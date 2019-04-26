@@ -130,7 +130,7 @@ def get_sql_dbs(conn_string):
     string = "SELECT datname FROM pg_database;"
     cursor = conn.cursor()
     cursor.execute(string)
-    dbs = zip(*cursor.fetchall())[0]
+    dbs = list(zip(*cursor.fetchall()))[0]
     dbs = sorted(dbs)
     return dbs
 
@@ -141,7 +141,7 @@ def get_all_tables(conn_string):
     cursor = conn.cursor()
     cursor.execute("SELECT relname FROM pg_class WHERE relkind='r' and "
                    "relname !~ '^(pg_|sql_)';")
-    tables = zip(*cursor.fetchall())[0]
+    tables = list(zip(*cursor.fetchall()))[0]
     tables = sorted(tables)
     return tables
 
