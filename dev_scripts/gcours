@@ -1,0 +1,5 @@
+#!/bin/bash -xe
+
+#cp $* $*.$(timestamp)
+git checkout --ours $*
+git add $*

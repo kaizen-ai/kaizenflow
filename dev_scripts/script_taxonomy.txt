@@ -1,0 +1,30 @@
+# TODO(gp): Move to gitconfig?
+
+# scripts/gcours
+git checkout --ours $*
+git add $*
+
+# scripts/gctheirs
+git checkout --theirs $*
+git add $*
+
+# scripts/git_files.sh
+  Current git files both modified and cached
+
+# scripts/git_previous_commit_files.sh
+- Files modified by my previous commit
+
+# scripts/gllmy.sh
+git ll --author gp -15
+
+# scripts/grc
+git rebase --continue
+
+# scripts/grs
+git rebase --skip
+
+# scripts/gsl
+git stash list
+
+# scripts/gss
+- Stash

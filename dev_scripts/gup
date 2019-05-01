@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+
+import argparse
+import logging
+import os
+import sys
+
+#sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
+
+import helpers.dbg as dbg
+import helpers.system_interaction as si
+
+_LOG = logging.getLogger(__name__)
+
+
+# ##############################################################################
+
+
+def _system(cmd, *args, **kwargs):
+    print("> %s" % cmd)
+    si.system(cmd, *args, **kwargs)
+
+
+def _main(parser):
+    args = parser.parse_args()
+    dbg.init_logger(verb=args.log_level)
+    #
+    print('[stash] Saving local changes...')
+    _USER_NAME = si.system_to_string("whoami")[1]
+    _SERVER_NAME = si.system_to_string("uname -n")[1]
+    _DATE = si.system_to_string("date +%Y%m%d-%H%M%S")[1]
+    tag = "gup.wip %s-%s-%s" % (_USER_NAME, _SERVER_NAME, _DATE)
+    print("tag='%s'" % tag)
+    cmd = "git stash save %s" % tag
+    _system(cmd, suppress_output=False)
+    # Check if we actually stashed anything.
+    cmd = "git stash list | \grep '%s' | wc -l" % tag
+    output = si.system_to_string(cmd)[1]
+    need_stash = int(output) > 0
+    print("Stashed was empty")
+    #
+    print('\n[pull] Getting new commits...')
+    cmd = 'git pull --rebase'
+    _system(cmd, suppress_output=False)
+    #
+    if need_stash:
+        print('\nChecking stash head ...')
+        cmd = "git stash list | head -3"
+        _system(cmd, suppress_output=False)
+        #
+        print('[stash] Restoring local changes...')
+        cmd = "git stash pop --quiet"
+        _system(cmd, suppress_output=False)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "-v",
+        dest="log_level",
+        default="INFO",
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        help="Set the logging level")
+    _main(parser)

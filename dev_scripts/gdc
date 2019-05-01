@@ -1,0 +1,4 @@
+#!/bin/bash -e
+cmd="git difftool --cached"
+echo "> $cmd"
+eval $cmd

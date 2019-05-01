@@ -1,0 +1,2 @@
+#echo "$@"
+find . -name "*.ipynb" -print0 | xargs -0 ack --nogroup --nocolor "$@"

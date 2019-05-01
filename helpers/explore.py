@@ -13,11 +13,23 @@ from IPython.display import display
 from tqdm import tqdm
 
 import helpers.dbg as dbg
-from helpers.printing import frame, list_to_string, perc, round_digits
+import helpers.printing as print_
 
 # #############################################################################
 # Pandas helpers.
 # #############################################################################
+
+
+# TODO(gp): Use logging when appropriate or a wrapper.
+
+
+def remove_nans(df, *args, **kwargs):
+    # TODO(gp): Remove rows completely empty.
+    num_rows_before = df.shape[0]
+    df = df.dropna(*args, **kwargs)
+    num_rows_after = df.shape[0]
+    print("removed: %s" % print_.perc(num_rows_before, num_rows_after))
+    return df
 
 
 def get_variable_cols(df, threshold=1):
@@ -51,9 +63,9 @@ def remove_const_columns(df, threshold=1, verb=False):
     if verb:
         print("# Constant cols")
         for c in const_cols:
-            print(("  %s: %s" % (c, list_to_string(list(map(str, df[c].unique()))))))
+            print(("  %s: %s" % (c, print_.list_to_string(list(map(str, df[c].unique()))))))
         print("# Var cols")
-        print((list_to_string(cols)))
+        print((print_.list_to_string(cols)))
     return df[cols]
 
 
@@ -93,12 +105,12 @@ def add_pct(res,
     res.insert(pos_col_name + 1, dst_col_name, (100.0 * res[col_name]) / total)
     # Format.
     res[col_name] = [
-        round_digits(
+        print_.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator)
         for v in res[col_name]
     ]
     res[dst_col_name] = [
-        round_digits(v, num_digits=num_digits, use_thousands_separator=False)
+        print_.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
         for v in res[dst_col_name]
     ]
     return res
@@ -126,7 +138,7 @@ def breakdown_table(df,
     """
     if isinstance(col_name, list):
         for c in col_name:
-            print(("\n" + frame(c).rstrip("\n")))
+            print(("\n" + print_.frame(c).rstrip("\n")))
             res = breakdown_table(df, c)
             print(res)
         return None
@@ -143,17 +155,17 @@ def breakdown_table(df,
     res["pct"] = (100.0 * res["count"]) / df.shape[0]
     # Format.
     res["count"] = [
-        round_digits(
+        print_.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator)
         for v in res["count"]
     ]
     res["pct"] = [
-        round_digits(v, num_digits=num_digits, use_thousands_separator=False)
+        print_.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
         for v in res["pct"]
     ]
     if verb:
         for k, df_tmp in df.groupby(col_name):
-            print((frame("%s=%s" % (col_name, k))))
+            print((print_.frame("%s=%s" % (col_name, k))))
             cols = [col_name, "description"]
             with pd.option_context("display.max_colwidth", 100000,
                                    "display.width", 130):
@@ -175,7 +187,7 @@ def print_column_variability(df,
     :param use_thousands_separator:  (Default value = True)
 
     """
-    print(("# df.columns=%s" % list_to_string(df.columns)))
+    print(("# df.columns=%s" % print_.list_to_string(df.columns)))
     res = []
     for c in tqdm(df.columns):
         vals = df[c].unique()
@@ -235,11 +247,11 @@ def remove_columns(df, cols, verb=False):
     """
     to_remove = set(cols).intersection(set(df.columns))
     if verb:
-        print(("to_remove=%s" % list_to_string(to_remove)))
+        print(("to_remove=%s" % print_.list_to_string(to_remove)))
     df.drop(to_remove, axis=1, inplace=True)
     if verb:
         display(df.head(3))
-        print((list_to_string(df.columns)))
+        print((print_.list_to_string(df.columns)))
     return df
 
 
@@ -346,30 +358,11 @@ def filter_by_val(df,
 
 
 # #############################################################################
-# Ravenpack specific functions
-# #############################################################################
-
-# TODO(gp): Move to the right place.
-
-
-def remove_junk_articles():
-    pass
-
-
-def compute_tz_events():
-    pass
-
-
-def filter_tz_events_by_novelty():
-    pass
-
-
-# #############################################################################
 # Printing
 # #############################################################################
 
 
-def tz_display(df,
+def display(df,
                threshold=0,
                remove_index=False,
                head=None,

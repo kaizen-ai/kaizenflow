@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+
+use strict;
+use Cwd;
+
+my @aFile=split(/\//, $ARGV[0]);
+my @aPwd=split(/\//, &Cwd::cwd());
+
+my $idx = 0;
+while ($idx < scalar(@aFile) && $aFile[$idx] eq "..") {
+   my $s = pop(@aPwd);
+   $idx++;
+}
+print join("/", @aPwd, splice(@aFile, $idx) )."\n";

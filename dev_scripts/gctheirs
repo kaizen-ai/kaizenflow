@@ -1,0 +1,7 @@
+#!/bin/bash -xe
+
+FILES=$*
+echo "Accepting $FILES"
+git reset HEAD $FILES
+git checkout --theirs $FILES
+git add $FILES
