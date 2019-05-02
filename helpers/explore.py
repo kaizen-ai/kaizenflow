@@ -3,24 +3,29 @@ Utility functions for Jupyter notebook for:
 - formatting
 - transforming pandas data structures
 - computing common stats
+
+These functions are used for both interactive data exploration and to implement
+more complex pipelines. The output is reported through logging.
 """
 
 import os
 
 import IPython
 import pandas as pd
+import numpy as np
 from IPython.display import display
 from tqdm import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as print_
 
+
+# TODO(gp): Always use logging but expose a logging config to make the logging
+# look like normal printing for interactive use in a notebook.
+
 # #############################################################################
 # Pandas helpers.
 # #############################################################################
-
-
-# TODO(gp): Use logging when appropriate or a wrapper.
 
 
 def drop_na_rows_columns(df):
@@ -75,51 +80,43 @@ def drop_na(df, *args, **kwargs):
     print("removed rows with nans: %s" % pct_removed)
     return df
 
+# //////////////////////////////////////////////////////////////////////////////
 
-def get_variable_cols(df, threshold=1):
+def _get_variable_cols(df, threshold=1):
     """
+    Return columns of a df that contain less than <threshold> unique values.
 
-
-    :param df:
-    :param threshold:  (Default value = 1)
-
+    :return: (variable cols, const_cols)
     """
-    cols = []
+    var_cols = []
     const_cols = []
     for i in df.columns:
         if len(df[i].unique()) <= threshold:
             const_cols.append(i)
         else:
-            cols.append(i)
-    return cols, const_cols
+            var_cols.append(i)
+    return var_cols, const_cols
 
 
+# TODO(gp): Remove verb and use print.
 def remove_const_columns(df, threshold=1, verb=False):
     """
+    Remove columns of a df that contain less than <threshold> unique values.
 
-
-    :param df:
-    :param threshold:  (Default value = 1)
-    :param verb:  (Default value = False)
-
+    :return: df with only variable columns
     """
-    cols, const_cols = get_variable_cols(df, threshold=threshold)
+    var_cols, const_cols = _get_variable_cols(df, threshold=threshold)
     if verb:
         print("# Constant cols")
         for c in const_cols:
             print(("  %s: %s" % (c, print_.list_to_string(list(map(str, df[c].unique()))))))
         print("# Var cols")
-        print((print_.list_to_string(cols)))
-    return df[cols]
+        print((print_.list_to_string(var_cols)))
+    return df[var_cols]
 
 
+# TODO(gp): ?
 def add_count_as_idx(df):
-    """
-
-
-    :param df:
-
-    """
     col = []
     for k in range(df.shape[0]):
         col.append("%2.d / %2.d" % (k + 1, df.shape[0]))
@@ -127,23 +124,13 @@ def add_count_as_idx(df):
     return df
 
 
+# TODO(gp): ?
 def add_pct(res,
             col_name,
             total,
             dst_col_name,
             num_digits=2,
             use_thousands_separator=True):
-    """
-
-
-    :param res:
-    :param col_name:
-    :param total:
-    :param dst_col_name:
-    :param num_digits:  (Default value = 2)
-    :param use_thousands_separator:  (Default value = True)
-
-    """
     # Add column with percentage right after col_name.
     pos_col_name = res.columns.tolist().index(col_name)
     res.insert(pos_col_name + 1, dst_col_name, (100.0 * res[col_name]) / total)
@@ -165,21 +152,32 @@ def add_pct(res,
 # #############################################################################
 
 
+def return_first_last_non_nan_idx(df):
+    """
+    Find the first and the last non-nan values for each column.
+    """
+    # Find the index of the first non-nan value.
+    df = df.applymap(lambda x: not np.isnan(x))
+    min_idx = df.idxmax(axis=0)
+    min_idx.name = "min_idx"
+    # Find the index of the last non-nan value.
+    max_idx = df.reindex(index=df.index[::-1]).idxmax(axis=0)
+    max_idx.name = "max_idx"
+    count_idx = df.sum(axis=0)
+    count_idx.name = "num_non_nans"
+    pct_idx = count_idx / df.shape[0]
+    pct_idx.name = "pct_non_nans"
+    # Package result into a df with a row for each statistic.
+    ret_df = pd.concat(map(lambda df_tmp: pd.DataFrame(df_tmp).T,
+                           [min_idx, max_idx, count_idx, pct_idx]))
+    return ret_df
+
+
 def breakdown_table(df,
                     col_name,
                     num_digits=2,
                     use_thousands_separator=True,
                     verb=False):
-    """
-
-
-    :param df:
-    :param col_name:
-    :param num_digits:  (Default value = 2)
-    :param use_thousands_separator:  (Default value = True)
-    :param verb:  (Default value = False)
-
-    """
     if isinstance(col_name, list):
         for c in col_name:
             print(("\n" + print_.frame(c).rstrip("\n")))
@@ -224,12 +222,6 @@ def print_column_variability(df,
     """
     Print statistics about the values in each column of a data frame.
     This is useful to get a sense of which columns are interesting.
-
-    :param df:
-    :param max_num_vals:  (Default value = 3)
-    :param num_digits:  (Default value = 2)
-    :param use_thousands_separator:  (Default value = True)
-
     """
     print(("# df.columns=%s" % print_.list_to_string(df.columns)))
     res = []
@@ -281,14 +273,6 @@ def find_common_columns(names, dfs):
 
 
 def remove_columns(df, cols, verb=False):
-    """
-
-
-    :param df:
-    :param cols:
-    :param verb:  (Default value = False)
-
-    """
     to_remove = set(cols).intersection(set(df.columns))
     if verb:
         print(("to_remove=%s" % print_.list_to_string(to_remove)))
@@ -303,11 +287,6 @@ def filter_with_df(df, filter_df, verb=True):
     """
     Compute a mask for DataFrame df using common columns and values in
     "filter_df".
-
-    :param df:
-    :param filter_df:
-    :param verb:   (Default value = True)
-
     """
     mask = None
     for c in filter_df:
@@ -328,17 +307,6 @@ def filter_around_time(df,
                        timedelta_before,
                        timedelta_after=None,
                        verb=False):
-    """
-
-
-    :param df:
-    :param col_name:
-    :param timestamp:
-    :param timedelta_before:
-    :param timedelta_after:  (Default value = None)
-    :param verb:  (Default value = False)
-
-    """
     dbg.dassert_in(col_name, df)
     dbg.dassert_lte(pd.Timedelta(0), timedelta_before)
     if timedelta_after is None:
@@ -363,14 +331,6 @@ def filter_by_val(df,
                   verb=False):
     """
     Filter out rows of df where df[col_name] is not in [min_val, max_val].
-
-    :param df: param col_name:
-    :param min_val: param max_val:
-    :param use_thousands_separator: Default value = True)
-    :param verb: Default value = False)
-    :param col_name:
-    :param max_val:
-
     """
     # TODO(gp): If column is ordered, this can be done more efficiently with
     # binary search.
@@ -400,6 +360,29 @@ def filter_by_val(df,
                 use_thousands_separator=use_thousands_separator))))
     return res
 
+# #############################################################################
+# Plotting
+# #############################################################################
+
+
+def plot_non_na_cols(df, sort=False, ascending=True):
+    # Assign 1.0 to all the non-nan value.
+    df = df.applymap(lambda x: np.nan if np.isnan(x) else 1.0)
+    if sort:
+        cnt = df.sum().sort_values(ascending=not ascending)
+        df = df.reindex(cnt.index.tolist(), axis=1)
+    # Associate each column to a number between 1 and num_cols + 1.
+    scale = pd.Series({col: idx + 1 for idx, col in enumerate(df.columns)})
+    df *= scale
+    #print(df.tail())
+    # Heuristics to find out ysize.
+    num_cols = df.shape[1]
+    ysize = num_cols * 0.3
+    ax = df.plot(figsize=(20, ysize), legend=False)
+    # Force all the yticks to be equal to the column names and to be visible.
+    ax.set_yticks(np.arange(1, num_cols + 1))
+    ax.set_yticklabels(df.columns.tolist())
+    return ax
 
 # #############################################################################
 # Printing
@@ -414,18 +397,6 @@ def display(df,
                max_colwidth=100,
                as_txt=False,
                return_df=False):
-    """
-
-
-    :param df:
-    :param threshold:  (Default value = 0)
-    :param remove_index:  (Default value = False)
-    :param head:  (Default value = None)
-    :param max_colwidth:  (Default value = 100)
-    :param as_txt:  (Default value = False)
-    :param return_df:  (Default value = False)
-
-    """
     df_tmp = df
     if threshold == 0:
         df_tmp = remove_const_columns(df_tmp, threshold=threshold)
