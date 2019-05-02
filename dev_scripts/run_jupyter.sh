@@ -1,11 +1,14 @@
+#!/bin/bash -e
+
 if [[ -z $1 ]]; then
-  ENV="jupyter"
+  ENV="develop"
 else
   ENV=$1
 fi;
 echo "ENV=$ENV"
 
-source dev_scripts/setenv.sh $ENV
+# Config env.
+source $SRC_DIR/utilities/dev_scripts/setenv.sh -t $ENV
 
 conda info --envs
 

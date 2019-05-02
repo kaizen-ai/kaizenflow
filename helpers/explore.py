@@ -23,12 +23,56 @@ import helpers.printing as print_
 # TODO(gp): Use logging when appropriate or a wrapper.
 
 
-def remove_nans(df, *args, **kwargs):
+def drop_na_rows_columns(df):
+    """
+    Remove columns and rows completely empty.
+    Assume that the index is timestamps, while columns are features.
+
+    :param df:
+    :return:
+    """
+    # Remove columns with all nans, if any.
+    cols_before = df.columns[:]
+    df = df.dropna(axis=1, how="all")
+    cols_after = df.columns[:]
+    # Report results.
+    removed_cols = [x in cols_after for x in set(cols_before).difference(set(cols_after))]
+    pct_removed = print_.perc(len(cols_before) - len(cols_after), len(cols_after))
+    print("removed cols with all nans: %s %s" % (pct_removed, print_.list_to_string(removed_cols)))
+    #
+    # Remove rows with all nans, if any.
+    rows_before = df.columns[:]
+    df = df.dropna(axis=0, how="all")
+    rows_after = df.columns[:]
+    # Report results.
+    removed_rows = [x in rows_after for x in set(rows_before).difference(set(rows_after))]
+    if len(rows_before) == len(rows_after):
+        # Nothing was removed.
+        min_ts = max_ts = None
+    else:
+        # TODO(gp): Report as intervals of dates.
+        min_ts = min(removed_rows)
+        max_ts = max(removed_rows)
+    pct_removed = print_.perc(len(rows_before) - len(rows_after), len(rows_after))
+    print("removed rows with all nans: %s [%s, %s]" % (pct_removed, min_ts, max_ts))
+    return df
+
+
+def drop_na(df, *args, **kwargs):
+    """
+    Wrapper around pd.dropna() reporting information about the removed rows.
+
+    :param df:
+    :param args:
+    :param kwargs:
+    :return:
+    """
     # TODO(gp): Remove rows completely empty.
     num_rows_before = df.shape[0]
     df = df.dropna(*args, **kwargs)
     num_rows_after = df.shape[0]
-    print("removed: %s" % print_.perc(num_rows_before, num_rows_after))
+    pct_removed = print_.perc(num_rows_before - num_rows_after, num_rows_before)
+    print("removed rows with nans: %s" % pct_removed)
     return df
 
 
@@ -362,6 +406,7 @@ def filter_by_val(df,
 # #############################################################################
 
 
+# TODO(gp): This should go in print_?
 def display(df,
                threshold=0,
                remove_index=False,
@@ -397,16 +442,3 @@ def display(df,
     # pylint: disable=inconsistent-return-statements
     if return_df:
         return df_tmp
-
-
-def to_csv(df, file_name):
-    """
-
-
-    :param df:
-    :param file_name:
-
-    """
-    file_name = os.path.abspath(file_name)
-    df.to_csv(file_name)
-    print(("file_name=%s" % file_name))
