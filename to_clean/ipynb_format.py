@@ -73,7 +73,7 @@ def ipynb_format(fname, style=None):
                 cell["source"] = out
                 modified += 1
 
-    print "Num of cells modified=%d" % modified
+    print("Num of cells modified=%d" % modified)
     if modified:
         import io
         f = io.open(fname, "w", encoding='utf-8')

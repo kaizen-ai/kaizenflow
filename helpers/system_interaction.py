@@ -48,7 +48,7 @@ def _system(cmd, abort_on_error, suppressed_error, suppress_output, blocking,
                 if not line:
                     break
                 if not suppress_output:
-                    print(line.rstrip("\n"))
+                    print((line.rstrip("\n")))
                 output += line
             p.stdout.close()
             rc = p.wait()

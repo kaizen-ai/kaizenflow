@@ -51,7 +51,7 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
     # Do not redirect to file when using vimdiff.
     os.system(cmd)
     #
-    ans = raw_input("Resolved? [y/n] ")
+    ans = input("Resolved? [y/n] ")
     if ans.rstrip(" ").lstrip(" ") in ("y", "yes"):
         # Make a backup.
         root_dir = git.get_client_root()

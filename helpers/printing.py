@@ -178,13 +178,13 @@ def print_list(tag, l, sort=False, axis=0, to_string=False):
             txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
         else:
             dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
-            vals = map(str, l)
+            vals = list(map(str, l))
             if sort:
                 vals = sorted(vals)
             txt += "%s: (%s) %s" % (tag, len(l), " ".join(vals)) + "\n"
     elif axis == 1:
         txt += "%s (%s):" % (tag, len(l)) + "\n"
-        vals = map(str, l)
+        vals = list(map(str, l))
         if sort:
             vals = sorted(vals)
         txt += "\n".join(vals) + "\n"
@@ -203,35 +203,35 @@ def print_set_diff(obj1,
     def _to_string(obj):
         return " ".join(map(str, obj))
 
-    print "# %s vs %s" % (obj1_name, obj2_name)
+    print("# %s vs %s" % (obj1_name, obj2_name))
     obj1 = set(obj1)
     dbg.dassert_lte(1, len(obj1))
-    print "* %s: (%s) %s" % (obj1_name, len(obj1), _to_string(obj1))
+    print("* %s: (%s) %s" % (obj1_name, len(obj1), _to_string(obj1)))
     if add_space:
-        print
+        print()
     #
     obj2 = set(obj2)
     dbg.dassert_lte(1, len(obj2))
-    print "* %s: (%s) %s" % (obj2_name, len(obj2), _to_string(obj2))
+    print("* %s: (%s) %s" % (obj2_name, len(obj2), _to_string(obj2)))
     if add_space:
-        print
+        print()
     #
     intersection = obj1.intersection(obj2)
-    print "* intersect=(%s) %s" % (len(intersection), _to_string(intersection))
+    print("* intersect=(%s) %s" % (len(intersection), _to_string(intersection)))
     if add_space:
-        print
+        print()
     #
     diff = obj1 - obj2
-    print "* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff),
-                               _to_string(diff))
+    print("* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff),
+                               _to_string(diff)))
     if add_space:
-        print
+        print()
     #
     diff = obj2 - obj1
-    print "* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff),
-                               _to_string(diff))
+    print("* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff),
+                               _to_string(diff)))
     if add_space:
-        print
+        print()
 
 
 def dataframe_to_str(df,

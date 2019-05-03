@@ -43,7 +43,7 @@ def drop_na_rows_columns(df):
     # Report results.
     removed_cols = [x in cols_after for x in set(cols_before).difference(set(cols_after))]
     pct_removed = print_.perc(len(cols_before) - len(cols_after), len(cols_after))
-    print("removed cols with all nans: %s %s" % (pct_removed, print_.list_to_string(removed_cols)))
+    print(("removed cols with all nans: %s %s" % (pct_removed, print_.list_to_string(removed_cols))))
     #
     # Remove rows with all nans, if any.
     rows_before = df.columns[:]
@@ -59,7 +59,7 @@ def drop_na_rows_columns(df):
         min_ts = min(removed_rows)
         max_ts = max(removed_rows)
     pct_removed = print_.perc(len(rows_before) - len(rows_after), len(rows_after))
-    print("removed rows with all nans: %s [%s, %s]" % (pct_removed, min_ts, max_ts))
+    print(("removed rows with all nans: %s [%s, %s]" % (pct_removed, min_ts, max_ts)))
     return df
 
 
@@ -77,7 +77,7 @@ def drop_na(df, *args, **kwargs):
     df = df.dropna(*args, **kwargs)
     num_rows_after = df.shape[0]
     pct_removed = print_.perc(num_rows_before - num_rows_after, num_rows_before)
-    print("removed rows with nans: %s" % pct_removed)
+    print(("removed rows with nans: %s" % pct_removed))
     return df
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -168,8 +168,7 @@ def return_first_last_non_nan_idx(df):
     pct_idx = count_idx / df.shape[0]
     pct_idx.name = "pct_non_nans"
     # Package result into a df with a row for each statistic.
-    ret_df = pd.concat(map(lambda df_tmp: pd.DataFrame(df_tmp).T,
-                           [min_idx, max_idx, count_idx, pct_idx]))
+    ret_df = pd.concat([pd.DataFrame(df_tmp).T for df_tmp in [min_idx, max_idx, count_idx, pct_idx]])
     return ret_df
 
 

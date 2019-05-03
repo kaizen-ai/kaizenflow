@@ -66,17 +66,17 @@ def _main():
     cmd = "linter.py"
     if args.test:
         cmd = "linter.py --action isort"
-    print print_.frame(cmd, char1="#")
+    print(print_.frame(cmd, char1="#"))
     num_lints = hsi.system(cmd, suppress_output=False, abort_on_error=False)
     # Post message.
     msg = "Num lints: %s\n" % num_lints
-    print msg
+    print(msg)
     io_.to_file(commit_file, msg, mode="a")
     commit_msg += msg
     # Handle errors.
     if num_lints != 0:
         if not args.not_abort_on_error:
-            print "Exiting. If you don't want to abort on errors use --not_abort_on_error"
+            print("Exiting. If you don't want to abort on errors use --not_abort_on_error")
             sys.exit(-1)
         else:
             _LOG.warning("Continue despite linter errors")
@@ -86,27 +86,27 @@ def _main():
     cmd = "run_tests.py"
     if args.test:
         cmd = 'pytest edgar -k "TestIsUnicodeDash"'
-    print print_.frame(cmd, char1="#")
+    print(print_.frame(cmd, char1="#"))
     rc = hsi.system(cmd, suppress_output=False, abort_on_error=False)
     unit_test_passing = rc == 0
     msg = "Unit tests passing: %s" % ("Yes"
                                       if unit_test_passing else "*** NO ***")
-    print msg
+    print(msg)
     io_.to_file(commit_file, msg, mode="a")
     commit_msg += msg
     # Handle errors.
-    print print_.frame("paranoid commit results", char1="#")
-    print commit_msg
+    print(print_.frame("paranoid commit results", char1="#"))
+    print(commit_msg)
     if not unit_test_passing:
         if not args.not_abort_on_error:
-            print "Exiting. If you don't want to abort on errors use --not_abort_on_error"
+            print("Exiting. If you don't want to abort on errors use --not_abort_on_error")
             sys.exit(-1)
         else:
             _LOG.warning("Continue despite unit tests failing")
     #
     # Generate commit message in a file.
     #
-    print "\nCommit with:\n> git commit --file %s" % commit_file
+    print("\nCommit with:\n> git commit --file %s" % commit_file)
     if not args.force_commit:
         if num_lints != 0:
             msg = "Found %d linter errors" % num_lints

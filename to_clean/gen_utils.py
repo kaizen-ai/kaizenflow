@@ -28,23 +28,23 @@ import utils.stats
 
 def init_notebook(num_git_commits=3):
     verb = 1
-    print "Setting verbosity to %s" % verb
+    print("Setting verbosity to %s" % verb)
     dbg.set_verbosity_level(verb)
     #
     #print matplotlib.rcParams
     config_matplotlib()
     #
     cmd = "conda info --envs"
-    print utils.jos.system_to_string(cmd)[1]
-    print "  SVN_ROOT=%s" % os.environ["SVN_ROOT"]
-    print "  numpy=%s" % np.__version__
-    print "  scipy=%s" % scipy.__version__
-    print "  sklearn=%s" % sklearn.__version__
-    print '  pandas=%s' % pd.__version__
+    print(utils.jos.system_to_string(cmd)[1])
+    print("  SVN_ROOT=%s" % os.environ["SVN_ROOT"])
+    print("  numpy=%s" % np.__version__)
+    print("  scipy=%s" % scipy.__version__)
+    print("  sklearn=%s" % sklearn.__version__)
+    print('  pandas=%s' % pd.__version__)
     #
-    print "# git tag"
+    print("# git tag")
     cmd = 'git log2 --author gp | head -%s' % num_git_commits
-    print utils.jos.system_to_string(cmd)[1]
+    print(utils.jos.system_to_string(cmd)[1])
 
 
 # #############################################################################
@@ -86,11 +86,11 @@ def apply_to_dict_panel(obj,
     res = {}
     if progress_bar:
         pb = utils.timer.ProgressBar(0, len(obj), descr=func_name, verb=0)
-    for k, v in obj.iteritems():
+    for k, v in obj.items():
         log.debug("Execute for k=%s", k)
         res[k] = f(v)
         if progress_bar:
-            pb.next()
+            next(pb)
     #
     if type_ == "panel":
         res = pd.Panel(res)
@@ -136,7 +136,7 @@ def apply_to_dict_panel_parallel(obj,
         raise ValueError("Invalid type='%s' for %s" % (type(obj), str(f)))
     #
     res = {}
-    keys = obj.keys()
+    keys = list(obj.keys())
     # Execute locally functions already cached.
     log.info("# Execute locally what was cached")
     keys_for_parallel = []
@@ -193,14 +193,14 @@ def apply_to_dict_panel_parallel(obj,
 
 def print_dict(dict_, num_values=5, sort=True):
     dbg.dassert_isinstance(dict_, dict)
-    keys = dict_.keys()
+    keys = list(dict_.keys())
     if sort:
         keys = sorted(keys)
     if num_values is not None:
         dbg.dassert_lte(1, num_values)
         keys = keys[:num_values]
         pprint.pprint({k: dict_[k] for k in keys})
-    print "..."
+    print("...")
 
 
 def pick_first(obj):
@@ -219,7 +219,7 @@ def head(obj, key=None, max_n=2, tag=None):
     txt = ""
     txt += "# %s\n" % str(type(obj))
     if isinstance(obj, dict):
-        txt += "keys=%s\n" % format_list(obj.keys(), tag=tag)
+        txt += "keys=%s\n" % format_list(list(obj.keys()), tag=tag)
         if key is None:
             key = sorted(obj.keys())[0]
         txt += "# key=%s\n" % key
@@ -237,9 +237,9 @@ def head(obj, key=None, max_n=2, tag=None):
 
 def analyze_object(locals_tmp, obj, tag="", max_string_len=1000):
     locals().update(locals_tmp)
-    print "obj=", tag
-    print "type(obj)=", type(obj)
-    print "str(obj)=", str(obj)[:max_string_len]
+    print("obj=", tag)
+    print("type(obj)=", type(obj))
+    print("str(obj)=", str(obj)[:max_string_len])
     data = []
     for x in dir(obj):
         try:
@@ -299,7 +299,7 @@ def head_tail(df, num_rows=2, as_txt=False):
     head.index.name = "head"
     display_df(head, inline_index=True, as_txt=as_txt)
     #
-    print
+    print()
     #
     tail = df.tail(num_rows)
     tail.index.name = "tail"
@@ -348,8 +348,8 @@ def columns(df):
     Print df columns vertically.
     """
     dbg.dassert_type_is(df, pd.DataFrame)
-    print "columns="
-    print dbg.space("\n".join(df.columns))
+    print("columns=")
+    print(dbg.space("\n".join(df.columns)))
 
 
 # TODO(gp): -> display
@@ -366,8 +366,8 @@ def display_df(df,
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
     if isinstance(df, pd.Panel):
-        for c in df.keys():
-            print "# %s" % c
+        for c in list(df.keys()):
+            print("# %s" % c)
             df_tmp = df[c]
             display_df(
                 df_tmp,
@@ -377,7 +377,7 @@ def display_df(df,
                 as_txt=as_txt)
         return
     if tag is not None:
-        print tag
+        print(tag)
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_eq(
         utils.sorted.find_duplicates(df.columns), [],
@@ -409,7 +409,7 @@ def display_df(df,
     # Finally, print / display.
     def _print_display():
         if as_txt:
-            print df.to_string(index=index)
+            print(df.to_string(index=index))
         else:
             IPython.core.display.display(
                 IPython.core.display.HTML(df.to_html(index=index)))
@@ -440,10 +440,10 @@ def display_df(df,
 
 
 def describe_df(df, ts_col, max_col_width=30, max_thr=15, sort_by_uniq_num=False):
-    print "%s: [%s, %s], count=%s" % (ts_col, min(df[ts_col]), max(df[ts_col]),
-            len(df[ts_col].unique()))
-    print "num_cols=", df.shape[1]
-    print "num_rows=", df.shape[0]
+    print("%s: [%s, %s], count=%s" % (ts_col, min(df[ts_col]), max(df[ts_col]),
+            len(df[ts_col].unique())))
+    print("num_cols=", df.shape[1])
+    print("num_rows=", df.shape[0])
     res_df = []
     for c in df.columns:
         uniq = df[c].unique()
@@ -460,7 +460,7 @@ def describe_df(df, ts_col, max_col_width=30, max_thr=15, sort_by_uniq_num=False
     res_df.set_index("column", inplace=True)
     if sort_by_uniq_num:
         res_df.sort("num uniq", inplace=True)
-    print res_df
+    print(res_df)
 
 
 def exact_rename_df(df, rename_map, axis):
@@ -474,7 +474,7 @@ def exact_rename_df(df, rename_map, axis):
         vals = df.columns
     else:
         raise ValueError("Invalid axis=%s" % axis)
-    dbg.dassert_set_eq(vals, rename_map.keys())
+    dbg.dassert_set_eq(vals, list(rename_map.keys()))
     if axis == 0:
         df = df.rename(index=rename_map)
     elif axis == 1:
@@ -679,9 +679,9 @@ def filter_non_finite(obj, col_names=None, keep_finite=True,
     if print_stats:
         before_num_cols = obj.shape[0]
         after_num_cols = obj_tmp.shape[0]
-        print "filter_non_finite (keep_finite=%s):" % keep_finite
-        print "\tkept rows=%s" % dbg.perc(
-            after_num_cols, before_num_cols, printAll=True)
+        print("filter_non_finite (keep_finite=%s):" % keep_finite)
+        print("\tkept rows=%s" % dbg.perc(
+            after_num_cols, before_num_cols, printAll=True))
 
         def _count_non_finite(vals):
             count = {
@@ -698,7 +698,7 @@ def filter_non_finite(obj, col_names=None, keep_finite=True,
                     count["-inf"] += 1
             return count
 
-        print "\tvals=%s" % pprint.pformat(_count_non_finite(vals))
+        print("\tvals=%s" % pprint.pformat(_count_non_finite(vals)))
     # Convert back to the correct type.
     if isinstance(obj_tmp, pd.DataFrame):
         dbg.dassert_lte(1, obj_tmp.shape[0])
@@ -835,7 +835,7 @@ def shuffle(obj, mode, seed):
     Shuffle predictors in a dict tag -> feature.
     """
     dbg.dassert_in(type(obj), [dict, pd.Panel])
-    for c in obj.keys():
+    for c in list(obj.keys()):
         obj[c] = shuffle_df(obj[c], mode, seed, axis=0)
     return obj
 
@@ -843,7 +843,7 @@ def shuffle(obj, mode, seed):
 def random(obj, seed):
     dbg.dassert_in(type(obj), [dict, pd.Panel])
     np.random.seed(seed)
-    for c in obj.keys():
+    for c in list(obj.keys()):
         idx = obj[c].index
         cols = obj[c].columns
         obj[c] = pd.DataFrame(
@@ -990,21 +990,21 @@ def report_nan_nums_for_columns(df,
                                 title=None,
                                 figsize=None):
     dbg.dassert_type_is(df, pd.DataFrame)
-    print "columns=(%s) %s" % (len(df.columns), " ".join(df.columns))
-    print "dates=[%s, %s]" % (df.index[0], df.index[-1])
-    print "num_dates=", df.shape[0]
+    print("columns=(%s) %s" % (len(df.columns), " ".join(df.columns)))
+    print("dates=[%s, %s]" % (df.index[0], df.index[-1]))
+    print("num_dates=", df.shape[0])
     # Count nans.
     count = pd.DataFrame(np.isnan(df).sum(axis=0), columns=["nans"])
     col_name = "pct_nans [%]"
     count[col_name] = count["nans"] / df.shape[0] * 100.0
     if fmt_pct:
-        count[col_name] = map(lambda x: float("%.1f" % x), count[col_name])
+        count[col_name] = [float("%.1f" % x) for x in count[col_name]]
     # Count zeros.
     count["zeros"] = (df == 0).sum(axis=0)
     col_name = "pct_zeros [%]"
     count[col_name] = count["zeros"] / df.shape[0] * 100.0
     if fmt_pct:
-        count[col_name] = map(lambda x: float("%.1f" % x), count[col_name])
+        count[col_name] = [float("%.1f" % x) for x in count[col_name]]
     if plot:
         count_tmp = count.sort(columns=["pct"])
         count_tmp[["pct"]].plot(kind="bar", title=title, figsize=figsize)
@@ -1134,7 +1134,7 @@ def to_csv(model_df, file_name, overwrite_if_present):
             msg="don't want to overwrite '%s'" % file_name)
     # Save data.
     model_df.to_csv(file_name)
-    print "File saved to: %s" % file_name
+    print("File saved to: %s" % file_name)
 
 
 def plot_rolling_correlation(df, vmin=-1, vmax=1):
@@ -1530,8 +1530,8 @@ def plot_acf(data, lags=10, remove_nans=False, figsize=None):
     dbg.dassert_type_is(data, pd.Series)
     if remove_nans:
         mask = np.isnan(data)
-        print "Removed %s nans" % (dbg.perc(
-            np.sum(mask), len(data), numDigits=2, printAll=True))
+        print("Removed %s nans" % (dbg.perc(
+            np.sum(mask), len(data), numDigits=2, printAll=True)))
         data = data[~mask]
     dbg.dassert_eq(sum(np.isnan(data)), 0, msg="data has nans")
     if figsize is None:
@@ -1539,9 +1539,9 @@ def plot_acf(data, lags=10, remove_nans=False, figsize=None):
     _, axes = plt.subplots(3, figsize=figsize, sharex=True)
     #
     acf = statsmodels.tsa.stattools.acf(data)[:lags]
-    srs = pd.Series(acf, index=range(0, lags))
+    srs = pd.Series(acf, index=list(range(0, lags)))
     srs.name = "acf"
-    print "acf=\n%s" % srs.to_string()
+    print("acf=\n%s" % srs.to_string())
     #
     statsmodels.api.graphics.tsa.plot_acf(data, lags=lags, ax=axes[0])
     statsmodels.api.graphics.tsa.plot_pacf(data, lags=lags, ax=axes[1])
@@ -1583,7 +1583,7 @@ def plot_ccf(data,
     # Compute cross-correlation.
     dbg.dassert_lte(1, data.shape[0])
     ccf = []
-    lags = range(min_lag, max_lag + 1)
+    lags = list(range(min_lag, max_lag + 1))
     for lag in lags:
         # Filter non-finite values.
         data_tmp = data[[col_name1, col_name2]].copy()
@@ -1602,7 +1602,7 @@ def plot_ccf(data,
         ccf = np.cumsum(ccf)
     # Report results.
     df = pd.DataFrame(ccf, columns=["ccf" + suffix], index=lags)
-    print df.to_string()
+    print(df.to_string())
     # Plot.
     plt.figure(figsize=figsize)
     plt.title(title)
@@ -1614,12 +1614,12 @@ def plot_ccf(data,
     plt.plot(lags, ccf, marker='o')
     # - Show all xticks.
     plt.xlim(min_lag, max_lag)
-    plt.xticks(range(min_lag, max_lag))
+    plt.xticks(list(range(min_lag, max_lag)))
     # Print some stats.
     argmin = lags[np.argmin(ccf)]
     argmax = lags[np.argmax(ccf)]
-    print "min: lag=%s (val=%.2f), max: lag=%s val=%.2f" % (
-        argmin, ccf[argmin], argmax, ccf[argmax])
+    print("min: lag=%s (val=%.2f), max: lag=%s val=%.2f" % (
+        argmin, ccf[argmin], argmax, ccf[argmax]))
 
 
 def plot_bootstrap_ccf(x_to_lag,
@@ -1744,14 +1744,14 @@ def plot_time_distributions(dts, mode, density=True):
         count = pd.Series(vals).value_counts(sort=False)
         dbg.dassert_eq(count.sum(), len(dts))
         # Compute the labels.
-        yticks = map(str, range(1, 31 + 1))
+        yticks = list(map(str, list(range(1, 31 + 1))))
     elif mode == "month_of_the_year":
         vals = [dt.date().month for dt in dts]
         # Count.
         count = pd.Series(vals).value_counts(sort=False)
         dbg.dassert_eq(count.sum(), len(dts))
         # Compute the labels.
-        yticks = map(str, range(1, 12 + 1))
+        yticks = list(map(str, list(range(1, 12 + 1))))
     else:
         raise ValueError("Invalid mode='%s'" % mode)
     #
@@ -1786,11 +1786,11 @@ def compute_correlation(df,
         y = (y - y.mean()) / y.std()
     rho, p_val = scipy.stats.stats.pearsonr(x, y)
     if print_stats:
-        print "num_samples=%s" % dbg.perc(
-            len(x), tot_num_samples, printAll=True)
-        print "rho=%.4f" % rho
-        print "2-tailed pvalue=%.4f (%s)" % (
-            p_val, utils.jstats.pvalue_to_stars(p_val))
+        print("num_samples=%s" % dbg.perc(
+            len(x), tot_num_samples, printAll=True))
+        print("rho=%.4f" % rho)
+        print("2-tailed pvalue=%.4f (%s)" % (
+            p_val, utils.jstats.pvalue_to_stars(p_val)))
     return rho, p_val
 
 
@@ -1880,7 +1880,7 @@ def regress(df,
     }
     if print_model_stats:
         # pylint: disable=E1101
-        print model.summary().as_text()
+        print(model.summary().as_text())
     if tsplot or jointplot_:
         if max_nrows is not None and df.shape[0] > max_nrows:
             log.warning("Skipping plots since df has %s rows", df.shape[0])
@@ -1926,8 +1926,8 @@ def regress(df,
         line_y = lr.predict(line_X)
         line_y_ransac = ransac.predict(line_X)
         # Compare estimated coefficients
-        print "Estimated coef for linear regression=", lr.coef_
-        print "Estimated coef for RANSAC=", ransac.estimator_.coef_
+        print("Estimated coef for linear regression=", lr.coef_)
+        print("Estimated coef for RANSAC=", ransac.estimator_.coef_)
         if jointplot_size is None:
             jointplot_size = 5
         plt.figure(figsize=(jointplot_size, jointplot_size))
