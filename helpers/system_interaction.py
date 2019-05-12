@@ -66,7 +66,6 @@ def _system(cmd, abort_on_error, suppressed_error, suppress_output, blocking,
             print_.frame("cmd='%s' failed with rc='%s'" % (cmd, rc)) +
             "Output of the failing command is:\n%s\n%s\n%s", print_.line(">"),
             output, print_.line("<"))
-
         raise RuntimeError("cmd='%s' failed with rc='%s'" % (cmd, rc))
     #dbg.dassert_type_in(output, (str, ))
     return rc, output
@@ -111,6 +110,7 @@ def system_to_string(cmd,
     return rc, output
 
 
+# TODO(gp): Make them on-demand to speed up the loading.
 USER_NAME = system_to_string("whoami")[1]
 SERVER_NAME = system_to_string("uname -n")[1]
 OS_NAME = system_to_string("uname -s")[1]

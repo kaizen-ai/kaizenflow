@@ -5,10 +5,10 @@ import logging
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
-import utils.dbg as dbg
-import utils.system_interaction as si
+import helpers.dbg as dbg
+import helpers.system_interaction as si
 
 _log = logging.getLogger(__name__)
 
@@ -16,6 +16,7 @@ _log = logging.getLogger(__name__)
 # ##############################################################################
 
 
+# TODO(gp): Use system param.
 def _system(cmd, *args, **kwargs):
     print(("> %s" % cmd))
     si.system(cmd, *args, **kwargs)
@@ -31,6 +32,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
+    # TODO(gp): Factor this out in dbg.
     parser.add_argument(
         "-v",
         dest="log_level",

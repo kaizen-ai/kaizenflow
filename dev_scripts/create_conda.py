@@ -5,6 +5,9 @@ Install the default package
 
 Quick install to test the script
 > create_conda.py -v DEBUG --test_install
+
+Create pymc3
+> create_conda.py --env_name pymc3 --req_file requirements_pymc.txt -v DEBUG
 """
 
 import argparse
@@ -84,6 +87,7 @@ def _main():
         "--test_install",
         help="Just test the install step",
         action="store_true")
+    parser.add_argument("--python_version", default="3.7", type=str, action="store")
     parser.add_argument("--skip_delete_env", action="store_true")
     parser.add_argument("--skip_install_env", action="store_true")
     #
