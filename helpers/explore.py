@@ -8,20 +8,20 @@ These functions are used for both interactive data exploration and to implement
 more complex pipelines. The output is reported through logging.
 """
 
-import os
+import logging
 
 import IPython
-import pandas as pd
 import numpy as np
+import pandas as pd
 from IPython.display import display
 from tqdm import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as print_
 
-
 # TODO(gp): Always use logging but expose a logging config to make the logging
 # look like normal printing for interactive use in a notebook.
+_LOG = logging.getLogger(__name__)
 
 # #############################################################################
 # Pandas helpers.
@@ -152,7 +152,7 @@ def add_pct(res,
 # #############################################################################
 
 
-def return_first_last_non_nan_idx(df):
+def describe_nan_stats(df):
     """
     Find the first and the last non-nan values for each column.
     """
@@ -364,23 +364,47 @@ def filter_by_val(df,
 # #############################################################################
 
 
-def plot_non_na_cols(df, sort=False, ascending=True):
+def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
+    """
+    Plot a diagram describing the non-nans intervals for the columns of df.
+
+    :param df: usual df indexed with times
+    :param sort: sort the columns by number of non-nans
+    :param ascending:
+    :param max_num: max number of columns to plot.
+    :return:
+    """
+    # Note that the plot assumes that the first column is at the bottom of the
+    # graph.
     # Assign 1.0 to all the non-nan value.
     df = df.applymap(lambda x: np.nan if np.isnan(x) else 1.0)
+    # Sort.
     if sort:
         cnt = df.sum().sort_values(ascending=not ascending)
         df = df.reindex(cnt.index.tolist(), axis=1)
+    _LOG.debug("Columns=%d %s", len(df.columns), ", ".join(df.columns))
+    # Limit the number of elements.
+    if max_num is not None:
+        _LOG.warning("Plotting only %d columns instead of all %d columns", max_num, df.shape[1])
+        dbg.dassert_lte(1, max_num)
+        if max_num > df.shape[1]:
+            _LOG.warning("Too many columns requested: %d > %d", max_num, df.shape[1])
+        df = df.iloc[:, :max_num]
+    _LOG.debug("Columns=%d %s", len(df.columns), ", ".join(df.columns))
+    _LOG.debug("To plot=\n%s", df.head())
     # Associate each column to a number between 1 and num_cols + 1.
     scale = pd.Series({col: idx + 1 for idx, col in enumerate(df.columns)})
     df *= scale
-    #print(df.tail())
-    # Heuristics to find out ysize.
     num_cols = df.shape[1]
-    ysize = num_cols * 0.3
-    ax = df.plot(figsize=(20, ysize), legend=False)
+    # Heuristics to find the value of ysize.
+    figsize = None
+    if True:
+        ysize = num_cols * 0.3
+        figsize = (20, ysize)
+    ax = df.plot(figsize=figsize, legend=False)
     # Force all the yticks to be equal to the column names and to be visible.
-    ax.set_yticks(np.arange(1, num_cols + 1))
-    ax.set_yticklabels(df.columns.tolist())
+    ax.set_yticks(np.arange(num_cols, 0, -1))
+    ax.set_yticklabels(reversed(df.columns.tolist()))
     return ax
 
 # #############################################################################

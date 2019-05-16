@@ -1,3 +1,4 @@
+import functools
 import logging
 import subprocess
 import sys
@@ -110,10 +111,19 @@ def system_to_string(cmd,
     return rc, output
 
 
-# TODO(gp): Make them on-demand to speed up the loading.
-USER_NAME = system_to_string("whoami")[1]
-SERVER_NAME = system_to_string("uname -n")[1]
-OS_NAME = system_to_string("uname -s")[1]
+@functools.lru_cache
+def get_user_name():
+    return system_to_string("whoami")[1]
+
+
+@functools.lru_cache
+def get_sever_name():
+    return system_to_string("uname -n")[1]
+
+
+@functools.lru_cache
+def get_os_name():
+    return system_to_string("uname -s")[1]
 
 
 def query_yes_no(question, abort_on_no=True):

@@ -267,10 +267,16 @@ if _HAS_PANDAS:
 # #############################################################################
 
 
+# TODO(gp): Add an option to log as if it was a print for notebook use.
 def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     """
     - Send both stderr and stdout to logging.
     - Optionally tee the logs also to file.
+
+    :param verb: verbosity to use
+    :param use_exec_path: use the name of the executable
+    :param log_filename: log to that file
+    :return:
     """
     # yapf: disable
     # pylint: disable=C0301
@@ -278,7 +284,7 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     # yapf: enable
     root_logger = logging.getLogger()
     if len(root_logger.handlers) > 0:
-        print("Logger already initialized... skipping")
+        print("WARNING: Logger already initialized: skipping")
         return
     root_logger.setLevel(verb)
     #
@@ -291,13 +297,15 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     #
     if use_exec_path and log_filename is None:
         dassert_is(log_filename, None, msg="Can't specify conflicting filenames")
+        # Use the name of the executable.
         import inspect
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
         filename = module.__file__
         log_filename = os.path.realpath(filename) + ".log"
+    # Handle teeing to a file.
     if log_filename:
-        print(("Saving log to file '%s'" % log_filename))
+        print("Saving log to file '%s'" % log_filename)
         # Create dir if it doesn't exist.
         log_dirname = os.path.dirname(log_filename)
         if not os.path.exists(log_dirname):
@@ -314,6 +322,16 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
         _log.info("Saving log to '%s'", log_filename)
     #
     #test_logger()
+
+
+def set_logger_verb(verb):
+    """
+    Used to change the verbosity of the logging after the initialization.
+    """
+    root_logger = logging.getLogger()
+    if len(root_logger.handlers) == 0:
+        assert 0, "ERROR: Logger not initialized"
+    root_logger.setLevel(verb)
 
 
 # TODO(gp): Remove this.
@@ -333,17 +351,17 @@ def init_logger2(verb=logging.INFO):
 
 def test_logger():
     _log = logging.getLogger(__name__)
-    print(("effective level=", _log.getEffectiveLevel()))
+    print("effective level=", _log.getEffectiveLevel())
     #
-    print(("\nlogging.DEBUG=", logging.DEBUG))
+    print("\nlogging.DEBUG=", logging.DEBUG)
     _log.debug("DEBUG")
     #
-    print(("\nlogging.INFO=", logging.INFO))
+    print("\nlogging.INFO=", logging.INFO)
     _log.info("INFO")
     #
-    print(("\nlogging.WARNING=", logging.WARNING))
+    print("\nlogging.WARNING=", logging.WARNING)
     _log.warning("WARNING")
     #
-    print(("\nlogging.CRITICAL=", logging.CRITICAL))
+    print("\nlogging.CRITICAL=", logging.CRITICAL)
     _log.critical("CRITICAL")
     assert 0

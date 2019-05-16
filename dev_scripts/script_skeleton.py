@@ -16,7 +16,16 @@ _LOG = logging.getLogger(__name__)
 # ##############################################################################
 
 
-def _main():
+def _main(parser):
+    args = parser.parse_args()
+    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    # Insert your code here.
+    # - Use log.info(), log.debug() instead of printing.
+    # - Use dbg.dassert_*() for assertion.
+    # - Use si.system() and si.system_to_string()
+
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -27,13 +36,4 @@ def _main():
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
         help="Set the logging level")
     #
-    args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
-    # Insert your code here.
-    # - Use log.info(), log.debug() instead of printing.
-    # - Use dbg.dassert_*() for assertion.
-    # - Use si.system() and si.system_to_string()
-
-
-if __name__ == '__main__':
-    _main()
+    _main(parser)
