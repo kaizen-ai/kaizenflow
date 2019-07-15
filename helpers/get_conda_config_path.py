@@ -3,6 +3,7 @@
 # Note that this file must run with python2.7 to bootstrap conda.
 
 import os
+import sys
 
 # TODO(gp): Not sure this is a good idea since it might create cyclic dependencies.
 import helpers.dbg as dbg
@@ -16,7 +17,13 @@ import helpers.dbg as dbg
 import subprocess
 
 def _system_to_string(cmd):
-    txt = subprocess.check_output(cmd)
+    py_ver = sys.version_info[0]
+    if py_ver == 2:
+        txt = subprocess.check_output(cmd)
+    elif py_ver == 3:
+        txt = subprocess.getoutput(cmd)
+    else:
+        raise RuntimeError("Invalid py_ver=%s" % py_ver)
     txt = [f for f in txt.split("\n") if f]
     dbg.dassert_eq(len(txt), 1)
     return txt[0]

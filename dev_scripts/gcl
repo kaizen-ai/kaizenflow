@@ -1,0 +1,3 @@
+#!/bin/bash -x
+
+git clean -fd

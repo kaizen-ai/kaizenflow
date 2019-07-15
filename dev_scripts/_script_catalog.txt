@@ -1,30 +1,96 @@
-# TODO(gp): Move to gitconfig?
+# Git
 
-# scripts/gcours
-git checkout --ours $*
-git add $*
+* gcl
+> git clean -fd
+ 
+* gcours
+> git checkout --ours $*
+> git add $*
 
-# scripts/gctheirs
-git checkout --theirs $*
-git add $*
+* gctheirs
+> git checkout --theirs $*
+> git add $*
 
-# scripts/git_files.sh
-  Current git files both modified and cached
+* git_files.sh
+- Current git files both modified and cached
 
-# scripts/git_previous_commit_files.sh
+* git_previous_commit_files.sh
 - Files modified by my previous commit
 
-# scripts/gllmy.sh
-git ll --author gp -15
+* gllmy.sh
+> git ll --author gp -15
 
-# scripts/grc
-git rebase --continue
+* grc
+> git rebase --continue
 
-# scripts/grs
-git rebase --skip
+* grs
+> git rebase --skip
 
-# scripts/gsl
-git stash list
+* gsl
+> git stash list
 
-# scripts/gss
-- Stash
+* gss
+
+* gdc
+
+git_conflict_files.sh
+git_create_patch.sh
+git_diff_notebook.py
+git_files.sh
+git_hash_head.sh
+git_hooks
+git_merge.py
+git_previous_commit_files.sh
+git_revert.sh
+git_root.sh
+git_untracked_files.sh
+git_up.sh
+git_yapf.sh
+github_to_jupyter.py
+
+grsync.old
+grsync.py
+gup
+gup.old
+
+# Misc
+
+ack
+cie
+cmd_done.py
+create_conda.py
+diff_to_vimdiff.py
+ffind.py
+gdmaster.sh
+ghi_review
+ghimy
+install_jupyter_extensions.sh
+ipynb_format.py
+jackipynb
+jacktxt
+jupyter_install_extensions.sh
+jupyter_server.sh
+jupyter_show_extensions.sh
+linter.py
+mkbak
+package_tester.py
+path
+print_packages.py
+process_prof.py
+replace_text.py
+run_jupyter.sh
+script_skeleton.py
+setenv.sh
+skeleton.py
+strip_ipython_magic.py
+strip_ipython_magic.sh
+svn_wrapper_vimdiff.sh
+timestamp
+tmux.sh
+unpack_path.sh
+vic
+vil
+vimgit.sh
+viw
+yapf.config
+yapf.sh

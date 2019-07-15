@@ -111,17 +111,17 @@ def system_to_string(cmd,
     return rc, output
 
 
-@functools.lru_cache
+@functools.lru_cache(maxsize=None)
 def get_user_name():
     return system_to_string("whoami")[1]
 
 
-@functools.lru_cache
+@functools.lru_cache(maxsize=None)
 def get_sever_name():
     return system_to_string("uname -n")[1]
 
 
-@functools.lru_cache
+@functools.lru_cache(maxsize=None)
 def get_os_name():
     return system_to_string("uname -s")[1]
 

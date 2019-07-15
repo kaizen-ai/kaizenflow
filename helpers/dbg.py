@@ -4,11 +4,11 @@ import os
 import pprint
 import sys
 
-try:
-    import pandas as pd
-    _HAS_PANDAS = True
-except ImportError:
-    _HAS_PANDAS = False
+#try:
+#    import pandas as pd
+#    _HAS_PANDAS = True
+#except ImportError:
+#    _HAS_PANDAS = False
 
 _log = logging.getLogger(__name__)
 
@@ -246,20 +246,20 @@ def dassert_dir_exists(dir_name, msg=""):
         dfatal(msg_)
 
 
-# TODO(gp): -> dassert_timestamp
-if _HAS_PANDAS:
-
-    def assert_timestamp(ts, msg=None):
-        """
-        Check that input is a pandas.Timestamp or datetime.datetime and that
-        it is set to 'US/Eastern' timezone.
-        """
-        ts_types = set([pd.Timestamp, datetime.datetime])
-        dassert_type_in(ts, ts_types)
-        if msg is None:
-            msg = 'Timezone must be US/Eastern!'
-        dassert_ne(ts.tzinfo, None, msg)
-        dassert_eq(ts.tzinfo.zone, 'US/Eastern', msg)
+## TODO(gp): -> dassert_timestamp
+#if _HAS_PANDAS:
+#
+#    def assert_timestamp(ts, msg=None):
+#        """
+#        Check that input is a pandas.Timestamp or datetime.datetime and that
+#        it is set to 'US/Eastern' timezone.
+#        """
+#        ts_types = set([pd.Timestamp, datetime.datetime])
+#        dassert_type_in(ts, ts_types)
+#        if msg is None:
+#            msg = 'Timezone must be US/Eastern!'
+#        dassert_ne(ts.tzinfo, None, msg)
+#        dassert_eq(ts.tzinfo.zone, 'US/Eastern', msg)
 
 
 # #############################################################################
