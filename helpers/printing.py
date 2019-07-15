@@ -167,8 +167,7 @@ def format_list(v, sep=" ", max_n=None, tag=None):
 
 
 # TODO(gp): Use format_list().
-# TODO(gp): -> list_to_str
-def print_list(tag, l, sort=False, axis=0, to_string=False):
+def list_to_str(l, tag="", sort=False, axis=0, to_string=False):
     """
     Print list / index horizontally or vertically.
     """
@@ -177,7 +176,7 @@ def print_list(tag, l, sort=False, axis=0, to_string=False):
         if l is None:
             txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
         else:
-            dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
+            #dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
             vals = list(map(str, l))
             if sort:
                 vals = sorted(vals)

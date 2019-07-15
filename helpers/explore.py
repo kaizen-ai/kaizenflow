@@ -43,7 +43,7 @@ def drop_na_rows_columns(df):
     # Report results.
     removed_cols = [x in cols_after for x in set(cols_before).difference(set(cols_after))]
     pct_removed = print_.perc(len(cols_before) - len(cols_after), len(cols_after))
-    print(("removed cols with all nans: %s %s" % (pct_removed, print_.list_to_string(removed_cols))))
+    print(("removed cols with all nans: %s %s" % (pct_removed, print_.list_to_str(removed_cols))))
     #
     # Remove rows with all nans, if any.
     rows_before = df.columns[:]
@@ -109,9 +109,9 @@ def remove_const_columns(df, threshold=1, verb=False):
     if verb:
         print("# Constant cols")
         for c in const_cols:
-            print(("  %s: %s" % (c, print_.list_to_string(list(map(str, df[c].unique()))))))
+            print(("  %s: %s" % (c, print_.list_to_str(list(map(str, df[c].unique()))))))
         print("# Var cols")
-        print((print_.list_to_string(var_cols)))
+        print((print_.list_to_str(var_cols)))
     return df[var_cols]
 
 
@@ -222,7 +222,7 @@ def print_column_variability(df,
     Print statistics about the values in each column of a data frame.
     This is useful to get a sense of which columns are interesting.
     """
-    print(("# df.columns=%s" % print_.list_to_string(df.columns)))
+    print(("# df.columns=%s" % print_.list_to_str(df.columns)))
     res = []
     for c in tqdm(df.columns):
         vals = df[c].unique()
@@ -274,11 +274,11 @@ def find_common_columns(names, dfs):
 def remove_columns(df, cols, verb=False):
     to_remove = set(cols).intersection(set(df.columns))
     if verb:
-        print(("to_remove=%s" % print_.list_to_string(to_remove)))
+        print(("to_remove=%s" % print_.list_to_str(to_remove)))
     df.drop(to_remove, axis=1, inplace=True)
     if verb:
         display(df.head(3))
-        print((print_.list_to_string(df.columns)))
+        print((print_.list_to_str(df.columns)))
     return df
 
 
