@@ -51,6 +51,7 @@ nb_conda
 ## Misc
 ## ############################################################################
 #pymongo
+#quandl
 # Seems to have problems at least when installing on top of an existing env.
 #pymc3
 #pydot

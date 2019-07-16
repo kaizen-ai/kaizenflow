@@ -247,3 +247,22 @@ def dataframe_to_str(df,
             'display.width', display_width):
         res = str(df)
     return res
+
+# #############################################################################
+# Notebook output
+# #############################################################################
+
+def config_notebook():
+    import pandas as pd
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    pd.set_option('display.max_rows', 500)
+    pd.set_option('display.max_columns', 500)
+    pd.set_option('display.width', 1000)
+    # plt.rcParams
+    # print plt.rcParams['figure.figsize']
+    plt.rcParams['figure.figsize'] = (20, 5)
+    plt.rcParams['legend.fontsize'] = 14
+    plt.rcParams['font.size'] = 14
+    # print plt.rcParams['figure.figsize']
