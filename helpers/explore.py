@@ -23,6 +23,20 @@ import helpers.printing as print_
 # look like normal printing for interactive use in a notebook.
 _LOG = logging.getLogger(__name__)
 
+
+# #############################################################################
+# Pandas helpers.
+# #############################################################################
+
+
+def find_duplicates(vals):
+    # Count the occurrences of each element of the seq.
+    v_to_num = [(v, vals.count(v)) for v in set(vals)]
+    # Build list of elems with duplicates.
+    res = [v for v, n in v_to_num if n > 1]
+    return res
+
+
 # #############################################################################
 # Pandas helpers.
 # #############################################################################
@@ -374,6 +388,7 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     :param max_num: max number of columns to plot.
     :return:
     """
+    dbg.dassert_eq(len(find_duplicates(df.columns.tolist())), 0)
     # Note that the plot assumes that the first column is at the bottom of the
     # graph.
     # Assign 1.0 to all the non-nan value.
