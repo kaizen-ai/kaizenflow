@@ -94,7 +94,8 @@ def _main():
         choices="rsync rsync_both_ways diff".split(),
         help="rsync from local to remote")
     parser.add_argument("--force", action="store_true", help="Force the rsync")
-    parser.add_argument("--preview", action="store_true", help="Use --itemize-changes")
+    parser.add_argument(
+        "--preview", action="store_true", help="Use --itemize-changes")
     parser.add_argument("--dry_run", action="store_true")
     parser.add_argument(
         "--remote_ip",
@@ -117,7 +118,8 @@ def _main():
     cmd = 'ssh %s "ls %s"' % (args.remote_ip, args.dst_dir)
     rc = si.system(cmd, abort_on_error=False)
     if rc != 0:
-        msg = "Can't find remote dir '%s' on '%s'" % (args.dst_dir, args.remote_ip)
+        msg = "Can't find remote dir '%s' on '%s'" % (args.dst_dir,
+                                                      args.remote_ip)
         _LOG.warning(msg)
         raise RuntimeError(msg)
     #
@@ -126,8 +128,8 @@ def _main():
         preview = args.preview
         execute = not args.dry_run
         local_to_remote = False
-        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip, preview, force,
-                             execute, local_to_remote)
+        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip, preview,
+                             force, execute, local_to_remote)
         si.system(cmd, suppress_output=False)
     elif args.action == "rsync_both_ways":
         raise RuntimeError("Not implemented yet")
@@ -136,13 +138,13 @@ def _main():
         execute = not args.dry_run
         #
         local_to_remote = False
-        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip,
-                             preview, force, execute, local_to_remote)
+        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip, preview,
+                             force, execute, local_to_remote)
         si.system(cmd, suppress_output=False)
         #
         local_to_remote = True
-        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip,
-                             preview, force, execute, local_to_remote)
+        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip, preview,
+                             force, execute, local_to_remote)
         si.system(cmd, suppress_output=False)
     elif args.action == "diff":
         local_to_remote = False

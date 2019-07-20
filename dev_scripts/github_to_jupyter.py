@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-
 """
 Convert a url / path into different formats: jupyter url, github, git path.
 """
 
 import argparse
 import logging
+
+import requests
 
 import helpers.dbg as dbg
 from helpers.system_interaction import system, system_to_string
@@ -23,7 +24,7 @@ _log = logging.getLogger(__name__)
 # - Git path relative to root
 #   ./ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
 
-import requests
+
 
 def _check_url(ret):
     request = requests.get(ret)
@@ -39,12 +40,15 @@ def _main(args):
     # TODO(gp): Generalize once everyone has an assigned port merging with infra/ssh_config.py.
     jupyter_prefix = None
     if user == "gp":
-        if pwd in ("/data/gp_wd/src/particle1", "/Users/gp/src/git_particleone_teza1"):
+        if pwd in ("/data/gp_wd/src/particle1",
+                   "/Users/gp/src/git_particleone_teza1"):
             jupyter_prefix = "http://localhost:9185/notebooks/"
-        elif pwd in ("/data/gp_wd/src/particle2", "/Users/gp/src/git_particleone_teza2"):
+        elif pwd in ("/data/gp_wd/src/particle2",
+                     "/Users/gp/src/git_particleone_teza2"):
             jupyter_prefix = "http://localhost:9186/notebooks/"
     if jupyter_prefix is None:
-        raise RuntimeError("Can't recognize user='%s' and pwd='%s'" % (user, pwd))
+        raise RuntimeError(
+            "Can't recognize user='%s' and pwd='%s'" % (user, pwd))
     # From.
     url = args.format_from
     if url.startswith(github_prefix):
@@ -72,8 +76,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--from', dest="format_from", required=True, type=str, action='store')
-    parser.add_argument('--to', dest="format_to", required=False, type=str, choices=["github", "jupyter", "git", "path"], action='store')
+    parser.add_argument(
+        '--from', dest="format_from", required=True, type=str, action='store')
+    parser.add_argument(
+        '--to',
+        dest="format_to",
+        required=False,
+        type=str,
+        choices=["github", "jupyter", "git", "path"],
+        action='store')
     parser.add_argument(
         "-v",
         dest="log_level",

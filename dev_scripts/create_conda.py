@@ -76,10 +76,7 @@ def _main():
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--delete_env_if_exists", action="store_true")
     parser.add_argument(
-        "--env_name",
-        help="Environment name",
-        default="develop",
-        type=str)
+        "--env_name", help="Environment name", default="develop", type=str)
     parser.add_argument(
         "--req_file", help="Requirement file", default=None, type=str)
     # Debug options.
@@ -87,7 +84,8 @@ def _main():
         "--test_install",
         help="Just test the install step",
         action="store_true")
-    parser.add_argument("--python_version", default="3.7", type=str, action="store")
+    parser.add_argument(
+        "--python_version", default="3.7", type=str, action="store")
     parser.add_argument("--skip_delete_env", action="store_true")
     parser.add_argument("--skip_install_env", action="store_true")
     #
@@ -140,8 +138,8 @@ def _main():
         conda_env_root = hco.get_conda_envs_dirs()[0]
         conda_env_path = os.path.join(conda_env_root, conda_env_name)
         if (conda_env_name in conda_env_dict or
-            # Sometimes conda is flaky and says that there is no env, even if the dir exists.
-            os.path.exists(conda_env_path)):
+                # Sometimes conda is flaky and says that there is no env, even if the dir exists.
+                os.path.exists(conda_env_path)):
             _LOG.warning("Conda env '%s' exists", conda_env_path)
             if delete_old_conda_if_exists:
                 #

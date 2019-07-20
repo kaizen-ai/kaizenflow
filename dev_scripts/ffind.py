@@ -11,6 +11,7 @@ import helpers.dbg as dbg
 
 _log = logging.getLogger(__name__)
 
+
 def _print_help(parser):
     print(parser.format_help())
     sys.exit(-1)

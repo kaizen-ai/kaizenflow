@@ -14,7 +14,6 @@ import helpers.system_interaction as hsi
 _LOG = logging.getLogger(__name__)
 
 
-
 def get_system_info(add_frame):
     msg = ""
     if add_frame:
@@ -77,10 +76,7 @@ def _main():
         default="INFO",
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
         help="Set the logging level")
-    parser.add_argument(
-        "--conda_env_name",
-        help="Environment name",
-        type=str)
+    parser.add_argument("--conda_env_name", help="Environment name", type=str)
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     msg = save_env_file(args.conda_env_name, dir_name=None)

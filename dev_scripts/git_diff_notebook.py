@@ -182,7 +182,8 @@ def _main(args):
     notebooks_equal = []
     # Diff the files.
     for abs_file_name, cwd_file_name in file_names:
-        print(("\n" + printing.frame("file_name=%s" % cwd_file_name).rstrip("\n")))
+        print((
+            "\n" + printing.frame("file_name=%s" % cwd_file_name).rstrip("\n")))
         is_ipynb_diff = _diff_notebook(dir_name, abs_file_name, git_client_root,
                                        args.brief)
         if args.brief:
@@ -192,10 +193,10 @@ def _main(args):
                 notebooks_equal.append(cwd_file_name)
     #
     if args.brief:
-        print(("\nDifferent notebooks are: (%s) %s" % (len(notebooks_diff),
-                                                      " ".join(notebooks_diff))))
+        print(("\nDifferent notebooks are: (%s) %s" %
+               (len(notebooks_diff), " ".join(notebooks_diff))))
         print(("\nEqual notebooks are: (%s) %s" % (len(notebooks_equal),
-                                                  " ".join(notebooks_equal))))
+                                                   " ".join(notebooks_equal))))
 
 
 def _parse():

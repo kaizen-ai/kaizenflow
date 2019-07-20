@@ -38,8 +38,10 @@ def _main(args):
         # Show who calls <funcs>.
         show_callers = True
         # Functions to analyze.
-        funcs = ['getmodule', 'findsource', 'getframeinfo', 'getouterframes',
-                 'stack', 'GetFunctionName', 'feature_computer.py:163']
+        funcs = [
+            'getmodule', 'findsource', 'getframeinfo', 'getouterframes',
+            'stack', 'GetFunctionName', 'feature_computer.py:163'
+        ]
         funcs = ["frame.py:1913"]
         if showRank:
             # From http://docs.python.org/2/library/profile.html
@@ -100,4 +102,3 @@ if __name__ == "__main__":
         action="store_true",
         help="Skip the graph and run the custom code")
     utils.main.main(_main, arg_parser)
-
