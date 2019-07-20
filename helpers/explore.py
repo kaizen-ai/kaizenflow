@@ -23,7 +23,6 @@ import helpers.printing as print_
 # look like normal printing for interactive use in a notebook.
 _LOG = logging.getLogger(__name__)
 
-
 # #############################################################################
 # Pandas helpers.
 # #############################################################################
@@ -55,16 +54,22 @@ def drop_na_rows_columns(df):
     df = df.dropna(axis=1, how="all")
     cols_after = df.columns[:]
     # Report results.
-    removed_cols = [x in cols_after for x in set(cols_before).difference(set(cols_after))]
-    pct_removed = print_.perc(len(cols_before) - len(cols_after), len(cols_after))
-    print(("removed cols with all nans: %s %s" % (pct_removed, print_.list_to_str(removed_cols))))
+    removed_cols = [
+        x in cols_after for x in set(cols_before).difference(set(cols_after))
+    ]
+    pct_removed = print_.perc(
+        len(cols_before) - len(cols_after), len(cols_after))
+    print(("removed cols with all nans: %s %s" %
+           (pct_removed, print_.list_to_str(removed_cols))))
     #
     # Remove rows with all nans, if any.
     rows_before = df.columns[:]
     df = df.dropna(axis=0, how="all")
     rows_after = df.columns[:]
     # Report results.
-    removed_rows = [x in rows_after for x in set(rows_before).difference(set(rows_after))]
+    removed_rows = [
+        x in rows_after for x in set(rows_before).difference(set(rows_after))
+    ]
     if len(rows_before) == len(rows_after):
         # Nothing was removed.
         min_ts = max_ts = None
@@ -72,8 +77,10 @@ def drop_na_rows_columns(df):
         # TODO(gp): Report as intervals of dates.
         min_ts = min(removed_rows)
         max_ts = max(removed_rows)
-    pct_removed = print_.perc(len(rows_before) - len(rows_after), len(rows_after))
-    print(("removed rows with all nans: %s [%s, %s]" % (pct_removed, min_ts, max_ts)))
+    pct_removed = print_.perc(
+        len(rows_before) - len(rows_after), len(rows_after))
+    print(("removed rows with all nans: %s [%s, %s]" % (pct_removed, min_ts,
+                                                        max_ts)))
     return df
 
 
@@ -94,7 +101,9 @@ def drop_na(df, *args, **kwargs):
     print(("removed rows with nans: %s" % pct_removed))
     return df
 
+
 # //////////////////////////////////////////////////////////////////////////////
+
 
 def _get_variable_cols(df, threshold=1):
     """
@@ -123,7 +132,8 @@ def remove_const_columns(df, threshold=1, verb=False):
     if verb:
         print("# Constant cols")
         for c in const_cols:
-            print(("  %s: %s" % (c, print_.list_to_str(list(map(str, df[c].unique()))))))
+            print(("  %s: %s" %
+                   (c, print_.list_to_str(list(map(str, df[c].unique()))))))
         print("# Var cols")
         print((print_.list_to_str(var_cols)))
     return df[var_cols]
@@ -155,7 +165,8 @@ def add_pct(res,
         for v in res[col_name]
     ]
     res[dst_col_name] = [
-        print_.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
+        print_.round_digits(
+            v, num_digits=num_digits, use_thousands_separator=False)
         for v in res[dst_col_name]
     ]
     return res
@@ -182,7 +193,10 @@ def describe_nan_stats(df):
     pct_idx = count_idx / df.shape[0]
     pct_idx.name = "pct_non_nans"
     # Package result into a df with a row for each statistic.
-    ret_df = pd.concat([pd.DataFrame(df_tmp).T for df_tmp in [min_idx, max_idx, count_idx, pct_idx]])
+    ret_df = pd.concat([
+        pd.DataFrame(df_tmp).T
+        for df_tmp in [min_idx, max_idx, count_idx, pct_idx]
+    ])
     return ret_df
 
 
@@ -215,7 +229,8 @@ def breakdown_table(df,
         for v in res["count"]
     ]
     res["pct"] = [
-        print_.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
+        print_.round_digits(
+            v, num_digits=num_digits, use_thousands_separator=False)
         for v in res["pct"]
     ]
     if verb:
@@ -331,8 +346,8 @@ def filter_around_time(df,
     mask = (df[col_name] >= lower_bound) & (df[col_name] <= upper_bound)
     #
     if verb:
-        print(("Filtering in [%s, %s] selected rows=%s" % (
-            lower_bound, upper_bound, perc(mask.sum(), df.shape[0]))))
+        print(("Filtering in [%s, %s] selected rows=%s" %
+               (lower_bound, upper_bound, perc(mask.sum(), df.shape[0]))))
     return df[mask]
 
 
@@ -362,16 +377,17 @@ def filter_by_val(df,
     res = df[mask]
     dbg.dassert_lt(0, res.shape[0])
     if verb:
-        print(("Rows kept %s, removed %s rows" % (
-            perc(
-                res.shape[0],
-                num_rows,
-                use_thousands_separator=use_thousands_separator),
-            perc(
-                num_rows - res.shape[0],
-                num_rows,
-                use_thousands_separator=use_thousands_separator))))
+        print(("Rows kept %s, removed %s rows" %
+               (perc(
+                   res.shape[0],
+                   num_rows,
+                   use_thousands_separator=use_thousands_separator),
+                perc(
+                    num_rows - res.shape[0],
+                    num_rows,
+                    use_thousands_separator=use_thousands_separator))))
     return res
+
 
 # #############################################################################
 # Plotting
@@ -400,10 +416,12 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     _LOG.debug("Columns=%d %s", len(df.columns), ", ".join(df.columns))
     # Limit the number of elements.
     if max_num is not None:
-        _LOG.warning("Plotting only %d columns instead of all %d columns", max_num, df.shape[1])
+        _LOG.warning("Plotting only %d columns instead of all %d columns",
+                     max_num, df.shape[1])
         dbg.dassert_lte(1, max_num)
         if max_num > df.shape[1]:
-            _LOG.warning("Too many columns requested: %d > %d", max_num, df.shape[1])
+            _LOG.warning("Too many columns requested: %d > %d", max_num,
+                         df.shape[1])
         df = df.iloc[:, :max_num]
     _LOG.debug("Columns=%d %s", len(df.columns), ", ".join(df.columns))
     _LOG.debug("To plot=\n%s", df.head())
@@ -422,6 +440,7 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     ax.set_yticklabels(reversed(df.columns.tolist()))
     return ax
 
+
 # #############################################################################
 # Printing
 # #############################################################################
@@ -429,12 +448,12 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
 
 # TODO(gp): This should go in print_?
 def display(df,
-               threshold=0,
-               remove_index=False,
-               head=None,
-               max_colwidth=100,
-               as_txt=False,
-               return_df=False):
+            threshold=0,
+            remove_index=False,
+            head=None,
+            max_colwidth=100,
+            as_txt=False,
+            return_df=False):
     df_tmp = df
     if threshold == 0:
         df_tmp = remove_const_columns(df_tmp, threshold=threshold)

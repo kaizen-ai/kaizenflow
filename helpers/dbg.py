@@ -261,7 +261,6 @@ def dassert_dir_exists(dir_name, msg=""):
 #        dassert_ne(ts.tzinfo, None, msg)
 #        dassert_eq(ts.tzinfo.zone, 'US/Eastern', msg)
 
-
 # #############################################################################
 # Logger.
 # #############################################################################

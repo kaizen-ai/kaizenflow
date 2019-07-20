@@ -6,13 +6,14 @@ EMAIL_ADDRESS = ''
 EMAIL_PASSWORD = ''
 
 
-def send_email(subject,
-               message,
-               to_adr,
-               email_address=EMAIL_ADDRESS,
-               email_pass=EMAIL_PASSWORD,
-               html=False,
-               ):
+def send_email(
+        subject,
+        message,
+        to_adr,
+        email_address=EMAIL_ADDRESS,
+        email_pass=EMAIL_PASSWORD,
+        html=False,
+):
     """
     Send mail to specified e - mail addresses
     :param message: Message to be sent

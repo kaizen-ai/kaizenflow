@@ -8,10 +8,10 @@ import socket
 import sys
 
 import pandas as pd
-import psycopg2 as pg
 
 import helpers.dbg as dbg
 import helpers.timer as timer
+import psycopg2 as pg
 
 _log = logging.getLogger(__name__)
 
@@ -201,7 +201,8 @@ def find_common_columns(conn_string, tables, as_df=False):
                            " ".join(common_cols)))
             else:
                 print(("'%s' vs '%s'" % (tables[i], tables[j])))
-                print(("    (%s): %s" % (len(common_cols), " ".join(common_cols))))
+                print((
+                    "    (%s): %s" % (len(common_cols), " ".join(common_cols))))
     if as_df:
         df = pd.DataFrame(
             df, columns=["table1", "table2", "num_comm_cols", "common_cols"])

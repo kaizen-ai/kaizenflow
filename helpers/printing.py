@@ -90,9 +90,11 @@ def prepend(str_, prefix):
     lines = [prefix + line for line in str_.split("\n")]
     return "\n".join(lines)
 
+
 # #############################################################################
 # Pretty print data structures.
 # #############################################################################
+
 
 # TODO(gp): Not sure it's worth it.
 def thousand_separator(v):
@@ -221,14 +223,14 @@ def print_set_diff(obj1,
         print()
     #
     diff = obj1 - obj2
-    print("* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff),
-                               _to_string(diff)))
+    print(
+        "* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff), _to_string(diff)))
     if add_space:
         print()
     #
     diff = obj2 - obj1
-    print("* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff),
-                               _to_string(diff)))
+    print(
+        "* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff), _to_string(diff)))
     if add_space:
         print()
 
@@ -240,17 +242,23 @@ def dataframe_to_str(df,
                      display_width=10000):
     import pandas as pd
     with pd.option_context(
-            "display.max_colwidth", max_colwidth,
+            "display.max_colwidth",
+            max_colwidth,
             #'display.height', 1000,
-            'display.max_rows', max_rows,
-            'display.max_columns', max_columns,
-            'display.width', display_width):
+            'display.max_rows',
+            max_rows,
+            'display.max_columns',
+            max_columns,
+            'display.width',
+            display_width):
         res = str(df)
     return res
+
 
 # #############################################################################
 # Notebook output
 # #############################################################################
+
 
 def config_notebook():
     import pandas as pd

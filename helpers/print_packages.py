@@ -14,7 +14,6 @@ import helpers.system_interaction as hsi
 _LOG = logging.getLogger(__name__)
 
 
-
 def get_system_info(add_frame):
     msg = ""
     if add_frame:

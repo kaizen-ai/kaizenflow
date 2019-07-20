@@ -3,6 +3,7 @@
 # Note that this file must run with python2.7 to bootstrap conda.
 
 import os
+import subprocess
 import sys
 
 # TODO(gp): Not sure this is a good idea since it might create cyclic dependencies.
@@ -14,7 +15,6 @@ import helpers.dbg as dbg
 #import helpers.system_interaction as hsi
 
 
-import subprocess
 
 def _system_to_string(cmd):
     py_ver = sys.version_info[0]
@@ -31,6 +31,7 @@ def _system_to_string(cmd):
 
 _User_name = None
 
+
 def _get_user_name():
     global _User_name
     if _User_name is None:
@@ -39,6 +40,7 @@ def _get_user_name():
 
 
 _Server_name = None
+
 
 def _get_server_name():
     global _Server_name

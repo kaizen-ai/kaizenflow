@@ -68,8 +68,9 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
     actual = _to_string(actual)
     expected = _to_string(expected)
     if expected != actual:
-        _LOG.info("%s", "\n" +
-                  print_.frame("Test %s failed" % full_test_name, "=", 80))
+        _LOG.info(
+            "%s",
+            "\n" + print_.frame("Test %s failed" % full_test_name, "=", 80))
         # Dump the expected and actual strings to files.
         _LOG.debug("Expected:\n%s", expected)
         exp_file_name = "%s/tmp.expected.txt" % test_dir
