@@ -26,7 +26,7 @@ _log = logging.getLogger(__name__)
 def get_server_name():
     cmd = "uname -n"
     txt = os.popen(cmd).read().rstrip("\n")
-    if txt == "test"L
+    if txt == "test":
         res = "test"
     else:
         raise ValueError("Invalid name='%s'" % txt)
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     src_file_name = get_path(args.file)
     # Export to html, add timestamp, archive html.
     if args.action == "open":
-        export_html(src_file_name, "./")
+        export_html(src_file_name)
         # TODO(gp): Open with Chrome.
         sys.exit(0)
     elif args.action == "publish":
@@ -231,9 +231,9 @@ if __name__ == "__main__":
         _log.info("HTML file path is: %s", html_file_name)
         dbg.dassert_exists(html_file_name)
         #
-        print "To visualize on Mac run:"
+        print("To visualize on Mac run:")
         cmd = (
             "dev_scripts/open_remote_html_mac.sh %s\n" % html_file_name +
             "FILE='%s'; scp 54.172.40.4:$FILE /tmp; open /tmp/$(basename $FILE)"
             % html_file_name)
-        print cmd
+        print(cmd)
