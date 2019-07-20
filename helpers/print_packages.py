@@ -19,9 +19,9 @@ def get_system_info(add_frame):
     msg = ""
     if add_frame:
         msg += print_.frame("System info") + "\n"
-    msg += "user name=%s\n" % hsi.USER_NAME
-    msg += "server name=%s\n" % hsi.SERVER_NAME
-    msg += "os name=%s\n" % hsi.OS_NAME
+    msg += "user name=%s\n" % hsi.get_user_name()
+    msg += "server name=%s\n" % hsi.get_server_name()
+    msg += "os name=%s\n" % hsi.get_os_name()
     msg += "conda path=%s\n" % hco.get_conda_path()
     msg += "conda env root=%s\n" % str(hco.get_conda_envs_dirs())
     return msg

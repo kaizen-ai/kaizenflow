@@ -117,7 +117,7 @@ def get_user_name():
 
 
 @functools.lru_cache(maxsize=None)
-def get_sever_name():
+def get_server_name():
     return system_to_string("uname -n")[1]
 
 
