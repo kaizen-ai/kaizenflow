@@ -4,7 +4,7 @@
 - This flow is designed to make our projects portable across
     - platforms (e.g., macOS, Linux)
     - different installation of OSes (e.g., GP's laptop vs Paul's laptop) with
-      all the peculiar way we install and manage servers and laptops
+      all the peculiar ways we install and manage servers and laptops
     - different versions of conda
     - different versions of python 3.x
     - different versions of python packages
@@ -65,8 +65,10 @@ Python 3.7.1
 
 * Install `develop` package
 - `develop` is the official package needed to run lemonade
+- Run this from `$SRC_DIR/utilities`
+- NOTE: this directory needs to be in your PYTHONPATH (or else the imports will fail).
 ```
-> install/create_conda.py --req_file dev_scripts/requirements/requirements_develop.txt --env_name develop_test --delete_env_if_exists >2&1 | tee create_conda.log
+> install/create_conda.py --req_file install/requirements/requirements_develop.txt --env_name develop_test --delete_env_if_exists 2>&1 | tee create_conda.log
 ```
 - Note that `create_conda.py` has lots of options, including creating a new test
   environment

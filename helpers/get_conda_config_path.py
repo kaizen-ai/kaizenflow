@@ -56,6 +56,9 @@ def _get_conda_config():
     if _get_user_name() == "saggese":
         path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
         conda_env_path = "/Users/saggese/.conda/envs"
+    elif _get_user_name() == "paul":
+        path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
+        conda_env_path = "/Users/paul/.conda/envs"
     elif _get_user_name() == "jenkins":
         path = "/data/shared/anaconda2/etc/profile.d/conda.sh"
         conda_env_path = "/data/jenkins/.conda/envs"

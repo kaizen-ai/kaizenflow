@@ -47,6 +47,9 @@ echo "user_name='$user_name'"
 if [[ $user_name == "saggese" ]]; then
   git config --local user.email "saggese@gmail.com"
   git config --global user.name "saggese"
+elif [[ $user_name == "paul" ]]; then
+  git config --local user.email "smith.paul.anthony@gmail.com"
+  git config --global user.name "paul"
 elif [[ $user_name == "jenkins" ]]; then
   echo "There is no need to setup git for user '$user_name'."
 else

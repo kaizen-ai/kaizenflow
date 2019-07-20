@@ -41,7 +41,7 @@ def _get_requirements_file():
     if os.path.exists(file_name):
         res = file_name
     if res is None:
-        raise RuntimeError("Can't find the requirement file")
+        raise RuntimeError("Can't find the requirements file")
     return res
 
 
