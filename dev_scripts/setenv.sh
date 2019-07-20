@@ -118,4 +118,4 @@ fi;
 echo "#############################################################################"
 echo "# Testing packages"
 echo "#############################################################################"
-$UTILITIES_DIR/dev_scripts/package_tester.py
+$UTILITIES_DIR/install/package_tester.py
