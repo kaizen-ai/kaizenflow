@@ -1,6 +1,4 @@
-# #############################################################################
 # Workflow
-# #############################################################################
 
 * Be patient
 - This flow is designed to make our projects portable across
@@ -95,11 +93,15 @@ develop               *  /Users/saggese/.conda/envs/develop
 
 * Configure a shell for `lemonade`
 - `lemonade` depends on `utilities`
+```
 > cd $SRC_DIR/lemonade && source $SRC_DIR/utilities/dev_scripts/setenv.sh && export PYTHONPATH=$SRC_DIR/lemonade:$SRC_DIR/utilities:$PYTHONPATH
+```
 
 * Start jupyter
+```
 > jupyter notebook --ip=* --browser="chrome" . --port 9999
 > run_jupyter.sh
+```
 
 * Other interesting packages
 ```
