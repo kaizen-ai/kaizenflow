@@ -31,7 +31,9 @@ def get_server_name():
     if txt == "gpmac.local":
         res = txt
     else:
-        raise ValueError("Invalid name='%s'" % txt)
+        raise ValueError(
+                "Invalid server name='%s'. " % txt +
+                "Probably you need to customize the script")
     return res
 
 
