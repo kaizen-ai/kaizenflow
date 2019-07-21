@@ -79,7 +79,7 @@ echo "##########################################################################
 echo "# Config conda"
 echo "#############################################################################"
 UTILITIES_DIR=$SRC_DIR/utilities
-export PATH=$UTILITIES_DIR/dev_scripts:$PATH
+export PATH=$UTILITIES_DIR/dev_scripts:$UTILITIES_DIR/ipynb_scripts:$UTILITIES_DIR/install:$PATH
 export PYTHONPATH=$PYTHONPATH:$UTILITIES_DIR
 CONDA_SCRIPT_NAME="$UTILITIES_DIR/helpers/get_conda_config_path.py"
 if [[ ! -e $CONDA_SCRIPT_NAME ]]; then
