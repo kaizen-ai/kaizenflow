@@ -68,6 +68,7 @@ echo "# Config python"
 echo "#############################################################################"
 # Disable python code caching.
 export PYTHONDONTWRITEBYTECODE=x
+
 # Python packages.
 export PYTHONPATH=""
 export PYTHONPATH=$PYTHONPATH:$(pwd)
@@ -81,6 +82,7 @@ echo "##########################################################################
 UTILITIES_DIR=$SRC_DIR/utilities
 export PATH=$UTILITIES_DIR/dev_scripts:$UTILITIES_DIR/ipynb_scripts:$UTILITIES_DIR/install:$PATH
 export PYTHONPATH=$PYTHONPATH:$UTILITIES_DIR
+
 CONDA_SCRIPT_NAME="$UTILITIES_DIR/helpers/get_conda_config_path.py"
 if [[ ! -e $CONDA_SCRIPT_NAME ]]; then
   echo "Can't find file $CONDA_SCRIPT_NAME"
@@ -105,6 +107,7 @@ if [[ 0 == 1 ]]; then
   #export PYTHONPATH=$PYTHONPATH:$CONDA_LIBS/lib/python2.7/site-packages/backports
 fi;
 
+# Remove redundant paths.
 PATH="$(echo $PATH| perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
 echo "PATH=$PATH"
 

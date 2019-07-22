@@ -51,11 +51,25 @@ def _get_server_name():
 
 def _get_conda_config():
     # TODO(*): Add your user and machine here.
+    #
+    # - For path
+    # > which conda
+    # /data/root/anaconda3/bin/conda
+    # > find /data/root/anaconda3 -name "conda.sh"
+    #
+    # - For conda_env_path
+    # > conda info
+    # ...
+    #        envs directories : /data/saggese/.conda/envs
     path = None
     conda_env_path = None
     if _get_user_name() == "saggese":
-        path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
-        conda_env_path = "/Users/saggese/.conda/envs"
+        if _get_server_name() == "gpmac.local":
+            path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
+            conda_env_path = "/Users/saggese/.conda/envs"
+        elif _get_server_name() == "ip-172-31-24-5":
+            path = "/data/root/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/data/saggese/.conda/envs"
     elif _get_user_name() == "paul":
         path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/Users/paul/.conda/envs"
@@ -77,6 +91,7 @@ def _get_conda_config():
                                                     _get_server_name()))
     conda_env_path = os.path.abspath(conda_env_path)
     # Not necessarily the conda_env_path exists.
+    dbg.dassert_exists(os.path.dirname(conda_env_path))
     return path, conda_env_path
 
 
