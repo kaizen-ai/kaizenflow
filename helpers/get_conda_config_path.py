@@ -14,8 +14,6 @@ import helpers.dbg as dbg
 # the functions.
 #import helpers.system_interaction as hsi
 
-
-
 def _system_to_string(cmd):
     py_ver = sys.version_info[0]
     if py_ver == 2:
@@ -35,7 +33,10 @@ _User_name = None
 def _get_user_name():
     global _User_name
     if _User_name is None:
-        _User_name = _system_to_string("whoami")
+        import getpass
+        _User_name = getpass.getuser()
+        # This seems to be flakey on some systems.
+        #_User_name = _system_to_string("whoami")
     return _User_name
 
 
@@ -45,7 +46,10 @@ _Server_name = None
 def _get_server_name():
     global _Server_name
     if _Server_name is None:
-        _Server_name = _system_to_string("uname -n")
+        import socket
+        _Server_name = socket.gethostname()
+        # This seems to be flakey on some systems.
+        #_Server_name = _system_to_string("uname -n")
     return _Server_name
 
 

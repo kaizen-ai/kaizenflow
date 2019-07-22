@@ -1,39 +1,50 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
-#DIR_NAME="/Users/gp/src/git_projects/time_series_analysis"
-if [[ $(uname -n) == "gpmac.lan" ]]; then
-  # My laptop.
-  DIR_NAME="/Users/saggese/src/git_gp1"
+SERVER_NAME=$(uname -n)
+echo "SERVER_NAME=$SERVER_NAME"
+
+if [[ $SERVER_NAME == "gpmac.local" ]]; then
+  DIR_NAME1="/Users/saggese/src/utilities"
+  DIR_NAME2="/Users/saggese/src/lemonade"
   SETENV="./dev_scripts/setenv.sh"
 else
-  DIR_NAME="/Users/gp/src/git_gp1"
-  SETENV="./dev_scripts/setenv2.sh"
+  echo "Invalid server"
+  exit -1
 fi;
 
-TMUX_NAME="git_gp1"
+TMUX_NAME="dev"
 
-CMD="source ${SETENV} && clear"
-
-# For debug to see what's happening.
-#CMD="source ${SETENV}"
+# No clear since we want to see issues.
+#CMD="source ${SETENV} && reset && clear"
+CMD="source ${SETENV}"
 
 ##
-tmux new-session -d -s $TMUX_NAME -n "SRC1"
-
+tmux new-session -d -s $TMUX_NAME -n "util"
 # The first one window seems a problem.
-tmux new-window -t $TMUX_NAME -n " "
-tmux send-keys -t $TMUX_NAME "white; cd ${DIR_NAME} && $CMD" C-m C-m
+tmux send-keys -t $TMUX_NAME "white; cd ${DIR_NAME1} && $CMD" C-m C-m
+
 #
 tmux new-window -t $TMUX_NAME -n " "
-tmux send-keys -t $TMUX_NAME "green; cd ${DIR_NAME} && $CMD" C-m C-m
+tmux send-keys -t $TMUX_NAME "green; cd ${DIR_NAME1} && $CMD" C-m C-m
 #
 tmux new-window -t $TMUX_NAME -n " "
-tmux send-keys -t $TMUX_NAME "yellow; cd ${DIR_NAME} && $CMD" C-m C-m
+tmux send-keys -t $TMUX_NAME "yellow; cd ${DIR_NAME1} && $CMD" C-m C-m
+#
+tmux new-window -t $TMUX_NAME -n " "
+tmux send-keys -t $TMUX_NAME "yellow; cd ${DIR_NAME1} && $CMD" C-m C-m
 
 
-tmux new-window -t $TMUX_NAME -n "latex"
-tmux send-keys -t $TMUX_NAME "green; cd ${DIR_NAME} && $CMD && cd memory_builder" C-m C-m
+tmux new-window -t $TMUX_NAME -n "lemon"
+tmux send-keys -t $TMUX_NAME "white; cd ${DIR_NAME2} && $CMD" C-m C-m
 #
+tmux new-window -t $TMUX_NAME -n " "
+tmux send-keys -t $TMUX_NAME "green; cd ${DIR_NAME2} && $CMD" C-m C-m
+#
+tmux new-window -t $TMUX_NAME -n " "
+tmux send-keys -t $TMUX_NAME "yellow; cd ${DIR_NAME2} && $CMD" C-m C-m
+#
+tmux new-window -t $TMUX_NAME -n "jupy"
+tmux send-keys -t $TMUX_NAME "yellow; cd ${DIR_NAME2} && $CMD" C-m C-m
 
 tmux select-window -t $TMUX_NAME:0
 tmux -2 attach-session -t $TMUX_NAME
