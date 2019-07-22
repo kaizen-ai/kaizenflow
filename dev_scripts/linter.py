@@ -736,7 +736,8 @@ def _main(args):
             _LOG.info("\n%s", print_.frame(file_name, char1="/"))
         for action in actions:
             if not progress_bar:
-                _LOG.info("\n%s", print_.frame(action, char1="-"))
+                _LOG.debug("\n%s", print_.frame(action, char1="-"))
+                print("## " + action)
             if args.debug:
                 dst_file_name = file_name + "." + action
                 cmd = "cp -a %s %s" % (file_name, dst_file_name)

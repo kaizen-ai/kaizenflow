@@ -1,16 +1,18 @@
 #!/usr/bin/env python
-"""
-Given a notebook specified as
-    - a ipynb file, e.g.,
-        data/web_path_two/Minute_distribution_20180802_182656.ipynb
-    - a jupyter url, e.g.,
-        https://github.com/...ipynb
-    - or a github url
 
-- backup a notebook and publish notebook on shared space;
-    > publish_notebook.py --file Task11_Simple_model_for_1min_futures_data.ipynb --action publish
-- open a notebook in Chrome
-    > publish_notebook.py --file Task11_Simple_model_for_1min_futures_data.ipynb --action open
+"""
+Given a notebook specified as:
+- a ipynb file, e.g.,
+    data/web_path_two/Minute_distribution_20180802_182656.ipynb
+- a jupyter url, e.g.,
+    https://github.com/...ipynb
+- a github url
+
+- Backup a notebook and publish notebook on shared space;
+> publish_notebook.py --file Task11_Simple_model_for_1min_futures_data.ipynb --action publish
+
+- Open a notebook in Chrome
+> publish_notebook.py --file Task11_Simple_model_for_1min_futures_data.ipynb --action open
 """
 
 import argparse
@@ -70,7 +72,7 @@ def export_html(path_to_notebook):
     cmd = ("jupyter nbconvert {path_to_file} --to html"
            " --output {dst_path}".format(
                path_to_file=path_to_notebook, dst_path=dst_path))
-    si.system(cmd, log_level=_LOG.getEffectiveLevel())
+    si.system(cmd)
     _LOG.debug("Export {file_name} to html".format(file_name=file_name_html))
     return dst_path
 
@@ -90,7 +92,7 @@ def copy_to_folder(path_to_notebook, dst_dir):
         os.makedirs(dst_dir)
     # File copying.
     cmd = 'cp {src} {dst}'.format(src=path_to_notebook, dst=dst_f_name)
-    si.system(cmd, log_level=_LOG.getEffectiveLevel())
+    si.system(cmd)
     _LOG.debug("Copy '{nootebook}' to '{dst_dir}'".format(
         nootebook=os.path.basename(path_to_notebook), dst_dir=dst_dir))
 
@@ -114,7 +116,7 @@ def export_to_webpath(path_to_notebook, dst_dir):
     _LOG.debug("Export '{html_dst}' to '{dst_dir}'".format(
         html_dst=html_src_path, dst_dir=html_dst_path))
     cmd = 'mv {src} {dst}'.format(src=html_src_path, dst=html_dst_path)
-    si.system(cmd, log_level=_LOG.getEffectiveLevel())
+    si.system(cmd)
     return html_dst_path
 
 
@@ -205,6 +207,8 @@ if __name__ == "__main__":
     # Export to html, add timestamp, archive html.
     if args.action == "open":
         html_path = export_html(src_file_name)
+        # Open with browser locally.
+        # TODO(gp): Check of Mac.
         cmd = "open %s" % html_path
         si.system(cmd)
         sys.exit(0)
@@ -228,15 +232,15 @@ if __name__ == "__main__":
         _LOG.info("backup path=%s", backup_path)
         _LOG.info("share_path=%s", share_path)
         #
-        _LOG.info("# Backing up ipynb")
+        _LOG.debug("# Backing up ipynb")
         copy_to_folder(src_file_name, backup_path)
         #
-        _LOG.info("# Publishing html")
+        _LOG.debug("# Publishing html")
         html_file_name = export_to_webpath(src_file_name, share_path)
-        _LOG.info("HTML file path is: %s", html_file_name)
+        print("HTML file path is: %s" % html_file_name)
         dbg.dassert_exists(html_file_name)
         #
-        print("To visualize on Mac run:")
+        print("\nTo visualize on Mac run:")
         cmd = (
             "dev_scripts/open_remote_html_mac.sh %s\n" % html_file_name +
             "FILE='%s'; scp 54.172.40.4:$FILE /tmp; open /tmp/$(basename $FILE)"
