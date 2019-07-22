@@ -1,6 +1,6 @@
 # Workflow
 
-* Be patient
+## Be patient
 - This flow is designed to make our projects portable across
     - platforms (e.g., macOS, Linux)
     - different installation of OSes (e.g., GP's laptop vs Paul's laptop) with
@@ -16,7 +16,7 @@
     - If you hit a problem, be patient, ping GP, and we will extend the script to
       handle the quirks of your set-up
 
-* Clone the packages
+## Clone the packages
 - The code is organized in two repos:
     - `utilities`: contains everything that is project agnostic (e.g., utilities,
       frameworks, ...)
@@ -28,7 +28,7 @@
 > git clone git@github.com:gpsaggese/lemonade.git 
 ```
 
-* Assumptions
+## Assumptions
 1) All the repos are cloned in the same dir like:
 ```
 > ls -1
@@ -62,20 +62,23 @@ Python 3.7.1
 - Probably one can also install python3 in the root environment, or upgrade
   python to 3 system wide
 
+## Create `develop` conda environment
+- `develop` is the official package needed to run `utilities` and `lemonade`
+    - In general we prefer to use a single conda environment, unless it's not
+      possible at all (e.g., using packages like Sage that don't support
+      python3)
 
-* Install `develop` package
-- `develop` is the official package needed to run lemonade
 - Run this from `$SRC_DIR/utilities`
 - NOTE: this directory needs to be in your PYTHONPATH (or else the imports will fail).
 ```
-> install/create_conda.py --req_file install/requirements/requirements_develop.txt --env_name develop_test --delete_env_if_exists 2>&1 | tee create_conda.log
+> install/create_conda.py --req_file install/requirements/requirements_develop.txt --env_name develop --delete_env_if_exists 2>&1 | tee create_conda.log
 ```
 - Note that `create_conda.py` has lots of options, including creating a new test
   environment
 
-* Configure a shell for `utilities`
+## Configure a shell for `utilities`
 ```
-> cd $SRC_DIR/utilities && source $SRC_DIR/utilities/dev_scripts/setenv.sh && export PYTHONPATH=$SRC_DIR/utilities:$PYTHONPATH
+> cd $SRC_DIR/utilities && source dev_scripts/setenv.sh
 ...
 # Testing packages
 3.7.1 | packaged by conda-forge | (default, Feb 25 2019, 21:02:05)
@@ -93,20 +96,22 @@ develop               *  /Users/saggese/.conda/envs/develop
 ...
 ```
 
-* Configure a shell for `lemonade`
+## Configure a shell for `lemonade`
 - `lemonade` depends on `utilities`
 ```
-> cd $SRC_DIR/lemonade && source $SRC_DIR/utilities/dev_scripts/setenv.sh && export PYTHONPATH=$SRC_DIR/lemonade:$SRC_DIR/utilities:$PYTHONPATH
+> cd $SRC_DIR/lemonade && source dev_scripts/setenv.sh
 ```
 
-* Start jupyter
+## Start jupyter
 ```
 > jupyter notebook --ip=* --browser="chrome" . --port 9999
 > run_jupyter.sh
 ```
 
+## Misc
+
 * Other interesting packages
 ```
 > install/create_conda.py --req_file requirements_pymc.txt --env_name pymc3 --delete_env_if_exists -v DEBUG
 > conda create sage -n sage
-```
+` ``
