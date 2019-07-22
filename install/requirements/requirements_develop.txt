@@ -3,10 +3,7 @@
 ## ############################################################################
 #python >= 2.7
 #python >= 3.0
-#boto3
 #certifi
-csvkit
-#joblib
 #pytables
 pytest
 python-dateutil
@@ -36,7 +33,7 @@ nb_conda
 ## ############################################################################
 ## Linter
 ## ############################################################################
-autoflake   # Not on Mac.
+autoflake               # Not on Mac.
 flake8
 isort
 pydocstyle
@@ -45,7 +42,7 @@ yapf
 ## ############################################################################
 ## Latex
 ## ############################################################################
-graphviz
+#graphviz
 ## ############################################################################
 ## AWS
 ## ############################################################################
@@ -55,8 +52,11 @@ s3fs
 ## ############################################################################
 ## Misc
 ## ############################################################################
+beautifulsoup4
+csvkit                  # To process csv.
+joblib
+jq                      # To process json.
 #pymongo
-#quandl
-# Seems to have problems at least when installing on top of an existing env.
-#pymc3
+quandl
+#pymc3                  # Seems to have problems at least when installing on top of an existing env.
 #pydot
