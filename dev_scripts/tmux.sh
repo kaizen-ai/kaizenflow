@@ -7,7 +7,7 @@ if [[ $SERVER_NAME == "gpmac.local" ]]; then
   DIR_NAME1="/Users/saggese/src/utilities"
   DIR_NAME2="/Users/saggese/src/lemonade"
   SETENV="./dev_scripts/setenv.sh"
-elif [[ $SERVER_NAME == "ip-172-31-24-5" ]]; then
+elif [[ $SERVER_NAME == "ip-172-31-23-127" ]]; then
   DIR_NAME1="/data/saggese/src/utilities"
   DIR_NAME2="/data/saggese/src/lemonade"
   SETENV="./dev_scripts/setenv.sh"

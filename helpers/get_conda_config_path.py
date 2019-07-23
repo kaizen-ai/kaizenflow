@@ -71,7 +71,7 @@ def _get_conda_config():
         if _get_server_name() == "gpmac.local":
             path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
-        elif _get_server_name() == "ip-172-31-24-5":
+        elif _get_server_name() == "ip-172-31-23-127":
             path = "/data/root/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/data/saggese/.conda/envs"
     elif _get_user_name() == "paul":
