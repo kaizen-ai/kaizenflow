@@ -10,7 +10,7 @@ import sys
 #except ImportError:
 #    _HAS_PANDAS = False
 
-_log = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 # #############################################################################
 # dfatal.
@@ -282,10 +282,11 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     # From https://stackoverflow.com/questions/14058453/making-python-loggers-output-all-messages-to-stdout-in-addition-to-log
     # yapf: enable
     root_logger = logging.getLogger()
+    root_logger.setLevel(verb)
+    print("effective level=", root_logger.getEffectiveLevel())
     if len(root_logger.handlers) > 0:
         print("WARNING: Logger already initialized: skipping")
         return
-    root_logger.setLevel(verb)
     #
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verb)
@@ -293,7 +294,7 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     formatter = logging.Formatter(_LOG_FORMAT, datefmt='%Y-%m-%d %I:%M:%S %p')
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
-    #
+    # Find name of the log file.
     if use_exec_path and log_filename is None:
         dassert_is(log_filename, None, msg="Can't specify conflicting filenames")
         # Use the name of the executable.
@@ -317,8 +318,8 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
         root_logger.addHandler(file_handler)
         file_handler.setFormatter(formatter)
         #
-        _log = logging.getLogger(__name__)
-        _log.info("Saving log to '%s'", log_filename)
+        _LOG = logging.getLogger(__name__)
+        _LOG.info("Saving log to '%s'", log_filename)
     #
     #test_logger()
 
@@ -353,14 +354,14 @@ def test_logger():
     print("effective level=", _log.getEffectiveLevel())
     #
     print("\nlogging.DEBUG=", logging.DEBUG)
-    _log.debug("DEBUG")
+    _log.debug("*working*")
     #
     print("\nlogging.INFO=", logging.INFO)
-    _log.info("INFO")
+    _log.info("*working*")
     #
     print("\nlogging.WARNING=", logging.WARNING)
-    _log.warning("WARNING")
+    _log.warning("*working*")
     #
     print("\nlogging.CRITICAL=", logging.CRITICAL)
-    _log.critical("CRITICAL")
+    _log.critical("*working*")
     assert 0
