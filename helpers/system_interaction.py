@@ -1,5 +1,6 @@
 import functools
 import logging
+import os
 import subprocess
 import sys
 
@@ -10,29 +11,39 @@ _LOG = logging.getLogger(__name__)
 
 
 def _system(cmd, abort_on_error, suppressed_error, suppress_output, blocking,
-            wrapper, dry_run, log_level):
+            wrapper, output_file, dry_run, log_level):
     """
 
     :param cmd: string with command to execute
     :param abort_on_error: whether we should assert in case of error or not
-    :param suppressed_error: set of error code to suppress
+    :param suppressed_error: set of error codes to suppress
     :param suppress_output: whether to print the output or not
     :param blocking: blocking system call or not
     :param wrapper: another command to prepend the execution of cmd
-    :param dry_run: just print the final command but not execute
-    :param log_level:
+    :param output_file: redirect stdout and stderr to this file
+    :param dry_run: just print the final command but not execute it
+    :param log_level: print the command to execute at level "log_level"
     :return: return code (int), output of the command (str)
     """
-    #dbg.dassert_type_in(cmd, (str, str))
-    cmd = "(%s) 2>&1" % cmd
+    # Prepare the command line.
+    cmd = "(%s)" % cmd
+    if output_file is not None:
+        dir_name = os.path.dirname(output_file)
+        if not os.path.exists(dir_name):
+            _LOG.debug("'%s' doesn't exist: creating", dir_name)
+            os.makedirs(dir_name)
+        cmd += " >%s" % output_file
+    cmd += " 2>&1"
     if wrapper:
         cmd = wrapper + " && " + cmd
     _LOG.log(log_level, "> %s", cmd)
+    #
     output = ""
     if dry_run:
         _LOG.warning("Not executing cmd\n%s\nas per user request", cmd)
         rc = 0
         return rc, output
+    # Execute the command.
     try:
         stdout = subprocess.PIPE
         stderr = subprocess.STDOUT
@@ -44,6 +55,7 @@ def _system(cmd, abort_on_error, suppressed_error, suppress_output, blocking,
             stderr=stderr)
         output = ""
         if blocking:
+            # Blocking.
             while True:
                 line = p.stdout.readline().decode("utf-8")
                 if not line:
@@ -54,6 +66,7 @@ def _system(cmd, abort_on_error, suppressed_error, suppress_output, blocking,
             p.stdout.close()
             rc = p.wait()
         else:
+            # Not blocking.
             rc = 0
         if suppressed_error is not None:
             dbg.dassert_isinstance(suppressed_error, set)
@@ -78,6 +91,7 @@ def system(cmd,
            suppress_output=True,
            blocking=True,
            wrapper=None,
+           output_file=None,
            dry_run=False,
            log_level=logging.DEBUG):
     rc, _ = _system(
@@ -87,6 +101,7 @@ def system(cmd,
         suppress_output=suppress_output,
         blocking=blocking,
         wrapper=wrapper,
+        output_file=output_file,
         dry_run=dry_run,
         log_level=log_level)
     return rc
@@ -105,6 +120,7 @@ def system_to_string(cmd,
         # If we want to see the output the system call must be blocking.
         blocking=True,
         wrapper=wrapper,
+        output_file=None,
         dry_run=dry_run,
         log_level=log_level)
     output = output.rstrip("\n")
