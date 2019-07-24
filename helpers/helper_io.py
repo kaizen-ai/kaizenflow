@@ -146,7 +146,8 @@ def create_dir(dir_name, incremental, abort_if_exists=False):
             raise e
 
 
-def create_enclosing_dir(file_name, incremental):
+# TODO(gp): Shouldn't be always incremental=False?
+def create_enclosing_dir(file_name, incremental=False):
     """
     Create the dir enclosing file_name, if needed. <incremental> has the same
     meaning as in create_dir().

@@ -96,9 +96,12 @@ def drop_na(df, *args, **kwargs):
     # TODO(gp): Remove rows completely empty.
     num_rows_before = df.shape[0]
     df = df.dropna(*args, **kwargs)
+    log_level = logging.INFO
+    if "log_level" in kwargs:
+        log_level = kwargs["log_level"]
     num_rows_after = df.shape[0]
     pct_removed = print_.perc(num_rows_before - num_rows_after, num_rows_before)
-    print(("removed rows with nans: %s" % pct_removed))
+    _LOG.log(log_level, "removed rows with nans: %s", pct_removed)
     return df
 
 

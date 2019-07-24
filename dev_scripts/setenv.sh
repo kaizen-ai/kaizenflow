@@ -79,11 +79,12 @@ echo "PYTHONPATH=$PYTHONPATH"
 echo "#############################################################################"
 echo "# Config conda"
 echo "#############################################################################"
-UTILITIES_DIR=$SRC_DIR/utilities
-export PATH=$UTILITIES_DIR/dev_scripts:$UTILITIES_DIR/ipynb_scripts:$UTILITIES_DIR/install:$PATH
-export PYTHONPATH=$PYTHONPATH:$UTILITIES_DIR
+UTIL_DIR=$SRC_DIR/utilities
+# TODO(gp): Add a loop picking up all the dirs.
+export PATH=$UTIL_DIR/dev_scripts:$UTIL_DIR/ipynb_scripts:$UTIL_DIR/install:$UTIL_DIR/aws:$PATH
+export PYTHONPATH=$PYTHONPATH:$UTIL_DIR
 
-CONDA_SCRIPT_NAME="$UTILITIES_DIR/helpers/get_conda_config_path.py"
+CONDA_SCRIPT_NAME="$UTIL_DIR/helpers/get_conda_config_path.py"
 if [[ ! -e $CONDA_SCRIPT_NAME ]]; then
   echo "Can't find file $CONDA_SCRIPT_NAME"
   return -1
@@ -109,6 +110,7 @@ fi;
 
 # Remove redundant paths.
 PATH="$(echo $PATH| perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
+# TODO(gp): Print a better list.
 echo "PATH=$PATH"
 
 if [ 0 == 1 ]; then
@@ -127,4 +129,4 @@ export AM_INST_ID="i-07f9b5323aa7a2ff2"
 echo "#############################################################################"
 echo "# Testing packages"
 echo "#############################################################################"
-$UTILITIES_DIR/install/package_tester.py
+$UTIL_DIR/install/package_tester.py

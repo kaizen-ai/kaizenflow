@@ -265,6 +265,15 @@ def dassert_dir_exists(dir_name, msg=""):
 # Logger.
 # #############################################################################
 
+# From https://stackoverflow.com/questions/15411967/how-can-i-check-if-code-is-executed-in-the-ipython-notebook
+def is_running_in_ipynb():
+    try:
+        cfg = get_ipython().config
+        res = cfg['IPKernelApp']['parent_appname'] == 'ipython-notebook'
+    except NameError:
+        res = False
+    return res
+
 
 # TODO(gp): Add an option to log as if it was a print for notebook use.
 def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
@@ -283,14 +292,20 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     # yapf: enable
     root_logger = logging.getLogger()
     root_logger.setLevel(verb)
-    print("effective level=", root_logger.getEffectiveLevel())
+    #print("effective level=", root_logger.getEffectiveLevel())
     if len(root_logger.handlers) > 0:
         print("WARNING: Logger already initialized: skipping")
         return
     #
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verb)
-    _LOG_FORMAT = "%(asctime)-15s %(funcName)s: %(levelname)s %(message)s"
+    if is_running_in_ipynb():
+        print("WARNING: Running in Jupyter")
+        #_LOG_FORMAT = "%(asctime)-15s: %(levelname)s %(message)s"
+        # TODO(gp): Print at much 15-20 chars of a function so that things are aligned
+        _LOG_FORMAT = "%(levelname)-5s: %(funcName)-15s: %(message)s"
+    else:
+        _LOG_FORMAT = "%(asctime)-5s: %(levelname)s: %(funcName)s: %(message)s"
     formatter = logging.Formatter(_LOG_FORMAT, datefmt='%Y-%m-%d %I:%M:%S %p')
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
@@ -350,18 +365,18 @@ def init_logger2(verb=logging.INFO):
 
 
 def test_logger():
+    print("# Testing logger ...")
     _log = logging.getLogger(__name__)
     print("effective level=", _log.getEffectiveLevel())
     #
-    print("\nlogging.DEBUG=", logging.DEBUG)
+    print("logging.DEBUG=", logging.DEBUG)
     _log.debug("*working*")
     #
-    print("\nlogging.INFO=", logging.INFO)
+    print("logging.INFO=", logging.INFO)
     _log.info("*working*")
     #
-    print("\nlogging.WARNING=", logging.WARNING)
+    print("logging.WARNING=", logging.WARNING)
     _log.warning("*working*")
     #
-    print("\nlogging.CRITICAL=", logging.CRITICAL)
+    print("logging.CRITICAL=", logging.CRITICAL)
     _log.critical("*working*")
-    assert 0

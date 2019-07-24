@@ -7,6 +7,8 @@ import types
 
 import helpers.debug as dbg
 
+# TODO(gp): -> _LOG
+# TODO(gp): fix camel case
 _log = logging.getLogger(__name__)
 
 
@@ -15,6 +17,7 @@ def _replace_extension(file_name, ext):
     return "%s.%s" % (os.path.splitext(file_name)[0], ext)
 
 
+# TODO(gp): to_pickle? Also it should be (obj, file_name, ..., log_level)
 def pickle(file_name, obj, backend="pickle", verb=10):
     """
     Pickle object <obj> into file <file_name>.
@@ -43,11 +46,12 @@ def pickle(file_name, obj, backend="pickle", verb=10):
     # files.
     transferRate = ("%s.3f" % (fileSizeInKb / elapsedTime)
                     if elapsedTime != 0.0 else "n/a")
-    log.debug(
-        ("Pickling: fileSize=%.1f Kb, time=%.3f -> " + "transferRate=%s Kb/s") %
-        (fileSizeInKb, elapsedTime, transferRate))
+    log.info(
+        "Saved '%s' (fileSize=%.1f Kb, time=%.3f -> transferRate=%s Kb/s)",
+        file_name, fileSizeInKb, elapsedTime, transferRate)
 
 
+# TODO(gp): from_pickle?
 def unpickle(file_name, backend="pickle", verb=10):
     """
     Unpickle and return object stored in <file_name>.
@@ -72,9 +76,9 @@ def unpickle(file_name, backend="pickle", verb=10):
     fileSizeInKb = os.path.getsize(file_name) / 1024.0
     transferRate = ("%.3f" % (fileSizeInKb / elapsedTime)
                     if elapsedTime != 0.0 else "n/a")
-    log.debug(
-        ("Unpickling: fileSize=%.1f Kb, time=%.3f -> " + "transferRate=%s Kb/s")
-        % (fileSizeInKb, elapsedTime, transferRate))
+    log.info(
+        "Read '%s' (fileSize=%.1f Kb, time=%.3f -> transferRate=%s Kb/s")
+        file_name, fileSizeInKb, elapsedTime, transferRate)
     return obj
 
 
