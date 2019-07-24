@@ -5,11 +5,9 @@ import os
 import pickle
 import types
 
-import helpers.debug as dbg
+import helpers.dbg as dbg
 
-# TODO(gp): -> _LOG
-# TODO(gp): fix camel case
-_log = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 
 def _replace_extension(file_name, ext):
@@ -40,15 +38,14 @@ def pickle(file_name, obj, backend="pickle", verb=10):
             pickler = dill.dump(obj, fd)
     else:
         raise ValueError("Invalid backend='%s'" % backend)
-    _, elapsedTime = utils.timer.dtimer_stop(dtmr)
-    fileSizeInKb = os.path.getsize(file_name) / 1024.0
+    _, elapsed_time = utils.timer.dtimer_stop(dtmr)
+    size_kb = os.path.getsize(file_name) / 1024.0
     # We can't use jnumpy.Div() since we want to avoid a dependency between utils
     # files.
-    transferRate = ("%s.3f" % (fileSizeInKb / elapsedTime)
-                    if elapsedTime != 0.0 else "n/a")
-    log.info(
-        "Saved '%s' (fileSize=%.1f Kb, time=%.3f -> transferRate=%s Kb/s)",
-        file_name, fileSizeInKb, elapsedTime, transferRate)
+    transfer_rate = ("%s.3f" % (size_kb / elapsed_time)
+                     if elapsed_time != 0.0 else "n/a")
+    _LOG.info("Saved '%s' (size=%.1f Kb, time=%.3f -> transfer_rate=%s Kb/s)",
+              file_name, size_kb, elapsed_time, transfer_rate)
 
 
 # TODO(gp): from_pickle?
@@ -72,13 +69,12 @@ def unpickle(file_name, backend="pickle", verb=10):
             obj = dill.load(fd)
     else:
         raise ValueError("Invalid backend='%s'" % backend)
-    _, elapsedTime = utils.timer.dtimer_stop(dtmr)
-    fileSizeInKb = os.path.getsize(file_name) / 1024.0
-    transferRate = ("%.3f" % (fileSizeInKb / elapsedTime)
-                    if elapsedTime != 0.0 else "n/a")
-    log.info(
-        "Read '%s' (fileSize=%.1f Kb, time=%.3f -> transferRate=%s Kb/s")
-        file_name, fileSizeInKb, elapsedTime, transferRate)
+    _, elapsed_time = utils.timer.dtimer_stop(dtmr)
+    size_kb = os.path.getsize(file_name) / 1024.0
+    transfer_rate = ("%.3f" % (size_kb / elapsed_time)
+                     if elapsed_time != 0.0 else "n/a")
+    _LOG.info("Read '%s' (size=%.1f Kb, time=%.3f -> transfer_rate=%s Kb/s)",
+              file_name, size_kb, elapsed_time, transfer_rate)
     return obj
 
 
@@ -88,20 +84,25 @@ def pickle_function(func):
     - return: string
     """
     dbg.dassert(callable(func))
-    codeString = marshal.dumps(func.__code__)
-    return codeString
+    code_as_str = marshal.dumps(func.__code__)
+    return code_as_str
 
 
-def unpickle_function(codeString, functionName):
+def unpickle_function(code_as_str, func_name):
     """
-    Unpickle a function saved into string <codeString>. The function is injected
-    in the global namespace as <functionName>.
+    Unpickle a function saved into string <code_as_str>. The function is injected
+    in the global namespace as <func_name>.
     - return: function
     """
-    dbg.dassert_type_is(codeString, str)
-    code = marshal.loads(codeString)
-    func = types.FunctionType(code, globals(), name=functionName)
+    dbg.dassert_type_is(code_as_str, str)
+    code = marshal.loads(code_as_str)
+    func = types.FunctionType(code, globals(), name=func_name)
     return func
+
+
+# #############################################################################
+# json
+# #############################################################################
 
 
 def to_json(file_name, obj):
