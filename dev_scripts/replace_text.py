@@ -3,19 +3,35 @@
 Replace an instance of text in all py, ipynb, and txt files.
 
 # Use cases.
+> replace_text.py --old io_ --new io_ --no_backup
 """
 
 import argparse
 import logging
 
 import helpers.dbg as dbg
+import helpers.printing as printing
 import helpers.system_interaction as hsi
 
-_log = logging
+_LOG = logging
+
+
+def _replace_with_perl(file_name, args):
+    perl_opts = []
+    perl_opts.append("-p")
+    if args.backup:
+        perl_opts.append("-i.bak")
+    else:
+        perl_opts.append("-i")
+    perl_opts.append("-e 's/\\b%s/%s/g'" % (args.old, args.new))
+    #perl_opts.append(
+    #    r"-e 's/\\b%s/%s/g unless /^\s*#/'" % (args.old, args.new))
+    cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
+    hsi.system(cmd, suppress_output=False)
 
 
 def _main(args):
-    dbg.init_logger2(args.log_level)
+    dbg.init_logger(args.log_level)
     dirs = args.dirs
     # TODO(gp): Fix this.
     is_mac = True
@@ -28,8 +44,7 @@ def _main(args):
         # Linux.
         cmd = r'find %s -regex ".*\.\(ipynb\|py\|txt\)" -print0' % dirs
     #
-    use_ack = False
-    if use_ack:
+    if args.use_ack:
         # Use ack.
         ack_opts = "--nogroup --nocolor"
         if args.preview:
@@ -60,23 +75,13 @@ def _main(args):
     # Find files.
     rc, output = hsi.system_to_string(cmd, abort_on_error=False)
     if rc != 0:
-        _log.warning("Can't find any instance of test in the code")
+        _LOG.warning("Can't find any file to process")
     # Replace.
     file_names = [f for f in output.split("\n") if f != ""]
-    _log.info("Found %s files:\n%s" % (len(file_names), "\n".join(file_names)))
+    _LOG.info("Found %s files:\n%s", len(file_names), printing.space("\n".join(file_names)))
     for file_name in file_names:
-        _log.info("* " + file_name)
-        perl_opts = []
-        perl_opts.append("-p")
-        if not args.no_backup:
-            perl_opts.append("-i.bak")
-        else:
-            perl_opts.append("-i")
-        #perl_opts.append("-e 's/\\b%s/%s/g'" % (args.old, args.new))
-        perl_opts.append(
-            r"-e 's/\\b%s/%s/g unless /^\s*#/'" % (args.old, args.new))
-        cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
-        hsi.system(cmd, suppress_output=False)
+        _LOG.info("* Processing " + file_name)
+        _replace_with_perl(file_name, args)
 
 
 def _parse():
@@ -98,7 +103,9 @@ def _parse():
     parser.add_argument(
         "--preview", action="store_true", help="Preview only the replacement")
     parser.add_argument(
-        "--no_backup", action="store_true", help="Keep backups of files")
+        "--backup", action="store_true", help="Keep backups of files")
+    parser.add_argument(
+        "--use_ack", action="store_true", help="Use ack instead of grep")
     parser.add_argument(
         "--dirs",
         action="append",
