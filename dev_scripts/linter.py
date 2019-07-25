@@ -255,8 +255,9 @@ def _test_actions():
     num_not_poss = 0
     for action in _VALID_ACTIONS:
         func = _get_action_func(action)
-        is_possible = func(file_name=None, check_if_possible=True)
-        print(("%s -> %s" % (action, is_possible)))
+        is_possible = func(file_name=None, pedantic=False,
+                check_if_possible=True)
+        print("%s -> %s" % (action, is_possible))
         if not is_possible:
             num_not_poss += 1
     if num_not_poss > 0:
@@ -766,9 +767,9 @@ def _main(args):
     output.append("datetime='%s'" % datetime.datetime.now())
     output = _remove_empty_lines(output)
     # Print linter output.
-    print((print_.frame(args.linter_log, char1="/").rstrip("\n")))
-    print(("\n".join(output) + "\n"))
-    print((print_.line().rstrip("\n")))
+    print(print_.frame(args.linter_log, char1="/").rstrip("\n"))
+    print("\n".join(output) + "\n")
+    print(print_.line().rstrip("\n"))
     # Write file.
     f = open(args.linter_log, "w")
     output = "\n".join(output)
