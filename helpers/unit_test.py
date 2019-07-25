@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 
 import helpers.dbg as dbg
-import helpers.helper_io as io_
+import helpers.io_ as io_
 import helpers.printing as print_
 import helpers.system_interaction as si
 

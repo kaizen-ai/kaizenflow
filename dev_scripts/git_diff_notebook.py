@@ -19,16 +19,16 @@ import os
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.helper_io as io
+import helpers.io_ as io_
 import helpers.printing as printing
 import helpers.system_interaction as hsi
 
-_log = logging
+_LOG = logging
 
 
 # TODO(gp): Use hsi.system.
 def _system(cmd):
-    _log.debug("> %s", cmd)
+    _LOG.debug("> %s", cmd)
     hsi.system(cmd)
 
 
@@ -40,7 +40,7 @@ def _convert(dir_name, ipynb_file, py_file):
     :param py_file: basename of the dst python file (e.g., "notebook_new.py")
     :return: path of dst file
     """
-    _log.debug("dir_name=%s ipynb_file=%s py_file=%s", dir_name, ipynb_file,
+    _LOG.debug("dir_name=%s ipynb_file=%s py_file=%s", dir_name, ipynb_file,
                py_file)
     # TODO(gp): Use dir_name for --output-dir.
     dbg.dassert_exists(ipynb_file)
@@ -65,7 +65,7 @@ def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
     :param git_client_root: path of git client
     :return:
     """
-    _log.debug("dir_name=%s abs_file_name=%s", dir_name, abs_file_name)
+    _LOG.debug("dir_name=%s abs_file_name=%s", dir_name, abs_file_name)
     # Make sure the file exists and it's a python notebook.
     dbg.dassert_exists(abs_file_name)
     # Retrieve HEAD file and save it.
@@ -77,7 +77,7 @@ def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
     #   altdata/python/src/agriculture/notebooks/data_explorations/
     #       ThomsonReuters_db.ipynb
     git_file_name = abs_file_name.replace(git_client_root, "")[1:]
-    _log.info("git_file_name=%s", git_file_name)
+    _LOG.info("git_file_name=%s", git_file_name)
     cmd = "git show HEAD:%s >%s" % (git_file_name, old_ipynb)
     hsi.system(cmd)
     dbg.dassert_exists(old_ipynb)
@@ -97,12 +97,12 @@ def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
         rc = hsi.system(cmd, abort_on_error=False)
         is_ipynb_diff = rc != 0
         if is_ipynb_diff:
-            _log.warning("Notebooks %s are different", abs_file_name)
+            _LOG.warning("Notebooks %s are different", abs_file_name)
         else:
-            _log.info("Notebooks %s are equal", abs_file_name)
+            _LOG.info("Notebooks %s are equal", abs_file_name)
     else:
         cmd = "vimdiff %s %s" % (old_py, new_py)
-        _log.debug(">> %s", cmd)
+        _LOG.debug(">> %s", cmd)
         # Do not redirect to file when using vimdiff.
         os.system(cmd)
     # Clean up.
@@ -119,10 +119,10 @@ def _get_files(args):
             file_names = git.get_modified_files()
         elif args.previous_git_commit_files:
             file_names = git.get_previous_committed_files()
-    _log.debug("file_names=%s", file_names)
+    _LOG.debug("file_names=%s", file_names)
     if not file_names:
         msg = "No files were selected"
-        _log.error(msg)
+        _LOG.error(msg)
         raise ValueError(msg)
     return file_names
 
@@ -138,19 +138,19 @@ def _main(args):
         if os.path.splitext(f)[1] == ".ipynb":
             file_names.append(f)
         else:
-            _log.warning("File '%s' is not a jupyter notebook: skipping", f)
+            _LOG.warning("File '%s' is not a jupyter notebook: skipping", f)
     dbg.dassert_lte(1, len(file_names))
     #
     # TODO(gp): Use get_path_from_git_root().
     git_client_root = git.get_client_root()
-    _log.info("git_client_root=%s", git_client_root)
+    _LOG.info("git_client_root=%s", git_client_root)
     client_root = os.getcwd()
-    _log.info("client_root=%s", client_root)
+    _LOG.info("client_root=%s", client_root)
     #
     file_names_tmp = file_names[:]
     file_names = []
     for f in file_names_tmp:
-        _log.debug("f=%s", f)
+        _LOG.debug("f=%s", f)
         # pylint: disable=C0301
         # Make files wrt git client become absolute.
         # E.g.,
@@ -171,13 +171,13 @@ def _main(args):
         dbg.dassert_ne(abs_file_name.find(client_root), -1)
         cwd_file_name = abs_file_name.replace(client_root + "/", "")
         file_names.append((abs_file_name, cwd_file_name))
-    _log.info(
+    _LOG.info(
         "file_names=%s\n%s", len(file_names), "\n".join(
             ["%s -> %s" % (cwd_f, abs_f) for (abs_f, cwd_f) in file_names]))
     dbg.dassert_lte(1, len(file_names))
     # Create tmp dir.
     dir_name = os.path.abspath("./tmp.git_diff_notebook")
-    io.create_dir(dir_name, incremental=False)
+    io_.create_dir(dir_name, incremental=False)
     notebooks_diff = []
     notebooks_equal = []
     # Diff the files.

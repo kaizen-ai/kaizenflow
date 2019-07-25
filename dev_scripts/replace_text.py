@@ -2,8 +2,7 @@
 """
 Replace an instance of text in all py, ipynb, and txt files.
 
-# Use cases.
-> replace_text.py --old io_ --new io_ --no_backup
+> replace_text.py --old io_ --new io_
 """
 
 import argparse
@@ -16,6 +15,11 @@ import helpers.system_interaction as hsi
 _LOG = logging
 
 
+def _look_for(file_name, args):
+    io_.
+    
+
+
 def _replace_with_perl(file_name, args):
     perl_opts = []
     perl_opts.append("-p")
@@ -23,9 +27,11 @@ def _replace_with_perl(file_name, args):
         perl_opts.append("-i.bak")
     else:
         perl_opts.append("-i")
-    perl_opts.append("-e 's/\\b%s/%s/g'" % (args.old, args.new))
-    #perl_opts.append(
-    #    r"-e 's/\\b%s/%s/g unless /^\s*#/'" % (args.old, args.new))
+    if True:
+        perl_opts.append("-e 's/\\b%s/%s/g'" % (args.old, args.new))
+    else:
+        perl_opts.append(
+            r"-e 's/\\b%s/%s/g unless /^\s*#/'" % (args.old, args.new))
     cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
     hsi.system(cmd, suppress_output=False)
 
@@ -39,34 +45,26 @@ def _main(args):
         # Mac.
         cmd = (r'find %s '
                r'\( -name "*.ipynb" -o -name "*.py" -o -name "*.txt" '
-               r'\) -print0' % dirs)
+               r'\)' % dirs)
     else:
         # Linux.
-        cmd = r'find %s -regex ".*\.\(ipynb\|py\|txt\)" -print0' % dirs
+        cmd = r'find %s -regex ".*\.\(ipynb\|py\|txt\)"' % dirs
+    _, txt = hsi.system_to_string(cmd)
+    file_names = [f for f in txt.split("\n") if f != ""]
+    file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
+    _LOG.info("Found %s files", len(file_names))
     #
-    if args.use_ack:
-        # Use ack.
-        ack_opts = "--nogroup --nocolor"
-        if args.preview:
-            # Print file name and line numbers.
-            ack_opts += " -H"
-        else:
-            # Print only file name.
-            ack_opts += " -l"
-        cmd += ' | xargs -0 ack %s "%s"' % (ack_opts, args.old)
+    for f in file_names:
+
+
+    grep_opts = ""
+    if args.preview:
+        # Print file name and line numbers.
+        grep_opts += " -n"
     else:
-        # Use grep.
-        grep_opts = ""
-        if args.preview:
-            # Print file name and line numbers.
-            grep_opts += " -n"
-        else:
-            grep_opts += " -l"
-        cmd += ' | xargs -0 grep %s "%s"' % (grep_opts, args.old)
+        grep_opts += " -l"
+    cmd += ' | xargs -0 grep %s "%s"' % (grep_opts, args.old)
     # Custom filtering.
-    if False:
-        cmd += r" | \grep -v _compute_derived_features"
-    #
     if args.preview:
         cmd = cmd + " | tee cfile"
         hsi.system(cmd, suppress_output=False)
@@ -78,7 +76,8 @@ def _main(args):
         _LOG.warning("Can't find any file to process")
     # Replace.
     file_names = [f for f in output.split("\n") if f != ""]
-    _LOG.info("Found %s files:\n%s", len(file_names), printing.space("\n".join(file_names)))
+    _LOG.info("Found %s files:\n%s", len(file_names),
+              printing.space("\n".join(file_names)))
     for file_name in file_names:
         _LOG.info("* Processing " + file_name)
         _replace_with_perl(file_name, args)
@@ -104,8 +103,6 @@ def _parse():
         "--preview", action="store_true", help="Preview only the replacement")
     parser.add_argument(
         "--backup", action="store_true", help="Keep backups of files")
-    parser.add_argument(
-        "--use_ack", action="store_true", help="Use ack instead of grep")
     parser.add_argument(
         "--dirs",
         action="append",

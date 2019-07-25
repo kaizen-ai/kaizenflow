@@ -10,7 +10,7 @@ import sys
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.helper_io as io_
+import helpers.io_ as io_
 import helpers.printing as print_
 import helpers.system_interaction as hsi
 
@@ -52,7 +52,8 @@ def _main():
     #
     # Keep this in sync with dev_scripts/setenv.sh
     _valid_users = [
-        "GP", "Paul",
+        "GP",
+        "Paul",
     ]
     user_name = git.get_git_name()
     if user_name not in _valid_users:
@@ -76,7 +77,9 @@ def _main():
     # Handle errors.
     if num_lints != 0:
         if not args.not_abort_on_error:
-            print("Exiting. If you don't want to abort on errors use --not_abort_on_error")
+            print(
+                "Exiting. If you don't want to abort on errors use --not_abort_on_error"
+            )
             sys.exit(-1)
         else:
             _LOG.warning("Continue despite linter errors")
@@ -99,7 +102,9 @@ def _main():
     print(commit_msg)
     if not unit_test_passing:
         if not args.not_abort_on_error:
-            print("Exiting. If you don't want to abort on errors use --not_abort_on_error")
+            print(
+                "Exiting. If you don't want to abort on errors use --not_abort_on_error"
+            )
             sys.exit(-1)
         else:
             _LOG.warning("Continue despite unit tests failing")

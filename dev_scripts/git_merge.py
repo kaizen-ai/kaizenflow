@@ -6,10 +6,10 @@ import os
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.helper_io as io
+import helpers.io_ as io_
 import helpers.system_interaction as hsi
 
-_log = logging
+_LOG = logging
 
 
 def _git_merge(file_name, tmp_dir_name, vs_base):
@@ -21,7 +21,7 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
     :param vs_base: compare to base instead of theirs.
 
     """
-    _log.info("\nResolving %s ... ", file_name)
+    _LOG.info("\nResolving %s ... ", file_name)
     # Save relevant files with different versions of the same file.
     file_names = {}
     # - BASE - the common ancestor(s) of LOCAL and REMOTE.
@@ -47,7 +47,7 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
         lhs = file_names["theirs"]
     rhs = file_names["mine"]
     cmd = "vimdiff %s %s" % (lhs, rhs)
-    _log.debug(">> %s", cmd)
+    _LOG.debug(">> %s", cmd)
     # Do not redirect to file when using vimdiff.
     os.system(cmd)
     #
@@ -66,9 +66,9 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
         hsi.system(cmd)
         cmd = "git reset HEAD -- %s" % client_file_name
         hsi.system(cmd)
-        _log.info("RESOLVED")
+        _LOG.info("RESOLVED")
     else:
-        _log.warning("NOT RESOLVED")
+        _LOG.warning("NOT RESOLVED")
 
 
 def _main(args):
@@ -82,11 +82,11 @@ def _main(args):
         dbg.dassert_lte(1, len(file_names))
     else:
         file_names = args.file
-    _log.info("# %s files to resolve:\n%s\n", len(file_names),
+    _LOG.info("# %s files to resolve:\n%s\n", len(file_names),
               "\n".join(file_names))
     # Resolve files.
     tmp_dir_name = "./tmp.git_merge"
-    io.create_dir(tmp_dir_name, incremental=False)
+    io_.create_dir(tmp_dir_name, incremental=False)
     for file_name in file_names:
         _git_merge(file_name, tmp_dir_name, args.vs_base)
 

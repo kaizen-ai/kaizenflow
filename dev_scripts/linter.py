@@ -64,7 +64,7 @@ import tqdm
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.helper_io as hio
+import helpers.io_ as io_
 import helpers.printing as print_
 import helpers.system_interaction as hsi
 
@@ -255,8 +255,8 @@ def _test_actions():
     num_not_poss = 0
     for action in _VALID_ACTIONS:
         func = _get_action_func(action)
-        is_possible = func(file_name=None, pedantic=False,
-                check_if_possible=True)
+        is_possible = func(
+            file_name=None, pedantic=False, check_if_possible=True)
         print("%s -> %s" % (action, is_possible))
         if not is_possible:
             num_not_poss += 1
@@ -601,7 +601,7 @@ class JupytextProcessor(object):
             # TODO(gp): We should compare timestamp?
             src_py_name = self.py_file_name
             dst_py_name = os.path.join(_TMP_DIR, src_py_name)
-            hio.create_enclosing_dir(dst_py_name, incremental=True)
+            io_.create_enclosing_dir(dst_py_name, incremental=True)
             cmd = "jupytext --to py:percent %s -o %s" % (src_py_name,
                                                          dst_py_name)
             _system(cmd)
@@ -722,7 +722,7 @@ def _main(args):
     ]
     _LOG.info("# Action selected:\n%s", print_.space("\n".join(actions_as_str)))
     # Create tmp dir.
-    hio.create_dir(_TMP_DIR, incremental=False)
+    io_.create_dir(_TMP_DIR, incremental=False)
     # Run linter.
     output = []
     num_steps = len(file_names) * len(actions)
@@ -787,7 +787,7 @@ def _main(args):
                   args.linter_log)
     #
     if not args.no_cleanup:
-        hio.delete_dir(_TMP_DIR)
+        io_.delete_dir(_TMP_DIR)
     else:
         _LOG.warning("Leaving tmp files in '%s'", _TMP_DIR)
     return num_lints

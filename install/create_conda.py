@@ -18,7 +18,7 @@ import sys
 import helpers.conda as hco
 import helpers.dbg as dbg
 import helpers.get_conda_config_path as gcp
-import helpers.helper_io as io_
+import helpers.io_ as io_
 import helpers.print_packages as ppack
 import helpers.printing as print_
 
@@ -179,9 +179,7 @@ def _main():
             #
             cmd = (
                 # yapf: disable
-                "conda create" +
-                " --yes" +
-                " --name %s" % conda_env_name
+                "conda create" + " --yes" + " --name %s" % conda_env_name
                 # yapf: enable
             )
             if args.test_install:
@@ -190,8 +188,7 @@ def _main():
                 cmd += (
                     # yapf: disable
                     #" --override-channels " +
-                    " -c conda-forge" +
-                    " --file %s" % tmp_req_file
+                    " -c conda-forge" + " --file %s" % tmp_req_file
                     # yapf: enable
                 )
             if _PYTHON_VERSION is not None:

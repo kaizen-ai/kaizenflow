@@ -3,23 +3,17 @@
 """
 
 import argparse
-import functools
 import logging
 import os
 
-import bs4
-import numpy as np
-import pandas as pd
-import tqdm
-from joblib import Parallel, delayed
 
 import helpers.dbg as dbg
-import helpers.helper_io as io_
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
+
 
 def _get_instance_ip():
     cmd = "aws/get_inst_ip.sh"
@@ -84,7 +78,6 @@ def _main(parser):
         #
         status = _gest_inst_status()
         dbg.dassert_eq(status, "stopped")
-
 
 
 if __name__ == '__main__':
