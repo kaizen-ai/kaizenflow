@@ -871,7 +871,7 @@ def _parse():
     #
     parser.add_argument(
         "--linter_log",
-        default="./linter.log",
+        default="./linter_warnings.txt",
         help="File storing the warnings")
     parser.add_argument(
         "-v",

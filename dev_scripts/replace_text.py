@@ -9,15 +9,24 @@ import argparse
 import logging
 
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.printing as printing
 import helpers.system_interaction as hsi
 
-_LOG = logging
+_LOG = logging.getLogger(__name__)
 
 
 def _look_for(file_name, args):
-    io_.
-    
+    txt = io_.from_file(file_name, split=False)
+    txt = txt.split("\n")
+    res = []
+    found = False
+    for i, line in enumerate(txt):
+        if args.old in line:
+            # ./install/create_conda.py:21:import helpers.helper_io as io_
+            res.append("%s:%s:%s" % (file_name, i + 1, line))
+            found = True
+    return found, res
 
 
 def _replace_with_perl(file_name, args):
@@ -39,47 +48,41 @@ def _replace_with_perl(file_name, args):
 def _main(args):
     dbg.init_logger(args.log_level)
     dirs = args.dirs
-    # TODO(gp): Fix this.
-    is_mac = True
-    if is_mac:
-        # Mac.
-        cmd = (r'find %s '
-               r'\( -name "*.ipynb" -o -name "*.py" -o -name "*.txt" '
-               r'\)' % dirs)
-    else:
-        # Linux.
-        cmd = r'find %s -regex ".*\.\(ipynb\|py\|txt\)"' % dirs
-    _, txt = hsi.system_to_string(cmd)
-    file_names = [f for f in txt.split("\n") if f != ""]
-    file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
-    _LOG.info("Found %s files", len(file_names))
     #
+    exts = args.ext.split(",")
+    _LOG.info("Extensions: %s", exts)
+    file_names = []
+    for d in dirs:
+        _LOG.info("Processing dir '%s'", d)
+        for ext in exts:
+            file_names_tmp = io_.find_files(d, "*." + ext)
+            _LOG.info("Found %s files", len(file_names_tmp))
+            file_names.extend(file_names_tmp)
+    file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
+    _LOG.info("Found %s target files", len(file_names))
+    # Look for files with values.
+    res = []
+    file_names_to_process = []
     for f in file_names:
-
-
-    grep_opts = ""
+        found, res_tmp = _look_for(f, args)
+        _LOG.debug("File='%s', found=%s, res_tmp=\n%s", f, found, res_tmp)
+        res.extend(res_tmp)
+        if found:
+            file_names_to_process.append(f)
+    #
+    txt = "\n".join(res)
+    _LOG.info("Found %s occurrences\n%s", len(res), printing.space(txt))
+    _LOG.info("Found %s files to process", len(file_names_to_process))
+    io_.to_file("./cfile", txt)
+    #
     if args.preview:
-        # Print file name and line numbers.
-        grep_opts += " -n"
-    else:
-        grep_opts += " -l"
-    cmd += ' | xargs -0 grep %s "%s"' % (grep_opts, args.old)
-    # Custom filtering.
-    if args.preview:
-        cmd = cmd + " | tee cfile"
-        hsi.system(cmd, suppress_output=False)
-        _log.warning("Preview only as required. Results saved in ./cfile")
+        _LOG.warning("Preview only as required. Results saved in ./cfile")
         exit(0)
-    # Find files.
-    rc, output = hsi.system_to_string(cmd, abort_on_error=False)
-    if rc != 0:
-        _LOG.warning("Can't find any file to process")
     # Replace.
-    file_names = [f for f in output.split("\n") if f != ""]
-    _LOG.info("Found %s files:\n%s", len(file_names),
-              printing.space("\n".join(file_names)))
-    for file_name in file_names:
-        _LOG.info("* Processing " + file_name)
+    _LOG.info("Found %s files:\n%s", len(file_names_to_process),
+              printing.space("\n".join(file_names_to_process)))
+    for file_name in file_names_to_process:
+        _LOG.info("* Processing %s", file_name)
         _replace_with_perl(file_name, args)
 
 
@@ -101,6 +104,12 @@ def _parse():
         help="regex (in perl format) to use")
     parser.add_argument(
         "--preview", action="store_true", help="Preview only the replacement")
+    parser.add_argument(
+        "--ext",
+        action="store",
+        type=str,
+        default="py,ipynb",
+        help="Extensions to process")
     parser.add_argument(
         "--backup", action="store_true", help="Keep backups of files")
     parser.add_argument(

@@ -2,8 +2,7 @@
 Functions to handle filesystem operations.
 """
 
-# TODO(gp): Rename io_
-
+import fnmatch
 import logging
 import os
 import shutil
@@ -12,7 +11,38 @@ import time
 import helpers.dbg as dbg
 import helpers.system_interaction as hsi
 
-_log = logging
+_LOG = logging
+
+# #############################################################################
+# Glob.
+# #############################################################################
+
+
+def find_files(directory, pattern):
+    """
+    Recursive glob.
+    """
+    file_names = []
+    for root, _, files in os.walk(directory):
+        for basename in files:
+            if fnmatch.fnmatch(basename, pattern):
+                file_name = os.path.join(root, basename)
+                file_names.append(file_name)
+    return file_names
+
+
+def find_regex_files(src_dir, regex):
+    cmd = 'find %s -name "%s"' % (src_dir, regex)
+    _, output = hsi.system_to_string(cmd)
+    file_names = [f for f in output.split('\n') if f != ""]
+    _LOG.debug("Found %s files in %s", len(file_names), src_dir)
+    _LOG.debug("\n".join(file_names))
+    return file_names
+
+
+# #############################################################################
+# Filesystem.
+# #############################################################################
 
 
 def create_soft_link(src, dst):
@@ -22,10 +52,10 @@ def create_soft_link(src, dst):
     like
     "cp <src> <dst>" but creating a soft link.
     """
-    _log.debug("# CreateSoftLink")
+    _LOG.debug("# CreateSoftLink")
     # Create the enclosing directory, if needed.
     enclosing_dir = os.path.dirname(dst)
-    _log.debug("enclosing_dir=%s" % enclosing_dir)
+    _LOG.debug("enclosing_dir=%s" % enclosing_dir)
     create_dir(enclosing_dir, incremental=True)
     # Create the link. Note that the link source needs to be an absolute path.
     src = os.path.abspath(src)
@@ -34,7 +64,7 @@ def create_soft_link(src, dst):
 
 
 def delete_file(file_name):
-    _log.debug("Deleting file '%s'" % file_name)
+    _LOG.debug("Deleting file '%s'" % file_name)
     if not os.path.exists(file_name) or file_name == "/dev/null":
         # Nothing to delete.
         return
@@ -50,9 +80,6 @@ def delete_file(file_name):
             raise e
 
 
-# /////////////////////////////////////////////////////////////////////////////
-
-
 def delete_dir(dir_,
                change_perms=False,
                errnum_to_retry_on=16,
@@ -66,7 +93,7 @@ def delete_dir(dir_,
       OSError: [Errno 16] Device or resource busy:
         'gridTmp/.nfs0000000002c8c10b00056e57'
     """
-    _log.debug("Deleting dir '%s'" % dir_)
+    _LOG.debug("Deleting dir '%s'" % dir_)
     if not os.path.isdir(dir_):
         # No directory so nothing to do.
         return
@@ -84,7 +111,7 @@ def delete_dir(dir_,
                     e.errno == errnum_to_retry_on):
                 # TODO(saggese): Make it less verbose once we know it's working
                 # properly.
-                _log.warning("Couldn't delete %s: attempt=%s / %s" %
+                _LOG.warning("Couldn't delete %s: attempt=%s / %s" %
                              (dir_, i, num_retries))
                 i += 1
                 if i > num_retries:
@@ -104,10 +131,6 @@ def create_dir(dir_name, incremental, abort_if_exists=False):
     false then the directory is deleted and re-created.
     """
     dbg.dassert_is_not(dir_name, None)
-    dbg.dassert_eq(
-        purify_file_name_for_linux(dir_name),
-        dir_name,
-        msg="Can't create dir with Linux unfriendly characters %s" % dir_name)
     dbg.dassert(
         os.path.normpath(dir_name) != ".", msg="Can't create the current dir")
     if abort_if_exists:
@@ -124,12 +147,12 @@ def create_dir(dir_name, incremental, abort_if_exists=False):
         else:
             # The dir exists and we want to create it from scratch (i.e., not
             # incremental), so we need to delete the dir.
-            _log.debug("Deleting dir '%s'" % dir_name)
+            _LOG.debug("Deleting dir '%s'" % dir_name)
             if os.path.islink(dir_name):
                 delete_file(dir_name)
             else:
                 shutil.rmtree(dir_name)
-    _log.debug("Creating directory '%s'" % dir_name)
+    _LOG.debug("Creating directory '%s'" % dir_name)
     # Note that makedirs raises OSError if the target directory already exists.
     # A race condition can happen when another process creates our target
     # directory, while we have just found that it doesn't exist, so we need to
@@ -159,11 +182,13 @@ def create_enclosing_dir(file_name, incremental=False):
         create_dir(dir_name, incremental)
 
 
-# /////////////////////////////////////////////////////////////////////////////
+# #############################################################################
+# File.
+# #############################################################################
 
 
 # TODO(saggese): We should have lines first since it is an input param.
-def to_file(file_name, lines, mode='w', forceFlush=False):
+def to_file(file_name, lines, mode='w', force_flush=False):
     """
     Write the content of lines into file_name, creating the enclosing directory
     if needed.
@@ -177,18 +202,16 @@ def to_file(file_name, lines, mode='w', forceFlush=False):
         create_dir(dir_name, incremental=True)
     with open(file_name, mode, buffering=0 if mode == "a" else -1) as f:
         f.writelines(lines)
-        if forceFlush:
+        if force_flush:
             f.flush()
             os.fsync(f.fileno())
 
 
 # TODO(saggese): Remove the split param.
-def from_file(file_name, split=True, castToStr=False):
+def from_file(file_name, split=True):
     dbg.dassert_ne(file_name, "")
     with open(file_name, 'r') as f:
         data = f.read()
-        if castToStr:
-            dbg.dfatal("NYI")
         dbg.dassert_isinstance(data, str)
         if split:
             data = data.split('\n')
@@ -210,51 +233,3 @@ def get_size_as_str(file_name):
     else:
         res = "nan"
     return res
-
-
-# /////////////////////////////////////////////////////////////////////////////
-
-
-def find_regex_files(src_dir, regex):
-    cmd = 'find %s -name "%s"' % (src_dir, regex)
-    _, output = hsi.system_to_string(cmd, verb=5)
-    file_names = [f for f in output.split('\n') if f != ""]
-    _log.debug("Found %s files in %s", len(file_names), src_dir)
-    _log.debug("\n".join(file_names))
-    return file_names
-
-
-def purify_file_name_for_linux(file_name):
-    """
-    Remove all Linux (and Windows) unfriendly characters.
-    """
-    if file_name is None:
-        return file_name
-    #if isinstance(file_name, str):
-    #    file_name = file_name.encode()
-    dbg.dassert_isinstance(file_name, str)
-    # Remove ".
-    file_name = file_name.replace("\"", "")
-    file_name = file_name.replace("'", "")
-    # Convert = into _.
-    file_name = file_name.replace("=", "_")
-    file_name = file_name.replace(" ", "_")
-    file_name = file_name.replace("`", "_")
-    file_name = file_name.replace("$", "_")
-    return file_name
-
-
-def to_linux_file_name(file_name):
-    """
-    Escape Linux unfriendly characters to get a Linux compliant file file_name.
-    """
-    if file_name is None:
-        return None
-    dbg.dassert_isinstance(file_name, str)
-    # Escape ".
-    file_name = file_name.replace('"', '\\\"')
-    # Escape =.
-    file_name = file_name.replace("=", r'\=')
-    # Escape ( and ).
-    file_name = file_name.replace(r'\)', "\\\)").replace("\(", "\\\\(")
-    return file_name

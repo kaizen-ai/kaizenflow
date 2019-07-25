@@ -1,1 +1,2 @@
-vim -c "cfile ./linter.log"
+#!/bin/bash -xe
+vim -c "cfile ./linter_warnings.txt"
