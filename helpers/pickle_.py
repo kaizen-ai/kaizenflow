@@ -1,3 +1,4 @@
+import gzip
 import json
 import logging
 import marshal
@@ -17,59 +18,74 @@ def _replace_extension(file_name, ext):
     return "%s.%s" % (os.path.splitext(file_name)[0], ext)
 
 
-# TODO(gp): to_pickle? Also it should be (obj, file_name, ..., log_level)
-def to_pickle(obj, file_name, backend="pickle", verb=10):
+def to_pickle(obj, file_name, backend="pickle", log_level=logging.DEBUG):
     """
     Pickle object <obj> into file <file_name>.
     """
     dbg.dassert_type_is(file_name, str)
-    dtmr = timer.dtimer_start(verb, "Pickling to '%s'" % file_name)
+    dtmr = timer.dtimer_start(log_level, "Pickling to '%s'" % file_name)
     io_.create_enclosing_dir(file_name, incremental=True)
     # We assume that the user always specifies a .pkl extension and then we
     # change the extension based on the backend.
-    dbg.dassert(
-        file_name.endswith(".pkl"), msg="Invalid file_name=%s" % file_name)
-    if backend == "pickle":
-        with open(file_name, 'wb') as fd:
+    if backend in ("pickle", "dill"):
+        dbg.dassert(
+            file_name.endswith(".pkl"), msg="Invalid file_name=%s" % file_name)
+        if backend == "pickle":
+            with open(file_name, 'wb') as fd:
+                pickler = pickle.Pickler(fd, pickle.HIGHEST_PROTOCOL)
+                pickler.fast = True
+                pickler.dump(obj)
+        elif backend == "dill":
+            import dill
+            with open(file_name, 'wb') as fd:
+                pickler = dill.dump(obj, fd)
+    elif backend == "pickle_gzip":
+        dbg.dassert(
+            file_name.endswith(".pkl.gz"),
+            msg="Invalid file_name=%s" % file_name)
+        with gzip.open(file_name, 'wb') as fd:
             pickler = pickle.Pickler(fd, pickle.HIGHEST_PROTOCOL)
             pickler.fast = True
             pickler.dump(obj)
-    elif backend == "dill":
-        import dill
-        with open(file_name, 'wb') as fd:
-            pickler = dill.dump(obj, fd)
     else:
         raise ValueError("Invalid backend='%s'" % backend)
     _, elapsed_time = timer.dtimer_stop(dtmr)
-    size_kb = os.path.getsize(file_name) / 1024.0
-    _LOG.info("Saved '%s' (size=%.1f Kb, time=%.3fs", file_name, size_kb,
+    size_mb = os.path.getsize(file_name) / (1024.0**2)
+    _LOG.info("Saved '%s' (size=%.2f Mb, time=%.1fs)", file_name, size_mb,
               elapsed_time)
 
 
-# TODO(gp): from_pickle?
-def unpickle(file_name, backend="pickle", verb=10):
+def from_unpickle(file_name, backend="pickle", log_level=logging.DEBUG):
     """
     Unpickle and return object stored in <file_name>.
     """
     dbg.dassert_type_is(file_name, str)
-    dtmr = timer.dtimer_start(verb, "Unpickling from '%s'" % file_name)
+    dtmr = timer.dtimer_start(log_level, "Unpickling from '%s'" % file_name)
     # We assume that the user always specifies a .pkl extension and then we
     # change the extension based on the backend.
-    dbg.dassert(
-        file_name.endswith(".pkl"), msg="Invalid file_name=%s" % file_name)
-    if backend == "pickle":
-        with open(file_name, 'rb') as fd:
+    if backend in ("pickle", "dill"):
+        dbg.dassert(
+            file_name.endswith(".pkl"), msg="Invalid file_name=%s" % file_name)
+        if backend == "pickle":
+            with open(file_name, 'rb') as fd:
+                unpickler = pickle.Unpickler(fd)
+                obj = unpickler.load()
+        elif backend == "dill":
+            import dill
+            with open(file_name, 'rb') as fd:
+                obj = dill.load(fd)
+    elif backend == "pickle_gzip":
+        dbg.dassert(
+            file_name.endswith(".pkl.gz"),
+            msg="Invalid file_name=%s" % file_name)
+        with gzip.open(file_name, 'rb') as fd:
             unpickler = pickle.Unpickler(fd)
             obj = unpickler.load()
-    elif backend == "dill":
-        import dill
-        with open(file_name, 'rb') as fd:
-            obj = dill.load(fd)
     else:
         raise ValueError("Invalid backend='%s'" % backend)
     _, elapsed_time = timer.dtimer_stop(dtmr)
-    size_kb = os.path.getsize(file_name) / 1024.0
-    _LOG.info("Read '%s' (size=%.1f Kb, time=%.3fs)", file_name, size_kb,
+    size_mb = os.path.getsize(file_name) / (1024.0**2)
+    _LOG.info("Read '%s' (size=%.2f Mb, time=%.1fs)", file_name, size_mb,
               elapsed_time)
     return obj
 
