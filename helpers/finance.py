@@ -1,6 +1,4 @@
 import numpy as np
-import pandas as pd
-import seaborn as sns
 
 
 def annualize_sharpe_ratio(df_ret):

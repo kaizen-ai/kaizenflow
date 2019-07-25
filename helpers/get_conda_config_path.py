@@ -14,6 +14,7 @@ import helpers.dbg as dbg
 # the functions.
 #import helpers.system_interaction as hsi
 
+
 def _system_to_string(cmd):
     py_ver = sys.version_info[0]
     if py_ver == 2:

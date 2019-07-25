@@ -4,7 +4,6 @@ import os
 import pprint
 import random
 import re
-import types
 import unittest
 
 import numpy as np

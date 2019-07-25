@@ -3,7 +3,6 @@
 import argparse
 import logging
 import os
-import pprint
 
 import helpers.conda as hco
 import helpers.dbg as dbg
@@ -57,7 +56,8 @@ def save_env_file(conda_env_name, dir_name):
     # Save results.
     if dir_name is not None:
         file_name = "%s.%s.%s.%s.txt" % (conda_env_name, hsi.get_user_name(),
-                                         hsi.get_os_name(), hsi.get_server_name())
+                                         hsi.get_os_name(),
+                                         hsi.get_server_name())
         dst_file = os.path.join(dir_name, file_name)
         dst_file = os.path.abspath(dst_file)
         io_.create_enclosing_dir(dst_file, incremental=True)

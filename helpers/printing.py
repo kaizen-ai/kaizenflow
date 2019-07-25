@@ -262,7 +262,6 @@ def dataframe_to_str(df,
 
 def config_notebook():
     import pandas as pd
-    import matplotlib
     import matplotlib.pyplot as plt
 
     pd.set_option('display.max_rows', 500)

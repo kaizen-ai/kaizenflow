@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 import pprint
@@ -264,6 +263,7 @@ def dassert_dir_exists(dir_name, msg=""):
 # #############################################################################
 # Logger.
 # #############################################################################
+
 
 # From https://stackoverflow.com/questions/15411967/how-can-i-check-if-code-is-executed-in-the-ipython-notebook
 def is_running_in_ipynb():
