@@ -3,27 +3,27 @@ import time
 
 import helpers.dbg as dbg
 
-_log = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
 
-class Timer(object):
+class Timer:
     """
     Measure time elapsed in one or more intervals.
     """
 
-    def __init__(self, startOnCreation=True):
+    def __init__(self, start_on_creation=True):
         """
-        Create a timer. If "startOnCreation" is True start automatically the
+        Create a timer. If "start_on_creation" is True start automatically the
         timer.
         """
         self._stop = None
         # Store the time for the last elapsed interval.
-        self._lastElapsed = None
+        self._last_elapsed = None
         # Store the total time for all the measured intervals.
-        self._totalElapsed = 0.0
-        if startOnCreation:
+        self._total_elapsed = 0.0
+        if start_on_creation:
             # For better accuracy start the timer as last action, after all the
             # bookkeeping.
             self._start = time.time()
@@ -40,8 +40,8 @@ class Timer(object):
         self._stop = time.time()
         # Update the total elapsed time.
         dbg.dassert_lte(self._start, self._stop)
-        self._lastElapsed = self._stop - self._start
-        self._totalElapsed += self._lastElapsed
+        self._last_elapsed = self._stop - self._start
+        self._total_elapsed += self._last_elapsed
         # Stop.
         self._start = None
         self._stop = None
@@ -52,18 +52,18 @@ class Timer(object):
         """
         if not self.is_stopped():
             self.stop()
-        dbg.dassert_is_not(self._lastElapsed, None)
-        return self._lastElapsed
+        dbg.dassert_is_not(self._last_elapsed, None)
+        return self._last_elapsed
 
     def __repr__(self):
         """
         Return string with the intervals measured so far.
         """
-        measuredTime = self._totalElapsed
+        measured_time = self._total_elapsed
         if self.is_started() and not self.is_stopped():
             # Timer still running.
-            measuredTime += time.time() - self._start
-        ret = "%.3f secs" % measuredTime
+            measured_time += time.time() - self._start
+        ret = "%.3f secs" % measured_time
         return ret
 
     # /////////////////////////////////////////////////////////////////////////
@@ -90,7 +90,7 @@ class Timer(object):
         """
         if not self.is_stopped():
             self.stop()
-        return self._totalElapsed
+        return self._total_elapsed
 
     def accumulate(self, timer):
         """
@@ -100,29 +100,29 @@ class Timer(object):
         dbg.dassert(timer.is_stopped())
         dbg.dassert(self.is_stopped())
         dbg.dassert_lte(0.0, timer.get_total_elapsed())
-        self._totalElapsed += timer.get_total_elapsed()
+        self._total_elapsed += timer.get_total_elapsed()
 
 
 # #############################################################################
 
-_DtimerInfo = {}
+_DTIMER_INFO = {}
 
 
-def dtimer_start(level, message):
+def dtimer_start(log_level, message):
     """
     - return: memento of the timer.
     """
-    _log.info("%s ...", message)
-    idx = len(_DtimerInfo)
-    info = level, message, Timer()
-    _DtimerInfo[idx] = info
+    _LOG.log(log_level, "%s ...", message)
+    idx = len(_DTIMER_INFO)
+    info = log_level, message, Timer()
+    _DTIMER_INFO[idx] = info
     return idx
 
 
 def stop_timer(timer):
     timer.stop()
-    elapsedTime = round(timer.get_elapsed(), 3)
-    msg = "%.3f s" % elapsedTime
+    elapsed_time = round(timer.get_elapsed(), 3)
+    msg = "%.3f s" % elapsed_time
     return msg
 
 
@@ -133,24 +133,25 @@ def dtimer_stop(idx):
       - time in seconds (int)
     """
     dbg.dassert_lte(0, idx)
-    dbg.dassert_lt(idx, len(_DtimerInfo))
-    level, message, timer = _DtimerInfo[idx]
+    dbg.dassert_lt(idx, len(_DTIMER_INFO))
+    log_level, message, timer = _DTIMER_INFO[idx]
     timer.stop()
-    elapsedTime = round(timer.get_elapsed(), 3)
-    msg = "%s done (%.3f s)" % (message, elapsedTime)
-    del _DtimerInfo[idx]
-    _log.info(msg)
-    return msg, elapsedTime
+    elapsed_time = round(timer.get_elapsed(), 3)
+    msg = "%s done (%.3f s)" % (message, elapsed_time)
+    del _DTIMER_INFO[idx]
+    _LOG.log(log_level, msg)
+    return msg, elapsed_time
 
 
-class TimedScope(object):
+class TimedScope:
 
-    def __init__(self, level, message):
-        self._level = level
+    def __init__(self, log_level, message):
+        self._log_level = log_level
         self._message = message
+        self._idx = None
 
     def __enter__(self):
-        self._idx = dtimer_start(self._level, self._message)
+        self._idx = dtimer_start(self._log_level, self._message)
         return self
 
     def __exit__(self, *args):

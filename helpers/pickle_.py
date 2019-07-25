@@ -6,6 +6,8 @@ import pickle
 import types
 
 import helpers.dbg as dbg
+import helpers.io_ as io_
+import helpers.timer as timer
 
 _LOG = logging.getLogger(__name__)
 
@@ -16,13 +18,13 @@ def _replace_extension(file_name, ext):
 
 
 # TODO(gp): to_pickle? Also it should be (obj, file_name, ..., log_level)
-def pickle(file_name, obj, backend="pickle", verb=10):
+def to_pickle(obj, file_name, backend="pickle", verb=10):
     """
     Pickle object <obj> into file <file_name>.
     """
     dbg.dassert_type_is(file_name, str)
-    dtmr = utils.timer.dtimer_start(verb, "Pickling to '%s'" % file_name)
-    utils.jio.create_enclosing_dir(file_name, incremental=True)
+    dtmr = timer.dtimer_start(verb, "Pickling to '%s'" % file_name)
+    io_.create_enclosing_dir(file_name, incremental=True)
     # We assume that the user always specifies a .pkl extension and then we
     # change the extension based on the backend.
     dbg.dassert(
@@ -38,14 +40,10 @@ def pickle(file_name, obj, backend="pickle", verb=10):
             pickler = dill.dump(obj, fd)
     else:
         raise ValueError("Invalid backend='%s'" % backend)
-    _, elapsed_time = utils.timer.dtimer_stop(dtmr)
+    _, elapsed_time = timer.dtimer_stop(dtmr)
     size_kb = os.path.getsize(file_name) / 1024.0
-    # We can't use jnumpy.Div() since we want to avoid a dependency between utils
-    # files.
-    transfer_rate = ("%s.3f" % (size_kb / elapsed_time)
-                     if elapsed_time != 0.0 else "n/a")
-    _LOG.info("Saved '%s' (size=%.1f Kb, time=%.3f -> transfer_rate=%s Kb/s)",
-              file_name, size_kb, elapsed_time, transfer_rate)
+    _LOG.info("Saved '%s' (size=%.1f Kb, time=%.3fs", file_name, size_kb,
+              elapsed_time)
 
 
 # TODO(gp): from_pickle?
@@ -54,7 +52,7 @@ def unpickle(file_name, backend="pickle", verb=10):
     Unpickle and return object stored in <file_name>.
     """
     dbg.dassert_type_is(file_name, str)
-    dtmr = utils.timer.dtimer_start(verb, "Unpickling from '%s'" % file_name)
+    dtmr = timer.dtimer_start(verb, "Unpickling from '%s'" % file_name)
     # We assume that the user always specifies a .pkl extension and then we
     # change the extension based on the backend.
     dbg.dassert(
@@ -69,12 +67,10 @@ def unpickle(file_name, backend="pickle", verb=10):
             obj = dill.load(fd)
     else:
         raise ValueError("Invalid backend='%s'" % backend)
-    _, elapsed_time = utils.timer.dtimer_stop(dtmr)
+    _, elapsed_time = timer.dtimer_stop(dtmr)
     size_kb = os.path.getsize(file_name) / 1024.0
-    transfer_rate = ("%.3f" % (size_kb / elapsed_time)
-                     if elapsed_time != 0.0 else "n/a")
-    _LOG.info("Read '%s' (size=%.1f Kb, time=%.3f -> transfer_rate=%s Kb/s)",
-              file_name, size_kb, elapsed_time, transfer_rate)
+    _LOG.info("Read '%s' (size=%.1f Kb, time=%.3fs)", file_name, size_kb,
+              elapsed_time)
     return obj
 
 
@@ -111,6 +107,6 @@ def to_json(file_name, obj):
 
 
 def from_json(file_name):
-    dbg.dassert_file_exists(file_name)
-    obj = json.loads(utils.jio.from_file(file_name, split=False))
+    dbg.dassert_exists(file_name)
+    obj = json.loads(io_.from_file(file_name, split=False))
     return obj
