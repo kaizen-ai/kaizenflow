@@ -1,21 +1,19 @@
+import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
-EMAIL_ADDRESS = ''
-EMAIL_PASSWORD = ''
 
 
 def send_email(
         subject,
         message,
         to_adr,
-        email_address=EMAIL_ADDRESS,
-        email_pass=EMAIL_PASSWORD,
+        email_address=None,
+        email_password=None,
         html=False,
 ):
     """
-    Send mail to specified e - mail addresses
+    Send mail to specified e-mail addresses
     :param message: Message to be sent
     :param to_adr: Mail to which to send messages
     :type list
@@ -23,7 +21,11 @@ def send_email(
     """
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(email_address, email_pass)
+    if email_address is None:
+        email_address = os.environ["EMAIL_ADDRESS"]
+    if email_password is None:
+        email_password = os.environ["EMAIL_PASSWORD"]
+    server.login(email_address, email_password)
     msg = MIMEMultipart()
     msg['From'] = email_address
     msg['To'] = ", ".join(to_adr)

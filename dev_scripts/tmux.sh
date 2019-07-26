@@ -4,17 +4,18 @@ SERVER_NAME=$(uname -n)
 echo "SERVER_NAME=$SERVER_NAME"
 
 if [[ $SERVER_NAME == "gpmac.local" ]]; then
-  DIR_NAME1="/Users/saggese/src/utilities"
-  DIR_NAME2="/Users/saggese/src/lemonade"
-  SETENV="./dev_scripts/setenv.sh"
-elif [[ $SERVER_NAME == "ip-172-31-23-127" ]]; then
-  DIR_NAME1="/data/saggese/src/utilities"
-  DIR_NAME2="/data/saggese/src/lemonade"
-  SETENV="./dev_scripts/setenv.sh"
+  HOME_DIR="/Users/saggese"
+elif [[ $SERVER_NAME == "ip-*" ]]; then
+  HOME_DIR="/data/saggese"
 else
   echo "Invalid server"
   exit -1
 fi;
+
+DIR_NAME1="$HOME_DIR/src/utilities"
+DIR_NAME2="$HOME_DIR/src/lemonade"
+
+SETENV="./dev_scripts/setenv.sh"
 
 TMUX_NAME="dev"
 

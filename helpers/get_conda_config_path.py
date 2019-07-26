@@ -28,30 +28,30 @@ def _system_to_string(cmd):
     return txt[0]
 
 
-_User_name = None
+_USER_NAME = None
 
 
 def _get_user_name():
-    global _User_name
-    if _User_name is None:
+    global _USER_NAME
+    if _USER_NAME is None:
         import getpass
-        _User_name = getpass.getuser()
+        _USER_NAME = getpass.getuser()
         # This seems to be flakey on some systems.
-        #_User_name = _system_to_string("whoami")
-    return _User_name
+        #_USER_NAME = _system_to_string("whoami")
+    return _USER_NAME
 
 
-_Server_name = None
+_SERVER_NAME = None
 
 
 def _get_server_name():
-    global _Server_name
-    if _Server_name is None:
+    global _SERVER_NAME
+    if _SERVER_NAME is None:
         import socket
-        _Server_name = socket.gethostname()
+        _SERVER_NAME = socket.gethostname()
         # This seems to be flakey on some systems.
-        #_Server_name = _system_to_string("uname -n")
-    return _Server_name
+        #_SERVER_NAME = _system_to_string("uname -n")
+    return _SERVER_NAME
 
 
 def _get_conda_config():
@@ -69,10 +69,10 @@ def _get_conda_config():
     path = None
     conda_env_path = None
     if _get_user_name() == "saggese":
-        if _get_server_name() == "gpmac.local":
+        if _get_server_name() in ("gpmac.local", "gpmac.lan"):
             path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
-        elif _get_server_name() == "ip-172-31-23-127":
+        elif _get_server_name().startswith("ip-"):
             path = "/data/root/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/data/saggese/.conda/envs"
     elif _get_user_name() == "paul":

@@ -66,7 +66,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as print_
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
@@ -87,10 +87,10 @@ def _get_command_line():
 
 def _system(cmd, abort_on_error=True):
     # print _log.getEffectiveLevel(), logging.DEBUG
-    suppress_output = not _LOG.getEffectiveLevel() <= logging.DEBUG
+    suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
     # print "suppress_output=", suppress_output
     _LOG.getEffectiveLevel()
-    rc = hsi.system(
+    rc = si.system(
         cmd,
         abort_on_error=abort_on_error,
         suppress_output=suppress_output,
@@ -110,7 +110,7 @@ def _clean_file(filename, write_back):
         Check if the line can be deleted.
         """
         for char in line:
-            if char != ' ' and char != '\n':
+            if char not in (' ', '\n'):
                 return False
         return True
 
@@ -142,7 +142,7 @@ def _annotate(output, executable):
 
 def _tee(cmd, executable, abort_on_error):
     _LOG.debug("cmd=%s executable=%s", cmd, executable)
-    _, output = hsi.system_to_string(cmd, abort_on_error=abort_on_error)
+    _, output = si.system_to_string(cmd, abort_on_error=abort_on_error)
     dbg.dassert_isinstance(output, str)
     _LOG.debug("output1='\n%s'", output)
     output = output.split("\n")
@@ -179,7 +179,7 @@ def _get_files(args):
             _LOG.info("Looking for all files in '%s'", dir_name)
             dbg.dassert_exists(dir_name)
             cmd = "find %s -name '*' -type f" % dir_name
-            output = hsi.system_to_string(cmd)[1]
+            output = si.system_to_string(cmd)[1]
             file_names = output.split("\n")
         if not file_names or args.current_git_files:
             # Get all the git modified files.
@@ -393,6 +393,8 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         ignore.extend([
             # D100: Missing docstring in public module
             "D100",
+            # D102: Missing docstring in public method
+            "D102",
             # D103: Missing docstring in public function
             "D103",
             # D107: Missing docstring in __init__
@@ -408,7 +410,7 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
     # yapf: enable
     # We don't abort on error on pydocstyle, since it returns error if there is
     # any violation.
-    _, file_lines = hsi.system_to_string(cmd, abort_on_error=False)
+    _, file_lines = si.system_to_string(cmd, abort_on_error=False)
     # Process lint_log transforming:
     #   linter_v2.py:1 at module level:
     #       D400: First line should end with a period (not ':')
@@ -453,7 +455,6 @@ def _pyment(file_name, pedantic, check_if_possible):
 
 
 def _pylint(file_name, pedantic, check_if_possible):
-    _ = pedantic
     executable = "pylint"
     if check_if_possible:
         return _check_exec(executable)
@@ -465,6 +466,10 @@ def _pylint(file_name, pedantic, check_if_possible):
     ignore = [
         # [C0304(missing-final-newline), ] Final newline missing [pylint]
         "C0304",
+        # C0412(ungrouped-imports), ] Imports from package sklearn are not grouped
+        "C0412",
+        # R1705(no-else-return), ] Unnecessary "elif" after "return"
+        "R1705",
     ]
     if not pedantic:
         ignore.extend([
@@ -473,15 +478,19 @@ def _pylint(file_name, pedantic, check_if_possible):
             "W0125",
             # [W0511(fixme), ]
             "W0511",
+            # [W0603(global-statement), ] Using the global statement
+            "W0603",
             # [C0111(missing-docstring), ] Missing module docstring
             "C0111",
-            # [R0903(too-few-public-methods), ] Too few public methods (1/2)
+            # [R0903(too-few-public-methods), ] Too few public methods
             "R0903",
             # [R0912(too-many-branches), ] Too many branches
             "R0912",
             # [R0913(too-many-arguments), ] Too many arguments
             "R0913",
-            # [R0915(too-many-statements), ] Too many statements (54/50)
+            # R0914(too-many-locals) Too many local variables
+            "R0914",
+            # [R0915(too-many-statements), ] Too many statements
             "R0915",
         ])
     if ignore:
@@ -558,7 +567,7 @@ def is_paired_jupytext_file(file_name):
     return is_paired
 
 
-class JupytextProcessor(object):
+class JupytextProcessor:
     """
     - If there is a ipynb but no corresponding py then generate the py file
       - Issue a warning about updating with jupytext

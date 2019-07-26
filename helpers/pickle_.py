@@ -55,7 +55,7 @@ def to_pickle(obj, file_name, backend="pickle", log_level=logging.DEBUG):
               elapsed_time)
 
 
-def from_unpickle(file_name, backend="pickle", log_level=logging.DEBUG):
+def from_pickle(file_name, backend="pickle", log_level=logging.DEBUG):
     """
     Unpickle and return object stored in <file_name>.
     """

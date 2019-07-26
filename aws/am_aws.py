@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """
+Start / stop / check AWS instance.
 """
 
 import argparse
 import logging
 import os
-
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -62,7 +62,7 @@ def _main(parser):
             si.system(cmd)
         else:
             _LOG.warning("Nothing to do")
-        dbg.dassert_eq(status, "running")
+        _LOG.info("status=%s", status)
         ip = _get_instance_ip()
         _LOG.info("IP: %s", ip)
     elif args.action == "stop":
@@ -80,7 +80,7 @@ def _main(parser):
         dbg.dassert_eq(status, "stopped")
 
 
-if __name__ == '__main__':
+def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -101,3 +101,7 @@ if __name__ == '__main__':
         help="Set the logging level")
     #
     _main(parser)
+
+
+if __name__ == '__main__':
+    _parse()
