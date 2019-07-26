@@ -5,15 +5,15 @@ import logging
 import re
 
 import helpers.dbg as dbg
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
-_log = logging
+_LOG = logging.getLogger(__name__)
 
 
 # These functions were provided by https://github.com/rgerkin
 # https://github.com/jupyter/nbconvert/issues/503
 def strip_line_magic(line):
-    _log.debug("line=%s", line)
+    _LOG.debug("line=%s", line)
     # get_ipython().run_cell_magic(
     #   u'time', u'',
     #   u"all_earnings['month_year'] =
@@ -22,13 +22,13 @@ def strip_line_magic(line):
     #       '%Y-%m-%d')\n)")
     matches = re.findall(r"run_cell_magic\((.*)\)", line)
     if matches:
-        _log.debug("-> matches=%s", matches)
+        _LOG.debug("-> matches=%s", matches)
         print()
         print(("\n".join(matches)))
         # This line contains the pattern.
-        matches[0]
+        #matches[0]
         stripped = "\n".join(matches[1:])
-        #_log.debug("stripped=%s", "\n".join(stripped))
+        #_LOG.debug("stripped=%s", "\n".join(stripped))
 
         print("stripped")
         print()
@@ -42,7 +42,7 @@ def strip_line_magic(line):
 def strip_magic(file_in, file_out):
     if file_out is None:
         file_out = file_in
-    _log.debug("file_in='%s' -> file_out='%s'", file_in, file_out)
+    _LOG.debug("file_in='%s' -> file_out='%s'", file_in, file_out)
     # Read file.
     with open(file_in) as f:
         code = f.read()
@@ -60,11 +60,11 @@ def strip_magic(file_in, file_out):
 def _main(args):
     dbg.init_logger2(args.log_level)
     for f in args.files:
-        _log.info("Converting %s", f)
+        _LOG.info("Converting %s", f)
         dbg.dassert(f.endswith(".ipynb"), msg="Invalid file=%s" % f)
         cmd = "jupyter nbconvert %s --to python" % f
         #--template=dev_scripts/ipy_to_py.tpl" % f
-        hsi.system(cmd)
+        si.system(cmd)
         if True:
             file_out = f.replace(".ipynb", ".py")
             #

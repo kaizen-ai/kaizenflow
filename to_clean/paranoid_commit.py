@@ -12,7 +12,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as print_
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def _main():
     if args.test:
         cmd = "linter.py --action isort"
     print(print_.frame(cmd, char1="#"))
-    num_lints = hsi.system(cmd, suppress_output=False, abort_on_error=False)
+    num_lints = si.system(cmd, suppress_output=False, abort_on_error=False)
     # Post message.
     msg = "Num lints: %s\n" % num_lints
     print(msg)
@@ -90,7 +90,7 @@ def _main():
     if args.test:
         cmd = 'pytest edgar -k "TestIsUnicodeDash"'
     print(print_.frame(cmd, char1="#"))
-    rc = hsi.system(cmd, suppress_output=False, abort_on_error=False)
+    rc = si.system(cmd, suppress_output=False, abort_on_error=False)
     unit_test_passing = rc == 0
     msg = "Unit tests passing: %s" % ("Yes"
                                       if unit_test_passing else "*** NO ***")

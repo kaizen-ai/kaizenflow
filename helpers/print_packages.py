@@ -8,7 +8,7 @@ import helpers.conda as hco
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.printing as print_
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,9 +17,9 @@ def get_system_info(add_frame):
     msg = ""
     if add_frame:
         msg += print_.frame("System info") + "\n"
-    msg += "user name=%s\n" % hsi.get_user_name()
-    msg += "server name=%s\n" % hsi.get_server_name()
-    msg += "os name=%s\n" % hsi.get_os_name()
+    msg += "user name=%s\n" % si.get_user_name()
+    msg += "server name=%s\n" % si.get_server_name()
+    msg += "os name=%s\n" % si.get_os_name()
     msg += "conda path=%s\n" % hco.get_conda_path()
     msg += "conda env root=%s\n" % str(hco.get_conda_envs_dirs())
     return msg
@@ -55,9 +55,8 @@ def save_env_file(conda_env_name, dir_name):
     msg += get_conda_export_list(conda_env_name, add_frame=True)
     # Save results.
     if dir_name is not None:
-        file_name = "%s.%s.%s.%s.txt" % (conda_env_name, hsi.get_user_name(),
-                                         hsi.get_os_name(),
-                                         hsi.get_server_name())
+        file_name = "%s.%s.%s.%s.txt" % (conda_env_name, si.get_user_name(),
+                                         si.get_os_name(), si.get_server_name())
         dst_file = os.path.join(dir_name, file_name)
         dst_file = os.path.abspath(dst_file)
         io_.create_enclosing_dir(dst_file, incremental=True)

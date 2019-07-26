@@ -12,7 +12,7 @@ import helpers.dbg as dbg
 # We cannot use system_interaction since it depends on python3, and this script is
 # used to configure conda to use python3. So to break the cyclic dependency we inline
 # the functions.
-#import helpers.system_interaction as hsi
+#import helpers.system_interaction as si
 
 
 def _system_to_string(cmd):

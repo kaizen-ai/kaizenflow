@@ -7,9 +7,9 @@ import os
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
-_log = logging
+_LOG = logging.getLogger(__name__)
 
 
 def _git_merge(file_name, tmp_dir_name, vs_base):
@@ -21,7 +21,7 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
     :param vs_base: compare to base instead of theirs.
 
     """
-    _log.info("\nResolving %s ... ", file_name)
+    _LOG.info("\nResolving %s ... ", file_name)
     # Save relevant files with different versions of the same file.
     file_names = {}
     # - BASE - the common ancestor(s) of LOCAL and REMOTE.
@@ -34,11 +34,11 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
         dst_file_name = "%s/%s.%s" % (tmp_dir_name, os.path.basename(file_name),
                                       suffix)
         cmd = "git show :%s:%s >%s" % (id_, file_name, dst_file_name)
-        hsi.system(cmd)
+        si.system(cmd)
         if file_name.endswith(".ipynb"):
             # Apply nbstripout.
             cmd = "nbstripout -f %s" % dst_file_name
-            hsi.system(cmd)
+            si.system(cmd)
         file_names[suffix] = dst_file_name
     # Diff.
     if vs_base:
@@ -47,7 +47,7 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
         lhs = file_names["theirs"]
     rhs = file_names["mine"]
     cmd = "vimdiff %s %s" % (lhs, rhs)
-    _log.debug(">> %s", cmd)
+    _LOG.debug(">> %s", cmd)
     # Do not redirect to file when using vimdiff.
     os.system(cmd)
     #
@@ -57,18 +57,18 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
         root_dir = git.get_client_root()
         client_file_name = "%s/%s" % (root_dir, file_name)
         cmd = "cp %s %s.bak" % (client_file_name, client_file_name)
-        hsi.system(cmd)
+        si.system(cmd)
         # Overwrite.
         cmd = "cp -r %s %s" % (file_names["mine"], client_file_name)
-        hsi.system(cmd)
+        si.system(cmd)
         # Add to resolve and then unstage.
         cmd = "git add %s" % client_file_name
-        hsi.system(cmd)
+        si.system(cmd)
         cmd = "git reset HEAD -- %s" % client_file_name
-        hsi.system(cmd)
-        _log.info("RESOLVED")
+        si.system(cmd)
+        _LOG.info("RESOLVED")
     else:
-        _log.warning("NOT RESOLVED")
+        _LOG.warning("NOT RESOLVED")
 
 
 def _main(args):
@@ -77,12 +77,12 @@ def _main(args):
     if not args.file:
         # Find files in conflict.
         cmd = "git diff --name-only --diff-filter=U"
-        _, txt = hsi.system_to_string(cmd)
+        _, txt = si.system_to_string(cmd)
         file_names = txt.split("\n")
         dbg.dassert_lte(1, len(file_names))
     else:
         file_names = args.file
-    _log.info("# %s files to resolve:\n%s\n", len(file_names),
+    _LOG.info("# %s files to resolve:\n%s\n", len(file_names),
               "\n".join(file_names))
     # Resolve files.
     tmp_dir_name = "./tmp.git_merge"

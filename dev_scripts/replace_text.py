@@ -11,7 +11,7 @@ import logging
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.printing as printing
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def _replace_with_perl(file_name, args):
         perl_opts.append(
             r"-e 's/\\b%s/%s/g unless /^\s*#/'" % (args.old, args.new))
     cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
-    hsi.system(cmd, suppress_output=False)
+    si.system(cmd, suppress_output=False)
 
 
 def _main(args):

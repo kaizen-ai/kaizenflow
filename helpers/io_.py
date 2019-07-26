@@ -9,9 +9,9 @@ import shutil
 import time
 
 import helpers.dbg as dbg
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
-_LOG = logging
+_LOG = logging.getLogger(__name__)
 
 # #############################################################################
 # Glob.
@@ -33,7 +33,7 @@ def find_files(directory, pattern):
 
 def find_regex_files(src_dir, regex):
     cmd = 'find %s -name "%s"' % (src_dir, regex)
-    _, output = hsi.system_to_string(cmd)
+    _, output = si.system_to_string(cmd)
     file_names = [f for f in output.split('\n') if f != ""]
     _LOG.debug("Found %s files in %s", len(file_names), src_dir)
     _LOG.debug("\n".join(file_names))
@@ -55,16 +55,16 @@ def create_soft_link(src, dst):
     _LOG.debug("# CreateSoftLink")
     # Create the enclosing directory, if needed.
     enclosing_dir = os.path.dirname(dst)
-    _LOG.debug("enclosing_dir=%s" % enclosing_dir)
+    _LOG.debug("enclosing_dir=%s", enclosing_dir)
     create_dir(enclosing_dir, incremental=True)
     # Create the link. Note that the link source needs to be an absolute path.
     src = os.path.abspath(src)
     cmd = "ln -s %s %s" % (src, dst)
-    hsi.system(cmd)
+    si.system(cmd)
 
 
 def delete_file(file_name):
-    _LOG.debug("Deleting file '%s'" % file_name)
+    _LOG.debug("Deleting file '%s'", file_name)
     if not os.path.exists(file_name) or file_name == "/dev/null":
         # Nothing to delete.
         return
@@ -93,13 +93,13 @@ def delete_dir(dir_,
       OSError: [Errno 16] Device or resource busy:
         'gridTmp/.nfs0000000002c8c10b00056e57'
     """
-    _LOG.debug("Deleting dir '%s'" % dir_)
+    _LOG.debug("Deleting dir '%s'", dir_)
     if not os.path.isdir(dir_):
         # No directory so nothing to do.
         return
     if (change_perms and os.path.isdir(dir_)):
         cmd = "chmod -R +rwx " + dir_
-        hsi.system(cmd)
+        si.system(cmd)
     i = 1
     while True:
         try:
@@ -111,8 +111,8 @@ def delete_dir(dir_,
                     e.errno == errnum_to_retry_on):
                 # TODO(saggese): Make it less verbose once we know it's working
                 # properly.
-                _LOG.warning("Couldn't delete %s: attempt=%s / %s" %
-                             (dir_, i, num_retries))
+                _LOG.warning("Couldn't delete %s: attempt=%s / %s", dir_, i,
+                             num_retries)
                 i += 1
                 if i > num_retries:
                     dbg.dfatal(
@@ -147,12 +147,12 @@ def create_dir(dir_name, incremental, abort_if_exists=False):
         else:
             # The dir exists and we want to create it from scratch (i.e., not
             # incremental), so we need to delete the dir.
-            _LOG.debug("Deleting dir '%s'" % dir_name)
+            _LOG.debug("Deleting dir '%s'", dir_name)
             if os.path.islink(dir_name):
                 delete_file(dir_name)
             else:
                 shutil.rmtree(dir_name)
-    _LOG.debug("Creating directory '%s'" % dir_name)
+    _LOG.debug("Creating directory '%s'", dir_name)
     # Note that makedirs raises OSError if the target directory already exists.
     # A race condition can happen when another process creates our target
     # directory, while we have just found that it doesn't exist, so we need to

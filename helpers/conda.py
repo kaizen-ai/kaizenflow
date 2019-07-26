@@ -3,7 +3,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.get_conda_config_path as gcp
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,14 +24,14 @@ def conda_system(cmd, *args, **kwargs):
     path = gcp.get_conda_config_path()
     dbg.dassert_exists(path)
     cmd = "source %s && %s" % (path, cmd)
-    return hsi.system(cmd, *args, **kwargs)
+    return si.system(cmd, *args, **kwargs)
 
 
 def conda_system_to_string(cmd, *args, **kwargs):
     path = gcp.get_conda_config_path()
     dbg.dassert_exists(path)
     cmd = "source %s && %s" % (path, cmd)
-    return hsi.system_to_string(cmd, *args, **kwargs)
+    return si.system_to_string(cmd, *args, **kwargs)
 
 
 def get_conda_envs_dirs():

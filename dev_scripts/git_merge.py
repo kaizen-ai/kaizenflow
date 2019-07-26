@@ -7,7 +7,7 @@ import os
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
 _LOG = logging
 
@@ -34,11 +34,11 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
         dst_file_name = "%s/%s.%s" % (tmp_dir_name, os.path.basename(file_name),
                                       suffix)
         cmd = "git show :%s:%s >%s" % (id_, file_name, dst_file_name)
-        hsi.system(cmd)
+        si.system(cmd)
         if file_name.endswith(".ipynb"):
             # Apply nbstripout.
             cmd = "nbstripout -f %s" % dst_file_name
-            hsi.system(cmd)
+            si.system(cmd)
         file_names[suffix] = dst_file_name
     # Diff.
     if vs_base:
@@ -57,15 +57,15 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
         root_dir = git.get_client_root()
         client_file_name = "%s/%s" % (root_dir, file_name)
         cmd = "cp %s %s.bak" % (client_file_name, client_file_name)
-        hsi.system(cmd)
+        si.system(cmd)
         # Overwrite.
         cmd = "cp -r %s %s" % (file_names["mine"], client_file_name)
-        hsi.system(cmd)
+        si.system(cmd)
         # Add to resolve and then unstage.
         cmd = "git add %s" % client_file_name
-        hsi.system(cmd)
+        si.system(cmd)
         cmd = "git reset HEAD -- %s" % client_file_name
-        hsi.system(cmd)
+        si.system(cmd)
         _LOG.info("RESOLVED")
     else:
         _LOG.warning("NOT RESOLVED")
@@ -77,7 +77,7 @@ def _main(args):
     if not args.file:
         # Find files in conflict.
         cmd = "git diff --name-only --diff-filter=U"
-        _, txt = hsi.system_to_string(cmd)
+        _, txt = si.system_to_string(cmd)
         file_names = txt.split("\n")
         dbg.dassert_lte(1, len(file_names))
     else:

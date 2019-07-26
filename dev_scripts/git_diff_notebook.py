@@ -16,20 +16,15 @@ to make the differences easier to spot using vimdiff.
 import argparse
 import logging
 import os
+import sys
 
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as printing
-import helpers.system_interaction as hsi
+import helpers.system_interaction as si
 
-_LOG = logging
-
-
-# TODO(gp): Use hsi.system.
-def _system(cmd):
-    _LOG.debug("> %s", cmd)
-    hsi.system(cmd)
+_LOG = logging.getLogger(__name__)
 
 
 def _convert(dir_name, ipynb_file, py_file):
@@ -46,13 +41,13 @@ def _convert(dir_name, ipynb_file, py_file):
     dbg.dassert_exists(ipynb_file)
     cmd = "jupyter nbconvert %s --to python --output %s >/dev/null" % (
         ipynb_file, py_file)
-    hsi.system(cmd)
+    si.system(cmd)
     # Purify output removing the [\d+].
     dir_name = os.path.dirname(ipynb_file)
     dst_py_file = dir_name + "/" + py_file
     dbg.dassert_exists(dst_py_file)
     cmd = r"perl -p -i -e 's/# In\s*\[.*]/# In[]/g' %s" % dst_py_file
-    _system(cmd)
+    si.system(cmd)
     return dst_py_file
 
 
@@ -79,7 +74,7 @@ def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
     git_file_name = abs_file_name.replace(git_client_root, "")[1:]
     _LOG.info("git_file_name=%s", git_file_name)
     cmd = "git show HEAD:%s >%s" % (git_file_name, old_ipynb)
-    hsi.system(cmd)
+    si.system(cmd)
     dbg.dassert_exists(old_ipynb)
     #
     old_py = "notebook_old.py"
@@ -94,7 +89,7 @@ def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
     if brief:
         cmd = "diff --brief %s %s" % (old_py, new_py)
         # Do not break on error, but return the error code.
-        rc = hsi.system(cmd, abort_on_error=False)
+        rc = si.system(cmd, abort_on_error=False)
         is_ipynb_diff = rc != 0
         if is_ipynb_diff:
             _LOG.warning("Notebooks %s are different", abs_file_name)
@@ -107,7 +102,7 @@ def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
         os.system(cmd)
     # Clean up.
     cmd = "rm %s %s" % (old_py, new_py)
-    _system(cmd)
+    si.system(cmd)
     return is_ipynb_diff
 
 
@@ -123,7 +118,7 @@ def _get_files(args):
     if not file_names:
         msg = "No files were selected"
         _LOG.error(msg)
-        raise ValueError(msg)
+        sys.exit(-1)
     return file_names
 
 
