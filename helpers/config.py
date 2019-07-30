@@ -9,6 +9,8 @@ import scipy
 import seaborn as sns
 import sklearn
 
+import helpers.printing as printing
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -47,3 +49,9 @@ def config_to_string(config):
 def config_to_python(config):
     config_as_str = str(config)
     return config_as_str.replace("OrderedDict", "collections.OrderedDict")
+
+
+# TODO(gp): Use this everywhere.
+def get_exception(config, key):
+    return "Invalid %s='%s' in config=\n%s" % (key, config[key],
+            printing.space(config_to_string(config)))
