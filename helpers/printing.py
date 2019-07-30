@@ -259,6 +259,8 @@ def dataframe_to_str(df,
 # Notebook output
 # #############################################################################
 
+# TODO(gp): Move to explore.py
+
 
 def config_notebook():
     import pandas as pd

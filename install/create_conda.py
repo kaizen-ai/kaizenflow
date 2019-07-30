@@ -32,6 +32,9 @@ _PYTHON_VERSION = None
 # cd ~/src/github/stickytape && conda activate develop && python setup.py install
 # > python /usr/local/lib/python2.7/site-packages/stickytape/main.py dev_scripts/create_conda.py --add-python-path . --output-file released_sticky.py
 
+# TODO(gp): Allow yml files with pip deps inside
+# https://stackoverflow.com/questions/35245401/combining-conda-environment-yml-with-pip-requirements-txt
+
 # ##############################################################################
 
 
