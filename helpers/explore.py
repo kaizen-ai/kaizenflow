@@ -8,11 +8,14 @@ These functions are used for both interactive data exploration and to implement
 more complex pipelines. The output is reported through logging.
 """
 
+import datetime
 import logging
 
 import IPython
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from IPython.display import display
 from tqdm import tqdm
 
@@ -443,6 +446,273 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     ax.set_yticklabels(reversed(df.columns.tolist()))
     return ax
 
+
+def plot_heatmap(corr_df,
+                 mode,
+                 annot="auto",
+                 figsize=None,
+                 title=None,
+                 vmin=None,
+                 vmax=None,
+                 ax=None):
+    """
+    Plot a heatmap for a corr / cov df.
+    """
+    # Sanity check.
+    dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
+    dbg.dassert_lte(corr_df.shape[0], 20)
+    if corr_df.shape[0] < 2 or corr_df.shape[1] < 2:
+        log.warning("Can't plot heatmap for corr_df with shape=%s", str(corr_df.shape))
+        return
+    if np.all(np.isnan(corr_df)):
+        log.warning("Can't plot heatmap with only nans:\n%s", corr_df.to_string())
+        return
+    #
+    if annot == "auto":
+        annot = corr_df.shape[0] < 10
+    # Generate a custom diverging colormap.
+    cmap = sns.diverging_palette(220, 10, as_cmap=True)
+    if figsize is None:
+        figsize = (8, 6)
+        #figsize = (10, 10)
+    if mode == "heatmap":
+        # Set up the matplotlib figure.
+        if ax is None:
+            _, ax = plt.subplots(figsize=figsize)
+        # Draw the heatmap with the mask and correct aspect ratio.
+        sns.heatmap(
+            corr_df,
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax,
+            square=True,
+            annot=annot,
+            fmt=".2f",
+            linewidths=.5,
+            cbar_kws={"shrink": .5},
+            ax=ax)
+        ax.set_title(title)
+    elif mode == "heatmap_semitriangle":
+        # Set up the matplotlib figure.
+        if ax is None:
+            _, ax = plt.subplots(figsize=figsize)
+        # Generate a mask for the upper triangle.
+        mask = np.zeros_like(corr_df, dtype=np.bool)
+        mask[np.triu_indices_from(mask)] = True
+        # Draw the heatmap with the mask and correct aspect ratio.
+        sns.heatmap(
+            corr_df,
+            mask=mask,
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax,
+            square=True,
+            annot=annot,
+            fmt=".2f",
+            linewidths=.5,
+            cbar_kws={"shrink": .5},
+            ax=ax)
+        ax.set_title(title)
+    elif mode == "clustermap":
+        dbg.dassert_is(ax, None)
+        g = sns.clustermap(
+            corr_df,
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax,
+            linewidths=.5,
+            square=True,
+            figsize=figsize)
+        g.ax_heatmap.set_title(title)
+    else:
+        raise RuntimeError("Invalid mode='%s'" % mode)
+
+
+# TODO(saggese): Add an option to mask out the correlation with low pvalues
+# http://stackoverflow.com/questions/24432101/correlation-coefficients-and-p-values-for-all-pairs-of-rows-of-a-matrix
+def plot_correlation_matrix(df, mode, annot=False, figsize=None, title=None):
+    if df.shape[1] < 2:
+        log.warning("Skipping correlation matrix since df is %s",
+                    str(df.shape))
+        return None
+    # Compute the correlation matrix.
+    corr_df = df.corr()
+    # Plot heatmap.
+    plot_heatmap(
+        corr_df,
+        mode,
+        annot=annot,
+        figsize=figsize,
+        title=title,
+        vmin=-1.0,
+        vmax=1.0)
+    return corr_df
+
+
+def plot_dendogram(df, figsize=None):
+    # Look at:
+    # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
+    # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
+    if df.shape[1] < 2:
+        log.warning("Skipping correlation matrix since df is %s",
+                    str(df.shape))
+        return None
+    #y = scipy.spatial.distance.pdist(df.values, 'correlation')
+    y = df.corr().values
+    #z = scipy.cluster.hierarchy.linkage(y, 'single')
+    z = scipy.cluster.hierarchy.linkage(y, 'average')
+    if figsize is None:
+        figsize = (16, 16)
+    _ = plt.figure(figsize=figsize)
+    scipy.cluster.hierarchy.dendrogram(
+        z,
+        labels=df.columns.tolist(),
+        leaf_rotation=0,
+        color_threshold=0,
+        orientation='right')
+
+
+def display_corr_df(df):
+    if df is not None:
+        df_tmp = df.applymap(lambda x: "%.2f" % x)
+        display_df(df_tmp)
+    else:
+        log.info("Can't display correlation df since it is None")
+
+
+# /////////////////////////////////////////////////////////////////////////////
+# PCA
+# /////////////////////////////////////////////////////////////////////////////
+
+
+def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
+    from sklearn.decomposition import PCA
+    # Compute PCA.
+    corr = ret.corr(method='pearson')
+    pca = PCA()
+    pca.fit(ret.fillna(0.0))
+    explained_variance = pd.Series(pca.explained_variance_ratio_)
+    # Find indices of assets with no nans in the covariance matrix.
+    num_non_nan_corr = corr.notnull().sum()
+    is_valid = num_non_nan_corr == num_non_nan_corr.max()
+    valid_indices = sorted(is_valid[is_valid].index.tolist())
+    # Compute eigenvalues / vectors for the subset of the matrix without nans.
+    eigenval, eigenvec = np.linalg.eig(corr.loc[valid_indices, valid_indices]
+                                       .values)
+    # Sort by decreasing eigenvalue.
+    ind = eigenval.argsort()[::-1]
+    selected_pcs = eigenvec[:, ind]
+    pcs = pd.DataFrame(selected_pcs, index=valid_indices)
+    lambdas = pd.Series(eigenval[ind])
+    #
+    if plot_explained_variance:
+        title = "Eigenvalues and explained variance vs ordered PCs"
+        # Plot explained variance.
+        explained_variance.cumsum().plot(
+            title=title, lw=5, figsize=(20, 7), ylim=(0, 1))
+        # Plot principal component lambda.
+        (lambdas / lambdas.max()).plot(color='g', lw=1, kind='bar')
+    if num_pcs_to_plot > 0:
+        num_cols = 3
+        use_subplots = True
+        figsize = (20, 7)
+        multiple_plots = MultiplePlots(
+            num_pcs_to_plot, num_cols, use_subplots, figsize=figsize)
+        for i in range(num_pcs_to_plot):
+            ax = multiple_plots.get_ax(i)
+            temp = pcs.ix[:, i].copy()
+            #temp.sort()
+            temp.plot(kind='barh', ax=ax, title='PC%s' % i)
+    #return pcs, lambdas
+
+
+def plot_pca_over_time(ret, com):
+    corr = pd.ewmcorr(ret.copy(), com=com, min_periods=com)
+    # Find when the correlation matrix is all not null.
+    start_date = np.argmax(corr.notnull().sum().sum() > 0)
+    corr = corr.loc[start_date:]
+    corr = corr.fillna(0)
+    # Compute rolling eigenvalues.
+    val, vec = np.linalg.eig(corr)
+    _ = vec
+    # Normalize by sum.
+    df = pd.DataFrame(val)
+    df = df.multiply(1 / df.sum(axis=1), axis="index")
+    df.plot(
+        figsize=(20, 7),
+        cmap='rainbow',
+        title='Top eigenvalues by PCs',
+        lw=2,
+        ylim=(0, 1))
+    #return df
+
+
+def plot_time_distributions(dts, mode, density=True):
+    """
+    Compute distribution for an array of timestamps `dts`.
+    - mode: see below
+    """
+    dbg.dassert_type_in(dts[0], (datetime.datetime, pd.Timestamp))
+    dbg.dassert_in(mode, ("time_of_the_day", "weekday", "minute_of_the_hour", "day_of_the_month", "month_of_the_year", "year"))
+    if mode == "time_of_the_day":
+        # Converts in minutes from the beginning of the day.
+        data = [dt.time() for dt in dts]
+        data = [t.hour * 60 + t.minute for t in data]
+        # 1 hour bucket.
+        step = 60
+        bins = np.arange(0, 24 * 60 + step, step)
+        vals = pd.cut(data, bins=bins, include_lowest=True, right=False, retbins=False, labels=False)
+        # Count.
+        count = pd.Series(vals).value_counts(sort=False)
+        # Compute the labels.
+        yticks = ["%02d:%02d" % (bins[k] / 60, bins[k] % 60) for k in count.index]
+    elif mode == "weekday":
+        data = [dt.date().weekday() for dt in dts]
+        bins = np.arange(0, 7 + 1)
+        vals = pd.cut(data, bins=bins, include_lowest=True, right=False, retbins=False, labels=False)
+        # Count.
+        count = pd.Series(vals).value_counts(sort=False)
+        # Compute the labels.
+        yticks = "Mon Tue Wed Thu Fri Sat Sun".split()
+    elif mode == "minute_of_the_hour":
+        vals = [dt.time().minute for dt in dts]
+        # Count.
+        count = pd.Series(vals).value_counts(sort=False)
+        # Compute the labels.
+        yticks = list(map(str, list(range(1, 60 + 1))))
+    elif mode == "day_of_the_month":
+        vals = [dt.date().day for dt in dts]
+        # Count.
+        count = pd.Series(vals).value_counts(sort=False)
+        # Compute the labels.
+        yticks = list(map(str, list(range(1, 31 + 1))))
+    elif mode == "month_of_the_year":
+        vals = [dt.date().month for dt in dts]
+        # Count.
+        count = pd.Series(vals).value_counts(sort=False)
+        # Compute the labels.
+        yticks = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
+    elif mode == "year":
+        vals = [dt.date().year for dt in dts]
+        # Count.
+        count = pd.Series(vals).value_counts(sort=False)
+        # Compute the labels.
+        yticks = pd.Series(vals).unique().tolist()
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    dbg.dassert_eq(count.sum(), len(dts))
+    #
+    if density:
+        count /= count.sum()
+    label = "num points=%s" % len(dts)
+    ax = count.plot(kind="bar", label=label, figsize=(20, 7))
+    ax.set_xticklabels(yticks)
+    if density:
+        ax.set_ylabel("Probability")
+    else:
+        ax.set_ylabel("Count")
+    ax.legend(loc="best")
+    return ax
 
 # #############################################################################
 # Printing
