@@ -714,6 +714,70 @@ def plot_time_distributions(dts, mode, density=True):
     ax.legend(loc="best")
     return ax
 
+
+# #############################################################################
+# Feature selection
+# #############################################################################
+
+
+import statsmodels.api as sm
+import collections
+
+
+def feature_selection(df, y_var, x_vars, use_intercept, nan_mode="drop", y_shifts=None):
+    if y_shifts is None:
+        y_shifts = [0]
+    res_df = []
+    for x_var in x_vars:
+        _LOG.debug("x_var=%s", x_var)
+        row = collections.OrderedDict()
+        df_tmp = df[[y_var, x_var]].copy()
+        row["y_var"] = y_var
+        row["x_var"] = x_var
+        for i in y_shifts:
+            _LOG.debug("feature_shift=%s", i)
+            row_tmp = row.copy()
+            row_tmp["y_shift"] = i
+            if i != 0:
+                df_tmp[y_var] = df_tmp.shift(i)
+            #
+            if nan_mode == "drop":
+                df_tmp.dropna(inplace=True)
+            elif nan_mode == "fill_with_zeros":
+                df_tmp.fillna(0.0, inplace=True)
+            else:
+                raise ValueError("Invalid nan_mode='%s'" % nan_mode)
+            row_tmp["nan_mode"] = nan_mode
+            regr_x_vars = [x_var]
+            if use_intercept:
+                df_tmp = sm.add_constant(df_tmp)
+                regr_x_vars.insert(0, "const")
+            row_tmp["use_intercept"] = use_intercept
+            # Fit.
+            reg = sm.OLS(df_tmp[y_var], df_tmp[regr_x_vars])
+            model = reg.fit()
+            if use_intercept:
+                dbg.dassert_eq(len(model.params), 2)
+                row_tmp["params_const"] = model.params[0]
+                row_tmp["pvalues_const"] = model.pvalues[0]
+                row_tmp["params_var"] = model.params[1]
+                row_tmp["pvalues_var"] = model.pvalues[1]
+            else:
+                dbg.dassert_eq(len(model.params), 1)
+                row_tmp["params_var"] = model.params[0]
+                row_tmp["pvalues_var"] = model.pvalues[0]
+            row_tmp["nobs"] = model.nobs
+            row_tmp["condition_number"] = model.condition_number
+            row_tmp["rsquared"] = model.rsquared
+            row_tmp["rsquared_adj"] = model.rsquared_adj
+            #print(model.summary())
+
+            #if False:
+            #    sns.regplot(x=df[x_var], y=df[y_var])
+            #    plt.show()
+            res_df.append(row_tmp)
+    return pd.DataFrame(res_df)
+
 # #############################################################################
 # Printing
 # #############################################################################
