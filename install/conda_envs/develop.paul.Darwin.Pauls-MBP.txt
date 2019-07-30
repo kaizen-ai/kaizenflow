@@ -22,6 +22,7 @@ anaconda-navigator=1.9.7=py37_0
 appnope=0.1.0=py37_0
 asn1crypto=0.24.0=py37_0
 attrs=19.1.0=py37_1
+awscli=1.16.201=py37_0
 backcall=0.1.0=py37_0
 backports=1.0=py_2
 backports.functools_lru_cache=1.5=py_2
@@ -30,14 +31,16 @@ backports.weakref=1.0.post1=py_1
 beautifulsoup4=4.7.1=py37_1
 blas=1.0=mkl
 bleach=3.1.0=py37_0
+botocore=1.12.191=py_0
 bzip2=1.0.8=h1de35cc_0
-ca-certificates=2019.5.15=0
-certifi=2019.6.16=py37_0
+ca-certificates=2019.6.16=hecc5488_0
+certifi=2019.6.16=py37_1
 cffi=1.12.3=py37hb5b8e2f_0
 chardet=3.0.4=py37_1
 click=7.0=py37_0
 clyent=1.2.2=py37_1
-conda=4.7.9=py37_0
+colorama=0.3.9=py_1
+conda=4.7.10=py37_0
 conda-build=3.18.7=py37_0
 conda-env=2.6.0=1
 conda-package-handling=1.3.11=py37_0
@@ -48,6 +51,7 @@ cycler=0.10.0=py37_0
 dbus=1.13.6=h90a0687_0
 decorator=4.4.0=py37_1
 defusedxml=0.6.0=py_0
+docutils=0.14=py37_1001
 entrypoints=0.3=py37_0
 expat=2.2.6=h0a44026_0
 filelock=3.0.12=py_0
@@ -68,6 +72,7 @@ ipython_genutils=0.2.0=py37_0
 ipywidgets=7.5.0=py_0
 jedi=0.13.3=py37_0
 jinja2=2.10.1=py37_0
+jmespath=0.9.4=py_0
 joblib=0.13.2=py37_0
 jpeg=9b=he5867d9_2
 json5=0.8.4=py_0
@@ -108,7 +113,7 @@ notebook=6.0.0=py37_0
 numpy=1.16.4=py37hacdab7b_0
 numpy-base=1.16.4=py37h6575580_0
 olefile=0.46=py37_0
-openssl=1.1.1c=h1de35cc_1
+openssl=1.1.1c=h01d97ff_0
 pandas=0.24.2=py37h0a44026_0
 pandas-datareader=0.7.0=pypi_0
 pandoc=2.2.3.2=0
@@ -126,6 +131,7 @@ prompt_toolkit=2.0.9=py37_0
 psutil=5.6.3=py37h1de35cc_0
 ptyprocess=0.6.0=py37_0
 py-lief=0.9.0=py37h1413db1_2
+pyasn1=0.4.5=py_0
 pycosat=0.6.3=py37h1de35cc_0
 pycparser=2.19=py37_0
 pygments=2.4.2=py_0
@@ -139,13 +145,15 @@ python-dateutil=2.8.0=py37_0
 python-libarchive-c=2.8=py37_11
 python.app=2=py37_9
 pytz=2019.1=py_0
-pyyaml=5.1.1=py37h1de35cc_0
+pyyaml=5.1=py37h1de35cc_0
 pyzmq=18.0.0=py37h0a44026_0
 qt=5.9.7=h468cd18_1
 qtpy=1.8.0=py_0
 readline=7.0=h1de35cc_5
 requests=2.22.0=py37_0
+rsa=3.4.2=py_1
 ruamel_yaml=0.15.46=py37h1de35cc_0
+s3transfer=0.2.1=py37_0
 scikit-learn=0.21.2=py37h27c97d8_0
 scipy=1.3.0=py37h1410ff5_0
 seaborn=0.9.0=py37_0
