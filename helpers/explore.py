@@ -31,6 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def find_duplicates(vals):
+    # TODO: Consider replacing with pd.Series.value_counts.
     # Count the occurrences of each element of the seq.
     v_to_num = [(v, vals.count(v)) for v in set(vals)]
     # Build list of elems with duplicates.
@@ -207,6 +208,7 @@ def describe_nan_stats(df):
     return ret_df
 
 
+# TODO(gp): Explain what this is supposed to do.
 def breakdown_table(df,
                     col_name,
                     num_digits=2,
