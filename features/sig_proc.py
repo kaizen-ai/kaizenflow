@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 import pywt
 import scipy as sp
-import statsmodels.api as sm 
+import statsmodels.api as sm
 
 
 def plot_autocorrelation(signal, lags=40):
     """
     Plot autocorrelation and partial autocorrelation of series.
     """
-    fig = plt.figure(figsize=(12,8))
+    fig = plt.figure(figsize=(12, 8))
     ax1 = fig.add_subplot(211)
     fig = sm.graphics.tsa.plot_acf(signal, lags=lags, ax=ax1)
     ax2 = fig.add_subplot(212)
@@ -32,6 +32,9 @@ def plot_power_spectral_density(signal):
 
 
 def plot_spectrogram(signal):
+    """
+    Plot spectrogram of signal.
+    """
     freqs, times, spectrogram = sp.signal.spectrogram(signal)
     plt.figure(figsize=(5, 4))
     plt.imshow(spectrogram, aspect='auto', cmap='hot_r', origin='lower')
@@ -44,7 +47,7 @@ def plot_spectrogram(signal):
 def plot_wavelet_levels(signal, wavelet_name, levels):
     """
     Wavelet level decomposition plot. Higher levels are smoother.
-    
+
     :param signal: Series-like numerical object
     :param wavelet_name: One of the names in pywt.wavelist()
     :param levels: The number of levels to plot
@@ -53,14 +56,16 @@ def plot_wavelet_levels(signal, wavelet_name, levels):
     ax.set_title("Original signal")
     ax.plot(signal)
     plt.show()
-    
+
     data = signal.copy()
-    fig, axarr = plt.subplots(nrows=levels, ncols=2, figsize=(6,6))
+    fig, axarr = plt.subplots(nrows=levels, ncols=2, figsize=(6, 6))
     for idx in range(levels):
         (data, coeff_d) = pywt.dwt(data, wavelet_name)
         axarr[idx, 0].plot(data, 'r')
         axarr[idx, 1].plot(coeff_d, 'g')
-        axarr[idx, 0].set_ylabel("Level {}".format(idx + 1), fontsize=14, rotation=90)
+        axarr[idx, 0].set_ylabel("Level {}".format(idx + 1),
+                                 fontsize=14,
+                                 rotation=90)
         axarr[idx, 0].set_yticklabels([])
         if idx == 0:
             axarr[idx, 0].set_title("Approximation coefficients", fontsize=14)
@@ -85,8 +90,9 @@ def low_pass_filter(signal, wavelet_name, threshold):
     :return: Smoothed signal as pd.Series, indexed like signal.index
     """
     threshold = threshold * np.nanmax(signal)
-    coeff = pywt.wavedec(signal, wavelet_name, mode="per" )
-    coeff[1:] = (pywt.threshold(i, value=threshold, mode="soft" ) for i in coeff[1:])
+    coeff = pywt.wavedec(signal, wavelet_name, mode="per")
+    coeff[1:] = (
+        pywt.threshold(i, value=threshold, mode="soft") for i in coeff[1:])
     rec = pywt.waverec(coeff, wavelet_name, mode="per")
     if rec.size > signal.size:
         rec = rec[1:]
@@ -98,7 +104,7 @@ def plot_low_pass(signal, wavelet_name, threshold):
     """
     Overlays signal with result of low_pass_filter()
     """
-    fig, ax = plt.subplots(figsize=(12,8))
+    fig, ax = plt.subplots(figsize=(12, 8))
     ax.plot(signal, color="b", alpha=0.5, label='original signal')
     rec = low_pass_filter(signal, wavelet_name, threshold)
     ax.plot(rec, 'k', label='DWT smoothing}', linewidth=2)
@@ -107,4 +113,3 @@ def plot_low_pass(signal, wavelet_name, threshold):
     ax.set_ylabel('Signal Amplitude', fontsize=16)
     ax.set_xlabel('Sample', fontsize=16)
     plt.show()
-
