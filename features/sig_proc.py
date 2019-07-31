@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pywt
 import scipy as sp
-import statsmodels as sm
+import statsmodels.api as sm 
 
 
 def plot_autocorrelation(signal, lags=40):
@@ -13,9 +13,9 @@ def plot_autocorrelation(signal, lags=40):
     """
     fig = plt.figure(figsize=(12,8))
     ax1 = fig.add_subplot(211)
-    fig = sm.api.graphics.tsa.plot_acf(signal, lags=lags, ax=ax1)
+    fig = sm.graphics.tsa.plot_acf(signal, lags=lags, ax=ax1)
     ax2 = fig.add_subplot(212)
-    fig = sm.api.graphics.tsa.plot_pacf(signal, lags=lags, ax=ax2)
+    fig = sm.graphics.tsa.plot_pacf(signal, lags=lags, ax=ax2)
 
 
 def plot_power_spectral_density(signal):
