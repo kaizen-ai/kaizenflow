@@ -1,14 +1,10 @@
 import collections
-import datetime
 import logging
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import scipy
 import seaborn as sns
 import statsmodels.api as sm
-from tqdm import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as printing
@@ -109,9 +105,13 @@ class Reporter:
 
     def plot(self):
         # Reshape the results in terms of coeff values and pvalues.
-        coeff_df = self.res_df[["x_var", "x_shift", "params_var", "pvalues_var"]].pivot(
+        coeff_df = self.res_df[[
+            "x_var", "x_shift", "params_var", "pvalues_var"
+        ]].pivot(
             index='x_shift', columns='x_var', values='params_var')
-        pvals_df = self.res_df[["x_var", "x_shift", "params_var", "pvalues_var"]].pivot(
+        pvals_df = self.res_df[[
+            "x_var", "x_shift", "params_var", "pvalues_var"
+        ]].pivot(
             index='x_shift', columns='x_var', values='pvalues_var')
         min_val = coeff_df.min(axis=0).min()
         max_val = coeff_df.max(axis=0).max()
@@ -144,7 +144,8 @@ class Reporter:
                 coeff_df_tmp.iloc[i, j] = coeff
                 coeff_color_map[coeff] = color
         # Style df by assigning colors.
-        decorate_with_color = lambda val: self._decorate_with_color(val, coeff_color_map)
+        decorate_with_color = lambda val: self._decorate_with_color(
+            val, coeff_color_map)
         coeff_df_tmp = coeff_df_tmp.style.applymap(decorate_with_color)
         return coeff_df_tmp
 
@@ -184,7 +185,8 @@ class Reporter:
             rgb = Reporter._interpolate_rgb(val, max_val, min_rgb, max_rgb)
         #E.g., color = '#FF0000'
         color = '#{:02x}{:02x}{:02x}'.format(*rgb)
-        _LOG.debug("val=%s in [%s, %s] -> rgb=%s %s", val, min_val, max_val, rgb, color)
+        _LOG.debug("val=%s in [%s, %s] -> rgb=%s %s", val, min_val, max_val,
+                   rgb, color)
         return color
 
     @staticmethod
@@ -192,6 +194,7 @@ class Reporter:
         dbg.dassert_in(txt, color_map)
         color = color_map[txt]
         return 'background-color: %s' % color
+
 
 # TODO(gp): Add unit test.
 # print(color_negative_red(val=2, min_val=-2, max_val=2))
