@@ -23,8 +23,6 @@ from tqdm import tqdm
 import helpers.dbg as dbg
 import helpers.printing as printing
 
-# TODO(gp): Always use logging but expose a logging config to make the logging
-# look like normal printing for interactive use in a notebook.
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
@@ -741,10 +739,14 @@ def _analyze_feature(df, y_var, x_var, use_intercept, nan_mode, x_shift,
     _LOG.debug("df=\n%s", df.head(3))
     _LOG.debug("y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s",
                y_var, x_var, use_intercept, nan_mode, x_shift)
+    dbg.dassert_isinstance(y_var, str)
+    dbg.dassert_isinstance(x_var, str)
+    #
     res = collections.OrderedDict()
-    df_tmp = df[[y_var, x_var]].copy()
     res["y_var"] = y_var
     res["x_var"] = x_var
+    df_tmp = df[[y_var, x_var]].copy()
+    #
     res["x_shift"] = x_shift
     if x_shift != 0:
         df_tmp[x_var] = df_tmp[x_var].shift(x_shift)
@@ -756,6 +758,7 @@ def _analyze_feature(df, y_var, x_var, use_intercept, nan_mode, x_shift,
     else:
         raise ValueError("Invalid nan_mode='%s'" % nan_mode)
     res["nan_mode"] = nan_mode
+    #
     regr_x_vars = [x_var]
     if use_intercept:
         df_tmp = sm.add_constant(df_tmp)
@@ -805,7 +808,7 @@ def analyze_features(df,
         _LOG.debug("x_var=%s", x_var)
         for x_shift in x_shifts:
             _LOG.debug("x_shifts=%s", x_shift)
-            res_tmp = _analyze_feature(df, y_var, x_vars, use_intercept,
+            res_tmp = _analyze_feature(df, y_var, x_var, use_intercept,
                                        nan_mode, x_shift, report_stats)
             res_df.append(res_tmp)
     return pd.DataFrame(res_df)
