@@ -96,4 +96,104 @@ def analyze_features(df,
     return pd.DataFrame(res_df)
 
 
+# #############################################################################
 
+
+class Reporter:
+    """
+    Report results from `analyze_features()` in a heatmap with coefficient values and p-values.
+    """
+
+    def __init__(self, res_df):
+        self.res_df = res_df
+
+    def plot(self):
+        # Reshape the results in terms of coeff values and pvalues.
+        coeff_df = self.res_df[["x_var", "x_shift", "params_var", "pvalues_var"]].pivot(
+            index='x_shift', columns='x_var', values='params_var')
+        pvals_df = self.res_df[["x_var", "x_shift", "params_var", "pvalues_var"]].pivot(
+            index='x_shift', columns='x_var', values='pvalues_var')
+        min_val = coeff_df.min(axis=0).min()
+        max_val = coeff_df.max(axis=0).max()
+        # Df storing the results.
+        coeff_df_tmp = coeff_df.copy()
+        # Map from cell text in coeff_df_map to color.
+        coeff_color_map = {}
+        #
+        for i in range(coeff_df_tmp.shape[0]):
+            for j in range(coeff_df_tmp.shape[1]):
+                coeff = coeff_df.iloc[i, j]
+                _LOG.debug("i=%s j=%s -> coeff=%s", i, j, coeff)
+                # Compute color.
+                color = self._assign_color(coeff, min_val, max_val)
+                # Present coeff and pval.
+                coeff = "%.3f" % coeff
+                pval = pvals_df.iloc[i, j]
+                if pval < 0.001:
+                    # 0.1%
+                    coeff += " (***)"
+                elif pval < 0.01:
+                    # 1%
+                    coeff += " (**)"
+                elif pval < 0.05:
+                    # 5%
+                    coeff += " (*)"
+                else:
+                    #coeff = ""
+                    pass
+                coeff_df_tmp.iloc[i, j] = coeff
+                coeff_color_map[coeff] = color
+        # Style df by assigning colors.
+        decorate_with_color = lambda val: self._decorate_with_color(val, coeff_color_map)
+        coeff_df_tmp = coeff_df_tmp.style.applymap(decorate_with_color)
+        return coeff_df_tmp
+
+    @staticmethod
+    def _interpolate(val, max_val, min_col, max_col):
+        """
+        Interpolate intensity in [min_col, max_col] based on val in
+        0, max_val].
+        :return: float value in [0, 1]
+        """
+        dbg.dassert_lte(0, val)
+        dbg.dassert_lte(val, max_val)
+        res = min_col + (val / max_val * (max_col - min_col))
+        return int(res)
+
+    @staticmethod
+    def _interpolate_rgb(val, max_val, min_rgb, max_rgb):
+        """
+        Interpolate val in [0, max_val] in terms of the rgb colors
+        [min_rgb, max_rgb] by interpolating the 3 color channels.
+        :return: triple representing the interpolated color
+        """
+        res = []
+        for min_, max_ in zip(min_rgb, max_rgb):
+            res.append(Reporter._interpolate(val, max_val, min_, max_))
+        return res
+
+    @staticmethod
+    def _assign_color(val, min_val, max_val):
+        if val < 0:
+            min_rgb = (255, 255, 255)
+            max_rgb = (96, 96, 255)
+            rgb = Reporter._interpolate_rgb(-val, -min_val, min_rgb, max_rgb)
+        else:
+            min_rgb = (255, 255, 255)
+            max_rgb = (255, 96, 96)
+            rgb = Reporter._interpolate_rgb(val, max_val, min_rgb, max_rgb)
+        #E.g., color = '#FF0000'
+        color = '#{:02x}{:02x}{:02x}'.format(*rgb)
+        _LOG.debug("val=%s in [%s, %s] -> rgb=%s %s", val, min_val, max_val, rgb, color)
+        return color
+
+    @staticmethod
+    def _decorate_with_color(txt, color_map):
+        dbg.dassert_in(txt, color_map)
+        color = color_map[txt]
+        return 'background-color: %s' % color
+
+# TODO(gp): Add unit test.
+# print(color_negative_red(val=2, min_val=-2, max_val=2))
+# print(color_negative_red(val=-2, min_val=-2, max_val=2))
+# print(color_negative_red(val=0.001, min_val=-2, max_val=2))
