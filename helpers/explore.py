@@ -8,19 +8,20 @@ These functions are used for both interactive data exploration and to implement
 more complex pipelines. The output is reported through logging.
 """
 
+import collections
 import datetime
 import logging
 
-import IPython
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy
 import seaborn as sns
-from IPython.display import display
+import statsmodels.api as sm
 from tqdm import tqdm
 
 import helpers.dbg as dbg
-import helpers.printing as print_
+import helpers.printing as printing
 
 # TODO(gp): Always use logging but expose a logging config to make the logging
 # look like normal printing for interactive use in a notebook.
@@ -60,10 +61,10 @@ def drop_na_rows_columns(df):
     removed_cols = [
         x in cols_after for x in set(cols_before).difference(set(cols_after))
     ]
-    pct_removed = print_.perc(
+    pct_removed = printing.perc(
         len(cols_before) - len(cols_after), len(cols_after))
-    print(("removed cols with all nans: %s %s" %
-           (pct_removed, print_.list_to_str(removed_cols))))
+    _LOG.info("removed cols with all nans: %s %s", pct_removed,
+              printing.list_to_str(removed_cols))
     #
     # Remove rows with all nans, if any.
     rows_before = df.columns[:]
@@ -80,10 +81,10 @@ def drop_na_rows_columns(df):
         # TODO(gp): Report as intervals of dates.
         min_ts = min(removed_rows)
         max_ts = max(removed_rows)
-    pct_removed = print_.perc(
+    pct_removed = printing.perc(
         len(rows_before) - len(rows_after), len(rows_after))
-    print(("removed rows with all nans: %s [%s, %s]" % (pct_removed, min_ts,
-                                                        max_ts)))
+    _LOG.info("removed rows with all nans: %s [%s, %s]", pct_removed, min_ts,
+              max_ts)
     return df
 
 
@@ -103,7 +104,8 @@ def drop_na(df, *args, **kwargs):
     if "log_level" in kwargs:
         log_level = kwargs["log_level"]
     num_rows_after = df.shape[0]
-    pct_removed = print_.perc(num_rows_before - num_rows_after, num_rows_before)
+    pct_removed = printing.perc(num_rows_before - num_rows_after,
+                                num_rows_before)
     _LOG.log(log_level, "removed rows with nans: %s", pct_removed)
     return df
 
@@ -128,20 +130,21 @@ def _get_variable_cols(df, threshold=1):
 
 
 # TODO(gp): Remove verb and use print.
-def remove_const_columns(df, threshold=1, verb=False):
+def remove_columns_with_low_variability(df,
+                                        threshold=1,
+                                        log_level=logging.DEBUG):
     """
-    Remove columns of a df that contain less than <threshold> unique values.
+    Remove columns of df that contain less than <threshold> unique values.
 
     :return: df with only variable columns
     """
     var_cols, const_cols = _get_variable_cols(df, threshold=threshold)
-    if verb:
-        print("# Constant cols")
-        for c in const_cols:
-            print(("  %s: %s" %
-                   (c, print_.list_to_str(list(map(str, df[c].unique()))))))
-        print("# Var cols")
-        print((print_.list_to_str(var_cols)))
+    _LOG.log(log_level, "# Constant cols")
+    for c in const_cols:
+        _LOG.log(log_level, "  %s: %s", c,
+                 printing.list_to_str(list(map(str, df[c].unique()))))
+    _LOG.log(log_level, "# Var cols")
+    _LOG.log(log_level, printing.list_to_str(var_cols))
     return df[var_cols]
 
 
@@ -166,12 +169,12 @@ def add_pct(res,
     res.insert(pos_col_name + 1, dst_col_name, (100.0 * res[col_name]) / total)
     # Format.
     res[col_name] = [
-        print_.round_digits(
+        printing.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator)
         for v in res[col_name]
     ]
     res[dst_col_name] = [
-        print_.round_digits(
+        printing.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False)
         for v in res[dst_col_name]
     ]
@@ -213,7 +216,7 @@ def breakdown_table(df,
                     verb=False):
     if isinstance(col_name, list):
         for c in col_name:
-            print(("\n" + print_.frame(c).rstrip("\n")))
+            print(("\n" + printing.frame(c).rstrip("\n")))
             res = breakdown_table(df, c)
             print(res)
         return None
@@ -230,18 +233,18 @@ def breakdown_table(df,
     res["pct"] = (100.0 * res["count"]) / df.shape[0]
     # Format.
     res["count"] = [
-        print_.round_digits(
+        printing.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator)
         for v in res["count"]
     ]
     res["pct"] = [
-        print_.round_digits(
+        printing.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False)
         for v in res["pct"]
     ]
     if verb:
         for k, df_tmp in df.groupby(col_name):
-            print((print_.frame("%s=%s" % (col_name, k))))
+            print((printing.frame("%s=%s" % (col_name, k))))
             cols = [col_name, "description"]
             with pd.option_context("display.max_colwidth", 100000,
                                    "display.width", 130):
@@ -249,15 +252,15 @@ def breakdown_table(df,
     return res
 
 
-def print_column_variability(df,
-                             max_num_vals=3,
-                             num_digits=2,
-                             use_thousands_separator=True):
+def printingcolumn_variability(df,
+                               max_num_vals=3,
+                               num_digits=2,
+                               use_thousands_separator=True):
     """
     Print statistics about the values in each column of a data frame.
     This is useful to get a sense of which columns are interesting.
     """
-    print(("# df.columns=%s" % print_.list_to_str(df.columns)))
+    print(("# df.columns=%s" % printing.list_to_str(df.columns)))
     res = []
     for c in tqdm(df.columns):
         vals = df[c].unique()
@@ -306,18 +309,16 @@ def find_common_columns(names, dfs):
 # #############################################################################
 
 
-def remove_columns(df, cols, verb=False):
+def remove_columns(df, cols, log_level=logging.DEBUG):
     to_remove = set(cols).intersection(set(df.columns))
-    if verb:
-        print(("to_remove=%s" % print_.list_to_str(to_remove)))
+    _LOG.log(log_level, "to_remove=%s", printing.list_to_str(to_remove))
     df.drop(to_remove, axis=1, inplace=True)
-    if verb:
-        display(df.head(3))
-        print((print_.list_to_str(df.columns)))
+    _LOG.debug("df=\n%s", df.head(3))
+    _LOG.log(log_level, printing.list_to_str(df.columns))
     return df
 
 
-def filter_with_df(df, filter_df, verb=True):
+def filter_with_df(df, filter_df, log_level=logging.DEBUG):
     """
     Compute a mask for DataFrame df using common columns and values in
     "filter_df".
@@ -330,8 +331,7 @@ def filter_with_df(df, filter_df, verb=True):
             mask = df[c].isin(vals)
         else:
             mask &= df[c].isin(vals)
-    if verb:
-        print(("after filter=%s" % perc(mask.sum(), len(mask))))
+    _LOG.log(log_level, "after filter=%s", printing.perc(mask.sum(), len(mask)))
     return mask
 
 
@@ -340,7 +340,7 @@ def filter_around_time(df,
                        timestamp,
                        timedelta_before,
                        timedelta_after=None,
-                       verb=False):
+                       log_level=logging.DEBUG):
     dbg.dassert_in(col_name, df)
     dbg.dassert_lte(pd.Timedelta(0), timedelta_before)
     if timedelta_after is None:
@@ -351,9 +351,8 @@ def filter_around_time(df,
     upper_bound = timestamp + timedelta_after
     mask = (df[col_name] >= lower_bound) & (df[col_name] <= upper_bound)
     #
-    if verb:
-        print(("Filtering in [%s, %s] selected rows=%s" %
-               (lower_bound, upper_bound, perc(mask.sum(), df.shape[0]))))
+    _LOG.log(log_level, "Filtering in [%s, %s] selected rows=%s", lower_bound,
+             upper_bound, printing.perc(mask.sum(), df.shape[0]))
     return df[mask]
 
 
@@ -362,7 +361,7 @@ def filter_by_val(df,
                   min_val,
                   max_val,
                   use_thousands_separator=True,
-                  verb=False):
+                  log_level=logging.DEBUG):
     """
     Filter out rows of df where df[col_name] is not in [min_val, max_val].
     """
@@ -382,16 +381,16 @@ def filter_by_val(df,
             mask &= mask2
     res = df[mask]
     dbg.dassert_lt(0, res.shape[0])
-    if verb:
-        print(("Rows kept %s, removed %s rows" %
-               (perc(
-                   res.shape[0],
-                   num_rows,
-                   use_thousands_separator=use_thousands_separator),
-                perc(
-                    num_rows - res.shape[0],
-                    num_rows,
-                    use_thousands_separator=use_thousands_separator))))
+    _LOG.log(
+        log_level, "Rows kept %s, removed %s rows",
+        printing.perc(
+            res.shape[0],
+            num_rows,
+            use_thousands_separator=use_thousands_separator),
+        printing.perc(
+            num_rows - res.shape[0],
+            num_rows,
+            use_thousands_separator=use_thousands_separator))
     return res
 
 
@@ -462,10 +461,12 @@ def plot_heatmap(corr_df,
     dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
     dbg.dassert_lte(corr_df.shape[0], 20)
     if corr_df.shape[0] < 2 or corr_df.shape[1] < 2:
-        log.warning("Can't plot heatmap for corr_df with shape=%s", str(corr_df.shape))
+        _LOG.warning("Can't plot heatmap for corr_df with shape=%s",
+                     str(corr_df.shape))
         return
     if np.all(np.isnan(corr_df)):
-        log.warning("Can't plot heatmap with only nans:\n%s", corr_df.to_string())
+        _LOG.warning("Can't plot heatmap with only nans:\n%s",
+                     corr_df.to_string())
         return
     #
     if annot == "auto":
@@ -532,8 +533,8 @@ def plot_heatmap(corr_df,
 # http://stackoverflow.com/questions/24432101/correlation-coefficients-and-p-values-for-all-pairs-of-rows-of-a-matrix
 def plot_correlation_matrix(df, mode, annot=False, figsize=None, title=None):
     if df.shape[1] < 2:
-        log.warning("Skipping correlation matrix since df is %s",
-                    str(df.shape))
+        _LOG.warning("Skipping correlation matrix since df is %s",
+                     str(df.shape))
         return None
     # Compute the correlation matrix.
     corr_df = df.corr()
@@ -554,9 +555,9 @@ def plot_dendogram(df, figsize=None):
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
     if df.shape[1] < 2:
-        log.warning("Skipping correlation matrix since df is %s",
-                    str(df.shape))
-        return None
+        _LOG.warning("Skipping correlation matrix since df is %s",
+                     str(df.shape))
+        return
     #y = scipy.spatial.distance.pdist(df.values, 'correlation')
     y = df.corr().values
     #z = scipy.cluster.hierarchy.linkage(y, 'single')
@@ -577,7 +578,7 @@ def display_corr_df(df):
         df_tmp = df.applymap(lambda x: "%.2f" % x)
         display_df(df_tmp)
     else:
-        log.info("Can't display correlation df since it is None")
+        _LOG.warning("Can't display correlation df since it is None")
 
 
 # /////////////////////////////////////////////////////////////////////////////
@@ -597,8 +598,8 @@ def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
     is_valid = num_non_nan_corr == num_non_nan_corr.max()
     valid_indices = sorted(is_valid[is_valid].index.tolist())
     # Compute eigenvalues / vectors for the subset of the matrix without nans.
-    eigenval, eigenvec = np.linalg.eig(corr.loc[valid_indices, valid_indices]
-                                       .values)
+    eigenval, eigenvec = np.linalg.eig(
+        corr.loc[valid_indices, valid_indices].values)
     # Sort by decreasing eigenvalue.
     ind = eigenval.argsort()[::-1]
     selected_pcs = eigenvec[:, ind]
@@ -653,7 +654,8 @@ def plot_time_distributions(dts, mode, density=True):
     - mode: see below
     """
     dbg.dassert_type_in(dts[0], (datetime.datetime, pd.Timestamp))
-    dbg.dassert_in(mode, ("time_of_the_day", "weekday", "minute_of_the_hour", "day_of_the_month", "month_of_the_year", "year"))
+    dbg.dassert_in(mode, ("time_of_the_day", "weekday", "minute_of_the_hour",
+                          "day_of_the_month", "month_of_the_year", "year"))
     if mode == "time_of_the_day":
         # Converts in minutes from the beginning of the day.
         data = [dt.time() for dt in dts]
@@ -661,15 +663,29 @@ def plot_time_distributions(dts, mode, density=True):
         # 1 hour bucket.
         step = 60
         bins = np.arange(0, 24 * 60 + step, step)
-        vals = pd.cut(data, bins=bins, include_lowest=True, right=False, retbins=False, labels=False)
+        vals = pd.cut(
+            data,
+            bins=bins,
+            include_lowest=True,
+            right=False,
+            retbins=False,
+            labels=False)
         # Count.
         count = pd.Series(vals).value_counts(sort=False)
         # Compute the labels.
-        yticks = ["%02d:%02d" % (bins[k] / 60, bins[k] % 60) for k in count.index]
+        yticks = [
+            "%02d:%02d" % (bins[k] / 60, bins[k] % 60) for k in count.index
+        ]
     elif mode == "weekday":
         data = [dt.date().weekday() for dt in dts]
         bins = np.arange(0, 7 + 1)
-        vals = pd.cut(data, bins=bins, include_lowest=True, right=False, retbins=False, labels=False)
+        vals = pd.cut(
+            data,
+            bins=bins,
+            include_lowest=True,
+            right=False,
+            retbins=False,
+            labels=False)
         # Count.
         count = pd.Series(vals).value_counts(sort=False)
         # Compute the labels.
@@ -720,90 +736,106 @@ def plot_time_distributions(dts, mode, density=True):
 # #############################################################################
 
 
-import statsmodels.api as sm
-import collections
+def _analyze_feature(df, y_var, x_var, use_intercept, nan_mode, x_shift,
+                     report_stats):
+    _LOG.debug("df=\n%s", df.head(3))
+    _LOG.debug("y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s",
+               y_var, x_var, use_intercept, nan_mode, x_shift)
+    res = collections.OrderedDict()
+    df_tmp = df[[y_var, x_var]].copy()
+    res["y_var"] = y_var
+    res["x_var"] = x_var
+    res["x_shift"] = x_shift
+    if x_shift != 0:
+        df_tmp[x_var] = df_tmp[x_var].shift(x_shift)
+    #
+    if nan_mode == "drop":
+        df_tmp.dropna(inplace=True)
+    elif nan_mode == "fill_with_zeros":
+        df_tmp.fillna(0.0, inplace=True)
+    else:
+        raise ValueError("Invalid nan_mode='%s'" % nan_mode)
+    res["nan_mode"] = nan_mode
+    regr_x_vars = [x_var]
+    if use_intercept:
+        df_tmp = sm.add_constant(df_tmp)
+        regr_x_vars.insert(0, "const")
+    res["use_intercept"] = use_intercept
+    # Fit.
+    reg = sm.OLS(df_tmp[y_var], df_tmp[regr_x_vars])
+    model = reg.fit()
+    if use_intercept:
+        dbg.dassert_eq(len(model.params), 2)
+        res["params_const"] = model.params[0]
+        res["pvalues_const"] = model.pvalues[0]
+        res["params_var"] = model.params[1]
+        res["pvalues_var"] = model.pvalues[1]
+    else:
+        dbg.dassert_eq(len(model.params), 1)
+        res["params_var"] = model.params[0]
+        res["pvalues_var"] = model.pvalues[0]
+    res["nobs"] = model.nobs
+    res["condition_number"] = model.condition_number
+    res["rsquared"] = model.rsquared
+    res["rsquared_adj"] = model.rsquared_adj
+    # TODO(gp): Add pnl, correlation, hitrate.
+    #
+    if report_stats:
+        txt = printing.frame(
+            "y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s" %
+            (y_var, x_var, use_intercept, nan_mode, x_shift))
+        _LOG.info("\n%s", txt)
+        _LOG.info("model.summary()=\n%s", model.summary())
+        sns.regplot(x=df[x_var], y=df[y_var])
+        plt.show()
+    return res
 
 
-def feature_selection(df, y_var, x_vars, use_intercept, nan_mode="drop", y_shifts=None):
-    if y_shifts is None:
-        y_shifts = [0]
+def analyze_features(df,
+                     y_var,
+                     x_vars,
+                     use_intercept,
+                     nan_mode="drop",
+                     x_shifts=None,
+                     report_stats=False):
+    if x_shifts is None:
+        x_shifts = [0]
     res_df = []
     for x_var in x_vars:
         _LOG.debug("x_var=%s", x_var)
-        row = collections.OrderedDict()
-        df_tmp = df[[y_var, x_var]].copy()
-        row["y_var"] = y_var
-        row["x_var"] = x_var
-        for i in y_shifts:
-            _LOG.debug("feature_shift=%s", i)
-            row_tmp = row.copy()
-            row_tmp["y_shift"] = i
-            if i != 0:
-                df_tmp[y_var] = df_tmp.shift(i)
-            #
-            if nan_mode == "drop":
-                df_tmp.dropna(inplace=True)
-            elif nan_mode == "fill_with_zeros":
-                df_tmp.fillna(0.0, inplace=True)
-            else:
-                raise ValueError("Invalid nan_mode='%s'" % nan_mode)
-            row_tmp["nan_mode"] = nan_mode
-            regr_x_vars = [x_var]
-            if use_intercept:
-                df_tmp = sm.add_constant(df_tmp)
-                regr_x_vars.insert(0, "const")
-            row_tmp["use_intercept"] = use_intercept
-            # Fit.
-            reg = sm.OLS(df_tmp[y_var], df_tmp[regr_x_vars])
-            model = reg.fit()
-            if use_intercept:
-                dbg.dassert_eq(len(model.params), 2)
-                row_tmp["params_const"] = model.params[0]
-                row_tmp["pvalues_const"] = model.pvalues[0]
-                row_tmp["params_var"] = model.params[1]
-                row_tmp["pvalues_var"] = model.pvalues[1]
-            else:
-                dbg.dassert_eq(len(model.params), 1)
-                row_tmp["params_var"] = model.params[0]
-                row_tmp["pvalues_var"] = model.pvalues[0]
-            row_tmp["nobs"] = model.nobs
-            row_tmp["condition_number"] = model.condition_number
-            row_tmp["rsquared"] = model.rsquared
-            row_tmp["rsquared_adj"] = model.rsquared_adj
-            #print(model.summary())
-
-            #if False:
-            #    sns.regplot(x=df[x_var], y=df[y_var])
-            #    plt.show()
-            res_df.append(row_tmp)
+        for x_shift in x_shifts:
+            _LOG.debug("x_shifts=%s", x_shift)
+            res_tmp = _analyze_feature(df, y_var, x_vars, use_intercept,
+                                       nan_mode, x_shift, report_stats)
+            res_df.append(res_tmp)
     return pd.DataFrame(res_df)
+
 
 # #############################################################################
 # Printing
 # #############################################################################
 
-
-# TODO(gp): This should go in print_?
-def display(df,
-            threshold=0,
-            remove_index=False,
-            head=None,
-            max_colwidth=100,
-            as_txt=False,
-            return_df=False):
-    df_tmp = df
-    if threshold == 0:
-        df_tmp = remove_const_columns(df_tmp, threshold=threshold)
-    # Head.
-    if head is not None:
-        df_tmp = df_tmp.head(head)
-    # Print.
-    with pd.option_context("display.max_colwidth", max_colwidth):
-        if as_txt:
-            print((df.to_string(index=not remove_index)))
-        else:
-            IPython.core.display.display(
-                IPython.core.display.HTML(df.to_html(index=not remove_index)))
-    # pylint: disable=inconsistent-return-statements
-    if return_df:
-        return df_tmp
+# TODO(gp): This should go in printing?
+#def display(df,
+#            threshold=0,
+#            remove_index=False,
+#            head=None,
+#            max_colwidth=100,
+#            as_txt=False,
+#            return_df=False):
+#    df_tmp = df
+#    if threshold == 0:
+#        df_tmp = remove_const_columns(df_tmp, threshold=threshold)
+#    # Head.
+#    if head is not None:
+#        df_tmp = df_tmp.head(head)
+#    # Print.
+#    with pd.option_context("display.max_colwidth", max_colwidth):
+#        if as_txt:
+#            print((df.to_string(index=not remove_index)))
+#        else:
+#            IPython.core.display.display(
+#                IPython.core.display.HTML(df.to_html(index=not remove_index)))
+#    # pylint: disable=inconsistent-return-statements
+#    if return_df:
+#        return df_tmp
