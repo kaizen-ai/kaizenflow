@@ -8,7 +8,6 @@ These functions are used for both interactive data exploration and to implement
 more complex pipelines. The output is reported through logging.
 """
 
-import collections
 import datetime
 import logging
 
@@ -17,7 +16,6 @@ import numpy as np
 import pandas as pd
 import scipy
 import seaborn as sns
-import statsmodels.api as sm
 from tqdm import tqdm
 
 import helpers.dbg as dbg
@@ -32,6 +30,7 @@ _LOG = logging.getLogger(__name__)
 
 def find_duplicates(vals):
     # TODO: Consider replacing with pd.Series.value_counts.
+    dbg.dassert_isinstance(vals, list)
     # Count the occurrences of each element of the seq.
     v_to_num = [(v, vals.count(v)) for v in set(vals)]
     # Build list of elems with duplicates.
@@ -760,3 +759,140 @@ def plot_time_distributions(dts, mode, density=True):
 #    # pylint: disable=inconsistent-return-statements
 #    if return_df:
 #        return df_tmp
+
+
+def display_df(df,
+               index=True,
+               inline_index=False,
+               max_lines=50,
+               as_txt=False,
+               tag=None,
+               mode=None):
+    """
+    Display a pandas object (series, df, panel) in a better way than the
+    ipython display, e.g.,
+        - by printing head and tail of the dataframe
+        - by formatting the code
+    :param index: whether to show the index or not
+    :param inline_index: make the index part of the dataframe. This is used
+        when cutting and pasting to other applications, which are not happy
+        with the output pandas html form
+    :param max_lines: number of lines to print
+    :param as_txt: print if True, otherwise render as usual html
+    :param mode: use different formats (e.g., all rows, all columns, ...)
+        temporarily overriding the default
+    """
+    if isinstance(df, pd.Series):
+        df = pd.DataFrame(df)
+    if isinstance(df, pd.Panel):
+        for c in list(df.keys()):
+            print("# %s" % c)
+            df_tmp = df[c]
+            display_df(
+                df_tmp,
+                index=index,
+                inline_index=inline_index,
+                max_lines=max_lines,
+                as_txt=as_txt,
+                mode=mode)
+        return
+    #
+    if tag is not None:
+        print(tag)
+    dbg.dassert_type_is(df, pd.DataFrame)
+    dbg.dassert_eq(
+        find_duplicates(df.columns.tolist()), [], msg="Find duplicated columns")
+    if max_lines is not None:
+        dbg.dassert_lte(1, max_lines)
+        if df.shape[0] > max_lines:
+            #log.error("Printing only top / bottom %s out of %s rows",
+            #        max_lines, df.shape[0])
+            ellipses = pd.DataFrame([["..."] * len(df.columns)],
+                                    columns=df.columns,
+                                    index=["..."])
+            df = pd.concat([
+                df.head(int(max_lines / 2)), ellipses,
+                df.tail(int(max_lines / 2))
+            ],
+                           axis=0)
+    if inline_index:
+        df = df.copy()
+        # Copy the index to a column and don't print the index.
+        if df.index.name is None:
+            col_name = "."
+        else:
+            col_name = df.index.name
+        df.insert(0, col_name, df.index)
+        df.index.name = None
+        index = False
+    # Finally, print / display.
+    def _print_display():
+        if as_txt:
+            print(df.to_string(index=index))
+        else:
+            import IPython.core.display
+            IPython.core.display.display(
+                IPython.core.display.HTML(df.to_html(index=index)))
+
+    if mode is None:
+        _print_display()
+    elif mode == "all_rows":
+        with pd.option_context('display.max_rows', None,
+                               'display.max_columns', 3):
+            _print_display()
+    elif mode == "all_cols":
+        with pd.option_context('display.max_colwidth', int(1e6),
+                               'display.max_columns', None):
+            _print_display()
+    elif mode == "all":
+        with pd.option_context(
+                # yapf: disable
+                'display.max_rows', int(1e6),
+                'display.max_columns', 3,
+                'display.max_colwidth', int(1e6),
+                'display.max_columns', None
+                # yapf: enable
+        ):
+            _print_display()
+    else:
+        _print_display()
+        raise ValueError("Invalid mode=%s" % mode)
+
+
+def describe_df(df,
+                ts_col=None,
+                max_col_width=30,
+                max_thr=15,
+                sort_by_uniq_num=False,
+                log_level=logging.INFO):
+    """
+    Improved version of pd.DataFrame.describe()
+    :param ts_col: timestamp column
+    """
+    if ts_col is None:
+        _LOG.log(log_level, "[%s, %s], count=%s", min(df.index), max(df.index),
+                 len(df.index.unique()))
+    else:
+        _LOG.log(log_level, "%s: [%s, %s], count=%s", ts_col, min(df[ts_col]),
+                 max(df[ts_col]), len(df[ts_col].unique()))
+    _LOG.log(log_level, "num_cols=%s", df.shape[1])
+    _LOG.log(log_level, "num_rows=%s", df.shape[0])
+    res_df = []
+    for c in df.columns:
+        uniq = df[c].unique()
+        num = len(uniq)
+        if num < max_thr:
+            vals = " ".join(map(str, uniq))
+        else:
+            vals = " ".join(map(str, uniq[:10]))
+        if len(vals) > max_col_width:
+            vals = vals[:max_col_width] + " ..."
+        type_str = df[c].dtype
+        res_df.append([c, len(uniq), vals, type_str])
+    #
+    res_df = pd.DataFrame(
+        res_df, columns=["column", "num uniq", "vals", "type"])
+    res_df.set_index("column", inplace=True)
+    if sort_by_uniq_num:
+        res_df.sort("num uniq", inplace=True)
+    _LOG.log(log_level, "res_df=\n%s", res_df)

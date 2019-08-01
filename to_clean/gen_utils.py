@@ -114,7 +114,6 @@ def apply_to_dict_panel_parallel(obj,
                                  timed=False,
                                  n_jobs=None,
                                  verbose=0):
-    import joblib
     from joblib import Parallel, delayed
     import dill
     if timed:
@@ -158,14 +157,13 @@ def apply_to_dict_panel_parallel(obj,
     global _keys_for_parallel
     _keys_for_parallel = keys_for_parallel[:]
     if keys_for_parallel:
-        log.info("Parallel exec starting (len(obj)=%d n_jobs=%d)",
-                 len(obj), n_jobs)
+        log.info("Parallel exec starting (len(obj)=%d n_jobs=%d)", len(obj),
+                 n_jobs)
         f_dill = dill.dumps(f)
         caches = Parallel(
-            n_jobs=n_jobs, max_nbytes=None, verbose=verbose)(
-                delayed(memoize.execute_remote_function)(f_dill,
-                                                         *([obj[k]] + args))
-                for k in keys_for_parallel)
+            n_jobs=n_jobs, max_nbytes=None,
+            verbose=verbose)(delayed(memoize.execute_remote_function)(f_dill, *(
+                [obj[k]] + args)) for k in keys_for_parallel)
         log.info("Parallel exec ending")
         # Update local cache from remote execution.
         for cache in caches:
@@ -252,8 +250,7 @@ def analyze_object(locals_tmp, obj, tag="", max_string_len=1000):
         data.append((x, type_, val))
     data = pd.DataFrame(data, columns=["key", "type(val)", "val"])
     data.set_index("key", inplace=True)
-    IPython.core.display.display(
-        IPython.core.display.HTML(data.to_html()))
+    IPython.core.display.display(IPython.core.display.HTML(data.to_html()))
 
 
 # #############################################################################
@@ -322,8 +319,7 @@ def min_max_index(obj, tag=None):
     if tag:
         txt += "%s: " % tag
     txt += "[%s, %s], count=%s" % (pd.to_datetime(index.values[0]),
-                                   pd.to_datetime(index.values[-1]),
-                                   len(index))
+                                   pd.to_datetime(index.values[-1]), len(index))
     return txt
 
 
@@ -350,117 +346,6 @@ def columns(df):
     dbg.dassert_type_is(df, pd.DataFrame)
     print("columns=")
     print(dbg.space("\n".join(df.columns)))
-
-
-# TODO(gp): -> display
-def display_df(df,
-               index=True,
-               inline_index=False,
-               max_lines=50,
-               as_txt=False,
-               tag=None,
-               display=None):
-    """
-    Display df or series.
-    """
-    if isinstance(df, pd.Series):
-        df = pd.DataFrame(df)
-    if isinstance(df, pd.Panel):
-        for c in list(df.keys()):
-            print("# %s" % c)
-            df_tmp = df[c]
-            display_df(
-                df_tmp,
-                index=index,
-                inline_index=inline_index,
-                max_lines=max_lines,
-                as_txt=as_txt)
-        return
-    if tag is not None:
-        print(tag)
-    dbg.dassert_type_is(df, pd.DataFrame)
-    dbg.dassert_eq(
-        utils.sorted.find_duplicates(df.columns), [],
-        msg="Find duplicated columns")
-    if max_lines is not None:
-        dbg.dassert_lte(1, max_lines)
-        if df.shape[0] > max_lines:
-            #log.error("Printing only top / bottom %s out of %s rows",
-            #        max_lines, df.shape[0])
-            ellipses = pd.DataFrame(
-                [["..."] * len(df.columns)], columns=df.columns,
-                index=["..."])
-            df = pd.concat(
-                [
-                    df.head(int(max_lines / 2)), ellipses,
-                    df.tail(int(max_lines / 2))
-                ],
-                axis=0)
-    if inline_index:
-        df = df.copy()
-        # Copy the index to a column and don't print the index.
-        if df.index.name is None:
-            col_name = "."
-        else:
-            col_name = df.index.name
-        df.insert(0, col_name, df.index)
-        df.index.name = None
-        index = False
-    # Finally, print / display.
-    def _print_display():
-        if as_txt:
-            print(df.to_string(index=index))
-        else:
-            IPython.core.display.display(
-                IPython.core.display.HTML(df.to_html(index=index)))
-
-    if display is None:
-        _print_display()
-    elif display == "all_rows":
-        with pd.option_context('display.max_rows', None, 'display.max_columns',
-                               3):
-            _print_display()
-    elif display == "all_cols":
-        with pd.option_context('display.max_colwidth',
-                               int(1e6), 'display.max_columns', None):
-            _print_display()
-    elif display == "all":
-        with pd.option_context(
-                # yapf: disable
-                'display.max_rows', int(1e6),
-                'display.max_columns', 3,
-                'display.max_colwidth', int(1e6),
-                'display.max_columns', None
-                # yapf: enable
-                ):
-            _print_display()
-    else:
-        _print_display()
-        raise ValueError("Invalid display=%s" % display)
-
-
-def describe_df(df, ts_col, max_col_width=30, max_thr=15, sort_by_uniq_num=False):
-    print("%s: [%s, %s], count=%s" % (ts_col, min(df[ts_col]), max(df[ts_col]),
-            len(df[ts_col].unique())))
-    print("num_cols=", df.shape[1])
-    print("num_rows=", df.shape[0])
-    res_df = []
-    for c in df.columns:
-        uniq = df[c].unique()
-        num = len(uniq)
-        if num < max_thr:
-            vals = " ".join(map(str, uniq))
-        else:
-            vals = " ".join(map(str, uniq[:10]))
-        if len(vals) > max_col_width:
-            vals = vals[:max_col_width] + " ..."
-        type_str = df[c].dtype
-        res_df.append([c, len(uniq), vals, type_str])
-    res_df = pd.DataFrame(res_df, columns=["column", "num uniq", "vals", "type"])
-    res_df.set_index("column", inplace=True)
-    if sort_by_uniq_num:
-        res_df.sort("num uniq", inplace=True)
-    print(res_df)
 
 
 def exact_rename_df(df, rename_map, axis):
@@ -634,8 +519,7 @@ def drop_before_first_row_without_nans(df):
 
 # TODO(gp): -> remove_non_finite()?
 # TODO(gp): Extend to work for a general value (e.g., 0.0)
-def filter_non_finite(obj, col_names=None, keep_finite=True,
-                      print_stats=False):
+def filter_non_finite(obj, col_names=None, keep_finite=True, print_stats=False):
     """
     Return the filtered obj (data frame, series, numpy array) removing
     non-finite values in any column in col_names.
@@ -879,27 +763,22 @@ def remove_outliers(obj,
         ret[bounds[1] <= obj] = bounds[1]
         if print_stats:
             num = np.sum(obj <= bounds[0]) + np.sum(bounds[1] <= obj)
-            log.debug(
-                "winsorize: to_process=%s",
-                dbg.perc(
-                    num, len(ret), printAll=True))
+            log.debug("winsorize: to_process=%s",
+                      dbg.perc(num, len(ret), printAll=True))
     else:
         mask = (bounds[0] <= obj) & (obj <= bounds[1])
         if print_stats:
             num = np.sum(mask)
-            log.debug(
-                "%s: to_process=%s",
-                mode,
-                dbg.perc(
-                    num, len(ret), printAll=True))
+            log.debug("%s: to_process=%s", mode,
+                      dbg.perc(num, len(ret), printAll=True))
         if mode == "set_to_nan":
             ret[~mask] = np.nan
             log.debug("overwritten %s / %s elems with nan",
                       np.sum(~np.isfinite(ret)), np.sum(np.isfinite(obj)))
         elif mode == "set_to_zero":
             ret[~mask] = 0.0
-            log.debug("overwritten %s / %s elems with 0",
-                      np.sum(~mask), obj.shape[0])
+            log.debug("overwritten %s / %s elems with 0", np.sum(~mask),
+                      obj.shape[0])
         elif mode == "filter":
             ret = ret[mask].copy()
         else:
@@ -932,7 +811,8 @@ def remove_outlier_rows_from_df(df,
                 df[col],
                 lower_quantile,
                 upper_quantile=upper_quantile,
-                mode=mode, )
+                mode=mode,
+            )
         else:
             log.debug("Skipping col %s", col)
             trimmed_col = df[col]
@@ -1184,8 +1064,7 @@ def compare_price_timeseries(df,
             df, outliers_thr, col_names=col_names_to_trim_tmp, mode=mode)
         df = df.dropna()
         df = df[[col_name1, col_name2]]
-        log.debug("Removed %s out of %s rows", num_cols - df.shape[0],
-                  num_cols)
+        log.debug("Removed %s out of %s rows", num_cols - df.shape[0], num_cols)
     df = df.dropna()
     df = scale_by_std(df)
     df -= df.min()
@@ -1198,8 +1077,6 @@ def compare_price_timeseries(df,
             col_name2,
             use_intercept=True,
             print_model_stats=print_model_stats)
-
-
 
 
 # #############################################################################
@@ -1227,7 +1104,7 @@ small_fig = (15, 2)
 def set_same_fig_limits(use_ylim, use_xlim, fig=None):
     if fig is None:
         fig = plt.gcf()
-	# Find limits.
+    # Find limits.
     ylim = None
     xlim = None
     for ax in fig.get_axes():
@@ -1235,25 +1112,19 @@ def set_same_fig_limits(use_ylim, use_xlim, fig=None):
         if ylim is None:
             ylim = curr_ylim
         else:
-            ylim = (
-                min(ylim[0], curr_ylim[0]),
-                max(ylim[1], curr_ylim[1]))
+            ylim = (min(ylim[0], curr_ylim[0]), max(ylim[1], curr_ylim[1]))
         #
         curr_xlim = ax.get_xlim()
         if xlim is None:
             xlim = curr_xlim
         else:
-            xlim = (
-                min(xlim[0], curr_xlim[0]),
-                max(xlim[1], curr_xlim[1]))
+            xlim = (min(xlim[0], curr_xlim[0]), max(xlim[1], curr_xlim[1]))
     # Apply limits.
     for ax in fig.get_axes():
         if use_ylim:
             ax.set_ylim(ylim)
         if use_xlim:
             ax.set_xlim(xlim)
-
-
 
 
 def plot_density(data, color="m", ax=None, figsize=None, title=""):
@@ -1427,8 +1298,8 @@ def plot_ccf(data,
     # Print some stats.
     argmin = lags[np.argmin(ccf)]
     argmax = lags[np.argmax(ccf)]
-    print("min: lag=%s (val=%.2f), max: lag=%s val=%.2f" % (
-        argmin, ccf[argmin], argmax, ccf[argmax]))
+    print("min: lag=%s (val=%.2f), max: lag=%s val=%.2f" %
+          (argmin, ccf[argmin], argmax, ccf[argmax]))
 
 
 def plot_bootstrap_ccf(x_to_lag,
@@ -1461,8 +1332,8 @@ def plot_bootstrap_ccf(x_to_lag,
         samples = []
         for lag in range(min_lags, max_lags):
             bootstrap = np.random.randint(0, N - 2 * lags, size=N - 2 * lags)
-            x1_window = x_to_lag[(lags + lag):((lags + lag) + (N - 2 * lags))][
-                bootstrap]
+            x1_window = x_to_lag[(
+                lags + lag):((lags + lag) + (N - 2 * lags))][bootstrap]
             x2_window = x_fixed[lags:(N - lags)][bootstrap]
             samples.append(
                 utils.stats.Cor(np.ravel(x1_window), np.ravel(x2_window)))
@@ -1494,7 +1365,7 @@ def plot_bootstrap_ccf(x_to_lag,
         color=color)
     title = "Cross correlation"
     if label != "":
-        title = "%s" % (label, )
+        title = "%s" % (label,)
     ax.set_title(title)
     plt.axhline(0, color="k", linestyle="--")
     plt.xlabel("Lags")
@@ -1523,8 +1394,6 @@ def plot_signal_with_envelope(df, col_name, span, n_std, ax=None):
     df[col_name + "_ub"].plot(rot=45, color="b", ls="--", ax=ax)
 
 
-
-
 def compute_correlation(df,
                         y_col_name,
                         x_col_name,
@@ -1543,11 +1412,11 @@ def compute_correlation(df,
         y = (y - y.mean()) / y.std()
     rho, p_val = scipy.stats.stats.pearsonr(x, y)
     if print_stats:
-        print("num_samples=%s" % dbg.perc(
-            len(x), tot_num_samples, printAll=True))
+        print(
+            "num_samples=%s" % dbg.perc(len(x), tot_num_samples, printAll=True))
         print("rho=%.4f" % rho)
-        print("2-tailed pvalue=%.4f (%s)" % (
-            p_val, utils.jstats.pvalue_to_stars(p_val)))
+        print("2-tailed pvalue=%.4f (%s)" %
+              (p_val, utils.jstats.pvalue_to_stars(p_val)))
     return rho, p_val
 
 
@@ -1596,8 +1465,7 @@ def regress(df,
         log.info(
             "Removed %s rows with all nans",
             dbg.perc(
-                num_rows - num_rows_after_drop_nan_all,
-                num_rows,
+                num_rows - num_rows_after_drop_nan_all, num_rows,
                 printAll=True))
     #
     df.dropna(how="any", inplace=True)
@@ -1606,8 +1474,7 @@ def regress(df,
         log.warning(
             "Removed %s rows with any nans",
             dbg.perc(
-                num_rows - num_rows_after_drop_nan_any,
-                num_rows,
+                num_rows - num_rows_after_drop_nan_any, num_rows,
                 printAll=True))
     # Prepare data.
     if use_intercept:
@@ -1623,9 +1490,8 @@ def regress(df,
     if df.shape[0] < 1:
         return None
     dbg.dassert_lte(1, df.shape[0])
-    model = statsmodels.api.OLS(df[predicted_var],
-                                df[predictor_vars],
-                                hasconst=use_intercept).fit()
+    model = statsmodels.api.OLS(
+        df[predicted_var], df[predictor_vars], hasconst=use_intercept).fit()
     regr_res = {
         "param_names": param_names,
         "coeffs": model.params,
@@ -1647,8 +1513,8 @@ def regress(df,
                 if tsplot:
                     if tsplot_figsize is None:
                         tsplot_figsize = (20, 5)
-                    df[[predicted_var, predictor_vars[0]]].plot(
-                        figsize=tsplot_figsize)
+                    df[[predicted_var,
+                        predictor_vars[0]]].plot(figsize=tsplot_figsize)
                 if jointplot_:
                     if jointplot_size is None:
                         jointplot_size = 5
