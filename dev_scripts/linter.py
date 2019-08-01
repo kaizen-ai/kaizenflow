@@ -34,7 +34,7 @@ E.g.,
 # TODO(gp): Add mccabe score.
 # TODO(gp): Do not overwrite file when there is no change.
 # TODO(gp): Add autopep8 if useful?
-# TODO(gp): Use Dask to parallelize
+# TODO(gp): Use joblib to parallelize
 # TODO(gp): Add vulture, snake_food
 # TODO(gp): It would be ideal to do two commits, but not sure how to do it
 # TODO(gp): Save tarball, dir or patch of changes
@@ -65,7 +65,7 @@ import tqdm
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
-import helpers.printing as print_
+import helpers.printing as printing
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -86,9 +86,7 @@ def _get_command_line():
 
 
 def _system(cmd, abort_on_error=True):
-    # print _log.getEffectiveLevel(), logging.DEBUG
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    # print "suppress_output=", suppress_output
     _LOG.getEffectiveLevel()
     rc = si.system(
         cmd,
@@ -104,36 +102,47 @@ def _remove_empty_lines(output):
 
 
 def _clean_file(filename, write_back):
-
-    def is_all_whitespace(line):
-        """
-        Check if the line can be deleted.
-        """
-        for char in line:
-            if char not in (' ', '\n'):
-                return False
-        return True
-
+    """
+    Remove empty spaces, tabs, windows end-of-lines.
+    :param write_back: if True the file is overwritten in place.
+    """
+    # Read file.
+    file_in = []
     with open(filename, 'r') as f:
-        file_out = []
         for line in f:
-            if is_all_whitespace(line):
-                line = '\n'
-            # dos2unix.
-            line = line.replace('\r\n', '\n')
-            file_out.append(line)
-    # Removes whitespaces at the end of file.
+            file_in.append(line)
+    #
+    file_out = []
+    for line in file_in:
+        # A line can be deleted if it has only spaces and \n.
+        if not any(char not in (' ', '\n') for char in line):
+            line = '\n'
+        # dos2unix.
+        line = line.replace('\r\n', '\n')
+        file_out.append(line)
+    # Remove whitespaces at the end of file.
     while file_out and (file_out[-1] == '\n'):
-        # While the last item in lst is blank, removes last element.
+        # While the last item in the list is blank, removes last element.
         file_out.pop(-1)
-    # Writes the new the output to file.
+    # Write the new the output to file.
     if write_back:
-        with open(filename, 'w') as f:
-            f.write(''.join(file_out))
+        file_in = ''.join(file_in)
+        file_out = ''.join(file_out)
+        if file_in != file_out:
+            _LOG.debug("Writing back file '%s'", file_name)
+            with open(filename, 'w') as f:
+                f.write(file_out)
+        else:
+            _LOG.debug("No change in file, so no saving")
     return file_out
 
 
-def _annotate(output, executable):
+def _annotate_output(output, executable):
+    """
+    Annotate a list containing the output of a cmd line with the name of the
+    executable used.
+    :return: list of strings
+    """
     dbg.dassert_isinstance(output, list)
     output = [t + " [%s]" % executable for t in output]
     dbg.dassert_isinstance(output, list)
@@ -141,6 +150,10 @@ def _annotate(output, executable):
 
 
 def _tee(cmd, executable, abort_on_error):
+    """
+    Execute command "cmd", capturing its output and removing empty lines.
+    :return: list of strings
+    """
     _LOG.debug("cmd=%s executable=%s", cmd, executable)
     _, output = si.system_to_string(cmd, abort_on_error=abort_on_error)
     dbg.dassert_isinstance(output, str)
@@ -211,16 +224,16 @@ def _get_files(args):
 # Actions.
 # #############################################################################
 
-# We use the command line instead of API because
+# We use the command line instead of API because:
 # - some tools don't have a public API
-# - make easier to reproduce / test commands with command lines and then
-#   incorporate in the code
-# - have clear control over options
+# - this make easier to reproduce / test commands using the command lines and
+#   then incorporate in the code
+# - it allows to have clear control over options
 
 
 def _check_exec(tool):
     """
-    Return True if the executables "tool" can be executed.
+    :return: True if the executables "tool" can be executed.
     """
     rc = _system("which %s" % tool, abort_on_error=False)
     return rc == 0
@@ -230,6 +243,9 @@ _THIS_MODULE = sys.modules[__name__]
 
 
 def _get_action_func(action):
+    """
+    Return the function corresponding to the passed string.
+    """
     func_name = "_" + action
     dbg.dassert(
         hasattr(_THIS_MODULE, func_name),
@@ -238,6 +254,11 @@ def _get_action_func(action):
 
 
 def _remove_not_possible_actions(actions):
+    """
+    Check whether each action in "actions" can be executed and return a list of
+    the actions that can be executed.
+    :return: list of strings representing actions
+    """
     actions_tmp = []
     for action in actions:
         func = _get_action_func(action)
@@ -250,16 +271,28 @@ def _remove_not_possible_actions(actions):
     return actions_tmp
 
 
+def _actions_to_string(actions):
+    actions_as_str = [
+        "%16s: %s" % (a, "Yes" if a in actions else "-") for a in _VALID_ACTIONS
+    ]
+    return "\n".join(actions_as_str)
+
+
 def _test_actions():
     _LOG.info("Testing actions")
     num_not_poss = 0
+    possible_actions = []
     for action in _VALID_ACTIONS:
         func = _get_action_func(action)
         is_possible = func(
             file_name=None, pedantic=False, check_if_possible=True)
-        print("%s -> %s" % (action, is_possible))
-        if not is_possible:
+        _LOG.debug("%s -> %s", action, is_possible)
+        if is_possible:
+            possible_actions.append(action)
+        else:
             num_not_poss += 1
+    actions_as_str = _actions_to_string(possible_actions)
+    _LOG.info("Possible actions:\n%s", printing.space(actions_as_str))
     if num_not_poss > 0:
         _LOG.warning("There are %s actions that are not possible", num_not_poss)
     else:
@@ -603,8 +636,8 @@ class JupytextProcessor:
         if is_paired_jupytext_file(self.ipynb_file_name):
             # Both py and ipynb files exist.
             # Remove empty spaces.
-            _clean_file(self.ipynb_file_name, write_back=True)
-            _clean_file(self.py_file_name, write_back=True)
+            #_clean_file(self.ipynb_file_name, write_back=True)
+            #_clean_file(self.py_file_name, write_back=True)
             # Check that they are consistent. Assume that the ipynb is the
             # correct one.
             # TODO(gp): We should compare timestamp?
@@ -614,7 +647,7 @@ class JupytextProcessor:
             cmd = "jupytext --to py:percent %s -o %s" % (src_py_name,
                                                          dst_py_name)
             _system(cmd)
-            _clean_file(dst_py_name, write_back=True)
+            #_clean_file(dst_py_name, write_back=True)
             cmd = "diff --ignore-blank-lines %s %s" % (src_py_name, dst_py_name)
             rc = _system(cmd, abort_on_error=False)
             if rc != 0:
@@ -701,8 +734,7 @@ def _main(args):
     # Select files.
     file_names = _get_files(args)
     _LOG.info("# Processing %s files:\n%s", len(file_names),
-              print_.space("\n".join(file_names)))
-    # Select actions.
+              printing.space("\n".join(file_names)))
     if args.collect_only:
         _LOG.warning("Exiting as requested")
         sys.exit(0)
@@ -724,12 +756,11 @@ def _main(args):
     for action in _VALID_ACTIONS:
         if action in actions:
             actions_tmp.append(action)
-    # Check that tools are available.
+    actions = actions_tmp
+    # Check which tools are available.
     actions = _remove_not_possible_actions(actions)
-    actions_as_str = [
-        "%16s: %s" % (a, "Yes" if a in actions else "-") for a in _VALID_ACTIONS
-    ]
-    _LOG.info("# Action selected:\n%s", print_.space("\n".join(actions_as_str)))
+    actions_as_str = _actions_to_string(actions)
+    _LOG.info("# Action selected:\n%s", printing.space(actions_as_str))
     # Create tmp dir.
     io_.create_dir(_TMP_DIR, incremental=False)
     # Run linter.
@@ -743,10 +774,10 @@ def _main(args):
         progress_bar = None
     for file_name in file_names:
         if not progress_bar:
-            _LOG.info("\n%s", print_.frame(file_name, char1="/"))
+            _LOG.info("\n%s", printing.frame(file_name, char1="/"))
         for action in actions:
             if not progress_bar:
-                _LOG.debug("\n%s", print_.frame(action, char1="-"))
+                _LOG.debug("\n%s", printing.frame(action, char1="-"))
                 print("## " + action)
             if args.debug:
                 dst_file_name = file_name + "." + action
@@ -760,7 +791,7 @@ def _main(args):
             check_if_possible = False
             output_tmp = func(dst_file_name, pedantic, check_if_possible)
             # Annotate with executable [tag].
-            output_tmp = _annotate(output_tmp, action)
+            output_tmp = _annotate_output(output_tmp, action)
             dbg.dassert_isinstance(
                 output_tmp,
                 list,
@@ -776,9 +807,9 @@ def _main(args):
     output.append("datetime='%s'" % datetime.datetime.now())
     output = _remove_empty_lines(output)
     # Print linter output.
-    print(print_.frame(args.linter_log, char1="/").rstrip("\n"))
+    print(printing.frame(args.linter_log, char1="/").rstrip("\n"))
     print("\n".join(output) + "\n")
-    print(print_.line().rstrip("\n"))
+    print(printing.line().rstrip("\n"))
     # Write file.
     f = open(args.linter_log, "w")
     output = "\n".join(output)
