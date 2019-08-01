@@ -24,14 +24,18 @@ import helpers.printing as printing
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
-# Pandas helpers.
+# Helpers.
 # #############################################################################
 
 
+# TODO(gp): Not sure this is the right place.
 def find_duplicates(vals):
-    # TODO: Consider replacing with pd.Series.value_counts.
+    """
+    Find the elements duplicated in a list.
+    """
     dbg.dassert_isinstance(vals, list)
     # Count the occurrences of each element of the seq.
+    # TODO: Consider replacing with pd.Series.value_counts.
     v_to_num = [(v, vals.count(v)) for v in set(vals)]
     # Build list of elems with duplicates.
     res = [v for v, n in v_to_num if n > 1]
@@ -89,23 +93,65 @@ def drop_na_rows_columns(df):
 def drop_na(df, *args, **kwargs):
     """
     Wrapper around pd.dropna() reporting information about the removed rows.
-
-    :param df:
-    :param args:
-    :param kwargs:
-    :return:
     """
-    # TODO(gp): Remove rows completely empty.
-    num_rows_before = df.shape[0]
-    df = df.dropna(*args, **kwargs)
     log_level = logging.INFO
     if "log_level" in kwargs:
         log_level = kwargs["log_level"]
+    #
+    num_rows_before = df.shape[0]
+    df = df.dropna(*args, **kwargs)
     num_rows_after = df.shape[0]
+    #
     pct_removed = printing.perc(num_rows_before - num_rows_after,
                                 num_rows_before)
     _LOG.log(log_level, "removed rows with nans: %s", pct_removed)
     return df
+
+
+def report_zero_null_stats(df, zero_threshold=1e-9):
+    """
+    Report statistics about zeros and nulls for a df.
+
+    E.g.,
+    index in [2009-09-27 18:00:00, 2019-07-19 16:59:00]
+    num_rows=3,433,655
+                        CL_ret_0	NG_ret_0	RB_ret_0	BZ_ret_0
+    2009-09-27 18:00:00	NaN	        NaN	        NaN	        NaN
+    ...	...	...	...	...
+    2019-07-19 16:59:00	0.000357846	0	        NaN	        -0.000318218
+
+                num_nulls	pct_nulls [%]	num_zeros	pct_zeros [%]
+    CL_ret_0	45238	    0.01	        736090	    0.21
+    NG_ret_0	867892	    0.25	        741705	    0.22
+    RB_ret_0	1602814	    0.47	        140218	    0.04
+    BZ_ret_0	2431500	    0.71	        131432	    0.04
+    """
+    dbg.dassert(df.index.is_monotonic_increasing)
+    dbg.dassert(df.index.is_unique)
+    _LOG.info("index in [%s, %s]", df.index[0], df.index[-1])
+    _LOG.info("num_rows=%s", printing.thousand_separator(df.shape[0]))
+    display_df(df, max_lines=5)
+    #
+    stats_df = pd.DataFrame(None)
+    if False:
+        # Find the index of the first non-nan value.
+        df = df.applymap(lambda x: not np.isnan(x))
+        min_idx = df.idxmax(axis=0)
+        min_idx.name = "min_idx"
+        # Find the index of the last non-nan value.
+        max_idx = df.reindex(index=df.index[::-1]).idxmax(axis=0)
+        max_idx.name = "max_idx"
+    #
+    num_nulls = df.isnull().sum(axis=0)
+    stats_df["num_nulls"] = num_nulls
+    stats_df["pct_nulls [%]"] = (100.0 * num_nulls / df.shape[0]).apply(
+            printing.round_digits)
+    #
+    num_zeros = (np.abs(df) < zero_threshold).sum(axis=0)
+    stats_df["num_zeros"] = num_zeros
+    stats_df["pct_zeros [%]"] = (100.0 * num_zeros / df.shape[0]).apply(
+            printing.round_digits)
+    display_df(stats_df)
 
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -115,7 +161,7 @@ def _get_variable_cols(df, threshold=1):
     """
     Return columns of a df that contain less than <threshold> unique values.
 
-    :return: (variable cols, const_cols)
+    :return: (variable columns, constant columns)
     """
     var_cols = []
     const_cols = []
@@ -127,14 +173,13 @@ def _get_variable_cols(df, threshold=1):
     return var_cols, const_cols
 
 
-# TODO(gp): Remove verb and use print.
 def remove_columns_with_low_variability(df,
                                         threshold=1,
                                         log_level=logging.DEBUG):
     """
-    Remove columns of df that contain less than <threshold> unique values.
+    Remove columns of a df that contain less than <threshold> unique values.
 
-    :return: df with only variable columns
+    :return: df with only columns with sufficient variability
     """
     var_cols, const_cols = _get_variable_cols(df, threshold=threshold)
     _LOG.log(log_level, "# Constant cols")
@@ -146,65 +191,39 @@ def remove_columns_with_low_variability(df,
     return df[var_cols]
 
 
-# TODO(gp): ?
-def add_count_as_idx(df):
-    col = []
-    for k in range(df.shape[0]):
-        col.append("%2.d / %2.d" % (k + 1, df.shape[0]))
-    df.insert(0, "index", col)
-    return df
-
-
-# TODO(gp): ?
-def add_pct(res,
+def add_pct(df,
             col_name,
             total,
             dst_col_name,
             num_digits=2,
             use_thousands_separator=True):
+    """
+    Add to df a column "dst_col_name" storing the percentage of values in
+    column "col_name" with respect to "total".
+    The rest of the parameters are the same as printing.round_digits().
+
+    :return: updated df
+    """
     # Add column with percentage right after col_name.
-    pos_col_name = res.columns.tolist().index(col_name)
-    res.insert(pos_col_name + 1, dst_col_name, (100.0 * res[col_name]) / total)
+    pos_col_name = df.columns.tolist().index(col_name)
+    df.insert(pos_col_name + 1, dst_col_name, (100.0 * df[col_name]) / total)
     # Format.
-    res[col_name] = [
+    df[col_name] = [
         printing.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator)
-        for v in res[col_name]
+        for v in df[col_name]
     ]
-    res[dst_col_name] = [
+    df[dst_col_name] = [
         printing.round_digits(
             v, num_digits=num_digits, use_thousands_separator=False)
-        for v in res[dst_col_name]
+        for v in df[dst_col_name]
     ]
-    return res
+    return df
 
 
 # #############################################################################
 # Pandas data structure stats.
 # #############################################################################
-
-
-def describe_nan_stats(df):
-    """
-    Find the first and the last non-nan values for each column.
-    """
-    # Find the index of the first non-nan value.
-    df = df.applymap(lambda x: not np.isnan(x))
-    min_idx = df.idxmax(axis=0)
-    min_idx.name = "min_idx"
-    # Find the index of the last non-nan value.
-    max_idx = df.reindex(index=df.index[::-1]).idxmax(axis=0)
-    max_idx.name = "max_idx"
-    count_idx = df.sum(axis=0)
-    count_idx.name = "num_non_nans"
-    pct_idx = count_idx / df.shape[0]
-    pct_idx.name = "pct_non_nans"
-    # Package result into a df with a row for each statistic.
-    ret_df = pd.concat([
-        pd.DataFrame(df_tmp).T
-        for df_tmp in [min_idx, max_idx, count_idx, pct_idx]
-    ])
-    return ret_df
 
 
 # TODO(gp): Explain what this is supposed to do.
@@ -251,10 +270,10 @@ def breakdown_table(df,
     return res
 
 
-def printingcolumn_variability(df,
-                               max_num_vals=3,
-                               num_digits=2,
-                               use_thousands_separator=True):
+def print_column_variability(df,
+                             max_num_vals=3,
+                             num_digits=2,
+                             use_thousands_separator=True):
     """
     Print statistics about the values in each column of a data frame.
     This is useful to get a sense of which columns are interesting.
@@ -735,36 +754,11 @@ def plot_time_distributions(dts, mode, density=True):
 # Printing
 # #############################################################################
 
-# TODO(gp): This should go in printing?
-#def display(df,
-#            threshold=0,
-#            remove_index=False,
-#            head=None,
-#            max_colwidth=100,
-#            as_txt=False,
-#            return_df=False):
-#    df_tmp = df
-#    if threshold == 0:
-#        df_tmp = remove_const_columns(df_tmp, threshold=threshold)
-#    # Head.
-#    if head is not None:
-#        df_tmp = df_tmp.head(head)
-#    # Print.
-#    with pd.option_context("display.max_colwidth", max_colwidth):
-#        if as_txt:
-#            print((df.to_string(index=not remove_index)))
-#        else:
-#            IPython.core.display.display(
-#                IPython.core.display.HTML(df.to_html(index=not remove_index)))
-#    # pylint: disable=inconsistent-return-statements
-#    if return_df:
-#        return df_tmp
-
 
 def display_df(df,
                index=True,
                inline_index=False,
-               max_lines=50,
+               max_lines=5,
                as_txt=False,
                tag=None,
                mode=None):

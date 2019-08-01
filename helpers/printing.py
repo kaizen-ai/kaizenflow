@@ -96,7 +96,6 @@ def prepend(str_, prefix):
 # #############################################################################
 
 
-# TODO(gp): Not sure it's worth it.
 def thousand_separator(v):
     v = "{0:,}".format(v)
     return v
