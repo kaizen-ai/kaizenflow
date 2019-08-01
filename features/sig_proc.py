@@ -7,7 +7,6 @@
 #   - Lag determination
 #   - etc.
 
-
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -146,15 +145,15 @@ def plot_crosscorrelation(x, y):
     z-scored with ewma).
 
     At index `k` in the result, the value is given by
-        (1 / N) * \sum_{l = 0}^{N - 1} x_l * y_{l + k}
+        (1 / n) * \sum_{l = 0}^{n - 1} x_l * y_{l + k}
     """
     joint_idx = x.index.intersection(y.index)
     corr = sp.signal.correlate(x.loc[joint_idx], y.loc[joint_idx])
     # Normalize by number of points in series (e.g., take expectations)
-    N = joint_idx.size
-    corr /= N
-    step_idx = pd.RangeIndex(-1 * N + 1, N)
+    n = joint_idx.size
+    corr /= n
+    step_idx = pd.RangeIndex(-1 * n + 1, n)
     pd.Series(data=corr, index=step_idx).plot()
 
 
-# TODO(Paul): Add coherence plotting function. 
+# TODO(Paul): Add coherence plotting function.
