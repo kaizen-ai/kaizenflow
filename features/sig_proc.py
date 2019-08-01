@@ -133,7 +133,46 @@ def plot_low_pass(signal, wavelet_name, threshold):
     plt.show()
 
 
-# TODO(Paul): Add scalogram plotting function.
+def plot_scaleogram(signal, scales, wavelet_name, cmap=plt.cm.seismic,
+                    title='Wavelet Spectrogram of signal',
+                    ylabel='Period', xlabel='Time'):
+    """
+    Plots wavelet-based spectrogram (aka scaleogram).
+
+    A nice reference and utility for plotting can be found at
+    https://github.com/alsauve/scaleogram.
+
+    :param signal: signal to transform
+    :param scales: numpy array, e.g., np.arange(1, 128)
+    :param wavelet_name: continuous wavelet, e.g., 'cmor' or 'morl' 
+    """
+    time = np.arange(0, signal.size)
+    dt = time[1] - time[0]
+    [coeffs, freqs] = pywt.cwt(signal, scales, wavelet_name, dt)
+    power = np.abs(coeffs) ** 2
+    periods = 1. / freqs
+    levels = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8]
+    contour_levels = np.log2(levels)
+
+    fig, ax = plt.subplots(figsize=(15, 10))
+    im = ax.contourf(time, np.log2(periods), np.log2(power), contour_levels,
+            extend='both', cmap=cmap)
+
+    ax.set_title(title, fontsize=20)
+    ax.set_ylabel(ylabel, fontsize=18)
+    ax.set_xlabel(xlabel, fontsize=18)
+
+    yticks = 2 ** np.arange(np.ceil(np.log2(periods.min())),
+            np.ceil(np.log2(periods.max())))
+    ax.set_yticks(np.log2(yticks))
+    ax.set_yticklabels(yticks)
+    ax.invert_yaxis()
+    ylim = ax.get_ylim()
+    ax.set_ylim(ylim[0], -1)
+
+    cbar_ax = fig.add_axes([0.95, 0.5, 0.03, 0.25])
+    fig.colorbar(im, cax=cbar_ax, orientation='vertical')
+    plt.show()
 
 
 #
