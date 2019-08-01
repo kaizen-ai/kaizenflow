@@ -268,14 +268,14 @@ def dassert_dir_exists(dir_name, msg=""):
 # From https://stackoverflow.com/questions/15411967/how-can-i-check-if-code-is-executed-in-the-ipython-notebook
 def is_running_in_ipynb():
     try:
-        cfg = get_ipython().config
-        res = cfg['IPKernelApp']['parent_appname'] == 'ipython-notebook'
+        _ = get_ipython().config
+        #res = cfg['IPKernelApp']['parent_appname'] == 'ipython-notebook'
+        res = True
     except NameError:
         res = False
     return res
 
 
-# TODO(gp): Add an option to log as if it was a print for notebook use.
 def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     """
     - Send both stderr and stdout to logging.
@@ -301,12 +301,15 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     ch.setLevel(verb)
     if is_running_in_ipynb():
         print("WARNING: Running in Jupyter")
-        #_LOG_FORMAT = "%(asctime)-15s: %(levelname)s %(message)s"
-        # TODO(gp): Print at much 15-20 chars of a function so that things are aligned
-        _LOG_FORMAT = "%(levelname)-5s: %(funcName)-15s: %(message)s"
+        # Make logging look like a normal print().
+        log_format = "%(message)s"
+        datefmt = ''
     else:
-        _LOG_FORMAT = "%(asctime)-5s: %(levelname)s: %(funcName)s: %(message)s"
-    formatter = logging.Formatter(_LOG_FORMAT, datefmt='%Y-%m-%d %I:%M:%S %p')
+        # TODO(gp): Print at much 15-20 chars of a function so that things are aligned
+        #log_format = "%(levelname)-5s: %(funcName)-15s: %(message)s"
+        log_format = "%(asctime)-5s: %(levelname)s: %(funcName)s: %(message)s"
+        datefmt = '%Y-%m-%d %I:%M:%S %p'
+    formatter = logging.Formatter(log_format, datefmt=datefmt)
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
     # Find name of the log file.
@@ -333,8 +336,7 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
         root_logger.addHandler(file_handler)
         file_handler.setFormatter(formatter)
         #
-        _LOG = logging.getLogger(__name__)
-        _LOG.info("Saving log to '%s'", log_filename)
+        print("Saving log to '%s'" % log_filename)
     #
     #test_logger()
 
