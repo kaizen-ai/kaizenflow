@@ -141,6 +141,9 @@ def plot_scaleogram(signal, scales, wavelet_name, cmap=plt.cm.seismic,
 
     A nice reference and utility for plotting can be found at
     https://github.com/alsauve/scaleogram.
+    
+    See also
+    https://github.com/PyWavelets/pywt/blob/master/demo/wp_scalogram.py.
 
     :param signal: signal to transform
     :param scales: numpy array, e.g., np.arange(1, 128)
