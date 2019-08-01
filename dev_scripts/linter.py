@@ -43,7 +43,6 @@ E.g.,
 # TODO(gp): Lint notebooks and then apply jupytext (lint_ipynb)
 # TODO(gp): Refresh all py files from ipynb
 # TODO(gp): Ensure all file names are correct (e.g., no space, nice TaskXYZ, no - but _...)
-# TODO(gp): Notebooks only in notebook dir
 # TODO(gp): Make sure that there are no conflict markers.
 # TODO(gp): Report number of errors vs warnings.
 # TODO(gp): Test directory should be called tests and not test
@@ -59,8 +58,6 @@ import logging
 import os
 import re
 import sys
-
-import tqdm
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -85,6 +82,7 @@ def _get_command_line():
     return _CMD_LINE
 
 
+# TODO(gp): This could become the default behavior of system().
 def _system(cmd, abort_on_error=True):
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
     _LOG.getEffectiveLevel()
@@ -101,6 +99,7 @@ def _remove_empty_lines(output):
     return output
 
 
+# TODO(gp): Horrible: to remove / rewrite.
 def _clean_file(filename, write_back):
     """
     Remove empty spaces, tabs, windows end-of-lines.
@@ -134,7 +133,7 @@ def _clean_file(filename, write_back):
                 f.write(file_out)
         else:
             _LOG.debug("No change in file, so no saving")
-    return file_out
+    return file_in, file_out
 
 
 def _annotate_output(output, executable):
@@ -263,7 +262,7 @@ def _remove_not_possible_actions(actions):
     for action in actions:
         func = _get_action_func(action)
         is_possible = func(
-            file_name=None, pedantic=False, check_if_possible=True)
+            file_name=None, pedantic=None, check_if_possible=True)
         if not is_possible:
             _LOG.warning("Can't execute action '%s': skipping", action)
         else:
@@ -280,6 +279,7 @@ def _actions_to_string(actions):
 
 def _test_actions():
     _LOG.info("Testing actions")
+    # Check all the actions.
     num_not_poss = 0
     possible_actions = []
     for action in _VALID_ACTIONS:
@@ -291,6 +291,7 @@ def _test_actions():
             possible_actions.append(action)
         else:
             num_not_poss += 1
+    # Report results.
     actions_as_str = _actions_to_string(possible_actions)
     _LOG.info("Possible actions:\n%s", printing.space(actions_as_str))
     if num_not_poss > 0:
@@ -301,16 +302,21 @@ def _test_actions():
 
 # ##############################################################################
 
+# Each action accepts:
+# :param file_name: name of the file to process
+# :param pendantic: True if it needs to be run in angry mode
+# :param check_if_possible: check if the action can be executed on filename
+# :return: list of strings representing the output
+
 
 def _basic_hygiene(file_name, pedantic, check_if_possible):
     _ = pedantic
     if check_if_possible:
         # We don't need any special executable, so we can always run this action.
         return True
-    output = []
     # Read file.
-    dbg.dassert_ne(file_name, "")
-    txt = _clean_file(file_name, write_back=False)
+    dbg.dassert(file_name)
+    txt = io_.from_file(file_name, split=True)
     # Process file.
     txt_new = []
     for line in txt:
@@ -322,13 +328,22 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
         line = line.replace("\t", " " * 4)
         # Remove trailing spaces.
         line = line.rstrip()
-        txt_new.append(line.rstrip("\n"))
+        # dos2unix.
+        line = line.replace('\r\n', '\n')
         # TODO(gp): Remove empty lines in functions.
+        #
+        txt_new.append(line.rstrip("\n"))
+    # Remove whitespaces at the end of file.
+    while txt_new and (txt_new[-1] == '\n'):
+        # While the last item in the list is blank, removes last element.
+        text_new.pop(-1)
     # Write.
-    with open(file_name, 'w') as f:
-        f.write("\n".join(txt_new))
+    txt = "\n".join(txt)
+    txt_new = "\n".join(txt_new)
+    if txt != txt_new:
+        io_.to_file(file_name, txt_new)
     #
-    return output
+    return []
 
 
 def _autoflake(file_name, pedantic, check_if_possible):
@@ -339,7 +354,8 @@ def _autoflake(file_name, pedantic, check_if_possible):
     executable = "autoflake"
     if check_if_possible:
         return _check_exec(executable)
-    dbg.dassert_ne(file_name, "")
+    #
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -354,7 +370,8 @@ def _yapf(file_name, pedantic, check_if_possible):
     executable = "yapf"
     if check_if_possible:
         return _check_exec(executable)
-    dbg.dassert_ne(file_name, "")
+    #
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -369,6 +386,8 @@ def _isort(file_name, pedantic, check_if_possible):
     executable = "isort"
     if check_if_possible:
         return _check_exec(executable)
+    #
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -389,7 +408,8 @@ def _flake8(file_name, pedantic, check_if_possible):
     executable = "flake8"
     if check_if_possible:
         return _check_exec(executable)
-    dbg.dassert_ne(file_name, "")
+    #
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -405,7 +425,8 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
     executable = "pydocstyle"
     if check_if_possible:
         return _check_exec(executable)
-    dbg.dassert_ne(file_name, "")
+    #
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -451,7 +472,7 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
     #   linter_v2.py:1: at module level: D400: First line should end with a
     #   period (not ':')
     #
-    res = []
+    output = []
     #
     file_lines = file_lines.split("\n")
     lines = ["", ""]
@@ -468,9 +489,9 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         lines[cnt % 2] = line
         if cnt % 2 == 1:
             line = "".join(lines)
-            res.append(line)
+            output.append(line)
     #
-    return res
+    return output
 
 
 def _pyment(file_name, pedantic, check_if_possible):
@@ -478,7 +499,8 @@ def _pyment(file_name, pedantic, check_if_possible):
     executable = "pyment"
     if check_if_possible:
         return _check_exec(executable)
-    dbg.dassert_ne(file_name, "")
+    #
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -491,7 +513,8 @@ def _pylint(file_name, pedantic, check_if_possible):
     executable = "pylint"
     if check_if_possible:
         return _check_exec(executable)
-    dbg.dassert_ne(file_name, "")
+    #
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -543,7 +566,8 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
     executable = '%s/ipynb_format.py' % curr_path
     if check_if_possible:
         return _check_exec(executable)
-    dbg.dassert_ne(file_name, "")
+    #
+    dbg.dassert(file_name)
     if not is_ipynb_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -690,9 +714,7 @@ def _fix_jupytext(file_name, pedantic, check_if_possible):
 # Main.
 # #############################################################################
 
-# To ensure determinism we execute:
-# - actions that write first in order (in order of aggressiveness)
-# - actions that read only in parallel
+# Actions and if they read / write files.
 _VALID_ACTIONS_META = [
     ("basic_hygiene", "w"),
     ("yapf", "w"),
@@ -768,18 +790,13 @@ def _main(args):
     num_steps = len(file_names) * len(actions)
     _LOG.info("Num of files=%d, num of actions=%d -> num of steps=%d",
               len(file_names), len(actions), num_steps)
-    if args.progress_bar:
-        progress_bar = tqdm.tqdm(total=num_steps)
-    else:
-        progress_bar = None
     for file_name in file_names:
-        if not progress_bar:
-            _LOG.info("\n%s", printing.frame(file_name, char1="/"))
+        _LOG.info("\n%s", printing.frame(file_name, char1="/"))
         for action in actions:
-            if not progress_bar:
-                _LOG.debug("\n%s", printing.frame(action, char1="-"))
-                print("## " + action)
+            _LOG.debug("\n%s", printing.frame(action, char1="-"))
+            print("## " + action)
             if args.debug:
+                # Make a copy after each action.
                 dst_file_name = file_name + "." + action
                 cmd = "cp -a %s %s" % (file_name, dst_file_name)
                 os.system(cmd)
@@ -797,11 +814,8 @@ def _main(args):
                 list,
                 msg="action=%s file_name=%s" % (action, file_name))
             output.extend(output_tmp)
-            if progress_bar:
-                progress_bar.update()
-            else:
-                if output_tmp:
-                    _LOG.info("\n%s", "\n".join(output_tmp))
+            if output_tmp:
+                _LOG.info("\n%s", "\n".join(output_tmp))
     output.append("cmd line='%s'" % _get_command_line())
     # TODO(gp): Get timestamp.
     output.append("datetime='%s'" % datetime.datetime.now())
@@ -811,10 +825,8 @@ def _main(args):
     print("\n".join(output) + "\n")
     print(printing.line().rstrip("\n"))
     # Write file.
-    f = open(args.linter_log, "w")
     output = "\n".join(output)
-    f.write(output)
-    f.close()
+    io_.to_file(args.linter_log, output)
     # Compute the number of lints.
     num_lints = 0
     for line in output.split("\n"):
@@ -886,10 +898,6 @@ def _parse():
         help="Generate one file per transformation")
     parser.add_argument(
         "--no_cleanup", action="store_true", help="Do not clean up tmp files")
-    parser.add_argument(
-        "--progress_bar",
-        action="store_true",
-        help="Use progress bar instead of verbose output")
     # Test.
     parser.add_argument(
         "--collect_only",

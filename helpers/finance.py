@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
-
+import helpers.printing as printing
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,7 +42,8 @@ def resample_1min(df):
     """
     dbg.dassert(df.index.is_monotonic_increasing)
     dbg.dassert(df.index.is_unique)
-    date_range = pd.date_range(start=df.index.min(), end=df.index.max(), freq="1T")
+    date_range = pd.date_range(
+        start=df.index.min(), end=df.index.max(), freq="1T")
     df = df.reindex(date_range)
     return df
 
@@ -53,43 +54,46 @@ def resample(df, agg_interval):
     """
     dbg.dassert(df.index.is_monotonic_increasing)
     dbg.dassert(df.index.is_unique)
-    resampler = df.resample(
-        agg_interval, closed="left", label="right")
+    resampler = df.resample(agg_interval, closed="left", label="right")
     rets = resampler.sum()
     return rets
 
 
-def filter_by_time(df, start_dt, end_dt, result_bundle=None, dt_col_name=None,
-        log_level=logging.INFO):
-     dbg.dassert_lte(1, df.shape[0])
-     if start_dt is not None and end_dt is not None:
-         dbg.dassert_lte(start_dt, end_dt)
-     #
-     if start_dt is not None:
-         _LOG.log(log_level, "Filtering df with start_dt=%s", start_dt)
-         if dt_col_name:
-             mask = df[dt_col_name] >= start_dt
-         else:
-             mask = df.index >= start_dt
-         kept_perc = printing.perc(mask.sum(), df.shape[0])
-         _LOG.info(">= start_dt=%s: kept %s rows", start_dt, kept_perc)
-         if result_bundle:
-             result_bundle["filter_ge_start_dt"] = kept_perc
-         df = df[mask]
-     #
-     if end_dt is not None:
-         _LOG.info("Filtering df with end_dt=%s", end_dt)
-         if dt_col_name:
-             mask = df[dt_col_name] < end_dt
-         else:
-             mask = df.index < end_dt
-         kept_perc = printing.perc(mask.sum(), df.shape[0])
-         _LOG.info("< end_dt=%s: kept %s rows", end_dt, kept_perc)
-         if result_bundle:
-             result_bundle["filter_lt_end_dt"] = kept_perc
-         df = df[mask]
-     dbg.dassert_lte(1, df.shape[0])
-     return df
+def filter_by_time(df,
+                   start_dt,
+                   end_dt,
+                   result_bundle=None,
+                   dt_col_name=None,
+                   log_level=logging.INFO):
+    dbg.dassert_lte(1, df.shape[0])
+    if start_dt is not None and end_dt is not None:
+        dbg.dassert_lte(start_dt, end_dt)
+    #
+    if start_dt is not None:
+        _LOG.log(log_level, "Filtering df with start_dt=%s", start_dt)
+        if dt_col_name:
+            mask = df[dt_col_name] >= start_dt
+        else:
+            mask = df.index >= start_dt
+        kept_perc = printing.perc(mask.sum(), df.shape[0])
+        _LOG.info(">= start_dt=%s: kept %s rows", start_dt, kept_perc)
+        if result_bundle:
+            result_bundle["filter_ge_start_dt"] = kept_perc
+        df = df[mask]
+    #
+    if end_dt is not None:
+        _LOG.info("Filtering df with end_dt=%s", end_dt)
+        if dt_col_name:
+            mask = df[dt_col_name] < end_dt
+        else:
+            mask = df.index < end_dt
+        kept_perc = printing.perc(mask.sum(), df.shape[0])
+        _LOG.info("< end_dt=%s: kept %s rows", end_dt, kept_perc)
+        if result_bundle:
+            result_bundle["filter_lt_end_dt"] = kept_perc
+        df = df[mask]
+    dbg.dassert_lte(1, df.shape[0])
+    return df
 
 
 # TODO(gp): ATHs vary over futures. Use volume to estimate them.
