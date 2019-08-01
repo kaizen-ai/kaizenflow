@@ -1,3 +1,13 @@
+# Graphical tools for time and frequency analysis.
+#
+# Some use cases include:
+#   - Determining whether a predictor exhibits autocorrelation
+#   - Determining the characteristic time scale of a signal
+#   - Signal filtering
+#   - Lag determination
+#   - etc.
+
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +17,9 @@ import scipy as sp
 import statsmodels.api as sm
 
 
+#
+# Single-signal functions
+#
 def plot_autocorrelation(signal, lags=40):
     """
     Plot autocorrelation and partial autocorrelation of series.
@@ -113,3 +126,23 @@ def plot_low_pass(signal, wavelet_name, threshold):
     ax.set_ylabel('Signal Amplitude', fontsize=16)
     ax.set_xlabel('Sample', fontsize=16)
     plt.show()
+
+
+#
+# Two-signal functions (e.g., predictor and response)
+#
+def plot_crosscorrelation(x, y):
+    """
+    Assumes x, y have been approximately demeaned and normalized (e.g.,
+    z-scored with ewma).
+
+    At index `k` in the result, the value is given by
+        (1 / N) * \sum_{l = 0}^{N - 1} x_l * y_{l + k}
+    """
+    joint_idx = x.index.intersection(y.index)
+    corr = sp.signal.correlate(x.loc[joint_idx], y.loc[joint_idx])
+    # Normalize by number of points in series (e.g., take expectations)
+    N = joint_idx.size
+    corr /= N
+    step_idx = pd.RangeIndex(-1 * N + 1, N)
+    pd.Series(data=corr, index=step_idx).plot()
