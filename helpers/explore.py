@@ -409,6 +409,7 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     :param max_num: max number of columns to plot.
     :return:
     """
+    # Check that there are no repeated columns.
     dbg.dassert_eq(len(find_duplicates(df.columns.tolist())), 0)
     # Note that the plot assumes that the first column is at the bottom of the
     # graph.

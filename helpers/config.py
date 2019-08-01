@@ -53,5 +53,5 @@ def config_to_python(config):
 
 # TODO(gp): Use this everywhere.
 def get_exception(config, key):
-    return "Invalid %s='%s' in config=\n%s" % (key, config[key],
-            printing.space(config_to_string(config)))
+    return ValueError("Invalid %s='%s' in config=\n%s" % (key, config[key],
+            printing.space(config_to_string(config))))
