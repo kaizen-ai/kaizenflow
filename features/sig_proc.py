@@ -6,6 +6,7 @@
 #   - Signal filtering
 #   - Lag determination
 #   - etc.
+import logging
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -15,6 +16,7 @@ import pywt
 import scipy as sp
 import statsmodels.api as sm
 
+_LOG = logging.getLogger(__name__)
 
 #
 # Single-signal functions
@@ -176,6 +178,35 @@ def plot_scaleogram(signal, scales, wavelet_name, cmap=plt.cm.seismic,
     cbar_ax = fig.add_axes([0.95, 0.5, 0.03, 0.25])
     fig.colorbar(im, cax=cbar_ax, orientation='vertical')
     plt.show()
+
+
+def fit_random_walk_plus_noise(signal):
+    """
+    Fit a random walk + Gaussian noise model using state space methods.
+
+    After convergence the resulting model is equivalent to exponential
+    smoothing. Using the state space approach we can
+      - Calculate the signal-to-noise ratio
+      - Determine an optimal (under model assumptions) ewma com
+      - Analyze residuals
+
+    :return: SSM model and fitted result
+    """
+    model = sm.tsa.UnobservedComponents(signal, level='local level')    
+    result = model.fit(method='powell', disp=True)
+    # Signal-to-noise ratio
+    q = result.params[1] / result.params[0]
+    _LOG.info("Signal-to-noise ratio q = %f", q)
+    p = 0.5 * (q + np.sqrt(q ** 2 + 4 * q))
+    kalman_gain = p / (p + 1)
+    _LOG.info("Steady-state Kalman gain = %f", kalman_gain)
+    # EWMA com
+    com = 1 / kalman_gain - 1
+    _LOG.info("EWMA com = %f", com)
+    print(result.summary())
+    result.plot_diagnostics()
+    result.plot_components(legend_loc='lower right', figsize=(15, 9))
+    return model, result
 
 
 #
