@@ -1,7 +1,13 @@
+import datetime
+import logging
+
 import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
+
+
+_LOG = logging.getLogger(__name__)
 
 
 def zscore(obj, com, demean, standardize, delay, min_periods=None):
@@ -28,14 +34,97 @@ def zscore(obj, com, demean, standardize, delay, min_periods=None):
     return obj
 
 
+def resample_1min(df):
+    """
+    Resample a df to one minute resolution leaving np.nan for the empty minutes.
+    Note that this is done on a 24h / calendar basis, without accounting for
+    any trading times.
+    """
+    dbg.dassert(df.index.is_monotonic_increasing)
+    dbg.dassert(df.index.is_unique)
+    date_range = pd.date_range(start=df.index.min(), end=df.index.max(), freq="1T")
+    df = df.reindex(date_range)
+    return df
+
+
+def resample(df, agg_interval):
+    """
+    Resample returns (using sum) using our timing convention.
+    """
+    dbg.dassert(df.index.is_monotonic_increasing)
+    dbg.dassert(df.index.is_unique)
+    resampler = df.resample(
+        agg_interval, closed="left", label="right")
+    rets = resampler.sum()
+    return rets
+
+
+def filter_by_time(df, start_dt, end_dt, result_bundle=None, dt_col_name=None,
+        log_level=logging.INFO):
+     dbg.dassert_lte(1, df.shape[0])
+     if start_dt is not None and end_dt is not None:
+         dbg.dassert_lte(start_dt, end_dt)
+     #
+     if start_dt is not None:
+         _LOG.log(log_level, "Filtering df with start_dt=%s", start_dt)
+         if dt_col_name:
+             mask = df[dt_col_name] >= start_dt
+         else:
+             mask = df.index >= start_dt
+         kept_perc = printing.perc(mask.sum(), df.shape[0])
+         _LOG.info(">= start_dt=%s: kept %s rows", start_dt, kept_perc)
+         if result_bundle:
+             result_bundle["filter_ge_start_dt"] = kept_perc
+         df = df[mask]
+     #
+     if end_dt is not None:
+         _LOG.info("Filtering df with end_dt=%s", end_dt)
+         if dt_col_name:
+             mask = df[dt_col_name] < end_dt
+         else:
+             mask = df.index < end_dt
+         kept_perc = printing.perc(mask.sum(), df.shape[0])
+         _LOG.info("< end_dt=%s: kept %s rows", end_dt, kept_perc)
+         if result_bundle:
+             result_bundle["filter_lt_end_dt"] = kept_perc
+         df = df[mask]
+     dbg.dassert_lte(1, df.shape[0])
+     return df
+
+
+# TODO(gp): ATHs vary over futures. Use volume to estimate them.
+def filter_ath(df, dt_col_name=None, log_level=logging.INFO):
+    """
+    Filter according to active trading hours.
+    """
+    dbg.dassert_lte(1, df.shape[0])
+    _LOG.log(log_level, "Filtering by ATH")
+    if dt_col_name is None:
+        times = np.array([dt.time() for dt in df[dt_col_name]])
+    else:
+        times = np.array([dt.time() for dt in df.index])
+    # Note that we need to exclude time(16, 0) since the last bar is tagged
+    # with time(15, 59).
+    # TODO(gp): Pass this values since they depend on the interval conventions.
+    start_time = datetime.time(9, 30)
+    end_time = datetime.time(15, 59)
+    mask = (start_time <= times) & (times <= end_time)
+    #
+    df = df[mask]
+    # Need to make a copy to avoid warnings
+    #   "A value is trying to be set on a copy of a slice from a DataFrame"
+    # downstream
+    df = df.copy()
+    _LOG.log(log_level, "df.shape=%s", df.shape)
+    dbg.dassert_lte(1, df.shape[0])
+    return df
+
+
 def show_distribution_by(by, ascending=False):
     by = by.sort_values(ascending=ascending)
     by.plot(kind="bar")
 
 
-# #############################################################################
-
-
-def annualize_sharpe_ratio(df_ret):
-    # TODO(gp): Check that it's not increasing.
-    return df_ret.mean() / df_ret.std() * np.sqrt(252)
+def annualize_sharpe_ratio(df):
+    df_tmp = df.resample("1D").sum()
+    return df_tmp.mean() / df_tmp.std() * np.sqrt(252)
