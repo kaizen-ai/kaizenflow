@@ -34,6 +34,8 @@ def plot_autocorrelation(signal, lags=40):
 def plot_power_spectral_density(signal):
     """
     Estimates the power spectral density using Welch's method.
+
+    Related to autocorrelation via the Fourier transform (Wiener-Khinchin).
     """
     freqs, psd = sp.signal.welch(signal)
     plt.figure(figsize=(5, 4))
@@ -47,6 +49,10 @@ def plot_power_spectral_density(signal):
 def plot_spectrogram(signal):
     """
     Plot spectrogram of signal.
+
+    From the scipy documentation of spectrogram:
+        "Spectrograms can be used as a way of visualizing the change of a
+         nonstationary signal's frequency content over time."
     """
     freqs, times, spectrogram = sp.signal.spectrogram(signal)
     plt.figure(figsize=(5, 4))
@@ -128,6 +134,9 @@ def plot_low_pass(signal, wavelet_name, threshold):
     plt.show()
 
 
+# TODO(Paul): Add scalogram plotting function.
+
+
 #
 # Two-signal functions (e.g., predictor and response)
 #
@@ -146,3 +155,6 @@ def plot_crosscorrelation(x, y):
     corr /= N
     step_idx = pd.RangeIndex(-1 * N + 1, N)
     pd.Series(data=corr, index=step_idx).plot()
+
+
+# TODO(Paul): Add coherence plotting function. 
