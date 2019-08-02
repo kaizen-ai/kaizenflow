@@ -18,6 +18,7 @@ import statsmodels.api as sm
 
 _LOG = logging.getLogger(__name__)
 
+
 #
 # Single-signal functions
 #
@@ -135,40 +136,48 @@ def plot_low_pass(signal, wavelet_name, threshold):
     plt.show()
 
 
-def plot_scaleogram(signal, scales, wavelet_name, cmap=plt.cm.seismic,
+def plot_scaleogram(signal,
+                    scales,
+                    wavelet_name,
+                    cmap=plt.cm.seismic,
                     title='Wavelet Spectrogram of signal',
-                    ylabel='Period', xlabel='Time'):
+                    ylabel='Period',
+                    xlabel='Time'):
     """
     Plots wavelet-based spectrogram (aka scaleogram).
 
     A nice reference and utility for plotting can be found at
     https://github.com/alsauve/scaleogram.
-    
+
     See also
     https://github.com/PyWavelets/pywt/blob/master/demo/wp_scalogram.py.
 
     :param signal: signal to transform
     :param scales: numpy array, e.g., np.arange(1, 128)
-    :param wavelet_name: continuous wavelet, e.g., 'cmor' or 'morl' 
+    :param wavelet_name: continuous wavelet, e.g., 'cmor' or 'morl'
     """
     time = np.arange(0, signal.size)
     dt = time[1] - time[0]
     [coeffs, freqs] = pywt.cwt(signal, scales, wavelet_name, dt)
-    power = np.abs(coeffs) ** 2
+    power = np.abs(coeffs)**2
     periods = 1. / freqs
     levels = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8]
     contour_levels = np.log2(levels)
 
     fig, ax = plt.subplots(figsize=(15, 10))
-    im = ax.contourf(time, np.log2(periods), np.log2(power), contour_levels,
-            extend='both', cmap=cmap)
+    im = ax.contourf(time,
+                     np.log2(periods),
+                     np.log2(power),
+                     contour_levels,
+                     extend='both',
+                     cmap=cmap)
 
     ax.set_title(title, fontsize=20)
     ax.set_ylabel(ylabel, fontsize=18)
     ax.set_xlabel(xlabel, fontsize=18)
 
-    yticks = 2 ** np.arange(np.ceil(np.log2(periods.min())),
-            np.ceil(np.log2(periods.max())))
+    yticks = 2**np.arange(np.ceil(np.log2(periods.min())),
+                          np.ceil(np.log2(periods.max())))
     ax.set_yticks(np.log2(yticks))
     ax.set_yticklabels(yticks)
     ax.invert_yaxis()
@@ -192,12 +201,12 @@ def fit_random_walk_plus_noise(signal):
 
     :return: SSM model and fitted result
     """
-    model = sm.tsa.UnobservedComponents(signal, level='local level')    
+    model = sm.tsa.UnobservedComponents(signal, level='local level')
     result = model.fit(method='powell', disp=True)
     # Signal-to-noise ratio
     q = result.params[1] / result.params[0]
     _LOG.info("Signal-to-noise ratio q = %f", q)
-    p = 0.5 * (q + np.sqrt(q ** 2 + 4 * q))
+    p = 0.5 * (q + np.sqrt(q**2 + 4 * q))
     kalman_gain = p / (p + 1)
     _LOG.info("Steady-state Kalman gain = %f", kalman_gain)
     # EWMA com
