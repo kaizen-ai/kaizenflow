@@ -245,11 +245,26 @@ def _get_action_func(action):
     """
     Return the function corresponding to the passed string.
     """
-    func_name = "_" + action
-    dbg.dassert(
-        hasattr(_THIS_MODULE, func_name),
-        msg="Invalid function '%s'" % func_name)
-    return getattr(_THIS_MODULE, func_name)
+    # Dynamic dispatch doesn't work with joblib since this module is injected
+    # in another module.
+    # func_name = "_" + action
+    # dbg.dassert(
+    #        hasattr(_THIS_MODULE, func_name),
+    #        msg="Invalid function '%s' in '%s'" % (func_name, _THIS_MODULE))
+    # return getattr(_THIS_MODULE, func_name)
+    map_ = {"basic_hygiene": _basic_hygiene,
+            "yapf": _yapf,
+            "autoflake": _autoflake,
+            "isort": _isort,
+            "pyment": _pyment,
+            "fix_jupytext": _fix_jupytext,
+            "ipynb_format": _ipynb_format,
+            "pylint": _pylint,
+            "check_jupytext": _check_jupytext,
+            "flake8": _flake8,
+            "pydocstyle": _pydocstyle,
+        }
+    return map_[action]
 
 
 def _remove_not_possible_actions(actions):
@@ -562,7 +577,7 @@ def _pylint(file_name, pedantic, check_if_possible):
 
 def _ipynb_format(file_name, pedantic, check_if_possible):
     _ = pedantic
-    curr_path = os.path.dirname(os.path.realpath(__file__))
+    curr_path = os.path.dirname(os.path.realpath(sys.argv[0]))
     executable = '%s/ipynb_format.py' % curr_path
     if check_if_possible:
         return _check_exec(executable)
@@ -710,6 +725,34 @@ def _fix_jupytext(file_name, pedantic, check_if_possible):
     return output
 
 
+def _lint(file_name, actions, pedantic, debug):
+    output = []
+    _LOG.info("\n%s", printing.frame(file_name, char1="="))
+    for action in actions:
+        _LOG.debug("\n%s", printing.frame(action, char1="-"))
+        print("## %-20s (%s)" % (action, file_name))
+        if debug:
+            # Make a copy after each action.
+            dst_file_name = file_name + "." + action
+            cmd = "cp -a %s %s" % (file_name, dst_file_name)
+            os.system(cmd)
+        else:
+            dst_file_name = file_name
+        func = _get_action_func(action)
+        # We want to run the stages, and not check.
+        check_if_possible = False
+        output_tmp = func(dst_file_name, pedantic, check_if_possible)
+        # Annotate with executable [tag].
+        output_tmp = _annotate_output(output_tmp, action)
+        dbg.dassert_isinstance(
+            output_tmp,
+            list,
+            msg="action=%s file_name=%s" % (action, file_name))
+        output.extend(output_tmp)
+        if output_tmp:
+            _LOG.info("\n%s", "\n".join(output_tmp))
+    return output
+
 # #############################################################################
 # Main.
 # #############################################################################
@@ -744,6 +787,8 @@ _ALL_ACTIONS = [
     "ipynb_format",
     "fix_jupytext",
 ]
+
+import itertools
 
 
 def _main(args):
@@ -786,36 +831,26 @@ def _main(args):
     # Create tmp dir.
     io_.create_dir(_TMP_DIR, incremental=False)
     # Run linter.
-    output = []
     num_steps = len(file_names) * len(actions)
     _LOG.info("Num of files=%d, num of actions=%d -> num of steps=%d",
               len(file_names), len(actions), num_steps)
-    for file_name in file_names:
-        _LOG.info("\n%s", printing.frame(file_name, char1="/"))
-        for action in actions:
-            _LOG.debug("\n%s", printing.frame(action, char1="-"))
-            print("## " + action)
-            if args.debug:
-                # Make a copy after each action.
-                dst_file_name = file_name + "." + action
-                cmd = "cp -a %s %s" % (file_name, dst_file_name)
-                os.system(cmd)
-            else:
-                dst_file_name = file_name
-            func = _get_action_func(action)
-            pedantic = not args.no_pedantic
-            # We want to run the stages, and not check.
-            check_if_possible = False
-            output_tmp = func(dst_file_name, pedantic, check_if_possible)
-            # Annotate with executable [tag].
-            output_tmp = _annotate_output(output_tmp, action)
-            dbg.dassert_isinstance(
-                output_tmp,
-                list,
-                msg="action=%s file_name=%s" % (action, file_name))
+    pedantic = not args.no_pedantic
+    num_threads = args.num_threads
+    if num_threads == "serial":
+        output = []
+        for file_name in file_names:
+            output_tmp = _lint(file_name, actions, pedantic, args.debug)
             output.extend(output_tmp)
-            if output_tmp:
-                _LOG.info("\n%s", "\n".join(output_tmp))
+    else:
+        num_threads = int(num_threads)
+        # -1 is interpreted by joblib like for all cores.
+        _LOG.info("Using %d threads", num_threads)
+        from joblib import Parallel, delayed
+        output_tmp = Parallel(
+            n_jobs=num_threads,
+            verbose=50)(delayed(_lint)(file_name, actions, pedantic, args.debug)
+                        for file_name in file_names)
+        output = list(itertools.chain.from_iterable(output_tmp))
     output.append("cmd line='%s'" % _get_command_line())
     # TODO(gp): Get timestamp.
     output.append("datetime='%s'" % datetime.datetime.now())
@@ -916,6 +951,9 @@ def _parse():
         "--all", action="store_true", help="Run all recommended phases")
     parser.add_argument(
         "--no_pedantic", action="store_true", help="Skip purely cosmetic lints")
+    parser.add_argument(
+        "--num_threads", action="store", default="serial",
+        help="Number of threads to use (-1 to use all CPUs)")
     #
     parser.add_argument(
         "--linter_log",
