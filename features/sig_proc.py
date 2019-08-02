@@ -201,7 +201,8 @@ def fit_random_walk_plus_noise(signal):
 
     :return: SSM model and fitted result
     """
-    model = sm.tsa.UnobservedComponents(signal, level='local level')
+    model = sm.tsa.UnobservedComponents(signal, level='local level',
+            initialization='diffuse')
     result = model.fit(method='powell', disp=True)
     # Signal-to-noise ratio
     q = result.params[1] / result.params[0]
