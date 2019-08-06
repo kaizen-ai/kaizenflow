@@ -30,7 +30,9 @@ statsmodels
 jupyter
 jupyter_contrib_nbextensions
 jupyter_nbextensions_configurator
+ipykernel
 nb_conda
+nb_conda_kernels
 ## ############################################################################
 ## Linter
 ## ############################################################################
@@ -59,5 +61,6 @@ joblib
 jq                      # To process json.
 #pymongo
 quandl
-#pymc3                  # Seems to have problems at least when installing on top of an existing env.
+mkl-service            # pymc3 expects it; not sure why conda doesn't solve for it
+pymc3                  # Seems to have problems at least when installing on top of an existing env.
 #pydot
