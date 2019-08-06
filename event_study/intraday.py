@@ -46,14 +46,33 @@ def generate_aligned_response(x_df, y_df, resp_col_name, num_shifts):
     return pre_event_df, post_event_df
 
 
-def event_regression(x_vars, y_var):
-    # TODO: add docstring, factor out tiling and size adjustments 
+def tile_x_flatten_y(x_vars, y_var):
+    """
+    Reshape x_vars, y_var for analysis from event time forward.
+
+    :param x_var: signal at event time
+    :param y_var: a single response variable in an nxk form, from event time
+        and forward
+    """
     y = y_var.values.transpose().flatten()
+    # Tile x values to match flattened y
+    _LOG.info('regressors: %s', x_vars.columns.values)
+    x = np.tile(x_vars.values, (y_var.shape[1], 1))
+    return x, y
+
+
+def regression(x, y):
+    """
+    Linear regression of y_var on x_vars.
+    
+    Constant regression term not included but must be supplied by caller.
+    
+    Returns beta_hat along with beta_hat_covar and z-scores for the hypothesis
+    that a beta_j = 0.
+    """
     nan_filter = ~np.isnan(y)
     nobs = np.count_nonzero(nan_filter) 
     _LOG.info('nobs = %s', nobs)
-    # Tile x values to match flattened y
-    x = np.tile(x_vars.values, (y_var.shape[1], 1))
     x = x[nan_filter]
     y = y[nan_filter]
     y_mean = np.mean(y)
@@ -68,13 +87,13 @@ def event_regression(x_vars, y_var):
     _LOG.info('rss = %f', rss)
     _LOG.info('r^2 = %f', 1 - rss / tss)
     xtx_inv = np.linalg.inv((x.transpose().dot(x)))
-    sigma_hat_sq = rss / (nobs - x_vars.shape[1])
+    sigma_hat_sq = rss / (nobs - x.shape[1])
     _LOG.info('sigma_hat_sq = %s', np.array2string(sigma_hat_sq))
     beta_hat_covar = xtx_inv * sigma_hat_sq 
     _LOG.info('beta_hat_covar = %s', np.array2string(beta_hat_covar))
     beta_hat_z_score = beta_hat / np.sqrt(sigma_hat_sq * np.diagonal(xtx_inv)) 
     _LOG.info('beta_hat_z_score = %s', np.array2string(beta_hat_z_score))
-    return sigma_hat_sq, beta_hat, beta_hat_covar, beta_hat_z_score
+    return beta_hat, beta_hat_covar, beta_hat_z_score
 
 
 def estimate_event_effect(x_vars, pre_resp, post_resp):
@@ -110,12 +129,13 @@ def estimate_event_effect(x_vars, pre_resp, post_resp):
     # Estimate level pre-event
     _LOG.info('Estimating pre-event response level...')
     x_ind = pd.DataFrame(index=x_vars.index,
-                         data=np.ones(x_vars.shape[0]))
-    pre_resp_sigma_sq, alpha_hat, alpha_hat_var, alpha_hat_z_score = \
-            event_regression(x_ind, pre_resp)
+                         data=np.ones(x_vars.shape[0]),
+                         columns=['const'])
+    x_lvl, y_pre_resp = tile_x_flatten_y(x_ind, pre_resp)
+    alpha_hat, alpha_hat_var, alpha_hat_z_score = regression(x_lvl, y_pre_resp) 
     _LOG.info('Regressing level-adjusted post-event response against x_vars...')
     # Adjust post-event values by pre-event-estimated level
-    post_resp_sigma_sq, delta_hat, delta_hat_var, delta_hat_z_score = \
-            event_regression(x_vars, post_resp - alpha_hat[0])
+    x, y_post_resp = tile_x_flatten_y(x_vars, post_resp - alpha_hat[0])
+    delta_hat, delta_hat_var, delta_hat_z_score = regression(x, y_post_resp) 
     return alpha_hat, alpha_hat_z_score, delta_hat, delta_hat_z_score 
 
