@@ -47,13 +47,18 @@ def generate_aligned_response(x_df, y_df, resp_col_name, num_shifts):
 
 
 def event_regression(x_vars, y_var):
+    # TODO: add docstring, factor out tiling and size adjustments 
     y = y_var.values.transpose().flatten()
     nan_filter = ~np.isnan(y)
     nobs = np.count_nonzero(nan_filter) 
+    _LOG.info('nobs = %s', nobs)
     # Tile x values to match flattened y
     x = np.tile(x_vars.values, (y_var.shape[1], 1))
     x = x[nan_filter]
     y = y[nan_filter]
+    y_mean = np.mean(y)
+    tss = (y - y_mean).dot(y - y_mean)
+    _LOG.info('tss = %f', tss)
     # Linear regression to estimate \beta
     regress = np.linalg.lstsq(x, y, rcond=None) 
     beta_hat = regress[0]
@@ -61,6 +66,7 @@ def event_regression(x_vars, y_var):
     # Estimate delta covariance
     rss = regress[1]
     _LOG.info('rss = %f', rss)
+    _LOG.info('r^2 = %f', 1 - rss / tss)
     xtx_inv = np.linalg.inv((x.transpose().dot(x)))
     sigma_hat_sq = rss / (nobs - x_vars.shape[1])
     _LOG.info('sigma_hat_sq = %s', np.array2string(sigma_hat_sq))
@@ -102,10 +108,12 @@ def estimate_event_effect(x_vars, pre_resp, post_resp):
         offsets)
     """
     # Estimate level pre-event
+    _LOG.info('Estimating pre-event response level...')
     x_ind = pd.DataFrame(index=x_vars.index,
                          data=np.ones(x_vars.shape[0]))
     pre_resp_sigma_sq, alpha_hat, alpha_hat_var, alpha_hat_z_score = \
             event_regression(x_ind, pre_resp)
+    _LOG.info('Regressing level-adjusted post-event response against x_vars...')
     # Adjust post-event values by pre-event-estimated level
     post_resp_sigma_sq, delta_hat, delta_hat_var, delta_hat_z_score = \
             event_regression(x_vars, post_resp - alpha_hat[0])
