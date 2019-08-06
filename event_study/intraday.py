@@ -46,26 +46,29 @@ def generate_aligned_response(x_df, y_df, resp_col_name, num_shifts):
     return pre_event_df, post_event_df
 
 
-def non_nan_cnt(v):
-    """
-    Convenience function for counting the number of non-nan values in a numpy
-    array.
-    
-    """
-    return np.count_nonzero(~np.isnan(v))
-
-
-def estimate_level(v):
-    """
-    Estimate mean based on samples provided in v.
-    
-    :param v: numpy array
-
-    :return: estimate of mean with NaN's dropped and variance of mean estimate
-    """
-    mean = np.nanmean(v)
-    var = np.nanvar(v, ddof=1) / float(non_nan_cnt(v))
-    return mean, var
+def event_regression(x_vars, y_var):
+    y = y_var.values.transpose().flatten()
+    nan_filter = ~np.isnan(y)
+    nobs = np.count_nonzero(nan_filter) 
+    # Tile x values to match flattened y
+    x = np.tile(x_vars.values, (y_var.shape[1], 1))
+    x = x[nan_filter]
+    y = y[nan_filter]
+    # Linear regression to estimate \beta
+    regress = np.linalg.lstsq(x, y, rcond=None) 
+    beta_hat = regress[0]
+    _LOG.info('beta = %s', np.array2string(beta_hat))
+    # Estimate delta covariance
+    rss = regress[1]
+    _LOG.info('rss = %f', rss)
+    xtx_inv = np.linalg.inv((x.transpose().dot(x)))
+    sigma_hat_sq = rss / (nobs - x_vars.shape[1])
+    _LOG.info('sigma_hat_sq = %s', np.array2string(sigma_hat_sq))
+    beta_hat_covar = xtx_inv * sigma_hat_sq 
+    _LOG.info('beta_hat_covar = %s', np.array2string(beta_hat_covar))
+    beta_hat_z_score = beta_hat / np.sqrt(sigma_hat_sq * np.diagonal(xtx_inv)) 
+    _LOG.info('beta_hat_z_score = %s', np.array2string(beta_hat_z_score))
+    return sigma_hat_sq, beta_hat, beta_hat_covar, beta_hat_z_score
 
 
 def estimate_event_effect(x_vars, pre_resp, post_resp):
@@ -82,6 +85,10 @@ def estimate_event_effect(x_vars, pre_resp, post_resp):
       1. Estimate \alpha by taking mean of all values in pre_resp
       2. Adjust values in post_resp by subtracting \alpha
       3. Regress adjusted post_resp values against x_df (estimate \delta)
+      4. Estimate dispersion of regression coefficients and z-score
+
+    For 4) we follow standard results as in Sec. 3.2 of Elements of Statistical
+    Learning.
 
     We should consider replacing this procedure with a robust Bayesian
     procedure, such as "Bayesian Estimation Supersedes the t Test"
@@ -93,21 +100,14 @@ def estimate_event_effect(x_vars, pre_resp, post_resp):
     :param pre_resp: pd.DataFrame of response pre-event (cols are neg offsets)
     :param post_resp: pd.DataFrame of response post-event (cols are pos
         offsets)
-
-    :return: alpha, alpha_var, delta, delta_covar 
     """
     # Estimate level pre-event
-    alpha, alpha_var = estimate_level(pre_resp.values)
+    x_ind = pd.DataFrame(index=x_vars.index,
+                         data=np.ones(x_vars.shape[0]))
+    pre_resp_sigma_sq, alpha_hat, alpha_hat_var, alpha_hat_z_score = \
+            event_regression(x_ind, pre_resp)
     # Adjust post-event values by pre-event-estimated level
-    y_tilde = post_resp.values.transpose().flatten() - alpha
-    nobs = non_nan_cnt(y_tilde)
-    # Tile x values to match flattened y
-    x = np.tile(x_vars.values, (post_resp.shape[1], 1))
-    # Linear regression to estimate \delta
-    regress = np.linalg.lstsq(x, np.nan_to_num(y_tilde), rcond=None) 
-    delta = regress[0]
-    # Estimate delta covariance
-    rss = regress[1]
-    xtx_inv = np.linalg.inv((x.transpose().dot(x)))
-    delta_covar = xtx_inv * rss / (nobs - 1)
-    return alpha, alpha_var, delta, delta_covar 
+    post_resp_sigma_sq, delta_hat, delta_hat_var, delta_hat_z_score = \
+            event_regression(x_vars, post_resp - alpha_hat[0])
+    return alpha_hat, alpha_hat_z_score, delta_hat, delta_hat_z_score 
+
