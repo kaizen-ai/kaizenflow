@@ -61,6 +61,7 @@ joblib
 jq                      # To process json.
 #pymongo
 quandl
+# arviz                # Needed by pymc3 for some plotting functionality.
 mkl-service            # pymc3 expects it; not sure why conda doesn't solve for it
 pymc3                  # Seems to have problems at least when installing on top of an existing env.
 #pydot
