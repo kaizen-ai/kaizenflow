@@ -6,6 +6,9 @@ Install the default package
 Quick install to test the script
 > create_conda.py -v DEBUG --test_install
 
+Test the develop environment
+> create_conda.py --env_name develop_test --req_file install/requirements/requirements_develop.txt
+
 Create pymc3
 > create_conda.py --env_name pymc3 --req_file requirements_pymc.txt -v DEBUG
 """

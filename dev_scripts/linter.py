@@ -34,7 +34,6 @@ E.g.,
 # TODO(gp): Add mccabe score.
 # TODO(gp): Do not overwrite file when there is no change.
 # TODO(gp): Add autopep8 if useful?
-# TODO(gp): Use joblib to parallelize
 # TODO(gp): Add vulture, snake_food
 # TODO(gp): It would be ideal to do two commits, but not sure how to do it
 # TODO(gp): Save tarball, dir or patch of changes
@@ -54,6 +53,7 @@ E.g.,
 
 import argparse
 import datetime
+import itertools
 import logging
 import os
 import re
@@ -99,15 +99,28 @@ def _remove_empty_lines(output):
     return output
 
 
+def _filter_target_files(file_names):
+    file_names_out = []
+    for file_name in file_names:
+        _, file_ext = os.path.splitext(file_name)
+        is_valid = file_ext in (".py", ".ipynb")
+        is_valid &= ".ipynb_checkpoints/" not in file_name
+        # Skip files in directory starting with "tmp.".
+        is_valid &= "/tmp." not in file_name
+        if is_valid:
+            file_names_out.append(file_name)
+    return file_names_out
+
+
 # TODO(gp): Horrible: to remove / rewrite.
-def _clean_file(filename, write_back):
+def _clean_file(file_name, write_back):
     """
     Remove empty spaces, tabs, windows end-of-lines.
     :param write_back: if True the file is overwritten in place.
     """
     # Read file.
     file_in = []
-    with open(filename, 'r') as f:
+    with open(file_name, 'r') as f:
         for line in f:
             file_in.append(line)
     #
@@ -129,7 +142,7 @@ def _clean_file(filename, write_back):
         file_out = ''.join(file_out)
         if file_in != file_out:
             _LOG.debug("Writing back file '%s'", file_name)
-            with open(filename, 'w') as f:
+            with open(file_name, 'w') as f:
                 f.write(file_out)
         else:
             _LOG.debug("No change in file, so no saving")
@@ -191,11 +204,12 @@ def _get_files(args):
             _LOG.info("Looking for all files in '%s'", dir_name)
             dbg.dassert_exists(dir_name)
             cmd = "find %s -name '*' -type f" % dir_name
-            output = si.system_to_string(cmd)[1]
+            _, output = si.system_to_string(cmd)
             file_names = output.split("\n")
         if not file_names or args.current_git_files:
             # Get all the git modified files.
             file_names = git.get_modified_files()
+    file_names = _filter_target_files(file_names)
     # Remove files.
     if args.skip_py:
         file_names = [f for f in file_names if not is_py_file(f)]
@@ -252,18 +266,19 @@ def _get_action_func(action):
     #        hasattr(_THIS_MODULE, func_name),
     #        msg="Invalid function '%s' in '%s'" % (func_name, _THIS_MODULE))
     # return getattr(_THIS_MODULE, func_name)
-    map_ = {"basic_hygiene": _basic_hygiene,
-            "yapf": _yapf,
-            "autoflake": _autoflake,
-            "isort": _isort,
-            "pyment": _pyment,
-            "fix_jupytext": _fix_jupytext,
-            "ipynb_format": _ipynb_format,
-            "pylint": _pylint,
-            "check_jupytext": _check_jupytext,
-            "flake8": _flake8,
-            "pydocstyle": _pydocstyle,
-        }
+    map_ = {
+        "basic_hygiene": _basic_hygiene,
+        "yapf": _yapf,
+        "autoflake": _autoflake,
+        "isort": _isort,
+        "pyment": _pyment,
+        "fix_jupytext": _fix_jupytext,
+        "ipynb_format": _ipynb_format,
+        "pylint": _pylint,
+        "check_jupytext": _check_jupytext,
+        "flake8": _flake8,
+        "pydocstyle": _pydocstyle,
+    }
     return map_[action]
 
 
@@ -329,6 +344,7 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
     if check_if_possible:
         # We don't need any special executable, so we can always run this action.
         return True
+    output = []
     # Read file.
     dbg.dassert(file_name)
     txt = io_.from_file(file_name, split=True)
@@ -351,14 +367,14 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
     # Remove whitespaces at the end of file.
     while txt_new and (txt_new[-1] == '\n'):
         # While the last item in the list is blank, removes last element.
-        text_new.pop(-1)
+        txt_new.pop(-1)
     # Write.
     txt = "\n".join(txt)
     txt_new = "\n".join(txt_new)
     if txt != txt_new:
         io_.to_file(file_name, txt_new)
     #
-    return []
+    return output
 
 
 def _autoflake(file_name, pedantic, check_if_possible):
@@ -725,6 +741,9 @@ def _fix_jupytext(file_name, pedantic, check_if_possible):
     return output
 
 
+# #############################################################################
+
+
 def _lint(file_name, actions, pedantic, debug):
     output = []
     _LOG.info("\n%s", printing.frame(file_name, char1="="))
@@ -752,6 +771,7 @@ def _lint(file_name, actions, pedantic, debug):
         if output_tmp:
             _LOG.info("\n%s", "\n".join(output_tmp))
     return output
+
 
 # #############################################################################
 # Main.
@@ -787,8 +807,6 @@ _ALL_ACTIONS = [
     "ipynb_format",
     "fix_jupytext",
 ]
-
-import itertools
 
 
 def _main(args):
@@ -952,7 +970,9 @@ def _parse():
     parser.add_argument(
         "--no_pedantic", action="store_true", help="Skip purely cosmetic lints")
     parser.add_argument(
-        "--num_threads", action="store", default="serial",
+        "--num_threads",
+        action="store",
+        default="serial",
         help="Number of threads to use (-1 to use all CPUs)")
     #
     parser.add_argument(
