@@ -1,5 +1,4 @@
 import collections
-import datetime
 import functools
 import glob
 import logging
@@ -8,22 +7,18 @@ import math
 #import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 import tqdm
 from IPython.display import display
 from sklearn import linear_model
 from sklearn.model_selection import TimeSeriesSplit
 
 import helpers.config as cfg
-import helpers.finance as fin
 import helpers.dbg as dbg
+import helpers.finance as fin
 import helpers.io_ as io_
 import helpers.pickle_ as pickle_
-import helpers.printing as printing
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(gp): This file should go in utilities since it's framework.
 
 # #############################################################################
 # Transform.
@@ -46,7 +41,10 @@ _LOG = logging.getLogger(__name__)
 #       pull information in the `result_bundle`
 
 
-def filter_by_time_from_config(config, df, result_bundle, dt_col_name="datetime"):
+def filter_by_time_from_config(config,
+                               df,
+                               result_bundle,
+                               dt_col_name="datetime"):
     cfg.print_config(config, ["start_dt", "end_dt"])
     dbg.dassert_lte(1, df.shape[0])
     #
@@ -164,7 +162,7 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
     result_split[tag + ".hitrate"] = _compute_model_hitrate(model, x, y)
     result_split[tag + ".pnl_rets"] = _compute_model_pnl_rets(
         df.iloc[idxs], model, x, y)
-    result_split[tag + ".sr"] = compute_sr(result_split[tag + ".pnl_rets"])
+    result_split[tag + ".sr"] = fin.compute_sr(result_split[tag + ".pnl_rets"])
     return result_split
 
 
@@ -283,44 +281,6 @@ def fit_model_from_config(config, df, result_bundle):
     dbg.dassert_eq(
         len(result_bundle["result_split"]), result_bundle["num_splits"])
     return result_bundle
-
-
-# #############################################################################
-# Pnl returns stats.
-# #############################################################################
-
-# TODO: These functions should go in a different module since they are more
-# basic.
-
-
-def compute_sr(rets):
-    # Annualize (brutally).
-    #sr = rets.mean() / rets.std()
-    #sr *= np.sqrt(252 * ((16 - 9.5) * 60))
-    daily_rets = rets.resample("1D").sum()
-    sr = daily_rets.mean() / daily_rets.std()
-    sr *= np.sqrt(252)
-    return sr
-
-
-def compute_kratio(rets, y_var):
-    # From http://s3.amazonaws.com/zanran_storage/www.styleadvisor.com/ContentPages/2449998087.pdf
-    daily_rets = rets.resample("1B").sum().cumsum()
-    # Fit the best line to the daily rets.
-    x = range(daily_rets.shape[0])
-    x = sm.add_constant(x)
-    y = daily_rets[y_var]
-    reg = sm.OLS(y, x)
-    model = reg.fit()
-    # Compute k-ratio as slope / std err of slope.
-    kratio = model.params[1] / model.bse[1]
-    if False:
-        # Debug the function.
-        print(model.summary())
-        daily_rets.index = range(daily_rets.shape[0])
-        daily_rets["kratio"] = model.predict(x)
-        daily_rets.plot()
-    return kratio
 
 
 # #############################################################################
@@ -477,11 +437,11 @@ def process_test_pnl(config, result_bundle, report_stats=True):
     pnl_rets = pd.concat(pnl_rets)
     result_bundle["concat_test_pnl_rets"] = pnl_rets
     #
-    sr = compute_sr(pnl_rets)
+    sr = fin.compute_sr(pnl_rets)
     txt = "sr=%.3f" % sr
     #
     y_var = result_bundle["y_var"]
-    kratio = compute_kratio(pnl_rets, y_var)
+    kratio = fin.compute_kratio(pnl_rets, y_var)
     txt += "\nkratio=%.1f" % kratio
     #
     txt += "\n\n" + cfg.config_to_string(config)

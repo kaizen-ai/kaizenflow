@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 
 import helpers.dbg as dbg
 import helpers.printing as printing
@@ -15,7 +16,8 @@ def zscore(obj, com, demean, standardize, delay, min_periods=None):
     # z-scoring might not be causal with delay=0, especially for predicted
     # variables.
     dbg.dassert_lte(0, delay)
-    dbg.check_monotonic_df(df)
+    # TODO(gp): Extend this to series.
+    dbg.check_monotonic_df(obj)
     obj = obj.copy()
     if min_periods is None:
         min_periods = 3 * com
@@ -179,6 +181,41 @@ def show_distribution_by(by, ascending=False):
     by.plot(kind="bar")
 
 
+# #############################################################################
+# Pnl returns stats.
+# #############################################################################
+
+
 def annualize_sharpe_ratio(df):
     df_tmp = df.resample("1D").sum()
     return df_tmp.mean() / df_tmp.std() * np.sqrt(252)
+
+
+def compute_sr(rets):
+    # Annualize (brutally).
+    #sr = rets.mean() / rets.std()
+    #sr *= np.sqrt(252 * ((16 - 9.5) * 60))
+    daily_rets = rets.resample("1D").sum()
+    sr = daily_rets.mean() / daily_rets.std()
+    sr *= np.sqrt(252)
+    return sr
+
+
+def compute_kratio(rets, y_var):
+    # From http://s3.amazonaws.com/zanran_storage/www.styleadvisor.com/ContentPages/2449998087.pdf
+    daily_rets = rets.resample("1B").sum().cumsum()
+    # Fit the best line to the daily rets.
+    x = range(daily_rets.shape[0])
+    x = sm.add_constant(x)
+    y = daily_rets[y_var]
+    reg = sm.OLS(y, x)
+    model = reg.fit()
+    # Compute k-ratio as slope / std err of slope.
+    kratio = model.params[1] / model.bse[1]
+    if False:
+        # Debug the function.
+        print(model.summary())
+        daily_rets.index = range(daily_rets.shape[0])
+        daily_rets["kratio"] = model.predict(x)
+        daily_rets.plot()
+    return kratio
