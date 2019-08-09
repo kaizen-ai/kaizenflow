@@ -972,8 +972,10 @@ def _parse():
     parser.add_argument(
         "--num_threads",
         action="store",
-        default="serial",
-        help="Number of threads to use (-1 to use all CPUs)")
+        default="-1",
+        help=
+        "Number of threads to use ('serial' to run serially, -1 to use all CPUs)"
+    )
     #
     parser.add_argument(
         "--linter_log",
