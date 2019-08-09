@@ -72,10 +72,11 @@ def regression(x, y):
     """
     nan_filter = ~np.isnan(y)
     nobs = np.count_nonzero(nan_filter) 
-    _LOG.info('nobs = %s', nobs)
+    _LOG.info('nobs (resp) = %s', nobs)
     x = x[nan_filter]
     y = y[nan_filter]
     y_mean = np.mean(y)
+    _LOG.info('y_mean = %f', y_mean)
     tss = (y - y_mean).dot(y - y_mean)
     _LOG.info('tss = %f', tss)
     # Linear regression to estimate \beta
