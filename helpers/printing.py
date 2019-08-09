@@ -269,8 +269,7 @@ def config_notebook():
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
     # plt.rcParams
-    # print plt.rcParams['figure.figsize']
     plt.rcParams['figure.figsize'] = (20, 5)
     plt.rcParams['legend.fontsize'] = 14
     plt.rcParams['font.size'] = 14
-    # print plt.rcParams['figure.figsize']
+    plt.rcParams['image.cmap'] = 'rainbow'

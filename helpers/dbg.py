@@ -245,6 +245,11 @@ def dassert_dir_exists(dir_name, msg=""):
         dfatal(msg_)
 
 
+def check_monotonic_df(df):
+    dassert(df.index.is_monotonic_increasing)
+    dassert(df.index.is_unique)
+
+
 ## TODO(gp): -> dassert_timestamp
 #if _HAS_PANDAS:
 #

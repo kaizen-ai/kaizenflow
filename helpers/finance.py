@@ -10,18 +10,12 @@ import helpers.printing as printing
 _LOG = logging.getLogger(__name__)
 
 
-def _check_monotonic_df(df):
-    dbg.dassert(df.index.is_monotonic_increasing)
-    dbg.dassert(df.index.is_unique)
-
-
 def zscore(obj, com, demean, standardize, delay, min_periods=None):
     dbg.dassert_type_in(obj, (pd.Series, pd.DataFrame))
     # z-scoring might not be causal with delay=0, especially for predicted
     # variables.
     dbg.dassert_lte(0, delay)
-    # Make sure timestamps are increasing.
-    dbg.dassert(obj.index.is_monotonic)
+    dbg.check_monotonic_df(df)
     obj = obj.copy()
     if min_periods is None:
         min_periods = 3 * com
@@ -47,7 +41,7 @@ def resample_1min(df, skip_weekends):
     :param skip_weekends: remove Sat and Sun
     :return: resampled df
     """
-    _check_monotonic_df(df)
+    dbg.check_monotonic_df(df)
     date_range = pd.date_range(
         start=df.index.min(), end=df.index.max(), freq="1T")
     # Remove weekends.
@@ -67,7 +61,7 @@ def remove_dates_with_no_data(df, report_stats):
     :return: filtered df
     """
     # This is not strictly necessary.
-    _check_monotonic_df(df)
+    dbg.check_monotonic_df(df)
     #
     removed_days = []
     df_out = []
@@ -80,7 +74,7 @@ def remove_dates_with_no_data(df, report_stats):
             df_out.append(df_tmp)
         num_days += 1
     df_out = pd.concat(df_out)
-    _check_monotonic_df(df_out)
+    dbg.check_monotonic_df(df_out)
     #
     if report_stats:
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
@@ -95,8 +89,8 @@ def remove_dates_with_no_data(df, report_stats):
         _LOG.info("Number of removed weekdays: %s", removed_perc)
         _LOG.info("Weekdays removed: %s", ", ".join(map(str, removed_weekdays)))
         #
-        removed_perc = printing.perc(len(removed_days) - len(removed_weekdays),
-                len(removed_days))
+        removed_perc = printing.perc(
+            len(removed_days) - len(removed_weekdays), len(removed_days))
         _LOG.info("Number of removed weekend days: %s", removed_perc)
         #
 
@@ -107,7 +101,7 @@ def resample(df, agg_interval):
     """
     Resample returns (using sum) using our timing convention.
     """
-    _check_monotonic_df(df)
+    dbg.check_monotonic_df(df)
     resampler = df.resample(agg_interval, closed="left", label="right")
     rets = resampler.sum()
     return rets

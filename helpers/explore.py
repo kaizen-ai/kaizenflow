@@ -10,13 +10,14 @@ more complex pipelines. The output is reported through logging.
 
 import datetime
 import logging
+import math
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy
 import seaborn as sns
-from tqdm import tqdm
+import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as printing
@@ -111,20 +112,6 @@ def drop_na(df, *args, **kwargs):
 def report_zero_null_stats(df, zero_threshold=1e-9, as_txt=False):
     """
     Report statistics about zeros and nulls for a df.
-
-    E.g.,
-    index in [2009-09-27 18:00:00, 2019-07-19 16:59:00]
-    num_rows=3,433,655
-                        CL_ret_0	NG_ret_0	RB_ret_0	BZ_ret_0
-    2009-09-27 18:00:00	NaN	        NaN	        NaN	        NaN
-    ...	...	...	...	...
-    2019-07-19 16:59:00	0.000357846	0	        NaN	        -0.000318218
-
-                num_nulls	pct_nulls [%]	num_zeros	pct_zeros [%]
-    CL_ret_0	45238	    0.01	        736090	    0.21
-    NG_ret_0	867892	    0.25	        741705	    0.22
-    RB_ret_0	1602814	    0.47	        140218	    0.04
-    BZ_ret_0	2431500	    0.71	        131432	    0.04
     """
     dbg.dassert(df.index.is_monotonic_increasing)
     dbg.dassert(df.index.is_unique)
@@ -152,18 +139,18 @@ def report_zero_null_stats(df, zero_threshold=1e-9, as_txt=False):
     num_nulls = df.isnull().sum(axis=0)
     stats_df["num_nulls"] = num_nulls
     stats_df["pct_nulls [%]"] = (100.0 * num_nulls / df.shape[0]).apply(
-            printing.round_digits)
+        printing.round_digits)
     #
     num_zeros = (np.abs(df) < zero_threshold).sum(axis=0)
     stats_df["num_zeros"] = num_zeros
     stats_df["pct_zeros [%]"] = (100.0 * num_zeros / df.shape[0]).apply(
-            printing.round_digits)
+        printing.round_digits)
     #
     num_valid = (np.abs(df) >= zero_threshold) & (~df.isnull())
     num_valid = num_valid.sum(axis=0)
     stats_df["num_valid"] = num_valid
     stats_df["pct_valid [%]"] = (100.0 * num_valid / df.shape[0]).apply(
-            printing.round_digits)
+        printing.round_digits)
     #
     display_df(stats_df, as_txt=as_txt)
 
@@ -294,7 +281,7 @@ def print_column_variability(df,
     """
     print(("# df.columns=%s" % printing.list_to_str(df.columns)))
     res = []
-    for c in tqdm(df.columns):
+    for c in tqdm.tqdm(df.columns):
         vals = df[c].unique()
         min_val = min(vals)
         max_val = max(vals)
@@ -647,38 +634,50 @@ def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
         # Plot principal component lambda.
         (lambdas / lambdas.max()).plot(color='g', lw=1, kind='bar')
     if num_pcs_to_plot > 0:
-        num_cols = 3
-        use_subplots = True
-        figsize = (20, 7)
-        multiple_plots = MultiplePlots(
-            num_pcs_to_plot, num_cols, use_subplots, figsize=figsize)
+        num_cols = 4
+        fig, ax = plt.subplots(
+            math.ceil(num_pcs_to_plot / num_cols),
+            num_cols,
+            sharex=True,
+            sharey=True)
         for i in range(num_pcs_to_plot):
-            ax = multiple_plots.get_ax(i)
+            ax_tmp = ax.flatten()[i]
             temp = pcs.ix[:, i].copy()
-            #temp.sort()
-            temp.plot(kind='barh', ax=ax, title='PC%s' % i)
+            temp.plot(kind='barh', ax=ax_tmp, title='PC%s' % i)
     #return pcs, lambdas
 
-
-def plot_pca_over_time(ret, com):
-    corr = pd.ewmcorr(ret.copy(), com=com, min_periods=com)
+def rolling_pca_over_time(ret, com):
+    dbg.check_monotonic_df(ret)
+    ret = ret.dropna(how="any")
+    corr = ret.ewm(com=com, min_periods=3 * com).corr()
+    # corr returns a df with multi-index.
     # Find when the correlation matrix is all not null.
-    start_date = np.argmax(corr.notnull().sum().sum() > 0)
-    corr = corr.loc[start_date:]
-    corr = corr.fillna(0)
-    # Compute rolling eigenvalues.
-    val, vec = np.linalg.eig(corr)
-    _ = vec
+    #start_date = np.argmax(corr.notnull().sum().sum() > 0)
+    #corr = corr.loc[start_date:]
+    eigval_df = []
+    timestamps = corr.index.get_level_values(0).unique()
+    for idx in tqdm.tqdm(timestamps):
+        corr_tmp = corr.loc[idx]
+        # Compute rolling eigues and eigenvectors.
+        eigval, eigvec = np.linalg.eig(corr_tmp.fillna(0.0))
+        eigval_df.append(eigval)
+    # Package results.
+    eigval_df = pd.DataFrame(eigval_df, index=timestamps)
+    dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
+    dbg.check_monotonic_df(eigval_df)
     # Normalize by sum.
-    df = pd.DataFrame(val)
-    df = df.multiply(1 / df.sum(axis=1), axis="index")
-    df.plot(
-        figsize=(20, 7),
-        cmap='rainbow',
-        title='Top eigenvalues by PCs',
-        lw=2,
+    eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
+    return eigval_df
+
+
+def plot_pca_over_time(eigval_df):
+    eigval_df.plot(
+        title='Eigenvalues',
         ylim=(0, 1))
-    #return df
+    #
+    eigval_df.cumsum(axis=1).plot(
+        title='Fraction of variance explained by top PCs',
+        ylim=(0, 1))
 
 
 def plot_time_distributions(dts, mode, density=True):
@@ -845,8 +844,8 @@ def display_df(df,
     if mode is None:
         _print_display()
     elif mode == "all_rows":
-        with pd.option_context('display.max_rows', None,
-                               'display.max_columns', 3):
+        with pd.option_context('display.max_rows', None, 'display.max_columns',
+                               3):
             _print_display()
     elif mode == "all_cols":
         with pd.option_context('display.max_colwidth', int(1e6),
