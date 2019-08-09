@@ -87,7 +87,7 @@ def filter_ath_from_config(config, df):
     cfg.print_config(config, "filter_ath")
     dbg.dassert_lte(1, df.shape[0])
     if config["filter_ath"]:
-        df = fin.filter_ath(df, dt_col_name="time")
+        df = fin.filter_ath(df)
     _LOG.info("df.shape=%s", df.shape)
     dbg.dassert_lte(1, df.shape[0])
     return df
