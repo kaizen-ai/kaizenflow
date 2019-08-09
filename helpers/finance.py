@@ -34,7 +34,7 @@ def zscore(obj, com, demean, standardize, delay, min_periods=None):
     return obj
 
 
-def resample_1min(df):
+def resample_1min(df, skip_weekends):
     """
     Resample a df to one minute resolution leaving np.nan for the empty minutes.
     Note that this is done on a 24h / calendar basis, without accounting for
@@ -44,6 +44,12 @@ def resample_1min(df):
     dbg.dassert(df.index.is_unique)
     date_range = pd.date_range(
         start=df.index.min(), end=df.index.max(), freq="1T")
+    # Remove weekends.
+    if skip_weekends:
+        # TODO(gp): Use thej proper calendar.
+        #date_range = [d for d in df.index if d.date().weekday() < 5]
+        mask = [d.weekday() < 5 for d in date_range]
+        date_range = date_range[mask]
     df = df.reindex(date_range)
     return df
 
@@ -103,10 +109,12 @@ def filter_ath(df, dt_col_name=None, log_level=logging.INFO):
     """
     dbg.dassert_lte(1, df.shape[0])
     _LOG.log(log_level, "Filtering by ATH")
-    if dt_col_name is None:
+    if dt_col_name:
         times = np.array([dt.time() for dt in df[dt_col_name]])
     else:
-        times = np.array([dt.time() for dt in df.index])
+        # Use index.
+        #times = np.array([dt.time() for dt in df.index])
+        times = df.index.time
     # Note that we need to exclude time(16, 0) since the last bar is tagged
     # with time(15, 59).
     # TODO(gp): Pass this values since they depend on the interval conventions.

@@ -108,7 +108,7 @@ def drop_na(df, *args, **kwargs):
     return df
 
 
-def report_zero_null_stats(df, zero_threshold=1e-9):
+def report_zero_null_stats(df, zero_threshold=1e-9, as_txt=False):
     """
     Report statistics about zeros and nulls for a df.
 
@@ -129,8 +129,15 @@ def report_zero_null_stats(df, zero_threshold=1e-9):
     dbg.dassert(df.index.is_monotonic_increasing)
     dbg.dassert(df.index.is_unique)
     _LOG.info("index in [%s, %s]", df.index[0], df.index[-1])
+    #
     _LOG.info("num_rows=%s", printing.thousand_separator(df.shape[0]))
-    display_df(df, max_lines=5)
+    display_df(df, max_lines=5, as_txt=as_txt)
+    #
+    num_days = len(set(df.index.date))
+    _LOG.info("num_days=%s", num_days)
+    #
+    num_weekdays = len(set([d for d in df.index.date if d.weekday() < 5]))
+    _LOG.info("num_weekdays=%s", num_weekdays)
     #
     stats_df = pd.DataFrame(None)
     if False:
@@ -151,7 +158,14 @@ def report_zero_null_stats(df, zero_threshold=1e-9):
     stats_df["num_zeros"] = num_zeros
     stats_df["pct_zeros [%]"] = (100.0 * num_zeros / df.shape[0]).apply(
             printing.round_digits)
-    display_df(stats_df)
+    #
+    num_valid = (np.abs(df) >= zero_threshold) & (~df.isnull())
+    num_valid = num_valid.sum(axis=0)
+    stats_df["num_valid"] = num_valid
+    stats_df["pct_valid [%]"] = (100.0 * num_valid / df.shape[0]).apply(
+            printing.round_digits)
+    #
+    display_df(stats_df, as_txt=as_txt)
 
 
 # //////////////////////////////////////////////////////////////////////////////
