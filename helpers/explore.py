@@ -646,7 +646,8 @@ def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
             temp.plot(kind='barh', ax=ax_tmp, title='PC%s' % i)
     #return pcs, lambdas
 
-def rolling_pca_over_time(ret, com):
+
+def rolling_pca_over_time(ret, com, sort_eigvals):
     dbg.check_monotonic_df(ret)
     ret = ret.dropna(how="any")
     corr = ret.ewm(com=com, min_periods=3 * com).corr()
@@ -655,29 +656,48 @@ def rolling_pca_over_time(ret, com):
     #start_date = np.argmax(corr.notnull().sum().sum() > 0)
     #corr = corr.loc[start_date:]
     eigval_df = []
+    eigvec_df = []
     timestamps = corr.index.get_level_values(0).unique()
     for idx in tqdm.tqdm(timestamps):
         corr_tmp = corr.loc[idx]
         # Compute rolling eigues and eigenvectors.
         eigval, eigvec = np.linalg.eig(corr_tmp.fillna(0.0))
+        if not (sorted(eigval) == eigval).all():
+            _LOG.debug("eigvals not sorted: %s", eigval)
+            if sort_eigvals:
+                _LOG.debug("Before sorting:\neigval=\n%s\neigvec=\n%s", eigval,
+                           eigvec)
+                _LOG.debug("eigvals: %s", eigval)
+                idx = eigval.argsort()[::-1]
+                eigval = eigval[idx]
+                eigvec = eigvec[:, idx]
+                _LOG.debug("After sorting:\neigval=\n%s\neigvec=\n%s", eigval,
+                           eigvec)
         eigval_df.append(eigval)
+        #
+        eigvec_df_tmp = pd.DataFrame(eigvec, index=corr_tmp.columns)
+        # Add another index.
+        eigvec_df_tmp.index.name = ""
+        eigvec_df_tmp.reset_index(inplace=True)
+        eigvec_df_tmp.insert(0, 'datetime', idx)
+        eigvec_df_tmp.set_index(["datetime", ""], inplace=True)
+        eigvec_df.append(eigvec_df_tmp)
     # Package results.
     eigval_df = pd.DataFrame(eigval_df, index=timestamps)
     dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
     dbg.check_monotonic_df(eigval_df)
     # Normalize by sum.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
-    return eigval_df
+    #
+    eigvec_df = pd.concat(eigvec_df)
+    return eigval_df, eigvec_df
 
 
 def plot_pca_over_time(eigval_df):
-    eigval_df.plot(
-        title='Eigenvalues',
-        ylim=(0, 1))
+    eigval_df.plot(title='Eigenvalues', ylim=(0, 1))
     #
     eigval_df.cumsum(axis=1).plot(
-        title='Fraction of variance explained by top PCs',
-        ylim=(0, 1))
+        title='Fraction of variance explained by top PCs', ylim=(0, 1))
 
 
 def plot_time_distributions(dts, mode, density=True):
