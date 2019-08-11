@@ -606,6 +606,25 @@ def display_corr_df(df):
 # /////////////////////////////////////////////////////////////////////////////
 
 
+def _get_multiple_plots(num_plots, num_cols=4, *args, **kwargs):
+    dbg.dassert_lte(1, num_plots)
+    dbg.dassert_lte(1, num_cols)
+    fig, ax = plt.subplots(
+        math.ceil(num_plots/ num_cols),
+        num_cols,
+        *args,
+        **kwargs)
+    return fig, ax.flatten()
+
+
+def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
+    if num_pcs_to_plot == -1:
+        num_pcs_to_plot = max_pcs
+    dbg.dassert_lte(0, num_pcs_to_plot)
+    dbg.dassert_lte(num_pcs_to_plot, max_pcs)
+    return num_pcs_to_plot
+
+
 def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
     from sklearn.decomposition import PCA
     # Compute PCA.
@@ -625,7 +644,7 @@ def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
     selected_pcs = eigenvec[:, ind]
     pcs = pd.DataFrame(selected_pcs, index=valid_indices)
     lambdas = pd.Series(eigenval[ind])
-    #
+    # Plot explained variance.
     if plot_explained_variance:
         title = "Eigenvalues and explained variance vs ordered PCs"
         # Plot explained variance.
@@ -633,18 +652,17 @@ def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
             title=title, lw=5, figsize=(20, 7), ylim=(0, 1))
         # Plot principal component lambda.
         (lambdas / lambdas.max()).plot(color='g', lw=1, kind='bar')
+    # Plot eigenvectors.
+    max_pcs = len(lambdas)
+    num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
+    _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        num_cols = 4
-        fig, ax = plt.subplots(
-            math.ceil(num_pcs_to_plot / num_cols),
-            num_cols,
+        fig, axes = _get_multiple_plots(num_pcs_to_plot, 
             sharex=True,
             sharey=True)
         for i in range(num_pcs_to_plot):
-            ax_tmp = ax.flatten()[i]
             temp = pcs.ix[:, i].copy()
-            temp.plot(kind='barh', ax=ax_tmp, title='PC%s' % i)
-    #return pcs, lambdas
+            temp.plot(kind='barh', ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
 
 
 def rolling_pca_over_time(ret, com, sort_eigvals):
@@ -658,10 +676,13 @@ def rolling_pca_over_time(ret, com, sort_eigvals):
     eigval_df = []
     eigvec_df = []
     timestamps = corr.index.get_level_values(0).unique()
-    for idx in tqdm.tqdm(timestamps):
-        corr_tmp = corr.loc[idx]
-        # Compute rolling eigues and eigenvectors.
+    for dt in tqdm.tqdm(timestamps):
+        dbg.dassert_isinstance(dt, datetime.date)
+        corr_tmp = corr.loc[dt]
+        # Compute rolling eigenvalues and eigenvectors.
+        # TODO(gp): Drop data, instead of filling with zero.
         eigval, eigvec = np.linalg.eig(corr_tmp.fillna(0.0))
+        # Sort eigenvalues, if needed.
         if not (sorted(eigval) == eigval).all():
             _LOG.debug("eigvals not sorted: %s", eigval)
             if sort_eigvals:
@@ -673,13 +694,16 @@ def rolling_pca_over_time(ret, com, sort_eigvals):
                 eigvec = eigvec[:, idx]
                 _LOG.debug("After sorting:\neigval=\n%s\neigvec=\n%s", eigval,
                            eigvec)
+        #
         eigval_df.append(eigval)
         #
+        if (eigval == 0).all():
+            eigvec = np.nan * eigvec
         eigvec_df_tmp = pd.DataFrame(eigvec, index=corr_tmp.columns)
         # Add another index.
         eigvec_df_tmp.index.name = ""
         eigvec_df_tmp.reset_index(inplace=True)
-        eigvec_df_tmp.insert(0, 'datetime', idx)
+        eigvec_df_tmp.insert(0, 'datetime', dt)
         eigvec_df_tmp.set_index(["datetime", ""], inplace=True)
         eigvec_df.append(eigvec_df_tmp)
     # Package results.
@@ -689,15 +713,30 @@ def rolling_pca_over_time(ret, com, sort_eigvals):
     # Normalize by sum.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
     #
-    eigvec_df = pd.concat(eigvec_df)
+    eigvec_df = pd.concat(eigvec_df, axis=0)
+    dbg.dassert_eq(len(eigvec_df.index.get_level_values(0).unique()),
+            len(timestamps))
     return eigval_df, eigvec_df
 
 
-def plot_pca_over_time(eigval_df):
-    eigval_df.plot(title='Eigenvalues', ylim=(0, 1))
+def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0):
+    # Plot eigenvalues.
+    eigval_df.plot(title='Eigenvalues over time', ylim=(0, 1))
     #
     eigval_df.cumsum(axis=1).plot(
-        title='Fraction of variance explained by top PCs', ylim=(0, 1))
+        title='Fraction of variance explained by top PCs over time', ylim=(0, 1))
+    #
+    max_pcs = eigvec_df.shape[1]
+    num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
+    _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
+    if num_pcs_to_plot > 0:
+        fig, axes = _get_multiple_plots(num_pcs_to_plot, num_cols=2,
+            sharex=True,
+            sharey=True)
+        for i in range(num_pcs_to_plot):
+            eigvec_df[i].unstack(1).plot(ax=axes[i], 
+                ylim=(-1, 1),
+                    title='PC%s' % i)
 
 
 def plot_time_distributions(dts, mode, density=True):
