@@ -610,10 +610,7 @@ def _get_multiple_plots(num_plots, num_cols=4, *args, **kwargs):
     dbg.dassert_lte(1, num_plots)
     dbg.dassert_lte(1, num_cols)
     fig, ax = plt.subplots(
-        math.ceil(num_plots/ num_cols),
-        num_cols,
-        *args,
-        **kwargs)
+        math.ceil(num_plots / num_cols), num_cols, *args, **kwargs)
     return fig, ax.flatten()
 
 
@@ -657,9 +654,8 @@ def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        fig, axes = _get_multiple_plots(num_pcs_to_plot, 
-            sharex=True,
-            sharey=True)
+        _, axes = _get_multiple_plots(
+            num_pcs_to_plot, sharex=True, sharey=True)
         for i in range(num_pcs_to_plot):
             temp = pcs.ix[:, i].copy()
             temp.plot(kind='barh', ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
@@ -714,8 +710,8 @@ def rolling_pca_over_time(ret, com, sort_eigvals):
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
     #
     eigvec_df = pd.concat(eigvec_df, axis=0)
-    dbg.dassert_eq(len(eigvec_df.index.get_level_values(0).unique()),
-            len(timestamps))
+    dbg.dassert_eq(
+        len(eigvec_df.index.get_level_values(0).unique()), len(timestamps))
     return eigval_df, eigvec_df
 
 
@@ -724,19 +720,18 @@ def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0):
     eigval_df.plot(title='Eigenvalues over time', ylim=(0, 1))
     #
     eigval_df.cumsum(axis=1).plot(
-        title='Fraction of variance explained by top PCs over time', ylim=(0, 1))
+        title='Fraction of variance explained by top PCs over time',
+        ylim=(0, 1))
     #
     max_pcs = eigvec_df.shape[1]
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        fig, axes = _get_multiple_plots(num_pcs_to_plot, num_cols=2,
-            sharex=True,
-            sharey=True)
+        _, axes = _get_multiple_plots(
+            num_pcs_to_plot, num_cols=2, sharex=True, sharey=True)
         for i in range(num_pcs_to_plot):
-            eigvec_df[i].unstack(1).plot(ax=axes[i], 
-                ylim=(-1, 1),
-                    title='PC%s' % i)
+            eigvec_df[i].unstack(1).plot(
+                ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
 
 
 def plot_time_distributions(dts, mode, density=True):
