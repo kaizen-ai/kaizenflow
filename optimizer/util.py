@@ -59,20 +59,19 @@ def equal_weighting(df):
     return log_rets
 
 
-# TODO: Return weights themselves
 def inverse_volatility_weighting(df, com, min_periods):
     """
     Weight returns by inverse volatility (calculated by rolling std).
     """
     inv_vol = 1. / df.dropna(how='any').ewm(com=com, min_periods=min_periods).std().dropna(how='any')
     total = inv_vol.sum(axis=1) 
-    weight = inv_vol.divide(total, axis=0)
+    weights = inv_vol.divide(total, axis=0)
     # Shift weights
-    weight = weight.shift(1)
-    weighted = df.dropna(how='any').multiply(weight, axis=0)
+    weights = weights.shift(1)
+    weighted = df.dropna(how='any').multiply(weights, axis=0)
     rets = weighted.sum(axis=1)
     log_rets = np.log(rets + 1)
-    return log_rets
+    return log_rets, weights
 
 
 def minimum_variance_weighting(df, com, min_periods):
@@ -89,4 +88,4 @@ def minimum_variance_weighting(df, com, min_periods):
     weights_df = weights_df.shift(1)
     rets = df.dropna(how='any').multiply(weights_df, axis=0).sum(axis=1)
     log_rets = np.log(rets + 1)
-    return log_rets
+    return log_rets, weights_df
