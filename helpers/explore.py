@@ -466,13 +466,25 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     return ax
 
 
+def _get_heatmap_mask(corr, mode):
+    if mode == "heatmap_semitriangle":
+        # Generate a mask for the upper triangle.
+        mask = np.zeros_like(corr, dtype=np.bool)
+        mask[np.triu_indices_from(mask)] = True
+    elif mode == "heatmap":
+        mask = None
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    return mask
+
+
 def plot_heatmap(corr_df,
                  mode,
                  annot="auto",
                  figsize=None,
                  title=None,
-                 vmin=None,
-                 vmax=None,
+                 vmin=-1.0,
+                 vmax=1.0,
                  ax=None):
     """
     Plot a heatmap for a corr / cov df.
@@ -492,14 +504,15 @@ def plot_heatmap(corr_df,
     if annot == "auto":
         annot = corr_df.shape[0] < 10
     # Generate a custom diverging colormap.
-    cmap = sns.diverging_palette(220, 10, as_cmap=True)
+    cmap = get_heatmap_colormap()
     if figsize is None:
         figsize = (8, 6)
         #figsize = (10, 10)
-    if mode == "heatmap":
+    if mode in ("heatmap", "heatmap_semitriangle"):
         # Set up the matplotlib figure.
         if ax is None:
             _, ax = plt.subplots(figsize=figsize)
+        mask = _get_heatmap_mask(corr_df, mode)
         # Draw the heatmap with the mask and correct aspect ratio.
         sns.heatmap(
             corr_df,
@@ -511,27 +524,7 @@ def plot_heatmap(corr_df,
             fmt=".2f",
             linewidths=.5,
             cbar_kws={"shrink": .5},
-            ax=ax)
-        ax.set_title(title)
-    elif mode == "heatmap_semitriangle":
-        # Set up the matplotlib figure.
-        if ax is None:
-            _, ax = plt.subplots(figsize=figsize)
-        # Generate a mask for the upper triangle.
-        mask = np.zeros_like(corr_df, dtype=np.bool)
-        mask[np.triu_indices_from(mask)] = True
-        # Draw the heatmap with the mask and correct aspect ratio.
-        sns.heatmap(
-            corr_df,
             mask=mask,
-            cmap=cmap,
-            vmin=vmin,
-            vmax=vmax,
-            square=True,
-            annot=annot,
-            fmt=".2f",
-            linewidths=.5,
-            cbar_kws={"shrink": .5},
             ax=ax)
         ax.set_title(title)
     elif mode == "clustermap":
@@ -543,6 +536,7 @@ def plot_heatmap(corr_df,
             vmax=vmax,
             linewidths=.5,
             square=True,
+            annot=annot,
             figsize=figsize)
         g.ax_heatmap.set_title(title)
     else:
@@ -644,11 +638,10 @@ def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
     # Plot explained variance.
     if plot_explained_variance:
         title = "Eigenvalues and explained variance vs ordered PCs"
-        # Plot explained variance.
         explained_variance.cumsum().plot(
-            title=title, lw=5, figsize=(20, 7), ylim=(0, 1))
+            title=title, lw=5, ylim=(0, 1))
         # Plot principal component lambda.
-        (lambdas / lambdas.max()).plot(color='g', lw=1, kind='bar')
+        (lambdas / lambdas.max()).plot(color='g', kind='bar')
     # Plot eigenvectors.
     max_pcs = len(lambdas)
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
@@ -657,18 +650,81 @@ def plot_pca_analysis(ret, plot_explained_variance=False, num_pcs_to_plot=0):
         _, axes = _get_multiple_plots(
             num_pcs_to_plot, sharex=True, sharey=True)
         for i in range(num_pcs_to_plot):
-            temp = pcs.ix[:, i].copy()
-            temp.plot(kind='barh', ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
+            pc = pcs.ix[:, i]
+            pc.plot(kind='barh', ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
+
+
+def handle_nans(df, nan_mode):
+    if nan_mode == "dropna":
+        df = df.dropna(how="any")
+    elif nan_mode == "fillna_with_zero":
+        df = df.fillna(0.0)
+    else:
+        raise ValueError("Invalid nan_mode='%s'" % nan_mode)
+    return df
+
+
+def sample_corr_df(corr, periods):
+    timestamps = corr.index.get_level_values(0)
+    ts = timestamps[::math.ceil(len(timestamps) / periods)]
+    _LOG.debug("timestamps=%s", str(ts))
+    #corr_out = corr.unstack().reindex(ts).stack(dropna=False)
+    corr_out = corr.loc[ts]
+    return corr_out
+
+
+def rolling_corr_over_time(ret, com, nan_mode):
+    dbg.check_monotonic_df(ret)
+    ret = handle_nans(ret, nan_mode)
+    corr = ret.ewm(com=com, min_periods=3 * com).corr()
+    # corr returns a df with multi-index.
+    return corr
+
+
+def get_heatmap_colormap():
+    # Generate a custom diverging colormap.
+    cmap = sns.diverging_palette(220, 10, as_cmap=True)
+    return cmap
+
+
+def plot_corr_over_time(corr, mode, annot=False, num_cols=4):
+    timestamps = corr.index.get_level_values(0).unique()
+    dbg.dassert_lte(len(timestamps), 20)
+    # Heuristic to find the dimension of the fig.
+    ysize = (len(timestamps) / num_cols) * 4
+    figsize = (20, ysize)
+    # Get the axes.
+    fig, axes = _get_multiple_plots(
+        len(timestamps), num_cols=num_cols, figsize=figsize, sharex=True, sharey=True)
+    # Add color map.
+    cbar_ax = fig.add_axes([.91, .3, .03, .4])
+    cmap = get_heatmap_colormap()
+    # Generate a mask for the upper triangle.
+    for i, dt in enumerate(timestamps):
+        corr_tmp = corr.loc[dt]
+        mask = _get_heatmap_mask(corr_tmp, mode)
+        sns.heatmap(
+            corr_tmp,
+            cmap=cmap,
+                            cbar=i == 0,
+                cbar_ax=None if i else cbar_ax,
+            vmin=-1,
+            vmax=1,
+            square=True,
+            annot=annot,
+            fmt=".2f",
+            linewidths=.5,
+            mask=mask,
+            #cbar_kws={"shrink": .5},
+            ax=axes[i])
+        axes[i].set_title(timestamps[i])
+
 
 
 def rolling_pca_over_time(ret, com, sort_eigvals):
-    dbg.check_monotonic_df(ret)
-    ret = ret.dropna(how="any")
-    corr = ret.ewm(com=com, min_periods=3 * com).corr()
-    # corr returns a df with multi-index.
-    # Find when the correlation matrix is all not null.
-    #start_date = np.argmax(corr.notnull().sum().sum() > 0)
-    #corr = corr.loc[start_date:]
+    # Compute rolling correlation.
+    corr = rolling_corr_over_time(ret, com, nan_mode)
+    #
     eigval_df = []
     eigvec_df = []
     timestamps = corr.index.get_level_values(0).unique()
@@ -676,7 +732,6 @@ def rolling_pca_over_time(ret, com, sort_eigvals):
         dbg.dassert_isinstance(dt, datetime.date)
         corr_tmp = corr.loc[dt]
         # Compute rolling eigenvalues and eigenvectors.
-        # TODO(gp): Drop data, instead of filling with zero.
         eigval, eigvec = np.linalg.eig(corr_tmp.fillna(0.0))
         # Sort eigenvalues, if needed.
         if not (sorted(eigval) == eigval).all():
@@ -715,7 +770,7 @@ def rolling_pca_over_time(ret, com, sort_eigvals):
     return eigval_df, eigvec_df
 
 
-def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0):
+def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0, num_cols=2):
     # Plot eigenvalues.
     eigval_df.plot(title='Eigenvalues over time', ylim=(0, 1))
     #
@@ -728,7 +783,7 @@ def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0):
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
         _, axes = _get_multiple_plots(
-            num_pcs_to_plot, num_cols=2, sharex=True, sharey=True)
+            num_pcs_to_plot, num_cols=num_cols, sharex=True, sharey=True)
         for i in range(num_pcs_to_plot):
             eigvec_df[i].unstack(1).plot(
                 ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
