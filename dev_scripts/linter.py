@@ -35,7 +35,6 @@ E.g.,
 # TODO(gp): Do not overwrite file when there is no change.
 # TODO(gp): Add autopep8 if useful?
 # TODO(gp): Add vulture, snake_food
-# TODO(gp): It would be ideal to do two commits, but not sure how to do it
 # TODO(gp): Save tarball, dir or patch of changes
 # TODO(gp): Make sure all the py files can be python compiled
 # TODO(gp): Check jupytext consistency (check_jupytext)
@@ -550,25 +549,27 @@ def _pylint(file_name, pedantic, check_if_possible):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
     opts = ""
+    # We ignore these errros as too picky.
     ignore = [
         # [C0304(missing-final-newline), ] Final newline missing [pylint]
         "C0304",
-        # C0412(ungrouped-imports), ] Imports from package sklearn are not grouped
+        # [C0412(ungrouped-imports), ] Imports from package sklearn are not grouped
         "C0412",
-        # R1705(no-else-return), ] Unnecessary "elif" after "return"
+        # [R1705(no-else-return), ] Unnecessary "elif" after "return"
         "R1705",
+        # [W0511(fixme), ]
+        "W0511",
+        # TODO(gp): Not clear what is the problem.
+        #[W1113(keyword-arg-before-vararg), ] Keyword argument before variable
+        # pos itional arguments list in the definition of
+        "W1113",
     ]
     if not pedantic:
         ignore.extend([
-            # [W0125(using-constant-test), ] Using a conditional statement with a
-            #   constant value
-            "W0125",
-            # [W0511(fixme), ]
-            "W0511",
-            # [W0603(global-statement), ] Using the global statement
-            "W0603",
             # [C0111(missing-docstring), ] Missing module docstring
             "C0111",
+            # [C0302(too-many-lines), ] Too many lines in module
+            "C0302",
             # [R0903(too-few-public-methods), ] Too few public methods
             "R0903",
             # [R0912(too-many-branches), ] Too many branches
@@ -579,6 +580,11 @@ def _pylint(file_name, pedantic, check_if_possible):
             "R0914",
             # [R0915(too-many-statements), ] Too many statements
             "R0915",
+            # [W0125(using-constant-test), ] Using a conditional statement with a
+            #   constant value
+            "W0125",
+            # [W0603(global-statement), ] Using the global statement
+            "W0603",
         ])
     if ignore:
         opts += "--disable " + ",".join(ignore)
