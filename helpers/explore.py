@@ -1,3 +1,4 @@
+# TODO: Move this out of helpers.
 """
 Utility functions for Jupyter notebook for:
 - formatting
@@ -673,6 +674,10 @@ def sample_corr_df(corr, periods):
     return corr_out
 
 
+# NOTE:
+#   - DRY: We have a rolling corr function elsewhere.
+#   - Functional style: This one seems to be able to modify `ret` through
+#     `nan_mode`.
 def rolling_corr_over_time(ret, com, nan_mode):
     dbg.check_monotonic_df(ret)
     ret = handle_nans(ret, nan_mode)
