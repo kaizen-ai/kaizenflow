@@ -17,6 +17,7 @@ def rolling_corr(df, com, min_periods):
     Entries assumed to be returns (p_{t + 1} / p_t - 1).
     """
     _LOG.info('df.shape = %s', df.shape)
+    _LOG.info('Rows with nans will be ignored.')
     _LOG.info('Calculating rolling correlation...')
     return df.dropna(how='any').ewm(com=com, min_periods=min_periods).corr().dropna(how='any')
 
@@ -27,6 +28,7 @@ def rolling_cov(df, com, min_periods):
     Entries assumed to be returns (p_{t + 1} / p_t - 1).
     """
     _LOG.info('df.shape = %s', df.shape)
+    _LOG.info('Rows with nans will be ignored.')
     _LOG.info('Calculating rolling covariance...')
     return df.dropna(how='any').ewm(com=com, min_periods=min_periods).cov().dropna(how='any')
 
@@ -48,7 +50,7 @@ def cov_df_to_inv(df):
     return np.linalg.inv(mats)
 
 
-def equally_weight(df):
+def equal_weighting(df):
     """
     Equally weight returns in df and generate stream of log rets.
     """
@@ -57,4 +59,14 @@ def equally_weight(df):
     return log_rets
 
 
-# def inv_var_weighted(df):
+def inverse_volatility_weighting(df, com, min_periods):
+    """
+    Weight returns by inverse volatility (calculated by rolling std).
+    """
+    inv_vol = 1. / df.ewm(com=com, min_periods=min_periods).std()
+    total = inv_vol.sum(axis=1) 
+    weight = inv_vol.divide(total, axis=0)
+    weighted = df.multiply(weight, axis=0)
+    rets = weighted.sum(axis=1)
+    log_rets = np.log(rets + 1)
+    return log_rets
