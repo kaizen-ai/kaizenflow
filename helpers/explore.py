@@ -711,21 +711,6 @@ def plot_pca_analysis(df, plot_explained_variance=False, num_pcs_to_plot=0):
             pc.plot(kind='barh', ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
 
 
-def sample_corr_df(corr, periods):
-    timestamps = corr.index.get_level_values(0)
-    ts = timestamps[::math.ceil(len(timestamps) / periods)]
-    _LOG.debug("timestamps=%s", str(ts))
-    #corr_out = corr.unstack().reindex(ts).stack(dropna=False)
-    corr_out = corr.loc[ts]
-    return corr_out
-
-
-def get_heatmap_colormap():
-    # Generate a custom diverging colormap.
-    cmap = sns.diverging_palette(220, 10, as_cmap=True)
-    return cmap
-
-
 # NOTE:
 #   - DRY: We have a rolling corr function elsewhere.
 #   - Functional style: This one seems to be able to modify `ret` through
@@ -1034,14 +1019,10 @@ def display_df(df,
     elif mode == "all":
         with pd.option_context(
                 # yapf: disable
-                'display.max_rows',
-                int(1e6),
-                'display.max_columns',
-                3,
-                'display.max_colwidth',
-                int(1e6),
-                'display.max_columns',
-                None
+                'display.max_rows', int(1e6),
+                'display.max_columns', 3,
+                'display.max_colwidth', int(1e6),
+                'display.max_columns', None
                 # yapf: enable
         ):
             _print_display()
