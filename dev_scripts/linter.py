@@ -46,10 +46,6 @@ E.g.,
 # TODO(gp): Test directory should be called tests and not test
 # TODO(gp): Discourage checking in master
 
-# Lint all py files that are not paired.
-# Lint all paired py files and run jupytest --update.
-# Lint all ipynb files and run jupytext.
-
 import argparse
 import datetime
 import itertools
@@ -622,6 +618,10 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
 # 3) Run linter on py file, and then update ipynb with jupytext
 #   - This is a bit risky for now
 
+# Lint all py files that are not paired.
+# Lint all paired py files and run jupytest --update.
+# Lint all ipynb files and run jupytext.
+
 
 def is_py_file(file_name):
     """
@@ -637,16 +637,15 @@ def is_ipynb_file(file_name):
     return file_name.endswith(".ipynb")
 
 
-def toggle_jupytext_file(file_name):
-    """
-    Get the paired jupytext file name.
-    """
-    if is_py_file(file_name):
-        ret = file_name.replace(".py", ".ipynb")
-    elif is_ipynb_file(file_name):
-        ret = file_name.replace(".ipynb", ".py")
-    else:
-        raise ValueError("Not a valid jupytext filename='%s'" % file_name)
+def from_python_to_ipynb_file(file_name):
+    dbg.dassert(is_py_file(file_name))
+    ret = file_name.replace(".py", ".ipynb")
+    return ret
+
+
+def from_ipynb_to_python_file(file_name):
+    dbg.dassert(is_ipynb_file(file_name))
+    ret = file_name.replace(".ipynb", ".py")
     return ret
 
 
@@ -655,9 +654,9 @@ def is_paired_jupytext_file(file_name):
     Return whether a file is a paired jupytext file.
     """
     is_paired = ((is_py_file(file_name) and
-                  os.path.exists(toggle_jupytext_file(file_name)) or
+                  os.path.exists(from_python_to_ipynb_file(file_name)) or
                   (is_ipynb_file(file_name) and
-                   os.path.exists(toggle_jupytext_file(file_name)))))
+                   os.path.exists(from_ipynb_to_python_file(file_name)))))
     return is_paired
 
 
@@ -670,11 +669,11 @@ class JupytextProcessor:
     """
 
     def __init__(self, ipynb_file_name, fix_issues):
-        dbg.dassert_isinstance(ipynb_file_name, str)
         dbg.dassert(is_ipynb_file(ipynb_file_name))
         dbg.dassert_exists(ipynb_file_name)
+        #
         self.ipynb_file_name = ipynb_file_name
-        self.py_file_name = toggle_jupytext_file(ipynb_file_name)
+        self.py_file_name = from_ipynb_to_python_file(ipynb_file_name)
         self.fix_issues = fix_issues
 
     def process(self):
@@ -694,6 +693,7 @@ class JupytextProcessor:
                 dbg.dassert_exists(self.py_file_name)
                 cmd = "git add %s" % self.ipynb_file_name
                 _system(cmd)
+        #
         if is_paired_jupytext_file(self.ipynb_file_name):
             # Both py and ipynb files exist.
             # Remove empty spaces.

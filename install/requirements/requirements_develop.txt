@@ -30,6 +30,7 @@ statsmodels
 jupyter
 jupyter_contrib_nbextensions
 jupyter_nbextensions_configurator
+jupytext
 ipykernel
 nb_conda
 nb_conda_kernels
