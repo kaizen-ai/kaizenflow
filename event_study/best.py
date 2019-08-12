@@ -34,7 +34,7 @@ def best(y1, y2, prior_tau=1e-6, samples=1000):
         group2_std = pm.Deterministic('group2_std', pm.math.exp(group2_log_std))
         # Shape parameter for T-distribution
         # TODO(Paul): Justify a prior parameter value.
-        nu = pm.Exponential('nu_minus_2', 0.1, testval=4.) + 2. 
+        nu = pm.Exponential('nu_minus_1', 1/29., testval=4.) + 1. 
         # Response distributions
         resp_group1 = pm.StudentT('group1', nu=nu, mu=group1_mean,
                                   lam=group1_std**-2, observed=y1)
