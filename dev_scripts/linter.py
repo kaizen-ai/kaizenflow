@@ -62,7 +62,8 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-_TMP_DIR = os.path.abspath("./tmp.linter")
+# Use the current dir and not the dir of the executable.
+_TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
 
 # #############################################################################
 # Utils.
@@ -704,7 +705,9 @@ class JupytextProcessor:
             # TODO(gp): We should compare timestamp?
             src_py_name = self.py_file_name
             dst_py_name = os.path.join(_TMP_DIR, src_py_name)
-            io_.create_enclosing_dir(dst_py_name, incremental=True)
+            dir_name = io_.create_enclosing_dir(dst_py_name, incremental=True)
+            _LOG.debug("Created dir_name '%s'", dir_name)
+            dbg.dassert_exists(dir_name)
             cmd = "jupytext --to py:percent %s -o %s" % (src_py_name,
                                                          dst_py_name)
             _system(cmd)
@@ -712,10 +715,18 @@ class JupytextProcessor:
             cmd = "diff --ignore-blank-lines %s %s" % (src_py_name, dst_py_name)
             rc = _system(cmd, abort_on_error=False)
             if rc != 0:
-                msg = "py file for %s is different: diff with" % src_py_name
-                msg += " vimdiff %s %s" % (src_py_name, dst_py_name)
-                _LOG.warning(msg)
-                output.append(msg)
+                if self.fix_issues:
+                    # Check the timestamps
+                    # If the .py file has a newer timestamp don't do anything.
+                    # If the .ipynb is newer, update the .py file, call the linter.
+                else:
+                    msg = "py file for '%s' is different: diff with:" % src_py_name
+                    msg += " vimdiff %s %s" % (src_py_name, dst_py_name)
+                    _LOG.warning(msg)
+                    output.append(msg)
+            # Lint the .py file.
+            # Re-apply it to the ipynb.
+            # Maybe it's best to have an executable to this work.
         return output
 
 
@@ -854,6 +865,7 @@ def _main(args):
     _LOG.info("# Action selected:\n%s", printing.space(actions_as_str))
     # Create tmp dir.
     io_.create_dir(_TMP_DIR, incremental=False)
+    _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Run linter.
     num_steps = len(file_names) * len(actions)
     _LOG.info("Num of files=%d, num of actions=%d -> num of steps=%d",
