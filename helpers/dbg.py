@@ -223,7 +223,7 @@ def dassert_exists(file_name, msg=""):
 
 def dassert_not_exists(file_name, msg=""):
     file_name = os.path.abspath(file_name)
-    # pylint: disable=C0325
+    # pylint: disable=C0325,C0113
     if not (not os.path.exists(file_name)):
         # yapf: disable
         msg_ = ("* Failed assertion:\n" +
@@ -298,7 +298,7 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     root_logger = logging.getLogger()
     root_logger.setLevel(verb)
     #print("effective level=", root_logger.getEffectiveLevel())
-    if len(root_logger.handlers) > 0:
+    if root_logger.handlers:
         print("WARNING: Logger already initialized: skipping")
         return
     #
@@ -350,7 +350,7 @@ def set_logger_verb(verb):
     Used to change the verbosity of the logging after the initialization.
     """
     root_logger = logging.getLogger()
-    if len(root_logger.handlers) == 0:
+    if not root_logger.handlers:
         assert 0, "ERROR: Logger not initialized"
     root_logger.setLevel(verb)
 

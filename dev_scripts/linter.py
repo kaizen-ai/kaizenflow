@@ -719,11 +719,13 @@ class JupytextProcessor:
                     # Check the timestamps
                     # If the .py file has a newer timestamp don't do anything.
                     # If the .ipynb is newer, update the .py file, call the linter.
+                    pass
                 else:
                     msg = "py file for '%s' is different: diff with:" % src_py_name
                     msg += " vimdiff %s %s" % (src_py_name, dst_py_name)
                     _LOG.warning(msg)
                     output.append(msg)
+            # TODO(gp):
             # Lint the .py file.
             # Re-apply it to the ipynb.
             # Maybe it's best to have an executable to this work.

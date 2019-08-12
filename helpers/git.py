@@ -58,7 +58,7 @@ def get_previous_committed_files(num_commits=1, uniquify=True):
     """
     cmd = ('git show --pretty="" --name-only' +
            " $(git log --author $(git config user.name) -%d " % num_commits +
-           r"""| \grep commit | perl -pe 's/commit (.*)/$1/')""")
+           r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
     _, files = si.system_to_string(cmd)
     files = files.split()
     if uniquify:

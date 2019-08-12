@@ -18,13 +18,12 @@ _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
-
 _ACTIONS = [
-        "check_commit_message",
-        "check_user_name",
-        #"linter",
-        #"run_tests",
-        ]
+    "check_commit_message",
+    "check_user_name",
+    #"linter",
+    #"run_tests",
+]
 
 
 def _update_action(action, actions):
@@ -60,7 +59,7 @@ def _main():
     # Check commit message
     #
     action = "check_commit_message"
-    is_present, actions_out = _update_action(action, actions)
+    is_present, actions = _update_action(action, actions)
     if is_present:
         commit_file = "tmp.commit.txt"
         commit_msg = args.m
@@ -75,7 +74,7 @@ def _main():
     # Check user name.
     #
     action = "check_user_name"
-    is_present, actions_out = _update_action(action, actions)
+    is_present, actions = _update_action(action, actions)
     if is_present:
         # Keep this in sync with dev_scripts/setenv.sh
         _valid_users = [
@@ -84,15 +83,15 @@ def _main():
         ]
         user_name = git.get_git_name()
         if user_name not in _valid_users:
-            _LOG.error("Invalid git name '%s': valid git names are %s", user_name,
-                       _valid_users)
+            _LOG.error("Invalid git name '%s': valid git names are %s",
+                       user_name, _valid_users)
             sys.exit(-1)
         # TODO(gp): Check email with dev_scripts/setenv.sh
     #
     # Run linter.
     #
     action = "linter"
-    is_present, actions_out = _update_action(action, actions)
+    is_present, actions = _update_action(action, actions)
     if is_present:
         cmd = "linter.py"
         if args.test:
@@ -117,7 +116,7 @@ def _main():
     # Run tests.
     #
     action = "run_tests"
-    is_present, actions_out = _update_action(action, actions)
+    is_present, actions = _update_action(action, actions)
     if is_present:
         cmd = "run_tests.py"
         if args.test:
@@ -125,8 +124,8 @@ def _main():
         print(print_.frame(cmd, char1="#"))
         rc = si.system(cmd, suppress_output=False, abort_on_error=False)
         unit_test_passing = rc == 0
-        msg = "Unit tests passing: %s" % ("Yes"
-                                          if unit_test_passing else "*** NO ***")
+        msg = "Unit tests passing: %s" % ("Yes" if unit_test_passing else
+                                          "*** NO ***")
         _LOG.info("%s", msg)
         io_.to_file(commit_file, msg, mode="a")
         commit_msg += msg
@@ -159,8 +158,8 @@ def _main():
         cmd = "git push"
         _LOG.info("cmd=%s", cmd)
     else:
-        _LOG.info("\nCommit with:\n> git commit --file %s" % commit_file)
-
+        msg = "\nCommit with:\n> git commit --file %s" % commit_file
+        _LOG.info("%s", msg)
 
 
 if __name__ == '__main__':
