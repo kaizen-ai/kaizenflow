@@ -77,11 +77,36 @@ def inverse_volatility_weighting(df, com, min_periods):
 def minimum_variance_weighting(df, com, min_periods):
     """
     Weight returns by inverse covariance (calculating by rolling cov).
+
+    Note that weights may be negative.
     """
     cov = rolling_cov(df, com, min_periods)
     inv_cov = cov_df_to_inv(cov)
     weights = np.divide(inv_cov.sum(axis=1),
                         inv_cov.sum(axis=1).sum(axis=1, keepdims=True))
+    weights_df = pd.DataFrame(data=weights,
+                              index=cov.index.get_level_values(0).drop_duplicates(),
+                              columns=cov.columns)
+    # Shift weights
+    weights_df = weights_df.shift(1)
+    rets = df.dropna(how='any').multiply(weights_df, axis=0).sum(axis=1)
+    log_rets = np.log(rets + 1)
+    return log_rets, weights_df
+
+
+def kelly_optimal_weighting(df, com, min_periods):
+    """
+    Same as Markowitz tangency portfolio, but with optimal leverage.
+
+    See https://epchan.blogspot.com/2014/08/kelly-vs-markowitz-portfolio.html.
+
+    TODO: Decide whether to use ewm_rets rather than rets. Results may be very
+    sensitive to choice of com. Portfolio may be highly leveraged.
+    """
+    cov = rolling_cov(df, com, min_periods)
+    inv_cov = cov_df_to_inv(cov)
+    ewm_rets = df.dropna(how='any').ewm(com=com, min_periods=min_periods).mean().dropna(how='any')
+    weights = np.einsum('ijk,ik->ij', inv_cov, ewm_rets)
     weights_df = pd.DataFrame(data=weights,
                               index=cov.index.get_level_values(0).drop_duplicates(),
                               columns=cov.columns)
