@@ -180,6 +180,7 @@ def create_enclosing_dir(file_name, incremental=False):
     dir_name = os.path.dirname(file_name)
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental)
+    return dir_name
 
 
 # #############################################################################

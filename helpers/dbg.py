@@ -328,7 +328,6 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
         log_filename = os.path.realpath(filename) + ".log"
     # Handle teeing to a file.
     if log_filename:
-        print("Saving log to file '%s'" % log_filename)
         # Create dir if it doesn't exist.
         log_dirname = os.path.dirname(log_filename)
         if not os.path.exists(log_dirname):
@@ -341,7 +340,7 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
         root_logger.addHandler(file_handler)
         file_handler.setFormatter(formatter)
         #
-        print("Saving log to '%s'" % log_filename)
+        print("Saving log to file '%s'" % log_filename)
     #
     #test_logger()
 

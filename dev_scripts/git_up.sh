@@ -1,4 +1,7 @@
 #!/bin/bash -e
+
+# TODO(gp): Use gup instead of this.
+
 echo '# Check what are the differences with master...'
 cmd="git ll ..origin/master"
 echo "> $cmd"
