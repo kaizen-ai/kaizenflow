@@ -270,12 +270,12 @@ def iter_ema(df, com, min_periods, depth):
     output, then $1 - \lambda = \exp(-1 / \tau)$. Now
     $\lambda = 1 / (1 + \text{com})$, and rearranging gives
     $\log(1 + 1 / \text{com}) = 1 / \tau$. Expanding in a Taylor series
-    leads to $\tau \approx \text{com}$. 
+    leads to $\tau \approx \text{com}$.
 
     The kernel for an ema of depth $n$ is
     $(1 / (n - 1)!) (t / \tau)^{n - 1} \exp^{-t / \tau} / \tau$.
 
-    Arbitrary kernels can be approximated by a combination of iterated emas. 
+    Arbitrary kernels can be approximated by a combination of iterated emas.
 
     For an iterated ema with given tau and depth n, we have
       - range = n \tau
@@ -287,8 +287,8 @@ def iter_ema(df, com, min_periods, depth):
     dbg.dassert_lte(1, depth)
     _LOG.info('Calculating iterated ema of depth %i...', depth)
     _LOG.info('com = %0.2f', com)
-    tau = _com_to_tau(com) 
-    _LOG.info('tau = %0.2f', tau) 
+    tau = _com_to_tau(com)
+    _LOG.info('tau = %0.2f', tau)
     _LOG.info('range = %0.2f', depth * tau)
     _LOG.info('<t^2>^{1/2} = %0.2f', np.sqrt(depth * (depth + 1)) * tau)
     _LOG.info('width = %0.2f', np.sqrt(depth) * tau)
@@ -325,7 +325,7 @@ def ema_diff(df, tau, min_periods, scaling, order):
     beta = 0.65
     alpha = 1. / (gamma * (8 * beta - 3))
     _LOG.info('alpha = %0.2f', alpha)
-    tau1 = alpha * tau 
+    tau1 = alpha * tau
     _LOG.info('tau1 = %0.2f', tau1)
     tau2 = alpha * beta * tau
     _LOG.info('tau2 = %0.2f', tau2)
@@ -333,24 +333,24 @@ def ema_diff(df, tau, min_periods, scaling, order):
     _LOG.info('com1 = %0.2f', com1)
     com2 = _tau_to_com(tau2)
     _LOG.info('com2 = %0.2f', com2)
-    
-    def order_one(df): 
+
+    def order_one(df):
         s1 = iter_ema(df, com1, min_periods, 1)
         s2 = iter_ema(df, com1, min_periods, 2)
         s3 = -2. * iter_ema(df, com2, min_periods, 4)
-        differential = gamma * (s1 + s2 + s3) 
+        differential = gamma * (s1 + s2 + s3)
         differential = gamma * (s1 + s2 + s3)
         if scaling == 0:
             return differential
         return differential / (tau**scaling)
-    
+
     df_diff = df.copy()
     for i in range(0, order):
         df_diff = order_one(df_diff)
     return df_diff
 
 
-def smooth_ma(df, range_, min_periods, min_depth, max_depth): 
+def smooth_ma(df, range_, min_periods, min_depth, max_depth):
     """
     Moving average operator defined in terms of iterated ema's.
     Choosing min_depth > 1 results in a lagged operator.
@@ -359,7 +359,7 @@ def smooth_ma(df, range_, min_periods, min_depth, max_depth):
 
     Abrupt impulse response that tapers off smoothly like a sigmoid
     (hence smoother than an equally-weighted moving average).
-    
+
     For min_depth = 1 and large max_depth, the series is approximately
     constant for t << 2 * range_. In particular, when max_depth >= 5,
     the kernels are more rectangular than ema-like.
@@ -371,8 +371,8 @@ def smooth_ma(df, range_, min_periods, min_depth, max_depth):
     _LOG.info('Calculating smoothed moving average...')
     tau_prime = 2. * range_ / (min_depth + max_depth)
     _LOG.info('ema tau = %0.2f', tau_prime)
-    com = _tau_to_com(tau_prime) 
-    _LOG.info('com = %0.2f', com) 
+    com = _tau_to_com(tau_prime)
+    _LOG.info('com = %0.2f', com)
     ema = functools.partial(iter_ema, df, com, min_periods)
     denom = float(max_depth - min_depth + 1)
     # Not the most efficient implementation, but follows 3.56 of Dacorogna
@@ -397,8 +397,8 @@ def moving_var(df, range_, min_periods, min_depth, max_depth, p_moment):
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_ma = smooth_ma(df, range_, min_periods, min_depth, max_depth) 
-    df_tmp = np.abs(df - df_ma)**p_moment 
+    df_ma = smooth_ma(df, range_, min_periods, min_depth, max_depth)
+    df_tmp = np.abs(df - df_ma)**p_moment
     return smooth_ma(df_tmp, range_, min_periods, min_depth, max_depth)
 
 
@@ -414,7 +414,7 @@ def moving_std(df, range_, min_periods, min_depth, max_depth, p_moment):
 
 def z_score(df, range_, min_periods, min_depth, max_depth, p_moment):
     """
-    Z-score using smooth_ma and moving_std. 
+    Z-score using smooth_ma and moving_std.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
@@ -438,7 +438,7 @@ def moving_kurtosis(df, range_z, range_s, min_periods, min_depth, max_depth, p_m
     """
     z_df = z_score(df, range_z, min_periods, min_depth, max_depth, p_moment)
     kurt = smooth_ma(z_df**4, range_s, min_periods, min_depth, max_depth)
-    return kurt 
+    return kurt
 
 
 #
@@ -446,7 +446,7 @@ def moving_kurtosis(df, range_z, range_s, min_periods, min_depth, max_depth, p_m
 #
 def get_heaviside(a, b, zero_loc, tick):
     """
-    Generate Heaviside pd.Series. 
+    Generate Heaviside pd.Series.
     """
     dbg.dassert_lte(a, zero_loc)
     dbg.dassert_lte(zero_loc, b)
