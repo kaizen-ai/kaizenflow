@@ -300,7 +300,7 @@ def iter_ema(df, com, min_periods, depth):
     return df_hat
 
 
-def ema_diff(df, tau, min_periods, order):
+def ema_diff(df, tau, min_periods, scaling):
     """
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 
@@ -328,9 +328,9 @@ def ema_diff(df, tau, min_periods, order):
     s2 = iter_ema(df, com1, min_periods, 2)
     s3 = -2. * iter_ema(df, com2, min_periods, 4)
     differential = gamma * (s1 + s2 + s3)
-    if order == 0:
+    if scaling == 0:
         return differential
-    return differential / (tau ** order)
+    return differential / (tau ** scaling)
 
 
 def smooth_ma(df, range_, min_periods, min_depth, max_depth): 
