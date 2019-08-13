@@ -6,6 +6,7 @@
 #   - Signal filtering
 #   - Lag determination
 #   - etc.
+import functools
 import logging
 
 import matplotlib
@@ -240,3 +241,30 @@ def plot_crosscorrelation(x, y):
 
 
 # TODO(Paul): Add coherence plotting function.
+
+
+def iter_ema(df, com, min_periods, depth):
+    """
+    Iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
+
+    depth=1 corresponds to a single application of exponential smoothing.
+    """
+    # TODO: Ensure depth is an integer.
+    if depth <= 0:
+        return df
+    return iter_ema(df.ewm(com=com, min_periods=min_periods, adjust=True,
+                           ignore_na=False, axis=0).mean(),
+                    com=com,
+                    min_periods=min_periods,
+                    depth=depth - 1)
+
+
+def iter_ma(df, r, max_depth, min_periods):
+    """
+    Moving average operator defined in terms of iterated ema's.
+    """
+    # Not the most efficient implementation, but follows 3.56 of Dacorogna
+    # directly.
+    com = 2 * r / (1. + max_depth)
+    ema = functools.partial(iter_ema, df, com, min_periods)
+    return sum(map(ema, range(1, max_depth + 1))) / float(max_depth)
