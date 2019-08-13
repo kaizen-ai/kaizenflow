@@ -380,7 +380,7 @@ def smooth_ma(df, range_, min_periods, min_depth, max_depth):
     return sum(map(ema, range(min_depth, max_depth + 1))) / denom
 
 
-def ma_norm(df, range_, min_periods, min_depth, max_depth, p_moment):
+def moving_norm(df, range_, min_periods, min_depth, max_depth, p_moment):
     """
     Smooth moving average norm (when p_moment >= 1).
 
@@ -391,7 +391,7 @@ def ma_norm(df, range_, min_periods, min_depth, max_depth, p_moment):
                      max_depth)**(1. / p_moment)
 
 
-def ma_var(df, range_, min_periods, min_depth, max_depth, p_moment):
+def moving_var(df, range_, min_periods, min_depth, max_depth, p_moment):
     """
     Smooth moving average central moment.
 
@@ -402,28 +402,28 @@ def ma_var(df, range_, min_periods, min_depth, max_depth, p_moment):
     return smooth_ma(df_tmp, range_, min_periods, min_depth, max_depth)
 
 
-def ma_std(df, range_, min_periods, min_depth, max_depth, p_moment):
+def moving_std(df, range_, min_periods, min_depth, max_depth, p_moment):
     """
     Normalized smooth moving average central moment.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_tmp = ma_var(df, range_, min_periods, min_depth, max_depth, p_moment)
+    df_tmp = smooth_var(df, range_, min_periods, min_depth, max_depth, p_moment)
     return df_tmp ** (1. / p_moment)
 
 
 def z_score(df, range_, min_periods, min_depth, max_depth, p_moment):
     """
-    Smooth moving average z-score.
+    Z-score using smooth_ma and moving_std. 
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
     df_hat = df - smooth_ma(df, range_, min_periods, min_depth, max_depth)
-    df_hat /= ma_std(df, range_, min_periods, min_depth, max_depth, p_moment)
+    df_hat /= moving_std(df, range_, min_periods, min_depth, max_depth, p_moment)
     return df_hat
 
 
-def ma_skew(df, range_z, range_s, min_periods, min_depth, max_depth, p_moment):
+def moving_skew(df, range_z, range_s, min_periods, min_depth, max_depth, p_moment):
     """
     Smooth moving average skew of z-scored df.
     """
@@ -432,7 +432,7 @@ def ma_skew(df, range_z, range_s, min_periods, min_depth, max_depth, p_moment):
     return skew
 
 
-def ma_kurtosis(df, range_z, range_s, min_periods, min_depth, max_depth, p_moment):
+def moving_kurtosis(df, range_z, range_s, min_periods, min_depth, max_depth, p_moment):
     """
     Smooth moving average kurtosis of z-scored df.
     """
