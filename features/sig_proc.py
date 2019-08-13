@@ -16,6 +16,8 @@ import pandas as pd
 import pywt
 import scipy as sp
 import statsmodels.api as sm
+import utilities.helpers.dbg as dbg
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -247,9 +249,6 @@ def plot_crosscorrelation(x, y):
 #
 # EMAs and derived operators
 #
-
-# TODO: Make interfaces more consistent. Relate com to tau.
-
 def iter_ema(df, com, min_periods, depth):
     """
     Iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
@@ -257,50 +256,93 @@ def iter_ema(df, com, min_periods, depth):
     depth=1 corresponds to a single application of exponential smoothing.
 
     Greater depth tempers impulse response, introducing a phase lag.
+
+    Dacorogna use the convention $\text{ema}(t) = \exp(-t / \tau) / \tau$.
+
+    If $s_n = \lambda x_n + (1 - \lambda) s_{n - 1}$, where $s_n$ is the ema
+    output, then $1 - \lambda = \exp(-1 / \tau)$. Now
+    $\lambda = 1 / (1 + \text{com})$, and rearranging gives
+    $\log(1 + 1 / \text{com}) = 1 / \tau$. Expanding in a Taylor series
+    leads to $\tau \approx \text{com}$. 
+
+    The kernel for an ema of depth $n$ is
+    $(1 / (n - 1)!) (t / \tau)^{n - 1} \exp^{-t / \tau} / \tau$.
+
+    Arbitrary kernels can be approximated by a combination of iterated emas. 
+
+    For an iterated ema with given tau and depth n, we have
+      - range = n \tau
+      - <t^2> = n(n + 1) \tau^2
+      - width = \sqrt{n} \tau
+      - aspect ratio = \sqrt{1 + 1 / n}
     """
-    # TODO: Ensure depth is an integer.
-    if depth <= 0:
-        return df
-    return iter_ema(df.ewm(com=com, min_periods=min_periods, adjust=True,
-                           ignore_na=False, axis=0).mean(),
-                    com=com,
-                    min_periods=min_periods,
-                    depth=depth - 1)
+    dbg.dassert_isinstance(depth, int)
+    dbg.dassert_lte(1, depth)
+    _LOG.info('Calculating iterated ema of depth %i...', depth)
+    _LOG.info('com = %0.2f', com)
+    tau = 1 / np.log(1 + 1 / com)
+    _LOG.info('tau = %0.2f', tau) 
+    _LOG.info('range = %0.2f', depth * tau)
+    _LOG.info('<t^2>^{1/2} = %0.2f', np.sqrt(depth * (depth + 1)) * tau)
+    _LOG.info('width = %0.2f', np.sqrt(depth) * tau)
+    _LOG.info('aspect ratio = %0.2f', np.sqrt(1 + 1. / depth))
+    df_hat = df.copy()
+    for i in range(0, depth):
+        df_hat = df_hat.ewm(com=com, min_periods=min_periods,
+                            adjust=True, ignore_na=False, axis=0).mean()
+    return df_hat
 
 
-def iter_ma(df, r, max_depth, min_periods):
+def smooth_ma(df, range_, min_periods, min_depth, max_depth): 
     """
     Moving average operator defined in terms of iterated ema's.
+    Choosing min_depth > 1 results in a lagged operator.
+    Choosing min_depth = max_depth = 1 reduces to a single ema with
+    com approximately equal to range_.
 
-    Abrupt impulse response that tapers off smoothly like a sigmoid.
-
-    For max_depth >= 5, the kernels are more rectangular than ema-like.
+    Abrupt impulse response that tapers off smoothly like a sigmoid
+    (hence smoother than an equally-weighted moving average).
+    
+    For min_depth = 1 and large max_depth, the series is approximately
+    constant for t << 2 * range_. In particular, when max_depth >= 5,
+    the kernels are more rectangular than ema-like.
     """
+    dbg.dassert_isinstance(min_depth, int)
+    dbg.dassert_isinstance(max_depth, int)
+    dbg.dassert_lte(1, min_depth)
+    dbg.dassert_lte(min_depth, max_depth)
+    _LOG.info('Calculating smoothed moving average...')
+    tau_prime = 2. * range_ / (min_depth + max_depth)
+    _LOG.info('ema tau = %0.2f', tau_prime)
+    com = 1 / (np.exp(1. / tau_prime) - 1)
+    _LOG.info('com = %0.2f', com) 
+    ema = functools.partial(iter_ema, df, com, min_periods)
+    denom = float(max_depth - min_depth + 1)
     # Not the most efficient implementation, but follows 3.56 of Dacorogna
     # directly.
-    com = 2 * r / (1. + max_depth)
-    ema = functools.partial(iter_ema, df, com, min_periods)
-    return sum(map(ema, range(1, max_depth + 1))) / float(max_depth)
+    return sum(map(ema, range(min_depth, max_depth + 1))) / denom
 
 
-def ma_norm(df, r, max_depth, min_periods, p_moment):
+def ma_norm(df, range_, min_periods, min_depth, max_depth, p_moment):
     df_tmp = np.abs(df)**p_moment
-    return iter_ma(df_tmp, r, max_depth, min_periods)**(1. / p_moment)
+    return smooth_ma(df_tmp, range_, min_periods, min_depth,
+                     max_depth)**(1. / p_moment)
 
 
-def ma_var(df, r, max_depth, min_periods, p_moment):
-    df_tmp = np.abs(df - iter_ma(df, r, max_depth, min_periods))**p_moment
-    return iter_ma(df_tmp, r, max_depth, min_periods)
+def ma_var(df, range_, min_periods, min_depth, max_depth, p_moment):
+    df_ma = smooth_ma(df, range_, min_periods, min_depth, max_depth) 
+    df_tmp = np.abs(df - df_ma)**p_moment 
+    return smooth_ma(df_tmp, range_, min_periods, min_depth, max_depth)
 
 
-def ma_std(df, r, max_depth, min_periods, p_moment):
-    df_tmp = ma_var(df, r, max_depth, min_periods, p_moment)
+def ma_std(df, range_, min_periods, min_depth, max_depth, p_moment):
+    df_tmp = ma_var(df, range_, min_periods, min_depth, max_depth, p_moment)
     return df_tmp ** (1. / p_moment)
 
 
-def z_score(df, r, max_depth, min_periods, p_moment):
-    df_hat = df - iter_ma(df, r, max_depth, min_periods)
-    df_hat /= ma_std(df, r, max_depth, min_periods, p_moment)
+def z_score(df, range_, min_periods, min_depth, max_depth, p_moment):
+    df_hat = df - smooth_ma(df, range_, min_periods, min_depth, max_depth)
+    df_hat /= ma_std(df, range_, min_periods, min_depth, max_depth, p_moment)
     return df_hat
 
 
