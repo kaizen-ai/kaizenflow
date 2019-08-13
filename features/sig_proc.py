@@ -381,29 +381,75 @@ def smooth_ma(df, range_, min_periods, min_depth, max_depth):
 
 
 def ma_norm(df, range_, min_periods, min_depth, max_depth, p_moment):
+    """
+    Smooth moving average norm (when p_moment >= 1).
+
+    Moving average corresponds to ema when min_depth = max_depth = 1.
+    """
     df_tmp = np.abs(df)**p_moment
     return smooth_ma(df_tmp, range_, min_periods, min_depth,
                      max_depth)**(1. / p_moment)
 
 
 def ma_var(df, range_, min_periods, min_depth, max_depth, p_moment):
+    """
+    Smooth moving average central moment.
+
+    Moving average corresponds to ema when min_depth = max_depth = 1.
+    """
     df_ma = smooth_ma(df, range_, min_periods, min_depth, max_depth) 
     df_tmp = np.abs(df - df_ma)**p_moment 
     return smooth_ma(df_tmp, range_, min_periods, min_depth, max_depth)
 
 
 def ma_std(df, range_, min_periods, min_depth, max_depth, p_moment):
+    """
+    Normalized smooth moving average central moment.
+
+    Moving average corresponds to ema when min_depth = max_depth = 1.
+    """
     df_tmp = ma_var(df, range_, min_periods, min_depth, max_depth, p_moment)
     return df_tmp ** (1. / p_moment)
 
 
 def z_score(df, range_, min_periods, min_depth, max_depth, p_moment):
+    """
+    Smooth moving average z-score.
+
+    Moving average corresponds to ema when min_depth = max_depth = 1.
+    """
     df_hat = df - smooth_ma(df, range_, min_periods, min_depth, max_depth)
     df_hat /= ma_std(df, range_, min_periods, min_depth, max_depth, p_moment)
     return df_hat
 
 
+def ma_skew(df, range_z, range_s, min_periods, min_depth, max_depth, p_moment):
+    """
+    Smooth moving average skew of z-scored df.
+    """
+    z_df = z_score(df, range_z, min_periods, min_depth, max_depth, p_moment)
+    skew = smooth_ma(z_df**3, range_s, min_periods, min_depth, max_depth)
+    return skew
+
+
+def ma_kurtosis(df, range_z, range_s, min_periods, min_depth, max_depth, p_moment):
+    """
+    Smooth moving average kurtosis of z-scored df.
+    """
+    z_df = z_score(df, range_z, min_periods, min_depth, max_depth, p_moment)
+    kurt = smooth_ma(z_df**4, range_s, min_periods, min_depth, max_depth)
+    return kurt 
+
+
+#
+# Test series
+#
 def get_heaviside(a, b, zero_loc, tick):
+    """
+    Generate Heaviside pd.Series. 
+    """
+    dbg.dassert_lte(a, zero_loc)
+    dbg.dassert_lte(zero_loc, b)
     array = np.arange(a, b, tick)
     srs = pd.Series(data=np.heaviside(array, zero_loc),
                     index=array,
@@ -412,6 +458,9 @@ def get_heaviside(a, b, zero_loc, tick):
 
 
 def get_impulse(a, b, zero_loc, tick):
+    """
+    Generate unit impulse pd.Series.
+    """
     heavi = get_heaviside(a, b, zero_loc, tick)
     impulse = (heavi - heavi.shift(1)).shift(-1).fillna(0)
     impulse.name = 'impulse'
