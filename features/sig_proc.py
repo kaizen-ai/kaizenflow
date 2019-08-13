@@ -300,7 +300,7 @@ def iter_ema(df, com, min_periods, depth):
     return df_hat
 
 
-def ema_diff(df, tau, min_periods, scaling):
+def ema_diff(df, tau, min_periods, scaling, order):
     """
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 
@@ -308,10 +308,19 @@ def ema_diff(df, tau, min_periods, scaling):
     and an average around time "now - \tau" over a time interval \tau_2.
     Here, \tau_1, \tau_2 are taken to be approximately \tau / 2.
 
-    The normalization is chosen so that the differential of a constant is zero
-    and so that the differential of 't' is approximately \tau.
+    The normalization factors are chosen so that the differential of a constant
+    is zero and so that the differential of 't' is approximately \tau (for
+    order = 0).
+
+    The `scaling` parameter refers to the exponential weighting of inverse
+    tau.
+
+    The `order` parameter refers to the number of times the ema_diff operator
+    is applied to the original df.
     """
-    _LOG.info('Calculating ema diff with tau = %0.2f...', tau)
+    dbg.dassert_isinstance(order, int)
+    dbg.dassert_lte(0, order)
+    _LOG.info('Calculating ema diff...')
     gamma = 1.22208
     beta = 0.65
     alpha = 1. / (gamma * (8 * beta - 3))
@@ -324,13 +333,21 @@ def ema_diff(df, tau, min_periods, scaling):
     _LOG.info('com1 = %0.2f', com1)
     com2 = _tau_to_com(tau2)
     _LOG.info('com2 = %0.2f', com2)
-    s1 = iter_ema(df, com1, min_periods, 1)
-    s2 = iter_ema(df, com1, min_periods, 2)
-    s3 = -2. * iter_ema(df, com2, min_periods, 4)
-    differential = gamma * (s1 + s2 + s3)
-    if scaling == 0:
-        return differential
-    return differential / (tau ** scaling)
+    
+    def order_one(df): 
+        s1 = iter_ema(df, com1, min_periods, 1)
+        s2 = iter_ema(df, com1, min_periods, 2)
+        s3 = -2. * iter_ema(df, com2, min_periods, 4)
+        differential = gamma * (s1 + s2 + s3) 
+        differential = gamma * (s1 + s2 + s3)
+        if scaling == 0:
+            return differential
+        return differential / (tau**scaling)
+    
+    df_diff = df.copy()
+    for i in range(0, order):
+        df_diff = order_one(df_diff)
+    return df_diff
 
 
 def smooth_ma(df, range_, min_periods, min_depth, max_depth): 
