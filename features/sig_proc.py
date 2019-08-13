@@ -243,11 +243,20 @@ def plot_crosscorrelation(x, y):
 # TODO(Paul): Add coherence plotting function.
 
 
+
+#
+# EMAs and derived operators
+#
+
+# TODO: Make interfaces more consistent. Relate com to tau.
+
 def iter_ema(df, com, min_periods, depth):
     """
     Iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
 
     depth=1 corresponds to a single application of exponential smoothing.
+
+    Greater depth tempers impulse response, introducing a phase lag.
     """
     # TODO: Ensure depth is an integer.
     if depth <= 0:
@@ -262,9 +271,49 @@ def iter_ema(df, com, min_periods, depth):
 def iter_ma(df, r, max_depth, min_periods):
     """
     Moving average operator defined in terms of iterated ema's.
+
+    Abrupt impulse response that tapers off smoothly like a sigmoid.
+
+    For max_depth >= 5, the kernels are more rectangular than ema-like.
     """
     # Not the most efficient implementation, but follows 3.56 of Dacorogna
     # directly.
     com = 2 * r / (1. + max_depth)
     ema = functools.partial(iter_ema, df, com, min_periods)
     return sum(map(ema, range(1, max_depth + 1))) / float(max_depth)
+
+
+def ma_norm(df, r, max_depth, min_periods, p_moment):
+    df_tmp = np.abs(df)**p_moment
+    return iter_ma(df_tmp, r, max_depth, min_periods)**(1. / p_moment)
+
+
+def ma_var(df, r, max_depth, min_periods, p_moment):
+    df_tmp = np.abs(df - iter_ma(df, r, max_depth, min_periods))**p_moment
+    return iter_ma(df_tmp, r, max_depth, min_periods)
+
+
+def ma_std(df, r, max_depth, min_periods, p_moment):
+    df_tmp = ma_var(df, r, max_depth, min_periods, p_moment)
+    return df_tmp ** (1. / p_moment)
+
+
+def z_score(df, r, max_depth, min_periods, p_moment):
+    df_hat = df - iter_ma(df, r, max_depth, min_periods)
+    df_hat /= ma_std(df, r, max_depth, min_periods, p_moment)
+    return df_hat
+
+
+def get_heaviside(a, b, zero_loc, tick):
+    array = np.arange(a, b, tick)
+    srs = pd.Series(data=np.heaviside(array, zero_loc),
+                    index=array,
+                    name='Heaviside')
+    return srs
+
+
+def get_impulse(a, b, zero_loc, tick):
+    heavi = get_heaviside(a, b, zero_loc, tick)
+    impulse = (heavi - heavi.shift(1)).shift(-1).fillna(0)
+    impulse.name = 'impulse'
+    return impulse
