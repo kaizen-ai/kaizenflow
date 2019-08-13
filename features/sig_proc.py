@@ -245,10 +245,17 @@ def plot_crosscorrelation(x, y):
 # TODO(Paul): Add coherence plotting function.
 
 
-
 #
 # EMAs and derived operators
 #
+def _com_to_tau(com):
+    return 1. / np.log(1 + 1. / com)
+
+
+def _tau_to_com(tau):
+    return 1. / (np.exp(1. / tau) - 1)
+
+
 def iter_ema(df, com, min_periods, depth):
     """
     Iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
@@ -280,7 +287,7 @@ def iter_ema(df, com, min_periods, depth):
     dbg.dassert_lte(1, depth)
     _LOG.info('Calculating iterated ema of depth %i...', depth)
     _LOG.info('com = %0.2f', com)
-    tau = 1 / np.log(1 + 1 / com)
+    tau = _com_to_tau(com) 
     _LOG.info('tau = %0.2f', tau) 
     _LOG.info('range = %0.2f', depth * tau)
     _LOG.info('<t^2>^{1/2} = %0.2f', np.sqrt(depth * (depth + 1)) * tau)
@@ -291,6 +298,36 @@ def iter_ema(df, com, min_periods, depth):
         df_hat = df_hat.ewm(com=com, min_periods=min_periods,
                             adjust=True, ignore_na=False, axis=0).mean()
     return df_hat
+
+
+def ema_diff(df, tau, min_periods):
+    """
+    'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
+
+    Computes difference of around time "now" over a time interval \tau_1
+    and an average around time "now - \tau" over a time interval \tau_2.
+    Here, \tau_1, \tau_2 are taken to be approximately \tau / 2.
+
+    The normalization is chosen so that the differential of a constant is zero
+    and so that the differential of 't' is approximately \tau.
+    """
+    _LOG.info('Calculating ema diff with tau = %0.2f...', tau)
+    gamma = 1.22208
+    beta = 0.65
+    alpha = 1. / (gamma * (8 * beta - 3))
+    _LOG.info('alpha = %0.2f', alpha)
+    tau1 = alpha * tau 
+    _LOG.info('tau1 = %0.2f', tau1)
+    tau2 = alpha * beta * tau
+    _LOG.info('tau2 = %0.2f', tau2)
+    com1 = _tau_to_com(tau1)
+    _LOG.info('com1 = %0.2f', com1)
+    com2 = _tau_to_com(tau2)
+    _LOG.info('com2 = %0.2f', com2)
+    s1 = iter_ema(df, com1, min_periods, 1)
+    s2 = iter_ema(df, com1, min_periods, 2)
+    s3 = -2. * iter_ema(df, com2, min_periods, 4)
+    return gamma * (s1 + s2 + s3)
 
 
 def smooth_ma(df, range_, min_periods, min_depth, max_depth): 
@@ -314,7 +351,7 @@ def smooth_ma(df, range_, min_periods, min_depth, max_depth):
     _LOG.info('Calculating smoothed moving average...')
     tau_prime = 2. * range_ / (min_depth + max_depth)
     _LOG.info('ema tau = %0.2f', tau_prime)
-    com = 1 / (np.exp(1. / tau_prime) - 1)
+    com = _tau_to_com(tau_prime) 
     _LOG.info('com = %0.2f', com) 
     ema = functools.partial(iter_ema, df, com, min_periods)
     denom = float(max_depth - min_depth + 1)
