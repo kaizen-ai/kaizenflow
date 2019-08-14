@@ -642,10 +642,14 @@ def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
 
 # TODO(gp): Add some stats about how many nans where filled.
 def handle_nans(df, nan_mode):
-    if nan_mode == "dropna":
+    if nan_mode == "drop":
         df = df.dropna(how="any")
-    elif nan_mode == "fillna_with_zero":
+    elif nan_mode == "fill_with_zero":
         df = df.fillna(0.0)
+    elif nan_mode == "abort":
+        num_nans = np.isnan(df).sum().sum()
+        if num_nans > 0:
+            raise ValueError("df has %d nans\n%s" % (num_nans, df))
     else:
         raise ValueError("Invalid nan_mode='%s'" % nan_mode)
     return df
@@ -771,14 +775,14 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
         - eigvec_df stores eigenvectors as multiindex df
     """
     # Compute rolling correlation.
-    corr = rolling_corr_over_time(df, com, nan_mode)
+    corr_df = rolling_corr_over_time(df, com, nan_mode)
     # Compute eigvalues and eigenvectors.
     eigval_df = []
     eigvec_df = []
-    timestamps = corr.index.get_level_values(0).unique()
+    timestamps = corr_df.index.get_level_values(0).unique()
     for dt in tqdm.tqdm(timestamps):
         dbg.dassert_isinstance(dt, datetime.date)
-        corr_tmp = corr.loc[dt]
+        corr_tmp = corr_df.loc[dt]
         # Compute rolling eigenvalues and eigenvectors.
         eigval, eigvec = np.linalg.eig(corr_tmp.fillna(0.0))
         # Sort eigenvalues, if needed.
@@ -816,7 +820,7 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
     eigvec_df = pd.concat(eigvec_df, axis=0)
     dbg.dassert_eq(
         len(eigvec_df.index.get_level_values(0).unique()), len(timestamps))
-    return eigval_df, eigvec_df
+    return corr_df, eigval_df, eigvec_df
 
 
 def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0, num_cols=2):

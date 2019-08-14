@@ -474,6 +474,8 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         ignore.extend([
             # D100: Missing docstring in public module
             "D100",
+            # D101: Missing docstring in public class
+            "D101",
             # D102: Missing docstring in public method
             "D102",
             # D103: Missing docstring in public function
