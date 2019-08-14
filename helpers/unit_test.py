@@ -53,7 +53,8 @@ def get_incremental_tests():
 def _assert_equal(actual, expected, full_test_name, test_dir):
     """
     Implement a better version of self.assertEqual() that reports mismatching
-    strings with sdiff and save them to files for further analysis with vimdiff.
+    strings with sdiff and save them to files for further analysis with
+    vimdiff.
     """
 
     def _to_string(obj):
@@ -70,13 +71,13 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
         _LOG.info(
             "%s",
             "\n" + print_.frame("Test %s failed" % full_test_name, "=", 80))
-        # Dump the expected and actual strings to files.
-        _LOG.debug("Expected:\n%s", expected)
-        exp_file_name = "%s/tmp.expected.txt" % test_dir
-        io_.to_file(exp_file_name, expected)
+        # Dump the actual and expected strings to files.
         _LOG.debug("Actual:\n%s", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir
         io_.to_file(act_file_name, actual)
+        _LOG.debug("Expected:\n%s", expected)
+        exp_file_name = "%s/tmp.expected.txt" % test_dir
+        io_.to_file(exp_file_name, expected)
         # Diff to screen.
         _, res = si.system_to_string(
             "echo; sdiff -l -w 150 %s %s" % (exp_file_name, act_file_name),
@@ -84,15 +85,15 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
             log_level=logging.DEBUG)
         _LOG.error(res)
         # Report how to diff.
-        vimdiff_cmd = "vimdiff %s %s" % (os.path.abspath(exp_file_name),
-                                         os.path.abspath(act_file_name))
+        vimdiff_cmd = "vimdiff %s %s" % (os.path.abspath(act_file_name),
+                                         os.path.abspath(exp_file_name))
         # Save a script to diff.
         diff_script = "./tmp_diff.sh"
         io_.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
         si.system(cmd)
         # Print stack trace.
-        msg = "\nDiff with:\n" + vimdiff_cmd + "\nor running:\n" + diff_script
+        msg = "\nDiff with:\n> " + vimdiff_cmd + "\nor running:\n> " + diff_script
         _LOG.error(msg)
         # Print stack trace.
         raise RuntimeError(msg)
