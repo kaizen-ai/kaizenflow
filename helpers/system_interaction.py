@@ -76,12 +76,12 @@ def _system(cmd, abort_on_error, suppressed_error, suppress_output, blocking,
                 rc = 0
     except OSError:
         rc = -1
-    _LOG.log(log_level, "rc=%s", rc)
+    _LOG.debug("rc=%s", rc)
     if abort_on_error and rc != 0:
-        _LOG.error(
-            print_.frame("cmd='%s' failed with rc='%s'" % (cmd, rc)) +
-            "Output of the failing command is:\n%s\n%s\n%s", print_.line(">"),
-            output, print_.line("<"))
+        msg = ("\n" + print_.frame("cmd='%s' failed with rc='%s'" % (cmd, rc)) +
+               "\nOutput of the failing command is:\n%s\n%s\n%s" %
+               (print_.line(">"), output, print_.line("<")))
+        _LOG.error("%s", msg)
         raise RuntimeError("cmd='%s' failed with rc='%s'" % (cmd, rc))
     #dbg.dassert_type_in(output, (str, ))
     return rc, output
