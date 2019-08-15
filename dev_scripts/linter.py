@@ -45,6 +45,9 @@ E.g.,
 # TODO(gp): Report number of errors vs warnings.
 # TODO(gp): Test directory should be called tests and not test
 # TODO(gp): Discourage checking in master
+# TODO(gp): Python files should end with py
+# TODO(gp): All and only executable python files (i.e., with main) should have
+# #!/usr/bin/env python
 
 import argparse
 import datetime
