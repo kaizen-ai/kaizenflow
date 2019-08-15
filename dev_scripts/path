@@ -1,14 +1,12 @@
-#!/usr/bin/perl
+#!/usr/bin/env python
 
-use strict;
-use Cwd;
+import os
+import sys
 
-my @aFile=split(/\//, $ARGV[0]);
-my @aPwd=split(/\//, &Cwd::cwd());
+path = sys.argv[1]
+path_out = os.path.abspath(path)
+print(path_out)
 
-my $idx = 0;
-while ($idx < scalar(@aFile) && $aFile[$idx] eq "..") {
-   my $s = pop(@aPwd);
-   $idx++;
-}
-print join("/", @aPwd, splice(@aFile, $idx) )."\n";
+if not os.path.exists(path_out):
+    msg = "path '%s' converted to '%s' doesn't exist" % (path, path_out)
+    raise RuntimeError(msg)
