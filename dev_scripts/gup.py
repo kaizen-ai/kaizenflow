@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _system(cmd, *args, **kwargs):
-    si.system(cmd, *args, **kwargs)
+    si.system(cmd, log_level=logging.INFO, *args, **kwargs)
 
 
 def _main(parser):
