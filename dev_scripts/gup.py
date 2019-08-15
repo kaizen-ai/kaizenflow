@@ -43,16 +43,15 @@ def _main(parser):
     was_stashed = int(output) > 0
     if not was_stashed:
         msg = "Nothing was stashed"
-        _LOG.error(msg)
-        raise RuntimeError(msg)
-    need_stash = was_stashed
+        _LOG.warning(msg)
+        #raise RuntimeError(msg)
     #
     msg = '# Getting new commits...'
     print("\n" + pri.frame(msg))
     cmd = 'git pull --rebase'
     _system(cmd, suppress_output=False)
     #
-    if need_stash:
+    if was_stashed:
         msg = '# Checking stash head ...'
         print("\n" + pri.frame(msg))
         cmd = "git stash list | head -3"
