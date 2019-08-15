@@ -115,3 +115,7 @@ develop               *  /Users/saggese/.conda/envs/develop
 > install/create_conda.py --req_file requirements_pymc.txt --env_name pymc3 --delete_env_if_exists -v DEBUG
 > conda create sage -n sage
 ` ``
+
+# Code org
+- `helpers`: low-level helpers that are general and not specific of any project
+- `core`: helpers that are specific of data science, finance projects

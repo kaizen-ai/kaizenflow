@@ -80,7 +80,7 @@ class PcaFactorComputer(FactorComputer):
         # Compute correlation.
         df = exp.handle_nans(df, self.nan_mode_in_data)
         corr_df = df.corr()
-        corr_df = exp.handle_nans(df, self.nan_mode_in_corr)
+        corr_df = exp.handle_nans(corr_df, self.nan_mode_in_corr)
         _LOG.debug("corr_df=%s", corr_df)
         # Use the last datetime as timestamp.
         df.index.max()

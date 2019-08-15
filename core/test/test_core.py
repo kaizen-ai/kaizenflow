@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-import helpers.pandas_helpers as pde
+import core.pandas_helpers as pde
 import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
