@@ -53,7 +53,7 @@ class FactorComputer:
         else:
             df = obj
         dbg.dassert_isinstance(df, pd.DataFrame)
-        self._execute(df)
+        return self._execute(df)
 
     def _execute(self, df):
         raise NotImplementedError
@@ -83,7 +83,8 @@ class PcaFactorComputer(FactorComputer):
         corr_df = exp.handle_nans(corr_df, self.nan_mode_in_corr)
         _LOG.debug("corr_df=%s", corr_df)
         # Use the last datetime as timestamp.
-        df.index.max()
+        dt = df.index.max()
+        _LOG.debug("ts=%s", dt)
         # Compute eigenvalues and eigenvectors.
         eigval, eigvec = np.linalg.eig(corr_df)
         # Sort eigenvalues, if needed.
@@ -97,18 +98,21 @@ class PcaFactorComputer(FactorComputer):
                 eigvec = eigvec[:, idx]
         _LOG.debug("eigval=\n%s\neigvec=\n%s", eigval, eigvec)
         # Package and store eigenvalues.
-        eigval_df = pd.DataFrame(eigval_df, index=timestamps)
+        eigval_df = pd.DataFrame([eigval], index=[dt])
         eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
+        _LOG.debug("eigval_df=%s", eigval_df)
         self._eigval_df.append(eigval_df)
         # Package and store eigenvectors.
-        if (eigval == 0).all():
+        if np.isnan(eigval_df).all().all():
             eigvec = np.nan * eigvec
-        eigvec_df = pd.DataFrame(eigvec, index=corr.columns)
+        # TODO(gp): Make sure eigenvec are normalized.
+        eigvec_df = pd.DataFrame(eigvec, index=corr_df.columns)
         # Add another index.
         eigvec_df.index.name = ""
         eigvec_df.reset_index(inplace=True)
         eigvec_df.insert(0, 'datetime', dt)
         eigvec_df.set_index(["datetime", ""], inplace=True)
+        _LOG.debug("eigvec_df=%s", eigvec_df)
         self._eigvec_df.append(eigvec_df)
         return eigvec_df
 
