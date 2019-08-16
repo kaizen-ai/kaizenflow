@@ -43,7 +43,6 @@ class TestDfRollingApply(ut.TestCase):
         df_exp = pd.DataFrame(df_exp.stack(dropna=False))
         self.assert_equal(df_act.to_string(), df_exp.to_string())
 
-    @pytest.mark.skip
     def test3(self):
         """
         Test with function returning a pd.DataFrame with multiple lines.
@@ -53,6 +52,4 @@ class TestDfRollingApply(ut.TestCase):
         df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=['A', 'B'])
         window = 5
         df_act = pde.df_rolling_apply(df, window, func)
-        #
-        df_exp = df.rolling(window).apply(func, raw=True)
-        self.assert_equal(df_act.to_string(), df_exp.to_string())
+        self.check_string(df_act.to_string())

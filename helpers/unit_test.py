@@ -10,7 +10,7 @@ import numpy as np
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.printing as print_
+import helpers.printing as pri
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
     if expected != actual:
         _LOG.info(
             "%s",
-            "\n" + print_.frame("Test %s failed" % full_test_name, "=", 80))
+            "\n" + pri.frame("Test %s failed" % full_test_name, "=", 80))
         # Dump the actual and expected strings to files.
         _LOG.debug("Actual:\n%s", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir
@@ -244,6 +244,9 @@ class TestCase(unittest.TestCase):
                 # The golden outcome doesn't exist.
                 outcome_updated = True
                 io_.to_file(file_name, actual)
+                # Add to git.
+                cmd = "git add %s" % file_name
+                si.system(cmd)
             if outcome_updated:
                 _LOG.warning("Test outcome updated ... ")
                 io_.to_file(file_name, actual)

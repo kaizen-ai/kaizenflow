@@ -58,8 +58,8 @@ def df_rolling_apply(df, window, func):
             idxs = df_tmp.index
             cols = df_tmp.columns
         else:
-            dbg.dassert((df_tmp.index == idxs).all)
-            dbg.dassert((df_tmp.columns == cols).all)
+            dbg.dassert((df_tmp.index == idxs).all())
+            dbg.dassert((df_tmp.columns == cols).all())
         # Accumulate results.
         _LOG.debug("df_tmp=\n%s", df_tmp)
         df_res[ts] = df_tmp
@@ -75,12 +75,8 @@ def df_rolling_apply(df, window, func):
             df_res_tmp[ts] = empty_df
         df_res_tmp.update(df_res)
         idx = df_res_tmp.keys()
-        _LOG.debug("idx=%s", idx)
         # Assemble result into a df.
-        _LOG.debug("df_res_tmp=%s", df_res_tmp)
-        res_vals = [x for x in df_res_tmp.values()]
-        _LOG.debug("res_vals=%s", res_vals)
-        df_res = pd.concat(res_vals)
+        df_res = pd.concat(df_res_tmp.values())
         dbg.dassert_eq(df_res.shape[0], len(idx))
         df_res.index = idx
         # The result should have the same length of the original df.
