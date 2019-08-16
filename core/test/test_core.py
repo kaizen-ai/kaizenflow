@@ -19,14 +19,14 @@ class TestDfRollingApply(ut.TestCase):
         Test with function returning a pd.Series.
         """
         np.random.seed(10)
+        func = np.mean
         df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=['A', 'B'])
         window = 5
-        df_act = pde.df_rolling_apply(df, window, np.mean)
+        df_act = pde.df_rolling_apply(df, window, func)
         #
-        df_exp = df.rolling(window).apply(np.mean, raw=True)
+        df_exp = df.rolling(window).apply(func, raw=True)
         self.assert_equal(df_act.to_string(), df_exp.to_string())
 
-    @pytest.mark.skip
     def test2(self):
         """
         Test with function returning a pd.DataFrame.
@@ -37,7 +37,10 @@ class TestDfRollingApply(ut.TestCase):
         window = 5
         df_act = pde.df_rolling_apply(df, window, func)
         #
+        func = np.mean
         df_exp = df.rolling(window).apply(func, raw=True)
+        # Convert to an equivalent format.
+        df_exp = pd.DataFrame(df_exp.stack(dropna=False))
         self.assert_equal(df_act.to_string(), df_exp.to_string())
 
     @pytest.mark.skip

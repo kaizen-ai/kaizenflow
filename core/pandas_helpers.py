@@ -2,6 +2,7 @@
 Package with general pandas helpers.
 """
 
+import collections
 import logging
 
 import numpy as np
@@ -11,7 +12,6 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-import collections
 
 def df_rolling_apply(df, window, func):
     """
@@ -70,7 +70,7 @@ def df_rolling_apply(df, window, func):
         # build a window.
         df_res_tmp = collections.OrderedDict()
         empty_df = pd.DataFrame([[np.nan] * len(cols)], columns=cols)
-        for j in range(0, window):
+        for j in range(0, window - 1):
             ts = df.index[j]
             df_res_tmp[ts] = empty_df
         df_res_tmp.update(df_res)
@@ -89,8 +89,9 @@ def df_rolling_apply(df, window, func):
         # Add a number of empty rows to handle when there were not enough rows to
         # build a window.
         df_res_nan = collections.OrderedDict()
-        empty_df = pd.DataFrame([[np.nan] * len(cols)] * len(idxs), index=idxs, columns=cols)
-        for j in range(0, window):
+        empty_df = pd.DataFrame(
+            [[np.nan] * len(cols)] * len(idxs), index=idxs, columns=cols)
+        for j in range(0, window - 1):
             ts = df.index[j]
             df_res_nan[ts] = empty_df
         df_res_nan = pd.concat(df_res_nan)
