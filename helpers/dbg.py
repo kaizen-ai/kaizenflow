@@ -210,6 +210,21 @@ def dassert_no_duplicates(val1, msg=""):
         dfatal(msg_)
 
 
+def dassert_eq_all(val1, val2, msg=""):
+    is_equal = (val1 == val2).all()
+    if not is_equal:
+        # yapf: disable
+        mask = val1 != val2
+        msg_ = ("* Failed assertion:" +
+                "\nval1= %s\n%s" % (len(val1), val1) +
+                "\nval2= %s\n%s" % (len(val2), val2) +
+                "\ndiff= %s\n%s\n%s\n" % (mask.sum(), val1[mask], val2[mask]) +
+                __to_msg(msg))
+        # yapf: enable
+        dfatal(msg_)
+
+
+# TODO(*): -> _file_exists
 def dassert_exists(file_name, msg=""):
     file_name = os.path.abspath(file_name)
     if not os.path.exists(file_name):
@@ -221,6 +236,7 @@ def dassert_exists(file_name, msg=""):
         dfatal(msg_)
 
 
+# TODO(*): -> _file_not_exists
 def dassert_not_exists(file_name, msg=""):
     file_name = os.path.abspath(file_name)
     # pylint: disable=C0325,C0113
@@ -245,6 +261,7 @@ def dassert_dir_exists(dir_name, msg=""):
         dfatal(msg_)
 
 
+# TODO(*): -> dassert_monotonic_df
 def check_monotonic_df(df):
     dassert(df.index.is_monotonic_increasing)
     dassert(df.index.is_unique)

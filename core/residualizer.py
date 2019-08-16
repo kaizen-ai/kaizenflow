@@ -69,11 +69,14 @@ class PcaFactorComputer(FactorComputer):
         self._eigval_df = []
         self._eigvec_df = []
 
-    def get_explained_variance():
-        pass
+    #def get_explained_variance(self):
+    #    pass
 
-    def get_eigenvalues():
-        pass
+    def get_eigenvalues(self):
+        return self._eigval_df
+
+    def get_eigenvalues(self):
+        return self._eigvec_df
 
     def _execute(self, df):
         dbg.check_monotonic_df(df)
@@ -116,6 +119,41 @@ class PcaFactorComputer(FactorComputer):
         self._eigvec_df.append(eigvec_df)
         return eigvec_df
 
+    def plot_over_time(self, num_pcs_to_plot=0, num_cols=2):
+        """
+        Similar to plot_pca_analysis() but over time.
+        """
+        # Plot eigenvalues.
+        self._eigval_df.plot(title='Eigenvalues over time', ylim=(0, 1))
+        # Plot cumulative variance.
+        self._eigval_df.cumsum(axis=1).plot(
+            title='Fraction of variance explained by top PCs over time',
+            ylim=(0, 1))
+        # Plot eigenvectors.
+        max_pcs = self._eigvec_df.shape[1]
+        num_pcs_to_plot = self._get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
+        _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
+        if num_pcs_to_plot > 0:
+            _, axes = _get_multiple_plots(
+                num_pcs_to_plot,
+                num_cols=num_cols,
+                y_scale=4,
+                sharex=True,
+                sharey=True)
+            for i in range(num_pcs_to_plot):
+                self._eigvec_df[i].unstack(1).plot(
+                    ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
+
+    @staticmethod
+    def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
+        """
+        Get the number of principal components to plot.
+        """
+        if num_pcs_to_plot == -1:
+            num_pcs_to_plot = max_pcs
+        dbg.dassert_lte(0, num_pcs_to_plot)
+        dbg.dassert_lte(num_pcs_to_plot, max_pcs)
+        return num_pcs_to_plot
 
 ## NOTE:
 ##   - DRY: We have a rolling corr function elsewhere.

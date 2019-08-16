@@ -7,13 +7,14 @@ import logging
 
 import numpy as np
 import pandas as pd
+import tqdm
 
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
 
-def df_rolling_apply(df, window, func):
+def df_rolling_apply(df, window, func, progress_bar=False):
     """
     Apply function `func` to a rolling window over `df` with `window` columns.
     The implementation from https://stackoverflow.com/questions/38878917
@@ -40,7 +41,10 @@ def df_rolling_apply(df, window, func):
     # Note that numpy / pandas slicing [a:b] corresponds to python slicing
     # [a:b+1].
     is_series = False
-    for i in range(window, df.shape[0] + 1):
+    iter_ = range(window, df.shape[0] + 1)
+    if progress_bar:
+        iter_ = tqdm.tqdm(iter_)
+    for i in iter_:
         # Extract the window.
         lower_bound = i - window
         upper_bound = i
@@ -58,8 +62,10 @@ def df_rolling_apply(df, window, func):
             idxs = df_tmp.index
             cols = df_tmp.columns
         else:
-            dbg.dassert((df_tmp.index == idxs).all())
-            dbg.dassert((df_tmp.columns == cols).all())
+            if is_series:
+                # TODO(gp): The equivalent check for multiindex is more complicated.
+                dbg.dassert_eq_all(df_tmp.index, idxs)
+                dbg.dassert_eq_all(df_tmp.columns, cols)
         # Accumulate results.
         _LOG.debug("df_tmp=\n%s", df_tmp)
         df_res[ts] = df_tmp
