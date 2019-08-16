@@ -690,6 +690,8 @@ def plot_pca_analysis(df, plot_explained_variance=False, num_pcs_to_plot=0):
     is_valid = num_non_nan_corr == num_non_nan_corr.max()
     valid_indices = sorted(is_valid[is_valid].index.tolist())
     # Compute eigenvalues / vectors for the subset of the matrix without nans.
+    # TODO(Paul): Consider replacing `eig` with `eigh` as per
+    # https://stackoverflow.com/questions/45434989/numpy-difference-between-linalg-eig-and-linalg-eigh
     eigenval, eigenvec = np.linalg.eig(
         corr.loc[valid_indices, valid_indices].values)
     # Sort by decreasing eigenvalue.
