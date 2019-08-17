@@ -21,6 +21,7 @@ import pandas as pd
 import helpers.dbg as dbg
 import helpers.explore as exp
 
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -66,8 +67,8 @@ class PcaFactorComputer(FactorComputer):
         self.nan_mode_in_data = nan_mode_in_data
         self.nan_mode_in_corr = nan_mode_in_corr
         self.sort_eigvals = sort_eigvals
-        self._eigval_df = []
-        self._eigvec_df = []
+        self._eigval_df = collections.OrderedDict()
+        self._eigvec_df = collections.OrderedDict()
 
     #def get_explained_variance(self):
     #    pass
@@ -78,7 +79,37 @@ class PcaFactorComputer(FactorComputer):
     def get_eigenvalues(self):
         return self._eigvec_df
 
-    def _execute(self, df):
+    @staticmethod
+    def linearize_df(df):
+        """
+        Transform a pd.DataFrame:
+
+                     0         1         2
+            0  0.691443 -0.088121  0.717036
+            1  0.656170 -0.338633 -0.674366
+            2  0.302238  0.936783 -0.176323
+
+        into a pd.Series
+
+            f0_0    0.691443
+            f0_1    0.656170
+            f0_2    0.302238
+            f1_0   -0.088121
+            f1_1   -0.338633
+            f1_2    0.936783
+            f2_0    0.717036
+            f2_1   -0.674366
+            f2_2   -0.176323
+
+        """
+        df = df.copy()
+        df.columns = ["f%s" % i for i in range(df.shape[1])]
+        df.index = df.index.map(str)
+        df = df.unstack()
+        df.index = df.index.map('_'.join)
+        return df
+
+    def _execute(self, df, ts):
         dbg.check_monotonic_df(df)
         # Compute correlation.
         df = exp.handle_nans(df, self.nan_mode_in_data)
@@ -104,7 +135,7 @@ class PcaFactorComputer(FactorComputer):
         eigval_df = pd.DataFrame([eigval], index=[dt])
         eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
         _LOG.debug("eigval_df=%s", eigval_df)
-        self._eigval_df.append(eigval_df)
+        self._eigval_df[ts] = eigval_df
         # Package and store eigenvectors.
         if np.isnan(eigval_df).all().all():
             eigvec = np.nan * eigvec
@@ -116,7 +147,11 @@ class PcaFactorComputer(FactorComputer):
         eigvec_df.insert(0, 'datetime', dt)
         eigvec_df.set_index(["datetime", ""], inplace=True)
         _LOG.debug("eigvec_df=%s", eigvec_df)
-        self._eigvec_df.append(eigvec_df)
+        self._eigvec_df[ts] = eigvec_df
+        # Package the results.
+        #res = self.linearize(eigvec_df)
+        #eigval_df
+        #res.append()
         return eigvec_df
 
     def plot_over_time(self, num_pcs_to_plot=0, num_cols=2):

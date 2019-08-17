@@ -3,6 +3,7 @@ Package with general pandas helpers.
 """
 
 import collections
+import inspect
 import logging
 
 import numpy as np
@@ -14,7 +15,7 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
-def df_rolling_apply(df, window, func, progress_bar=False):
+def df_rolling_apply(df, window, func, convert_to_df=True, progress_bar=False):
     """
     Apply function `func` to a rolling window over `df` with `window` columns.
     The implementation from https://stackoverflow.com/questions/38878917
@@ -26,6 +27,8 @@ def df_rolling_apply(df, window, func, progress_bar=False):
     :param window: number of rows in each window
     :param func: function taking a df and returning a pd.Series with the results
         `func` should not change the passed df
+    :param convert_to_df: return a df (potentially multiindex) with the result.
+        If False return a OrderDict index to df
     :return: dataframe with the concatenated results, with the same number of
         rows as `df`
     """
@@ -34,7 +37,8 @@ def df_rolling_apply(df, window, func, progress_bar=False):
     # Make sure the window is not larger than the df.
     dbg.dassert_lte(1, window)
     dbg.dassert_lte(window, df.shape[0])
-    df_res = collections.OrderedDict()
+    idx_to_df = collections.OrderedDict()
+    is_class = inspect.isclass(func)
     # Store the columns of the results.
     idxs = cols = None
     # Roll the window over the df.
@@ -53,7 +57,10 @@ def df_rolling_apply(df, window, func, progress_bar=False):
         ts = window_df.index[-1]
         _LOG.debug("ts=%s", ts)
         # Apply function.
-        df_tmp = func(window_df)
+        if is_class:
+            df_tmp = func(window_df, ts)
+        else:
+            df_tmp = func(window_df)
         # Make sure result is well-formed.
         if isinstance(df_tmp, pd.Series):
             is_series = True
@@ -68,36 +75,35 @@ def df_rolling_apply(df, window, func, progress_bar=False):
                 dbg.dassert_eq_all(df_tmp.columns, cols)
         # Accumulate results.
         _LOG.debug("df_tmp=\n%s", df_tmp)
-        df_res[ts] = df_tmp
+        idx_to_df[ts] = df_tmp
     # Unfortunately the code paths for concatenating pd.Series and multiindex
     # pd.DataFrame are difficult to unify.
     if is_series:
         # Add a number of empty rows to handle when there were not enough rows to
         # build a window.
-        df_res_tmp = collections.OrderedDict()
+        idx_to_df_all = collections.OrderedDict()
         empty_df = pd.DataFrame([[np.nan] * len(cols)], columns=cols)
         for j in range(0, window - 1):
             ts = df.index[j]
-            df_res_tmp[ts] = empty_df
-        df_res_tmp.update(df_res)
-        idx = df_res_tmp.keys()
+            idx_to_df_all[ts] = empty_df
+        idx_to_df_all.update(idx_to_df)
         # Assemble result into a df.
-        df_res = pd.concat(df_res_tmp.values())
-        dbg.dassert_eq(df_res.shape[0], len(idx))
-        df_res.index = idx
+        res_df = pd.concat(idx_to_df_all.values())
+        idx = idx_to_df_all.keys()
+        dbg.dassert_eq(res_df.shape[0], len(idx))
+        res_df.index = idx
         # The result should have the same length of the original df.
-        dbg.dassert_eq(df_res.shape[0], df.shape[0])
+        dbg.dassert_eq(res_df.shape[0], df.shape[0])
     else:
         # Add a number of empty rows to handle when there were not enough rows to
         # build a window.
-        df_res_nan = collections.OrderedDict()
+        idx_to_df_all = collections.OrderedDict()
         empty_df = pd.DataFrame(
             [[np.nan] * len(cols)] * len(idxs), index=idxs, columns=cols)
         for j in range(0, window - 1):
             ts = df.index[j]
-            df_res_nan[ts] = empty_df
-        df_res_nan = pd.concat(df_res_nan)
+            idx_to_df_all[ts] = empty_df
+        idx_to_df_all.update(idx_to_df)
         # Assemble result into a df.
-        df_res = pd.concat(df_res)
-        df_res = pd.concat([df_res_nan, df_res])
-    return df_res
+        res_df = pd.concat(idx_to_df_all)
+    return res_df
