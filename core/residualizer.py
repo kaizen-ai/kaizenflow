@@ -123,6 +123,8 @@ class PcaFactorComputer(FactorComputer):
         dt = df.index.max()
         _LOG.debug("ts=%s", dt)
         # Compute eigenvalues and eigenvectors.
+        # TODO(Paul): Consider replacing `eig` with `eigh` as per
+        # https://stackoverflow.com/questions/45434989/numpy-difference-between-linalg-eig-and-linalg-eigh
         eigval, eigvec = np.linalg.eig(corr_df)
         # Sort eigenvalues, if needed.
         if not (sorted(eigval) == eigval).all():
