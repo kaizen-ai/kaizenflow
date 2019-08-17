@@ -13,6 +13,7 @@ Each of the 3 components:
 - can be used in sklearn Pipeline objects
 """
 
+import collections
 import logging
 
 import numpy as np
@@ -48,13 +49,13 @@ class FactorComputer:
     #def get_loading(self):
     #    raise NotImplementedError
 
-    def __call__(self, obj):
+    def __call__(self, obj, *args, **kwargs):
         if isinstance(obj, pd.Series):
             df = pd.DataFrame(obj)
         else:
             df = obj
         dbg.dassert_isinstance(df, pd.DataFrame)
-        return self._execute(df)
+        return self._execute(obj, *args, **kwargs)
 
     def _execute(self, df):
         raise NotImplementedError
@@ -141,11 +142,6 @@ class PcaFactorComputer(FactorComputer):
             eigvec = np.nan * eigvec
         # TODO(gp): Make sure eigenvec are normalized.
         eigvec_df = pd.DataFrame(eigvec, index=corr_df.columns)
-        # Add another index.
-        eigvec_df.index.name = ""
-        eigvec_df.reset_index(inplace=True)
-        eigvec_df.insert(0, 'datetime', dt)
-        eigvec_df.set_index(["datetime", ""], inplace=True)
         _LOG.debug("eigvec_df=%s", eigvec_df)
         self._eigvec_df[ts] = eigvec_df
         # Package the results.

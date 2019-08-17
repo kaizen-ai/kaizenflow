@@ -5,6 +5,7 @@ Package with general pandas helpers.
 import collections
 import inspect
 import logging
+import types
 
 import numpy as np
 import pandas as pd
@@ -38,7 +39,8 @@ def df_rolling_apply(df, window, func, convert_to_df=True, progress_bar=False):
     dbg.dassert_lte(1, window)
     dbg.dassert_lte(window, df.shape[0])
     idx_to_df = collections.OrderedDict()
-    is_class = inspect.isclass(func)
+    #is_class = inspect.isclass(func)
+    is_class = not isinstance(func, types.FunctionType)
     # Store the columns of the results.
     idxs = cols = None
     # Roll the window over the df.
@@ -76,34 +78,35 @@ def df_rolling_apply(df, window, func, convert_to_df=True, progress_bar=False):
         # Accumulate results.
         _LOG.debug("df_tmp=\n%s", df_tmp)
         idx_to_df[ts] = df_tmp
-    # Unfortunately the code paths for concatenating pd.Series and multiindex
-    # pd.DataFrame are difficult to unify.
+    # Add a number of empty rows to handle when there were not enough rows to
+    # build a window.
+    idx_to_df_all = collections.OrderedDict()
     if is_series:
-        # Add a number of empty rows to handle when there were not enough rows to
-        # build a window.
-        idx_to_df_all = collections.OrderedDict()
         empty_df = pd.DataFrame([[np.nan] * len(cols)], columns=cols)
-        for j in range(0, window - 1):
-            ts = df.index[j]
-            idx_to_df_all[ts] = empty_df
-        idx_to_df_all.update(idx_to_df)
-        # Assemble result into a df.
-        res_df = pd.concat(idx_to_df_all.values())
-        idx = idx_to_df_all.keys()
-        dbg.dassert_eq(res_df.shape[0], len(idx))
-        res_df.index = idx
-        # The result should have the same length of the original df.
-        dbg.dassert_eq(res_df.shape[0], df.shape[0])
     else:
-        # Add a number of empty rows to handle when there were not enough rows to
-        # build a window.
-        idx_to_df_all = collections.OrderedDict()
         empty_df = pd.DataFrame(
             [[np.nan] * len(cols)] * len(idxs), index=idxs, columns=cols)
-        for j in range(0, window - 1):
-            ts = df.index[j]
-            idx_to_df_all[ts] = empty_df
-        idx_to_df_all.update(idx_to_df)
-        # Assemble result into a df.
-        res_df = pd.concat(idx_to_df_all)
-    return res_df
+    #
+    for j in range(0, window - 1):
+        ts = df.index[j]
+        idx_to_df_all[ts] = empty_df
+    idx_to_df_all.update(idx_to_df)
+    _LOG.debug("idx_to_df_all=\n%s", idx_to_df_all)
+    # Unfortunately the code paths for concatenating pd.Series and multiindex
+    # pd.DataFrame are difficult to unify.
+    if convert_to_df:
+        if is_series:
+            # Assemble result into a df.
+            res_df = pd.concat(idx_to_df_all.values())
+            idx = idx_to_df_all.keys()
+            dbg.dassert_eq(res_df.shape[0], len(idx))
+            res_df.index = idx
+            # The result should have the same length of the original df.
+            dbg.dassert_eq(res_df.shape[0], df.shape[0])
+        else:
+            # Assemble result into a df.
+            res_df = pd.concat(idx_to_df_all)
+        res = res_df
+    else:
+        res = idx_to_df_all
+    return res
