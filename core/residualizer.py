@@ -63,13 +63,15 @@ class FactorComputer:
 
 class PcaFactorComputer(FactorComputer):
 
-    def __init__(self, nan_mode_in_data, nan_mode_in_corr, sort_eigvals):
+    def __init__(self, nan_mode_in_data, nan_mode_in_corr, sort_eigvals, stabilize_eig):
         super().__init__()
         self.nan_mode_in_data = nan_mode_in_data
         self.nan_mode_in_corr = nan_mode_in_corr
         self.sort_eigvals = sort_eigvals
+        self.stabilize_eig = stabilize_eig
         self._eigval_df = collections.OrderedDict()
         self._eigvec_df = collections.OrderedDict()
+        self._ts = []
 
     #def get_explained_variance(self):
     #    pass
@@ -143,12 +145,113 @@ class PcaFactorComputer(FactorComputer):
         # TODO(gp): Make sure eigenvec are normalized.
         eigvec_df = pd.DataFrame(eigvec, index=corr_df.columns)
         _LOG.debug("eigvec_df=%s", eigvec_df)
+        if self.stabilize_eigvec:
+            if self._ts:
+                # Get previous ts.
+                prev_ts = self._ts[-1]
+                prev_eigvec_df = self._eigvec_df[prev_ts]
+                col_map = self.stabilize_eigvec(prev_eigvec_df, eigvec_df)
+                prev_eigval_df = self._eigval_df[prev_ts]
+                # Use the col_map to reorg eigvec and eigval.
+                #eigval_df = pd.Data
+        # Get previous
         self._eigvec_df[ts] = eigvec_df
+        self._ts.append(ts)
         # Package the results.
         #res = self.linearize(eigvec_df)
         #eigval_df
         #res.append()
         return eigvec_df
+
+    @staticmethod
+    def eigvec_distance(v1, v2):
+        # TODO(gp): Maybe the max of the diff of the component is a better
+        # metric.
+        diff = np.linalg.norm(v1 - v2)
+        _LOG.debug("v1=%s\nv2=%s\ndiff=%s", v1, v2, diff)
+        return diff
+
+    @staticmethod
+    def stabilize_eigvec(prev_eigvec_df, eigvec_df):
+        """
+        Try to find a shuffling and sign changes of the columns in
+        `prev_eigvec_df` to approximate `eigvec_df`.
+
+        :return: map column index of original eigvec to (sign, column index
+            of transformed eigvec)
+        """
+
+        def get_coeff(v1, v2, thr=1e-3):
+            # TODO(gp): Use a loop to avoid repeatition.
+            diff = PcaFactorComputer.eigvec_distance(v1, v2)
+            _LOG.debug("v1=%s v2=%s -> diff=%s", v1, v2, diff)
+            if diff < thr:
+                return 1
+            diff = PcaFactorComputer.eigvec_distance(v1, -v2)
+            _LOG.debug("v1=%s v2=%s -> diff=%s", v1, v2, diff)
+            if diff < thr:
+                return -1
+            return None
+
+        # TODO(gp): This code can be sped up by:
+        # 1) keeping a running list of the v2 columns already mapped so that
+        #    we don't have to check over and over.
+        # 2) once we find a match between columns, move to the next one v1
+        # For now we just care about functionality.
+        num_cols = eigvec_df.shape[1]
+        col_map = {}
+        for i in range(num_cols):
+            for j in range(num_cols):
+                coeff = get_coeff(prev_eigvec_df.iloc[:, i], eigvec_df.iloc[:, j])
+                _LOG.debug("i=%s, j=%s, coeff=%s", i, j, coeff)
+                if coeff:
+                    _LOG.debug("i=%s -> j=%s", i, j)
+                    dbg.dassert_not_in(i, col_map, msg="i=%s col_map=%s" % (
+                     i, col_map))
+                    col_map[i] = (coeff, j)
+        return col_map
+
+    @staticmethod
+    def shuffle_eigval_eigvec(eigval_df, eigvec_df, col_map):
+        """
+        Transform the eigenvalues / eigenvectors according to a col_map
+        returned by `stabilize_eigvec`.
+
+        :return: updated eigvalues and eigenvectors
+        """
+        _LOG.debug("col_map=%s", col_map)
+        # Apply the permutation to the eigenvalues / eigenvectors.
+        permutation = [col_map[i][1] for i in sorted(col_map.keys())]
+        _LOG.debug("permutation=%s", permutation)
+        shuffled_eigvec_df = eigvec_df.reindex(columns=permutation)
+        shuffled_eigvec_df.columns = range(shuffled_eigvec_df.shape[1])
+        shuffled_eigval_df = eigval_df.reindex(index=permutation)
+        shuffled_eigval_df.index = range(shuffled_eigval_df.shape[0])
+        # Change the sign of the eigenvectors. We don't need to change the
+        # sign of the eigenvalues.
+        coeffs = pd.Series([col_map[i][0] for i in sorted(col_map.keys())])
+        _LOG.debug("coeffs=%s", coeffs)
+        shuffled_eigvec_df *= coeffs
+        return shuffled_eigval_df, shuffled_eigvec_df
+
+    @staticmethod
+    def are_eigenvectors_stable(prev_eigvec_df, eigvec_df, thr=1e-3):
+        """
+        Return whether eigvec_df are "stable" in the sense that the change of
+        corresponding of each eigenvec is smaller than a certain threshold.
+        """
+        dbg.dassert_eq(prev_eigvec_df.shape, eigvec_df.shape)
+        num_fails = 0
+        for i in range(eigvec_df.shape[1]):
+            v1 = prev_eigvec_df.iloc[:, i]
+            v2 = eigvec_df.iloc[:, i]
+            _LOG.debug("v1=%s\nv2=%s", v1, v2)
+            diff = PcaFactorComputer.eigvec_distance(v1, v2)
+            if diff > thr:
+                _LOG.debug("diff=%s > thr=%s -> num_fails=%d", diff, thr,
+                           num_fails)
+                num_fails += 1
+        return num_fails
 
     def plot_over_time(self, num_pcs_to_plot=0, num_cols=2):
         """
@@ -186,42 +289,8 @@ class PcaFactorComputer(FactorComputer):
         dbg.dassert_lte(num_pcs_to_plot, max_pcs)
         return num_pcs_to_plot
 
-## NOTE:
-##   - DRY: We have a rolling corr function elsewhere.
-##   - Functional style: This one seems to be able to modify `ret` through
-##     `nan_mode`.
-#def rolling_corr_over_time(df, com, nan_mode):
-#    """
-#    Compute rolling correlation over time.
-#    :return: corr_df is a multi-index df storing correlation matrices with
-#        labels
-#    """
-#    dbg.check_monotonic_df(df)
-#    df = handle_nans(df, nan_mode)
-#    #corr_df = df.ewm(com=com, min_periods=3 * com).corr()
-#    corr_df = df.rolling(com).corr()
-#    return corr_df
-#
-#
-#df2 = df.rolling(com=..., window).corr()
-#
-#
-#def corr_tmp():
-#    sklearn....
-#    #
-#    PCA
-#
-#
-#df2 = df.rolling(com=..., window).apply(corr_tmp)
-#
-#
-#
-#res = PcaResidualizer(...)
-#
-#df2 = df.rolling(com=..., window).apply(res)
-#
-#df = date   factors     loadings
-#
-#res.get_...()
-#
-#
+
+
+# We want to return linearized factors and coeff
+# We need to unlinearize
+# We can plot that directly
