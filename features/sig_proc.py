@@ -1,11 +1,3 @@
-# Graphical tools for time and frequency analysis.
-#
-# Some use cases include:
-#   - Determining whether a predictor exhibits autocorrelation
-#   - Determining the characteristic time scale of a signal
-#   - Signal filtering
-#   - Lag determination
-#   - etc.
 import functools
 import logging
 
@@ -16,12 +8,21 @@ import pandas as pd
 import pywt
 import scipy as sp
 import statsmodels.api as sm
-import utilities.helpers.dbg as dbg
 
+import utilities.helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
 
+# Graphical tools for time and frequency analysis.
+#
+# Some use cases include:
+#   - Determining whether a predictor exhibits autocorrelation
+#   - Determining the characteristic time scale of a signal
+#   - Signal filtering
+#   - Lag determination
+#   - etc.
+#
 #
 # Single-signal functions
 #
@@ -204,8 +205,9 @@ def fit_random_walk_plus_noise(signal):
 
     :return: SSM model and fitted result
     """
-    model = sm.tsa.UnobservedComponents(signal, level='local level',
-            initialization='diffuse')
+    model = sm.tsa.UnobservedComponents(signal,
+                                        level='local level',
+                                        initialization='diffuse')
     result = model.fit(method='powell', disp=True)
     # Signal-to-noise ratio
     q = result.params[1] / result.params[0]
@@ -295,8 +297,11 @@ def iter_ema(df, com, min_periods, depth):
     _LOG.info('aspect ratio = %0.2f', np.sqrt(1 + 1. / depth))
     df_hat = df.copy()
     for i in range(0, depth):
-        df_hat = df_hat.ewm(com=com, min_periods=min_periods,
-                            adjust=True, ignore_na=False, axis=0).mean()
+        df_hat = df_hat.ewm(com=com,
+                            min_periods=min_periods,
+                            adjust=True,
+                            ignore_na=False,
+                            axis=0).mean()
     return df_hat
 
 
@@ -380,14 +385,18 @@ def smooth_ma(df, range_, min_periods=0, min_depth=1, max_depth=1):
     return sum(map(ema, range(min_depth, max_depth + 1))) / denom
 
 
-def moving_moment(df, range_, min_periods=0, min_depth=1, max_depth=1,
+def moving_moment(df,
+                  range_,
+                  min_periods=0,
+                  min_depth=1,
+                  max_depth=1,
                   p_moment=2):
-    return smooth_ma(np.abs(df)**p_moment, range_, min_periods, min_depth,
-                     max_depth)
+    return smooth_ma(
+        np.abs(df)**p_moment, range_, min_periods, min_depth, max_depth)
 
 
 def moving_norm(df, range_, min_periods=0, min_depth=1, max_depth=1,
-        p_moment=2):
+                p_moment=2):
     """
     Smooth moving average norm (when p_moment >= 1).
 
@@ -395,7 +404,7 @@ def moving_norm(df, range_, min_periods=0, min_depth=1, max_depth=1,
     """
     df_p = moving_moment(df, range_, min_periods, min_depth, max_depth,
                          p_moment)
-    return df_p ** (1. / p_moment)
+    return df_p**(1. / p_moment)
 
 
 def moving_var(df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
@@ -415,7 +424,7 @@ def moving_std(df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
     df_tmp = moving_var(df, range_, min_periods, min_depth, max_depth, p_moment)
-    return df_tmp ** (1. / p_moment)
+    return df_tmp**(1. / p_moment)
 
 
 def z_score(df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
@@ -425,12 +434,17 @@ def z_score(df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
     df_ma = smooth_ma(df, range_, min_periods, min_depth, max_depth)
-    df_std = moving_norm(df - df_ma, range_, min_periods, min_depth,
-                         max_depth, p_moment)
-    return (df - df_ma) / df_std 
+    df_std = moving_norm(df - df_ma, range_, min_periods, min_depth, max_depth,
+                         p_moment)
+    return (df - df_ma) / df_std
 
 
-def moving_skew(df, range_z, range_s, min_periods=0, min_depth=1, max_depth=1,
+def moving_skew(df,
+                range_z,
+                range_s,
+                min_periods=0,
+                min_depth=1,
+                max_depth=1,
                 p_moment=2):
     """
     Smooth moving average skew of z-scored df.
@@ -440,8 +454,13 @@ def moving_skew(df, range_z, range_s, min_periods=0, min_depth=1, max_depth=1,
     return skew
 
 
-def moving_kurtosis(df, range_z, range_s, min_periods=0, min_depth=1,
-                    max_depth=1, p_moment=2):
+def moving_kurtosis(df,
+                    range_z,
+                    range_s,
+                    min_periods=0,
+                    min_depth=1,
+                    max_depth=1,
+                    p_moment=2):
     """
     Smooth moving average kurtosis of z-scored df.
     """
@@ -450,11 +469,17 @@ def moving_kurtosis(df, range_z, range_s, min_periods=0, min_depth=1,
     return kurt
 
 
-def moving_corr(srs1, srs2, range_, demean=True, min_periods=0, min_depth=1,
-                max_depth=1, p_moment=2): 
+def moving_corr(srs1,
+                srs2,
+                range_,
+                demean=True,
+                min_periods=0,
+                min_depth=1,
+                max_depth=1,
+                p_moment=2):
     """
     Smooth moving correlation.
-    
+
     """
     if demean:
         srs1_adj = srs1 - smooth_ma(srs1, range_, min_periods, min_depth,
@@ -464,9 +489,8 @@ def moving_corr(srs1, srs2, range_, demean=True, min_periods=0, min_depth=1,
     else:
         srs1_adj = srs1
         srs2_adj = srs2
-    
-    smooth_prod = smooth_ma(srs1_adj * srs2_adj, range_, min_periods,
-                            max_depth)
+
+    smooth_prod = smooth_ma(srs1_adj * srs2_adj, range_, min_periods, max_depth)
     srs1_std = moving_norm(srs1_adj, range_, min_periods, min_depth, max_depth,
                            p_moment)
     srs2_std = moving_norm(srs2_adj, range_, min_periods, min_depth, max_depth,
@@ -474,10 +498,16 @@ def moving_corr(srs1, srs2, range_, demean=True, min_periods=0, min_depth=1,
     return smooth_prod / (srs1_std * srs2_std)
 
 
-def moving_z_corr(srs1, srs2, range_, demean=True, min_periods=0, min_depth=1,
-                  max_depth=1, p_moment=2):
+def moving_z_corr(srs1,
+                  srs2,
+                  range_,
+                  demean=True,
+                  min_periods=0,
+                  min_depth=1,
+                  max_depth=1,
+                  p_moment=2):
     """
-    Z-scores srs1, srs2 then calculates moving average of product. 
+    Z-scores srs1, srs2 then calculates moving average of product.
 
     Not guaranteed to lie in [-1, 1], but bilinear in the z-scored variables.
     """
@@ -503,7 +533,7 @@ def ipca_step(u, v, alpha):
 
     At each point, the norm of v is the eigenvalue estimate (for the component
     to which u and v refer).
-    
+
     :param u: residualized observation for step n, component i
     :param v: unnormalized eigenvector estimate for step n - 1, component i
     :param alpha: ema-type weight (choose in [0, 1] and typically < 0.5)
@@ -560,9 +590,10 @@ def ipca(df, num_pc, alpha):
     # Convert unit_eigenvecs list of lists to list of dataframes
     lambdas_srs = []
     unit_eigenvec_dfs = []
-    for i in range(0, num_pc): 
+    for i in range(0, num_pc):
         lambdas_srs.append(pd.Series(index=df.index, data=lambdas[i]))
-        unit_eigenvec_dfs.append(pd.concat(unit_eigenvecs[i], axis=1).transpose())
+        unit_eigenvec_dfs.append(
+            pd.concat(unit_eigenvecs[i], axis=1).transpose())
     return lambdas_srs, unit_eigenvec_dfs
 
 
