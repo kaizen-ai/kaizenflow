@@ -82,6 +82,18 @@ def space(str_, num_spaces=2):
     return prepend(str_, " " * num_spaces)
 
 
+def dedent(txt):
+    """
+    Remove all extra leadning / trailing spaces and empty lines
+    """
+    txt_out = []
+    for line in txt.split("\n"):
+        line = line.rstrip(" ").lstrip(" ")
+        if line:
+            txt_out.append(line)
+    return "\n".join(txt_out)
+
+
 def prepend(str_, prefix):
     """
     Add "prefix" before each line of the string str_.

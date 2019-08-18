@@ -6,6 +6,7 @@ import pandas as pd
 
 import core.pandas_helpers as pde
 import helpers.dbg as dbg
+import helpers.printing as pri
 import helpers.unit_test as ut
 import utilities.core.residualizer as res
 
@@ -60,22 +61,11 @@ class TestDfRollingApply(ut.TestCase):
 # #############################################################################
 
 
-def dedent(txt):
-    txt_out = []
-    for l in txt.split("\n"):
-        l = l.rstrip(" ").lstrip(" ")
-        if l:
-            txt_out.append(l)
-    return "\n".join(txt_out)
-
-
-
-
 class TestPcaFactorComputer1(ut.TestCase):
 
     @staticmethod
     def get_ex1():
-        df_str = dedent("""
+        df_str = pri.dedent("""
         ,0,1,2
         0,0.68637724274453,0.34344509725064354,0.6410395820984168
         1,-0.7208890365507423,0.205021903910637,0.6620309780499695
