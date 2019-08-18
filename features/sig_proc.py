@@ -555,9 +555,13 @@ def ipca(df, num_pc, alpha):
         dataframes of corresponding unit eigenvectors. Eigenvalues are reverse
         sorted (largest first).
     """
-    dbg.dassert_isinstance(num_pc, int, msg="Specify an integral number of principal components.")
-    dbg.dassert_lt(num_pc, df.shape[1],
-                   msg="Number of time steps should exceed number of principal components.")
+    dbg.dassert_isinstance(
+        num_pc, int, msg="Specify an integral number of principal components.")
+    dbg.dassert_lt(
+        num_pc,
+        df.shape[1],
+        msg="Number of time steps should exceed number of principal components."
+    )
     dbg.dassert_lte(0, alpha, msg="alpha should belong to [0, 1].")
     dbg.dassert_lte(alpha, 1, msg="alpha should belong to [0, 1].")
     lambdas = []
