@@ -555,27 +555,33 @@ def ipca(df, num_pc, alpha):
         dataframes of corresponding unit eigenvectors. Eigenvalues are reverse
         sorted (largest first).
     """
-    # TODO(Paul): Ensure df.size[1] >= num_pc
+    dbg.dassert_isinstance(num_pc, int, msg="Specify an integral number of principal components.")
+    dbg.dassert_lt(num_pc, df.shape[1],
+                   msg="Number of time steps should exceed number of principal components.")
+    dbg.dassert_lte(0, alpha, msg="alpha should belong to [0, 1].")
+    dbg.dassert_lte(alpha, 1, msg="alpha should belong to [0, 1].")
     lambdas = []
     # V's are eigenvectors with norm equal to corresponding eigenvalue
     # vsl = [[v1], [v2], ...]
     vsl = []
     unit_eigenvecs = []
-    step = 1
+    step = 0
     for n in df.index:
+        step += 1
         # Initialize u1(n)
         ul = [df.loc[n]]
-        for i in range(1, num_pc + 1):
+        for i in range(1, min(num_pc, step) + 1):
             # Initialize ith eigenvector
             if i == step:
-                v = ul[0]
+                _LOG.info('Initializing eigenvector %i...', i)
+                v = ul[-1]
                 # Bookkeeping
                 vsl.append([v])
                 norm = np.linalg.norm(v)
                 lambdas.append([norm])
                 unit_eigenvecs.append([v / norm])
             else:
-                # Main update step
+                # Main update step for eigenvector i
                 u, v = ipca_step(ul[-1], vsl[i - 1][-1], alpha)
                 # Bookkeeping
                 u.name = n
@@ -585,13 +591,13 @@ def ipca(df, num_pc, alpha):
                 norm = np.linalg.norm(v)
                 lambdas[i - 1].append(norm)
                 unit_eigenvecs[i - 1].append(v / norm)
-            step += 1
+    _LOG.info('Completed %i steps of incremental PCA.', step)
     # Convert lambda list of lists to list of series
     # Convert unit_eigenvecs list of lists to list of dataframes
     lambdas_srs = []
     unit_eigenvec_dfs = []
     for i in range(0, num_pc):
-        lambdas_srs.append(pd.Series(index=df.index, data=lambdas[i]))
+        lambdas_srs.append(pd.Series(index=df.index[i:], data=lambdas[i]))
         unit_eigenvec_dfs.append(
             pd.concat(unit_eigenvecs[i], axis=1).transpose())
     return lambdas_srs, unit_eigenvec_dfs
