@@ -19,7 +19,7 @@ def zscore(obj, com, demean, standardize, delay, min_periods=None):
     # variables.
     dbg.dassert_lte(0, delay)
     # TODO(gp): Extend this to series.
-    dbg.check_monotonic_df(obj)
+    dbg.dassert_monotonic_index(obj)
     obj = obj.copy()
     if min_periods is None:
         min_periods = 3 * com
@@ -45,7 +45,7 @@ def resample_1min(df, skip_weekends):
     :param skip_weekends: remove Sat and Sun
     :return: resampled df
     """
-    dbg.check_monotonic_df(df)
+    dbg.dassert_monotonic_index(df)
     date_range = pd.date_range(
         start=df.index.min(), end=df.index.max(), freq="1T")
     # Remove weekends.
@@ -65,7 +65,7 @@ def remove_dates_with_no_data(df, report_stats):
     :return: filtered df
     """
     # This is not strictly necessary.
-    dbg.check_monotonic_df(df)
+    dbg.dassert_monotonic_index(df)
     #
     removed_days = []
     df_out = []
@@ -78,7 +78,7 @@ def remove_dates_with_no_data(df, report_stats):
             df_out.append(df_tmp)
         num_days += 1
     df_out = pd.concat(df_out)
-    dbg.check_monotonic_df(df_out)
+    dbg.dassert_monotonic_index(df_out)
     #
     if report_stats:
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
@@ -105,7 +105,7 @@ def resample(df, agg_interval):
     """
     Resample returns (using sum) using our timing convention.
     """
-    dbg.check_monotonic_df(df)
+    dbg.dassert_monotonic_index(df)
     resampler = df.resample(agg_interval, closed="left", label="right")
     rets = resampler.sum()
     return rets

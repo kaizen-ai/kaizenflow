@@ -1,3 +1,7 @@
+# Code org
+- `helpers`: low-level helpers that are general and not specific of any project
+- `core`: helpers that are specific of data science, finance projects
+
 # Workflow
 
 ## Be patient
@@ -111,11 +115,29 @@ develop               *  /Users/saggese/.conda/envs/develop
 ## Misc
 
 * Other interesting packages
-```
+```bash
 > install/create_conda.py --req_file requirements_pymc.txt --env_name pymc3 --delete_env_if_exists -v DEBUG
 > conda create sage -n sage
 ` ``
 
-# Code org
-- `helpers`: low-level helpers that are general and not specific of any project
-- `core`: helpers that are specific of data science, finance projects
+# Running unit tests
+
+- To enable debug info
+```bash
+> pytest --dbg_verbosity DEBUG
+```
+
+- To update golden outcomes
+```bash
+> pytest --update_outcomes
+```
+
+- To stop at first failure
+```bash
+> pytest -x
+```
+
+- To run a single class
+```bash
+> pytest -k TestPcaFactorComputer1
+```

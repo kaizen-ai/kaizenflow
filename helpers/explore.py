@@ -727,7 +727,7 @@ def rolling_corr_over_time(df, com, nan_mode):
     :return: corr_df is a multi-index df storing correlation matrices with
         labels
     """
-    dbg.check_monotonic_df(df)
+    dbg.dassert_monotonic_index(df)
     df = handle_nans(df, nan_mode)
     corr_df = df.ewm(com=com, min_periods=3 * com).corr()
     return corr_df
@@ -814,7 +814,7 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
     # Package results.
     eigval_df = pd.DataFrame(eigval_df, index=timestamps)
     dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
-    dbg.check_monotonic_df(eigval_df)
+    dbg.dassert_monotonic_index(eigval_df)
     # Normalize by sum.
     # TODO(gp): Move this up.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")

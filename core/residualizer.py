@@ -22,14 +22,11 @@ import pandas as pd
 import helpers.dbg as dbg
 import helpers.explore as exp
 
-
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Make sure it's sklearn complaint
-# TODO(gp): We can use abstract classes which now are better supported in
-# python3 (see https://docs.python.org/3/library/abc.html). Although abstract
-# classes is not as important, with duck typing.
+# TODO(gp): Use abstract classes (see https://docs.python.org/3/library/abc.html).
 class FactorComputer:
 
     def __init__(self):
@@ -46,9 +43,6 @@ class FactorComputer:
     def get_factors(self):
         raise NotImplementedError
 
-    #def get_loading(self):
-    #    raise NotImplementedError
-
     def __call__(self, obj, *args, **kwargs):
         if isinstance(obj, pd.Series):
             df = pd.DataFrame(obj)
@@ -57,21 +51,37 @@ class FactorComputer:
         dbg.dassert_isinstance(df, pd.DataFrame)
         return self._execute(obj, *args, **kwargs)
 
-    def _execute(self, df):
+    def _execute(self, df, ts):
         raise NotImplementedError
 
 
+# TODO(gp): eigval_df -> eigval since it's a Series?
+# eigvec_df -> eigvec
 class PcaFactorComputer(FactorComputer):
+    """
+    Compute factors using a rolling PCA decomposition.
+    """
 
-    def __init__(self, nan_mode_in_data, nan_mode_in_corr, sort_eigvals, stabilize_eig):
+    def __init__(self, nan_mode_in_data, nan_mode_in_corr, sort_eigvals,
+                 stabilize_eig):
+        """
+
+        :param nan_mode_in_data: how to handle NAs in data passed for processing
+            (see `handle_nans()`)
+        :param nan_mode_in_corr: how to handle NAs in correlation matrix
+        :param sort_eigvals: force sorting of the eigenvalues
+        :param stabilize_eig: stabilize eigenvalues / eigenvectors by
+            reordering them and changing sign
+        """
         super().__init__()
         self.nan_mode_in_data = nan_mode_in_data
         self.nan_mode_in_corr = nan_mode_in_corr
         self.sort_eigvals = sort_eigvals
         self.stabilize_eig = stabilize_eig
+        # Map from timestamps to eigval / eigvec.
+        self._ts = []
         self._eigval_df = collections.OrderedDict()
         self._eigvec_df = collections.OrderedDict()
-        self._ts = []
 
     #def get_explained_variance(self):
     #    pass
@@ -79,7 +89,7 @@ class PcaFactorComputer(FactorComputer):
     def get_eigenvalues(self):
         return self._eigval_df
 
-    def get_eigenvalues(self):
+    def get_eigenvectors(self):
         return self._eigvec_df
 
     @staticmethod
@@ -113,7 +123,7 @@ class PcaFactorComputer(FactorComputer):
         return df
 
     def _execute(self, df, ts):
-        dbg.check_monotonic_df(df)
+        dbg.dassert_monotonic_index(df)
         # Compute correlation.
         df = exp.handle_nans(df, self.nan_mode_in_data)
         corr_df = df.corr()
@@ -152,11 +162,26 @@ class PcaFactorComputer(FactorComputer):
                 # Get previous ts.
                 prev_ts = self._ts[-1]
                 prev_eigvec_df = self._eigvec_df[prev_ts]
-                col_map = self.stabilize_eigvec(prev_eigvec_df, eigvec_df)
-                prev_eigval_df = self._eigval_df[prev_ts]
-                # Use the col_map to reorg eigvec and eigval.
-                #eigval_df = pd.Data
-        # Get previous
+                # Check if they are stable.
+                num_fails = self.are_eigenvectors_stable(
+                    prev_eigvec_df, eigvec_df)
+                if num_fails:
+                    _LOG.debug("Eigenvalues not stable: prev_ts=%s"
+                               "\nprev_eigvec_df=\n%s"
+                               "\neigvec_df=\n%s"
+                               "\nnum_fails=%s",
+                               prev_ts, prev_eigvec_df,
+                               eigvec_df, num_fails)
+                    col_map = self.stabilize_eigvec(
+                        prev_eigvec_df, eigvec_df)
+                    #
+                    shuffled_eigval_df, shuffled_eigvec_df = \
+                        self.shuffle_eigval_eigvec(
+                            eigval_df, eigvec_df, col_map)
+                    num_fails = self.are_eigenvectors_stable(
+                        prev_eigvec_df, shuffled_eigvec_df)
+                    eigval_df = shuffled_eigval_df
+                    eigvec_df = shuffled_eigvec_df
         self._eigvec_df[ts] = eigvec_df
         self._ts.append(ts)
         # Package the results.
@@ -165,6 +190,7 @@ class PcaFactorComputer(FactorComputer):
         #res.append()
         return eigvec_df
 
+    # TODO(gp): -> eig_distance
     @staticmethod
     def eigvec_distance(v1, v2):
         # TODO(gp): Maybe the max of the diff of the component is a better
@@ -195,6 +221,8 @@ class PcaFactorComputer(FactorComputer):
                 return -1
             return None
 
+        dbg.dassert_monotonic_index(prev_eigvec_df)
+        dbg.dassert_monotonic_index(eigvec_df)
         # TODO(gp): This code can be sped up by:
         # 1) keeping a running list of the v2 columns already mapped so that
         #    we don't have to check over and over.
@@ -204,12 +232,13 @@ class PcaFactorComputer(FactorComputer):
         col_map = {}
         for i in range(num_cols):
             for j in range(num_cols):
-                coeff = get_coeff(prev_eigvec_df.iloc[:, i], eigvec_df.iloc[:, j])
+                coeff = get_coeff(prev_eigvec_df.iloc[:, i],
+                                  eigvec_df.iloc[:, j])
                 _LOG.debug("i=%s, j=%s, coeff=%s", i, j, coeff)
                 if coeff:
                     _LOG.debug("i=%s -> j=%s", i, j)
-                    dbg.dassert_not_in(i, col_map, msg="i=%s col_map=%s" % (
-                     i, col_map))
+                    dbg.dassert_not_in(
+                        i, col_map, msg="i=%s col_map=%s" % (i, col_map))
                     col_map[i] = (coeff, j)
         return col_map
 
@@ -221,6 +250,8 @@ class PcaFactorComputer(FactorComputer):
 
         :return: updated eigvalues and eigenvectors
         """
+        dbg.dassert_monotonic_index(eigval_df)
+        dbg.dassert_monotonic_index(eigvec_df)
         _LOG.debug("col_map=%s", col_map)
         # Apply the permutation to the eigenvalues / eigenvectors.
         permutation = [col_map[i][1] for i in sorted(col_map.keys())]
@@ -242,6 +273,8 @@ class PcaFactorComputer(FactorComputer):
         Return whether eigvec_df are "stable" in the sense that the change of
         corresponding of each eigenvec is smaller than a certain threshold.
         """
+        dbg.dassert_monotonic_index(prev_eigvec_df)
+        dbg.dassert_monotonic_index(eigvec_df)
         dbg.dassert_eq(prev_eigvec_df.shape, eigvec_df.shape)
         num_fails = 0
         for i in range(eigvec_df.shape[1]):
@@ -254,6 +287,21 @@ class PcaFactorComputer(FactorComputer):
                            num_fails)
                 num_fails += 1
         return num_fails
+
+    @staticmethod
+    def are_eigenvalues_stable(prev_eigval_df, eigval_df, thr=1e-3):
+        _LOG.debug("prev_eigval_df=\n%s\neigval_df=\n%s\n",
+                   prev_eigval_df, eigval_df)
+        dbg.dassert_monotonic_index(prev_eigval_df)
+        dbg.dassert_monotonic_index(eigval_df)
+        dbg.dassert_eq(prev_eigval_df.shape, eigval_df.shape)
+        are_stable = True
+        diff = PcaFactorComputer.eigvec_distance(prev_eigval_df, eigval_df)
+        _LOG.debug("diff=%s", diff)
+        if diff > thr:
+            _LOG.debug("diff=%s > thr=%s", diff, thr)
+            are_stable = False
+        return are_stable
 
     def plot_over_time(self, num_pcs_to_plot=0, num_cols=2):
         """
@@ -290,7 +338,6 @@ class PcaFactorComputer(FactorComputer):
         dbg.dassert_lte(0, num_pcs_to_plot)
         dbg.dassert_lte(num_pcs_to_plot, max_pcs)
         return num_pcs_to_plot
-
 
 
 # We want to return linearized factors and coeff

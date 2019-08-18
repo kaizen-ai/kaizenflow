@@ -3,7 +3,6 @@ Package with general pandas helpers.
 """
 
 import collections
-import inspect
 import logging
 import types
 
@@ -34,7 +33,7 @@ def df_rolling_apply(df, window, func, convert_to_df=True, progress_bar=False):
         rows as `df`
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.check_monotonic_df(df)
+    dbg.dassert_monotonic_index(df)
     # Make sure the window is not larger than the df.
     dbg.dassert_lte(1, window)
     dbg.dassert_lte(window, df.shape[0])

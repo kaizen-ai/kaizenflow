@@ -1,10 +1,13 @@
+import io
 import logging
 
 import numpy as np
 import pandas as pd
 
 import core.pandas_helpers as pde
+import helpers.dbg as dbg
 import helpers.unit_test as ut
+import utilities.core.residualizer as res
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,6 +56,7 @@ class TestDfRollingApply(ut.TestCase):
         df_act = pde.df_rolling_apply(df, window, func)
         self.check_string(df_act.to_string())
 
+
 # #############################################################################
 
 
@@ -65,8 +69,6 @@ def dedent(txt):
     return "\n".join(txt_out)
 
 
-import io
-import utilities.core.residualizer as res
 
 
 class TestPcaFactorComputer1(ut.TestCase):
@@ -92,34 +94,40 @@ class TestPcaFactorComputer1(ut.TestCase):
         eigvec_df.iloc[:, 1] *= -1
         #
         eigval_df = prev_eigval_df.reindex(index=shuffle)
-        eigval_df.columns = list(range(eigval_df.shape[0]))
+        eigval_df.index = list(range(eigval_df.shape[0]))
+        for obj in (prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df):
+            dbg.dassert_monotonic_index(obj)
         return prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df
 
     def test_stabilize_eigenvec1(self):
+        # Get data.
         prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df = \
             self.get_ex1()
-        #
+        # Check if they are stable.
         num_fails = res.PcaFactorComputer.are_eigenvectors_stable(
-            prev_eigvec_df, eigvec_df
-        )
+            prev_eigvec_df, eigvec_df)
         self.assertEqual(num_fails, 3)
+        self.assertFalse(
+            res.PcaFactorComputer.are_eigenvalues_stable(
+                prev_eigval_df, eigval_df))
         #
-        col_map = res.PcaFactorComputer.stabilize_eigvec(prev_eigvec_df,
-                                                         eigvec_df)
+        col_map = res.PcaFactorComputer.stabilize_eigvec(
+            prev_eigvec_df, eigvec_df)
         #
         shuffled_eigval_df, shuffled_eigvec_df = \
             res.PcaFactorComputer.shuffle_eigval_eigvec(
             eigval_df, eigvec_df, col_map)
         #
-        txt = (
-                "prev_eigval_df=\n%s\n" % prev_eigval_df +
-                "prev_eigvec_df=\n%s\n" % prev_eigvec_df +
-                "eigval_df=\n%s\n" % eigval_df +
-                "eigvec_df=\n%s\n" % eigvec_df +
-                "shuffled_eigval_df=\n%s\n" % shuffled_eigval_df +
-                "shuffled_eigvec_df=\n%s\n" % shuffled_eigvec_df
-        )
+        txt = ("prev_eigval_df=\n%s\n" % prev_eigval_df +
+               "prev_eigvec_df=\n%s\n" % prev_eigvec_df +
+               "eigval_df=\n%s\n" % eigval_df + "eigvec_df=\n%s\n" % eigvec_df +
+               "shuffled_eigval_df=\n%s\n" % shuffled_eigval_df +
+               "shuffled_eigvec_df=\n%s\n" % shuffled_eigvec_df)
         self.check_string(txt)
+        # Check stability.
         num_fails = res.PcaFactorComputer.are_eigenvectors_stable(
             prev_eigvec_df, shuffled_eigvec_df)
         self.assertEqual(num_fails, 0)
+        self.assertTrue(
+            res.PcaFactorComputer.are_eigenvalues_stable(
+                prev_eigval_df, shuffled_eigval_df))

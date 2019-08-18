@@ -261,10 +261,9 @@ def dassert_dir_exists(dir_name, msg=""):
         dfatal(msg_)
 
 
-# TODO(*): -> dassert_monotonic_df
-def check_monotonic_df(df):
-    dassert(df.index.is_monotonic_increasing)
-    dassert(df.index.is_unique)
+def dassert_monotonic_index(obj):
+    dassert(obj.index.is_monotonic_increasing)
+    dassert(obj.index.is_unique)
 
 
 ## TODO(gp): -> dassert_timestamp
