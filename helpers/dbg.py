@@ -230,14 +230,14 @@ def dassert_no_duplicates(val1, msg=""):
 def dassert_eq_all(val1, val2, msg=""):
     is_equal = (val1 == val2).all()
     if not is_equal:
-        # yapf: disable
         mask = val1 != val2
-        msg_ = ("* Failed assertion:" +
-                "\nval1= %s\n%s" % (len(val1), val1) +
-                "\nval2= %s\n%s" % (len(val2), val2) +
-                "\ndiff= %s\n%s\n%s\n" % (mask.sum(), val1[mask], val2[mask]) +
-                _to_msg(msg))
-        # yapf: enable
+        msg_ = "* Failed assertion:"
+        msg_ += "\nval1=%s\n%s" % (len(val1), val1)
+        msg_ += "\nval2=%s\n%s" % (len(val2), val2)
+        msg_ += "\ndiff=%s" % mask.sum()
+        msg_ += "\n%s" % val1[mask]
+        msg_ += "\n%s" % val2[mask]
+        msg_ += _to_msg(msg)
         dfatal(msg_)
 
 
@@ -314,7 +314,15 @@ def is_running_in_ipynb():
     return res
 
 
-def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
+def reset_logger():
+    from importlib import reload
+    print("Resetting logger...")
+    logging.shutdown()
+    reload(logging)
+
+
+def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None,
+                force_verbose_format=False):
     """
     - Send both stderr and stdout to logging.
     - Optionally tee the logs also to file.
@@ -322,12 +330,10 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     :param verb: verbosity to use
     :param use_exec_path: use the name of the executable
     :param log_filename: log to that file
-    :return:
+    :param force_verbose_format: use the verbose format used by code even for
+        notebook
     """
-    # yapf: disable
-    # pylint: disable=C0301
-    # From https://stackoverflow.com/questions/14058453/making-python-loggers-output-all-messages-to-stdout-in-addition-to-log
-    # yapf: enable
+    # From https://stackoverflow.com/questions/14058453
     root_logger = logging.getLogger()
     root_logger.setLevel(verb)
     #print("effective level=", root_logger.getEffectiveLevel())
@@ -337,7 +343,7 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None):
     #
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verb)
-    if is_running_in_ipynb():
+    if not force_verbose_format and is_running_in_ipynb():
         print("WARNING: Running in Jupyter")
         # Make logging look like a normal print().
         log_format = "%(message)s"

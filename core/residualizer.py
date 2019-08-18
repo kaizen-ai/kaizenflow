@@ -153,14 +153,8 @@ class PcaFactorComputer(FactorComputer):
         # https://stackoverflow.com/questions/45434989/numpy-difference-between-linalg-eig-and-linalg-eigh
         eigval, eigvec = np.linalg.eig(corr_df)
         # Sort eigenvalues, if needed.
-        if not (sorted(eigval) == eigval).all():
-            _LOG.debug("eigvals not sorted: %s", eigval)
-            if self.sort_eigvals:
-                _LOG.debug("Before sorting:\neigval=\n%s\neigvec=\n%s", eigval,
-                           eigvec)
-                idx = eigval.argsort()[::-1]
-                eigval = eigval[idx]
-                eigvec = eigvec[:, idx]
+        if self.sort_eigvals:
+            eigval, eigvec = self.sort_eigval(eigval, eigvec)
         _LOG.debug("eigval=\n%s\neigvec=\n%s", eigval, eigvec)
         # Package eigenvalues.
         eigval_df = pd.DataFrame([eigval], index=[dt])
@@ -187,12 +181,13 @@ class PcaFactorComputer(FactorComputer):
                         "\nnum_fails=%s", prev_ts, prev_eigvec_df, eigvec_df,
                         num_fails)
                     col_map = self.stabilize_eigvec(prev_eigvec_df, eigvec_df)
-                    #
                     shuffled_eigval_df, shuffled_eigvec_df = \
                         self.shuffle_eigval_eigvec(
                             eigval_df, eigvec_df, col_map)
+                    # Check.
                     num_fails = self.are_eigenvectors_stable(
                         prev_eigvec_df, shuffled_eigvec_df)
+                    dbg.dassert_eq(num_fails, 0)
                     eigval_df = shuffled_eigval_df
                     eigvec_df = shuffled_eigvec_df
         # Store.
@@ -204,6 +199,20 @@ class PcaFactorComputer(FactorComputer):
         # Turn results into a pd.Series.
         self.linearize_eigval_eigvec(eigval_df, eigvec_df)
         return eigvec_df
+
+    @staticmethod
+    def sort_eigval(eigval, eigvec):
+        are_eigval_sorted = (np.diff(eigval) <= 0).all()
+        if not are_eigval_sorted:
+            _LOG.debug("eigvals not sorted:\neigval=\n%s\neigvec=\n%s", eigval,
+                       eigvec)
+            # Sort eigvals in descending order.
+            idx = eigval.argsort()[::-1]
+            eigval = eigval[idx]
+            eigvec = eigvec[:, idx]
+            # Make sure it's sorted in descending order.
+            dbg.dassert_eq_all(eigval, np.sort(eigval)[::-1])
+        return are_eigval_sorted, eigval, eigvec
 
     # TODO(gp): -> eig_distance
     @staticmethod
@@ -227,11 +236,11 @@ class PcaFactorComputer(FactorComputer):
         def get_coeff(v1, v2, thr=1e-3):
             # TODO(gp): Use a loop to avoid repeatition.
             diff = PcaFactorComputer.eigvec_distance(v1, v2)
-            _LOG.debug("v1=%s v2=%s -> diff=%s", v1, v2, diff)
+            _LOG.debug("v1=\n%s\nv2=\n%s\n-> diff=%s", v1, v2, diff)
             if diff < thr:
                 return 1
             diff = PcaFactorComputer.eigvec_distance(v1, -v2)
-            _LOG.debug("v1=%s v2=%s -> diff=%s", v1, v2, diff)
+            _LOG.debug("v1=\n%s\nv2=\n%s\n-> diff=%s", v1, v2, diff)
             if diff < thr:
                 return -1
             return None
@@ -290,7 +299,9 @@ class PcaFactorComputer(FactorComputer):
         """
         dbg.dassert_monotonic_index(prev_eigvec_df)
         dbg.dassert_monotonic_index(eigvec_df)
-        dbg.dassert_eq(prev_eigvec_df.shape, eigvec_df.shape)
+        dbg.dassert_eq(prev_eigvec_df.shape, eigvec_df.shape,
+                       "prev_eigvec_df=\n%s\neigvec_df=\n%s",
+                       prev_eigvec_df, eigvec_df)
         num_fails = 0
         for i in range(eigvec_df.shape[1]):
             v1 = prev_eigvec_df.iloc[:, i]

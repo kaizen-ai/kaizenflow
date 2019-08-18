@@ -11,6 +11,7 @@ import pandas as pd
 import tqdm
 
 import helpers.dbg as dbg
+import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ def df_rolling_apply(df, window, func, convert_to_df=True, progress_bar=False):
         # Extract the window.
         lower_bound = i - window
         upper_bound = i
-        _LOG.debug("slice=[%d:%d]", lower_bound, upper_bound)
+        _LOG.debug(pri.frame("slice=[%d:%d]"), lower_bound, upper_bound)
         window_df = df.iloc[lower_bound:upper_bound, :]
         ts = window_df.index[-1]
         _LOG.debug("ts=%s", ts)

@@ -274,10 +274,6 @@ class TestCase(unittest.TestCase):
         return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
 
     def _get_current_path(self, test_class_name=None, test_method_name=None):
-        """
-
-        :return:
-        """
         dir_name = os.path.dirname(inspect.getfile(self.__class__))
         if test_class_name is None:
             test_class_name = self.__class__.__name__

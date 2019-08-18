@@ -135,3 +135,32 @@ class TestPcaFactorComputer1(ut.TestCase):
             "eigvec_df=\n%s\n" % eigvec_df +
             "out=\n%s" % out)
         self.check_string(txt)
+
+    def _sort_eigval_helper(self, eigval, eigvec, are_eigval_sorted_exp):
+        are_eigval_sorted, eigval_tmp, eigvec_tmp = \
+            res.PcaFactorComputer.sort_eigval(eigval, eigvec)
+        self.assertEqual(are_eigval_sorted, are_eigval_sorted_exp)
+        self.assertSequenceEqual(eigval_tmp.tolist(), sorted(eigval_tmp,
+                                                             reverse=True))
+        vars = ["eigval", "eigvec",
+                "are_eigval_sorted",
+                "eigval_tmp",
+                "eigvec_tmp"]
+        txt = pri.vars_to_debug_string(vars, locals())
+        self.check_string(txt)
+
+    def test_sort_eigval1(self):
+        eigval = np.array([1.30610138, 0.99251131, 0.70138731])
+        eigvec = np.array([[-0.55546523, 0.62034663, 0.55374041],
+                           [ 0.70270302, -0.00586218, 0.71145914],
+                           [-0.4445974,  -0.78430587, 0.43266321]])
+        are_eigval_sorted_exp = True
+        self._sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
+
+    def test_sort_eigval2(self):
+        eigval = np.array([0.99251131, 0.70138731, 1.30610138])
+        eigvec = np.array([[-0.55546523, 0.62034663, 0.55374041],
+                           [ 0.70270302, -0.00586218, 0.71145914],
+                           [-0.4445974,  -0.78430587, 0.43266321]])
+        are_eigval_sorted_exp = False
+        self._sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)

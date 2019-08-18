@@ -103,6 +103,19 @@ def prepend(str_, prefix):
     return "\n".join(lines)
 
 
+def vars_to_debug_string(vars_as_str, locals_):
+    """
+    Create a string with var name -> var value.
+    E.g., ["var1", "var2"] is converted into:
+        var1=...
+        var2=...
+    """
+    txt = []
+    for var in vars_as_str:
+        txt.append(var + "=")
+        txt.append(space(str(locals_[var])))
+    return "\n".join(txt)
+
 # #############################################################################
 # Pretty print data structures.
 # #############################################################################
