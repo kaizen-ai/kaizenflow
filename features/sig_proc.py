@@ -495,6 +495,78 @@ def moving_z_corr(srs1, srs2, range_, demean=True, min_periods=0, min_depth=1,
 
 
 #
+# Incremental PCA
+#
+def ipca_step(u, v, alpha):
+    """
+    Single step of incremental PCA.
+
+    At each point, the norm of v is the eigenvalue estimate (for the component
+    to which u and v refer).
+    
+    :param u: residualized observation for step n, component i
+    :param v: unnormalized eigenvector estimate for step n - 1, component i
+    :param alpha: ema-type weight (choose in [0, 1] and typically < 0.5)
+
+    :return: (u_next, v_next), where
+      * u_next is residualized observation for step n, component i + 1
+      * v_next is unnormalized eigenvector estimate for step n, component i
+    """
+    v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
+    u_next = u - np.dot(u, v) * v / (np.linalg.norm(v)**2)
+    return u_next, v_next
+
+
+def ipca(df, num_pc, alpha):
+    """
+    Incremental PCA.
+
+    :return: list of num_pc series of eigenvalue estimates and list of num_pc
+        dataframes of corresponding unit eigenvectors. Eigenvalues are reverse
+        sorted (largest first).
+    """
+    # TODO(Paul): Ensure df.size[1] >= num_pc
+    lambdas = []
+    # V's are eigenvectors with norm equal to corresponding eigenvalue
+    # vsl = [[v1], [v2], ...]
+    vsl = []
+    unit_eigenvecs = []
+    step = 1
+    for n in df.index:
+        # Initialize u1(n)
+        ul = [df.loc[n]]
+        for i in range(1, num_pc + 1):
+            # Initialize ith eigenvector
+            if i == step:
+                v = ul[0]
+                # Bookkeeping
+                vsl.append([v])
+                norm = np.linalg.norm(v)
+                lambdas.append([norm])
+                unit_eigenvecs.append([v / norm])
+            else:
+                # Main update step
+                u, v = ipca_step(ul[-1], vsl[i - 1][-1], alpha)
+                # Bookkeeping
+                u.name = n
+                v.name = n
+                ul.append(u)
+                vsl[i - 1].append(v)
+                norm = np.linalg.norm(v)
+                lambdas[i - 1].append(norm)
+                unit_eigenvecs[i - 1].append(v / norm)
+            step += 1
+    # Convert lambda list of lists to list of series
+    # Convert unit_eigenvecs list of lists to list of dataframes
+    lambdas_srs = []
+    unit_eigenvec_dfs = []
+    for i in range(0, num_pc): 
+        lambdas_srs.append(pd.Series(index=df.index, data=lambdas[i]))
+        unit_eigenvec_dfs.append(pd.concat(unit_eigenvecs[i], axis=1).transpose())
+    return lambdas_srs, unit_eigenvec_dfs
+
+
+#
 # Test series
 #
 def get_heaviside(a, b, zero_loc, tick):
