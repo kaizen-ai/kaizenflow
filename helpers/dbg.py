@@ -60,6 +60,7 @@ def dfatal(message, assertion_type=None):
 # TODO(gp): Would be nice to have a way to disable the assertions in certain
 #  builds, or at least know how much time is spent in the assertions.
 
+
 # TODO(gp): Use None as default everywhere.
 def _to_msg(msg, *args):
     if msg == "":
@@ -70,7 +71,7 @@ def _to_msg(msg, *args):
         except TypeError as e:
             # The arguments didn't match the format string: report error and
             # print the result somehow.
-            _LOG.warning("Caught assertion while formatting message:\n'%s'" % e)
+            _LOG.warning("Caught assertion while formatting message:\n'%s'", e)
             res = msg + " " + " ".join(map(str, args))
         res = "(" + res + ") "
     return res
@@ -84,8 +85,7 @@ def dassert(cond, msg=""):
 def dassert_eq(val1, val2, msg="", *args):
     if not val1 == val2:
         msg = _to_msg(msg, *args)
-        txt = "* Failed assertion:\n'%s'\n==\n'%s'\n%s*" % (val1, val2,
-                                                             msg)
+        txt = "* Failed assertion:\n'%s'\n==\n'%s'\n%s*" % (val1, val2, msg)
         dfatal(txt)
 
 
@@ -156,9 +156,8 @@ def dassert_type_in(val1, val2, msg=""):
 
 def dassert_isinstance(val1, val2, msg=""):
     if not isinstance(val1, val2):
-        dfatal(
-            "* Failed assertion: instance '%s' is of type '%s' instead of "
-            "expected type '%s' %s" % (val1, type(val1), val2, _to_msg(msg)))
+        dfatal("* Failed assertion: instance '%s' is of type '%s' instead of "
+               "expected type '%s' %s" % (val1, type(val1), val2, _to_msg(msg)))
 
 
 def dassert_is_not(val1, val2, msg=""):

@@ -7,7 +7,7 @@ import helpers.dbg as dbg
 # #############################################################################
 
 
-class Colors(object):
+class Colors:
     PURPLE = '\033[95m'
     BLUE = '\033[94m'
     GREEN = '\033[92m'
@@ -201,7 +201,7 @@ def list_to_str(l, tag="", sort=False, axis=0, to_string=False):
             vals = sorted(vals)
         txt += "\n".join(vals) + "\n"
     else:
-        raise ValueError("Invalid axis='%s'", axis)
+        raise ValueError("Invalid axis='%s'" % axis)
     return txt
 
 

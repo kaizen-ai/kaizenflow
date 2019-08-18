@@ -127,7 +127,8 @@ class TestPcaFactorComputer1(ut.TestCase):
         # Get data.
         eigval_df, _, eigvec_df, _ = \
             self.get_ex1()
-        out = res.PcaFactorComputer.linearize_eigval_eigvec(eigval_df, eigvec_df)
+        out = res.PcaFactorComputer.linearize_eigval_eigvec(
+            eigval_df, eigvec_df)
         _LOG.debug("out=\n%s", out)
         txt = (
             "eigval_df=\n%s\n" % eigval_df +

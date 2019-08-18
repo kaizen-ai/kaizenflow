@@ -55,7 +55,9 @@ def linearize_df(df, prefix):
     df.index = df.index.map('_'.join)
     return df
 
+
 # ##############################################################################
+
 
 # TODO(gp): Make sure it's sklearn complaint
 # TODO(gp): Use abstract classes (see https://docs.python.org/3/library/abc.html).
@@ -86,7 +88,9 @@ class FactorComputer:
     def _execute(self, df, ts):
         raise NotImplementedError
 
+
 # ##############################################################################
+
 
 # TODO(gp): eigval_df -> eigval since it's a Series?
 # eigvec_df -> eigvec
@@ -176,14 +180,13 @@ class PcaFactorComputer(FactorComputer):
                 num_fails = self.are_eigenvectors_stable(
                     prev_eigvec_df, eigvec_df)
                 if num_fails:
-                    _LOG.debug("Eigenvalues not stable: prev_ts=%s"
-                               "\nprev_eigvec_df=\n%s"
-                               "\neigvec_df=\n%s"
-                               "\nnum_fails=%s",
-                               prev_ts, prev_eigvec_df,
-                               eigvec_df, num_fails)
-                    col_map = self.stabilize_eigvec(
-                        prev_eigvec_df, eigvec_df)
+                    _LOG.debug(
+                        "Eigenvalues not stable: prev_ts=%s"
+                        "\nprev_eigvec_df=\n%s"
+                        "\neigvec_df=\n%s"
+                        "\nnum_fails=%s", prev_ts, prev_eigvec_df, eigvec_df,
+                        num_fails)
+                    col_map = self.stabilize_eigvec(prev_eigvec_df, eigvec_df)
                     #
                     shuffled_eigval_df, shuffled_eigvec_df = \
                         self.shuffle_eigval_eigvec(
@@ -199,7 +202,7 @@ class PcaFactorComputer(FactorComputer):
         _LOG.debug("eigvec_df=\n%s", eigvec_df)
         self._eigvec_df[ts] = eigvec_df
         # Turn results into a pd.Series.
-        out = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
+        self.linearize_eigval_eigvec(eigval_df, eigvec_df)
         return eigvec_df
 
     # TODO(gp): -> eig_distance
@@ -302,8 +305,8 @@ class PcaFactorComputer(FactorComputer):
 
     @staticmethod
     def are_eigenvalues_stable(prev_eigval_df, eigval_df, thr=1e-3):
-        _LOG.debug("prev_eigval_df=\n%s\neigval_df=\n%s\n",
-                   prev_eigval_df, eigval_df)
+        _LOG.debug("prev_eigval_df=\n%s\neigval_df=\n%s\n", prev_eigval_df,
+                   eigval_df)
         dbg.dassert_monotonic_index(prev_eigval_df)
         dbg.dassert_monotonic_index(eigval_df)
         dbg.dassert_eq(prev_eigval_df.shape, eigval_df.shape)
