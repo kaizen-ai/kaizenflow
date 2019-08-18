@@ -54,6 +54,11 @@ def dfatal(message, assertion_type=None):
 # dassert.
 # #############################################################################
 
+# TODO(gp): "msg" should not be the str and be just the format and then pass all
+# the arguments like in log, to avoid computing the string every time.
+
+# TODO(gp): Would be nice to have a way to disable the assertions in certain
+#  builds, or at least know how much time is spent in the assertions.
 
 # TODO(gp): Use None as default everywhere.
 def __to_msg(msg):

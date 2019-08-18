@@ -141,3 +141,8 @@ develop               *  /Users/saggese/.conda/envs/develop
 ```bash
 > pytest -k TestPcaFactorComputer1
 ```
+
+- To run a single test method
+```bash
+> pytest core/test/test_core.py::TestPcaFactorComputer1::test_linearize_eigval_eigvec
+```

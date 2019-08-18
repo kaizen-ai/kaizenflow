@@ -120,7 +120,8 @@ class TestPcaFactorComputer1(ut.TestCase):
         #
         txt = ("prev_eigval_df=\n%s\n" % prev_eigval_df +
                "prev_eigvec_df=\n%s\n" % prev_eigvec_df +
-               "eigval_df=\n%s\n" % eigval_df + "eigvec_df=\n%s\n" % eigvec_df +
+               "eigval_df=\n%s\n" % eigval_df +
+               "eigvec_df=\n%s\n" % eigvec_df +
                "shuffled_eigval_df=\n%s\n" % shuffled_eigval_df +
                "shuffled_eigvec_df=\n%s\n" % shuffled_eigvec_df)
         self.check_string(txt)
@@ -131,3 +132,15 @@ class TestPcaFactorComputer1(ut.TestCase):
         self.assertTrue(
             res.PcaFactorComputer.are_eigenvalues_stable(
                 prev_eigval_df, shuffled_eigval_df))
+
+    def test_linearize_eigval_eigvec(self):
+        # Get data.
+        eigval_df, _, eigvec_df, _ = \
+            self.get_ex1()
+        out = res.PcaFactorComputer.linearize_eigval_eigvec(eigval_df, eigvec_df)
+        _LOG.debug("out=\n%s", out)
+        txt = (
+            "eigval_df=\n%s\n" % eigval_df +
+            "eigvec_df=\n%s\n" % eigvec_df +
+            "out=\n%s" % out)
+        self.check_string(txt)

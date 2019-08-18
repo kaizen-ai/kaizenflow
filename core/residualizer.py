@@ -25,6 +25,38 @@ import helpers.explore as exp
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): This is probably general and should be moved somewhere else.
+def linearize_df(df, prefix):
+    """
+    Transform a pd.DataFrame:
+
+                 0         1         2
+        0  0.691443 -0.088121  0.717036
+        1  0.656170 -0.338633 -0.674366
+        2  0.302238  0.936783 -0.176323
+
+    into a pd.Series
+
+        f0_0    0.691443
+        f0_1    0.656170
+        f0_2    0.302238
+        f1_0   -0.088121
+        f1_1   -0.338633
+        f1_2    0.936783
+        f2_0    0.717036
+        f2_1   -0.674366
+        f2_2   -0.176323
+
+    """
+    df = df.copy()
+    df.columns = ["%s%s" % (prefix, i) for i in range(df.shape[1])]
+    df.index = df.index.map(str)
+    df = df.unstack()
+    df.index = df.index.map('_'.join)
+    return df
+
+# ##############################################################################
+
 # TODO(gp): Make sure it's sklearn complaint
 # TODO(gp): Use abstract classes (see https://docs.python.org/3/library/abc.html).
 class FactorComputer:
@@ -54,6 +86,7 @@ class FactorComputer:
     def _execute(self, df, ts):
         raise NotImplementedError
 
+# ##############################################################################
 
 # TODO(gp): eigval_df -> eigval since it's a Series?
 # eigvec_df -> eigvec
@@ -93,34 +126,13 @@ class PcaFactorComputer(FactorComputer):
         return self._eigvec_df
 
     @staticmethod
-    def linearize_df(df):
-        """
-        Transform a pd.DataFrame:
-
-                     0         1         2
-            0  0.691443 -0.088121  0.717036
-            1  0.656170 -0.338633 -0.674366
-            2  0.302238  0.936783 -0.176323
-
-        into a pd.Series
-
-            f0_0    0.691443
-            f0_1    0.656170
-            f0_2    0.302238
-            f1_0   -0.088121
-            f1_1   -0.338633
-            f1_2    0.936783
-            f2_0    0.717036
-            f2_1   -0.674366
-            f2_2   -0.176323
-
-        """
-        df = df.copy()
-        df.columns = ["f%s" % i for i in range(df.shape[1])]
-        df.index = df.index.map(str)
-        df = df.unstack()
-        df.index = df.index.map('_'.join)
-        return df
+    def linearize_eigval_eigvec(eigval_df, eigvec_df):
+        res = linearize_df(eigvec_df, "f")
+        #
+        eigval_df = eigval_df.copy()
+        eigval_df.index = ["eigval%s" % i for i in range(eigval_df.shape[0])]
+        res = res.append(eigval_df)
+        return res
 
     def _execute(self, df, ts):
         dbg.dassert_monotonic_index(df)
@@ -146,12 +158,10 @@ class PcaFactorComputer(FactorComputer):
                 eigval = eigval[idx]
                 eigvec = eigvec[:, idx]
         _LOG.debug("eigval=\n%s\neigvec=\n%s", eigval, eigvec)
-        # Package and store eigenvalues.
+        # Package eigenvalues.
         eigval_df = pd.DataFrame([eigval], index=[dt])
         eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
-        _LOG.debug("eigval_df=%s", eigval_df)
-        self._eigval_df[ts] = eigval_df
-        # Package and store eigenvectors.
+        # Package eigenvectors.
         if np.isnan(eigval_df).all().all():
             eigvec = np.nan * eigvec
         # TODO(gp): Make sure eigenvec are normalized.
@@ -182,12 +192,14 @@ class PcaFactorComputer(FactorComputer):
                         prev_eigvec_df, shuffled_eigvec_df)
                     eigval_df = shuffled_eigval_df
                     eigvec_df = shuffled_eigvec_df
-        self._eigvec_df[ts] = eigvec_df
+        # Store.
         self._ts.append(ts)
-        # Package the results.
-        #res = self.linearize(eigvec_df)
-        #eigval_df
-        #res.append()
+        _LOG.debug("eigval_df=%s", eigval_df)
+        self._eigval_df[ts] = eigval_df
+        _LOG.debug("eigvec_df=\n%s", eigvec_df)
+        self._eigvec_df[ts] = eigvec_df
+        # Turn results into a pd.Series.
+        out = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
         return eigvec_df
 
     # TODO(gp): -> eig_distance
