@@ -89,25 +89,21 @@ class TestPcaFactorComputer1(ut.TestCase):
             dbg.dassert_monotonic_index(obj)
         return prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df
 
-    def test_stabilize_eigenvec1(self):
+    def _test_stabilize_eigenvec_helper(self, data_func, eval_func):
         # Get data.
         prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df = \
-            self.get_ex1()
+            data_func()
         # Check if they are stable.
         num_fails = res.PcaFactorComputer.are_eigenvectors_stable(
             prev_eigvec_df, eigvec_df)
         self.assertEqual(num_fails, 3)
-        self.assertFalse(
-            res.PcaFactorComputer.are_eigenvalues_stable(
-                prev_eigval_df, eigval_df))
-        #
-        col_map = res.PcaFactorComputer.stabilize_eigvec(
-            prev_eigvec_df, eigvec_df)
+        # Transform.
+        col_map, _ = eval_func(prev_eigvec_df, eigvec_df)
         #
         shuffled_eigval_df, shuffled_eigvec_df = \
             res.PcaFactorComputer.shuffle_eigval_eigvec(
             eigval_df, eigvec_df, col_map)
-        #
+        # Check.
         txt = ("prev_eigval_df=\n%s\n" % prev_eigval_df +
                "prev_eigvec_df=\n%s\n" % prev_eigvec_df +
                "eigval_df=\n%s\n" % eigval_df +
@@ -123,20 +119,35 @@ class TestPcaFactorComputer1(ut.TestCase):
             res.PcaFactorComputer.are_eigenvalues_stable(
                 prev_eigval_df, shuffled_eigval_df))
 
+    def test_stabilize_eigenvec1(self):
+        data_func = self.get_ex1
+        eval_func = res.PcaFactorComputer.stabilize_eigvec
+        self._test_stabilize_eigenvec_helper(data_func, eval_func)
+
+    def test_stabilize_eigenvec2(self):
+        data_func = self.get_ex1
+        eval_func = res.PcaFactorComputer.stabilize_eigvec2
+        self._test_stabilize_eigenvec_helper(data_func, eval_func)
+
+    # ##########################################################################
+
     def test_linearize_eigval_eigvec(self):
         # Get data.
-        eigval_df, _, eigvec_df, _ = \
-            self.get_ex1()
+        eigval_df, _, eigvec_df, _ = self.get_ex1()
+        # Evaluate.
         out = res.PcaFactorComputer.linearize_eigval_eigvec(
             eigval_df, eigvec_df)
         _LOG.debug("out=\n%s", out)
+        # Check.
         txt = (
             "eigval_df=\n%s\n" % eigval_df +
             "eigvec_df=\n%s\n" % eigvec_df +
             "out=\n%s" % out)
         self.check_string(txt)
 
-    def _sort_eigval_helper(self, eigval, eigvec, are_eigval_sorted_exp):
+    # ##########################################################################
+
+    def _test_sort_eigval_helper(self, eigval, eigvec, are_eigval_sorted_exp):
         are_eigval_sorted, eigval_tmp, eigvec_tmp = \
             res.PcaFactorComputer.sort_eigval(eigval, eigvec)
         self.assertEqual(are_eigval_sorted, are_eigval_sorted_exp)
@@ -155,7 +166,7 @@ class TestPcaFactorComputer1(ut.TestCase):
                            [ 0.70270302, -0.00586218, 0.71145914],
                            [-0.4445974,  -0.78430587, 0.43266321]])
         are_eigval_sorted_exp = True
-        self._sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
+        self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
 
     def test_sort_eigval2(self):
         eigval = np.array([0.99251131, 0.70138731, 1.30610138])
@@ -163,4 +174,4 @@ class TestPcaFactorComputer1(ut.TestCase):
                            [ 0.70270302, -0.00586218, 0.71145914],
                            [-0.4445974,  -0.78430587, 0.43266321]])
         are_eigval_sorted_exp = False
-        self._sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
+        self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)

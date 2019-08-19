@@ -92,6 +92,8 @@ class FactorComputer:
 # ##############################################################################
 
 
+from scipy.spatial.distance import cosine
+
 # TODO(gp): eigval_df -> eigval since it's a Series?
 # eigvec_df -> eigvec
 class PcaFactorComputer(FactorComputer):
@@ -152,9 +154,10 @@ class PcaFactorComputer(FactorComputer):
         # TODO(Paul): Consider replacing `eig` with `eigh` as per
         # https://stackoverflow.com/questions/45434989/numpy-difference-between-linalg-eig-and-linalg-eigh
         eigval, eigvec = np.linalg.eig(corr_df)
+        #eigval, eigvec = np.linalg.eigh(corr_df)
         # Sort eigenvalues, if needed.
         if self.sort_eigvals:
-            eigval, eigvec = self.sort_eigval(eigval, eigvec)
+            _, eigval, eigvec = self.sort_eigval(eigval, eigvec)
         _LOG.debug("eigval=\n%s\neigvec=\n%s", eigval, eigvec)
         # Package eigenvalues.
         eigval_df = pd.DataFrame([eigval], index=[dt])
@@ -180,7 +183,7 @@ class PcaFactorComputer(FactorComputer):
                         "\neigvec_df=\n%s"
                         "\nnum_fails=%s", prev_ts, prev_eigvec_df, eigvec_df,
                         num_fails)
-                    col_map = self.stabilize_eigvec(prev_eigvec_df, eigvec_df)
+                    col_map, _ = self.stabilize_eigvec(prev_eigvec_df, eigvec_df)
                     shuffled_eigval_df, shuffled_eigvec_df = \
                         self.shuffle_eigval_eigvec(
                             eigval_df, eigvec_df, col_map)
@@ -220,29 +223,66 @@ class PcaFactorComputer(FactorComputer):
         # TODO(gp): Maybe the max of the diff of the component is a better
         # metric.
         diff = np.linalg.norm(v1 - v2)
-        _LOG.debug("v1=%s\nv2=%s\ndiff=%s", v1, v2, diff)
+        #_LOG.debug("v1=%s\nv2=%s\ndiff=%s", v1, v2, diff)
         return diff
+
+    @staticmethod
+    def check_stabilized_eigvec(col_map, n):
+        # Check that col_map contains a permutation of the index.
+        col_map_src = col_map.keys()
+        col_map_dst = [x[1] for x in col_map.values()]
+        exp_idxs = list(range(n))
+        dbg.dassert_eq_all(sorted(col_map_src), exp_idxs)
+        dbg.dassert_eq_all(sorted(col_map_dst), exp_idxs)
+        return True
 
     @staticmethod
     def stabilize_eigvec(prev_eigvec_df, eigvec_df):
         """
-        Try to find a shuffling and sign changes of the columns in
-        `prev_eigvec_df` to approximate `eigvec_df`.
+        Try to find a permutation and sign changes of the columns in
+        `prev_eigvec_df` to ensure continuity with `eigvec_df`.
 
         :return: map column index of original eigvec to (sign, column index
             of transformed eigvec)
         """
+        def dist(v1, v2):
+            # return res.PcaFactorComputer.eigvec_distance(v1, v2)
+            return 1 - cosine(v1, v2)
 
-        def get_coeff(v1, v2, thr=1e-3):
-            # TODO(gp): Use a loop to avoid repeatition.
-            diff = PcaFactorComputer.eigvec_distance(v1, v2)
-            _LOG.debug("v1=\n%s\nv2=\n%s\n-> diff=%s", v1, v2, diff)
-            if diff < thr:
-                return 1
-            diff = PcaFactorComputer.eigvec_distance(v1, -v2)
-            _LOG.debug("v1=\n%s\nv2=\n%s\n-> diff=%s", v1, v2, diff)
-            if diff < thr:
-                return -1
+        dbg.dassert_monotonic_index(prev_eigvec_df)
+        dbg.dassert_monotonic_index(eigvec_df)
+        # Build a matrix with the distances between corresponding vectors.
+        num_cols = prev_eigvec_df.shape[1]
+        distances = np.zeros((num_cols, num_cols)) * np.nan
+        for i in range(num_cols):
+            for j in range(num_cols):
+                distances[i, j] = dist(prev_eigvec_df.iloc[:, i],
+                                       eigvec_df.iloc[:, j])
+        _LOG.debug("distances=\n%s", distances)
+        # Find the row with the max abs value for each column.
+        max_abs_cos = np.argmax(np.abs(distances), axis=1)
+        _LOG.debug("max_abs_cos=%s", max_abs_cos)
+        signs = np.sign(distances[range(0, num_cols), max_abs_cos])
+        signs = list(map(int, signs))
+        _LOG.debug("signs=%s", signs)
+        # Package the results into col_map.
+        col_map = {k: (signs[k], max_abs_cos[k]) for k in range(0, num_cols)}
+        _LOG.debug("col_map=%s", col_map)
+        #
+        PcaFactorComputer.check_stabilized_eigvec(col_map, num_cols)
+        return col_map, distances
+
+    @staticmethod
+    def stabilize_eigvec2(prev_eigvec_df, eigvec_df):
+        """
+        Different implementation of `stabilize_eigvec()`.
+        """
+        def eigvec_coeff(v1, v2, thr=1e-3):
+            for sign in (-1, 1):
+                diff = PcaFactorComputer.eigvec_distance(v1, sign * v2)
+                _LOG.debug("v1=\n%s\nv2=\n%s\n-> diff=%s", v1, sign * v2, diff)
+                if diff < thr:
+                    return sign
             return None
 
         dbg.dassert_monotonic_index(prev_eigvec_df)
@@ -256,7 +296,7 @@ class PcaFactorComputer(FactorComputer):
         col_map = {}
         for i in range(num_cols):
             for j in range(num_cols):
-                coeff = get_coeff(prev_eigvec_df.iloc[:, i],
+                coeff = eigvec_coeff(prev_eigvec_df.iloc[:, i],
                                   eigvec_df.iloc[:, j])
                 _LOG.debug("i=%s, j=%s, coeff=%s", i, j, coeff)
                 if coeff:
@@ -264,7 +304,11 @@ class PcaFactorComputer(FactorComputer):
                     dbg.dassert_not_in(
                         i, col_map, msg="i=%s col_map=%s" % (i, col_map))
                     col_map[i] = (coeff, j)
-        return col_map
+        # Sanity check.
+        PcaFactorComputer.check_stabilized_eigvec(col_map, num_cols)
+        # Add dummy var to keep the same interface of stabilize_eigvec.
+        dummy = None
+        return col_map, dummy
 
     @staticmethod
     def shuffle_eigval_eigvec(eigval_df, eigvec_df, col_map):

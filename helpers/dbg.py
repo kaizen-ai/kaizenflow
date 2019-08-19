@@ -228,15 +228,17 @@ def dassert_no_duplicates(val1, msg=""):
 
 
 def dassert_eq_all(val1, val2, msg=""):
-    is_equal = (val1 == val2).all()
+    val1 = list(val1)
+    val2 = list(val2)
+    is_equal = val1 == val2
     if not is_equal:
-        mask = val1 != val2
+        #mask = val1 != val2
         msg_ = "* Failed assertion:"
         msg_ += "\nval1=%s\n%s" % (len(val1), val1)
         msg_ += "\nval2=%s\n%s" % (len(val2), val2)
-        msg_ += "\ndiff=%s" % mask.sum()
-        msg_ += "\n%s" % val1[mask]
-        msg_ += "\n%s" % val2[mask]
+        #msg_ += "\ndiff=%s" % mask.sum()
+        #msg_ += "\n%s" % val1[mask]
+        #msg_ += "\n%s" % val2[mask]
         msg_ += _to_msg(msg)
         dfatal(msg_)
 
