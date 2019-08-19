@@ -464,6 +464,8 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
     ignore = [
         # D200: One-line docstring should fit on one line with quotes
         "D200",
+        # D202: No blank lines allowed after function docstring
+        "D202",
         # D212: Multi-line docstring summary should start at the first line
         "D212",
         # D203: 1 blank line required before class docstring (found 0)

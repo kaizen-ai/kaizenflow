@@ -18,6 +18,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from scipy.spatial.distance import cosine
 
 import helpers.dbg as dbg
 import helpers.explore as exp
@@ -91,8 +92,6 @@ class FactorComputer:
 
 # ##############################################################################
 
-
-from scipy.spatial.distance import cosine
 
 # TODO(gp): eigval_df -> eigval since it's a Series?
 # eigvec_df -> eigvec
@@ -183,7 +182,8 @@ class PcaFactorComputer(FactorComputer):
                         "\neigvec_df=\n%s"
                         "\nnum_fails=%s", prev_ts, prev_eigvec_df, eigvec_df,
                         num_fails)
-                    col_map, _ = self.stabilize_eigvec(prev_eigvec_df, eigvec_df)
+                    col_map, _ = self.stabilize_eigvec(prev_eigvec_df,
+                                                       eigvec_df)
                     shuffled_eigval_df, shuffled_eigvec_df = \
                         self.shuffle_eigval_eigvec(
                             eigval_df, eigvec_df, col_map)
@@ -245,6 +245,7 @@ class PcaFactorComputer(FactorComputer):
         :return: map column index of original eigvec to (sign, column index
             of transformed eigvec)
         """
+
         def dist(v1, v2):
             # return res.PcaFactorComputer.eigvec_distance(v1, v2)
             return 1 - cosine(v1, v2)
@@ -277,6 +278,7 @@ class PcaFactorComputer(FactorComputer):
         """
         Different implementation of `stabilize_eigvec()`.
         """
+
         def eigvec_coeff(v1, v2, thr=1e-3):
             for sign in (-1, 1):
                 diff = PcaFactorComputer.eigvec_distance(v1, sign * v2)
@@ -297,7 +299,7 @@ class PcaFactorComputer(FactorComputer):
         for i in range(num_cols):
             for j in range(num_cols):
                 coeff = eigvec_coeff(prev_eigvec_df.iloc[:, i],
-                                  eigvec_df.iloc[:, j])
+                                     eigvec_df.iloc[:, j])
                 _LOG.debug("i=%s, j=%s, coeff=%s", i, j, coeff)
                 if coeff:
                     _LOG.debug("i=%s -> j=%s", i, j)
@@ -344,8 +346,8 @@ class PcaFactorComputer(FactorComputer):
         dbg.dassert_monotonic_index(prev_eigvec_df)
         dbg.dassert_monotonic_index(eigvec_df)
         dbg.dassert_eq(prev_eigvec_df.shape, eigvec_df.shape,
-                       "prev_eigvec_df=\n%s\neigvec_df=\n%s",
-                       prev_eigvec_df, eigvec_df)
+                       "prev_eigvec_df=\n%s\neigvec_df=\n%s", prev_eigvec_df,
+                       eigvec_df)
         num_fails = 0
         for i in range(eigvec_df.shape[1]):
             v1 = prev_eigvec_df.iloc[:, i]

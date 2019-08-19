@@ -68,9 +68,8 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
     actual = _to_string(actual)
     expected = _to_string(expected)
     if expected != actual:
-        _LOG.info(
-            "%s",
-            "\n" + pri.frame("Test %s failed" % full_test_name, "=", 80))
+        _LOG.info("%s",
+                  "\n" + pri.frame("Test %s failed" % full_test_name, "=", 80))
         # Dump the actual and expected strings to files.
         _LOG.debug("Actual:\n%s", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir
@@ -117,7 +116,7 @@ def _remove_spaces(obj):
     return string
 
 
-def _fuzzy_assert_equal(actual, expected, full_test_name):
+def _fuzzy_assert_equal(actual, expected, full_test_name, test_dir):
     """
     Implement a better version of self.assertEqual() that ignores differences in
     spaces and end of lines, by calling _remove_spaces().
@@ -136,7 +135,7 @@ def _fuzzy_assert_equal(actual, expected, full_test_name):
             expected = expected
             actual = actual
         #
-        _assert_equal(actual, expected, full_test_name)
+        _assert_equal(actual, expected, full_test_name, test_dir)
 
 
 # #############################################################################

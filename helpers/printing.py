@@ -87,10 +87,10 @@ def dedent(txt):
     Remove all extra leadning / trailing spaces and empty lines
     """
     txt_out = []
-    for line in txt.split("\n"):
-        line = line.rstrip(" ").lstrip(" ")
-        if line:
-            txt_out.append(line)
+    for curr_line in txt.split("\n"):
+        curr_line = curr_line.rstrip(" ").lstrip(" ")
+        if curr_line:
+            txt_out.append(curr_line)
     return "\n".join(txt_out)
 
 
@@ -98,8 +98,8 @@ def prepend(str_, prefix):
     """
     Add "prefix" before each line of the string str_.
     """
-    #lines = ["<" + prefix + line + ">" for line in str_.split("\n")]
-    lines = [prefix + line for line in str_.split("\n")]
+    #lines = ["<" + prefix + curr_line + ">" for curr_line in str_.split("\n")]
+    lines = [prefix + curr_line for curr_line in str_.split("\n")]
     return "\n".join(lines)
 
 
@@ -115,6 +115,7 @@ def vars_to_debug_string(vars_as_str, locals_):
         txt.append(var + "=")
         txt.append(space(str(locals_[var])))
     return "\n".join(txt)
+
 
 # #############################################################################
 # Pretty print data structures.
@@ -197,6 +198,8 @@ def list_to_str(l, tag="", sort=False, axis=0, to_string=False):
     """
     Print list / index horizontally or vertically.
     """
+    # TODO(gp): Fix this.
+    _ = to_string
     txt = ""
     if axis == 0:
         if l is None:

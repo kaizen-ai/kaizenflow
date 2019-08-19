@@ -305,7 +305,7 @@ def dassert_monotonic_index(obj):
 # #############################################################################
 
 
-# From https://stackoverflow.com/questions/15411967/how-can-i-check-if-code-is-executed-in-the-ipython-notebook
+# From https://stackoverflow.com/questions/15411967
 def is_running_in_ipynb():
     try:
         _ = get_ipython().config
@@ -323,7 +323,9 @@ def reset_logger():
     reload(logging)
 
 
-def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None,
+def init_logger(verb=logging.INFO,
+                use_exec_path=False,
+                log_filename=None,
                 force_verbose_format=False):
     """
     - Send both stderr and stdout to logging.
@@ -360,7 +362,8 @@ def init_logger(verb=logging.INFO, use_exec_path=False, log_filename=None,
     root_logger.addHandler(ch)
     # Find name of the log file.
     if use_exec_path and log_filename is None:
-        dassert_is(log_filename, None, msg="Can't specify conflicting filenames")
+        dassert_is(
+            log_filename, None, msg="Can't specify conflicting filenames")
         # Use the name of the executable.
         import inspect
         frame = inspect.stack()[1]
