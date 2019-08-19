@@ -551,9 +551,11 @@ def ipca(df, num_pc, alpha):
     """
     Incremental PCA.
 
-    :return: list of num_pc series of eigenvalue estimates and list of num_pc
-        dataframes of corresponding unit eigenvectors. Eigenvalues are reverse
-        sorted (largest first).
+    df should already be centered.
+
+    :return: df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
+        list of dfs of unit eigenvectors (0 indexes df eigenvectors
+        corresponding to max eigenvalue, etc.).
     """
     dbg.dassert_isinstance(
         num_pc, int, msg="Specify an integral number of principal components.")
@@ -564,6 +566,7 @@ def ipca(df, num_pc, alpha):
     )
     dbg.dassert_lte(0, alpha, msg="alpha should belong to [0, 1].")
     dbg.dassert_lte(alpha, 1, msg="alpha should belong to [0, 1].")
+    _LOG.info('com = %0.2f', 1. / alpha - 1)
     lambdas = []
     # V's are eigenvectors with norm equal to corresponding eigenvalue
     # vsl = [[v1], [v2], ...]
@@ -573,7 +576,8 @@ def ipca(df, num_pc, alpha):
     for n in df.index:
         step += 1
         # Initialize u1(n)
-        ul = [df.loc[n]]
+        # Handle NaN's by replacing with 0
+        ul = [df.loc[n].fillna(value=0)]
         for i in range(1, min(num_pc, step) + 1):
             # Initialize ith eigenvector
             if i == step:
@@ -604,7 +608,8 @@ def ipca(df, num_pc, alpha):
         lambdas_srs.append(pd.Series(index=df.index[i:], data=lambdas[i]))
         unit_eigenvec_dfs.append(
             pd.concat(unit_eigenvecs[i], axis=1).transpose())
-    return lambdas_srs, unit_eigenvec_dfs
+    lambda_df = pd.concat(lambdas_srs, axis=1)
+    return lambda_df, unit_eigenvec_dfs
 
 
 #
