@@ -132,11 +132,13 @@ class PcaFactorComputer(FactorComputer):
 
     @staticmethod
     def linearize_eigval_eigvec(eigval_df, eigvec_df):
-        res = linearize_df(eigvec_df, "f")
+        res = linearize_df(eigvec_df, "eigvec")
         #
-        eigval_df = eigval_df.copy()
+        dbg.dassert_isinstance(eigval_df, pd.DataFrame)
+        eigval_df = eigval_df.T.copy()
         eigval_df.index = ["eigval%s" % i for i in range(eigval_df.shape[0])]
-        res = res.append(eigval_df)
+        dbg.dassert_eq(eigval_df.shape[1], 1)
+        res = res.append(eigval_df.iloc[:, 0])
         return res
 
     def _execute(self, df, ts):
@@ -151,7 +153,7 @@ class PcaFactorComputer(FactorComputer):
         _LOG.debug("ts=%s", dt)
         # Compute eigenvalues and eigenvectors.
         # TODO(Paul): Consider replacing `eig` with `eigh` as per
-        # https://stackoverflow.com/questions/45434989/numpy-difference-between-linalg-eig-and-linalg-eigh
+        # https://stackoverflow.com/questions/45434989
         eigval, eigvec = np.linalg.eig(corr_df)
         #eigval, eigvec = np.linalg.eigh(corr_df)
         # Sort eigenvalues, if needed.
@@ -175,7 +177,7 @@ class PcaFactorComputer(FactorComputer):
                 # Check if they are stable.
                 num_fails = self.are_eigenvectors_stable(
                     prev_eigvec_df, eigvec_df)
-                if num_fails:
+                if num_fails > 0:
                     _LOG.debug(
                         "Eigenvalues not stable: prev_ts=%s"
                         "\nprev_eigvec_df=\n%s"
@@ -188,9 +190,15 @@ class PcaFactorComputer(FactorComputer):
                         self.shuffle_eigval_eigvec(
                             eigval_df, eigvec_df, col_map)
                     # Check.
-                    num_fails = self.are_eigenvectors_stable(
-                        prev_eigvec_df, shuffled_eigvec_df)
-                    dbg.dassert_eq(num_fails, 0)
+                    # TODO(gp): Use Frobenius norm compared to identity.
+                    if False:
+                        num_fails = self.are_eigenvectors_stable(
+                            prev_eigvec_df, shuffled_eigvec_df)
+                        dbg.dassert_eq(num_fails, 0,
+                                       "prev_eigvec_df=\n%s\n"
+                                           "shuffled_eigvec_df=\n%s",
+                                       prev_eigvec_df,
+                                       shuffled_eigvec_df)
                     eigval_df = shuffled_eigval_df
                     eigvec_df = shuffled_eigvec_df
         # Store.
@@ -200,8 +208,9 @@ class PcaFactorComputer(FactorComputer):
         _LOG.debug("eigvec_df=\n%s", eigvec_df)
         self._eigvec_df[ts] = eigvec_df
         # Turn results into a pd.Series.
-        self.linearize_eigval_eigvec(eigval_df, eigvec_df)
-        return eigvec_df
+        res = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
+        dbg.dassert_isinstance(res, pd.Series)
+        return res
 
     @staticmethod
     def sort_eigval(eigval, eigvec):
@@ -320,6 +329,8 @@ class PcaFactorComputer(FactorComputer):
 
         :return: updated eigvalues and eigenvectors
         """
+        dbg.dassert_isinstance(eigval_df, pd.DataFrame)
+        dbg.dassert_isinstance(eigvec_df, pd.DataFrame)
         dbg.dassert_monotonic_index(eigval_df)
         dbg.dassert_monotonic_index(eigvec_df)
         _LOG.debug("col_map=%s", col_map)
@@ -328,8 +339,8 @@ class PcaFactorComputer(FactorComputer):
         _LOG.debug("permutation=%s", permutation)
         shuffled_eigvec_df = eigvec_df.reindex(columns=permutation)
         shuffled_eigvec_df.columns = range(shuffled_eigvec_df.shape[1])
-        shuffled_eigval_df = eigval_df.reindex(index=permutation)
-        shuffled_eigval_df.index = range(shuffled_eigval_df.shape[0])
+        shuffled_eigval_df = eigval_df.reindex(columns=permutation)
+        shuffled_eigval_df.columns = range(shuffled_eigval_df.shape[1])
         # Change the sign of the eigenvectors. We don't need to change the
         # sign of the eigenvalues.
         coeffs = pd.Series([col_map[i][0] for i in sorted(col_map.keys())])
@@ -338,7 +349,7 @@ class PcaFactorComputer(FactorComputer):
         return shuffled_eigval_df, shuffled_eigvec_df
 
     @staticmethod
-    def are_eigenvectors_stable(prev_eigvec_df, eigvec_df, thr=1e-3):
+    def are_eigenvectors_stable(prev_eigvec_df, eigvec_df, thr=0.1):
         """
         Return whether eigvec_df are "stable" in the sense that the change of
         corresponding of each eigenvec is smaller than a certain threshold.
@@ -375,29 +386,40 @@ class PcaFactorComputer(FactorComputer):
             are_stable = False
         return are_stable
 
-    def plot_over_time(self, num_pcs_to_plot=0, num_cols=2):
+    def plot_over_time(self, res_df, num_pcs_to_plot=0, num_cols=2):
         """
         Similar to plot_pca_analysis() but over time.
         """
         # Plot eigenvalues.
-        self._eigval_df.plot(title='Eigenvalues over time', ylim=(0, 1))
+        cols = [c for c in res_df.columns if c.startswith("eigval")]
+        eigval_df = res_df[cols]
+        dbg.dassert_lte(1, eigval_df.shape[1])
+        eigval_df.plot(title='Eigenvalues over time', ylim=(0, 1))
         # Plot cumulative variance.
-        self._eigval_df.cumsum(axis=1).plot(
+        eigval_df.cumsum(axis=1).plot(
             title='Fraction of variance explained by top PCs over time',
             ylim=(0, 1))
         # Plot eigenvectors.
-        max_pcs = self._eigvec_df.shape[1]
+        cols = [c for c in res_df.columns if c.startswith("eigvec")]
+        eigvec_df = res_df[cols]
+        dbg.dassert_lte(1, eigvec_df.shape[1])
+        # TODO(gp): Fix this.
+        #max_pcs = len([c for c in res_df.columns if c.startswith("eigvec_")])
+        max_pcs = 3
         num_pcs_to_plot = self._get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
         _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
         if num_pcs_to_plot > 0:
-            _, axes = _get_multiple_plots(
+            _, axes = exp.get_multiple_plots(
                 num_pcs_to_plot,
                 num_cols=num_cols,
                 y_scale=4,
                 sharex=True,
                 sharey=True)
             for i in range(num_pcs_to_plot):
-                self._eigvec_df[i].unstack(1).plot(
+                col_names = [c for c in eigvec_df.columns if c.startswith(
+                    "eigvec%s" % i)]
+                dbg.dassert_lte(1, len(col_names))
+                eigvec_df[col_names].plot(
                     ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
 
     @staticmethod

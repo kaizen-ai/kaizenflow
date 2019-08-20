@@ -75,7 +75,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         prev_eigvec_df.index = prev_eigvec_df.index.map(int)
         prev_eigvec_df.columns = prev_eigvec_df.columns.map(int)
         #
-        prev_eigval_df = pd.Series([1.0, 0.5, 0.3], index=[0, 1, 2])
+        prev_eigval_df = pd.DataFrame([[1.0, 0.5, 0.3]], columns=[0, 1, 2])
         # Shuffle eigenvalues / eigenvectors.
         eigvec_df = prev_eigvec_df.copy()
         shuffle = [1, 2, 0]
@@ -83,8 +83,8 @@ class TestPcaFactorComputer1(ut.TestCase):
         eigvec_df.columns = list(range(eigvec_df.shape[1]))
         eigvec_df.iloc[:, 1] *= -1
         #
-        eigval_df = prev_eigval_df.reindex(index=shuffle)
-        eigval_df.index = list(range(eigval_df.shape[0]))
+        eigval_df = prev_eigval_df.reindex(columns=shuffle)
+        eigval_df.columns = list(range(eigval_df.shape[1]))
         for obj in (prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df):
             dbg.dassert_monotonic_index(obj)
         return prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df

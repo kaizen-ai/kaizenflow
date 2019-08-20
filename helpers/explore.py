@@ -595,11 +595,12 @@ def display_corr_df(df):
 # /////////////////////////////////////////////////////////////////////////////
 
 
-def _get_multiple_plots(num_plots, num_cols, y_scale=None, *args, **kwargs):
+def get_multiple_plots(num_plots, num_cols, y_scale=None, *args, **kwargs):
     """
-    Create figure to accomodate `num_plots` plots, arranged in rows with `num_cols`
-    columns.
+    Create figure to accommodate `num_plots` plots, arranged in rows with
+    `num_cols` columns.
     :param num_plots: number of plots
+    :param num_cols: number of columns to use in the subplot
     :param y_scale: if not None
     Return a figure and an array of axes
     """
@@ -710,7 +711,7 @@ def plot_pca_analysis(df, plot_explained_variance=False, num_pcs_to_plot=0):
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        _, axes = _get_multiple_plots(
+        _, axes = get_multiple_plots(
             num_pcs_to_plot, num_cols=4, sharex=True, sharey=True)
         for i in range(num_pcs_to_plot):
             pc = pcs.ix[:, i]
@@ -740,7 +741,7 @@ def plot_corr_over_time(corr_df, mode, annot=False, num_cols=4):
     timestamps = corr_df.index.get_level_values(0).unique()
     dbg.dassert_lte(len(timestamps), 20)
     # Get the axes.
-    fig, axes = _get_multiple_plots(
+    fig, axes = get_multiple_plots(
         len(timestamps), num_cols=num_cols, y_scale=4, sharex=True, sharey=True)
     # Add color map bar on the side.
     cbar_ax = fig.add_axes([.91, .3, .03, .4])
@@ -840,7 +841,7 @@ def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0, num_cols=2):
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        _, axes = _get_multiple_plots(
+        _, axes = get_multiple_plots(
             num_pcs_to_plot,
             num_cols=num_cols,
             y_scale=4,
