@@ -72,5 +72,7 @@ beautifulsoup4
 csvkit                  # To process csv.
 joblib
 jq                      # To process json.
+# conda install -c hcc rclone 
+#rclone                  # To interact with Google Drive.
 #pymongo
 quandl

@@ -12,13 +12,13 @@ import helpers.printing as print_
 _LOG = logging.getLogger(__name__)
 
 
-def _system(cmd, abort_on_error, suppressed_error, suppress_output, blocking,
+def _system(cmd, abort_on_error, suppress_error, suppress_output, blocking,
             wrapper, output_file, dry_run, log_level):
     """
 
     :param cmd: string with command to execute
     :param abort_on_error: whether we should assert in case of error or not
-    :param suppressed_error: set of error codes to suppress
+    :param suppress_error: set of error codes to suppress
     :param suppress_output: whether to print the output or not
     :param blocking: blocking system call or not
     :param wrapper: another command to prepend the execution of cmd
@@ -70,9 +70,9 @@ def _system(cmd, abort_on_error, suppressed_error, suppress_output, blocking,
         else:
             # Not blocking.
             rc = 0
-        if suppressed_error is not None:
-            dbg.dassert_isinstance(suppressed_error, set)
-            if rc in suppressed_error:
+        if suppress_error is not None:
+            dbg.dassert_isinstance(suppress_error, set)
+            if rc in suppress_error:
                 rc = 0
     except OSError:
         rc = -1
@@ -99,7 +99,7 @@ def system(cmd,
     rc, _ = _system(
         cmd,
         abort_on_error=abort_on_error,
-        suppressed_error=suppressed_error,
+        suppress_error=suppressed_error,
         suppress_output=suppress_output,
         blocking=blocking,
         wrapper=wrapper,
@@ -117,7 +117,7 @@ def system_to_string(cmd,
     rc, output = _system(
         cmd,
         abort_on_error=abort_on_error,
-        suppressed_error=None,
+        suppress_error=None,
         suppress_output=True,
         # If we want to see the output the system call must be blocking.
         blocking=True,
