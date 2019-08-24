@@ -169,7 +169,7 @@ class PcaFactorComputer(FactorComputer):
         # TODO(gp): Make sure eigenvec are normalized.
         eigvec_df = pd.DataFrame(eigvec, index=corr_df.columns)
         _LOG.debug("eigvec_df=%s", eigvec_df)
-        if self.stabilize_eigvec:
+        if False and self.stabilize_eigvec:
             if self._ts:
                 # Get previous ts.
                 prev_ts = self._ts[-1]
