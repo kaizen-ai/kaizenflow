@@ -107,29 +107,52 @@ class PcaFactorComputer(FactorComputer):
         :param nan_mode_in_data: how to handle NAs in data passed for processing
             (see `handle_nans()`)
         :param nan_mode_in_corr: how to handle NAs in correlation matrix
-        :param sort_eigvals: force sorting of the eigenvalues
-        :param stabilize_eig: stabilize eigenvalues / eigenvectors by
+        :param do_sort_eigvals: force sorting of the eigenvalues
+        :param do_stabilize_eig: stabilize eigenvalues / eigenvectors by
             reordering them and changing sign
         """
         super().__init__()
         self.nan_mode_in_data = nan_mode_in_data
         self.nan_mode_in_corr = nan_mode_in_corr
-        self.sort_eigvals = sort_eigvals
-        self.stabilize_eig = stabilize_eig
+        self.do_sort_eigvals = sort_eigvals
+        self.do_stabilize_eig = stabilize_eig
         # Map from timestamps to eigval / eigvec.
         self._ts = []
         self._eigval_df = collections.OrderedDict()
         self._eigvec_df = collections.OrderedDict()
+        #
+        self._eig_num = None
+        self._eig_comp_num = None
 
-    #def get_explained_variance(self):
-    #    pass
+    @property
+    def eig_num(self):
+        """
+        Number of eigenvalue / vectors.
+        """
+        return self._eig_num
 
-    def get_eigenvalues(self):
-        return self._eigval_df
+    @property
+    def eig_comp_num(self):
+        """
+        Number of components for each eigenvector.
+        """
+        return self._eig_comp_num
 
-    def get_eigenvectors(self):
-        return self._eigvec_df
+    def get_eigval_names(self):
+        """
+        Return the names of the eigenvalues column in the result df.
+        """
+        return ["eigval%s" % i for i in range(self.eig_num)]
 
+    def get_eigvec_names(self, i):
+        """
+        Return the names of the i-th eigenvector in the result df.
+        """
+        dbg.dassert_lte(0, i)
+        dbg.dassert_lt(i, self.eig_num)
+        return ["eigvec%s_%s" % (i, j) for j in range(self.eig_comp_num)]
+
+    # TODO(gp): -> private
     @staticmethod
     def linearize_eigval_eigvec(eigval_df, eigvec_df):
         res = linearize_df(eigvec_df, "eigvec")
@@ -157,7 +180,7 @@ class PcaFactorComputer(FactorComputer):
         eigval, eigvec = np.linalg.eig(corr_df)
         #eigval, eigvec = np.linalg.eigh(corr_df)
         # Sort eigenvalues, if needed.
-        if self.sort_eigvals:
+        if self.do_sort_eigvals:
             _, eigval, eigvec = self.sort_eigval(eigval, eigvec)
         _LOG.debug("eigval=\n%s\neigvec=\n%s", eigval, eigvec)
         # Package eigenvalues.
@@ -169,7 +192,7 @@ class PcaFactorComputer(FactorComputer):
         # TODO(gp): Make sure eigenvec are normalized.
         eigvec_df = pd.DataFrame(eigvec, index=corr_df.columns)
         _LOG.debug("eigvec_df=%s", eigvec_df)
-        if False and self.stabilize_eigvec:
+        if self.do_stabilize_eig:
             if self._ts:
                 # Get previous ts.
                 prev_ts = self._ts[-1]
@@ -203,10 +226,15 @@ class PcaFactorComputer(FactorComputer):
                     eigvec_df = shuffled_eigvec_df
         # Store.
         self._ts.append(ts)
+        #
         _LOG.debug("eigval_df=%s", eigval_df)
         self._eigval_df[ts] = eigval_df
+        #
         _LOG.debug("eigvec_df=\n%s", eigvec_df)
         self._eigvec_df[ts] = eigvec_df
+        if self._eig_num is None:
+            self._eig_num = eigvec_df.shape[1]
+            self._eig_comp_num = eigvec_df.shape[0]
         # Turn results into a pd.Series.
         res = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
         dbg.dassert_isinstance(res, pd.Series)
@@ -432,8 +460,3 @@ class PcaFactorComputer(FactorComputer):
         dbg.dassert_lte(0, num_pcs_to_plot)
         dbg.dassert_lte(num_pcs_to_plot, max_pcs)
         return num_pcs_to_plot
-
-
-# We want to return linearized factors and coeff
-# We need to unlinearize
-# We can plot that directly

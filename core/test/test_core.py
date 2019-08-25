@@ -171,3 +171,114 @@ class TestPcaFactorComputer1(ut.TestCase):
                            [-0.4445974, -0.78430587, 0.43266321]])
         are_eigval_sorted_exp = False
         self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
+
+# #############################################################################
+
+import numpy as np
+from scipy.linalg import eigh, cholesky
+from scipy.stats import norm
+
+import helpers.explore as exp
+import matplotlib.pyplot as plt
+
+class TestPcaFactorComputer2(ut.TestCase):
+
+    @staticmethod
+    def _get_data(num_samples, report_stats):
+        # The desired covariance matrix.
+        # r = np.array([
+        #         [  3.40, -2.75, -2.00],
+        #         [ -2.75,  5.50,  1.50],
+        #         [ -2.00,  1.50,  1.25]
+        #     ])
+        cov = np.array([
+            [1.0, 0.5, 0],
+            [0.5, 1, 0],
+            [0, 0, 1]
+        ])
+        if report_stats:
+            _LOG.info("cov=\n%s", cov)
+            exp.plot_heatmap(cov, mode="heatmap", title="cov")
+            plt.show()
+        # Generate samples from three independent normally distributed random
+        # variables with mean 0 and std dev 1.
+        np.random.seed(10)
+        x = norm.rvs(size=(3, num_samples))
+        if report_stats:
+            _LOG.info("x=\n%s", x[:2, :])
+        # We need a matrix `c` for which `c*c^T = r`.
+        # We can use # the Cholesky decomposition, or the we can construct `c`
+        # from the eigenvectors and eigenvalues.
+        # Compute the eigenvalues and eigenvectors.
+        # evals, evecs = np.linalg.eig(r)
+        evals, evecs = np.linalg.eigh(cov)
+        if report_stats:
+            _LOG.info("evals=\n%s", evals)
+            _LOG.info("evecs=\n%s", evecs)
+            exp.plot_heatmap(evecs, mode="heatmap", title="evecs")
+            plt.show()
+        # Construct c, so c*c^T = r.
+        transform = np.dot(evecs, np.diag(np.sqrt(evals)))
+        if report_stats:
+            _LOG.info("transform=\n%s", transform)
+        # print(c.T * c)
+        # print(c * c.T)
+        # Convert the data to correlated random variables.
+        y = np.dot(transform, x)
+        y_cov = np.corrcoef(y)
+        if report_stats:
+            _LOG.info("cov(y)=\n%s", y_cov)
+            exp.plot_heatmap(y_cov, mode="heatmap", title="y_cov")
+            plt.show()
+        #
+        y = pd.DataFrame(y).T
+        _LOG.debug("y=\n%s", y.head(5))
+        result = {
+            "y": y,
+            "cov": cov,
+            "evals": evals,
+            "evecs": evecs,
+            "transform": transform,
+        }
+        return result
+
+    def _helper(self, num_samples, report_stats, stabilize_eig, window):
+        result = self._get_data(num_samples, report_stats)
+        _LOG.debug("result=%s", result.keys())
+        #
+        nan_mode_in_data = "drop"
+        nan_mode_in_corr = "fill_with_zero"
+        sort_eigvals = True
+        comp = res.PcaFactorComputer(nan_mode_in_data, nan_mode_in_corr,
+                                     sort_eigvals, stabilize_eig)
+        df_res = pde.df_rolling_apply(result["y"], window, comp,
+                                      progress_bar=True)
+        if report_stats:
+            comp.plot_over_time(df_res, num_pcs_to_plot=-1)
+        return comp, df_res
+
+    def _check(self, comp, df_res):
+        txt = []
+        txt.append("comp.get_eigval_names()=\n%s" % comp.get_eigval_names())
+        txt.append("df_res.mean()=\n%s" % df_res.mean())
+        txt.append("df_res.std()=\n%s" % df_res.std())
+        txt = "\n".join(txt)
+        self.check_string(txt)
+
+    def test1(self):
+        num_samples = 100
+        report_stats = False
+        stabilize_eig = False
+        window = 50
+        comp, df_res = self._helper(num_samples, report_stats, stabilize_eig,
+                                    window)
+        self._check(comp, df_res)
+
+    def test2(self):
+        num_samples = 100
+        report_stats = False
+        stabilize_eig = True
+        window = 50
+        comp, df_res = self._helper(num_samples, report_stats, stabilize_eig,
+                                    window)
+        self._check(comp, df_res)

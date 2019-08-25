@@ -1,0 +1,30 @@
+comp.get_eigval_names()=
+['eigval0', 'eigval1', 'eigval2']
+df_res.mean()=
+eigvec0_0   -0.094493
+eigvec0_1   -0.121373
+eigvec0_2    0.006960
+eigvec1_0   -0.198408
+eigvec1_1   -0.129114
+eigvec1_2    0.913111
+eigvec2_0    0.177415
+eigvec2_1   -0.151242
+eigvec2_2   -0.007173
+eigval0      0.530162
+eigval1      0.318415
+eigval2      0.151424
+dtype: float64
+df_res.std()=
+eigvec0_0    0.677358
+eigvec0_1    0.659333
+eigvec0_2    0.319817
+eigvec1_0    0.082460
+eigvec1_1    0.320489
+eigvec1_2    0.053703
+eigvec2_0    0.687765
+eigvec2_1    0.653609
+eigvec2_2    0.253545
+eigval0      0.024503
+eigval1      0.032342
+eigval2      0.016513
+dtype: float64

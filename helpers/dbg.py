@@ -357,10 +357,19 @@ def init_logger(verb=logging.INFO,
     :param force_verbose_format: use the verbose format used by code even for
         notebook
     """
+    if isinstance(verb, str):
+        verb = logging._checkLevel(verb)
     # From https://stackoverflow.com/questions/14058453
     root_logger = logging.getLogger()
+    # Set verbosity for all loggers.
     root_logger.setLevel(verb)
-    #print("effective level=", root_logger.getEffectiveLevel())
+    eff_level = root_logger.getEffectiveLevel()
+    print("effective level= %s (%s)" % (eff_level, logging.getLevelName(
+        eff_level)))
+    #dassert_eq(root_logger.getEffectiveLevel(), verb)
+    for handler in root_logger.handlers:
+        handler.setLevel(verb)
+    # Exit to avoid to replicate the same output multiple times.
     if root_logger.handlers:
         print("WARNING: Logger already initialized: skipping")
         return
@@ -380,6 +389,7 @@ def init_logger(verb=logging.INFO,
     formatter = logging.Formatter(log_format, datefmt=datefmt)
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
+    #
     # Find name of the log file.
     if use_exec_path and log_filename is None:
         dassert_is(
@@ -409,14 +419,21 @@ def init_logger(verb=logging.INFO,
     #test_logger()
 
 
-def set_logger_verb(verb):
+def set_logger_verb(verb, module_name=None):
     """
     Used to change the verbosity of the logging after the initialization.
+
+    Passing a module_name (e.g., matplotlib) one can change the logging of
+    that specific module.
     """
-    root_logger = logging.getLogger()
-    if not root_logger.handlers:
+    logger = logging.getLogger(module_name)
+    if module_name is None and not logger.handlers:
         assert 0, "ERROR: Logger not initialized"
-    root_logger.setLevel(verb)
+    logger.setLevel(verb)
+    eff_level = logger.getEffectiveLevel()
+    print("effective level= %s (%s)" % (eff_level, logging.getLevelName(
+        eff_level)))
+    dassert_eq(logger.getEffectiveLevel(), verb)
 
 
 def get_logger_verb():
@@ -428,9 +445,7 @@ def get_logger_verb():
 
 # TODO(gp): Remove this.
 def init_logger2(verb=logging.INFO):
-    # flake8: noqa
-    # pylint: disable=C0301
-    # From https://stackoverflow.com/questions/14058453/making-python-loggers-output-all-messages-to-stdout-in-addition-to-log
+    # From https://stackoverflow.com/questions/14058453
     root = logging.getLogger()
     root.setLevel(verb)
     ch = logging.StreamHandler(sys.stdout)
