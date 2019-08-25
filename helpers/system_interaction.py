@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 def _system(cmd, abort_on_error, suppress_error, suppress_output, blocking,
             wrapper, output_file, tee, dry_run, log_level):
     """
+    Execute a shell command.
 
     :param cmd: string with command to execute
     :param abort_on_error: whether we should assert in case of error or not
@@ -38,10 +39,11 @@ def _system(cmd, abort_on_error, suppress_error, suppress_output, blocking,
             if dir_name:
                 os.makedirs(dir_name)
         if tee:
-            cmd += " | tee %s" % output_file
+            cmd += " 2>&1 | tee %s" % output_file
         else:
-            cmd += " >%s" % output_file
-    cmd += " 2>&1"
+            cmd += " 2>&1 >%s" % output_file
+    else:
+        cmd += " 2>&1"
     if wrapper:
         cmd = wrapper + " && " + cmd
     _LOG.log(log_level, "> %s", cmd)
@@ -103,6 +105,10 @@ def system(cmd,
            tee=False,
            dry_run=False,
            log_level=logging.DEBUG):
+    """
+    Execute a shell command, without capturing its output.
+    See _system() for options.
+    """
     rc, _ = _system(
         cmd,
         abort_on_error=abort_on_error,
@@ -122,6 +128,10 @@ def system_to_string(cmd,
                      wrapper=None,
                      dry_run=False,
                      log_level=logging.DEBUG):
+    """
+    Execute a shell command and capture its output.
+    See _system() for options.
+    """
     rc, output = _system(
         cmd,
         abort_on_error=abort_on_error,

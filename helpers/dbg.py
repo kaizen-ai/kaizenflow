@@ -419,6 +419,13 @@ def set_logger_verb(verb):
     root_logger.setLevel(verb)
 
 
+def get_logger_verb():
+    root_logger = logging.getLogger()
+    if not root_logger.handlers:
+        assert 0, "ERROR: Logger not initialized"
+    return root_logger.getEffectiveLevel()
+
+
 # TODO(gp): Remove this.
 def init_logger2(verb=logging.INFO):
     # flake8: noqa

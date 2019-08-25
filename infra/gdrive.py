@@ -3,11 +3,11 @@
 Create backups of Google Drive directory.
 
 # List content of a Google drive dir.
-> infra/gdoc_backup.py --action ls --src_dir gp_drive:alphamatic -v DEBUG
+> infra/gdrive.py --action ls --src_dir gp_drive:alphamatic -v DEBUG
 
-> infra/gdoc_backup.py --action export --src_dir gp_drive:alphamatic/LLC --dst_dir tmp.LLC
+> infra/gdrive.py --action export --src_dir gp_drive:alphamatic/LLC --dst_dir tmp.LLC
 
-> infra/gdoc_backup.py --action import --src_dir tmp.LLC --dst_dir alphamatic_drive:LLC
+> infra/gdrive.py --action import --src_dir tmp.LLC --dst_dir alphamatic_drive:LLC
 """
 
 #  Configure rclone
@@ -57,11 +57,30 @@ def _create_dst_dir(dst_dir):
 def _rclone_ls(remote_src_dir, timestamp, local_dst_dir):
     cmd = ["rclone ls", remote_src_dir]
     cmd = " ".join(cmd)
-    output_file = "%s/gdoc_backup.%s.txt" % (local_dst_dir, timestamp)
+    output_file = "%s/gdrive.%s.txt" % (local_dst_dir, timestamp)
     si.system(cmd, output_file=output_file)
 
 
-def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, dry_run):
+def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
+    cmd = [
+        "rclone copy",
+        remote_src_dir,
+        local_dst_dir,
+        # "--drive-shared-with-me"
+        # "--drive-export-formats docx,xlsx,pptx,svg"
+    ]
+    verb = dbg.get_logger_verb()
+    if verb <= logging.DEBUG:
+        cmd.append("-vv")
+    #
+    cmd = " ".join(cmd)
+    #
+    output_file = log_dir + "/rclone_copy_from_gdrive.txt"
+    si.system(cmd, output_file=output_file, tee=True,
+              suppress_output=False, dry_run=dry_run)
+
+
+def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
     dbg.dassert_exists(local_src_dir)
     cmd = [
         "rclone copy",
@@ -70,20 +89,15 @@ def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, dry_run):
         # "--drive-shared-with-me"
         # "--drive-export-formats docx,xlsx,pptx,svg"
     ]
+    verb = dbg.get_logger_verb()
+    if verb <= logging.DEBUG:
+        cmd.append("-vv")
+    #
     cmd = " ".join(cmd)
-    si.system(cmd, dry_run=dry_run)
-
-
-def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, dry_run):
-    cmd = [
-        "rclone copy",
-        remote_src_dir,
-        local_dst_dir,
-        # "--drive-shared-with-me"
-        # "--drive-export-formats docx,xlsx,pptx,svg"
-    ]
-    cmd = " ".join(cmd)
-    si.system(cmd, dry_run=dry_run)
+    #
+    output_file = log_dir + "/rclone_copy_to_gdrive.log"
+    si.system(cmd, output_file=output_file, tee=True,
+        suppress_output=False, dry_run=dry_run)
 
 
 def _parse():
@@ -114,6 +128,9 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     #
+    log_dir = "./tmp.gdrive.log"
+    log_dir = os.path.abspath(log_dir)
+    io_.create_dir(log_dir, incremental=not args.incremental)
     timestamp = datetime_.get_timestamp()
     if args.action == "ls":
         cmd = ["rclone ls", args.src_dir]
@@ -122,7 +139,7 @@ def _main(parser):
         sys.exit(0)
     if args.action == "backup":
         # Create temp dir.
-        temp_dir = "./tmp.gdoc_backup"
+        temp_dir = "./tmp.gdrive"
         temp_dir = os.path.abspath(temp_dir)
         io_.create_dir(temp_dir, incremental=not args.incremental)
         # Create dst dir.
@@ -131,13 +148,13 @@ def _main(parser):
         dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
         _rclone_ls(args.src_dir, timestamp, dst_dir)
         # Clone data inside the temp dir.
-        _rclone_copy_from_gdrive(args.src_dir, temp_dir, args.dry_run)
+        _rclone_copy_from_gdrive(args.src_dir, temp_dir, log_dir, args.dry_run)
         # Compress.
-        tar_file = "%s/gdoc_backup.%s.tgz" % (dst_dir, timestamp)
+        tar_file = "%s/gdrive.%s.tgz" % (dst_dir, timestamp)
         dbg.dassert_not_exists(tar_file)
+        output_file = log_dir + "/tar.log"
         cmd = "tar -cf %s -C %s ." % (tar_file, temp_dir)
         si.system(cmd, dry_run=args.dry_run)
-        si.system(cmd)
         # Clean up.
         if not args.incremental:
             cmd = "rm -rf %s" % temp_dir
@@ -151,10 +168,10 @@ def _main(parser):
         dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
         _rclone_ls(args.src_dir, timestamp, dst_dir)
         # Clone data inside the temp dir.
-        _rclone_copy_from_gdrive(args.src_dir, dst_dir, args.dry_run)
+        _rclone_copy_from_gdrive(args.src_dir, dst_dir, log_dir, args.dry_run)
     if args.action == "import":
         # Clone data inside the temp dir.
-        _rclone_copy_to_gdrive(args.src_dir, args.dst_dir, args.dry_run)
+        _rclone_copy_to_gdrive(args.src_dir, args.dst_dir, log_dir, args.dry_run)
 
 
 if __name__ == '__main__':
