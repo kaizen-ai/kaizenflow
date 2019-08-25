@@ -358,14 +358,15 @@ def init_logger(verb=logging.INFO,
         notebook
     """
     if isinstance(verb, str):
+        # pylint: disable=W0212
         verb = logging._checkLevel(verb)
     # From https://stackoverflow.com/questions/14058453
     root_logger = logging.getLogger()
     # Set verbosity for all loggers.
     root_logger.setLevel(verb)
     eff_level = root_logger.getEffectiveLevel()
-    print("effective level= %s (%s)" % (eff_level, logging.getLevelName(
-        eff_level)))
+    print("effective level= %s (%s)" % (eff_level,
+                                        logging.getLevelName(eff_level)))
     #dassert_eq(root_logger.getEffectiveLevel(), verb)
     for handler in root_logger.handlers:
         handler.setLevel(verb)
@@ -431,8 +432,8 @@ def set_logger_verb(verb, module_name=None):
         assert 0, "ERROR: Logger not initialized"
     logger.setLevel(verb)
     eff_level = logger.getEffectiveLevel()
-    print("effective level= %s (%s)" % (eff_level, logging.getLevelName(
-        eff_level)))
+    print("effective level= %s (%s)" % (eff_level,
+                                        logging.getLevelName(eff_level)))
     dassert_eq(logger.getEffectiveLevel(), verb)
 
 

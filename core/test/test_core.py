@@ -1,11 +1,14 @@
 import io
 import logging
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 
 import core.pandas_helpers as pde
 import helpers.dbg as dbg
+import helpers.explore as exp
 import helpers.printing as pri
 import helpers.unit_test as ut
 import utilities.core.residualizer as res
@@ -145,6 +148,7 @@ class TestPcaFactorComputer1(ut.TestCase):
     # ##########################################################################
 
     def _test_sort_eigval_helper(self, eigval, eigvec, are_eigval_sorted_exp):
+        # pylint: disable=W0641
         are_eigval_sorted, eigval_tmp, eigvec_tmp = \
             res.PcaFactorComputer.sort_eigval(eigval, eigvec)
         self.assertEqual(are_eigval_sorted, are_eigval_sorted_exp)
@@ -172,14 +176,9 @@ class TestPcaFactorComputer1(ut.TestCase):
         are_eigval_sorted_exp = False
         self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
 
+
 # #############################################################################
 
-import numpy as np
-from scipy.linalg import eigh, cholesky
-from scipy.stats import norm
-
-import helpers.explore as exp
-import matplotlib.pyplot as plt
 
 class TestPcaFactorComputer2(ut.TestCase):
 
@@ -191,11 +190,7 @@ class TestPcaFactorComputer2(ut.TestCase):
         #         [ -2.75,  5.50,  1.50],
         #         [ -2.00,  1.50,  1.25]
         #     ])
-        cov = np.array([
-            [1.0, 0.5, 0],
-            [0.5, 1, 0],
-            [0, 0, 1]
-        ])
+        cov = np.array([[1.0, 0.5, 0], [0.5, 1, 0], [0, 0, 1]])
         if report_stats:
             _LOG.info("cov=\n%s", cov)
             exp.plot_heatmap(cov, mode="heatmap", title="cov")
@@ -251,8 +246,8 @@ class TestPcaFactorComputer2(ut.TestCase):
         sort_eigvals = True
         comp = res.PcaFactorComputer(nan_mode_in_data, nan_mode_in_corr,
                                      sort_eigvals, stabilize_eig)
-        df_res = pde.df_rolling_apply(result["y"], window, comp,
-                                      progress_bar=True)
+        df_res = pde.df_rolling_apply(
+            result["y"], window, comp, progress_bar=True)
         if report_stats:
             comp.plot_over_time(df_res, num_pcs_to_plot=-1)
         return comp, df_res

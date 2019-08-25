@@ -217,11 +217,10 @@ class PcaFactorComputer(FactorComputer):
                     if False:
                         num_fails = self.are_eigenvectors_stable(
                             prev_eigvec_df, shuffled_eigvec_df)
-                        dbg.dassert_eq(num_fails, 0,
-                                       "prev_eigvec_df=\n%s\n"
-                                           "shuffled_eigvec_df=\n%s",
-                                       prev_eigvec_df,
-                                       shuffled_eigvec_df)
+                        dbg.dassert_eq(
+                            num_fails, 0, "prev_eigvec_df=\n%s\n"
+                            "shuffled_eigvec_df=\n%s", prev_eigvec_df,
+                            shuffled_eigvec_df)
                     eigval_df = shuffled_eigval_df
                     eigvec_df = shuffled_eigvec_df
         # Store.
@@ -444,8 +443,9 @@ class PcaFactorComputer(FactorComputer):
                 sharex=True,
                 sharey=True)
             for i in range(num_pcs_to_plot):
-                col_names = [c for c in eigvec_df.columns if c.startswith(
-                    "eigvec%s" % i)]
+                col_names = [
+                    c for c in eigvec_df.columns if c.startswith("eigvec%s" % i)
+                ]
                 dbg.dassert_lte(1, len(col_names))
                 eigvec_df[col_names].plot(
                     ax=axes[i], ylim=(-1, 1), title='PC%s' % i)
