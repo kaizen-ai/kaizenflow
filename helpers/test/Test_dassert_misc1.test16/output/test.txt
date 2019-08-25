@@ -1,10 +1,9 @@
 
 ################################################################################
 * Failed assertion *
-'1'
-==
-'2'
-Caught assertion while formatting message:
-'not enough arguments for format string'
-hello %s 
+* Failed assertion:
+val1=3
+[1, 2, 3]
+val2=3
+[1, 2, 4]
 ################################################################################

@@ -1,10 +1,9 @@
 
 ################################################################################
 * Failed assertion *
-'1'
-==
-'2'
-Caught assertion while formatting message:
-'not enough arguments for format string'
-hello %s 
+val1 - val2={3}
+val2 - val1=set()
+val1={1, 2, 3}
+set eq
+val2={1, 2}
 ################################################################################

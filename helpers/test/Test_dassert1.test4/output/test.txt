@@ -1,10 +1,6 @@
 
 ################################################################################
 * Failed assertion *
-'1'
-==
-'2'
-Caught assertion while formatting message:
-'not enough arguments for format string'
-hello %s 
+cond=False
+hello world
 ################################################################################
