@@ -54,16 +54,21 @@ def dfatal(message, assertion_type=None):
 # dassert.
 # #############################################################################
 
-# TODO(gp): "msg" should not be the str and be just the format and then pass all
-# the arguments like in log, to avoid computing the string every time.
-
 # TODO(gp): Would be nice to have a way to disable the assertions in certain
 #  builds, or at least know how much time is spent in the assertions.
 
 
-# TODO(gp): Use None as default everywhere.
+# TODO(gp): "msg" should not be the str and be just the format and then pass all
+# the arguments like in log, to avoid computing the string every time.
+
+# TODO(gp): Use None as default everywhere and propagate this idiom everywhere.
 def _to_msg(msg, *args):
-    if msg == "":
+    """
+    Format the error message with the params.
+    """
+    if msg is None:
+        # If there is no message, we should have no arguments to format.
+        assert not args, "args=%s" % str(args)
         res = ""
     else:
         try:
@@ -71,41 +76,61 @@ def _to_msg(msg, *args):
         except TypeError as e:
             # The arguments didn't match the format string: report error and
             # print the result somehow.
-            _LOG.warning("Caught assertion while formatting message:\n'%s'", e)
-            res = msg + " " + " ".join(map(str, args))
-        res = "(" + res + ") "
+            res = "Caught assertion while formatting message:\n'%s'" % str(e)
+            _LOG.warning(res)
+            res += "\n" + msg + " " + " ".join(map(str, args))
+        #res = "(" + res + ") "
     return res
 
 
-def dassert(cond, msg=""):
+def _dfatal(cond, msg, *args):
+    """
+    Package the error to raise.
+    """
+    txt = "* Failed assertion *\n"
+    if isinstance(cond, list):
+        txt += "\n".join(cond)
+    else:
+        txt += cond
+    msg = _to_msg(msg, *args)
+    if msg:
+        if not txt.endswith("\n"):
+            txt += "\n"
+        txt += msg
+    dfatal(txt)
+
+
+def dassert(cond, msg=None, *args):
     if not cond:
-        dfatal("* Failed assertion %s %s*" % (cond, _to_msg(msg)))
+        txt = "cond=%s" % cond
+        _dfatal(txt, msg, *args)
 
 
-def dassert_eq(val1, val2, msg="", *args):
+def dassert_eq(val1, val2, msg=None, *args):
     if not val1 == val2:
-        msg = _to_msg(msg, *args)
-        txt = "* Failed assertion:\n'%s'\n==\n'%s'\n%s*" % (val1, val2, msg)
-        dfatal(txt)
+        txt = "'%s'\n==\n'%s'" % (val1, val2)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_ne(val1, val2, msg=""):
+def dassert_ne(val1, val2, msg=None, *args):
     # pylint: disable=C0325
     if not (val1 != val2):
-        dfatal("* Failed assertion:\n'%s'\n!=\n'%s'\n%s*" % (val1, val2,
-                                                             _to_msg(msg)))
+        txt = "'%s'\n!=\n'%s'" % (val1, val2)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_lt(val1, val2, msg=""):
+def dassert_lt(val1, val2, msg=None, *args):
     # pylint: disable=C0325
     if not (val1 < val2):
-        dfatal("* Failed assertion: %s < %s %s*" % (val1, val2, _to_msg(msg)))
+        txt = "'%s' < '%s'" % (val1, val2)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_lte(val1, val2, msg=""):
+def dassert_lte(val1, val2, msg=None, *args):
     # pylint: disable=C0325
     if not (val1 <= val2):
-        dfatal("* Failed assertion: %s <= %s %s*" % (val1, val2, _to_msg(msg)))
+        txt = "'%s' <= '%s'" % (val1, val2)
+        _dfatal(txt, msg, *args)
 
 
 def dassert_lgt(lower_bound, x, upper_bound, lower_bound_closed,
@@ -120,164 +145,163 @@ def dassert_lgt(lower_bound, x, upper_bound, lower_bound_closed,
         dassert_lt(x, upper_bound)
 
 
-def dassert_in(value, valid_values, msg=""):
+def dassert_in(value, valid_values, msg=None, *args):
     # pylint: disable=C0325
     if not (value in valid_values):
-        dfatal("* Failed assertion: '%s' in '%s' %s*" % (value, valid_values,
-                                                         _to_msg(msg)))
+        txt = "'%s' in '%s'" % (value, valid_values)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_not_in(value, valid_values, msg=""):
+def dassert_not_in(value, valid_values, msg=None, *args):
     if value in valid_values:
-        dfatal("* Failed assertion: '%s' not in '%s' %s*" %
-               (value, valid_values, _to_msg(msg)))
+        txt = "'%s' not in '%s'" % (value, valid_values)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_is(val1, val2, msg=""):
+def dassert_is(val1, val2, msg=None, *args):
     # pylint: disable=C0325
     if not (val1 is val2):
-        dfatal(
-            "* Failed assertion: '%s' is '%s' %s" % (val1, val2, _to_msg(msg)))
+        txt = "'%s' is '%s'" % (val1, val2)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_type_is(val1, val2, msg=""):
-    # pylint: disable=C0325, C0123
-    if not (type(val1) is val2):
-        dfatal("* Failed assertion: type of '%s' is '%s' instead of '%s' %s" %
-               (val1, type(val1), val2, _to_msg(msg)))
-
-
-def dassert_type_in(val1, val2, msg=""):
-    # pylint: disable=C0325, C0123
-    if not (type(val1) in val2):
-        dfatal("* Failed assertion: type of '%s' is '%s' not in '%s' %s" %
-               (val1, type(val1), val2, _to_msg(msg)))
-
-
-def dassert_isinstance(val1, val2, msg=""):
-    if not isinstance(val1, val2):
-        dfatal("* Failed assertion: instance '%s' is of type '%s' instead of "
-               "expected type '%s' %s" % (val1, type(val1), val2, _to_msg(msg)))
-
-
-def dassert_is_not(val1, val2, msg=""):
+def dassert_is_not(val1, val2, msg=None, *args):
     # pylint: disable=C0325
     if not (val1 is not val2):
-        dfatal("* Failed assertion: '%s' is not '%s' %s" % (val1, val2,
-                                                            _to_msg(msg)))
+        txt = "'%s' is not '%s'" % (val1, val2)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_imply(val1, val2, msg=""):
+def dassert_type_is(val1, val2, msg=None, *args):
+    # pylint: disable=C0325, C0123
+    if not (type(val1) is val2):
+        txt = "type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
+        _dfatal(txt, msg, *args)
+
+
+def dassert_type_in(val1, val2, msg=None, *args):
+    # pylint: disable=C0325, C0123
+    if not (type(val1) in val2):
+        txt = "type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
+        _dfatal(txt, msg, *args)
+
+
+def dassert_isinstance(val1, val2, msg=None, *args):
+    if not isinstance(val1, val2):
+        txt = "instance of '%s' is '%s' instead of '%s'" % (val1, type(val1),
+                                                           val2)
+        _dfatal(txt, msg, *args)
+
+
+def dassert_imply(val1, val2, msg=None, *args):
     # pylint: disable=C0325
     if not (not val1 or val2):
-        dfatal(
-            "* Failed assertion: '%s' => '%s' %s" % (val1, val2, _to_msg(msg)))
+        txt = "'%s' implies '%s'" % (val1, val2)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_set_eq(val1, val2, msg=""):
+def dassert_set_eq(val1, val2, msg=None, *args):
     val1 = set(val1)
     val2 = set(val2)
     # pylint: disable=C0325
     if not (val1 == val2):
-        msg_ = ("* Failed assertion:\n" + "val1 - val2=" + str(
-            val1.difference(val2)) + "\n" + "val2 - val1=" + str(
-                val2.difference(val1)) + "\n")
+        txt = []
+        txt.append("val1 - val2=" + str(val1.difference(val2)))
+        txt.append("val2 - val1=" + str(val2.difference(val1)))
         thr = 20
         if max(len(val1), len(val2)) < thr:
-            msg_ += ("val1=" + pprint.pformat(val1) + "\n" + "  set eq\n" +
-                     "val2=" + pprint.pformat(val2) + "\n")
-        msg += " " + _to_msg(msg)
-        dfatal(msg_)
+            txt.append("val1=" + pprint.pformat(val1))
+            txt.append("set eq")
+            txt.append("val2=" + pprint.pformat(val2))
+        _dfatal(txt, msg, *args)
 
 
-def dassert_is_subset(val1, val2, msg="", verbose=False):
+# TODO(gp): -> dassert_issubset
+def dassert_is_subset(val1, val2, msg=None, *args):
+    """
+    Check that val1 is a subset of val2, raise otherwise.
+    """
     val1 = set(val1)
     val2 = set(val2)
     if not val1.issubset(val2):
-        msg_ = "* Failed assertion:\n"
-        if verbose:
-            msg_ += ("val1=" + pprint.pformat(val1) + "\n" + "  issubset \n" +
-                     "val2=" + pprint.pformat(val2) + "\n")
-        msg_ += "val1 - val2=" + str(
-            val1.difference(val2)) + "\n" + _to_msg(msg)
-        dfatal(msg_)
+        txt = []
+        txt.append("val1=" + pprint.pformat(val1))
+        txt.append("issubset")
+        txt.append("val2=" + pprint.pformat(val2))
+        txt.append("val1 - val2=" + str(val1.difference(val2)))
+        _dfatal(txt, msg, *args)
 
 
-def dassert_not_intersection(val1, val2, msg=""):
+def dassert_not_intersection(val1, val2, msg=None, *args):
+    """
+    Check that val1 has no intersection val2, raise otherwise.
+    """
     val1 = set(val1)
     val2 = set(val2)
     if val1.intersection(val2):
-        msg_ = (
-            "* Failed assertion:\n" + "val1=" + pprint.pformat(val1) + "\n" +
-            "  issubset \n" + "val2=" + pprint.pformat(val2) + "\n" +
-            "val1 - val2=" + str(val1.difference(val2)) + "\n" + _to_msg(msg))
-        dfatal(msg_)
+        txt = []
+        txt.append("val1=" + pprint.pformat(val1))
+        txt.append("has no intersection")
+        txt.append("val2=" + pprint.pformat(val2))
+        txt.append("val1 - val2=" + str(val1.difference(val2)))
+        _dfatal(txt, msg, *args)
 
 
-def dassert_no_duplicates(val1, msg=""):
+def dassert_no_duplicates(val1, msg=None, *args):
     # pylint: disable=C0325
     if not (len(set(val1)) == len(val1)):
         # Count the occurrences of each element of the seq.
         v_to_num = [(v, val1.count(v)) for v in set(val1)]
         # Build list of elems with duplicates.
-        res = [v for v, n in v_to_num if n > 1]
-        msg_ = (
-            "* Failed assertion:\n" + "val1=" + pprint.pformat(val1) + "\n" +
-            "has duplicates=" + ",".join(map(str, res)) + "\n" + _to_msg(msg))
-        dfatal(msg_)
+        dups = [v for v, n in v_to_num if n > 1]
+        txt = []
+        txt.append("val1=" + pprint.pformat(val1))
+        txt.append("has duplicates")
+        txt.append(",".join(map(str, dups)))
+        _dfatal(txt, msg, *args)
 
 
-def dassert_eq_all(val1, val2, msg=""):
+def dassert_eq_all(val1, val2, msg=None, *args):
     val1 = list(val1)
     val2 = list(val2)
     is_equal = val1 == val2
     if not is_equal:
         #mask = val1 != val2
-        msg_ = "* Failed assertion:"
-        msg_ += "\nval1=%s\n%s" % (len(val1), val1)
-        msg_ += "\nval2=%s\n%s" % (len(val2), val2)
-        #msg_ += "\ndiff=%s" % mask.sum()
-        #msg_ += "\n%s" % val1[mask]
-        #msg_ += "\n%s" % val2[mask]
-        msg_ += _to_msg(msg)
-        dfatal(msg_)
+        txt = []
+        txt.append("val1=%s\n%s" % (len(val1), val1))
+        txt.append("val2=%s\n%s" % (len(val2), val2))
+        #txt += "\ndiff=%s" % mask.sum()
+        #txt += "\n%s" % val1[mask]
+        #txt += "\n%s" % val2[mask]
+        _dfatal(txt, msg, *args)
 
 
 # TODO(*): -> _file_exists
-def dassert_exists(file_name, msg=""):
+def dassert_exists(file_name, msg=None, *args):
     file_name = os.path.abspath(file_name)
     if not os.path.exists(file_name):
-        # yapf: disable
-        msg_ = ("* Failed assertion:\n" +
-                "file='%s' doesn't exist" % file_name +
-                " " + _to_msg(msg))
-        # yapf: enable
-        dfatal(msg_)
+        txt = []
+        txt.append("file='%s' doesn't exist" % file_name)
+        _dfatal(txt, msg, *args)
 
 
 # TODO(*): -> _file_not_exists
-def dassert_not_exists(file_name, msg=""):
+def dassert_not_exists(file_name, msg=None, *args):
     file_name = os.path.abspath(file_name)
     # pylint: disable=C0325,C0113
     if not (not os.path.exists(file_name)):
-        # yapf: disable
-        msg_ = ("* Failed assertion:\n" +
-                "file='%s' already exists" % file_name +
-                " " + _to_msg(msg))
-        # yapf: enable
-        dfatal(msg_)
+        txt = []
+        txt.append("file='%s' already exists" % file_name)
+        _dfatal(txt, msg, *args)
 
 
-def dassert_dir_exists(dir_name, msg=""):
+def dassert_dir_exists(dir_name, msg=None, *args):
     dir_name = os.path.abspath(dir_name)
     # pylint: disable=C0325
     if not (os.path.exists(dir_name) and not os.path.isdir(dir_name)):
-        # yapf: disable
-        msg_ = ("* Failed assertion:\n" +
-                "dir_name='%s' already exists" % dir_name +
-                " " + _to_msg(msg))
-        # yapf: enable
-        dfatal(msg_)
+        txt = []
+        txt.append("dir='%s' already exists" % dir_name)
+        _dfatal(txt, msg, *args)
 
 
 def dassert_monotonic_index(obj):

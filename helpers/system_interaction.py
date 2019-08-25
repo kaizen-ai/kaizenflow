@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _system(cmd, abort_on_error, suppress_error, suppress_output, blocking,
-            wrapper, output_file, dry_run, log_level):
+            wrapper, output_file, tee_file, dry_run, log_level):
     """
 
     :param cmd: string with command to execute
@@ -23,18 +23,25 @@ def _system(cmd, abort_on_error, suppress_error, suppress_output, blocking,
     :param blocking: blocking system call or not
     :param wrapper: another command to prepend the execution of cmd
     :param output_file: redirect stdout and stderr to this file
+    :param tee_file: tee stdout and stderr to this file
     :param dry_run: just print the final command but not execute it
     :param log_level: print the command to execute at level "log_level"
     :return: return code (int), output of the command (str)
     """
     # Prepare the command line.
     cmd = "(%s)" % cmd
-    if output_file is not None:
+    if (output_file is not None) or (tee_file is not None):
         dir_name = os.path.dirname(output_file)
         if not os.path.exists(dir_name):
             _LOG.debug("'%s' doesn't exist: creating", dir_name)
             os.makedirs(dir_name)
-        cmd += " >%s" % output_file
+        dbg.dassert((output_file is None) or (tee_file is None),
+                    "Can't specify both output_file='%s' and tee_file='%s'",
+                    output_file, tee_file)
+        if output_file is not None:
+            cmd += " >%s" % output_file
+        elif tee_file is not None:
+            cmd += " | tee %s" % output_file
     cmd += " 2>&1"
     if wrapper:
         cmd = wrapper + " && " + cmd
@@ -94,6 +101,7 @@ def system(cmd,
            blocking=True,
            wrapper=None,
            output_file=None,
+           tee_file=None,
            dry_run=False,
            log_level=logging.DEBUG):
     rc, _ = _system(
@@ -104,6 +112,7 @@ def system(cmd,
         blocking=blocking,
         wrapper=wrapper,
         output_file=output_file,
+        tee_file=tee_file,
         dry_run=dry_run,
         log_level=log_level)
     return rc
@@ -123,6 +132,7 @@ def system_to_string(cmd,
         blocking=True,
         wrapper=wrapper,
         output_file=None,
+        tee_file=None,
         dry_run=dry_run,
         log_level=log_level)
     output = output.rstrip("\n")
