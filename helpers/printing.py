@@ -300,4 +300,4 @@ def config_notebook():
     plt.rcParams['figure.figsize'] = (20, 5)
     plt.rcParams['legend.fontsize'] = 14
     plt.rcParams['font.size'] = 14
-    kplt.rcParams['image.cmap'] = 'rainbow'
+    plt.rcParams['image.cmap'] = 'rainbow'

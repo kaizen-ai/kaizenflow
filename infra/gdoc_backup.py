@@ -2,8 +2,16 @@
 """
 Create backups of Google Drive directory.
 
+# List content of a Google drive dir.
+> infra/gdoc_backup.py --action ls --src_dir gp_drive:alphamatic -v DEBUG
 
+> infra/gdoc_backup.py --action export --src_dir gp_drive:alphamatic/LLC --dst_dir tmp.LLC
+
+> infra/gdoc_backup.py --action import --src_dir tmp.LLC --dst_dir alphamatic_drive:LLC
 """
+#config["name"] = "gp_drive:alphamatic"
+#config["name"] = "particle_drive:"
+#config["name"] = "alphamatic:"
 
 #  Configure rclone
 # > rclone config
@@ -17,10 +25,10 @@ Create backups of Google Drive directory.
 #     service_account_file> (blank)
 #     Edit advanced config? (n)
 #     Use auto config? (y)
-#
 #     Then the browser asks for authorizing rclone
-#
 #     Configure this as a team drive? (n)
+
+# The config file is ~/.config/rclone/rclone.conf
 
 import argparse
 import logging
@@ -37,16 +45,40 @@ _LOG = logging.getLogger(__name__)
 # ##############################################################################
 
 
-def _get_rclone_config(config_name):
-    config = {}
-    if config_name == "gp_alphamatic":
-        # remote:path
-        config["name"] = "gp_drive:alphamatic"
-    elif config_name == "particle":
-        config["name"] = "particle_drive:"
-    else:
-        raise ValueError("Invalid config_name='%s'" % config_name)
-    return config
+def _create_dst_dir(dst_dir):
+    dbg.dassert(dst_dir, msg="Need to specify --dst_dir")
+    dst_dir = os.path.abspath(dst_dir)
+    io_.create_dir(dst_dir, incremental=True)
+    return dst_dir
+
+
+def _rclone_ls(remote_src_dir, timestamp, local_dst_dir):
+    cmd = ["rclone ls", remote_src_dir]
+    cmd = " ".join(cmd)
+    output_file = "%s/gdoc_backup.%s.txt" % (local_dst_dir, timestamp)
+    si.system(cmd, output_file=output_file)
+
+
+def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, dry_run):
+    dbg.dassert_exists(local_src_dir)
+    cmd = [
+        "rclone copy", local_src_dir,
+        remote_dst_dir,
+        # "--drive-shared-with-me"
+        # "--drive-export-formats docx,xlsx,pptx,svg"
+    ]
+    cmd = " ".join(cmd)
+    si.system(cmd, dry_run=dry_run)
+
+
+def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, dry_run):
+    cmd = [
+        "rclone copy", remote_src_dir, local_dst_dir,
+        # "--drive-shared-with-me"
+        # "--drive-export-formats docx,xlsx,pptx,svg"
+    ]
+    cmd = " ".join(cmd)
+    si.system(cmd, dry_run=dry_run)
 
 
 def _parse():
@@ -54,11 +86,12 @@ def _parse():
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
-        '--config', action="store", help="rclone config", required=True)
-    parser.add_argument(
-        '--action', action="store", choices=['ls', 'backup'], required=True)
+        '--action', action="store", choices=['ls', 'backup', 'export', 'import'],
+        required=True)
     parser.add_argument('--incremental', action="store_true")
     parser.add_argument('--dry_run', action="store_true")
+    parser.add_argument(
+        '--src_dir', action="store", default=None, help="Source dir")
     parser.add_argument(
         '--dst_dir', action="store", default=None, help="Destination dir")
     parser.add_argument(
@@ -74,9 +107,9 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     #
-    config = _get_rclone_config(args.config)
+    timestamp = datetime_.get_timestamp()
     if args.action == "ls":
-        cmd = ["rclone ls", config["name"]]
+        cmd = ["rclone ls", args.src_dir]
         cmd = " ".join(cmd)
         si.system(cmd, suppress_output=False)
         sys.exit(0)
@@ -86,23 +119,12 @@ def _main(parser):
         temp_dir = os.path.abspath(temp_dir)
         io_.create_dir(temp_dir, incremental=not args.incremental)
         # Create dst dir.
-        dst_dir = args.dst_dir
-        dbg.dassert(dst_dir, msg="Need to specify --dst_dir")
-        dst_dir = os.path.abspath(dst_dir)
-        io_.create_dir(dst_dir, incremental=True)
+        dst_dir = _create_dst_dir(args.dst_dir)
         # List files.
-        timestamp = datetime_.get_timestamp()
-        cmd = ["rclone ls", config["name"]]
-        cmd = " ".join(cmd)
-        output_file = "%s/gdoc_backup.%s.txt" % (dst_dir, timestamp)
-        si.system(cmd, output_file=output_file)
+        dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
+        _rclone_ls(args.src_dir, timestamp, dst_dir)
         # Clone data inside the temp dir.
-        cmd = [
-            "rclone copy", config["name"], temp_dir, "--drive-shared-with-me"
-            #"--drive-export-formats docx,xlsx,pptx,svg"
-        ]
-        cmd = " ".join(cmd)
-        si.system(cmd, dry_run=args.dry_run)
+        _rclone_copy_from_gdrive(args.src_dir, temp_dir, args.dry_run)
         # Compress.
         tar_file = "%s/gdoc_backup.%s.tgz" % (dst_dir, timestamp)
         dbg.dassert_not_exists(tar_file)
@@ -117,23 +139,15 @@ def _main(parser):
         #find $base -type f -mtime +3 -delete
     if args.action == "export":
         # Create dst dir.
-        dst_dir = args.dst_dir
-        dbg.dassert(dst_dir, msg="Need to specify --dst_dir")
-        dst_dir = os.path.abspath(dst_dir)
-        io_.create_dir(dst_dir, incremental=True)
+        dst_dir = _create_dst_dir(args.dst_dir)
         # List files.
-        timestamp = datetime_.get_timestamp()
-        cmd = ["rclone ls", config["name"]]
-        cmd = " ".join(cmd)
-        output_file = "%s/gdoc_backup.%s.txt" % (dst_dir, timestamp)
-        si.system(cmd, output_file=output_file)
+        dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
+        _rclone_ls(args.src_dir, timestamp, dst_dir)
         # Clone data inside the temp dir.
-        cmd = [
-            "rclone copy", config["name"], temp_dir, "--drive-shared-with-me"
-            #"--drive-export-formats docx,xlsx,pptx,svg"
-        ]
-        cmd = " ".join(cmd)
-        si.system(cmd, dry_run=args.dry_run)
+        _rclone_copy_from_gdrive(args.src_dir, dst_dir, args.dry_run)
+    if args.action == "import":
+        # Clone data inside the temp dir.
+        _rclone_copy_to_gdrive(args.src_dir, args.dst_dir, args.dry_run)
 
 
 if __name__ == '__main__':

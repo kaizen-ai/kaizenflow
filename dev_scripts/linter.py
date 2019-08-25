@@ -879,7 +879,7 @@ def _main(args):
     num_steps = len(file_names) * len(actions)
     _LOG.info("Num of files=%d, num of actions=%d -> num of steps=%d",
               len(file_names), len(actions), num_steps)
-    pedantic = not args.no_pedantic
+    pedantic = args.pedantic
     num_threads = args.num_threads
     if num_threads == "serial":
         output = []
@@ -995,7 +995,9 @@ def _parse():
     parser.add_argument(
         "--all", action="store_true", help="Run all recommended phases")
     parser.add_argument(
-        "--no_pedantic", action="store_true", help="Skip purely cosmetic lints")
+        "--pedantic",
+        action="store_true",
+        help="Run some purely cosmetic lints")
     parser.add_argument(
         "--num_threads",
         action="store",
