@@ -1,13 +1,21 @@
 #!/usr/bin/env python
 """
-Create backups of Google Drive directory.
+Handle backups / export / import of Google Drive directory.
 
 # List content of a Google drive dir.
 > infra/gdrive.py --action ls --src_dir gp_drive:alphamatic -v DEBUG
 
-> infra/gdrive.py --action export --src_dir gp_drive:alphamatic/LLC --dst_dir tmp.LLC
+# Backup.
+> infra/gdrive.py --action backup --src_dir gp_drive:alphamatic --dst_dir gdrive_backup -v DEBUG
 
-> infra/gdrive.py --action import --src_dir tmp.LLC --dst_dir alphamatic_drive:LLC
+# Test of moving data.
+> infra/gdrive.py --action backup --src_dir gp_drive:alphamatic/LLC --dst_dir gdrive_backup
+> infra/gdrive.py --action export --src_dir gp_drive:alphamatic/LLC --dst_dir tmp.LLC
+> infra/gdrive.py --action import --src_dir tmp.LLC --dst_dir alphamatic_drive:test/LLC
+
+# Moving data.
+> infra/gdrive.py --action export --src_dir gp_drive:alphamatic --dst_dir tmp.alphamatic
+> infra/gdrive.py --action import --src_dir tmp.alphamatic --dst_dir alphamatic_drive:alphamatic
 """
 
 #  Configure rclone
@@ -54,7 +62,7 @@ def _create_dst_dir(dst_dir):
     return dst_dir
 
 
-def _rclone_ls(remote_src_dir, timestamp, local_dst_dir, log_dir):
+def _rclone_ls(remote_src_dir, timestamp, log_dir):
     cmd = ["rclone ls", remote_src_dir]
     cmd = " ".join(cmd)
     output_file = "%s/gdrive.%s.txt" % (log_dir, timestamp)
@@ -76,8 +84,12 @@ def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
     cmd = " ".join(cmd)
     #
     output_file = log_dir + "/rclone_copy_from_gdrive.txt"
-    si.system(cmd, output_file=output_file, tee=True,
-              suppress_output=False, dry_run=dry_run)
+    si.system(
+        cmd,
+        output_file=output_file,
+        tee=True,
+        suppress_output=False,
+        dry_run=dry_run)
 
 
 def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
@@ -97,8 +109,12 @@ def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
     cmd = " ".join(cmd)
     #
     output_file = log_dir + "/rclone_copy_to_gdrive.log"
-    si.system(cmd, output_file=output_file, tee=True,
-        suppress_output=False, dry_run=dry_run)
+    si.system(
+        cmd,
+        output_file=output_file,
+        tee=True,
+        suppress_output=False,
+        dry_run=dry_run)
 
 
 def _parse():
@@ -110,6 +126,8 @@ def _parse():
         action="store",
         choices=['ls', 'backup', 'export', 'import'],
         required=True)
+    parser.add_argument('--no_cleanup', action="store_true")
+    parser.add_argument('--skip_tgz', action="store_true")
     parser.add_argument('--incremental', action="store_true")
     parser.add_argument('--dry_run', action="store_true")
     parser.add_argument(
@@ -147,17 +165,28 @@ def _main(parser):
         dst_dir = _create_dst_dir(args.dst_dir)
         # List files.
         dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
-        _rclone_ls(args.src_dir, timestamp, dst_dir, log_dir)
+        _rclone_ls(args.src_dir, timestamp, log_dir)
         # Clone data inside the temp dir.
+        _LOG.info("# Downloading data from %s to %s ...", args.src_dir, dst_dir)
         _rclone_copy_from_gdrive(args.src_dir, temp_dir, log_dir, args.dry_run)
         # Compress.
-        tar_file = "%s/gdrive.%s.tgz" % (dst_dir, timestamp)
-        dbg.dassert_not_exists(tar_file)
-        output_file = log_dir + "/tar.log"
-        cmd = "tar -cf %s -C %s ." % (tar_file, temp_dir)
-        si.system(cmd, dry_run=args.dry_run)
+        if not args.skip_tgz:
+            _LOG.info("# Archiving ...")
+            tar_file = "%s/gdrive.%s.tgz" % (dst_dir, timestamp)
+            dbg.dassert_not_exists(tar_file)
+            output_file = log_dir + "/tar.log"
+            cmd = "tar -cf %s -C %s ." % (tar_file, temp_dir)
+            si.system(
+                cmd, output_file=output_file, tee=True, dry_run=args.dry_run)
+            _LOG.info("tar_file is at '%s'", tar_file)
+        else:
+            _LOG.info("# Skipping archiving")
         # Clean up.
-        if not args.incremental:
+        if args.incremental or args.no_cleanup:
+            # No clean-up.
+            _LOG.info("# Skipping clean up")
+        else:
+            _LOG.info("# Cleaning up ...")
             cmd = "rm -rf %s" % temp_dir
             si.system(cmd, dry_run=args.dry_run)
         # Delete old ones.
@@ -167,12 +196,16 @@ def _main(parser):
         dst_dir = _create_dst_dir(args.dst_dir)
         # List files.
         dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
-        _rclone_ls(args.src_dir, timestamp, dst_dir, log_dir)
+        _rclone_ls(args.src_dir, timestamp, log_dir)
         # Clone data inside the temp dir.
+        _LOG.info("# Exporting data from %s to %s ...", args.src_dir, dst_dir)
         _rclone_copy_from_gdrive(args.src_dir, dst_dir, log_dir, args.dry_run)
     if args.action == "import":
         # Clone data inside the temp dir.
-        _rclone_copy_to_gdrive(args.src_dir, args.dst_dir, log_dir, args.dry_run)
+        _LOG.info("# Importing data from %s to %s ...", args.src_dir,
+                  args.dst_dir)
+        _rclone_copy_to_gdrive(args.src_dir, args.dst_dir, log_dir,
+                               args.dry_run)
 
 
 if __name__ == '__main__':
