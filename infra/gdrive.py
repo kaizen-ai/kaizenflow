@@ -54,10 +54,10 @@ def _create_dst_dir(dst_dir):
     return dst_dir
 
 
-def _rclone_ls(remote_src_dir, timestamp, local_dst_dir):
+def _rclone_ls(remote_src_dir, timestamp, local_dst_dir, log_dir):
     cmd = ["rclone ls", remote_src_dir]
     cmd = " ".join(cmd)
-    output_file = "%s/gdrive.%s.txt" % (local_dst_dir, timestamp)
+    output_file = "%s/gdrive.%s.txt" % (log_dir, timestamp)
     si.system(cmd, output_file=output_file)
 
 
@@ -66,8 +66,8 @@ def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
         "rclone copy",
         remote_src_dir,
         local_dst_dir,
-        # "--drive-shared-with-me"
-        # "--drive-export-formats docx,xlsx,pptx,svg"
+        "--drive-export-formats docx,xlsx,pptx,svg",
+        # "--drive-shared-with-me",
     ]
     verb = dbg.get_logger_verb()
     if verb <= logging.DEBUG:
@@ -86,8 +86,9 @@ def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
         "rclone copy",
         local_src_dir,
         remote_dst_dir,
+        "--drive-import-formats docx,xlsx,pptx,svg",
+        "--drive-allow-import-name-change",
         # "--drive-shared-with-me"
-        # "--drive-export-formats docx,xlsx,pptx,svg"
     ]
     verb = dbg.get_logger_verb()
     if verb <= logging.DEBUG:
@@ -146,7 +147,7 @@ def _main(parser):
         dst_dir = _create_dst_dir(args.dst_dir)
         # List files.
         dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
-        _rclone_ls(args.src_dir, timestamp, dst_dir)
+        _rclone_ls(args.src_dir, timestamp, dst_dir, log_dir)
         # Clone data inside the temp dir.
         _rclone_copy_from_gdrive(args.src_dir, temp_dir, log_dir, args.dry_run)
         # Compress.
@@ -166,7 +167,7 @@ def _main(parser):
         dst_dir = _create_dst_dir(args.dst_dir)
         # List files.
         dbg.dassert(args.src_dir, msg="Need to specify --src__dir")
-        _rclone_ls(args.src_dir, timestamp, dst_dir)
+        _rclone_ls(args.src_dir, timestamp, dst_dir, log_dir)
         # Clone data inside the temp dir.
         _rclone_copy_from_gdrive(args.src_dir, dst_dir, log_dir, args.dry_run)
     if args.action == "import":
