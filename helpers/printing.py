@@ -1,6 +1,6 @@
 import helpers.dbg as dbg
 
-# TODO(gp): Rename print_
+# TODO(gp): Rename print_?
 
 # #############################################################################
 # Debug output
@@ -188,8 +188,9 @@ def format_list(v, sep=" ", max_n=None, tag=None):
     if n < max_n:
         txt += sep.join(map(str, v))
     else:
-        txt += sep.join(map(str, v[:max_n / 2])) + " ... " + sep.join(
-            map(str, v[-max_n / 2:]))
+        txt += sep.join(map(str, v[:max_n / 2]))
+        txt += " ... "
+        txt += sep.join(map(str, v[(-max_n) / 2:]))
     return txt
 
 

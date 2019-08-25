@@ -58,10 +58,6 @@ def dfatal(message, assertion_type=None):
 #  builds, or at least know how much time is spent in the assertions.
 
 
-# TODO(gp): "msg" should not be the str and be just the format and then pass all
-# the arguments like in log, to avoid computing the string every time.
-
-# TODO(gp): Use None as default everywhere and propagate this idiom everywhere.
 def _to_msg(msg, *args):
     """
     Format the error message with the params.
@@ -189,7 +185,7 @@ def dassert_type_in(val1, val2, msg=None, *args):
 def dassert_isinstance(val1, val2, msg=None, *args):
     if not isinstance(val1, val2):
         txt = "instance of '%s' is '%s' instead of '%s'" % (val1, type(val1),
-                                                           val2)
+                                                            val2)
         _dfatal(txt, msg, *args)
 
 

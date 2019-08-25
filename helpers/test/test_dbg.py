@@ -7,6 +7,7 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
+
 class Test_dassert1(ut.TestCase):
 
     def test1(self):
@@ -43,7 +44,9 @@ class Test_dassert1(ut.TestCase):
             dbg.dassert(False, "hello %s")
         self.check_string(str(cm.exception))
 
+
 # #############################################################################
+
 
 class Test_dassert_eq1(ut.TestCase):
 
@@ -71,7 +74,9 @@ class Test_dassert_eq1(ut.TestCase):
             dbg.dassert_eq(1, 2, "hello %s")
         self.check_string(str(cm.exception))
 
+
 # #############################################################################
+
 
 class Test_dassert_misc1(ut.TestCase):
 

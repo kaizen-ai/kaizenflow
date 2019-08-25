@@ -43,11 +43,16 @@ E.g.,
 # TODO(gp): Ensure all file names are correct (e.g., no space, nice TaskXYZ, no - but _...)
 # TODO(gp): Make sure that there are no conflict markers.
 # TODO(gp): Report number of errors vs warnings.
-# TODO(gp): Test directory should be called tests and not test
+# TODO(gp): Test directory should be called "test" and not "tests"
 # TODO(gp): Discourage checking in master
 # TODO(gp): Python files should end with py
 # TODO(gp): All and only executable python files (i.e., with main) should have
 # #!/usr/bin/env python
+
+# TODO(gp): For files inside "test", disable:
+#   [C0103(invalid-name), Test_dassert_eq1] Class name "Test_dassert_eq1" doesn't conform to PascalCase naming style [pylint]
+#   [R0201(no-self-use), Test_dassert_eq1.test1] Method could be a function [pylint]
+#   [W0212(protected-access), Test_system1.test5] Access to a protected member _get_default_tempdir of a client class [pylint]
 
 import argparse
 import datetime

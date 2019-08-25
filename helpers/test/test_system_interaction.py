@@ -1,6 +1,7 @@
 import logging
 import tempfile
 
+import helpers.dbg as dbg
 import helpers.system_interaction as si
 import helpers.unit_test as ut
 
@@ -15,10 +16,48 @@ class Test_system1(ut.TestCase):
         si.system("ls")
 
     def test2(self):
-        si.system("ls", suppress_output=False)
+        si.system("ls /dev/null", suppress_output=False)
 
     def test3(self):
+        """
+        Output to a file.
+        """
         with tempfile.NamedTemporaryFile() as fp:
             temp_file_name = fp.name
+            _LOG.debug("temp_file_name=%s", temp_file_name)
             si.system("ls", output_file=temp_file_name)
-            si.system("ls %s" % temp_file_name, suppress_output=False)
+            dbg.dassert_exists(temp_file_name)
+
+    def test4(self):
+        """
+        Tee to a file.
+        """
+        with tempfile.NamedTemporaryFile() as fp:
+            temp_file_name = fp.name
+            _LOG.debug("temp_file_name=%s", temp_file_name)
+            si.system("ls", output_file=temp_file_name, tee=True)
+            dbg.dassert_exists(temp_file_name)
+
+    def test5(self):
+        """
+        Test dry_run.
+        """
+        temp_file_name = tempfile._get_default_tempdir()
+        temp_file_name += "/" + next(tempfile._get_candidate_names())
+        _LOG.debug("temp_file_name=%s", temp_file_name)
+        si.system("ls", output_file=temp_file_name, dry_run=True)
+        dbg.dassert_not_exists(temp_file_name)
+
+    def test6(self):
+        """
+        Test abort_on_error=True.
+        """
+        si.system("ls this_file_doesnt_exist", abort_on_error=False)
+
+    def test7(self):
+        """
+        Test abort_on_error=False.
+        """
+        with self.assertRaises(RuntimeError) as cm:
+            si.system("ls this_file_doesnt_exist")
+        self.check_string(str(cm.exception))

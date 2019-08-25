@@ -9,9 +9,6 @@ Create backups of Google Drive directory.
 
 > infra/gdoc_backup.py --action import --src_dir tmp.LLC --dst_dir alphamatic_drive:LLC
 """
-#config["name"] = "gp_drive:alphamatic"
-#config["name"] = "particle_drive:"
-#config["name"] = "alphamatic:"
 
 #  Configure rclone
 # > rclone config
@@ -29,6 +26,11 @@ Create backups of Google Drive directory.
 #     Configure this as a team drive? (n)
 
 # The config file is ~/.config/rclone/rclone.conf
+
+# The Google drives are:
+# - "gp_drive:alphamatic"
+# - "particle_drive:"
+# - "alphamatic:"
 
 import argparse
 import logging
@@ -62,7 +64,8 @@ def _rclone_ls(remote_src_dir, timestamp, local_dst_dir):
 def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, dry_run):
     dbg.dassert_exists(local_src_dir)
     cmd = [
-        "rclone copy", local_src_dir,
+        "rclone copy",
+        local_src_dir,
         remote_dst_dir,
         # "--drive-shared-with-me"
         # "--drive-export-formats docx,xlsx,pptx,svg"
@@ -73,7 +76,9 @@ def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, dry_run):
 
 def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, dry_run):
     cmd = [
-        "rclone copy", remote_src_dir, local_dst_dir,
+        "rclone copy",
+        remote_src_dir,
+        local_dst_dir,
         # "--drive-shared-with-me"
         # "--drive-export-formats docx,xlsx,pptx,svg"
     ]
@@ -86,7 +91,9 @@ def _parse():
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
-        '--action', action="store", choices=['ls', 'backup', 'export', 'import'],
+        '--action',
+        action="store",
+        choices=['ls', 'backup', 'export', 'import'],
         required=True)
     parser.add_argument('--incremental', action="store_true")
     parser.add_argument('--dry_run', action="store_true")
