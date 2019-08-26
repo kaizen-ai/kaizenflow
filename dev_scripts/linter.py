@@ -40,7 +40,8 @@ E.g.,
 # TODO(gp): Check jupytext consistency (check_jupytext)
 # TODO(gp): Lint notebooks and then apply jupytext (lint_ipynb)
 # TODO(gp): Refresh all py files from ipynb
-# TODO(gp): Ensure all file names are correct (e.g., no space, nice TaskXYZ, no - but _...)
+# TODO(gp): Ensure all file names are correct (e.g., no space, nice TaskXYZ, no
+# `-` but `_`...)
 # TODO(gp): Make sure that there are no conflict markers.
 # TODO(gp): Report number of errors vs warnings.
 # TODO(gp): Test directory should be called "test" and not "tests"
@@ -51,9 +52,12 @@ E.g.,
 # TODO(gp): Add https://github.com/PyCQA/flake8-bugbear
 
 # TODO(gp): For files inside "test", disable:
-#   [C0103(invalid-name), Test_dassert_eq1] Class name "Test_dassert_eq1" doesn't conform to PascalCase naming style [pylint]
-#   [R0201(no-self-use), Test_dassert_eq1.test1] Method could be a function [pylint]
-#   [W0212(protected-access), Test_system1.test5] Access to a protected member _get_default_tempdir of a client class [pylint]
+#   [C0103(invalid-name), Test_dassert_eq1] Class name "Test_dassert_eq1"
+#       doesn't conform to PascalCase naming style [pylint]
+#   [R0201(no-self-use), Test_dassert_eq1.test1] Method could be a function
+#       [pylint]
+#   [W0212(protected-access), Test_system1.test5] Access to a
+#       protected member _get_default_tempdir of a client class [pylint]
 
 import argparse
 import datetime
@@ -95,7 +99,8 @@ def _system(cmd, abort_on_error=True):
         cmd,
         abort_on_error=abort_on_error,
         suppress_output=suppress_output,
-        log_level=logging.DEBUG)
+        log_level=logging.DEBUG,
+    )
     return rc
 
 
@@ -125,29 +130,29 @@ def _clean_file(file_name, write_back):
     """
     # Read file.
     file_in = []
-    with open(file_name, 'r') as f:
+    with open(file_name, "r") as f:
         for line in f:
             file_in.append(line)
     #
     file_out = []
     for line in file_in:
         # A line can be deleted if it has only spaces and \n.
-        if not any(char not in (' ', '\n') for char in line):
-            line = '\n'
+        if not any(char not in (" ", "\n") for char in line):
+            line = "\n"
         # dos2unix.
-        line = line.replace('\r\n', '\n')
+        line = line.replace("\r\n", "\n")
         file_out.append(line)
     # Remove whitespaces at the end of file.
-    while file_out and (file_out[-1] == '\n'):
+    while file_out and (file_out[-1] == "\n"):
         # While the last item in the list is blank, removes last element.
         file_out.pop(-1)
     # Write the new the output to file.
     if write_back:
-        file_in = ''.join(file_in)
-        file_out = ''.join(file_out)
+        file_in = "".join(file_in)
+        file_out = "".join(file_out)
         if file_in != file_out:
             _LOG.debug("Writing back file '%s'", file_name)
-            with open(file_name, 'w') as f:
+            with open(file_name, "w") as f:
                 f.write(file_out)
         else:
             _LOG.debug("No change in file, so no saving")
@@ -297,8 +302,7 @@ def _remove_not_possible_actions(actions):
     actions_tmp = []
     for action in actions:
         func = _get_action_func(action)
-        is_possible = func(
-            file_name=None, pedantic=None, check_if_possible=True)
+        is_possible = func(file_name=None, pedantic=None, check_if_possible=True)
         if not is_possible:
             _LOG.warning("Can't execute action '%s': skipping", action)
         else:
@@ -320,8 +324,7 @@ def _test_actions():
     possible_actions = []
     for action in _ALL_ACTIONS:
         func = _get_action_func(action)
-        is_possible = func(
-            file_name=None, pedantic=False, check_if_possible=True)
+        is_possible = func(file_name=None, pedantic=False, check_if_possible=True)
         _LOG.debug("%s -> %s", action, is_possible)
         if is_possible:
             possible_actions.append(action)
@@ -366,12 +369,12 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
         # Remove trailing spaces.
         line = line.rstrip()
         # dos2unix.
-        line = line.replace('\r\n', '\n')
+        line = line.replace("\r\n", "\n")
         # TODO(gp): Remove empty lines in functions.
         #
         txt_new.append(line.rstrip("\n"))
     # Remove whitespaces at the end of file.
-    while txt_new and (txt_new[-1] == '\n'):
+    while txt_new and (txt_new[-1] == "\n"):
         # While the last item in the list is blank, removes last element.
         txt_new.pop(-1)
     # Write.
@@ -468,8 +471,14 @@ def _flake8(file_name, pedantic, check_if_possible):
         return []
     # --max-line-length=88 is because of black using 88 chars max.
     opts = "--exit-zero --doctests --max-line-length=88 -j 4"
-    # E265 block comment should start with '# '
-    opts += " --ignore=E265"
+    disabled_checks = [
+        # Because of black, disable
+        #   "W503 line break before binary operator"
+        "W503",
+        # E265 block comment should start with '# '
+        "E265",
+    ]
+    opts += " --ignore=" + ",".join(disabled_checks)
     cmd = executable + " %s %s" % (opts, file_name)
     return _tee(cmd, executable, abort_on_error=True)
 
@@ -500,20 +509,22 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         "D400",
     ]
     if not pedantic:
-        ignore.extend([
-            # D100: Missing docstring in public module
-            "D100",
-            # D101: Missing docstring in public class
-            "D101",
-            # D102: Missing docstring in public method
-            "D102",
-            # D103: Missing docstring in public function
-            "D103",
-            # D107: Missing docstring in __init__
-            "D107",
-            # D401: First line should be in imperative mood
-            "D401",
-        ])
+        ignore.extend(
+            [
+                # D100: Missing docstring in public module
+                "D100",
+                # D101: Missing docstring in public class
+                "D101",
+                # D102: Missing docstring in public method
+                "D102",
+                # D103: Missing docstring in public function
+                "D103",
+                # D107: Missing docstring in __init__
+                "D107",
+                # D401: First line should be in imperative mood
+                "D401",
+            ]
+        )
     opts = ""
     if ignore:
         opts += "--ignore " + ",".join(ignore)
@@ -588,32 +599,34 @@ def _pylint(file_name, pedantic, check_if_possible):
         # [W0511(fixme), ]
         "W0511",
         # TODO(gp): Not clear what is the problem.
-        #[W1113(keyword-arg-before-vararg), ] Keyword argument before variable
+        # [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
         # pos itional arguments list in the definition of
         "W1113",
     ]
     if not pedantic:
-        ignore.extend([
-            # [C0111(missing-docstring), ] Missing module docstring
-            "C0111",
-            # [C0302(too-many-lines), ] Too many lines in module
-            "C0302",
-            # [R0903(too-few-public-methods), ] Too few public methods
-            "R0903",
-            # [R0912(too-many-branches), ] Too many branches
-            "R0912",
-            # [R0913(too-many-arguments), ] Too many arguments
-            "R0913",
-            # R0914(too-many-locals) Too many local variables
-            "R0914",
-            # [R0915(too-many-statements), ] Too many statements
-            "R0915",
-            # [W0125(using-constant-test), ] Using a conditional statement with a
-            #   constant value
-            "W0125",
-            # [W0603(global-statement), ] Using the global statement
-            "W0603",
-        ])
+        ignore.extend(
+            [
+                # [C0111(missing-docstring), ] Missing module docstring
+                "C0111",
+                # [C0302(too-many-lines), ] Too many lines in module
+                "C0302",
+                # [R0903(too-few-public-methods), ] Too few public methods
+                "R0903",
+                # [R0912(too-many-branches), ] Too many branches
+                "R0912",
+                # [R0913(too-many-arguments), ] Too many arguments
+                "R0913",
+                # R0914(too-many-locals) Too many local variables
+                "R0914",
+                # [R0915(too-many-statements), ] Too many statements
+                "R0915",
+                # [W0125(using-constant-test), ] Using a conditional statement with a
+                #   constant value
+                "W0125",
+                # [W0603(global-statement), ] Using the global statement
+                "W0603",
+            ]
+        )
     if ignore:
         opts += "--disable " + ",".join(ignore)
     # Allow short variables, as long as camel-case.
@@ -628,7 +641,7 @@ def _pylint(file_name, pedantic, check_if_possible):
 def _ipynb_format(file_name, pedantic, check_if_possible):
     _ = pedantic
     curr_path = os.path.dirname(os.path.realpath(sys.argv[0]))
-    executable = '%s/ipynb_format.py' % curr_path
+    executable = "%s/ipynb_format.py" % curr_path
     if check_if_possible:
         return _check_exec(executable)
     #
@@ -685,10 +698,14 @@ def is_paired_jupytext_file(file_name):
     """
     Return whether a file is a paired jupytext file.
     """
-    is_paired = ((is_py_file(file_name) and
-                  os.path.exists(from_python_to_ipynb_file(file_name)) or
-                  (is_ipynb_file(file_name) and
-                   os.path.exists(from_ipynb_to_python_file(file_name)))))
+    is_paired = (
+        is_py_file(file_name)
+        and os.path.exists(from_python_to_ipynb_file(file_name))
+        or (
+            is_ipynb_file(file_name)
+            and os.path.exists(from_ipynb_to_python_file(file_name))
+        )
+    )
     return is_paired
 
 
@@ -710,15 +727,15 @@ class JupytextProcessor:
 
     def process(self):
         output = []
-        if is_ipynb_file(self.ipynb_file_name) and not is_paired_jupytext_file(
-                self.ipynb_file_name):
+        if is_ipynb_file(self.ipynb_file_name) and (
+            not is_paired_jupytext_file(self.ipynb_file_name)
+        ):
             # Missing py file associated to ipynb: need to create py script.
             msg = "Notebook '%s' has no paired jupytext script" % self.ipynb_file_name
             _LOG.warning(msg)
             output.append(msg)
             if self.fix_issues:
-                _LOG.warning("Fixing by creating py file '%s'",
-                             self.py_file_name)
+                _LOG.warning("Fixing by creating py file '%s'", self.py_file_name)
                 cmd = "jupytext --to py:percent %s" % self.ipynb_file_name
                 _system(cmd)
                 # Add to git.
@@ -729,8 +746,8 @@ class JupytextProcessor:
         if is_paired_jupytext_file(self.ipynb_file_name):
             # Both py and ipynb files exist.
             # Remove empty spaces.
-            #_clean_file(self.ipynb_file_name, write_back=True)
-            #_clean_file(self.py_file_name, write_back=True)
+            # _clean_file(self.ipynb_file_name, write_back=True)
+            # _clean_file(self.py_file_name, write_back=True)
             # Check that they are consistent. Assume that the ipynb is the
             # correct one.
             # TODO(gp): We should compare timestamp?
@@ -739,10 +756,9 @@ class JupytextProcessor:
             dir_name = io_.create_enclosing_dir(dst_py_name, incremental=True)
             _LOG.debug("Created dir_name '%s'", dir_name)
             dbg.dassert_exists(dir_name)
-            cmd = "jupytext --to py:percent %s -o %s" % (src_py_name,
-                                                         dst_py_name)
+            cmd = "jupytext --to py:percent %s -o %s" % (src_py_name, dst_py_name)
             _system(cmd)
-            #_clean_file(dst_py_name, write_back=True)
+            # _clean_file(dst_py_name, write_back=True)
             cmd = "diff --ignore-blank-lines %s %s" % (src_py_name, dst_py_name)
             rc = _system(cmd, abort_on_error=False)
             if rc != 0:
@@ -779,15 +795,13 @@ def _jupytext_helper(file_name, pedantic, check_if_possible, fix_issues):
 
 def _check_jupytext(file_name, pedantic, check_if_possible):
     fix_issues = False
-    output = _jupytext_helper(file_name, pedantic, check_if_possible,
-                              fix_issues)
+    output = _jupytext_helper(file_name, pedantic, check_if_possible, fix_issues)
     return output
 
 
 def _fix_jupytext(file_name, pedantic, check_if_possible):
     fix_issues = True
-    output = _jupytext_helper(file_name, pedantic, check_if_possible,
-                              fix_issues)
+    output = _jupytext_helper(file_name, pedantic, check_if_possible, fix_issues)
     return output
 
 
@@ -814,9 +828,8 @@ def _lint(file_name, actions, pedantic, debug):
         # Annotate with executable [tag].
         output_tmp = _annotate_output(output_tmp, action)
         dbg.dassert_isinstance(
-            output_tmp,
-            list,
-            msg="action=%s file_name=%s" % (action, file_name))
+            output_tmp, list, msg="action=%s file_name=%s" % (action, file_name)
+        )
         output.extend(output_tmp)
         if output_tmp:
             _LOG.info("\n%s", "\n".join(output_tmp))
@@ -830,36 +843,36 @@ def _lint(file_name, actions, pedantic, debug):
 # Actions and if they read / write files.
 # The order of this list implies the order in which they are executed.
 _VALID_ACTIONS_META = [
-    ("basic_hygiene", "w",
-        "Clean up (e.g., tabs, trailing spaces)."),
-    ("autoflake", "w",
-        "Removes unused imports and unused variables as reported by pyflakes."),
-    ("isort", "w",
-        "Sort Python import definitions alphabetically within logical sections."),
+    ("basic_hygiene", "w", "Clean up (e.g., tabs, trailing spaces)."),
+    (
+        "autoflake",
+        "w",
+        "Removes unused imports and unused variables as reported by pyflakes.",
+    ),
+    (
+        "isort",
+        "w",
+        "Sort Python import definitions alphabetically within logical sections.",
+    ),
     # Superseded by black.
-    #("yapf", "w",
+    # ("yapf", "w",
     #    "Formatter for Python code."),
-    ("black", "w",
-        "The uncompromising code formatter."),
-    ("flake8", "r",
-        "Tool For Style Guide Enforcement."),
-    ("pydocstyle", "r",
-        "Docstring style checker."),
+    ("black", "w", "The uncompromising code formatter."),
+    ("flake8", "r", "Tool For Style Guide Enforcement."),
+    ("pydocstyle", "r", "Docstring style checker."),
     # Not installable through conda.
-    #("pyment", "w",
+    # ("pyment", "w",
     #   "Create, update or convert docstring."),
-    ("pylint", "r",
-        "Check that module(s) satisfy a coding standard."),
-    ("check_jupytext", "r",
-        "Check that jupytext files exist and are compatible."),
-    ("fix_jupytext", "w",
-        "Fix problems with jupytext files."),
+    ("pylint", "r", "Check that module(s) satisfy a coding standard."),
+    ("check_jupytext", "r", "Check that jupytext files exist and are compatible."),
+    ("fix_jupytext", "w", "Fix problems with jupytext files."),
     # Superseded by "fix_jupytext".
-    #("ipynb_format", "w",
+    # ("ipynb_format", "w",
     #   "Format jupyter code using yapf."),
 ]
 
 _ALL_ACTIONS = list(zip(*_VALID_ACTIONS_META))[0]
+
 
 def _main(args):
     dbg.init_logger(args.log_level)
@@ -870,8 +883,11 @@ def _main(args):
         sys.exit(0)
     # Select files.
     file_names = _get_files(args)
-    _LOG.info("# Processing %s files:\n%s", len(file_names),
-              printing.space("\n".join(file_names)))
+    _LOG.info(
+        "# Processing %s files:\n%s",
+        len(file_names),
+        printing.space("\n".join(file_names)),
+    )
     if args.collect_only:
         _LOG.warning("Exiting as requested")
         sys.exit(0)
@@ -903,8 +919,12 @@ def _main(args):
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Run linter.
     num_steps = len(file_names) * len(actions)
-    _LOG.info("Num of files=%d, num of actions=%d -> num of steps=%d",
-              len(file_names), len(actions), num_steps)
+    _LOG.info(
+        "Num of files=%d, num of actions=%d -> num of steps=%d",
+        len(file_names),
+        len(actions),
+        num_steps,
+    )
     pedantic = args.pedantic
     num_threads = args.num_threads
     if num_threads == "serial":
@@ -917,10 +937,11 @@ def _main(args):
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
         from joblib import Parallel, delayed
-        output_tmp = Parallel(
-            n_jobs=num_threads,
-            verbose=50)(delayed(_lint)(file_name, actions, pedantic, args.debug)
-                        for file_name in file_names)
+
+        output_tmp = Parallel(n_jobs=num_threads, verbose=50)(
+            delayed(_lint)(file_name, actions, pedantic, args.debug)
+            for file_name in file_names
+        )
         output = list(itertools.chain.from_iterable(output_tmp))
     output.append("cmd line='%s'" % _get_command_line())
     # TODO(gp): Get timestamp.
@@ -941,8 +962,9 @@ def _main(args):
             num_lints += 1
     _LOG.info("num_lints=%d", num_lints)
     if num_lints != 0:
-        _LOG.info("You can quickfix the issues with\n> vim -c 'cfile %s'",
-                  args.linter_log)
+        _LOG.info(
+            "You can quickfix the issues with\n> vim -c 'cfile %s'", args.linter_log
+        )
     #
     if not args.no_cleanup:
         io_.delete_dir(_TMP_DIR)
@@ -953,99 +975,96 @@ def _main(args):
 
 def _parse():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     # Select files.
+    parser.add_argument("-f", "--files", nargs="+", type=str, help="Files to process")
     parser.add_argument(
-        "-f", "--files", nargs='+', type=str, help="Files to process")
-    parser.add_argument(
-        '-c',
-        '--current_git_files',
+        "-c",
+        "--current_git_files",
         action="store_true",
-        help="Select all files modified in the current git client")
+        help="Select all files modified in the current git client",
+    )
     parser.add_argument(
-        '-p',
-        '--previous_git_commit_files',
+        "-p",
+        "--previous_git_commit_files",
         nargs="?",
         type=int,
         const=1,
         default=None,
-        help="Select all files modified in previous 'n' user git commit")
+        help="Select all files modified in previous 'n' user git commit",
+    )
     parser.add_argument(
-        '-d',
-        '--dir_name',
+        "-d",
+        "--dir_name",
         action="store",
-        help="Select all files in a dir. 'GIT_ROOT' to select git root")
+        help="Select all files in a dir. 'GIT_ROOT' to select git root",
+    )
     # Select files based on type.
     parser.add_argument(
-        "--skip_py", action="store_true", help="Do not process python scripts")
+        "--skip_py", action="store_true", help="Do not process python scripts"
+    )
     parser.add_argument(
-        "--skip_ipynb",
-        action="store_true",
-        help="Do not process jupyter notebooks")
+        "--skip_ipynb", action="store_true", help="Do not process jupyter notebooks"
+    )
     parser.add_argument(
-        "--skip_jupytext",
-        action="store_true",
-        help="Do not process paired notebooks")
+        "--skip_jupytext", action="store_true", help="Do not process paired notebooks"
+    )
     parser.add_argument(
-        "--only_py", action="store_true", help="Process only python scripts")
+        "--only_py", action="store_true", help="Process only python scripts"
+    )
     parser.add_argument(
-        "--only_ipynb",
-        action="store_true",
-        help="Process only jupyter notebooks")
+        "--only_ipynb", action="store_true", help="Process only jupyter notebooks"
+    )
     parser.add_argument(
-        "--only_jupytext",
-        action="store_true",
-        help="Process only paired notebooks")
+        "--only_jupytext", action="store_true", help="Process only paired notebooks"
+    )
     # Debug.
     parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Generate one file per transformation")
+        "--debug", action="store_true", help="Generate one file per transformation"
+    )
     parser.add_argument(
-        "--no_cleanup", action="store_true", help="Do not clean up tmp files")
+        "--no_cleanup", action="store_true", help="Do not clean up tmp files"
+    )
     # Test.
     parser.add_argument(
         "--collect_only",
         action="store_true",
-        help="Print only the files to process and stop")
+        help="Print only the files to process and stop",
+    )
     parser.add_argument(
-        "--test_actions",
-        action="store_true",
-        help="Print the possible actions")
+        "--test_actions", action="store_true", help="Print the possible actions"
+    )
     # Select actions.
+    parser.add_argument("--action", action="append", help="Run a specific check")
+    parser.add_argument("--quick", action="store_true", help="Run all quick phases")
+    parser.add_argument("--all", action="store_true", help="Run all recommended phases")
     parser.add_argument(
-        "--action", action="append", help="Run a specific check")
-    parser.add_argument(
-        "--quick", action="store_true", help="Run all quick phases")
-    parser.add_argument(
-        "--all", action="store_true", help="Run all recommended phases")
-    parser.add_argument(
-        "--pedantic",
-        action="store_true",
-        help="Run some purely cosmetic lints")
+        "--pedantic", action="store_true", help="Run some purely cosmetic lints"
+    )
     parser.add_argument(
         "--num_threads",
         action="store",
         default="-1",
-        help=
-        "Number of threads to use ('serial' to run serially, -1 to use all CPUs)"
+        help="Number of threads to use ('serial' to run serially, -1 to use all CPUs)",
     )
     #
     parser.add_argument(
         "--linter_log",
         default="./linter_warnings.txt",
-        help="File storing the warnings")
+        help="File storing the warnings",
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     args = parser.parse_args()
     rc = _main(args)
     sys.exit(rc)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _parse()
