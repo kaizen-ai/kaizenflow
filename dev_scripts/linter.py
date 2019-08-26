@@ -431,7 +431,7 @@ def _black(file_name, pedantic, check_if_possible):
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
-    opts = ""
+    opts = "--line-length 82"
     cmd = executable + " %s %s" % (opts, file_name)
     _system(cmd, abort_on_error=True)
     return []
@@ -469,8 +469,7 @@ def _flake8(file_name, pedantic, check_if_possible):
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
-    # --max-line-length=88 is because of black using 88 chars max.
-    opts = "--exit-zero --doctests --max-line-length=88 -j 4"
+    opts = "--exit-zero --doctests --max-line-length=82 -j 4"
     disabled_checks = [
         # Because of black, disable
         #   "W503 line break before binary operator"
@@ -590,8 +589,11 @@ def _pylint(file_name, pedantic, check_if_possible):
     opts = ""
     # We ignore these errros as too picky.
     ignore = [
-        # [C0304(missing-final-newline), ] Final newline missing [pylint]
+        # [C0304(missing-final-newline), ] Final newline missing
         "C0304",
+        # [C0330(bad-continuation), ] Wrong hanging indentation before block (add 4 spaces).
+        # Black and pylint don't agree on the formatting.
+        "C0330",
         # [C0412(ungrouped-imports), ] Imports from package sklearn are not grouped
         "C0412",
         # [R1705(no-else-return), ] Unnecessary "elif" after "return"
@@ -731,7 +733,10 @@ class JupytextProcessor:
             not is_paired_jupytext_file(self.ipynb_file_name)
         ):
             # Missing py file associated to ipynb: need to create py script.
-            msg = "Notebook '%s' has no paired jupytext script" % self.ipynb_file_name
+            msg = (
+                "Notebook '%s' has no paired jupytext script"
+                % self.ipynb_file_name
+            )
             _LOG.warning(msg)
             output.append(msg)
             if self.fix_issues:
@@ -768,7 +773,9 @@ class JupytextProcessor:
                     # If the .ipynb is newer, update the .py file, call the linter.
                     pass
                 else:
-                    msg = "py file for '%s' is different: diff with:" % src_py_name
+                    msg = (
+                        "py file for '%s' is different: diff with:" % src_py_name
+                    )
                     msg += " vimdiff %s %s" % (src_py_name, dst_py_name)
                     _LOG.warning(msg)
                     output.append(msg)
@@ -864,7 +871,11 @@ _VALID_ACTIONS_META = [
     # ("pyment", "w",
     #   "Create, update or convert docstring."),
     ("pylint", "r", "Check that module(s) satisfy a coding standard."),
-    ("check_jupytext", "r", "Check that jupytext files exist and are compatible."),
+    (
+        "check_jupytext",
+        "r",
+        "Check that jupytext files exist and are compatible.",
+    ),
     ("fix_jupytext", "w", "Fix problems with jupytext files."),
     # Superseded by "fix_jupytext".
     # ("ipynb_format", "w",
@@ -963,7 +974,8 @@ def _main(args):
     _LOG.info("num_lints=%d", num_lints)
     if num_lints != 0:
         _LOG.info(
-            "You can quickfix the issues with\n> vim -c 'cfile %s'", args.linter_log
+            "You can quickfix the issues with\n> vim -c 'cfile %s'",
+            args.linter_log,
         )
     #
     if not args.no_cleanup:
@@ -978,7 +990,9 @@ def _parse():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Select files.
-    parser.add_argument("-f", "--files", nargs="+", type=str, help="Files to process")
+    parser.add_argument(
+        "-f", "--files", nargs="+", type=str, help="Files to process"
+    )
     parser.add_argument(
         "-c",
         "--current_git_files",
@@ -1005,10 +1019,14 @@ def _parse():
         "--skip_py", action="store_true", help="Do not process python scripts"
     )
     parser.add_argument(
-        "--skip_ipynb", action="store_true", help="Do not process jupyter notebooks"
+        "--skip_ipynb",
+        action="store_true",
+        help="Do not process jupyter notebooks",
     )
     parser.add_argument(
-        "--skip_jupytext", action="store_true", help="Do not process paired notebooks"
+        "--skip_jupytext",
+        action="store_true",
+        help="Do not process paired notebooks",
     )
     parser.add_argument(
         "--only_py", action="store_true", help="Process only python scripts"
@@ -1017,11 +1035,15 @@ def _parse():
         "--only_ipynb", action="store_true", help="Process only jupyter notebooks"
     )
     parser.add_argument(
-        "--only_jupytext", action="store_true", help="Process only paired notebooks"
+        "--only_jupytext",
+        action="store_true",
+        help="Process only paired notebooks",
     )
     # Debug.
     parser.add_argument(
-        "--debug", action="store_true", help="Generate one file per transformation"
+        "--debug",
+        action="store_true",
+        help="Generate one file per transformation",
     )
     parser.add_argument(
         "--no_cleanup", action="store_true", help="Do not clean up tmp files"
@@ -1037,8 +1059,12 @@ def _parse():
     )
     # Select actions.
     parser.add_argument("--action", action="append", help="Run a specific check")
-    parser.add_argument("--quick", action="store_true", help="Run all quick phases")
-    parser.add_argument("--all", action="store_true", help="Run all recommended phases")
+    parser.add_argument(
+        "--quick", action="store_true", help="Run all quick phases"
+    )
+    parser.add_argument(
+        "--all", action="store_true", help="Run all recommended phases"
+    )
     parser.add_argument(
         "--pedantic", action="store_true", help="Run some purely cosmetic lints"
     )

@@ -3,10 +3,10 @@ import os
 import pprint
 import sys
 
-#try:
+# try:
 #    import pandas as pd
 #    _HAS_PANDAS = True
-#except ImportError:
+# except ImportError:
 #    _HAS_PANDAS = False
 
 _LOG = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ def dfatal(message, assertion_type=None):
     """
     ret = ""
     message = str(message)
-    ret = "\n" + _frame(message, '#', 80)
+    ret = "\n" + _frame(message, "#", 80)
     if assertion_type is None:
         assertion_type = AssertionError
     raise assertion_type(ret)
@@ -75,7 +75,7 @@ def _to_msg(msg, *args):
             res = "Caught assertion while formatting message:\n'%s'" % str(e)
             _LOG.warning(res)
             res += "\n" + msg + " " + " ".join(map(str, args))
-        #res = "(" + res + ") "
+        # res = "(" + res + ") "
     return res
 
 
@@ -129,8 +129,9 @@ def dassert_lte(val1, val2, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_lgt(lower_bound, x, upper_bound, lower_bound_closed,
-                upper_bound_closed):
+def dassert_lgt(
+    lower_bound, x, upper_bound, lower_bound_closed, upper_bound_closed
+):
     if lower_bound_closed:
         dassert_lte(lower_bound, x)
     else:
@@ -184,8 +185,11 @@ def dassert_type_in(val1, val2, msg=None, *args):
 
 def dassert_isinstance(val1, val2, msg=None, *args):
     if not isinstance(val1, val2):
-        txt = "instance of '%s' is '%s' instead of '%s'" % (val1, type(val1),
-                                                            val2)
+        txt = "instance of '%s' is '%s' instead of '%s'" % (
+            val1,
+            type(val1),
+            val2,
+        )
         _dfatal(txt, msg, *args)
 
 
@@ -262,13 +266,13 @@ def dassert_eq_all(val1, val2, msg=None, *args):
     val2 = list(val2)
     is_equal = val1 == val2
     if not is_equal:
-        #mask = val1 != val2
+        # mask = val1 != val2
         txt = []
         txt.append("val1=%s\n%s" % (len(val1), val1))
         txt.append("val2=%s\n%s" % (len(val2), val2))
-        #txt += "\ndiff=%s" % mask.sum()
-        #txt += "\n%s" % val1[mask]
-        #txt += "\n%s" % val2[mask]
+        # txt += "\ndiff=%s" % mask.sum()
+        # txt += "\n%s" % val1[mask]
+        # txt += "\n%s" % val2[mask]
         _dfatal(txt, msg, *args)
 
 
@@ -306,7 +310,7 @@ def dassert_monotonic_index(obj):
 
 
 ## TODO(gp): -> dassert_timestamp
-#if _HAS_PANDAS:
+# if _HAS_PANDAS:
 #
 #    def assert_timestamp(ts, msg=None):
 #        """
@@ -329,7 +333,7 @@ def dassert_monotonic_index(obj):
 def is_running_in_ipynb():
     try:
         _ = get_ipython().config
-        #res = cfg['IPKernelApp']['parent_appname'] == 'ipython-notebook'
+        # res = cfg['IPKernelApp']['parent_appname'] == 'ipython-notebook'
         res = True
     except NameError:
         res = False
@@ -338,15 +342,18 @@ def is_running_in_ipynb():
 
 def reset_logger():
     from importlib import reload
+
     print("Resetting logger...")
     logging.shutdown()
     reload(logging)
 
 
-def init_logger(verb=logging.INFO,
-                use_exec_path=False,
-                log_filename=None,
-                force_verbose_format=False):
+def init_logger(
+    verb=logging.INFO,
+    use_exec_path=False,
+    log_filename=None,
+    force_verbose_format=False,
+):
     """
     - Send both stderr and stdout to logging.
     - Optionally tee the logs also to file.
@@ -365,11 +372,13 @@ def init_logger(verb=logging.INFO,
     # Set verbosity for all loggers.
     root_logger.setLevel(verb)
     eff_level = root_logger.getEffectiveLevel()
-    print("effective level= %s (%s)" % (eff_level,
-                                        logging.getLevelName(eff_level)))
-    #dassert_eq(root_logger.getEffectiveLevel(), verb)
-    for handler in root_logger.handlers:
-        handler.setLevel(verb)
+    print(
+        "effective level= %s (%s)" % (eff_level, logging.getLevelName(eff_level))
+    )
+    if False:
+        # dassert_eq(root_logger.getEffectiveLevel(), verb)
+        for handler in root_logger.handlers:
+            handler.setLevel(verb)
     # Exit to avoid to replicate the same output multiple times.
     if root_logger.handlers:
         print("WARNING: Logger already initialized: skipping")
@@ -381,22 +390,22 @@ def init_logger(verb=logging.INFO,
         print("WARNING: Running in Jupyter")
         # Make logging look like a normal print().
         log_format = "%(message)s"
-        datefmt = ''
+        datefmt = ""
     else:
         # TODO(gp): Print at much 15-20 chars of a function so that things are aligned
-        #log_format = "%(levelname)-5s: %(funcName)-15s: %(message)s"
+        # log_format = "%(levelname)-5s: %(funcName)-15s: %(message)s"
         log_format = "%(asctime)-5s: %(levelname)s: %(funcName)s: %(message)s"
-        datefmt = '%Y-%m-%d %I:%M:%S %p'
+        datefmt = "%Y-%m-%d %I:%M:%S %p"
     formatter = logging.Formatter(log_format, datefmt=datefmt)
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
     #
     # Find name of the log file.
     if use_exec_path and log_filename is None:
-        dassert_is(
-            log_filename, None, msg="Can't specify conflicting filenames")
+        dassert_is(log_filename, None, msg="Can't specify conflicting filenames")
         # Use the name of the executable.
         import inspect
+
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
         filename = module.__file__
@@ -417,7 +426,7 @@ def init_logger(verb=logging.INFO,
         #
         print("Saving log to file '%s'" % log_filename)
     #
-    #test_logger()
+    # test_logger()
 
 
 def set_logger_verb(verb, module_name=None):
@@ -432,8 +441,9 @@ def set_logger_verb(verb, module_name=None):
         assert 0, "ERROR: Logger not initialized"
     logger.setLevel(verb)
     eff_level = logger.getEffectiveLevel()
-    print("effective level= %s (%s)" % (eff_level,
-                                        logging.getLevelName(eff_level)))
+    print(
+        "effective level= %s (%s)" % (eff_level, logging.getLevelName(eff_level))
+    )
     dassert_eq(logger.getEffectiveLevel(), verb)
 
 
@@ -444,6 +454,19 @@ def get_logger_verb():
     return root_logger.getEffectiveLevel()
 
 
+def get_all_loggers():
+    loggers = [
+        logging.getLogger(name) for name in logging.root.manager.loggerDict
+    ]
+    return loggers
+
+
+def get_matching_loggers(module_name):
+    loggers = get_all_loggers()
+    sel_loggers = [logger for logger in loggers if module_name in str(logger)]
+    return sel_loggers
+
+
 # TODO(gp): Remove this.
 def init_logger2(verb=logging.INFO):
     # From https://stackoverflow.com/questions/14058453
@@ -452,7 +475,7 @@ def init_logger2(verb=logging.INFO):
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verb)
     log_format = "%(asctime)-15s %(funcName)-20s: %(levelname)-5s %(message)s"
-    formatter = logging.Formatter(log_format, datefmt='%Y-%m-%d %I:%M:%S %p')
+    formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %I:%M:%S %p")
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
@@ -462,14 +485,10 @@ def test_logger():
     _log = logging.getLogger(__name__)
     print("effective level=", _log.getEffectiveLevel())
     #
-    print("logging.DEBUG=", logging.DEBUG)
-    _log.debug("*working*")
+    _log.debug("DEBUG=%s", logging.DEBUG)
     #
-    print("logging.INFO=", logging.INFO)
-    _log.info("*working*")
+    _log.info("INFO=%s", logging.INFO)
     #
-    print("logging.WARNING=", logging.WARNING)
-    _log.warning("*working*")
+    _log.warning("WARNING=%s", logging.WARNING)
     #
-    print("logging.CRITICAL=", logging.CRITICAL)
-    _log.critical("*working*")
+    _log.critical("CRITICAL=%s", logging.CRITICAL)
