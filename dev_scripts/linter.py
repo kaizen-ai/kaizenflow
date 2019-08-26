@@ -48,6 +48,7 @@ E.g.,
 # TODO(gp): Python files should end with py
 # TODO(gp): All and only executable python files (i.e., with main) should have
 # #!/usr/bin/env python
+# TODO(gp): Add https://github.com/PyCQA/flake8-bugbear
 
 # TODO(gp): For files inside "test", disable:
 #   [C0103(invalid-name), Test_dassert_eq1] Class name "Test_dassert_eq1" doesn't conform to PascalCase naming style [pylint]
@@ -271,17 +272,18 @@ def _get_action_func(action):
     #        msg="Invalid function '%s' in '%s'" % (func_name, _THIS_MODULE))
     # return getattr(_THIS_MODULE, func_name)
     map_ = {
-        "basic_hygiene": _basic_hygiene,
-        "yapf": _yapf,
         "autoflake": _autoflake,
-        "isort": _isort,
-        "pyment": _pyment,
-        "fix_jupytext": _fix_jupytext,
-        "ipynb_format": _ipynb_format,
-        "pylint": _pylint,
+        "basic_hygiene": _basic_hygiene,
+        "black": _black,
         "check_jupytext": _check_jupytext,
+        "fix_jupytext": _fix_jupytext,
         "flake8": _flake8,
+        "ipynb_format": _ipynb_format,
+        "isort": _isort,
         "pydocstyle": _pydocstyle,
+        "pylint": _pylint,
+        "pyment": _pyment,
+        "yapf": _yapf,
     }
     return map_[action]
 
@@ -306,7 +308,7 @@ def _remove_not_possible_actions(actions):
 
 def _actions_to_string(actions):
     actions_as_str = [
-        "%16s: %s" % (a, "Yes" if a in actions else "-") for a in _VALID_ACTIONS
+        "%16s: %s" % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
     ]
     return "\n".join(actions_as_str)
 
@@ -316,7 +318,7 @@ def _test_actions():
     # Check all the actions.
     num_not_poss = 0
     possible_actions = []
-    for action in _VALID_ACTIONS:
+    for action in _ALL_ACTIONS:
         func = _get_action_func(action)
         is_possible = func(
             file_name=None, pedantic=False, check_if_possible=True)
@@ -416,6 +418,22 @@ def _yapf(file_name, pedantic, check_if_possible):
     return []
 
 
+def _black(file_name, pedantic, check_if_possible):
+    _ = pedantic
+    executable = "black"
+    if check_if_possible:
+        return _check_exec(executable)
+    #
+    dbg.dassert(file_name)
+    if not is_py_file(file_name):
+        _LOG.debug("Skipping file_name='%s'", file_name)
+        return []
+    opts = ""
+    cmd = executable + " %s %s" % (opts, file_name)
+    _system(cmd, abort_on_error=True)
+    return []
+
+
 def _isort(file_name, pedantic, check_if_possible):
     _ = pedantic
     executable = "isort"
@@ -448,7 +466,8 @@ def _flake8(file_name, pedantic, check_if_possible):
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
-    opts = "--exit-zero --doctests --max-line-length=80 -j 4"
+    # --max-line-length=88 is because of black using 88 chars max.
+    opts = "--exit-zero --doctests --max-line-length=88 -j 4"
     # E265 block comment should start with '# '
     opts += " --ignore=E265"
     cmd = executable + " %s %s" % (opts, file_name)
@@ -809,36 +828,38 @@ def _lint(file_name, actions, pedantic, debug):
 # #############################################################################
 
 # Actions and if they read / write files.
+# The order of this list implies the order in which they are executed.
 _VALID_ACTIONS_META = [
-    ("basic_hygiene", "w"),
-    ("yapf", "w"),
-    ("autoflake", "w"),
-    ("isort", "w"),
-    ("pyment", "w"),
-    ("fix_jupytext", "w"),
-    ("ipynb_format", "w"),
-    #
-    ("pylint", "r"),
-    ("check_jupytext", "r"),
-    ("flake8", "r"),
-    ("pydocstyle", "r"),
+    ("basic_hygiene", "w",
+        "Clean up (e.g., tabs, trailing spaces)."),
+    ("autoflake", "w",
+        "Removes unused imports and unused variables as reported by pyflakes."),
+    ("isort", "w",
+        "Sort Python import definitions alphabetically within logical sections."),
+    # Superseded by black.
+    #("yapf", "w",
+    #    "Formatter for Python code."),
+    ("black", "w",
+        "The uncompromising code formatter."),
+    ("flake8", "r",
+        "Tool For Style Guide Enforcement."),
+    ("pydocstyle", "r",
+        "Docstring style checker."),
+    # Not installable through conda.
+    #("pyment", "w",
+    #   "Create, update or convert docstring."),
+    ("pylint", "r",
+        "Check that module(s) satisfy a coding standard."),
+    ("check_jupytext", "r",
+        "Check that jupytext files exist and are compatible."),
+    ("fix_jupytext", "w",
+        "Fix problems with jupytext files."),
+    # Superseded by "fix_jupytext".
+    #("ipynb_format", "w",
+    #   "Format jupyter code using yapf."),
 ]
 
-_VALID_ACTIONS = list(zip(*_VALID_ACTIONS_META))[0]
-
-_ALL_ACTIONS = [
-    "basic_hygiene",
-    "autoflake",
-    "isort",
-    "yapf",
-    # Disabled because of "import configparser" error.
-    #"flake8",
-    "pydocstyle",
-    "pylint",
-    "ipynb_format",
-    "fix_jupytext",
-]
-
+_ALL_ACTIONS = list(zip(*_VALID_ACTIONS_META))[0]
 
 def _main(args):
     dbg.init_logger(args.log_level)
@@ -865,11 +886,11 @@ def _main(args):
     # Validate actions.
     actions = set(actions)
     for action in actions:
-        if action not in _VALID_ACTIONS:
+        if action not in _ALL_ACTIONS:
             raise ValueError("Invalid action '%s'" % action)
-    # Reorder actions according to _VALID_ACTIONS.
+    # Reorder actions according to _ALL_ACTIONS.
     actions_tmp = []
-    for action in _VALID_ACTIONS:
+    for action in _ALL_ACTIONS:
         if action in actions:
             actions_tmp.append(action)
     actions = actions_tmp
