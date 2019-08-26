@@ -8,7 +8,7 @@ import types
 
 import numpy as np
 import pandas as pd
-import tqdm
+from tqdm.auto import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -16,13 +16,77 @@ import helpers.printing as pri
 _LOG = logging.getLogger(__name__)
 
 
-def df_rolling_apply(df, window, func, convert_to_df=True, progress_bar=False):
+def _build_empty_df(metadata):
+    """
+    Build an empty dataframe using the data in `metadata`, which is populated
+    in the previous calls of the rolling function.
+    This is used to generate missing data when applying the rolling function.
+    """
+    cols = metadata["cols"]
+    dbg.dassert_is_not(cols, None)
+    idxs = metadata["idxs"]
+    dbg.dassert_is_not(idxs, None)
+    if metadata["is_series"]:
+        empty_df = pd.DataFrame([[np.nan] * len(cols)], columns=cols)
+    else:
+        empty_df = pd.DataFrame(
+            [[np.nan] * len(cols)] * len(idxs), index=idxs, columns=cols
+        )
+    return empty_df
+
+
+def _loop(i, df, func, window, metadata, abort_on_error):
+    """
+    Apply `func` to a slice of `df` given by `i` and `window`.
+    """
+    # Extract the window.
+    lower_bound = i - window
+    upper_bound = i
+    _LOG.debug(pri.frame("slice=[%d:%d]"), lower_bound, upper_bound)
+    window_df = df.iloc[lower_bound:upper_bound, :]
+    ts = window_df.index[-1]
+    _LOG.debug("ts=%s", ts)
+    # Apply function.
+    # is_class = inspect.isclass(func)
+    is_class = not isinstance(func, types.FunctionType)
+    try:
+        if is_class:
+            df_tmp = func(window_df, ts)
+        else:
+            df_tmp = func(window_df)
+    except RuntimeError as e:
+        _LOG.error(e)
+        if abort_on_error:
+            raise RuntimeError(e)
+        else:
+            df_tmp = _build_empty_df(metadata)
+    # Make sure result is well-formed.
+    if isinstance(df_tmp, pd.Series):
+        metadata["is_series"] = True
+        df_tmp = pd.DataFrame(df_tmp).T
+    if metadata["idxs"] is None:
+        dbg.dassert_is(metadata["cols"], None)
+        metadata["idxs"] = df_tmp.index
+        metadata["cols"] = df_tmp.columns
+    else:
+        if metadata["is_series"]:
+            # TODO(gp): The equivalent check for multiindex is more complicated.
+            dbg.dassert_eq_all(df_tmp.index, metadata["idxs"])
+            dbg.dassert_eq_all(df_tmp.columns, metadata["cols"])
+    # Accumulate results.
+    _LOG.debug("df_tmp=\n%s", df_tmp)
+    return ts, df_tmp, metadata
+
+
+def df_rolling_apply(
+    df, window, func, convert_to_df=True, progress_bar=False, abort_on_error=True
+):
     """
     Apply function `func` to a rolling window over `df` with `window` columns.
     The implementation from https://stackoverflow.com/questions/38878917
-    doesn't scale both in time and memory since it makes copies of the windowed df.
-    This implementations uses views and apply `func` directly without making
-    copies.
+    doesn't scale both in time and memory since it makes copies of the windowed
+    df. This implementations uses views and apply `func` directly without
+    making copies.
 
     :param df: dataframe to process
     :param window: number of rows in each window
@@ -39,54 +103,24 @@ def df_rolling_apply(df, window, func, convert_to_df=True, progress_bar=False):
     dbg.dassert_lte(1, window)
     dbg.dassert_lte(window, df.shape[0])
     idx_to_df = collections.OrderedDict()
-    #is_class = inspect.isclass(func)
-    is_class = not isinstance(func, types.FunctionType)
     # Store the columns of the results.
-    idxs = cols = None
+    metadata = {"idxs": None, "cols": None, "is_series": False}
     # Roll the window over the df.
     # Note that numpy / pandas slicing [a:b] corresponds to python slicing
     # [a:b+1].
-    is_series = False
     iter_ = range(window, df.shape[0] + 1)
     if progress_bar:
-        iter_ = tqdm.tqdm(iter_)
+        iter_ = tqdm(iter_)
     for i in iter_:
-        # Extract the window.
-        lower_bound = i - window
-        upper_bound = i
-        _LOG.debug(pri.frame("slice=[%d:%d]"), lower_bound, upper_bound)
-        window_df = df.iloc[lower_bound:upper_bound, :]
-        ts = window_df.index[-1]
-        _LOG.debug("ts=%s", ts)
-        # Apply function.
-        if is_class:
-            df_tmp = func(window_df, ts)
-        else:
-            df_tmp = func(window_df)
-        # Make sure result is well-formed.
-        if isinstance(df_tmp, pd.Series):
-            is_series = True
-            df_tmp = pd.DataFrame(df_tmp).T
-        if cols is None:
-            idxs = df_tmp.index
-            cols = df_tmp.columns
-        else:
-            if is_series:
-                # TODO(gp): The equivalent check for multiindex is more complicated.
-                dbg.dassert_eq_all(df_tmp.index, idxs)
-                dbg.dassert_eq_all(df_tmp.columns, cols)
-        # Accumulate results.
-        _LOG.debug("df_tmp=\n%s", df_tmp)
+        ts, df_tmp, metadata = _loop(
+            i, df, func, window, metadata, abort_on_error
+        )
         idx_to_df[ts] = df_tmp
     # Add a number of empty rows to handle when there were not enough rows to
     # build a window.
     idx_to_df_all = collections.OrderedDict()
-    if is_series:
-        empty_df = pd.DataFrame([[np.nan] * len(cols)], columns=cols)
-    else:
-        empty_df = pd.DataFrame(
-            [[np.nan] * len(cols)] * len(idxs), index=idxs, columns=cols)
     #
+    empty_df = _build_empty_df(metadata)
     for j in range(0, window - 1):
         ts = df.index[j]
         idx_to_df_all[ts] = empty_df
@@ -95,7 +129,7 @@ def df_rolling_apply(df, window, func, convert_to_df=True, progress_bar=False):
     # Unfortunately the code paths for concatenating pd.Series and multiindex
     # pd.DataFrame are difficult to unify.
     if convert_to_df:
-        if is_series:
+        if metadata["is_series"]:
             # Assemble result into a df.
             res_df = pd.concat(idx_to_df_all.values())
             idx = idx_to_df_all.keys()

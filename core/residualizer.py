@@ -196,45 +196,8 @@ class PcaFactorComputer(FactorComputer):
         eigvec_df = pd.DataFrame(eigvec, index=corr_df.columns)
         _LOG.debug("eigvec_df=%s", eigvec_df)
         if self.do_stabilize_eig:
-            if self._ts:
-                # Get previous ts.
-                prev_ts = self._ts[-1]
-                prev_eigvec_df = self._eigvec_df[prev_ts]
-                # Check if they are stable.
-                num_fails = self.are_eigenvectors_stable(
-                    prev_eigvec_df, eigvec_df
-                )
-                if num_fails > 0:
-                    _LOG.debug(
-                        "Eigenvalues not stable: prev_ts=%s"
-                        "\nprev_eigvec_df=\n%s"
-                        "\neigvec_df=\n%s"
-                        "\nnum_fails=%s",
-                        prev_ts,
-                        prev_eigvec_df,
-                        eigvec_df,
-                        num_fails,
-                    )
-                    col_map, _ = self.stabilize_eigvec(prev_eigvec_df, eigvec_df)
-                    shuffled_eigval_df, shuffled_eigvec_df = self.shuffle_eigval_eigvec(
-                        eigval_df, eigvec_df, col_map
-                    )
-                    # Check.
-                    # TODO(gp): Use Frobenius norm compared to identity.
-                    if False:
-                        num_fails = self.are_eigenvectors_stable(
-                            prev_eigvec_df, shuffled_eigvec_df
-                        )
-                        dbg.dassert_eq(
-                            num_fails,
-                            0,
-                            "prev_eigvec_df=\n%s\n" "shuffled_eigvec_df=\n%s",
-                            prev_eigvec_df,
-                            shuffled_eigvec_df,
-                        )
-                    eigval_df = shuffled_eigval_df
-                    eigvec_df = shuffled_eigvec_df
-        # Store.
+            eigval_df, eigvec_df = self._stabilize_eig(eigval_df, eigvec_df)
+        # Store results.
         self._ts.append(ts)
         #
         _LOG.debug("eigval_df=%s", eigval_df)
@@ -249,6 +212,46 @@ class PcaFactorComputer(FactorComputer):
         res = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
         dbg.dassert_isinstance(res, pd.Series)
         return res
+
+    def _stabilize_eig(self, eigval_df, eigvec_df):
+        if not self._ts:
+            return eigval_df, eigvec_df
+        # Get previous ts.
+        prev_ts = self._ts[-1]
+        prev_eigvec_df = self._eigvec_df[prev_ts]
+        # Check if they are stable.
+        num_fails = self.are_eigenvectors_stable(prev_eigvec_df, eigvec_df)
+        if num_fails > 0:
+            _LOG.debug(
+                "Eigenvalues not stable: prev_ts=%s"
+                "\nprev_eigvec_df=\n%s"
+                "\neigvec_df=\n%s"
+                "\nnum_fails=%s",
+                prev_ts,
+                prev_eigvec_df,
+                eigvec_df,
+                num_fails,
+            )
+            col_map, _ = self._build_stable_eig_map(prev_eigvec_df, eigvec_df)
+            shuffled_eigval_df, shuffled_eigvec_df = self.shuffle_eigval_eigvec(
+                eigval_df, eigvec_df, col_map
+            )
+            # Check.
+            # TODO(gp): Use Frobenius norm compared to identity.
+            if False:
+                num_fails = self.are_eigenvectors_stable(
+                    prev_eigvec_df, shuffled_eigvec_df
+                )
+                dbg.dassert_eq(
+                    num_fails,
+                    0,
+                    "prev_eigvec_df=\n%s\n" "shuffled_eigvec_df=\n%s",
+                    prev_eigvec_df,
+                    shuffled_eigvec_df,
+                )
+            eigval_df = shuffled_eigval_df
+            eigvec_df = shuffled_eigvec_df
+        return eigval_df, eigvec_df
 
     @staticmethod
     def sort_eigval(eigval, eigvec):
@@ -285,7 +288,7 @@ class PcaFactorComputer(FactorComputer):
         return True
 
     @staticmethod
-    def stabilize_eigvec(prev_eigvec_df, eigvec_df):
+    def _build_stable_eig_map(prev_eigvec_df, eigvec_df):
         """
         Try to find a permutation and sign changes of the columns in
         `prev_eigvec_df` to ensure continuity with `eigvec_df`.
@@ -321,9 +324,9 @@ class PcaFactorComputer(FactorComputer):
         return col_map, distances
 
     @staticmethod
-    def stabilize_eigvec2(prev_eigvec_df, eigvec_df):
+    def _build_stable_eig_map2(prev_eigvec_df, eigvec_df):
         """
-        Different implementation of `stabilize_eigvec()`.
+        Different implementation of `_build_stable_eig_map()`.
         """
 
         def eigvec_coeff(v1, v2, thr=1e-3):
@@ -357,7 +360,7 @@ class PcaFactorComputer(FactorComputer):
                     col_map[i] = (coeff, j)
         # Sanity check.
         PcaFactorComputer.check_stabilized_eigvec(col_map, num_cols)
-        # Add dummy var to keep the same interface of stabilize_eigvec.
+        # Add dummy var to keep the same interface of _build_stable_eig_map.
         dummy = None
         return col_map, dummy
 
@@ -365,7 +368,7 @@ class PcaFactorComputer(FactorComputer):
     def shuffle_eigval_eigvec(eigval_df, eigvec_df, col_map):
         """
         Transform the eigenvalues / eigenvectors according to a col_map
-        returned by `stabilize_eigvec`.
+        returned by `_build_stable_eig_map()`.
 
         :return: updated eigvalues and eigenvectors
         """

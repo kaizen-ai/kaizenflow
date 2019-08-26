@@ -390,13 +390,13 @@ def init_logger(
         print("WARNING: Running in Jupyter")
         # Make logging look like a normal print().
         log_format = "%(message)s"
-        datefmt = ""
+        date_fmt = ""
     else:
         # TODO(gp): Print at much 15-20 chars of a function so that things are aligned
         # log_format = "%(levelname)-5s: %(funcName)-15s: %(message)s"
         log_format = "%(asctime)-5s: %(levelname)s: %(funcName)s: %(message)s"
-        datefmt = "%Y-%m-%d %I:%M:%S %p"
-    formatter = logging.Formatter(log_format, datefmt=datefmt)
+        date_fmt = "%Y-%m-%d %I:%M:%S %p"
+    formatter = logging.Formatter(log_format, datefmt=date_fmt)
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
     #

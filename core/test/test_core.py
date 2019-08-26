@@ -19,14 +19,13 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestDfRollingApply(ut.TestCase):
-
     def test1(self):
         """
         Test with function returning a pd.Series.
         """
         np.random.seed(10)
         func = np.mean
-        df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=['A', 'B'])
+        df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
         window = 5
         df_act = pde.df_rolling_apply(df, window, func)
         #
@@ -39,7 +38,7 @@ class TestDfRollingApply(ut.TestCase):
         """
         np.random.seed(10)
         func = lambda x: pd.DataFrame(np.mean(x))
-        df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=['A', 'B'])
+        df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
         window = 5
         df_act = pde.df_rolling_apply(df, window, func)
         #
@@ -55,7 +54,7 @@ class TestDfRollingApply(ut.TestCase):
         """
         np.random.seed(10)
         func = lambda x: pd.DataFrame([np.mean(x), np.sum(x)])
-        df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=['A', 'B'])
+        df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
         window = 5
         df_act = pde.df_rolling_apply(df, window, func)
         self.check_string(df_act.to_string())
@@ -65,14 +64,15 @@ class TestDfRollingApply(ut.TestCase):
 
 
 class TestPcaFactorComputer1(ut.TestCase):
-
     @staticmethod
     def get_ex1():
-        df_str = pri.dedent("""
+        df_str = pri.dedent(
+            """
         ,0,1,2
         0,0.68637724274453,0.34344509725064354,0.6410395820984168
         1,-0.7208890365507423,0.205021903910637,0.6620309780499695
-        2,-0.09594413803541411,0.916521404055221,-0.3883081743735094""")
+        2,-0.09594413803541411,0.916521404055221,-0.3883081743735094"""
+        )
         df_str = io.StringIO(df_str)
         prev_eigvec_df = pd.read_csv(df_str, index_col=0)
         prev_eigvec_df.index = prev_eigvec_df.index.map(int)
@@ -94,41 +94,47 @@ class TestPcaFactorComputer1(ut.TestCase):
 
     def _test_stabilize_eigenvec_helper(self, data_func, eval_func):
         # Get data.
-        prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df = \
-            data_func()
+        prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df = data_func()
         # Check if they are stable.
         num_fails = res.PcaFactorComputer.are_eigenvectors_stable(
-            prev_eigvec_df, eigvec_df)
+            prev_eigvec_df, eigvec_df
+        )
         self.assertEqual(num_fails, 3)
         # Transform.
         col_map, _ = eval_func(prev_eigvec_df, eigvec_df)
         #
-        shuffled_eigval_df, shuffled_eigvec_df = \
-                res.PcaFactorComputer.shuffle_eigval_eigvec(
-                        eigval_df, eigvec_df, col_map)
+        shuffled_eigval_df, shuffled_eigvec_df = res.PcaFactorComputer.shuffle_eigval_eigvec(
+            eigval_df, eigvec_df, col_map
+        )
         # Check.
-        txt = ("prev_eigval_df=\n%s\n" % prev_eigval_df +
-               "prev_eigvec_df=\n%s\n" % prev_eigvec_df +
-               "eigval_df=\n%s\n" % eigval_df + "eigvec_df=\n%s\n" % eigvec_df +
-               "shuffled_eigval_df=\n%s\n" % shuffled_eigval_df +
-               "shuffled_eigvec_df=\n%s\n" % shuffled_eigvec_df)
+        txt = (
+            "prev_eigval_df=\n%s\n" % prev_eigval_df
+            + "prev_eigvec_df=\n%s\n" % prev_eigvec_df
+            + "eigval_df=\n%s\n" % eigval_df
+            + "eigvec_df=\n%s\n" % eigvec_df
+            + "shuffled_eigval_df=\n%s\n" % shuffled_eigval_df
+            + "shuffled_eigvec_df=\n%s\n" % shuffled_eigvec_df
+        )
         self.check_string(txt)
         # Check stability.
         num_fails = res.PcaFactorComputer.are_eigenvectors_stable(
-            prev_eigvec_df, shuffled_eigvec_df)
+            prev_eigvec_df, shuffled_eigvec_df
+        )
         self.assertEqual(num_fails, 0)
         self.assertTrue(
             res.PcaFactorComputer.are_eigenvalues_stable(
-                prev_eigval_df, shuffled_eigval_df))
+                prev_eigval_df, shuffled_eigval_df
+            )
+        )
 
     def test_stabilize_eigenvec1(self):
         data_func = self.get_ex1
-        eval_func = res.PcaFactorComputer.stabilize_eigvec
+        eval_func = res.PcaFactorComputer._build_stable_eig_map
         self._test_stabilize_eigenvec_helper(data_func, eval_func)
 
     def test_stabilize_eigenvec2(self):
         data_func = self.get_ex1
-        eval_func = res.PcaFactorComputer.stabilize_eigvec2
+        eval_func = res.PcaFactorComputer._build_stable_eig_map2
         self._test_stabilize_eigenvec_helper(data_func, eval_func)
 
     # ##########################################################################
@@ -137,42 +143,58 @@ class TestPcaFactorComputer1(ut.TestCase):
         # Get data.
         eigval_df, _, eigvec_df, _ = self.get_ex1()
         # Evaluate.
-        out = res.PcaFactorComputer.linearize_eigval_eigvec(
-            eigval_df, eigvec_df)
+        out = res.PcaFactorComputer.linearize_eigval_eigvec(eigval_df, eigvec_df)
         _LOG.debug("out=\n%s", out)
         # Check.
-        txt = ("eigval_df=\n%s\n" % eigval_df + "eigvec_df=\n%s\n" % eigvec_df +
-               "out=\n%s" % out)
+        txt = (
+            "eigval_df=\n%s\n" % eigval_df
+            + "eigvec_df=\n%s\n" % eigvec_df
+            + "out=\n%s" % out
+        )
         self.check_string(txt)
 
     # ##########################################################################
 
     def _test_sort_eigval_helper(self, eigval, eigvec, are_eigval_sorted_exp):
         # pylint: disable=W0641
-        are_eigval_sorted, eigval_tmp, eigvec_tmp = \
-            res.PcaFactorComputer.sort_eigval(eigval, eigvec)
+        are_eigval_sorted, eigval_tmp, eigvec_tmp = res.PcaFactorComputer.sort_eigval(
+            eigval, eigvec
+        )
         self.assertEqual(are_eigval_sorted, are_eigval_sorted_exp)
-        self.assertSequenceEqual(eigval_tmp.tolist(),
-                                 sorted(eigval_tmp, reverse=True))
+        self.assertSequenceEqual(
+            eigval_tmp.tolist(), sorted(eigval_tmp, reverse=True)
+        )
         vars_as_str = [
-            "eigval", "eigvec", "are_eigval_sorted", "eigval_tmp", "eigvec_tmp"
+            "eigval",
+            "eigvec",
+            "are_eigval_sorted",
+            "eigval_tmp",
+            "eigvec_tmp",
         ]
         txt = pri.vars_to_debug_string(vars_as_str, locals())
         self.check_string(txt)
 
     def test_sort_eigval1(self):
         eigval = np.array([1.30610138, 0.99251131, 0.70138731])
-        eigvec = np.array([[-0.55546523, 0.62034663, 0.55374041],
-                           [0.70270302, -0.00586218, 0.71145914],
-                           [-0.4445974, -0.78430587, 0.43266321]])
+        eigvec = np.array(
+            [
+                [-0.55546523, 0.62034663, 0.55374041],
+                [0.70270302, -0.00586218, 0.71145914],
+                [-0.4445974, -0.78430587, 0.43266321],
+            ]
+        )
         are_eigval_sorted_exp = True
         self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
 
     def test_sort_eigval2(self):
         eigval = np.array([0.99251131, 0.70138731, 1.30610138])
-        eigvec = np.array([[-0.55546523, 0.62034663, 0.55374041],
-                           [0.70270302, -0.00586218, 0.71145914],
-                           [-0.4445974, -0.78430587, 0.43266321]])
+        eigvec = np.array(
+            [
+                [-0.55546523, 0.62034663, 0.55374041],
+                [0.70270302, -0.00586218, 0.71145914],
+                [-0.4445974, -0.78430587, 0.43266321],
+            ]
+        )
         are_eigval_sorted_exp = False
         self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
 
@@ -181,7 +203,6 @@ class TestPcaFactorComputer1(ut.TestCase):
 
 
 class TestPcaFactorComputer2(ut.TestCase):
-
     @staticmethod
     def _get_data(num_samples, report_stats):
         # The desired covariance matrix.
@@ -244,10 +265,12 @@ class TestPcaFactorComputer2(ut.TestCase):
         nan_mode_in_data = "drop"
         nan_mode_in_corr = "fill_with_zero"
         sort_eigvals = True
-        comp = res.PcaFactorComputer(nan_mode_in_data, nan_mode_in_corr,
-                                     sort_eigvals, stabilize_eig)
+        comp = res.PcaFactorComputer(
+            nan_mode_in_data, nan_mode_in_corr, sort_eigvals, stabilize_eig
+        )
         df_res = pde.df_rolling_apply(
-            result["y"], window, comp, progress_bar=True)
+            result["y"], window, comp, progress_bar=True
+        )
         if report_stats:
             comp.plot_over_time(df_res, num_pcs_to_plot=-1)
         return comp, df_res
@@ -265,8 +288,9 @@ class TestPcaFactorComputer2(ut.TestCase):
         report_stats = False
         stabilize_eig = False
         window = 50
-        comp, df_res = self._helper(num_samples, report_stats, stabilize_eig,
-                                    window)
+        comp, df_res = self._helper(
+            num_samples, report_stats, stabilize_eig, window
+        )
         self._check(comp, df_res)
 
     def test2(self):
@@ -274,6 +298,7 @@ class TestPcaFactorComputer2(ut.TestCase):
         report_stats = False
         stabilize_eig = True
         window = 50
-        comp, df_res = self._helper(num_samples, report_stats, stabilize_eig,
-                                    window)
+        comp, df_res = self._helper(
+            num_samples, report_stats, stabilize_eig, window
+        )
         self._check(comp, df_res)
