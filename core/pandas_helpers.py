@@ -15,6 +15,34 @@ import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
+
+# ##############################################################################
+
+
+def resample_index(index, time=None, **kwargs):
+    """
+    Resample `index` with options compatible with pd.date_range().
+    Implementation inspired by https://stackoverflow.com/questions/37853623
+
+    :param index: The daily-frequency index to resample as pd.DatetimeIndex
+    :param time: (hour, time) tuple to align the sampling
+    :param **kwargs: parameters (e.g., freq) passed to pd.date_range()
+
+    :return: The resampled index. Use df.loc[resampled_index] to sample.
+    """
+    dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    _LOG.debug("index=%s", index)
+    start_date = index.min()
+    if time is not None:
+        start_date = start_date.replace(hour=time[0], minute=time[1])
+    end_date = index.max() + pd.DateOffset(nanoseconds=1)
+    _LOG.debug("start_date=%s end_date=%s", start_date, end_date)
+    resampled_index = pd.date_range(start_date, end_date, **kwargs)[:-1]
+    _LOG.debug("resampled_index=%s", resampled_index)
+    index = resampled_index.intersection(index)
+    return index
+
+
 # ##############################################################################
 
 
@@ -41,7 +69,12 @@ def _loop(i, df, func, window, metadata, abort_on_error):
     """
     Apply `func` to a slice of `df` given by `i` and `window`.
     """
+    # Note that numpy / pandas slicing [a:b] corresponds to python slicing
+    # [a:b+1].
     # Extract the window.
+    dbg.dassert_lte(0, i)
+    dbg.dassert_lte(i, df.shape[0])
+    dbg.dassert_lt(0, window)
     lower_bound = i - window
     upper_bound = i
     _LOG.debug(pri.frame("slice=[%d:%d]"), lower_bound, upper_bound)
@@ -147,30 +180,3 @@ def df_rolling_apply(
     else:
         res = idx_to_df_all
     return res
-
-
-# ##############################################################################
-
-
-def resample_index(index, time=None, **kwargs):
-    """
-    Resample `index` with options compatible with pd.date_range().
-    Implementation inspired by https://stackoverflow.com/questions/37853623
-
-    :param index: The daily-frequency index to resample as pd.DatetimeIndex
-    :param time: (hour, time) tuple to align the sampling
-    :param **kwargs: parameters (e.g., freq) passed to pd.date_range()
-
-    :return: The resampled index. Use df.loc[resampled_index] to sample.
-    """
-    dbg.dassert_isinstance(index, pd.DatetimeIndex)
-    _LOG.debug("index=%s", index)
-    start_date = index.min()
-    if time is not None:
-        start_date = start_date.replace(hour=time[0], minute=time[1])
-    end_date = index.max() + pd.DateOffset(nanoseconds=1)
-    _LOG.debug("start_date=%s end_date=%s", start_date, end_date)
-    resampled_index = pd.date_range(start_date, end_date, **kwargs)[:-1]
-    _LOG.debug("resampled_index=%s", resampled_index)
-    index = resampled_index.intersection(index)
-    return index

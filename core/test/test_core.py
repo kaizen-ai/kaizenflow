@@ -14,6 +14,25 @@ import helpers.unit_test as ut
 import utilities.core.residualizer as res
 
 _LOG = logging.getLogger(__name__)
+# #############################################################################
+
+
+class TestResampleIndex1(ut.TestCase):
+    def test1(self):
+        index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
+        df = pd.DataFrame(np.random.rand(len(index), 3), index=index)
+        txt = []
+        txt.extend(["df.head()=", df.head()])
+        txt.extend(["df.tail()=", df.tail()])
+        resampled_index = pde.resample_index(df.index, time=(10, 30), freq="D")
+        # Normalize since the format seems to be changing on different machines.
+        txt_tmp = str(resampled_index).replace("\n", "").replace(" ", "")
+        txt.extend(["resampled_index=", txt_tmp])
+        result = df.loc[resampled_index]
+        txt.extend(["result=", str(result)])
+        txt = "\n".join(map(str, txt))
+        self.check_string(txt)
+
 
 # #############################################################################
 
@@ -23,9 +42,10 @@ class TestDfRollingApply(ut.TestCase):
         """
         Test with function returning a pd.Series.
         """
-        func = np.mean
         df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
+        #
         window = 5
+        func = np.mean
         df_act = pde.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
@@ -35,9 +55,10 @@ class TestDfRollingApply(ut.TestCase):
         """
         Test with function returning a pd.DataFrame.
         """
-        func = lambda x: pd.DataFrame(np.mean(x))
         df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
+        #
         window = 5
+        func = lambda x: pd.DataFrame(np.mean(x))
         df_act = pde.df_rolling_apply(df, window, func)
         #
         func = np.mean
@@ -50,29 +71,12 @@ class TestDfRollingApply(ut.TestCase):
         """
         Test with function returning a pd.DataFrame with multiple lines.
         """
-        func = lambda x: pd.DataFrame([np.mean(x), np.sum(x)])
         df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
+        #
         window = 5
+        func = lambda x: pd.DataFrame([np.mean(x), np.sum(x)])
         df_act = pde.df_rolling_apply(df, window, func)
         self.check_string(df_act.to_string())
-
-
-# #############################################################################
-
-
-class TestResampleIndex1(ut.TestCase):
-    def test1(self):
-        index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
-        df = pd.DataFrame(np.random.rand(len(index), 3), index=index)
-        txt = []
-        txt.extend(["df.head()=", df.head()])
-        txt.extend(["df.tail()=", df.tail()])
-        resampled_index = pde.resample_index(df.index, time=(10, 30), freq="D")
-        txt.extend(["resampled_index=", str(resampled_index)])
-        result = df.loc[resampled_index]
-        txt.extend(["result=", str(result)])
-        txt = "\n".join(map(str, txt))
-        self.check_string(txt)
 
 
 # #############################################################################

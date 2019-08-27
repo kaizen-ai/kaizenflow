@@ -8,12 +8,12 @@ import helpers.dbg as dbg
 
 
 class Colors:
-    PURPLE = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    NONE = '\033[0m'
+    PURPLE = "\033[95m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    NONE = "\033[0m"
 
 
 INFO = Colors.BLUE + "INFO: " + Colors.NONE
@@ -69,8 +69,12 @@ def frame(message, char1=None, num_chars=None, char2=None, thickness=1):
     dbg.dassert_eq(len(char2), 1)
     dbg.dassert_lte(1, num_chars)
     # Build the return value.
-    ret = ((line(char1, num_chars) + "\n") * thickness + message + "\n" +
-           (line(char2, num_chars) + "\n") * thickness).rstrip("\n")
+    ret = (
+        (line(char1, num_chars) + "\n") * thickness
+        + message
+        + "\n"
+        + (line(char2, num_chars) + "\n") * thickness
+    ).rstrip("\n")
     return ret
 
 
@@ -98,7 +102,7 @@ def prepend(str_, prefix):
     """
     Add "prefix" before each line of the string str_.
     """
-    #lines = ["<" + prefix + curr_line + ">" for curr_line in str_.split("\n")]
+    # lines = ["<" + prefix + curr_line + ">" for curr_line in str_.split("\n")]
     lines = [prefix + curr_line for curr_line in str_.split("\n")]
     return "\n".join(lines)
 
@@ -127,15 +131,18 @@ def thousand_separator(v):
     return v
 
 
-def perc(a, b, num_digits=2, use_thousands_separator=False):
+def perc(a, b, invert=False, num_digits=2, use_thousands_separator=False):
     """
     Calculate percentage a / b as a string.
 
-    Asserts 0 <= a <= b. If true, returns a/b to num_digits decimal places.
+    Asserts 0 <= a <= b. If true, returns a/b to `num_digits` decimal places.
 
     :param a: numerator
     :param b: denominator
-    :returns: a/b to two decimal places.
+    :param invert: assume the fraction is (b - a) / b
+        This is useful when we want to compute the complement of a count.
+    :param use_thousands_separator: report the numbers using thousands separator
+    :return: string with a/b
     """
     dbg.dassert_lte(0, a)
     dbg.dassert_lte(a, b)
@@ -145,6 +152,8 @@ def perc(a, b, num_digits=2, use_thousands_separator=False):
     else:
         a_str = str(a)
         b_str = str(b)
+    if invert:
+        a = b - a
     dbg.dassert_lte(0, num_digits)
     fmt = "%s / %s = %." + str(num_digits) + "f%%"
     ret = fmt % (a_str, b_str, float(a) / b * 100.0)
@@ -177,7 +186,7 @@ def round_digits(v, num_digits=2, use_thousands_separator=False):
 
 def format_list(v, sep=" ", max_n=None, tag=None):
     sep = " "
-    #sep = ", "
+    # sep = ", "
     if max_n is None:
         max_n = 10
     n = len(v)
@@ -188,9 +197,9 @@ def format_list(v, sep=" ", max_n=None, tag=None):
     if n < max_n:
         txt += sep.join(map(str, v))
     else:
-        txt += sep.join(map(str, v[:max_n / 2]))
+        txt += sep.join(map(str, v[: max_n / 2]))
         txt += " ... "
-        txt += sep.join(map(str, v[(-max_n) / 2:]))
+        txt += sep.join(map(str, v[(-max_n) / 2 :]))
     return txt
 
 
@@ -206,7 +215,7 @@ def list_to_str(l, tag="", sort=False, axis=0, to_string=False):
         if l is None:
             txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
         else:
-            #dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
+            # dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
             vals = list(map(str, l))
             if sort:
                 vals = sorted(vals)
@@ -223,12 +232,9 @@ def list_to_str(l, tag="", sort=False, axis=0, to_string=False):
 
 
 # TODO(gp): -> set_diff_to_str
-def print_set_diff(obj1,
-                   obj2,
-                   obj1_name="obj1",
-                   obj2_name="obj2",
-                   add_space=False):
-
+def print_set_diff(
+    obj1, obj2, obj1_name="obj1", obj2_name="obj2", add_space=False
+):
     def _to_string(obj):
         return " ".join(map(str, obj))
 
@@ -251,34 +257,32 @@ def print_set_diff(obj1,
         print()
     #
     diff = obj1 - obj2
-    print(
-        "* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff), _to_string(diff)))
+    print("* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff), _to_string(diff)))
     if add_space:
         print()
     #
     diff = obj2 - obj1
-    print(
-        "* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff), _to_string(diff)))
+    print("* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff), _to_string(diff)))
     if add_space:
         print()
 
 
-def dataframe_to_str(df,
-                     max_columns=10000,
-                     max_colwidth=2000,
-                     max_rows=500,
-                     display_width=10000):
+def dataframe_to_str(
+    df, max_columns=10000, max_colwidth=2000, max_rows=500, display_width=10000
+):
     import pandas as pd
+
     with pd.option_context(
-            "display.max_colwidth",
-            max_colwidth,
-            #'display.height', 1000,
-            'display.max_rows',
-            max_rows,
-            'display.max_columns',
-            max_columns,
-            'display.width',
-            display_width):
+        "display.max_colwidth",
+        max_colwidth,
+        #'display.height', 1000,
+        "display.max_rows",
+        max_rows,
+        "display.max_columns",
+        max_columns,
+        "display.width",
+        display_width,
+    ):
         res = str(df)
     return res
 
@@ -294,11 +298,11 @@ def config_notebook():
     import pandas as pd
     import matplotlib.pyplot as plt
 
-    pd.set_option('display.max_rows', 500)
-    pd.set_option('display.max_columns', 500)
-    pd.set_option('display.width', 1000)
+    pd.set_option("display.max_rows", 500)
+    pd.set_option("display.max_columns", 500)
+    pd.set_option("display.width", 1000)
     # plt.rcParams
-    plt.rcParams['figure.figsize'] = (20, 5)
-    plt.rcParams['legend.fontsize'] = 14
-    plt.rcParams['font.size'] = 14
-    plt.rcParams['image.cmap'] = 'rainbow'
+    plt.rcParams["figure.figsize"] = (20, 5)
+    plt.rcParams["legend.fontsize"] = 14
+    plt.rcParams["font.size"] = 14
+    plt.rcParams["image.cmap"] = "rainbow"

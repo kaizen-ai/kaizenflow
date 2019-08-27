@@ -305,8 +305,16 @@ def dassert_dir_exists(dir_name, msg=None, *args):
 
 
 def dassert_monotonic_index(obj):
-    dassert(obj.index.is_monotonic_increasing)
-    dassert(obj.index.is_unique)
+    # For some reason importing pandas is slow and we don't want to pay this
+    # start up cost unless we need to.
+    import pandas as pd
+
+    if isinstance(obj, pd.Index):
+        index = obj
+    else:
+        index = obj.index
+    dassert(index.is_monotonic_increasing)
+    dassert(index.is_unique)
 
 
 ## TODO(gp): -> dassert_timestamp
