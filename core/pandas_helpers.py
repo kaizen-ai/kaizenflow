@@ -15,6 +15,8 @@ import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
+# ##############################################################################
+
 
 def _build_empty_df(metadata):
     """
@@ -54,10 +56,11 @@ def _loop(i, df, func, window, metadata, abort_on_error):
             df_tmp = func(window_df, ts)
         else:
             df_tmp = func(window_df)
-    except RuntimeError as e:
-        _LOG.error(e)
+    except (RuntimeError, AssertionError) as e:
+        _LOG.error("Caught exception at ts=%s", ts)
         if abort_on_error:
-            raise RuntimeError(e)
+            _LOG.error(str(e))
+            raise e
         else:
             df_tmp = _build_empty_df(metadata)
     # Make sure result is well-formed.
@@ -144,3 +147,30 @@ def df_rolling_apply(
     else:
         res = idx_to_df_all
     return res
+
+
+# ##############################################################################
+
+
+def resample_index(index, time=None, **kwargs):
+    """
+    Resample `index` with options compatible with pd.date_range().
+    Implementation inspired by https://stackoverflow.com/questions/37853623
+
+    :param index: The daily-frequency index to resample as pd.DatetimeIndex
+    :param time: (hour, time) tuple to align the sampling
+    :param **kwargs: parameters (e.g., freq) passed to pd.date_range()
+
+    :return: The resampled index. Use df.loc[resampled_index] to sample.
+    """
+    dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    _LOG.debug("index=%s", index)
+    start_date = index.min()
+    if time is not None:
+        start_date = start_date.replace(hour=time[0], minute=time[1])
+    end_date = index.max() + pd.DateOffset(nanoseconds=1)
+    _LOG.debug("start_date=%s end_date=%s", start_date, end_date)
+    resampled_index = pd.date_range(start_date, end_date, **kwargs)[:-1]
+    _LOG.debug("resampled_index=%s", resampled_index)
+    index = resampled_index.intersection(index)
+    return index

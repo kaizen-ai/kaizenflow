@@ -587,17 +587,15 @@ def _pylint(file_name, pedantic, check_if_possible):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
     opts = ""
-    # We ignore these errros as too picky.
+    # We ignore these errors as too picky.
     ignore = [
         # [C0304(missing-final-newline), ] Final newline missing
         "C0304",
         # [C0330(bad-continuation), ] Wrong hanging indentation before block (add 4 spaces).
         # Black and pylint don't agree on the formatting.
         "C0330",
-        # [C0412(ungrouped-imports), ] Imports from package sklearn are not grouped
+        # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
         "C0412",
-        # [R1705(no-else-return), ] Unnecessary "elif" after "return"
-        "R1705",
         # [W0511(fixme), ]
         "W0511",
         # TODO(gp): Not clear what is the problem.
@@ -612,6 +610,10 @@ def _pylint(file_name, pedantic, check_if_possible):
                 "C0111",
                 # [C0302(too-many-lines), ] Too many lines in module
                 "C0302",
+                # [R1705(no-else-return), ] Unnecessary "elif" after "return"
+                "R1705",
+                # [R1720(no-else-raise), ] Unnecessary "else" after "raise"
+                "R1720",
                 # [R0903(too-few-public-methods), ] Too few public methods
                 "R0903",
                 # [R0912(too-many-branches), ] Too many branches
