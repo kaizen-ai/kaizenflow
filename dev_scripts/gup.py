@@ -4,6 +4,7 @@ import argparse
 import logging
 
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -20,7 +21,7 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
     #
-    msg = '# Checking what are the differences with master...'
+    msg = "# Checking what are the differences with master..."
     print("\n" + pri.frame(msg))
     cmd = "git ll ..origin/master"
     _system(cmd, suppress_output=False)
@@ -28,53 +29,38 @@ def _main(parser):
     cmd = "git ll origin/master.."
     _system(cmd, suppress_output=False)
     #
-    msg = '# Saving local changes...'
+    msg = "# Saving local changes..."
     print("\n" + pri.frame(msg))
-    user_name = si.system_to_string("whoami")[1]
-    server_name = si.system_to_string("uname -n")[1]
-    date = si.system_to_string("date +%Y%m%d-%H%M%S")[1]
-    tag = "gup.wip.%s-%s-%s" % (user_name, server_name, date)
+    tag, was_stashed = git.git_stash_save(prefix="gup", log_level=logging.INFO)
     print("tag='%s'" % tag)
-    cmd = "git stash save %s" % tag
-    _system(cmd, suppress_output=False)
-    # Check if we actually stashed anything.
-    cmd = r"git stash list | \grep '%s' | wc -l" % tag
-    output = si.system_to_string(cmd)[1]
-    was_stashed = int(output) > 0
     if not was_stashed:
-        msg = "Nothing was stashed"
-        _LOG.warning(msg)
-        #raise RuntimeError(msg)
+        # raise RuntimeError(msg)
+        pass
     #
-    msg = '# Getting new commits...'
+    msg = "# Getting new commits..."
     print("\n" + pri.frame(msg))
-    cmd = 'git pull --rebase'
+    cmd = "git pull --rebase"
     _system(cmd, suppress_output=False)
     #
     if was_stashed:
-        msg = '# Checking stash head ...'
+        msg = "# Restoring local changes..."
         print("\n" + pri.frame(msg))
-        cmd = "git stash list | head -3"
-        _system(cmd, suppress_output=False)
-        #
-        msg = '# Restoring local changes...'
-        print("\n" + pri.frame(msg))
-        cmd = "git stash pop --quiet"
-        _system(cmd, suppress_output=False)
+        git.git_stash_apply(log_level=logging.INFO)
 
 
 def _parser():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     return parser
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main(_parser())

@@ -12,8 +12,18 @@ import helpers.printing as print_
 _LOG = logging.getLogger(__name__)
 
 
-def _system(cmd, abort_on_error, suppress_error, suppress_output, blocking,
-            wrapper, output_file, tee, dry_run, log_level):
+def _system(
+    cmd,
+    abort_on_error,
+    suppress_error,
+    suppress_output,
+    blocking,
+    wrapper,
+    output_file,
+    tee,
+    dry_run,
+    log_level,
+):
     """
     Execute a shell command.
 
@@ -58,11 +68,8 @@ def _system(cmd, abort_on_error, suppress_error, suppress_output, blocking,
         stdout = subprocess.PIPE
         stderr = subprocess.STDOUT
         p = subprocess.Popen(
-            cmd,
-            shell=True,
-            executable="/bin/bash",
-            stdout=stdout,
-            stderr=stderr)
+            cmd, shell=True, executable="/bin/bash", stdout=stdout, stderr=stderr
+        )
         output = ""
         if blocking:
             # Blocking.
@@ -86,25 +93,30 @@ def _system(cmd, abort_on_error, suppress_error, suppress_output, blocking,
         rc = -1
     _LOG.debug("rc=%s", rc)
     if abort_on_error and rc != 0:
-        msg = ("\n" + print_.frame("cmd='%s' failed with rc='%s'" % (cmd, rc)) +
-               "\nOutput of the failing command is:\n%s\n%s\n%s" %
-               (print_.line(">"), output, print_.line("<")))
+        msg = (
+            "\n"
+            + print_.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
+            + "\nOutput of the failing command is:\n%s\n%s\n%s"
+            % (print_.line(">"), output, print_.line("<"))
+        )
         _LOG.error("%s", msg)
         raise RuntimeError("cmd='%s' failed with rc='%s'" % (cmd, rc))
-    #dbg.dassert_type_in(output, (str, ))
+    # dbg.dassert_type_in(output, (str, ))
     return rc, output
 
 
-def system(cmd,
-           abort_on_error=True,
-           suppressed_error=None,
-           suppress_output=True,
-           blocking=True,
-           wrapper=None,
-           output_file=None,
-           tee=False,
-           dry_run=False,
-           log_level=logging.DEBUG):
+def system(
+    cmd,
+    abort_on_error=True,
+    suppressed_error=None,
+    suppress_output=True,
+    blocking=True,
+    wrapper=None,
+    output_file=None,
+    tee=False,
+    dry_run=False,
+    log_level=logging.DEBUG,
+):
     """
     Execute a shell command, without capturing its output.
     See _system() for options.
@@ -119,15 +131,14 @@ def system(cmd,
         output_file=output_file,
         tee=tee,
         dry_run=dry_run,
-        log_level=log_level)
+        log_level=log_level,
+    )
     return rc
 
 
-def system_to_string(cmd,
-                     abort_on_error=True,
-                     wrapper=None,
-                     dry_run=False,
-                     log_level=logging.DEBUG):
+def system_to_string(
+    cmd, abort_on_error=True, wrapper=None, dry_run=False, log_level=logging.DEBUG
+):
     """
     Execute a shell command and capture its output.
     See _system() for options.
@@ -143,18 +154,28 @@ def system_to_string(cmd,
         output_file=None,
         tee=False,
         dry_run=dry_run,
-        log_level=log_level)
+        log_level=log_level,
+    )
     output = output.rstrip("\n")
     return rc, output
 
 
 @functools.lru_cache(maxsize=None)
 def get_user_name():
+    # TODO(gp): Use this to avoid to make a system call.
+    # import getpass
+    # getpass.getuser()
     return system_to_string("whoami")[1]
 
 
 @functools.lru_cache(maxsize=None)
 def get_server_name():
+    # TODO(gp): Use this to avoid to make a system call.
+    # import os
+    # os.uname()
+    # posix.uname_result(sysname='Darwin', nodename='gpmac.lan', release='18.2.0',
+    # version='Darwin Kernel Version 18.2.0: Mon Nov 12 20:24:46 PST 2018;
+    # root:xnu-4903.231.4~2/RELEASE_X86_64', machine='x86_64')
     return system_to_string("uname -n")[1]
 
 
@@ -179,7 +200,7 @@ def query_yes_no(question, abort_on_no=True):
         "y": True,
         #
         "no": False,
-        "n": False
+        "n": False,
     }
     prompt = " [y/n] "
     while True:

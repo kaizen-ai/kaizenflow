@@ -1,6 +1,7 @@
 import logging
 import os
 
+import helpers.datetime_ as datetime_
 import helpers.dbg as dbg
 import helpers.system_interaction as si
 
@@ -21,9 +22,6 @@ def get_client_root():
 def get_path_from_git_root(file_name):
     """
     Get the git path from the root of the tree.
-
-    :param file_name:
-    :return:
     """
     cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
     _, git_file_name = si.system_to_string(cmd)
@@ -56,9 +54,11 @@ def get_previous_committed_files(num_commits=1, uniquify=True):
     """
     Equivalent to dev_scripts/git_previous_commit_files.sh
     """
-    cmd = ('git show --pretty="" --name-only' +
-           " $(git log --author $(git config user.name) -%d " % num_commits +
-           r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
+    cmd = (
+        'git show --pretty="" --name-only'
+        + " $(git log --author $(git config user.name) -%d " % num_commits
+        + r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')"""
+    )
     _, files = si.system_to_string(cmd)
     files = files.split()
     if uniquify:
@@ -71,3 +71,34 @@ def get_git_name():
     cmd = "git config --get user.name"
     git_name = si.system_to_string(cmd)[1]
     return git_name
+
+
+def git_stash_save(prefix=None, log_level=logging.DEBUG):
+    user_name = si.get_user_name()
+    server_name = si.get_server_name()
+    timestamp = datetime_.get_timestamp()
+    tag = "gup.wip.%s-%s-%s" % (user_name, server_name, timestamp)
+    if prefix:
+        tag = prefix + "." + tag
+    _LOG.debug("tag='%s'" % tag)
+    cmd = "git stash save %s" % tag
+    si.system(cmd, suppress_output=False, log_level=log_level)
+    # Check if we actually stashed anything.
+    cmd = r"git stash list | \grep '%s' | wc -l" % tag
+    _, output = si.system_to_string(cmd)
+    was_stashed = int(output) > 0
+    if not was_stashed:
+        msg = "Nothing was stashed"
+        _LOG.warning(msg)
+        # raise RuntimeError(msg)
+    return tag, was_stashed
+
+
+def git_stash_apply(log_level=logging.DEBUG):
+    _LOG.debug("# Checking stash head ...")
+    cmd = "git stash list | head -3"
+    si.system(cmd, suppress_output=False, log_level=log_level)
+    #
+    _LOG.debug("# Restoring local changes...")
+    cmd = "git stash pop --quiet"
+    si.system(cmd, suppress_output=False, log_level=log_level)
