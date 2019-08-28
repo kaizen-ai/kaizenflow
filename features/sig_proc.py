@@ -9,7 +9,7 @@ import pywt
 import scipy as sp
 import statsmodels.api as sm
 
-import utilities.helpers.dbg as dbg
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
