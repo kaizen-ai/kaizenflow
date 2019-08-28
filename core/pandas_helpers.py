@@ -69,18 +69,19 @@ def _loop(i, df, func, window, metadata, abort_on_error):
     """
     Apply `func` to a slice of `df` given by `i` and `window`.
     """
-    # Note that numpy / pandas slicing [a:b] corresponds to python slicing
-    # [a:b+1].
     # Extract the window.
-    dbg.dassert_lte(0, i)
+    dbg.dassert_lt(0, i)
     dbg.dassert_lte(i, df.shape[0])
     dbg.dassert_lt(0, window)
     lower_bound = i - window
     upper_bound = i
     _LOG.debug(pri.frame("slice=[%d:%d]"), lower_bound, upper_bound)
     window_df = df.iloc[lower_bound:upper_bound, :]
-    ts = window_df.index[-1]
-    _LOG.debug("ts=%s", ts)
+    ts = df.index[upper_bound - 1]
+    _LOG.debug("i=%s ts=%s", i, ts)
+    if window_df.shape[0] < window:
+        df_tmp = None
+        return ts, df_tmp, metadata
     # Apply function.
     # is_class = inspect.isclass(func)
     is_class = not isinstance(func, types.FunctionType)
@@ -111,8 +112,6 @@ def _loop(i, df, func, window, metadata, abort_on_error):
             # TODO(gp): The equivalent check for multiindex is more complicated.
             dbg.dassert_eq_all(df_tmp.index, metadata["idxs"])
             dbg.dassert_eq_all(df_tmp.columns, metadata["cols"])
-    # Accumulate results.
-    _LOG.debug("df_tmp=\n%s", df_tmp)
     return ts, df_tmp, metadata
 
 
@@ -153,7 +152,7 @@ def df_rolling_apply(
     metadata = None
     if timestamps is None:
         # Roll the window over the df.
-        iter_ = range(window, df.shape[0] + 1)
+        iter_ = range(1, df.shape[0] + 1)
     else:
         dbg.dassert_isinstance(timestamps, pd.Index)
         dbg.dassert_monotonic_index(timestamps)
@@ -184,10 +183,10 @@ def df_rolling_apply(
     idx_to_df_all = collections.OrderedDict()
     #
     empty_df = _build_empty_df(metadata)
-    for j in range(0, window - 1):
-        ts = df.index[j]
-        idx_to_df_all[ts] = empty_df
-    idx_to_df_all.update(idx_to_df)
+    for ts, v in idx_to_df.items():
+        if v is None:
+            v = empty_df
+        idx_to_df_all[ts] = v
     _LOG.debug("idx_to_df_all=\n%s", idx_to_df_all)
     # Unfortunately the code paths for concatenating pd.Series and multiindex
     # pd.DataFrame are difficult to unify.

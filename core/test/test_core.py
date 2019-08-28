@@ -45,14 +45,14 @@ class TestDfRollingApply(ut.TestCase):
         df_str = pri.dedent(
             """
          ,A,B
-        0,0.47,0.01
-        1,0.83,0.43
-        2,0.81,0.79
-        3,0.83,0.93
-        4,0.66,0.71
-        5,0.41,0.6
-        6,0.83,0.82
-        7,0.69,0.82
+        2018-01-01,0.47,0.01
+        2018-01-02,0.83,0.43
+        2018-01-04,0.81,0.79
+        2018-01-05,0.83,0.93
+        2018-01-06,0.66,0.71
+        2018-01-08,0.41,0.6
+        2018-01-09,0.83,0.82
+        2019-01-10,0.69,0.82
         """
         )
         df_str = io.StringIO(df_str)
@@ -64,6 +64,7 @@ class TestDfRollingApply(ut.TestCase):
         #
         df_exp = df.rolling(window).apply(func, raw=True)
         self.assert_equal(df_act.to_string(), df_exp.to_string())
+        self.check_string(df_act.to_string())
 
     def test2(self):
         """
@@ -77,6 +78,7 @@ class TestDfRollingApply(ut.TestCase):
         #
         df_exp = df.rolling(window).apply(func, raw=True)
         self.assert_equal(df_act.to_string(), df_exp.to_string())
+        self.check_string(df_act.to_string())
 
     def test3(self):
         """
@@ -93,6 +95,7 @@ class TestDfRollingApply(ut.TestCase):
         # Convert to an equivalent format.
         df_exp = pd.DataFrame(df_exp.stack(dropna=False))
         self.assert_equal(df_act.to_string(), df_exp.to_string())
+        self.check_string(df_act.to_string())
 
     def test4(self):
         """
