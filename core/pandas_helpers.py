@@ -65,7 +65,7 @@ def _build_empty_df(metadata):
     return empty_df
 
 
-def _loop(i, df, func, window, metadata, abort_on_error):
+def _loop(i, ts, df, func, window, metadata, abort_on_error):
     """
     Apply `func` to a slice of `df` given by `i` and `window`.
     """
@@ -75,13 +75,11 @@ def _loop(i, df, func, window, metadata, abort_on_error):
     dbg.dassert_lt(0, window)
     lower_bound = i - window
     upper_bound = i
-    _LOG.debug(pri.frame("slice=[%d:%d]"), lower_bound, upper_bound)
+    _LOG.debug("slice=[%d:%d]", lower_bound, upper_bound)
     window_df = df.iloc[lower_bound:upper_bound, :]
-    ts = df.index[upper_bound - 1]
-    _LOG.debug("i=%s ts=%s", i, ts)
     if window_df.shape[0] < window:
         df_tmp = None
-        return ts, df_tmp, metadata
+        return df_tmp, metadata
     # Apply function.
     # is_class = inspect.isclass(func)
     is_class = not isinstance(func, types.FunctionType)
@@ -112,7 +110,7 @@ def _loop(i, df, func, window, metadata, abort_on_error):
             # TODO(gp): The equivalent check for multiindex is more complicated.
             dbg.dassert_eq_all(df_tmp.index, metadata["idxs"])
             dbg.dassert_eq_all(df_tmp.columns, metadata["cols"])
-    return ts, df_tmp, metadata
+    return df_tmp, metadata
 
 
 def df_rolling_apply(
@@ -174,8 +172,10 @@ def df_rolling_apply(
     if progress_bar:
         iter_ = tqdm(iter_)
     for i in iter_:
-        ts, df_tmp, metadata = _loop(
-            i, df, func, window, metadata, abort_on_error
+        ts = df.index[i - 1]
+        _LOG.debug(pri.frame("i=%s ts=%s"), i, ts)
+        df_tmp, metadata = _loop(
+            i, ts, df, func, window, metadata, abort_on_error
         )
         idx_to_df[ts] = df_tmp
     # Add a number of empty rows to handle when there were not enough rows to
