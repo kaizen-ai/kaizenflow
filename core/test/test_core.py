@@ -42,7 +42,21 @@ class TestDfRollingApply(ut.TestCase):
         """
         Test with function returning a pd.Series.
         """
-        df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
+        df_str = pri.dedent(
+            """
+         ,A,B
+        0,0.47,0.01
+        1,0.83,0.43
+        2,0.81,0.79
+        3,0.83,0.93
+        4,0.66,0.71
+        5,0.41,0.6
+        6,0.83,0.82
+        7,0.69,0.82
+        """
+        )
+        df_str = io.StringIO(df_str)
+        df = pd.read_csv(df_str, index_col=0)
         #
         window = 5
         func = np.mean
@@ -52,6 +66,19 @@ class TestDfRollingApply(ut.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
 
     def test2(self):
+        """
+        Test with function returning a pd.Series.
+        """
+        df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
+        #
+        window = 5
+        func = np.mean
+        df_act = pde.df_rolling_apply(df, window, func)
+        #
+        df_exp = df.rolling(window).apply(func, raw=True)
+        self.assert_equal(df_act.to_string(), df_exp.to_string())
+
+    def test3(self):
         """
         Test with function returning a pd.DataFrame.
         """
@@ -67,7 +94,7 @@ class TestDfRollingApply(ut.TestCase):
         df_exp = pd.DataFrame(df_exp.stack(dropna=False))
         self.assert_equal(df_act.to_string(), df_exp.to_string())
 
-    def test3(self):
+    def test4(self):
         """
         Test with function returning a pd.DataFrame with multiple lines.
         """
@@ -77,6 +104,23 @@ class TestDfRollingApply(ut.TestCase):
         func = lambda x: pd.DataFrame([np.mean(x), np.sum(x)])
         df_act = pde.df_rolling_apply(df, window, func)
         self.check_string(df_act.to_string())
+
+    # def test5(self):
+    #     """
+    #     Test with function returning a pd.DataFrame and downsampling the
+    #     index.
+    #     """
+    #     df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
+    #     #
+    #     window = 5
+    #     func = lambda x: pd.DataFrame(np.mean(x))
+    #     df_act = pde.df_rolling_apply(df, window, func)
+    #     #
+    #     func = np.mean
+    #     df_exp = df.rolling(window).apply(func, raw=True)
+    #     # Convert to an equivalent format.
+    #     df_exp = pd.DataFrame(df_exp.stack(dropna=False))
+    #     self.assert_equal(df_act.to_string(), df_exp.to_string())
 
 
 # #############################################################################
