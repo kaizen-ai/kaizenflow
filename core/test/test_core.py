@@ -63,6 +63,7 @@ class TestDfRollingApply(ut.TestCase):
         df_act = pde.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
+        # Check.
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
@@ -77,6 +78,7 @@ class TestDfRollingApply(ut.TestCase):
         df_act = pde.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
+        # Check.
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
@@ -94,6 +96,7 @@ class TestDfRollingApply(ut.TestCase):
         df_exp = df.rolling(window).apply(func, raw=True)
         # Convert to an equivalent format.
         df_exp = pd.DataFrame(df_exp.stack(dropna=False))
+        # Check.
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
@@ -106,24 +109,33 @@ class TestDfRollingApply(ut.TestCase):
         window = 5
         func = lambda x: pd.DataFrame([np.mean(x), np.sum(x)])
         df_act = pde.df_rolling_apply(df, window, func)
+        # Check.
         self.check_string(df_act.to_string())
 
-    # def test5(self):
-    #     """
-    #     Test with function returning a pd.DataFrame and downsampling the
-    #     index.
-    #     """
-    #     df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
-    #     #
-    #     window = 5
-    #     func = lambda x: pd.DataFrame(np.mean(x))
-    #     df_act = pde.df_rolling_apply(df, window, func)
-    #     #
-    #     func = np.mean
-    #     df_exp = df.rolling(window).apply(func, raw=True)
-    #     # Convert to an equivalent format.
-    #     df_exp = pd.DataFrame(df_exp.stack(dropna=False))
-    #     self.assert_equal(df_act.to_string(), df_exp.to_string())
+    def test5(self):
+        """
+        Like test1 but with a down-sampled version of the data.
+        """
+        dts = pd.date_range(start="2009-01-04", end="2009-01-10", freq="1H")
+        df = pd.DataFrame(
+            np.random.rand(len(dts), 2).round(2), columns=["A", "B"], index=dts
+        )
+        #
+        resampled_index = pde.resample_index(df.index, time=(9, 0), freq="1D")
+        self.assertEqual(len(resampled_index), 6)
+        #
+        window = 5
+        func = np.mean
+        df_act = pde.df_rolling_apply(
+            df, window, func, timestamps=resampled_index
+        )
+        # Check.
+        df_tmp = df.loc["2009-01-04 04:00:00":"2009-01-04 08:00:00"]
+        exp_val = [0.712, 0.714]
+        self.assertEqual(df_tmp.mean().tolist(), exp_val)
+        self.assertEqual(df_act.loc["2009-01-04 08:00:00"].tolist(), exp_val)
+        #
+        self.check_string(df_act.to_string())
 
 
 # #############################################################################

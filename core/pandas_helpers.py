@@ -52,10 +52,11 @@ def _build_empty_df(metadata):
     in the previous calls of the rolling function.
     This is used to generate missing data when applying the rolling function.
     """
+    dbg.dassert_is_not(metadata, None)
     cols = metadata["cols"]
-    dbg.dassert_is_not(cols, None)
+    dbg.dassert_lte(1, len(cols))
     idxs = metadata["idxs"]
-    dbg.dassert_is_not(idxs, None)
+    dbg.dassert_lte(1, len(idxs))
     if metadata["is_series"]:
         empty_df = pd.DataFrame([[np.nan] * len(cols)], columns=cols)
     else:
@@ -70,12 +71,16 @@ def _loop(i, ts, df, func, window, metadata, abort_on_error):
     Apply `func` to a slice of `df` given by `i` and `window`.
     """
     # Extract the window.
-    dbg.dassert_lt(0, i)
+    if i <= 1:
+        df_tmp = None
+        return df_tmp, metadata
     dbg.dassert_lte(i, df.shape[0])
     dbg.dassert_lt(0, window)
     lower_bound = i - window
     upper_bound = i
-    _LOG.debug("slice=[%d:%d]", lower_bound, upper_bound)
+    _LOG.debug(
+        "i=%s, window=%s -> slice=[%d:%d]", i, window, lower_bound, upper_bound
+    )
     window_df = df.iloc[lower_bound:upper_bound, :]
     if window_df.shape[0] < window:
         df_tmp = None
@@ -124,6 +129,11 @@ def df_rolling_apply(
 ):
     """
     Apply function `func` to a rolling window over `df` with `window` columns.
+    Timing semantic:
+    - a timestamp i is computed based on [i - window:i - 1]
+    - this mimics pd.rolling functions, although it's a bit conservative from
+      our typical point of view
+
     The implementation from https://stackoverflow.com/questions/38878917
     doesn't scale both in time and memory since it makes copies of the windowed
     df. This implementations uses views and apply `func` directly without
@@ -134,7 +144,7 @@ def df_rolling_apply(
     :param func: function taking a df and returning a pd.Series with the results
         `func` should not change the passed df
     :param timestamps: pd.Index representing the datetimes to apply `func`
-        - None implies using all the timestamps in df
+        - `None` implies using all the timestamps in `df`
     :param convert_to_df: return a df (potentially multiindex) with the result.
         If False return a OrderDict index to df
     :return: dataframe with the concatenated results, with the same number of
@@ -143,7 +153,10 @@ def df_rolling_apply(
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_monotonic_index(df)
     # Make sure the window is not larger than the df.
-    dbg.dassert_lte(1, window)
+    dbg.dassert_lt(0, window)
+    if int(window) != window:
+        _LOG.warning("window=%s is not an integer", window)
+    window = int(window)
     dbg.dassert_lte(window, df.shape[0])
     idx_to_df = collections.OrderedDict()
     # Store the metadata about the result of `func`.
@@ -155,6 +168,7 @@ def df_rolling_apply(
         dbg.dassert_isinstance(timestamps, pd.Index)
         dbg.dassert_monotonic_index(timestamps)
         idxs = df.index.intersection(timestamps)
+        dbg.dassert_lte(1, len(idxs))
         if len(idxs) < len(timestamps):
             _LOG.warning(
                 "Some of the requested timestamps are not in df: "
