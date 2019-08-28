@@ -97,13 +97,15 @@ def _loop(i, df, func, window, metadata, abort_on_error):
         else:
             df_tmp = _build_empty_df(metadata)
     # Make sure result is well-formed.
-    if isinstance(df_tmp, pd.Series):
-        metadata["is_series"] = True
+    is_series = isinstance(df_tmp, pd.Series)
+    if is_series:
         df_tmp = pd.DataFrame(df_tmp).T
-    if metadata["idxs"] is None:
-        dbg.dassert_is(metadata["cols"], None)
-        metadata["idxs"] = df_tmp.index
-        metadata["cols"] = df_tmp.columns
+    if metadata is None:
+        metadata = {
+            "is_series": is_series,
+            "idxs": df_tmp.index,
+            "cols": df_tmp.columns,
+        }
     else:
         if metadata["is_series"]:
             # TODO(gp): The equivalent check for multiindex is more complicated.
@@ -115,7 +117,13 @@ def _loop(i, df, func, window, metadata, abort_on_error):
 
 
 def df_rolling_apply(
-    df, window, func, convert_to_df=True, progress_bar=False, abort_on_error=True
+    df,
+    window,
+    func,
+    timestamps=None,
+    convert_to_df=True,
+    progress_bar=False,
+    abort_on_error=True,
 ):
     """
     Apply function `func` to a rolling window over `df` with `window` columns.
@@ -128,6 +136,8 @@ def df_rolling_apply(
     :param window: number of rows in each window
     :param func: function taking a df and returning a pd.Series with the results
         `func` should not change the passed df
+    :param timestamps: pd.Index representing the datetimes to apply `func`
+        - None implies using all the timestamps in df
     :param convert_to_df: return a df (potentially multiindex) with the result.
         If False return a OrderDict index to df
     :return: dataframe with the concatenated results, with the same number of
@@ -139,12 +149,29 @@ def df_rolling_apply(
     dbg.dassert_lte(1, window)
     dbg.dassert_lte(window, df.shape[0])
     idx_to_df = collections.OrderedDict()
-    # Store the columns of the results.
-    metadata = {"idxs": None, "cols": None, "is_series": False}
-    # Roll the window over the df.
-    # Note that numpy / pandas slicing [a:b] corresponds to python slicing
-    # [a:b+1].
-    iter_ = range(window, df.shape[0] + 1)
+    # Store the metadata about the result of `func`.
+    metadata = None
+    if timestamps is None:
+        # Roll the window over the df.
+        iter_ = range(window, df.shape[0] + 1)
+    else:
+        dbg.dassert_isinstance(timestamps, pd.Index)
+        dbg.dassert_monotonic_index(timestamps)
+        idxs = df.index.intersection(timestamps)
+        if len(idxs) < len(timestamps):
+            _LOG.warning(
+                "Some of the requested timestamps are not in df: "
+                "missing %s timestamps",
+                pri.perc(len(idxs), len(timestamps), invert=True),
+            )
+        # Find the numerical index of all the timestamps in df.
+        idxs_loc = (
+            pd.Series(list(range(df.shape[0])), index=df.index)
+            .loc[idxs]
+            .values.tolist()
+        )
+        dbg.dassert_eq(len(idxs_loc), len(idxs))
+        iter_ = idxs_loc
     if progress_bar:
         iter_ = tqdm(iter_)
     for i in iter_:
