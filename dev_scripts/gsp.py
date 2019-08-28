@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 """
-Update a git client by:
-    - stashing
-    - rebasing
-    - reapplying the stashed changes
+Stash the changes in a Git client without changing the client, besides a reset
+of the inex.
 """
 
 import argparse
@@ -28,14 +26,6 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
     #
-    msg = "# Checking what are the differences with master..."
-    print("\n" + pri.frame(msg))
-    cmd = "git ll ..origin/master"
-    _system(cmd, suppress_output=False)
-    #
-    cmd = "git ll origin/master.."
-    _system(cmd, suppress_output=False)
-    #
     msg = "# Saving local changes..."
     print("\n" + pri.frame(msg))
     tag, was_stashed = git.git_stash_save(prefix="gup", log_level=logging.INFO)
@@ -43,16 +33,10 @@ def _main(parser):
     if not was_stashed:
         # raise RuntimeError(msg)
         pass
-    #
-    msg = "# Getting new commits..."
-    print("\n" + pri.frame(msg))
-    cmd = "git pull --rebase"
-    _system(cmd, suppress_output=False)
-    #
-    if was_stashed:
+    else:
         msg = "# Restoring local changes..."
         print("\n" + pri.frame(msg))
-        git.git_stash_apply(mode="pop", log_level=logging.INFO)
+        git.git_stash_apply(mode="apply", log_level=logging.INFO)
 
 
 def _parser():

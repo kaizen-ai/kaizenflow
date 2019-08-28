@@ -94,11 +94,16 @@ def git_stash_save(prefix=None, log_level=logging.DEBUG):
     return tag, was_stashed
 
 
-def git_stash_apply(log_level=logging.DEBUG):
+def git_stash_apply(mode, log_level=logging.DEBUG):
     _LOG.debug("# Checking stash head ...")
     cmd = "git stash list | head -3"
     si.system(cmd, suppress_output=False, log_level=log_level)
     #
     _LOG.debug("# Restoring local changes...")
-    cmd = "git stash pop --quiet"
+    if mode == "pop":
+        cmd = "git stash pop --quiet"
+    elif mode == "stash":
+        cmd = "git stash apply --quiet"
+    else:
+        raise ValueError("mode='%s'" % mode)
     si.system(cmd, suppress_output=False, log_level=log_level)
