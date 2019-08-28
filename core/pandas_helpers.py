@@ -178,31 +178,25 @@ def df_rolling_apply(
             i, ts, df, func, window, metadata, abort_on_error
         )
         idx_to_df[ts] = df_tmp
-    # Add a number of empty rows to handle when there were not enough rows to
-    # build a window.
-    idx_to_df_all = collections.OrderedDict()
-    #
+    # Replace None values with an empty df.
     empty_df = _build_empty_df(metadata)
     for ts, v in idx_to_df.items():
         if v is None:
-            v = empty_df
-        idx_to_df_all[ts] = v
-    _LOG.debug("idx_to_df_all=\n%s", idx_to_df_all)
+            idx_to_df[ts] = empty_df
+    _LOG.debug("idx_to_df=\n%s", idx_to_df)
     # Unfortunately the code paths for concatenating pd.Series and multiindex
     # pd.DataFrame are difficult to unify.
     if convert_to_df:
         if metadata["is_series"]:
             # Assemble result into a df.
-            res_df = pd.concat(idx_to_df_all.values())
-            idx = idx_to_df_all.keys()
+            res_df = pd.concat(idx_to_df.values())
+            idx = idx_to_df.keys()
             dbg.dassert_eq(res_df.shape[0], len(idx))
             res_df.index = idx
-            # The result should have the same length of the original df.
-            dbg.dassert_eq(res_df.shape[0], df.shape[0])
         else:
             # Assemble result into a df.
-            res_df = pd.concat(idx_to_df_all)
+            res_df = pd.concat(idx_to_df)
         res = res_df
     else:
-        res = idx_to_df_all
+        res = idx_to_df
     return res
