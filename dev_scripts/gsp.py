@@ -28,7 +28,9 @@ def _main(parser):
     #
     msg = "# Saving local changes..."
     print("\n" + pri.frame(msg))
-    tag, was_stashed = git.git_stash_save(prefix="gup", log_level=logging.INFO)
+    tag, was_stashed = git.git_stash_push(
+        msg=args.message, log_level=logging.INFO
+    )
     print("tag='%s'" % tag)
     if not was_stashed:
         # raise RuntimeError(msg)
@@ -37,11 +39,19 @@ def _main(parser):
         msg = "# Restoring local changes..."
         print("\n" + pri.frame(msg))
         git.git_stash_apply(mode="apply", log_level=logging.INFO)
+    #
+    msg = "# Stash state ..."
+    print("\n" + pri.frame(msg))
+    cmd = r"git stash list"
+    _system(cmd, suppress_output=False)
 
 
 def _parser():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "-m", default=None, dest="message", help="Add message to commit"
     )
     parser.add_argument(
         "-v",

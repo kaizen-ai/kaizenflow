@@ -73,15 +73,21 @@ def get_git_name():
     return git_name
 
 
-def git_stash_save(prefix=None, log_level=logging.DEBUG):
+def git_stash_push(prefix=None, msg=None, log_level=logging.DEBUG):
     user_name = si.get_user_name()
     server_name = si.get_server_name()
     timestamp = datetime_.get_timestamp()
-    tag = "gup.wip.%s-%s-%s" % (user_name, server_name, timestamp)
+    tag = "wip.%s-%s-%s" % (user_name, server_name, timestamp)
     if prefix:
         tag = prefix + "." + tag
-    _LOG.debug("tag='%s'" % tag)
-    cmd = "git stash save %s" % tag
+    _LOG.debug("tag='%s'", tag)
+    # TODO(gp): Use push.
+    cmd = "git stash push"
+    _LOG.debug("msg='%s'", msg)
+    push_msg = tag[:]
+    if msg:
+        push_msg += ": " + msg
+    cmd += " -m '%s'" % push_msg
     si.system(cmd, suppress_output=False, log_level=log_level)
     # Check if we actually stashed anything.
     cmd = r"git stash list | \grep '%s' | wc -l" % tag
@@ -102,7 +108,7 @@ def git_stash_apply(mode, log_level=logging.DEBUG):
     _LOG.debug("# Restoring local changes...")
     if mode == "pop":
         cmd = "git stash pop --quiet"
-    elif mode == "stash":
+    elif mode == "apply":
         cmd = "git stash apply --quiet"
     else:
         raise ValueError("mode='%s'" % mode)
