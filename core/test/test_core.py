@@ -64,6 +64,13 @@ class TestDfRollingApply(ut.TestCase):
         #
         df_exp = df.rolling(window).apply(func, raw=True)
         # Check.
+        exp_val = [0.720, 0.574]
+        np.testing.assert_array_almost_equal(
+            df.loc["2018-01-01":"2018-01-06"].mean().tolist(), exp_val
+        )
+        np.testing.assert_array_almost_equal(
+            df_act.loc["2018-01-06"].tolist(), exp_val
+        )
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
@@ -130,10 +137,19 @@ class TestDfRollingApply(ut.TestCase):
             df, window, func, timestamps=resampled_index
         )
         # Check.
-        df_tmp = df.loc["2009-01-04 04:00:00":"2009-01-04 08:00:00"]
-        exp_val = [0.712, 0.714]
-        self.assertEqual(df_tmp.mean().tolist(), exp_val)
-        self.assertEqual(df_act.loc["2009-01-04 08:00:00"].tolist(), exp_val)
+        df_tmp = df.loc["2009-01-04 05:00:00":"2009-01-04 09:00:00"]
+        exp_val = [0.592, 0.746]
+        np.testing.assert_array_almost_equal(df_tmp.mean().tolist(), exp_val)
+        np.testing.assert_array_almost_equal(
+            df_act.loc["2009-01-04 09:00:00"].tolist(), exp_val
+        )
+        #
+        df_tmp = df.loc["2009-01-09 05:00:00":"2009-01-09 09:00:00"]
+        exp_val = [0.608, 0.620]
+        np.testing.assert_array_almost_equal(df_tmp.mean().tolist(), exp_val)
+        np.testing.assert_array_almost_equal(
+            df_act.loc["2009-01-09 09:00:00"].tolist(), exp_val
+        )
         #
         self.check_string(df_act.to_string())
 

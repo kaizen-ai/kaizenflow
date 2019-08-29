@@ -71,18 +71,30 @@ def _loop(i, ts, df, func, window, metadata, abort_on_error):
     Apply `func` to a slice of `df` given by `i` and `window`.
     """
     # Extract the window.
+    # if i <= 0:
     if i <= 1:
+        _LOG.debug("i=%s -> return=None", i)
         df_tmp = None
         return df_tmp, metadata
     dbg.dassert_lte(i, df.shape[0])
     dbg.dassert_lt(0, window)
-    lower_bound = i - window
-    upper_bound = i
+    upper_bound = i + 1
+    # upper_bound = i
+    lower_bound = upper_bound - window
     _LOG.debug(
         "i=%s, window=%s -> slice=[%d:%d]", i, window, lower_bound, upper_bound
     )
+    if lower_bound < 0:
+        _LOG.debug("lower_bound=%s < 0 -> return=None", i)
+        df_tmp = None
+        return df_tmp, metadata
     window_df = df.iloc[lower_bound:upper_bound, :]
     if window_df.shape[0] < window:
+        _LOG.debug(
+            "Not enough samples: window.shape=%s < window=%s -> " "return=None",
+            window_df.shape[0],
+            window,
+        )
         df_tmp = None
         return df_tmp, metadata
     # Apply function.
@@ -163,7 +175,8 @@ def df_rolling_apply(
     metadata = None
     if timestamps is None:
         # Roll the window over the df.
-        iter_ = range(1, df.shape[0] + 1)
+        iter_ = range(0, df.shape[0])
+        # iter_ = range(1, df.shape[0] + 1)
     else:
         dbg.dassert_isinstance(timestamps, pd.Index)
         dbg.dassert_monotonic_index(timestamps)
@@ -182,11 +195,13 @@ def df_rolling_apply(
             .values.tolist()
         )
         dbg.dassert_eq(len(idxs_loc), len(idxs))
+        dbg.dassert_eq_all(df.iloc[idxs_loc].index, idxs)
         iter_ = idxs_loc
     if progress_bar:
         iter_ = tqdm(iter_)
     for i in iter_:
-        ts = df.index[i - 1]
+        ts = df.index[i]
+        # ts = df.index[i - 1]
         _LOG.debug(pri.frame("i=%s ts=%s"), i, ts)
         df_tmp, metadata = _loop(
             i, ts, df, func, window, metadata, abort_on_error
@@ -211,6 +226,8 @@ def df_rolling_apply(
             # Assemble result into a df.
             res_df = pd.concat(idx_to_df)
         res = res_df
+        if timestamps is not None:
+            dbg.dassert_eq_all(res_df.index, idxs)
     else:
         res = idx_to_df
     return res
