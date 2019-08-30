@@ -19,6 +19,7 @@ matplotlib
 numba
 numpy
 pandas
+pyarrow
 pywavelets
 scikit-learn
 scipy
