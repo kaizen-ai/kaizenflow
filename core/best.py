@@ -9,6 +9,8 @@ _LOG = logging.getLogger(__name__)
 def best(y1, y2, prior_tau=1e-6, samples=1000):
     """
     Bayesian Estimation Supersedes the T Test
+
+    http://www.indiana.edu/~kruschke/BEST/BEST.pdf
     """
     with pm.Model() as model:
         # We set the mean of the prior to 0 because
@@ -16,7 +18,7 @@ def best(y1, y2, prior_tau=1e-6, samples=1000):
         #      value.
         #   2. We typically expect the precision to be set very low so that the
         #      prior is very vague. The center is not so important provided the
-        #      prior is sufficiently vague.
+        #      prior is sufficiently vague (and the sample sufficiently large).
         group1_mean = pm.Normal('group1_mean', mu=0, tau=prior_tau,
                                 testval=y1.mean())
         group2_mean = pm.Normal('group2_mean', mu=0, tau=prior_tau,
@@ -48,6 +50,6 @@ def best(y1, y2, prior_tau=1e-6, samples=1000):
                          group2_std - group1_std)
         pm.Deterministic('effect size', diff_of_means /
                          pm.math.sqrt(0.5 * (group1_std**2 + group2_std**2)))
-
+        # MCMC
         trace = pm.sample(samples, progressbar=True)
     return model, trace
