@@ -55,7 +55,7 @@ def filter_by_time_from_config(config,
     return df
 
 
-# TODO(gp): Swith to fin.zscore.
+# TODO(gp): Switch to fin.zscore.
 def zscore_from_config(config, df):
     cfg.print_config(config, ["zscore_style", "zscore_com"])
     dbg.dassert_lte(1, df.shape[0])

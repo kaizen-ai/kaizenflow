@@ -71,7 +71,6 @@ def _loop(i, ts, df, func, window, metadata, abort_on_error):
     Apply `func` to a slice of `df` given by `i` and `window`.
     """
     # Extract the window.
-    # if i <= 0:
     if i <= 1:
         _LOG.debug("i=%s -> return=None", i)
         df_tmp = None
@@ -79,7 +78,6 @@ def _loop(i, ts, df, func, window, metadata, abort_on_error):
     dbg.dassert_lte(i, df.shape[0])
     dbg.dassert_lt(0, window)
     upper_bound = i + 1
-    # upper_bound = i
     lower_bound = upper_bound - window
     _LOG.debug(
         "i=%s, window=%s -> slice=[%d:%d]", i, window, lower_bound, upper_bound
@@ -142,9 +140,8 @@ def df_rolling_apply(
     """
     Apply function `func` to a rolling window over `df` with `window` columns.
     Timing semantic:
-    - a timestamp i is computed based on [i - window:i - 1]
-    - this mimics pd.rolling functions, although it's a bit conservative from
-      our typical point of view
+    - a timestamp i is computed based on a data slice [i - window + 1:i]
+    - mimics pd.rolling functions
 
     The implementation from https://stackoverflow.com/questions/38878917
     doesn't scale both in time and memory since it makes copies of the windowed
@@ -176,7 +173,6 @@ def df_rolling_apply(
     if timestamps is None:
         # Roll the window over the df.
         iter_ = range(0, df.shape[0])
-        # iter_ = range(1, df.shape[0] + 1)
     else:
         dbg.dassert_isinstance(timestamps, pd.Index)
         dbg.dassert_monotonic_index(timestamps)
@@ -201,7 +197,6 @@ def df_rolling_apply(
         iter_ = tqdm(iter_)
     for i in iter_:
         ts = df.index[i]
-        # ts = df.index[i - 1]
         _LOG.debug(pri.frame("i=%s ts=%s"), i, ts)
         df_tmp, metadata = _loop(
             i, ts, df, func, window, metadata, abort_on_error
