@@ -612,6 +612,35 @@ def ipca(df, num_pc, alpha):
     return lambda_df, unit_eigenvec_dfs
 
 
+def unit_vector_angular_distance(df):
+    """
+    Accepts a df of unit eigenvectors (rows) and returns a series with angular
+    distance from index i to index i + 1.
+
+    The angular distance lies in [0, 1].
+    """
+    vecs = df.values
+    # If all of the vectors are unit vectors, then
+    # np.diag(vecs.dot(vecs.T)) should return an array of all 1.'s
+    cos_sim = np.diag(vecs[:-1,:].dot(vecs[1:,:].T))
+    ang_dist = np.arccos(cos_sim) / np.pi
+    srs = pd.Series(index=df.index[1:], data=ang_dist, name="angular change")
+    return srs
+
+
+def eigenvector_diffs(eigenvecs):
+    """
+    Takes a list of eigenvectors and returns a df of angular distances
+    """
+    ang_chg = []
+    for i, vec in enumerate(eigenvecs):
+        srs = unit_vector_angular_distance(vec)
+        srs.name = i
+        ang_chg.append(srs)
+    df = pd.concat(ang_chg, axis=1)
+    return df
+
+    
 #
 # Test series
 #
