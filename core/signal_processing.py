@@ -561,8 +561,13 @@ def ipca(df, num_pc, alpha):
         num_pc, int, msg="Specify an integral number of principal components.")
     dbg.dassert_lt(
         num_pc,
-        df.shape[1],
+        df.shape[0],
         msg="Number of time steps should exceed number of principal components."
+    )
+    dbg.dassert_lte(
+        num_pc,
+        df.shape[1],
+        msg="Dimension should be greater than or equal to the number of principal components."
     )
     dbg.dassert_lte(0, alpha, msg="alpha should belong to [0, 1].")
     dbg.dassert_lte(alpha, 1, msg="alpha should belong to [0, 1].")
