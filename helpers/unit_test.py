@@ -138,6 +138,22 @@ def _fuzzy_assert_equal(actual, expected, full_test_name, test_dir):
         _assert_equal(actual, expected, full_test_name, test_dir)
 
 
+def get_random_df(num_cols, seed=None, **kwargs):
+    """
+    Compute df with random data with `num_cols` columns and index obtained by
+    calling `pd.date_range(**kwargs)`.
+
+    :return: df
+    """
+    import pandas as pd
+    import numpy as np
+    if seed:
+        np.random.seed(seed)
+    dt = pd.date_range(**kwargs)
+    df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
+    return df
+
+
 # #############################################################################
 # TestCase
 # #############################################################################
