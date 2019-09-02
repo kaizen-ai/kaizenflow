@@ -7,12 +7,13 @@ import pymc3 as pm
 _LOG = logging.getLogger(__name__)
 
 
-def best(y1, y2, prior_tau=1e-6, samples=1000, progressbar=True):
+def best(y1, y2, prior_tau=1e-6, **kwargs):
     """
     Bayesian Estimation Supersedes the T Test:
     http://www.indiana.edu/~kruschke/BEST/BEST.pdf
 
     This is a generic t-test replacement.
+    :param **kwargs:
     """
     with pm.Model() as model:
         # We set the mean of the prior to 0 because
@@ -53,11 +54,11 @@ def best(y1, y2, prior_tau=1e-6, samples=1000, progressbar=True):
         pm.Deterministic('effect size', diff_of_means /
                          pm.math.sqrt(0.5 * (group1_std**2 + group2_std**2)))
         # MCMC
-        trace = pm.sample(samples, progressbar=progressbar)
+        trace = pm.sample(**kwargs)
     return model, trace
 
 
-def fit_t_distribution(y, prior_tau=1e-6, samples=1000, progressbar=True):
+def fit_t_distribution(y, prior_tau=1e-3, **kwargs):
     """
     Fits a t-distribution to y. Calculates annualized Sharpe ratio and
     volatility assuming y is a daily series with 252 points per year.
@@ -73,10 +74,11 @@ def fit_t_distribution(y, prior_tau=1e-6, samples=1000, progressbar=True):
                             testval=pm.math.log(y.std()))
         std = pm.Deterministic('std', pm.math.exp(log_std))
         nu = pm.Exponential('nu_minus_2', 1/10., testval=3.)
-        returns = pm.StudentT('returns', nu=nu + 2, mu=mu, sd=sigma, observed=y)
+        returns = pm.StudentT('returns', nu=nu + 2, mu=mean, sigma=std,
+                              observed=y)
         pm.Deterministic('annualized_volatility',
-                         returns.distribution.std * np.sqrt(252))
+                         returns.distribution.sigma * np.sqrt(252))
         pm.Deterministic('sharpe_ratio', returns.distribution.mean /
-                         returns.distribution.std * np.sqrt(252))
-        trace = pm.sample(samples, progressbar=progressbar)
+                         returns.distribution.sigma * np.sqrt(252))
+        trace = pm.sample(**kwargs)
     return model, trace
