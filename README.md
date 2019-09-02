@@ -1,6 +1,7 @@
 # Code org
 - `helpers`: low-level helpers that are general and not specific of any project
 - `core`: helpers that are specific of data science, finance projects
+- test
 
 # Workflow
 
