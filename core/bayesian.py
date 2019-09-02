@@ -1,16 +1,18 @@
 import logging
 
+import numpy as np
 import pymc3 as pm
 
 
 _LOG = logging.getLogger(__name__)
 
 
-def best(y1, y2, prior_tau=1e-6, samples=1000):
+def best(y1, y2, prior_tau=1e-6, samples=1000, progressbar=True):
     """
-    Bayesian Estimation Supersedes the T Test
-
+    Bayesian Estimation Supersedes the T Test:
     http://www.indiana.edu/~kruschke/BEST/BEST.pdf
+
+    This is a generic t-test replacement.
     """
     with pm.Model() as model:
         # We set the mean of the prior to 0 because
@@ -51,5 +53,30 @@ def best(y1, y2, prior_tau=1e-6, samples=1000):
         pm.Deterministic('effect size', diff_of_means /
                          pm.math.sqrt(0.5 * (group1_std**2 + group2_std**2)))
         # MCMC
-        trace = pm.sample(samples, progressbar=True)
+        trace = pm.sample(samples, progressbar=progressbar)
+    return model, trace
+
+
+def fit_t_distribution(y, prior_tau=1e-6, samples=1000, progressbar=True):
+    """
+    Fits a t-distribution to y. Calculates annualized Sharpe ratio and
+    volatility assuming y is a daily series with 252 points per year.
+
+    :param y: Data to be modeled by a t-distribution
+    :param prior_tau: Controls precision of mean and log_std priors
+    :param samples: Number of MCMC samples
+    :return: PyMC3 model and trace
+    """
+    with pm.Model() as model:
+        mean = pm.Normal('mean', mu=0, tau=prior_tau, testval=y.mean())
+        log_std = pm.Normal('log_std', mu=0, tau=prior_tau,
+                            testval=pm.math.log(y.std()))
+        std = pm.Deterministic('std', pm.math.exp(log_std))
+        nu = pm.Exponential('nu_minus_2', 1/10., testval=3.)
+        returns = pm.StudentT('returns', nu=nu + 2, mu=mu, sd=sigma, observed=y)
+        pm.Deterministic('annualized_volatility',
+                         returns.distribution.std * np.sqrt(252))
+        pm.Deterministic('sharpe_ratio', returns.distribution.mean /
+                         returns.distribution.std * np.sqrt(252))
+        trace = pm.sample(samples, progressbar=progressbar)
     return model, trace

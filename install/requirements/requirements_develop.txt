@@ -60,7 +60,7 @@ s3fs
 ## ############################################################################
 ## pymc3
 ## ############################################################################
-#arviz                  # Needed by pymc3 for some plotting functionality.
+arviz                   # Needed by pymc3 for some plotting functionality.
 mkl-service             # pymc3 expects it; not sure why conda doesn't solve for it.
 pymc3
 #pydot
