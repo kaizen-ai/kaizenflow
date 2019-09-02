@@ -53,15 +53,19 @@ def best(y1, y2, prior_tau=1e-6, **kwargs):
                          group2_std - group1_std)
         pm.Deterministic('effect size', diff_of_means /
                          pm.math.sqrt(0.5 * (group1_std**2 + group2_std**2)))
+        # SNR (signal-to-noise ratio, i.e., Sharpe ratio, but without
+        # annualization)
+        group1_snr = pm.Deterministic('group1_snr', group1_mean / group1_std)
+        group2_snr = pm.Deterministic('group2_snr', group2_mean / group2_std)
+        pm.Deterministic('difference of snrs', group2_snr - group1_snr)
         # MCMC
         trace = pm.sample(**kwargs)
     return model, trace
 
 
-def fit_t_distribution(y, prior_tau=1e-3, **kwargs):
+def fit_t_distribution(y, prior_tau=1e-6, **kwargs):
     """
-    Fits a t-distribution to y. Calculates annualized Sharpe ratio and
-    volatility assuming y is a daily series with 252 points per year.
+    Fits a t-distribution to y.
 
     :param y: Data to be modeled by a t-distribution
     :param prior_tau: Controls precision of mean and log_std priors
@@ -76,9 +80,7 @@ def fit_t_distribution(y, prior_tau=1e-3, **kwargs):
         nu = pm.Exponential('nu_minus_2', 1/10., testval=3.)
         returns = pm.StudentT('returns', nu=nu + 2, mu=mean, sigma=std,
                               observed=y)
-        pm.Deterministic('annualized_volatility',
-                         returns.distribution.sigma * np.sqrt(252))
-        pm.Deterministic('sharpe_ratio', returns.distribution.mean /
-                         returns.distribution.sigma * np.sqrt(252))
+        pm.Deterministic('snr', returns.distribution.mean /
+                         returns.distribution.sigma)
         trace = pm.sample(**kwargs)
     return model, trace
