@@ -1,12 +1,11 @@
 # Code org
 - `helpers`: low-level helpers that are general and not specific of any project
 - `core`: helpers that are specific of data science, finance projects
-- test
 
 # Workflow
 
 ## Be patient
-- This flow is designed to make our projects portable across
+- This flow is designed to make our projects portable across:
     - platforms (e.g., macOS, Linux)
     - different installation of OSes (e.g., GP's laptop vs Paul's laptop) with
       all the peculiar ways we install and manage servers and laptops
@@ -23,30 +22,20 @@
 
 ## Clone the packages
 - The code is organized in two repos:
-    - `utilities`: contains everything that is project agnostic (e.g., utilities,
+    - `amp`: contains everything that is project agnostic (e.g., utilities,
       frameworks, ...)
     - `lemonade`: contains the models shared by GP & Paul
 - Clone the packages in the same dir `$SRC_DIR`
 ```
 > cd $SRC_DIR
-> git clone git@github.com:gpsaggese/utilities.git 
-> git clone git@github.com:gpsaggese/lemonade.git 
+> git clone --recursive git@github.com:gpsaggese/lemonade.git 
 ```
 
 ## Assumptions
-1) All the repos are cloned in the same dir like:
-```
-> ls -1
-lemonade
-git_gp1
-git_gp2
-utilities
-```
-
-2) The env var `SRC_DIR` points to the dir with all your code you cloned
+1) The env var `SRC_DIR` points to the dir with all your code you cloned
     - You want to put in your `.bashrc` an `export SRC_DIR=/Users/saggese/src`
 
-3) You have a recent version of `conda`
+2) You have a recent version of `conda`
 ```
 > conda -V
 conda 4.6.7
@@ -68,12 +57,12 @@ Python 3.7.1
   python to 3 system wide
 
 ## Create `develop` conda environment
-- `develop` is the official package needed to run `utilities` and `lemonade`
+- `develop` is the official package needed to run `amp` and `lemonade`
     - In general we prefer to use a single conda environment, unless it's not
       possible at all (e.g., using packages like Sage that don't support
       python3)
 
-- Run this from `$SRC_DIR/utilities`
+- Run this from `$SRC_DIR/lemonade/amp`
 - NOTE: this directory needs to be in your PYTHONPATH (or else the imports will fail).
 ```
 > install/create_conda.py --req_file install/requirements/requirements_develop.txt --env_name develop --delete_env_if_exists 2>&1 | tee create_conda.log
