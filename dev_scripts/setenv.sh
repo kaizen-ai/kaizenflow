@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
 # This file needs to be sourced:
 #   > source setenv.sh
@@ -11,6 +11,17 @@
 
 # TODO(gp): Use git to make sure you are in the root of the repo.
 #  echo "Error: you need to be in the root of the repo to configure the environment"
+
+EXEC_NAME="${BASH_SOURCE[0]}"
+echo "# Executing '$EXEC_NAME' ..."
+DIR=$(dirname "$EXEC_NAME")
+EXEC_PATH="$(cd $DIR ; pwd -P)"
+CURR_DIR=$(dirname "$EXEC_PATH")
+echo "CURR_DIR=$CURR_DIR"
+if [[ -z $CURR_DIR ]]; then
+  echo "Error"
+  return -1
+fi;
 
 ENV_NAME="develop"
 
@@ -70,8 +81,9 @@ echo "##########################################################################
 export PYTHONDONTWRITEBYTECODE=x
 
 # Python packages.
+
 export PYTHONPATH=""
-export PYTHONPATH=$PYTHONPATH:$(pwd)
+export PYTHONPATH=$PYTHONPATH:$CURR_DIR
 # Remove redundant paths.
 PYTHONPATH="$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
 echo "PYTHONPATH=$PYTHONPATH"
@@ -79,12 +91,8 @@ echo "PYTHONPATH=$PYTHONPATH"
 echo "#############################################################################"
 echo "# Config conda"
 echo "#############################################################################"
-UTIL_DIR=$SRC_DIR/amp
-# TODO(gp): Add a loop picking up all the dirs.
-export PATH=$UTIL_DIR/dev_scripts:$UTIL_DIR/ipynb_scripts:$UTIL_DIR/install:$UTIL_DIR/aws:$PATH
-export PYTHONPATH=$PYTHONPATH:$UTIL_DIR
 
-CONDA_SCRIPT_NAME="$UTIL_DIR/helpers/get_conda_config_path.py"
+CONDA_SCRIPT_NAME="$CURR_DIR/helpers/get_conda_config_path.py"
 if [[ ! -e $CONDA_SCRIPT_NAME ]]; then
   echo "Can't find file $CONDA_SCRIPT_NAME"
   return -1
@@ -108,11 +116,6 @@ if [[ 0 == 1 ]]; then
   #export PYTHONPATH=$PYTHONPATH:$CONDA_LIBS/lib/python2.7/site-packages/backports
 fi;
 
-# Remove redundant paths.
-PATH="$(echo $PATH| perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
-# TODO(gp): Print a better list.
-echo "PATH=$PATH"
-
 if [ 0 == 1 ]; then
   echo "#############################################################################"
   echo "# Fixing pandas warnings."
@@ -123,10 +126,27 @@ if [ 0 == 1 ]; then
   fi;
 fi;
 
-# AWS.
+echo "#############################################################################"
+echo "# Config AWS"
+echo "#############################################################################"
+
 export AM_INST_ID="i-07f9b5323aa7a2ff2"
+
+echo "#############################################################################"
+echo "# Config bash"
+echo "#############################################################################"
+
+# TODO(gp): Add a loop picking up all the dirs.
+export PATH=$CURR_DIR/dev_scripts:$CURR_DIR/ipynb_scripts:$CURR_DIR/install:$CURR_DIR/aws:$PATH
+
+# Remove redundant paths.
+PATH="$(echo $PATH| perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
+# TODO(gp): Print a better list.
+echo "PATH=$PATH"
 
 echo "#############################################################################"
 echo "# Testing packages"
 echo "#############################################################################"
-$UTIL_DIR/install/package_tester.py
+$CURR_DIR/install/package_tester.py
+
+echo "# ... done executing '$EXEC_PATH'"
