@@ -79,7 +79,7 @@ echo "PYTHONPATH=$PYTHONPATH"
 echo "#############################################################################"
 echo "# Config conda"
 echo "#############################################################################"
-UTIL_DIR=$SRC_DIR/utilities
+UTIL_DIR=$SRC_DIR/amp
 # TODO(gp): Add a loop picking up all the dirs.
 export PATH=$UTIL_DIR/dev_scripts:$UTIL_DIR/ipynb_scripts:$UTIL_DIR/install:$UTIL_DIR/aws:$PATH
 export PYTHONPATH=$PYTHONPATH:$UTIL_DIR

@@ -378,11 +378,11 @@ def smooth_moving_average(df, range_, min_periods=0, min_depth=1, max_depth=1):
     _LOG.info('ema tau = %0.2f', tau_prime)
     com = _tau_to_com(tau_prime)
     _LOG.info('com = %0.2f', com)
-    ema = functools.partial(ema, df, com, min_periods)
+    ema_eval = functools.partial(ema, df, com, min_periods)
     denom = float(max_depth - min_depth + 1)
     # Not the most efficient implementation, but follows 3.56 of Dacorogna
     # directly.
-    return sum(map(ema, range(min_depth, max_depth + 1))) / denom
+    return sum(map(ema_eval, range(min_depth, max_depth + 1))) / denom
 
 
 def rolling_moment(df,
@@ -663,14 +663,14 @@ def eigenvector_diffs(eigenvecs):
 #
 # Test series
 #
-def get_heaviside(a, b, zero_loc, tick):
+def get_heaviside(a, b, zero_val, tick):
     """
     Generate Heaviside pd.Series.
     """
     dbg.dassert_lte(a, zero_loc)
     dbg.dassert_lte(zero_loc, b)
     array = np.arange(a, b, tick)
-    srs = pd.Series(data=np.heaviside(array, zero_loc),
+    srs = pd.Series(data=np.heaviside(array, zero_val),
                     index=array,
                     name='Heaviside')
     return srs
