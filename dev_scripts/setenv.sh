@@ -82,7 +82,7 @@ export PYTHONDONTWRITEBYTECODE=x
 
 # Python packages.
 
-export PYTHONPATH=""
+#export PYTHONPATH=""
 export PYTHONPATH=$PYTHONPATH:$CURR_DIR
 # Remove redundant paths.
 PYTHONPATH="$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
