@@ -1,7 +1,3 @@
-# Code org
-- `helpers`: low-level helpers that are general and not specific of any project
-- `core`: helpers that are specific of data science, finance projects
-
 # Workflow
 
 ## Be patient
@@ -21,11 +17,7 @@
       handle the quirks of your set-up
 
 ## Clone the packages
-- The code is organized in two repos:
-    - `amp`: contains everything that is project agnostic (e.g., utilities,
-      frameworks, ...)
-    - `lemonade`: contains the models shared by GP & Paul
-- Clone the packages in the same dir `$SRC_DIR`
+- Assume that $SRC_DIR contains the source code, e.g., `$HOME/src`
 ```
 > cd $SRC_DIR
 > git clone --recursive git@github.com:gpsaggese/lemonade.git 
@@ -90,7 +82,7 @@ develop               *  /Users/saggese/.conda/envs/develop
 ...
 ```
 
-## Configure a shell for `lemonade`
+## Configure a shell
 - `lemonade` depends on `utilities`
 ```
 > cd $SRC_DIR/lemonade && source dev_scripts/setenv.sh
