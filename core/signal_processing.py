@@ -667,8 +667,8 @@ def get_heaviside(a, b, zero_val, tick):
     """
     Generate Heaviside pd.Series.
     """
-    dbg.dassert_lte(a, zero_loc)
-    dbg.dassert_lte(zero_loc, b)
+    dbg.dassert_lte(a, zero_val)
+    dbg.dassert_lte(zero_val, b)
     array = np.arange(a, b, tick)
     srs = pd.Series(data=np.heaviside(array, zero_val),
                     index=array,
