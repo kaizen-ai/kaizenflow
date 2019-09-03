@@ -449,6 +449,7 @@ def rolling_sharpe_ratio(df, range_, min_periods=0, min_depth=1, max_depth=1,
     df_ma = smooth_moving_average(df, range_, min_periods, min_depth, max_depth)
     df_std = rolling_norm(df - df_ma, range_, min_periods, min_depth, max_depth,
                           p_moment)
+    # TODO(Paul): Annualize appropriately.
     return df_ma / df_std
 
 
