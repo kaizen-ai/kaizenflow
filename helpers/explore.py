@@ -44,65 +44,97 @@ def find_duplicates(vals):
     return res
 
 
+def cast_to_df(obj):
+    if isinstance(obj, pd.Series):
+        df = pd.DataFrame(obj)
+    else:
+        df = obj
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    return df
+
+
+def cast_to_series(obj):
+    if isinstance(obj, pd.DataFrame):
+        dbg.dassert_eq(obj.shape[1], 1)
+        srs = obj.iloc[:, 1]
+    else:
+        srs = obj
+    dbg.dassert_isinstance(srs, pd.Series)
+    return srs
+
+
 # #############################################################################
 # Pandas helpers.
 # #############################################################################
 
 
-def drop_na_rows_columns(df, report_stats=False):
+def drop_axis_with_all_nans(
+    df, drop_rows=True, drop_columns=False, drop_infs=False, report_stats=False
+):
     """
     Remove columns and rows completely empty.
+    The operation is not in place and the resulting df is returned.
+
     Assume that the index is timestamps.
 
-    The operation is not in place and the resulting df is returned.
+    :param drop_rows: remove rows with only nans
+    :param drop_columns: remove columns with only nans
+    :param drop_infs: remove also +/- np.inf
     """
-    # Remove columns with all nans, if any.
-    cols_before = df.columns[:]
-    df = df.dropna(axis=1, how="all")
-    if report_stats:
-        # Report results.
-        cols_after = df.columns[:]
-        removed_cols = [
-            x in cols_after for x in set(cols_before).difference(set(cols_after))
-        ]
-        pct_removed = printing.perc(
-            len(cols_before) - len(cols_after), len(cols_after)
-        )
-        _LOG.info(
-            "removed cols with all nans: %s %s",
-            pct_removed,
-            printing.list_to_str(removed_cols),
-        )
-    # Remove rows with all nans, if any.
-    rows_before = df.columns[:]
-    df = df.dropna(axis=0, how="all")
-    if report_stats:
-        # Report results.
-        rows_after = df.columns[:]
-        removed_rows = [
-            x in rows_after for x in set(rows_before).difference(set(rows_after))
-        ]
-        if len(rows_before) == len(rows_after):
-            # Nothing was removed.
-            min_ts = max_ts = None
-        else:
-            # TODO(gp): Report as intervals of dates.
-            min_ts = min(removed_rows)
-            max_ts = max(removed_rows)
-        pct_removed = printing.perc(
-            len(rows_before) - len(rows_after), len(rows_after)
-        )
-        _LOG.info(
-            "removed rows with all nans: %s [%s, %s]", pct_removed, min_ts, max_ts
-        )
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
+    if drop_columns:
+        # Remove columns with all nans, if any.
+        cols_before = df.columns[:]
+        df = df.dropna(axis=1, how="all")
+        if report_stats:
+            # Report results.
+            cols_after = df.columns[:]
+            removed_cols = set(cols_before).difference(set(cols_after))
+            pct_removed = printing.perc(
+                len(cols_before) - len(cols_after), len(cols_after)
+            )
+            _LOG.info(
+                "removed cols with all nans: %s %s",
+                pct_removed,
+                printing.list_to_str(removed_cols),
+            )
+    if drop_rows:
+        # Remove rows with all nans, if any.
+        rows_before = df.index[:]
+        df = df.dropna(axis=0, how="all")
+        if report_stats:
+            # Report results.
+            rows_after = df.index[:]
+            removed_rows = set(rows_before).difference(set(rows_after))
+            if len(rows_before) == len(rows_after):
+                # Nothing was removed.
+                min_ts = max_ts = None
+            else:
+                # TODO(gp): Report as intervals of dates.
+                min_ts = min(removed_rows)
+                max_ts = max(removed_rows)
+            pct_removed = printing.perc(
+                len(rows_before) - len(rows_after), len(rows_after)
+            )
+            _LOG.info(
+                "removed rows with all nans: %s [%s, %s]",
+                pct_removed,
+                min_ts,
+                max_ts,
+            )
     return df
 
 
-def drop_na(df, report_stats=False, *args, **kwargs):
+def drop_na(df, drop_infs=False, report_stats=False, *args, **kwargs):
     """
     Wrapper around pd.dropna() reporting information about the removed rows.
     """
+    dbg.dassert_isinstance(df, pd.DataFrame)
     num_rows_before = df.shape[0]
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]
@@ -117,10 +149,11 @@ def report_zero_nan_inf_stats(
     df, zero_threshold=1e-9, verbose=False, as_txt=False
 ):
     """
-    Report statistics about zeros, nans, infs for a df.
+    Report count and percentage about zeros, nans, infs for a df.
 
     :param verbose: print more information
     """
+    df = cast_to_df(df)
     _LOG.info("index in [%s, %s]", df.index.min(), df.index.max())
     #
     num_rows = df.shape[0]
@@ -1020,6 +1053,49 @@ def plot_time_distributions(dts, mode, density=True):
 
 
 # #############################################################################
+# Statistics.
+# #############################################################################
+
+
+def adf(srs, verbose=False, **kwargs):
+    """
+    Wrapper around statsmodels.adfuller().
+
+    :param verbose: return all info, instead of just p-value.
+    :return: srs
+    """
+    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
+    srs = cast_to_series(srs)
+    from statsmodels.tsa.stattools import adfuller
+
+    adf_stat, pvalue, usedlag, nobs, critical_values, icbest = adfuller(
+        srs.values
+    )
+    # E.g.,
+    # (-25.618120847156426, 0.0, 1, 998,
+    # {'1%': -3.4369193380671,
+    #   '5%': -2.864440383452517,
+    #   '10%': -2.56831430323573},
+    # 2658.933246559476)
+    res = [("pvalue", pvalue)]
+    if verbose:
+        res.extend(
+            [
+                ("adf_stat", adf_stat),
+                ("usedlag", usedlag),
+                ("nobs", nobs),
+                ("critical_values_1%", critical_values["1%"]),
+                ("critical_values_5%", critical_values["5%"]),
+                ("critical_values_10%", critical_values["10%"]),
+                ("icbest", icbest),
+            ]
+        )
+    data = list(zip(*res))
+    res = pd.Series(data[1], index=data[0])
+    return res
+
+
+# #############################################################################
 # Printing
 # #############################################################################
 
@@ -1050,7 +1126,7 @@ def display_df(
     """
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
-    if isinstance(df, pd.Panel):
+    elif isinstance(df, pd.Panel):
         for c in list(df.keys()):
             print("# %s" % c)
             df_tmp = df[c]
@@ -1064,12 +1140,12 @@ def display_df(
             )
         return
     #
-    if tag is not None:
-        print(tag)
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_eq(
         find_duplicates(df.columns.tolist()), [], msg="Find duplicated columns"
     )
+    if tag is not None:
+        print(tag)
     if max_lines is not None:
         dbg.dassert_lte(1, max_lines)
         if df.shape[0] > max_lines:
