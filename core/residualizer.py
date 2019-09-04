@@ -21,7 +21,7 @@ import pandas as pd
 from scipy.spatial.distance import cosine
 
 import helpers.dbg as dbg
-import helpers.explore as exp
+import core.explore as exp
 
 _LOG = logging.getLogger(__name__)
 

@@ -7,6 +7,8 @@
 * _script_catalog.txt
 
 * ack
+- Command for fancy search, much better than `find` + `grep`
+- TODO(gp): Maybe we should install with conda
 
 * cie
 
@@ -90,8 +92,16 @@
 * ipynb_format.py
 
 * jackipynb
+- Search in jupyter notebooks
+
+* jackppy
+- Search in both python and jupyter notebooks
+
+* jackpy
+- Search in python files 
 
 * jacktxt
+- Search in md and txt files 
 
 * jupyter_install_extensions.sh
 
@@ -108,6 +118,7 @@
 * process_prof.py
 
 * replace_text.py
+- Script to do complex search and replacement in code base
 
 * run_jupyter.sh
 

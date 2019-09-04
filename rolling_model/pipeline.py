@@ -14,7 +14,7 @@ from sklearn.model_selection import TimeSeriesSplit
 
 import helpers.config as cfg
 import helpers.dbg as dbg
-import helpers.finance as fin
+import core.finance as fin
 import helpers.io_ as io_
 import helpers.pickle_ as pickle_
 
