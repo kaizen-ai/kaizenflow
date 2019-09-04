@@ -2,7 +2,7 @@
 """
 Replace an instance of text in all py, ipynb, and txt files.
 
-> replace_text.py --old io_ --new io_
+> replace_text.py --old "import helpers.finance" --new "import core.finance" --preview
 """
 
 import argparse

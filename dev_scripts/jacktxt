@@ -1,2 +1,2 @@
-echo "$@"
-#find . -name "*.txt" -print0 | xargs -0 ack --nogroup --nocolor "$@"
+#echo "$@"
+find . \( -name "*.txt" \) -print0 | xargs -0 ack --nogroup --nocolor "$@"

@@ -8,7 +8,7 @@ if [[ $SERVER_NAME == "gpmac.local" || $SERVER_NAME == "gpmac.lan" ]]; then
 elif [[ $SERVER_NAME == "ip-*" ]]; then
   HOME_DIR="/data/saggese"
 else
-  echo "Invalid server"
+  echo "Invalid SERVER_NAME=$SERVER_NAME"
   exit -1
 fi;
 

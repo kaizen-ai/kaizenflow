@@ -1,6 +1,6 @@
 - To regenerate the list
 ```
-> (cd dev_scripts; ls -1)
+> (cd dev_scripts; unset CLICOLOR; \ls -1 | sort | perl -pe 's/^/\n* /') >_catalog.md
 > %s/^/* /g
 ```
 
