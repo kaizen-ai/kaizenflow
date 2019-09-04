@@ -11,19 +11,28 @@ import sys
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
-import helpers.printing as print_
+import helpers.printing as pri
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
-_ACTIONS = [
+_ALL_ACTIONS = [
     "check_commit_message",
     "check_user_name",
-    #"linter",
-    #"run_tests",
+    "linter",
+    "run_tests",
+    "commit",
 ]
+
+
+# TODO(gp): Share with linter.py
+def _actions_to_string(actions):
+    actions_as_str = [
+        "%24s: %s" % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
+    ]
+    return "\n".join(actions_as_str)
 
 
 def _update_action(action, actions):
@@ -38,6 +47,10 @@ def _main():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--action", action="append", help="Run certain phases")
+    parser.add_argument(
+        "--all", action="store_true", help="Run all recommended phases"
+    )
     parser.add_argument(
         "-m", required=True, action="store", type=str, help="Commit message")
     parser.add_argument("--commit", action="store_true")
@@ -53,7 +66,27 @@ def _main():
     #
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
-    actions = _ACTIONS[:]
+    # Select phases.
+    actions = args.action
+    if isinstance(actions, str) and " " in actions:
+        actions = actions.split(" ")
+    if not actions or args.all:
+        actions = _ALL_ACTIONS[:]
+    # Validate actions.
+    actions = set(actions)
+    for action in actions:
+        if action not in _ALL_ACTIONS:
+            raise ValueError("Invalid action '%s'" % action)
+    # Reorder actions according to _ALL_ACTIONS.
+    actions_tmp = []
+    for action in _ALL_ACTIONS:
+        if action in actions:
+            actions_tmp.append(action)
+    actions = actions_tmp
+    # Print actions.
+    actions_as_str = _actions_to_string(actions)
+    _LOG.info("\n# Action selected:\n%s", pri.space(actions_as_str))
+    #
     # TODO(GP): Make sure that index is empty.
     #
     # Check commit message
@@ -96,7 +129,7 @@ def _main():
         cmd = "linter.py"
         if args.test:
             cmd = "linter.py --action isort"
-        print(print_.frame(cmd, char1="#"))
+        print(pri.frame(cmd, char1="#"))
         num_lints = si.system(cmd, suppress_output=False, abort_on_error=False)
         # Post message.
         msg = "Num lints: %s\n" % num_lints
@@ -121,7 +154,7 @@ def _main():
         cmd = "run_tests.py"
         if args.test:
             cmd = 'pytest edgar -k "TestIsUnicodeDash"'
-        print(print_.frame(cmd, char1="#"))
+        print(pri.frame(cmd, char1="#"))
         rc = si.system(cmd, suppress_output=False, abort_on_error=False)
         unit_test_passing = rc == 0
         msg = "Unit tests passing: %s" % ("Yes" if unit_test_passing else
@@ -130,7 +163,7 @@ def _main():
         io_.to_file(commit_file, msg, mode="a")
         commit_msg += msg
         # Handle errors.
-        print(print_.frame("Commit results", char1="#"))
+        print(pri.frame("Commit results", char1="#"))
         _LOG.info("%s", commit_msg)
         if not unit_test_passing:
             if not args.not_abort_on_error:
@@ -151,12 +184,21 @@ def _main():
             msg = "Unit tests are not passing: you should not commit"
             _LOG.warning(msg)
     if args.commit:
-        cmd = "git commit --file %s" % commit_file
-        _LOG.info("cmd=%s", cmd)
-        cmd = "gup"
-        _LOG.info("cmd=%s", cmd)
-        cmd = "git push"
-        _LOG.info("cmd=%s", cmd)
+        cwd = os.getwcd()
+        _LOG.info("cwd=%s", cwd)
+        # TODO(gp): We should query git.
+        submodules = "amp".split()
+        for submod in submodules:
+            cmd = "git commit --file %s" % commit_file
+            si.system(cmd)
+        #
+        for submod in submodules:
+            cmd = "git commit --file %s" % commit_file
+            si.system(cmd)
+            cmd = "gup.py"
+            si.system(cmd)
+            cmd = "git push"
+            si.system(cmd)
     else:
         msg = "\nCommit with:\n> git commit --file %s" % commit_file
         _LOG.info("%s", msg)

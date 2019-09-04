@@ -3,6 +3,7 @@
 Replace an instance of text in all py, ipynb, and txt files.
 
 > replace_text.py --old "import core.finance" --new "import core.finance" --preview
+> replace_text.py --old "alphamatic/kibot/All_Futures" --new "alphamatic/kibot/All_Futures" --preview
 """
 
 import argparse
@@ -36,11 +37,25 @@ def _replace_with_perl(file_name, args):
         perl_opts.append("-i.bak")
     else:
         perl_opts.append("-i")
+    if "/" in args.old or "/" in args.new:
+        sep = "|"
+    else:
+        sep = "/"
+    # s|\\balphamatic/kibot/All_Futures|alphamatic/kibot/All_Futures|g
+    regex = ""
+    regex += "s" + sep
+    #regex += "\\b"
+    regex += args.old
+    regex += sep
+    regex += args.new
+    regex += sep
+    regex += "g"
+    #regex = r"s%s\\b%s%s%s%sg" % (sep, args.old, sep, args.new, sep)
     if True:
-        perl_opts.append("-e 's/\\b%s/%s/g'" % (args.old, args.new))
+        perl_opts.append("-e '%s'" % regex)
     else:
         perl_opts.append(
-            r"-e 's/\\b%s/%s/g unless /^\s*#/'" % (args.old, args.new))
+            r"-e '%s unless /^\s*#/'" % regex)
     cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
     si.system(cmd, suppress_output=False)
 
@@ -49,7 +64,9 @@ def _main(args):
     dbg.init_logger(args.log_level)
     dirs = args.dirs
     #
-    exts = args.ext.split(",")
+    exts = args.ext
+    #exts = "py,ipynb,txt"
+    exts = exts.split(",")
     _LOG.info("Extensions: %s", exts)
     file_names = []
     for d in dirs:
