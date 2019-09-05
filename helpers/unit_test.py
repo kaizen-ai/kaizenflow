@@ -68,8 +68,9 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
     actual = _to_string(actual)
     expected = _to_string(expected)
     if expected != actual:
-        _LOG.info("%s",
-                  "\n" + pri.frame("Test %s failed" % full_test_name, "=", 80))
+        _LOG.info(
+            "%s", "\n" + pri.frame("Test %s failed" % full_test_name, "=", 80)
+        )
         # Dump the actual and expected strings to files.
         _LOG.debug("Actual:\n%s", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir
@@ -81,20 +82,25 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
         _, res = si.system_to_string(
             "echo; sdiff -l -w 150 %s %s" % (exp_file_name, act_file_name),
             abort_on_error=False,
-            log_level=logging.DEBUG)
+            log_level=logging.DEBUG,
+        )
         _LOG.error(res)
         # Report how to diff.
-        vimdiff_cmd = "vimdiff %s %s" % (os.path.abspath(act_file_name),
-                                         os.path.abspath(exp_file_name))
+        vimdiff_cmd = "vimdiff %s %s" % (
+            os.path.abspath(act_file_name),
+            os.path.abspath(exp_file_name),
+        )
         # Save a script to diff.
         diff_script = "./tmp_diff.sh"
         io_.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
         si.system(cmd)
-        msg = ("Diff with:",
-                "> " + vimdiff_cmd,
-               "or running:",
-               "> " + diff_script)
+        msg = (
+            "Diff with:",
+            "> " + vimdiff_cmd,
+            "or running:",
+            "> " + diff_script,
+        )
         msg = "\n".join(msg)
         _LOG.error(msg)
         # Print stack trace.
@@ -149,7 +155,7 @@ def get_random_df(num_cols, seed=None, **kwargs):
     :return: df
     """
     import pandas as pd
-    import numpy as np
+
     if seed:
         np.random.seed(seed)
     dt = pd.date_range(**kwargs)
@@ -190,9 +196,12 @@ class TestCase(unittest.TestCase):
         :return: dir name
         :rtype: str
         """
-        dir_name = self._get_current_path(
-            test_class_name=test_class_name,
-            test_method_name=test_method_name) + "/input"
+        dir_name = (
+            self._get_current_path(
+                test_class_name=test_class_name, test_method_name=test_method_name
+            )
+            + "/input"
+        )
         return dir_name
 
     def get_output_dir(self):
@@ -271,8 +280,8 @@ class TestCase(unittest.TestCase):
         else:
             # Just check the test result.
             if os.path.exists(file_name):
-                # Golden outcome is available: check the actual outcome against the
-                # golden outcome.
+                # Golden outcome is available: check the actual outcome against
+                # the golden outcome.
                 expected = io_.from_file(file_name, split=False)
                 test_name = self._get_test_name()
                 _assert_equal(actual, expected, test_name, dir_name)
@@ -281,7 +290,9 @@ class TestCase(unittest.TestCase):
                 tmp_file_name = file_name + ".tmp"
                 io_.to_file(tmp_file_name, actual)
                 msg = "Can't find golden in %s: saved actual outcome in %s" % (
-                    file_name, tmp_file_name)
+                    file_name,
+                    tmp_file_name,
+                )
                 raise RuntimeError(msg)
 
     def _get_test_name(self):
