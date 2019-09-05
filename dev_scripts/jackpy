@@ -1,1 +1,1 @@
-ack --nogroup --nocolor --type=python
+ack --nogroup --nocolor --type=python "$@"
