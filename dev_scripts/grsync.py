@@ -11,6 +11,7 @@ import logging
 import os
 
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -20,6 +21,8 @@ _LOG = logging.getLogger(__name__)
 # - Mount remote file system and then get info and sha1sum
 
 # ##############################################################################
+
+_TO_EXCLUDE = ["*.pyc", ".git", ".idea", ".ipynb_checkpoints", "*/my_venv/*"]
 
 
 def _get_rsync_cmd(src_dir, dst_dir, dst_ip, preview, force, execute,
@@ -41,7 +44,7 @@ def _get_rsync_cmd(src_dir, dst_dir, dst_ip, preview, force, execute,
     if force:
         cmd_opts += " -I --delete"
     cmd_opts += " -avzu"
-    cmd_opts += " --exclude *.pyc --exclude .git --exclude .idea --exclude .ipynb_checkpoints"
+    cmd_opts += "".join([" --exclude %s" % e for e in _TO_EXCLUDE])
     cmd += cmd_opts
     #dst_dir = os.path.dirname(dst_dir)
     if not local_to_remote:
@@ -51,23 +54,64 @@ def _get_rsync_cmd(src_dir, dst_dir, dst_ip, preview, force, execute,
     return cmd
 
 
+def _process_rsync_file_list(src_file, dst_file):
+    # Load.
+    txt = io_.from_file(src_file, split=True)
+    _LOG.debug("Read file '%s'", src_file)
+    # Process.
+    txt_out = []
+    for i in range(0, len(txt)):
+        line = txt[i]
+        if line == "":
+            continue
+        if "incremental file list" in line:
+            continue
+        # 1,140,347 5,571,728 bytes 4,474,716.67 bytes/sec
+        # size speedup is 189.68 (DRY RUN)
+        if ("bytes/sec" in line) or ("(DRY RUN)" in line):
+            continue
+        #_LOG.debug("line=%s", line)
+        # 0                   1     2          3        4
+        # drwxr-xr-x          1,312 2019/09/05 17:51:42 commodity_research
+        data = line.split()
+        dbg.dassert_lte(4, len(data), "line=%s", str(data))
+        perms, size, date, time = data[:4]
+        file_name = data[4:]
+        if perms.startswith("d"):
+            continue
+        # Keep size and file name.
+        data = [size] + file_name
+        txt_out.append(" ".join(data))
+    # Save.
+    txt_out = "\n".join(txt_out)
+    io_.to_file(dst_file, txt_out)
+    _LOG.debug("Written file '%s'", dst_file)
+
+
 def _get_list_files_cmd(src_dir, dst_dir, remote_user_name, dst_ip,
                         local_to_remote):
     """
-    Only list files
+    Only list files.
     """
     cmd = 'rsync'
     cmd_opts = ""
     cmd_opts += " --itemize-changes"
     cmd_opts += " -n -avzu"
-    cmd_opts += " --exclude .git --exclude .idea --exclude .ipynb_checkpoints"
+    cmd_opts += "".join([" --exclude %s" % e for e in _TO_EXCLUDE])
     cmd += cmd_opts
     if not local_to_remote:
         cmd += " " + src_dir
     else:
         cmd += " %s@%s:%s" % (remote_user_name, dst_ip, dst_dir)
-    cmd += " >" + ("local.txt" if not local_to_remote else "remote.txt")
-    return cmd
+    dst_file = "tmp.local_all.txt" if not local_to_remote else \
+        "tmp.remote_all.txt"
+    cmd += " >%s" % dst_file
+    si.system(cmd)
+    #
+    src_file = dst_file
+    dst_file = dst_file.replace("_all.txt", ".txt")
+    _process_rsync_file_list(src_file, dst_file)
+    return dst_file
 
 
 # ##############################################################################
@@ -94,6 +138,7 @@ def _main():
         choices="rsync rsync_both_ways diff".split(),
         help="rsync from local to remote")
     parser.add_argument("--force", action="store_true", help="Force the rsync")
+    parser.add_argument("--no_check", action="store_true")
     parser.add_argument(
         "--preview", action="store_true", help="Use --itemize-changes")
     parser.add_argument("--dry_run", action="store_true")
@@ -130,14 +175,15 @@ def _main():
     print("dst_dir=%s" % dst_dir)
     print("remote=%s@%s" % (remote_user_name, remote_ip))
     #
-    cmd = 'ssh %s@%s "ls %s"' % (remote_user_name, remote_ip, dst_dir)
-    rc = si.system(cmd, abort_on_error=False)
-    if rc != 0:
-        msg = "Can't find remote dir '%s' on '%s@%s'" % (dst_dir,
-                                                      remote_user_name,
-                                                         remote_ip)
-        _LOG.error(msg)
-        raise RuntimeError(msg)
+    if not args.no_check:
+        cmd = 'ssh %s@%s "ls %s"' % (remote_user_name, remote_ip, dst_dir)
+        rc = si.system(cmd, abort_on_error=False)
+        if rc != 0:
+            msg = "Can't find remote dir '%s' on '%s@%s'" % (dst_dir,
+                                                          remote_user_name,
+                                                             remote_ip)
+            _LOG.error(msg)
+            raise RuntimeError(msg)
     #
     if args.action == "rsync":
         force = args.force
@@ -164,14 +210,27 @@ def _main():
         si.system(cmd, suppress_output=False)
     elif args.action == "diff":
         local_to_remote = False
-        cmd = _get_list_files_cmd(src_dir, dst_dir, remote_user_name, remote_ip,
+        file1 = _get_list_files_cmd(src_dir, dst_dir, remote_user_name, remote_ip,
                                   local_to_remote)
-        si.system(cmd, suppress_output=False)
         #
         local_to_remote = True
-        cmd = _get_list_files_cmd(src_dir, dst_dir, remote_user_name, remote_ip,
+        file2 = _get_list_files_cmd(src_dir, dst_dir, remote_user_name, remote_ip,
                                   local_to_remote)
-        si.system(cmd, suppress_output=False)
+        # Save a script to diff.
+        vimdiff_cmd = "vimdiff %s %s" % (file1, file2)
+        diff_script = "./tmp_diff.sh"
+        io_.to_file(diff_script, vimdiff_cmd)
+        cmd = "chmod +x " + diff_script
+        si.system(cmd)
+        msg = ("Diff with:",
+               "> " + vimdiff_cmd,
+               "or running:",
+               "> " + diff_script)
+        msg = "\n".join(msg)
+        _LOG.error(msg)
+
+
+        cmd = "Compare with ./tmp_diff.sh"
     else:
         dbg.dfatal("Invalid action='%s'" % args.action)
 

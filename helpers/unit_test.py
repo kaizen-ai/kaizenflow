@@ -91,8 +91,11 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
         io_.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
         si.system(cmd)
-        # Print stack trace.
-        msg = "\nDiff with:\n> " + vimdiff_cmd + "\nor running:\n> " + diff_script
+        msg = ("Diff with:",
+                "> " + vimdiff_cmd,
+               "or running:",
+               "> " + diff_script)
+        msg = "\n".join(msg)
         _LOG.error(msg)
         # Print stack trace.
         raise RuntimeError(msg)
