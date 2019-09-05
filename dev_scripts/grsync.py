@@ -2,12 +2,8 @@
 
 # pylint: disable=C0301
 """
-- Force sync
-> grsync.py --src_dir . --dst_dir /data/gp_wd/src/deploy_particle1 --action rsync --force
-
 - Rsync a git dir against a pycharm deploy dir
-> dev_scripts/grsync --src_dir ~/src/git_particleone_teza1 --dst_dir /data/gp_wd/src/deploy_particle1 --rsync
-
+> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff
 """
 
 import argparse
@@ -55,7 +51,8 @@ def _get_rsync_cmd(src_dir, dst_dir, dst_ip, preview, force, execute,
     return cmd
 
 
-def _get_list_files_cmd(src_dir, dst_dir, dst_ip, local_to_remote):
+def _get_list_files_cmd(src_dir, dst_dir, remote_user_name, dst_ip,
+                        local_to_remote):
     """
     Only list files
     """
@@ -68,9 +65,12 @@ def _get_list_files_cmd(src_dir, dst_dir, dst_ip, local_to_remote):
     if not local_to_remote:
         cmd += " " + src_dir
     else:
-        cmd += " %s:%s" % (dst_ip, dst_dir)
+        cmd += " %s@%s:%s" % (remote_user_name, dst_ip, dst_dir)
     cmd += " >" + ("local.txt" if not local_to_remote else "remote.txt")
     return cmd
+
+
+# ##############################################################################
 
 
 def _main():
@@ -85,7 +85,7 @@ def _main():
     parser.add_argument(
         "--dst_dir",
         action="store",
-        required=True,
+        default=None,
         help="Remote directory to sync")
     parser.add_argument(
         "--action",
@@ -98,9 +98,9 @@ def _main():
         "--preview", action="store_true", help="Use --itemize-changes")
     parser.add_argument("--dry_run", action="store_true")
     parser.add_argument(
-        "--remote_ip",
+        "--config",
         action="store",
-        default=os.environ["AWS_MONSTER_IP"],
+        required=True,
         help="IP of remote machine")
     parser.add_argument(
         "-v",
@@ -111,16 +111,32 @@ def _main():
     #
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
+    #
+    if args.config == "P1":
+        remote_user_name = "gp"
+        remote_ip = "104.248.187.204"
+        dst_dir = "/home/gp/src/commodity_research"
+    else:
+        raise ValueError("Invalid config='%s'" % args.config)
+    if args.dst_dir:
+        dst_dir = args.dst_dir
+    dbg.dassert_is_not(dst_dir, None)
     # Check that both dirs exist.
+    dbg.dassert_is_not(args.src_dir, None)
     src_dir = os.path.abspath(args.src_dir)
     dbg.dassert_exists(src_dir)
     #
-    cmd = 'ssh %s "ls %s"' % (args.remote_ip, args.dst_dir)
+    print("src_dir=%s" % args.src_dir)
+    print("dst_dir=%s" % dst_dir)
+    print("remote=%s@%s" % (remote_user_name, remote_ip))
+    #
+    cmd = 'ssh %s@%s "ls %s"' % (remote_user_name, remote_ip, dst_dir)
     rc = si.system(cmd, abort_on_error=False)
     if rc != 0:
-        msg = "Can't find remote dir '%s' on '%s'" % (args.dst_dir,
-                                                      args.remote_ip)
-        _LOG.warning(msg)
+        msg = "Can't find remote dir '%s' on '%s@%s'" % (dst_dir,
+                                                      remote_user_name,
+                                                         remote_ip)
+        _LOG.error(msg)
         raise RuntimeError(msg)
     #
     if args.action == "rsync":
@@ -128,7 +144,7 @@ def _main():
         preview = args.preview
         execute = not args.dry_run
         local_to_remote = False
-        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip, preview,
+        cmd = _get_rsync_cmd(src_dir, dst_dir, remote_ip, preview,
                              force, execute, local_to_remote)
         si.system(cmd, suppress_output=False)
     elif args.action == "rsync_both_ways":
@@ -138,22 +154,22 @@ def _main():
         execute = not args.dry_run
         #
         local_to_remote = False
-        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip, preview,
+        cmd = _get_rsync_cmd(src_dir, dst_dir, remote_ip, preview,
                              force, execute, local_to_remote)
         si.system(cmd, suppress_output=False)
         #
         local_to_remote = True
-        cmd = _get_rsync_cmd(src_dir, args.dst_dir, args.remote_ip, preview,
+        cmd = _get_rsync_cmd(src_dir, dst_dir, remote_ip, preview,
                              force, execute, local_to_remote)
         si.system(cmd, suppress_output=False)
     elif args.action == "diff":
         local_to_remote = False
-        cmd = _get_list_files_cmd(src_dir, args.dst_dir, args.remote_ip,
+        cmd = _get_list_files_cmd(src_dir, dst_dir, remote_user_name, remote_ip,
                                   local_to_remote)
         si.system(cmd, suppress_output=False)
         #
-        local_to_remote = False
-        cmd = _get_list_files_cmd(src_dir, args.dst_dir, args.remote_ip,
+        local_to_remote = True
+        cmd = _get_list_files_cmd(src_dir, dst_dir, remote_user_name, remote_ip,
                                   local_to_remote)
         si.system(cmd, suppress_output=False)
     else:
