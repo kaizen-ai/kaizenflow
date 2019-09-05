@@ -47,8 +47,12 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
     :return: DataFrame with columns from csv line 0
     """
     dbg.dassert_lt(0, start)
+    _LOG.info("row = %i", start)
     stop = False
     dfs = []
+    init_df = read_csv_range(csv_path, start, 1, **kwargs)
+    if init_df.shape[0] < 1:
+        return init_df
     val = read_csv_range(csv_path, start, 1, **kwargs)[col_name].iloc[0]
     _LOG.info('Building chunk for %s', val)
     counter = 0
@@ -69,6 +73,8 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
             stop = True
         dfs.append(df.iloc[0:idx_max + 1])
         counter += 1
+    if not dfs:
+        return pd.DataFrame()
     return pd.concat(dfs, axis=0).reset_index(drop=True)
 
 
