@@ -47,7 +47,7 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
     :return: DataFrame with columns from csv line 0
     """
     dbg.dassert_lt(0, start)
-    _LOG.info("row = %i", start)
+    # _LOG.info("row = %i", start)
     stop = False
     dfs = []
     init_df = read_csv_range(csv_path, start, 1, **kwargs)
