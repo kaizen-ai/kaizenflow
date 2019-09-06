@@ -61,8 +61,11 @@ if [[ $USER_NAME == "saggese" || $USER_NAME == "gp" ]]; then
 elif [[ $USER_NAME == "paul" ]]; then
   git config --local user.email "smith.paul.anthony@gmail.com"
   git config --global user.name "paul"
+elif [[ $user_name == "julia" ]]; then
+  git config --local user.email "julia@particle.one"
+  git config --global user.name "Julia"
 elif [[ $USER_NAME == "jenkins" ]]; then
-  echo "There is no need to setup git for user '$USER_NAME'."
+    echo "There is no need to setup git for user '$USER_NAME'."
 else
   echo "Error: Invalid user '$USER_NAME'. Add your credentials to setenv.sh"
   return -1
