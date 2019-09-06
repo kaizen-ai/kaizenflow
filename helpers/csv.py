@@ -7,24 +7,27 @@ import pandas as pd
 _LOG = logging.getLogger(__name__)
 
 
-def read_csv_range(csv_path, start, nrows, **kwargs):
+def read_csv_range(csv_path, from_, to, **kwargs):
     """
     Read a specified row range of a csv file and convert to a DataFrame.
 
-    Assumed to have header, which is row 0.
+    Assumed to have header, considered to be row 0.
+    Reads [from_, to), e.g., to - from_ lines.
+    I.e., follows list slicing semantics.
 
     :param csv_path: Location of csv file
-    :param start: First line to read (header is row 0 and is always read)
-    :param nrows: Number of non-header rows to read
-    :return: DataFrame with columns from csv line 0 (header) and rows
-        with lines [start, nrows).
+    :param from_: First line to read (header is row 0 and is always read)
+    :param to: Last line to read, not inclusive
+    :return: DataFrame with columns from csv line 0 (header)
     """
-    dbg.dassert_lt(0, start, msg="Row 0 assumed to be header row")
-    skiprows = [i for i in range(1, start)]
+    dbg.dassert_lt(0, from_, msg="Row 0 assumed to be header row")
+    dbg.dassert_lt(from_, to, msg="Empty range requested!")
+    skiprows = [i for i in range(1, from_)]
+    nrows = to - from_
     df = pd.read_csv(csv_path, skiprows=skiprows, nrows=nrows, **kwargs)
-    if df.shape[0] < nrows:
+    if df.shape[0] < to:
         _LOG.info("Number of df rows = %i vs requested = %i", df.shape[0],
-                  nrows)
+                  to)
     return df
 
 
@@ -50,15 +53,15 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
     # _LOG.info("row = %i", start)
     stop = False
     dfs = []
-    init_df = read_csv_range(csv_path, start, 1, **kwargs)
+    init_df = read_csv_range(csv_path, start, start + 1, **kwargs)
     if init_df.shape[0] < 1:
         return init_df
-    val = read_csv_range(csv_path, start, 1, **kwargs)[col_name].iloc[0]
+    val = init_df[col_name].iloc[0]
     _LOG.info('Building chunk for %s', val)
     counter = 0
     while not stop:
-        df = read_csv_range(csv_path, start + counter * nrows_at_a_time,
-                            nrows_at_a_time)
+        from_ = start + counter * nrows_at_a_time
+        df = read_csv_range(csv_path, from_, from_ + nrows_at_a_time)
         # Break if there are no matches.
         if df.shape[0] == 0:
             break
@@ -93,7 +96,7 @@ def find_first_matching_row(csv_path, col_name, val, start=1,
     curr = start
     while True:
         _LOG.info("Start of current chunk = line %i", curr)
-        df = read_csv_range(csv_path, curr, nrows_at_a_time, **kwargs)
+        df = read_csv_range(csv_path, curr, curr + nrows_at_a_time, **kwargs)
         if df.shape[0] < 1:
             _LOG.info("Value %s not found", val)
             break
