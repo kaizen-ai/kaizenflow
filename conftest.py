@@ -5,7 +5,9 @@ import helpers.unit_test as hut
 
 # Hack to workaround pytest not happy with multiple redundant conftest.py
 # (bug #34)
-if hasattr(hut, "_conftest_already_parsed"):
+if not hasattr(hut, "_conftest_already_parsed"):
+    hut._conftest_already_parsed = True
+
     def pytest_addoption(parser):
         parser.addoption(
             "--update_outcomes",

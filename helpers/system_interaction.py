@@ -160,30 +160,27 @@ def system_to_string(
     return rc, output
 
 
-#@functools.lru_cache(maxsize=None)
 def get_user_name():
-    # TODO(gp): Use this to avoid to make a system call.
-    res2 = system_to_string("whoami")[1]
     import getpass
     res = getpass.getuser()
-    assert res == res2
     return res
 
 
-#@functools.lru_cache(maxsize=None)
 def get_server_name():
-    # TODO(gp): Use this to avoid to make a system call.
-    # import os
-    # os.uname()
-    # posix.uname_result(sysname='Darwin', nodename='gpmac.lan', release='18.2.0',
-    # version='Darwin Kernel Version 18.2.0: Mon Nov 12 20:24:46 PST 2018;
-    # root:xnu-4903.231.4~2/RELEASE_X86_64', machine='x86_64')
-    return system_to_string("uname -n")[1]
+    res = os.uname()
+    # posix.uname_result(
+    #   sysname='Darwin',
+    #   nodename='gpmac.lan',
+    #   release='18.2.0',
+    #   version='Darwin Kernel Version 18.2.0: Mon Nov 12 20:24:46 PST 2018;
+    #       root:xnu-4903.231.4~2/RELEASE_X86_64',
+    #   machine='x86_64')
+    return res.nodename
 
 
-@functools.lru_cache(maxsize=None)
 def get_os_name():
-    return system_to_string("uname -s")[1]
+    res = os.uname()
+    return res.sysname
 
 
 def query_yes_no(question, abort_on_no=True):
