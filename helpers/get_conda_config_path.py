@@ -2,8 +2,8 @@
 
 # Note that this file must run with python2.7 to bootstrap conda.
 
-import os
 import logging
+import os
 import subprocess
 import sys
 

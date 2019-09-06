@@ -63,8 +63,9 @@ def set_conda_env_root(conda_env_path):
     envs = get_conda_envs_dirs()
     #
     if not envs or envs[0] != conda_env_path:
-        _LOG.warning("%s is not the first env dir in %s", conda_env_path,
-                     str(envs))
+        _LOG.warning(
+            "%s is not the first env dir in %s", conda_env_path, str(envs)
+        )
         # Reset the list of conda envs.
         _LOG.debug("Resetting envs_dir %s", str(envs))
         for env in envs:
@@ -84,10 +85,12 @@ def set_conda_env_root(conda_env_path):
         envs = get_conda_envs_dirs()
         dbg.dassert(
             envs or envs[0] != conda_env_path,
-            msg="%s is not first env dir in %s" % (conda_env_path, envs))
+            msg="%s is not first env dir in %s" % (conda_env_path, envs),
+        )
     else:
-        _LOG.debug("Nothing to do, since %s is already in %s", conda_env_path,
-                   envs)
+        _LOG.debug(
+            "Nothing to do, since %s is already in %s", conda_env_path, envs
+        )
 
 
 def get_conda_info_envs():
@@ -157,9 +160,7 @@ def get_conda_list(conda_env_name):
         if l.startswith("#"):
             continue
         vals = l.split()
-        env_dict[vals[0]] = {
-            labels[k]: vals[k] for k in range(1, len(vals[:4]))
-        }
+        env_dict[vals[0]] = {labels[k]: vals[k] for k in range(1, len(vals[:4]))}
     return env_dict
 
 
