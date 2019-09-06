@@ -14,11 +14,11 @@ from helpers.system_interaction import system, system_to_string
 _log = logging.getLogger(__name__)
 
 # - Github path:
-#   https://github.com/tezaorg/teza/blob/master/ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
+#   https://github.com/.../.../blob/master/ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
 # - Jupyter url:
 #   http://localhost:9186/notebooks/ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
 # - Absolute path:
-#   /Users/gp/src/git_particleone_teza2/ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
+#   /Users/gp/src/git_particleone/ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
 # - Relative path to the current dir
 #   ./ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
 # - Git path relative to root
@@ -34,17 +34,17 @@ def _check_url(ret):
 
 
 def _main(args):
-    github_prefix = "https://github.com/tezaorg/teza/blob/master/"
+    github_prefix = "https://github.com/.../.../blob/master/"
     _, user = system_to_string('whoami')
     _, pwd = system_to_string('pwd')
     # TODO(gp): Generalize once everyone has an assigned port merging with infra/ssh_config.py.
     jupyter_prefix = None
     if user == "gp":
         if pwd in ("/data/gp_wd/src/particle1",
-                   "/Users/gp/src/git_particleone_teza1"):
+                   "/Users/gp/src/git_particleone_...1"):
             jupyter_prefix = "http://localhost:9185/notebooks/"
         elif pwd in ("/data/gp_wd/src/particle2",
-                     "/Users/gp/src/git_particleone_teza2"):
+                     "/Users/gp/src/git_particleone_...2"):
             jupyter_prefix = "http://localhost:9186/notebooks/"
     if jupyter_prefix is None:
         raise RuntimeError(

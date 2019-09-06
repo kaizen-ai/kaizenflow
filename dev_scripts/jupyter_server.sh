@@ -1,6 +1,23 @@
 #!/bin/bash -e
 
-source dev_scripts/setenv.sh
+# First optional param is the conda env.
+if [[ -z $1 ]]; then
+  ENV="develop"
+else
+  ENV=$1
+fi;
+echo "ENV=$ENV"
+
+# Second optional param is the port number.
+if [[ -z $2 ]]; then
+  PORT=9999
+else
+  PORT=$2
+fi;
+echo "PORT=$PORT"
+
+# Config env.
+source $SRC_DIR/utilities/dev_scripts/setenv.sh -t $ENV
 
 OS_NAME=$(uname)
 echo "OS_NAME='$OS_NAME'"
@@ -16,7 +33,7 @@ if [[ $USER_NAME == "saggese" ]]; then
   if [[ 1 == 1 ]]; then
     # TODO: It should be function of current dir.
     IP_NAME="localhost"
-    if [[ $DIR_NAME == "/Users/gp/src/git_particleone_teza1" ]]; then
+    if [[ $DIR_NAME == "/Users/gp/src/git_particleone" ]]; then
       PORT=8101
     else
       echo "ERROR: Dir '$DIR_NAME' not recognized"

@@ -288,6 +288,7 @@ def _get_action_func(action):
         "pydocstyle": _pydocstyle,
         "pylint": _pylint,
         "pyment": _pyment,
+        "python_compile": _python_compile,
         "yapf": _yapf,
     }
     return map_[action]
@@ -384,6 +385,22 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
         io_.to_file(file_name, txt_new)
     #
     return output
+
+import py_compile
+
+def _python_compile(
+    file_name, pedantic, check_if_possible
+):
+    _ = pedantic
+    if check_if_possible:
+        return True
+    #
+    dbg.dassert(file_name)
+    if not is_py_file(file_name):
+        _LOG.debug("Skipping file_name='%s'", file_name)
+        return []
+    py_compile.compile(file_name, doraise=True)
+    return []
 
 
 def _autoflake(file_name, pedantic, check_if_possible):
@@ -853,6 +870,7 @@ def _lint(file_name, actions, pedantic, debug):
 # The order of this list implies the order in which they are executed.
 _VALID_ACTIONS_META = [
     ("basic_hygiene", "w", "Clean up (e.g., tabs, trailing spaces)."),
+    ("python_compile", "r", "Check that python code is valid"),
     (
         "autoflake",
         "w",
