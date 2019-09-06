@@ -11,7 +11,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_system1(ut.TestCase):
-
     def test1(self):
         si.system("ls")
 
@@ -61,3 +60,32 @@ class Test_system1(ut.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             si.system("ls this_file_doesnt_exist")
         self.check_string(str(cm.exception))
+
+
+# #############################################################################
+
+
+class Test_system2(ut.TestCase):
+    def test_get_user_name(self):
+        act = si.get_user_name()
+        _LOG.debug("act=%s", act)
+        #
+        exp = si.system_to_string("whoami")[1]
+        _LOG.debug("exp=%s", exp)
+        self.assertEqual(act, exp)
+
+    def test_get_server_name(self):
+        act = si.get_server_name()
+        _LOG.debug("act=%s", act)
+        #
+        exp = si.system_to_string("uname -n")[1]
+        _LOG.debug("exp=%s", exp)
+        self.assertEqual(act, exp)
+
+    def test_get_os_name(self):
+        act = si.get_os_name()
+        _LOG.debug("act=%s", act)
+        #
+        exp = si.system_to_string("uname -s")[1]
+        _LOG.debug("exp=%s", exp)
+        self.assertEqual(act, exp)

@@ -41,9 +41,9 @@ while getopts "t:" option
   esac
   shift $((OPTIND -1))
 done
-extra="$1"
-if [[ $extra != "bell-style" && $extra != "" ]]; then
-  echo "Error: can't parse '$extra'"
+EXTRA="$1"
+if [[ $EXTRA != "bell-style" && $EXTRA != "" ]]; then
+  echo "Error: can't parse '$EXTRA'"
   return -1
 fi;
 echo "ENV_NAME=$ENV_NAME"
@@ -52,24 +52,24 @@ echo "##########################################################################
 echo "# Config git"
 echo "#############################################################################"
 
-user_name=$(whoami)
-echo "user_name='$user_name'"
+USER_NAME=$(whoami)
+echo "USER_NAME='$USER_NAME'"
 # TODO(gp): Generalize this to all users.
-if [[ $user_name == "saggese" ]]; then
+if [[ $USER_NAME == "saggese" || $USER_NAME == "gp" ]]; then
   git config --local user.email "saggese@gmail.com"
   git config --global user.name "saggese"
-elif [[ $user_name == "paul" ]]; then
+elif [[ $USER_NAME == "paul" ]]; then
   git config --local user.email "smith.paul.anthony@gmail.com"
   git config --global user.name "paul"
-elif [[ $user_name == "jenkins" ]]; then
-  echo "There is no need to setup git for user '$user_name'."
+elif [[ $USER_NAME == "jenkins" ]]; then
+  echo "There is no need to setup git for user '$USER_NAME'."
 else
-  echo "Error: Invalid user '$user_name'. Add your credentials to setenv.sh"
+  echo "Error: Invalid user '$USER_NAME'. Add your credentials to setenv.sh"
   return -1
 fi;
 
-if [[ $user_name != "jenkins" ]]; then
-  git config --list | \grep $user_name
+if [[ $USER_NAME != "jenkins" ]]; then
+  git config --list | \grep $USER_NAME
 else
   git config --list
 fi;

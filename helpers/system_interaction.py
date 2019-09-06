@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import functools
 import logging
 import os
 import subprocess
@@ -160,28 +159,32 @@ def system_to_string(
     return rc, output
 
 
-@functools.lru_cache(maxsize=None)
 def get_user_name():
-    # TODO(gp): Use this to avoid to make a system call.
-    # import getpass
-    # getpass.getuser()
-    return system_to_string("whoami")[1]
+    import getpass
+
+    res = getpass.getuser()
+    return res
 
 
-@functools.lru_cache(maxsize=None)
 def get_server_name():
-    # TODO(gp): Use this to avoid to make a system call.
-    # import os
-    # os.uname()
-    # posix.uname_result(sysname='Darwin', nodename='gpmac.lan', release='18.2.0',
-    # version='Darwin Kernel Version 18.2.0: Mon Nov 12 20:24:46 PST 2018;
-    # root:xnu-4903.231.4~2/RELEASE_X86_64', machine='x86_64')
-    return system_to_string("uname -n")[1]
+    res = os.uname()
+    # posix.uname_result(
+    #   sysname='Darwin',
+    #   nodename='gpmac.lan',
+    #   release='18.2.0',
+    #   version='Darwin Kernel Version 18.2.0: Mon Nov 12 20:24:46 PST 2018;
+    #       root:xnu-4903.231.4~2/RELEASE_X86_64',
+    #   machine='x86_64')
+    # This is not compatible with python2.7
+    #return res.nodename
+    return res[1]
 
 
-@functools.lru_cache(maxsize=None)
 def get_os_name():
-    return system_to_string("uname -s")[1]
+    res = os.uname()
+    # This is not compatible with python2.7
+    #return res.sysname
+    return res[0]
 
 
 def query_yes_no(question, abort_on_no=True):
