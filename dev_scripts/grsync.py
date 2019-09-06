@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 
-# pylint: disable=C0301
 """
 - Rsync a git dir against a pycharm deploy dir
+> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action rsync -v DEBUG --preview
+
+- Diff
 > grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff
+> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff_verb
+> grsync.py --src_dir $HOME/src/particle/commodity_research/tr --config P1 --action diff_verb
 """
 
 import argparse
@@ -17,16 +21,29 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp):
-# - Filter local, remote removing directory (first d or through rsync)
 # - Mount remote file system and then get info and sha1sum
 
 # ##############################################################################
 
-_TO_EXCLUDE = ["*.pyc", ".git", ".idea", ".ipynb_checkpoints", "*/my_venv/*"]
+_TO_EXCLUDE = [
+    "*.pyc",
+    ".git",
+    ".idea",
+    ".ipynb_checkpoints",
+    "'*/my_venv/*'",
+    "'*/infra/*'",
+]
 
 
 def _get_rsync_cmd(
-    src_dir, dst_dir, dst_ip, preview, force, execute, local_to_remote
+    src_dir,
+    dst_dir,
+    remote_user_name,
+    dst_ip,
+    preview,
+    force,
+    execute,
+    local_to_remote,
 ):
     cmd = "rsync"
     # -a: archive
@@ -38,7 +55,7 @@ def _get_rsync_cmd(
     # --suffix.old: use a suffix to keep old
     cmd_opts = ""
     if preview:
-        assert 0
+        # https://stackoverflow.com/questions/4493525
         cmd_opts += " --itemize-changes"
     if not execute:
         cmd_opts += " --dry-run"
@@ -47,15 +64,25 @@ def _get_rsync_cmd(
     cmd_opts += " -avzu"
     cmd_opts += "".join([" --exclude %s" % e for e in _TO_EXCLUDE])
     cmd += cmd_opts
-    # dst_dir = os.path.dirname(dst_dir)
-    if not local_to_remote:
-        cmd += " %s %s:%s" % (src_dir, dst_ip, dst_dir)
+    # Handle a quirk of rsync where the destination dir needs to have one
+    # missing level.
+    # > rsync --itemize-changes -avzu --exclude ... \
+    #   /Users/saggese/src/particle/commodity_research/tr
+    #   gp@104.248.187.204:/home/gp/src/commodity_research
+    #   --dry-run
+    dbg.dassert_eq(os.path.basename(src_dir), os.path.basename(dst_dir))
+    dst_dir = os.path.dirname(dst_dir)
+    dst = "%s@%s:%s" % (remote_user_name, dst_ip, dst_dir)
+    if local_to_remote:
+        cmd += " %s %s" % (src_dir, dst)
     else:
-        cmd += " %s:%s %s" % (dst_ip, dst_dir, src_dir)
+        cmd += " %s %s" % (dst, src_dir)
     return cmd
 
 
 def _process_rsync_file_list(src_file, dst_file):
+    # rsync --itemize-changes -n -avzu --exclude ... /Users/saggese/src/particle/commodity_research/tr
+    # rsync --itemize-changes -n -avzu --exclude ... gp@104.248.187.204:/home/gp/src/commodity_research/tr
     # Load.
     txt = io_.from_file(src_file, split=True)
     _LOG.debug("Read file '%s'", src_file)
@@ -90,7 +117,7 @@ def _process_rsync_file_list(src_file, dst_file):
 
 
 def _get_list_files_cmd(
-    src_dir, dst_dir, remote_user_name, dst_ip, local_to_remote
+    src_dir, dst_dir, remote_user_name, dst_ip, local_to_remote, verbose
 ):
     """
     Only list files.
@@ -101,7 +128,7 @@ def _get_list_files_cmd(
     cmd_opts += " -n -avzu"
     cmd_opts += "".join([" --exclude %s" % e for e in _TO_EXCLUDE])
     cmd += cmd_opts
-    if not local_to_remote:
+    if local_to_remote:
         cmd += " " + src_dir
     else:
         cmd += " %s@%s:%s" % (remote_user_name, dst_ip, dst_dir)
@@ -111,9 +138,10 @@ def _get_list_files_cmd(
     cmd += " >%s" % dst_file
     si.system(cmd)
     #
-    src_file = dst_file
-    dst_file = dst_file.replace("_all.txt", ".txt")
-    _process_rsync_file_list(src_file, dst_file)
+    if not verbose:
+        src_file = dst_file
+        dst_file = dst_file.replace("_all.txt", ".txt")
+        _process_rsync_file_list(src_file, dst_file)
     return dst_file
 
 
@@ -134,7 +162,7 @@ def _main():
         "--action",
         action="store",
         required=True,
-        choices="rsync rsync_both_ways diff".split(),
+        choices="rsync rsync_both_ways diff diff_verb".split(),
         help="rsync from local to remote",
     )
     parser.add_argument("--force", action="store_true", help="Force the rsync")
@@ -157,14 +185,22 @@ def _main():
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
     #
+    src_dir = args.src_dir
     if args.config == "P1":
+        # TODO(gp): Generalize this.
         remote_user_name = "gp"
         remote_ip = "104.248.187.204"
         dst_dir = "/home/gp/src/commodity_research"
+        if args.src_dir:
+            base_dir = "commodity_research"
+            dbg.dassert_in(base_dir, src_dir)
+            dbg.dassert_in(base_dir, dst_dir)
+            idx = src_dir.index(base_dir) + len(base_dir)
+            sub_dir = src_dir[idx:]
+            dst_dir += "/" + sub_dir
+            dst_dir = os.path.abspath(dst_dir)
     else:
         raise ValueError("Invalid config='%s'" % args.config)
-    if args.dst_dir:
-        dst_dir = args.dst_dir
     dbg.dassert_is_not(dst_dir, None)
     # Check that both dirs exist.
     dbg.dassert_is_not(args.src_dir, None)
@@ -191,9 +227,16 @@ def _main():
         force = args.force
         preview = args.preview
         execute = not args.dry_run
-        local_to_remote = False
+        local_to_remote = True
         cmd = _get_rsync_cmd(
-            src_dir, dst_dir, remote_ip, preview, force, execute, local_to_remote
+            src_dir,
+            dst_dir,
+            remote_user_name,
+            remote_ip,
+            preview,
+            force,
+            execute,
+            local_to_remote,
         )
         si.system(cmd, suppress_output=False)
     elif args.action == "rsync_both_ways":
@@ -202,29 +245,34 @@ def _main():
         preview = args.preview
         execute = not args.dry_run
         #
-        local_to_remote = False
-        cmd = _get_rsync_cmd(
-            src_dir, dst_dir, remote_ip, preview, force, execute, local_to_remote
-        )
-        si.system(cmd, suppress_output=False)
+        for local_to_remote in (True, False):
+            cmd = _get_rsync_cmd(
+                src_dir,
+                dst_dir,
+                remote_user_name,
+                remote_ip,
+                preview,
+                force,
+                execute,
+                local_to_remote,
+            )
+            si.system(cmd, suppress_output=False)
         #
-        local_to_remote = True
-        cmd = _get_rsync_cmd(
-            src_dir, dst_dir, remote_ip, preview, force, execute, local_to_remote
-        )
-        si.system(cmd, suppress_output=False)
-    elif args.action == "diff":
-        local_to_remote = False
-        file1 = _get_list_files_cmd(
-            src_dir, dst_dir, remote_user_name, remote_ip, local_to_remote
-        )
-        #
-        local_to_remote = True
-        file2 = _get_list_files_cmd(
-            src_dir, dst_dir, remote_user_name, remote_ip, local_to_remote
-        )
+    elif args.action in ("diff", "diff_verb"):
+        files = []
+        verbose = args.action == "diff_verb"
+        for local_to_remote in (True, False):
+            file = _get_list_files_cmd(
+                src_dir,
+                dst_dir,
+                remote_user_name,
+                remote_ip,
+                local_to_remote,
+                verbose,
+            )
+            files.append(file)
         # Save a script to diff.
-        vimdiff_cmd = "vimdiff %s %s" % (file1, file2)
+        vimdiff_cmd = "vimdiff %s %s" % (files[0], files[1])
         diff_script = "./tmp_diff.sh"
         io_.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
@@ -237,8 +285,6 @@ def _main():
         )
         msg = "\n".join(msg)
         _LOG.error(msg)
-
-        cmd = "Compare with ./tmp_diff.sh"
     else:
         dbg.dfatal("Invalid action='%s'" % args.action)
 
