@@ -1,4 +1,5 @@
 import logging
+import os
 
 import helpers.dbg as dbg
 import pandas as pd
@@ -106,3 +107,37 @@ def find_first_matching_row(csv_path, col_name, val, start=1,
             return curr + idx_max
         else:
             curr += nrows_at_a_time
+
+
+def append(df, path, index=False, **kwargs):
+    with open(path, 'a') as f:
+        df.to_csv(f, header=False, index=index, **kwargs)
+
+
+def csv_mr(csv_path,
+           out_dir,
+           key_func,
+           chunk_preprocessor=None,
+           chunksize=1000000):
+    """
+    Map-reduce-type processing of csv. Here we
+      - Read the csv in chunks, loading the chunk into a DataFrame
+      - Key each row of the DataFrame using a groupby
+      - "Reduce" keyed groups by writing and appending to a csv
+
+    :param csv_path: Input csv path
+    :param out_dir: Output dir for csv's with filenames corresponding to keys
+    :param key_func: Function to apply to each chunk DataFrame to key rows.
+        Should return an iterable with elements like (key, df).
+    :param chunk_preprocessor: Optional. Function to apply to each chunk
+        DataFrame before applying key_func.
+    :param chunksize: Chunksize of input to process
+    :return: None
+    """
+    chunks = pd.read_csv(csv_path, chunksize=chunksize)
+    if chunk_preprocessor is not None:
+        chunks = map(chunk_preprocessor, chunks)
+    keyed_group_blocks = map(key_func, chunks)
+    for block in keyed_group_blocks:
+        for idx, df in block:
+            append(df, os.path.join(out_dir, idx + '.csv'))
