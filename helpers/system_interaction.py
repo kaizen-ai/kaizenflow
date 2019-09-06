@@ -175,12 +175,16 @@ def get_server_name():
     #   version='Darwin Kernel Version 18.2.0: Mon Nov 12 20:24:46 PST 2018;
     #       root:xnu-4903.231.4~2/RELEASE_X86_64',
     #   machine='x86_64')
-    return res.nodename
+    # This is not compatible with python2.7
+    #return res.nodename
+    return res[1]
 
 
 def get_os_name():
     res = os.uname()
-    return res.sysname
+    # This is not compatible with python2.7
+    #return res.sysname
+    return res[0]
 
 
 def query_yes_no(question, abort_on_no=True):
