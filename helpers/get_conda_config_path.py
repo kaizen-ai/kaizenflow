@@ -3,11 +3,15 @@
 # Note that this file must run with python2.7 to bootstrap conda.
 
 import os
+import logging
 import subprocess
 import sys
 
 # TODO(gp): Not sure this is a good idea since it might create cyclic dependencies.
 import helpers.dbg as dbg
+import helpers.io_ as io_
+
+_LOG = logging.getLogger(__name__)
 
 # We cannot use system_interaction since it depends on python3, and this script is
 # used to configure conda to use python3. So to break the cyclic dependency we inline
@@ -59,15 +63,15 @@ def _get_server_name():
 def _get_conda_config():
     # TODO(*): Add your user and machine here.
     #
-    # - For path
-    # > which conda
-    # /data/root/anaconda3/bin/conda
-    # > find /data/root/anaconda3 -name "conda.sh"
+    # - To find "path"
+    #   > which conda
+    #   /data/root/anaconda3/bin/conda
+    #   > find /data/root/anaconda3 -name "conda.sh"
     #
-    # - For conda_env_path
-    # > conda info
-    # ...
-    #        envs directories : /data/saggese/.conda/envs
+    # - To find "conda_env_path"
+    #   > conda info
+    #   ...
+    #          envs directories : /data/saggese/.conda/envs
     path = None
     conda_env_path = None
     if _get_user_name() in ("saggese", "gp"):
@@ -78,9 +82,8 @@ def _get_conda_config():
             path = "/data/root/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/data/saggese/.conda/envs"
         elif _get_server_name() == "twitter-data":
-            # path = "/data/root/anaconda3/etc/profile.d/conda.sh"
-            # conda_env_path = "/data/saggese/.conda/envs"
-            assert 0
+            path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/gp/.conda/envs"
     elif _get_user_name() == "paul":
         path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/Users/paul/.conda/envs"
@@ -105,6 +108,9 @@ def _get_conda_config():
         )
     conda_env_path = os.path.abspath(conda_env_path)
     # Not necessarily the conda_env_path exists.
+    if not os.path.exists(conda_env_path):
+        _LOG.warning("The dir '%s' doesn't exist: creating it", conda_env_path)
+        io_.create_dir(conda_env_path, incremental=True)
     dbg.dassert_exists(os.path.dirname(conda_env_path))
     return path, conda_env_path
 
