@@ -68,13 +68,17 @@ def _get_conda_config():
     #        envs directories : /data/saggese/.conda/envs
     path = None
     conda_env_path = None
-    if _get_user_name() == "saggese":
+    if _get_user_name() in ("saggese", "gp"):
         if _get_server_name() in ("gpmac.local", "gpmac.lan"):
             path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
         elif _get_server_name().startswith("ip-"):
             path = "/data/root/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/data/saggese/.conda/envs"
+        elif _get_server_name() == "twitter-data":
+            #path = "/data/root/anaconda3/etc/profile.d/conda.sh"
+            #conda_env_path = "/data/saggese/.conda/envs"
+            assert 0
     elif _get_user_name() == "paul":
         path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/Users/paul/.conda/envs"

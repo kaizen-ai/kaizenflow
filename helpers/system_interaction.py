@@ -160,15 +160,17 @@ def system_to_string(
     return rc, output
 
 
-@functools.lru_cache(maxsize=None)
+#@functools.lru_cache(maxsize=None)
 def get_user_name():
     # TODO(gp): Use this to avoid to make a system call.
-    # import getpass
-    # getpass.getuser()
-    return system_to_string("whoami")[1]
+    res2 = system_to_string("whoami")[1]
+    import getpass
+    res = getpass.getuser()
+    assert res == res2
+    return res
 
 
-@functools.lru_cache(maxsize=None)
+#@functools.lru_cache(maxsize=None)
 def get_server_name():
     # TODO(gp): Use this to avoid to make a system call.
     # import os
