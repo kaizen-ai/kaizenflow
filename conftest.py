@@ -13,14 +13,15 @@ if not hasattr(hut, "_conftest_already_parsed"):
             "--update_outcomes",
             action="store_true",
             default=False,
-            help="Update golden outcomes of test")
+            help="Update golden outcomes of test",
+        )
         parser.addoption(
             "--dbg_verbosity",
             dest="log_level",
             default="INFO",
-            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-            help="Set the logging level")
-
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            help="Set the logging level",
+        )
 
     def pytest_collection_modifyitems(config, items):
         if config.getoption("--update_outcomes"):

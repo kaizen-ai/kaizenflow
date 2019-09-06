@@ -11,7 +11,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_system1(ut.TestCase):
-
     def test1(self):
         si.system("ls")
 
@@ -62,10 +61,11 @@ class Test_system1(ut.TestCase):
             si.system("ls this_file_doesnt_exist")
         self.check_string(str(cm.exception))
 
+
 # #############################################################################
 
-class Test_system2(ut.TestCase):
 
+class Test_system2(ut.TestCase):
     def test_get_user_name(self):
         act = si.get_user_name()
         _LOG.debug("act=%s", act)

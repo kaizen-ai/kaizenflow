@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import functools
 import logging
 import os
 import subprocess
@@ -162,6 +161,7 @@ def system_to_string(
 
 def get_user_name():
     import getpass
+
     res = getpass.getuser()
     return res
 
