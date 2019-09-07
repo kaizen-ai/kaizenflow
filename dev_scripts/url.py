@@ -1,7 +1,26 @@
 #!/usr/bin/env python
 """
 Convert a url / path into different formats: jupyter url, github, git path.
+
+> url.py -u https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+effective level= 20 (INFO)
+
+file_name=
+/Users/saggese/src/particle/commodity_research/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+
+github_url=
+https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+
+jupyter_url=
+http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 """
+
+# TODO(gp): Add
+# - Relative path to the current dir
+#   ./ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
+# - Git path relative to root
+#   ./ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
+
 
 import argparse
 import logging
@@ -11,20 +30,10 @@ import re
 import requests
 
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
-
-# - Github path:
-#   https://github.com/.../.../blob/master/ravenpack/.../Task245_Analyst-ratings.ipynb
-# - Jupyter url:
-#   http://localhost:9186/notebooks/ravenpack/.../Task245_Analyst-ratings.ipynb
-# - Absolute path:
-#   /Users/gp/src/git_particleone/ravenpack/.../Task245_Analyst-ratings.ipynb
-# - Relative path to the current dir
-#   ./ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
-# - Git path relative to root
-#   ./ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
 
 
 def _check_url(url):
@@ -83,6 +92,9 @@ def _get_root(url):
     return ret
 
 
+# #############################################################################
+
+
 def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -102,21 +114,22 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=False)
     #
-    url = args.url
-    file_name = _get_root(url)
-    #
-    print(file_name)
-    if not os.path.exists(file_name):
-        _LOG.warning("'%s' doesn't exist")
-    #
     github_prefix, jupyter_prefix = _get_prefixes()
+    root = _get_root(args.url)
     #
-    github_url = github_prefix + "/" + file_name
-    print(github_url)
+    file_name = git.get_client_root() + "/" + root
+    print("\nfile_name=\n%s" % file_name)
+    #
+    github_url = github_prefix + "/" + root
+    print("\ngithub_url=\n%s" % github_url)
+    #
+    jupyter_url = jupyter_prefix + "/" + root
+    print("\njupyter_url=\n%s" % jupyter_url)
+    #
+    print()
+    if not os.path.exists(file_name):
+        _LOG.warning("'%s' doesn't exist", file_name)
     _check_url(github_url)
-    #
-    jupyter_url = jupyter_prefix + "/" + file_name
-    print(jupyter_url)
     _check_url(jupyter_url)
 
 

@@ -46,14 +46,6 @@ E.g.,
 # #!/usr/bin/env python
 # TODO(gp): Add https://github.com/PyCQA/flake8-bugbear
 
-# TODO(gp): For files inside "test", disable:
-#   [C0103(invalid-name), Test_dassert_eq1] Class name "Test_dassert_eq1"
-#       doesn't conform to PascalCase naming style [pylint]
-#   [R0201(no-self-use), Test_dassert_eq1.test1] Method could be a function
-#       [pylint]
-#   [W0212(protected-access), Test_system1.test5] Access to a
-#       protected member _get_default_tempdir of a client class [pylint]
-
 import argparse
 import datetime
 import itertools
@@ -646,6 +638,22 @@ def _pylint(file_name, pedantic, check_if_possible):
         # pos itional arguments list in the definition of
         "W1113",
     ]
+    is_test_code = "test" in file_name.split("/")
+    _LOG.debug("is_test_code=%s", is_test_code)
+    if is_test_code:
+        # TODO(gp): For files inside "test", disable:
+        ignore.extend(
+            [
+                # [C0103(invalid-name), ] Class name "Test_dassert_eq1"
+                #   doesn't conform to PascalCase naming style
+                "C0103",
+                # [R0201(no-self-use), ] Method could be a function
+                "R0201",
+                # [W0212(protected-access), ] Access to a protected member
+                #   _get_default_tempdir of a client class
+                "W0212",
+            ]
+        )
     if not pedantic:
         ignore.extend(
             [
@@ -1063,8 +1071,8 @@ def _parse():
         "--num_threads",
         action="store",
         default="-1",
-        help="Number of threads to use ('serial' to run serially, -1 to use " \
-                "all CPUs)",
+        help="Number of threads to use ('serial' to run serially, -1 to use "
+        "all CPUs)",
     )
     #
     parser.add_argument(

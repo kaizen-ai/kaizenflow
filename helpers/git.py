@@ -48,10 +48,11 @@ def get_path_from_git_root(file_name, super_module=True):
     git_root = get_client_root(super_module=super_module) + "/"
     abs_path = os.path.abspath(file_name)
     dbg.dassert(abs_path.startswith(git_root))
-    ret = abs_path[len(git_root):]
-    #cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
-    #_, git_file_name = si.system_to_string(cmd)
-    #dbg.dassert_ne(git_file_name, "")
+    end_idx = len(git_root)
+    ret = abs_path[end_idx:]
+    # cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
+    # _, git_file_name = si.system_to_string(cmd)
+    # dbg.dassert_ne(git_file_name, "")
     return ret
 
 
@@ -107,7 +108,6 @@ def git_stash_push(prefix=None, msg=None, log_level=logging.DEBUG):
     if prefix:
         tag = prefix + "." + tag
     _LOG.debug("tag='%s'", tag)
-    # TODO(gp): Use push.
     cmd = "git stash push"
     _LOG.debug("msg='%s'", msg)
     push_msg = tag[:]
