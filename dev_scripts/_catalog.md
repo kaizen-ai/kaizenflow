@@ -1,149 +1,169 @@
-- To regenerate the list
-```
-> (cd dev_scripts; unset CLICOLOR; \ls -1 | sort | perl -pe 's/^/\n* /') >_catalog.md
-> %s/^/* /g
-```
+# _catalog.md
 
-* _script_catalog.txt
-
-* ack
+# ack
 - Command for fancy search, much better than `find` + `grep`
 - TODO(gp): Maybe we should install with conda
 
-* cie
+# cie
 
-* cmd_done.py
+# cmd_done.py
 
-* diff_to_vimdiff.py
+# diff_to_vimdiff.py
 
-* ffind.py
+# ffind.py
 
-* gcl
+# gcl
+```bash
 > git clean -fd
+```
 
-* gcours
+# gcours
+```bash
 > git checkout --ours $*
 > git add $*
+```
 
-* gctheirs
-> git checkout --theirs $*
-> git add $*
+# gctheirs
+```bash
+> git checkout --theirs $* git add $*
+```
 
-* gdc
+# gdc
 
-* gdmaster.sh
+# gdmaster.sh
 
-* ghi_review
+# ghi_review
 
-* ghimy
+# ghimy
 
-* git_commit.py
+# git_commit.py
 
-* git_conflict_files.sh
+# git_conflict_files.sh
 
-* git_create_patch.sh
+# git_create_patch.sh
 
-* git_diff_notebook.py
+# git_diff_notebook.py
 
-* git_files.sh
+# git_files.sh
 - Current git files both modified and cached
 
-* git_hash_head.sh
+# git_hash_head.sh
 
-* git_hooks
+# git_hooks
 
-* git_merge.py
+# git_merge.py
 
-* git_previous_commit_files.sh
+# git_previous_commit_files.sh
 - Files modified by my previous commit
 
-* git_revert.sh
+# git_revert.sh
 
-* git_root.sh
+# git_root.sh
 
-* git_untracked_files.sh
+# git_untracked_files.sh
 
-* git_up.sh
+# git_up.sh
 
-* git_yapf.sh
+# git_yapf.sh
 
-* github_to_jupyter.py
+# github_to_jupyter.py
 
-* gllmy.sh
+# gllmy.sh
+```bash
 > git ll --author gp -15
+```
 
-* grc
+# grc
+```bash
 > git rebase --continue
+```
 
-* grs
+# grs
+```bash
 > git rebase --skip
+```
 
-* grsync.old
+# grsync.old
 
-* grsync.py
+# grsync.py
 
-* gsl
+# gsl
+```bash
 > git stash list
+```
 
-* gsp.py
+# gsp.py
 
-* gup.py
+# gup.py
 
-* ipynb_format.py
+# ipynb_format.py
 
-* jackipynb
+# jackipynb
 - Search in jupyter notebooks
 
-* jackppy
+# jackppy
 - Search in both python and jupyter notebooks
 
-* jackpy
+# jackpy
 - Search in python files 
 
-* jacktxt
+# jacktxt
 - Search in md and txt files 
 
-* jupyter_install_extensions.sh
+# jupyter_install_extensions.sh
 
-* jupyter_server.sh
+# jupyter_server.sh
 
-* jupyter_show_extensions.sh
+# linter.py
 
-* linter.py
+# mkbak
 
-* mkbak
+# path
 
-* path
+# process_prof.py
 
-* process_prof.py
-
-* replace_text.py
+# replace_text.py
 - Script to do complex search and replacement in code base
 
-* run_jupyter.sh
+# replace_text.py
 
-* script_skeleton.py
+# script_skeleton.py
 
-* setenv.sh
+# setenv.sh
 
-* setenv.sh.bak
+# strip_ipython_magic.py
 
-* strip_ipython_magic.py
+# strip_ipython_magic.sh
 
-* strip_ipython_magic.sh
+# svn_wrapper_vimdiff.sh
 
-* svn_wrapper_vimdiff.sh
+# timestamp
 
-* timestamp
+# tmux.sh
 
-* tmux.sh
+# unpack_path.sh
 
-* unpack_path.sh
+# url.py
+Convert a url / path into different formats: jupyter url, github, git path.
 
-* vic
+```bash
+> url.py -u https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+effective level= 20 (INFO)
 
-* vil
+file_name=
+/Users/saggese/src/particle/commodity_research/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
-* vimgit.sh
+github_url=
+https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
-* viw
+jupyter_url=
+http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+```
+
+# vic
+
+# vil
+
+# vimgit.sh
+
+# viw
