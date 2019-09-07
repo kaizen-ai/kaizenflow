@@ -25,7 +25,7 @@ E.g.,
 > vim -c "cfile linter.log"
 
 - Check all jupytext files.
-> linter.py -d edgar --skip_py --action check_jupytext
+> linter.py -d edgar --action sync_jupytext
 
 # Run some test with:
 > test_linter.sh
@@ -36,10 +36,6 @@ E.g.,
 # TODO(gp): Add autopep8 if useful?
 # TODO(gp): Add vulture, snake_food
 # TODO(gp): Save tarball, dir or patch of changes
-# TODO(gp): Make sure all the py files can be python compiled
-# TODO(gp): Check jupytext consistency (check_jupytext)
-# TODO(gp): Lint notebooks and then apply jupytext (lint_ipynb)
-# TODO(gp): Refresh all py files from ipynb
 # TODO(gp): Ensure all file names are correct (e.g., no space, nice TaskXYZ, no
 # `-` but `_`...)
 # TODO(gp): Make sure that there are no conflict markers.
@@ -64,6 +60,7 @@ import datetime
 import itertools
 import logging
 import os
+import py_compile
 import re
 import sys
 
@@ -94,7 +91,6 @@ def _get_command_line():
 # TODO(gp): This could become the default behavior of system().
 def _system(cmd, abort_on_error=True):
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    _LOG.getEffectiveLevel()
     rc = si.system(
         cmd,
         abort_on_error=abort_on_error,
@@ -110,6 +106,12 @@ def _remove_empty_lines(output):
 
 
 def _filter_target_files(file_names):
+    """
+    Keep only the files that
+    - have extension .py or .ipynb
+    - are not Jupyter checkpoints
+    - are not in tmp dirs
+    """
     file_names_out = []
     for file_name in file_names:
         _, file_ext = os.path.splitext(file_name)
@@ -219,20 +221,21 @@ def _get_files(args):
         if not file_names or args.current_git_files:
             # Get all the git modified files.
             file_names = git.get_modified_files()
+    # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
     # Remove files.
     if args.skip_py:
         file_names = [f for f in file_names if not is_py_file(f)]
     if args.skip_ipynb:
         file_names = [f for f in file_names if not is_ipynb_file(f)]
-    if args.skip_jupytext:
+    if args.skip_paired_jupytext:
         file_names = [f for f in file_names if not is_paired_jupytext_file(f)]
     # Keep files.
     if args.only_py:
         file_names = [f for f in file_names if is_py_file(f)]
     if args.only_ipynb:
         file_names = [f for f in file_names if is_ipynb_file(f)]
-    if args.only_jupytext:
+    if args.only_paired_jupytext:
         file_names = [f for f in file_names if is_paired_jupytext_file(f)]
     #
     _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
@@ -280,8 +283,7 @@ def _get_action_func(action):
         "autoflake": _autoflake,
         "basic_hygiene": _basic_hygiene,
         "black": _black,
-        "check_jupytext": _check_jupytext,
-        "fix_jupytext": _fix_jupytext,
+        "sync_jupytext": _sync_jupytext,
         "flake8": _flake8,
         "ipynb_format": _ipynb_format,
         "isort": _isort,
@@ -386,11 +388,11 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
     #
     return output
 
-import py_compile
 
-def _python_compile(
-    file_name, pedantic, check_if_possible
-):
+def _python_compile(file_name, pedantic, check_if_possible):
+    """
+    Check that the code is valid python.
+    """
     _ = pedantic
     if check_if_possible:
         return True
@@ -413,6 +415,7 @@ def _autoflake(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only python file.
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -423,12 +426,16 @@ def _autoflake(file_name, pedantic, check_if_possible):
 
 
 def _yapf(file_name, pedantic, check_if_possible):
+    """
+    Apply yapf code formatter.
+    """
     _ = pedantic
     executable = "yapf"
     if check_if_possible:
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only python file.
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -439,12 +446,16 @@ def _yapf(file_name, pedantic, check_if_possible):
 
 
 def _black(file_name, pedantic, check_if_possible):
+    """
+    Apply black code formatter.
+    """
     _ = pedantic
     executable = "black"
     if check_if_possible:
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only python file.
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -455,12 +466,16 @@ def _black(file_name, pedantic, check_if_possible):
 
 
 def _isort(file_name, pedantic, check_if_possible):
+    """
+    Sort imports using isort.
+    """
     _ = pedantic
     executable = "isort"
     if check_if_possible:
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only python file.
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -483,6 +498,7 @@ def _flake8(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only python file.
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -506,6 +522,7 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only python file.
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -586,6 +603,7 @@ def _pyment(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only python file.
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -600,6 +618,7 @@ def _pylint(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only python file.
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -667,6 +686,7 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # Applicable to only ipynb file.
     if not is_ipynb_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -677,18 +697,8 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
 
 # ##############################################################################
 
-# There are 3 possible ways to handle notebooks.
-# 1) Skip linting py/ipynb files
-# 2) ignore paired py file, run run_ipynb_format() on ipynb, and then update py
-#    file with jupytext
-# 3) Run linter on py file, and then update ipynb with jupytext
-#   - This is a bit risky for now
 
-# Lint all py files that are not paired.
-# Lint all paired py files and run jupytest --update.
-# Lint all ipynb files and run jupytext.
-
-
+# TODO(gp): Move in a more general file.
 def is_py_file(file_name):
     """
     Return whether a file is a python file.
@@ -730,105 +740,23 @@ def is_paired_jupytext_file(file_name):
     return is_paired
 
 
-class JupytextProcessor:
-    """
-    - If there is a ipynb but no corresponding py then generate the py file
-      - Issue a warning about updating with jupytext
-    - TODO(gp): Check that paired notebooks are in sync
-      - If not, we break since user should decide what to do
-    """
-
-    def __init__(self, ipynb_file_name, fix_issues):
-        dbg.dassert(is_ipynb_file(ipynb_file_name))
-        dbg.dassert_exists(ipynb_file_name)
-        #
-        self.ipynb_file_name = ipynb_file_name
-        self.py_file_name = from_ipynb_to_python_file(ipynb_file_name)
-        self.fix_issues = fix_issues
-
-    def process(self):
-        output = []
-        if is_ipynb_file(self.ipynb_file_name) and (
-            not is_paired_jupytext_file(self.ipynb_file_name)
-        ):
-            # Missing py file associated to ipynb: need to create py script.
-            msg = (
-                "Notebook '%s' has no paired jupytext script"
-                % self.ipynb_file_name
-            )
-            _LOG.warning(msg)
-            output.append(msg)
-            if self.fix_issues:
-                _LOG.warning("Fixing by creating py file '%s'", self.py_file_name)
-                cmd = "jupytext --to py:percent %s" % self.ipynb_file_name
-                _system(cmd)
-                # Add to git.
-                dbg.dassert_exists(self.py_file_name)
-                cmd = "git add %s" % self.ipynb_file_name
-                _system(cmd)
-        #
-        if is_paired_jupytext_file(self.ipynb_file_name):
-            # Both py and ipynb files exist.
-            # Remove empty spaces.
-            # _clean_file(self.ipynb_file_name, write_back=True)
-            # _clean_file(self.py_file_name, write_back=True)
-            # Check that they are consistent. Assume that the ipynb is the
-            # correct one.
-            # TODO(gp): We should compare timestamp?
-            src_py_name = self.py_file_name
-            dst_py_name = os.path.join(_TMP_DIR, src_py_name)
-            dir_name = io_.create_enclosing_dir(dst_py_name, incremental=True)
-            _LOG.debug("Created dir_name '%s'", dir_name)
-            dbg.dassert_exists(dir_name)
-            cmd = "jupytext --to py:percent %s -o %s" % (src_py_name, dst_py_name)
-            _system(cmd)
-            # _clean_file(dst_py_name, write_back=True)
-            cmd = "diff --ignore-blank-lines %s %s" % (src_py_name, dst_py_name)
-            rc = _system(cmd, abort_on_error=False)
-            if rc != 0:
-                if self.fix_issues:
-                    # Check the timestamps
-                    # If the .py file has a newer timestamp don't do anything.
-                    # If the .ipynb is newer, update the .py file, call the linter.
-                    pass
-                else:
-                    msg = (
-                        "py file for '%s' is different: diff with:" % src_py_name
-                    )
-                    msg += " vimdiff %s %s" % (src_py_name, dst_py_name)
-                    _LOG.warning(msg)
-                    output.append(msg)
-            # TODO(gp):
-            # Lint the .py file.
-            # Re-apply it to the ipynb.
-            # Maybe it's best to have an executable to this work.
-        return output
-
-
-def _jupytext_helper(file_name, pedantic, check_if_possible, fix_issues):
+def _sync_jupytext(file_name, pedantic, check_if_possible):
     _ = pedantic
     executable = "jupytext"
     if check_if_possible:
         return _check_exec(executable)
     #
-    if is_ipynb_file(file_name):
-        p = JupytextProcessor(file_name, fix_issues)
-        output = p.process()
-    else:
-        output = []
-    return output
-
-
-def _check_jupytext(file_name, pedantic, check_if_possible):
-    fix_issues = False
-    output = _jupytext_helper(file_name, pedantic, check_if_possible, fix_issues)
-    return output
-
-
-def _fix_jupytext(file_name, pedantic, check_if_possible):
-    fix_issues = True
-    output = _jupytext_helper(file_name, pedantic, check_if_possible, fix_issues)
-    return output
+    dbg.dassert(file_name)
+    # Run if it's:
+    # - a ipynb file without a py (i.e., not paired), or
+    # - a ipynb file and paired (to avoid to run it twice)
+    # so always and only a ipynb file.
+    if not is_ipynb_file(file_name):
+        _LOG.debug("Skipping file_name='%s'", file_name)
+        return []
+    cmd = executable + " --sync --test %s" % file_name
+    _system(cmd)
+    return []
 
 
 # #############################################################################
@@ -890,14 +818,9 @@ _VALID_ACTIONS_META = [
     # Not installable through conda.
     # ("pyment", "w",
     #   "Create, update or convert docstring."),
-    ("pylint", "r", "Check that module(s) satisfy a coding standard."),
-    (
-        "check_jupytext",
-        "r",
-        "Check that jupytext files exist and are compatible.",
-    ),
-    ("fix_jupytext", "w", "Fix problems with jupytext files."),
-    # Superseded by "fix_jupytext".
+    ("pylint", "w", "Check that module(s) satisfy a coding standard."),
+    ("sync_jupytext", "r", "Create / sync jupytext files."),
+    # Superseded by "sync_jupytext".
     # ("ipynb_format", "w",
     #   "Format jupyter code using yapf."),
 ]
@@ -1044,7 +967,7 @@ def _parse():
         help="Do not process jupyter notebooks",
     )
     parser.add_argument(
-        "--skip_jupytext",
+        "--skip_paired_jupytext",
         action="store_true",
         help="Do not process paired notebooks",
     )
@@ -1055,7 +978,7 @@ def _parse():
         "--only_ipynb", action="store_true", help="Process only jupyter notebooks"
     )
     parser.add_argument(
-        "--only_jupytext",
+        "--only_paired_jupytext",
         action="store_true",
         help="Process only paired notebooks",
     )
