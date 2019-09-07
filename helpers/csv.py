@@ -141,3 +141,42 @@ def csv_mr(csv_path,
     for block in keyed_group_blocks:
         for idx, df in block:
             append(df, os.path.join(out_dir, idx + '.csv'))
+
+
+def csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
+    """
+    Converts csv file to parquet file.
+
+    Output of csv_mr is typically headerless (to support append mode), and so
+    `normalizer` may be used to add appropriate headers. Note that parquet
+    requires string column names, whereas pandas by default uses integer
+    column names.
+
+    :param csv_path: Full path of csv
+    :param pq_path: Full path of parquet
+    :param header: Header specification of csv
+    :param normalizer: Function to apply to df before writing to pq
+    :return: None
+    """
+    # TODO(Paul): Ensure that one of header, normalizer is not None.
+    df = pd.read_csv(csv_path, header=header)
+    if normalizer is not None:
+        df = normalizer(df)
+    df.to_parquet(pq_path)
+
+
+def csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
+    """
+    Applies `csv_to_pq` to all files in csv_dir
+
+    :param csv_dir: Directory of csv's
+    :param pq_dir: Target directory
+    :param normalizer: Function to apply to df before writing to pq
+    :return: None
+    """
+    filenames = os.listdir(csv_dir)
+    for filename in filenames:
+        pq_filename = filename.split('.')[0] + '.pq'
+        csv_to_pq(os.path.join(csv_dir, filename),
+                  os.path.join(pq_dir, pq_filename),
+                  normalizer)
