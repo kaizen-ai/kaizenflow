@@ -283,7 +283,6 @@ def _get_action_func(action):
         "autoflake": _autoflake,
         "basic_hygiene": _basic_hygiene,
         "black": _black,
-        "sync_jupytext": _sync_jupytext,
         "flake8": _flake8,
         "ipynb_format": _ipynb_format,
         "isort": _isort,
@@ -291,6 +290,8 @@ def _get_action_func(action):
         "pylint": _pylint,
         "pyment": _pyment,
         "python_compile": _python_compile,
+        "sync_jupytext": _sync_jupytext,
+        "test_jupytext": _test_jupytext,
         "yapf": _yapf,
     }
     return map_[action]
@@ -754,7 +755,26 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
     if not is_ipynb_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
-    cmd = executable + " --sync --test %s" % file_name
+    cmd = executable + " --sync %s" % file_name
+    _system(cmd)
+    return []
+
+
+def _test_jupytext(file_name, pedantic, check_if_possible):
+    _ = pedantic
+    executable = "jupytext"
+    if check_if_possible:
+        return _check_exec(executable)
+    #
+    dbg.dassert(file_name)
+    # Run if it's:
+    # - a ipynb file without a py (i.e., not paired), or
+    # - a ipynb file and paired (to avoid to run it twice)
+    # so always and only a ipynb file.
+    if not is_ipynb_file(file_name):
+        _LOG.debug("Skipping file_name='%s'", file_name)
+        return []
+    cmd = executable + " --test %s" % file_name
     _system(cmd)
     return []
 
@@ -819,7 +839,8 @@ _VALID_ACTIONS_META = [
     # ("pyment", "w",
     #   "Create, update or convert docstring."),
     ("pylint", "w", "Check that module(s) satisfy a coding standard."),
-    ("sync_jupytext", "r", "Create / sync jupytext files."),
+    ("sync_jupytext", "w", "Create / sync jupytext files."),
+    ("test_jupytext", "r", "Test jupytext files."),
     # Superseded by "sync_jupytext".
     # ("ipynb_format", "w",
     #   "Format jupyter code using yapf."),
