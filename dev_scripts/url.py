@@ -100,6 +100,7 @@ def _parse():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("-u", "--url", required=True, type=str, action="store")
+    parser.add_argument("--verbose", action="store_true", help="Long output form")
     parser.add_argument(
         "-v",
         dest="log_level",
@@ -117,14 +118,36 @@ def _main(parser):
     github_prefix, jupyter_prefix = _get_prefixes()
     root = _get_root(args.url)
     #
+    if args.verbose:
+        print("\n# file_name\n%s" % root)
+    else:
+        print("\n" + root)
+    #
     file_name = git.get_client_root() + "/" + root
-    print("\nfile_name=\n%s" % file_name)
+    if args.verbose:
+        print("\n# abs file_name\n%s" % file_name)
+    else:
+        print(file_name)
     #
     github_url = github_prefix + "/" + root
-    print("\ngithub_url=\n%s" % github_url)
+    if args.verbose:
+        print("\n# github_url\n%s" % github_url)
+    else:
+        print(github_url)
     #
     jupyter_url = jupyter_prefix + "/" + root
-    print("\njupyter_url=\n%s" % jupyter_url)
+    if args.verbose:
+        print("\n# jupyter_url\n%s" % jupyter_url)
+    else:
+        print(jupyter_url)
+    #
+    if root.endswith(".ipynb"):
+        cmd = "publish_notebook.py --file %s --action open" % file_name
+        if args.verbose:
+            print("\n# read notebook\n%s" % cmd)
+        else:
+            print(cmd)
+
     #
     print()
     if not os.path.exists(file_name):

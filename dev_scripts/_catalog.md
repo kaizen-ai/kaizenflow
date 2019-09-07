@@ -1,3 +1,4 @@
+
 # _catalog.md
 
 # ack
@@ -32,9 +33,24 @@
 
 # gdmaster.sh
 
+# ghi
+
+# ghi_my
+
 # ghi_review
 
-# ghimy
+# ghi_show.sh
+```
+> ghi_show.sh 243
+#243: ST: Save selected fields of the data to the server
+https://github.com/ParticleDev/commodity_research/issues/243
+
+Files in the repo:
+regex=Task243*\.*py*
+./oil/utils/Task243_readers.py
+./oil/ST/Task243_Save_selected_fields_to_the_server.py
+./oil/ST/Task243_Save_selected_fields_to_the_server.ipynb
+```
 
 # git_commit.py
 
@@ -121,6 +137,8 @@
 # path
 
 # process_prof.py
+
+# refresh_catalog.sh
 
 # replace_text.py
 - Script to do complex search and replacement in code base

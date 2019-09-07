@@ -380,9 +380,11 @@ def init_logger(
     # Set verbosity for all loggers.
     root_logger.setLevel(verb)
     eff_level = root_logger.getEffectiveLevel()
-    print(
-        "effective level= %s (%s)" % (eff_level, logging.getLevelName(eff_level))
-    )
+    if False:
+        print(
+            "effective level= %s (%s)"
+            % (eff_level, logging.getLevelName(eff_level))
+        )
     if False:
         # dassert_eq(root_logger.getEffectiveLevel(), verb)
         for handler in root_logger.handlers:

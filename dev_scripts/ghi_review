@@ -1,4 +1,4 @@
-ghi --no-pager list -g -L TO_REVIEW_GP
-ghi --no-pager list -g -L TO_REVIEW_PAUL
-ghi --no-pager list -g -L TO_REVIEW_RYAN
-ghi --no-pager list -g -L TO_REVIEW
+#!/bin/bash -e
+cmd="ghi --no-pager list -g -L TO_REVIEW"
+echo "> $cmd"
+eval $cmd
