@@ -174,7 +174,8 @@ def csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
     """
     filenames = os.listdir(csv_dir)
     for filename in filenames:
-        pq_filename = filename.split(".")[0] + ".pq"
+        # Remove .csv and add .pq
+        pq_filename = filename[:-4] + ".pq"
         csv_to_pq(
             os.path.join(csv_dir, filename),
             os.path.join(pq_dir, pq_filename),
