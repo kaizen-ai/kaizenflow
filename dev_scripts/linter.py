@@ -556,6 +556,8 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
                 "D102",
                 # D103: Missing docstring in public function
                 "D103",
+                # D104: Missing docstring in public package
+                "D104",
                 # D107: Missing docstring in __init__
                 "D107",
                 # D401: First line should be in imperative mood
@@ -631,7 +633,8 @@ def _pylint(file_name, pedantic, check_if_possible):
     ignore = [
         # [C0304(missing-final-newline), ] Final newline missing
         "C0304",
-        # [C0330(bad-continuation), ] Wrong hanging indentation before block (add 4 spaces).
+        # [C0330(bad-continuation), ] Wrong hanging indentation before block
+        #   (add 4 spaces).
         # Black and pylint don't agree on the formatting.
         "C0330",
         # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
@@ -664,8 +667,8 @@ def _pylint(file_name, pedantic, check_if_possible):
                 "R0914",
                 # [R0915(too-many-statements), ] Too many statements
                 "R0915",
-                # [W0125(using-constant-test), ] Using a conditional statement with a
-                #   constant value
+                # [W0125(using-constant-test), ] Using a conditional statement
+                #   with a constant value
                 "W0125",
                 # [W0603(global-statement), ] Using the global statement
                 "W0603",
@@ -762,8 +765,10 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         return []
     elif is_ipynb_file(file_name) and not is_paired_jupytext_file(file_name):
         # It is a ipynb and it is unpaired: create the python file.
-        msg = "There was no paired notebook for '%s': created and added to git" % \
-              file_name
+        msg = (
+            "There was no paired notebook for '%s': created and added to git"
+            % file_name
+        )
         _LOG.warning(msg)
         output.append(msg)
         #
@@ -1058,7 +1063,8 @@ def _parse():
         "--num_threads",
         action="store",
         default="-1",
-        help="Number of threads to use ('serial' to run serially, -1 to use all CPUs)",
+        help="Number of threads to use ('serial' to run serially, -1 to use " \
+                "all CPUs)",
     )
     #
     parser.add_argument(

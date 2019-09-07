@@ -10,8 +10,30 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
 
 
-def get_client_root():
-    cmd = "git rev-parse --show-toplevel"
+def is_inside_submodule():
+    cmd = (
+        'cd "$(git rev-parse --show-toplevel)/.." && '
+        "(git rev-parse --is-inside-work-tree | grep -q true)"
+    )
+    rc = si.system(cmd, abort_on_error=False)
+    ret = rc == 0
+    return ret
+
+
+def get_client_root(super_module=True):
+    """
+    Return the full path of the root of the Git client.
+
+    :param super_module: if True use the root of the Git supermodule, if we are
+        in a submodule, otherwise use the Git submodule root
+
+    E.g., "/Users/saggese/src/.../amp"
+    """
+    if super_module and is_inside_submodule():
+        # https://stackoverflow.com/questions/957928
+        cmd = "git rev-parse --show-superproject-working-tree"
+    else:
+        cmd = "git rev-parse --show-toplevel"
     _, out = si.system_to_string(cmd)
     out = out.rstrip("\n")
     dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
@@ -19,14 +41,18 @@ def get_client_root():
     return client_root
 
 
-def get_path_from_git_root(file_name):
+def get_path_from_git_root(file_name, super_module=True):
     """
     Get the git path from the root of the tree.
     """
-    cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
-    _, git_file_name = si.system_to_string(cmd)
-    dbg.dassert_ne(git_file_name, "")
-    return git_file_name
+    git_root = get_client_root(super_module=super_module) + "/"
+    abs_path = os.path.abspath(file_name)
+    dbg.dassert(abs_path.startswith(git_root))
+    ret = abs_path[len(git_root):]
+    #cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
+    #_, git_file_name = si.system_to_string(cmd)
+    #dbg.dassert_ne(git_file_name, "")
+    return ret
 
 
 def _check_files(files):

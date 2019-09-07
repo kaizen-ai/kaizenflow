@@ -6,6 +6,7 @@
 
 import argparse
 import logging
+import os
 import sys
 
 import helpers.dbg as dbg
@@ -142,7 +143,8 @@ def _main():
         if num_lints != 0:
             if not args.not_abort_on_error:
                 _LOG.error(
-                    "Exiting. If you don't want to abort on errors use --not_abort_on_error"
+                    "Exiting. If you don't want to abort on errors use "
+                    "--not_abort_on_error"
                 )
                 sys.exit(-1)
             else:
@@ -171,7 +173,8 @@ def _main():
         if not unit_test_passing:
             if not args.not_abort_on_error:
                 _LOG.error(
-                    "Exiting. If you don't want to abort on errors use --not_abort_on_error"
+                    "Exiting. If you don't want to abort on errors use "
+                    "--not_abort_on_error"
                 )
                 sys.exit(-1)
             else:
@@ -187,12 +190,12 @@ def _main():
             msg = "Unit tests are not passing: you should not commit"
             _LOG.warning(msg)
     if args.commit:
-        cwd = os.getwcd()
+        cwd = os.getcwd()
         _LOG.info("cwd=%s", cwd)
         # TODO(gp): We should query git.
         submodules = "amp".split()
         for submod in submodules:
-            cmd = "git commit --file %s" % commit_file
+            cmd = "cd %s && git commit --file %s" % (submod, commit_file)
             si.system(cmd)
         #
         for submod in submodules:
