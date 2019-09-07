@@ -30,7 +30,7 @@ def read_data_from_disk(file_name, nrows):
     - check for monotonic index
     """
     _LOG.info("Reading file_name='%s' nrows=%s", file_name, nrows)
-    if nrows is None:
+    if nrows is not None:
         _LOG.warning("Reading only the first nrows=%s rows", nrows)
     dir_name = os.path.basename(os.path.dirname(file_name))
     if dir_name in (
