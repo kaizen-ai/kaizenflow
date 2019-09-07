@@ -18,14 +18,13 @@ E.g.,
 
 # Lint a certain number of previous commits
 > linter.py --previous_git_commit_files n --collect_only
-
 > linter.py --files event_study/*.py linter_v2.py --yapf --isort -v DEBUG
 
 - To jump to all the warnings to fix:
 > vim -c "cfile linter.log"
 
 - Check all jupytext files.
-> linter.py -d edgar --action sync_jupytext
+> linter.py -d . --action sync_jupytext
 
 # Run some test with:
 > test_linter.sh
@@ -759,7 +758,7 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
     if not is_ipynb_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
-    cmd = executable + " --sync %s" % file_name
+    cmd = executable + " --sync --to py:percent %s" % file_name
     _system(cmd)
     return []
 
@@ -778,7 +777,7 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
     if not is_ipynb_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
-    cmd = executable + " --test %s" % file_name
+    cmd = executable + " --test --to py:percent %s" % file_name
     _system(cmd)
     return []
 
