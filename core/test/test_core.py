@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
 import helpers.dbg as dbg
-import core.explore as exp
 import helpers.printing as pri
 import helpers.unit_test as ut
 

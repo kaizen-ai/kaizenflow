@@ -11,7 +11,7 @@ def _main():
     # TODO(gp): Generalize to multiple users using current user: we can use github
     # credentials.
     send_email.send_email(subject, message, "saggese@gmail.com")
-    #send_email.send_email(subject, message, "4084311286@messaging.sprintpcs.com")
+    # send_email.send_email(subject, message, "4084311286@messaging.sprintpcs.com")
 
 
 if __name__ == "main":

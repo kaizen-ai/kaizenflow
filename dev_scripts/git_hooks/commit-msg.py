@@ -7,7 +7,7 @@ import sys
 def _main():
     message_file = sys.argv[1]
     try:
-        f = open(message_file, 'r')
+        f = open(message_file, "r")
         commit_message = f.read()
     finally:
         f.close()
@@ -16,12 +16,14 @@ def _main():
         print(("Your commit message doesn't match regex '%s'" % regex))
         print("E.g., '#101 Awesomely fix this and that' or 'Merge branch ...'")
         print()
-        print("If you think there is a problem commit with --no-verify and " \
-            "file a bug with commit line and error")
+        print(
+            "If you think there is a problem commit with --no-verify and "
+            "file a bug with commit line and error"
+        )
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("git commit-msg hook ...")
     _main()
     sys.exit(0)

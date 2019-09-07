@@ -21,8 +21,11 @@ def read_sentiment_data_from_disk(file_name):
     data = data.iloc[:, 1:]
     # Sanity check.
     dbg.dassert(np.all(sorted(data["created_at"]) == data["created_at"]))
-    _LOG.info("Data is in [%s, %s]", data["created_at"].iloc[0],
-              data["created_at"].iloc[-1])
+    _LOG.info(
+        "Data is in [%s, %s]",
+        data["created_at"].iloc[0],
+        data["created_at"].iloc[-1],
+    )
     # Format data.
     if "created_at" in data.columns:
         data.set_index("created_at", drop=True, inplace=True)
@@ -74,14 +77,15 @@ def compute_features_from_config(config, data):
 def sample_features_from_config(config, data):
     # Resample.
     resampler = data.resample(
-        config["agg_interval"], closed="left", label="right")
+        config["agg_interval"], closed="left", label="right"
+    )
     if config["agg_function"] == "mean":
         data = resampler.mean()
     elif config["agg_function"] == "sum":
         data = resampler.sum()
     else:
         raise cfg.get_exception(config, "agg_function")
-    if config["agg_interval"] in ("1B", ):
+    if config["agg_interval"] in ("1B",):
         data.index.name = "date"
     elif config["agg_interval"] in ("1T", "5T"):
         data.index.name = "datetime"

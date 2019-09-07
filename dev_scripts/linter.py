@@ -232,7 +232,11 @@ def _get_files(args):
         file_names = [f for f in file_names if not is_paired_jupytext_file(f)]
     # Keep files.
     if args.only_py:
-        file_names = [f for f in file_names if is_py_file(f)]
+        file_names = [
+            f
+            for f in file_names
+            if is_py_file(f) and not is_paired_jupytext_file(f)
+        ]
     if args.only_ipynb:
         file_names = [f for f in file_names if is_ipynb_file(f)]
     if args.only_paired_jupytext:
@@ -993,7 +997,9 @@ def _parse():
         help="Do not process paired notebooks",
     )
     parser.add_argument(
-        "--only_py", action="store_true", help="Process only python scripts"
+        "--only_py",
+        action="store_true",
+        help="Process only python scripts " "excluding paired notebooks",
     )
     parser.add_argument(
         "--only_ipynb", action="store_true", help="Process only jupyter notebooks"

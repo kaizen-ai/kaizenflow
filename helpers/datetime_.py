@@ -12,8 +12,17 @@ def get_timestamp():
 
 def check_et_timezone(dt):
     tzinfo = dt.tzinfo
-    ret = (tzinfo.zone in (pytz.timezone('US/Eastern').zone,
-                           pytz.timezone('America/New_York').zone))
-    dbg.dassert(ret, "dt=%s (type=%s) tzinfo=%s (type=%s) tzinfo.zone=%s", dt,
-                type(dt), tzinfo, type(tzinfo), tzinfo.zone)
+    ret = tzinfo.zone in (
+        pytz.timezone("US/Eastern").zone,
+        pytz.timezone("America/New_York").zone,
+    )
+    dbg.dassert(
+        ret,
+        "dt=%s (type=%s) tzinfo=%s (type=%s) tzinfo.zone=%s",
+        dt,
+        type(dt),
+        tzinfo,
+        type(tzinfo),
+        tzinfo.zone,
+    )
     return True

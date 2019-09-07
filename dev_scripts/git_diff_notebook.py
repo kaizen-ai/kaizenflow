@@ -35,12 +35,15 @@ def _convert(dir_name, ipynb_file, py_file):
     :param py_file: basename of the dst python file (e.g., "notebook_new.py")
     :return: path of dst file
     """
-    _LOG.debug("dir_name=%s ipynb_file=%s py_file=%s", dir_name, ipynb_file,
-               py_file)
+    _LOG.debug(
+        "dir_name=%s ipynb_file=%s py_file=%s", dir_name, ipynb_file, py_file
+    )
     # TODO(gp): Use dir_name for --output-dir.
     dbg.dassert_exists(ipynb_file)
     cmd = "jupyter nbconvert %s --to python --output %s >/dev/null" % (
-        ipynb_file, py_file)
+        ipynb_file,
+        py_file,
+    )
     si.system(cmd)
     # Purify output removing the [\d+].
     dir_name = os.path.dirname(ipynb_file)
@@ -167,8 +170,10 @@ def _main(args):
         cwd_file_name = abs_file_name.replace(client_root + "/", "")
         file_names.append((abs_file_name, cwd_file_name))
     _LOG.info(
-        "file_names=%s\n%s", len(file_names), "\n".join(
-            ["%s -> %s" % (cwd_f, abs_f) for (abs_f, cwd_f) in file_names]))
+        "file_names=%s\n%s",
+        len(file_names),
+        "\n".join(["%s -> %s" % (cwd_f, abs_f) for (abs_f, cwd_f) in file_names]),
+    )
     dbg.dassert_lte(1, len(file_names))
     # Create tmp dir.
     dir_name = os.path.abspath("./tmp.git_diff_notebook")
@@ -177,10 +182,12 @@ def _main(args):
     notebooks_equal = []
     # Diff the files.
     for abs_file_name, cwd_file_name in file_names:
-        print((
-            "\n" + printing.frame("file_name=%s" % cwd_file_name).rstrip("\n")))
-        is_ipynb_diff = _diff_notebook(dir_name, abs_file_name, git_client_root,
-                                       args.brief)
+        print(
+            ("\n" + printing.frame("file_name=%s" % cwd_file_name).rstrip("\n"))
+        )
+        is_ipynb_diff = _diff_notebook(
+            dir_name, abs_file_name, git_client_root, args.brief
+        )
         if args.brief:
             if is_ipynb_diff:
                 notebooks_diff.append(cwd_file_name)
@@ -188,38 +195,50 @@ def _main(args):
                 notebooks_equal.append(cwd_file_name)
     #
     if args.brief:
-        print(("\nDifferent notebooks are: (%s) %s" %
-               (len(notebooks_diff), " ".join(notebooks_diff))))
-        print(("\nEqual notebooks are: (%s) %s" % (len(notebooks_equal),
-                                                   " ".join(notebooks_equal))))
+        print(
+            (
+                "\nDifferent notebooks are: (%s) %s"
+                % (len(notebooks_diff), " ".join(notebooks_diff))
+            )
+        )
+        print(
+            (
+                "\nEqual notebooks are: (%s) %s"
+                % (len(notebooks_equal), " ".join(notebooks_equal))
+            )
+        )
 
 
 def _parse():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-f", "--files", nargs='+', help="Files to process")
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("-f", "--files", nargs="+", help="Files to process")
     parser.add_argument(
-        '-c',
-        '--current_git_files',
+        "-c",
+        "--current_git_files",
         action="store_true",
-        help="Select all files modified in the current git client")
+        help="Select all files modified in the current git client",
+    )
     parser.add_argument(
-        '-p',
-        '--previous_git_commit_files',
+        "-p",
+        "--previous_git_commit_files",
         action="store_true",
-        help="Select all files modified in previous user git commit")
+        help="Select all files modified in previous user git commit",
+    )
     parser.add_argument(
-        '-b',
-        '--brief',
+        "-b",
+        "--brief",
         action="store_true",
-        help="Just report if a notebook is changed or not")
+        help="Just report if a notebook is changed or not",
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     args = parser.parse_args()
     _main(args)
 

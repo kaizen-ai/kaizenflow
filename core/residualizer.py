@@ -20,8 +20,8 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cosine
 
-import helpers.dbg as dbg
 import core.explore as exp
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 

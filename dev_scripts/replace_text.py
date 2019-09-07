@@ -44,18 +44,17 @@ def _replace_with_perl(file_name, args):
     # s|\\balphamatic/kibot/All_Futures|alphamatic/kibot/All_Futures|g
     regex = ""
     regex += "s" + sep
-    #regex += "\\b"
+    # regex += "\\b"
     regex += args.old
     regex += sep
     regex += args.new
     regex += sep
     regex += "g"
-    #regex = r"s%s\\b%s%s%s%sg" % (sep, args.old, sep, args.new, sep)
+    # regex = r"s%s\\b%s%s%s%sg" % (sep, args.old, sep, args.new, sep)
     if True:
         perl_opts.append("-e '%s'" % regex)
     else:
-        perl_opts.append(
-            r"-e '%s unless /^\s*#/'" % regex)
+        perl_opts.append(r"-e '%s unless /^\s*#/'" % regex)
     cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
     si.system(cmd, suppress_output=False)
 
@@ -65,7 +64,7 @@ def _main(args):
     dirs = args.dirs
     #
     exts = args.ext
-    #exts = "py,ipynb,txt"
+    # exts = "py,ipynb,txt"
     exts = exts.split(",")
     _LOG.info("Extensions: %s", exts)
     file_names = []
@@ -96,8 +95,11 @@ def _main(args):
         _LOG.warning("Preview only as required. Results saved in ./cfile")
         exit(0)
     # Replace.
-    _LOG.info("Found %s files:\n%s", len(file_names_to_process),
-              printing.space("\n".join(file_names_to_process)))
+    _LOG.info(
+        "Found %s files:\n%s",
+        len(file_names_to_process),
+        printing.space("\n".join(file_names_to_process)),
+    )
     for file_name in file_names_to_process:
         _LOG.info("* Processing %s", file_name)
         _replace_with_perl(file_name, args)
@@ -106,41 +108,49 @@ def _main(args):
 def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "--old",
         action="store",
         type=str,
         required=True,
-        help="regex (in perl format) to replace")
+        help="regex (in perl format) to replace",
+    )
     parser.add_argument(
         "--new",
         action="store",
         type=str,
         required=True,
-        help="regex (in perl format) to use")
+        help="regex (in perl format) to use",
+    )
     parser.add_argument(
-        "--preview", action="store_true", help="Preview only the replacement")
+        "--preview", action="store_true", help="Preview only the replacement"
+    )
     parser.add_argument(
         "--ext",
         action="store",
         type=str,
         default="py,ipynb",
-        help="Extensions to process")
+        help="Extensions to process",
+    )
     parser.add_argument(
-        "--backup", action="store_true", help="Keep backups of files")
+        "--backup", action="store_true", help="Keep backups of files"
+    )
     parser.add_argument(
         "--dirs",
         action="append",
         type=str,
         default=".",
-        help="Directories to process")
+        help="Directories to process",
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     #
     args = parser.parse_args()
     _main(args)

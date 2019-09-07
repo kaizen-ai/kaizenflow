@@ -34,8 +34,9 @@ def get_server_name():
         res = txt
     else:
         raise ValueError(
-                "Invalid server name='%s'. " % txt +
-                "Probably you need to customize the script")
+            "Invalid server name='%s'. " % txt
+            + "Probably you need to customize the script"
+        )
     return res
 
 
@@ -49,7 +50,7 @@ def add_tag(file_path, tag=None):
     name, extension = os.path.splitext(os.path.basename(file_path))
     if not tag:
         tag = datetime.now().strftime("_%Y%m%d_%H%M%S")
-    return ''.join([name, tag, extension])
+    return "".join([name, tag, extension])
 
 
 def export_html(path_to_notebook):
@@ -69,9 +70,12 @@ def export_html(path_to_notebook):
     file_name_html = add_tag(file_name_html)
     dst_path = os.path.join(dir_path, file_name_html)
     # Export ipynb to html format.
-    cmd = ("jupyter nbconvert {path_to_file} --to html"
-           " --output {dst_path}".format(
-               path_to_file=path_to_notebook, dst_path=dst_path))
+    cmd = (
+        "jupyter nbconvert {path_to_file} --to html"
+        " --output {dst_path}".format(
+            path_to_file=path_to_notebook, dst_path=dst_path
+        )
+    )
     si.system(cmd)
     _LOG.debug("Export {file_name} to html".format(file_name=file_name_html))
     return dst_path
@@ -91,10 +95,13 @@ def copy_to_folder(path_to_notebook, dst_dir):
     if not os.path.isdir(dst_dir):
         os.makedirs(dst_dir)
     # File copying.
-    cmd = 'cp {src} {dst}'.format(src=path_to_notebook, dst=dst_f_name)
+    cmd = "cp {src} {dst}".format(src=path_to_notebook, dst=dst_f_name)
     si.system(cmd)
-    _LOG.debug("Copy '{nootebook}' to '{dst_dir}'".format(
-        nootebook=os.path.basename(path_to_notebook), dst_dir=dst_dir))
+    _LOG.debug(
+        "Copy '{nootebook}' to '{dst_dir}'".format(
+            nootebook=os.path.basename(path_to_notebook), dst_dir=dst_dir
+        )
+    )
 
 
 def export_to_webpath(path_to_notebook, dst_dir):
@@ -113,9 +120,12 @@ def export_to_webpath(path_to_notebook, dst_dir):
     if not os.path.isdir(dst_dir):
         os.makedirs(dst_dir)
     # Move html.
-    _LOG.debug("Export '{html_dst}' to '{dst_dir}'".format(
-        html_dst=html_src_path, dst_dir=html_dst_path))
-    cmd = 'mv {src} {dst}'.format(src=html_src_path, dst=html_dst_path)
+    _LOG.debug(
+        "Export '{html_dst}' to '{dst_dir}'".format(
+            html_dst=html_src_path, dst_dir=html_dst_path
+        )
+    )
+    cmd = "mv {src} {dst}".format(src=html_src_path, dst=html_dst_path)
     si.system(cmd)
     return html_dst_path
 
@@ -127,10 +137,11 @@ def show_file_in_folder(folder_path):
     :return: None
     """
     # Check the correctness of the entered path
-    if not folder_path.endswith('/'):
+    if not folder_path.endswith("/"):
         folder_path = folder_path + "/"
     only_files = [
-        _file for _file in os.listdir(folder_path)
+        _file
+        for _file in os.listdir(folder_path)
         if os.path.isfile(os.path.join(folder_path, _file))
     ]
     for _one_file in only_files:
@@ -148,9 +159,9 @@ def get_path(path_or_url):
     """
     ret = ""
     if "https://github" in path_or_url:
-        ret = '/'.join(path_or_url.split('/')[7:])
+        ret = "/".join(path_or_url.split("/")[7:])
     elif "http://" in path_or_url:
-        ret = '/'.join(path_or_url.split('/')[4:])
+        ret = "/".join(path_or_url.split("/")[4:])
         dbg.dassert_exists(ret)
         if not os.path.exists(path_or_url):
             # Try to find the file with find basename(ret) in the current
@@ -160,32 +171,36 @@ def get_path(path_or_url):
         ret = path_or_url
     else:
         raise ValueError(
-            'Incorrect link to git or local jupiter notebook or file path')
+            "Incorrect link to git or local jupiter notebook or file path"
+        )
     return ret
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--file",
         action="store",
         required=True,
         type=str,
-        help="The path to the file ipynb, jupyter url, or github url")
+        help="The path to the file ipynb, jupyter url, or github url",
+    )
     parser.add_argument(
         "--web_path",
         type=str,
         action="store",
         help="Save a copy to the specified folder *.ipynb and html with"
-        " timestamps in the name")
+        " timestamps in the name",
+    )
     parser.add_argument(
         "--project",
         action="store",
         type=str,
         default=None,
-        help="An optional project that is used as sub-directory")
+        help="An optional project that is used as sub-directory",
+    )
     parser.add_argument("--tag", action="store", type=str)
     #
     parser.add_argument(
@@ -193,13 +208,15 @@ if __name__ == "__main__":
         action="store",
         default="publish",
         choices=["open", "publish"],
-        help="Open with Chrome without publish, or archive / publish as html")
+        help="Open with Chrome without publish, or archive / publish as html",
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     #
     args = parser.parse_args()
     dbg.init_logger2(args.log_level)
@@ -214,15 +231,15 @@ if __name__ == "__main__":
         sys.exit(0)
     elif args.action == "publish":
         SERVERS = {
-            'gpmac.local': {
-                'share_path': '/Users/saggese/GoogleDrive/alphamatic/Research/notebooks',
-                'backup_path': '/Users/saggese/GoogleDrive/alphamatic/Research/notebooks/backup',
+            "gpmac.local": {
+                "share_path": "/Users/saggese/GoogleDrive/alphamatic/Research/notebooks",
+                "backup_path": "/Users/saggese/GoogleDrive/alphamatic/Research/notebooks/backup",
             }
         }
         server_name = get_server_name()
         if server_name in SERVERS:
-            share_path = SERVERS[server_name]['share_path']
-            backup_path = SERVERS[server_name]['backup_path']
+            share_path = SERVERS[server_name]["share_path"]
+            backup_path = SERVERS[server_name]["backup_path"]
         else:
             raise ValueError("Invalid name='%s'" % server_name)
         if args.project is not None:
@@ -242,7 +259,8 @@ if __name__ == "__main__":
         #
         print("\nTo visualize on Mac run:")
         cmd = (
-            "dev_scripts/open_remote_html_mac.sh %s\n" % html_file_name +
-            "FILE='%s'; scp 54.172.40.4:$FILE /tmp; open /tmp/$(basename $FILE)"
-            % html_file_name)
+            "dev_scripts/open_remote_html_mac.sh %s\n" % html_file_name
+            + "FILE='%s'; scp 54.172.40.4:$FILE /tmp; open /tmp/$(basename $FILE)"
+            % html_file_name
+        )
         print(cmd)

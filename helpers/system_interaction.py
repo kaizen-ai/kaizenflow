@@ -176,14 +176,14 @@ def get_server_name():
     #       root:xnu-4903.231.4~2/RELEASE_X86_64',
     #   machine='x86_64')
     # This is not compatible with python2.7
-    #return res.nodename
+    # return res.nodename
     return res[1]
 
 
 def get_os_name():
     res = os.uname()
     # This is not compatible with python2.7
-    #return res.sysname
+    # return res.sysname
     return res[0]
 
 

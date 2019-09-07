@@ -34,7 +34,7 @@ def find_files(directory, pattern):
 def find_regex_files(src_dir, regex):
     cmd = 'find %s -name "%s"' % (src_dir, regex)
     _, output = si.system_to_string(cmd)
-    file_names = [f for f in output.split('\n') if f != ""]
+    file_names = [f for f in output.split("\n") if f != ""]
     _LOG.debug("Found %s files in %s", len(file_names), src_dir)
     _LOG.debug("\n".join(file_names))
     return file_names
@@ -80,11 +80,13 @@ def delete_file(file_name):
             raise e
 
 
-def delete_dir(dir_,
-               change_perms=False,
-               errnum_to_retry_on=16,
-               num_retries=1,
-               num_secs_retry=1):
+def delete_dir(
+    dir_,
+    change_perms=False,
+    errnum_to_retry_on=16,
+    num_retries=1,
+    num_secs_retry=1,
+):
     """
     Delete a directory.
     - change_perms: change permissions to -R rwx before deleting to deal with
@@ -97,7 +99,7 @@ def delete_dir(dir_,
     if not os.path.isdir(dir_):
         # No directory so nothing to do.
         return
-    if (change_perms and os.path.isdir(dir_)):
+    if change_perms and os.path.isdir(dir_):
         cmd = "chmod -R +rwx " + dir_
         si.system(cmd)
     i = 1
@@ -107,17 +109,18 @@ def delete_dir(dir_,
             # Command succeeded: exit.
             break
         except OSError as e:
-            if (errnum_to_retry_on is not None and
-                    e.errno == errnum_to_retry_on):
+            if errnum_to_retry_on is not None and e.errno == errnum_to_retry_on:
                 # TODO(saggese): Make it less verbose once we know it's working
                 # properly.
-                _LOG.warning("Couldn't delete %s: attempt=%s / %s", dir_, i,
-                             num_retries)
+                _LOG.warning(
+                    "Couldn't delete %s: attempt=%s / %s", dir_, i, num_retries
+                )
                 i += 1
                 if i > num_retries:
                     dbg.dfatal(
-                        "Couldn't delete %s after %s attempts (%s)" %
-                        (dir_, num_retries, dbg.get_exception_as_string()))
+                        "Couldn't delete %s after %s attempts (%s)"
+                        % (dir_, num_retries, dbg.get_exception_as_string())
+                    )
                 else:
                     time.sleep(num_secs_retry)
             else:
@@ -132,7 +135,8 @@ def create_dir(dir_name, incremental, abort_if_exists=False):
     """
     dbg.dassert_is_not(dir_name, None)
     dbg.dassert(
-        os.path.normpath(dir_name) != ".", msg="Can't create the current dir")
+        os.path.normpath(dir_name) != ".", msg="Can't create the current dir"
+    )
     if abort_if_exists:
         dbg.dassert_not_exists(dir_name)
     #                   dir exists / dir does not exist
@@ -176,7 +180,7 @@ def create_enclosing_dir(file_name, incremental=False):
     meaning as in create_dir().
     """
     dbg.dassert_is_not(file_name, None)
-    #dbg.dassert_isinstance(file_name, str)
+    # dbg.dassert_isinstance(file_name, str)
     dir_name = os.path.dirname(file_name)
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental)
@@ -189,14 +193,14 @@ def create_enclosing_dir(file_name, incremental=False):
 
 
 # TODO(saggese): We should have lines first since it is an input param.
-def to_file(file_name, lines, mode='w', force_flush=False):
+def to_file(file_name, lines, mode="w", force_flush=False):
     """
     Write the content of lines into file_name, creating the enclosing directory
     if needed.
     """
     # TODO(gp): create_enclosing_dir().
     dbg.dassert_is_not(file_name, None)
-    #dbg.dassert_in(type(file_name), (str, unicode))
+    # dbg.dassert_in(type(file_name), (str, unicode))
     # Create the enclosing dir, if needed.
     dir_name = os.path.dirname(file_name)
     if dir_name != "" and not os.path.isdir(dir_name):
@@ -211,25 +215,25 @@ def to_file(file_name, lines, mode='w', force_flush=False):
 # TODO(saggese): Remove the split param.
 def from_file(file_name, split=True):
     dbg.dassert_ne(file_name, "")
-    with open(file_name, 'r') as f:
+    with open(file_name, "r") as f:
         data = f.read()
         dbg.dassert_isinstance(data, str)
         if split:
-            data = data.split('\n')
+            data = data.split("\n")
     return data
 
 
 def get_size_as_str(file_name):
     if os.path.exists(file_name):
         size_in_bytes = os.path.getsize(file_name)
-        if size_in_bytes < (1024**2):
+        if size_in_bytes < (1024 ** 2):
             size_in_kb = size_in_bytes / 1024.0
             res = "%.1f KB" % size_in_kb
-        if size_in_bytes < (1024**3):
-            size_in_mb = size_in_bytes / (1024.0**2)
+        if size_in_bytes < (1024 ** 3):
+            size_in_mb = size_in_bytes / (1024.0 ** 2)
             res = "%.1f MB" % size_in_mb
         else:
-            size_in_gb = size_in_bytes / (1024.0**3)
+            size_in_gb = size_in_bytes / (1024.0 ** 3)
             res = "%.1f GB" % size_in_gb
     else:
         res = "nan"

@@ -144,7 +144,6 @@ def dtimer_stop(idx):
 
 
 class TimedScope:
-
     def __init__(self, log_level, message):
         self._log_level = log_level
         self._message = message
@@ -160,11 +159,10 @@ class TimedScope:
 
 # Decorator.
 def timed(f):
-
     def wrapper(*args, **kwargs):
-        #if hasattr(f, "__name__"):
+        # if hasattr(f, "__name__"):
         func_name = f.__name__
-        #else:
+        # else:
         #    func_name = dbg.get_function_name()
         timer = dtimer_start(0, func_name)
         v = f(*args, **kwargs)

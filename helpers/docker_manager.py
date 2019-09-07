@@ -5,21 +5,20 @@ import docker
 
 def get_volumes(name):
     client = docker.from_env()
-    container = client.containers.get('postgres_service')
-    return container.attrs['Mounts']
+    container = client.containers.get("postgres_service")
+    return container.attrs["Mounts"]
 
 
 def get_source_from(name):
-    s = ''
+    s = ""
     for i in get_volumes(name):
-        s += i['Source'] + '\n'
+        s += i["Source"] + "\n"
     return s
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--get_volumes', required=False, type=str, action='store')
+    parser.add_argument("--get_volumes", required=False, type=str, action="store")
     args = parser.parse_args()
     # _main(args)
     if args.get_volumes:

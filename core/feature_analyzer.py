@@ -12,11 +12,18 @@ import helpers.printing as printing
 _LOG = logging.getLogger(__name__)
 
 
-def _analyze_feature(df, y_var, x_var, use_intercept, nan_mode, x_shift,
-                     report_stats):
+def _analyze_feature(
+    df, y_var, x_var, use_intercept, nan_mode, x_shift, report_stats
+):
     _LOG.debug("df=\n%s", df.head(3))
-    _LOG.debug("y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s",
-               y_var, x_var, use_intercept, nan_mode, x_shift)
+    _LOG.debug(
+        "y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s",
+        y_var,
+        x_var,
+        use_intercept,
+        nan_mode,
+        x_shift,
+    )
     dbg.dassert_isinstance(y_var, str)
     dbg.dassert_isinstance(x_var, str)
     #
@@ -63,8 +70,9 @@ def _analyze_feature(df, y_var, x_var, use_intercept, nan_mode, x_shift,
     #
     if report_stats:
         txt = printing.frame(
-            "y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s" %
-            (y_var, x_var, use_intercept, nan_mode, x_shift))
+            "y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s"
+            % (y_var, x_var, use_intercept, nan_mode, x_shift)
+        )
         _LOG.info("\n%s", txt)
         _LOG.info("model.summary()=\n%s", model.summary())
         sns.regplot(x=df[x_var], y=df[y_var])
@@ -72,13 +80,15 @@ def _analyze_feature(df, y_var, x_var, use_intercept, nan_mode, x_shift,
     return res
 
 
-def analyze_features(df,
-                     y_var,
-                     x_vars,
-                     use_intercept,
-                     nan_mode="drop",
-                     x_shifts=None,
-                     report_stats=False):
+def analyze_features(
+    df,
+    y_var,
+    x_vars,
+    use_intercept,
+    nan_mode="drop",
+    x_shifts=None,
+    report_stats=False,
+):
     if x_shifts is None:
         x_shifts = [0]
     res_df = []
@@ -86,8 +96,9 @@ def analyze_features(df,
         _LOG.debug("x_var=%s", x_var)
         for x_shift in x_shifts:
             _LOG.debug("x_shifts=%s", x_shift)
-            res_tmp = _analyze_feature(df, y_var, x_var, use_intercept,
-                                       nan_mode, x_shift, report_stats)
+            res_tmp = _analyze_feature(
+                df, y_var, x_var, use_intercept, nan_mode, x_shift, report_stats
+            )
             res_df.append(res_tmp)
     return pd.DataFrame(res_df)
 
@@ -105,14 +116,12 @@ class Reporter:
 
     def plot(self):
         # Reshape the results in terms of coeff values and pvalues.
-        coeff_df = self.res_df[[
-            "x_var", "x_shift", "params_var", "pvalues_var"
-        ]].pivot(
-            index='x_shift', columns='x_var', values='params_var')
-        pvals_df = self.res_df[[
-            "x_var", "x_shift", "params_var", "pvalues_var"
-        ]].pivot(
-            index='x_shift', columns='x_var', values='pvalues_var')
+        coeff_df = self.res_df[
+            ["x_var", "x_shift", "params_var", "pvalues_var"]
+        ].pivot(index="x_shift", columns="x_var", values="params_var")
+        pvals_df = self.res_df[
+            ["x_var", "x_shift", "params_var", "pvalues_var"]
+        ].pivot(index="x_shift", columns="x_var", values="pvalues_var")
         min_val = coeff_df.min(axis=0).min()
         max_val = coeff_df.max(axis=0).max()
         # Df storing the results.
@@ -139,13 +148,14 @@ class Reporter:
                     # 5%
                     coeff += " (*)"
                 else:
-                    #coeff = ""
+                    # coeff = ""
                     pass
                 coeff_df_tmp.iloc[i, j] = coeff
                 coeff_color_map[coeff] = color
         # Style df by assigning colors.
         decorate_with_color = lambda val: self._decorate_with_color(
-            val, coeff_color_map)
+            val, coeff_color_map
+        )
         coeff_df_tmp = coeff_df_tmp.style.applymap(decorate_with_color)
         return coeff_df_tmp
 
@@ -183,17 +193,18 @@ class Reporter:
             min_rgb = (255, 255, 255)
             max_rgb = (255, 96, 96)
             rgb = Reporter._interpolate_rgb(val, max_val, min_rgb, max_rgb)
-        #E.g., color = '#FF0000'
-        color = '#{:02x}{:02x}{:02x}'.format(*rgb)
-        _LOG.debug("val=%s in [%s, %s] -> rgb=%s %s", val, min_val, max_val,
-                   rgb, color)
+        # E.g., color = '#FF0000'
+        color = "#{:02x}{:02x}{:02x}".format(*rgb)
+        _LOG.debug(
+            "val=%s in [%s, %s] -> rgb=%s %s", val, min_val, max_val, rgb, color
+        )
         return color
 
     @staticmethod
     def _decorate_with_color(txt, color_map):
         dbg.dassert_in(txt, color_map)
         color = color_map[txt]
-        return 'background-color: %s' % color
+        return "background-color: %s" % color
 
 
 # TODO(gp): Add unit test.

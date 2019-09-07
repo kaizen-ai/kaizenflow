@@ -10,26 +10,26 @@ import argparse
 import logging
 
 import helpers.dbg as dbg
-#import helpers.system_interaction as si
+
+# import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
+
 def _parse():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument(
-        '--dst_dir',
-        action="store",
-        help="Destination dir")
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("--dst_dir", action="store", help="Destination dir")
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     return parser
 
 
@@ -42,5 +42,5 @@ def _main(parser):
     # - Use si.system() and si.system_to_string()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main(_parse())

@@ -6,7 +6,7 @@
 #
 # Print files staged.
 
-#-m message
+# -m message
 
 # Check message.
 

@@ -19,7 +19,7 @@ def sizeof_fmt(num):
     like "3.5 MB" for it's given 'num'-parameter.
     From http://stackoverflow.com/questions/1094841
     """
-    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+    for x in ["bytes", "KB", "MB", "GB", "TB"]:
         if num < 1024.0:
             return "%3.1f %s" % (num, x)
         num /= 1024.0
@@ -31,12 +31,15 @@ def _main():
     # The path to the git-binary:
     git_binary_path = "git"
     try:
-        print(("Checking for files bigger then " + sizeof_fmt(max_file_size * 1024)))
+        print(
+            ("Checking for files bigger then " + sizeof_fmt(max_file_size * 1024))
+        )
         # Check all files in the staging-area, i.e., everything but un-staged files.
         # TODO(gp): Check only staged files.
         text = subprocess.check_output(
             [git_binary_path, "status", "--porcelain", "-uno"],
-            stderr=subprocess.STDOUT).decode("utf-8")
+            stderr=subprocess.STDOUT,
+        ).decode("utf-8")
         file_list = text.splitlines()
         print(file_list)
         # Check all files:
@@ -45,12 +48,16 @@ def _main():
                 stat = os.stat(file_s[3:])
                 if stat.st_size > (max_file_size * 1024):
                     # File is to big, abort the commit:
-                    print(("'" + file_s[3:] + "' is too huge to be commited!",
-                          "(" + sizeof_fmt(stat.st_size) + ")"))
+                    print(
+                        (
+                            "'" + file_s[3:] + "' is too huge to be commited!",
+                            "(" + sizeof_fmt(stat.st_size) + ")",
+                        )
+                    )
                     sys.exit(1)
         # Everything seams to be okay:
         print("No huge files found.")
-        #sys.exit(12)
+        # sys.exit(12)
         sys.exit(0)
     except subprocess.CalledProcessError:
         # There was a problem calling "git status".
@@ -65,7 +72,7 @@ def _main():
     # https://code-maven.com/enforcing-commit-message-format-in-git
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("git pre-commit hook ...")
-    #_main()
+    # _main()
     sys.exit(0)

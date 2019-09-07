@@ -45,14 +45,15 @@ def _update_action(action, actions):
 
 def _main():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--action", action="append", help="Run certain phases")
     parser.add_argument(
         "--all", action="store_true", help="Run all recommended phases"
     )
     parser.add_argument(
-        "-m", required=True, action="store", type=str, help="Commit message")
+        "-m", required=True, action="store", type=str, help="Commit message"
+    )
     parser.add_argument("--commit", action="store_true")
     parser.add_argument("--test", action="store_true")
     parser.add_argument("--not_abort_on_error", action="store_true")
@@ -61,8 +62,9 @@ def _main():
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     #
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
@@ -110,14 +112,14 @@ def _main():
     is_present, actions = _update_action(action, actions)
     if is_present:
         # Keep this in sync with dev_scripts/setenv.sh
-        _valid_users = [
-            "saggese",
-            "Paul",
-        ]
+        _valid_users = ["saggese", "Paul"]
         user_name = git.get_git_name()
         if user_name not in _valid_users:
-            _LOG.error("Invalid git name '%s': valid git names are %s",
-                       user_name, _valid_users)
+            _LOG.error(
+                "Invalid git name '%s': valid git names are %s",
+                user_name,
+                _valid_users,
+            )
             sys.exit(-1)
         # TODO(gp): Check email with dev_scripts/setenv.sh
     #
@@ -157,8 +159,9 @@ def _main():
         print(pri.frame(cmd, char1="#"))
         rc = si.system(cmd, suppress_output=False, abort_on_error=False)
         unit_test_passing = rc == 0
-        msg = "Unit tests passing: %s" % ("Yes" if unit_test_passing else
-                                          "*** NO ***")
+        msg = "Unit tests passing: %s" % (
+            "Yes" if unit_test_passing else "*** NO ***"
+        )
         _LOG.info("%s", msg)
         io_.to_file(commit_file, msg, mode="a")
         commit_msg += msg
@@ -204,5 +207,5 @@ def _main():
         _LOG.info("%s", msg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main()

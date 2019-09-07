@@ -82,26 +82,25 @@ def _main(parser):
 
 def _parse():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--action",
         action="store",
-        choices=[
-            "start",
-            "stop",
-        ],
+        choices=["start", "stop"],
         required=True,
-        help="Select action to execute")
+        help="Select action to execute",
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     #
     _main(parser)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _parse()

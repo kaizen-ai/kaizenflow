@@ -4,7 +4,7 @@ import glob
 import logging
 import math
 
-#import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tqdm
@@ -12,9 +12,9 @@ from IPython.display import display
 from sklearn import linear_model
 from sklearn.model_selection import TimeSeriesSplit
 
+import core.finance as fin
 import helpers.config as cfg
 import helpers.dbg as dbg
-import core.finance as fin
 import helpers.io_ as io_
 import helpers.pickle_ as pickle_
 
@@ -41,10 +41,7 @@ _LOG = logging.getLogger(__name__)
 #       pull information in the `result_bundle`
 
 
-def filter_by_time_from_config(config,
-                               df,
-                               result_bundle,
-                               dt_col_name="datetime"):
+def filter_by_time_from_config(config, df, result_bundle, dt_col_name="datetime"):
     cfg.print_config(config, ["start_dt", "end_dt"])
     dbg.dassert_lte(1, df.shape[0])
     #
@@ -108,9 +105,10 @@ def compute_features_from_config(config, df, result_bundle):
     df.index = range(df.shape[0])
     y_var = config["target_y_var"]
     x_vars = []
-    #dbg.dassert_lte(1, config["delay_lag"])
-    for i in range(1 + config["delay_lag"],
-                   1 + config["delay_lag"] + config["num_lags"]):
+    # dbg.dassert_lte(1, config["delay_lag"])
+    for i in range(
+        1 + config["delay_lag"], 1 + config["delay_lag"] + config["num_lags"]
+    ):
         var = y_var.replace("_0", "_%s" % i)
         _LOG.debug("Computing var=%s", var)
         df[var] = df[y_var].shift(i)
@@ -161,15 +159,19 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
     # "train.perf" with a dict of results instead of flattening the keys.
     result_split[tag + ".hitrate"] = _compute_model_hitrate(model, x, y)
     result_split[tag + ".pnl_rets"] = _compute_model_pnl_rets(
-        df.iloc[idxs], model, x, y)
+        df.iloc[idxs], model, x, y
+    )
     result_split[tag + ".sr"] = fin.compute_sr(result_split[tag + ".pnl_rets"])
     return result_split
 
 
 def get_splits(config, df):
     cv_split_style = config["cv_split_style"]
-    _LOG.info("min_date=%s, max_date=%s", df.iloc[0]["datetime"],
-              df.iloc[-1]["datetime"])
+    _LOG.info(
+        "min_date=%s, max_date=%s",
+        df.iloc[0]["datetime"],
+        df.iloc[-1]["datetime"],
+    )
     if cv_split_style == "TimeSeriesSplit":
         n_splits = config["cv_n_splits"]
         dbg.dassert_lte(1, n_splits)
@@ -183,18 +185,18 @@ def get_splits(config, df):
         chunk_size = int(math.ceil(len(idxs) / n_splits))
         dbg.dassert_lte(1, chunk_size)
         chunks = [
-            idxs[i:i + chunk_size] for i in range(0, len(idxs), chunk_size)
+            idxs[i : i + chunk_size] for i in range(0, len(idxs), chunk_size)
         ]
         dbg.dassert_eq(len(chunks), n_splits)
         #
         splits = list(zip(chunks[:-1], chunks[1:]))
     elif cv_split_style == "TrainTest":
         # TODO: Pass this through config
-        #cutoff_date = "2016-01-04 09:30:00"
+        # cutoff_date = "2016-01-04 09:30:00"
         cutoff_date = "2010-01-12 09:30:00"
         cutoff_date = pd.to_datetime(cutoff_date)
         idx = np.where(df["datetime"] == cutoff_date)
-        #print("idx=", idx)
+        # print("idx=", idx)
         dbg.dassert_lt(0, len(idx))
         idx = idx[0][0]
         _LOG.debug("idx=%s", idx)
@@ -208,17 +210,27 @@ def splits_to_string(splits, df=None):
     txt = "n_splits=%s\n" % len(splits)
     for train_idxs, test_idxs in splits:
         if df is None:
-            txt += "  train=%s [%s, %s]" % (len(train_idxs), min(train_idxs),
-                                            max(train_idxs))
-            txt += ", test=[%s, %s] %s" % (len(test_idxs), min(test_idxs),
-                                           max(test_idxs))
+            txt += "  train=%s [%s, %s]" % (
+                len(train_idxs),
+                min(train_idxs),
+                max(train_idxs),
+            )
+            txt += ", test=[%s, %s] %s" % (
+                len(test_idxs),
+                min(test_idxs),
+                max(test_idxs),
+            )
         else:
-            txt += "  train=%s [%s, %s]" % (len(train_idxs),
-                                            min(df.iloc[train_idxs]),
-                                            max(df.iloc[train_idxs]))
-            txt += ", test=%s [%s, %s]" % (len(test_idxs),
-                                           min(df.iloc[test_idxs]),
-                                           max(df.iloc[test_idxs]))
+            txt += "  train=%s [%s, %s]" % (
+                len(train_idxs),
+                min(df.iloc[train_idxs]),
+                max(df.iloc[train_idxs]),
+            )
+            txt += ", test=%s [%s, %s]" % (
+                len(test_idxs),
+                min(df.iloc[test_idxs]),
+                max(df.iloc[test_idxs]),
+            )
         txt += "\n"
     return txt
 
@@ -230,7 +242,7 @@ def fit_model_from_config(config, df, result_bundle):
     y_var = result_bundle["y_var"]
     x_vars = result_bundle["x_vars"]
     # TODO: Fix this
-    #result_bundle["num_splits"] = len(splits)
+    # result_bundle["num_splits"] = len(splits)
     result_bundle["num_splits"] = 0
     #
     result_splits = []
@@ -257,8 +269,9 @@ def fit_model_from_config(config, df, result_bundle):
         result_split["model_x_vars"] = ["intercept"] + x_vars
         # Add stats about splits and model.
         result_split = _add_split_stats(df, train_idxs, tag, result_split)
-        result_split = _add_model_perf(tag, model, df, train_idxs, x_train,
-                                       y_train, result_split)
+        result_split = _add_model_perf(
+            tag, model, df, train_idxs, x_train, y_train, result_split
+        )
         perf_as_string = _model_perf_to_string(result_split, tag)
 
         # ==== Test ====
@@ -267,19 +280,21 @@ def fit_model_from_config(config, df, result_bundle):
         y_test = df.iloc[test_idxs][y_var]
         # Add stats about splits and model.
         result_split = _add_split_stats(df, test_idxs, tag, result_split)
-        result_split = _add_model_perf(tag, model, df, test_idxs, x_test,
-                                       y_test, result_split)
+        result_split = _add_model_perf(
+            tag, model, df, test_idxs, x_test, y_test, result_split
+        )
         perf_as_string += " " + _model_perf_to_string(result_split, tag)
 
         # Print results for this split.
         result_split["perf_as_string"] = perf_as_string
-        print(perf_as_string)
+        _LOG.info("%s", perf_as_string)
 
         result_splits.append(result_split)
     #
     result_bundle["result_split"] = result_splits
     dbg.dassert_eq(
-        len(result_bundle["result_split"]), result_bundle["num_splits"])
+        len(result_bundle["result_split"]), result_bundle["num_splits"]
+    )
     return result_bundle
 
 
@@ -292,7 +307,7 @@ def _compute_model_hitrate(model, x, y):
     hat_y = model.predict(x)
     hr_perf = collections.OrderedDict()
     zero_thr = 1e-6
-    #zero_thr = 0.0
+    # zero_thr = 0.0
     for w in ("pos", "zero", "neg"):
         if w == "pos":
             mask = y >= zero_thr
@@ -308,7 +323,7 @@ def _compute_model_hitrate(model, x, y):
             acc = (y_zero == hat_y_zero).mean()
         else:
             acc = (np.sign(y[mask]) == np.sign(hat_y[mask])).mean()
-        #acc = "%.3f" % acc + "(%s)" % len(y[mask])
+        # acc = "%.3f" % acc + "(%s)" % len(y[mask])
         hr_perf[w + ".acc"] = acc
         hr_perf[w + ".num"] = len(y[mask])
     return hr_perf
@@ -415,8 +430,7 @@ def process_model_coeffs(config, result_bundle, report_stats=True):
     split_names = _accumulate_from_result_split(result_bundle, "name")
     model_df = _accumulate_from_result_split(result_bundle, "model_coeffs")
     # TODO: Check that they are all the same.
-    model_x_vars = _accumulate_from_result_split(result_bundle,
-                                                 "model_x_vars")[0]
+    model_x_vars = _accumulate_from_result_split(result_bundle, "model_x_vars")[0]
     #
     model_df = pd.DataFrame(model_df, index=split_names, columns=model_x_vars)
     # TODO: model_coeffs_df?
@@ -452,18 +466,16 @@ def process_test_pnl(config, result_bundle, report_stats=True):
             0.05,
             0.6,
             txt,
-            horizontalalignment='left',
-            verticalalignment='center',
-            transform=ax.transAxes)
+            horizontalalignment="left",
+            verticalalignment="center",
+            transform=ax.transAxes,
+        )
     return result_bundle
 
 
 def to_file(config, result_bundle, file_name):
     io_.create_enclosing_dir(file_name)
-    data = {
-        "config": config,
-        "result_bundle": result_bundle,
-    }
+    data = {"config": config, "result_bundle": result_bundle}
     pickle_.to_pickle(data, file_name, backend="pickle_gzip")
 
 

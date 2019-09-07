@@ -1,9 +1,9 @@
 import logging
 import os
 
-import helpers.dbg as dbg
 import pandas as pd
 
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,8 +27,7 @@ def read_csv_range(csv_path, from_, to, **kwargs):
     nrows = to - from_
     df = pd.read_csv(csv_path, skiprows=skiprows, nrows=nrows, **kwargs)
     if df.shape[0] < to:
-        _LOG.info("Number of df rows = %i vs requested = %i", df.shape[0],
-                  to)
+        _LOG.info("Number of df rows = %i vs requested = %i", df.shape[0], to)
     return df
 
 
@@ -58,7 +57,7 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
     if init_df.shape[0] < 1:
         return init_df
     val = init_df[col_name].iloc[0]
-    _LOG.info('Building chunk for %s', val)
+    _LOG.info("Building chunk for %s", val)
     counter = 0
     while not stop:
         from_ = start + counter * nrows_at_a_time
@@ -75,15 +74,16 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
         # Stop if we have reached a new value
         if idx_max < (df.shape[0] - 1):
             stop = True
-        dfs.append(df.iloc[0:idx_max + 1])
+        dfs.append(df.iloc[0 : idx_max + 1])
         counter += 1
     if not dfs:
         return pd.DataFrame()
     return pd.concat(dfs, axis=0).reset_index(drop=True)
 
 
-def find_first_matching_row(csv_path, col_name, val, start=1,
-                            nrows_at_a_time=1000000, **kwargs):
+def find_first_matching_row(
+    csv_path, col_name, val, start=1, nrows_at_a_time=1000000, **kwargs
+):
     """
     Find first row in csv where value in column `col_name` equals `val`.
 
@@ -110,15 +110,13 @@ def find_first_matching_row(csv_path, col_name, val, start=1,
 
 
 def append(df, path, index=False, **kwargs):
-    with open(path, 'a') as f:
+    with open(path, "a") as f:
         df.to_csv(f, header=False, index=index, **kwargs)
 
 
-def csv_mr(csv_path,
-           out_dir,
-           key_func,
-           chunk_preprocessor=None,
-           chunksize=1000000):
+def csv_mr(
+    csv_path, out_dir, key_func, chunk_preprocessor=None, chunksize=1000000
+):
     """
     Map-reduce-type processing of csv. Here we
       - Read the csv in chunks, loading the chunk into a DataFrame
@@ -140,7 +138,7 @@ def csv_mr(csv_path,
     keyed_group_blocks = map(key_func, chunks)
     for block in keyed_group_blocks:
         for idx, df in block:
-            append(df, os.path.join(out_dir, idx + '.csv'))
+            append(df, os.path.join(out_dir, idx + ".csv"))
 
 
 def csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
@@ -176,7 +174,9 @@ def csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
     """
     filenames = os.listdir(csv_dir)
     for filename in filenames:
-        pq_filename = filename.split('.')[0] + '.pq'
-        csv_to_pq(os.path.join(csv_dir, filename),
-                  os.path.join(pq_dir, pq_filename),
-                  normalizer)
+        pq_filename = filename.split(".")[0] + ".pq"
+        csv_to_pq(
+            os.path.join(csv_dir, filename),
+            os.path.join(pq_dir, pq_filename),
+            normalizer,
+        )

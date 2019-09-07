@@ -45,11 +45,12 @@ def resample_1min(df, skip_weekends):
     """
     dbg.dassert_monotonic_index(df)
     date_range = pd.date_range(
-        start=df.index.min(), end=df.index.max(), freq="1T")
+        start=df.index.min(), end=df.index.max(), freq="1T"
+    )
     # Remove weekends.
     if skip_weekends:
         # TODO(gp): Use thej proper calendar.
-        #date_range = [d for d in df.index if d.date().weekday() < 5]
+        # date_range = [d for d in df.index if d.date().weekday() < 5]
         mask = [d.weekday() < 5 for d in date_range]
         date_range = date_range[mask]
     df = df.reindex(date_range)
@@ -92,7 +93,8 @@ def remove_dates_with_no_data(df, report_stats):
         _LOG.info("Weekdays removed: %s", ", ".join(map(str, removed_weekdays)))
         #
         removed_perc = printing.perc(
-            len(removed_days) - len(removed_weekdays), len(removed_days))
+            len(removed_days) - len(removed_weekdays), len(removed_days)
+        )
         _LOG.info("Number of removed weekend days: %s", removed_perc)
         #
 
@@ -109,12 +111,14 @@ def resample(df, agg_interval):
     return rets
 
 
-def filter_by_time(df,
-                   start_dt,
-                   end_dt,
-                   result_bundle=None,
-                   dt_col_name=None,
-                   log_level=logging.INFO):
+def filter_by_time(
+    df,
+    start_dt,
+    end_dt,
+    result_bundle=None,
+    dt_col_name=None,
+    log_level=logging.INFO,
+):
     dbg.dassert_lte(1, df.shape[0])
     if start_dt is not None and end_dt is not None:
         dbg.dassert_lte(start_dt, end_dt)
@@ -157,7 +161,7 @@ def filter_ath(df, dt_col_name=None, log_level=logging.INFO):
         times = np.array([dt.time() for dt in df[dt_col_name]])
     else:
         # Use index.
-        #times = np.array([dt.time() for dt in df.index])
+        # times = np.array([dt.time() for dt in df.index])
         times = df.index.time
     # Note that we need to exclude time(16, 0) since the last bar is tagged
     # with time(15, 59).
@@ -193,8 +197,8 @@ def annualize_sharpe_ratio(df):
 
 def compute_sr(rets):
     # Annualize (brutally).
-    #sr = rets.mean() / rets.std()
-    #sr *= np.sqrt(252 * ((16 - 9.5) * 60))
+    # sr = rets.mean() / rets.std()
+    # sr *= np.sqrt(252 * ((16 - 9.5) * 60))
     daily_rets = rets.resample("1D").sum()
     sr = daily_rets.mean() / daily_rets.std()
     sr *= np.sqrt(252)

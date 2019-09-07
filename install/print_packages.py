@@ -42,7 +42,10 @@ def get_conda_export_list(conda_env_name, add_frame):
     msg = ""
     if add_frame:
         msg += print_.frame("Package summary") + "\n"
-    cmd = "(conda activate %s 2>&1 >/dev/null) && conda list --export" % conda_env_name
+    cmd = (
+        "(conda activate %s 2>&1 >/dev/null) && conda list --export"
+        % conda_env_name
+    )
     _, msg_tmp = co.conda_system_to_string(cmd)
     msg += msg_tmp
     return msg
@@ -55,8 +58,12 @@ def save_env_file(conda_env_name, dir_name):
     msg += get_conda_export_list(conda_env_name, add_frame=True)
     # Save results.
     if dir_name is not None:
-        file_name = "%s.%s.%s.%s.txt" % (conda_env_name, si.get_user_name(),
-                                         si.get_os_name(), si.get_server_name())
+        file_name = "%s.%s.%s.%s.txt" % (
+            conda_env_name,
+            si.get_user_name(),
+            si.get_os_name(),
+            si.get_server_name(),
+        )
         dst_file = os.path.join(dir_name, file_name)
         dst_file = os.path.abspath(dst_file)
         io_.create_enclosing_dir(dst_file, incremental=True)
@@ -67,14 +74,15 @@ def save_env_file(conda_env_name, dir_name):
 
 def _main():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     parser.add_argument("--conda_env_name", help="Environment name", type=str)
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
@@ -82,5 +90,5 @@ def _main():
     print(msg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main()

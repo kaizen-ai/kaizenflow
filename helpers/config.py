@@ -2,7 +2,8 @@ import logging
 import platform
 
 import matplotlib
-#import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy
@@ -24,7 +25,7 @@ def get_system_signature():
     txt.append("scipy=%s" % scipy.__version__)
     txt.append("matplotlib=%s" % matplotlib.__version__)
     txt.append("sklearn=%s" % sklearn.__version__)
-    #txt.append("joblib=%s" % joblib.__version__)
+    # txt.append("joblib=%s" % joblib.__version__)
     return "\n".join(txt)
 
 
@@ -53,5 +54,7 @@ def config_to_python(config):
 
 # TODO(gp): Use this everywhere.
 def get_exception(config, key):
-    return ValueError("Invalid %s='%s' in config=\n%s" % (key, config[key],
-            printing.space(config_to_string(config))))
+    return ValueError(
+        "Invalid %s='%s' in config=\n%s"
+        % (key, config[key], printing.space(config_to_string(config)))
+    )

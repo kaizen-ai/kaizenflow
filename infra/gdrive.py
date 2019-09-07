@@ -89,7 +89,8 @@ def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
         output_file=output_file,
         tee=True,
         suppress_output=False,
-        dry_run=dry_run)
+        dry_run=dry_run,
+    )
 
 
 def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
@@ -114,32 +115,37 @@ def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
         output_file=output_file,
         tee=True,
         suppress_output=False,
-        dry_run=dry_run)
+        dry_run=dry_run,
+    )
 
 
 def _parse():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
-        '--action',
+        "--action",
         action="store",
-        choices=['ls', 'backup', 'export', 'import'],
-        required=True)
-    parser.add_argument('--no_cleanup', action="store_true")
-    parser.add_argument('--skip_tgz', action="store_true")
-    parser.add_argument('--incremental', action="store_true")
-    parser.add_argument('--dry_run', action="store_true")
+        choices=["ls", "backup", "export", "import"],
+        required=True,
+    )
+    parser.add_argument("--no_cleanup", action="store_true")
+    parser.add_argument("--skip_tgz", action="store_true")
+    parser.add_argument("--incremental", action="store_true")
+    parser.add_argument("--dry_run", action="store_true")
     parser.add_argument(
-        '--src_dir', action="store", default=None, help="Source dir")
+        "--src_dir", action="store", default=None, help="Source dir"
+    )
     parser.add_argument(
-        '--dst_dir', action="store", default=None, help="Destination dir")
+        "--dst_dir", action="store", default=None, help="Destination dir"
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     return parser
 
 
@@ -177,7 +183,8 @@ def _main(parser):
             output_file = log_dir + "/tar.log"
             cmd = "tar -cf %s -C %s ." % (tar_file, temp_dir)
             si.system(
-                cmd, output_file=output_file, tee=True, dry_run=args.dry_run)
+                cmd, output_file=output_file, tee=True, dry_run=args.dry_run
+            )
             _LOG.info("tar_file is at '%s'", tar_file)
         else:
             _LOG.info("# Skipping archiving")
@@ -190,7 +197,7 @@ def _main(parser):
             cmd = "rm -rf %s" % temp_dir
             si.system(cmd, dry_run=args.dry_run)
         # Delete old ones.
-        #find $base -type f -mtime +3 -delete
+        # find $base -type f -mtime +3 -delete
     if args.action == "export":
         # Create dst dir.
         dst_dir = _create_dst_dir(args.dst_dir)
@@ -202,11 +209,11 @@ def _main(parser):
         _rclone_copy_from_gdrive(args.src_dir, dst_dir, log_dir, args.dry_run)
     if args.action == "import":
         # Clone data inside the temp dir.
-        _LOG.info("# Importing data from %s to %s ...", args.src_dir,
-                  args.dst_dir)
-        _rclone_copy_to_gdrive(args.src_dir, args.dst_dir, log_dir,
-                               args.dry_run)
+        _LOG.info(
+            "# Importing data from %s to %s ...", args.src_dir, args.dst_dir
+        )
+        _rclone_copy_to_gdrive(args.src_dir, args.dst_dir, log_dir, args.dry_run)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main(_parse())

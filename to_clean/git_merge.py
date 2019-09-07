@@ -31,8 +31,11 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
     #   trying to merge into your LOCAL branch.
     for id_, suffix in [("1", "base"), ("2", "theirs"), ("3", "mine")]:
         # Save file.
-        dst_file_name = "%s/%s.%s" % (tmp_dir_name, os.path.basename(file_name),
-                                      suffix)
+        dst_file_name = "%s/%s.%s" % (
+            tmp_dir_name,
+            os.path.basename(file_name),
+            suffix,
+        )
         cmd = "git show :%s:%s >%s" % (id_, file_name, dst_file_name)
         si.system(cmd)
         if file_name.endswith(".ipynb"):
@@ -82,8 +85,9 @@ def _main(args):
         dbg.dassert_lte(1, len(file_names))
     else:
         file_names = args.file
-    _LOG.info("# %s files to resolve:\n%s\n", len(file_names),
-              "\n".join(file_names))
+    _LOG.info(
+        "# %s files to resolve:\n%s\n", len(file_names), "\n".join(file_names)
+    )
     # Resolve files.
     tmp_dir_name = "./tmp.git_merge"
     io.create_dir(tmp_dir_name, incremental=False)
@@ -93,18 +97,20 @@ def _main(args):
 
 def _parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, action='append')
+    parser.add_argument("--file", type=str, action="append")
     parser.add_argument(
-        '--vs_base',
-        action='store_true',
+        "--vs_base",
+        action="store_true",
         help="Compare to the base / ancestor version instead of the theirs /"
-        " remote version")
+        " remote version",
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     args = parser.parse_args()
     _main(args)
 

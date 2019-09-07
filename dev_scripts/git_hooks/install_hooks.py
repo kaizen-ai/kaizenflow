@@ -30,19 +30,21 @@ _HOOKS = ["pre-commit", "commit-msg"]
 
 def _main():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--action",
         required=True,
         choices=["install", "remove", "status"],
-        action="store")
+        action="store",
+    )
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     #
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
@@ -85,12 +87,11 @@ def _main():
                 cmd = "unlink %s" % target_file
                 si.system(cmd, log_level=logging.DEBUG)
             else:
-                _LOG.warning("Nothing to do since %s doesn't exist",
-                             target_file)
+                _LOG.warning("Nothing to do since %s doesn't exist", target_file)
         else:
             dbg.dfatal("Invalid action='%s'" % args.action)
     _LOG.info("Done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main()

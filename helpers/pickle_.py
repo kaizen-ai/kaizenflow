@@ -29,30 +29,33 @@ def to_pickle(obj, file_name, backend="pickle", log_level=logging.DEBUG):
     # change the extension based on the backend.
     if backend in ("pickle", "dill"):
         dbg.dassert(
-            file_name.endswith(".pkl"), msg="Invalid file_name=%s" % file_name)
+            file_name.endswith(".pkl"), msg="Invalid file_name=%s" % file_name
+        )
         if backend == "pickle":
-            with open(file_name, 'wb') as fd:
+            with open(file_name, "wb") as fd:
                 pickler = pickle.Pickler(fd, pickle.HIGHEST_PROTOCOL)
                 pickler.fast = True
                 pickler.dump(obj)
         elif backend == "dill":
             import dill
-            with open(file_name, 'wb') as fd:
+
+            with open(file_name, "wb") as fd:
                 pickler = dill.dump(obj, fd)
     elif backend == "pickle_gzip":
         dbg.dassert(
-            file_name.endswith(".pkl.gz"),
-            msg="Invalid file_name=%s" % file_name)
-        with gzip.open(file_name, 'wb') as fd:
+            file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name
+        )
+        with gzip.open(file_name, "wb") as fd:
             pickler = pickle.Pickler(fd, pickle.HIGHEST_PROTOCOL)
             pickler.fast = True
             pickler.dump(obj)
     else:
         raise ValueError("Invalid backend='%s'" % backend)
     _, elapsed_time = timer.dtimer_stop(dtmr)
-    size_mb = os.path.getsize(file_name) / (1024.0**2)
-    _LOG.info("Saved '%s' (size=%.2f Mb, time=%.1fs)", file_name, size_mb,
-              elapsed_time)
+    size_mb = os.path.getsize(file_name) / (1024.0 ** 2)
+    _LOG.info(
+        "Saved '%s' (size=%.2f Mb, time=%.1fs)", file_name, size_mb, elapsed_time
+    )
 
 
 def from_pickle(file_name, backend="pickle", log_level=logging.DEBUG):
@@ -65,28 +68,31 @@ def from_pickle(file_name, backend="pickle", log_level=logging.DEBUG):
     # change the extension based on the backend.
     if backend in ("pickle", "dill"):
         dbg.dassert(
-            file_name.endswith(".pkl"), msg="Invalid file_name=%s" % file_name)
+            file_name.endswith(".pkl"), msg="Invalid file_name=%s" % file_name
+        )
         if backend == "pickle":
-            with open(file_name, 'rb') as fd:
+            with open(file_name, "rb") as fd:
                 unpickler = pickle.Unpickler(fd)
                 obj = unpickler.load()
         elif backend == "dill":
             import dill
-            with open(file_name, 'rb') as fd:
+
+            with open(file_name, "rb") as fd:
                 obj = dill.load(fd)
     elif backend == "pickle_gzip":
         dbg.dassert(
-            file_name.endswith(".pkl.gz"),
-            msg="Invalid file_name=%s" % file_name)
-        with gzip.open(file_name, 'rb') as fd:
+            file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name
+        )
+        with gzip.open(file_name, "rb") as fd:
             unpickler = pickle.Unpickler(fd)
             obj = unpickler.load()
     else:
         raise ValueError("Invalid backend='%s'" % backend)
     _, elapsed_time = timer.dtimer_stop(dtmr)
-    size_mb = os.path.getsize(file_name) / (1024.0**2)
-    _LOG.info("Read '%s' (size=%.2f Mb, time=%.1fs)", file_name, size_mb,
-              elapsed_time)
+    size_mb = os.path.getsize(file_name) / (1024.0 ** 2)
+    _LOG.info(
+        "Read '%s' (size=%.2f Mb, time=%.1fs)", file_name, size_mb, elapsed_time
+    )
     return obj
 
 
@@ -118,7 +124,7 @@ def unpickle_function(code_as_str, func_name):
 
 
 def to_json(file_name, obj):
-    with open(file_name, 'w') as outfile:
+    with open(file_name, "w") as outfile:
         json.dump(obj, outfile)
 
 

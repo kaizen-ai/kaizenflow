@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import pandas as pd
 
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -56,7 +55,7 @@ def tile_x_flatten_y(x_vars, y_var):
     """
     y = y_var.values.transpose().flatten()
     # Tile x values to match flattened y
-    _LOG.info('regressors: %s', x_vars.columns.values)
+    _LOG.info("regressors: %s", x_vars.columns.values)
     x = np.tile(x_vars.values, (y_var.shape[1], 1))
     return x, y
 
@@ -64,36 +63,36 @@ def tile_x_flatten_y(x_vars, y_var):
 def regression(x, y):
     """
     Linear regression of y_var on x_vars.
-    
+
     Constant regression term not included but must be supplied by caller.
-    
+
     Returns beta_hat along with beta_hat_covar and z-scores for the hypothesis
     that a beta_j = 0.
     """
     nan_filter = ~np.isnan(y)
-    nobs = np.count_nonzero(nan_filter) 
-    _LOG.info('nobs (resp) = %s', nobs)
+    nobs = np.count_nonzero(nan_filter)
+    _LOG.info("nobs (resp) = %s", nobs)
     x = x[nan_filter]
     y = y[nan_filter]
     y_mean = np.mean(y)
-    _LOG.info('y_mean = %f', y_mean)
+    _LOG.info("y_mean = %f", y_mean)
     tss = (y - y_mean).dot(y - y_mean)
-    _LOG.info('tss = %f', tss)
+    _LOG.info("tss = %f", tss)
     # Linear regression to estimate \beta
-    regress = np.linalg.lstsq(x, y, rcond=None) 
+    regress = np.linalg.lstsq(x, y, rcond=None)
     beta_hat = regress[0]
-    _LOG.info('beta = %s', np.array2string(beta_hat))
+    _LOG.info("beta = %s", np.array2string(beta_hat))
     # Estimate delta covariance
     rss = regress[1]
-    _LOG.info('rss = %f', rss)
-    _LOG.info('r^2 = %f', 1 - rss / tss)
+    _LOG.info("rss = %f", rss)
+    _LOG.info("r^2 = %f", 1 - rss / tss)
     xtx_inv = np.linalg.inv((x.transpose().dot(x)))
     sigma_hat_sq = rss / (nobs - x.shape[1])
-    _LOG.info('sigma_hat_sq = %s', np.array2string(sigma_hat_sq))
-    beta_hat_covar = xtx_inv * sigma_hat_sq 
-    _LOG.info('beta_hat_covar = %s', np.array2string(beta_hat_covar))
-    beta_hat_z_score = beta_hat / np.sqrt(sigma_hat_sq * np.diagonal(xtx_inv)) 
-    _LOG.info('beta_hat_z_score = %s', np.array2string(beta_hat_z_score))
+    _LOG.info("sigma_hat_sq = %s", np.array2string(sigma_hat_sq))
+    beta_hat_covar = xtx_inv * sigma_hat_sq
+    _LOG.info("beta_hat_covar = %s", np.array2string(beta_hat_covar))
+    beta_hat_z_score = beta_hat / np.sqrt(sigma_hat_sq * np.diagonal(xtx_inv))
+    _LOG.info("beta_hat_z_score = %s", np.array2string(beta_hat_z_score))
     return beta_hat, beta_hat_covar, beta_hat_z_score
 
 
@@ -122,21 +121,20 @@ def estimate_event_effect(x_vars, pre_resp, post_resp):
     https://colcarroll.github.io/pymc3/notebooks/BEST.html
 
     For all params, rows are datetimes.
-    :param x_vars: pd.DataFrame of event signal, with 1 col for each regressor 
+    :param x_vars: pd.DataFrame of event signal, with 1 col for each regressor
     :param pre_resp: pd.DataFrame of response pre-event (cols are neg offsets)
     :param post_resp: pd.DataFrame of response post-event (cols are pos
         offsets)
     """
     # Estimate level pre-event
-    _LOG.info('Estimating pre-event response level...')
-    x_ind = pd.DataFrame(index=x_vars.index,
-                         data=np.ones(x_vars.shape[0]),
-                         columns=['const'])
+    _LOG.info("Estimating pre-event response level...")
+    x_ind = pd.DataFrame(
+        index=x_vars.index, data=np.ones(x_vars.shape[0]), columns=["const"]
+    )
     x_lvl, y_pre_resp = tile_x_flatten_y(x_ind, pre_resp)
-    alpha_hat, alpha_hat_var, alpha_hat_z_score = regression(x_lvl, y_pre_resp) 
-    _LOG.info('Regressing level-adjusted post-event response against x_vars...')
+    alpha_hat, alpha_hat_var, alpha_hat_z_score = regression(x_lvl, y_pre_resp)
+    _LOG.info("Regressing level-adjusted post-event response against x_vars...")
     # Adjust post-event values by pre-event-estimated level
     x, y_post_resp = tile_x_flatten_y(x_vars, post_resp - alpha_hat[0])
-    delta_hat, delta_hat_var, delta_hat_z_score = regression(x, y_post_resp) 
-    return alpha_hat, alpha_hat_z_score, delta_hat, delta_hat_z_score 
-
+    delta_hat, delta_hat_var, delta_hat_z_score = regression(x, y_post_resp)
+    return alpha_hat, alpha_hat_z_score, delta_hat, delta_hat_z_score

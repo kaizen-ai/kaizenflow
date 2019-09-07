@@ -9,7 +9,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_dassert1(ut.TestCase):
-
     def test1(self):
         dbg.dassert(True)
 
@@ -49,7 +48,6 @@ class Test_dassert1(ut.TestCase):
 
 
 class Test_dassert_eq1(ut.TestCase):
-
     def test1(self):
         dbg.dassert_eq(1, 1)
 
@@ -79,7 +77,6 @@ class Test_dassert_eq1(ut.TestCase):
 
 
 class Test_dassert_misc1(ut.TestCase):
-
     def test1(self):
         dbg.dassert_in("a", "abc")
 

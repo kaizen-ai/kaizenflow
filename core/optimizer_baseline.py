@@ -20,10 +20,8 @@
 
 import logging
 
-import helpers.dbg as dbg
 import numpy as np
 import pandas as pd
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ def equal_weighting(df):
     """
     Equally weight returns in df and generate stream of log rets.
     """
-    rets = df.dropna(how='any').mean(axis=1)
+    rets = df.dropna(how="any").mean(axis=1)
     log_rets = np.log(rets + 1)
     return log_rets
 
@@ -48,10 +46,11 @@ def inverse_volatility_weighting(df, com, min_periods):
     """
     # Convert to log returns for the purpose of calculating volatility.
     log_df = np.log(df + 1)
-    log_df = log_df.ewm(com=com, min_periods=min_periods, adjust=True,
-                        ignore_na=False, axis=0).std()
-    inv_vol = 1. / log_df
-    total_inv_vol = inv_vol.sum(axis=1) 
+    log_df = log_df.ewm(
+        com=com, min_periods=min_periods, adjust=True, ignore_na=False, axis=0
+    ).std()
+    inv_vol = 1.0 / log_df
+    total_inv_vol = inv_vol.sum(axis=1)
     weights = inv_vol.divide(total_inv_vol, axis=0)
     # Shift weights two time periods (1 to enter, 1 to exit)
     weights = weights.shift(2)
@@ -67,22 +66,28 @@ def minimum_variance_weighting(df, com, min_periods):
 
     Note that weights may be negative.
     """
-    # Convert to log returns for the purpose of calculating covariance. 
+    # Convert to log returns for the purpose of calculating covariance.
     _LOG.info("df num rows = %i", df.shape[0])
-    _LOG.info("df num rows with no NaNs = %i", df.dropna(how='any').shape[0])
+    _LOG.info("df num rows with no NaNs = %i", df.dropna(how="any").shape[0])
     log_df = np.log(df + 1)
-    cov = log_df.ewm(com=com, min_periods=min_periods, adjust=True,
-                     ignore_na=False, axis=0).cov()
+    cov = log_df.ewm(
+        com=com, min_periods=min_periods, adjust=True, ignore_na=False, axis=0
+    ).cov()
     _LOG.info("cov num matrices = %i", cov.shape[0] / cov.shape[1])
     inv_cov = _cov_df_to_inv(cov)
-    weights = np.divide(inv_cov.sum(axis=1),
-                        inv_cov.sum(axis=1).sum(axis=1, keepdims=True))
-    weights_df = pd.DataFrame(data=weights,
-                              index=cov.index.get_level_values(0).drop_duplicates(),
-                              columns=cov.columns)
+    weights = np.divide(
+        inv_cov.sum(axis=1), inv_cov.sum(axis=1).sum(axis=1, keepdims=True)
+    )
+    weights_df = pd.DataFrame(
+        data=weights,
+        index=cov.index.get_level_values(0).drop_duplicates(),
+        columns=cov.columns,
+    )
     _LOG.info("weights_df num rows = %i", weights_df.shape[0])
-    _LOG.info("weights_df num rows with no NaNs = %i",
-              weights_df.dropna(how='any').shape[0])
+    _LOG.info(
+        "weights_df num rows with no NaNs = %i",
+        weights_df.dropna(how="any").shape[0],
+    )
     # Shift weights two time periods (1 to enter, 1 to exit)
     weights_df = weights_df.shift(2)
     rets = df.multiply(weights_df, axis=0).sum(axis=1, skipna=False)
@@ -102,10 +107,12 @@ def kelly_optimal_weighting(df, com, min_periods):
     cov = _ewm_cov(df, com, min_periods)
     inv_cov = _cov_df_to_inv(cov)
     ewm_rets = df.ewm(com=com, min_periods=min_periods).mean()
-    weights = np.einsum('ijk,ik->ij', inv_cov, ewm_rets)
-    weights_df = pd.DataFrame(data=weights,
-                              index=cov.index.get_level_values(0).drop_duplicates(),
-                              columns=cov.columns)
+    weights = np.einsum("ijk,ik->ij", inv_cov, ewm_rets)
+    weights_df = pd.DataFrame(
+        data=weights,
+        index=cov.index.get_level_values(0).drop_duplicates(),
+        columns=cov.columns,
+    )
     # Shift weights two time periods (1 to enter, 1 to exit)
     weights_df = weights_df.shift(2)
     rets = df.multiply(weights_df, axis=0).sum(axis=1, skipna=False)
@@ -130,11 +137,16 @@ def _ewm_cov(df, com, min_periods, adjust=True, ignore_na=False, axis=0):
     Accepts df of % returns and calculates ewm covariance matrix
     """
     _LOG.info("df num rows = %i", df.shape[0])
-    _LOG.info("df num rows with no NaNs = %i", df.dropna(how='any').shape[0])
+    _LOG.info("df num rows with no NaNs = %i", df.dropna(how="any").shape[0])
     # Convert to log returns for the purpose of calculating covariance.
     log_df = np.log(df + 1)
-    cov = log_df.ewm(com=com, min_periods=min_periods, adjust=adjust,
-                     ignore_na=ignore_na, axis=axis).cov()
+    cov = log_df.ewm(
+        com=com,
+        min_periods=min_periods,
+        adjust=adjust,
+        ignore_na=ignore_na,
+        axis=axis,
+    ).cov()
     _LOG.info("cov num matrices = %i", cov.shape[0] / cov.shape[1])
     return cov
 

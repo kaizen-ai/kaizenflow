@@ -26,9 +26,9 @@ def strip_line_magic(line):
         print()
         print(("\n".join(matches)))
         # This line contains the pattern.
-        #matches[0]
+        # matches[0]
         stripped = "\n".join(matches[1:])
-        #_LOG.debug("stripped=%s", "\n".join(stripped))
+        # _LOG.debug("stripped=%s", "\n".join(stripped))
 
         print("stripped")
         print()
@@ -46,13 +46,13 @@ def strip_magic(file_in, file_out):
     # Read file.
     with open(file_in) as f:
         code = f.read()
-    code = code.split('\n')
+    code = code.split("\n")
     # Strip out magic.
     n_code = []
     for cl in code:
         n_code.append(strip_line_magic(cl))
     # Write.
-    with open(file_out, 'w') as fo:
+    with open(file_out, "w") as fo:
         for item in n_code:
             fo.write("%s\n" % item)
 
@@ -63,7 +63,7 @@ def _main(args):
         _LOG.info("Converting %s", f)
         dbg.dassert(f.endswith(".ipynb"), msg="Invalid file=%s" % f)
         cmd = "jupyter nbconvert %s --to python" % f
-        #--template=dev_scripts/ipy_to_py.tpl" % f
+        # --template=dev_scripts/ipy_to_py.tpl" % f
         si.system(cmd)
         if True:
             file_out = f.replace(".ipynb", ".py")
@@ -75,15 +75,16 @@ def _main(args):
 
 def _parse():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--files', type=str, action='append', default=[])
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("--files", type=str, action="append", default=[])
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     args = parser.parse_args()
     _main(args)
 

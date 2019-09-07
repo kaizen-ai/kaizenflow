@@ -34,7 +34,7 @@ def ipynb_format(fname, style=None):
             out = []
             q = []
             for i in cell["source"].splitlines(True):
-                #print i
+                # print i
                 if i.startswith("!"):
                     continue
                 if i.startswith("?"):
@@ -69,14 +69,15 @@ def ipynb_format(fname, style=None):
                 out[-1] = out[-1][:-1]
 
             if modcell:
-                out = [s.encode('ascii', 'ignore') for s in out]
+                out = [s.encode("ascii", "ignore") for s in out]
                 cell["source"] = out
                 modified += 1
 
     print("Num of cells modified=%d" % modified)
     if modified:
         import io
-        f = io.open(fname, "w", encoding='utf-8')
+
+        f = io.open(fname, "w", encoding="utf-8")
         nbf.write(nb, f)
         f.close()
 
@@ -85,7 +86,8 @@ def ipynb_format(fname, style=None):
 
 def cli():
     parser = argparse.ArgumentParser(
-        description="Format ipython notebook using yapf")
+        description="Format ipython notebook using yapf"
+    )
     parser.add_argument("--style", action="store", help="yapf style to use")
     parser.add_argument("files", nargs="*")
     args = parser.parse_args()

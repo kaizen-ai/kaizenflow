@@ -74,13 +74,15 @@ def sql_execute_query(conn_string, qq):
 _sql_cache = {}
 
 
-def query(conn_string,
-          qq,
-          limit=None,
-          use_timer=False,
-          use_cache=True,
-          profile=False,
-          verbose=True):
+def query(
+    conn_string,
+    qq,
+    limit=None,
+    use_timer=False,
+    use_cache=True,
+    profile=False,
+    verbose=True,
+):
     global _sql_cache
     if limit is not None:
         qq += " LIMIT %s" % limit
@@ -138,8 +140,10 @@ def get_all_tables(conn_string):
     _log.debug("conn_string=%s", conn_string)
     conn = pg.connect(conn_string)
     cursor = conn.cursor()
-    cursor.execute("SELECT relname FROM pg_class WHERE relkind='r' and "
-                   "relname !~ '^(pg_|sql_)';")
+    cursor.execute(
+        "SELECT relname FROM pg_class WHERE relkind='r' and "
+        "relname !~ '^(pg_|sql_)';"
+    )
     tables = list(zip(*cursor.fetchall()))[0]
     tables = sorted(tables)
     return tables
@@ -168,8 +172,8 @@ def show_table(conn_string, table, limit=5, as_txt=False):
     qq = "SELECT * FROM %s LIMIT %s " % (table, limit)
     df = query(conn_string, qq)
     if as_txt:
-        #pd.options.display.max_columns = 1000
-        #pd.options.display.width = 130
+        # pd.options.display.max_columns = 1000
+        # pd.options.display.width = 130
         print(df)
     else:
         display(df, as_txt=as_txt)
@@ -196,15 +200,23 @@ def find_common_columns(conn_string, tables, as_df=False):
             df2 = query(conn_string, qq, verbose=False)
             common_cols = [c for c in df1 if c in df2]
             if as_df:
-                df.append((tables[i], tables[j], len(common_cols),
-                           " ".join(common_cols)))
+                df.append(
+                    (
+                        tables[i],
+                        tables[j],
+                        len(common_cols),
+                        " ".join(common_cols),
+                    )
+                )
             else:
                 print(("'%s' vs '%s'" % (tables[i], tables[j])))
-                print((
-                    "    (%s): %s" % (len(common_cols), " ".join(common_cols))))
+                print(
+                    ("    (%s): %s" % (len(common_cols), " ".join(common_cols)))
+                )
     if as_df:
         df = pd.DataFrame(
-            df, columns=["table1", "table2", "num_comm_cols", "common_cols"])
+            df, columns=["table1", "table2", "num_comm_cols", "common_cols"]
+        )
         return df
 
 
@@ -226,7 +238,7 @@ def create_sql_pickle(conn, sql_query, file_name, abort_on_file_exists):
         df = pd.read_sql_query(sql_query, conn)
     data["df"] = df
     #
-    f = open(file_name, 'w')
+    f = open(file_name, "w")
     pickle.dump(data, f)
     f.close()
     _log.info("Created file='%s'", file_name)
@@ -234,7 +246,7 @@ def create_sql_pickle(conn, sql_query, file_name, abort_on_file_exists):
 
 
 def read_sql_pickle(file_name):
-    f = open(file_name, 'r')
+    f = open(file_name, "r")
     data = pickle.load(f)
     f.close()
     return data["df"]
@@ -247,7 +259,7 @@ def read_sql_pickle(file_name):
 
 def normalize_code(code):
     # Remove quotes.
-    code = code.rstrip("\"").lstrip("\"")
+    code = code.rstrip('"').lstrip('"')
     # Remove \\ (see "NI:ATTACK/01\   instancesOf" in bug #6).
     if code.endswith("\\"):
         code2 = code.rstrip("""\\""")

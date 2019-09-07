@@ -33,14 +33,13 @@ def read_data_from_disk(file_name, nrows):
     if nrows is None:
         _LOG.warning("Reading only the first nrows=%s rows", nrows)
     dir_name = os.path.basename(os.path.dirname(file_name))
-    if dir_name in ("All_Futures_Contracts_1min",
-            "All_Futures_Continuous_Contracts_1min"):
+    if dir_name in (
+        "All_Futures_Contracts_1min",
+        "All_Futures_Continuous_Contracts_1min",
+    ):
         # 1 minute data.
         df = pd.read_csv(
-            file_name,
-            header=None,
-            parse_dates=[[0, 1]],
-            nrows=nrows,
+            file_name, header=None, parse_dates=[[0, 1]], nrows=nrows
         )
         # According to Kibot the columns are:
         #   Date,Time,Open,High,Low,Close,Volume
@@ -56,7 +55,8 @@ def read_data_from_disk(file_name, nrows):
         # TODO(gp): Turn it into datetime using EOD timestamp. Check on Kibot.
     else:
         raise ValueError(
-            "Invalid dir_name='%s' in file_name='%s'" % (dir_name, file_name))
+            "Invalid dir_name='%s' in file_name='%s'" % (dir_name, file_name)
+        )
     dbg.dassert(df.index.is_monotonic_increasing)
     dbg.dassert(df.index.is_unique)
     return df
@@ -131,7 +131,8 @@ def read_metadata3():
     """
     file_name = KIBOT_DIRNAME + "/Futures_tickbidask.txt"
     df = pd.read_csv(file_name, index_col=0, skiprows=5, header=None, sep="\t")
-    df.columns = "SymbolBase Symbol StartDate Size(MB) Description Exchange".split(
+    df.columns = (
+        "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
     )
     df.index.name = None
     _LOG.debug("df=\n%s", df.head(3))
@@ -148,7 +149,8 @@ def read_metadata4():
     """
     file_name = KIBOT_DIRNAME + "/FuturesContinuous_intraday.txt"
     df = pd.read_csv(file_name, index_col=0, skiprows=5, header=None, sep="\t")
-    df.columns = "SymbolBase Symbol StartDate Size(MB) Description Exchange".split(
+    df.columns = (
+        "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
     )
     df.index.name = None
     _LOG.debug("df=\n%s", df.head(3))

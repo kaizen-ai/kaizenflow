@@ -31,7 +31,7 @@ def init_notebook(num_git_commits=3):
     print("Setting verbosity to %s" % verb)
     dbg.set_verbosity_level(verb)
     #
-    #print matplotlib.rcParams
+    # print matplotlib.rcParams
     config_matplotlib()
     #
     cmd = "conda info --envs"
@@ -40,10 +40,10 @@ def init_notebook(num_git_commits=3):
     print("  numpy=%s" % np.__version__)
     print("  scipy=%s" % scipy.__version__)
     print("  sklearn=%s" % sklearn.__version__)
-    print('  pandas=%s' % pd.__version__)
+    print("  pandas=%s" % pd.__version__)
     #
     print("# git tag")
-    cmd = 'git log2 --author gp | head -%s' % num_git_commits
+    cmd = "git log2 --author gp | head -%s" % num_git_commits
     print(utils.jos.system_to_string(cmd)[1])
 
 
@@ -51,7 +51,7 @@ def init_notebook(num_git_commits=3):
 # Python.
 # #############################################################################
 
-#def apply_to_one_column_df(f):
+# def apply_to_one_column_df(f):
 #    def wrapper(*args, **kwargs):
 #        func_name = f.__name__
 #        obj, args_tmp = *args[0], *
@@ -63,12 +63,9 @@ def init_notebook(num_git_commits=3):
 #    return wrapper
 
 
-def apply_to_dict_panel(obj,
-                        f,
-                        func_name=None,
-                        timed=False,
-                        progress_bar=False,
-                        report_func=False):
+def apply_to_dict_panel(
+    obj, f, func_name=None, timed=False, progress_bar=False, report_func=False
+):
     if report_func:
         log.info("# %s", func_name)
     if timed:
@@ -107,15 +104,12 @@ _keys_for_parallel = None
 # filling some arguments for a memoized function, we need to know if the
 # memoized function will need eval. So we need to pass the intrinsic function
 # and the args to this wrapper.
-def apply_to_dict_panel_parallel(obj,
-                                 f,
-                                 args,
-                                 func_name=None,
-                                 timed=False,
-                                 n_jobs=None,
-                                 verbose=0):
+def apply_to_dict_panel_parallel(
+    obj, f, args, func_name=None, timed=False, n_jobs=None, verbose=0
+):
     from joblib import Parallel, delayed
     import dill
+
     if timed:
         timer = utils.timer.dtimer_start(0, func_name)
     dbg.dassert_isinstance(f, utils.memoize.memoized)
@@ -152,18 +146,22 @@ def apply_to_dict_panel_parallel(obj,
             log.debug("k=%s needs remote execution", k)
             keys_for_parallel.append(k)
     # Execution remotely functions that are not cached.
-    log.info("# Execute remotely what was not cached (%s) %s",
-             len(keys_for_parallel), str(keys_for_parallel))
+    log.info(
+        "# Execute remotely what was not cached (%s) %s",
+        len(keys_for_parallel),
+        str(keys_for_parallel),
+    )
     global _keys_for_parallel
     _keys_for_parallel = keys_for_parallel[:]
     if keys_for_parallel:
-        log.info("Parallel exec starting (len(obj)=%d n_jobs=%d)", len(obj),
-                 n_jobs)
+        log.info(
+            "Parallel exec starting (len(obj)=%d n_jobs=%d)", len(obj), n_jobs
+        )
         f_dill = dill.dumps(f)
-        caches = Parallel(
-            n_jobs=n_jobs, max_nbytes=None,
-            verbose=verbose)(delayed(memoize.execute_remote_function)(f_dill, *(
-                [obj[k]] + args)) for k in keys_for_parallel)
+        caches = Parallel(n_jobs=n_jobs, max_nbytes=None, verbose=verbose)(
+            delayed(memoize.execute_remote_function)(f_dill, *([obj[k]] + args))
+            for k in keys_for_parallel
+        )
         log.info("Parallel exec ending")
         # Update local cache from remote execution.
         for cache in caches:
@@ -318,13 +316,16 @@ def min_max_index(obj, tag=None):
     txt = ""
     if tag:
         txt += "%s: " % tag
-    txt += "[%s, %s], count=%s" % (pd.to_datetime(index.values[0]),
-                                   pd.to_datetime(index.values[-1]), len(index))
+    txt += "[%s, %s], count=%s" % (
+        pd.to_datetime(index.values[0]),
+        pd.to_datetime(index.values[-1]),
+        len(index),
+    )
     return txt
 
 
 def min_max(obj, tag=None):
-    #dbg.dassert_in(type(obj), (list, tuple))
+    # dbg.dassert_in(type(obj), (list, tuple))
     txt = ""
     if tag:
         txt += "%s: " % tag
@@ -393,14 +394,15 @@ def check_index_type(series):
     for s in series:
         dbg.dassert_type_is(s, pd.Series)
         curr_type = series.index
-        #curr_type = type(series.index[0])
+        # curr_type = type(series.index[0])
         if exp_type is None:
             exp_type = curr_type
         else:
             dbg.dassert_eq(
                 exp_type,
                 curr_type,
-                msg="series '%s' has different index type" % s.name)
+                msg="series '%s' has different index type" % s.name,
+            )
     return True
 
 
@@ -409,12 +411,9 @@ def check_index_type(series):
 # /////////////////////////////////////////////////////////////////////////////
 
 
-def filter_by_period(obj,
-                     start_time,
-                     end_time,
-                     axis=None,
-                     mode=None,
-                     verb=logging.DEBUG):
+def filter_by_period(
+    obj, start_time, end_time, axis=None, mode=None, verb=logging.DEBUG
+):
     """
     Filter an obj that can be sliced with [start_time:end_time] reporting
     stats.
@@ -480,7 +479,7 @@ def filter_on_times(df, start_time, end_time, reverse=False):
     return df[mask]
 
 
-#def drop_zeros(srs):
+# def drop_zeros(srs):
 #    is_df = False
 #    if isinstance(srs, pd.DataFrame):
 #        srs = cast_df_to_series(srs)
@@ -492,7 +491,7 @@ def filter_on_times(df, start_time, end_time, reverse=False):
 #    return srs
 #
 #
-#def drop_not_finite(srs):
+# def drop_not_finite(srs):
 #    dbg.dassert_type_is(srs, pd.Series)
 #    return srs[np.isfinite(srs)]
 
@@ -503,7 +502,7 @@ def sample_index_times(obj, time):
     """
     dbg.dassert_type_is(time, datetime.time)
     index = get_index(obj)
-    #dbg.dassert_type_is(index.values[0].time(), datetime.time)
+    # dbg.dassert_type_is(index.values[0].time(), datetime.time)
     mask = [pd.to_datetime(dt).time() == time for dt in index]
     ret = obj[mask].copy()
     dbg.dassert_lte(1, ret.shape[0])
@@ -514,7 +513,7 @@ def drop_before_first_row_without_nans(df):
     """
     Filter df before the first row without nans.
     """
-    return df[df.dropna().index[0]:]
+    return df[df.dropna().index[0] :]
 
 
 # TODO(gp): -> remove_non_finite()?
@@ -564,15 +563,13 @@ def filter_non_finite(obj, col_names=None, keep_finite=True, print_stats=False):
         before_num_cols = obj.shape[0]
         after_num_cols = obj_tmp.shape[0]
         print("filter_non_finite (keep_finite=%s):" % keep_finite)
-        print("\tkept rows=%s" % dbg.perc(
-            after_num_cols, before_num_cols, printAll=True))
+        print(
+            "\tkept rows=%s"
+            % dbg.perc(after_num_cols, before_num_cols, printAll=True)
+        )
 
         def _count_non_finite(vals):
-            count = {
-                "nan": 0,
-                "-inf": 0,
-                "+inf": 0,
-            }
+            count = {"nan": 0, "-inf": 0, "+inf": 0}
             for v in vals:
                 if np.isnan(v):
                     count["nan"] += 1
@@ -586,7 +583,7 @@ def filter_non_finite(obj, col_names=None, keep_finite=True, print_stats=False):
     # Convert back to the correct type.
     if isinstance(obj_tmp, pd.DataFrame):
         dbg.dassert_lte(1, obj_tmp.shape[0])
-    elif (isinstance(obj_tmp, pd.Series) or isinstance(obj_tmp, np.ndarray)):
+    elif isinstance(obj_tmp, pd.Series) or isinstance(obj_tmp, np.ndarray):
         dbg.dassert_lte(1, len(obj_tmp))
     else:
         raise ValueError("Invalid type='%s'" % type(obj_tmp))
@@ -679,8 +676,7 @@ def concat_to_df(df, obj, overwrite=False):
     #
     if set(obj.columns).issubset(df.columns):
         # df overlaps with obj.
-        dbg.dassert(
-            overwrite, msg="Columns already present: one must overwrite")
+        dbg.dassert(overwrite, msg="Columns already present: one must overwrite")
         df.drop(obj.columns, axis=1, inplace=True)
     # Merge.
     dbg.dassert(not set(df.columns).intersection(set(obj.columns)))
@@ -731,16 +727,19 @@ def random(obj, seed):
         idx = obj[c].index
         cols = obj[c].columns
         obj[c] = pd.DataFrame(
-            np.random.rand(*obj[c].shape) * 2 - 1.0, index=idx, columns=cols)
+            np.random.rand(*obj[c].shape) * 2 - 1.0, index=idx, columns=cols
+        )
     return obj
 
 
-def remove_outliers(obj,
-                    lower_quantile,
-                    upper_quantile=None,
-                    mode=None,
-                    inplace=False,
-                    print_stats=True):
+def remove_outliers(
+    obj,
+    lower_quantile,
+    upper_quantile=None,
+    mode=None,
+    inplace=False,
+    print_stats=True,
+):
     """
     Remove / winsorize outliers (according to "mode") given lower / upper
     quantile in df[col_name].
@@ -750,8 +749,7 @@ def remove_outliers(obj,
     if mode is None:
         mode = "winsorize"
     log.debug("Removing outliers with mode=%s", mode)
-    bounds = utils.jstats.get_quantile_bounds(obj, lower_quantile,
-                                              upper_quantile)
+    bounds = utils.jstats.get_quantile_bounds(obj, lower_quantile, upper_quantile)
     if print_stats:
         log.debug("bounds=%s", str(bounds))
     if inplace:
@@ -763,22 +761,28 @@ def remove_outliers(obj,
         ret[bounds[1] <= obj] = bounds[1]
         if print_stats:
             num = np.sum(obj <= bounds[0]) + np.sum(bounds[1] <= obj)
-            log.debug("winsorize: to_process=%s",
-                      dbg.perc(num, len(ret), printAll=True))
+            log.debug(
+                "winsorize: to_process=%s", dbg.perc(num, len(ret), printAll=True)
+            )
     else:
         mask = (bounds[0] <= obj) & (obj <= bounds[1])
         if print_stats:
             num = np.sum(mask)
-            log.debug("%s: to_process=%s", mode,
-                      dbg.perc(num, len(ret), printAll=True))
+            log.debug(
+                "%s: to_process=%s", mode, dbg.perc(num, len(ret), printAll=True)
+            )
         if mode == "set_to_nan":
             ret[~mask] = np.nan
-            log.debug("overwritten %s / %s elems with nan",
-                      np.sum(~np.isfinite(ret)), np.sum(np.isfinite(obj)))
+            log.debug(
+                "overwritten %s / %s elems with nan",
+                np.sum(~np.isfinite(ret)),
+                np.sum(np.isfinite(obj)),
+            )
         elif mode == "set_to_zero":
             ret[~mask] = 0.0
-            log.debug("overwritten %s / %s elems with 0", np.sum(~mask),
-                      obj.shape[0])
+            log.debug(
+                "overwritten %s / %s elems with 0", np.sum(~mask), obj.shape[0]
+            )
         elif mode == "filter":
             ret = ret[mask].copy()
         else:
@@ -786,11 +790,9 @@ def remove_outliers(obj,
     return ret, bounds
 
 
-def remove_outlier_rows_from_df(df,
-                                lower_quantile,
-                                upper_quantile=None,
-                                col_names=None,
-                                mode=None):
+def remove_outlier_rows_from_df(
+    df, lower_quantile, upper_quantile=None, col_names=None, mode=None
+):
     """
     Remove outlier rows, i.e., rows where there is at least one outlier in each
     column.
@@ -808,10 +810,7 @@ def remove_outlier_rows_from_df(df,
         if col in col_names_to_trim:
             log.debug("Trimming col %s", col)
             trimmed_col, _ = remove_outliers(
-                df[col],
-                lower_quantile,
-                upper_quantile=upper_quantile,
-                mode=mode,
+                df[col], lower_quantile, upper_quantile=upper_quantile, mode=mode
             )
         else:
             log.debug("Skipping col %s", col)
@@ -838,7 +837,7 @@ def align_df_to_last_value(df):
     Align the columns of the df to the last value.
     """
     df = df.dropna()
-    #df -= df.min()
+    # df -= df.min()
     df /= df.iloc[-1]
     return df
 
@@ -863,12 +862,9 @@ def get_time_interval(times):
     return min(times), max(times), len(times)
 
 
-def report_nan_nums_for_columns(df,
-                                display=True,
-                                fmt_pct=True,
-                                plot=False,
-                                title=None,
-                                figsize=None):
+def report_nan_nums_for_columns(
+    df, display=True, fmt_pct=True, plot=False, title=None, figsize=None
+):
     dbg.dassert_type_is(df, pd.DataFrame)
     print("columns=(%s) %s" % (len(df.columns), " ".join(df.columns)))
     print("dates=[%s, %s]" % (df.index[0], df.index[-1]))
@@ -924,8 +920,8 @@ def report_intraday_stats(rets):
         #
         stats_df.append(row)
     stats_df = pd.DataFrame(
-        stats_df,
-        columns=["inst", "min_hour", "max_hour", "min_date", "max_date"])
+        stats_df, columns=["inst", "min_hour", "max_hour", "min_date", "max_date"]
+    )
     stats_df.set_index("inst", drop=True, inplace=True)
     return stats_df
 
@@ -1005,13 +1001,15 @@ def to_csv(model_df, file_name, overwrite_if_present):
     base_name = os.path.basename(file_name).replace("/", "_")
     file_name = os.path.abspath("%s/%s" % (dir_name, base_name))
     dbg.dassert(
-        file_name.endswith(".csv"), msg="Invalid file_name='%s'" % file_name)
+        file_name.endswith(".csv"), msg="Invalid file_name='%s'" % file_name
+    )
     # Create dir, if needed.
     utils.jio.create_enclosing_dir(file_name, incremental=True)
     if not overwrite_if_present:
         dbg.dassert(
             not os.path.exists(file_name),
-            msg="don't want to overwrite '%s'" % file_name)
+            msg="don't want to overwrite '%s'" % file_name,
+        )
     # Save data.
     model_df.to_csv(file_name)
     print("File saved to: %s" % file_name)
@@ -1039,21 +1037,23 @@ def plot_rolling_correlation(df, vmin=-1, vmax=1):
     ax.axhline(0.5, color="green", linestyle="--", alpha=0.5)
 
 
-def compare_price_timeseries(df,
-                             col_name1,
-                             col_name2,
-                             col_names_to_trim=None,
-                             outliers_thr=None,
-                             plot_ts=True,
-                             plot_regress=True,
-                             print_model_stats=False):
+def compare_price_timeseries(
+    df,
+    col_name1,
+    col_name2,
+    col_names_to_trim=None,
+    outliers_thr=None,
+    plot_ts=True,
+    plot_regress=True,
+    print_model_stats=False,
+):
     df = df.dropna()
     df = df[[col_name1, col_name2]]
     # Remove outliers based on returns.
     if outliers_thr is not None:
         dbg.dassert_is_not(col_names_to_trim, None)
         mode = "set_to_nan"
-        #mode = "set_to_zero"
+        # mode = "set_to_zero"
         df = df.dropna()
         num_cols = df.shape[0]
         col_names_to_trim_tmp = []
@@ -1061,7 +1061,8 @@ def compare_price_timeseries(df,
             df[col_name + ".ret"] = df[col_name1].pct_change()
             col_names_to_trim_tmp.append(col_name + ".ret")
         df = remove_outlier_rows_from_df(
-            df, outliers_thr, col_names=col_names_to_trim_tmp, mode=mode)
+            df, outliers_thr, col_names=col_names_to_trim_tmp, mode=mode
+        )
         df = df.dropna()
         df = df[[col_name1, col_name2]]
         log.debug("Removed %s out of %s rows", num_cols - df.shape[0], num_cols)
@@ -1076,7 +1077,8 @@ def compare_price_timeseries(df,
             col_name1,
             col_name2,
             use_intercept=True,
-            print_model_stats=print_model_stats)
+            print_model_stats=print_model_stats,
+        )
 
 
 # #############################################################################
@@ -1085,17 +1087,19 @@ def compare_price_timeseries(df,
 
 
 def config_matplotlib():
-    matplotlib.rcParams.update({
-        'axes.labelsize': 15,
-        'axes.titlesize': 20,
-        #'figure.figsize': [15, 10],
-        'figure.figsize': [15, 5],
-        'font.size': 12,
-        'image.cmap': 'rainbow',
-        'legend.fontsize': 15,
-        'xtick.labelsize': 12,
-        'ytick.labelsize': 12,
-    })
+    matplotlib.rcParams.update(
+        {
+            "axes.labelsize": 15,
+            "axes.titlesize": 20,
+            #'figure.figsize': [15, 10],
+            "figure.figsize": [15, 5],
+            "font.size": 12,
+            "image.cmap": "rainbow",
+            "legend.fontsize": 15,
+            "xtick.labelsize": 12,
+            "ytick.labelsize": 12,
+        }
+    )
 
 
 small_fig = (15, 2)
@@ -1144,15 +1148,16 @@ def plot_density(data, color="m", ax=None, figsize=None, title=""):
 
 # It can't accept ax.
 def jointplot(
-        df,
-        predicted_var,
-        predictor_var,
-        color="r",
-        # TODO(gp): -> figsize?
-        size=7,
-        kind="reg",
-        fit_reg=True,
-        intercept=True):
+    df,
+    predicted_var,
+    predictor_var,
+    color="r",
+    # TODO(gp): -> figsize?
+    size=7,
+    kind="reg",
+    fit_reg=True,
+    intercept=True,
+):
     dbg.dassert_in(predicted_var, df.columns)
     dbg.dassert_in(predictor_var, df.columns)
     if not intercept:
@@ -1170,7 +1175,8 @@ def jointplot(
         kind=kind,
         color=color,
         size=size,
-        fit_reg=fit_reg)
+        fit_reg=fit_reg,
+    )
 
 
 def regplot(df, predicted_var, predictor_var, color="r", ax=None):
@@ -1187,17 +1193,19 @@ def regplot(df, predicted_var, predictor_var, color="r", ax=None):
     ax = sns.regplot(predicted_var, predictor_var, df, color=color, ax=ax)
     # Add info about the fit.
     slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(
-        df[predictor_var].values, df[predicted_var].values)
+        df[predictor_var].values, df[predicted_var].values
+    )
     _ = slope, intercept, std_err
     label = "rho=%.2f pval=%.2f" % (r_value, p_value)
     ax.text(
-        .9,
-        .9,
+        0.9,
+        0.9,
         label,
         fontsize=20,
-        horizontalalignment='right',
-        verticalalignment='top',
-        transform=ax.transAxes)
+        horizontalalignment="right",
+        verticalalignment="top",
+        transform=ax.transAxes,
+    )
     return ax
 
 
@@ -1210,8 +1218,10 @@ def plot_acf(data, lags=10, remove_nans=False, figsize=None):
     dbg.dassert_type_is(data, pd.Series)
     if remove_nans:
         mask = np.isnan(data)
-        print("Removed %s nans" % (dbg.perc(
-            np.sum(mask), len(data), numDigits=2, printAll=True)))
+        print(
+            "Removed %s nans"
+            % (dbg.perc(np.sum(mask), len(data), numDigits=2, printAll=True))
+        )
         data = data[~mask]
     dbg.dassert_eq(sum(np.isnan(data)), 0, msg="data has nans")
     if figsize is None:
@@ -1228,26 +1238,28 @@ def plot_acf(data, lags=10, remove_nans=False, figsize=None):
     #
     acf_tmp = acf
     acf_tmp[0] = 0.0
-    axes[2].plot(np.cumsum(acf_tmp), marker='o')
+    axes[2].plot(np.cumsum(acf_tmp), marker="o")
     axes[2].set_title("Cumsum of acf[1:]")
 
 
-def plot_ccf(data,
-             col_name1,
-             col_name2,
-             min_lag=-3,
-             max_lag=10,
-             cumsum=False,
-             title=None,
-             figsize=None,
-             max_nrows=None):
+def plot_ccf(
+    data,
+    col_name1,
+    col_name2,
+    min_lag=-3,
+    max_lag=10,
+    cumsum=False,
+    title=None,
+    figsize=None,
+    max_nrows=None,
+):
     if max_nrows is not None and data.shape[0] > max_nrows:
         log.warning("Skipping since df has %s rows", data.shape[0])
         return
     # Sanity check for params.
     dbg.dassert_lte(min_lag, max_lag)
     dbg.dassert_lte(0, max_lag)
-    #dbg.dassert_ne(col_name1, col_name2)
+    # dbg.dassert_ne(col_name1, col_name2)
     dbg.dassert_in(col_name1, data.columns)
     dbg.dassert_in(col_name2, data.columns)
     suffix = " (cumsum)" if cumsum else ""
@@ -1257,9 +1269,9 @@ def plot_ccf(data,
     if figsize is None:
         figsize = (16, 4)
     # Extract and prepare the data.
-    #data = data[[col_name1, col_name2]].copy()
-    #data[col_name2] = data[col_name2].shift(min_lag)
-    #data = filter_non_finite(data, [col_name1, col_name2])
+    # data = data[[col_name1, col_name2]].copy()
+    # data[col_name2] = data[col_name2].shift(min_lag)
+    # data = filter_non_finite(data, [col_name1, col_name2])
     # Compute cross-correlation.
     dbg.dassert_lte(1, data.shape[0])
     ccf = []
@@ -1275,9 +1287,9 @@ def plot_ccf(data,
         else:
             corr = data_tmp[col_name1].corr(data_tmp[col_name2])
         ccf.append(corr)
-    #ccf = statsmodels.tsa.stattools.ccf(data[col_name1], data[col_name2])
-    #print ccf
-    #ccf = ccf[:((abs(min_lag) + max_lag))]
+    # ccf = statsmodels.tsa.stattools.ccf(data[col_name1], data[col_name2])
+    # print ccf
+    # ccf = ccf[:((abs(min_lag) + max_lag))]
     if cumsum:
         ccf = np.cumsum(ccf)
     # Report results.
@@ -1291,26 +1303,30 @@ def plot_ccf(data,
     dbg.dassert(np.all(np.isfinite(ccf)))
     dbg.dassert_eq(len(lags), len(ccf))
     plt.axhline(0, color="k", linestyle="--")
-    plt.plot(lags, ccf, marker='o')
+    plt.plot(lags, ccf, marker="o")
     # - Show all xticks.
     plt.xlim(min_lag, max_lag)
     plt.xticks(list(range(min_lag, max_lag)))
     # Print some stats.
     argmin = lags[np.argmin(ccf)]
     argmax = lags[np.argmax(ccf)]
-    print("min: lag=%s (val=%.2f), max: lag=%s val=%.2f" %
-          (argmin, ccf[argmin], argmax, ccf[argmax]))
+    print(
+        "min: lag=%s (val=%.2f), max: lag=%s val=%.2f"
+        % (argmin, ccf[argmin], argmax, ccf[argmax])
+    )
 
 
-def plot_bootstrap_ccf(x_to_lag,
-                       x_fixed,
-                       label="",
-                       color=None,
-                       min_lags=-20,
-                       max_lags=20,
-                       conf_int=False,
-                       samples=200,
-                       ax=None):
+def plot_bootstrap_ccf(
+    x_to_lag,
+    x_fixed,
+    label="",
+    color=None,
+    min_lags=-20,
+    max_lags=20,
+    conf_int=False,
+    samples=200,
+    ax=None,
+):
     """
     lags describes how many days before / after today should we lag
     for Plot*CrossCorrelation.
@@ -1318,7 +1334,8 @@ def plot_bootstrap_ccf(x_to_lag,
     dbg.dassert_eq(
         len(x_to_lag),
         len(x_fixed),
-        msg="x_to_lag and x_fixed should have the same shape.")
+        msg="x_to_lag and x_fixed should have the same shape.",
+    )
     dbg.dassert_lt(min_lags, max_lags)
     # We create confidence intervals by computing the correlation
     # over bootstrap samples.
@@ -1332,11 +1349,13 @@ def plot_bootstrap_ccf(x_to_lag,
         samples = []
         for lag in range(min_lags, max_lags):
             bootstrap = np.random.randint(0, N - 2 * lags, size=N - 2 * lags)
-            x1_window = x_to_lag[(
-                lags + lag):((lags + lag) + (N - 2 * lags))][bootstrap]
-            x2_window = x_fixed[lags:(N - lags)][bootstrap]
+            x1_window = x_to_lag[(lags + lag) : ((lags + lag) + (N - 2 * lags))][
+                bootstrap
+            ]
+            x2_window = x_fixed[lags : (N - lags)][bootstrap]
             samples.append(
-                utils.stats.Cor(np.ravel(x1_window), np.ravel(x2_window)))
+                utils.stats.Cor(np.ravel(x1_window), np.ravel(x2_window))
+            )
         correlations.append(samples)
     correlations = np.array(correlations)
     means = np.mean(correlations, axis=0)
@@ -1345,7 +1364,8 @@ def plot_bootstrap_ccf(x_to_lag,
             cis = []
             for i in range(correlations.shape[1]):
                 ci = utils.stats.Quantile(
-                    correlations[:, i], probs=[0.025, 0.5, 0.975])
+                    correlations[:, i], probs=[0.025, 0.5, 0.975]
+                )
                 # ci = np.std(correlations[:, i]) * 1.96
                 cis.append(ci)
         cis = np.std(correlations, axis=0) * 1.96
@@ -1360,9 +1380,10 @@ def plot_bootstrap_ccf(x_to_lag,
     ax.errorbar(
         xx,
         means,  # (cis[:, 2] + cis[:, 0]) / 2.0,
-        marker='o',  # ms=8,
+        marker="o",  # ms=8,
         yerr=cis,  # (cis[:, 2] - cis[:, 0]) / 2.0,
-        color=color)
+        color=color,
+    )
     title = "Cross correlation"
     if label != "":
         title = "%s" % (label,)
@@ -1370,7 +1391,7 @@ def plot_bootstrap_ccf(x_to_lag,
     plt.axhline(0, color="k", linestyle="--")
     plt.xlabel("Lags")
     ax.set_ylabel("Correlation")
-    #ax.grid()
+    # ax.grid()
     # Leave it up to the user to plt.show() in case they want to modify the
     # plot.
     return  # (cis[:, 0] + cis[:, 2]) / 2.
@@ -1384,9 +1405,11 @@ def plot_signal_with_envelope(df, col_name, span, n_std, ax=None):
     df[col_name + "_ewma"] = pd.ewma(df[col_name], span=span)
     df[col_name + "_ewmstd"] = pd.ewmstd(df[col_name], span=span)
     df[col_name + "_lb"] = (
-        df[col_name + "_ewma"] - n_std * df[col_name + "_ewmstd"])
+        df[col_name + "_ewma"] - n_std * df[col_name + "_ewmstd"]
+    )
     df[col_name + "_ub"] = (
-        df[col_name + "_ewma"] + n_std * df[col_name + "_ewmstd"])
+        df[col_name + "_ewma"] + n_std * df[col_name + "_ewmstd"]
+    )
     #
     df[[col_name]].plot(rot=45, color="gray", ax=ax)
     df[col_name + "_ewma"].plot(rot=45, color="r", ax=ax)
@@ -1394,12 +1417,14 @@ def plot_signal_with_envelope(df, col_name, span, n_std, ax=None):
     df[col_name + "_ub"].plot(rot=45, color="b", ls="--", ax=ax)
 
 
-def compute_correlation(df,
-                        y_col_name,
-                        x_col_name,
-                        remove_non_finite=False,
-                        standardize=False,
-                        print_stats=False):
+def compute_correlation(
+    df,
+    y_col_name,
+    x_col_name,
+    remove_non_finite=False,
+    standardize=False,
+    print_stats=False,
+):
     tot_num_samples = df.shape[0]
     col_names = [y_col_name, x_col_name]
     dbg.dassert_is_subset(col_names, df.columns.tolist())
@@ -1412,35 +1437,38 @@ def compute_correlation(df,
         y = (y - y.mean()) / y.std()
     rho, p_val = scipy.stats.stats.pearsonr(x, y)
     if print_stats:
-        print(
-            "num_samples=%s" % dbg.perc(len(x), tot_num_samples, printAll=True))
+        print("num_samples=%s" % dbg.perc(len(x), tot_num_samples, printAll=True))
         print("rho=%.4f" % rho)
-        print("2-tailed pvalue=%.4f (%s)" %
-              (p_val, utils.jstats.pvalue_to_stars(p_val)))
+        print(
+            "2-tailed pvalue=%.4f (%s)"
+            % (p_val, utils.jstats.pvalue_to_stars(p_val))
+        )
     return rho, p_val
 
 
 # TODO(gp): use_intercept -> intercept
-def regress(df,
-            predicted_var,
-            predictor_vars,
-            use_intercept,
-            print_model_stats=True,
-            tsplot=False,
-            tsplot_figsize=None,
-            jointplot_=True,
-            jointplot_size=None,
-            predicted_var_delay=0,
-            predictor_vars_delay=0,
-            max_nrows=1e4,
-            robust_regress=False):
+def regress(
+    df,
+    predicted_var,
+    predictor_vars,
+    use_intercept,
+    print_model_stats=True,
+    tsplot=False,
+    tsplot_figsize=None,
+    jointplot_=True,
+    jointplot_size=None,
+    predicted_var_delay=0,
+    predictor_vars_delay=0,
+    max_nrows=1e4,
+    robust_regress=False,
+):
     # Sanity check vars.
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_lte(1, df.shape[0])
     if isinstance(predictor_vars, str):
         predictor_vars = [predictor_vars]
     dbg.dassert_type_is(predictor_vars, list)
-    #dbg.dassert_type_is(predicted_var, str)
+    # dbg.dassert_type_is(predicted_var, str)
     dbg.dassert_not_in(predicted_var, predictor_vars)
     if len(predictor_vars) == 0:
         # No predictors.
@@ -1465,8 +1493,9 @@ def regress(df,
         log.info(
             "Removed %s rows with all nans",
             dbg.perc(
-                num_rows - num_rows_after_drop_nan_all, num_rows,
-                printAll=True))
+                num_rows - num_rows_after_drop_nan_all, num_rows, printAll=True
+            ),
+        )
     #
     df.dropna(how="any", inplace=True)
     num_rows_after_drop_nan_any = df.shape[0]
@@ -1474,8 +1503,9 @@ def regress(df,
         log.warning(
             "Removed %s rows with any nans",
             dbg.perc(
-                num_rows - num_rows_after_drop_nan_any, num_rows,
-                printAll=True))
+                num_rows - num_rows_after_drop_nan_any, num_rows, printAll=True
+            ),
+        )
     # Prepare data.
     if use_intercept:
         if "const" not in df.columns:
@@ -1485,13 +1515,15 @@ def regress(df,
     dbg.dassert(np.all(np.isfinite(df[predicted_var].values)))
     dbg.dassert(
         np.all(np.isfinite(df[predictor_vars].values)),
-        msg="predictor_vars=%s" % predictor_vars)
+        msg="predictor_vars=%s" % predictor_vars,
+    )
     # Perform regression.
     if df.shape[0] < 1:
         return None
     dbg.dassert_lte(1, df.shape[0])
     model = statsmodels.api.OLS(
-        df[predicted_var], df[predictor_vars], hasconst=use_intercept).fit()
+        df[predicted_var], df[predictor_vars], hasconst=use_intercept
+    ).fit()
     regr_res = {
         "param_names": param_names,
         "coeffs": model.params,
@@ -1499,7 +1531,7 @@ def regress(df,
         # pylint: disable=E1101
         "rsquared": model.rsquared,
         "adj_rsquared": model.rsquared_adj,
-        "model": model
+        "model": model,
     }
     if print_model_stats:
         # pylint: disable=E1101
@@ -1513,8 +1545,9 @@ def regress(df,
                 if tsplot:
                     if tsplot_figsize is None:
                         tsplot_figsize = (20, 5)
-                    df[[predicted_var,
-                        predictor_vars[0]]].plot(figsize=tsplot_figsize)
+                    df[[predicted_var, predictor_vars[0]]].plot(
+                        figsize=tsplot_figsize
+                    )
                 if jointplot_:
                     if jointplot_size is None:
                         jointplot_size = 5
@@ -1523,15 +1556,18 @@ def regress(df,
                         predicted_var,
                         predictor_vars[0],
                         intercept=use_intercept,
-                        size=jointplot_size)
+                        size=jointplot_size,
+                    )
             else:
-                log.warning("Skipping plots since there are too many "
-                            "predictors")
+                log.warning(
+                    "Skipping plots since there are too many " "predictors"
+                )
     # Robust regression.
     if robust_regress:
         # From http://scikit-learn.org/stable/auto_examples/linear_model/plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py
         # TODO(gp): Add also TheilSenRegressor and HuberRegressor.
         from sklearn import linear_model
+
         dbg.dassert_eq(len(predictor_vars), 1)
         y = df[predicted_var]
         X = df[predictor_vars]
@@ -1544,8 +1580,9 @@ def regress(df,
         inlier_mask = ransac.inlier_mask_
         outlier_mask = np.logical_not(inlier_mask)
         # Predict data of estimated models.
-        line_X = np.linspace(
-            X.min().values[0], X.max().values[0], num=100)[:, np.newaxis]
+        line_X = np.linspace(X.min().values[0], X.max().values[0], num=100)[
+            :, np.newaxis
+        ]
         line_y = lr.predict(line_X)
         line_y_ransac = ransac.predict(line_X)
         # Compare estimated coefficients
@@ -1557,19 +1594,22 @@ def regress(df,
         plt.scatter(
             X[inlier_mask],
             y[inlier_mask],
-            color='red',
-            marker='o',
-            label='Inliers')
+            color="red",
+            marker="o",
+            label="Inliers",
+        )
         plt.scatter(
             X[outlier_mask],
             y[outlier_mask],
-            color='blue',
-            marker='o',
-            label='Outliers')
-        plt.plot(line_X, line_y, color='green', linewidth=2, label='OLS')
+            color="blue",
+            marker="o",
+            label="Outliers",
+        )
+        plt.plot(line_X, line_y, color="green", linewidth=2, label="OLS")
         plt.plot(
-            line_X, line_y_ransac, color='black', linewidth=3, label='RANSAC')
-        plt.legend(loc='best')
+            line_X, line_y_ransac, color="black", linewidth=3, label="RANSAC"
+        )
+        plt.legend(loc="best")
         plt.xlabel(", ".join(predictor_vars))
         plt.ylabel(predicted_var)
     #
@@ -1580,15 +1620,17 @@ def regress(df,
 
 
 # TODO(gp): Use kwargs.
-def regress_series(srs1,
-                   srs2,
-                   use_intercept,
-                   print_model_stats=True,
-                   jointplot_=True,
-                   infer_names=False,
-                   srs1_name=None,
-                   srs2_name=None,
-                   convert_to_dates=True):
+def regress_series(
+    srs1,
+    srs2,
+    use_intercept,
+    print_model_stats=True,
+    jointplot_=True,
+    infer_names=False,
+    srs1_name=None,
+    srs2_name=None,
+    convert_to_dates=True,
+):
     """
     Wrapper around regress() to convert series into df.
     """
@@ -1603,11 +1645,15 @@ def regress_series(srs1,
         srs2.index = [pd.to_datetime(dt).date() for dt in srs2.index]
     #
     if type(srs1.index[0]) != type(srs2.index[0]):
-        msg = "\nsrs1.index=%s type(srs1.index)=%s" % (srs1.index[0],
-                                                       type(srs1.index[0]))
+        msg = "\nsrs1.index=%s type(srs1.index)=%s" % (
+            srs1.index[0],
+            type(srs1.index[0]),
+        )
         msg += "\n!=\n"
-        msg += "srs2.index=%s type(srs2.index)=%s" % (srs2.index[0],
-                                                      type(srs2.index[0]))
+        msg += "srs2.index=%s type(srs2.index)=%s" % (
+            srs2.index[0],
+            type(srs2.index[0]),
+        )
         log.error(msg)
         raise ValueError("")
     # Check common indices.
@@ -1638,7 +1684,8 @@ def regress_series(srs1,
         srs2_name,
         use_intercept=use_intercept,
         print_model_stats=print_model_stats,
-        jointplot_=jointplot_)
+        jointplot_=jointplot_,
+    )
     return None if (jointplot_ or print_model_stats) else val
 
 

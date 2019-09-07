@@ -27,8 +27,8 @@ import helpers.printing as print_
 
 _LOG = logging.getLogger(__name__)
 
-#_PYTHON_VERSION = "2.7"
-#_PYTHON_VERSION = "3.7"
+# _PYTHON_VERSION = "2.7"
+# _PYTHON_VERSION = "3.7"
 _PYTHON_VERSION = None
 
 # TODO(gp): Try https://github.com/mwilliamson/stickytape. It doesn't work that well.
@@ -78,20 +78,22 @@ def _process_requirements(req_file):
 
 def _main():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--delete_env_if_exists", action="store_true")
     parser.add_argument(
-        "--env_name", help="Environment name", default="develop", type=str)
+        "--env_name", help="Environment name", default="develop", type=str
+    )
     parser.add_argument(
-        "--req_file", help="Requirement file", default=None, type=str)
+        "--req_file", help="Requirement file", default=None, type=str
+    )
     # Debug options.
     parser.add_argument(
-        "--test_install",
-        help="Just test the install step",
-        action="store_true")
+        "--test_install", help="Just test the install step", action="store_true"
+    )
     parser.add_argument(
-        "--python_version", default="3.7", type=str, action="store")
+        "--python_version", default="3.7", type=str, action="store"
+    )
     parser.add_argument("--skip_delete_env", action="store_true")
     parser.add_argument("--skip_install_env", action="store_true")
     #
@@ -99,8 +101,9 @@ def _main():
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     args = parser.parse_args()
     dbg.dassert_is_not(args.env_name, None)
     #
@@ -136,16 +139,20 @@ def _main():
         conda_env_name = "test_conda"
     _LOG.info(
         "\n%s",
-        print_.frame("Delete old conda env '%s', if exists" % conda_env_name))
+        print_.frame("Delete old conda env '%s', if exists" % conda_env_name),
+    )
     if args.skip_delete_env:
         _LOG.warning("Skipping")
     else:
         conda_env_dict, _ = hco.get_conda_info_envs()
         conda_env_root = hco.get_conda_envs_dirs()[0]
         conda_env_path = os.path.join(conda_env_root, conda_env_name)
-        if (conda_env_name in conda_env_dict or
-                # Sometimes conda is flaky and says that there is no env, even if the dir exists.
-                os.path.exists(conda_env_path)):
+        if (
+            conda_env_name in conda_env_dict
+            or
+            # Sometimes conda is flaky and says that there is no env, even if the dir exists.
+            os.path.exists(conda_env_path)
+        ):
             _LOG.warning("Conda env '%s' exists", conda_env_path)
             if delete_old_conda_if_exists:
                 #
@@ -160,8 +167,10 @@ def _main():
                 cmd = "conda deactivate; rm -rf %s" % conda_env_path
                 hco.conda_system(cmd, suppress_output=False)
             else:
-                msg = ("Conda env '%s' already exists. You need to use"
-                       " --delete_env_if_exists to delete it" % conda_env_name)
+                msg = (
+                    "Conda env '%s' already exists. You need to use"
+                    " --delete_env_if_exists to delete it" % conda_env_name
+                )
                 _LOG.error(msg)
                 sys.exit(-1)
         else:
@@ -169,8 +178,7 @@ def _main():
     #
     # Process requirements file.
     #
-    _LOG.info("\n%s",
-              print_.frame("Create new conda env '%s'" % conda_env_name))
+    _LOG.info("\n%s", print_.frame("Create new conda env '%s'" % conda_env_name))
     if args.skip_install_env:
         _LOG.warning("Skipping")
     else:
@@ -219,11 +227,12 @@ def _main():
     #
     dst_dir = os.path.dirname(__file__) + "/conda_envs"
     _, file_name = ppack.save_env_file(conda_env_name, dst_dir)
-    _LOG.warning("You should commit the file '%s' for future reference",
-                 file_name)
+    _LOG.warning(
+        "You should commit the file '%s' for future reference", file_name
+    )
     #
     _LOG.info("DONE")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main()
