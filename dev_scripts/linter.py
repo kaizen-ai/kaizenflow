@@ -762,13 +762,14 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         return []
     elif is_ipynb_file(file_name) and not is_paired_jupytext_file(file_name):
         # It is a ipynb and it is unpaired: create the python file.
-        msg = "There was no paired notebook for %s: created and added to git" % \
+        msg = "There was no paired notebook for '%s': created and added to git" % \
               file_name
         _LOG.warning(msg)
         output.append(msg)
         #
         cmd = executable + " --to py:percent %s" % file_name
         _system(cmd)
+        py_file_name = from_ipynb_to_python_file(file_name)
         cmd = "git add %s" % py_file_name
         _system(cmd)
     elif is_paired_jupytext_file(file_name):
@@ -937,14 +938,14 @@ def _main(args):
             for file_name in file_names
         )
         output = list(itertools.chain.from_iterable(output_tmp))
-    output.append("cmd line='%s'" % _get_command_line())
-    # TODO(gp): Get timestamp.
-    output.append("datetime='%s'" % datetime.datetime.now())
+    output.append("# cmd line='%s'" % _get_command_line())
+    # TODO(gp): datetime_.get_timestamp().
+    output.append("# datetime='%s'" % datetime.datetime.now())
     output = _remove_empty_lines(output)
     # Print linter output.
     print(printing.frame(args.linter_log, char1="/").rstrip("\n"))
     print("\n".join(output) + "\n")
-    print(printing.line().rstrip("\n"))
+    print(printing.line(char="/").rstrip("\n"))
     # Write file.
     output = "\n".join(output)
     io_.to_file(args.linter_log, output)
