@@ -35,8 +35,11 @@ _LOG = logging.getLogger(__name__)
 
 
 def _check_url(url):
-    request = requests.get(url)
-    exists = request.status_code == 200
+    try:
+        request = requests.get(url)
+        exists = request.status_code == 200
+    except Exception:
+        exists = False
     if not exists:
         _LOG.warning("url '%s' doesn't exist", url)
 
