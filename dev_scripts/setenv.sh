@@ -16,6 +16,7 @@ EXEC_NAME="${BASH_SOURCE[0]}"
 echo "# Executing '$EXEC_NAME' ..."
 DIR=$(dirname "$EXEC_NAME")
 EXEC_PATH="$(cd $DIR ; pwd -P)"
+
 CURR_DIR=$(dirname "$EXEC_PATH")
 echo "CURR_DIR=$CURR_DIR"
 if [[ -z $CURR_DIR ]]; then
@@ -87,9 +88,11 @@ export PYTHONDONTWRITEBYTECODE=x
 
 #export PYTHONPATH=""
 export PYTHONPATH=$PYTHONPATH:$CURR_DIR
+
 # Remove redundant paths.
-PYTHONPATH="$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
+PYTHONPATH="$(echo $PYTHONPATH | $EXEC_PATH/remove_redundant_paths.sh)"
 echo "PYTHONPATH=$PYTHONPATH"
+echo $PYTHONPATH | $EXEC_PATH/print_paths.sh
 
 echo "#############################################################################"
 echo "# Config conda"
@@ -143,9 +146,9 @@ echo "##########################################################################
 export PATH=$CURR_DIR/dev_scripts:$CURR_DIR/ipynb_scripts:$CURR_DIR/install:$CURR_DIR/aws:$PATH
 
 # Remove redundant paths.
-PATH="$(echo $PATH| perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
-# TODO(gp): Print a better list.
+PATH="$(echo $PATH | $EXEC_PATH/remove_redundant_paths.sh)"
 echo "PATH=$PATH"
+echo $PATH | $EXEC_PATH/print_paths.sh
 
 echo "#############################################################################"
 echo "# Testing packages"

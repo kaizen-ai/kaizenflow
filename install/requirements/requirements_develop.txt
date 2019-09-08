@@ -70,6 +70,7 @@ pymc3
 ## ############################################################################
 # conda install -c quantopian trading-calendars
 #trading-calendars
+#pip install ta          # Technical analysis package.
 ## ############################################################################
 ## Misc
 ## ############################################################################
@@ -77,8 +78,7 @@ beautifulsoup4
 csvkit                  # To process csv.
 joblib
 jq                      # To process json.
-# conda install -c hcc rclone 
-#rclone                  # To interact with Google Drive.
 #pymongo
 quandl
-#pip install ta
+#rclone                  # To back up Google Drive (conda install -c hcc rclone)
+#gdrive                  # To interact with Google Drive.
