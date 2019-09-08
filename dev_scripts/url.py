@@ -2,9 +2,7 @@
 """
 Convert a url / path into different formats: jupyter url, github, git path.
 
-> url.py -u https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
-effective level= 20 (INFO)
-
+> url.py https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 file_name=
 /Users/saggese/src/particle/commodity_research/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
@@ -99,7 +97,7 @@ def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("-u", "--url", required=True, type=str, action="store")
+    parser.add_argument("positional", nargs="*")
     parser.add_argument("--verbose", action="store_true", help="Long output form")
     parser.add_argument(
         "-v",
@@ -116,7 +114,11 @@ def _main(parser):
     dbg.init_logger(verb=args.log_level, use_exec_path=False)
     #
     github_prefix, jupyter_prefix = _get_prefixes()
-    root = _get_root(args.url)
+    positional = args.positional
+    if len(positional) != 1:
+        print("Need to specify one 'url'")
+        sys.exit(-1)
+    root = _get_root(positional[0])
     #
     if args.verbose:
         print("\n# file_name\n%s" % root)
