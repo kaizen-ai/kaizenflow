@@ -17,42 +17,45 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
+_LOG_LEVEL = "echo"
+
 # ##############################################################################
 
 
 def _system(cmd, *args, **kwargs):
-    si.system(cmd, log_level=logging.INFO, *args, **kwargs)
+    si.system(cmd, log_level=_LOG_LEVEL, *args, **kwargs)
+
+
+def _print(msg):
+    msg = pri.color_highlight(msg, "red")
+    print("\n" + msg)
 
 
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
     #
-    msg = "# Checking what are the differences with master..."
-    print("\n" + pri.frame(msg))
+    _print("# Checking what are the differences with master...")
     cmd = "git ll ..origin/master"
     _system(cmd, suppress_output=False)
     #
-    cmd = "git ll origin/master.."
+    cmd = "git ll origin/master..."
     _system(cmd, suppress_output=False)
     #
-    msg = "# Saving local changes..."
-    print("\n" + pri.frame(msg))
-    tag, was_stashed = git.git_stash_push(prefix="gup", log_level=logging.INFO)
+    _print("# Saving local changes...")
+    tag, was_stashed = git.git_stash_push(prefix="gup", log_level=_LOG_LEVEL)
     print("tag='%s'" % tag)
     if not was_stashed:
         # raise RuntimeError(msg)
         pass
     #
-    msg = "# Getting new commits..."
-    print("\n" + pri.frame(msg))
+    _print("# Getting new commits...")
     cmd = "git pull --rebase"
     _system(cmd, suppress_output=False)
     #
     if was_stashed:
-        msg = "# Restoring local changes..."
-        print("\n" + pri.frame(msg))
-        git.git_stash_apply(mode="pop", log_level=logging.INFO)
+        _print("# Restoring local changes...")
+        git.git_stash_apply(mode="pop", log_level=_LOG_LEVEL)
 
 
 def _parser():

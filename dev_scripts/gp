@@ -1,0 +1,4 @@
+#!/bin/bash -x
+
+dev_scripts/gup.py
+git push

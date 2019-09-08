@@ -35,9 +35,11 @@ def _system(
     :param output_file: redirect stdout and stderr to this file
     :param tee: if True, tee stdout and stderr to output_file
     :param dry_run: just print the final command but not execute it
-    :param log_level: print the command to execute at level "log_level"
+    :param log_level: print the command to execute at level "log_level". If
+        it is equal to "echo" then just print to screen.
     :return: return code (int), output of the command (str)
     """
+    orig_cmd = cmd[:]
     # Prepare the command line.
     cmd = "(%s)" % cmd
     dbg.dassert_imply(tee, output_file is not None)
@@ -45,8 +47,8 @@ def _system(
         dir_name = os.path.dirname(output_file)
         if not os.path.exists(dir_name):
             _LOG.debug("Dir '%s' doesn't exist: creating", dir_name)
-            if dir_name:
-                os.makedirs(dir_name)
+            dbg.dassert(bool(dir_name), "dir_name='%s'", dir_name)
+            os.makedirs(dir_name)
         if tee:
             cmd += " 2>&1 | tee %s" % output_file
         else:
@@ -55,7 +57,11 @@ def _system(
         cmd += " 2>&1"
     if wrapper:
         cmd = wrapper + " && " + cmd
-    _LOG.log(log_level, "> %s", cmd)
+    if log_level == "echo":
+        print("> %s" % orig_cmd)
+        _LOG.debug(log_level, "> %s", cmd)
+    else:
+        _LOG.log(log_level, "> %s", cmd)
     #
     output = ""
     if dry_run:
