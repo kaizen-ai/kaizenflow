@@ -22,6 +22,7 @@ def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument("positional", nargs="*", help="...")
     parser.add_argument("--dst_dir", action="store", help="Destination dir")
     parser.add_argument(
         "-v",
@@ -39,7 +40,7 @@ def _main(parser):
     # Insert your code here.
     # - Use _LOG.info(), _LOG.debug() instead of printing.
     # - Use dbg.dassert_*() for assertion.
-    # - Use si.system() and si.system_to_string()
+    # - Use si.system() and si.system_to_string() to issue commands.
 
 
 if __name__ == "__main__":

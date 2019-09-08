@@ -6,19 +6,19 @@ import helpers.dbg as dbg
 # Debug output
 # #############################################################################
 
+COLOR_MAP = {
+    "blue": "\033[94m",
+    "green": "\033[92m",
+    "none": "\033[0m",
+    "purple": "\033[95m",
+    "red": "\033[91m",
+    "yellow": "\033[93m",
+}
 
-class Colors:
-    PURPLE = "\033[95m"
-    BLUE = "\033[94m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    NONE = "\033[0m"
 
+def color_highlight(text, color):
 
-INFO = Colors.BLUE + "INFO: " + Colors.NONE
-WARNING = Colors.PURPLE + "WARNING: " + Colors.NONE
-ERROR = Colors.RED + "ERROR: " + Colors.NONE
+    return COLOR_MAP[color] + text + COLOR_MAP["none"]
 
 
 def clear_screen():

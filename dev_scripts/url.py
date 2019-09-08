@@ -24,6 +24,7 @@ import argparse
 import logging
 import os
 import re
+import sys
 
 import requests
 
@@ -39,6 +40,8 @@ def _check_url(url):
         request = requests.get(url)
         exists = request.status_code == 200
     except Exception:
+        # TODO(gp): RuntimeError doesn't seem to catch. Find a narrower
+        #  exception to catch.
         exists = False
     if not exists:
         _LOG.warning("url '%s' doesn't exist", url)
@@ -68,7 +71,8 @@ def _get_prefixes():
 
 
 def _get_root(url):
-    # "http://localhost:10001/notebooks/oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
+    # "http://localhost:10001/notebooks/...
+    #   oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
     ret = None
     if ret is None:
         m = re.search(r"http.*://localhost:\d+/(.*)", url)
@@ -80,7 +84,8 @@ def _get_root(url):
                 end_idx = idx + len(to_remove)
                 ret = ret[end_idx:]
     if ret is None:
-        # https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+        # https://github.com/ParticleDev/commodity_research/blob/master/...
+        #   oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
         m = re.search(r"http.*://.*github.com/(.*)", url)
         if m:
             ret = m.group(1)
