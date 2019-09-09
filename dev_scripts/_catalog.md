@@ -78,11 +78,7 @@ regex=Task243*\.*py*
 
 # git_untracked_files.sh
 
-# git_up.sh
-
 # git_yapf.sh
-
-# github_to_jupyter.py
 
 # gllmy.sh
 ```bash
@@ -136,14 +132,18 @@ regex=Task243*\.*py*
 
 # path
 
+# print_paths.sh
+
 # process_prof.py
 
 # refresh_catalog.sh
 
+# remove_redundant_paths.sh
+
 # replace_text.py
 - Script to do complex search and replacement in code base
 
-# replace_text.py
+# run_jupyter_server.sh
 
 # script_skeleton.py
 
@@ -158,8 +158,6 @@ regex=Task243*\.*py*
 # timestamp
 
 # tmux.sh
-
-# unpack_path.sh
 
 # url.py
 Convert a url / path into different formats: jupyter url, github, git path.
