@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 """
-Install the default package
+# Install the default package
 > create_conda.py
+> create_conda.py --env_name develop --req_file install/requirements/requirements_develop.txt --delete_env_if_exists
 
-Quick install to test the script
-> create_conda.py -v DEBUG --test_install
+# Quick install to test the script
+> create_conda.py --test_install -v DEBUG
 
-Test the develop environment
-> create_conda.py --env_name develop_test --req_file install/requirements/requirements_develop.txt
+# Test the develop environment
+> create_conda.py --env_name develop_test --req_file install/requirements/requirements_develop.txt --delete_env_if_exists
 
-Create pymc3
+# Create pymc3
 > create_conda.py --env_name pymc3 --req_file requirements_pymc.txt -v DEBUG
 """
 
