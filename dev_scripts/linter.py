@@ -654,32 +654,18 @@ def _pylint(file_name, pedantic, check_if_possible):
                 "W0212",
             ]
         )
+    is_jupytext_code = is_paired_jupytext_file(file_name)
+    _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
     if not pedantic:
         ignore.extend(
             [
-                # [C0111(missing-docstring), ] Missing module docstring
+                # [C0103(invalid-name), ] Constant name "..." doesn't conform to
+                #   UPPER_CASE naming style
+                "C0103",
+                # [C0111(missing - docstring), ] Missing module docstring
                 "C0111",
-                # [C0302(too-many-lines), ] Too many lines in module
-                "C0302",
-                # [R1705(no-else-return), ] Unnecessary "elif" after "return"
-                "R1705",
-                # [R1720(no-else-raise), ] Unnecessary "else" after "raise"
-                "R1720",
-                # [R0903(too-few-public-methods), ] Too few public methods
-                "R0903",
-                # [R0912(too-many-branches), ] Too many branches
-                "R0912",
-                # [R0913(too-many-arguments), ] Too many arguments
-                "R0913",
-                # R0914(too-many-locals) Too many local variables
-                "R0914",
-                # [R0915(too-many-statements), ] Too many statements
-                "R0915",
-                # [W0125(using-constant-test), ] Using a conditional statement
-                #   with a constant value
-                "W0125",
-                # [W0603(global-statement), ] Using the global statement
-                "W0603",
+                # [C0301(line-too-long), ] Line too long (1065/100)
+                "C0301",
             ]
         )
     if ignore:
@@ -843,6 +829,73 @@ def _lint(file_name, actions, pedantic, debug):
     return output
 
 
+def _select_actions(args):
+    # Select phases.
+    actions = args.action
+    if isinstance(actions, str) and " " in actions:
+        actions = actions.split(" ")
+    if not actions or args.all:
+        actions = _ALL_ACTIONS[:]
+    if args.quick:
+        actions = [a for a in _ALL_ACTIONS if a != "pylint"]
+    # Validate actions.
+    actions = set(actions)
+    for action in actions:
+        if action not in _ALL_ACTIONS:
+            raise ValueError("Invalid action '%s'" % action)
+    # Reorder actions according to _ALL_ACTIONS.
+    actions_tmp = []
+    for action in _ALL_ACTIONS:
+        if action in actions:
+            actions_tmp.append(action)
+    actions = actions_tmp
+    # Check which tools are available.
+    actions = _remove_not_possible_actions(actions)
+    actions_as_str = _actions_to_string(actions)
+    _LOG.info("# Action selected:\n%s", printing.space(actions_as_str))
+    return actions
+
+
+def _run_linter(actions, args, file_names):
+    num_steps = len(file_names) * len(actions)
+    _LOG.info(
+        "Num of files=%d, num of actions=%d -> num of steps=%d",
+        len(file_names),
+        len(actions),
+        num_steps,
+    )
+    pedantic = args.pedantic
+    num_threads = args.num_threads
+    if len(file_names) == 1:
+        num_threads = "serial"
+        _LOG.warning(
+            "Using num_threads='%s' since there is a single file", num_threads
+        )
+    if num_threads == "serial":
+        output = []
+        for file_name in file_names:
+            output_tmp = _lint(file_name, actions, pedantic, args.debug)
+            output.extend(output_tmp)
+    else:
+        num_threads = int(num_threads)
+        # -1 is interpreted by joblib like for all cores.
+        _LOG.info(
+            "Using %s threads", num_threads if num_threads > 0 else "all CPUs"
+        )
+        from joblib import Parallel, delayed
+
+        output_tmp = Parallel(n_jobs=num_threads, verbose=50)(
+            delayed(_lint)(file_name, actions, pedantic, args.debug)
+            for file_name in file_names
+        )
+        output = list(itertools.chain.from_iterable(output_tmp))
+    output.append("# cmd line='%s'" % _get_command_line())
+    # TODO(gp): datetime_.get_timestamp().
+    output.append("# datetime='%s'" % datetime.datetime.now())
+    output = _remove_empty_lines(output)
+    return output
+
+
 # #############################################################################
 # Main.
 # #############################################################################
@@ -899,62 +952,12 @@ def _main(args):
     if args.collect_only:
         _LOG.warning("Exiting as requested")
         sys.exit(0)
-    # Select phases.
-    actions = args.action
-    if isinstance(actions, str) and " " in actions:
-        actions = actions.split(" ")
-    if not actions or args.all:
-        actions = _ALL_ACTIONS[:]
-    if args.quick:
-        actions = [a for a in _ALL_ACTIONS if a != "pylint"]
-    # Validate actions.
-    actions = set(actions)
-    for action in actions:
-        if action not in _ALL_ACTIONS:
-            raise ValueError("Invalid action '%s'" % action)
-    # Reorder actions according to _ALL_ACTIONS.
-    actions_tmp = []
-    for action in _ALL_ACTIONS:
-        if action in actions:
-            actions_tmp.append(action)
-    actions = actions_tmp
-    # Check which tools are available.
-    actions = _remove_not_possible_actions(actions)
-    actions_as_str = _actions_to_string(actions)
-    _LOG.info("# Action selected:\n%s", printing.space(actions_as_str))
+    actions = _select_actions(args)
     # Create tmp dir.
     io_.create_dir(_TMP_DIR, incremental=False)
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Run linter.
-    num_steps = len(file_names) * len(actions)
-    _LOG.info(
-        "Num of files=%d, num of actions=%d -> num of steps=%d",
-        len(file_names),
-        len(actions),
-        num_steps,
-    )
-    pedantic = args.pedantic
-    num_threads = args.num_threads
-    if num_threads == "serial":
-        output = []
-        for file_name in file_names:
-            output_tmp = _lint(file_name, actions, pedantic, args.debug)
-            output.extend(output_tmp)
-    else:
-        num_threads = int(num_threads)
-        # -1 is interpreted by joblib like for all cores.
-        _LOG.info("Using %d threads", num_threads)
-        from joblib import Parallel, delayed
-
-        output_tmp = Parallel(n_jobs=num_threads, verbose=50)(
-            delayed(_lint)(file_name, actions, pedantic, args.debug)
-            for file_name in file_names
-        )
-        output = list(itertools.chain.from_iterable(output_tmp))
-    output.append("# cmd line='%s'" % _get_command_line())
-    # TODO(gp): datetime_.get_timestamp().
-    output.append("# datetime='%s'" % datetime.datetime.now())
-    output = _remove_empty_lines(output)
+    output = _run_linter(actions, args, file_names)
     # Print linter output.
     print(printing.frame(args.linter_log, char1="/").rstrip("\n"))
     print("\n".join(output) + "\n")
