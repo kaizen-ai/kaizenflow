@@ -754,7 +754,7 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
     # - a ipynb file and paired (to avoid to run it twice)
     # so always and only a ipynb file.
     if is_py_file(file_name) and not is_paired_jupytext_file(file_name):
-        # It is an unpaired python file: nothing to do.
+        # It is a python file, without a paired notebook: nothing to do.
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
     elif is_ipynb_file(file_name) and not is_paired_jupytext_file(file_name):
@@ -766,13 +766,13 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         _LOG.warning(msg)
         output.append(msg)
         #
-        cmd = executable + " --to py:percent %s" % file_name
+        cmd = executable + " --set-formats ipynb,py:percent %s" % file_name
         _system(cmd)
         py_file_name = from_ipynb_to_python_file(file_name)
         cmd = "git add %s" % py_file_name
         _system(cmd)
     elif is_paired_jupytext_file(file_name):
-        cmd = executable + " --sync --to py:percent %s" % file_name
+        cmd = executable + " --sync --update --to py:percent %s" % file_name
         _system(cmd)
     else:
         dbg.dfatal("Never get here")
