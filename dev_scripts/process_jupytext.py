@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 """
+Automate some common workflows with jupytext.
+
+> find . -name "*.ipynb" | grep -v ipynb_checkpoints | head -3 | xargs -t -L 1 process_jupytext.py --action sync --file
+
 # Pair
 > process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb  --action pair
 
@@ -42,14 +46,13 @@ def _pair(file_name):
         cmd.append(file_name)
         cmd = " ".join(cmd)
         si.system(cmd)
-        #
-        # Test the ipynb -> py:percent -> ipynb round trip conversion
+        # Test the ipynb -> py:percent -> ipynb round trip conversion.
         cmd = _EXECUTABLE + " --test --stop --to py:percent %s" % file_name
         si.system(cmd)
-        #
+        # Add the .py file.
         cmd = _EXECUTABLE + " --to py:percent %s" % file_name
         si.system(cmd)
-        #
+        # Add to git.
         py_file_name = lin.from_ipynb_to_python_file(file_name)
         cmd = "git add %s" % py_file_name
         si.system(cmd)
