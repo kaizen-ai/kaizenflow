@@ -22,6 +22,7 @@ import logging
 import os
 
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as pri
 import helpers.system_interaction as si
@@ -58,9 +59,12 @@ def _main(parser):
     cmd = "ghi show %d | head -1" % issue_num
     _, txt = si.system_to_string(cmd, abort_on_error=False)
     print(txt)
-    print(
-        "https://github.com/ParticleDev/commodity_research/issues/%d" % issue_num
-    )
+    # Print url.
+    git_repo_name = git.get_repo_symbolic_name()
+    url_name = "https://github.com/%s/issues/%d" % (git_repo_name, issue_num)
+    print(url_name)
+    # github doesn't let ping this url.
+    # url.check_url(url_name)
     #
     print(pri.color_highlight("\n# Files in the repo:", "red"))
     # regex="Task%d*\.*py*" % issue_num

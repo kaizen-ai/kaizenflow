@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 import helpers.datetime_ as datetime_
 import helpers.dbg as dbg
@@ -9,8 +10,14 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
 
+# TODO(gp): Avoid "stuttering": the module is already called "git", so no need
+# to make reference to git again.
+
 
 def is_inside_submodule():
+    """
+    Return whether we are inside a Git submodule or in a Git supermodule.
+    """
     cmd = (
         'cd "$(git rev-parse --show-toplevel)/.." && '
         "(git rev-parse --is-inside-work-tree | grep -q true)"
@@ -94,10 +101,44 @@ def get_previous_committed_files(num_commits=1, uniquify=True):
     return files
 
 
+# TODO(gp): -> get_user_name()
 def get_git_name():
+    """
+    Return the git user name.
+    """
     cmd = "git config --get user.name"
-    git_name = si.system_to_string(cmd)[1]
+    _, output = si.system_to_string(cmd)
+    git_name = output.split("\n")
+    dbg.dassert_eq(len(git_name), 1, "output='%s'", output)
+    git_name = git_name[0]
     return git_name
+
+
+def get_repo_symbolic_name():
+    """
+    Return the name of the repo like "alphamatic/amp".
+    """
+    cmd = "git remote -v | grep fetch"
+    # TODO(gp): Make it more robust, by checking both fetch and push.
+    # "origin  git@github.com:alphamatic/amp (fetch)"
+    _, output = si.system_to_string(cmd)
+    data = output.split()
+    _LOG.debug("data=%s", data)
+    dbg.dassert(len(data), 3, "data='%s'", data)
+    # git@github.com:alphamatic/amp
+    repo_name = data[1]
+    m = re.match(r"^.*\.com:(.*)$", repo_name)
+    dbg.dassert(m, "Can't parse '%s'", repo_name)
+    repo_name = m.group(1)
+    _LOG.debug("repo_name=%s", repo_name)
+    # We expect something like "alphamatic/amp".
+    m = re.match(r"^\S+/\S+$", repo_name)
+    dbg.dassert(m, "repo_name='%s'", repo_name)
+    # origin  git@github.com:ParticleDev/ORG_Particle.git (fetch)
+    suffix_to_remove = ".git"
+    if repo_name.endswith(suffix_to_remove):
+        repo_name = repo_name[: -len(suffix_to_remove)]
+    return repo_name
 
 
 def git_stash_push(prefix=None, msg=None, log_level=logging.DEBUG):

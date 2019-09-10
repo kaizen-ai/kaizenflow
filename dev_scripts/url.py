@@ -35,7 +35,8 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
-def _check_url(url):
+# TODO(gp): Move it to a central place, helpers.network?
+def check_url(url):
     try:
         request = requests.get(url)
         exists = request.status_code == 200
@@ -162,8 +163,8 @@ def _main(parser):
     print()
     if not os.path.exists(file_name):
         _LOG.warning("'%s' doesn't exist", file_name)
-    _check_url(github_url)
-    _check_url(jupyter_url)
+    check_url(github_url)
+    check_url(jupyter_url)
 
 
 if __name__ == "__main__":

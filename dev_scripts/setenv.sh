@@ -87,7 +87,7 @@ export PYTHONDONTWRITEBYTECODE=x
 # Python packages.
 
 #export PYTHONPATH=""
-export PYTHONPATH=$PYTHONPATH:$CURR_DIR
+export PYTHONPATH=$CURR_DIR:$PYTHONPATH
 
 # Remove redundant paths.
 PYTHONPATH="$(echo $PYTHONPATH | $EXEC_PATH/remove_redundant_paths.sh)"
@@ -117,9 +117,9 @@ conda info --envs
 if [[ 0 == 1 ]]; then
   CONDA_LIBS=$(conda info | \grep "active env location" | awk '{print $NF;}')
   echo "CONDA_LIBS=$CONDA_LIBS"
-  export PYTHONPATH=$PYTHONPATH:$CONDA_LIBS/lib/python2.7/site-packages
+  export PYTHONPATH=$CONDA_LIBS/lib/python2.7/site-packages:$PYTHONPATH
   # To fix: python -c "import configparser"
-  #export PYTHONPATH=$PYTHONPATH:$CONDA_LIBS/lib/python2.7/site-packages/backports
+  #export PYTHONPATH=$CONDA_LIBS/lib/python2.7/site-packages/backports:$PYTHONPATH
 fi;
 
 if [ 0 == 1 ]; then
@@ -131,12 +131,6 @@ if [ 0 == 1 ]; then
     $FILE_NAME
   fi;
 fi;
-
-echo "#############################################################################"
-echo "# Config AWS"
-echo "#############################################################################"
-
-export AM_INST_ID="i-07f9b5323aa7a2ff2"
 
 echo "#############################################################################"
 echo "# Config bash"
