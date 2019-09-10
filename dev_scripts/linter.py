@@ -765,9 +765,22 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         )
         _LOG.warning(msg)
         output.append(msg)
-        #
-        cmd = executable + " --set-formats ipynb,py:percent %s" % file_name
+        # Convert a notebook into jupytext.
+        cmd = []
+        cmd.append(executable)
+        cmd.append("--update-metadata")
+        cmd.append("""{"jupytext":{"formats":"ipynb, py:percent"}}'""")
+        cmd.append(file_name)
+        cmd = " ".join(cmd)
         _system(cmd)
+        #
+        # Test the ipynb -> py:percent -> ipynb round trip conversion
+        cmd = executable + " --test --stop --to py:percent %s" % file_name
+        _system(cmd)
+        #
+        cmd = executable + " --to py:percent %s" % file_name
+        _system(cmd)
+        #
         py_file_name = from_ipynb_to_python_file(file_name)
         cmd = "git add %s" % py_file_name
         _system(cmd)
