@@ -12,6 +12,10 @@ _LOG = logging.getLogger(__name__)
 
 
 def zscore(obj, com, demean, standardize, delay, min_periods=None):
+    """
+    DEPRECATE in favor of rolling_zscore in signal_processing.py.
+    Need to add demeaning and delay optionality before migrating.
+    """
     dbg.dassert_type_in(obj, (pd.Series, pd.DataFrame))
     # z-scoring might not be causal with delay=0, especially for predicted
     # variables.
@@ -25,6 +29,8 @@ def zscore(obj, com, demean, standardize, delay, min_periods=None):
         mean = obj.ewm(com=com, min_periods=min_periods).mean()
         if delay != 0:
             mean = mean.shift(delay)
+        # TODO: Check the logic here (if demean=True, standardize=True, and
+        # delay > 0, then we end up shifting an already-shifted series...
         obj = obj - mean
     if standardize:
         # TODO(gp): Remove nans, if needed.
@@ -196,6 +202,9 @@ def annualize_sharpe_ratio(df):
 
 
 def compute_sr(rets):
+    """
+    See also rolling_sharpe_ratio in signal_processing.py
+    """
     # Annualize (brutally).
     # sr = rets.mean() / rets.std()
     # sr *= np.sqrt(252 * ((16 - 9.5) * 60))

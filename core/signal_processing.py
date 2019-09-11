@@ -263,7 +263,7 @@ def _tau_to_com(tau):
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
-def ema(df, com, min_periods, depth=1):
+def ema(df, tau, min_periods, depth=1):
     """
     Iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
 
@@ -292,14 +292,14 @@ def ema(df, com, min_periods, depth=1):
     """
     dbg.dassert_isinstance(depth, int)
     dbg.dassert_lte(1, depth)
-    _LOG.info("Calculating iterated ema of depth %i...", depth)
-    _LOG.info("com = %0.2f", com)
-    tau = _com_to_tau(com)
+    _LOG.info("Calculating iterated ema of depth %i", depth)
     _LOG.info("tau = %0.2f", tau)
-    _LOG.info("range = %0.2f", depth * tau)
-    _LOG.info("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)
-    _LOG.info("width = %0.2f", np.sqrt(depth) * tau)
-    _LOG.info("aspect ratio = %0.2f", np.sqrt(1 + 1.0 / depth))
+    com = _tau_to_com(tau)
+    _LOG.info("com = %0.2f", com)
+    # _LOG.info("range = %0.2f", depth * tau)
+    # _LOG.info("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)
+    # _LOG.info("width = %0.2f", np.sqrt(depth) * tau)
+    # _LOG.info("aspect ratio = %0.2f", np.sqrt(1 + 1.0 / depth))
     df_hat = df.copy()
     for i in range(0, depth):
         df_hat = df_hat.ewm(
@@ -337,15 +337,11 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
     _LOG.info("tau1 = %0.2f", tau1)
     tau2 = alpha * beta * tau
     _LOG.info("tau2 = %0.2f", tau2)
-    com1 = _tau_to_com(tau1)
-    _LOG.info("com1 = %0.2f", com1)
-    com2 = _tau_to_com(tau2)
-    _LOG.info("com2 = %0.2f", com2)
 
     def order_one(df):
-        s1 = ema(df, com1, min_periods, 1)
-        s2 = ema(df, com1, min_periods, 2)
-        s3 = -2.0 * ema(df, com2, min_periods, 4)
+        s1 = ema(df, tau1, min_periods, 1)
+        s2 = ema(df, tau1, min_periods, 2)
+        s3 = -2.0 * ema(df, tau2, min_periods, 4)
         differential = gamma * (s1 + s2 + s3)
         differential = gamma * (s1 + s2 + s3)
         if scaling == 0:
@@ -358,12 +354,11 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
     return df_diff
 
 
-def smooth_moving_average(df, range_, min_periods=0, min_depth=1, max_depth=1):
+def smooth_moving_average(df, tau, min_periods=0, min_depth=1, max_depth=1):
     """
     Moving average operator defined in terms of iterated ema's.
     Choosing min_depth > 1 results in a lagged operator.
-    Choosing min_depth = max_depth = 1 reduces to a single ema with
-    com approximately equal to range_.
+    Choosing min_depth = max_depth = 1 reduces to a single ema.
 
     Abrupt impulse response that tapers off smoothly like a sigmoid
     (hence smoother than an equally-weighted moving average).
@@ -377,11 +372,9 @@ def smooth_moving_average(df, range_, min_periods=0, min_depth=1, max_depth=1):
     dbg.dassert_lte(1, min_depth)
     dbg.dassert_lte(min_depth, max_depth)
     _LOG.info("Calculating smoothed moving average...")
-    tau_prime = 2.0 * range_ / (min_depth + max_depth)
-    _LOG.info("ema tau = %0.2f", tau_prime)
-    com = _tau_to_com(tau_prime)
-    _LOG.info("com = %0.2f", com)
-    ema_eval = functools.partial(ema, df, com, min_periods)
+    range_ = tau * (min_depth + max_depth) / 2.0
+    _LOG.info("Range = %0.2f", range_)
+    ema_eval = functools.partial(ema, df, tau, min_periods)
     denom = float(max_depth - min_depth + 1)
     # Not the most efficient implementation, but follows 3.56 of Dacorogna
     # directly.
@@ -389,100 +382,117 @@ def smooth_moving_average(df, range_, min_periods=0, min_depth=1, max_depth=1):
 
 
 def rolling_moment(
-    df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2
+    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
 ):
     return smooth_moving_average(
-        np.abs(df) ** p_moment, range_, min_periods, min_depth, max_depth
+        np.abs(df) ** p_moment, tau, min_periods, min_depth, max_depth
     )
 
 
-def rolling_norm(df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
+def rolling_norm(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     """
     Smooth moving average norm (when p_moment >= 1).
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_p = rolling_moment(df, range_, min_periods, min_depth, max_depth, p_moment)
+    df_p = rolling_moment(df, tau, min_periods, min_depth, max_depth, p_moment)
     return df_p ** (1.0 / p_moment)
 
 
-def rolling_var(df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
+def rolling_var(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     """
     Smooth moving average central moment.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_ma = smooth_moving_average(df, range_, min_periods, min_depth, max_depth)
-    return rolling_moment(df - df_ma, range_, min_periods, min_depth, max_depth)
+    df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
+    return rolling_moment(df - df_ma, tau, min_periods, min_depth, max_depth)
 
 
-def rolling_std(df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
+def rolling_std(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     """
     Normalized smooth moving average central moment.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_tmp = rolling_var(df, range_, min_periods, min_depth, max_depth, p_moment)
+    df_tmp = rolling_var(df, tau, min_periods, min_depth, max_depth, p_moment)
     return df_tmp ** (1.0 / p_moment)
 
 
+def rolling_demean(df, tau, min_periods=0, min_depth=1, max_depth=1):
+    """
+    Demeans df on a rolling basis with smooth_moving_average
+    """
+    df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
+    return df - df_ma
+
+
 def rolling_zscore(
-    df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2
+    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2, demean=True, delay=0
 ):
     """
     Z-score using smooth_moving_average and rolling_std.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_ma = smooth_moving_average(df, range_, min_periods, min_depth, max_depth)
-    df_std = rolling_norm(
-        df - df_ma, range_, min_periods, min_depth, max_depth, p_moment
-    )
-    return (df - df_ma) / df_std
+    if demean:
+        df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
+        df_std = rolling_norm(
+            df - df_ma, tau, min_periods, min_depth, max_depth, p_moment
+        )
+        return (df - df_ma.shift(delay)) / df_std.shift(delay)
+
+    else:
+        df_std = rolling_norm(
+            df, tau, min_periods, min_depth, max_depth, p_moment
+        )
+        return df / df_std.shift(delay)
 
 
 def rolling_sharpe_ratio(
-    df, range_, min_periods=0, min_depth=1, max_depth=1, p_moment=2
+    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
 ):
     """
     Sharpe ratio using smooth_moving_average and rolling_std.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
+
+    TODO(Paul): Add annualization or just replace with rolling_zscore
     """
-    df_ma = smooth_moving_average(df, range_, min_periods, min_depth, max_depth)
+    df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
     df_std = rolling_norm(
-        df - df_ma, range_, min_periods, min_depth, max_depth, p_moment
+        df - df_ma, tau, min_periods, min_depth, max_depth, p_moment
     )
     # TODO(Paul): Annualize appropriately.
     return df_ma / df_std
 
 
 def rolling_skew(
-    df, range_z, range_s, min_periods=0, min_depth=1, max_depth=1, p_moment=2
+    df, tau_z, tau_s, min_periods=0, min_depth=1, max_depth=1, p_moment=2
 ):
     """
     Smooth moving average skew of z-scored df.
     """
     z_df = rolling_zscore(
-        df, range_z, min_periods, min_depth, max_depth, p_moment
+        df, tau_z, min_periods, min_depth, max_depth, p_moment
     )
     skew = smooth_moving_average(
-        z_df ** 3, range_s, min_periods, min_depth, max_depth
+        z_df ** 3, tau_s, min_periods, min_depth, max_depth
     )
     return skew
 
 
 def rolling_kurtosis(
-    df, range_z, range_s, min_periods=0, min_depth=1, max_depth=1, p_moment=2
+    df, tau_z, tau_s, min_periods=0, min_depth=1, max_depth=1, p_moment=2
 ):
     """
     Smooth moving average kurtosis of z-scored df.
     """
     z_df = rolling_zscore(
-        df, range_z, min_periods, min_depth, max_depth, p_moment
+        df, tau_z, min_periods, min_depth, max_depth, p_moment
     )
     kurt = smooth_moving_average(
-        z_df ** 4, range_s, min_periods, min_depth, max_depth
+        z_df ** 4, tau_s, min_periods, min_depth, max_depth
     )
     return kurt
 
@@ -490,7 +500,7 @@ def rolling_kurtosis(
 def rolling_corr(
     srs1,
     srs2,
-    range_,
+    tau,
     demean=True,
     min_periods=0,
     min_depth=1,
@@ -503,23 +513,23 @@ def rolling_corr(
     """
     if demean:
         srs1_adj = srs1 - smooth_moving_average(
-            srs1, range_, min_periods, min_depth, max_depth
+            srs1, tau, min_periods, min_depth, max_depth
         )
         srs2_adj = srs2 - smooth_moving_average(
-            srs2, range_, min_periods, min_depth, max_depth
+            srs2, tau, min_periods, min_depth, max_depth
         )
     else:
         srs1_adj = srs1
         srs2_adj = srs2
 
     smooth_prod = smooth_moving_average(
-        srs1_adj * srs2_adj, range_, min_periods, max_depth
+        srs1_adj * srs2_adj, tau, min_periods, max_depth
     )
     srs1_std = rolling_norm(
-        srs1_adj, range_, min_periods, min_depth, max_depth, p_moment
+        srs1_adj, tau, min_periods, min_depth, max_depth, p_moment
     )
     srs2_std = rolling_norm(
-        srs2_adj, range_, min_periods, min_depth, max_depth, p_moment
+        srs2_adj, tau, min_periods, min_depth, max_depth, p_moment
     )
     return smooth_prod / (srs1_std * srs2_std)
 
@@ -527,7 +537,7 @@ def rolling_corr(
 def rolling_zcorr(
     srs1,
     srs2,
-    range_,
+    tau,
     demean=True,
     min_periods=0,
     min_depth=1,
@@ -541,19 +551,19 @@ def rolling_zcorr(
     """
     if demean:
         z_srs1 = rolling_zscore(
-            srs1, range_, min_periods, min_depth, max_depth, p_moment
+            srs1, tau, min_periods, min_depth, max_depth, p_moment
         )
         z_srs2 = rolling_zscore(
-            srs2, range_, min_periods, min_depth, max_depth, p_moment
+            srs2, tau, min_periods, min_depth, max_depth, p_moment
         )
     else:
         z_srs1 = srs1 / rolling_norm(
-            srs1, range_, min_periods, min_depth, max_depth, p_moment
+            srs1, tau, min_periods, min_depth, max_depth, p_moment
         )
         z_srs2 = srs2 / rolling_norm(
-            srs2, range_, min_periods, min_depth, max_depth, p_moment
+            srs2, tau, min_periods, min_depth, max_depth, p_moment
         )
-    return smooth_moving_average(z_srs1 * z_srs2, range_, min_depth, max_depth)
+    return smooth_moving_average(z_srs1 * z_srs2, tau, min_depth, max_depth)
 
 
 #
