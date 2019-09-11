@@ -11,14 +11,12 @@ EXEC_NAME="${BASH_SOURCE[0]}"
 DIR=$(dirname "$EXEC_NAME")
 EXEC_PATH=$(cd $DIR ; pwd -P)
 
-DATETIME=$(date "+%Y%m%d-%H%M%S")
+#DATETIME=$(date "+%Y%m%d-%H%M%S")
+DATETIME=""
 SCRIPT_FILE=/tmp/setenv.${DATETIME}.sh
+echo "SCRIPT_FILE=$SCRIPT_FILE"
 
 $EXEC_PATH/_setenv.py $* >$SCRIPT_FILE
-
-
-#  echo "Error: Invalid user '$USER_NAME'. Add your credentials to setenv.sh"
-#  return -1
 
 source $SCRIPT_FILE
 

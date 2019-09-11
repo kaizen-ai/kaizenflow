@@ -75,14 +75,30 @@ def _remove_redundant_paths(paths):
     return paths_out
 
 
-def _get_env_var_code(val_name, vals):
+def _export_env_var(val_name, vals):
+    """
+    Create snippet of bash script equivalent to the following:
+
+    PYTHONPATH=$CURR_DIR:$PYTHONPATH
+    # Remove redundant paths.
+    PYTHONPATH="$(echo $PYTHONPATH | perl -e
+      'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
+    echo "PYTHONPATH=$PYTHONPATH"
+    echo $PYTHONPATH | $EXEC_PATH/print_paths.sh
+    """
     txt = []
     vals = _remove_redundant_paths(vals)
-    txt.append("export %s=" % val_name + ":".join(vals))
+    txt.append("%s=" % val_name + ":".join(vals))
+    txt_tmp = "%s=" % val_name
+    txt_tmp += "$(echo $%s" % val_name
+    txt_tmp += " | perl -e " + \
+        """'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))'"""
+    txt_tmp += ")"
+    txt.append(txt_tmp)
     txt.append("echo %s=$%s" % (val_name, val_name))
     txt.append(
         "echo $%s" % val_name
-        + """ | perl -e 'print join("\\n", split(/:/, scalar <>))'"""
+        + """ | perl -e 'print "  "; print join("\\n  ", split(/:/, scalar <>))'"""
     )
     return txt
 
@@ -125,7 +141,7 @@ def _main(parser):
         txt.extend(txt_tmp)
 
     def _log_var(var_name, var_val):
-        txt.append("# %s='%s'" % (var_name, var_val))
+        txt.append("echo '%s=%s'" % (var_name, var_val))
         _LOG.debug("%s='%s'", var_name, var_val)
 
     #
@@ -156,7 +172,7 @@ def _main(parser):
     user_credentials = usc.get_credentials(user_name, server_name)
     git_user_name = user_credentials["git_user_name"]
     if git_user_name:
-        txt.append('git config --local user.name"%s"' % git_user_name)
+        txt.append('git config --local user.name "%s"' % git_user_name)
     #
     git_user_email = user_credentials["git_user_email"]
     if git_user_email:
@@ -173,9 +189,9 @@ def _main(parser):
     txt.append("# Disable python code caching.")
     txt.append("export PYTHONDONTWRITEBYTECODE=x")
     #
-    txt.append("# Append current dir to PYTHONPATH")
-    pythonpath = [curr_path] + _PYTHONPATH.split(":")
-    txt.extend(_get_env_var_code("PYTHONPATH", pythonpath))
+    txt.append("# Append current dir to PYTHONPATH.")
+    pythonpath = [curr_path] + ["$PYTHONPATH"]
+    txt.extend(_export_env_var("PYTHONPATH", pythonpath))
     #
     # Config conda.
     #
@@ -183,30 +199,15 @@ def _main(parser):
     #
     conda_sh_path = user_credentials["conda_sh_path"]
     _log_var("conda_sh_path", conda_sh_path)
-    txt.append("source %s" % conda_sh_path)
+    # TODO(gp): This makes conda not working for some reason.
+    #txt.append("source %s" % conda_sh_path)
     dbg.dassert_exists(conda_sh_path)
     #
     txt.append('echo "CONDA_PATH="$(which conda)')
+    txt.append('echo "CONDA_VER="$(conda -V)')
     txt.append("conda info --envs")
     txt.append("conda activate %s" % args.conda_env)
     txt.append("conda info --envs")
-    #
-    ## Workaround for conda error not finding certain installed packages.
-    # if [[ 0 == 1 ]]; then
-    #  CONDA_LIBS=$(conda info | \grep "active env location" | awk '{print $NF;}')
-    #  echo "CONDA_LIBS=$CONDA_LIBS"
-    #  export PYTHONPATH=$CONDA_LIBS/lib/python2.7/site-packages:$PYTHONPATH
-    #  # To fix: python -c "import configparser"
-    #  #export PYTHONPATH=$CONDA_LIBS/lib/python2.7/site-packages/backports:$PYTHONPATH
-    # fi;
-    #
-    # if [ 0 == 1 ]; then
-    #  echo "# Fixing pandas warnings."
-    #  FILE_NAME="dev_scripts/fix_pandas_numpy_warnings.py"
-    #  if [ -f $FILE_NAME ]; then
-    #    $FILE_NAME
-    #  fi;
-    # fi;
     #
     # Config bash.
     #
@@ -217,19 +218,14 @@ def _main(parser):
     dirs = [".", "dev_scripts", "install", "ipynb_script"]
     dirs = sorted(dirs)
     dirs = [os.path.abspath(os.path.join(exec_path, "..", d)) for d in dirs]
-    path = dirs + _PATH.split(":")
-    # path = _remove_redundant_paths(path)
-    # txt.append("export PATH=" + ":".join(path))
-    # txt.append("echo PATH=$PATH")
-    txt.extend(_get_env_var_code("PATH", path))
-    # txt_tmp = " PATH=\n%s" % pri.space("\n".join(path))
-    # txt.append(pri.prepend(txt_tmp, "#"))
+    path = dirs + ["$PATH"]
+    txt.extend(_export_env_var("PATH", path))
     #
     # Test packages.
     #
     _frame("Test packages")
-
     script = os.path.join(exec_path, "../install/package_tester.py")
+    script = os.path.abspath(script)
     dbg.dassert_exists(script)
     txt.append(script)
     #
