@@ -13,9 +13,8 @@ import logging
 import os
 import sys
 
-import helpers.dbg as dbg
-import helpers.system_interaction as si
-import helpers.user_credentials as usc
+# ##############################################################################
+
 
 # Store the values before any modification, by making a copy (out of paranoia).
 _PATH = str(os.environ["PATH"])
@@ -51,6 +50,10 @@ def _config_env():
 # We need to tweak the PYTHONPATH before importing.
 _config_env()
 
+
+import helpers.dbg as dbg
+import helpers.system_interaction as si
+import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
