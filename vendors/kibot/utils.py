@@ -174,8 +174,7 @@ def compute_ret_0(prices, mode):
     if mode == "pct_change":
         ret_0 = prices.pct_change()
     elif mode == "log_rets":
-        ret_0 = prices.diff()
-        ret_0 = np.log(1 + ret_0)
+        ret_0 = np.log(prices) - np.log(prices.shift(1))
     elif mode == "diff":
         # TODO(gp): Use shifts for clarity, e.g.,
         # df["ret_0"] = df["open"] - df["open"].shift(1)
