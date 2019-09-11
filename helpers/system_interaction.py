@@ -141,6 +141,19 @@ def system(
     return rc
 
 
+# def _system_to_string(cmd):
+#     py_ver = sys.version_info[0]
+#     if py_ver == 2:
+#         txt = subprocess.check_output(cmd)
+#     elif py_ver == 3:
+#         txt = subprocess.getoutput(cmd)
+#     else:
+#         raise RuntimeError("Invalid py_ver=%s" % py_ver)
+#     txt = [f for f in txt.split("\n") if f]
+#     dbg.dassert_eq(len(txt), 1)
+#     return txt[0]
+
+
 def system_to_string(
     cmd, abort_on_error=True, wrapper=None, dry_run=False, log_level=logging.DEBUG
 ):
@@ -163,6 +176,9 @@ def system_to_string(
     )
     output = output.rstrip("\n")
     return rc, output
+
+
+# ##############################################################################
 
 
 def get_user_name():

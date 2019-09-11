@@ -2,6 +2,8 @@ import logging
 
 import helpers.git as git
 import helpers.unit_test as ut
+import helpers.system_interaction as si
+import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
@@ -55,3 +57,20 @@ class Test_git1(ut.TestCase):
     def test_get_repo_symbolic_name1(self):
         func_name = "get_repo_symbolic_name"
         self._helper(func_name)
+
+# #############################################################################
+
+class Test_user_credentials(ut.TestCase):
+    def test_get_credentials1(self):
+        user_name = si.get_user_name()
+        server_name = si.get_server_name()
+        data = usc.get_credentials(user_name, server_name)
+        _LOG.debug("data=%s", data)
+
+
+# #############################################################################
+
+
+class Test_numba_1(ut.TestCase):
+    def test1(self):
+        pass
