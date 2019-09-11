@@ -317,21 +317,6 @@ def dassert_monotonic_index(obj):
     dassert(index.is_unique)
 
 
-## TODO(gp): -> dassert_timestamp
-# if _HAS_PANDAS:
-#
-#    def assert_timestamp(ts, msg=None):
-#        """
-#        Check that input is a pandas.Timestamp or datetime.datetime and that
-#        it is set to 'US/Eastern' timezone.
-#        """
-#        ts_types = set([pd.Timestamp, datetime.datetime])
-#        dassert_type_in(ts, ts_types)
-#        if msg is None:
-#            msg = 'Timezone must be US/Eastern!'
-#        dassert_ne(ts.tzinfo, None, msg)
-#        dassert_eq(ts.tzinfo.zone, 'US/Eastern', msg)
-
 # #############################################################################
 # Logger.
 # #############################################################################
@@ -402,7 +387,8 @@ def init_logger(
         log_format = "%(message)s"
         date_fmt = ""
     else:
-        # TODO(gp): Print at much 15-20 chars of a function so that things are aligned
+        # TODO(gp): Print at much 15-20 chars of a function so that things are
+        # aligned.
         # log_format = "%(levelname)-5s: %(funcName)-15s: %(message)s"
         log_format = "%(asctime)-5s: %(levelname)s: %(funcName)s: %(message)s"
         date_fmt = "%Y-%m-%d %I:%M:%S %p"
@@ -502,3 +488,15 @@ def test_logger():
     _log.warning("WARNING=%s", logging.WARNING)
     #
     _log.critical("CRITICAL=%s", logging.CRITICAL)
+
+
+# #############################################################################
+
+
+# Sample at the beginning of time before we start fiddling with command line
+# args.
+_CMD_LINE = " ".join(arg for arg in sys.argv)
+
+
+def get_command_line():
+    return _CMD_LINE

@@ -32,8 +32,9 @@ _LOG = logging.getLogger(__name__)
 # _PYTHON_VERSION = "3.7"
 _PYTHON_VERSION = None
 
-# TODO(gp): Try https://github.com/mwilliamson/stickytape. It doesn't work that well.
-# cd ~/src/github/stickytape && conda activate develop && python setup.py install
+# TODO(gp): Try https://github.com/mwilliamson/stickytape. It doesn't work
+# that well.
+# > cd ~/src/github/stickytape && conda activate develop && python setup.py install
 # > python /usr/local/lib/python2.7/site-packages/stickytape/main.py dev_scripts/create_conda.py --add-python-path . --output-file released_sticky.py
 
 # TODO(gp): Allow yml files with pip deps inside
@@ -77,7 +78,7 @@ def _process_requirements(req_file):
     return dst_req_file
 
 
-def _main():
+def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -105,6 +106,10 @@ def _main():
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level",
     )
+    return parser
+
+
+def _main(parser):
     args = parser.parse_args()
     dbg.dassert_is_not(args.env_name, None)
     #
@@ -236,4 +241,4 @@ def _main():
 
 
 if __name__ == "__main__":
-    _main()
+    _main(_parse())
