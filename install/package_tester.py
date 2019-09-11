@@ -1,34 +1,43 @@
 #!/usr/bin/env python
 
-import sys
 
-print((sys.version))
-
-try:
-    import numpy
-
-    print(("numpy", numpy.__version__))
-except ImportError:
-    print("Can't import numpy, check packages.")
-
-try:
-    import pandas
-
-    print(("pandas", pandas.__version__))
-except ImportError:
-    print("Can't import pandas, check packages.")
-
-if False:
+def _get_version(lib_name):
+    version = None
     try:
-        import pyarrow
-
-        print(("pyarrrow", pyarrow.__version__))
+        cmd = "import %s" % lib_name
+        exec(cmd)
     except ImportError:
-        print("Can't import pyarrow, check packages.")
+        version = "- (can't import)"
+    else:
+        cmd = "%s.__version__" % lib_name
+        version = eval(cmd)
+    return version
 
-    try:
-        import joblib
 
-        print(("joblib", joblib.__version__))
-    except ImportError:
-        print("Can't import joblib, check packages.")
+def get_system_signature():
+    txt = []
+    # import sys
+    # print(sys.version)
+    import platform
+
+    txt.append(("python", platform.python_version()))
+    libs = [
+        "numpy",
+        "pandas",
+        "pyarrow",
+        "joblib",
+        "scipy",
+        "seaborn",
+        "sklearn",
+        "statsmodels",
+    ]
+    libs = sorted(libs)
+    # TODO(gp): Add date, git commit.
+    for lib in libs:
+        txt.append((lib, _get_version(lib)))
+    txt_out = ["%15s: %s" % (l, v) for (l, v) in txt]
+    return "\n".join(txt_out)
+
+
+if __name__ == "__main__":
+    print(get_system_signature())

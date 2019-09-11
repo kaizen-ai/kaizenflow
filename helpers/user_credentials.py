@@ -99,13 +99,9 @@ def get_credentials(user_name, server_name):
     dbg.dassert_exists(os.path.dirname(conda_env_path))
     #
     ret = {
-        "git_user_name":
-    git_user_name,
-              "git_user_email":
-        git_user_email,
-              "conda_sh_path":
-        conda_sh_path,
-        "conda_env_path":
-        conda_env_path,
+        "git_user_name": git_user_name,
+        "git_user_email": git_user_email,
+        "conda_sh_path": conda_sh_path,
+        "conda_env_path": conda_env_path,
     }
     return ret
