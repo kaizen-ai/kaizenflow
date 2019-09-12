@@ -7,8 +7,8 @@ _LOG = logging.getLogger(__name__)
 
 def best(y1, y2, prior_tau=1e-6, **kwargs):
     """
-    Bayesian Estimation Supersedes the T Test:
-    http://www.indiana.edu/~kruschke/BEST/BEST.pdf
+    Bayesian Estimation Supersedes the T Test.
+    See http://www.indiana.edu/~kruschke/BEST/BEST.pdf
 
     This is a generic t-test replacement.
     :param **kwargs:
@@ -62,8 +62,14 @@ def best(y1, y2, prior_tau=1e-6, **kwargs):
         )
         # SNR (signal-to-noise ratio, i.e., Sharpe ratio, but without
         # annualization)
-        group1_snr = pm.Deterministic("group1_snr", resp_group1.mean / resp_group1.variance**0.5)
-        group2_snr = pm.Deterministic("group2_snr", resp_group2.mean / resp_group2.variance**0.5)
+        group1_vol = pm.Deterministic(
+            "group1_vol", resp_group1.distribution.variance ** 0.5
+        )
+        group2_vol = pm.Deterministic(
+            "group2_vol", resp_group2.distribution.variance ** 0.5
+        )
+        group1_snr = pm.Deterministic("group1_snr", resp_group1.mean / group1_vol)
+        group2_snr = pm.Deterministic("group2_snr", resp_group2.mean / group2_vol)
         pm.Deterministic("difference of snrs", group2_snr - group1_snr)
         # MCMC
         trace = pm.sample(**kwargs)
@@ -89,9 +95,8 @@ def fit_t_distribution(y, prior_tau=1e-6, **kwargs):
         returns = pm.StudentT(
             "returns", nu=nu + 2, mu=mean, sigma=std, observed=y
         )
-        pm.Deterministic(
-            "snr", returns.distribution.mean / returns.distribution.variance**0.5
-        )
+        vol = pm.Deterministic("vol", returns.distribution.variance ** 0.5)
+        pm.Deterministic("snr", returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
     return model, trace
 
@@ -101,10 +106,10 @@ def trace_info(trace, **kwargs):
     Standard trace plots and info.
     """
     _LOG.info("traceplot...")
-    pm.traceplot(trace, **kwargs);
+    pm.traceplot(trace, **kwargs)
     _LOG.info("plot_posterior...")
-    pm.plot_posterior(trace, ref_val=0, **kwargs);
+    pm.plot_posterior(trace, ref_val=0, **kwargs)
     _LOG.info("forestplot...")
-    pm.forestplot(trace, **kwargs);
+    pm.forestplot(trace, **kwargs)
     _LOG.info("summary...")
     print(pm.summary(trace, **kwargs))
