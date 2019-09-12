@@ -48,7 +48,7 @@ def _main(parser):
     cmd = "find %s" % dir_name
     if args.only_files:
         cmd += " -type f"
-    cmd += ' -iname "*%s*"' % name
+    cmd += ' -iname "%s"' % name
     cmd += " | sort"
     cmd += " | grep -v .ipynb_checkpoints"
     print(cmd)

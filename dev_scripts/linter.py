@@ -20,14 +20,14 @@ E.g.,
 > linter.py --previous_git_commit_files n --collect_only
 > linter.py --files event_study/*.py linter_v2.py --yapf --isort -v DEBUG
 
-- To jump to all the warnings to fix:
+# Lint all python files, but not the notebooks.
+> linter.py -d . --only_py --collect
+
+# To jump to all the warnings to fix:
 > vim -c "cfile linter.log"
 
-- Check all jupytext files.
+# Check all jupytext files.
 > linter.py -d . --action sync_jupytext
-
-# Run some test with:
-> test_linter.sh
 """
 
 # TODO(gp): Add mccabe score.
@@ -740,8 +740,12 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    cmd = executable + " -f %s --action sync" % file_name
-    return _tee(cmd, executable, abort_on_error=True)
+    if is_paired_jupytext_file(file_name):
+        cmd = executable + " -f %s --action sync" % file_name
+        output = _tee(cmd, executable, abort_on_error=True)
+    else:
+        output = []
+    return output
 
 
 def _test_jupytext(file_name, pedantic, check_if_possible):
@@ -751,8 +755,12 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    cmd = executable + " -f %s --action test" % file_name
-    return _tee(cmd, executable, abort_on_error=True)
+    if is_paired_jupytext_file(file_name):
+        cmd = executable + " -f %s --action test" % file_name
+        output = _tee(cmd, executable, abort_on_error=True)
+    else:
+        output = []
+    return output
 
 
 # #############################################################################

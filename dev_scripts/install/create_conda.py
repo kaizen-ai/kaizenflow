@@ -45,6 +45,7 @@ _PYTHON_VERSION = None
 # dev_scripts/install/requirements
 _CURR_DIR = os.path.dirname(sys.argv[0])
 
+# dev_scripts/install/requirements
 _REQUIREMENT_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
 
 # dev_scripts/install/conda_envs
@@ -52,13 +53,9 @@ _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 
 
 def _get_requirements_file():
-    res = None
-    file_name = os.path.join(_REQUIREMENT_DIR, "requirements.txt")
-    if os.path.exists(file_name):
-        res = file_name
-    if res is None:
-        raise RuntimeError("Can't find the requirements file")
-    return res
+    file_name = os.path.join(_REQUIREMENT_DIR, "requirements_develop.txt")
+    dbg.dassert_exists(file_name)
+    return file_name
 
 
 def _process_requirements(req_file):
