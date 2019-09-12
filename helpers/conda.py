@@ -2,7 +2,7 @@ import json
 import logging
 
 import helpers.dbg as dbg
-import helpers.get_conda_config_path as gcp
+import helpers.user_credentials as usc
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -21,14 +21,14 @@ def conda_system(cmd, *args, **kwargs):
     :return:
     """
     # TODO(gp): Pass conda_env_name as done in get_conda_list()
-    path = gcp.get_conda_config_path()
+    path = usc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
     cmd = "source %s && %s" % (path, cmd)
     return si.system(cmd, *args, **kwargs)
 
 
 def conda_system_to_string(cmd, *args, **kwargs):
-    path = gcp.get_conda_config_path()
+    path = usc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
     cmd = "source %s && %s" % (path, cmd)
     return si.system_to_string(cmd, *args, **kwargs)

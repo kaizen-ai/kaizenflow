@@ -171,7 +171,7 @@ def _main(parser):
     # Config git.
     #
     _frame("Config git")
-    user_credentials = usc.get_credentials(user_name, server_name)
+    user_credentials = usc.get_credentials()
     git_user_name = user_credentials["git_user_name"]
     if git_user_name:
         txt.append('git config --local user.name "%s"' % git_user_name)

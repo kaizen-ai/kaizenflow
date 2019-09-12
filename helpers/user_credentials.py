@@ -1,15 +1,14 @@
 import logging
 import os
 
-# TODO(gp): Not sure this is a good idea since it might create cyclic
-# dependencies. Maybe use the trick of setting PYTHONPATH on the fly.
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
 
-def get_credentials(user_name, server_name):
+def get_credentials():
     """
     - To find "conda_sh_path":
       > which conda
@@ -21,6 +20,8 @@ def get_credentials(user_name, server_name):
       ...
              envs directories : /data/saggese/.conda/envs
     """
+    user_name = si.get_user_name()
+    server_name = si.get_server_name()
     git_user_name = None
     git_user_email = None
     conda_sh_path = None

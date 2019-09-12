@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 import helpers.dbg as dbg
-import helpers.printing as print_
+import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,9 +100,9 @@ def _system(
     if abort_on_error and rc != 0:
         msg = (
             "\n"
-            + print_.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
+            + pri.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
             + "\nOutput of the failing command is:\n%s\n%s\n%s"
-            % (print_.line(">"), output, print_.line("<"))
+            % (pri.line(">"), output, pri.line("<"))
         )
         _LOG.error("%s", msg)
         raise RuntimeError("cmd='%s' failed with rc='%s'" % (cmd, rc))

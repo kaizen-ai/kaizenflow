@@ -60,9 +60,7 @@ class Test_git1(ut.TestCase):
 
 class Test_user_credentials(ut.TestCase):
     def test_get_credentials1(self):
-        user_name = si.get_user_name()
-        server_name = si.get_server_name()
-        data = usc.get_credentials(user_name, server_name)
+        data = usc.get_credentials()
         _LOG.debug("data=%s", data)
 
 

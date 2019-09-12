@@ -2,13 +2,13 @@
 """
 # Install the default package
 > create_conda.py
-> create_conda.py --env_name develop --req_file install/requirements/requirements_develop.txt --delete_env_if_exists
+> create_conda.py --env_name develop --req_file dev_scripts/install/requirements/requirements_develop.txt --delete_env_if_exists
 
 # Quick install to test the script
 > create_conda.py --test_install -v DEBUG
 
 # Test the develop environment
-> create_conda.py --env_name develop_test --req_file install/requirements/requirements_develop.txt --delete_env_if_exists
+> create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/requirements_develop.txt --delete_env_if_exists
 
 # Create pymc3
 > create_conda.py --env_name pymc3 --req_file requirements_pymc.txt -v DEBUG
@@ -21,10 +21,10 @@ import sys
 
 import helpers.conda as hco
 import helpers.dbg as dbg
-import helpers.get_conda_config_path as gcp
+import helpers.env as env
 import helpers.io_ as io_
-import helpers.print_packages as ppack
-import helpers.printing as print_
+import helpers.printing as pri
+import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,10 +42,22 @@ _PYTHON_VERSION = None
 
 # ##############################################################################
 
+# dev_scripts/install/requirements
+_CURR_DIR = os.path.dirname(sys.argv[0])
+
+_REQUIREMENT_DIR = os.path.abspath(
+    os.path.join(_CURR_DIR,
+        "requirements"))
+
+# dev_scripts/install/conda_envs
+_CONDA_ENVS_DIR = os.path.abspath(
+    os.path.join(_CURR_DIR,
+                 "conda_envs"))
+
 
 def _get_requirements_file():
     res = None
-    file_name = "./requirements.txt"
+    file_name = os.path.join(_REQUIREMENT_DIR, "requirements.txt")
     if os.path.exists(file_name):
         res = file_name
     if res is None:
@@ -64,6 +76,7 @@ def _process_requirements(req_file):
     # Read file.
     req_file = os.path.abspath(req_file)
     _LOG.debug("req_file=%s", req_file)
+    dbg.dassert_exists(req_file)
     txt = io_.from_file(req_file, split=True)
     # Process.
     txt_tmp = []
@@ -114,19 +127,21 @@ def _main(parser):
     dbg.dassert_is_not(args.env_name, None)
     #
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
-    _LOG.info("\n%s", ppack.get_system_info(add_frame=True))
+    _LOG.info("\n%s", env.get_system_info(add_frame=True))
+    dbg.dassert_exists(_REQUIREMENT_DIR)
+    dbg.dassert_exists(_CONDA_ENVS_DIR)
     #
     delete_old_conda_if_exists = args.delete_env_if_exists
     install_new_conda = True
     #
     # Set conda root dir.
     #
-    conda_env_path = gcp.get_conda_env_path()
+    conda_env_path = usc.get_credentials()["conda_env_path"]
     hco.set_conda_env_root(conda_env_path)
     #
     # conda info
     #
-    _LOG.info("\n%s", print_.frame("Current conda status"))
+    _LOG.info("\n%s", pri.frame("Current conda status"))
     cmd = "conda info"
     hco.conda_system(cmd, suppress_output=False)
     #
@@ -134,7 +149,7 @@ def _main(parser):
     #
     # Deactivate conda.
     #
-    _LOG.info("\n%s", print_.frame("Check conda status after deactivation"))
+    _LOG.info("\n%s", pri.frame("Check conda status after deactivation"))
     cmd = "conda deactivate; conda info --envs"
     hco.conda_system(cmd, suppress_output=False)
     #
@@ -145,7 +160,7 @@ def _main(parser):
         conda_env_name = "test_conda"
     _LOG.info(
         "\n%s",
-        print_.frame("Delete old conda env '%s', if exists" % conda_env_name),
+        pri.frame("Delete old conda env '%s', if exists" % conda_env_name),
     )
     if args.skip_delete_env:
         _LOG.warning("Skipping")
@@ -184,7 +199,7 @@ def _main(parser):
     #
     # Process requirements file.
     #
-    _LOG.info("\n%s", print_.frame("Create new conda env '%s'" % conda_env_name))
+    _LOG.info("\n%s", pri.frame("Create new conda env '%s'" % conda_env_name))
     if args.skip_install_env:
         _LOG.warning("Skipping")
     else:
@@ -219,7 +234,7 @@ def _main(parser):
     #
     # Test activating.
     #
-    _LOG.info("\n%s", print_.frame("Test activate"))
+    _LOG.info("\n%s", pri.frame("Test activate"))
     cmd = "conda activate %s && conda info --envs" % conda_env_name
     hco.conda_system(cmd, suppress_output=False)
     #
@@ -231,8 +246,7 @@ def _main(parser):
     #
     # Check packages.
     #
-    dst_dir = os.path.dirname(__file__) + "/conda_envs"
-    _, file_name = ppack.save_env_file(conda_env_name, dst_dir)
+    _, file_name = env.save_env_file(conda_env_name, _CONDA_ENVS_DIR)
     _LOG.warning(
         "You should commit the file '%s' for future reference", file_name
     )
