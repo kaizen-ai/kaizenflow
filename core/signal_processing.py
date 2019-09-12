@@ -292,14 +292,14 @@ def ema(df, tau, min_periods, depth=1):
     """
     dbg.dassert_isinstance(depth, int)
     dbg.dassert_lte(1, depth)
-    # _LOG.info("Calculating iterated ema of depth %i", depth)
-    # _LOG.info("tau = %0.2f", tau)
+    _LOG.debug("Calculating iterated ema of depth %i", depth)
+    _LOG.debug("range = %0.2f", depth * tau)
+    _LOG.debug("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)
+    _LOG.debug("width = %0.2f", np.sqrt(depth) * tau)
+    _LOG.debug("aspect ratio = %0.2f", np.sqrt(1 + 1.0 / depth))
+    _LOG.debug("tau = %0.2f", tau)
     com = _tau_to_com(tau)
-    # _LOG.info("com = %0.2f", com)
-    # _LOG.info("range = %0.2f", depth * tau)
-    # _LOG.info("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)
-    # _LOG.info("width = %0.2f", np.sqrt(depth) * tau)
-    # _LOG.info("aspect ratio = %0.2f", np.sqrt(1 + 1.0 / depth))
+    _LOG.debug("com = %0.2f", com)
     df_hat = df.copy()
     for i in range(0, depth):
         df_hat = df_hat.ewm(
@@ -331,11 +331,11 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
     gamma = 1.22208
     beta = 0.65
     alpha = 1.0 / (gamma * (8 * beta - 3))
-    _LOG.info("alpha = %0.2f", alpha)
+    _LOG.debug("alpha = %0.2f", alpha)
     tau1 = alpha * tau
-    _LOG.info("tau1 = %0.2f", tau1)
+    _LOG.debug("tau1 = %0.2f", tau1)
     tau2 = alpha * beta * tau
-    _LOG.info("tau2 = %0.2f", tau2)
+    _LOG.debug("tau2 = %0.2f", tau2)
 
     def order_one(df):
         s1 = ema(df, tau1, min_periods, 1)
@@ -369,9 +369,8 @@ def smooth_moving_average(df, tau, min_periods=0, min_depth=1, max_depth=1):
     dbg.dassert_isinstance(max_depth, int)
     dbg.dassert_lte(1, min_depth)
     dbg.dassert_lte(min_depth, max_depth)
-    _LOG.info("Calculating smoothed moving average...")
     range_ = tau * (min_depth + max_depth) / 2.0
-    _LOG.info("Range = %0.2f", range_)
+    _LOG.debug("Range = %0.2f", range_)
     ema_eval = functools.partial(ema, df, tau, min_periods)
     denom = float(max_depth - min_depth + 1)
     # Not the most efficient implementation, but follows 3.56 of Dacorogna
