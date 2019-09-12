@@ -13,18 +13,18 @@ import pywt
 _LOG = logging.getLogger(__name__)
 
 
-# Graphical tools for time and frequency analysis.
-#
+# #############################################################################
+# Graphical tools for time and frequency analysis
+# #############################################################################
+
 # Some use cases include:
 #   - Determining whether a predictor exhibits autocorrelation
 #   - Determining the characteristic time scale of a signal
 #   - Signal filtering
 #   - Lag determination
 #   - etc.
-#
-#
-# Single-signal functions
-#
+
+
 def plot_autocorrelation(signal, lags=40):
     """
     Plot autocorrelation and partial autocorrelation of series.
@@ -198,6 +198,11 @@ def plot_scaleogram(
     plt.show()
 
 
+# #############################################################################
+# Basic modeling
+# #############################################################################
+
+
 def fit_random_walk_plus_noise(signal):
     """
     Fit a random walk + Gaussian noise model using state space methods.
@@ -229,9 +234,11 @@ def fit_random_walk_plus_noise(signal):
     return model, result
 
 
-#
-# Two-signal functions (e.g., predictor and response)
-#
+# #############################################################################
+# Multisignal or predictor/response functions
+# #############################################################################
+
+
 def plot_crosscorrelation(x, y):
     """
     Assumes x, y have been approximately demeaned and normalized (e.g.,
@@ -252,6 +259,11 @@ def plot_crosscorrelation(x, y):
 # TODO(Paul): Add coherence plotting function.
 
 
+# #############################################################################
+# Signal transformations
+# #############################################################################
+
+
 def squash(df, scale=1):
     """
     Applies squashing function to data.
@@ -265,9 +277,11 @@ def squash(df, scale=1):
     return scale * np.tanh(df / scale)
 
 
-#
-# EMAs and derived operators
-#
+# #############################################################################
+# EMAs and derived kernels
+# #############################################################################
+
+
 def _com_to_tau(com):
     return 1.0 / np.log(1 + 1.0 / com)
 
@@ -391,7 +405,14 @@ def smooth_moving_average(df, tau, min_periods=0, min_depth=1, max_depth=1):
     return sum(map(ema_eval, range(min_depth, max_depth + 1))) / denom
 
 
-def rolling_moment(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
+# #############################################################################
+# Rolling moments, norms, z-scoring, demeaning, etc.
+# #############################################################################
+
+
+def rolling_moment(
+    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
+):
     return smooth_moving_average(
         np.abs(df) ** p_moment, tau, min_periods, min_depth, max_depth
     )
@@ -451,6 +472,8 @@ def rolling_zscore(
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
     if demean:
+        # Equivalent to invoking rolling_demean and rolling_std, but this way
+        # we avoid calculating df_ma twice.
         df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
         df_std = rolling_norm(
             df - df_ma, tau, min_periods, min_depth, max_depth, p_moment
@@ -462,24 +485,6 @@ def rolling_zscore(
             df, tau, min_periods, min_depth, max_depth, p_moment
         )
         return df / df_std.shift(delay)
-
-
-def rolling_sharpe_ratio(
-    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
-):
-    """
-    Sharpe ratio using smooth_moving_average and rolling_std.
-
-    Moving average corresponds to ema when min_depth = max_depth = 1.
-
-    TODO(Paul): Add annualization or just replace with rolling_zscore
-    """
-    df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
-    df_std = rolling_norm(
-        df - df_ma, tau, min_periods, min_depth, max_depth, p_moment
-    )
-    # TODO(Paul): Annualize appropriately.
-    return df_ma / df_std
 
 
 def rolling_skew(
@@ -506,6 +511,30 @@ def rolling_kurtosis(
         z_df ** 4, tau_s, min_periods, min_depth, max_depth
     )
     return kurt
+
+
+# #############################################################################
+# Rolling Sharpe ratio
+# #############################################################################
+
+
+def rolling_sharpe_ratio(
+        df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
+):
+    """
+    Sharpe ratio using smooth_moving_average and rolling_std.
+    """
+    df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
+    df_std = rolling_norm(
+        df - df_ma, tau, min_periods, min_depth, max_depth, p_moment
+    )
+    # TODO(Paul): Annualize appropriately.
+    return df_ma / df_std
+
+
+# #############################################################################
+# Rolling correlation functions
+# #############################################################################
 
 
 def rolling_corr(
@@ -577,9 +606,11 @@ def rolling_zcorr(
     return smooth_moving_average(z_srs1 * z_srs2, tau, min_depth, max_depth)
 
 
-#
+# #############################################################################
 # Incremental PCA
-#
+# #############################################################################
+
+
 def ipca_step(u, v, alpha):
     """
     Single step of incremental PCA.
@@ -699,9 +730,11 @@ def eigenvector_diffs(eigenvecs):
     return df
 
 
-#
-# Test series
-#
+# #############################################################################
+# Test signals
+# #############################################################################
+
+
 def get_heaviside(a, b, zero_val, tick):
     """
     Generate Heaviside pd.Series.
