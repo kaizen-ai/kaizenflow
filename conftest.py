@@ -4,7 +4,7 @@ import helpers.unit_test as hut
 # Add custom options.
 
 # Hack to workaround pytest not happy with multiple redundant conftest.py
-# (bug #34)
+# (bug #34).
 if not hasattr(hut, "_conftest_already_parsed"):
     hut._conftest_already_parsed = True
 

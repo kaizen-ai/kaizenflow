@@ -9,20 +9,23 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
-# Unfortunately we can't check the outcome of some of these functions since we
-# don't know in which dir we are running. Thus we test that the function
-# completes and visually inspect the outcome, if needed.
-# TODO(gp): If we have Jenkins on AM side we could test for the outcome at least
-# in that set-up.
-
 
 class Test_git1(ut.TestCase):
+    """
+    Unfortunately we can't check the outcome of some of these functions since we
+    don't know in which dir we are running. Thus we test that the function
+    completes and visually inspect the outcome, if needed.
+    TODO(gp): If we have Jenkins on AM side we could test for the outcome at
+    least in that set-up.
+    """
+    def _helper(self, func_name):
+        func = eval("git.%s" % func_name)
+        act = func()
+        _LOG.debug("%s()=%s", func_name, act)
+
     def test_is_inside_submodule1(self):
-        ret = git.is_inside_submodule()
-        _LOG.debug("git.is_inside_submodule()=%s", ret)
-        # amp is typically used as a submodule.
-        # TODO(gp): This is not true in case we run Jenkins on amp itself.
-        self.assertEqual(ret, True)
+        func_name = "is_inside_submodule"
+        self._helper(func_name)
 
     def test_get_client_root1(self):
         val = git.get_client_root(super_module=True)
@@ -36,11 +39,6 @@ class Test_git1(ut.TestCase):
         file_name = "helpers/test/test_helpers.py"
         act = git.get_path_from_git_root(file_name, super_module=False)
         _LOG.debug("get_path_from_git_root()=%s", act)
-
-    def _helper(self, func_name):
-        func = eval("git.%s" % func_name)
-        act = func()
-        _LOG.debug("%s()=%s", func_name, act)
 
     def test_get_modified_files1(self):
         func_name = "get_modified_files"

@@ -1,6 +1,9 @@
 import logging
+import os
 
 import dev_scripts.url as url
+import helpers.dbg as dbg
+import helpers.env as env
 import helpers.unit_test as ut
 import helpers.system_interaction as si
 
@@ -30,15 +33,27 @@ class Test_url_py1(ut.TestCase):
         self.assertEqual(act, exp)
 
 
+# #############################################################################
+
+
+class Test_env1(ut.TestCase):
+    def test_env1(self):
+        _ = env.get_system_signature()
+
 
 # #############################################################################
 
 
 class Test_set_env1(ut.TestCase):
     def test_setenv_py1(self):
-        cmd = "source dev_scripts/setenv.sh"
-        si.system(cmd)
+        cmd = "find . -name _setenv.py"
+        _, txt = si.system_to_string(cmd)
+        _LOG.debug("txt=%s", txt)
+        exec = os.path.abspath(txt)
+        _LOG.debug("exec=%s", exec)
+        dbg.dassert_exists(exec)
+        si.system(exec)
 
     def test_setenv_sh1(self):
-        cmd = "dev_scripts/_setenv.py"
+        cmd = "source dev_scripts/setenv.sh"
         si.system(cmd)
