@@ -32,7 +32,7 @@ _EXECUTABLE = "jupytext"
 
 def _pair(file_name):
     if lin.is_paired_jupytext_file(file_name):
-        _LOG.warning("The file '%s' is already paired", file_name)
+        _LOG.warning("The file '%s' seems already paired", file_name)
     # It is a ipynb and it is unpaired: create the python file.
     msg = (
         "There was no paired notebook for '%s': created and added to git"

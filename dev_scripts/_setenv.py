@@ -215,9 +215,11 @@ def _main(parser):
     #
     _frame("Config bash")
     #
-    dirs = [".", "aws", "infra", "install", "ipynb_script"]
+    dirs = [".", "aws", "infra", "install", "notebooks"]
     dirs = sorted(dirs)
     dirs = [os.path.abspath(os.path.join(exec_path, d)) for d in dirs]
+    for d in dirs:
+        dbg.dassert_exists(d)
     path = dirs + ["$PATH"]
     txt.extend(_export_env_var("PATH", path))
     #
