@@ -31,33 +31,32 @@ _EXECUTABLE = "jupytext"
 
 
 def _pair(file_name):
-    if not lin.is_paired_jupytext_file(file_name):
-        # It is a ipynb and it is unpaired: create the python file.
-        msg = (
-            "There was no paired notebook for '%s': created and added to git"
-            % file_name
-        )
-        _LOG.warning(msg)
-        # Convert a notebook into jupytext.
-        cmd = []
-        cmd.append(_EXECUTABLE)
-        cmd.append("--update-metadata")
-        cmd.append("""{"jupytext":{"formats":"ipynb, py:percent"}}'""")
-        cmd.append(file_name)
-        cmd = " ".join(cmd)
-        si.system(cmd)
-        # Test the ipynb -> py:percent -> ipynb round trip conversion.
-        cmd = _EXECUTABLE + " --test --stop --to py:percent %s" % file_name
-        si.system(cmd)
-        # Add the .py file.
-        cmd = _EXECUTABLE + " --to py:percent %s" % file_name
-        si.system(cmd)
-        # Add to git.
-        py_file_name = lin.from_ipynb_to_python_file(file_name)
-        cmd = "git add %s" % py_file_name
-        si.system(cmd)
-    else:
+    if lin.is_paired_jupytext_file(file_name):
         _LOG.warning("The file '%s' is already paired", file_name)
+    # It is a ipynb and it is unpaired: create the python file.
+    msg = (
+        "There was no paired notebook for '%s': created and added to git"
+        % file_name
+    )
+    _LOG.warning(msg)
+    # Convert a notebook into jupytext.
+    cmd = []
+    cmd.append(_EXECUTABLE)
+    cmd.append("--update-metadata")
+    cmd.append("""'{"jupytext":{"formats":"ipynb,py:percent"}}'""")
+    cmd.append(file_name)
+    cmd = " ".join(cmd)
+    si.system(cmd)
+    # Test the ipynb -> py:percent -> ipynb round trip conversion.
+    cmd = _EXECUTABLE + " --test --stop --to py:percent %s" % file_name
+    si.system(cmd)
+    # Add the .py file.
+    cmd = _EXECUTABLE + " --to py:percent %s" % file_name
+    si.system(cmd)
+    # Add to git.
+    py_file_name = lin.from_ipynb_to_python_file(file_name)
+    cmd = "git add %s" % py_file_name
+    si.system(cmd)
 
 
 def _sync(file_name):
