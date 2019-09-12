@@ -292,10 +292,10 @@ def ema(df, tau, min_periods, depth=1):
     """
     dbg.dassert_isinstance(depth, int)
     dbg.dassert_lte(1, depth)
-    _LOG.info("Calculating iterated ema of depth %i", depth)
-    _LOG.info("tau = %0.2f", tau)
+    # _LOG.info("Calculating iterated ema of depth %i", depth)
+    # _LOG.info("tau = %0.2f", tau)
     com = _tau_to_com(tau)
-    _LOG.info("com = %0.2f", com)
+    # _LOG.info("com = %0.2f", com)
     # _LOG.info("range = %0.2f", depth * tau)
     # _LOG.info("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)
     # _LOG.info("width = %0.2f", np.sqrt(depth) * tau)
@@ -328,7 +328,6 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
     """
     dbg.dassert_isinstance(order, int)
     dbg.dassert_lte(0, order)
-    _LOG.info("Calculating ema diff...")
     gamma = 1.22208
     beta = 0.65
     alpha = 1.0 / (gamma * (8 * beta - 3))
@@ -342,7 +341,6 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
         s1 = ema(df, tau1, min_periods, 1)
         s2 = ema(df, tau1, min_periods, 2)
         s3 = -2.0 * ema(df, tau2, min_periods, 4)
-        differential = gamma * (s1 + s2 + s3)
         differential = gamma * (s1 + s2 + s3)
         if scaling == 0:
             return differential
