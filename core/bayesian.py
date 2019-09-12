@@ -94,3 +94,17 @@ def fit_t_distribution(y, prior_tau=1e-6, **kwargs):
         )
         trace = pm.sample(**kwargs)
     return model, trace
+
+
+def trace_info(trace, **kwargs):
+    """
+    Standard trace plots and info.
+    """
+    _LOG.info("traceplot...")
+    pm.traceplot(trace, **kwargs);
+    _LOG.info("plot_posterior...")
+    pm.plot_posterior(trace, ref_val=0, **kwargs);
+    _LOG.info("forestplot...")
+    pm.forestplot(trace, **kwargs);
+    _LOG.info("summary...")
+    print(pm.summary(trace, **kwargs))
