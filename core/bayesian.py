@@ -62,8 +62,8 @@ def best(y1, y2, prior_tau=1e-6, **kwargs):
         )
         # SNR (signal-to-noise ratio, i.e., Sharpe ratio, but without
         # annualization)
-        group1_snr = pm.Deterministic("group1_snr", group1_mean / group1_std)
-        group2_snr = pm.Deterministic("group2_snr", group2_mean / group2_std)
+        group1_snr = pm.Deterministic("group1_snr", resp_group1.mean / resp_group1.variance**0.5)
+        group2_snr = pm.Deterministic("group2_snr", resp_group2.mean / resp_group2.variance**0.5)
         pm.Deterministic("difference of snrs", group2_snr - group1_snr)
         # MCMC
         trace = pm.sample(**kwargs)
@@ -90,7 +90,7 @@ def fit_t_distribution(y, prior_tau=1e-6, **kwargs):
             "returns", nu=nu + 2, mu=mean, sigma=std, observed=y
         )
         pm.Deterministic(
-            "snr", returns.distribution.mean / returns.distribution.sigma
+            "snr", returns.distribution.mean / returns.distribution.variance**0.5
         )
         trace = pm.sample(**kwargs)
     return model, trace
