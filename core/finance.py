@@ -14,7 +14,6 @@ _LOG = logging.getLogger(__name__)
 def zscore(obj, com, demean, standardize, delay, min_periods=None):
     """
     DEPRECATE in favor of rolling_zscore in signal_processing.py.
-    Need to add demeaning and delay optionality before migrating.
     """
     dbg.dassert_type_in(obj, (pd.Series, pd.DataFrame))
     # z-scoring might not be causal with delay=0, especially for predicted

@@ -252,6 +252,19 @@ def plot_crosscorrelation(x, y):
 # TODO(Paul): Add coherence plotting function.
 
 
+def squash(df, scale=1):
+    """
+    Applies squashing function to data.
+
+    :param df: data
+    :param scale: Divide data by scale and multiply squashed output by scale.
+        Rescaling approximately preserves behavior in a neighborhood of the
+        origin where the squashing function is approximately linear.
+    :return: squashed data
+    """
+    return scale * np.tanh(df / scale)
+
+
 #
 # EMAs and derived operators
 #
