@@ -6,11 +6,11 @@ Automate some common workflows with jupytext.
 > find . -name "*.ipynb" | grep -v ipynb_checkpoints | head -3 | xargs -t -L 1 process_jupytext.py --action sync --file
 
 # Pair
-> process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb  --action pair
+> process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb --action pair
 
 # Test
 > process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb --action test
-> process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb  --action test_strict
+> process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb --action test_strict
 
 # Sync
 > process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb --action sync
@@ -61,7 +61,8 @@ def _pair(file_name):
 
 def _sync(file_name):
     if lin.is_paired_jupytext_file(file_name):
-        cmd = _EXECUTABLE + " --sync --update --to py:percent %s" % file_name
+        #cmd = _EXECUTABLE + " --sync --update --to py:percent %s" % file_name
+        cmd = _EXECUTABLE + " --sync --to py:percent %s" % file_name
         si.system(cmd)
     else:
         _LOG.warning("The file '%s' is not paired: run --pair", file_name)
