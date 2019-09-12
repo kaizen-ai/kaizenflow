@@ -2,7 +2,6 @@ import logging
 
 import helpers.git as git
 import helpers.unit_test as ut
-import helpers.system_interaction as si
 import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
@@ -18,6 +17,7 @@ class Test_git1(ut.TestCase):
     TODO(gp): If we have Jenkins on AM side we could test for the outcome at
     least in that set-up.
     """
+
     def _helper(self, func_name):
         func = eval("git.%s" % func_name)
         act = func()
@@ -56,7 +56,9 @@ class Test_git1(ut.TestCase):
         func_name = "get_repo_symbolic_name"
         self._helper(func_name)
 
+
 # #############################################################################
+
 
 class Test_user_credentials(ut.TestCase):
     def test_get_credentials1(self):

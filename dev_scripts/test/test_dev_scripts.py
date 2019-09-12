@@ -4,8 +4,8 @@ import os
 import dev_scripts.url as url
 import helpers.dbg as dbg
 import helpers.env as env
-import helpers.unit_test as ut
 import helpers.system_interaction as si
+import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 

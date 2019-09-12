@@ -2,8 +2,8 @@ import json
 import logging
 
 import helpers.dbg as dbg
-import helpers.user_credentials as usc
 import helpers.system_interaction as si
+import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 

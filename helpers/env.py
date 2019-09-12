@@ -84,8 +84,8 @@ def get_conda_export_list(conda_env_name, add_frame):
     if add_frame:
         msg += print_.frame("Package summary") + "\n"
     cmd = (
-            "(conda activate %s 2>&1 >/dev/null) && conda list --export"
-            % conda_env_name
+        "(conda activate %s 2>&1 >/dev/null) && conda list --export"
+        % conda_env_name
     )
     _, msg_tmp = hco.conda_system_to_string(cmd)
     msg += msg_tmp
@@ -131,4 +131,3 @@ def _main():
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     msg = save_env_file(args.conda_env_name, dir_name=None)
     print(msg)
-

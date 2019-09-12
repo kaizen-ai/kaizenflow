@@ -45,9 +45,9 @@ def _main(parser):
     dbg.dassert_exists(dir_name)
     name = "*" + positional[0].rstrip("").lstrip("") + "*"
     #
-    cmd = 'find %s' % dir_name
+    cmd = "find %s" % dir_name
     if args.only_files:
-        cmd += ' -type f'
+        cmd += " -type f"
     cmd += ' -iname "*%s*"' % name
     cmd += " | sort"
     cmd += " | grep -v .ipynb_checkpoints"
@@ -60,10 +60,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("positional", nargs="*", help="First param is regex, optional second param is dirname")
     parser.add_argument(
-            "--only_files",
-        action="store_true", help="Only files")
+        "positional",
+        nargs="*",
+        help="First param is regex, optional second param is dirname",
+    )
+    parser.add_argument("--only_files", action="store_true", help="Only files")
     parser.add_argument(
         "-v",
         dest="log_level",

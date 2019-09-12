@@ -35,8 +35,7 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
     #
-    git_ll = "git log --date=local --oneline --graph --date-order " \
-             "--decorate "
+    git_ll = "git log --date=local --oneline --graph --date-order " "--decorate "
     _print("# Checking what are the differences with master...")
     cmd = "%s ..origin/master" % git_ll
     _system(cmd, suppress_output=False)

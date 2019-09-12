@@ -391,9 +391,7 @@ def smooth_moving_average(df, tau, min_periods=0, min_depth=1, max_depth=1):
     return sum(map(ema_eval, range(min_depth, max_depth + 1))) / denom
 
 
-def rolling_moment(
-    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
-):
+def rolling_moment(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     return smooth_moving_average(
         np.abs(df) ** p_moment, tau, min_periods, min_depth, max_depth
     )
@@ -438,7 +436,14 @@ def rolling_demean(df, tau, min_periods=0, min_depth=1, max_depth=1):
 
 
 def rolling_zscore(
-    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2, demean=True, delay=0
+    df,
+    tau,
+    min_periods=0,
+    min_depth=1,
+    max_depth=1,
+    p_moment=2,
+    demean=True,
+    delay=0,
 ):
     """
     Z-score using smooth_moving_average and rolling_std.
@@ -483,9 +488,7 @@ def rolling_skew(
     """
     Smooth moving average skew of z-scored df.
     """
-    z_df = rolling_zscore(
-        df, tau_z, min_periods, min_depth, max_depth, p_moment
-    )
+    z_df = rolling_zscore(df, tau_z, min_periods, min_depth, max_depth, p_moment)
     skew = smooth_moving_average(
         z_df ** 3, tau_s, min_periods, min_depth, max_depth
     )
@@ -498,9 +501,7 @@ def rolling_kurtosis(
     """
     Smooth moving average kurtosis of z-scored df.
     """
-    z_df = rolling_zscore(
-        df, tau_z, min_periods, min_depth, max_depth, p_moment
-    )
+    z_df = rolling_zscore(df, tau_z, min_periods, min_depth, max_depth, p_moment)
     kurt = smooth_moving_average(
         z_df ** 4, tau_s, min_periods, min_depth, max_depth
     )

@@ -45,14 +45,10 @@ _PYTHON_VERSION = None
 # dev_scripts/install/requirements
 _CURR_DIR = os.path.dirname(sys.argv[0])
 
-_REQUIREMENT_DIR = os.path.abspath(
-    os.path.join(_CURR_DIR,
-        "requirements"))
+_REQUIREMENT_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
 
 # dev_scripts/install/conda_envs
-_CONDA_ENVS_DIR = os.path.abspath(
-    os.path.join(_CURR_DIR,
-                 "conda_envs"))
+_CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 
 
 def _get_requirements_file():
@@ -159,8 +155,7 @@ def _main(parser):
     if args.test_install:
         conda_env_name = "test_conda"
     _LOG.info(
-        "\n%s",
-        pri.frame("Delete old conda env '%s', if exists" % conda_env_name),
+        "\n%s", pri.frame("Delete old conda env '%s', if exists" % conda_env_name)
     )
     if args.skip_delete_env:
         _LOG.warning("Skipping")

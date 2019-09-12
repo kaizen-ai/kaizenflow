@@ -19,8 +19,8 @@ Automate some common workflows with jupytext.
 import argparse
 import logging
 
-import helpers.dbg as dbg
 import dev_scripts.linter as lin
+import helpers.dbg as dbg
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ def _pair(file_name):
 
 def _sync(file_name):
     if lin.is_paired_jupytext_file(file_name):
-        #cmd = _EXECUTABLE + " --sync --update --to py:percent %s" % file_name
+        # cmd = _EXECUTABLE + " --sync --update --to py:percent %s" % file_name
         cmd = _EXECUTABLE + " --sync --to py:percent %s" % file_name
         si.system(cmd)
     else:
@@ -79,14 +79,21 @@ def _test(file_name, action):
     cmd = " ".join(cmd)
     si.system(cmd)
 
+
 # ##############################################################################
+
 
 def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "-f", "--file", action="store", type=str, required=True, help="File to process"
+        "-f",
+        "--file",
+        action="store",
+        type=str,
+        required=True,
+        help="File to process",
     )
     parser.add_argument(
         "--action",

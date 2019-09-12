@@ -740,18 +740,18 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    cmd = executable + " -f %s --action sync"
+    cmd = executable + " -f %s --action sync" % file_name
     return _tee(cmd, executable, abort_on_error=True)
 
 
 def _test_jupytext(file_name, pedantic, check_if_possible):
     _ = pedantic
-    executable = "jupytext"
+    executable = "process_jupytext.py"
     if check_if_possible:
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    cmd = executable + " -f %s --action test"
+    cmd = executable + " -f %s --action test" % file_name
     return _tee(cmd, executable, abort_on_error=True)
 
 

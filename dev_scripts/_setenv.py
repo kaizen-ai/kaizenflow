@@ -91,8 +91,10 @@ def _export_env_var(val_name, vals):
     txt.append("%s=" % val_name + ":".join(vals))
     txt_tmp = "%s=" % val_name
     txt_tmp += "$(echo $%s" % val_name
-    txt_tmp += " | perl -e " + \
-        """'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))'"""
+    txt_tmp += (
+        " | perl -e "
+        + """'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))'"""
+    )
     txt_tmp += ")"
     txt.append(txt_tmp)
     txt.append("echo %s=$%s" % (val_name, val_name))
@@ -157,8 +159,9 @@ def _main(parser):
     # configure the environment.
     exec_path = os.path.dirname(exec_name)
     _log_var("exec_path", exec_path)
-    dbg.dassert(os.path.basename(exec_path), "dev_scripts",
-            "exec_path=%s", exec_path)
+    dbg.dassert(
+        os.path.basename(exec_path), "dev_scripts", "exec_path=%s", exec_path
+    )
     # Current dir.
     curr_path = os.getcwd()
     _log_var("curr_path", curr_path)
@@ -202,7 +205,7 @@ def _main(parser):
     conda_sh_path = user_credentials["conda_sh_path"]
     _log_var("conda_sh_path", conda_sh_path)
     # TODO(gp): This makes conda not working for some reason.
-    #txt.append("source %s" % conda_sh_path)
+    # txt.append("source %s" % conda_sh_path)
     dbg.dassert_exists(conda_sh_path)
     #
     txt.append('echo "CONDA_PATH="$(which conda)')
