@@ -34,6 +34,7 @@ import sklearn
 
 import helpers.config as cfg
 import helpers.dbg as dbg
+import helpers.env as env
 import helpers.printing as printing
 import core.explore as exp
 import core.finance as fin
@@ -41,7 +42,7 @@ import core.finance as fin
 import vendors.kibot.utils as kut
 
 # %%
-print(cfg.get_system_signature())
+print(env.get_system_signature())
 
 printing.config_notebook()
 
