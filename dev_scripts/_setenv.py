@@ -26,8 +26,8 @@ def _config_env():
     Tweak PYTHONPATH to pick up amp, even if we are configuring amp, breaking the
     circular dependency.
     """
-    # This script is in dev_scripts, which is at the same level of helpers.
     exec_name = os.path.abspath(sys.argv[0])
+    # This script is in dev_scripts, which is at the same level of "helpers".
     amp_path = os.path.abspath(os.path.join(os.path.dirname(exec_name), ".."))
     # Check that helpers exists.
     helpers_path = os.path.join(amp_path, "helpers")
@@ -157,7 +157,9 @@ def _main(parser):
     # configure the environment.
     exec_path = os.path.dirname(exec_name)
     _log_var("exec_path", exec_path)
-    # Current dir: it should be "dev_scripts".
+    dbg.dassert(os.path.basename(exec_path), "dev_scripts",
+            "exec_path=%s", exec_path)
+    # Current dir.
     curr_path = os.getcwd()
     _log_var("curr_path", curr_path)
     # Get name.
@@ -213,18 +215,16 @@ def _main(parser):
     #
     _frame("Config bash")
     #
-    # files = glob.glob(os.path.join(exec_path, "*"))
-    # dirs = [f for f in files if os.path.isdir(f)]
-    dirs = [".", "dev_scripts", "install", "ipynb_script"]
+    dirs = [".", "aws", "infra", "install", "ipynb_script"]
     dirs = sorted(dirs)
-    dirs = [os.path.abspath(os.path.join(exec_path, "..", d)) for d in dirs]
+    dirs = [os.path.abspath(os.path.join(exec_path, d)) for d in dirs]
     path = dirs + ["$PATH"]
     txt.extend(_export_env_var("PATH", path))
     #
     # Test packages.
     #
     _frame("Test packages")
-    script = os.path.join(exec_path, "../install/package_tester.py")
+    script = os.path.join(exec_path, "install/package_tester.py")
     script = os.path.abspath(script)
     dbg.dassert_exists(script)
     txt.append(script)
