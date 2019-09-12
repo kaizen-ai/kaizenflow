@@ -70,14 +70,6 @@ _TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
 # Utils.
 # #############################################################################
 
-# Sample at the beginning of time before we start fiddling with command line
-# args.
-_CMD_LINE = " ".join(arg for arg in sys.argv)
-
-
-def _get_command_line():
-    return _CMD_LINE
-
 
 # TODO(gp): This could become the default behavior of system().
 def _system(cmd, abort_on_error=True):
@@ -757,7 +749,7 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         # It is a python file, without a paired notebook: nothing to do.
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
-    elif is_ipynb_file(file_name) and not is_paired_jupytext_file(file_name):
+    if is_ipynb_file(file_name) and not is_paired_jupytext_file(file_name):
         # It is a ipynb and it is unpaired: create the python file.
         msg = (
             "There was no paired notebook for '%s': created and added to git"
@@ -902,7 +894,7 @@ def _run_linter(actions, args, file_names):
             for file_name in file_names
         )
         output = list(itertools.chain.from_iterable(output_tmp))
-    output.append("# cmd line='%s'" % _get_command_line())
+    output.append("# cmd line='%s'" % dbg.get_command_line())
     # TODO(gp): datetime_.get_timestamp().
     output.append("# datetime='%s'" % datetime.datetime.now())
     output = _remove_empty_lines(output)

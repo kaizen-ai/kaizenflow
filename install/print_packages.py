@@ -4,7 +4,7 @@ import argparse
 import logging
 import os
 
-import helpers.conda as co
+import helpers.conda as hco
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.printing as print_
@@ -20,8 +20,8 @@ def get_system_info(add_frame):
     msg += "user name=%s\n" % si.get_user_name()
     msg += "server name=%s\n" % si.get_server_name()
     msg += "os name=%s\n" % si.get_os_name()
-    msg += "conda path=%s\n" % co.get_conda_path()
-    msg += "conda env root=%s\n" % str(co.get_conda_envs_dirs())
+    msg += "conda path=%s\n" % hco.get_conda_path()
+    msg += "conda env root=%s\n" % str(hco.get_conda_envs_dirs())
     return msg
 
 
@@ -29,7 +29,7 @@ def get_package_summary(conda_env_name, add_frame):
     msg = ""
     if add_frame:
         msg += print_.frame("Package summary") + "\n"
-    conda_list = co.get_conda_list(conda_env_name)
+    conda_list = hco.get_conda_list(conda_env_name)
     msg = ""
     for package in ["pandas", "numpy", "scipy", "arrow-cpp"]:
         ver = conda_list[package]["version"] if package in conda_list else "None"
@@ -46,7 +46,7 @@ def get_conda_export_list(conda_env_name, add_frame):
         "(conda activate %s 2>&1 >/dev/null) && conda list --export"
         % conda_env_name
     )
-    _, msg_tmp = co.conda_system_to_string(cmd)
+    _, msg_tmp = hco.conda_system_to_string(cmd)
     msg += msg_tmp
     return msg
 
@@ -83,7 +83,9 @@ def _main():
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level",
     )
-    parser.add_argument("--conda_env_name", help="Environment name", type=str)
+    parser.add_argument(
+        "--conda_env_name", help="Environment name", default="develop", type=str
+    )
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     msg = save_env_file(args.conda_env_name, dir_name=None)

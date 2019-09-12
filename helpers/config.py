@@ -1,32 +1,11 @@
 import logging
-import platform
-
-import matplotlib
-
-# import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import scipy
-import seaborn as sns
-import sklearn
 
 import helpers.printing as printing
 
 _LOG = logging.getLogger(__name__)
 
 
-def get_system_signature():
-    # TODO(gp): Add date, git commit.
-    txt = []
-    txt.append("python=%s" % platform.python_version())
-    txt.append("numpy=%s" % np.__version__)
-    txt.append("pandas=%s" % pd.__version__)
-    txt.append("seaborn=%s" % sns.__version__)
-    txt.append("scipy=%s" % scipy.__version__)
-    txt.append("matplotlib=%s" % matplotlib.__version__)
-    txt.append("sklearn=%s" % sklearn.__version__)
-    # txt.append("joblib=%s" % joblib.__version__)
-    return "\n".join(txt)
+# TODO(gp): Move to core.
 
 
 # #############################################################################
