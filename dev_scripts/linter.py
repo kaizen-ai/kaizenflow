@@ -735,53 +735,13 @@ def is_paired_jupytext_file(file_name):
 
 def _sync_jupytext(file_name, pedantic, check_if_possible):
     _ = pedantic
-    executable = "jupytext"
+    executable = "process_jupytext.py"
     if check_if_possible:
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    output = []
-    # Run if it's:
-    # - a ipynb file without a py (i.e., not paired), or
-    # - a ipynb file and paired (to avoid to run it twice)
-    # so always and only a ipynb file.
-    if is_py_file(file_name) and not is_paired_jupytext_file(file_name):
-        # It is a python file, without a paired notebook: nothing to do.
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    if is_ipynb_file(file_name) and not is_paired_jupytext_file(file_name):
-        # It is a ipynb and it is unpaired: create the python file.
-        msg = (
-            "There was no paired notebook for '%s': created and added to git"
-            % file_name
-        )
-        _LOG.warning(msg)
-        output.append(msg)
-        # Convert a notebook into jupytext.
-        cmd = []
-        cmd.append(executable)
-        cmd.append("--update-metadata")
-        cmd.append("""{"jupytext":{"formats":"ipynb, py:percent"}}'""")
-        cmd.append(file_name)
-        cmd = " ".join(cmd)
-        _system(cmd)
-        #
-        # Test the ipynb -> py:percent -> ipynb round trip conversion
-        cmd = executable + " --test --stop --to py:percent %s" % file_name
-        _system(cmd)
-        #
-        cmd = executable + " --to py:percent %s" % file_name
-        _system(cmd)
-        #
-        py_file_name = from_ipynb_to_python_file(file_name)
-        cmd = "git add %s" % py_file_name
-        _system(cmd)
-    elif is_paired_jupytext_file(file_name):
-        cmd = executable + " --sync --update --to py:percent %s" % file_name
-        _system(cmd)
-    else:
-        dbg.dfatal("Never get here")
-    return output
+    cmd = executable + " -f %s --action sync"
+    return _tee(cmd, executable, abort_on_error=True)
 
 
 def _test_jupytext(file_name, pedantic, check_if_possible):
@@ -791,16 +751,8 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    # Run if it's:
-    # - a ipynb file without a py (i.e., not paired), or
-    # - a ipynb file and paired (to avoid to run it twice)
-    # so always and only a ipynb file.
-    if not is_ipynb_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    cmd = executable + " --test --to py:percent %s" % file_name
-    _system(cmd)
-    return []
+    cmd = executable + " -f %s --action test"
+    return _tee(cmd, executable, abort_on_error=True)
 
 
 # #############################################################################
