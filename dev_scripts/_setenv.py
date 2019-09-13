@@ -61,6 +61,8 @@ _LOG = logging.getLogger(__name__)
 # ##############################################################################
 
 
+# TODO(gp): This is kind of useless since the cleaning of the path is done at
+# run-time now.
 def _remove_redundant_paths(paths):
     # Set of unique paths.
     found_paths = set()
@@ -91,6 +93,8 @@ def _export_env_var(val_name, vals):
     txt.append("%s=" % val_name + ":".join(vals))
     txt_tmp = "%s=" % val_name
     txt_tmp += "$(echo $%s" % val_name
+    # TODO(gp): Improve this script. It doesn't seem to work for the empty
+    # paths and with repeated paths.
     txt_tmp += (
         " | perl -e "
         + """'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))'"""
@@ -142,6 +146,10 @@ def _main(parser):
         txt_tmp.append("echo '%s'" % line)
         txt.extend(txt_tmp)
 
+    def _execute(cmd):
+        txt.append("echo '> %s'" % cmd)
+        txt.append(cmd)
+
     def _log_var(var_name, var_val):
         txt.append("echo '%s=%s'" % (var_name, var_val))
         _LOG.debug("%s='%s'", var_name, var_val)
@@ -151,17 +159,20 @@ def _main(parser):
     #
     _frame("Info")
     _log_var("cmd_line", dbg.get_command_line())
-    # Full path of this executable.
+    # TODO(gp): Use git to make sure you are in the root of the repo to
+    # configure the environment.
     exec_name = os.path.abspath(sys.argv[0])
     dbg.dassert_dir_exists(exec_name)
     _log_var("exec_name", exec_name)
-    # TODO(gp): Use git to make sure you are in the root of the repo to
-    # configure the environment.
+    # Full path of this executable which is the same as setenv.sh.
     exec_path = os.path.dirname(exec_name)
     _log_var("exec_path", exec_path)
     dbg.dassert(
         os.path.basename(exec_path), "dev_scripts", "exec_path=%s", exec_path
     )
+    # Get the path of helpers.
+    submodule_path = os.path.abspath(os.path.join(exec_path, ".."))
+    dbg.dassert_exists(submodule_path)
     # Current dir.
     curr_path = os.getcwd()
     _log_var("curr_path", curr_path)
@@ -177,15 +188,17 @@ def _main(parser):
     user_credentials = usc.get_credentials()
     git_user_name = user_credentials["git_user_name"]
     if git_user_name:
-        txt.append('git config --local user.name "%s"' % git_user_name)
+        cmd = 'git config --local user.name "%s"' % git_user_name
+        _execute(cmd)
     #
     git_user_email = user_credentials["git_user_email"]
     if git_user_email:
-        txt.append('git config --local user.email "%s"' % git_user_email)
+        cmd = 'git config --local user.email "%s"' % git_user_email
+        _execute(cmd)
     #
     if user_name == "jenkins":
         cmd = r"git config --list | \grep %s" % user_name
-        txt.append(cmd)
+        _execute(cmd)
     #
     # Config python.
     #
@@ -195,7 +208,7 @@ def _main(parser):
     txt.append("export PYTHONDONTWRITEBYTECODE=x")
     #
     txt.append("# Append current dir to PYTHONPATH.")
-    pythonpath = [curr_path] + ["$PYTHONPATH"]
+    pythonpath = [submodule_path] + ["$PYTHONPATH"]
     txt.extend(_export_env_var("PYTHONPATH", pythonpath))
     #
     # Config conda.
@@ -210,9 +223,12 @@ def _main(parser):
     #
     txt.append('echo "CONDA_PATH="$(which conda)')
     txt.append('echo "CONDA_VER="$(conda -V)')
-    txt.append("conda info --envs")
-    txt.append("conda activate %s" % args.conda_env)
-    txt.append("conda info --envs")
+    cmd = "conda info --envs"
+    _execute(cmd)
+    cmd = "conda activate %s" % args.conda_env
+    _execute(cmd)
+    cmd = "conda info --envs"
+    _execute(cmd)
     #
     # Config bash.
     #
@@ -232,7 +248,7 @@ def _main(parser):
     script = os.path.join(exec_path, "install/check_develop_packages.py")
     script = os.path.abspath(script)
     dbg.dassert_exists(script)
-    txt.append(script)
+    _execute(script)
     #
     txt = "\n".join(txt)
     print(txt)
