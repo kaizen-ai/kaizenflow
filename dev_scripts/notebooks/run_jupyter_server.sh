@@ -30,7 +30,7 @@ echo "DIR_NAME='$DIR_NAME'"
 
 # TODO(gp): Generalize this to all users.
 if [[ $USER_NAME == "saggese" ]]; then
-  if [[ 1 == 1 ]]; then
+  if [[ $SERVER_NAME == "gpmac.lan" ]]; then
     # TODO: It should be function of current dir.
     IP_NAME="localhost"
     if [[ $DIR_NAME == "/Users/gp/src/git_particleone" ]]; then
@@ -49,5 +49,4 @@ else
 fi;
 
 echo "You can connect to: $IP_NAME:$PORT"
-
 jupyter notebook '--ip=*' --browser chrome . --port $PORT

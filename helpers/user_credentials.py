@@ -26,7 +26,7 @@ def get_credentials():
     git_user_email = None
     conda_sh_path = None
     conda_env_path = None
-    if user_name in ("saggese", "gp"):
+    if user_name == "saggese":
         # GP.
         git_user_name = "saggese"
         git_user_email = "saggese@gmail.com"
@@ -38,7 +38,7 @@ def get_credentials():
             conda_env_path = "/data/saggese/.conda/envs"
         elif server_name == "twitter-data":
             conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/gp/.conda/envs"
+            conda_env_path = "/home/saggese/.conda/envs"
     elif user_name == "paul":
         # Paul.
         git_user_name = "paul"
