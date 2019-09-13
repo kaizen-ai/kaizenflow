@@ -4,11 +4,11 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pywt
 import scipy as sp
 import statsmodels.api as sm
 
 import helpers.dbg as dbg
-import pywt
 
 _LOG = logging.getLogger(__name__)
 
@@ -410,9 +410,7 @@ def smooth_moving_average(df, tau, min_periods=0, min_depth=1, max_depth=1):
 # #############################################################################
 
 
-def rolling_moment(
-    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
-):
+def rolling_moment(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     return smooth_moving_average(
         np.abs(df) ** p_moment, tau, min_periods, min_depth, max_depth
     )
@@ -519,7 +517,7 @@ def rolling_kurtosis(
 
 
 def rolling_sharpe_ratio(
-        df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
+    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
 ):
     """
     Sharpe ratio using smooth_moving_average and rolling_std.
@@ -563,7 +561,7 @@ def rolling_corr(
         srs2_adj = srs2
 
     smooth_prod = smooth_moving_average(
-        srs1_adj * srs2_adj, tau, min_periods, max_depth
+        srs1_adj.multiply(srs2_adj), tau, min_periods, max_depth
     )
     srs1_std = rolling_norm(
         srs1_adj, tau, min_periods, min_depth, max_depth, p_moment
@@ -603,7 +601,9 @@ def rolling_zcorr(
         z_srs2 = srs2 / rolling_norm(
             srs2, tau, min_periods, min_depth, max_depth, p_moment
         )
-    return smooth_moving_average(z_srs1 * z_srs2, tau, min_depth, max_depth)
+    return smooth_moving_average(
+        z_srs1.multiply(z_srs2), tau, min_depth, max_depth
+    )
 
 
 # #############################################################################

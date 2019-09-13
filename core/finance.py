@@ -203,6 +203,8 @@ def annualize_sharpe_ratio(df):
 def compute_sr(rets):
     """
     See also rolling_sharpe_ratio in signal_processing.py
+
+    We can also use tools in bayesian.py for a more comprehensive assessment.
     """
     # Annualize (brutally).
     # sr = rets.mean() / rets.std()
@@ -231,3 +233,12 @@ def compute_kratio(rets, y_var):
         daily_rets["kratio"] = model.predict(x)
         daily_rets.plot()
     return kratio
+
+
+def max_drawdowns(log_rets):
+    # Keep track of maximum drawdown ending at index location i + 1
+    sums = log_rets.dropna()
+    for i in range(sums.shape[0] - 1):
+        if sums.iloc[i] <= 0:
+            sums.iloc[i + 1] += sums.iloc[i]
+    return sums
