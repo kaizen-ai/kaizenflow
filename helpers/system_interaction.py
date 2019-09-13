@@ -10,6 +10,7 @@ import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
+import time
 
 def _system(
     cmd,
@@ -77,7 +78,7 @@ def _system(
         )
         output = ""
         if blocking:
-            # Blocking.
+            # Blocking call: get the output.
             while True:
                 line = p.stdout.readline().decode("utf-8")
                 if not line:
@@ -89,7 +90,21 @@ def _system(
             rc = p.wait()
         else:
             # Not blocking.
-            rc = 0
+            # Wait until process terminates (without using p.wait()).
+            max_cnt = 20
+            cnt = 0
+            while p.poll() is None:
+                # Process hasn't exited yet, let's wait some time.
+                time.sleep(0.1)
+                cnt += 1
+                _LOG.debug("cnt=%s, rc=%s", cnt, p.returncode)
+                if cnt > max_cnt:
+                    break
+            if cnt > max_cnt:
+                # Timeout: we assume it worked.
+                rc = 0
+            else:
+                rc = p.returncode
         if suppress_error is not None:
             dbg.dassert_isinstance(suppress_error, set)
             if rc in suppress_error:

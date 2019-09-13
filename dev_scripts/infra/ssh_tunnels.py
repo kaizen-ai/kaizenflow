@@ -40,9 +40,6 @@ MAPPING = {
 
 DEFAULT_PORTS = sorted(MAPPING.keys())
 
-# Users
-
-
 # ##############################################################################
 
 
@@ -63,25 +60,6 @@ def _get_tunnel_info(user_name):
 
 
 # ##############################################################################
-
-
-def _create_tunnel(server_name, port, user_name, key_path):
-    """
-    Create tunnel from localhost to 'server' for the given `port` and
-    `user_name`.
-    """
-    key_path = os.path.expanduser(key_path)
-    _LOG.debug("key_path=%s", key_path)
-    dbg.dassert_exists(key_path)
-    #
-    cmd = (
-        "ssh -i {key_path} -f -nNT -L {port}:localhost:{port}"
-        + "{user_name}@{server}"
-    )
-    cmd = cmd.format(
-        user_name=user_name, key_path=key_path, port=port, server=server_name
-    )
-    si.system(cmd, blocking=False)
 
 
 def _parse_ps_output(cmd):
@@ -119,6 +97,29 @@ def _get_ssh_tunnel_process(port):
         _LOG.debug("Expect a single process, instead got:\n%s", txt)
     _LOG.debug("pids=%s", pids)
     return pids
+
+# ##############################################################################
+
+def _create_tunnel(server_name, port, user_name, key_path):
+    """
+    Create tunnel from localhost to 'server' for the given `port` and
+    `user_name`.
+    """
+    key_path = os.path.expanduser(key_path)
+    _LOG.debug("key_path=%s", key_path)
+    dbg.dassert_exists(key_path)
+    #
+    cmd = (
+            "ssh -i {key_path} -f -nNT -L {port}:localhost:{port}"
+            + " {user_name}@{server}"
+    )
+    cmd = cmd.format(
+        user_name=user_name, key_path=key_path, port=port, server=server_name
+    )
+    si.system(cmd, blocking=False)
+    # Check that the tunnel is up and running.
+    pids = _get_ssh_tunnel_process(port)
+    dbg.dassert_lte(1, len(pids))
 
 
 def _kill_ssh_tunnel_process(port):
