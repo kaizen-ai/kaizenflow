@@ -49,7 +49,7 @@ def _main():
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
     #
-    git_root = git.get_client_root()
+    git_root = git.get_client_root(super_module=True)
     _LOG.info("git_root=%s", git_root)
     target_dir = git_root + "/.git/hooks"
     _LOG.info("target_dir=%s", target_dir)

@@ -140,7 +140,7 @@ def _main(args):
     dbg.dassert_lte(1, len(file_names))
     #
     # TODO(gp): Use get_path_from_git_root().
-    git_client_root = git.get_client_root()
+    git_client_root = git.get_client_root(super_module=True)
     _LOG.info("git_client_root=%s", git_client_root)
     client_root = os.getcwd()
     _LOG.info("client_root=%s", client_root)

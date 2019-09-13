@@ -14,93 +14,6 @@ _LOG = logging.getLogger(__name__)
 # to make reference to git again.
 
 
-def is_inside_submodule():
-    """
-    Return whether we are inside a Git submodule or in a Git supermodule.
-    """
-    cmd = (
-        'cd "$(git rev-parse --show-toplevel)/.." && '
-        "(git rev-parse --is-inside-work-tree | grep -q true)"
-    )
-    rc = si.system(cmd, abort_on_error=False)
-    ret = rc == 0
-    return ret
-
-
-def get_client_root(super_module=True):
-    """
-    Return the full path of the root of the Git client.
-
-    :param super_module: if True use the root of the Git supermodule, if we are
-        in a submodule, otherwise use the Git submodule root
-
-    E.g., "/Users/saggese/src/.../amp"
-    """
-    if super_module and is_inside_submodule():
-        # https://stackoverflow.com/questions/957928
-        cmd = "git rev-parse --show-superproject-working-tree"
-    else:
-        cmd = "git rev-parse --show-toplevel"
-    _, out = si.system_to_string(cmd)
-    out = out.rstrip("\n")
-    dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
-    client_root = os.path.realpath(out)
-    return client_root
-
-
-def get_path_from_git_root(file_name, super_module=True):
-    """
-    Get the git path from the root of the tree.
-    """
-    git_root = get_client_root(super_module=super_module) + "/"
-    abs_path = os.path.abspath(file_name)
-    dbg.dassert(abs_path.startswith(git_root))
-    end_idx = len(git_root)
-    ret = abs_path[end_idx:]
-    # cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
-    # _, git_file_name = si.system_to_string(cmd)
-    # dbg.dassert_ne(git_file_name, "")
-    return ret
-
-
-def _check_files(files):
-    files_tmp = []
-    for f in files:
-        if os.path.exists(f):
-            files_tmp.append(f)
-        else:
-            _LOG.warning("'%s' doesn't exist", f)
-    return files_tmp
-
-
-def get_modified_files():
-    """
-    Equivalent to dev_scripts/git_files.sh
-    """
-    cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
-    _, files = si.system_to_string(cmd)
-    files = files.split()
-    files = _check_files(files)
-    return files
-
-
-def get_previous_committed_files(num_commits=1, uniquify=True):
-    """
-    Equivalent to dev_scripts/git_previous_commit_files.sh
-    """
-    cmd = (
-        'git show --pretty="" --name-only'
-        + " $(git log --author $(git config user.name) -%d " % num_commits
-        + r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')"""
-    )
-    _, files = si.system_to_string(cmd)
-    files = files.split()
-    if uniquify:
-        files = sorted(list(set(files)))
-    files = _check_files(files)
-    return files
-
-
 # TODO(gp): -> get_user_name()
 def get_git_name():
     """
@@ -114,11 +27,49 @@ def get_git_name():
     return git_name
 
 
-def get_repo_symbolic_name():
+def is_inside_submodule():
     """
-    Return the name of the repo like "alphamatic/amp".
+    Return whether we are inside a Git submodule or in a Git supermodule.
     """
-    cmd = "git remote -v | grep fetch"
+    cmd = (
+        'cd "$(git rev-parse --show-toplevel)/.." && '
+        "(git rev-parse --is-inside-work-tree | grep -q true)"
+    )
+    rc = si.system(cmd, abort_on_error=False)
+    ret = rc == 0
+    return ret
+
+
+def get_client_root(super_module):
+    """
+    Return the full path of the root of the Git client.
+    E.g., "/Users/saggese/src/.../amp"
+
+    :param super_module: if True use the root of the Git supermodule, if we are
+        in a submodule, otherwise use the Git submodule root
+    """
+    if super_module and is_inside_submodule():
+        # https://stackoverflow.com/questions/957928
+        cmd = "git rev-parse --show-superproject-working-tree"
+    else:
+        cmd = "git rev-parse --show-toplevel"
+    _, out = si.system_to_string(cmd)
+    out = out.rstrip("\n")
+    dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
+    client_root = os.path.realpath(out)
+    return client_root
+
+
+def get_repo_symbolic_name(super_module):
+    """
+    Return the name of the remote repo. E.g., "alphamatic/amp".
+
+    :param super_module: like get_client_root()
+    """
+    # Get the git remote in the git_module.
+    git_dir = get_client_root(super_module)
+    dbg.dassert_exists(git_dir)
+    cmd = "cd %s; (git remote -v | grep fetch)" % git_dir
     # TODO(gp): Make it more robust, by checking both fetch and push.
     # "origin  git@github.com:alphamatic/amp (fetch)"
     _, output = si.system_to_string(cmd)
@@ -140,6 +91,84 @@ def get_repo_symbolic_name():
         repo_name = repo_name[: -len(suffix_to_remove)]
     return repo_name
 
+
+def get_path_from_git_root(file_name, super_module):
+    """
+    Get the git path from the root of the tree.
+
+    :param super_module: like get_client_root()
+    """
+    git_root = get_client_root(super_module) + "/"
+    abs_path = os.path.abspath(file_name)
+    dbg.dassert(abs_path.startswith(git_root))
+    end_idx = len(git_root)
+    ret = abs_path[end_idx:]
+    # cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
+    # _, git_file_name = si.system_to_string(cmd)
+    # dbg.dassert_ne(git_file_name, "")
+    return ret
+
+# ##############################################################################
+
+def _check_files(files):
+    files_tmp = []
+    for f in files:
+        if os.path.exists(f):
+            files_tmp.append(f)
+        else:
+            _LOG.warning("'%s' doesn't exist", f)
+    return files_tmp
+
+
+def get_modified_files():
+    """
+    Return the list of files that are added and modified. In other words the
+    files that will be committed with a `git commit -am ...`.
+
+    Equivalent to dev_scripts/git_files.sh
+    """
+    # If the client status is:
+    #   > git status -s
+    #   AM dev_scripts/infra/ssh_tunnels.py
+    #   M helpers/git.py
+    #   ?? linter_warnings.txt
+    #
+    # The result is:
+    #   > git diff --cached --name-only
+    #   dev_scripts/infra/ssh_tunnels.py
+    #
+    #   > git ls-files -m
+    #   dev_scripts/infra/ssh_tunnels.py
+    #   helpers/git.py
+    cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
+    _, files = si.system_to_string(cmd)
+    files = files.split()
+    files = _check_files(files)
+    return files
+
+
+# TODO(gp): Remove uniquify if not needed.
+def get_previous_committed_files(num_commits=1, uniquify=True):
+    """
+    Return the list of files changed by the current git user in the last
+    `num_commits` commits.
+
+    Equivalent to dev_scripts/git_previous_commit_files.sh
+    """
+    cmd = []
+    cmd.append('git show --pretty="" --name-only')
+    cmd.append("$(git log --author $(git config user.name) -%d" % num_commits)
+    cmd.append(r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
+    cmd = " ".join(cmd)
+    _, files = si.system_to_string(cmd)
+    #
+    files = files.split()
+    if uniquify:
+        files = sorted(list(set(files)))
+    files = _check_files(files)
+    return files
+
+# ##############################################################################
 
 def git_stash_push(prefix=None, msg=None, log_level=logging.DEBUG):
     user_name = si.get_user_name()

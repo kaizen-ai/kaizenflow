@@ -134,7 +134,7 @@ def _main(parser):
     else:
         print("\n" + root)
     #
-    file_name = git.get_client_root() + "/" + root
+    file_name = git.get_client_root(super_module=True) + "/" + root
     if args.verbose:
         print("\n# abs file_name\n%s" % file_name)
     else:

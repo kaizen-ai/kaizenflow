@@ -18,43 +18,46 @@ class Test_git1(ut.TestCase):
     least in that set-up.
     """
 
-    def _helper(self, func_name):
-        func = eval("git.%s" % func_name)
-        act = func()
-        _LOG.debug("%s()=%s", func_name, act)
+    def _helper(self, func_call):
+        act = eval(func_call)
+        _LOG.debug("%s=%s", func_call, act)
+
+    def test_get_git_name1(self):
+        func_call = "git.get_repo_symbolic_name(super_module=True)"
+        self._helper(func_call)
 
     def test_is_inside_submodule1(self):
-        func_name = "is_inside_submodule"
-        self._helper(func_name)
+        func_call = "git.is_inside_submodule()"
+        self._helper(func_call)
 
     def test_get_client_root1(self):
-        val = git.get_client_root(super_module=True)
-        _LOG.debug("git.get_client_root(super_module=True)=%s", val)
+        func_call = "git.get_client_root(super_module=True)"
+        self._helper(func_call)
 
     def test_get_client_root2(self):
-        val = git.get_client_root(super_module=False)
-        _LOG.debug("git.get_client_root(super_module=False)=%s", val)
+        func_call = "git.get_client_root(super_module=False)"
+        self._helper(func_call)
 
     def test_get_path_from_git_root1(self):
         file_name = "helpers/test/test_helpers.py"
         act = git.get_path_from_git_root(file_name, super_module=False)
         _LOG.debug("get_path_from_git_root()=%s", act)
 
+    def test_get_repo_symbolic_name1(self):
+        func_call = "git.get_repo_symbolic_name(super_module=True)"
+        self._helper(func_call)
+
+    def test_get_repo_symbolic_name2(self):
+        func_call = "git.get_repo_symbolic_name(super_module=False)"
+        self._helper(func_call)
+
     def test_get_modified_files1(self):
-        func_name = "get_modified_files"
-        self._helper(func_name)
+        func_call = "git.get_modified_files()"
+        self._helper(func_call)
 
     def test_get_previous_committed_files1(self):
-        func_name = "get_previous_committed_files"
-        self._helper(func_name)
-
-    def test_get_git_name1(self):
-        func_name = "get_repo_symbolic_name"
-        self._helper(func_name)
-
-    def test_get_repo_symbolic_name1(self):
-        func_name = "get_repo_symbolic_name"
-        self._helper(func_name)
+        func_call = "git.get_previous_committed_files()"
+        self._helper(func_call)
 
 
 # #############################################################################

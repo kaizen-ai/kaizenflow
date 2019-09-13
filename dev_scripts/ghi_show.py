@@ -60,7 +60,7 @@ def _main(parser):
     _, txt = si.system_to_string(cmd, abort_on_error=False)
     print(txt)
     # Print url.
-    git_repo_name = git.get_repo_symbolic_name()
+    git_repo_name = git.get_repo_symbolic_name(super_module=True)
     url_name = "https://github.com/%s/issues/%d" % (git_repo_name, issue_num)
     print(url_name)
     # github doesn't let ping this url.

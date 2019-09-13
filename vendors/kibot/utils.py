@@ -16,7 +16,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 # TODO(gp): This should be general to the entire codebase.
-_MEM_FILE_NAME = os.path.abspath(git.get_client_root() + "/tmp.joblib.cache")
+_MEM_FILE_NAME = os.path.abspath(git.get_client_root(super_module=True) + "/tmp.joblib.cache")
 MEMORY = Memory(_MEM_FILE_NAME, verbose=0, compress=1)
 
 
@@ -90,7 +90,7 @@ def read_multiple_symbol_data(symbols, file_name_template, nrows=None):
 # #############################################################################
 
 # TODO(gp): Wrap it into a function.
-KIBOT_DIRNAME = git.get_client_root() + "/vendors/kibot/data/kibot_metadata"
+KIBOT_DIRNAME = git.get_client_root(super_module=True) + "/vendors/kibot/data/kibot_metadata"
 
 
 # TODO(gp): I don't have a clear understanding of what the metadata means and

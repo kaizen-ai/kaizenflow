@@ -57,7 +57,7 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
     ans = input("Resolved? [y/n] ")
     if ans.rstrip(" ").lstrip(" ") in ("y", "yes"):
         # Make a backup.
-        root_dir = git.get_client_root()
+        root_dir = git.get_client_root(super_module=True)
         client_file_name = "%s/%s" % (root_dir, file_name)
         cmd = "cp %s %s.bak" % (client_file_name, client_file_name)
         si.system(cmd)
