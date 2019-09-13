@@ -451,7 +451,15 @@ def _black(file_name, pedantic, check_if_possible):
         return []
     opts = "--line-length 82"
     cmd = executable + " %s %s" % (opts, file_name)
-    return _tee(cmd, executable, abort_on_error=False)
+    output = _tee(cmd, executable, abort_on_error=False)
+    # All done!
+    # 1 file left unchanged. [black]
+    output = [
+        l
+        for l in output
+        if ("All done!" not in l) and ("file left unchanged" not in l)
+    ]
+    return output
 
 
 def _isort(file_name, pedantic, check_if_possible):
@@ -831,9 +839,9 @@ def _run_linter(actions, args, file_names):
     )
     pedantic = args.pedantic
     num_threads = args.num_threads
-    if (len(file_names) == 1 and
-        # Unless the user specified a num_threads.
-        not (num_threads != -1)):
+    # Use serial mode if there is a single file, unless the user specified
+    # explicitly the numer of threads to use.
+    if len(file_names) == 1 and not (num_threads == -1):
         num_threads = "serial"
         _LOG.warning(
             "Using num_threads='%s' since there is a single file", num_threads

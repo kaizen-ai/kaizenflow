@@ -229,7 +229,7 @@ def _main(parser):
     # Test packages.
     #
     _frame("Test packages")
-    script = os.path.join(exec_path, "install/test_develop_packages.py")
+    script = os.path.join(exec_path, "install/check_develop_packages.py")
     script = os.path.abspath(script)
     dbg.dassert_exists(script)
     txt.append(script)

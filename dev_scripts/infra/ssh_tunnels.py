@@ -19,18 +19,18 @@ import os
 import signal
 
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.system_interaction as si
-import infra.ssh_config as ssh_cfg
 
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
-# Servers
+# Servers.
 DEV_SERVER = "104.248.187.204"
 DB_SERVER = ""
 
-# Server ports
+# Server ports.
 MAPPING = {
     # "JENKINS": ("Continuous integration", DEV_SERVER, 8111),
     # "REVIEWBOARD": ("Code review", DEV_SERVER, 8080),
@@ -41,48 +41,47 @@ MAPPING = {
 DEFAULT_PORTS = sorted(MAPPING.keys())
 
 # Users
-_DEFAULT_RSA_KEY = "~/.ssh/id_rsa"
+
 
 # ##############################################################################
 
 
-def _create_tunnel(server, port, user_name):
-    _LOG.debug("server=%s port=%s user_name=%s", server, port, user_name)
-    dbg.dassert_in(user_name, ssh_cfg.USERS)
-    key_path = ssh_cfg.USERS[user_name]["key_path"]
-    key_path = os.path.expanduser(key_path)
-    _LOG.debug("key_path=%s", key_path)
-    dbg.dassert_exists(key_path)
-    cmd = (
-        "ssh -i {key_path} -f -nNT -L {port}:localhost:{port} {user_name}@"
-        + server
-    )
-    cmd = cmd.format(user_name=user_name, key_path=key_path, port=port)
-    si.system(cmd, blocking=False)
-
-
-# def _get_tunnel_info(user_name):
-#     """
-#     Return the list of services for a user. Each service is represented
-#     as a triple (symbolic name, IP, port).
-#     """
-#     info = [ssh_cfg.MAPPING[n] for n in ssh_cfg.DEFAULT_PORTS]
-#     info.extend(ssh_cfg.USERS[user_name]['ports'])
-#     return info
-
-
 def _get_tunnel_info(user_name):
+    key_path = "~/.ssh/id_rsa"
     server_name = si.get_server_name()
     git_repo_name = git.get_repo_symbolic_name(super_module=True)
     info = None
     if user_name in ("gp", "saggese"):
-        if server_name == "":
-            info = [
-                ("Jupyter1", DEV_SERVER, 10001),
-                ("Mongodb", DEV_SERVER, 27017),
-            ]
+        if git_repo_name == "ParticleDev/commodity_research":
+            if server_name.startswith("gpmac."):
+                info = [
+                    ("Jupyter1", DEV_SERVER, 10001),
+                    ("Mongodb", DEV_SERVER, 27017),
+                ]
     dbg.dassert_is_not(info, None)
-    return info
+    return info, key_path
+
+
+# ##############################################################################
+
+
+def _create_tunnel(server_name, port, user_name, key_path):
+    """
+    Create tunnel from localhost to 'server' for the given `port` and
+    `user_name`.
+    """
+    key_path = os.path.expanduser(key_path)
+    _LOG.debug("key_path=%s", key_path)
+    dbg.dassert_exists(key_path)
+    #
+    cmd = (
+        "ssh -i {key_path} -f -nNT -L {port}:localhost:{port}"
+        + "{user_name}@{server}"
+    )
+    cmd = cmd.format(
+        user_name=user_name, key_path=key_path, port=port, server=server_name
+    )
+    si.system(cmd, blocking=False)
 
 
 def _parse_ps_output(cmd):
@@ -94,7 +93,8 @@ def _parse_ps_output(cmd):
             _LOG.debug("line=%s", line)
             # pylint: disable=C0301
             # > ps ax | grep 'ssh -i' | grep localhost
-            # 19417   ??  Ss     0:00.39 ssh -i /Users/gp/.ssh/id_rsa -f -nNT -L 19999:localhost:19999 gp@54.172.40.4
+            # 19417   ??  Ss     0:00.39 ssh -i /Users/gp/.ssh/id_rsa -f -nNT \
+            #           -L 19999:localhost:19999 gp@54.172.40.4
             fields = line.split()
             try:
                 pid = int(fields[0])
@@ -107,6 +107,9 @@ def _parse_ps_output(cmd):
 
 
 def _get_ssh_tunnel_process(port):
+    """
+    Return the pids of the processes attached to a given port.
+    """
     _LOG.debug("port=%s", port)
     cmd = "ps ax | grep 'ssh -i' | grep localhost:{port} | grep -v grep".format(
         port=port
@@ -119,6 +122,9 @@ def _get_ssh_tunnel_process(port):
 
 
 def _kill_ssh_tunnel_process(port):
+    """
+    Kill all the processes attached to a given port.
+    """
     pids = _get_ssh_tunnel_process(port)
     for pid in pids:
         os.kill(pid, signal.SIGKILL)
@@ -128,33 +134,44 @@ def _kill_ssh_tunnel_process(port):
 
 
 def _start_tunnels(user_name):
+    """
+    Start all the tunnels for the given user.
+    """
     _LOG.debug("user_name=%s", user_name)
-    info = _get_tunnel_info(user_name)
-    for sym_name, server, port in info:
+    # Get tunnel info.
+    info, key_path = _get_tunnel_info(user_name)
+    _LOG.info("info=%s", info)
+    for service_name, server, port in info:
         pids = _get_ssh_tunnel_process(port)
         if not pids:
             _LOG.info(
                 "Starting tunnel for service '%s' server=%s port=%s",
-                sym_name,
+                service_name,
                 server,
                 port,
             )
-            _create_tunnel(server, port, user_name)
+            _create_tunnel(server, port, user_name, key_path)
         else:
             _LOG.warning(
                 "Tunnel for service '%s' on port %s already exist: skipping",
-                sym_name,
+                service_name,
                 port,
             )
 
 
 def _stop_tunnels(user_name):
+    """
+    Stop all the tunnels for the given user.
+    """
     _LOG.debug("user_name=%s", user_name)
-    info = _get_tunnel_info(user_name)
-    for sym_name, server, port in info:
+    # Get the tunnel info.
+    info, _ = _get_tunnel_info(user_name)
+    _LOG.info("info=%s", info)
+    #
+    for service_name, server, port in info:
         _LOG.info(
             "Stopping tunnel for service '%s' server=%s port=%s",
-            sym_name,
+            service_name,
             server,
             port,
         )
@@ -162,16 +179,22 @@ def _stop_tunnels(user_name):
 
 
 def _check_tunnels(user_name):
+    """
+    Check the status of the tunnels for the given user.
+    """
     _LOG.info("user_name=%s", user_name)
-    info = _get_tunnel_info(user_name)
-    for sym_name, server, port in info:
+    # Get the tunnel info.
+    info, _ = _get_tunnel_info(user_name)
+    _LOG.info("info=%s", info)
+    #
+    for service_name, server, port in info:
         pids = _get_ssh_tunnel_process(port)
         if pids:
             msg = "exists with pid=%s" % pids
         else:
             msg = "doesn't exist"
         _LOG.info(
-            "Service='%s' server=%s port=%s %s", sym_name, server, port, msg
+            "service='%s' server=%s port=%s %s", service_name, server, port, msg
         )
 
 
