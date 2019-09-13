@@ -24,7 +24,7 @@ def _main():
         "--conda_env_name", help="Environment name", default="develop", type=str
     )
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verb=args.log_level)
     msg = env.save_env_file(args.conda_env_name, dir_name=None)
     print(msg)
 

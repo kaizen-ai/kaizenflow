@@ -110,6 +110,8 @@ def save_env_file(conda_env_name, dir_name):
         io_.create_enclosing_dir(dst_file, incremental=True)
         _LOG.info("Saving conda env signature to '%s'", dst_file)
         io_.to_file(dst_file, msg)
+    else:
+        dst_file = None
     return msg, dst_file
 
 
