@@ -192,7 +192,7 @@ def _get_files(args):
             file_names = git.get_previous_committed_files(n_commits)
         elif args.dir_name:
             if args.dir_name == "GIT_ROOT":
-                dir_name = git.get_client_root()
+                dir_name = git.get_client_root(super_module=True)
             else:
                 dir_name = args.dir_name
             dir_name = os.path.abspath(dir_name)
@@ -385,12 +385,16 @@ def _python_compile(file_name, pedantic, check_if_possible):
     if check_if_possible:
         return True
     #
+    output = []
     dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    py_compile.compile(file_name, doraise=True)
-    return []
+        return output
+    try:
+        py_compile.compile(file_name, doraise=True)
+    except Exception as e:
+        output.append(str(e))
+    return output
 
 
 def _autoflake(file_name, pedantic, check_if_possible):
@@ -409,8 +413,7 @@ def _autoflake(file_name, pedantic, check_if_possible):
         return []
     opts = "-i --remove-all-unused-imports --remove-unused-variables"
     cmd = executable + " %s %s" % (opts, file_name)
-    _system(cmd, abort_on_error=True)
-    return []
+    return _tee(cmd, executable, abort_on_error=False)
 
 
 def _yapf(file_name, pedantic, check_if_possible):
@@ -429,8 +432,7 @@ def _yapf(file_name, pedantic, check_if_possible):
         return []
     opts = "-i --style='google'"
     cmd = executable + " %s %s" % (opts, file_name)
-    _system(cmd, abort_on_error=True)
-    return []
+    return _tee(cmd, executable, abort_on_error=False)
 
 
 def _black(file_name, pedantic, check_if_possible):
@@ -449,8 +451,7 @@ def _black(file_name, pedantic, check_if_possible):
         return []
     opts = "--line-length 82"
     cmd = executable + " %s %s" % (opts, file_name)
-    _system(cmd, abort_on_error=True)
-    return []
+    return _tee(cmd, executable, abort_on_error=False)
 
 
 def _isort(file_name, pedantic, check_if_possible):
@@ -468,8 +469,7 @@ def _isort(file_name, pedantic, check_if_possible):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
     cmd = executable + " %s" % file_name
-    _system(cmd, abort_on_error=True)
-    return []
+    return _tee(cmd, executable, abort_on_error=False)
 
 
 def _flake8(file_name, pedantic, check_if_possible):
@@ -831,7 +831,9 @@ def _run_linter(actions, args, file_names):
     )
     pedantic = args.pedantic
     num_threads = args.num_threads
-    if len(file_names) == 1:
+    if (len(file_names) == 1 and
+        # Unless the user specified a num_threads.
+        not (num_threads != -1)):
         num_threads = "serial"
         _LOG.warning(
             "Using num_threads='%s' since there is a single file", num_threads
