@@ -195,6 +195,10 @@ def show_distribution_by(by, ascending=False):
 # #############################################################################
 
 
+def log_rets_to_rets(df):
+    return np.exp(df) - 1
+
+
 def annualize_sharpe_ratio(df):
     df_tmp = df.resample("1D").sum()
     return df_tmp.mean() / df_tmp.std() * np.sqrt(252)
@@ -235,10 +239,29 @@ def compute_kratio(rets, y_var):
     return kratio
 
 
-def max_drawdowns(log_rets):
+def drawdown(log_rets):
+    """
+    Define the drawdown at index location j to be
+        d_j := max_{0 \leq i \leq j} \log(p_i / p_j)
+    where p_k is price. Though this definition is in terms of prices, we
+    calculate the drawdown series using log returns.
+
+    Using this definition, drawdown is always nonnegative.
+
+    :param log_rets: log returns
+    :return: drawdown time series
+    """
     # Keep track of maximum drawdown ending at index location i + 1
     sums = log_rets.dropna()
     for i in range(sums.shape[0] - 1):
         if sums.iloc[i] <= 0:
             sums.iloc[i + 1] += sums.iloc[i]
-    return sums
+    # Correction for case where max occurs at i == j.
+    sums[sums > 0] = 0
+    # Sign normalization
+    return -sums
+
+
+def max_perc_loss_from_high_water_mark(log_rets):
+    dd = drawdown(log_rets)
+    return 1 - np.exp(-dd)
