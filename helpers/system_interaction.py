@@ -2,15 +2,51 @@
 
 import logging
 import os
+import signal
 import subprocess
 import sys
 import time
+
+import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
+
+# ##############################################################################
+
+
+def get_user_name():
+    import getpass
+
+    res = getpass.getuser()
+    return res
+
+
+def get_server_name():
+    res = os.uname()
+    # posix.uname_result(
+    #   sysname='Darwin',
+    #   nodename='gpmac.lan',
+    #   release='18.2.0',
+    #   version='Darwin Kernel Version 18.2.0: Mon Nov 12 20:24:46 PST 2018;
+    #       root:xnu-4903.231.4~2/RELEASE_X86_64',
+    #   machine='x86_64')
+    # This is not compatible with python2.7
+    # return res.nodename
+    return res[1]
+
+
+def get_os_name():
+    res = os.uname()
+    # This is not compatible with python2.7
+    # return res.sysname
+    return res[0]
+
+
+# ##############################################################################
 
 # pylint: disable=R0912, R0913, R0914, R0915
 # [R0912(too-many-branches), _system] Too many branches
@@ -42,7 +78,7 @@ def _system(
     :param tee: if True, tee stdout and stderr to output_file
     :param dry_run: just print the final command but not execute it
     :param log_level: print the command to execute at level "log_level". If
-        it is equal to "echo" then just print to screen.
+        it is equal to "echo" then just print the command line to screen.
     :return: return code (int), output of the command (str)
     """
     orig_cmd = cmd[:]
@@ -203,60 +239,32 @@ def system_to_string(
 # ##############################################################################
 
 
-# TODO(gp): Maybe move to helpers.env or merge helpers.env back here?
-def get_user_name():
-    import getpass
-
-    res = getpass.getuser()
-    return res
-
-
-def get_server_name():
-    res = os.uname()
-    # posix.uname_result(
-    #   sysname='Darwin',
-    #   nodename='gpmac.lan',
-    #   release='18.2.0',
-    #   version='Darwin Kernel Version 18.2.0: Mon Nov 12 20:24:46 PST 2018;
-    #       root:xnu-4903.231.4~2/RELEASE_X86_64',
-    #   machine='x86_64')
-    # This is not compatible with python2.7
-    # return res.nodename
-    return res[1]
-
-
-def get_os_name():
-    res = os.uname()
-    # This is not compatible with python2.7
-    # return res.sysname
-    return res[0]
-
-
-# ##############################################################################
-
-
 def get_process_pids(keep_line):
     """
     Find all the processes corresponding to `ps ax` filtered line by line with
     `keep_line()`.
+
+    :return: list of pids and filtered output of `ps ax`
     """
     cmd = "ps ax"
     rc, txt = system_to_string(cmd, abort_on_error=False)
     _LOG.debug("txt=\n%s", txt)
     pids = []
+    txt_out = []
     if rc == 0:
         for line in txt.split("\n"):
             _LOG.debug("line=%s", line)
             # PID   TT  STAT      TIME COMMAND
             if "PID" in line and "TT" in line and "STAT" in line:
+                txt_out.append(line)
                 continue
-            # > ps ax | grep 'ssh -i' | grep localhost
-            # 19417   ??  Ss     0:00.39 ssh -i /Users/gp/.ssh/id_rsa -f -nNT \
-            #           -L 19999:localhost:19999 gp@54.172.40.4
             keep = keep_line(line)
             _LOG.debug("  keep=%s", keep)
             if not keep:
                 continue
+            # > ps ax | grep 'ssh -i' | grep localhost
+            # 19417   ??  Ss     0:00.39 ssh -i /Users/gp/.ssh/id_rsa -f -nNT \
+            #           -L 19999:localhost:19999 gp@54.172.40.4
             fields = line.split()
             try:
                 pid = int(fields[0])
@@ -265,7 +273,36 @@ def get_process_pids(keep_line):
                 raise e
             _LOG.debug("pid=%s", pid)
             pids.append(pid)
-    return pids, txt
+            txt_out.append(line)
+    return pids, txt_out
+
+
+def kill_process(get_pids, timeout_in_secs=5, polltime_in_secs=0.1):
+    """
+    Kill all the processes returned by the function `get_pids()`.
+
+    :param timeout_in_secs: how many seconds to wait at most before giving up
+    :param polltime_in_secs: how often to check for dead processes
+    """
+    pids, txt = get_pids()
+    _LOG.info("Killing %d pids (%s)\n%s", len(pids), pids, "\n".join(txt))
+    if not pids:
+        return
+    for pid in pids:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError as e:
+            _LOG.warning(str(e))
+    #
+    _LOG.info("Waiting %d processes (%s) to die", len(pids), pids)
+    for _ in tqdm.tqdm(range(int(timeout_in_secs / polltime_in_secs))):
+        time.sleep(polltime_in_secs)
+        pids, _ = get_pids()
+        if not pids:
+            break
+    pids, txt = get_pids()
+    dbg.dassert_eq(len(pids), 0, "Processes are still alive:%s", "\n".join(txt))
+    _LOG.info("Processes dead")
 
 
 # ##############################################################################

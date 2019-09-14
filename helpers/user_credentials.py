@@ -56,7 +56,7 @@ def get_credentials():
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
                 tunnel_info = [
-                    ("Jupyter1", DEV_SERVER, 10001),
+                    ("Jupyter1", DEV_SERVER, 10002),
                     ("Mongodb", DEV_SERVER, 27017),
                 ]
                 jupyter_port = 10001
@@ -67,6 +67,8 @@ def get_credentials():
         elif server_name.startswith("ip-"):
             conda_sh_path = "/data/root/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/data/saggese/.conda/envs"
+            if git_repo_name == "ParticleDev/commodity_research":
+                jupyter_port = 10002
         elif server_name == "twitter-data":
             conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/saggese/.conda/envs"

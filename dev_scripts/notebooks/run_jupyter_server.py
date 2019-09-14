@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
 """
-Start a jupyter process.
+Start a jupyter server.
+
+# Start a jupyter server killing the existing one:
+> run_jupyter_server.py force_start
 """
 
 import argparse
 import logging
-import os
-import signal
-import sys
-import time
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -25,6 +24,7 @@ def _get_port_process(port):
     Find the pids of the jupyter servers connected to a certain port.
     """
 
+    # 'grep "jupyter-notebook" | grep "\-port" | grep %d' % port
     def _keep_line(port, line):
         keep = (
             ("jupyter-notebook" in line)
@@ -34,39 +34,67 @@ def _get_port_process(port):
         return keep
 
     keep_line = lambda line: _keep_line(port, line)
-    # filter_cmd = 'grep "jupyter-notebook" | grep "\-port" | grep %d' % port
-    pids, _ = si.get_process_pids(keep_line)
+    pids, txt = si.get_process_pids(keep_line)
     _LOG.debug("pids=%s", pids)
-    return pids
+    return pids, txt
 
 
-def _kill_port_process(port):
-    """
-    Kill all the processes attached to a given port.
-    """
-    pids = _get_port_process(port)
-    _LOG.info("Killing pids=%s", pids)
-    for pid in pids:
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError as e:
-            _LOG.warning(str(e))
+def _check(port):
+    pids, txt = _get_port_process(port)
+    _LOG.info("Found %d pids: %s\n%s", len(pids), str(pids), "\n".join(txt))
+
+
+def _kill(port):
+    get_pids = lambda: _get_port_process(port)
+    si.kill_process(get_pids)
+
+
+def _start(port, action):
+    pids, txt = _get_port_process(port)
+    if pids:
+        _LOG.warning(
+            "Found other jupyter notebooks running on the same " "port:\n%s",
+            "\n".join(txt),
+        )
+        if action == "force_start":
+            _kill(port)
+        else:
+            print(
+                "Exiting: re-run with force_start to kill the processes "
+                "squatting the port"
+            )
+            return
+    #
+    ip_name = "localhost"
+    print("You can connect to: %s:%s" % (ip_name, port))
+    cmd = "jupyter notebook '--ip=*' --browser chrome . --port %s" % port
+    si.system(cmd, suppress_output=False, log_level="echo")
+
+
+# ##############################################################################
 
 
 def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    _help = """
+- start: start a notebook if no notebook server is running at the requested port
+- check: print the notebook servers running
+- kill: kill a notebook server squatting the requested port
+- force_start: kill squatting notebook servers and start a new one
+"""
+    parser.add_argument(
+        "positional",
+        nargs=1,
+        choices=["start", "force_start", "check", "kill"],
+        help=_help,
+    )
     parser.add_argument(
         "--port",
         action="store",
         default=None,
         help="Override the " "default port to use",
-    )
-    parser.add_argument(
-        "--kill",
-        action="store_true",
-        help="Kill any jupyter process using the requested port",
     )
     parser.add_argument(
         "-v",
@@ -89,34 +117,18 @@ def _main(parser):
         port = int(args.port)
         _LOG.warning("Overriding port %d with port %d", jupyter_port, port)
         jupyter_port = port
+    _LOG.info("Target port='%d'", jupyter_port)
     #
-    pids = _get_port_process(jupyter_port)
-    if pids:
-        _LOG.warning("Found another jupyter notebook running on the same port")
-        if args.kill:
-            _kill_port_process(jupyter_port)
-            _LOG.info("Waiting processes to die")
-            cnt = 0
-            max_cnt = 10
-            while cnt < max_cnt:
-                time.sleep(0.1)
-                pids = _get_port_process(jupyter_port)
-                cnt += 1
-                if not pids:
-                    break
-            pids = _get_port_process(jupyter_port)
-            dbg.dassert_eq(len(pids), 0)
-        else:
-            print(
-                "Exiting: re-run with --kill to kill the processes squatting "
-                "the port"
-            )
-            sys.exit(-1)
-    #
-    ip_name = "localhost"
-    print("You can connect to: %s:%s" % (ip_name, jupyter_port))
-    cmd = "jupyter notebook '--ip=*' --browser chrome . --port %s" % jupyter_port
-    si.system(cmd, suppress_output=False)
+    action = args.positional[0]
+    _LOG.debug("action=%s", action)
+    if action == "check":
+        _check(jupyter_port)
+    elif action == "kill":
+        _kill(jupyter_port)
+    elif action in ("start", "force_start"):
+        _start(jupyter_port, action)
+    else:
+        dbg.dfatal("Invalid action='%s'" % action)
 
 
 if __name__ == "__main__":

@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 """
 # Start all tunnels
-> ssh_tunnels.py --action start
+> ssh_tunnels.py start
 
 # Stop all service tunnels
-> ssh_tunnels.py --action stop
+> ssh_tunnels.py stop
 
 # Report the status of each service tunnel
-> ssh_tunnels.py --action check
+> ssh_tunnels.py check
 
 # Kill all the ssh tunnels on the machine, for a known service or not.
-> ssh_tunnels.py --action kill
+> ssh_tunnels.py kill
 """
 
 import argparse
 import logging
 import os
-import signal
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -54,7 +53,7 @@ def _get_ssh_tunnel_process(port):
     _LOG.debug("pids=%s", pids)
     if len(pids) > 1:
         _LOG.warning("Expected a single process, instead got:\n%s", txt)
-    return pids
+    return pids, txt
 
 
 # ##############################################################################
@@ -86,9 +85,8 @@ def _kill_ssh_tunnel_process(port):
     """
     Kill all the processes attached to a given port.
     """
-    pids = _get_ssh_tunnel_process(port)
-    for pid in pids:
-        os.kill(pid, signal.SIGKILL)
+    get_pids = lambda: _get_ssh_tunnel_process(port)
+    si.kill_process(get_pids)
 
 
 # ##############################################################################
@@ -103,7 +101,7 @@ def _start_tunnels(user_name):
     tunnel_info, key_path = _get_tunnel_info()
     _LOG.info("tunnel_info=%s", tunnel_info)
     for service_name, server, port in tunnel_info:
-        pids = _get_ssh_tunnel_process(port)
+        pids, _ = _get_ssh_tunnel_process(port)
         if not pids:
             _LOG.info(
                 "Starting tunnel for service '%s' server=%s port=%s",
@@ -147,7 +145,7 @@ def _check_tunnels():
     _LOG.info("tunnel_info=%s", tunnel_info)
     #
     for service_name, server, port in tunnel_info:
-        pids = _get_ssh_tunnel_process(port)
+        pids, _ = _get_ssh_tunnel_process(port)
         if pids:
             msg = "exists with pid=%s" % pids
         else:
@@ -163,16 +161,8 @@ def _kill_all_tunnel_processes():
         keep = ("ssh -i" in line) and ("localhost:" in line)
         return keep
 
-    pids, _ = si.get_process_pids(_keep_line)
-    _LOG.debug("pids=%s", pids)
-    #
-    for pid in pids:
-        os.kill(pid, signal.SIGKILL)
-    _LOG.info("Killed %s processes", len(pids))
-    #
-    pids, _ = si.get_process_pids(_keep_line)
-    _LOG.debug("pids=%s", pids)
-    dbg.dassert_eq(len(pids), 0)
+    get_pids = lambda: si.get_process_pids(_keep_line)
+    si.kill_process(get_pids)
 
 
 # ##############################################################################
@@ -182,13 +172,19 @@ def _main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--user", type=str, action="store")
+    _help = """
+- start: start a notebook if no notebook server is running at the requested port
+- check: print the notebook servers running
+- kill: kill a notebook server squatting the requested port
+- force_start: kill squatting notebook servers and start a new one
+"""
     parser.add_argument(
-        "--action",
-        required=True,
-        action="store",
-        choices="start stop check kill".split(),
+        "positional",
+        nargs=1,
+        choices=["start", "stop", "check", "kill"],
+        help=_help,
     )
+    parser.add_argument("--user", type=str, action="store")
     parser.add_argument(
         "-v",
         dest="log_level",
@@ -203,16 +199,19 @@ def _main():
         user_name = args.user
     else:
         user_name = si.get_user_name()
-    if args.action == "start":
+    #
+    action = args.positional[0]
+    _LOG.debug("action=%s", action)
+    if action == "start":
         _start_tunnels(user_name)
-    elif args.action == "stop":
+    elif action == "stop":
         _stop_tunnels()
-    elif args.action == "check":
+    elif action == "check":
         _check_tunnels()
-    elif args.action == "kill":
+    elif action == "kill":
         _kill_all_tunnel_processes()
     else:
-        dbg.dfatal("Invalid action='%s'" % args.action)
+        dbg.dfatal("Invalid action='%s'" % action)
 
 
 if __name__ == "__main__":
