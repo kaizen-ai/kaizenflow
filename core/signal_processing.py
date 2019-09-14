@@ -467,6 +467,9 @@ def rolling_zscore(
     """
     Z-score using smooth_moving_average and rolling_std.
 
+    If delay > 0, then pay special attention to 0 and NaN handling to avoid
+    extreme values.
+
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
     if demean:

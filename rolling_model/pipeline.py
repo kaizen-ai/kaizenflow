@@ -52,7 +52,7 @@ def filter_by_time_from_config(config, df, result_bundle, dt_col_name="datetime"
     return df
 
 
-# TODO(gp): Switch to fin.zscore.
+# TODO(gp): Switch to sigp.rolling_zscore.
 def zscore_from_config(config, df):
     cfg.print_config(config, ["zscore_style", "zscore_com"])
     dbg.dassert_lte(1, df.shape[0])
