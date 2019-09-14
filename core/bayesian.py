@@ -101,9 +101,7 @@ def fit_normal_distribution(y, prior_tau=1e-6, **kwargs):
             "log_std", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
         )
         std = pm.Deterministic("std", pm.math.exp(log_std))
-        returns = pm.Normal(
-            "returns", mu=mean, sigma=std, observed=y
-        )
+        returns = pm.Normal("returns", mu=mean, sigma=std, observed=y)
         vol = pm.Deterministic("vol", returns.distribution.variance ** 0.5)
         pm.Deterministic("snr", returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
@@ -149,21 +147,23 @@ def fit_one_way_normal(df, prior_tau=1e-6, **kwargs):
     :return: PyMC3 model and trace
     """
     with pm.Model() as model:
-        global_mean = pm.Normal("global_mean",
-                                mu=0,
-                                tau=prior_tau,
-                                testval=df.mean().mean())
+        global_mean = pm.Normal(
+            "global_mean", mu=0, tau=prior_tau, testval=df.mean().mean()
+        )
         # http://www.stat.columbia.edu/~gelman/research/published/taumain.pdf
         # https://arxiv.org/pdf/1104.4937.pdf
         global_sigma = pm.HalfCauchy("global_sigma", beta=1)
-                                     # Sometimes sampling when this is included
-                                     # testval=df.mean().std())
+        # Sometimes sampling when this is included
+        # testval=df.mean().std())
         thetas = pm.Normal("thetas", mu=0, sigma=1, shape=df.shape[1])
         # Use a non-centered parametrization as discussed in
         # https://arxiv.org/pdf/1312.0906.pdf
-        groups = pm.Normal("groups", mu=global_mean + global_sigma * thetas,
-                  sigma=df.std(),
-                  observed=df)
+        groups = pm.Normal(
+            "groups",
+            mu=global_mean + global_sigma * thetas,
+            sigma=df.std(),
+            observed=df,
+        )
         vol = pm.Deterministic("vol", groups.distribution.variance ** 0.5)
         pm.Deterministic("snr", groups.distribution.mean / vol)
         trace = pm.sample(**kwargs)
