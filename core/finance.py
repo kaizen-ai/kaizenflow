@@ -250,6 +250,8 @@ def drawdown(log_rets):
 
     :param log_rets: log returns
     :return: drawdown time series
+
+    # TODO(Paul): Extend this to dataframes
     """
     # Keep track of maximum drawdown ending at index location i + 1
     sums = log_rets.dropna()
