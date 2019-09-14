@@ -21,6 +21,8 @@ _MAPPING = {
 }
 
 
+# pylint: disable=R0915
+# [R0915(too-many-statements), get_credentials] Too many statements (51/50)
 def get_credentials():
     """
     - To find "conda_sh_path":

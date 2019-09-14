@@ -503,6 +503,8 @@ def _flake8(file_name, pedantic, check_if_possible):
         # Because of black, disable
         #   "W503 line break before binary operator"
         "W503",
+        # E731 do not assign a lambda expression, use a def
+        "E731",
         # E265 block comment should start with '# '
         "E265",
     ]
@@ -635,7 +637,7 @@ def _pylint(file_name, pedantic, check_if_possible):
         "W0511",
         # TODO(gp): Not clear what is the problem.
         # [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
-        # pos itional arguments list in the definition of
+        # positional arguments list in the definition of
         "W1113",
     ]
     is_test_code = "test" in file_name.split("/")

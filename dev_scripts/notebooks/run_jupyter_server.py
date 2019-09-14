@@ -26,13 +26,16 @@ def _get_port_process(port):
     """
 
     def _keep_line(port, line):
-        keep = ("jupyter-notebook" in line) and ("-port" in line) and (
-                str(port) in line)
+        keep = (
+            ("jupyter-notebook" in line)
+            and ("-port" in line)
+            and (str(port) in line)
+        )
         return keep
 
     keep_line = lambda line: _keep_line(port, line)
     # filter_cmd = 'grep "jupyter-notebook" | grep "\-port" | grep %d' % port
-    pids, txt = si.get_process_pids(keep_line)
+    pids, _ = si.get_process_pids(keep_line)
     _LOG.debug("pids=%s", pids)
     return pids
 
@@ -99,7 +102,7 @@ def _main(parser):
                 time.sleep(0.1)
                 pids = _get_port_process(jupyter_port)
                 cnt += 1
-                if not (pids):
+                if not pids:
                     break
             pids = _get_port_process(jupyter_port)
             dbg.dassert_eq(len(pids), 0)

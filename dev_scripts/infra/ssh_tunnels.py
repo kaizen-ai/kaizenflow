@@ -158,22 +158,20 @@ def _check_tunnels():
 
 
 def _kill_all_tunnel_processes():
-    #cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
-    def _keep_line(port, line):
-        keep = ("ssh -i" in line) and (("localhost:%d" % port) in line)
+    # cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
+    def _keep_line(line):
+        keep = ("ssh -i" in line) and ("localhost:" in line)
         return keep
 
-    keep_line = lambda line: _keep_line(port, line)
-    pids, txt = _parse_ps_output(cmd)
-    _LOG.info("Before killing all tunnel processes:\n%s", txt)
+    pids, _ = si.get_process_pids(_keep_line)
+    _LOG.debug("pids=%s", pids)
     #
     for pid in pids:
         os.kill(pid, signal.SIGKILL)
     _LOG.info("Killed %s processes", len(pids))
     #
-    cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
-    pids, txt = _parse_ps_output(cmd)
-    _LOG.info("After killing all tunnel processes:\n%s", txt)
+    pids, _ = si.get_process_pids(_keep_line)
+    _LOG.debug("pids=%s", pids)
     dbg.dassert_eq(len(pids), 0)
 
 

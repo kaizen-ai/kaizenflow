@@ -12,6 +12,11 @@ import helpers.printing as pri
 _LOG = logging.getLogger(__name__)
 
 
+# pylint: disable=R0912, R0913, R0914, R0915
+# [R0912(too-many-branches), _system] Too many branches
+# [R0915(too-many-statements), _system] Too many statements
+# [R0913(too-many-arguments), _system] Too many arguments (10/5) [pylint]
+# [R0914(too-many-locals), _system] Too many local variables (21/15) [pylint]
 def _system(
     cmd,
     abort_on_error,
@@ -125,6 +130,8 @@ def _system(
     return rc, output
 
 
+# pylint: disable=R0913
+# [R0913(too-many-arguments), system] Too many arguments (10/5) [pylint]
 def system(
     cmd,
     abort_on_error=True,

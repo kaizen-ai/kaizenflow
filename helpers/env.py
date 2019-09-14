@@ -19,11 +19,15 @@ def _get_version(lib_name):
     version = None
     try:
         cmd = "import %s" % lib_name
+        # pylint: disable=W0122
+        # [W0122(exec-used), _get_version] Use of exec [pylint]
         exec(cmd)
     except ImportError:
         version = "- (can't import)"
     else:
         cmd = "%s.__version__" % lib_name
+        # pylint: disable=W0123
+        # [W0123(eval-used), _get_version] Use of eval [pylint]
         version = eval(cmd)
     return version
 
