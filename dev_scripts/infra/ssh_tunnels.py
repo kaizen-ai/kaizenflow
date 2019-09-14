@@ -10,7 +10,7 @@
 > ssh_tunnels.py --action check
 
 # Kill all the ssh tunnels on the machine, for a known service or not.
-> ssh_tunnels.py --action killall
+> ssh_tunnels.py --action kill
 """
 
 import argparse
@@ -19,86 +19,46 @@ import os
 import signal
 
 import helpers.dbg as dbg
-import helpers.git as git
 import helpers.system_interaction as si
+import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
-
-# Servers.
-DEV_SERVER = "104.248.187.204"
-DB_SERVER = ""
-
-# Server ports.
-MAPPING = {
-    # "JENKINS": ("Continuous integration", DEV_SERVER, 8111),
-    # "REVIEWBOARD": ("Code review", DEV_SERVER, 8080),
-    # "NGINX": ("Publish notebook server", DEV_SERVER, 8181),
-    # "NETDATA": ("System performance", DEV_SERVER, 19999),
-}
-
-DEFAULT_PORTS = sorted(MAPPING.keys())
 
 # ##############################################################################
 
 
-def _get_tunnel_info(user_name):
-    key_path = "~/.ssh/id_rsa"
-    server_name = si.get_server_name()
-    git_repo_name = git.get_repo_symbolic_name(super_module=True)
-    info = None
-    if user_name in ("gp", "saggese"):
-        if git_repo_name == "ParticleDev/commodity_research":
-            if server_name.startswith("gpmac."):
-                info = [
-                    ("Jupyter1", DEV_SERVER, 10001),
-                    ("Mongodb", DEV_SERVER, 27017),
-                ]
-    dbg.dassert_is_not(info, None)
-    return info, key_path
-
-
-# ##############################################################################
-
-
-def _parse_ps_output(cmd):
-    rc, txt = si.system_to_string(cmd, abort_on_error=False)
-    _LOG.debug("txt=\n%s", txt)
-    pids = []
-    if rc == 0:
-        for line in txt.split("\n"):
-            _LOG.debug("line=%s", line)
-            # pylint: disable=C0301
-            # > ps ax | grep 'ssh -i' | grep localhost
-            # 19417   ??  Ss     0:00.39 ssh -i /Users/gp/.ssh/id_rsa -f -nNT \
-            #           -L 19999:localhost:19999 gp@54.172.40.4
-            fields = line.split()
-            try:
-                pid = int(fields[0])
-            except ValueError as e:
-                _LOG.error("Cant' parse '%s' from '%s'", fields, line)
-                raise e
-            _LOG.debug("pid=%s", pid)
-            pids.append(pid)
-    return pids, txt
+def _get_tunnel_info():
+    credentials = usc.get_credentials()
+    #
+    tunnel_info = credentials["tunnel_info"]
+    dbg.dassert_is_not(tunnel_info, None)
+    #
+    key_path = credentials["key_path"]
+    dbg.dassert_is_not(key_path, None)
+    return tunnel_info, key_path
 
 
 def _get_ssh_tunnel_process(port):
     """
     Return the pids of the processes attached to a given port.
     """
+
+    def _keep_line(port, line):
+        keep = ("ssh -i" in line) and (("localhost:%d" % port) in line)
+        return keep
+
     _LOG.debug("port=%s", port)
-    cmd = "ps ax | grep 'ssh -i' | grep localhost:{port} | grep -v grep".format(
-        port=port
-    )
-    pids, txt = _parse_ps_output(cmd)
-    if len(pids) > 1:
-        _LOG.debug("Expect a single process, instead got:\n%s", txt)
+    keep_line = lambda line: _keep_line(port, line)
+    pids, txt = si.get_process_pids(keep_line)
     _LOG.debug("pids=%s", pids)
+    if len(pids) > 1:
+        _LOG.warning("Expected a single process, instead got:\n%s", txt)
     return pids
 
+
 # ##############################################################################
+
 
 def _create_tunnel(server_name, port, user_name, key_path):
     """
@@ -110,8 +70,8 @@ def _create_tunnel(server_name, port, user_name, key_path):
     dbg.dassert_exists(key_path)
     #
     cmd = (
-            "ssh -i {key_path} -f -nNT -L {port}:localhost:{port}"
-            + " {user_name}@{server}"
+        "ssh -i {key_path} -f -nNT -L {port}:localhost:{port}"
+        + " {user_name}@{server}"
     )
     cmd = cmd.format(
         user_name=user_name, key_path=key_path, port=port, server=server_name
@@ -140,9 +100,9 @@ def _start_tunnels(user_name):
     """
     _LOG.debug("user_name=%s", user_name)
     # Get tunnel info.
-    info, key_path = _get_tunnel_info(user_name)
-    _LOG.info("info=%s", info)
-    for service_name, server, port in info:
+    tunnel_info, key_path = _get_tunnel_info()
+    _LOG.info("tunnel_info=%s", tunnel_info)
+    for service_name, server, port in tunnel_info:
         pids = _get_ssh_tunnel_process(port)
         if not pids:
             _LOG.info(
@@ -160,16 +120,15 @@ def _start_tunnels(user_name):
             )
 
 
-def _stop_tunnels(user_name):
+def _stop_tunnels():
     """
     Stop all the tunnels for the given user.
     """
-    _LOG.debug("user_name=%s", user_name)
     # Get the tunnel info.
-    info, _ = _get_tunnel_info(user_name)
-    _LOG.info("info=%s", info)
+    tunnel_info, _ = _get_tunnel_info()
+    _LOG.info("tunnel_info=%s", tunnel_info)
     #
-    for service_name, server, port in info:
+    for service_name, server, port in tunnel_info:
         _LOG.info(
             "Stopping tunnel for service '%s' server=%s port=%s",
             service_name,
@@ -179,16 +138,15 @@ def _stop_tunnels(user_name):
         _kill_ssh_tunnel_process(port)
 
 
-def _check_tunnels(user_name):
+def _check_tunnels():
     """
     Check the status of the tunnels for the given user.
     """
-    _LOG.info("user_name=%s", user_name)
     # Get the tunnel info.
-    info, _ = _get_tunnel_info(user_name)
-    _LOG.info("info=%s", info)
+    tunnel_info, _ = _get_tunnel_info()
+    _LOG.info("tunnel_info=%s", tunnel_info)
     #
-    for service_name, server, port in info:
+    for service_name, server, port in tunnel_info:
         pids = _get_ssh_tunnel_process(port)
         if pids:
             msg = "exists with pid=%s" % pids
@@ -200,7 +158,12 @@ def _check_tunnels(user_name):
 
 
 def _kill_all_tunnel_processes():
-    cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
+    #cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
+    def _keep_line(port, line):
+        keep = ("ssh -i" in line) and (("localhost:%d" % port) in line)
+        return keep
+
+    keep_line = lambda line: _keep_line(port, line)
     pids, txt = _parse_ps_output(cmd)
     _LOG.info("Before killing all tunnel processes:\n%s", txt)
     #
@@ -226,7 +189,7 @@ def _main():
         "--action",
         required=True,
         action="store",
-        choices="start stop check killall".split(),
+        choices="start stop check kill".split(),
     )
     parser.add_argument(
         "-v",
@@ -245,10 +208,10 @@ def _main():
     if args.action == "start":
         _start_tunnels(user_name)
     elif args.action == "stop":
-        _stop_tunnels(user_name)
+        _stop_tunnels()
     elif args.action == "check":
-        _check_tunnels(user_name)
-    elif args.action == "killall":
+        _check_tunnels()
+    elif args.action == "kill":
         _kill_all_tunnel_processes()
     else:
         dbg.dfatal("Invalid action='%s'" % args.action)

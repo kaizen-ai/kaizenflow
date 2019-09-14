@@ -12,6 +12,8 @@ _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
+# TODO(gp): Merge env in system_interaction?
+
 
 def _get_version(lib_name):
     version = None

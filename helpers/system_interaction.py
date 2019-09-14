@@ -4,13 +4,13 @@ import logging
 import os
 import subprocess
 import sys
+import time
 
 import helpers.dbg as dbg
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
-import time
 
 def _system(
     cmd,
@@ -196,6 +196,7 @@ def system_to_string(
 # ##############################################################################
 
 
+# TODO(gp): Maybe move to helpers.env or merge helpers.env back here?
 def get_user_name():
     import getpass
 
@@ -222,6 +223,45 @@ def get_os_name():
     # This is not compatible with python2.7
     # return res.sysname
     return res[0]
+
+
+# ##############################################################################
+
+
+def get_process_pids(keep_line):
+    """
+    Find all the processes corresponding to `ps ax` filtered line by line with
+    `keep_line()`.
+    """
+    cmd = "ps ax"
+    rc, txt = system_to_string(cmd, abort_on_error=False)
+    _LOG.debug("txt=\n%s", txt)
+    pids = []
+    if rc == 0:
+        for line in txt.split("\n"):
+            _LOG.debug("line=%s", line)
+            # PID   TT  STAT      TIME COMMAND
+            if "PID" in line and "TT" in line and "STAT" in line:
+                continue
+            # > ps ax | grep 'ssh -i' | grep localhost
+            # 19417   ??  Ss     0:00.39 ssh -i /Users/gp/.ssh/id_rsa -f -nNT \
+            #           -L 19999:localhost:19999 gp@54.172.40.4
+            keep = keep_line(line)
+            _LOG.debug("  keep=%s", keep)
+            if not keep:
+                continue
+            fields = line.split()
+            try:
+                pid = int(fields[0])
+            except ValueError as e:
+                _LOG.error("Can't parse fields '%s' from line '%s'", fields, line)
+                raise e
+            _LOG.debug("pid=%s", pid)
+            pids.append(pid)
+    return pids, txt
+
+
+# ##############################################################################
 
 
 def query_yes_no(question, abort_on_no=True):
