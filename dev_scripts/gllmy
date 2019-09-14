@@ -1,0 +1,13 @@
+#!/bin/bash -xe
+
+# ```
+# Like gll but using your user.
+#
+# # Show my last 5 commits.
+# > gllmy -5
+# ```
+
+git log --date=local --oneline --graph --date-order --decorate \
+  --pretty=format:'%Creset%Cgreen%h %C(reset)%C(cyan)%<(8)%aN%Creset %Creset%C(bold white) %<(65)%s %C(bold black)(%>(14)%ar) %C(red)%ad %C(yellow)%<(10)%d%C(reset)' \
+  --author $(git config user.name) \
+  $*

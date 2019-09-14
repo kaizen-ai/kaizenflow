@@ -108,7 +108,9 @@ def get_path_from_git_root(file_name, super_module):
     # dbg.dassert_ne(git_file_name, "")
     return ret
 
+
 # ##############################################################################
+
 
 def _check_files(files):
     files_tmp = []
@@ -147,8 +149,7 @@ def get_modified_files():
     return files
 
 
-# TODO(gp): Remove uniquify if not needed.
-def get_previous_committed_files(num_commits=1, uniquify=True):
+def get_previous_committed_files(num_commits=1):
     """
     Return the list of files changed by the current git user in the last
     `num_commits` commits.
@@ -163,12 +164,30 @@ def get_previous_committed_files(num_commits=1, uniquify=True):
     _, files = si.system_to_string(cmd)
     #
     files = files.split()
-    if uniquify:
-        files = sorted(list(set(files)))
+    files = sorted(list(set(files)))
     files = _check_files(files)
     return files
 
+
 # ##############################################################################
+
+
+def git_log(num_commits=5, my_commits=False):
+    cmd = []
+    cmd.append("git log --date=local --oneline --graph --date-order --decorate")
+    cmd.append(
+        "--pretty=format:" "'%h %<(8)%aN%  %<(65)%s (%>(14)%ar) %ad %<(10)%d'"
+    )
+    cmd.append("-%d" % num_commits)
+    if my_commits:
+        cmd.append("--author $(git config user.name)")
+    cmd = " ".join(cmd)
+    _, txt = si.system_to_string(cmd)
+    return txt
+
+
+# ##############################################################################
+
 
 def git_stash_push(prefix=None, msg=None, log_level=logging.DEBUG):
     user_name = si.get_user_name()

@@ -1,11 +1,13 @@
 import argparse
 import logging
 import os
+import platform
 
 import helpers.conda as hco
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.io_ as io_
-import helpers.printing as print_
+import helpers.printing as pri
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -36,9 +38,10 @@ def get_system_signature():
     txt = []
     # import sys
     # print(sys.version)
-    import platform
-
-    txt.append(("python", platform.python_version()))
+    txt.append("# Packages")
+    #
+    packages = []
+    packages.append(("python", platform.python_version()))
     libs = [
         "numpy",
         "pandas",
@@ -50,11 +53,20 @@ def get_system_signature():
         "statsmodels",
     ]
     libs = sorted(libs)
-    # TODO(gp): Add date, git commit.
     for lib in libs:
-        txt.append((lib, _get_version(lib)))
-    txt_out = ["%15s: %s" % (l, v) for (l, v) in txt]
-    return "\n".join(txt_out)
+        packages.append((lib, _get_version(lib)))
+    txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
+    # Add git signature.
+    log_txt = git.git_log(num_commits=3, my_commits=False)
+    txt.append("# Last commits:")
+    txt.append(pri.space(log_txt))
+    #
+    log_txt = git.git_log(num_commits=3, my_commits=False)
+    txt.append("# Your last commits:")
+    txt.append(pri.space(log_txt))
+    #
+    txt = "\n".join(txt)
+    return txt
 
 
 # ##############################################################################
@@ -63,7 +75,7 @@ def get_system_signature():
 def get_system_info(add_frame):
     msg = ""
     if add_frame:
-        msg += print_.frame("System info") + "\n"
+        msg += pri.frame("System info") + "\n"
     msg += "user name=%s\n" % si.get_user_name()
     msg += "server name=%s\n" % si.get_server_name()
     msg += "os name=%s\n" % si.get_os_name()
@@ -75,7 +87,7 @@ def get_system_info(add_frame):
 def get_package_summary(conda_env_name, add_frame):
     msg = ""
     if add_frame:
-        msg += print_.frame("Package summary") + "\n"
+        msg += pri.frame("Package summary") + "\n"
     conda_list = hco.get_conda_list(conda_env_name)
     msg = ""
     for package in ["pandas", "numpy", "scipy", "arrow-cpp"]:
@@ -88,7 +100,7 @@ def get_package_summary(conda_env_name, add_frame):
 def get_conda_export_list(conda_env_name, add_frame):
     msg = ""
     if add_frame:
-        msg += print_.frame("Package summary") + "\n"
+        msg += pri.frame("Package summary") + "\n"
     cmd = (
         "(conda activate %s 2>&1 >/dev/null) && conda list --export"
         % conda_env_name

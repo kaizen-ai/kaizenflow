@@ -1,5 +1,6 @@
 import logging
 
+import helpers.env as env
 import helpers.git as git
 import helpers.unit_test as ut
 import helpers.user_credentials as usc
@@ -19,6 +20,8 @@ class Test_git1(ut.TestCase):
     """
 
     def _helper(self, func_call):
+        # pylint: disable=W0123
+        # [W0123(eval-used), Test_git1._helper] Use of eval
         act = eval(func_call)
         _LOG.debug("%s=%s", func_call, act)
 
@@ -59,11 +62,26 @@ class Test_git1(ut.TestCase):
         func_call = "git.get_previous_committed_files()"
         self._helper(func_call)
 
+    def test_git_log1(self):
+        _LOG.debug("git_log=\n%s", git.git_log())
+
+    def test_git_log2(self):
+        _LOG.debug("git_log=\n%s", git.git_log(my_commits=True))
+
 
 # #############################################################################
 
 
-class Test_user_credentials(ut.TestCase):
+class Test_env1(ut.TestCase):
+    def test_get_system_signature1(self):
+        txt = env.get_system_signature()
+        _LOG.debug(txt)
+
+
+# #############################################################################
+
+
+class Test_user_credentials1(ut.TestCase):
     def test_get_credentials1(self):
         data = usc.get_credentials()
         _LOG.debug("data=%s", data)
