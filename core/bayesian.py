@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import pymc3 as pm
 import theano
 
@@ -9,7 +10,7 @@ theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 _LOG = logging.getLogger(__name__)
 
 
-def best(y1, y2, prior_tau=1e-6, **kwargs):
+def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
     Bayesian Estimation Supersedes the T Test.
     See http://www.indiana.edu/~kruschke/BEST/BEST.pdf
@@ -67,23 +68,29 @@ def best(y1, y2, prior_tau=1e-6, **kwargs):
             diff_of_means
             / pm.math.sqrt(0.5 * (group1_std ** 2 + group2_std ** 2)),
         )
-        # SNR (signal-to-noise ratio, i.e., Sharpe ratio, but without
-        # annualization)
+        # Vol in sampling units, unless adjusted.
         group1_vol = pm.Deterministic(
-            "group1_vol", resp_group1.distribution.variance ** 0.5
+            "group1_volatilty",
+            np.sqrt(time_scaling) * resp_group1.distribution.variance ** 0.5,
         )
         group2_vol = pm.Deterministic(
-            "group2_vol", resp_group2.distribution.variance ** 0.5
+            "group2_volatility",
+            np.sqrt(time_scaling) * resp_group2.distribution.variance ** 0.5,
         )
-        group1_snr = pm.Deterministic("group1_snr", resp_group1.mean / group1_vol)
-        group2_snr = pm.Deterministic("group2_snr", resp_group2.mean / group2_vol)
-        pm.Deterministic("difference of snrs", group2_snr - group1_snr)
+        # Sharpe ratio in sampling units, unless adjusted.
+        group1_sr = pm.Deterministic(
+            "group1_sharpe", time_scaling * resp_group1.mean / group1_vol
+        )
+        group2_sr = pm.Deterministic(
+            "group2_sharpe", time_scaling * resp_group2.mean / group2_vol
+        )
+        pm.Deterministic("difference of Sharpe ratios", group2_sr - group1_sr)
         # MCMC
         trace = pm.sample(**kwargs)
     return model, trace
 
 
-def fit_normal_distribution(y, prior_tau=1e-6, **kwargs):
+def fit_normal_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
     Fits a normal distribution to y.
 
@@ -102,13 +109,16 @@ def fit_normal_distribution(y, prior_tau=1e-6, **kwargs):
         )
         std = pm.Deterministic("std", pm.math.exp(log_std))
         returns = pm.Normal("returns", mu=mean, sigma=std, observed=y)
-        vol = pm.Deterministic("vol", returns.distribution.variance ** 0.5)
-        pm.Deterministic("snr", returns.distribution.mean / vol)
+        vol = pm.Deterministic(
+            "volatility",
+            np.sqrt(time_scaling) * returns.distribution.variance ** 0.5,
+        )
+        pm.Deterministic("sharpe", time_scaling * returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
     return model, trace
 
 
-def fit_t_distribution(y, prior_tau=1e-6, **kwargs):
+def fit_t_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
     Fits a t-distribution to y.
 
@@ -121,7 +131,7 @@ def fit_t_distribution(y, prior_tau=1e-6, **kwargs):
     with pm.Model() as model:
         mean = pm.Normal("mean", mu=0, tau=prior_tau, testval=y.mean())
         # TODO(Paul): Compare with replacing these priors on sigma with
-        # sigma = pm.HalfCauchy("std", beta=1, testval=y.std())
+        # std = pm.HalfCauchy("std", beta=1, testval=y.std())
         log_std = pm.Normal(
             "log_std", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
         )
@@ -130,13 +140,16 @@ def fit_t_distribution(y, prior_tau=1e-6, **kwargs):
         returns = pm.StudentT(
             "returns", nu=nu + 2, mu=mean, sigma=std, observed=y
         )
-        vol = pm.Deterministic("vol", returns.distribution.variance ** 0.5)
-        pm.Deterministic("snr", returns.distribution.mean / vol)
+        vol = pm.Deterministic(
+            "volatility",
+            np.sqrt(time_scaling) * returns.distribution.variance ** 0.5,
+        )
+        pm.Deterministic("sharpe", time_scaling * returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
     return model, trace
 
 
-def fit_one_way_normal(df, prior_tau=1e-6, **kwargs):
+def fit_one_way_normal(df, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
     Fits a one-way normal model.
 
@@ -164,8 +177,11 @@ def fit_one_way_normal(df, prior_tau=1e-6, **kwargs):
             sigma=df.std(),
             observed=df,
         )
-        vol = pm.Deterministic("vol", groups.distribution.variance ** 0.5)
-        pm.Deterministic("snr", groups.distribution.mean / vol)
+        vol = pm.Deterministic(
+            "volatility",
+            np.sqrt(time_scaling) * groups.distribution.variance ** 0.5,
+        )
+        pm.Deterministic("sharpe", time_scaling * groups.distribution.mean / vol)
         trace = pm.sample(**kwargs)
     return model, trace
 
