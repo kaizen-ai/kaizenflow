@@ -173,6 +173,13 @@ def get_previous_committed_files(num_commits=1):
 
 
 def git_log(num_commits=5, my_commits=False):
+    """
+    Return the output of a pimped version of git log.
+
+    :param num_commits: number of commits to report
+    :param my_commits: True to report only the current user commits
+    :return: string
+    """
     cmd = []
     cmd.append("git log --date=local --oneline --graph --date-order --decorate")
     cmd.append(

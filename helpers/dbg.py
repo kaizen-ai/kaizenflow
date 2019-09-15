@@ -285,7 +285,7 @@ def dassert_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-# TODO(*): -> _file_not_exists
+# TODO(*): -> _file_not_exist
 def dassert_not_exists(file_name, msg=None, *args):
     file_name = os.path.abspath(file_name)
     # pylint: disable=C0325,C0113
@@ -295,26 +295,68 @@ def dassert_not_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
+# TODO(*): -> dassert_dir_not_exist
 def dassert_dir_exists(dir_name, msg=None, *args):
     dir_name = os.path.abspath(dir_name)
     # pylint: disable=C0325
+    # TODO(gp): Not sure it's correct.
+    # if not (os.path.isdir(dir_name) and os.path.exists(dir_name)):
     if not (os.path.exists(dir_name) and not os.path.isdir(dir_name)):
         txt = []
         txt.append("dir='%s' already exists" % dir_name)
         _dfatal(txt, msg, *args)
 
 
-def dassert_monotonic_index(obj):
+def dassert_monotonic_index(obj, msg=None, *args):
     # For some reason importing pandas is slow and we don't want to pay this
-    # start up cost unless we need to.
+    # start up cost unless we have to.
     import pandas as pd
 
     if isinstance(obj, pd.Index):
         index = obj
     else:
         index = obj.index
-    dassert(index.is_monotonic_increasing)
-    dassert(index.is_unique)
+    dassert(index.is_monotonic_increasing, msg=msg, *args)
+    dassert(index.is_unique, msg=msg, *args)
+
+
+def dassert_array_has_same_type_element(
+    obj1, obj2, only_first_elem, msg=None, *args
+):
+    """
+    Check that two objects iterables like arrays (e.g., pd.Index) have
+    elements of the same type.
+
+    :param only_first_elem:
+    """
+    if only_first_elem:
+        obj1_first_type = obj1[0]
+        obj2_first_type = obj2[0]
+    else:
+
+        def _get_first_type(obj, tag):
+            obj_types = set(type(v) for v in obj)
+            dassert_eq(
+                len(obj_types),
+                1,
+                "More than one type for elem of " "%s=%s",
+                tag,
+                map(str, obj_types),
+            )
+            return obj_types[0]
+
+        obj1_first_type = _get_first_type(obj1)
+        obj2_first_type = _get_first_type(obj2)
+    if obj1_first_type != obj2_first_type:
+        txt = []
+        num_elems = 5
+        txt.append("obj1=\n%s" % obj1[:num_elems])
+        txt.append("obj2=\n%s" % obj2[:num_elems])
+        txt.append(
+            "type(obj1[0])='%s' is different from "
+            "type(obj1[0])='%s'" % (obj1_first_type, obj2_first_type)
+        )
+        _dfatal(txt, msg, *args)
 
 
 # #############################################################################

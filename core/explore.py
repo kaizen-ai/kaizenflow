@@ -17,10 +17,12 @@ import numpy as np
 import pandas as pd
 import scipy
 import seaborn as sns
+import statsmodels
+import statsmodels.api
 import tqdm
 
 import helpers.dbg as dbg
-import helpers.printing as printing
+import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
@@ -91,13 +93,13 @@ def drop_axis_with_all_nans(
             # Report results.
             cols_after = df.columns[:]
             removed_cols = set(cols_before).difference(set(cols_after))
-            pct_removed = printing.perc(
+            pct_removed = pri.perc(
                 len(cols_before) - len(cols_after), len(cols_after)
             )
             _LOG.info(
                 "removed cols with all nans: %s %s",
                 pct_removed,
-                printing.list_to_str(removed_cols),
+                pri.list_to_str(removed_cols),
             )
     if drop_rows:
         # Remove rows with all nans, if any.
@@ -114,7 +116,7 @@ def drop_axis_with_all_nans(
                 # TODO(gp): Report as intervals of dates.
                 min_ts = min(removed_rows)
                 max_ts = max(removed_rows)
-            pct_removed = printing.perc(
+            pct_removed = pri.perc(
                 len(rows_before) - len(rows_after), len(rows_after)
             )
             _LOG.info(
@@ -137,9 +139,7 @@ def drop_na(df, drop_infs=False, report_stats=False, *args, **kwargs):
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]
-        pct_removed = printing.perc(
-            num_rows_before - num_rows_after, num_rows_before
-        )
+        pct_removed = pri.perc(num_rows_before - num_rows_after, num_rows_before)
         _LOG.info("removed rows with nans: %s", pct_removed)
     return df
 
@@ -156,17 +156,20 @@ def report_zero_nan_inf_stats(
     _LOG.info("index in [%s, %s]", df.index.min(), df.index.max())
     #
     num_rows = df.shape[0]
-    _LOG.info("num_rows=%s", printing.thousand_separator(num_rows))
+    _LOG.info("num_rows=%s", pri.thousand_separator(num_rows))
     _LOG.info("data=")
     display_df(df, max_lines=5, as_txt=as_txt)
     #
     num_days = len(set(df.index.date))
     _LOG.info("num_days=%s", num_days)
     #
-    num_weekdays = len(set([d for d in df.index.date if d.weekday() < 5]))
+    num_weekdays = len(set(d for d in df.index.date if d.weekday() < 5))
     _LOG.info("num_weekdays=%s", num_weekdays)
     #
     stats_df = pd.DataFrame(None, index=df.columns)
+    # pylint: disable=W0125
+    # [W0125(using-constant-test), ] Using a conditional statement with a
+    # constant value.
     if False:
         # Find the index of the first non-nan value.
         df = df.applymap(lambda x: not np.isnan(x))
@@ -180,30 +183,22 @@ def report_zero_nan_inf_stats(
     num_zeros = (np.abs(df) < zero_threshold).sum(axis=0)
     if verbose:
         stats_df["num_zeros"] = num_zeros
-    stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(
-        printing.round_digits
-    )
+    stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(pri.round_digits)
     #
     num_nans = np.isnan(df).sum(axis=0)
     if verbose:
         stats_df["num_nans"] = num_nans
-    stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(
-        printing.round_digits
-    )
+    stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(pri.round_digits)
     #
     num_infs = np.isinf(df).sum(axis=0)
     if verbose:
         stats_df["num_infs"] = num_infs
-    stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(
-        printing.round_digits
-    )
+    stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(pri.round_digits)
     #
     num_valid = df.shape[0] - num_zeros - num_nans - num_infs
     if verbose:
         stats_df["num_valid"] = num_valid
-    stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(
-        printing.round_digits
-    )
+    stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(pri.round_digits)
     #
     display_df(stats_df, as_txt=as_txt)
 
@@ -240,10 +235,10 @@ def remove_columns_with_low_variability(df, threshold=1, log_level=logging.DEBUG
             log_level,
             "  %s: %s",
             c,
-            printing.list_to_str(list(map(str, df[c].unique()))),
+            pri.list_to_str(list(map(str, df[c].unique()))),
         )
     _LOG.log(log_level, "# Var cols")
-    _LOG.log(log_level, printing.list_to_str(var_cols))
+    _LOG.log(log_level, pri.list_to_str(var_cols))
     return df[var_cols]
 
 
@@ -253,7 +248,7 @@ def add_pct(
     """
     Add to df a column "dst_col_name" storing the percentage of values in
     column "col_name" with respect to "total".
-    The rest of the parameters are the same as printing.round_digits().
+    The rest of the parameters are the same as pri.round_digits().
 
     :return: updated df
     """
@@ -262,15 +257,13 @@ def add_pct(
     df.insert(pos_col_name + 1, dst_col_name, (100.0 * df[col_name]) / total)
     # Format.
     df[col_name] = [
-        printing.round_digits(
+        pri.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in df[col_name]
     ]
     df[dst_col_name] = [
-        printing.round_digits(
-            v, num_digits=num_digits, use_thousands_separator=False
-        )
+        pri.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
         for v in df[dst_col_name]
     ]
     return df
@@ -287,7 +280,7 @@ def breakdown_table(
 ):
     if isinstance(col_name, list):
         for c in col_name:
-            print(("\n" + printing.frame(c).rstrip("\n")))
+            print(("\n" + pri.frame(c).rstrip("\n")))
             res = breakdown_table(df, c)
             print(res)
         return None
@@ -305,20 +298,18 @@ def breakdown_table(
     res["pct"] = (100.0 * res["count"]) / df.shape[0]
     # Format.
     res["count"] = [
-        printing.round_digits(
+        pri.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in res["count"]
     ]
     res["pct"] = [
-        printing.round_digits(
-            v, num_digits=num_digits, use_thousands_separator=False
-        )
+        pri.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
         for v in res["pct"]
     ]
     if verb:
         for k, df_tmp in df.groupby(col_name):
-            print((printing.frame("%s=%s" % (col_name, k))))
+            print((pri.frame("%s=%s" % (col_name, k))))
             cols = [col_name, "description"]
             with pd.option_context(
                 "display.max_colwidth", 100000, "display.width", 130
@@ -334,7 +325,7 @@ def print_column_variability(
     Print statistics about the values in each column of a data frame.
     This is useful to get a sense of which columns are interesting.
     """
-    print(("# df.columns=%s" % printing.list_to_str(df.columns)))
+    print(("# df.columns=%s" % pri.list_to_str(df.columns)))
     res = []
     for c in tqdm.tqdm(df.columns):
         vals = df[c].unique()
@@ -400,10 +391,10 @@ def find_common_columns(names, dfs):
 
 def remove_columns(df, cols, log_level=logging.DEBUG):
     to_remove = set(cols).intersection(set(df.columns))
-    _LOG.log(log_level, "to_remove=%s", printing.list_to_str(to_remove))
+    _LOG.log(log_level, "to_remove=%s", pri.list_to_str(to_remove))
     df.drop(to_remove, axis=1, inplace=True)
     _LOG.debug("df=\n%s", df.head(3))
-    _LOG.log(log_level, printing.list_to_str(df.columns))
+    _LOG.log(log_level, pri.list_to_str(df.columns))
     return df
 
 
@@ -420,7 +411,7 @@ def filter_with_df(df, filter_df, log_level=logging.DEBUG):
             mask = df[c].isin(vals)
         else:
             mask &= df[c].isin(vals)
-    _LOG.log(log_level, "after filter=%s", printing.perc(mask.sum(), len(mask)))
+    _LOG.log(log_level, "after filter=%s", pri.perc(mask.sum(), len(mask)))
     return mask
 
 
@@ -447,7 +438,7 @@ def filter_around_time(
         "Filtering in [%s, %s] selected rows=%s",
         lower_bound,
         upper_bound,
-        printing.perc(mask.sum(), df.shape[0]),
+        pri.perc(mask.sum(), df.shape[0]),
     )
     return df[mask]
 
@@ -482,12 +473,12 @@ def filter_by_val(
     _LOG.log(
         log_level,
         "Rows kept %s, removed %s rows",
-        printing.perc(
+        pri.perc(
             res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
         ),
-        printing.perc(
+        pri.perc(
             num_rows - res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
@@ -1051,12 +1042,324 @@ def plot_time_distributions(dts, mode, density=True):
     return ax
 
 
+# TODO(gp): It can't accept ax. Remove this limitation.
+def jointplot(
+    df,
+    predicted_var,
+    predictor_var,
+    color="r",
+    # TODO(gp): -> figsize?
+    figsize=(15, 7),
+    kind="reg",
+    fit_reg=True,
+    intercept=True,
+):
+    dbg.dassert_in(predicted_var, df.columns)
+    dbg.dassert_in(predictor_var, df.columns)
+    # TODO(gp): Remove this limitation.
+    if not intercept:
+        _LOG.error("Can't plot without intercept")
+        return
+    df = df[[predicted_var, predictor_var]]
+    # Remove non-finite values.
+    mask = np.all(np.isfinite(df.values), axis=1)
+    df = df[mask]
+    # Plot.
+    sns.jointplot(
+        predictor_var,
+        predicted_var,
+        df,
+        kind=kind,
+        color=color,
+        figsize=figsize,
+        fit_reg=fit_reg,
+    )
+
+
+def regress(
+    df,
+    predicted_var,
+    predictor_vars,
+    intercept,
+    print_model_stats=True,
+    tsplot=False,
+    tsplot_figsize=None,
+    jointplot_=True,
+    jointplot_figsize=None,
+    predicted_var_delay=0,
+    predictor_vars_delay=0,
+    max_nrows=1e4,
+    robust_regress=False,
+):
+    # Sanity check vars.
+    dbg.dassert_type_is(df, pd.DataFrame)
+    dbg.dassert_lte(1, df.shape[0])
+    if isinstance(predictor_vars, str):
+        predictor_vars = [predictor_vars]
+    dbg.dassert_type_is(predictor_vars, list)
+    # dbg.dassert_type_is(predicted_var, str)
+    dbg.dassert_not_in(predicted_var, predictor_vars)
+    if not predictor_vars:
+        # No predictors.
+        _LOG.warning("No predictor vars: skipping")
+        return None
+    #
+    col_names = [predicted_var] + predictor_vars
+    dbg.dassert_is_subset(col_names, df.columns)
+    df = df[col_names].copy()
+    num_rows = df.shape[0]
+    # Shift.
+    if predicted_var_delay != 0:
+        df[predicted_var] = df[predicted_var].shift(predicted_var_delay)
+        _LOG.warning("Shifting predicted_var=%s", predicted_var_delay)
+    if predictor_vars_delay != 0:
+        df[predictor_vars] = df[predictor_vars].shift(predictor_vars_delay)
+        _LOG.warning("Shifting predictor_vars=%s", predictor_vars_delay)
+    # Remove non-finite values.
+    # TODO(gp): Use the function.
+    df.dropna(how="all", inplace=True)
+    num_rows_after_drop_nan_all = df.shape[0]
+    if num_rows_after_drop_nan_all != num_rows:
+        _LOG.info(
+            "Removed %s rows with all nans",
+            pri.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
+        )
+    #
+    df.dropna(how="any", inplace=True)
+    num_rows_after_drop_nan_any = df.shape[0]
+    if num_rows_after_drop_nan_any != num_rows_after_drop_nan_all:
+        _LOG.warning(
+            "Removed %s rows with any nans",
+            pri.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
+        )
+    # Prepare data.
+    if intercept:
+        if "const" not in df.columns:
+            df.insert(0, "const", 1.0)
+        predictor_vars = ["const"] + predictor_vars[:]
+    param_names = predictor_vars[:]
+    dbg.dassert(np.all(np.isfinite(df[predicted_var].values)))
+    dbg.dassert(
+        np.all(np.isfinite(df[predictor_vars].values)),
+        msg="predictor_vars=%s" % predictor_vars,
+    )
+    # Perform regression.
+    if df.shape[0] < 1:
+        return None
+    dbg.dassert_lte(1, df.shape[0])
+    model = statsmodels.api.OLS(
+        df[predicted_var], df[predictor_vars], hasconst=intercept
+    ).fit()
+    regr_res = {
+        "param_names": param_names,
+        "coeffs": model.params,
+        "pvals": model.pvalues,
+        # pylint: disable=E1101
+        "rsquared": model.rsquared,
+        "adj_rsquared": model.rsquared_adj,
+        "model": model,
+    }
+    if print_model_stats:
+        # pylint: disable=E1101
+        print(model.summary().as_text())
+    if tsplot or jointplot_:
+        if max_nrows is not None and df.shape[0] > max_nrows:
+            _LOG.warning("Skipping plots since df has %s rows", df.shape[0])
+        else:
+            predictor_vars = [p for p in predictor_vars if p != "const"]
+            if len(predictor_vars) == 1:
+                if tsplot:
+                    if tsplot_figsize is None:
+                        tsplot_figsize = (20, 5)
+                    df[[predicted_var, predictor_vars[0]]].plot(
+                        figsize=tsplot_figsize
+                    )
+                if jointplot_:
+                    if jointplot_figsize is None:
+                        jointplot_figsize = 5
+                    jointplot(
+                        df,
+                        predicted_var,
+                        predictor_vars[0],
+                        intercept=intercept,
+                        figsize=jointplot_figsize,
+                    )
+            else:
+                _LOG.warning(
+                    "Skipping plots since there are too many " "predictors"
+                )
+    # Robust regression.
+    if robust_regress:
+        # From http://scikit-learn.org/stable/auto_examples/linear_model/plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py
+        # TODO(gp): Add also TheilSenRegressor and HuberRegressor.
+        from sklearn import linear_model
+
+        dbg.dassert_eq(len(predictor_vars), 1)
+        y = df[predicted_var]
+        X = df[predictor_vars]
+        # Fit line using all data.
+        lr = linear_model.LinearRegression()
+        lr.fit(X, y)
+        # Robustly fit linear model with RANSAC algorithm.
+        ransac = linear_model.RANSACRegressor()
+        ransac.fit(X, y)
+        inlier_mask = ransac.inlier_mask_
+        outlier_mask = np.logical_not(inlier_mask)
+        # Predict data of estimated models.
+        line_X = np.linspace(X.min().values[0], X.max().values[0], num=100)[
+            :, np.newaxis
+        ]
+        line_y = lr.predict(line_X)
+        line_y_ransac = ransac.predict(line_X)
+        # Compare estimated coefficients
+        print("Estimated coef for linear regression=", lr.coef_)
+        print("Estimated coef for RANSAC=", ransac.estimator_.coef_)
+        if jointplot_figsize is None:
+            jointplot_figsize = (17, 5)
+        plt.figure(figsize=jointplot_figsize)
+        plt.scatter(
+            X[inlier_mask],
+            y[inlier_mask],
+            color="red",
+            marker="o",
+            label="Inliers",
+        )
+        plt.scatter(
+            X[outlier_mask],
+            y[outlier_mask],
+            color="blue",
+            marker="o",
+            label="Outliers",
+        )
+        plt.plot(line_X, line_y, color="green", linewidth=2, label="OLS")
+        plt.plot(
+            line_X, line_y_ransac, color="black", linewidth=3, label="RANSAC"
+        )
+        plt.legend(loc="best")
+        plt.xlabel(", ".join(predictor_vars))
+        plt.ylabel(predicted_var)
+    #
+    if print_model_stats:
+        return None
+    return regr_res
+
+
+# TODO(gp): Use kwargs.
+def regress_series(
+    srs1,
+    srs2,
+    use_intercept,
+    print_model_stats=True,
+    jointplot_=True,
+    infer_names=False,
+    srs1_name=None,
+    srs2_name=None,
+    convert_to_dates=False,
+):
+    """
+    Wrapper around regress() to convert series into df.
+    """
+    dbg.dassert_type_is(srs1, pd.Series)
+    dbg.dassert_type_is(srs2, pd.Series)
+    srs1 = srs1.copy()
+    srs2 = srs2.copy()
+    #
+    if convert_to_dates:
+        _LOG.warning("Sampling to date")
+        srs1.index = [pd.to_datetime(dt).date() for dt in srs1.index]
+        srs2.index = [pd.to_datetime(dt).date() for dt in srs2.index]
+    # TODO(gp): Use this.
+    # dassert_array_has_same_type_element()
+    #    if type(srs1.index[0]) != type(srs2.index[0]):
+    #        msg = "\nsrs1.index=%s type(srs1.index)=%s" % (
+    #            srs1.index[0],
+    #            type(srs1.index[0]),
+    #        )
+    #        msg += "\n!=\n"
+    #        msg += "srs2.index=%s type(srs2.index)=%s" % (
+    #            srs2.index[0],
+    #            type(srs2.index[0]),
+    #        )
+    #        _LOG.error(msg)
+    #        raise ValueError("")
+    # Check common indices.
+    common_idx = srs1.index.intersection(srs2.index)
+    dbg.dassert_lte(1, len(common_idx))
+    # Get column names.
+    if srs1_name is None:
+        if infer_names:
+            srs1_name = "1"
+        else:
+            dbg.dassert_is_not(srs1.name, None)
+            srs1_name = srs1.name
+    if srs2_name is None:
+        if infer_names:
+            srs2_name = "2"
+        else:
+            dbg.dassert_is_not(srs2.name, None)
+            srs2_name = srs2.name
+    # Merge.
+    dbg.dassert_ne(srs1_name, srs2_name)
+    df = pd.DataFrame(None)
+    df[srs1_name] = srs1
+    df[srs2_name] = srs2
+    #
+    val = regress(
+        df,
+        srs1_name,
+        srs2_name,
+        intercept=use_intercept,
+        print_model_stats=print_model_stats,
+        jointplot_=jointplot_,
+    )
+    return None if (jointplot_ or print_model_stats) else val
+
+
+def pvalue_to_stars(pval):
+    if np.isnan(pval):
+        stars = "NA"
+    else:
+        dbg.dassert_lte(0.0, pval)
+        dbg.dassert_lte(pval, 1.0)
+        if pval < 0.005:
+            # More than 99.5% confidence.
+            stars = "****"
+        elif pval < 0.01:
+            # More than 99% confidence.
+            stars = "***"
+        elif pval < 0.05:
+            # More than 95% confidence.
+            stars = "**"
+        elif pval < 0.1:
+            # More than 90% confidence.
+            stars = "*"
+        else:
+            stars = "?"
+    return stars
+
+
+def format_regress_res(regr_res):
+    if regr_res is None:
+        _LOG.warning("regr_res=None: skipping")
+        df = pd.DataFrame(None)
+        return df
+    row = [
+        "%.3f (%s)" % (coeff, pvalue_to_stars(pval))
+        for (coeff, pval) in zip(regr_res["coeffs"], regr_res["pvals"])
+    ]
+    row.append(float("%.2f" % (regr_res["rsquared"] * 100.0)))
+    row.append(float("%.2f" % (regr_res["adj_rsquared"] * 100.0)))
+    col_names = regr_res["param_names"] + ["R^2 [%]", "Adj R^2 [%]"]
+    df = pd.DataFrame([row], columns=col_names)
+    return df
+
+
 # #############################################################################
 # Statistics.
 # #############################################################################
 
 
-def adf(srs, verbose=False, **kwargs):
+def adf(srs, verbose=False):
     """
     Wrapper around statsmodels.adfuller().
 

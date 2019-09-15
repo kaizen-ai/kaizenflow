@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import scipy
 import seaborn as sns
-import sklearn
 import statsmodels
 
 import utils.debug as dbg
@@ -21,31 +20,7 @@ import utils.memoize as memoize
 import utils.sorted
 import utils.stats
 
-# #############################################################################
-# Misc.
-# #############################################################################
-
-
-def init_notebook(num_git_commits=3):
-    verb = 1
-    print("Setting verbosity to %s" % verb)
-    dbg.set_verbosity_level(verb)
-    #
-    # print matplotlib.rcParams
-    config_matplotlib()
-    #
-    cmd = "conda info --envs"
-    print(utils.jos.system_to_string(cmd)[1])
-    print("  SVN_ROOT=%s" % os.environ["SVN_ROOT"])
-    print("  numpy=%s" % np.__version__)
-    print("  scipy=%s" % scipy.__version__)
-    print("  sklearn=%s" % sklearn.__version__)
-    print("  pandas=%s" % pd.__version__)
-    #
-    print("# git tag")
-    cmd = "git log2 --author gp | head -%s" % num_git_commits
-    print(utils.jos.system_to_string(cmd)[1])
-
+_LOG = logging.getLogger(__name__)
 
 # #############################################################################
 # Python.
@@ -67,7 +42,7 @@ def apply_to_dict_panel(
     obj, f, func_name=None, timed=False, progress_bar=False, report_func=False
 ):
     if report_func:
-        log.info("# %s", func_name)
+        _LOG.info("# %s", func_name)
     if timed:
         timer = utils.timer.dtimer_start(0, func_name)
     #
@@ -84,7 +59,7 @@ def apply_to_dict_panel(
     if progress_bar:
         pb = utils.timer.ProgressBar(0, len(obj), descr=func_name, verb=0)
     for k, v in obj.items():
-        log.debug("Execute for k=%s", k)
+        _LOG.debug("Execute for k=%s", k)
         res[k] = f(v)
         if progress_bar:
             next(pb)
@@ -131,22 +106,22 @@ def apply_to_dict_panel_parallel(
     res = {}
     keys = list(obj.keys())
     # Execute locally functions already cached.
-    log.info("# Execute locally what was cached")
+    _LOG.info("# Execute locally what was cached")
     keys_for_parallel = []
     for k in keys:
         v = obj[k]
         all_args = [v] + args
         needs_eval = memoized_f.needs_eval(*all_args)
-        log.debug("k=%s -> needs_eval=%s", k, needs_eval)
+        _LOG.debug("k=%s -> needs_eval=%s", k, needs_eval)
         if not needs_eval:
             # Execute locally, since it is already cache.
-            log.debug("Execute k=%s locally", k)
+            _LOG.debug("Execute k=%s locally", k)
             res[k] = memoized_f(*all_args)
         else:
-            log.debug("k=%s needs remote execution", k)
+            _LOG.debug("k=%s needs remote execution", k)
             keys_for_parallel.append(k)
     # Execution remotely functions that are not cached.
-    log.info(
+    _LOG.info(
         "# Execute remotely what was not cached (%s) %s",
         len(keys_for_parallel),
         str(keys_for_parallel),
@@ -154,7 +129,7 @@ def apply_to_dict_panel_parallel(
     global _keys_for_parallel
     _keys_for_parallel = keys_for_parallel[:]
     if keys_for_parallel:
-        log.info(
+        _LOG.info(
             "Parallel exec starting (len(obj)=%d n_jobs=%d)", len(obj), n_jobs
         )
         f_dill = dill.dumps(f)
@@ -162,12 +137,12 @@ def apply_to_dict_panel_parallel(
             delayed(memoize.execute_remote_function)(f_dill, *([obj[k]] + args))
             for k in keys_for_parallel
         )
-        log.info("Parallel exec ending")
+        _LOG.info("Parallel exec ending")
         # Update local cache from remote execution.
         for cache in caches:
             memoize.update_cache(cache)
     # Update results from remote execution.
-    log.info("Update results from remote execution")
+    _LOG.info("Update results from remote execution")
     for k in keys_for_parallel:
         all_args = [obj[k]] + args
         need_eval = memoized_f.needs_eval(*all_args)
@@ -418,7 +393,7 @@ def filter_by_period(
     Filter an obj that can be sliced with [start_time:end_time] reporting
     stats.
     """
-    log.log(verb, "# Filtering in [%s, %s]", start_time, end_time)
+    _LOG.log(verb, "# Filtering in [%s, %s]", start_time, end_time)
     if isinstance(obj, pd.Panel) or isinstance(obj, pd.Panel4D):
         dbg.dassert_is_not(axis, None)
         index = obj.axes[axis]
@@ -426,12 +401,12 @@ def filter_by_period(
         index = obj.index
     else:
         raise ValueError("Invalid type(obj)=%s" % type(obj))
-    log.log(verb, "before=%s", min_max(index))
+    _LOG.log(verb, "before=%s", min_max(index))
     # Slice index.
     index_tmp = slice_index(index, start_time, end_time, mode=mode)
     dbg.dassert_lte(1, len(index_tmp))
     # Assign.
-    log.log(verb, "after=%s", min_max(index_tmp))
+    _LOG.log(verb, "after=%s", min_max(index_tmp))
     # TODO(gp): Find out how to do it systematically.
     if isinstance(obj, pd.DataFrame):
         if axis == 0:
@@ -748,10 +723,10 @@ def remove_outliers(
         upper_quantile = 1.0 - lower_quantile
     if mode is None:
         mode = "winsorize"
-    log.debug("Removing outliers with mode=%s", mode)
+    _LOG.debug("Removing outliers with mode=%s", mode)
     bounds = utils.jstats.get_quantile_bounds(obj, lower_quantile, upper_quantile)
     if print_stats:
-        log.debug("bounds=%s", str(bounds))
+        _LOG.debug("bounds=%s", str(bounds))
     if inplace:
         ret = obj
     else:
@@ -761,26 +736,26 @@ def remove_outliers(
         ret[bounds[1] <= obj] = bounds[1]
         if print_stats:
             num = np.sum(obj <= bounds[0]) + np.sum(bounds[1] <= obj)
-            log.debug(
+            _LOG.debug(
                 "winsorize: to_process=%s", dbg.perc(num, len(ret), printAll=True)
             )
     else:
         mask = (bounds[0] <= obj) & (obj <= bounds[1])
         if print_stats:
             num = np.sum(mask)
-            log.debug(
+            _LOG.debug(
                 "%s: to_process=%s", mode, dbg.perc(num, len(ret), printAll=True)
             )
         if mode == "set_to_nan":
             ret[~mask] = np.nan
-            log.debug(
+            _LOG.debug(
                 "overwritten %s / %s elems with nan",
                 np.sum(~np.isfinite(ret)),
                 np.sum(np.isfinite(obj)),
             )
         elif mode == "set_to_zero":
             ret[~mask] = 0.0
-            log.debug(
+            _LOG.debug(
                 "overwritten %s / %s elems with 0", np.sum(~mask), obj.shape[0]
             )
         elif mode == "filter":
@@ -803,21 +778,21 @@ def remove_outlier_rows_from_df(
         col_names_to_trim = df.columns
     else:
         col_names_to_trim = col_names
-    log.debug("Trimming based on col_names=%s", str(col_names_to_trim))
+    _LOG.debug("Trimming based on col_names=%s", str(col_names_to_trim))
     # Scan and trim columns.
     trimmed_cols = []
     for col in df.columns:
         if col in col_names_to_trim:
-            log.debug("Trimming col %s", col)
+            _LOG.debug("Trimming col %s", col)
             trimmed_col, _ = remove_outliers(
                 df[col], lower_quantile, upper_quantile=upper_quantile, mode=mode
             )
         else:
-            log.debug("Skipping col %s", col)
+            _LOG.debug("Skipping col %s", col)
             trimmed_col = df[col]
         trimmed_cols.append(trimmed_col)
     ret = pd.concat(trimmed_cols, join="outer", axis=1)
-    log.debug("Trimmed %s rows out of %s", num_cols - ret.shape[0], num_cols)
+    _LOG.debug("Trimmed %s rows out of %s", num_cols - ret.shape[0], num_cols)
     return ret
 
 
@@ -1065,7 +1040,7 @@ def compare_price_timeseries(
         )
         df = df.dropna()
         df = df[[col_name1, col_name2]]
-        log.debug("Removed %s out of %s rows", num_cols - df.shape[0], num_cols)
+        _LOG.debug("Removed %s out of %s rows", num_cols - df.shape[0], num_cols)
     df = df.dropna()
     df = scale_by_std(df)
     df -= df.min()
@@ -1133,7 +1108,7 @@ def set_same_fig_limits(use_ylim, use_xlim, fig=None):
 
 def plot_density(data, color="m", ax=None, figsize=None, title=""):
     if len(data) <= 1:
-        log.error("Can't plot density with %s elements", len(data))
+        _LOG.error("Can't plot density with %s elements", len(data))
         return
     dbg.dassert_lte(1, len(data))
     dbg.dassert_type_is(color, str)
@@ -1161,7 +1136,7 @@ def jointplot(
     dbg.dassert_in(predicted_var, df.columns)
     dbg.dassert_in(predictor_var, df.columns)
     if not intercept:
-        log.error("Can't plot without intercept")
+        _LOG.error("Can't plot without intercept")
         return
     df = df[[predicted_var, predictor_var]]
     # Remove non-finite values.
@@ -1254,7 +1229,7 @@ def plot_ccf(
     max_nrows=None,
 ):
     if max_nrows is not None and data.shape[0] > max_nrows:
-        log.warning("Skipping since df has %s rows", data.shape[0])
+        _LOG.warning("Skipping since df has %s rows", data.shape[0])
         return
     # Sanity check for params.
     dbg.dassert_lte(min_lag, max_lag)
@@ -1444,262 +1419,3 @@ def compute_correlation(
             % (p_val, utils.jstats.pvalue_to_stars(p_val))
         )
     return rho, p_val
-
-
-# TODO(gp): use_intercept -> intercept
-def regress(
-    df,
-    predicted_var,
-    predictor_vars,
-    use_intercept,
-    print_model_stats=True,
-    tsplot=False,
-    tsplot_figsize=None,
-    jointplot_=True,
-    jointplot_size=None,
-    predicted_var_delay=0,
-    predictor_vars_delay=0,
-    max_nrows=1e4,
-    robust_regress=False,
-):
-    # Sanity check vars.
-    dbg.dassert_type_is(df, pd.DataFrame)
-    dbg.dassert_lte(1, df.shape[0])
-    if isinstance(predictor_vars, str):
-        predictor_vars = [predictor_vars]
-    dbg.dassert_type_is(predictor_vars, list)
-    # dbg.dassert_type_is(predicted_var, str)
-    dbg.dassert_not_in(predicted_var, predictor_vars)
-    if len(predictor_vars) == 0:
-        # No predictors.
-        log.warning("No predictor vars: skipping")
-        return None
-    #
-    col_names = [predicted_var] + predictor_vars
-    dbg.dassert_is_subset(col_names, df.columns)
-    df = df[col_names].copy()
-    num_rows = df.shape[0]
-    # Shift.
-    if predicted_var_delay != 0:
-        df[predicted_var] = df[predicted_var].shift(predicted_var_delay)
-        log.warning("Shifting predicted_var=%s" % predicted_var_delay)
-    if predictor_vars_delay != 0:
-        df[predictor_vars] = df[predictor_vars].shift(predictor_vars_delay)
-        log.warning("Shifting predictor_vars=%s" % predictor_vars_delay)
-    # Remove non-finite values.
-    df.dropna(how="all", inplace=True)
-    num_rows_after_drop_nan_all = df.shape[0]
-    if num_rows_after_drop_nan_all != num_rows:
-        log.info(
-            "Removed %s rows with all nans",
-            dbg.perc(
-                num_rows - num_rows_after_drop_nan_all, num_rows, printAll=True
-            ),
-        )
-    #
-    df.dropna(how="any", inplace=True)
-    num_rows_after_drop_nan_any = df.shape[0]
-    if num_rows_after_drop_nan_any != num_rows_after_drop_nan_all:
-        log.warning(
-            "Removed %s rows with any nans",
-            dbg.perc(
-                num_rows - num_rows_after_drop_nan_any, num_rows, printAll=True
-            ),
-        )
-    # Prepare data.
-    if use_intercept:
-        if "const" not in df.columns:
-            df.insert(0, "const", 1.0)
-        predictor_vars = ["const"] + predictor_vars[:]
-    param_names = predictor_vars[:]
-    dbg.dassert(np.all(np.isfinite(df[predicted_var].values)))
-    dbg.dassert(
-        np.all(np.isfinite(df[predictor_vars].values)),
-        msg="predictor_vars=%s" % predictor_vars,
-    )
-    # Perform regression.
-    if df.shape[0] < 1:
-        return None
-    dbg.dassert_lte(1, df.shape[0])
-    model = statsmodels.api.OLS(
-        df[predicted_var], df[predictor_vars], hasconst=use_intercept
-    ).fit()
-    regr_res = {
-        "param_names": param_names,
-        "coeffs": model.params,
-        "pvals": model.pvalues,
-        # pylint: disable=E1101
-        "rsquared": model.rsquared,
-        "adj_rsquared": model.rsquared_adj,
-        "model": model,
-    }
-    if print_model_stats:
-        # pylint: disable=E1101
-        print(model.summary().as_text())
-    if tsplot or jointplot_:
-        if max_nrows is not None and df.shape[0] > max_nrows:
-            log.warning("Skipping plots since df has %s rows", df.shape[0])
-        else:
-            predictor_vars = [p for p in predictor_vars if p != "const"]
-            if len(predictor_vars) == 1:
-                if tsplot:
-                    if tsplot_figsize is None:
-                        tsplot_figsize = (20, 5)
-                    df[[predicted_var, predictor_vars[0]]].plot(
-                        figsize=tsplot_figsize
-                    )
-                if jointplot_:
-                    if jointplot_size is None:
-                        jointplot_size = 5
-                    jointplot(
-                        df,
-                        predicted_var,
-                        predictor_vars[0],
-                        intercept=use_intercept,
-                        size=jointplot_size,
-                    )
-            else:
-                log.warning(
-                    "Skipping plots since there are too many " "predictors"
-                )
-    # Robust regression.
-    if robust_regress:
-        # From http://scikit-learn.org/stable/auto_examples/linear_model/plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py
-        # TODO(gp): Add also TheilSenRegressor and HuberRegressor.
-        from sklearn import linear_model
-
-        dbg.dassert_eq(len(predictor_vars), 1)
-        y = df[predicted_var]
-        X = df[predictor_vars]
-        # Fit line using all data.
-        lr = linear_model.LinearRegression()
-        lr.fit(X, y)
-        # Robustly fit linear model with RANSAC algorithm.
-        ransac = linear_model.RANSACRegressor()
-        ransac.fit(X, y)
-        inlier_mask = ransac.inlier_mask_
-        outlier_mask = np.logical_not(inlier_mask)
-        # Predict data of estimated models.
-        line_X = np.linspace(X.min().values[0], X.max().values[0], num=100)[
-            :, np.newaxis
-        ]
-        line_y = lr.predict(line_X)
-        line_y_ransac = ransac.predict(line_X)
-        # Compare estimated coefficients
-        print("Estimated coef for linear regression=", lr.coef_)
-        print("Estimated coef for RANSAC=", ransac.estimator_.coef_)
-        if jointplot_size is None:
-            jointplot_size = 5
-        plt.figure(figsize=(jointplot_size, jointplot_size))
-        plt.scatter(
-            X[inlier_mask],
-            y[inlier_mask],
-            color="red",
-            marker="o",
-            label="Inliers",
-        )
-        plt.scatter(
-            X[outlier_mask],
-            y[outlier_mask],
-            color="blue",
-            marker="o",
-            label="Outliers",
-        )
-        plt.plot(line_X, line_y, color="green", linewidth=2, label="OLS")
-        plt.plot(
-            line_X, line_y_ransac, color="black", linewidth=3, label="RANSAC"
-        )
-        plt.legend(loc="best")
-        plt.xlabel(", ".join(predictor_vars))
-        plt.ylabel(predicted_var)
-    #
-    if print_model_stats:
-        return None
-    else:
-        return regr_res
-
-
-# TODO(gp): Use kwargs.
-def regress_series(
-    srs1,
-    srs2,
-    use_intercept,
-    print_model_stats=True,
-    jointplot_=True,
-    infer_names=False,
-    srs1_name=None,
-    srs2_name=None,
-    convert_to_dates=True,
-):
-    """
-    Wrapper around regress() to convert series into df.
-    """
-    dbg.dassert_type_is(srs1, pd.Series)
-    dbg.dassert_type_is(srs2, pd.Series)
-    srs1 = srs1.copy()
-    srs2 = srs2.copy()
-    #
-    if convert_to_dates:
-        log.warning("Sampling to date")
-        srs1.index = [pd.to_datetime(dt).date() for dt in srs1.index]
-        srs2.index = [pd.to_datetime(dt).date() for dt in srs2.index]
-    #
-    if type(srs1.index[0]) != type(srs2.index[0]):
-        msg = "\nsrs1.index=%s type(srs1.index)=%s" % (
-            srs1.index[0],
-            type(srs1.index[0]),
-        )
-        msg += "\n!=\n"
-        msg += "srs2.index=%s type(srs2.index)=%s" % (
-            srs2.index[0],
-            type(srs2.index[0]),
-        )
-        log.error(msg)
-        raise ValueError("")
-    # Check common indices.
-    common_idx = srs1.index.intersection(srs2.index)
-    dbg.dassert_lte(1, len(common_idx))
-    # Get column names.
-    if srs1_name is None:
-        if infer_names:
-            srs1_name = "1"
-        else:
-            dbg.dassert_is_not(srs1.name, None)
-            srs1_name = srs1.name
-    if srs2_name is None:
-        if infer_names:
-            srs2_name = "2"
-        else:
-            dbg.dassert_is_not(srs2.name, None)
-            srs2_name = srs2.name
-    # Merge.
-    dbg.dassert_ne(srs1_name, srs2_name)
-    df = pd.DataFrame(None)
-    df[srs1_name] = srs1
-    df[srs2_name] = srs2
-    #
-    val = regress(
-        df,
-        srs1_name,
-        srs2_name,
-        use_intercept=use_intercept,
-        print_model_stats=print_model_stats,
-        jointplot_=jointplot_,
-    )
-    return None if (jointplot_ or print_model_stats) else val
-
-
-def format_regress_res(regr_res):
-    if regr_res is None:
-        log.warning("regr_res=None: skipping")
-        df = pd.DataFrame(None)
-        return df
-    row = [
-        "%.3f (%s)" % (coeff, utils.jstats.pvalue_to_stars(pval))
-        for (coeff, pval) in zip(regr_res["coeffs"], regr_res["pvals"])
-    ]
-    row.append(float("%.2f" % (regr_res["rsquared"] * 100.0)))
-    row.append(float("%.2f" % (regr_res["adj_rsquared"] * 100.0)))
-    col_names = regr_res["param_names"] + ["R^2 [%]", "Adj R^2 [%]"]
-    df = pd.DataFrame([row], columns=col_names)
-    return df
