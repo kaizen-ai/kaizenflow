@@ -206,6 +206,9 @@ def annualize_sharpe_ratio(df):
 
 def compute_sr(rets):
     """
+    NOTE: The current implementation of this resamples to daily but does not
+    filter out non-trading days. This will tend to deflate the SR.
+
     See also rolling_sharpe_ratio in signal_processing.py
 
     We can also use tools in bayesian.py for a more comprehensive assessment.
