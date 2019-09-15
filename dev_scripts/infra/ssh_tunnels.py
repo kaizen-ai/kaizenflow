@@ -33,9 +33,9 @@ def _get_tunnel_info():
     tunnel_info = credentials["tunnel_info"]
     dbg.dassert_is_not(tunnel_info, None)
     #
-    key_path = credentials["key_path"]
-    dbg.dassert_is_not(key_path, None)
-    return tunnel_info, key_path
+    ssh_key_path = credentials["ssh_key_path"]
+    dbg.dassert_is_not(ssh_key_path, None)
+    return tunnel_info, ssh_key_path
 
 
 def _get_ssh_tunnel_process(port):
@@ -59,21 +59,24 @@ def _get_ssh_tunnel_process(port):
 # ##############################################################################
 
 
-def _create_tunnel(server_name, port, user_name, key_path):
+def _create_tunnel(server_name, port, user_name, ssh_key_path):
     """
     Create tunnel from localhost to 'server' for the given `port` and
     `user_name`.
     """
-    key_path = os.path.expanduser(key_path)
-    _LOG.debug("key_path=%s", key_path)
-    dbg.dassert_exists(key_path)
+    ssh_key_path = os.path.expanduser(ssh_key_path)
+    _LOG.debug("ssh_key_path=%s", ssh_key_path)
+    dbg.dassert_exists(ssh_key_path)
     #
     cmd = (
-        "ssh -i {key_path} -f -nNT -L {port}:localhost:{port}"
+        "ssh -i {ssh_key_path} -f -nNT -L {port}:localhost:{port}"
         + " {user_name}@{server}"
     )
     cmd = cmd.format(
-        user_name=user_name, key_path=key_path, port=port, server=server_name
+        user_name=user_name,
+        ssh_key_path=ssh_key_path,
+        port=port,
+        server=server_name,
     )
     si.system(cmd, blocking=False)
     # Check that the tunnel is up and running.
@@ -98,7 +101,7 @@ def _start_tunnels(user_name):
     """
     _LOG.debug("user_name=%s", user_name)
     # Get tunnel info.
-    tunnel_info, key_path = _get_tunnel_info()
+    tunnel_info, ssh_key_path = _get_tunnel_info()
     _LOG.info("tunnel_info=%s", tunnel_info)
     for service_name, server, port in tunnel_info:
         pids, _ = _get_ssh_tunnel_process(port)
@@ -109,7 +112,7 @@ def _start_tunnels(user_name):
                 server,
                 port,
             )
-            _create_tunnel(server, port, user_name, key_path)
+            _create_tunnel(server, port, user_name, ssh_key_path)
         else:
             _LOG.warning(
                 "Tunnel for service '%s' on port %s already exist: skipping",

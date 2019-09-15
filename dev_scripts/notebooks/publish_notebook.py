@@ -9,10 +9,10 @@ Given a notebook specified as:
 - a github url
 
 - Backup a notebook and publish notebook on shared space;
-> publish_notebook.py --file Task11_Simple_model_for_1min_futures_data.ipynb --action publish
+> publish_notebook.py --file xyz.ipynb --action publish
 
 - Open a notebook in Chrome
-> publish_notebook.py --file Task11_Simple_model_for_1min_futures_data.ipynb --action open
+> publish_notebook.py --file xyz.ipynb --action open
 """
 
 import argparse
@@ -23,24 +23,12 @@ from datetime import datetime
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
+import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
 
-def get_server_name():
-    cmd = "uname -n"
-    txt = os.popen(cmd).read().rstrip("\n")
-    if txt == "gpmac.local":
-        res = txt
-    else:
-        raise ValueError(
-            "Invalid server name='%s'. " % txt
-            + "Probably you need to customize the script"
-        )
-    return res
-
-
-def add_tag(file_path, tag=None):
+def _add_tag(file_path, tag=None):
     """
     By default add timestamp in filename
     :param file_path:
@@ -53,7 +41,7 @@ def add_tag(file_path, tag=None):
     return "".join([name, tag, extension])
 
 
-def export_html(path_to_notebook):
+def _export_html(path_to_notebook):
     """
     Accept ipynb, exports to html, adds a timestamp to the file name, and
     returns the name of the created file
@@ -67,7 +55,7 @@ def export_html(path_to_notebook):
     file_name = os.path.splitext(os.path.basename(path_to_notebook))[0]
     # Create file name and timestamp.
     file_name_html = file_name + ".html"
-    file_name_html = add_tag(file_name_html)
+    file_name_html = _add_tag(file_name_html)
     dst_path = os.path.join(dir_path, file_name_html)
     # Export ipynb to html format.
     cmd = (
@@ -77,11 +65,11 @@ def export_html(path_to_notebook):
         )
     )
     si.system(cmd)
-    _LOG.debug("Export {file_name} to html".format(file_name=file_name_html))
+    _LOG.debug("Export %s to html", file_name)
     return dst_path
 
 
-def copy_to_folder(path_to_notebook, dst_dir):
+def _copy_to_folder(path_to_notebook, dst_dir):
     """
     Copy file to another directory
     :param path_to_notebook: The path to the file of the notebook
@@ -90,21 +78,18 @@ def copy_to_folder(path_to_notebook, dst_dir):
     :return: None
     """
     # file_name = os.path.basename(path_to_notebook)
-    dst_f_name = os.path.join(dst_dir, add_tag(path_to_notebook))
+    dst_f_name = os.path.join(dst_dir, _add_tag(path_to_notebook))
     # If there is no such directory, create it.
     if not os.path.isdir(dst_dir):
         os.makedirs(dst_dir)
     # File copying.
     cmd = "cp {src} {dst}".format(src=path_to_notebook, dst=dst_f_name)
     si.system(cmd)
-    _LOG.debug(
-        "Copy '{nootebook}' to '{dst_dir}'".format(
-            nootebook=os.path.basename(path_to_notebook), dst_dir=dst_dir
-        )
-    )
+    path_to_notebook = os.path.basename(path_to_notebook)
+    _LOG.debug("Copy '%s' to '%s'", path_to_notebook, dst_dir)
 
 
-def export_to_webpath(path_to_notebook, dst_dir):
+def _export_to_webpath(path_to_notebook, dst_dir):
     """
     Create a folder if it does not exist. Export ipynb to html, to add a
     timestamp, moves to dst_dir
@@ -113,24 +98,20 @@ def export_to_webpath(path_to_notebook, dst_dir):
     :param dst_dir: destination folder to move
     :return: None
     """
-    html_src_path = export_html(path_to_notebook)
+    html_src_path = _export_html(path_to_notebook)
     html_name = os.path.basename(html_src_path)
     html_dst_path = os.path.join(dst_dir, html_name)
     # If there is no such directory, create it.
     if not os.path.isdir(dst_dir):
         os.makedirs(dst_dir)
     # Move html.
-    _LOG.debug(
-        "Export '{html_dst}' to '{dst_dir}'".format(
-            html_dst=html_src_path, dst_dir=html_dst_path
-        )
-    )
+    _LOG.debug("Export '%s' to '%s'", html_src_path, html_dst_path)
     cmd = "mv {src} {dst}".format(src=html_src_path, dst=html_dst_path)
     si.system(cmd)
     return html_dst_path
 
 
-def show_file_in_folder(folder_path):
+def _show_file_in_folder(folder_path):
     """
     Print all files in a folder
     :param folder_path:
@@ -148,8 +129,8 @@ def show_file_in_folder(folder_path):
         print(folder_path + _one_file)
 
 
-# TODO (GP): should be able parse url from git and from jupyter.
-def get_path(path_or_url):
+# TODO(gp): Reuse url.py code.
+def _get_path(path_or_url):
     """
     Get path from file, local link or github link
     :param path_or_url: url to notebook/github, local path,
@@ -176,7 +157,10 @@ def get_path(path_or_url):
     return ret
 
 
-if __name__ == "__main__":
+# ##############################################################################
+
+
+def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -217,43 +201,38 @@ if __name__ == "__main__":
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level",
     )
-    #
+    return parser
+
+
+def _main(parser):
     args = parser.parse_args()
     dbg.init_logger2(args.log_level)
-    src_file_name = get_path(args.file)
+    src_file_name = _get_path(args.file)
     # Export to html, add timestamp, archive html.
     if args.action == "open":
-        html_path = export_html(src_file_name)
+        html_path = _export_html(src_file_name)
         # Open with browser locally.
         # TODO(gp): Check of Mac.
         cmd = "open %s" % html_path
         si.system(cmd)
         sys.exit(0)
     elif args.action == "publish":
-        SERVERS = {
-            "gpmac.local": {
-                "share_path": "/Users/saggese/GoogleDrive/alphamatic/Research/notebooks",
-                "backup_path": "/Users/saggese/GoogleDrive/alphamatic/Research/notebooks/backup",
-            }
-        }
-        server_name = get_server_name()
-        if server_name in SERVERS:
-            share_path = SERVERS[server_name]["share_path"]
-            backup_path = SERVERS[server_name]["backup_path"]
-        else:
-            raise ValueError("Invalid name='%s'" % server_name)
+        user_credentials = usc.get_credentials()
+        html_path = user_credentials["notebook_html_path"]
+        dbg.dassert_is_not(html_path, None)
+        backup_path = user_credentials["notebook_backup_path"]
+        dbg.dassert_is_not(html_path, None)
         if args.project is not None:
-            share_path = os.path.join(share_path, args.project)
+            html_path = os.path.join(html_path, args.project)
             backup_path = os.path.join(backup_path, args.project)
-        _LOG.info("Server name=%s", server_name)
+        _LOG.info("html_path=%s", html_path)
         _LOG.info("backup path=%s", backup_path)
-        _LOG.info("share_path=%s", share_path)
         #
         _LOG.debug("# Backing up ipynb")
-        copy_to_folder(src_file_name, backup_path)
+        _copy_to_folder(src_file_name, backup_path)
         #
         _LOG.debug("# Publishing html")
-        html_file_name = export_to_webpath(src_file_name, share_path)
+        html_file_name = _export_to_webpath(src_file_name, html_path)
         print("HTML file path is: %s" % html_file_name)
         dbg.dassert_exists(html_file_name)
         #
@@ -264,3 +243,7 @@ if __name__ == "__main__":
             % html_file_name
         )
         print(cmd)
+
+
+if __name__ == "__main__":
+    _main(_parse())
