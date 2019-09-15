@@ -24,10 +24,9 @@ import numpy as np
 import pandas as pd
 
 import core.explore as exp
-import helpers.unit_test as hut
 
 # %% [markdown]
-# ## display_df
+# ## exp.display_df
 
 # %%
 np.random.seed(100)
@@ -38,8 +37,20 @@ df = pd.DataFrame()
 df["x"] = x
 df["y"] = y
 
-df.head()
+exp.display_df(df)
 
-exp.regress_series(df["x"], df["y"], use_intercept=True)
+# %% [markdown]
+# ## exp.ols_regress_series
+
+# %%
+np.random.seed(100)
+
+x = 5 * np.random.randn(100)
+y = x + np.random.randn(*x.shape)
+df = pd.DataFrame()
+df["x"] = x
+df["y"] = y
+
+exp.ols_regress_series(df["x"], df["y"], use_intercept=True)
 
 # %%

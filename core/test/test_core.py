@@ -14,6 +14,10 @@ import helpers.printing as pri
 import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# pandas_helpers.py
 # #############################################################################
 
 
@@ -155,6 +159,8 @@ class TestDfRollingApply(ut.TestCase):
 
 
 # #############################################################################
+# residualizer.py
+# #############################################################################
 
 
 class TestPcaFactorComputer1(ut.TestCase):
@@ -197,9 +203,10 @@ class TestPcaFactorComputer1(ut.TestCase):
         # Transform.
         col_map, _ = eval_func(prev_eigvec_df, eigvec_df)
         #
-        shuffled_eigval_df, shuffled_eigvec_df = res.PcaFactorComputer.shuffle_eigval_eigvec(
+        obj = res.PcaFactorComputer.shuffle_eigval_eigvec(
             eigval_df, eigvec_df, col_map
         )
+        shuffled_eigval_df, shuffled_eigvec_df = obj
         # Check.
         txt = (
             "prev_eigval_df=\n%s\n" % prev_eigval_df
@@ -251,9 +258,8 @@ class TestPcaFactorComputer1(ut.TestCase):
 
     def _test_sort_eigval_helper(self, eigval, eigvec, are_eigval_sorted_exp):
         # pylint: disable=W0641
-        are_eigval_sorted, eigval_tmp, eigvec_tmp = res.PcaFactorComputer.sort_eigval(
-            eigval, eigvec
-        )
+        obj = res.PcaFactorComputer.sort_eigval(eigval, eigvec)
+        are_eigval_sorted, eigval_tmp, eigvec_tmp = obj
         self.assertEqual(are_eigval_sorted, are_eigval_sorted_exp)
         self.assertSequenceEqual(
             eigval_tmp.tolist(), sorted(eigval_tmp, reverse=True)
@@ -395,3 +401,20 @@ class TestPcaFactorComputer2(ut.TestCase):
             num_samples, report_stats, stabilize_eig, window
         )
         self._check(comp, df_res)
+
+
+# #############################################################################
+# explore.py
+# #############################################################################
+
+
+class Test_explore1(ut.TestCase):
+    def test_ols_regress_series(self):
+        x = 5 * np.random.randn(100)
+        y = x + np.random.randn(*x.shape)
+        df = pd.DataFrame()
+        df["x"] = x
+        df["y"] = y
+        exp.ols_regress_series(
+            df["x"], df["y"], use_intercept=True, print_model_stats=False
+        )

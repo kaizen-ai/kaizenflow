@@ -491,6 +491,11 @@ def filter_by_val(
 # Plotting
 # #############################################################################
 
+# TODO(gp): Use this everywhere. Use None as default value.
+_FIG_SIZE = (20, 5)
+
+# TODO(gp): Maybe move to plotting.py?
+
 
 def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     """
@@ -705,7 +710,7 @@ def get_multiple_plots(num_plots, num_cols, y_scale=None, *args, **kwargs):
         num_cols,
         figsize=figsize,
         *args,
-        **kwargs
+        **kwargs,
     )
     return fig, ax.flatten()
 
@@ -1043,54 +1048,40 @@ def plot_time_distributions(dts, mode, density=True):
 
 
 # TODO(gp): It can't accept ax. Remove this limitation.
-def jointplot(
-    df,
-    predicted_var,
-    predictor_var,
-    color="r",
-    # TODO(gp): -> figsize?
-    figsize=(15, 7),
-    kind="reg",
-    fit_reg=True,
-    intercept=True,
-):
+def jointplot(df, predicted_var, predictor_var, height=None, *args, **kwargs):
+    """
+    Wrapper to perform a scatterplot of two columns of a dataframe using
+    seaborn.jointplot().
+
+    :param df: dataframe
+    :param predicted_var: y-var
+    :param predictor_var: x-var
+    :param args, kwargs: arguments passed to seaborn.jointplot()
+    """
     dbg.dassert_in(predicted_var, df.columns)
     dbg.dassert_in(predictor_var, df.columns)
-    # TODO(gp): Remove this limitation.
-    if not intercept:
-        _LOG.error("Can't plot without intercept")
-        return
     df = df[[predicted_var, predictor_var]]
     # Remove non-finite values.
+    # TODO(gp): Use explore.dropna().
     mask = np.all(np.isfinite(df.values), axis=1)
     df = df[mask]
     # Plot.
     sns.jointplot(
-        predictor_var,
-        predicted_var,
-        df,
-        kind=kind,
-        color=color,
-        figsize=figsize,
-        fit_reg=fit_reg,
+        predictor_var, predicted_var, df, height=height, *args, **kwargs
     )
 
 
-def regress(
+def _preprocess_regression(
     df,
-    predicted_var,
-    predictor_vars,
     intercept,
-    print_model_stats=True,
-    tsplot=False,
-    tsplot_figsize=None,
-    jointplot_=True,
-    jointplot_figsize=None,
-    predicted_var_delay=0,
-    predictor_vars_delay=0,
-    max_nrows=1e4,
-    robust_regress=False,
+    predicted_var,
+    predicted_var_delay,
+    predictor_vars,
+    predictor_vars_delay,
 ):
+    """
+    Preprocess data in dataframe form in order to perform a regression.
+    """
     # Sanity check vars.
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_lte(1, df.shape[0])
@@ -1146,6 +1137,52 @@ def regress(
     # Perform regression.
     if df.shape[0] < 1:
         return None
+    return df, param_names, predictor_vars
+
+
+def ols_regress(
+    df,
+    predicted_var,
+    predictor_vars,
+    intercept,
+    print_model_stats=True,
+    tsplot=False,
+    tsplot_figsize=None,
+    jointplot_=True,
+    jointplot_height=None,
+    predicted_var_delay=0,
+    predictor_vars_delay=0,
+    max_nrows=1e4,
+):
+    """
+    Perform OLS on columns of a dataframe.
+
+    :param df: dataframe
+    :param predicted_var: y variable
+    :param predictor_vars: x variables
+    :param intercept:
+    :param print_model_stats: print or return the model stats
+    :param tsplot: plot a time-series if possible
+    :param tsplot_figsize:
+    :param jointplot_: plot a scatter plot
+    :param jointplot_height:
+    :param predicted_var_delay:
+    :param predictor_vars_delay:
+    :param max_nrows: do not plot if there are too many rows, since notebook
+        can be slow or hang
+    :return:
+    """
+    obj = _preprocess_regression(
+        df,
+        intercept,
+        predicted_var,
+        predicted_var_delay,
+        predictor_vars,
+        predictor_vars_delay,
+    )
+    if obj is None:
+        return None
+    df, param_names, predictor_vars = obj
     dbg.dassert_lte(1, df.shape[0])
     model = statsmodels.api.OLS(
         df[predicted_var], df[predictor_vars], hasconst=intercept
@@ -1161,7 +1198,7 @@ def regress(
     }
     if print_model_stats:
         # pylint: disable=E1101
-        print(model.summary().as_text())
+        _LOG.info(model.summary().as_text())
     if tsplot or jointplot_:
         if max_nrows is not None and df.shape[0] > max_nrows:
             _LOG.warning("Skipping plots since df has %s rows", df.shape[0])
@@ -1169,83 +1206,31 @@ def regress(
             predictor_vars = [p for p in predictor_vars if p != "const"]
             if len(predictor_vars) == 1:
                 if tsplot:
+                    # Plot the data over time.
                     if tsplot_figsize is None:
-                        tsplot_figsize = (20, 5)
+                        tsplot_figsize = _FIG_SIZE
                     df[[predicted_var, predictor_vars[0]]].plot(
                         figsize=tsplot_figsize
                     )
                 if jointplot_:
-                    if jointplot_figsize is None:
-                        jointplot_figsize = 5
+                    # Perform scatter plot.
+                    if jointplot_height is None:
+                        jointplot_height = _FIG_SIZE[1]
                     jointplot(
                         df,
                         predicted_var,
                         predictor_vars[0],
-                        intercept=intercept,
-                        figsize=jointplot_figsize,
+                        height=jointplot_height,
                     )
             else:
-                _LOG.warning(
-                    "Skipping plots since there are too many " "predictors"
-                )
-    # Robust regression.
-    if robust_regress:
-        # From http://scikit-learn.org/stable/auto_examples/linear_model/plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py
-        # TODO(gp): Add also TheilSenRegressor and HuberRegressor.
-        from sklearn import linear_model
-
-        dbg.dassert_eq(len(predictor_vars), 1)
-        y = df[predicted_var]
-        X = df[predictor_vars]
-        # Fit line using all data.
-        lr = linear_model.LinearRegression()
-        lr.fit(X, y)
-        # Robustly fit linear model with RANSAC algorithm.
-        ransac = linear_model.RANSACRegressor()
-        ransac.fit(X, y)
-        inlier_mask = ransac.inlier_mask_
-        outlier_mask = np.logical_not(inlier_mask)
-        # Predict data of estimated models.
-        line_X = np.linspace(X.min().values[0], X.max().values[0], num=100)[
-            :, np.newaxis
-        ]
-        line_y = lr.predict(line_X)
-        line_y_ransac = ransac.predict(line_X)
-        # Compare estimated coefficients
-        print("Estimated coef for linear regression=", lr.coef_)
-        print("Estimated coef for RANSAC=", ransac.estimator_.coef_)
-        if jointplot_figsize is None:
-            jointplot_figsize = (17, 5)
-        plt.figure(figsize=jointplot_figsize)
-        plt.scatter(
-            X[inlier_mask],
-            y[inlier_mask],
-            color="red",
-            marker="o",
-            label="Inliers",
-        )
-        plt.scatter(
-            X[outlier_mask],
-            y[outlier_mask],
-            color="blue",
-            marker="o",
-            label="Outliers",
-        )
-        plt.plot(line_X, line_y, color="green", linewidth=2, label="OLS")
-        plt.plot(
-            line_X, line_y_ransac, color="black", linewidth=3, label="RANSAC"
-        )
-        plt.legend(loc="best")
-        plt.xlabel(", ".join(predictor_vars))
-        plt.ylabel(predicted_var)
-    #
+                _LOG.warning("Skipping plots since there are too many predictors")
     if print_model_stats:
         return None
     return regr_res
 
 
 # TODO(gp): Use kwargs.
-def regress_series(
+def ols_regress_series(
     srs1,
     srs2,
     use_intercept,
@@ -1257,7 +1242,7 @@ def regress_series(
     convert_to_dates=False,
 ):
     """
-    Wrapper around regress() to convert series into df.
+    Wrapper around regress() to regress series.
     """
     dbg.dassert_type_is(srs1, pd.Series)
     dbg.dassert_type_is(srs2, pd.Series)
@@ -1304,7 +1289,7 @@ def regress_series(
     df[srs1_name] = srs1
     df[srs2_name] = srs2
     #
-    val = regress(
+    val = ols_regress(
         df,
         srs1_name,
         srs2_name,
@@ -1338,7 +1323,7 @@ def pvalue_to_stars(pval):
     return stars
 
 
-def format_regress_res(regr_res):
+def format_ols_regress_results(regr_res):
     if regr_res is None:
         _LOG.warning("regr_res=None: skipping")
         df = pd.DataFrame(None)
@@ -1352,6 +1337,78 @@ def format_regress_res(regr_res):
     col_names = regr_res["param_names"] + ["R^2 [%]", "Adj R^2 [%]"]
     df = pd.DataFrame([row], columns=col_names)
     return df
+
+
+def robust_regression(
+    df,
+    predicted_var,
+    predictor_vars,
+    intercept,
+    jointplot_=True,
+    jointplot_figsize=None,
+    predicted_var_delay=0,
+    predictor_vars_delay=0,
+):
+    obj = _preprocess_regression(
+        df,
+        intercept,
+        predicted_var,
+        predicted_var_delay,
+        predictor_vars,
+        predictor_vars_delay,
+    )
+    if obj is None:
+        return
+    # From http://scikit-learn.org/stable/auto_examples/linear_model/
+    #   plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py
+    # TODO(gp): Add also TheilSenRegressor and HuberRegressor.
+    from sklearn import linear_model
+
+    dbg.dassert_eq(len(predictor_vars), 1)
+    y = df[predicted_var]
+    X = df[predictor_vars]
+    # Fit line using all data.
+    lr = linear_model.LinearRegression()
+    lr.fit(X, y)
+    # Robustly fit linear model with RANSAC algorithm.
+    ransac = linear_model.RANSACRegressor()
+    ransac.fit(X, y)
+    inlier_mask = ransac.inlier_mask_
+    outlier_mask = np.logical_not(inlier_mask)
+    # Predict data of estimated models.
+    line_X = np.linspace(X.min().values[0], X.max().values[0], num=100)[
+        :, np.newaxis
+    ]
+    line_y = lr.predict(line_X)
+    line_y_ransac = ransac.predict(line_X)
+    # Compare estimated coefficients
+    _LOG.info("Estimated coef for linear regression=%s", lr.coef_)
+    _LOG.info("Estimated coef for RANSAC=%s", ransac.estimator_.coef_)
+    if jointplot_:
+        if jointplot_figsize is None:
+            jointplot_figsize = _FIG_SIZE
+        plt.figure(figsize=jointplot_figsize)
+        plt.scatter(
+            X[inlier_mask],
+            y[inlier_mask],
+            color="red",
+            marker="o",
+            label="Inliers",
+        )
+        plt.scatter(
+            X[outlier_mask],
+            y[outlier_mask],
+            color="blue",
+            marker="o",
+            label="Outliers",
+        )
+        plt.plot(line_X, line_y, color="green", linewidth=2, label="OLS")
+        plt.plot(
+            line_X, line_y_ransac, color="black", linewidth=3, label="RANSAC"
+        )
+        plt.legend(loc="best")
+        plt.xlabel(", ".join(predictor_vars))
+        plt.ylabel(predicted_var)
 
 
 # #############################################################################
@@ -1474,6 +1531,7 @@ def display_df(
         df.insert(0, col_name, df.index)
         df.index.name = None
         index = False
+
     # Finally, print / display.
     def _print_display():
         if as_txt:

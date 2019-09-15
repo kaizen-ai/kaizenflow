@@ -45,6 +45,8 @@ E.g.,
 # TODO(gp): All and only executable python files (i.e., with main) should have
 # #!/usr/bin/env python
 # TODO(gp): Add https://github.com/PyCQA/flake8-bugbear
+# TODO(gp): Improve the output by saving the output for each filename and action
+# and getting a comment about which file each portion of the output is about
 
 import argparse
 import datetime
@@ -58,7 +60,7 @@ import sys
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
-import helpers.printing as printing
+import helpers.printing as pri
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -168,6 +170,7 @@ def _tee(cmd, executable, abort_on_error):
     output = output.split("\n")
     output = _remove_empty_lines(output)
     _LOG.debug("output2='\n%s'", "\n".join(output))
+    dbg.dassert_isinstance(output, list)
     return output
 
 
@@ -323,7 +326,7 @@ def _test_actions():
             num_not_poss += 1
     # Report results.
     actions_as_str = _actions_to_string(possible_actions)
-    _LOG.info("Possible actions:\n%s", printing.space(actions_as_str))
+    _LOG.info("Possible actions:\n%s", pri.space(actions_as_str))
     if num_not_poss > 0:
         _LOG.warning("There are %s actions that are not possible", num_not_poss)
     else:
@@ -392,6 +395,8 @@ def _python_compile(file_name, pedantic, check_if_possible):
         return output
     try:
         py_compile.compile(file_name, doraise=True)
+        # pylint: disable=W0703
+        # [W0703(broad-except), ] Catching too general exception Exception.
     except Exception as e:
         output.append(str(e))
     return output
@@ -452,13 +457,13 @@ def _black(file_name, pedantic, check_if_possible):
     opts = "--line-length 82"
     cmd = executable + " %s %s" % (opts, file_name)
     output = _tee(cmd, executable, abort_on_error=False)
-    # All done!
-    # 1 file left unchanged. [black]
-    output = [
-        l
-        for l in output
-        if ("All done!" not in l) and ("file left unchanged" not in l)
-    ]
+    # Remove the lines:
+    # - reformatted core/test/test_core.py
+    # - 1 file reformatted.
+    # - All done!
+    # - 1 file left unchanged.
+    to_remove = ["All done!", "file left unchanged", "reformatted"]
+    output = [l for l in output if all(w not in l for w in to_remove)]
     return output
 
 
@@ -498,6 +503,7 @@ def _flake8(file_name, pedantic, check_if_possible):
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
+    # TODO(gp): Does -j 4 help?
     opts = "--exit-zero --doctests --max-line-length=82 -j 4"
     disabled_checks = [
         # Because of black, disable
@@ -685,10 +691,16 @@ def _pylint(file_name, pedantic, check_if_possible):
     # Allow short variables, as long as camel-case.
     opts += ' --variable-rgx="[a-z0-9_]{1,30}$"'
     opts += ' --argument-rgx="[a-z0-9_]{1,30}$"'
-    opts += " --ignored-modules=pandas --output-format=parseable"
+    # TODO(gp): Not sure this is needed anymore.
+    opts += " --ignored-modules=pandas"
+    opts += " --output-format=parseable"
+    # TODO(gp): Does -j 4 help?
     opts += " -j 4"
     cmd = executable + " %s %s" % (opts, file_name)
-    return _tee(cmd, executable, abort_on_error=False)
+    output = _tee(cmd, executable, abort_on_error=False)
+    output.insert(0, "* file_name=%s" % file_name)
+    output = [l for l in output if "-" * 20 not in l]
+    return output
 
 
 def _ipynb_format(file_name, pedantic, check_if_possible):
@@ -705,7 +717,8 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
         return []
     cmd = executable + " %s" % file_name
     _system(cmd)
-    return []
+    output = []
+    return output
 
 
 # ##############################################################################
@@ -760,10 +773,11 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    if is_paired_jupytext_file(file_name):
+    if is_ipynb_file(file_name) and is_paired_jupytext_file(file_name):
         cmd = executable + " -f %s --action sync" % file_name
         output = _tee(cmd, executable, abort_on_error=True)
     else:
+        _LOG.debug("Skipping file_name='%s'", file_name)
         output = []
     return output
 
@@ -775,10 +789,11 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    if is_paired_jupytext_file(file_name):
+    if is_ipynb_file(file_name) and is_paired_jupytext_file(file_name):
         cmd = executable + " -f %s --action test" % file_name
         output = _tee(cmd, executable, abort_on_error=True)
     else:
+        _LOG.debug("Skipping file_name='%s'", file_name)
         output = []
     return output
 
@@ -788,9 +803,9 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
 
 def _lint(file_name, actions, pedantic, debug):
     output = []
-    _LOG.info("\n%s", printing.frame(file_name, char1="="))
+    _LOG.info("\n%s", pri.frame(file_name, char1="="))
     for action in actions:
-        _LOG.debug("\n%s", printing.frame(action, char1="-"))
+        _LOG.debug("\n%s", pri.frame(action, char1="-"))
         print("## %-20s (%s)" % (action, file_name))
         if debug:
             # Make a copy after each action.
@@ -837,11 +852,16 @@ def _select_actions(args):
     # Check which tools are available.
     actions = _remove_not_possible_actions(actions)
     actions_as_str = _actions_to_string(actions)
-    _LOG.info("# Action selected:\n%s", printing.space(actions_as_str))
+    _LOG.info("# Action selected:\n%s", pri.space(actions_as_str))
     return actions
 
 
 def _run_linter(actions, args, file_names):
+    # We process the py files first and then the ipynb.
+    py_file_names = sorted([f for f in file_names if f.endswith(".py")])
+    ipynb_file_names = sorted([f for f in file_names if f.endswith(".ipynb")])
+    file_names = py_file_names + ipynb_file_names
+    #
     num_steps = len(file_names) * len(actions)
     _LOG.info(
         "Num of files=%d, num of actions=%d -> num of steps=%d",
@@ -853,7 +873,7 @@ def _run_linter(actions, args, file_names):
     num_threads = args.num_threads
     # Use serial mode if there is a single file, unless the user specified
     # explicitly the numer of threads to use.
-    if len(file_names) == 1 and not (num_threads == -1):
+    if len(file_names) == 1 and num_threads != -1:
         num_threads = "serial"
         _LOG.warning(
             "Using num_threads='%s' since there is a single file", num_threads
@@ -876,9 +896,9 @@ def _run_linter(actions, args, file_names):
             for file_name in file_names
         )
         output = list(itertools.chain.from_iterable(output_tmp))
-    output.append("# cmd line='%s'" % dbg.get_command_line())
+    output.insert(0, "cmd line='%s'" % dbg.get_command_line())
     # TODO(gp): datetime_.get_timestamp().
-    output.append("# datetime='%s'" % datetime.datetime.now())
+    output.insert(1, "datetime='%s'" % datetime.datetime.now())
     output = _remove_empty_lines(output)
     return output
 
@@ -932,9 +952,9 @@ def _main(args):
     # Select files.
     file_names = _get_files(args)
     _LOG.info(
-        "# Processing %s files:\n%s",
+        "# Processing %d files:\n%s",
         len(file_names),
-        printing.space("\n".join(file_names)),
+        pri.space("\n".join(file_names)),
     )
     if args.collect_only:
         _LOG.warning("Exiting as requested")
@@ -946,9 +966,9 @@ def _main(args):
     # Run linter.
     output = _run_linter(actions, args, file_names)
     # Print linter output.
-    print(printing.frame(args.linter_log, char1="/").rstrip("\n"))
+    print(pri.frame(args.linter_log, char1="/").rstrip("\n"))
     print("\n".join(output) + "\n")
-    print(printing.line(char="/").rstrip("\n"))
+    print(pri.line(char="/").rstrip("\n"))
     # Write file.
     output = "\n".join(output)
     io_.to_file(args.linter_log, output)
