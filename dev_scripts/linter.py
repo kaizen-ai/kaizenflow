@@ -625,6 +625,8 @@ def _pylint(file_name, pedantic, check_if_possible):
     opts = ""
     # We ignore these errors as too picky.
     ignore = [
+        # [C0302(too-many-lines), ] Too many lines in module (/1000)
+        "C0302",
         # [C0304(missing-final-newline), ] Final newline missing
         "C0304",
         # [C0330(bad-continuation), ] Wrong hanging indentation before block
@@ -633,6 +635,14 @@ def _pylint(file_name, pedantic, check_if_possible):
         "C0330",
         # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
         "C0412",
+        # [R0912(too-many-branches), ] Too many branches (/12)
+        "R0912",
+        # R0913(too-many-arguments), ] Too many arguments (/5)
+        "R0913",
+        # [R0914(too-many-locals), ] Too many local variables (/15)
+        "R0914",
+        # [R0915(too-many-statements), ] Too many statements (/50)
+        "R0915",
         # [W0511(fixme), ]
         "W0511",
         # TODO(gp): Not clear what is the problem.
