@@ -4,6 +4,8 @@ Replace an instance of text in all py, ipynb, and txt files.
 
 > replace_text.py --old "import core.finance" --new "import core.finance" --preview
 > replace_text.py --old "alphamatic/kibot/All_Futures" --new "alphamatic/kibot/All_Futures" --preview
+
+> replace_text.py --custom_flow _custom1
 """
 
 import argparse
@@ -12,7 +14,7 @@ import re
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.printing as printing
+import helpers.printing as pri
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -26,13 +28,17 @@ def _get_extensions(exts):
 
 
 def _get_file_names(old_string, dirs, exts):
+    dbg.dassert_isinstance(exts, list)
+    dbg.dassert_lte(1, len(exts))
     # Get files.
+    _LOG.debug("exts=%s", exts)
     file_names = []
     for d in dirs:
-        _LOG.info("Processing dir '%s'", d)
+        _LOG.debug("Processing dir '%s'", d)
         for ext in exts:
+            dbg.dassert(not ext.startswith("."), "Invalid ext='%s'", ext)
             file_names_tmp = io_.find_files(d, "*." + ext)
-            _LOG.info("Found %s files", len(file_names_tmp))
+            _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
             file_names.extend(file_names_tmp)
     file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
     _LOG.info("Found %s target files", len(file_names))
@@ -47,7 +53,7 @@ def _get_file_names(old_string, dirs, exts):
             file_names_to_process.append(f)
     #
     txt = "\n".join(res)
-    _LOG.info("Found %s occurrences\n%s", len(res), printing.space(txt))
+    _LOG.info("Found %s occurrences\n%s", len(res), pri.space(txt))
     _LOG.info("Found %s files to process", len(file_names_to_process))
     return file_names_to_process, txt
 
@@ -117,7 +123,7 @@ def _replace(file_names_to_process, old_string, new_string, backup):
     _LOG.info(
         "Found %s files:\n%s",
         len(file_names_to_process),
-        printing.space("\n".join(file_names_to_process)),
+        pri.space("\n".join(file_names_to_process)),
     )
     for file_name in file_names_to_process:
         _LOG.info("* Processing %s", file_name)
@@ -133,15 +139,16 @@ def _custom1():
         ("printing.", "pri."),
     ]
     dirs = "."
-    exts = ".py"
+    exts = ["py"]
     backup = False
     preview = True
     #
     txt = ""
     for old_string, new_string in to_replace:
+        print(pri.frame("%s -> %s" % (old_string, new_string)))
         file_names_to_process, txt_tmp = _get_file_names(old_string, dirs, exts)
+        dbg.dassert_lte(1, len(file_names_to_process))
         # Replace.
-        backup = False
         if preview:
             txt += txt_tmp
         else:
@@ -178,7 +185,7 @@ def _parse():
         description=__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--config", action="store", type=str)
+    parser.add_argument("--custom_flow", action="store", type=str)
     parser.add_argument(
         "--old",
         action="store",
