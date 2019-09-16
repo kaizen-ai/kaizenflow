@@ -142,7 +142,7 @@ def _replace(file_names_to_process, old_string, new_string, backup, mode):
 def _custom1(args):
     to_replace = [
         ("import helpers.printing as printing", "import helpers.printing as pri"),
-        ("printing.", "pri."),
+        ("printing\.", "pri\."),
     ]
     dirs = "."
     exts = ["py"]
