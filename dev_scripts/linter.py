@@ -49,7 +49,6 @@ E.g.,
 # and getting a comment about which file each portion of the output is about
 
 import argparse
-import datetime
 import itertools
 import logging
 import os
@@ -505,7 +504,7 @@ def _flake8(file_name, pedantic, check_if_possible):
         return []
     # TODO(gp): Does -j 4 help?
     opts = "--exit-zero --doctests --max-line-length=82 -j 4"
-    disabled_checks = [
+    ignore = [
         # Because of black, disable
         #   "W503 line break before binary operator"
         "W503",
@@ -514,7 +513,16 @@ def _flake8(file_name, pedantic, check_if_possible):
         # E265 block comment should start with '# '
         "E265",
     ]
-    opts += " --ignore=" + ",".join(disabled_checks)
+    is_jupytext_code = is_paired_jupytext_file(file_name)
+    _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+    if is_jupytext_code:
+        ignore.extend(
+            [
+                # E501 line too long.
+                "E501"
+            ]
+        )
+    opts += " --ignore=" + ",".join(ignore)
     cmd = executable + " %s %s" % (opts, file_name)
     return _tee(cmd, executable, abort_on_error=True)
 
@@ -674,6 +682,9 @@ def _pylint(file_name, pedantic, check_if_possible):
         )
     is_jupytext_code = is_paired_jupytext_file(file_name)
     _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+    if is_jupytext_code:
+        ignore.extend([])
+
     if not pedantic:
         ignore.extend(
             [
@@ -898,7 +909,7 @@ def _run_linter(actions, args, file_names):
         output = list(itertools.chain.from_iterable(output_tmp))
     output.insert(0, "cmd line='%s'" % dbg.get_command_line())
     # TODO(gp): datetime_.get_timestamp().
-    output.insert(1, "datetime='%s'" % datetime.datetime.now())
+    # output.insert(1, "datetime='%s'" % datetime.datetime.now())
     output = _remove_empty_lines(output)
     return output
 

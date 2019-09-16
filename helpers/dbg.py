@@ -327,11 +327,13 @@ def dassert_array_has_same_type_element(
     Check that two objects iterables like arrays (e.g., pd.Index) have
     elements of the same type.
 
-    :param only_first_elem:
+    :param only_first_elem: whether to check only the first element or all the
+        elements of the iterable.
     """
+    # Get the types to compare.
     if only_first_elem:
-        obj1_first_type = obj1[0]
-        obj2_first_type = obj2[0]
+        obj1_first_type = type(obj1[0])
+        obj2_first_type = type(obj2[0])
     else:
 
         def _get_first_type(obj, tag):
@@ -343,18 +345,19 @@ def dassert_array_has_same_type_element(
                 tag,
                 map(str, obj_types),
             )
-            return obj_types[0]
+            return list(obj_types)[0]
 
-        obj1_first_type = _get_first_type(obj1)
-        obj2_first_type = _get_first_type(obj2)
+        obj1_first_type = _get_first_type(obj1, "obj1")
+        obj2_first_type = _get_first_type(obj2, "obj2")
+    #
     if obj1_first_type != obj2_first_type:
         txt = []
         num_elems = 5
         txt.append("obj1=\n%s" % obj1[:num_elems])
         txt.append("obj2=\n%s" % obj2[:num_elems])
         txt.append(
-            "type(obj1[0])='%s' is different from "
-            "type(obj1[0])='%s'" % (obj1_first_type, obj2_first_type)
+            "type(obj1)='%s' is different from "
+            "type(obj2)='%s'" % (obj1_first_type, obj2_first_type)
         )
         _dfatal(txt, msg, *args)
 
@@ -407,11 +410,17 @@ def init_logger(
     # Set verbosity for all loggers.
     root_logger.setLevel(verb)
     eff_level = root_logger.getEffectiveLevel()
+    # pylint: disable=W0125
+    # [W0125(using-constant-test), ] Using a conditional statement with a
+    #   constant value.
     if False:
         print(
             "effective level= %s (%s)"
             % (eff_level, logging.getLevelName(eff_level))
         )
+    # pylint: disable=W0125
+    # [W0125(using-constant-test), ] Using a conditional statement with a
+    #   constant value.
     if False:
         # dassert_eq(root_logger.getEffectiveLevel(), verb)
         for handler in root_logger.handlers:

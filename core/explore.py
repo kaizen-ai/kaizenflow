@@ -1201,7 +1201,9 @@ def ols_regress(
         _LOG.info(model.summary().as_text())
     if tsplot or jointplot_:
         if max_nrows is not None and df.shape[0] > max_nrows:
-            _LOG.warning("Skipping plots since df has %s rows", df.shape[0])
+            _LOG.warning(
+                "Skipping plots since df has %d > %d rows", df.shape[0], max_nrows
+            )
         else:
             predictor_vars = [p for p in predictor_vars if p != "const"]
             if len(predictor_vars) == 1:
@@ -1229,75 +1231,54 @@ def ols_regress(
     return regr_res
 
 
-# TODO(gp): Use kwargs.
+def to_series(obj):
+    if isinstance(obj, np.ndarray):
+        dbg.dassert(obj.shape, 1)
+        srs = pd.Series(obj)
+    else:
+        srs = obj
+    dbg.dassert_isinstance(srs, pd.Series)
+    return srs
+
+
 def ols_regress_series(
     srs1,
     srs2,
-    use_intercept,
-    print_model_stats=True,
-    jointplot_=True,
-    infer_names=False,
+    intercept,
     srs1_name=None,
     srs2_name=None,
     convert_to_dates=False,
+    **kwargs,
 ):
     """
-    Wrapper around regress() to regress series.
+    Wrapper around regress() to regress series against each other.
     """
-    dbg.dassert_type_is(srs1, pd.Series)
-    dbg.dassert_type_is(srs2, pd.Series)
-    srs1 = srs1.copy()
-    srs2 = srs2.copy()
+    srs1 = to_series(srs1).copy()
+    srs2 = to_series(srs2).copy()
     #
     if convert_to_dates:
         _LOG.warning("Sampling to date")
         srs1.index = [pd.to_datetime(dt).date() for dt in srs1.index]
         srs2.index = [pd.to_datetime(dt).date() for dt in srs2.index]
-    # TODO(gp): Use this.
-    # dassert_array_has_same_type_element()
-    #    if type(srs1.index[0]) != type(srs2.index[0]):
-    #        msg = "\nsrs1.index=%s type(srs1.index)=%s" % (
-    #            srs1.index[0],
-    #            type(srs1.index[0]),
-    #        )
-    #        msg += "\n!=\n"
-    #        msg += "srs2.index=%s type(srs2.index)=%s" % (
-    #            srs2.index[0],
-    #            type(srs2.index[0]),
-    #        )
-    #        _LOG.error(msg)
-    #        raise ValueError("")
+    #
+    dbg.dassert_array_has_same_type_element(srs1, srs2, only_first_elem=True)
     # Check common indices.
     common_idx = srs1.index.intersection(srs2.index)
     dbg.dassert_lte(1, len(common_idx))
-    # Get column names.
+    # Merge series into a dataframe.
     if srs1_name is None:
-        if infer_names:
-            srs1_name = "1"
-        else:
-            dbg.dassert_is_not(srs1.name, None)
-            srs1_name = srs1.name
+        srs1_name = srs1.name if srs1.name is not None else ""
     if srs2_name is None:
-        if infer_names:
-            srs2_name = "2"
-        else:
-            dbg.dassert_is_not(srs2.name, None)
-            srs2_name = srs2.name
-    # Merge.
-    dbg.dassert_ne(srs1_name, srs2_name)
-    df = pd.DataFrame(None)
-    df[srs1_name] = srs1
-    df[srs2_name] = srs2
+        srs2_name = srs2.name if srs2.name is not None else ""
+    if srs1_name == srs2_name:
+        srs1_name += "_1"
+        srs2_name += "_2"
+        _LOG.warning("Series have the same name: adding suffix to distinguish")
+    df = pd.concat([srs1, srs2], axis=1, join="outer")
+    df.columns = [srs1_name, srs2_name]
     #
-    val = ols_regress(
-        df,
-        srs1_name,
-        srs2_name,
-        intercept=use_intercept,
-        print_model_stats=print_model_stats,
-        jointplot_=jointplot_,
-    )
-    return None if (jointplot_ or print_model_stats) else val
+    val = ols_regress(df, srs1_name, srs2_name, intercept=intercept, **kwargs)
+    return val
 
 
 def pvalue_to_stars(pval):
