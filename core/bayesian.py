@@ -10,8 +10,18 @@ theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 _LOG = logging.getLogger(__name__)
 
 
+DOF = "dof"
+LOC = "location"
+RET = "returns"
+SCALE = "scale"
+SHAPE = "shape"
+SR = "sharpe"
+VOL = "volatility"
+
+
 # TODO(Paul): Use config-style constants for defining strings used by models.
 # TODO(Paul): Consider factoring out common code
+
 
 def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
@@ -107,11 +117,11 @@ def fit_laplace_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
     :return: PyMC3 model and trace
     """
     with pm.Model() as model:
-        loc = pm.Normal("loc", mu=0, tau=prior_tau, testval=y.mean())
+        loc = pm.Normal(LOC, mu=0, tau=prior_tau, testval=y.mean())
         log_scale = pm.Normal(
             "log_scale", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
         )
-        scale = pm.Deterministic("scale", pm.math.exp(log_scale))
+        scale = pm.Deterministic(SCALE, pm.math.exp(log_scale))
         returns = pm.Laplace("returns", mu=loc, b=scale, observed=y)
         vol = pm.Deterministic(
             "volatility",
@@ -126,6 +136,8 @@ def fit_normal_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
     Fits a normal distribution to y.
 
+    TODO(Paul): Generalize this to multiple independent streams.
+
     :param y: Data to be modeled by a normal distribution
     :param prior_tau: Controls precision of mean and log_std priors
     :param samples: Number of MCMC samples
@@ -133,19 +145,18 @@ def fit_normal_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
     :return: PyMC3 model and trace
     """
     with pm.Model() as model:
-        mean = pm.Normal("mean", mu=0, tau=prior_tau, testval=y.mean())
+        mean = pm.Normal(LOC, mu=0, tau=prior_tau, testval=y.mean())
         # TODO(Paul): Compare with replacing these priors on sigma with
         # sigma = pm.HalfCauchy("std", beta=1, testval=y.std())
         log_std = pm.Normal(
             "log_std", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
         )
-        std = pm.Deterministic("std", pm.math.exp(log_std))
-        returns = pm.Normal("returns", mu=mean, sigma=std, observed=y)
+        std = pm.Deterministic(SCALE, pm.math.exp(log_std))
+        returns = pm.Normal(RET, mu=mean, sigma=std, observed=y)
         vol = pm.Deterministic(
-            "volatility",
-            np.sqrt(time_scaling) * returns.distribution.variance ** 0.5,
+            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5
         )
-        pm.Deterministic("sharpe", time_scaling * returns.distribution.mean / vol)
+        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
     return model, trace
 
@@ -161,22 +172,20 @@ def fit_t_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
     :return: PyMC3 model and trace
     """
     with pm.Model() as model:
-        mean = pm.Normal("mean", mu=0, tau=prior_tau, testval=y.mean())
+        loc = pm.Normal(LOC, mu=0, tau=prior_tau, testval=y.mean())
         # TODO(Paul): Compare with replacing these priors on sigma with
         # std = pm.HalfCauchy("std", beta=1, testval=y.std())
         log_std = pm.Normal(
             "log_std", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
         )
-        std = pm.Deterministic("std", pm.math.exp(log_std))
-        nu = pm.Exponential("nu_minus_2", 1 / 10.0, testval=3.0)
-        returns = pm.StudentT(
-            "returns", nu=nu + 2, mu=mean, sigma=std, observed=y
-        )
+        scale = pm.Deterministic(SCALE, pm.math.exp(log_std))
+        nu_shft = pm.Exponential(DOF + "_minus_2", 1 / 10.0, testval=3.0)
+        dof = pm.Deterministic(DOF, nu_shft + 2)
+        returns = pm.StudentT(RET, nu=dof, mu=loc, sigma=scale, observed=y)
         vol = pm.Deterministic(
-            "volatility",
-            np.sqrt(time_scaling) * returns.distribution.variance ** 0.5,
+            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5
         )
-        pm.Deterministic("sharpe", time_scaling * returns.distribution.mean / vol)
+        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
     return model, trace
 

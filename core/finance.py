@@ -11,6 +11,9 @@ import helpers.printing as pri
 _LOG = logging.getLogger(__name__)
 
 
+SR_COL = "sharpe"
+
+
 def zscore(obj, com, demean, standardize, delay, min_periods=None):
     """
     DEPRECATE in favor of rolling_zscore in signal_processing.py.
@@ -197,6 +200,13 @@ def show_distribution_by(by, ascending=False):
 
 def log_rets_to_rets(df):
     return np.exp(df) - 1
+
+
+def sharpe_ratio(df, time_scaling=1):
+    sr = df.mean() / df.std()
+    sr *= np.sqrt(time_scaling)
+    sr.name = SR_COL
+    return sr
 
 
 def annualize_sharpe_ratio(df):
