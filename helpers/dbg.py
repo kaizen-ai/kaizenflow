@@ -410,17 +410,11 @@ def init_logger(
     # Set verbosity for all loggers.
     root_logger.setLevel(verb)
     eff_level = root_logger.getEffectiveLevel()
-    # pylint: disable=W0125
-    # [W0125(using-constant-test), ] Using a conditional statement with a
-    #   constant value.
     if False:
         print(
             "effective level= %s (%s)"
             % (eff_level, logging.getLevelName(eff_level))
         )
-    # pylint: disable=W0125
-    # [W0125(using-constant-test), ] Using a conditional statement with a
-    #   constant value.
     if False:
         # dassert_eq(root_logger.getEffectiveLevel(), verb)
         for handler in root_logger.handlers:

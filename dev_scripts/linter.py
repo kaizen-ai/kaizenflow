@@ -99,7 +99,10 @@ def _filter_target_files(file_names):
     file_names_out = []
     for file_name in file_names:
         _, file_ext = os.path.splitext(file_name)
-        is_valid = file_ext in (".py", ".ipynb")
+        # TODO(gp): We can probably consider only the .py files after jupytext
+        # is part of the main flow.
+        # is_valid = file_ext in (".py", ".ipynb")
+        is_valid = file_ext in (".py",)
         is_valid &= ".ipynb_checkpoints/" not in file_name
         # Skip files in directory starting with "tmp.".
         is_valid &= "/tmp." not in file_name
@@ -508,6 +511,14 @@ def _flake8(file_name, pedantic, check_if_possible):
         # Because of black, disable
         #   "W503 line break before binary operator"
         "W503",
+        # E266 too many leading '#' for block comment
+        # We have disabled this since it is a false positive for jupytext files.
+        "E266,"
+        # E501 line too long (> 82 characters)
+        # We have disabled this since it triggers also for docstrings at the
+        # beginning of the line. We let pylint pick the lines too long, since
+        # it seems to be smarter.
+        "E501",
         # E731 do not assign a lambda expression, use a def
         "E731",
         # E265 block comment should start with '# '
@@ -524,7 +535,21 @@ def _flake8(file_name, pedantic, check_if_possible):
         )
     opts += " --ignore=" + ",".join(ignore)
     cmd = executable + " %s %s" % (opts, file_name)
-    return _tee(cmd, executable, abort_on_error=True)
+    #
+    output = _tee(cmd, executable, abort_on_error=True)
+    # Remove some errors.
+    is_jupytext_code = is_paired_jupytext_file(file_name)
+    _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+    output_tmp = []
+    if is_jupytext_code:
+        for l in output:
+            # F821 undefined name 'display' [flake8]
+            if "F821" in l and "undefined name 'display'" in l:
+                continue
+            output_tmp.append(l)
+    output = output_tmp
+    #
+    return output
 
 
 def _pydocstyle(file_name, pedantic, check_if_possible):
@@ -649,6 +674,8 @@ def _pylint(file_name, pedantic, check_if_possible):
         "C0330",
         # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
         "C0412",
+        # [R0903(too-few-public-methods), ] Too few public methods (/2)
+        "R0903",
         # [R0912(too-many-branches), ] Too many branches (/12)
         "R0912",
         # R0913(too-many-arguments), ] Too many arguments (/5)
@@ -657,6 +684,11 @@ def _pylint(file_name, pedantic, check_if_possible):
         "R0914",
         # [R0915(too-many-statements), ] Too many statements (/50)
         "R0915",
+        # [W0123(eval-used), ] Use of eval
+        "W0123",
+        # [W0125(using-constant-test), ] Using a conditional statement with a
+        #   constant value
+        "W0125",
         # [W0511(fixme), ]
         "W0511",
         # TODO(gp): Not clear what is the problem.
@@ -683,7 +715,13 @@ def _pylint(file_name, pedantic, check_if_possible):
     is_jupytext_code = is_paired_jupytext_file(file_name)
     _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
     if is_jupytext_code:
-        ignore.extend([])
+        ignore.extend(
+            [
+                # [W0104(pointless-statement), ] Statement seems to have no effect
+                # This is disabled since we use just variable names to print.
+                "W0104"
+            ]
+        )
 
     if not pedantic:
         ignore.extend(
@@ -709,6 +747,16 @@ def _pylint(file_name, pedantic, check_if_possible):
     opts += " -j 4"
     cmd = executable + " %s %s" % (opts, file_name)
     output = _tee(cmd, executable, abort_on_error=False)
+    # Remove some errors.
+    output_tmp = []
+    if is_jupytext_code:
+        for l in output:
+            # [E0602(undefined-variable), ] Undefined variable 'display'
+            if "E0602" in l and "Undefined variable 'display'" in l:
+                continue
+            output_tmp.append(l)
+    output = output_tmp
+    #
     output.insert(0, "* file_name=%s" % file_name)
     output = [l for l in output if "-" * 20 not in l]
     return output
@@ -1049,7 +1097,7 @@ def _parse():
     parser.add_argument(
         "--only_py",
         action="store_true",
-        help="Process only python scripts " "excluding paired notebooks",
+        help="Process only python scripts excluding paired notebooks",
     )
     parser.add_argument(
         "--only_ipynb", action="store_true", help="Process only jupyter notebooks"

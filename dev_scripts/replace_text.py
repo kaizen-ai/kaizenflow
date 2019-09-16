@@ -175,8 +175,6 @@ def _custom1(args):
 def _main(args):
     dbg.init_logger(args.log_level)
     if args.custom_flow:
-        # pylint: disable=W0123
-        # [W0123(eval-used), ] Use of eval
         eval("%s(args)" % args.custom_flow)
     else:
         dirs = args.dirs

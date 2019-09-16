@@ -17,11 +17,11 @@
 # ## Import
 
 # %%
-import collections
 
 # %%
 # %load_ext autoreload
 # %autoreload 2
+import collections
 import logging
 import os
 
@@ -147,21 +147,21 @@ daily_price_dict_df["CL"].head(3)
 
 # %% [markdown]
 # ## Read data through config API
-#
-#
-# config = collections.OrderedDict()
-#
-# if "__CONFIG__" in os.environ:
-#     config = os.environ["__CONFIG__"]
-#     _LOG.info("__CONFIG__=%s", config)
-#     config = eval(config)
-# else:
-#     # Use the data from S3.
-#     file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
-#     config["file_name"] = file_name
-#     config["nrows"] = 100000
-#
-# _LOG.info(cfg.config_to_string(config))
+
+# %%
+config = collections.OrderedDict()
+
+if "__CONFIG__" in os.environ:
+    config = os.environ["__CONFIG__"]
+    _LOG.info("__CONFIG__=%s", config)
+    config = eval(config)
+else:
+    # Use the data from S3.
+    file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
+    config["file_name"] = file_name
+    config["nrows"] = 100000
+
+_LOG.info(cfg.config_to_string(config))
 
 # %%
 df = kut.read_data_from_config(config)
@@ -226,16 +226,16 @@ min_rets.fillna(0.0).resample("1D").sum().cumsum().plot()
 # %%
 # Resample to 1min.
 _LOG.info("## Before resampling")
-exp.report_zero_null_stats(min_rets)
+exp.report_zero_nan_inf_stats(min_rets)
 
 # %%
 exp.plot_non_na_cols(min_rets.resample("1D").sum())
 
 # %%
-min_rets = fin.resample_1min(min_rets)
+min_rets = fin.resample_1min(min_rets, skip_weekends=False)
 
 _LOG.info("## After resampling")
-exp.report_zero_null_stats(min_rets)
+exp.report_zero_nan_inf_stats(min_rets)
 
 min_rets.fillna(0.0, inplace=True)
 

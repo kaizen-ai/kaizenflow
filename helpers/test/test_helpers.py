@@ -20,8 +20,6 @@ class Test_git1(ut.TestCase):
     """
 
     def _helper(self, func_call):
-        # pylint: disable=W0123
-        # [W0123(eval-used), Test_git1._helper] Use of eval
         act = eval(func_call)
         _LOG.debug("%s=%s", func_call, act)
 

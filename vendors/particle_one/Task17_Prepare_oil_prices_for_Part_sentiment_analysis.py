@@ -17,11 +17,11 @@
 # ## Import
 
 # %%
-import collections
 
 # %%
 # %load_ext autoreload
 # %autoreload 2
+import collections
 import logging
 import os
 
@@ -77,21 +77,21 @@ print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
 
 # %% [markdown]
 # # Read data
-#
-#
-# config = collections.OrderedDict()
-#
-# if "__CONFIG__" in os.environ:
-#     config = os.environ["__CONFIG__"]
-#     print("__CONFIG__=", config)
-#     config = eval(config)
-# else:
-#     # config["nrows"] = 100000
-#     config["nrows"] = None
-#     #
-#     config["zscore_com"] = 28
-#
-# print(cfg.config_to_string(config))
+
+# %%
+config = collections.OrderedDict()
+
+if "__CONFIG__" in os.environ:
+    config = os.environ["__CONFIG__"]
+    print("__CONFIG__=", config)
+    config = eval(config)
+else:
+    # config["nrows"] = 100000
+    config["nrows"] = None
+    #
+    config["zscore_com"] = 28
+
+print(cfg.config_to_string(config))
 
 # %% [markdown]
 # # Prices

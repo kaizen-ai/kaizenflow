@@ -194,13 +194,13 @@ exp.plot_non_na_cols(rets.resample("1D").sum())
 # %%
 # Resample to 1min.
 _LOG.info("## Before resampling")
-exp.report_zero_null_stats(rets)
+exp.report_zero_nan_inf_stats(rets)
 
 # %%
 rets = fin.resample_1min(rets)
 
 _LOG.info("## After resampling")
-exp.report_zero_null_stats(rets_tmp)
+exp.report_zero_nan_inf_stats(rets_tmp)
 
 rets.fillna(0.0, inplace=True)
 

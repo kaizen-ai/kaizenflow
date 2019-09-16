@@ -167,9 +167,6 @@ def report_zero_nan_inf_stats(
     _LOG.info("num_weekdays=%s", num_weekdays)
     #
     stats_df = pd.DataFrame(None, index=df.columns)
-    # pylint: disable=W0125
-    # [W0125(using-constant-test), ] Using a conditional statement with a
-    # constant value.
     if False:
         # Find the index of the first non-nan value.
         df = df.applymap(lambda x: not np.isnan(x))
