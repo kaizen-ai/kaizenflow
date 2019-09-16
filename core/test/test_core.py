@@ -416,5 +416,5 @@ class Test_explore1(ut.TestCase):
         df["x"] = x
         df["y"] = y
         exp.ols_regress_series(
-            df["x"], df["y"], use_intercept=True, print_model_stats=False
+            df["x"], df["y"], intercept=True, print_model_stats=False
         )
