@@ -65,7 +65,8 @@ def _look_for(file_name, old_string):
     res = []
     found = False
     for i, line in enumerate(txt):
-        if old_string in line:
+        m = re.search(old_string, line)
+        if m:
             # ./install/create_conda.py:21:import helpers.helper_io as io_
             res.append("%s:%s:%s" % (file_name, i + 1, line))
             found = True
