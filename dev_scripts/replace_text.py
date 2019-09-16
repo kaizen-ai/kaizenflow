@@ -14,7 +14,7 @@ import re
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.printing as pri
+import helpers.pri.as pri
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ def _replace_with_python(file_name, old_string, new_string, backup):
     io_.to_file(file_name, lines_out)
 
 
-def _replace(file_names_to_process, old_string, new_string, backup):
+def _replace(file_names_to_process, old_string, new_string, backup, mode):
     _LOG.info(
         "Found %s files:\n%s",
         len(file_names_to_process),
@@ -127,7 +127,12 @@ def _replace(file_names_to_process, old_string, new_string, backup):
     )
     for file_name in file_names_to_process:
         _LOG.info("* Processing %s", file_name)
-        _replace_with_perl(file_name, old_string, new_string, backup)
+        if mode == "replace_with_perl":
+            _replace_with_perl(file_name, old_string, new_string, backup)
+        elif mode == "replace_with_python":
+            _replace_with_python(file_name, old_string, new_string, backup)
+        else:
+            raise ValueError("Invalid mode='%s'", mode)
 
 
 # ##############################################################################
@@ -135,13 +140,14 @@ def _replace(file_names_to_process, old_string, new_string, backup):
 
 def _custom1(args):
     to_replace = [
-        ("import helpers.printing as printing", "import helpers.printing as pri"),
-        ("printing.", "pri."),
+        ("import helpers.pri.as pri", "import helpers.pri.as pri"),
+        ("pri.", "pri."),
     ]
     dirs = "."
     exts = ["py"]
     backup = args.backup
     preview = args.preview
+    mode = "replace_with_python"
     #
     txt = ""
     for old_string, new_string in to_replace:
@@ -152,8 +158,8 @@ def _custom1(args):
         if preview:
             txt += txt_tmp
         else:
-            _replace_with_python(
-                file_names_to_process, old_string, new_string, backup
+            _replace(
+                file_names_to_process, old_string, new_string, backup, mode
             )
     io_.to_file("./cfile", txt)
     if preview:
@@ -180,7 +186,8 @@ def _main(args):
             _LOG.warning("Preview only as required. Results saved in ./cfile")
             exit(0)
         # Replace.
-        _replace(file_names_to_process, args.old, args.new, args.backup)
+        mode = "replace_with_perl"
+        _replace(file_names_to_process, args.old, args.new, args.backup, mode)
 
 
 def _parse():
