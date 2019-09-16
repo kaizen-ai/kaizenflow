@@ -17,39 +17,32 @@
 # ## Import
 
 # %%
+import collections
+
+# %%
 # %load_ext autoreload
 # %autoreload 2
-import datetime
 import logging
 import os
-import platform
 
-import numpy as np
-import pandas as pd
 import seaborn as sns
-import scipy
-import matplotlib
-import matplotlib.pyplot as plt
-import sklearn
 
+import core.finance as fin
 import helpers.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
-import helpers.printing as printing
-import core.explore as exp
-import core.finance as fin
-
+import helpers.printing as pri
 import vendors.kibot.utils as kut
 
 # %%
 print(env.get_system_signature())
 
-printing.config_notebook()
+pri.config_notebook()
 
 # TODO(gp): Changing level during the notebook execution doesn't work. Fix it.
-#dbg.init_logger(verb=logging.DEBUG)
+# dbg.init_logger(verb=logging.DEBUG)
 dbg.init_logger(verb=logging.INFO)
-#dbg.test_logger()
+# dbg.test_logger()
 
 _LOG = logging.getLogger(__name__)
 
@@ -84,23 +77,21 @@ print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
 
 # %% [markdown]
 # # Read data
-
-# %%
-import collections
-
-config = collections.OrderedDict()
-
-if "__CONFIG__" in os.environ:
-    config = os.environ["__CONFIG__"]
-    print("__CONFIG__=", config)
-    config = eval(config)
-else:
-    #config["nrows"] = 100000
-    config["nrows"] = None
-    #
-    config["zscore_com"] = 28
-
-print(cfg.config_to_string(config))
+#
+#
+# config = collections.OrderedDict()
+#
+# if "__CONFIG__" in os.environ:
+#     config = os.environ["__CONFIG__"]
+#     print("__CONFIG__=", config)
+#     config = eval(config)
+# else:
+#     # config["nrows"] = 100000
+#     config["nrows"] = None
+#     #
+#     config["zscore_com"] = 28
+#
+# print(cfg.config_to_string(config))
 
 # %% [markdown]
 # # Prices
@@ -110,16 +101,22 @@ print(cfg.config_to_string(config))
 
 # %%
 symbols = "CL NG RB BZ".split()
-file_name = "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
+file_name = (
+    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
+)
 
-daily_price_dict_df = kut.read_multiple_symbol_data(symbols, file_name, nrows=config["nrows"])
+daily_price_dict_df = kut.read_multiple_symbol_data(
+    symbols, file_name, nrows=config["nrows"]
+)
 
 daily_price_dict_df["CL"].tail(2)
 
 # %%
 col_name = "close"
 mode = "pct_change"
-daily_rets = kut.compute_ret_0_from_multiple_daily_prices(daily_price_dict_df, col_name, mode)
+daily_rets = kut.compute_ret_0_from_multiple_daily_prices(
+    daily_price_dict_df, col_name, mode
+)
 
 daily_rets.head(3)
 
@@ -128,7 +125,9 @@ daily_rets = daily_rets["2008-01-01":]
 daily_rets.fillna(0.0).cumsum().plot()
 
 # %%
-daily_zrets = fin.zscore(daily_rets, com=config["zscore_com"], demean=False, standardize=True, delay=1)
+daily_zrets = fin.zscore(
+    daily_rets, com=config["zscore_com"], demean=False, standardize=True, delay=1
+)
 daily_zrets.columns = [c.replace("ret_", "zret_") for c in daily_zrets.columns]
 daily_zrets.dropna().head(3)
 
@@ -152,8 +151,12 @@ daily_rets.to_csv("oil_daily_zrets.csv")
 
 # %%
 symbols = "CL NG RB BZ".split()
-file_name = "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
-min_price_dict_df = kut.read_multiple_symbol_data(symbols, file_name, nrows=config["nrows"])
+file_name = (
+    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+)
+min_price_dict_df = kut.read_multiple_symbol_data(
+    symbols, file_name, nrows=config["nrows"]
+)
 
 min_price_dict_df["CL"].tail(2)
 
@@ -171,7 +174,8 @@ min_rets.fillna(0.0).resample("1D").sum().cumsum().plot()
 
 # %%
 min_zrets = fin.zscore(
-    min_rets, com=config["zscore_com"], demean=False, standardize=True, delay=1)
+    min_rets, com=config["zscore_com"], demean=False, standardize=True, delay=1
+)
 min_zrets.columns = [c.replace("ret_", "zret_") for c in min_zrets.columns]
 min_zrets.dropna().head(3)
 

@@ -17,39 +17,31 @@
 # ## Import
 
 # %%
+import collections
+
+# %%
 # %load_ext autoreload
 # %autoreload 2
-import datetime
 import logging
 import os
-import platform
 
-import numpy as np
 import pandas as pd
-import seaborn as sns
-import scipy
-import matplotlib
-import matplotlib.pyplot as plt
-import sklearn
 
 import helpers.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
-import helpers.printing as printing
-import core.explore as exp
-import core.finance as fin
-
+import helpers.printing as pri
 import vendors.kibot.utils as kut
 
 # %%
 print(env.get_system_signature())
 
-printing.config_notebook()
+pri.config_notebook()
 
 # TODO(gp): Changing level during the notebook execution doesn't work. Fix it.
-#dbg.init_logger(verb=logging.DEBUG)
+# dbg.init_logger(verb=logging.DEBUG)
 dbg.init_logger(verb=logging.INFO)
-#dbg.test_logger()
+# dbg.test_logger()
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,27 +75,25 @@ print(sum(mask))
 print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
 
 # %%
-df4[mask]['Symbol'].values
+df4[mask]["Symbol"].values
 
 # %% [markdown]
 # # Read data
-
-# %%
-import collections
-
-config = collections.OrderedDict()
-
-if "__CONFIG__" in os.environ:
-    config = os.environ["__CONFIG__"]
-    print("__CONFIG__=", config)
-    config = eval(config)
-else:
-    #config["nrows"] = 100000
-    config["nrows"] = None
-    #
-    config["zscore_com"] = 28
-
-print(cfg.config_to_string(config))
+#
+#
+# config = collections.OrderedDict()
+#
+# if "__CONFIG__" in os.environ:
+#     config = os.environ["__CONFIG__"]
+#     print("__CONFIG__=", config)
+#     config = eval(config)
+# else:
+#     # config["nrows"] = 100000
+#     config["nrows"] = None
+#     #
+#     config["zscore_com"] = 28
+#
+# print(cfg.config_to_string(config))
 
 # %% [markdown]
 # # Prices
@@ -113,18 +103,22 @@ print(cfg.config_to_string(config))
 
 # %%
 all_symbols = [
-    futures.replace('.csv.gz', '') for futures in os.listdir(
-        '/data/kibot/All_Futures_Continuous_Contracts_daily')
+    futures.replace(".csv.gz", "")
+    for futures in os.listdir(
+        "/data/kibot/All_Futures_Continuous_Contracts_daily"
+    )
 ]
 
 # %%
-symbols = df4[mask]['Symbol'].values
+symbols = df4[mask]["Symbol"].values
 symbols
 
 # %%
 file_name = "/data/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
 
-daily_price_dict_df = kut.read_multiple_symbol_data(symbols, file_name, nrows=config["nrows"])
+daily_price_dict_df = kut.read_multiple_symbol_data(
+    symbols, file_name, nrows=config["nrows"]
+)
 
 daily_price_dict_df["CL"].tail(2)
 
@@ -136,31 +130,35 @@ daily_price_dict_df["CL"].tail(2)
 
 # %%
 daily_volume_sum_dict = {
-    symbol: daily_prices_symbol['vol'].sum()
+    symbol: daily_prices_symbol["vol"].sum()
     for symbol, daily_prices_symbol in daily_price_dict_df.items()
 }
 
 # %%
-daily_volume_sum_df = pd.DataFrame.from_dict(daily_volume_sum_dict, orient='index', columns=['sum_vol'])
-daily_volume_sum_df.index.name = 'symbol'
+daily_volume_sum_df = pd.DataFrame.from_dict(
+    daily_volume_sum_dict, orient="index", columns=["sum_vol"]
+)
+daily_volume_sum_df.index.name = "symbol"
 
 # %%
-daily_volume_sum_df.sort_values('sum_vol', ascending=False)
+daily_volume_sum_df.sort_values("sum_vol", ascending=False)
 
 # %% [markdown]
 # ## Mean volume
 
 # %%
 daily_volume_mean_dict = {
-    symbol: daily_prices_symbol['vol'].mean()
+    symbol: daily_prices_symbol["vol"].mean()
     for symbol, daily_prices_symbol in daily_price_dict_df.items()
 }
 
 # %%
-daily_volume_mean_df = pd.DataFrame.from_dict(daily_volume_mean_dict, orient='index', columns=['mean_vol'])
-daily_volume_mean_df.index.name = 'symbol'
+daily_volume_mean_df = pd.DataFrame.from_dict(
+    daily_volume_mean_dict, orient="index", columns=["mean_vol"]
+)
+daily_volume_mean_df.index.name = "symbol"
 
 # %%
-daily_volume_mean_df.sort_values('mean_vol', ascending=False)
+daily_volume_mean_df.sort_values("mean_vol", ascending=False)
 
 # %%

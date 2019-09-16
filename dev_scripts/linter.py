@@ -784,7 +784,7 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    if is_ipynb_file(file_name) and is_paired_jupytext_file(file_name):
+    if is_py_file(file_name) and is_paired_jupytext_file(file_name):
         cmd = executable + " -f %s --action sync" % file_name
         output = _tee(cmd, executable, abort_on_error=True)
     else:
@@ -800,7 +800,7 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
-    if is_ipynb_file(file_name) and is_paired_jupytext_file(file_name):
+    if is_py_file(file_name) and is_paired_jupytext_file(file_name):
         cmd = executable + " -f %s --action test" % file_name
         output = _tee(cmd, executable, abort_on_error=True)
     else:

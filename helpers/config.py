@@ -1,6 +1,6 @@
 import logging
 
-import helpers.printing as printing
+import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,5 +35,5 @@ def config_to_python(config):
 def get_exception(config, key):
     return ValueError(
         "Invalid %s='%s' in config=\n%s"
-        % (key, config[key], printing.space(config_to_string(config)))
+        % (key, config[key], pri.space(config_to_string(config)))
     )

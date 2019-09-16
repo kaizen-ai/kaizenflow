@@ -17,38 +17,33 @@
 # ## Import
 
 # %%
+import collections
+
+# %%
 # %load_ext autoreload
 # %autoreload 2
-import datetime
 import logging
 import os
-import platform
 
-import numpy as np
 import pandas as pd
 import seaborn as sns
-import scipy
-import matplotlib
-import matplotlib.pyplot as plt
-import sklearn
 
+import core.explore as exp
+import core.finance as fin
 import helpers.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
-import core.finance as fin
-import helpers.printing as printing
-import core.explore as exp
-
+import helpers.printing as pri
 import vendors.kibot.utils as kut
 
 # %%
 print(env.get_system_signature())
 
-printing.config_notebook()
+pri.config_notebook()
 
-#dbg.init_logger(verb=logging.DEBUG)
+# dbg.init_logger(verb=logging.DEBUG)
 dbg.init_logger(verb=logging.INFO)
-#dbg.test_logger()
+# dbg.test_logger()
 
 _LOG = logging.getLogger(__name__)
 
@@ -92,10 +87,12 @@ print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
 
 # %%
 s = "CL"
-#nrows = None
+# nrows = None
 nrows = 10000
-#file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/%s.csv.gz" % s
-file_name = "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz" % s
+# file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/%s.csv.gz" % s
+file_name = (
+    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz" % s
+)
 df = kut.read_data_memcached(file_name, nrows)
 df.head(3)
 
@@ -104,10 +101,12 @@ df.head(3)
 
 # %%
 s = "CL"
-#nrows = None
+# nrows = None
 nrows = 10000
-#file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/%s.csv.gz" % s
-file_name = "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
+# file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/%s.csv.gz" % s
+file_name = (
+    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
+)
 df = kut.read_data_memcached(file_name, nrows)
 df.head(3)
 
@@ -119,10 +118,14 @@ df.head(3)
 
 # %%
 symbols = "CL NG RB BZ".split()
-file_name = "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
+file_name = (
+    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
+)
 nrows = 10000
 
-daily_price_dict_df = kut.read_multiple_symbol_data(symbols, file_name, nrows=nrows)
+daily_price_dict_df = kut.read_multiple_symbol_data(
+    symbols, file_name, nrows=nrows
+)
 
 daily_price_dict_df["CL"].head(3)
 
@@ -131,32 +134,34 @@ daily_price_dict_df["CL"].head(3)
 
 # %%
 symbols = "CL NG RB BZ".split()
-file_name = "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+file_name = (
+    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+)
 nrows = 10000
 
-daily_price_dict_df = kut.read_multiple_symbol_data(symbols, file_name, nrows=nrows)
+daily_price_dict_df = kut.read_multiple_symbol_data(
+    symbols, file_name, nrows=nrows
+)
 
 daily_price_dict_df["CL"].head(3)
 
 # %% [markdown]
 # ## Read data through config API
-
-# %%
-import collections
-
-config = collections.OrderedDict()
-
-if "__CONFIG__" in os.environ:
-    config = os.environ["__CONFIG__"]
-    _LOG.info("__CONFIG__=%s", config)
-    config = eval(config)
-else:
-    # Use the data from S3.
-    file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
-    config["file_name"] = file_name
-    config["nrows"] = 100000
-
-_LOG.info(cfg.config_to_string(config))
+#
+#
+# config = collections.OrderedDict()
+#
+# if "__CONFIG__" in os.environ:
+#     config = os.environ["__CONFIG__"]
+#     _LOG.info("__CONFIG__=%s", config)
+#     config = eval(config)
+# else:
+#     # Use the data from S3.
+#     file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
+#     config["file_name"] = file_name
+#     config["nrows"] = 100000
+#
+# _LOG.info(cfg.config_to_string(config))
 
 # %%
 df = kut.read_data_from_config(config)
@@ -170,7 +175,9 @@ _LOG.info("df=\n%s", df.head(3))
 
 # %%
 s = "CL"
-file_name = "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
+file_name = (
+    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
+)
 nrows = 10000
 
 df = pd.read_csv(file_name, header=None, parse_dates=[0], nrows=nrows)
@@ -192,7 +199,9 @@ df.head(3)
 # %%
 # Read multiple futures.
 symbols = "CL NG RB BZ".split()
-file_name = "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+file_name = (
+    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+)
 nrows = 100000
 min_price_dict_df = kut.read_multiple_symbol_data(symbols, file_name, nrows=nrows)
 
@@ -236,7 +245,8 @@ min_rets.fillna(0.0, inplace=True)
 # %%
 zscore_com = 28
 min_zrets = fin.zscore(
-    min_rets, com=zscore_com, demean=False, standardize=True, delay=1)
+    min_rets, com=zscore_com, demean=False, standardize=True, delay=1
+)
 min_zrets.columns = [c.replace("ret_", "zret_") for c in min_zrets.columns]
 min_zrets.dropna().head(3)
 

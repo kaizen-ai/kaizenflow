@@ -6,7 +6,7 @@ import pandas as pd
 import statsmodels.api as sm
 
 import helpers.dbg as dbg
-import helpers.printing as printing
+import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
@@ -86,18 +86,18 @@ def remove_dates_with_no_data(df, report_stats):
     #
     if report_stats:
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
-        removed_perc = printing.perc(df.shape[0] - df_out.shape[0], df.shape[0])
+        removed_perc = pri.perc(df.shape[0] - df_out.shape[0], df.shape[0])
         _LOG.info("Rows removed: %s", removed_perc)
         #
-        removed_perc = printing.perc(len(removed_days), num_days)
+        removed_perc = pri.perc(len(removed_days), num_days)
         _LOG.info("Number of removed days: %s", removed_perc)
         # Find week days.
         removed_weekdays = [d for d in removed_days if d.weekday() < 5]
-        removed_perc = printing.perc(len(removed_weekdays), len(removed_days))
+        removed_perc = pri.perc(len(removed_weekdays), len(removed_days))
         _LOG.info("Number of removed weekdays: %s", removed_perc)
         _LOG.info("Weekdays removed: %s", ", ".join(map(str, removed_weekdays)))
         #
-        removed_perc = printing.perc(
+        removed_perc = pri.perc(
             len(removed_days) - len(removed_weekdays), len(removed_days)
         )
         _LOG.info("Number of removed weekend days: %s", removed_perc)
@@ -134,7 +134,7 @@ def filter_by_time(
             mask = df[dt_col_name] >= start_dt
         else:
             mask = df.index >= start_dt
-        kept_perc = printing.perc(mask.sum(), df.shape[0])
+        kept_perc = pri.perc(mask.sum(), df.shape[0])
         _LOG.info(">= start_dt=%s: kept %s rows", start_dt, kept_perc)
         if result_bundle:
             result_bundle["filter_ge_start_dt"] = kept_perc
@@ -146,7 +146,7 @@ def filter_by_time(
             mask = df[dt_col_name] < end_dt
         else:
             mask = df.index < end_dt
-        kept_perc = printing.perc(mask.sum(), df.shape[0])
+        kept_perc = pri.perc(mask.sum(), df.shape[0])
         _LOG.info("< end_dt=%s: kept %s rows", end_dt, kept_perc)
         if result_bundle:
             result_bundle["filter_lt_end_dt"] = kept_perc
@@ -223,7 +223,8 @@ def compute_sr(rets):
 
 
 def compute_kratio(rets, y_var):
-    # From http://s3.amazonaws.com/zanran_storage/www.styleadvisor.com/ContentPages/2449998087.pdf
+    # From http://s3.amazonaws.com/zanran_storage/www.styleadvisor.com/
+    #   ContentPages/2449998087.pdf
     daily_rets = rets.resample("1B").sum().cumsum()
     # Fit the best line to the daily rets.
     x = range(daily_rets.shape[0])
@@ -243,7 +244,7 @@ def compute_kratio(rets, y_var):
 
 
 def drawdown(log_rets):
-    """
+    r"""
     Define the drawdown at index location j to be
         d_j := max_{0 \leq i \leq j} \log(p_i / p_j)
     where p_k is price. Though this definition is in terms of prices, we

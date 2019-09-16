@@ -1,11 +1,15 @@
 #!/usr/bin/env python
-"""
+
+r"""
 Replace an instance of text in all py, ipynb, and txt files.
 
 > replace_text.py --old "import core.finance" --new "import core.finance" --preview
 > replace_text.py --old "alphamatic/kibot/All_Futures" --new "alphamatic/kibot/All_Futures" --preview
 
 > replace_text.py --custom_flow _custom1
+
+# To revert all files but this one
+> gs -s | grep -v dev_scripts/replace_text.py | grep -v "\?" | awk '{print $2}' | xargs git checkout --
 """
 
 import argparse
@@ -94,8 +98,6 @@ def _replace_with_perl(file_name, old_string, new_string, backup):
     regex += sep
     regex += "g"
     # regex = r"s%s\\b%s%s%s%sg" % (sep, args.old, sep, args.new, sep)
-    # pylint: disable=W0125
-    # W0125(using-constant-test), ] Using a conditional statement with a constant value
     if True:
         perl_opts.append("-e '%s'" % regex)
     else:
@@ -143,7 +145,7 @@ def _replace(file_names_to_process, old_string, new_string, backup, mode):
 def _custom1(args):
     to_replace = [
         ("import helpers.printing as printing", "import helpers.printing as pri"),
-        ("printing\.", "pri\."),
+        (r"printing\.", "pri."),
     ]
     dirs = "."
     exts = ["py"]

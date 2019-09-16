@@ -21,7 +21,7 @@ import sys
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
-import helpers.printing as printing
+import helpers.printing as pri
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -182,9 +182,7 @@ def _main(args):
     notebooks_equal = []
     # Diff the files.
     for abs_file_name, cwd_file_name in file_names:
-        print(
-            ("\n" + printing.frame("file_name=%s" % cwd_file_name).rstrip("\n"))
-        )
+        print(("\n" + pri.frame("file_name=%s" % cwd_file_name).rstrip("\n")))
         is_ipynb_diff = _diff_notebook(
             dir_name, abs_file_name, git_client_root, args.brief
         )

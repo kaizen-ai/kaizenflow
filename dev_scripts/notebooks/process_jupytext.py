@@ -31,6 +31,9 @@ _EXECUTABLE = "jupytext"
 
 
 def _pair(file_name):
+    dbg.dassert(
+        lin.is_ipynb_file(file_name), "'%s' has no .ipynb extension", file_name
+    )
     if lin.is_paired_jupytext_file(file_name):
         _LOG.warning("The file '%s' seems already paired", file_name)
     # It is a ipynb and it is unpaired: create the python file.
@@ -118,9 +121,6 @@ def _main(parser):
     #
     file_name = args.file
     dbg.dassert_exists(file_name)
-    dbg.dassert(
-        lin.is_ipynb_file(file_name), "'%s' has no .ipynb extension", file_name
-    )
     if args.action == "pair":
         _pair(file_name)
     elif args.action == "sync":

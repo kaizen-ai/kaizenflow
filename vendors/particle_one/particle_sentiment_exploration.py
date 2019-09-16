@@ -19,41 +19,31 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
-#import datetime
-import glob
+# import datetime
 import logging
-import os
-import platform
-import pprint
 
-import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import scipy
-import statsmodels.api as sm
-import matplotlib
-import matplotlib.pyplot as plt
-import sklearn
 
+import core.explore as exp
+import core.features_analyzer as ana
+import core.finance as fin
 import helpers.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
-import core.explore as exp
-import core.finance as fin
-import helpers.printing as printing
-import core.features_analyzer as ana
+import helpers.printing as pri
 import vendors.particle_one.utils as put
-import vendors.kibot.utils as kut
 
 # %%
 print(env.get_system_signature())
 
-printing.config_notebook()
+pri.config_notebook()
 
 # TODO(gp): Changing level during the notebook execution doesn't work. Fix it.
-#dbg.init_logger(verb=logging.DEBUG)
+# dbg.init_logger(verb=logging.DEBUG)
 dbg.init_logger(verb=logging.INFO)
-#dbg.test_logger()
+# dbg.test_logger()
 
 _LOG = logging.getLogger(__name__)
 
@@ -62,35 +52,32 @@ _LOG = logging.getLogger(__name__)
 
 # %%
 config = {
-    "feature_file_name":
-    "/Users/saggese/GoogleDrive/alphamatic/Particle/Tech/twitter_dataset_sentiment_07.05.19.csv",
+    "feature_file_name": "/Users/saggese/GoogleDrive/alphamatic/Particle/Tech/twitter_dataset_sentiment_07.05.19.csv",
     #
     "feat_zscore_com": 28,
     #
 }
 
 if True:
-    config.update({
-        "agg_interval":
-        "1T",
-        #"agg_interval": "5T",
-        "agg_function":
-        "mean",
-        #
-        "rets_file_name":
-        "/Users/saggese/src/lemonade/vendors/particle_one/oil_1min_zrets.csv",
-    })
+    config.update(
+        {
+            "agg_interval": "1T",
+            # "agg_interval": "5T",
+            "agg_function": "mean",
+            #
+            "rets_file_name": "/Users/saggese/src/lemonade/vendors/particle_one/oil_1min_zrets.csv",
+        }
+    )
 else:
-    config.update({
-        # TODO(gp): weekday
-        "agg_interval":
-        "1B",
-        "agg_function":
-        "mean",
-        #
-        "rets_file_name":
-        "/Users/saggese/src/lemonade/vendors/particle_one/oil_daily_zrets.csv",
-    })
+    config.update(
+        {
+            # TODO(gp): weekday
+            "agg_interval": "1B",
+            "agg_function": "mean",
+            #
+            "rets_file_name": "/Users/saggese/src/lemonade/vendors/particle_one/oil_daily_zrets.csv",
+        }
+    )
 
 _LOG.info("config=\n%s", cfg.config_to_string(config))
 
@@ -120,12 +107,12 @@ mode = "weekday"
 exp.plot_time_distributions(feat_data.index, mode)
 
 # %%
-#mode = "day_of_the_month"
+# mode = "day_of_the_month"
 mode = "month_of_the_year"
 exp.plot_time_distributions(feat_data.index, mode)
 
 # %%
-#mode = "day_of_the_month"
+# mode = "day_of_the_month"
 mode = "year"
 exp.plot_time_distributions(feat_data.index, mode, density=False)
 
@@ -161,7 +148,8 @@ _LOG.info("feat_data=\n%s", feat_data.head(3))
 # %%
 feat_names = "demand inventory supply".split()
 exp.plot_heatmap(
-    feat_data[feat_names].corr(), "heatmap", annot=True, vmin=-1, vmax=1.0)
+    feat_data[feat_names].corr(), "heatmap", annot=True, vmin=-1, vmax=1.0
+)
 
 # %%
 # Count majority1 and majority2.
@@ -175,7 +163,7 @@ feat_data_sampled = put.sample_features_from_config(config, feat_data)
 feat_data_sampled.head(2)
 
 # %%
-#feat_names = put.get_raw_features() + "demand inventory supply".split()
+# feat_names = put.get_raw_features() + "demand inventory supply".split()
 feat_names = "demand inventory supply".split()
 put.plot_raw_data_pdf(feat_data_sampled, feat_names)
 
@@ -188,7 +176,8 @@ fin.zscore(
     com=config["feat_zscore_com"],
     demean=True,
     standardize=True,
-    delay=1).resample("1D").sum().plot()
+    delay=1,
+).resample("1D").sum().plot()
 
 # %% [markdown]
 # # Read returns
@@ -243,22 +232,24 @@ if config["feat_zscore_com"] is not None:
         com=config["feat_zscore_com"],
         demean=True,
         standardize=True,
-        delay=1)
+        delay=1,
+    )
 
 all_df.dropna().tail()
 
 # %%
 y_var = "CL_ret_0"
-#y_var = "NG_ret_0"
+# y_var = "NG_ret_0"
 x_vars = "demand inventory supply".split()
-#use_intercept = True
+# use_intercept = True
 use_intercept = False
 nan_mode = "drop"
-#x_shifts = [0]
+# x_shifts = [0]
 x_shifts = [-5, -3, -2, -1, 0, 1, 2, 3, 5]
-#x_shifts = [-5, -3, -2, -1, 0]
+# x_shifts = [-5, -3, -2, -1, 0]
 res_df = ana.analyze_features(
-    all_df, y_var, x_vars, use_intercept, nan_mode=nan_mode, x_shifts=x_shifts)
+    all_df, y_var, x_vars, use_intercept, nan_mode=nan_mode, x_shifts=x_shifts
+)
 display(res_df)
 
 # %%
@@ -270,11 +261,12 @@ if False:
     y_var = "CL_ret_0"
     y_var = "NG_ret_0"
     x_vars = "demand"
-    #use_intercept = True
+    # use_intercept = True
     use_intercept = False
     nan_mode = "drop"
     x_shift = 1
     report_stats = True
-    res_df = ana._analyze_feature(all_df, y_var, x_var, use_intercept,
-                                  nan_mode, x_shift, report_stats)
+    res_df = ana._analyze_feature(
+        all_df, y_var, x_var, use_intercept, nan_mode, x_shift, report_stats
+    )
     display(res_df)

@@ -7,7 +7,7 @@ import seaborn as sns
 import statsmodels.api as sm
 
 import helpers.dbg as dbg
-import helpers.printing as printing
+import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def _analyze_feature(
     # TODO(gp): Add pnl, correlation, hitrate.
     #
     if report_stats:
-        txt = printing.frame(
+        txt = pri.frame(
             "y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s"
             % (y_var, x_var, use_intercept, nan_mode, x_shift)
         )
@@ -108,7 +108,8 @@ def analyze_features(
 
 class Reporter:
     """
-    Report results from `analyze_features()` in a heatmap with coefficient values and p-values.
+    Report results from `analyze_features()` in a heatmap with coefficient
+    values and p-values.
     """
 
     def __init__(self, res_df):
