@@ -10,6 +10,9 @@ theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Paul): Use config-style constants for defining strings used by models.
+# TODO(Paul): Consider factoring out common code
+
 def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
     Bayesian Estimation Supersedes the T Test.
@@ -86,6 +89,35 @@ def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
         )
         pm.Deterministic("difference of Sharpe ratios", group2_sr - group1_sr)
         # MCMC
+        trace = pm.sample(**kwargs)
+    return model, trace
+
+
+def fit_laplace_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
+    """
+    Fits a Laplace distribution to y.
+
+    :param y: Data to be modeled by a Laplace distribution
+    :param prior_tau: Controls precision of mean and log_std priors
+    :param time_scaling: Scaling parameter for volatility and Sharpe.
+        E.g. If the time sampling units (in the input) are days and volatility
+        and Sharpe are to be reported in annualized units, use
+        time_scaling = 252.
+    :param kwargs: Passed to pm.sample
+    :return: PyMC3 model and trace
+    """
+    with pm.Model() as model:
+        loc = pm.Normal("loc", mu=0, tau=prior_tau, testval=y.mean())
+        log_scale = pm.Normal(
+            "log_scale", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
+        )
+        scale = pm.Deterministic("scale", pm.math.exp(log_scale))
+        returns = pm.Laplace("returns", mu=loc, b=scale, observed=y)
+        vol = pm.Deterministic(
+            "volatility",
+            np.sqrt(time_scaling) * returns.distribution.variance ** 0.5,
+        )
+        pm.Deterministic("sharpe", time_scaling * returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
     return model, trace
 
