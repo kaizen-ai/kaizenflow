@@ -133,15 +133,15 @@ def _replace(file_names_to_process, old_string, new_string, backup):
 # ##############################################################################
 
 
-def _custom1():
+def _custom1(args):
     to_replace = [
         ("import helpers.printing as printing", "import helpers.printing as pri"),
         ("printing.", "pri."),
     ]
     dirs = "."
     exts = ["py"]
-    backup = False
-    preview = True
+    backup = args.backup
+    preview = args.preview
     #
     txt = ""
     for old_string, new_string in to_replace:
@@ -156,6 +156,9 @@ def _custom1():
                 file_names_to_process, old_string, new_string, backup
             )
     io_.to_file("./cfile", txt)
+    if preview:
+        _LOG.warning("Preview only as required. Results saved in ./cfile")
+        exit(0)
 
 
 # ##############################################################################
@@ -166,7 +169,7 @@ def _main(args):
     if args.custom_flow:
         # pylint: disable=W0123
         # [W0123(eval-used), ] Use of eval
-        eval("%s()" % args.custom_flow)
+        eval("%s(args)" % args.custom_flow)
     else:
         dirs = args.dirs
         exts = _get_extensions(args.ext)
