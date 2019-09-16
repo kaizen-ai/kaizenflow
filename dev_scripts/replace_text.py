@@ -14,7 +14,7 @@ import re
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.pri.as pri
+import helpers.printing as pri
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ def _get_file_names(old_string, dirs, exts):
             _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
             file_names.extend(file_names_tmp)
     file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
+    file_names = [f for f in file_names if "replace_text.py" not in f]
     _LOG.info("Found %s target files", len(file_names))
     # Look for files with values.
     res = []
@@ -132,7 +133,7 @@ def _replace(file_names_to_process, old_string, new_string, backup, mode):
         elif mode == "replace_with_python":
             _replace_with_python(file_name, old_string, new_string, backup)
         else:
-            raise ValueError("Invalid mode='%s'", mode)
+            raise ValueError("Invalid mode='%s'" % mode)
 
 
 # ##############################################################################
@@ -140,8 +141,8 @@ def _replace(file_names_to_process, old_string, new_string, backup, mode):
 
 def _custom1(args):
     to_replace = [
-        ("import helpers.pri.as pri", "import helpers.pri.as pri"),
-        ("pri.", "pri."),
+        ("import helpers.printing as printing", "import helpers.printing as pri"),
+        ("printing.", "pri."),
     ]
     dirs = "."
     exts = ["py"]
@@ -158,9 +159,7 @@ def _custom1(args):
         if preview:
             txt += txt_tmp
         else:
-            _replace(
-                file_names_to_process, old_string, new_string, backup, mode
-            )
+            _replace(file_names_to_process, old_string, new_string, backup, mode)
     io_.to_file("./cfile", txt)
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
