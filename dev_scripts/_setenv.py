@@ -197,7 +197,7 @@ def _main(parser):
         _execute(cmd)
     #
     if user_name == "jenkins":
-        cmd = r"git config --list | \grep %s" % user_name
+        cmd = "git config --list"
         _execute(cmd)
     #
     # Config python.
