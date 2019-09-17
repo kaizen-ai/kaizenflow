@@ -97,12 +97,15 @@ def compute_features_from_config(config, df, result_bundle):
     """
     Compute features in-place.
     """
+    cfg.check_params(config, ["target_y_var", "delay_lag", "num_lags"])
     _LOG.debug("df.shape=%s", df.shape)
     # The rest of the flow (e.g., sklearn, to compute train/test intervals)
     # want indices to be integers.
     df = df.copy()
     df.insert(0, "datetime", df.index)
     df.index = range(df.shape[0])
+    #
+    dbg.dassert_in(config["target_y_var"], df.columns)
     y_var = config["target_y_var"]
     x_vars = []
     # dbg.dassert_lte(1, config["delay_lag"])
@@ -114,7 +117,7 @@ def compute_features_from_config(config, df, result_bundle):
         df[var] = df[y_var].shift(i)
         x_vars.append(var)
     #
-    _LOG.info("y_var=%s", y_var)
+    _LOG.info("y_var='%s'", y_var)
     _LOG.info("x_vars=%s", x_vars)
     # TODO(gp): Not sure if we should replicate this (since it's already in
     # config) just to make things symmetric.
@@ -166,19 +169,21 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
 
 
 def get_splits(config, df):
-    cv_split_style = config["cv_split_style"]
+    cv_split_style = cfg.get_param(config, "cv_split_style")
     _LOG.info(
         "min_date=%s, max_date=%s",
         df.iloc[0]["datetime"],
         df.iloc[-1]["datetime"],
     )
     if cv_split_style == "TimeSeriesSplit":
-        n_splits = config["cv_n_splits"]
+        # Expanding window with n folds.
+        n_splits = cfg.get_param(config, "cv_n_splits")
         dbg.dassert_lte(1, n_splits)
         tscv = TimeSeriesSplit(n_splits=n_splits)
         splits = list(tscv.split(df))
     elif cv_split_style == "TimeSeriesRollingFolds":
-        n_splits = config["cv_n_splits"]
+        # Rolling window using n folds.
+        n_splits = cfg.get_param(config, "cv_n_splits")
         dbg.dassert_lte(1, n_splits)
         idxs = range(df.shape[0])
         # Split in equal chunks.
@@ -195,12 +200,23 @@ def get_splits(config, df):
         # cutoff_date = "2016-01-04 09:30:00"
         cutoff_date = "2010-01-12 09:30:00"
         cutoff_date = pd.to_datetime(cutoff_date)
+        # Look for the cutoff_date.
         idx = np.where(df["datetime"] == cutoff_date)
-        # print("idx=", idx)
+        _LOG.debug("idx=%s", idx)
         dbg.dassert_lt(0, len(idx))
         idx = idx[0][0]
         _LOG.debug("idx=%s", idx)
-        splits = [(range(idx), range(idx, len(df)))]
+        splits = [(range(idx), range(idx, df.shape[0]))]
+    elif cv_split_style == "TrainTestPct":
+        train_pct = cfg.get_param(config, "cv_train_pct")
+        dbg.dassert_lte(0.0, train_pct)
+        dbg.dassert_lte(train_pct, 1.0)
+        #
+        idx = int(train_pct * df.shape[0])
+        dbg.dassert_lte(0, idx)
+        dbg.dassert_lte(idx, df.shape[0])
+        _LOG.debug("idx=%s", idx)
+        splits = [(range(idx), range(idx, df.shape[0]))]
     else:
         raise ValueError("Invalid cv_split_style='%s'" % cv_split_style)
     return splits

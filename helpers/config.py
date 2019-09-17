@@ -1,5 +1,6 @@
 import logging
 
+import helpers.dbg as dbg
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
@@ -11,6 +12,8 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 # Config
 # #############################################################################
+
+# TODO(gp): Should become a class.
 
 
 def print_config(config, keys):
@@ -29,6 +32,26 @@ def config_to_string(config):
 def config_to_python(config):
     config_as_str = str(config)
     return config_as_str.replace("OrderedDict", "collections.OrderedDict")
+
+
+def check_params(config, var_names):
+    missing_var_names = []
+    for var_name in var_names:
+        if var_name not in config:
+            missing_var_names.append(var_name)
+    if missing_var_names:
+        msg = "Missing %s vars (from %s) in config=\n%s" % (
+            ",".join(missing_var_names),
+            ",".join(var_names),
+            config_to_string(config),
+        )
+        _LOG.error(msg)
+        raise ValueError(msg)
+
+
+def get_param(config, var_name):
+    dbg.dassert_in(var_name, config)
+    return config[var_name]
 
 
 # TODO(gp): Use this everywhere.
