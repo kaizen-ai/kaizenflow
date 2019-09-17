@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import pandas as pd
 import pymc3 as pm
 import theano
 
@@ -18,9 +19,28 @@ SHAPE = "shape"
 SR = "sharpe"
 VOL = "volatility"
 
+NORM_TAG = "normal"
+T_TAG = "student_t"
+LAP_TAG = "laplace"
+ONE_WAY_NORM_TAG = "one_way_normal"
+
 
 # TODO(Paul): Use config-style constants for defining strings used by models.
 # TODO(Paul): Consider factoring out common code
+
+
+def get_col_shape(data):
+    """
+
+    :param data:
+    :return:
+    """
+    if isinstance(data, pd.Series):
+        return 1
+    elif isinstance(data, pd.DataFrame):
+        return data.shape[1]
+    else:
+        raise ValueError("Expects pd.Series or pd.DataFrame!")
 
 
 def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
@@ -103,90 +123,111 @@ def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
     return model, trace
 
 
-def fit_laplace_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
+def fit_laplace(data, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
-    Fits a Laplace distribution to y.
+    Fits a Laplace distribution to each column of data (independently).
 
-    :param y: Data to be modeled by a Laplace distribution
+    :param data: pd.Series of pd.DataFrame (obs along rows)
     :param prior_tau: Controls precision of mean and log_std priors
+    :param kwargs: Passed to pm.sample
     :param time_scaling: Scaling parameter for volatility and Sharpe.
         E.g. If the time sampling units (in the input) are days and volatility
         and Sharpe are to be reported in annualized units, use
         time_scaling = 252.
-    :param kwargs: Passed to pm.sample
     :return: PyMC3 model and trace
     """
+    cols = get_col_shape(data)
     with pm.Model() as model:
-        loc = pm.Normal(LOC, mu=0, tau=prior_tau, testval=y.mean())
-        log_scale = pm.Normal(
-            "log_scale", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
-        )
-        scale = pm.Deterministic(SCALE, pm.math.exp(log_scale))
-        returns = pm.Laplace("returns", mu=loc, b=scale, observed=y)
-        vol = pm.Deterministic(
-            "volatility",
-            np.sqrt(time_scaling) * returns.distribution.variance ** 0.5,
-        )
-        pm.Deterministic("sharpe", time_scaling * returns.distribution.mean / vol)
-        trace = pm.sample(**kwargs)
-    return model, trace
-
-
-def fit_normal_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
-    """
-    Fits a normal distribution to y.
-
-    TODO(Paul): Generalize this to multiple independent streams.
-
-    :param y: Data to be modeled by a normal distribution
-    :param prior_tau: Controls precision of mean and log_std priors
-    :param samples: Number of MCMC samples
-    :param kwargs: Passed to pm.sample
-    :return: PyMC3 model and trace
-    """
-    with pm.Model() as model:
-        mean = pm.Normal(LOC, mu=0, tau=prior_tau, testval=y.mean())
+        loc = pm.Normal(LOC, mu=0, tau=prior_tau, testval=data.mean(), shape=cols)
         # TODO(Paul): Compare with replacing these priors on sigma with
         # sigma = pm.HalfCauchy("std", beta=1, testval=y.std())
         log_std = pm.Normal(
-            "log_std", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
+            "log_std",
+            mu=0,
+            tau=prior_tau,
+            testval=pm.math.log(data.std()),
+            shape=cols,
         )
-        std = pm.Deterministic(SCALE, pm.math.exp(log_std))
-        returns = pm.Normal(RET, mu=mean, sigma=std, observed=y)
+        scale = pm.Deterministic(SCALE, pm.math.exp(log_std))
+        returns = pm.Laplace(RET, mu=loc, b=scale, observed=data)
         vol = pm.Deterministic(
             VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5
         )
         pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
+    model.name = LAP_TAG
     return model, trace
 
 
-def fit_t_distribution(y, prior_tau=1e-6, time_scaling=1, **kwargs):
+def fit_normal(data, prior_tau=1e-6, time_scaling=1, **kwargs):
     """
-    Fits a t-distribution to y.
+    Fits a normal distribution to each column of data (independently).
 
-    :param y: Data to be modeled by a t-distribution
+    :param data: pd.Series of pd.DataFrame (obs along rows)
     :param prior_tau: Controls precision of mean and log_std priors
-    :param samples: Number of MCMC samples
     :param kwargs: Passed to pm.sample
+    :param time_scaling: Scaling parameter for volatility and Sharpe.
+        E.g. If the time sampling units (in the input) are days and volatility
+        and Sharpe are to be reported in annualized units, use
+        time_scaling = 252.
     :return: PyMC3 model and trace
     """
+    cols = get_col_shape(data)
     with pm.Model() as model:
-        loc = pm.Normal(LOC, mu=0, tau=prior_tau, testval=y.mean())
+        loc = pm.Normal(LOC, mu=0, tau=prior_tau, testval=data.mean(), shape=cols)
         # TODO(Paul): Compare with replacing these priors on sigma with
-        # std = pm.HalfCauchy("std", beta=1, testval=y.std())
+        # sigma = pm.HalfCauchy("std", beta=1, testval=y.std())
         log_std = pm.Normal(
-            "log_std", mu=0, tau=prior_tau, testval=pm.math.log(y.std())
+            "log_std",
+            mu=0,
+            tau=prior_tau,
+            testval=pm.math.log(data.std()),
+            shape=cols,
         )
         scale = pm.Deterministic(SCALE, pm.math.exp(log_std))
-        nu_shft = pm.Exponential(DOF + "_minus_2", 1 / 10.0, testval=3.0)
-        dof = pm.Deterministic(DOF, nu_shft + 2)
-        returns = pm.StudentT(RET, nu=dof, mu=loc, sigma=scale, observed=y)
+        returns = pm.Normal(RET, mu=loc, sigma=scale, observed=data)
         vol = pm.Deterministic(
             VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5
         )
         pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)
         trace = pm.sample(**kwargs)
+    model.name = NORM_TAG
+    return model, trace
+
+
+def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
+    """
+    Fits a Student T distribution to each column of data (independently).
+
+    :param data: pd.Series of pd.DataFrame (obs along rows)
+    :param prior_tau: Controls precision of mean and log_std priors
+    :param kwargs: Passed to pm.sample
+    :param time_scaling: Scaling parameter for volatility and Sharpe.
+        E.g. If the time sampling units (in the input) are days and volatility
+        and Sharpe are to be reported in annualized units, use
+        time_scaling = 252.
+    :return: PyMC3 model and trace
+    """
+    cols = get_col_shape(data)
+    with pm.Model() as model:
+        loc = pm.Normal(LOC, mu=0, tau=prior_tau, testval=data.mean(), shape=cols)
+        log_std = pm.Normal(
+            "log_std",
+            mu=0,
+            tau=prior_tau,
+            testval=pm.math.log(data.std()),
+            shape=cols,
+        )
+        scale = pm.Deterministic(SCALE, pm.math.exp(log_std))
+        nu_offset = pm.Exponential(DOF + "_minus_2", 1 / 10.0, testval=3.0)
+        dof = pm.Deterministic(DOF, nu_offset + 2)
+        returns = pm.StudentT(RET, nu=dof, mu=loc, sigma=scale, observed=data)
+        vol = pm.Deterministic(
+            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5
+        )
+        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)
+        trace = pm.sample(**kwargs)
+    model.name = T_TAG
     return model, trace
 
 
@@ -224,6 +265,7 @@ def fit_one_way_normal(df, prior_tau=1e-6, time_scaling=1, **kwargs):
         )
         pm.Deterministic("sharpe", time_scaling * groups.distribution.mean / vol)
         trace = pm.sample(**kwargs)
+    model.name = ONE_WAY_NORM_TAG
     return model, trace
 
 
