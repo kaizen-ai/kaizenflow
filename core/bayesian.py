@@ -231,13 +231,18 @@ def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
     return model, trace
 
 
-def fit_one_way_normal(df, prior_tau=1e-6, time_scaling=1, **kwargs):
+def fit_one_way_normal(
+    df, prior_tau=1e-6, time_scaling=1, vol_mode="point", **kwargs
+):
     """
     Fits a one-way normal model.
 
     :param df: Df of obs, each column representing a group
     :param prior_tau: Controls precision of global mean prior
-    :param sigma: Shared sigma of groups
+    :param vol_mode: How to handle volatility estimation
+        - 'point': Use df.std() and treat as fixed
+        - 'no_pooling': Estimate std for each series without hierarchical
+            modeling.
     :param kwargs: Passed to pm.sample
     :return: PyMC3 model and trace
     """
@@ -248,15 +253,26 @@ def fit_one_way_normal(df, prior_tau=1e-6, time_scaling=1, **kwargs):
         # http://www.stat.columbia.edu/~gelman/research/published/taumain.pdf
         # https://arxiv.org/pdf/1104.4937.pdf
         global_sigma = pm.HalfCauchy("global_sigma", beta=1)
-        # Sometimes sampling when this is included
+        # Sometimes sampling fails when this is included
         # testval=df.mean().std())
         thetas = pm.Normal("thetas", mu=0, sigma=1, shape=df.shape[1])
+        if vol_mode == "no_pooling":
+            log_std = pm.Normal(
+                "global_std_mean",
+                mu=0,
+                tau=prior_tau,
+                testval=pm.math.log(df.std()),
+                shape=df.shape[1],
+            )
+            scale = pm.Deterministic(SCALE, pm.math.exp(log_std))
+        elif vol_mode == "point":
+            scale = df.std()
         # Use a non-centered parametrization as discussed in
         # https://arxiv.org/pdf/1312.0906.pdf
         groups = pm.Normal(
             "groups",
             mu=global_mean + global_sigma * thetas,
-            sigma=df.std(),
+            sigma=scale,
             observed=df,
         )
         vol = pm.Deterministic(
