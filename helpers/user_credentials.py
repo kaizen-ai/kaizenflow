@@ -38,6 +38,7 @@ def get_credentials():
           > which conda
           /data/root/anaconda3/bin/conda
           > find /data/root/anaconda3 -name "conda.sh"
+          > find $(basename $(which conda)) -name "conda.sh"
     - conda_env_path: the path of the dir storing the conda environments
         - To find "conda_env_path"
           > conda info
@@ -110,8 +111,8 @@ def get_credentials():
         # Jenkins should not commit so it doesn't neet Git credentials.
         git_user_name = ""
         git_user_email = ""
-        conda_sh_path = "/data/shared/anaconda2/etc/profile.d/conda.sh"
-        conda_env_path = "/data/jenkins/.conda/envs"
+        conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+        conda_env_path = "/var/lib/jenkins/.conda/envs"
     # Check.
     for var_name, val_name in [
         ("git_user_name", git_user_name),
