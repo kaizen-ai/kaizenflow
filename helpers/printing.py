@@ -1,6 +1,8 @@
 import helpers.dbg as dbg
 
-# TODO(gp): Rename print_?
+"""
+This module should be imported as `prnt`.
+"""
 
 # #############################################################################
 # Debug output

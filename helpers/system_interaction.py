@@ -294,6 +294,7 @@ def kill_process(get_pids, timeout_in_secs=5, polltime_in_secs=0.1):
     #
     _LOG.info("Waiting %d processes (%s) to die", len(pids), pids)
     import tqdm
+
     for _ in tqdm.tqdm(range(int(timeout_in_secs / polltime_in_secs))):
         time.sleep(polltime_in_secs)
         pids, _ = get_pids()

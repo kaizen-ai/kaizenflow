@@ -21,7 +21,6 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
-import collections
 import logging
 import os
 
@@ -81,19 +80,19 @@ df4[mask]["Symbol"].values
 # # Read data
 
 # %%
-config = collections.OrderedDict()
+config = cfg.Config()
 
 if "__CONFIG__" in os.environ:
     config = os.environ["__CONFIG__"]
     print("__CONFIG__=", config)
-    config = eval(config)
+    config = cfg.Config.from_python(config)
 else:
     # config["nrows"] = 100000
     config["nrows"] = None
     #
     config["zscore_com"] = 28
 
-print(cfg.config_to_string(config))
+print(cfg)
 
 # %% [markdown]
 # # Prices

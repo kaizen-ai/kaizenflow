@@ -273,7 +273,11 @@ class TestCase(unittest.TestCase):
                 io_.to_file(file_name, actual)
                 # Add to git.
                 cmd = "git add %s" % file_name
-                si.system(cmd)
+                rc = si.system(cmd, abort_on_error=False)
+                if rc:
+                    _LOG.warning(
+                        "Can't run '%s': yo need to add the file " "manually", cmd
+                    )
             if outcome_updated:
                 _LOG.warning("Test outcome updated ... ")
                 io_.to_file(file_name, actual)

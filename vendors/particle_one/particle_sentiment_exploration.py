@@ -29,7 +29,6 @@ import seaborn as sns
 import core.explore as exp
 import core.features_analyzer as ana
 import core.finance as fin
-import core.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
@@ -79,7 +78,7 @@ else:
         }
     )
 
-_LOG.info("config=\n%s", cfg.config_to_string(config))
+_LOG.info("config=\n%s", config)
 
 # %% [markdown]
 # # Read data

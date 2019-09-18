@@ -21,16 +21,15 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
-import collections
 import logging
 import os
 
 import pandas as pd
 import seaborn as sns
 
+import core.config as cfg
 import core.explore as exp
 import core.finance as fin
-import core.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
@@ -149,19 +148,19 @@ daily_price_dict_df["CL"].head(3)
 # ## Read data through config API
 
 # %%
-config = collections.OrderedDict()
+config = cfg.Config()
 
 if "__CONFIG__" in os.environ:
     config = os.environ["__CONFIG__"]
     _LOG.info("__CONFIG__=%s", config)
-    config = eval(config)
+    config = cfg.Config.from_python(config)
 else:
     # Use the data from S3.
     file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
     config["file_name"] = file_name
     config["nrows"] = 100000
 
-_LOG.info(cfg.config_to_string(config))
+_LOG.info(cfg)
 
 # %%
 df = kut.read_data_from_config(config)

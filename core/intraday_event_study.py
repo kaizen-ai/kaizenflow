@@ -97,7 +97,7 @@ def regression(x, y):
 
 
 def estimate_event_effect(x_vars, pre_resp, post_resp):
-    """
+    r"""
     Consider the regression model
 
     y_{ij} = \alpha + \delta x_{ij}

@@ -96,9 +96,7 @@ def _parse():
     parser.add_argument(
         "--env_name", help="Environment name", default="develop", type=str
     )
-    parser.add_argument(
-        "--req_file", help="Requirement file", action="append",
-    )
+    parser.add_argument("--req_file", help="Requirement file", action="append")
     # Debug options.
     parser.add_argument(
         "--test_install", help="Just test the install step", action="store_true"
@@ -202,7 +200,7 @@ def _main(parser):
         if install_new_conda:
             req_files = args.req_file
             if not req_files:
-                req_file = _get_requirements_file()
+                _get_requirements_file()
             if isinstance(req_files, str):
                 req_files = [req_files]
             dbg.dassert_isinstance(req_files, list)

@@ -51,6 +51,6 @@ df = pd.DataFrame()
 df["x"] = x
 df["y"] = y
 
-exp.ols_regress_series(df["x"], df["y"], use_intercept=True)
+exp.ols_regress_series(df["x"], df["y"], intercept=True)
 
 # %%

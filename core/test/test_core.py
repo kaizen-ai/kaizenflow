@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+import core.config as cfg
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
@@ -18,10 +19,64 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
+# config.py
+# #############################################################################
+
+
+class Test_config1(ut.TestCase):
+    def test_config1(self):
+        config = cfg.Config()
+        config["hello"] = "world"
+        self.check_string(str(config))
+
+    def test_config2(self):
+        config = cfg.Config()
+        config["hello"] = "world"
+        config["foo"] = [1, 2, 3]
+        #
+        code = config.to_python()
+        config2 = cfg.Config.from_python(code)
+        #
+        act = []
+        act.append("config=%s" % str(config))
+        act.append("code=%s" % str(code))
+        act.append("config2=%s" % str(config2))
+        act = "\n".join(act)
+        self.check_string(act)
+        #
+        self.assertEqual(str(config), str(config2))
+
+    def test_config3(self):
+        config = cfg.Config()
+        config["nrows"] = 10000
+        self.assertEqual(config["nrows"], 10000)
+        self.assertEqual(config.get("nrows", None), 10000)
+        #
+        self.assertEqual(config.get("nrows_tmp", None), None)
+
+# #############################################################################
+# explore.py
+# #############################################################################
+
+
+class Test_explore1(ut.TestCase):
+    def test_ols_regress_series(self):
+        x = 5 * np.random.randn(100)
+        y = x + np.random.randn(*x.shape)
+        df = pd.DataFrame()
+        df["x"] = x
+        df["y"] = y
+        exp.ols_regress_series(
+            df["x"], df["y"], intercept=True, print_model_stats=False
+        )
+
+
+# #############################################################################
 # pandas_helpers.py
 # #############################################################################
 
 
+# TODO(gp): -> Test_pandas_helper1
 class TestResampleIndex1(ut.TestCase):
     def test1(self):
         index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
@@ -42,6 +97,7 @@ class TestResampleIndex1(ut.TestCase):
 # #############################################################################
 
 
+# TODO(gp): -> Test_pandas_helper2
 class TestDfRollingApply(ut.TestCase):
     def test1(self):
         """
@@ -164,6 +220,7 @@ class TestDfRollingApply(ut.TestCase):
 # #############################################################################
 
 
+# TODO(gp): -> Test_residualizer1
 class TestPcaFactorComputer1(ut.TestCase):
     @staticmethod
     def get_ex1():
@@ -419,20 +476,3 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
-
-
-# #############################################################################
-# explore.py
-# #############################################################################
-
-
-class Test_explore1(ut.TestCase):
-    def test_ols_regress_series(self):
-        x = 5 * np.random.randn(100)
-        y = x + np.random.randn(*x.shape)
-        df = pd.DataFrame()
-        df["x"] = x
-        df["y"] = y
-        exp.ols_regress_series(
-            df["x"], df["y"], intercept=True, print_model_stats=False
-        )

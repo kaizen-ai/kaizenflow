@@ -149,7 +149,7 @@ def plot_scaleogram(
     ylabel="Period",
     xlabel="Time",
 ):
-    """
+    r"""
     Plots wavelet-based spectrogram (aka scaleogram).
 
     A nice reference and utility for plotting can be found at

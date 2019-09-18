@@ -10,6 +10,7 @@ def get_timestamp():
 def check_et_timezone(dt):
     # TODO(gp): Check if dateutils is better.
     import pytz
+
     tzinfo = dt.tzinfo
     ret = tzinfo.zone in (
         pytz.timezone("US/Eastern").zone,

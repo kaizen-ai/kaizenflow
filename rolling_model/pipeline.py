@@ -12,8 +12,8 @@ from IPython.display import display
 from sklearn import linear_model
 from sklearn.model_selection import TimeSeriesSplit
 
-import core.finance as fin
 import core.config as cfg
+import core.finance as fin
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.pickle_ as pickle_
@@ -42,7 +42,6 @@ _LOG = logging.getLogger(__name__)
 
 
 def filter_by_time_from_config(config, df, result_bundle, dt_col_name="datetime"):
-    cfg.print_config(config, ["start_dt", "end_dt"])
     dbg.dassert_lte(1, df.shape[0])
     #
     start_dt = config.get("start_dt", None)
@@ -54,7 +53,7 @@ def filter_by_time_from_config(config, df, result_bundle, dt_col_name="datetime"
 
 # TODO(gp): Switch to sigp.rolling_zscore.
 def zscore_from_config(config, df):
-    cfg.print_config(config, ["zscore_style", "zscore_com"])
+    config.check_params(["zscore_style", "zscore_com"])
     dbg.dassert_lte(1, df.shape[0])
     #
     zscore_com = config["zscore_com"]
@@ -80,7 +79,6 @@ def filter_ath_from_config(config, df):
     """
     Filter according to active trading hours.
     """
-    cfg.print_config(config, "filter_ath")
     dbg.dassert_lte(1, df.shape[0])
     if config["filter_ath"]:
         df = fin.filter_ath(df)
@@ -98,7 +96,7 @@ def compute_features_from_config(config, df, result_bundle):
     """
     Compute features in-place.
     """
-    cfg.check_params(config, ["target_y_var", "delay_lag", "num_lags"])
+    config.check_params(["target_y_var", "delay_lag", "num_lags"])
     _LOG.debug("df.shape=%s", df.shape)
     # The rest of the flow (e.g., sklearn, to compute train/test intervals)
     # want indices to be integers.
@@ -170,21 +168,22 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
 
 
 def get_splits(config, df):
-    cv_split_style = cfg.get_param(config, "cv_split_style")
+    cv_split_style = config["cv_split_style"]
     _LOG.info(
-        "min_date=%s, max_date=%s",
+        "len=%s min_date=%s, max_date=%s",
+        df.shape[0],
         df.iloc[0]["datetime"],
         df.iloc[-1]["datetime"],
     )
     if cv_split_style == "TimeSeriesSplit":
         # Expanding window with n folds.
-        n_splits = cfg.get_param(config, "cv_n_splits")
+        n_splits = config["cv_n_splits"]
         dbg.dassert_lte(1, n_splits)
         tscv = TimeSeriesSplit(n_splits=n_splits)
         splits = list(tscv.split(df))
     elif cv_split_style == "TimeSeriesRollingFolds":
         # Rolling window using n folds.
-        n_splits = cfg.get_param(config, "cv_n_splits")
+        n_splits = config["cv_n_splits"]
         dbg.dassert_lte(1, n_splits)
         idxs = range(df.shape[0])
         # Split in equal chunks.
@@ -209,7 +208,7 @@ def get_splits(config, df):
         _LOG.debug("idx=%s", idx)
         splits = [(range(idx), range(idx, df.shape[0]))]
     elif cv_split_style == "TrainTestPct":
-        train_pct = cfg.get_param(config, "cv_train_pct")
+        train_pct = config["cv_train_pct"]
         dbg.dassert_lte(0.0, train_pct)
         dbg.dassert_lte(train_pct, 1.0)
         #
@@ -475,7 +474,7 @@ def process_test_pnl(config, result_bundle, report_stats=True):
     kratio = fin.compute_kratio(pnl_rets, y_var)
     txt += "\nkratio=%.1f" % kratio
     #
-    txt += "\n\n" + cfg.config_to_string(config)
+    txt += "\n\n" + str(config)
     #
     if report_stats:
         ax = pnl_rets.resample("1B").sum().cumsum().plot()

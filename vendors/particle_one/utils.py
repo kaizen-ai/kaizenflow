@@ -84,13 +84,13 @@ def sample_features_from_config(config, data):
     elif config["agg_function"] == "sum":
         data = resampler.sum()
     else:
-        raise cfg.get_exception(config, "agg_function")
+        raise config.get_exception("agg_function")
     if config["agg_interval"] in ("1B",):
         data.index.name = "date"
     elif config["agg_interval"] in ("1T", "5T"):
         data.index.name = "datetime"
     else:
-        raise cfg.get_exception(config, "agg_interval")
+        raise config.get_exception("agg_interval")
     _LOG.debug("data=\n%s", data.head(3))
     return data
 
