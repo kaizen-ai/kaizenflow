@@ -1,0 +1,5 @@
+config=hello: world
+foo: [1, 2, 3]
+code=collections.OrderedDict([('hello', 'world'), ('foo', [1, 2, 3])])
+config2=hello: world
+foo: [1, 2, 3]
