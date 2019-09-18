@@ -11,7 +11,7 @@ ENV_NAME=develop
 source ~/.bashrc
 
 # Config.
-source dev_scripts/setenv.sh -t $ENV_NAME
+source dev_scripts/setenv.sh -e $ENV_NAME
 
 # Run tests.
 dev_scripts/run_tests.py --test fast --jenkins -v $VERB

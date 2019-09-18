@@ -14,7 +14,7 @@ NUM_CPUS=4
 source ~/.bashrc
 
 # Config.
-source dev_scripts/setenv.sh -t $ENV_NAME
+source dev_scripts/setenv.sh -e $ENV_NAME
 
 # Run tests.
 dev_scripts/run_tests.py --test fast --num_cpus $NUM_CPUS --jenkins -v $VERB

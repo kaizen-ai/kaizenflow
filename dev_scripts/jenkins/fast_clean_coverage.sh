@@ -14,7 +14,7 @@ source ~/.bashrc
 dev_scripts/create_conda.py --delete_env_if_exists --env_name $ENV_NAME -v $VERB
 
 # Config.
-source dev_scripts/setenv.sh -t $ENV_NAME
+source dev_scripts/setenv.sh -e $ENV_NAME
 
 # Run tests.
 OPTS='--coverage'
