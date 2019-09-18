@@ -68,7 +68,10 @@ def _start(port, action):
     ip_name = "localhost"
     print("You can connect to: %s:%s" % (ip_name, port))
     cmd = "jupyter notebook '--ip=*' --browser chrome . --port %s" % port
-    si.system(cmd, suppress_output=False, log_level="echo")
+    if action != "only_print_cmd":
+        si.system(cmd, suppress_output=False, log_level="echo")
+    else:
+        print(cmd)
 
 
 # ##############################################################################
@@ -87,7 +90,7 @@ def _parse():
     parser.add_argument(
         "positional",
         nargs=1,
-        choices=["start", "force_start", "check", "kill"],
+        choices=["start", "force_start", "check", "kill", "only_print_cmd"],
         help=_help,
     )
     parser.add_argument(
@@ -125,7 +128,7 @@ def _main(parser):
         _check(jupyter_port)
     elif action == "kill":
         _kill(jupyter_port)
-    elif action in ("start", "force_start"):
+    elif action in ("start", "force_start", "only_print_cmd"):
         _start(jupyter_port, action)
     else:
         dbg.dfatal("Invalid action='%s'" % action)
