@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 """
-# Install the default package
+# Install the amp default package
 > create_conda.py
 > create_conda.py --env_name develop --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists
 
+# Install the amp default package
+> create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/develop.txt --req_file dev_scripts/install/requirements/p1_develop.txt --delete_env_if_exists
 # Quick install to test the script
 > create_conda.py --test_install -v DEBUG
 
@@ -58,29 +60,31 @@ def _get_requirements_file():
     return file_name
 
 
-def _process_requirements(req_file):
+def _process_requirements(req_files):
     """
-    - Read req_file
+    - Read a list of req_file
     - Skip lines like:
-    # docx    # Not on Mac.
+        # docx    # Not on Mac.
     - Write the result in a tmp file
     :return: name of the new file
     """
-    # Read file.
-    req_file = os.path.abspath(req_file)
-    _LOG.debug("req_file=%s", req_file)
-    dbg.dassert_exists(req_file)
-    txt = io_.from_file(req_file, split=True)
-    # Process.
-    txt_tmp = []
-    for l in txt:
-        if "# Not on Mac." in l:
-            continue
-        txt_tmp.append(l)
-    txt_tmp = "\n".join(txt_tmp)
+    dbg.dassert_isinstance(req_files, list)
+    txt = []
+    for req_file in req_files:
+        # Read file.
+        req_file = os.path.abspath(req_file)
+        _LOG.debug("req_file=%s", req_file)
+        dbg.dassert_exists(req_file)
+        txt_tmp = io_.from_file(req_file, split=True)
+        # Process.
+        for l in txt_tmp:
+            if "# Not on Mac." in l:
+                continue
+            txt.append(l)
     # Save file.
+    txt = "\n".join(txt)
     dst_req_file = req_file + ".tmp"
-    io_.to_file(dst_req_file, txt_tmp)
+    io_.to_file(dst_req_file, txt)
     return dst_req_file
 
 
@@ -93,7 +97,7 @@ def _parse():
         "--env_name", help="Environment name", default="develop", type=str
     )
     parser.add_argument(
-        "--req_file", help="Requirement file", default=None, type=str
+        "--req_file", help="Requirement file", action="append",
     )
     # Debug options.
     parser.add_argument(
@@ -196,11 +200,14 @@ def _main(parser):
         _LOG.warning("Skipping")
     else:
         if install_new_conda:
-            if args.req_file is None:
+            req_files = args.req_file
+            if not req_files:
                 req_file = _get_requirements_file()
-            else:
-                req_file = args.req_file
-            tmp_req_file = _process_requirements(req_file)
+            if isinstance(req_files, str):
+                req_files = [req_files]
+            dbg.dassert_isinstance(req_files, list)
+            tmp_req_file = _process_requirements(req_files)
+            _LOG.info("final req_file=%s", tmp_req_file)
             #
             # Install.
             #
@@ -239,6 +246,8 @@ def _main(parser):
     # Check packages.
     #
     _, file_name = env.save_env_file(conda_env_name, _CONDA_ENVS_DIR)
+    # TODO(gp): Not happy to save all the package list in amp. It should go in
+    # a spot with respct to the git root.
     _LOG.warning(
         "You should commit the file '%s' for future reference", file_name
     )
