@@ -640,6 +640,9 @@ def ipca(df, num_pc, alpha):
 
     df should already be centered.
 
+    https://ieeexplore.ieee.org/document/1217609
+    https://www.cse.msu.edu/~weng/research/CCIPCApami.pdf
+
     :return: df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
         list of dfs of unit eigenvectors (0 indexes df eigenvectors
         corresponding to max eigenvalue, etc.).
