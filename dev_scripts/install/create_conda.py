@@ -200,7 +200,7 @@ def _main(parser):
         if install_new_conda:
             req_files = args.req_file
             if not req_files:
-                _get_requirements_file()
+                req_files = _get_requirements_file()
             if isinstance(req_files, str):
                 req_files = [req_files]
             dbg.dassert_isinstance(req_files, list)
