@@ -1,3 +1,5 @@
+# Install
+
 1) Map python3 as python
 
 ```
@@ -37,3 +39,8 @@ unset __conda_setup
 
 amp/dev_scripts/jenkins/amp.pytest.sh
 ```
+
+# Expose webpages
+
+- From `https://wiki.jenkins.io/display/JENKINS/User+Content`
+- https://plugins.jenkins.io/htmlpublisher
