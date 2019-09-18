@@ -57,7 +57,7 @@ Python 3.7.1
 - Run this from `$SRC_DIR/lemonade/amp`
 - NOTE: this directory needs to be in your PYTHONPATH (or else the imports will fail).
 ```
-> install/create_conda.py --req_file install/requirements/requirements_develop.txt --env_name develop --delete_env_if_exists 2>&1 | tee create_conda.log
+> create_conda.py --req_file dev_scripts/install/requirements/develop.txt --env_name develop --delete_env_if_exists 2>&1 | tee create_conda.log
 ```
 - Note that `create_conda.py` has lots of options, including creating a new test
   environment
@@ -98,7 +98,7 @@ develop               *  /Users/saggese/.conda/envs/develop
 
 * Other interesting packages
 ```bash
-> install/create_conda.py --req_file requirements_pymc.txt --env_name pymc3 --delete_env_if_exists -v DEBUG
+> create_conda.py --req_file dev_scripts/install/requirements/pymc.txt --env_name pymc3 --delete_env_if_exists -v DEBUG
 > conda create sage -n sage
 ` ``
 

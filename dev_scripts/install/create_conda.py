@@ -2,16 +2,16 @@
 """
 # Install the default package
 > create_conda.py
-> create_conda.py --env_name develop --req_file dev_scripts/install/requirements/requirements_develop.txt --delete_env_if_exists
+> create_conda.py --env_name develop --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists
 
 # Quick install to test the script
 > create_conda.py --test_install -v DEBUG
 
 # Test the develop environment
-> create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/requirements_develop.txt --delete_env_if_exists
+> create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists
 
 # Create pymc3
-> create_conda.py --env_name pymc3 --req_file requirements_pymc.txt -v DEBUG
+> create_conda.py --env_name pymc3 --req_file dev_scripts/install/requirements/pymc.txt -v DEBUG
 """
 
 import argparse
@@ -53,7 +53,7 @@ _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 
 
 def _get_requirements_file():
-    file_name = os.path.join(_REQUIREMENT_DIR, "requirements_develop.txt")
+    file_name = os.path.join(_REQUIREMENT_DIR, "develop.txt")
     dbg.dassert_exists(file_name)
     return file_name
 
