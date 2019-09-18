@@ -6,6 +6,9 @@
 #certifi
 #pytables
 pytest
+pytest-cov
+pytest-instafail
+pytest-xdist
 python-dateutil
 pytz
 #six

@@ -218,6 +218,7 @@ def _main(parser):
     _LOG.info("pytest_opts=%s", pytest_opts)
     _LOG.info("pytest_test=%s", pytest_test)
     cmd = "pytest %s %s" % (pytest_opts, pytest_test)
+    print("> %s" % cmd)
     # This is the only system that should be not execute to dry run.
     _system(cmd, dry_run=args.dry_run)
 
