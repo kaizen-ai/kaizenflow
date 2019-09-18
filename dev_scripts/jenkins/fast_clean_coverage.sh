@@ -6,12 +6,12 @@
 # ```
 
 VERB=DEBUG
-ENV_NAME=develop
+ENV_NAME=develop.fast_clean
 
 source ~/.bashrc
 
 # Create a fresh conda install.
-dev_scripts/create_conda.py --delete_env_if_exists --env_name $ENV_NAME -v $VERB
+dev_scripts/install/create_conda.py --delete_env_if_exists --env_name $ENV_NAME -v $VERB
 
 # Config.
 source dev_scripts/setenv.sh -e $ENV_NAME
