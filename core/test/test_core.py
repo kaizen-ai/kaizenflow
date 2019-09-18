@@ -9,6 +9,7 @@ from scipy.stats import norm
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 import helpers.printing as pri
 import helpers.unit_test as ut
@@ -401,6 +402,23 @@ class TestPcaFactorComputer2(ut.TestCase):
             num_samples, report_stats, stabilize_eig, window
         )
         self._check(comp, df_res)
+
+
+# #############################################################################
+# signal_processing.py
+# #############################################################################
+
+
+class TestSignalProcessingRollingZScore1(ut.TestCase):
+    def test_default_values1(self):
+        heaviside = sigp.get_heaviside(-10, 252, 1, 1)
+        zscored = sigp.rolling_zscore(heaviside, tau=40)
+        self.check_string(zscored.to_string())
+
+    def test_default_values2(self):
+        heaviside = sigp.get_heaviside(-10, 252, 1, 1)
+        zscored = sigp.rolling_zscore(heaviside, tau=20)
+        self.check_string(zscored.to_string())
 
 
 # #############################################################################
