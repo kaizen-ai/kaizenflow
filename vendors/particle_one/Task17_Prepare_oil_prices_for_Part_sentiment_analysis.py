@@ -28,7 +28,7 @@ import os
 import seaborn as sns
 
 import core.finance as fin
-import helpers.config as cfg
+import core.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri

@@ -7,7 +7,7 @@ import pandas as pd
 from joblib import Memory
 
 import helpers.dbg as dbg
-import helpers.config as cfg
+import core.config as cfg
 import helpers.git as git
 
 _LOG = logging.getLogger(__name__)

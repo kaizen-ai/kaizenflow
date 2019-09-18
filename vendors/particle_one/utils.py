@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import helpers.config as cfg
+import core.config as cfg
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)

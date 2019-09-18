@@ -144,11 +144,13 @@ def _replace(file_names_to_process, old_string, new_string, backup, mode):
 
 def _custom1(args):
     to_replace = [
-        ("import helpers.printing as printing", "import helpers.printing as pri"),
-        (r"printing\.", "pri."),
+        #("import helpers.printing as printing", "import helpers.printing as
+        # pri"),
+        #(r"printing\.", "pri."),
+        ("import helpers.config", "import core.config"),
     ]
     dirs = "."
-    exts = ["py"]
+    exts = ["py", "ipynb"]
     backup = args.backup
     preview = args.preview
     mode = "replace_with_python"

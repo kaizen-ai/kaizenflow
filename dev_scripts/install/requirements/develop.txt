@@ -86,3 +86,5 @@ jq                      # To process json.
 quandl
 #rclone                  # To back up Google Drive (conda install -c hcc rclone)
 #gdrive                  # To interact with Google Drive.
+
+# pip install RBTools

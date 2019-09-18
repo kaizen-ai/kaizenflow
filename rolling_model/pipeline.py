@@ -13,7 +13,7 @@ from sklearn import linear_model
 from sklearn.model_selection import TimeSeriesSplit
 
 import core.finance as fin
-import helpers.config as cfg
+import core.config as cfg
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.pickle_ as pickle_
