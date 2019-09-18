@@ -11,5 +11,5 @@ ENV_NAME=develop
 source ~/.bashrc
 source dev_scripts/setenv.sh -e $ENV_NAME
 
-# Run.
-linter.py -d .
+# Run (ignoring the rc).
+linter.py -d . --num_threads; true
