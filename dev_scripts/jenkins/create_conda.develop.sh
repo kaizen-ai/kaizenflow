@@ -1,4 +1,9 @@
 #!/bin/bash -xe
+
+# ```
+# Build conda env from scratch
+# ```
+
 source ~/.bashrc
 
 export PYTHONPATH=""

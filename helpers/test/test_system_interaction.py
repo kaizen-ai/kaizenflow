@@ -1,4 +1,5 @@
 import logging
+import re
 import tempfile
 
 import helpers.dbg as dbg
@@ -59,7 +60,11 @@ class Test_system1(ut.TestCase):
         """
         with self.assertRaises(RuntimeError) as cm:
             si.system("ls this_file_doesnt_exist")
-        self.check_string(str(cm.exception))
+        act = str(cm.exception)
+        # Different systems return different rc.
+        # cmd='(ls this_file_doesnt_exist) 2>&1' failed with rc='2'
+        act = re.sub("rc='(\d+)'", "rc=''", act)
+        self.check_string(act)
 
 
 # #############################################################################

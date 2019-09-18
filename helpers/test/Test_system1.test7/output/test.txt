@@ -1,1 +1,1 @@
-cmd='(ls this_file_doesnt_exist) 2>&1' failed with rc='1'
+cmd='(ls this_file_doesnt_exist) 2>&1' failed with rc=''

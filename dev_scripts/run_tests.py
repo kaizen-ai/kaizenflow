@@ -22,56 +22,66 @@ _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
+
 def _parse():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--conda_env_name",
         action="store",
         type=str,
-        help="Use a given conda environment to run the tests")
+        help="Use a given conda environment to run the tests",
+    )
     parser.add_argument(
         "--test",
         action="store",
         default="fast",
         type=str,
         help="Run a given set of tests (e.g., fast) or a given test using pytest"
-        " specification style")
+        " specification style",
+    )
     parser.add_argument(
         "--num_cpus",
         action="store",
         type=int,
         default=1,
-        help=
-        "Use up to a certain number of CPUs (1=serial, -1=all available CPUs)")
+        help="Use up to a certain number of CPUs (1=serial, -1=all available CPUs)",
+    )
     parser.add_argument("--coverage", action="store_true")
     parser.add_argument(
         "--extra_pytest_arg",
         action="store",
-        help="Options to add to the standard pytest command line")
+        help="Options to add to the standard pytest command line",
+    )
     parser.add_argument(
         "--override_pytest_arg",
         action="store",
-        help="Options to override to the standard pytest command line")
+        help="Options to override to the standard pytest command line",
+    )
     parser.add_argument(
-        "--collect_only", action="store_true", help="Only collection step")
+        "--collect_only", action="store_true", help="Only collection step"
+    )
     parser.add_argument(
-        "--skip_collect", action="store_true", help="Skip the collection step")
+        "--skip_collect", action="store_true", help="Skip the collection step"
+    )
     parser.add_argument(
         "--use_setenv",
         action="store_true",
-        help="Execute setenv.sh before each command")
+        help="Execute setenv.sh before each command",
+    )
     parser.add_argument(
-        "--jenkins", action="store_true", help="Run tests as Jenkins")
+        "--jenkins", action="store_true", help="Run tests as Jenkins"
+    )
     #
     parser.add_argument("--dry_run", action="store_true")
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     return parser
 
 
@@ -109,13 +119,19 @@ def _main(parser):
             wrapper=wrapper,
             suppress_output=False,
             dry_run=dry_run,
-            log_level=logging.DEBUG)
+            log_level=logging.DEBUG,
+        )
 
     #
     if args.jenkins:
         cmds = [
-            "git log -5", "whoami", "printenv", "conda list", "pwd", "date",
-            "which conda"
+            "git log -5",
+            "whoami",
+            "printenv",
+            "conda list",
+            "pwd",
+            "date",
+            "which conda",
         ]
         for cmd in cmds:
             _system(cmd, dry_run=False)
@@ -135,7 +151,7 @@ def _main(parser):
             market_opts += " and"
         # Skip certain tests, if needed.
         market_opts += " not broken_deps"
-        if si.get_server_name() in ("gpmac", ):
+        if si.get_server_name() in ("gpmac",):
             market_opts += " and not aws_deps"
         pytest_mark_opts.append(market_opts)
     else:
@@ -150,7 +166,7 @@ def _main(parser):
         pytest_opts += '-m "' + " and ".join(pytest_mark_opts) + '"'
     if args.jenkins:
         # Report all the tests.
-        #pytest_opts += " --durations=0"
+        # pytest_opts += " --durations=0"
         pytest_opts += " --durations=20"
     if pytest_test:
         pytest_opts += " " + pytest_test
@@ -173,6 +189,7 @@ def _main(parser):
             # Parallel mode.
             if args.num_cpus == -1:
                 import joblib
+
                 n_jobs = joblib.cpu_count()
             else:
                 n_jobs = args.num_cpus
@@ -181,11 +198,13 @@ def _main(parser):
             pytest_opts += " -n %s" % n_jobs
         # Add coverage, if needed.
         if args.coverage:
-            pytest_opts += ' --cov' \
-                           ' --cov-branch' \
-                           ' --cov-report term-missing' \
-                           ' --cov-report html' \
-                           ' --cov-report annotate'
+            pytest_opts += (
+                " --cov"
+                " --cov-branch"
+                " --cov-report term-missing"
+                " --cov-report html"
+                " --cov-report annotate"
+            )
         # Nice verbose mode.
         pytest_opts += " -vv"
         # Report the results.
@@ -203,5 +222,5 @@ def _main(parser):
     _system(cmd, dry_run=args.dry_run)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main(_parse())
