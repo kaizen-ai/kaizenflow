@@ -75,6 +75,7 @@ def zscore_from_config(config, df):
     return df
 
 
+# TODO(gp): Pass "mode", eg us_equity_hours, futures_ath_hours.
 def filter_ath_from_config(config, df):
     """
     Filter according to active trading hours.

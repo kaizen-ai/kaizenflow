@@ -32,14 +32,14 @@ def _get_version(lib_name):
     return version
 
 
-def get_system_signature():
+def get_system_signature(git_commit_type="all"):
     txt = []
-    # import sys
-    # print(sys.version)
     txt.append("# Packages")
-    #
+    # Add package info.
     packages = []
     packages.append(("python", platform.python_version()))
+    # import sys
+    # print(sys.version)
     libs = [
         "numpy",
         "pandas",
@@ -55,13 +55,18 @@ def get_system_signature():
         packages.append((lib, _get_version(lib)))
     txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
     # Add git signature.
-    log_txt = git.git_log(num_commits=3, my_commits=False)
-    txt.append("# Last commits:")
-    txt.append(pri.space(log_txt))
-    #
-    log_txt = git.git_log(num_commits=3, my_commits=False)
-    txt.append("# Your last commits:")
-    txt.append(pri.space(log_txt))
+    if git_commit_type == "all":
+        log_txt = git.git_log(num_commits=3, my_commits=False)
+        txt.append("# Last commits:")
+        txt.append(pri.space(log_txt))
+    elif git_commit_type == "mine":
+        log_txt = git.git_log(num_commits=3, my_commits=False)
+        txt.append("# Your last commits:")
+        txt.append(pri.space(log_txt))
+    elif git_commit_type == "none":
+        pass
+    else:
+        raise ValueError("Invalid value='%s'" % git_commit_type)
     #
     txt = "\n".join(txt)
     return txt

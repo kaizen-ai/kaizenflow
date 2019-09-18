@@ -7,6 +7,7 @@ import pandas as pd
 from joblib import Memory
 
 import helpers.dbg as dbg
+import helpers.config as cfg
 import helpers.git as git
 
 _LOG = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ def read_data_memcached(file_name, nrows):
 
 def read_data_from_config(config):
     _LOG.info("Reading data ...")
+    cfg.check_params(config, ["file_name"])
     return read_data_memcached(config["file_name"], config.get("nrows", None))
 
 
