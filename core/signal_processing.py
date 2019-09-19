@@ -754,11 +754,34 @@ def get_heaviside(a, b, zero_val, tick):
     return srs
 
 
-def get_impulse(a, b, zero_loc, tick):
+def get_impulse(a, b, tick):
     """
     Generate unit impulse pd.Series.
     """
-    heavi = get_heaviside(a, b, zero_loc, tick)
+    heavi = get_heaviside(a, b, 1, tick)
     impulse = (heavi - heavi.shift(1)).shift(-1).fillna(0)
     impulse.name = "impulse"
     return impulse
+
+
+def get_lognormal(mean, sigma, size, seed=None):
+    np.random.seed(seed=seed)
+    lognormal = np.random.lognormal(mean, sigma, size)
+    srs = pd.Series((1 + lognormal).cumprod(), name="lognormal")
+    return srs
+
+
+def get_binomial_tree(p, vol, size, seed=None):
+    # binomial_tree(0.5, 0.1, 252, seed=0).plot()
+    np.random.seed(seed=seed)
+    pos = np.random.binomial(1, p, size)
+    neg = (np.full(size, 1) - pos)
+    delta = float(vol) * (pos - neg)
+    return pd.Series(np.exp(delta.cumsum()), name="binomial_walk")
+
+
+def get_gaussian_walk(drift, vol, size, seed=None):
+    # get_gaussian_walk(0, .2, 252, seed=10)
+    np.random.seed(seed=seed)
+    gauss = np.random.normal(drift, vol, size)
+    return pd.Series(np.exp(gauss.cumsum()), name="gaussian_walk")
