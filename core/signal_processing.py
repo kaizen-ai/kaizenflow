@@ -764,13 +764,6 @@ def get_impulse(a, b, tick):
     return impulse
 
 
-def get_lognormal(mean, sigma, size, seed=None):
-    np.random.seed(seed=seed)
-    lognormal = np.random.lognormal(mean, sigma, size)
-    srs = pd.Series((1 + lognormal).cumprod(), name="lognormal")
-    return srs
-
-
 def get_binomial_tree(p, vol, size, seed=None):
     # binomial_tree(0.5, 0.1, 252, seed=0).plot()
     np.random.seed(seed=seed)
