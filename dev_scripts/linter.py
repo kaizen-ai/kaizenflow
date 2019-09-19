@@ -1050,6 +1050,9 @@ def _main(args):
         io_.delete_dir(_TMP_DIR)
     else:
         _LOG.warning("Leaving tmp files in '%s'", _TMP_DIR)
+    if args.jenkins:
+        _LOG.warning("Skipping returning an error because of --jenkins")
+        num_lints = 0
     return num_lints
 
 
@@ -1117,6 +1120,11 @@ def _parse():
     )
     parser.add_argument(
         "--no_cleanup", action="store_true", help="Do not clean up tmp files"
+    )
+    parser.add_argument(
+        "--jenkins",
+        action="store_true",
+        help="Run as jenkins",
     )
     # Test.
     parser.add_argument(
