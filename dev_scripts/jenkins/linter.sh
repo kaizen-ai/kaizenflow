@@ -12,4 +12,4 @@ source ~/.bashrc
 source dev_scripts/setenv.sh -e $ENV_NAME
 
 # Run (ignoring the rc).
-(linter.py -d . --num_threads serial; true)
+linter.py -d . --jenkins --num_threads serial
