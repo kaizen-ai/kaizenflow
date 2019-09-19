@@ -12,32 +12,22 @@
 #     name: python3
 # ---
 
-# %%
-from telethon import TelegramClient, events, sync
-from pprint import pprint
-import asyncio
-import json
-import datetime
-from tqdm import tqdm
-import os
 import logging
-import pandas as pd
+import os
+
+# %%
+import telethon
+# %%
+# %%
+from telethon.sync import TelegramClient
 
 # %load_ext autoreload
 # %autoreload 2
 
 
 # %%
-from oil.utils.tg_utils import messages_to_json 
-
-
-# %%
 _log = logging.getLogger()
 _log.setLevel(logging.INFO)
-
-# %%
-import telethon
-from telethon.sync import TelegramClient, events
 
 # %%
 telethon.__version__
@@ -73,21 +63,21 @@ print(entity.channel_id)
 
 # %%
 channel_link = 'https://t.me/finkrolik'
-await messages_to_json( channel_link, '/data/telegram/test', client)
+await messages_to_json(channel_link, '/data/telegram/test', client)
 
 # %% [markdown]
 # # markettwits
 
 # %%
 channel_link = 'https://t.me/markettwits'
-await messages_to_json( channel_link, '/data/telegram/test', client)
+await messages_to_json(channel_link, '/data/telegram/test', client)
 
 # %% [markdown]
-# # russianmacro 
+# # russianmacro
 
 # %%
 channel_link = 'https://t.me/russianmacro'
-await messages_to_json( channel_link, '/data/telegram/test', client)
+await messages_to_json(channel_link, '/data/telegram/test', client)
 
 # %% [markdown]
 # # download Max list of channels
@@ -95,44 +85,44 @@ await messages_to_json( channel_link, '/data/telegram/test', client)
 # %%
 # except 'https://t.me/markettwits', 'https://t.me/finkrolik'
 Max_list = ['https://t.me/rationalnumbers',
- 'https://t.me/MarketOverview',
- 'https://t.me/societe_financiers',
- 'https://t.me/newBablishko',
- 'https://t.me/trehlitrovayabanka',
- 'https://t.me/avenuenews',
- 'https://t.me/dohod',
- 'https://t.me/finside',
- 'https://t.me/VipCoinexhangePump',
- 'https://t.me/lemonfortea',
- 'https://t.me/fondu_10',
- 'https://t.me/smfanton',
- 'https://t.me/rothschild_son',
- 'https://t.me/finpol',
- 'https://t.me/FINASCOP',
- 'https://t.me/Bablopobezhdaetzlo',
- 'https://t.me/rbc_news',
- 'https://t.me/blablanomika',
- 'https://t.me/KotElviry',
- 'https://t.me/accwhisper',
- 'https://t.me/angrybonds',
- 'https://t.me/Go_Investing',
- 'https://t.me/tele_most_money',
- 'https://t.me/LHfinance',
- 'https://t.me/BizLike',
- 'https://t.me/probonds',
- 'https://t.me/gazmyaso',
- 'https://t.me/finance_global',
- 'https://t.me/DMTraders',
- 'https://t.me/safe_money',
- 'https://t.me/themovchans',
- 'https://t.me/riskovik',
- 'https://t.me/zloyinvestor',
- 'https://t.me/divonline']
+            'https://t.me/MarketOverview',
+            'https://t.me/societe_financiers',
+            'https://t.me/newBablishko',
+            'https://t.me/trehlitrovayabanka',
+            'https://t.me/avenuenews',
+            'https://t.me/dohod',
+            'https://t.me/finside',
+            'https://t.me/VipCoinexhangePump',
+            'https://t.me/lemonfortea',
+            'https://t.me/fondu_10',
+            'https://t.me/smfanton',
+            'https://t.me/rothschild_son',
+            'https://t.me/finpol',
+            'https://t.me/FINASCOP',
+            'https://t.me/Bablopobezhdaetzlo',
+            'https://t.me/rbc_news',
+            'https://t.me/blablanomika',
+            'https://t.me/KotElviry',
+            'https://t.me/accwhisper',
+            'https://t.me/angrybonds',
+            'https://t.me/Go_Investing',
+            'https://t.me/tele_most_money',
+            'https://t.me/LHfinance',
+            'https://t.me/BizLike',
+            'https://t.me/probonds',
+            'https://t.me/gazmyaso',
+            'https://t.me/finance_global',
+            'https://t.me/DMTraders',
+            'https://t.me/safe_money',
+            'https://t.me/themovchans',
+            'https://t.me/riskovik',
+            'https://t.me/zloyinvestor',
+            'https://t.me/divonline']
 
 # %%
 
 # %%
- for link in Max_list:
+for link in Max_list:
     await messages_to_json(link, '/data/telegram/test', client)
 
 # %%
