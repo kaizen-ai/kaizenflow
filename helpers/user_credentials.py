@@ -48,7 +48,7 @@ def get_credentials():
     git_user_email = None
     conda_sh_path = None
     conda_env_path = None
-    ssh_key_path = None
+    ssh_key_path = "~/.ssh/id_rsa"
     tunnel_info = []
     jupyter_port = None
     notebook_html_path = None
@@ -58,7 +58,6 @@ def get_credentials():
         # GP.
         git_user_name = "saggese"
         git_user_email = "saggese@gmail.com"
-        ssh_key_path = "~/.ssh/id_rsa"
         if server_name in ("gpmac.local", "gpmac.lan"):
             # Laptop.
             conda_sh_path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
