@@ -22,8 +22,8 @@ import pandas as pd
 
 import core.signal_processing as sigp
 
-# %%
-# Generate signal
+# %% [markdown]
+# # Generate signal
 
 # %%
 prices = sigp.get_gaussian_walk(0, .01, 4*252, seed=20)
