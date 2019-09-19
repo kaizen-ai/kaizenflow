@@ -26,12 +26,26 @@ _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
+# Server ports.
+_SERVICES = {
+    # TODO(gp): Update this.
+    ("MongoDb", "104.248.187.204", 27017),
+    ("Jenkins", "3.14.143.113", 8080),
+    ("Reviewboard", "3.19.215.69", 8000),
+    # ("Published notebook server", DEV_SERVER, 8181),
+    # Netdata to Jenkins and Dev server.
+    # ("Dev system performance", DEV_SERVER, 19999),
+    # ("Jenkins system performance", DEV_SERVER, 19999),
+}
+
 
 def _get_tunnel_info():
     credentials = usc.get_credentials()
     #
     tunnel_info = credentials["tunnel_info"]
     dbg.dassert_is_not(tunnel_info, None)
+    # Add standard tunnels.
+    tunnel_info.extend(_SERVICES)
     #
     ssh_key_path = credentials["ssh_key_path"]
     dbg.dassert_is_not(ssh_key_path, None)

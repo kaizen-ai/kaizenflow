@@ -8,18 +8,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# Servers.
 DEV_SERVER = "104.248.187.204"
-DB_SERVER = ""
-
-# Server ports.
-_MAPPING = {
-    # "JENKINS": ("Continuous integration", DEV_SERVER, 8111),
-    # "REVIEWBOARD": ("Code review", DEV_SERVER, 8080),
-    # "NGINX": ("Publish notebook server", DEV_SERVER, 8181),
-    # "NETDATA": ("System performance", DEV_SERVER, 19999),
-}
-
 
 # pylint: disable=R0915
 # [R0915(too-many-statements), get_credentials] Too many statements (51/50)
