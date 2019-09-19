@@ -1,4 +1,10 @@
-#!/bin/bash -x
+#!/bin/bash -e
 
-gup.py
-git push
+# ```
+# Sync client with gup.py and then push.
+# ```
+
+source helpers.sh
+
+exec "gup.py"
+exec "git push"

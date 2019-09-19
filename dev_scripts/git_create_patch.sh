@@ -1,8 +1,12 @@
 #!/bin/bash -e
-#
+
+# ```
 # Create a patch file for the entire repo client from the base revision.
 # This script accepts a list of files to package, if specified.
-#
+# ```
+
+# TODO(gp): Improve this.
+
 echo "Creating patch ..."
 #hash_=$(svn info | \grep Revision | awk '{print $2}')
 hash_=$(git rev-parse --short HEAD)

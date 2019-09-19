@@ -1,4 +1,5 @@
 #!/bin/bash -e
-cmd="ghi --no-pager list --mine --label IN_PROGRESS"
-echo "> $cmd"
-eval $cmd
+
+source helpers.sh
+
+exec "ghi --no-pager list --mine --label IN_PROGRESS"

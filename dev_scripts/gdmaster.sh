@@ -1,10 +1,16 @@
-#!/bin/bash
+#!/bin/bash -e
 
-git fetch
+# ```
+# Diff current branch with master.
+# ```
 
-echo "# master - branch"
-git ll ..origin/master
+source helpers.sh
+
+exec "git fetch"
+
+echo "==================== master - branch ===================="
+exec "gll ..origin/master"
 
 echo
-echo "# branch - master"
-git ll origin/master..
+echo "==================== branch - master ===================="
+exec "gll origin/master.."
