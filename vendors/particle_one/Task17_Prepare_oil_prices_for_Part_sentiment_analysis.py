@@ -22,7 +22,6 @@
 # %load_ext autoreload
 # %autoreload 2
 import logging
-import os
 
 import seaborn as sns
 
@@ -78,19 +77,16 @@ print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
 # # Read data
 
 # %%
-config = cfg.Config()
+config = cfg.Config.from_env()
 
-if "__CONFIG__" in os.environ:
-    config = os.environ["__CONFIG__"]
-    print("__CONFIG__=", config)
-    config = cfg.Config.from_python(config)
-else:
-    # config["nrows"] = 100000
-    config["nrows"] = None
+if config is None:
+    config_tmp = config.add_subconfig("read_data")
+    # config_tmp["nrows"] = 100000
+    config_tmp["nrows"] = None
     #
     config["zscore_com"] = 28
 
-print(cfg)
+print(config)
 
 # %% [markdown]
 # # Prices
@@ -105,7 +101,7 @@ file_name = (
 )
 
 daily_price_dict_df = kut.read_multiple_symbol_data(
-    symbols, file_name, nrows=config["nrows"]
+    symbols, file_name, nrows=config["read_data"]["nrows"]
 )
 
 daily_price_dict_df["CL"].tail(2)
@@ -154,7 +150,7 @@ file_name = (
     "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
 )
 min_price_dict_df = kut.read_multiple_symbol_data(
-    symbols, file_name, nrows=config["nrows"]
+    symbols, file_name, nrows=config["read_data"]["nrows"]
 )
 
 min_price_dict_df["CL"].tail(2)

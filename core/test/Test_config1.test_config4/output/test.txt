@@ -1,7 +1,7 @@
 nrows: 10000
 read_data:
   file_name: foo_bar.txt
-  nrows: 1000
+  nrows: 999
 single_val: hello
 zscore:
   style: gaz

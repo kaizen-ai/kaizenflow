@@ -80,19 +80,16 @@ df4[mask]["Symbol"].values
 # # Read data
 
 # %%
-config = cfg.Config()
+config = cfg.Config.from_env()
 
-if "__CONFIG__" in os.environ:
-    config = os.environ["__CONFIG__"]
-    print("__CONFIG__=", config)
-    config = cfg.Config.from_python(config)
-else:
-    # config["nrows"] = 100000
-    config["nrows"] = None
+if config is None:
+    config_tmp = config.add_subconfig("read_data")
+    # config_tmp["nrows"] = 100000
+    config_tmp["nrows"] = None
     #
     config["zscore_com"] = 28
 
-print(cfg)
+print(config)
 
 # %% [markdown]
 # # Prices
@@ -116,7 +113,7 @@ symbols
 file_name = "/data/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
 
 daily_price_dict_df = kut.read_multiple_symbol_data(
-    symbols, file_name, nrows=config["nrows"]
+    symbols, file_name, nrows=config["read_data"]["nrows"]
 )
 
 daily_price_dict_df["CL"].tail(2)

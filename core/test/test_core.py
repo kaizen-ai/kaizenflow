@@ -80,7 +80,7 @@ class Test_config1(ut.TestCase):
         #
         config.add_subconfig("read_data")
         config["read_data"]["file_name"] = "foo_bar.txt"
-        config["read_data"]["nrows"] = 1000
+        config["read_data"]["nrows"] = 999
         #
         config["single_val"] = "hello"
         #
@@ -113,6 +113,31 @@ class Test_config1(ut.TestCase):
         #
         act = self._check_python(config)
         self.check_string(act)
+
+    @staticmethod
+    def _get_nested_config2():
+        config = cfg.Config()
+        config["nrows"] = 10000
+        #
+        config_tmp = config.add_subconfig("read_data")
+        config_tmp["file_name"] = "foo_bar.txt"
+        config_tmp["nrows"] = 999
+        #
+        config["single_val"] = "hello"
+        #
+        config_tmp = config.add_subconfig("zscore")
+        config_tmp["style"] = "gaz"
+        config_tmp["com"] = 28
+        return config
+
+    def test_config7(self):
+        """
+        Compare two different styles of building a nested config.
+        """
+        config1 = self._get_nested_config1()
+        config2 = self._get_nested_config2()
+        #
+        self.assertEqual(str(config1), str(config2))
 
 
 # #############################################################################

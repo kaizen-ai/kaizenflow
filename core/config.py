@@ -1,15 +1,21 @@
+"""
+Import as:
+
+import core.config as cfg
+"""
+
 import collections
 import logging
+
+# #############################################################################
+# Config
+# #############################################################################
+import os
 
 import helpers.dbg as dbg
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
-
-
-# #############################################################################
-# Config
-# #############################################################################
 
 
 # TODO(gp): Add mechanism to check if a value was assigned but not used.
@@ -50,6 +56,7 @@ class Config:
     def add_subconfig(self, key):
         dbg.dassert_not_in(key, self._config)
         self._config[key] = Config()
+        return self._config[key]
 
     def update(self, dict_: dict):
         """
@@ -128,6 +135,20 @@ class Config:
         for k in keys:
             v = self._config.get(k, "na")
             _LOG.info("%s='%s'", k, v)
+
+    @classmethod
+    def from_env(cls):
+        """
+        Build a config passed through an environment variable, if possible,
+        or return None.
+        """
+        if "__CONFIG__" in os.environ:
+            config = os.environ["__CONFIG__"]
+            _LOG.info("__CONFIG__=%s", config)
+            config = Config.from_python(config)
+        else:
+            config = None
+        return config
 
     # TODO(gp): Use this everywhere.
     def get_exception(self, key):

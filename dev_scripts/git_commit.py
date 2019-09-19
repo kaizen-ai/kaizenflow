@@ -48,12 +48,19 @@ def _main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--action", action="append", help="Run certain phases")
     parser.add_argument(
-        "--all", action="store_true", help="Run all recommended phases"
+        "--action",
+        action="append",
+        choices=_ALL_ACTIONS,
+        help="Run certain phases",
     )
     parser.add_argument(
-        "-m", required=True, action="store", type=str, help="Commit message"
+        "-m",
+        "--message",
+        required=True,
+        action="store",
+        type=str,
+        help="Commit message",
     )
     parser.add_argument("--commit", action="store_true")
     parser.add_argument("--test", action="store_true")
