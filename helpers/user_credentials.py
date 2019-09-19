@@ -49,7 +49,7 @@ def get_credentials():
     conda_sh_path = None
     conda_env_path = None
     ssh_key_path = None
-    tunnel_info = None
+    tunnel_info = []
     jupyter_port = None
     notebook_html_path = None
     notebook_backup_path = None
@@ -66,7 +66,6 @@ def get_credentials():
             if git_repo_name == "ParticleDev/commodity_research":
                 tunnel_info = [
                     ("Jupyter1", DEV_SERVER, 10002),
-                    ("Mongodb", DEV_SERVER, 27017),
                 ]
                 jupyter_port = 10001
             elif git_repo_name == "alphamatic/lemonade":
