@@ -1,0 +1,4 @@
+function exec {
+  echo "+ $*"
+  eval $*
+} 

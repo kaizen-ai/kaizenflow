@@ -720,8 +720,12 @@ def _pylint(file_name, pedantic, check_if_possible):
                 # [W0104(pointless-statement), ] Statement seems to have no effect
                 # This is disabled since we use just variable names to print.
                 "W0104",
-                # [W0621(redefined-outer-name), ] Redefining name '' from outer scope
-                "W0621"
+                # [W0106(expression-not-assigned), ] Expression # ... is
+                # assigned to nothing
+                "W0106",
+                # [W0621(redefined-outer-name), ] Redefining name ... from outer
+                # scope
+                "W0621",
             ]
         )
 

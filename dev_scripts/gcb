@@ -1,4 +1,10 @@
 #!/bin/bash -xe
 
-git checkout -b $1
-git push -u origin $1
+# ```
+# Check out a branch and push it remotely.
+# ```
+
+source helpers.sh
+
+exec "git checkout -b $*"
+exec "git push -u origin $*"

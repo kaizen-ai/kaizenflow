@@ -1,3 +1,11 @@
 #!/bin/bash -x
 
-git clean -fd
+# ```
+# Clean the client
+# > git clean -fd
+# ```
+
+source helpers.sh
+
+# TODO(gp): Add gsp.py to make a backup
+exec "git clean -fd"

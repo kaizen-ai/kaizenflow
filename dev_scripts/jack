@@ -1,0 +1,1 @@
+ack --nogroup --nocolor --ignore-file=is:tags --ignore-file=is:cscope.out --ignore-file=is:cscope.files

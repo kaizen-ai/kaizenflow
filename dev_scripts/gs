@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+# ```
+# Print the status of the clients and of the submodules
+# > git status
+# ```
+
+source helpers.sh
+
+exec "git status --short $*"
+
+echo "+ ===================== submodule ====================="
+exec "git submodule foreach git status --short $*"

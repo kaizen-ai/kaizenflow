@@ -1,7 +1,13 @@
-#!/bin/bash -xe
+#!/bin/bash -e
+
+# ```
+# Accept their changes in case of a conflict.
+# ```
+
+source helpers.sh
 
 FILES=$*
 echo "Accepting $FILES"
-git reset HEAD $FILES
-git checkout --theirs $FILES
-git add $FILES
+exec "git reset HEAD $FILES"
+exec "git checkout --theirs $FILES"
+exec "git add $FILES"

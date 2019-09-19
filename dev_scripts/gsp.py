@@ -2,7 +2,7 @@
 
 """
 Stash the changes in a Git client without changing the client, besides a reset
-of the inex.
+of the index.
 """
 
 import argparse
