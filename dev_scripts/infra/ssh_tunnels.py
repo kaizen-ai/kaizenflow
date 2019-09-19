@@ -66,7 +66,7 @@ def _get_ssh_tunnel_process(port):
     pids, txt = si.get_process_pids(keep_line)
     _LOG.debug("pids=%s", pids)
     if len(pids) > 1:
-        _LOG.warning("Expected a single process, instead got:\n%s", txt)
+        _LOG.debug("Expected a single process, instead got:\n%s", txt)
     return pids, txt
 
 
