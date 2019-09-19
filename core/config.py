@@ -12,14 +12,24 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): Add mechanism to check if a value was assigned but not used.
 class Config:
-    def __init__(self):
+    def __init__(self, array=None):
+        """
+        :param array: array of (key, value), where value can be a python
+        type or a Config in case of nested config.
+        """
         self._config = collections.OrderedDict()
+        if array is not None:
+            for k, v in array:
+                self._config[k] = v
 
     def __setitem__(self, key, val):
+        dbg.dassert_isinstance(key, str, "Keys can only be string")
         self._config[key] = val
 
     def __getitem__(self, key):
+        dbg.dassert_isinstance(key, str, "Keys can only be string")
         dbg.dassert_in(key, self._config)
         return self._config[key]
 
@@ -27,8 +37,19 @@ class Config:
         """
         Return the string representation.
         """
-        txt = "\n".join(["%s: %s" % (k, v) for (k, v) in self._config.items()])
+        txt = []
+        for k, v in self._config.items():
+            if isinstance(v, Config):
+                txt_tmp = str(v)
+                txt.append("%s:\n%s" % (k, pri.space(txt_tmp)))
+            else:
+                txt.append("%s: %s" % (k, v))
+        txt = "\n".join(txt)
         return txt
+
+    def add_subconfig(self, key):
+        dbg.dassert_not_in(key, self._config)
+        self._config[key] = Config()
 
     def update(self, dict_: dict):
         """
@@ -51,18 +72,32 @@ class Config:
         """
         Create an object from the code returned by `to_python()`.
         """
-        val = cls()
-        val._config = eval(code)
+        val = eval(code)
+        dbg.dassert_isinstance(val, Config)
         return val
 
-    def to_python(self) -> str:
+    def to_dict(self):
         """
-        Return python code as a string that can be evaluated to regenerate the
-        object.
+        Convert to a ordered dict of order dicts, removing the class.
         """
-        config_as_str = str(self._config)
-        code = config_as_str.replace("OrderedDict", "collections.OrderedDict")
-        return code
+        dict_ = collections.OrderedDict()
+        for k, v in self._config.items():
+            if isinstance(v, Config):
+                dict_[k] = v.to_dict()
+            else:
+                dict_[k] = v
+        return dict_
+
+    def to_python(self, check=True):
+        config_as_str = str(self.to_dict())
+        # We don't need 'cfg.' since we are inside the config module.
+        config_as_str = config_as_str.replace("OrderedDict", "Config")
+        if check:
+            # Check that the object can be reconstructed.
+            config_tmp = Config.from_python(config_as_str)
+            # Compare.
+            dbg.dassert_eq(str(self), str(config_tmp))
+        return config_as_str
 
     def check_params(self, keys):
         """

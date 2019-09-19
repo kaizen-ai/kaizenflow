@@ -276,7 +276,8 @@ class TestCase(unittest.TestCase):
                 rc = si.system(cmd, abort_on_error=False)
                 if rc:
                     _LOG.warning(
-                        "Can't run '%s': yo need to add the file " "manually", cmd
+                        "Can't run '%s': you need to add the file " "manually",
+                        cmd,
                     )
             if outcome_updated:
                 _LOG.warning("Test outcome updated ... ")

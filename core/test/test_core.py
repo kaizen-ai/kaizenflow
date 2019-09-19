@@ -25,16 +25,16 @@ _LOG = logging.getLogger(__name__)
 
 class Test_config1(ut.TestCase):
     def test_config1(self):
+        """
+        Test print flatten config.
+        """
         config = cfg.Config()
         config["hello"] = "world"
         self.check_string(str(config))
 
-    def test_config2(self):
-        config = cfg.Config()
-        config["hello"] = "world"
-        config["foo"] = [1, 2, 3]
-        #
+    def _check_python(self, config):
         code = config.to_python()
+        _LOG.debug("code=%s", code)
         config2 = cfg.Config.from_python(code)
         #
         act = []
@@ -42,17 +42,78 @@ class Test_config1(ut.TestCase):
         act.append("code=%s" % str(code))
         act.append("config2=%s" % str(config2))
         act = "\n".join(act)
-        self.check_string(act)
-        #
         self.assertEqual(str(config), str(config2))
+        return act
+
+    @staticmethod
+    def _get_flat_config1():
+        config = cfg.Config()
+        config["hello"] = "world"
+        config["foo"] = [1, 2, 3]
+        return config
+
+    def test_config2(self):
+        """
+        Test serialization / deserialization for flat config.
+        """
+        config = self._get_flat_config1()
+        #
+        act = self._check_python(config)
+        self.check_string(act)
 
     def test_config3(self):
+        """
+        Test Config.get()
+        """
         config = cfg.Config()
         config["nrows"] = 10000
+        #
         self.assertEqual(config["nrows"], 10000)
         self.assertEqual(config.get("nrows", None), 10000)
         #
         self.assertEqual(config.get("nrows_tmp", None), None)
+
+    @staticmethod
+    def _get_nested_config1():
+        config = cfg.Config()
+        config["nrows"] = 10000
+        #
+        config.add_subconfig("read_data")
+        config["read_data"]["file_name"] = "foo_bar.txt"
+        config["read_data"]["nrows"] = 1000
+        #
+        config["single_val"] = "hello"
+        #
+        config.add_subconfig("zscore")
+        config["zscore"]["style"] = "gaz"
+        config["zscore"]["com"] = 28
+        return config
+
+    def test_config4(self):
+        """
+        Test print nested config.
+        """
+        config = self._get_nested_config1()
+        act = str(config)
+        self.check_string(act)
+
+    def test_config5(self):
+        """
+        Test to_python() nested config.
+        """
+        config = self._get_nested_config1()
+        act = config.to_python()
+        self.check_string(act)
+
+    def test_config6(self):
+        """
+        Test serialization / deserialization for nested config.
+        """
+        config = self._get_nested_config1()
+        #
+        act = self._check_python(config)
+        self.check_string(act)
+
 
 # #############################################################################
 # explore.py

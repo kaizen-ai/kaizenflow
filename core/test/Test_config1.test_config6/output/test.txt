@@ -1,0 +1,17 @@
+config=nrows: 10000
+read_data:
+  file_name: foo_bar.txt
+  nrows: 1000
+single_val: hello
+zscore:
+  style: gaz
+  com: 28
+code=Config([('nrows', 10000), ('read_data', Config([('file_name', 'foo_bar.txt'), ('nrows', 1000)])), ('single_val', 'hello'), ('zscore', Config([('style', 'gaz'), ('com', 28)]))])
+config2=nrows: 10000
+read_data:
+  file_name: foo_bar.txt
+  nrows: 1000
+single_val: hello
+zscore:
+  style: gaz
+  com: 28
