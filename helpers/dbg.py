@@ -457,7 +457,9 @@ def _get_logging_format(force_print_format, force_verbose_format):
 # a "mode" in ("auto", "verbose", "print")
 def init_logger(
     verb=logging.INFO,
-    use_exec_path=False,
+    # TODO(gp): If default is True then we should remove the param from the
+    # callers.
+    use_exec_path=True,
     log_filename=None,
     force_verbose_format=False,
     force_print_format=False,

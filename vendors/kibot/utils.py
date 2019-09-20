@@ -1,3 +1,8 @@
+"""
+Import as:
+
+import vendors.kibot.utils as kut
+"""
 import functools
 import logging
 import os

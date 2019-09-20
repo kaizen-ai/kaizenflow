@@ -196,13 +196,12 @@ def git_log(num_commits=5, my_commits=False):
 # ##############################################################################
 
 
-def git_stash_push(prefix=None, msg=None, log_level=logging.DEBUG):
+def git_stash_push(prefix, msg=None, log_level=logging.DEBUG):
     user_name = si.get_user_name()
     server_name = si.get_server_name()
     timestamp = datetime_.get_timestamp()
-    tag = "wip.%s-%s-%s" % (user_name, server_name, timestamp)
-    if prefix:
-        tag = prefix + "." + tag
+    tag = "%s-%s-%s" % (user_name, server_name, timestamp)
+    tag = prefix + "." + tag
     _LOG.debug("tag='%s'", tag)
     cmd = "git stash push"
     _LOG.debug("msg='%s'", msg)

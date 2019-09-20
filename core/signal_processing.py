@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.signal_processing as sigp
+"""
+
 import functools
 import logging
 
