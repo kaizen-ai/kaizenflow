@@ -1,9 +1,8 @@
+import copy
 import logging
 import os
 import pprint
 import sys
-
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -382,26 +381,23 @@ def reset_logger():
     reload(logging)
 
 
-import copy
-
-
 class _ColoredFormatter(logging.Formatter):
 
     MAPPING = {
         # White.
-        'DEBUG': 37,
+        "DEBUG": 37,
         # Cyan.
-        'INFO': 36,
+        "INFO": 36,
         # Yellow.
-        'WARNING': 33,
+        "WARNING": 33,
         # Red.
-        'ERROR': 31,
+        "ERROR": 31,
         # White on red background.
-        'CRITICAL': 41,
+        "CRITICAL": 41,
     }
 
-    PREFIX = '\033['
-    SUFFIX = '\033[0m'
+    PREFIX = "\033["
+    SUFFIX = "\033[0m"
 
     def __init__(self, log_format, date_format):
         logging.Formatter.__init__(self, log_format, date_format)
@@ -413,7 +409,9 @@ class _ColoredFormatter(logging.Formatter):
         seq = self.MAPPING.get(levelname, 37)
         # Align the level name.
         levelname = "%-5s" % levelname
-        colored_levelname = '{0}{1}m{2}{3}'.format(self.PREFIX, seq, levelname, self.SUFFIX)
+        colored_levelname = "{0}{1}m{2}{3}".format(
+            self.PREFIX, seq, levelname, self.SUFFIX
+        )
         colored_record.levelname = colored_levelname
         return logging.Formatter.format(self, colored_record)
 
@@ -422,11 +420,11 @@ def _get_logging_format(force_print_format, force_verbose_format):
     if is_running_in_ipynb():
         print("WARNING: Running in Jupyter")
     verbose_format = not is_running_in_ipynb()
-    dbg.dassert(
+    dassert(
         not (force_verbose_format and force_print_format),
         ("Can't use both force_verbose_format=%s and " "force_print_format=%s")
         % (force_verbose_format, force_print_format),
-        )
+    )
     if force_verbose_format:
         verbose_format = True
     if force_print_format:
@@ -440,9 +438,9 @@ def _get_logging_format(force_print_format, force_verbose_format):
         #
         # log_format = "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
         log_format = (
-            "%(asctime)-5s %(levelname)-5s: " \
-            "%(funcName)-15s:%(lineno)-4d: " \
-            "%(message)s" \
+            "%(asctime)-5s %(levelname)-5s: "
+            "%(funcName)-15s:%(lineno)-4d: "
+            "%(message)s"
             # "[%(name)s][%(levelname)s]  %(message)s (%(filename)s:%(lineno)d)")
         )
         # date_fmt = "%Y-%m-%d %I:%M:%S %p"
@@ -453,7 +451,6 @@ def _get_logging_format(force_print_format, force_verbose_format):
         log_format = "%(message)s"
         date_fmt = ""
     return date_fmt, log_format
-
 
 
 # TODO(gp): maybe replace "force_verbose_format" and "force_print_format" with
@@ -476,6 +473,7 @@ def init_logger(
         case, even for notebook
     :param force_print_format: use the print format for the logging in any case
     """
+    sys.stdout.write("\033[0m")
     if isinstance(verb, str):
         # pylint: disable=W0212
         verb = logging._checkLevel(verb)
@@ -501,14 +499,13 @@ def init_logger(
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verb)
     # Decide whether to use verbose or print format.
-    date_fmt, log_format = _get_logging_format(force_print_format,
-                                               force_verbose_format)
-    # Use normal formatter.
-    #formatter = logging.Formatter(log_format, datefmt=date_fmt)
-    # Use formatter with colors.
-    formatter = _ColoredFormatter(
-        log_format, date_fmt,
+    date_fmt, log_format = _get_logging_format(
+        force_print_format, force_verbose_format
     )
+    # Use normal formatter.
+    # formatter = logging.Formatter(log_format, datefmt=date_fmt)
+    # Use formatter with colors.
+    formatter = _ColoredFormatter(log_format, date_fmt)
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
     #
