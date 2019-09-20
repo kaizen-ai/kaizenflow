@@ -2,12 +2,13 @@
 
 # ```
 # Print the status of the clients and of the submodules with
-# `git status # --short`.
+# `git status --short`.
 # ```
 
 source helpers.sh
 
 exec "git status --short $*"
 
-echo "+ ===================== submodule ====================="
+echo
+echo "===================== submodule ====================="
 exec "git submodule foreach git status --short $*"

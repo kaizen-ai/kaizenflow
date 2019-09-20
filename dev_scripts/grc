@@ -1,1 +1,7 @@
-git rebase --continue
+#!/bin/bash -e
+
+# ```
+# git rebase --continue
+# ```
+
+exec "git rebase --continue"

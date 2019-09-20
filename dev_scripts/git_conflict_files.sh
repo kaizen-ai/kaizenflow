@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # ```
-# Check out a branch and push it remotely.
+# Find files with git conflicts.
 # ```
 
 source helpers.sh

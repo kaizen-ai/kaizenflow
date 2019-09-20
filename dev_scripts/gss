@@ -8,5 +8,5 @@ source helpers.sh
 
 exec "git status $*"
 
-echo "+ ===================== submodule ====================="
+echo "===================== submodule ====================="
 exec "git submodule foreach git status $*"

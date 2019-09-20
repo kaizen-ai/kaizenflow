@@ -2,9 +2,9 @@
 
 """
 Update a git client by:
-    - stashing
-    - rebasing
-    - reapplying the stashed changes
+- stashing
+- rebasing
+- reapplying the stashed changes
 """
 
 import argparse
@@ -44,7 +44,7 @@ def _main(parser):
     _system(cmd, suppress_output=False)
     #
     _print("# Saving local changes...")
-    tag, was_stashed = git.git_stash_push(prefix="gup", log_level=_LOG_LEVEL)
+    tag, was_stashed = git.git_stash_push("gup", log_level=_LOG_LEVEL)
     print("tag='%s'" % tag)
     if not was_stashed:
         # raise RuntimeError(msg)

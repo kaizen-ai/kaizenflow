@@ -1,12 +1,14 @@
 #!/bin/bash -e
 
 # ```
-# Sync client with gup.py and then push.
+# Sync client with gup.py and then push local commits.
 # ```
 
 source helpers.sh
 
 echo "==================== gup.py ===================="
 exec "gup.py"
+
+echo
 echo "==================== git push ===================="
 exec "git push"

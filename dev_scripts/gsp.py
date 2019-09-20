@@ -22,26 +22,28 @@ def _system(cmd, *args, **kwargs):
     si.system(cmd, log_level=logging.INFO, *args, **kwargs)
 
 
+def _print(msg):
+    msg = pri.color_highlight(msg, "red")
+    print("\n" + msg)
+
+
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
     #
-    msg = "# Saving local changes..."
-    print("\n" + pri.frame(msg))
+    _print("# Saving local changes...")
     tag, was_stashed = git.git_stash_push(
-        msg=args.message, log_level=logging.INFO
-    )
+        "gsp",
+        msg=args.message, log_level=logging.INFO)
     print("tag='%s'" % tag)
     if not was_stashed:
         # raise RuntimeError(msg)
         pass
     else:
-        msg = "# Restoring local changes..."
-        print("\n" + pri.frame(msg))
+        _print("# Restoring local changes...")
         git.git_stash_apply(mode="apply", log_level=logging.INFO)
     #
-    msg = "# Stash state ..."
-    print("\n" + pri.frame(msg))
+    _print("# Stash state ...")
     cmd = r"git stash list"
     _system(cmd, suppress_output=False)
 

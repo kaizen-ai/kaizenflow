@@ -1,7 +1,15 @@
+#!/bin/bash -e
+
+# ```
+# Retrieve the files checked in by the current user in the n last commits.
+# ```
+
 if [[ -z $1 ]]; then
-  num_lines=1
+  num_commits=1
 else
-  num_lines=$1
+  num_commits=$1
 fi;
-#echo "num_lines=$num_lines"
-git show --pretty="" --name-only $(git log --author $(git config user.name) -$num_lines | \grep commit | perl -pe 's/commit (.*)/$1/')
+#echo "num_commits=$num_commits"
+
+# TODO(gp): Improve.
+git show --pretty="" --name-only $(git log --author $(git config user.name) -$num_commits | \grep commit | perl -pe 's/commit (.*)/$1/')

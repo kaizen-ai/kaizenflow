@@ -2,6 +2,7 @@
 
 # ```
 # List commits in a fancy full-screen format like:
+#
 #    * 299ad8e saggese   Improve scripts for tunnelling and handling notebooks             (   4 hours ago) Sat Sep 14 11:28:29 2019  (HEAD -> master, origin/master, origin/HEAD)
 #    * f08f8a0 saggese   Fix bug in ssh_tunnel.py and lint                                 (   5 hours ago) Sat Sep 14 10:30:41 2019
 #    * 296e6ad saggese   Consolidate all the user info in helpers/user_credentials. Clean up (   6 hours ago) Sat Sep 14 10:17:03 2019
@@ -14,6 +15,11 @@
 # > gll -5
 # ```
 
-git log --date=local --oneline --graph --date-order --decorate \
-  --pretty=format:'%Creset%Cgreen%h %C(reset)%C(cyan)%<(8)%aN%Creset %Creset%C(bold white) %<(65)%s %C(bold black)(%>(14)%ar) %C(red)%ad %C(yellow)%<(10)%d%C(reset)' \
+git log \
+  --date=local \
+  --oneline \
+  --graph \
+  --date-order \
+  --decorate \
+  --pretty=format:'%Creset%Cgreen%h %C(reset)%C(cyan)%<(8)%aN%Creset %Creset%C(bold white) %<(55)%s %C(bold black)(%>(14)%ar) %C(red)%ad %C(yellow)%<(10)%d%C(reset)' \
   $*

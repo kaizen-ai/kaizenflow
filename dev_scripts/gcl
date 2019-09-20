@@ -7,5 +7,6 @@
 
 source helpers.sh
 
-# TODO(gp): Add gsp.py to make a backup
+# Make a backup.
+exec "gsp.py"
 exec "git clean -fd"
