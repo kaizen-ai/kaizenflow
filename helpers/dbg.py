@@ -3,11 +3,7 @@ import os
 import pprint
 import sys
 
-# try:
-#    import pandas as pd
-#    _HAS_PANDAS = True
-# except ImportError:
-#    _HAS_PANDAS = False
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -386,11 +382,88 @@ def reset_logger():
     reload(logging)
 
 
+import copy
+
+
+class _ColoredFormatter(logging.Formatter):
+
+    MAPPING = {
+        # White.
+        'DEBUG': 37,
+        # Cyan.
+        'INFO': 36,
+        # Yellow.
+        'WARNING': 33,
+        # Red.
+        'ERROR': 31,
+        # White on red background.
+        'CRITICAL': 41,
+    }
+
+    PREFIX = '\033['
+    SUFFIX = '\033[0m'
+
+    def __init__(self, log_format, date_format):
+        logging.Formatter.__init__(self, log_format, date_format)
+
+    def format(self, record):
+        colored_record = copy.copy(record)
+        levelname = colored_record.levelname
+        # Use white as default.
+        seq = self.MAPPING.get(levelname, 37)
+        # Align the level name.
+        levelname = "%-5s" % levelname
+        colored_levelname = '{0}{1}m{2}{3}'.format(self.PREFIX, seq, levelname, self.SUFFIX)
+        colored_record.levelname = colored_levelname
+        return logging.Formatter.format(self, colored_record)
+
+
+def _get_logging_format(force_print_format, force_verbose_format):
+    if is_running_in_ipynb():
+        print("WARNING: Running in Jupyter")
+    verbose_format = not is_running_in_ipynb()
+    dbg.dassert(
+        not (force_verbose_format and force_print_format),
+        ("Can't use both force_verbose_format=%s and " "force_print_format=%s")
+        % (force_verbose_format, force_print_format),
+        )
+    if force_verbose_format:
+        verbose_format = True
+    if force_print_format:
+        verbose_format = False
+    if verbose_format:
+        # TODO(gp): We would like to have filename.name.funcName:lineno all
+        # justified on the 15.
+        # See https://docs.python.org/3/howto/logging-cookbook.html#use-of-alternative-formatting-styles
+        # Something like:
+        #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
+        #
+        # log_format = "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
+        log_format = (
+            "%(asctime)-5s %(levelname)-5s: " \
+            "%(funcName)-15s:%(lineno)-4d: " \
+            "%(message)s" \
+            # "[%(name)s][%(levelname)s]  %(message)s (%(filename)s:%(lineno)d)")
+        )
+        # date_fmt = "%Y-%m-%d %I:%M:%S %p"
+        date_fmt = "%m-%d_%H:%M"
+    else:
+        # Make logging look like a normal print().
+        # TODO(gp): We want to still prefix with WARNING and ERROR.
+        log_format = "%(message)s"
+        date_fmt = ""
+    return date_fmt, log_format
+
+
+
+# TODO(gp): maybe replace "force_verbose_format" and "force_print_format" with
+# a "mode" in ("auto", "verbose", "print")
 def init_logger(
     verb=logging.INFO,
     use_exec_path=False,
     log_filename=None,
     force_verbose_format=False,
+    force_print_format=False,
 ):
     """
     - Send both stderr and stdout to logging.
@@ -399,8 +472,9 @@ def init_logger(
     :param verb: verbosity to use
     :param use_exec_path: use the name of the executable
     :param log_filename: log to that file
-    :param force_verbose_format: use the verbose format used by code even for
-        notebook
+    :param force_verbose_format: use the verbose format for the logging in any
+        case, even for notebook
+    :param force_print_format: use the print format for the logging in any case
     """
     if isinstance(verb, str):
         # pylint: disable=W0212
@@ -409,16 +483,16 @@ def init_logger(
     root_logger = logging.getLogger()
     # Set verbosity for all loggers.
     root_logger.setLevel(verb)
-    eff_level = root_logger.getEffectiveLevel()
-    if False:
-        print(
-            "effective level= %s (%s)"
-            % (eff_level, logging.getLevelName(eff_level))
-        )
-    if False:
-        # dassert_eq(root_logger.getEffectiveLevel(), verb)
-        for handler in root_logger.handlers:
-            handler.setLevel(verb)
+    # if False:
+    #     eff_level = root_logger.getEffectiveLevel()
+    #     print(
+    #         "effective level= %s (%s)"
+    #         % (eff_level, logging.getLevelName(eff_level))
+    #     )
+    # if False:
+    #     # dassert_eq(root_logger.getEffectiveLevel(), verb)
+    #     for handler in root_logger.handlers:
+    #         handler.setLevel(verb)
     # Exit to avoid to replicate the same output multiple times.
     if root_logger.handlers:
         print("WARNING: Logger already initialized: skipping")
@@ -426,18 +500,15 @@ def init_logger(
     #
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verb)
-    if not force_verbose_format and is_running_in_ipynb():
-        print("WARNING: Running in Jupyter")
-        # Make logging look like a normal print().
-        log_format = "%(message)s"
-        date_fmt = ""
-    else:
-        # TODO(gp): Print at much 15-20 chars of a function so that things are
-        # aligned.
-        # log_format = "%(levelname)-5s: %(funcName)-15s: %(message)s"
-        log_format = "%(asctime)-5s: %(levelname)s: %(funcName)s: %(message)s"
-        date_fmt = "%Y-%m-%d %I:%M:%S %p"
-    formatter = logging.Formatter(log_format, datefmt=date_fmt)
+    # Decide whether to use verbose or print format.
+    date_fmt, log_format = _get_logging_format(force_print_format,
+                                               force_verbose_format)
+    # Use normal formatter.
+    #formatter = logging.Formatter(log_format, datefmt=date_fmt)
+    # Use formatter with colors.
+    formatter = _ColoredFormatter(
+        log_format, date_fmt,
+    )
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
     #
