@@ -83,6 +83,7 @@ df4[mask]["Symbol"].values
 config = cfg.Config.from_env()
 
 if config is None:
+    config = cfg.Config()
     config_tmp = config.add_subconfig("read_data")
     # config_tmp["nrows"] = 100000
     config_tmp["nrows"] = None

@@ -150,6 +150,7 @@ daily_price_dict_df["CL"].head(3)
 config = cfg.Config.from_env()
 
 if config is None:
+    config = cfg.Config()
     config_tmp = config.add_subconfig("read_data")
     # Use the data from S3.
     file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
