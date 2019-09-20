@@ -173,3 +173,10 @@ class Test_dassert_misc1(ut.TestCase):
             b = [1, 2, 4]
             dbg.dassert_eq_all(a, b)
         self.check_string(str(cm.exception))
+
+
+# #############################################################################
+
+class Test_logging1(ut.TestCase):
+    def test_logging_levels1(self):
+        dbg.test_logger()

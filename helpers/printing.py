@@ -19,7 +19,6 @@ COLOR_MAP = {
 
 
 def color_highlight(text, color):
-
     return COLOR_MAP[color] + text + COLOR_MAP["none"]
 
 

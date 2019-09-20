@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.user_credentials as usc
+"""
+
 import logging
 import os
 
@@ -63,9 +69,7 @@ def get_credentials():
             conda_sh_path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
-                tunnel_info = [
-                    ("Jupyter1", DEV_SERVER, 10002),
-                ]
+                tunnel_info = [("Jupyter1", DEV_SERVER, 10002)]
                 jupyter_port = 10001
             elif git_repo_name == "alphamatic/lemonade":
                 # TODO(gp): This should be factored out in the including

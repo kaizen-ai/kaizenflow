@@ -30,7 +30,9 @@ import requests
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.printing as prnt
 import helpers.system_interaction as si
+import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,28 +54,38 @@ def check_url(url):
 
 def _get_prefixes():
     si.get_user_name()
-    # pwd = os.getcwd()
-    # TODO(gp): Generalize once everyone has an assigned port merging with
-    # infra/ssh_config.py.
-    github_prefix = (
-        "https://github.com/ParticleDev/commodity_research/blob/master"
-    )
-    jupyter_prefix = "http://localhost:10001/tree"
-    # if user == "gp":
-    #     if pwd in (
-    #         "/data/gp_wd/src/particle1",
-    #         "/Users/gp/src/git_particleone_...1",
-    #     ):
-    #         jupyter_prefix = "http://localhost:9185/notebooks/"
-    #     elif pwd in (
-    #         "/data/gp_wd/src/particle2",
-    #         "/Users/gp/src/git_particleone_...2",
-    #     ):
-    #         jupyter_prefix = "http://localhost:9186/notebooks/"
+    user_credentials = usc.get_credentials()
+    if "jupyter_port" in user_credentials:
+        jupyter_port = user_credentials["jupyter_port"]
+    else:
+        jupyter_port = 10001
+        _LOG.warning(
+            "jupyter_port not defined in user_credentials.py: using "
+            "the default one %s",
+            jupyter_port,
+        )
+    repo_name = git.get_repo_symbolic_name(super_module=False)
+    _LOG.debug("repo_name=%s", repo_name)
+    github_prefix = "https://github.com/%s/blob/master" % repo_name
+    jupyter_prefix = "http://localhost:%s/tree" % jupyter_port
     return github_prefix, jupyter_prefix
 
 
-def _get_root(url):
+def _get_file_name(url):
+    """
+    Given a url from Jupyter server or github extract the path corresponding
+    to the file.
+    E.g.,
+    - http://localhost:10001/notebooks/research/...
+        oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb
+      ->
+        oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb
+
+    - https://github.com/ParticleDev/commodity_research/blob/master/...
+        oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+      ->
+        oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb
+    """
     # "http://localhost:10001/notebooks/...
     #   oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
     ret = None
@@ -101,6 +113,13 @@ def _get_root(url):
     return ret
 
 
+def _print(tag, val, verbose):
+    if verbose:
+        print("\n# %s\n%s" % (prnt.color_highlight(tag, "green"), val))
+    else:
+        print("\n" + val)
+
+
 # #############################################################################
 
 
@@ -109,7 +128,7 @@ def _parse():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("positional", nargs="*")
-    parser.add_argument("--verbose", action="store_true", help="Long output form")
+    parser.add_argument("--short", action="store_true", help="Short output form")
     parser.add_argument(
         "-v",
         dest="log_level",
@@ -122,49 +141,44 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=False)
+    dbg.init_logger(verb=args.log_level, force_print_format=True)
     #
-    github_prefix, jupyter_prefix = _get_prefixes()
     positional = args.positional
     if len(positional) != 1:
         print("Need to specify one 'url'")
         sys.exit(-1)
-    root = _get_root(positional[0])
     #
-    if args.verbose:
-        print("\n# file_name\n%s" % root)
-    else:
-        print("\n" + root)
+    verb = not args.short
+    github_prefix, jupyter_prefix = _get_prefixes()
+    _print("github_prefix", github_prefix, verb)
+    _print("jupyter_prefix", jupyter_prefix, verb)
     #
-    file_name = git.get_client_root(super_module=True) + "/" + root
-    if args.verbose:
-        print("\n# abs file_name\n%s" % file_name)
-    else:
-        print(file_name)
+    url = positional[0]
+    rel_file_name = _get_file_name(url)
+    _print("rel_file_name", rel_file_name, verb)
+    if not rel_file_name:
+        msg = "Can't extract the name of a file from '%s'" % url
+        raise ValueError(msg)
     #
-    github_url = github_prefix + "/" + root
-    if args.verbose:
-        print("\n# github_url\n%s" % github_url)
-    else:
-        print(github_url)
+    _print("file_name", rel_file_name, verb)
     #
-    jupyter_url = jupyter_prefix + "/" + root
-    if args.verbose:
-        print("\n# jupyter_url\n%s" % jupyter_url)
-    else:
-        print(jupyter_url)
+    abs_file_name = git.get_client_root(super_module=True) + "/" + rel_file_name
+    _print("abs file_name", abs_file_name, verb)
     #
-    if root.endswith(".ipynb"):
-        cmd = "publish_notebook.py --file %s --action open" % file_name
-        if args.verbose:
-            print("\n# read notebook\n%s" % cmd)
-        else:
-            print(cmd)
+    github_url = github_prefix + "/" + rel_file_name
+    _print("github_url", github_url, verb)
+    #
+    jupyter_url = jupyter_prefix + "/" + rel_file_name
+    _print("jupyter_url", jupyter_url, verb)
+    #
+    if rel_file_name.endswith(".ipynb"):
+        cmd = "publish_notebook.py --file %s --action open" % abs_file_name
+        _print("read notebook", cmd, verb)
 
     #
     print()
-    if not os.path.exists(file_name):
-        _LOG.warning("'%s' doesn't exist", file_name)
+    if not os.path.exists(abs_file_name):
+        _LOG.warning("'%s' doesn't exist", abs_file_name)
     check_url(github_url)
     check_url(jupyter_url)
 

@@ -14,30 +14,40 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_url_py1(ut.TestCase):
+    # TODO(gp): -> test_get_file_name
     def test1(self):
         url_tmp = (
             "http://localhost:10001/notebooks/oil/ST/"
-            "Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
+            + "Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         )
-        act = url._get_root(url_tmp)
+        act = url._get_file_name(url_tmp)
         exp = "oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         self.assertEqual(act, exp)
 
     def test2(self):
         url_tmp = (
             "https://github.com/ParticleDev/commodity_research/blob/"
-            "master/oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
+            + "master/oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         )
-        act = url._get_root(url_tmp)
+        act = url._get_file_name(url_tmp)
         exp = "oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         self.assertEqual(act, exp)
+
+    def test_run1(self):
+        cmd = (
+            "url.py "
+            "http://localhost:9999/notebooks/research"
+            "/Task51_experiment_with_sklearn_pipeline/"
+            "Task51_experiment_with_sklearn_pipeline.ipynb"
+        )
+        si.system(cmd)
 
 
 # #############################################################################
 
 
 class Test_env1(ut.TestCase):
-    def test_env1(self):
+    def test_get_system_signature1(self):
         _ = env.get_system_signature()
 
 
@@ -46,14 +56,21 @@ class Test_env1(ut.TestCase):
 
 class Test_set_env1(ut.TestCase):
     def test_setenv_py1(self):
+        """
+        Find _setenv.py executable and run it.
+        """
         cmd = "find . -name _setenv.py"
         _, txt = si.system_to_string(cmd)
         _LOG.debug("txt=%s", txt)
-        exec = os.path.abspath(txt)
-        _LOG.debug("exec=%s", exec)
-        dbg.dassert_exists(exec)
-        si.system(exec)
+        #
+        executable = os.path.abspath(txt)
+        _LOG.debug("executable=%s", executable)
+        dbg.dassert_exists(executable)
+        si.system(executable)
 
     def test_setenv_sh1(self):
+        """
+        Execute setenv.sh.
+        """
         cmd = "source dev_scripts/setenv.sh"
         si.system(cmd)
