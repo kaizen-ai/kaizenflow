@@ -12,11 +12,11 @@ DIR=$(dirname "$EXEC_NAME")
 EXEC_PATH=$(cd $DIR ; pwd -P)
 
 # Create the script to execute calling python.
-#DATETIME=$(date "+%Y%m%d-%H%M%S")
-DATETIME=""
+DATETIME=$(date "+%Y%m%d-%H%M%S")
+#DATETIME=""
 SCRIPT_FILE=/tmp/setenv.${DATETIME}.sh
 echo "SCRIPT_FILE=$SCRIPT_FILE"
-$EXEC_PATH/_setenv.py $* >$SCRIPT_FILE
+$EXEC_PATH/_setenv.py --output_file $SCRIPT_FILE $*
 
 # Execute the script
 source $SCRIPT_FILE

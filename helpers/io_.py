@@ -1,5 +1,9 @@
 """
 Functions to handle filesystem operations.
+
+Import as:
+
+import helpers.io_ as io_
 """
 
 import fnmatch

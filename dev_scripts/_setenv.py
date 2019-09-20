@@ -13,6 +13,8 @@ import logging
 import os
 import sys
 
+import helpers.io_ as io_
+
 # ##############################################################################
 
 
@@ -115,6 +117,9 @@ def _export_env_var(val_name, vals):
 def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "-o", "--output_file", default=None, help="File to write. None for stdout"
     )
     parser.add_argument(
         "-e", "--conda_env", default="develop", help="Select the conda env to use"
@@ -251,7 +256,11 @@ def _main(parser):
     _execute(script)
     #
     txt = "\n".join(txt)
-    print(txt)
+    if args.output_file:
+        io_.to_file(args.output_file, txt)
+    else:
+        # stdout.
+        print(txt)
 
 
 if __name__ == "__main__":
