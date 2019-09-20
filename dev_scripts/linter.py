@@ -565,6 +565,8 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         return []
     # http://www.pydocstyle.org/en/2.1.1/error_codes.html
     ignore = [
+        # D105: Missing docstring in magic method
+        "D105",
         # D200: One-line docstring should fit on one line with quotes
         "D200",
         # D202: No blank lines allowed after function docstring

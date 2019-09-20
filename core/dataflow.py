@@ -1,14 +1,17 @@
 import logging
 
+import pandas as pd
+
 import core.signal_processing as sigp
 import helpers.dbg as dbg
+import helpers.printing as prnt
 import vendors.kibot.utils as kut
 
 _LOG = logging.getLogger(__name__)
 
 
 class Node:
-    def __init__(self, name: str, num_inputs: int = 1):
+    def __init__(self, name, num_inputs=1):
         dbg.dassert_isinstance(name, str)
         self._name = name
         #
@@ -20,7 +23,7 @@ class Node:
 
     def connect(self, *nodes):
         if self._is_connected:
-            msg = "%s: already connected to %s" % (
+            msg = "Node '%s': already connected to %s" % (
                 self._name,
                 ", " "".join(self._input_nodes),
             )
@@ -29,7 +32,7 @@ class Node:
         dbg.dassert_eq(
             len(nodes),
             self._num_inputs,
-            "%s: invalid number of " "connections",
+            "Node '%s': invalid number of " "connections",
             self._name,
         )
         for node in nodes:
@@ -39,7 +42,7 @@ class Node:
 
     def fit(self):
         if self._is_fit:
-            msg = "%s: already fit" % self._name
+            msg = "Node '%s': already fit" % self._name
             _LOG.error(msg)
         for node in self._input_nodes:
             self._fit_inputs_values.append(node.fit())
@@ -60,13 +63,69 @@ class Node:
         self._predict_input_values = []
         self._output_values = None
 
+    def __str__(self):
+        # TODO(gp): Specify also the format like %s.
+        info = [
+            ("name", self._name),
+            ("num_inputs", self._num_inputs),
+            ("is_connected", self._is_connected),
+            ("is_fit", self._is_fit),
+        ]
+        ret = self._to_string(info)
+        return ret
+
+    def dag_to_string(self):
+        ret = []
+        ret.append(str(self))
+        for n in self._input_nodes:
+            ret.append(prnt.space(str(n)))
+        ret = "\n".join(ret)
+        return ret
+
+    @staticmethod
+    def _to_string(info):
+        ret = ", ".join(["%s=%s" % (i[0], i[1]) for i in info])
+        return ret
+
 
 # ##############################################################################
 
 
 class ReadData(Node):
+    def __init__(self, name):
+        super().__init__(name, num_inputs=0)
+        #
+        self.df = None
+
+    def fit(self, train_idxs):
+        """
+        :param train_idxs: indices of the df to use for fitting
+        :return: training set as df
+        """
+        super().fit()
+        train_df = self.df.iloc[train_idxs]
+        return train_df
+
+    def predict(self, test_idxs):
+        """
+        :param test_idxs: indices of the df to use for predicting
+        :return: test set as df
+        """
+        super().predict()
+        test_df = self.df.iloc[test_idxs]
+        return test_df
+
+
+class ReadDataFromDf(ReadData):
+    def __init__(self, name, df):
+        super().__init__(name)
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        self.df = df
+
+
+class KibotReadData(ReadData):
     def __init__(self, name, file_name, nrows):
-        super(self).__init__(name, num_inputs=0)
+        super().__init__(name)
         dbg.dassert_exists(file_name)
         self.file_name = file_name
         self.nrows = nrows
@@ -84,24 +143,16 @@ class ReadData(Node):
         :param train_idxs: indices of the df to use for fitting
         :return: training set as df
         """
-        super(self).fit()
         self._lazy_load()
-        train_df = self.df.iloc[train_idxs]
-        return train_df
+        super().fit()
 
-    def predict(self, test_idxs):
-        """
-        :param test_idxs: indices of the df to use for predicting
-        :return: test set as df
-        """
-        super(self).predict()
-        test_df = self.df.iloc[test_idxs]
-        return test_df
+
+# ##############################################################################
 
 
 class Zscore(Node):
     def __init__(self, name, tau):
-        super(self).__init__(name, num_inputs=1)
+        super().__init__(name, num_inputs=1)
         self.tau = tau
 
     def _transform(self, df):
@@ -109,13 +160,13 @@ class Zscore(Node):
         return df_out
 
     def fit(self):
-        super(self).fit()
+        super().fit()
         df_in = self._fit_inputs_values[0]
         df_out = self._transform(df_in)
         return df_out
 
     def predict(self):
-        super(self).predict()
+        super().predict()
         df_in = self._predict_inputs_values[0]
         df_out = self._transform(df_in)
         return df_out
@@ -127,7 +178,7 @@ class Zscore(Node):
 #         pass
 #
 #     def connect(self, input1):
-#         super(self).connect(input1)
+#         super().connect(input1)
 #
 #     def get_x_vars(self):
 #         x_vars = ["x0", "x1"]
@@ -145,7 +196,7 @@ class Zscore(Node):
 #         self._params = None
 #
 #     def connect(self, input1):
-#         super(self).connect(input1)
+#         super().connect(input1)
 #
 #     def fit(self, df):
 #         """
