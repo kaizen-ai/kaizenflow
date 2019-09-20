@@ -23,7 +23,7 @@ def _system(cmd, *args, **kwargs):
 
 
 def _print(msg):
-    msg = pri.color_highlight(msg, "red")
+    msg = pri.color_highlight(msg, "blue")
     print("\n" + msg)
 
 
