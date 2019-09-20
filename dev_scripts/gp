@@ -6,5 +6,7 @@
 
 source helpers.sh
 
+echo "==================== gup.py ===================="
 exec "gup.py"
+echo "==================== git push ===================="
 exec "git push"

@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
 # ```
-# Print the status of the clients and of the submodules
-# > git status
+# Print the status of the clients and of the submodules with
+# `git status # --short`.
 # ```
 
 source helpers.sh
