@@ -577,6 +577,8 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         "D205",
         # D400: First line should end with a period (not ':')
         "D400",
+        # D402: First line should not be the function's "signature"
+        "D402",
     ]
     if not pedantic:
         ignore.extend(
@@ -1125,11 +1127,7 @@ def _parse():
     parser.add_argument(
         "--no_cleanup", action="store_true", help="Do not clean up tmp files"
     )
-    parser.add_argument(
-        "--jenkins",
-        action="store_true",
-        help="Run as jenkins",
-    )
+    parser.add_argument("--jenkins", action="store_true", help="Run as jenkins")
     # Test.
     parser.add_argument(
         "--collect_only",

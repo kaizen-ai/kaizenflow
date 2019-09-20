@@ -246,7 +246,7 @@ def fit_random_walk_plus_noise(signal):
 
 
 def plot_crosscorrelation(x, y):
-    """
+    r"""
     Assumes x, y have been approximately demeaned and normalized (e.g.,
     z-scored with ewma).
 
@@ -297,7 +297,7 @@ def _tau_to_com(tau):
 
 
 def ema(df, tau, min_periods, depth=1):
-    """
+    r"""
     Iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
 
     depth=1 corresponds to a single application of exponential smoothing.
@@ -342,7 +342,7 @@ def ema(df, tau, min_periods, depth=1):
 
 
 def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
-    """
+    r"""
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 
     Computes difference of around time "now" over a time interval \tau_1
@@ -774,7 +774,7 @@ def get_binomial_tree(p, vol, size, seed=None):
     # binomial_tree(0.5, 0.1, 252, seed=0).plot()
     np.random.seed(seed=seed)
     pos = np.random.binomial(1, p, size)
-    neg = (np.full(size, 1) - pos)
+    neg = np.full(size, 1) - pos
     delta = float(vol) * (pos - neg)
     return pd.Series(np.exp(delta.cumsum()), name="binomial_walk")
 

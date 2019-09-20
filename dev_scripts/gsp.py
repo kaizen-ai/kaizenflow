@@ -33,8 +33,8 @@ def _main(parser):
     #
     _print("# Saving local changes...")
     tag, was_stashed = git.git_stash_push(
-        "gsp",
-        msg=args.message, log_level=logging.INFO)
+        "gsp", msg=args.message, log_level=logging.INFO
+    )
     print("tag='%s'" % tag)
     if not was_stashed:
         # raise RuntimeError(msg)

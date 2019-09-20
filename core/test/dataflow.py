@@ -2,13 +2,13 @@ import logging
 
 import core.signal_processing as sigp
 import helpers.dbg as dbg
+import vendors.kibot.utils as kut
 
 _LOG = logging.getLogger(__name__)
 
 
 class Node:
-
-    def __init__(self, name: str, num_inputs : int =1):
+    def __init__(self, name: str, num_inputs: int = 1):
         dbg.dassert_isinstance(name, str)
         self._name = name
         #
@@ -20,13 +20,18 @@ class Node:
 
     def connect(self, *nodes):
         if self._is_connected:
-            msg = "%s: already connected to %s" %(self._name, ", " \
-                                                                      "".join(
-                self._input_nodes))
+            msg = "%s: already connected to %s" % (
+                self._name,
+                ", " "".join(self._input_nodes),
+            )
             _LOG.error(msg)
             raise ValueError(msg)
-        dbg.dassert_eq(len(nodes), self._num_inputs, "%s: invalid number of "
-                                                     "connections", self._name)
+        dbg.dassert_eq(
+            len(nodes),
+            self._num_inputs,
+            "%s: invalid number of " "connections",
+            self._name,
+        )
         for node in nodes:
             dbg.dassert_isinstance(node, Node)
             self._input_nodes.append(node)
@@ -58,11 +63,8 @@ class Node:
 
 # ##############################################################################
 
-import vendors.kibot.utils as kut
-
 
 class ReadData(Node):
-
     def __init__(self, name, file_name, nrows):
         super(self).__init__(name, num_inputs=0)
         dbg.dassert_exists(file_name)
@@ -98,16 +100,12 @@ class ReadData(Node):
 
 
 class Zscore(Node):
-
     def __init__(self, name, tau):
         super(self).__init__(name, num_inputs=1)
         self.tau = tau
 
     def _transform(self, df):
-        df_out = sigp.rolling_zscore(
-                df,
-                self.tau,
-        )
+        df_out = sigp.rolling_zscore(df, self.tau)
         return df_out
 
     def fit(self):

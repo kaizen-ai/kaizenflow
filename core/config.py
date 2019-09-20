@@ -31,10 +31,16 @@ class Config:
                 self._config[k] = v
 
     def __setitem__(self, key, val):
+        """
+        Set / update `key` to `val`.
+        """
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         self._config[key] = val
 
     def __getitem__(self, key):
+        """
+        Get value for `key` or assert, if it doesn't exist.
+        """
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         dbg.dassert_in(key, self._config)
         return self._config[key]
@@ -60,13 +66,13 @@ class Config:
 
     def update(self, dict_: dict):
         """
-        Equivalent to dict.update()
+        Equivalent to `dict.update()`
         """
         self._config.update(dict_)
 
     def get(self, key, val):
         """
-        Equivalent to dict.get()
+        Equivalent to `dict.get()`
         """
         # TODO(gp): For some reason this doesn't work. It's probably something
         # trivial.
