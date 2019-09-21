@@ -80,7 +80,7 @@ class Node:
         ret = []
         ret.append(str(self))
         for n in self._input_nodes:
-            ret.append(prnt.space(str(n)))
+            ret.append(prnt.space(n.dag_to_string()))
         ret = "\n".join(ret)
         return ret
 
