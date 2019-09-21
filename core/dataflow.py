@@ -10,6 +10,8 @@ import vendors.kibot.utils as kut
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(GP, Paul): Consider separating higher-level dataflow classes from
+# source-specific inherited extensions.
 class Node:
     def __init__(self, name, num_inputs=1):
         dbg.dassert_isinstance(name, str)
@@ -49,7 +51,7 @@ class Node:
         self._is_fit = True
 
     def predict(self):
-        # We can predict multiple times so everytime we need to re-evaluate.
+        # We can predict multiple times, so every time we need to re-evaluate.
         self._predict_inputs_values = []
         for node in self._input_nodes:
             self._predict_inputs_values.append(node.predict())
@@ -57,7 +59,7 @@ class Node:
     def _reset(self):
         self._is_connected = False
         #
-        self._fit_input_values = []
+        self._fit_inputs_values = []
         self._is_fit = False
         #
         self._predict_input_values = []
