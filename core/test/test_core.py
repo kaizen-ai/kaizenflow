@@ -183,6 +183,11 @@ class Test_dataflow_Node1(ut.TestCase):
 
 
 class Test_dataflow_ReadData1(ut.TestCase):
+    def _check(self, n):
+        act = n.dag_to_string()
+        _LOG.debug("act=%s", act)
+        self.check_string(act)
+
     def test_read_data1(self):
         # Create a file.
         df = pd.DataFrame(np.random.rand(10, 3), columns="a b c".split())
@@ -196,9 +201,13 @@ class Test_dataflow_ReadData1(ut.TestCase):
         read_data.connect()
         #
         idxs = list(range(df.shape[0]))
-        read_data.fit(idxs)
-        # zscore = Zscore("zscore", style="foo", com=28)
-        # zscore.connect(read_data)
+        read_data.set_train_idxs(idxs)
+        #
+        zscore = dtf.Zscore("zscore", tau=2.0)
+        zscore.connect(read_data)
+        zscore.fit()
+        #
+        self._check(zscore)
 
 
 # #############################################################################

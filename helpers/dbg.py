@@ -457,9 +457,7 @@ def _get_logging_format(force_print_format, force_verbose_format):
 # a "mode" in ("auto", "verbose", "print")
 def init_logger(
     verb=logging.INFO,
-    # TODO(gp): If default is True then we should remove the param from the
-    # callers.
-    use_exec_path=True,
+    use_exec_path=False,
     log_filename=None,
     force_verbose_format=False,
     force_print_format=False,
@@ -519,7 +517,10 @@ def init_logger(
 
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
-        filename = module.__file__
+        if not hasattr(module, __file__):
+            filename = module.__file__
+        else:
+            filename = "unknown_module"
         log_filename = os.path.realpath(filename) + ".log"
     # Handle teeing to a file.
     if log_filename:

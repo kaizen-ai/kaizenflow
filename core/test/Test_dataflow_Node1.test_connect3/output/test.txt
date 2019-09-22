@@ -1,2 +1,2 @@
-name=n2, num_inputs=1, is_connected=True, is_fit=False
-  name=n1, num_inputs=0, is_connected=True, is_fit=False
+name=n2, type=core.dataflow.Node, num_inputs=1, is_connected=True, is_fit=False
+  name=n1, type=core.dataflow.Node, num_inputs=0, is_connected=True, is_fit=False

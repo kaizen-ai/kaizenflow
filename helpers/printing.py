@@ -185,6 +185,24 @@ def round_digits(v, num_digits=2, use_thousands_separator=False):
 # #############################################################################
 
 
+def type_to_string(type_as_str):
+    """
+    Return a short string representing the type of an object, e.g.,
+        "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")
+    """
+    if isinstance(type_as_str, type):
+        type_as_str = str(type_as_str)
+    dbg.dassert_isinstance(type_as_str, str)
+    # Remove the extra string from:
+    #   <class 'core.dataflow.Zscore'>
+    prefix = "<class '"
+    dbg.dassert(type_as_str.startswith(prefix), type_as_str)
+    suffix = "'>"
+    dbg.dassert(type_as_str.endswith(suffix), type_as_str)
+    type_as_str = type_as_str[len(prefix) : -len(suffix)]
+    return type_as_str
+
+
 def format_list(v, sep=" ", max_n=None, tag=None):
     sep = " "
     # sep = ", "
