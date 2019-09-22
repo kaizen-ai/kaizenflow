@@ -1,5 +1,6 @@
 #!/bin/bash -e
 source helpers.sh
 
-#echo "$@"
-find . \( -name "*.ipynb" \) -print0 | xargs -0 ack $ACK_OPTS "$@"
+cmd="find . \( -name '*.ipynb' \) -print0 | xargs -0 ack $ACK_OPTS '$@'"
+#echo "+ $cmd"
+eval $cmd

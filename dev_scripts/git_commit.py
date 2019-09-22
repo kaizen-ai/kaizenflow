@@ -44,38 +44,7 @@ def _update_action(action, actions):
     return is_present, actions_out
 
 
-def _main():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--action",
-        action="append",
-        choices=_ALL_ACTIONS,
-        help="Run certain phases",
-    )
-    parser.add_argument(
-        "-m",
-        "--message",
-        required=True,
-        action="store",
-        type=str,
-        help="Commit message",
-    )
-    parser.add_argument("--commit", action="store_true")
-    parser.add_argument("--test", action="store_true")
-    parser.add_argument("--not_abort_on_error", action="store_true")
-    parser.add_argument("--force_commit", action="store_true")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
-    #
-    args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+def _select_phases(args):
     # Select phases.
     actions = args.action
     if isinstance(actions, str) and " " in actions:
@@ -96,71 +65,29 @@ def _main():
     # Print actions.
     actions_as_str = _actions_to_string(actions)
     _LOG.info("\n# Action selected:\n%s", pri.space(actions_as_str))
-    #
-    # TODO(GP): Make sure that index is empty.
-    #
-    # Check commit message
-    #
+    return actions
+
+
+# ##############################################################################
+
+
+def _check_commit_message(args, actions):
     action = "check_commit_message"
     is_present, actions = _update_action(action, actions)
+    commit_file = commit_msg = None
     if is_present:
         commit_file = "tmp.commit.txt"
         commit_msg = args.m
         commit_msg = commit_msg.rstrip("\n") + "\n\n"
         io_.to_file(commit_file, commit_msg)
-        # TODO(GP): Check commit message.
-    # TODO(GP):
-    # 1) Did you make sure that the external dependencies are minimized?
-    # 3) Is the code properly unit tested?
-    # TODO(GP): git diff check?
-    #
-    # Check user name.
-    #
-    action = "check_user_name"
-    is_present, actions = _update_action(action, actions)
-    if is_present:
-        # Keep this in sync with dev_scripts/setenv.sh
-        _valid_users = ["saggese", "Paul"]
-        user_name = git.get_git_name()
-        if user_name not in _valid_users:
-            _LOG.error(
-                "Invalid git name '%s': valid git names are %s",
-                user_name,
-                _valid_users,
-            )
-            sys.exit(-1)
-        # TODO(gp): Check email with dev_scripts/setenv.sh
-    #
-    # Run linter.
-    #
-    action = "linter"
-    is_present, actions = _update_action(action, actions)
-    if is_present:
-        cmd = "linter.py"
-        if args.test:
-            cmd = "linter.py --action isort"
-        print(pri.frame(cmd, char1="#"))
-        num_lints = si.system(cmd, suppress_output=False, abort_on_error=False)
-        # Post message.
-        msg = "Num lints: %s\n" % num_lints
-        _LOG.info("%s", msg)
-        io_.to_file(commit_file, msg, mode="a")
-        commit_msg += msg
-        # Handle errors.
-        if num_lints != 0:
-            if not args.not_abort_on_error:
-                _LOG.error(
-                    "Exiting. If you don't want to abort on errors use "
-                    "--not_abort_on_error"
-                )
-                sys.exit(-1)
-            else:
-                _LOG.warning("Continue despite linter errors")
-    #
-    # Run tests.
-    #
+        # TODO(gp): Check commit message.
+    return actions, commit_file, commit_msg
+
+
+def _run_unit_tests(args, actions, commit_file, commit_msg):
     action = "run_tests"
     is_present, actions = _update_action(action, actions)
+    unit_test_passing = True
     if is_present:
         cmd = "run_tests.py"
         if args.test:
@@ -186,9 +113,63 @@ def _main():
                 sys.exit(-1)
             else:
                 _LOG.warning("Continue despite unit tests failing")
-    #
+    return actions, unit_test_passing
+
+
+def _linter(args, actions, commit_file, commit_msg):
+    action = "linter"
+    is_present, actions = _update_action(action, actions)
+    num_lints = 0
+    if is_present:
+        cmd = "linter.py"
+        if args.test:
+            cmd = "linter.py --action isort"
+        print(pri.frame(cmd, char1="#"))
+        num_lints = si.system(cmd, suppress_output=False, abort_on_error=False)
+        # Post message.
+        msg = "Num lints: %s\n" % num_lints
+        _LOG.info("%s", msg)
+        io_.to_file(commit_file, msg, mode="a")
+        commit_msg += msg
+        # Handle errors.
+        if num_lints != 0:
+            if not args.not_abort_on_error:
+                _LOG.error(
+                    "Exiting. If you don't want to abort on errors use "
+                    "--not_abort_on_error"
+                )
+                sys.exit(-1)
+            else:
+                _LOG.warning("Continue despite linter errors")
+    return actions, commit_msg, num_lints
+
+
+def _check_user_name(actions):
+    action = "check_user_name"
+    is_present, actions = _update_action(action, actions)
+    if is_present:
+        # Keep this in sync with dev_scripts/setenv.sh
+        _valid_users = ["saggese", "Paul"]
+        user_name = git.get_git_name()
+        if user_name not in _valid_users:
+            _LOG.error(
+                "Invalid git name '%s': valid git names are %s",
+                user_name,
+                _valid_users,
+            )
+            sys.exit(-1)
+        # TODO(gp): Check email with dev_scripts/setenv.sh
+    return actions
+
+
+def _commit(args, commit_file, num_lints, unit_test_passing):
+    # TODO(gp): The flow is:
+    #   git commit in all submodules
+    #   git submodule update --remote
+    #   git add amp
+    #   gp in all submodules
+    #   git commit
     # Generate commit message in a file.
-    #
     if False and not args.force_commit:
         if num_lints != 0:
             msg = "Found %d linter errors" % num_lints
@@ -217,5 +198,64 @@ def _main():
         _LOG.info("%s", msg)
 
 
+# ##############################################################################
+
+
+def _parse():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--action",
+        action="append",
+        choices=_ALL_ACTIONS,
+        help="Run certain phases",
+    )
+    parser.add_argument(
+        "-m",
+        "--message",
+        required=True,
+        action="store",
+        type=str,
+        help="Commit message",
+    )
+    parser.add_argument("--commit", action="store_true")
+    parser.add_argument("--test", action="store_true")
+    parser.add_argument("--not_abort_on_error", action="store_true")
+    parser.add_argument("--force_commit", action="store_true")
+    parser.add_argument(
+        "-v",
+        dest="log_level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
+    return parser
+
+
+def _main(parser):
+    args = parser.parse_args()
+    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    actions = _select_phases(args)
+    # TODO(gp): Make sure that index is empty.
+    # Check commit message
+    actions, commit_file, commit_msg = _check_commit_message(args, actions)
+    # TODO(gp):
+    #  1) Did you make sure that the external dependencies are minimized?
+    #  2) Is the code properly unit tested?
+    # TODO(gp): git diff check?
+    # Check user name.
+    actions = _check_user_name(actions)
+    # Run linter.
+    actions, commit_msg, num_lints = _linter(
+        args, actions, commit_file, commit_msg
+    )
+    # Run tests.
+    actions, unit_test_passing = _run_unit_tests(args, actions, commit_file,
+                                           commit_msg)
+    # Commit.
+    _commit(args, commit_file, num_lints, unit_test_passing)
+
+
 if __name__ == "__main__":
-    _main()
+    _main(_parse())

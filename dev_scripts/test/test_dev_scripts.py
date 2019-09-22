@@ -74,3 +74,28 @@ class Test_set_env1(ut.TestCase):
         """
         cmd = "source dev_scripts/setenv.sh"
         si.system(cmd)
+
+
+# #############################################################################
+
+
+class Test_jack1(ut.TestCase):
+    def test_jack(self):
+        cmd = 'jack "def dassert"'
+        si.system(cmd)
+
+    def test_jackpy(self):
+        cmd = 'jackpy "def dassert"'
+        si.system(cmd)
+
+    def test_jackipynb(self):
+        cmd = 'jackipynb "import"'
+        si.system(cmd)
+
+    def test_jackppy(self):
+        cmd = 'jackipynb "import"'
+        si.system(cmd)
+
+    def test_jacktxt(self):
+        cmd = 'jacktxt "python"'
+        si.system(cmd)
