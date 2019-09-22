@@ -10,8 +10,8 @@ import vendors.kibot.utils as kut
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(GP, Paul): Separate higher-level dataflow classes from
-# source-specific inherited extensions.
+# TODO(GP, Paul): Separate higher-level dataflow classes from source-specific
+# inherited extensions.
 class Node:
     """
     Represent a computation that depends on other nodes.
@@ -95,18 +95,6 @@ class Node:
         for node in self._input_nodes:
             self._predict_inputs_values.append(node.predict())
 
-    def _reset(self):
-        """
-        Reset part of the state between two successive fit operations.
-        """
-        _LOG.debug("name=%s", self._name)
-        #
-        self._fit_inputs_values = []
-        self._is_fit = False
-        #
-        self._predict_input_values = []
-        self._output_values = None
-
     def __str__(self):
         """
         Return a string representing the node, e.g.,:
@@ -137,6 +125,20 @@ class Node:
             ret.append(prnt.space(n.dag_to_string()))
         ret = "\n".join(ret)
         return ret
+
+    # //////////////////////////////////////////////////////////////////////////
+
+    def _reset(self):
+        """
+        Reset part of the state between two successive fit operations.
+        """
+        _LOG.debug("name=%s", self._name)
+        #
+        self._fit_input_values = []
+        self._is_fit = False
+        #
+        self._predict_input_values = []
+        self._output_values = None
 
     @staticmethod
     def _to_string(info):
@@ -232,7 +234,6 @@ class KibotReadData(ReadData):
     # possible.
     def fit(self):
         """
-        :param train_idxs: indices of the df to use for fitting
         :return: training set as df
         """
         self._lazy_load()
