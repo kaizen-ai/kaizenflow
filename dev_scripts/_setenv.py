@@ -188,6 +188,11 @@ def _main(parser):
     server_name = si.get_server_name()
     _log_var("server_name", server_name)
     #
+    # Check conda.
+    #
+    cmd = "conda -V"
+    si.system(cmd)
+    #
     # Config git.
     #
     _frame("Config git")
