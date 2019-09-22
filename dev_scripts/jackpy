@@ -1,1 +1,6 @@
-ack --nogroup --nocolor --type=python "$@"
+#!/bin/bash -e
+source helpers.sh
+
+cmd="ack $ACK_OPTS --type=python "$@""
+#echo "+ $cmd"
+eval $cmd
