@@ -29,8 +29,11 @@ def _config_env():
     circular dependency.
     """
     exec_name = os.path.abspath(sys.argv[0])
-    # This script is in dev_scripts, which is at the same level of "helpers".
-    amp_path = os.path.abspath(os.path.join(os.path.dirname(exec_name), ".."))
+    # This script is dev_scripts/_setenv.sh, so we need to go up one level to
+    # reach "helpers".
+    rel_path_to_helpers = ".."
+    amp_path = os.path.abspath(os.path.join(os.path.dirname(exec_name),
+        rel_path_to_helpers))
     # Check that helpers exists.
     helpers_path = os.path.join(amp_path, "helpers")
     assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
@@ -42,7 +45,7 @@ def _config_env():
     sys.path.insert(0, amp_path)
     # Test the imports.
     try:
-        pass
+        import helpers
     except ImportError as e:
         print("PYTHONPATH=%s" % _PYTHONPATH)
         print("amp_path=%s" % amp_path)
@@ -57,10 +60,9 @@ import helpers.dbg as dbg  # isort:skip
 import helpers.system_interaction as si  # isort:skip
 import helpers.user_credentials as usc  # isort:skip
 
-_LOG = logging.getLogger(__name__)
-
-
 # ##############################################################################
+
+_LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): This is kind of useless since the cleaning of the path is done at

@@ -20,30 +20,37 @@ DEV_SERVER = "104.248.187.204"
 # [R0915(too-many-statements), get_credentials] Too many statements (51/50)
 def get_credentials():
     """
-    Report information about a user set-up as a function of
+    Report information about a user set-up as a function of:
         1) user name
         2) server name
         3) git repository name
 
-    The information are:
-    - git_user_name
-    - git_user_email
-    - conda_sh_path: the path of the script bootstrapping conda
+    The mandatory information are:
+    1) git_user_name
+    2) git_user_email
+    3) conda_sh_path: the path of the script bootstrapping conda
         - To find "conda_sh_path":
           > which conda
           /data/root/anaconda3/bin/conda
           > find /data/root/anaconda3 -name "conda.sh"
-          > find $(basename $(which conda)) -name "conda.sh"
-    - conda_env_path: the path of the dir storing the conda environments
+        - In one instruction:
+          > CONDA_DIR=$(dirname $(which conda))"/.."; find $CONDA_DIR -name "conda.sh"
+        - If there are multiple ones you want to pick the one under
+          `profile.d`, e.g., `/anaconda3/etc/profile.d/conda.sh`
+    4) conda_env_path: the path of the dir storing the conda environments
         - To find "conda_env_path"
           > conda info
           ...
                  envs directories : /data/saggese/.conda/envs
-    - ssh_key_path: the path of the ssh key to use
-    - tunnel_info: list of ports to forward
-    - jupyter_port: on which port to start a jupyter server
-    - notebook_html_path: the path where to save html of notebooks
-    - notebook_backup_path: the path where to backup the source .ipynb code of
+
+    The optional information are:
+    5) ssh_key_path: the path of the ssh key to use
+    6) tunnel_info: list of ports to forward
+    7) jupyter_port: on which port to start a jupyter server on a specific server
+        - It's a good idea for everybody to have a different port to avoid port
+          collisions
+    8) notebook_html_path: the path where to save html of notebooks
+    9) notebook_backup_path: the path where to backup the source .ipynb code of
         notebooks
     """
     user_name = si.get_user_name()
@@ -77,16 +84,22 @@ def get_credentials():
                 jupyter_port = 9999
                 notebook_html_path = "/Users/saggese/src/notebooks"
                 notebook_backup_path = "/Users/saggese/src/notebooks/backup"
-        elif server_name.startswith("ip-"):
-            # AM server.
-            conda_sh_path = "/data/root/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/data/saggese/.conda/envs"
         elif server_name == "twitter-data":
-            # P1 server.
+            # P1 old server.
             conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
                 jupyter_port = 10002
+        elif server_name == "ip-172-31-16-23":
+            # P1 server.
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/saggese/.conda/envs"
+            if git_repo_name == "ParticleDev/commodity_research":
+                jupyter_port = 10003
+        elif server_name.startswith("ip-"):
+            # AM server.
+            conda_sh_path = "/data/root/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/data/saggese/.conda/envs"
     elif user_name == "paul":
         # Paul.
         git_user_name = "paul"

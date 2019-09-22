@@ -11,6 +11,9 @@ echo "Starting $EXEC_NAME ..."
 DIR=$(dirname "$EXEC_NAME")
 EXEC_PATH=$(cd $DIR ; pwd -P)
 
+# Make sure python works.
+python -V
+
 # Create the script to execute calling python.
 DATETIME=$(date "+%Y%m%d-%H%M%S")
 #DATETIME=""
