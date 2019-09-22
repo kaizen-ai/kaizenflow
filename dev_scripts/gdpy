@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+# ```
+# Git diff all the python files.
+# gd $(git status $* | grep ".py$" | gs_to_files.sh)"
+# ```
+
+source helpers.sh
+
+exec "gd $(git status $* | grep '.py$' | gs_to_files.sh)"

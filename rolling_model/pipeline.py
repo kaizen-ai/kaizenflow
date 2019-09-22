@@ -4,7 +4,6 @@ import glob
 import logging
 import math
 
-# import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tqdm
@@ -12,7 +11,7 @@ from IPython.display import display
 from sklearn import linear_model
 from sklearn.model_selection import TimeSeriesSplit
 
-import core.config as cfg
+import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -97,35 +96,16 @@ def compute_features_from_config(config, df, result_bundle):
     Compute features in-place.
     """
     config.check_params(["target_y_var", "delay_lag", "num_lags"])
-    _LOG.debug("df.shape=%s", df.shape)
-    # The rest of the flow (e.g., sklearn, to compute train/test intervals)
-    # want indices to be integers.
-    df = df.copy()
-    df.insert(0, "datetime", df.index)
-    df.index = range(df.shape[0])
+    # df = df.copy()
+    df = ftrs.reindex_to_integers(df)
+    df_out, info = ftrs.compute_lagged_features(
+        df, config["target_y_var"], config["delay_lag"], config["num_lags"]
+    )
     #
-    dbg.dassert_in(config["target_y_var"], df.columns)
-    y_var = config["target_y_var"]
-    x_vars = []
-    # dbg.dassert_lte(1, config["delay_lag"])
-    for i in range(
-        1 + config["delay_lag"], 1 + config["delay_lag"] + config["num_lags"]
-    ):
-        var = y_var.replace("_0", "_%s" % i)
-        _LOG.debug("Computing var=%s", var)
-        df[var] = df[y_var].shift(i)
-        x_vars.append(var)
-    #
-    _LOG.info("y_var='%s'", y_var)
-    _LOG.info("x_vars=%s", x_vars)
     # TODO(gp): Not sure if we should replicate this (since it's already in
     # config) just to make things symmetric.
-    result_bundle["y_var"] = y_var
-    result_bundle["x_vars"] = x_vars
-    # TODO(gp): Add dropna stats using exp.dropna().
-    df = df.dropna()
-    _LOG.info("df.shape=%s", df.shape)
-    return df, result_bundle
+    result_bundle.update(info)
+    return df_out, result_bundle
 
 
 # #############################################################################

@@ -191,11 +191,6 @@ class Test_dataflow_ReadData1(ut.TestCase):
     def test_read_data1(self):
         # Create a file.
         df = pd.DataFrame(np.random.rand(10, 3), columns="a b c".split())
-        # import os
-        # dir_name = self.get_scratch_space()
-        # file_name = os.path.join(dir_name, "df.csv")
-        # _LOG.debug("file_name=%s", file_name)
-        # df.to_csv(file_name)
         # Build the data flow graph.
         read_data = dtf.ReadDataFromDf("read_data", df)
         read_data.connect()

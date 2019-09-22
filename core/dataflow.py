@@ -1,7 +1,9 @@
+import copy
 import logging
 
 import pandas as pd
 
+import core.features as ftrs
 import core.signal_processing as sigp
 import helpers.dbg as dbg
 import helpers.printing as prnt
@@ -160,6 +162,36 @@ class Node:
         return ret
 
 
+# TODO(gp): Extend this to nodes with more than one input.
+class StatelessNodeWithOneInput(Node):
+    def __init__(self, name):
+        super().__init__(name, num_inputs=1)
+
+    def _transform(self, df):
+        """
+        :return: df, info
+        """
+        raise NotImplementedError
+
+    def fit(self):
+        super().fit()
+        # Transform the input df.
+        df_in = self._fit_input_values[0]
+        df_out, info = self._transform(df_in)
+        # Save the info in the node: we make a copy just to be safe.
+        self.fit_info = copy.copy(info)
+        return df_out
+
+    def predict(self):
+        super().predict()
+        # Transform the input df.
+        df_in = self._predict_inputs_values[0]
+        df_out, info = self._transform(df_in)
+        # Save the info in the node: we make a copy just to be safe.
+        self.predict_info = copy.copy(info)
+        return df_out
+
+
 # ##############################################################################
 
 
@@ -252,46 +284,34 @@ class KibotReadData(ReadData):
 # ##############################################################################
 
 
-class Zscore(Node):
+class Zscore(StatelessNodeWithOneInput):
     def __init__(self, name, tau):
-        super().__init__(name, num_inputs=1)
+        super().__init__(name)
         self.tau = tau
 
     def _transform(self, df):
         df_out = sigp.rolling_zscore(df, self.tau)
-        return df_out
-
-    def fit(self):
-        super().fit()
-        df_in = self._fit_input_values[0]
-        df_out = self._transform(df_in)
-        return df_out
-
-    def predict(self):
-        super().predict()
-        df_in = self._predict_inputs_values[0]
-        df_out = self._transform(df_in)
-        return df_out
+        info = None
+        return df_out, info
 
 
-# class ComputeFeatures(Node):
-#
-#     def __init__(self, name, target_y, num_lags):
-#         pass
-#
-#     def connect(self, input1):
-#         super().connect(input1)
-#
-#     def get_x_vars(self):
-#         x_vars = ["x0", "x1"]
-#         return x_var
-#
-#     def fit(self, df):
-#         df_out = df
-#         x_vars = ["x0", "x1"]
-#         return df_out
-#
-#
+class ComputeLaggedFeatures(StatelessNodeWithOneInput):
+    def __init__(self, name, y_var, delay_lag, num_lags):
+        super().__init__(name, num_inputs=1)
+        self.y_var = y_var
+        self.delay_lag = delay_lag
+        self.num_lags = num_lags
+
+    def _transform(self, df):
+        # Make a copy to be safe.
+        df = df.copy()
+        df = ftrs.reindex_to_integers(df)
+        df_out, info = ftrs.compute_lagged_features(
+            df, self.y_var, self.delay_lag, self.num_lags
+        )
+        return df_out, info
+
+
 # class Model(Node):
 #
 #     def __init__(self, name, y_var, x_vars):
