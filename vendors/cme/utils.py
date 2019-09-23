@@ -17,11 +17,11 @@ def extract_urls(soup_table):
         in the cell, the corresponding element will be None
     """
     urls_in_rows = []
-    for row in soup_table.find_all('tr'):
+    for row in soup_table.find_all("tr"):
         urls_in_cols = []
-        for td in row.find_all('td'):
-            if td.find('a'):
-                url = td.a['href']
+        for td in row.find_all("td"):
+            if td.find("a"):
+                url = td.a["href"]
             else:
                 url = None
             urls_in_cols.append(url)
@@ -30,8 +30,8 @@ def extract_urls(soup_table):
 
 
 def _urls_list_to_df(urls_list):
-    links_df = pd.DataFrame(urls_list).dropna(axis=1, how='all')
-    links_df = links_df.add_prefix('link_')
+    links_df = pd.DataFrame(urls_list).dropna(axis=1, how="all")
+    links_df = links_df.add_prefix("link_")
     return links_df
 
 
@@ -55,7 +55,7 @@ def soup_table_to_df(soup_table):
     :param soup_table: beautiful soup table
     :return: pd.DataFrame
     """
-    return pd.read_html(str(soup_table).replace('colspan', ''))[0]
+    return pd.read_html(str(soup_table).replace("colspan", ""))[0]
 
 
 def soup_table_to_df_with_links(soup_table):
@@ -88,15 +88,16 @@ def load_html_to_df(html_url):
     req_res = requests.get(html_url)
     if req_res.status_code == 200:
         soup = BeautifulSoup(req_res.content, "lxml")
-        soup_tables = soup.find_all('table')
-        dfs = [soup_table_to_df_with_links(soup_table) for soup_table in
-               soup_tables]
+        soup_tables = soup.find_all("table")
+        dfs = [
+            soup_table_to_df_with_links(soup_table) for soup_table in soup_tables
+        ]
         if len(dfs) > 0:
             concatenated_df = pd.concat(dfs)
         else:
-            _log.info('No tables were extracted from %s', html_url)
+            _log.info("No tables were extracted from %s", html_url)
             concatenated_df = None
     else:
-        _log.warning(f'Request status code is {req_res.status_code}')
+        _log.warning(f"Request status code is {req_res.status_code}")
         concatenated_df = None
     return concatenated_df
