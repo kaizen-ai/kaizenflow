@@ -4,8 +4,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-_log = logging.getLogger()
-_log.setLevel(logging.INFO)
+_LOG = logging.getLogger(__name__)
 
 
 def extract_urls(soup_table):
@@ -89,15 +88,14 @@ def load_html_to_df(html_url):
     if req_res.status_code == 200:
         soup = BeautifulSoup(req_res.content, "lxml")
         soup_tables = soup.find_all("table")
-        dfs = [
-            soup_table_to_df_with_links(soup_table) for soup_table in soup_tables
-        ]
+        dfs = [soup_table_to_df_with_links(soup_table) for soup_table in
+               soup_tables]
         if len(dfs) > 0:
             concatenated_df = pd.concat(dfs)
         else:
-            _log.info("No tables were extracted from %s", html_url)
+            _LOG.info("No tables were extracted from %s", html_url)
             concatenated_df = None
     else:
-        _log.warning(f"Request status code is {req_res.status_code}")
+        _LOG.warning(f"Request status code is {req_res.status_code}")
         concatenated_df = None
     return concatenated_df
