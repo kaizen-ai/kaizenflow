@@ -110,7 +110,11 @@ def get_credentials():
         # Julia.
         git_user_name = "Julia"
         git_user_email = "julia@particle.one"
-        if server_name == "twitter-data":
+        if server_name == "vostro":
+            # Local 
+            conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/julia/.conda/envs"
+        elif server_name == "twitter-data":
             # P1 old server.
             conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/julia/.conda/envs"
