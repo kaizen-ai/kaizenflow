@@ -1,8 +1,10 @@
-import helpers.dbg as dbg
+"""
+Import as:
 
+import helpers.printing as prnt
 """
-This module should be imported as `prnt`.
-"""
+
+import helpers.dbg as dbg
 
 # #############################################################################
 # Debug output
@@ -28,11 +30,7 @@ def clear_screen():
 
 def line(char=None, num_chars=None):
     """
-    Return a line with the desired character and
-
-    :param char:
-    :param num_chars:
-    :return:
+    Return a line with the desired character.
     """
     char = "#" if char is None else char
     num_chars = 80 if num_chars is None else num_chars
@@ -42,13 +40,6 @@ def line(char=None, num_chars=None):
 def frame(message, char1=None, num_chars=None, char2=None, thickness=1):
     """
     Print a frame around a message.
-
-    :param message:
-    :param char1:
-    :param num_chars:
-    :param char2:
-    :param thickness:
-    :return:
     """
     # Fill in the default values.
     if char1 is None:

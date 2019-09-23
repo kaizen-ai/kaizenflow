@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """
 Convert a url / path into different formats: jupyter url, github, git path.
 
@@ -12,13 +13,6 @@ https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exp
 jupyter_url=
 http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 """
-
-# TODO(gp): Add
-# - Relative path to the current dir
-#   ./ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
-# - Git path relative to root
-#   ./ravenpack/RP_data_exploration/Task245_Analyst-ratings.ipynb
-
 
 import argparse
 import logging

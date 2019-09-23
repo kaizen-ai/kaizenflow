@@ -2,11 +2,25 @@ import logging
 
 import helpers.env as env
 import helpers.git as git
+import helpers.printing as prnt
 import helpers.unit_test as ut
 import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
+# #############################################################################
+# env.py
+# #############################################################################
+
+
+class Test_env1(ut.TestCase):
+    def test_get_system_signature1(self):
+        txt = env.get_system_signature()
+        _LOG.debug(txt)
+
+
+# #############################################################################
+# git.py
 # #############################################################################
 
 
@@ -68,14 +82,29 @@ class Test_git1(ut.TestCase):
 
 
 # #############################################################################
+# numba.py
+# #############################################################################
 
 
-class Test_env1(ut.TestCase):
-    def test_get_system_signature1(self):
-        txt = env.get_system_signature()
-        _LOG.debug(txt)
+class Test_numba_1(ut.TestCase):
+    def test1(self):
+        # TODO(gp): Implement this.
+        pass
 
 
+# #############################################################################
+# numba.py
+# #############################################################################
+
+
+class Test_printing1(ut.TestCase):
+    def test_color_highlight1(self):
+        for c in prnt.COLOR_MAP.keys():
+            _LOG.debug(prnt.color_highlight(c, c))
+
+
+# #############################################################################
+# user_credentials.py
 # #############################################################################
 
 
@@ -83,11 +112,3 @@ class Test_user_credentials1(ut.TestCase):
     def test_get_credentials1(self):
         data = usc.get_credentials()
         _LOG.debug("data=%s", data)
-
-
-# #############################################################################
-
-
-class Test_numba_1(ut.TestCase):
-    def test1(self):
-        pass

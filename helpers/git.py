@@ -92,6 +92,18 @@ def get_repo_symbolic_name(super_module):
     return repo_name
 
 
+def get_repo_prefix(git_repo_name):
+    if git_repo_name == "alphamatic/amp":
+        prefix = "Amp"
+    elif git_repo_name == "alphamatic/lemonade":
+        prefix = "Lem"
+    elif git_repo_name == "ParticleDev/commodity_research":
+        prefix = "Par"
+    else:
+        dbg.dfatal("Invalid git repo name '%s'" % git_repo_name)
+    return prefix
+
+
 def get_path_from_git_root(file_name, super_module):
     """
     Get the git path from the root of the tree.
