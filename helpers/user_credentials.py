@@ -110,8 +110,14 @@ def get_credentials():
         # Julia.
         git_user_name = "Julia"
         git_user_email = "julia@particle.one"
-        conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/home/julia/.conda/envs"
+        if server_name == "twitter-data":
+            # P1 old server.
+            conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/julia/.conda/envs"
+        elif server_name == "ip-172-31-16-23":
+            # P1 server.
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/julia/.conda/envs"
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.
