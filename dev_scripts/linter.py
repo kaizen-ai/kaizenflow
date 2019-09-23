@@ -581,6 +581,9 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         "D400",
         # D402: First line should not be the function's "signature"
         "D402",
+        # D415: First line should end with a period, question mark, or
+        # exclamation point
+        "D415",
     ]
     if not pedantic:
         ignore.extend(

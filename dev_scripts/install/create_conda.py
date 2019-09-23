@@ -22,51 +22,59 @@ import logging
 import os
 import sys
 
-# ##############################################################################
-
-# Store the values before any modification, by making a copy (out of paranoia).
-_PATH = str(os.environ["PATH"])
-_PYTHONPATH = str(os.environ["PYTHONPATH"])
-
-
-def _config_env():
-    """
-    Tweak PYTHONPATH to pick up amp, even if we are configuring amp, breaking the
-    circular dependency.
-    """
-    exec_name = os.path.abspath(sys.argv[0])
-    # This script is dev_scripts/install/create_conda.py, so we need to go up
-    # two levels to reach "helpers".
-    rel_path_to_helpers = "../.."
-    amp_path = os.path.abspath(os.path.join(os.path.dirname(exec_name),
-        rel_path_to_helpers))
-    # Check that helpers exists.
-    helpers_path = os.path.join(amp_path, "helpers")
-    assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
-    # Update path.
-    if False:
-        print("PYTHONPATH=%s" % _PYTHONPATH)
-        print("amp_path=%s" % amp_path)
-    # We can't update os.environ since the script is already running.
-    sys.path.insert(0, amp_path)
-    # Test the imports.
-    try:
-        import helpers
-    except ImportError as e:
-        print("PYTHONPATH=%s" % _PYTHONPATH)
-        print("amp_path=%s" % amp_path)
-        raise e
-
-
-# We need to tweak the PYTHONPATH before importing.
-_config_env()
-
 import helpers.conda as hco
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.io_ as io_
 import helpers.printing as pri
 import helpers.user_credentials as usc
+
+# ##############################################################################
+
+
+# Store the values before any modification, by making a copy (out of paranoia).
+_PATH = str(os.environ["PATH"]) if "PATH" in os.environ else ""
+_PYTHONPATH = str(os.environ["PYTHONPATH"]) if "PYTHONPATH" in os.environ else ""
+
+
+def _bootstrap(rel_path_to_helpers):
+    """
+    Tweak PYTHONPATH to pick up amp libraries while we are configuring amp,
+    breaking the circular dependency.
+
+    Same code for dev_scripts/_setenv.py and dev_scripts/install/create_conda.py
+
+    # TODO(gp): It is not easy to share it as an import. Maybe we can just read
+    # it from a file an eval it.
+    """
+    exec_name = os.path.abspath(sys.argv[0])
+    amp_path = os.path.abspath(
+        os.path.join(os.path.dirname(exec_name), rel_path_to_helpers)
+    )
+    # Check that helpers exists.
+    helpers_path = os.path.join(amp_path, "helpers")
+    assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
+    # Update path.
+    if False:
+        print("PATH=%s" % _PATH)
+        print("PYTHONPATH=%s" % _PYTHONPATH)
+        print("amp_path=%s" % amp_path)
+    # We can't update os.environ since the script is already running.
+    sys.path.insert(0, amp_path)
+    # Test the imports.
+    try:
+        pass
+    except ImportError as e:
+        print("PATH=%s" % _PATH)
+        print("PYTHONPATH=%s" % _PYTHONPATH)
+        print("amp_path=%s" % amp_path)
+        raise e
+
+
+# This script is dev_scripts/install/create_conda.py, so we need to go up two
+# levels to reach "helpers".
+_bootstrap("../..")
+
 
 # ##############################################################################
 
