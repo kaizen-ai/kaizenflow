@@ -28,7 +28,7 @@ import pandas as pd
 
 
 # %%
-from oil.utils.tg_utils import messages_to_json 
+from amp.vendors.particle_one.utils import messages_to_json 
 
 
 # %%
