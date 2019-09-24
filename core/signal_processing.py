@@ -477,6 +477,8 @@ def rolling_zscore(
     extreme values.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
+
+    TODO(Paul): determine whether df == df.shift(0) always.
     """
     if demean:
         # Equivalent to invoking rolling_demean and rolling_std, but this way
