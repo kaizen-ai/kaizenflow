@@ -1,3 +1,4 @@
+import itertools
 import logging
 
 import networkx as nx
@@ -98,21 +99,46 @@ class Pipeline:
         kwargs = {child[1]: parent[1]}
         self._graph.add_edge(parent[0], child[0], **kwargs)
 
+    def _run_node(self, method, nid):
+        """
+        Helper method for running nodes
+        """
+        _LOG.info("Node nid=`%s` executing method `%s`...", nid, method)
+        kwargs = {}
+        for pre in self._graph.predecessors(nid):
+            kvs = self._graph.edges[[pre, nid]]
+            for k, v in kvs.items():
+                kwargs[k] = self.get_node(pre).outputs[v]
+        _LOG.info("kwargs are %s", kwargs)
+        getattr(self.get_node(nid), method)(**kwargs)
+
     def run(self, method):
         """
-        Pipeline execution.
+        Executes pipeline.
 
         :param method: Method of class `Node` (or subclass) to be executed for
             the entire DAG.
         """
         dbg.dassert(self.is_dag, "Graph execution requires a DAG!")
         for nid in nx.topological_sort(self._graph):
-            _LOG.info("Node nid=`%s` executing method `%s`...", nid, method)
-            kwargs = {}
-            for pre in self._graph.predecessors(nid):
-                 kvs = self._graph.edges[[pre, nid]]
-                 for k, v in kvs.items():
-                     kwargs[k] = self.get_node(pre).outputs[v]
-            _LOG.info("kwargs are %s", kwargs)
-            getattr(self.get_node(nid), method)(**kwargs)
+            self._run_node(method, nid)
 
+    def run_node(self, method, nid, eval_mode='full'):
+        """
+        Executes pipeline only up to (and including) `node`.
+
+        :param method: Same as in `run`.
+        :param node: terminal evaluation node
+        :param eval_mode: options for rerunning ancestors / caching, etc.
+        """
+        if eval_mode == 'full':
+            dbg.dassert(self.is_dag, "Graph execution requires a DAG!")
+            ancestors = filter(lambda x: x in nx.ancestors(self._graph, nid),
+                               nx.topological_sort(self._graph))
+            nids = itertools.chain(ancestors, [nid])
+        elif eval_mode == 'cached':
+            nids = [nid]
+        else:
+            raise ValueError("Supported eval_modes are `full` and `cached`.")
+        for nid in nids:
+            self._run_node(method, nid)
