@@ -1,0 +1,102 @@
+meta_df.shape=(1985, 38)
+meta_df=0        EQLT
+1        ACIM
+2        DBLV
+3        HDGE
+4        SCAP
+5         CWS
+6        FWDD
+7        FWDB
+8        FWDI
+9         FNG
+10       MINC
+11       FLRT
+12       HYLD
+13       HOLD
+14       VEGA
+15        ACT
+16       AADR
+17       ENFR
+18       AMLP
+19       VMOT
+20       IMOM
+21       QMOM
+22       IVAL
+23       QVAL
+24       ALFA
+25       SMCP
+26        BUZ
+27       DTEC
+28       EDOG
+29        EQL
+        ...  
+1955      DXJ
+1956      DLN
+1957     WTMF
+1958      DON
+1959      EZM
+1960     GULF
+1961      EES
+1962      DTD
+1963      EXT
+1964      DES
+1965     DGRW
+1966     USMF
+1967      QSY
+1968     DGRS
+1969      YYY
+1970     GASL
+1971      PWS
+1972     CLRG
+1973     LSST
+1974    DWTIF
+1975    HFGIC
+1976      BCD
+1977      BCI
+1978      BEF
+1979     PALL
+1980     PPLT
+1981     GLTR
+1982     SIVR
+1983     SGOL
+1984      NaN
+Name: masterdatareports.fundamentals.csv, Length: 1985, dtype: object
+meta_df=masterdatareports.fundamentals.csv                                                                 EQLT
+Composite Name                                                              ALPS Workplace Equality ETF
+RIC                                                                                              EQLT.K
+Bloomberg Symbol                                                                                EQLT:US
+FutVal                                                                                              NaN
+Exchange                                                                                       NYSEArca
+52 Week Price Range                                                                       36.94 - 36.94
+AveVol                                                                                             3101
+NAV Date                                                                                     04/08/2019
+NAV                                                                                              37.041
+AUM                                                                                               20370
+Market Cap                                                                                  2.03356e+07
+Leverage                                                                                              1
+Inception Date                                                                      2014-02-24 00:00:00
+Expense Ratio                                                                                      0.75
+MorningStar Category                                                                        Large Blend
+ETF Type                                                                               Gobal Equity ETF
+Total Holdings                                                                                      272
+YTD Return                                                                                          1.3
+1 month Return                                                                                    -2.31
+1 Year Return                                                                                      7.18
+3 Year Return                                                                                      11.1
+Percent Above Constituent's 200 Day Moving Average                                                  NaN
+Advances                                                                                            NaN
+Declines                                                                                            NaN
+Advancing Volume                                                                                    NaN
+Declining Volume                                                                                    NaN
+New 1 Year Highs                                                                                    NaN
+New 1 Year Lows                                                                                     NaN
+FutVal.1                                                                                            NaN
+FutVal.2                                                                                            NaN
+FutVal.3                                                                                            NaN
+FutVal.4                                                                                            NaN
+FutVal.5                                                                                            NaN
+CUSIP                                                                                         00162Q650
+ISIN                                                                                            BK0TLB4
+Description                                           The investment seeks investment results that c...
+Family                                                                                              nan
+Name: 0, dtype: object
