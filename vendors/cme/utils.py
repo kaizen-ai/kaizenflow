@@ -18,9 +18,17 @@ _LOG = logging.getLogger(__name__)
 class DownloadProductSlate:
 
     def __init__(self, download_url):
+        """
+        :param download_url: The url of the product slate
+        """
         self.download_url = download_url
 
     def download_xls(self, dst_path):
+        """
+        Download product slate xls by url.
+
+        :param dst_path: The path to save the xls.
+        """
         dbg.dassert_eq(os.path.splitext(self.download_url)[1],
                        os.path.splitext(dst_path)[1],
                        "Extensions of the files do not match.")
@@ -34,11 +42,14 @@ class DownloadProductSlate:
     @staticmethod
     def open_xls_openpyxl(xls_path, first_row=1):
         """
+        Open xls file into openpyxl (openpyxl does not support xls).
+        You can choose from which row to save the file.
 
-        :param xls_path:
+        :param xls_path: The path to the xls file
         :param first_row: From which row to open the file.
-            If first_row==1, no rows are dropped.
-        :return:
+            If first_row==1, no rows are dropped (in openpyxl
+            the numeration starts at 1)
+        :return: openpyxl workbook
         """
         xlrd_book = xlrd.open_workbook(xls_path)
         xlrd_sheet = xlrd_book.sheet_by_index(0)
@@ -53,12 +64,30 @@ class DownloadProductSlate:
 
     @staticmethod
     def save_xls_to_xlsx(xls_path, first_row):
+        """
+        Open xls file, convert it to xlsx and save. You can choose from
+        which row to save the file.
+
+        :param xls_path: A path to the xls file
+        :param first_row: From which row to open the file.
+            If first_row==1, no rows are dropped (in openpyxl
+            the numeration starts at 1).
+        """
         openpyxl_wb = DownloadProductSlate.open_xls_openpyxl(xls_path=xls_path,
                                                              first_row=first_row)
         xlsx_path = os.path.splitext(xls_path)[0] + '.xlsx'
         openpyxl_wb.save(xlsx_path)
 
     def get_xlsx(self, dst_path, first_row=4):
+        """
+        A function that downloads xls, and saves the table to xlsx
+        starting with the first_row row.
+
+        :param dst_path: xls destination path
+        :param first_row: From which row to save the file.
+            If first_row==1, no rows are dropped (in openpyxl
+            the numeration starts at 1).
+        """
         self.download_xls(dst_path)
         self.save_xls_to_xlsx(xls_path=dst_path, first_row=first_row)
 
@@ -71,6 +100,13 @@ class ExtractHyperlinks:
         self.df_with_hyperlinks = pd.DataFrame()
 
     def extract(self, hyperlink_col_loc):
+        """
+        Get hyperlinks for the xlsx file.
+
+        :param hyperlink_col_loc: From which column to extract hyperlinks.
+            In openpyxl the numeration starts at 1.
+        :return: A list of hyperlinks.
+        """
         workbook = openpyxl.load_workbook(self.xlsx_path)
         ws = workbook[workbook.get_sheet_names()[0]]
         hyperlinks = []
@@ -80,18 +116,44 @@ class ExtractHyperlinks:
         return hyperlinks
 
     def add_hyperlinks_to_df(self, hyperlink_col_name):
+        """
+        Read xlsx dataframe and add hyperlinks as a column.
+
+        :param hyperlink_col_name: the name of the hyperlinks column
+            in the output dataframe
+        :return: pd.DataFrame with hyperlinks column
+        """
         df = pd.read_excel(self.xlsx_path)
         df[hyperlink_col_name] = self.hyperlinks
         return df
 
     def get_df_with_hyperlinks(self, hyperlink_col_loc=5,
                                hyperlink_col_name='product_link'):
+        """
+        Extract hyperlinks from the dataframe and get a dataframe with
+        a hyperlinks column.
+
+        :param hyperlink_col_loc: Number of column from which to extract
+            the hyperlinks. In openpyxl numeration starts at 1.
+        :param hyperlink_col_name: The name of the hyperlinks column
+            in the output dataframe
+        :return: A dataframe with a hyperlinks column
+        """
         self.hyperlinks = self.extract(hyperlink_col_loc=hyperlink_col_loc)
         self.df_with_hyperlinks = self.add_hyperlinks_to_df(
             hyperlink_col_name=hyperlink_col_name)
 
     def save_df_with_hyperlinks(self, dst_path, hyperlink_col_loc=5,
                                 hyperlink_col_name='product_link'):
+        """
+        Extract hyperlinks from the dataframe and save a dataframe with
+        a hyperlinks column.
+
+        :param hyperlink_col_loc: Number of column from which to extract
+            the hyperlinks. In openpyxl numeration starts at 1.
+        :param hyperlink_col_name: The name of the hyperlinks column
+            in the output dataframe
+        """
         self.get_df_with_hyperlinks(hyperlink_col_loc=hyperlink_col_loc,
                                     hyperlink_col_name=hyperlink_col_name)
         self.df_with_hyperlinks.to_excel(dst_path)
@@ -209,6 +271,11 @@ class ContractSpecs:
         self.product_slate_with_specs = pd.DataFrame()
 
     def load_htmls(self):
+        """
+        Load htmls from links and construct a dictionary with them.
+
+        :return: {product_name: html}
+        """
         product_names_htmls = {}
         for name, link in tqdm(self.name_link.iterrows(),
                                total=len(self.name_link)):
@@ -220,6 +287,12 @@ class ContractSpecs:
         return product_names_htmls
 
     def specs_dict_to_df(self):
+        """
+        Transform contract specs dictionary to a dataframe.
+
+        :return: pd.DataFrame with product_name as index and contract
+            spec html indices as columns
+        """
         html_rows = [self._get_row(html,
                                    product_name) if html is not None else pd.DataFrame(
             index=[product_name]) for product_name, html in
@@ -229,6 +302,12 @@ class ContractSpecs:
         return specs_df
 
     def get_contract_specs(self):
+        """
+        Download contract specs and merge them to the product slate.
+
+        :return: pd.DataFrame with product slate and contract specs
+            for each product
+        """
         self.names_specs_dict = self.load_htmls()
         self.specs_df = self.specs_dict_to_df()
         self.product_slate_with_specs = self.product_slate.merge(self.specs_df,
