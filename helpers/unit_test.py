@@ -163,6 +163,21 @@ def get_random_df(num_cols, seed=None, **kwargs):
     return df
 
 
+def get_df_signature(df, num_rows=3):
+    import pandas as pd
+
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    txt = []
+    txt.append("df.shape=%s" % str(df.shape))
+    with pd.option_context(
+        "display.max_colwidth", int(1e6), "display.max_columns", None
+    ):
+        txt.append("df.head=\n%s" % df.head(num_rows))
+        txt.append("df.tail=\n%s" % df.tail(num_rows))
+    txt = "\n".join(txt)
+    return txt
+
+
 # #############################################################################
 # TestCase
 # #############################################################################

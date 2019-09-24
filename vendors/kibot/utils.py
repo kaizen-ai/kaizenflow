@@ -13,7 +13,6 @@ import pandas as pd
 
 import helpers.cache as cache
 import helpers.dbg as dbg
-import helpers.git as git
 
 _LOG = logging.getLogger(__name__)
 
@@ -102,11 +101,7 @@ def read_multiple_symbol_data(symbols, file_name_template, nrows=None):
 # Read metadata.
 # #############################################################################
 
-# TODO(gp): Wrap it into a function.
-# TODO(gp): Move this data to s3.
-KIBOT_DIRNAME = (
-    git.get_client_root(super_module=True) + "/vendors/kibot/data/kibot_metadata"
-)
+_KIBOT_DIRNAME = "s3://alphamatic/kibot/metadata"
 
 
 # TODO(gp): I don't have a clear understanding of what the metadata means and
@@ -117,7 +112,7 @@ def read_metadata1():
     JY        http://api.kibot.com/?action=download&link=151...   CONTINUOUS JAPANESE YEN CONTRACT
     JYF18    http://api.kibot.com/?action=download&link=vrv...    JAPANESE YEN JANUARY 2018
     """
-    file_name = KIBOT_DIRNAME + "/All_Futures_Contracts_1min.csv"
+    file_name = _KIBOT_DIRNAME + "/All_Futures_Contracts_1min.csv.gz"
     df = pd.read_csv(file_name, index_col=0)
     df = df.iloc[:, 1:]
     _LOG.debug("df=\n%s", df.head(3))
@@ -131,7 +126,7 @@ def read_metadata2():
     JY        http://api.kibot.com/?action=download&link=151...   CONTINUOUS JAPANESE YEN CONTRACT
     JYF18    http://api.kibot.com/?action=download&link=vrv...    JAPANESE YEN JANUARY 2018
     """
-    file_name = KIBOT_DIRNAME + "/All_Futures_Contracts_daily.csv"
+    file_name = _KIBOT_DIRNAME + "/All_Futures_Contracts_daily.csv.gz"
     df = pd.read_csv(file_name, index_col=0)
     df = df.iloc[:, 1:]
     _LOG.debug("df=\n%s", df.head(3))
@@ -145,7 +140,7 @@ def read_metadata3():
     ES            ES        9/30/2009    50610.0     CONTINUOUS E-MINI S&P 500 CONTRACT    Chicago Mercantile Exchange Mini Sized Contrac...
     ES            ESH11     4/6/2010     891.0       E-MINI S&P 500 MARCH 2011             Chicago Mercantile Exchange Mini Sized Contrac...
     """
-    file_name = KIBOT_DIRNAME + "/Futures_tickbidask.txt"
+    file_name = _KIBOT_DIRNAME + "/Futures_tickbidask.txt.gz"
     df = pd.read_csv(file_name, index_col=0, skiprows=5, header=None, sep="\t")
     df.columns = (
         "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
@@ -163,7 +158,7 @@ def read_metadata4():
     TY         TY      9/27/2009  180.0       CONTINUOUS 10 YR US TREASURY NOTE CONTRACT   Chicago Board Of Trade (CBOT GLOBEX)
     FV         FV      9/27/2009  171.0       CONTINUOUS 5 YR US TREASURY NOTE CONTRACT    Chicago Board Of Trade (CBOT GLOBEX)
     """
-    file_name = KIBOT_DIRNAME + "/FuturesContinuous_intraday.txt"
+    file_name = _KIBOT_DIRNAME + "/FuturesContinuous_intraday.txt.gz"
     df = pd.read_csv(file_name, index_col=0, skiprows=5, header=None, sep="\t")
     df.columns = (
         "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()

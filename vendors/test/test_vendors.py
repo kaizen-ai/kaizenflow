@@ -1,7 +1,5 @@
 import logging
 
-import pytest
-
 import helpers.unit_test as ut
 import vendors.etfs.utils as etfut
 import vendors.kibot.utils as kut
@@ -44,21 +42,30 @@ class Test_kibot_utils1(ut.TestCase):
         file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
         nrows = 100
         df = kut._read_data(file_name, nrows)
+        _LOG.debug("df=%s", df.head())
         #
         df2 = kut._read_data_from_disk_cache(file_name, nrows)
+        _LOG.debug("df2=%s", df2.head())
         self.assertTrue(df.equals(df2))
         #
         df3 = kut.read_data(file_name, nrows)
+        _LOG.debug("df3=%s", df3.head())
         self.assertTrue(df.equals(df3))
         #
-        self.check_string(str(df.head(5)))
+        self.check_string(ut.get_df_signature(df))
 
-    @pytest.mark.skip
+    def _helper_read_metadata(self, func):
+        df = func()
+        self.check_string(ut.get_df_signature(df))
+
     def test_read_metadata1(self):
-        df = kut.read_metadata1()
-        self.check_string(str(df.head(5)))
+        self._helper_read_metadata(kut.read_metadata1)
 
-    @pytest.mark.skip
     def test_read_metadata2(self):
-        df = kut.read_metadata2()
-        self.check_string(str(df.head(5)))
+        self._helper_read_metadata(kut.read_metadata2)
+
+    def test_read_metadata3(self):
+        self._helper_read_metadata(kut.read_metadata3)
+
+    def test_read_metadata4(self):
+        self._helper_read_metadata(kut.read_metadata4)
