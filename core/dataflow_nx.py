@@ -88,6 +88,8 @@ class Pipeline:
 
         Raises if the requested edge is invalid.
 
+        TODO(Paul): Support connecting multiple inputs/outputs.
+
         :param parent: tuple of the form (nid, output)
         :param child: tuple of the form (nid, input)
         """
@@ -108,7 +110,9 @@ class Pipeline:
             _LOG.info("Node nid=`%s` executing method `%s`...", nid, method)
             kwargs = {}
             for pre in self._graph.predecessors(nid):
-                 kwargs.update(self._graph.edges[(pre, nid)])
+                 kvs = self._graph.edges[[pre, nid]]
+                 for k, v in kvs.items():
+                     kwargs[k] = self.get_node(pre).outputs[v]
             _LOG.info("kwargs are %s", kwargs)
             getattr(self.get_node(nid), method)(**kwargs)
 
