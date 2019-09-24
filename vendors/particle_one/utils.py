@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import core.config as cfg
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
+
+# TODO(gp): Use the idiom like kut.read_data().
 
 
 def read_sentiment_data_from_disk(file_name):

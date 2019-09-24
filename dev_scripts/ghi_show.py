@@ -51,7 +51,8 @@ def _print_github_info(issue_num):
     #
     dbg.dassert_eq(int(m.group(1)), issue_num)
     title = m.group(2)
-    title = title.replace(":", "").replace("+", "")
+    for char in ": + ( )".split():
+        title = title.replace(char, "")
     title = title.replace(" ", "_")
     #
     prefix = git.get_repo_prefix(git_repo_name)
@@ -108,8 +109,10 @@ def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument(
+        "--only_github", action="store_true", help="Print only git hub info"
+    )
     parser.add_argument("positional", nargs="+", help="Github issue number")
-    parser.add_argument("only_git_hub", action="store_true", help="Print only git hub info")
     parser.add_argument(
         "-v",
         dest="log_level",
@@ -125,7 +128,7 @@ def _main(parser):
     dbg.init_logger(verb=args.log_level)
     #
     actions = [_print_github_info, _print_files_in_git_repo, _print_gdrive_files]
-    if args.only_git_hub:
+    if args.only_github:
         actions = [_print_github_info]
 
     for issue_num in args.positional:

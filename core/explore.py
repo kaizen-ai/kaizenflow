@@ -1458,8 +1458,10 @@ def display_df(
         with the output pandas html form
     :param max_lines: number of lines to print
     :param as_txt: print if True, otherwise render as usual html
-    :param mode: use different formats (e.g., all rows, all columns, ...)
-        temporarily overriding the default
+    :param mode: use different formats temporarily overriding the default, e.g.,
+        - "all_rows": print all the rows
+        - "all_cols": print all the columns
+        - "all": print the entire df (it could be huge)
     """
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
@@ -1535,12 +1537,14 @@ def display_df(
             _print_display()
     elif mode == "all":
         with pd.option_context(
-            # yapf: disable
-                'display.max_rows', int(1e6),
-                'display.max_columns', 3,
-                'display.max_colwidth', int(1e6),
-                'display.max_columns', None
-            # yapf: enable
+            "display.max_rows",
+            int(1e6),
+            "display.max_columns",
+            3,
+            "display.max_colwidth",
+            int(1e6),
+            "display.max_columns",
+            None,
         ):
             _print_display()
     else:

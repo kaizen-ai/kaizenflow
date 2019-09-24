@@ -91,7 +91,7 @@ nrows = 10000
 file_name = (
     "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz" % s
 )
-df = kut.read_data_memcached(file_name, nrows)
+df = kut.read_data(file_name, nrows)
 df.head(3)
 
 # %% [markdown]
@@ -105,7 +105,7 @@ nrows = 10000
 file_name = (
     "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
 )
-df = kut.read_data_memcached(file_name, nrows)
+df = kut.read_data(file_name, nrows)
 df.head(3)
 
 # %%

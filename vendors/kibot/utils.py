@@ -3,14 +3,15 @@ Import as:
 
 import vendors.kibot.utils as kut
 """
+
 import functools
 import logging
 import os
 
 import numpy as np
 import pandas as pd
-from joblib import Memory
 
+import helpers.cache as cache
 import helpers.dbg as dbg
 import helpers.git as git
 
@@ -20,16 +21,9 @@ _LOG = logging.getLogger(__name__)
 # Read data.
 # #############################################################################
 
-# TODO(gp): This should be general to the entire codebase.
-_MEM_FILE_NAME = os.path.abspath(
-    git.get_client_root(super_module=True) + "/tmp.joblib.cache"
-)
-MEMORY = Memory(_MEM_FILE_NAME, verbose=0, compress=1)
-
 
 # TODO(gp): Add timezone or use _ET suffix.
-@MEMORY.cache
-def read_data_from_disk(file_name, nrows):
+def _read_data(file_name, nrows):
     """
     Read row data from disk and perform basic transformations such as:
     - parse dates
@@ -69,16 +63,27 @@ def read_data_from_disk(file_name, nrows):
     return df
 
 
+MEMORY = cache.get_disk_cache()
+
+
+@MEMORY.cache
+def _read_data_from_disk_cache(*args, **kwargs):
+    _LOG.info("args=%s kwargs=%s", str(args), str(kwargs))
+    obj = _read_data(*args, **kwargs)
+    return obj
+
+
 @functools.lru_cache(maxsize=None)
-def read_data_memcached(file_name, nrows):
-    _LOG.info("Reading file_name='%s' nrows=%s", file_name, nrows)
-    return read_data_from_disk(file_name, nrows)
+def read_data(*args, **kwargs):
+    _LOG.info("args=%s kwargs=%s", str(args), str(kwargs))
+    obj = _read_data_from_disk_cache(*args, **kwargs)
+    return obj
 
 
 def read_data_from_config(config):
     _LOG.info("Reading data ...")
     config.check_params(["file_name"])
-    return read_data_memcached(config["file_name"], config.get("nrows", None))
+    return read_data(config["file_name"], config.get("nrows", None))
 
 
 def read_multiple_symbol_data(symbols, file_name_template, nrows=None):
@@ -89,7 +94,7 @@ def read_multiple_symbol_data(symbols, file_name_template, nrows=None):
     dict_df = {}
     for s in symbols:
         file_name = file_name_template % s
-        dict_df[s] = read_data_memcached(file_name, nrows)
+        dict_df[s] = read_data(file_name, nrows)
     return dict_df
 
 
@@ -98,13 +103,14 @@ def read_multiple_symbol_data(symbols, file_name_template, nrows=None):
 # #############################################################################
 
 # TODO(gp): Wrap it into a function.
+# TODO(gp): Move this data to s3.
 KIBOT_DIRNAME = (
     git.get_client_root(super_module=True) + "/vendors/kibot/data/kibot_metadata"
 )
 
 
 # TODO(gp): I don't have a clear understanding of what the metadata means and
-# different so I call them 1, 2, 3, ... for now, waiting for a better name.
+#  different so I call them 1, 2, 3, ... for now, waiting for a better name.
 def read_metadata1():
     """
     Symbol    Link                                                Description

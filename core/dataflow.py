@@ -260,7 +260,7 @@ class KibotReadData(ReadData):
 
     def _lazy_load(self):
         if not self.df:
-            self.df = kut.read_data_memcached(self._file_name, self._nrows)
+            self.df = kut.read_data(self._file_name, self._nrows)
 
     # TODO(gp): Make it streamable so that it reads only the needed data, if
     # possible.
