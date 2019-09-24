@@ -5,6 +5,7 @@ Import as:
 import vendors.pandas_datareader.utils as pdut
 
 
+# To download the data and upload it to s3:
 > amp/vendors/pandas_datareader/utils.py download_yahoo
 """
 
@@ -31,9 +32,7 @@ _LOG = logging.getLogger(__name__)
 def _read_data(ticker):
     file_name = os.path.join(_S3_DIR, ticker) + ".csv.gz"
     _LOG.debug("Loading data from %s", file_name)
-    df = pd.read_csv(
-        file_name + ".gz", index_col=0, parse_dates=True, compression="gzip"
-    )
+    df = pd.read_csv(file_name, index_col=0, parse_dates=True, compression="gzip")
     return df
 
 
@@ -42,14 +41,14 @@ MEMORY = cache.get_disk_cache()
 
 @MEMORY.cache
 def _read_data_from_disk_cache(*args, **kwargs):
-    _LOG.info("args=%s kwargs=%s", str(*args), str(**kwargs))
+    _LOG.debug("args=%s kwargs=%s", str(*args), str(**kwargs))
     obj = _read_data(*args, **kwargs)
     return obj
 
 
 @functools.lru_cache(maxsize=None)
 def read_data(*args, **kwargs):
-    _LOG.info("args=%s kwargs=%s", str(*args), str(**kwargs))
+    _LOG.debug("args=%s kwargs=%s", str(*args), str(**kwargs))
     obj = _read_data_from_disk_cache(*args, **kwargs)
     return obj
 
@@ -58,7 +57,6 @@ _S3_DIR = "s3://alphamatic/etf/data"
 
 
 class YahooDailyQuotes:
-
     def __init__(self, dst_dir=None):
         if not dst_dir:
             dst_dir = "./tmp.yahoo_historical_data"
@@ -93,7 +91,7 @@ class YahooDailyQuotes:
 
     def get_multiple_data(self, field, tickers):
         data = []
-        for ticker in tickers:
+        for ticker in tqdm(tickers):
             df = self.get_data(ticker)
             dbg.dassert_in(field, df.columns)
             df_tmp = df[[field]]
@@ -213,10 +211,11 @@ def get_liquid_etf_tickers():
 
 
 def _download_yahoo_daily_quotes(args):
-    ydq = YahooDailyQuotes()
-    # tickers = get_liquid_etf_tickers()
-    # ydq.download_historical_data(tickers, args.incremental)
-    ydq.upload_historical_data_to_s3()
+    if False:
+        ydq = YahooDailyQuotes()
+        tickers = get_liquid_etf_tickers()
+        ydq.download_historical_data(tickers, args.incremental)
+        ydq.upload_historical_data_to_s3()
 
 
 def _parse():

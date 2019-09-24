@@ -4,6 +4,11 @@ import helpers.unit_test as ut
 import vendors.etfs.utils as etfut
 import vendors.kibot.utils as kut
 
+# #############################################################################
+# pandas_datareader/utils.py
+# #############################################################################
+import vendors.pandas_datareader.utils as pdut
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -69,3 +74,12 @@ class Test_kibot_utils1(ut.TestCase):
 
     def test_read_metadata4(self):
         self._helper_read_metadata(kut.read_metadata4)
+
+
+class Test_pandas_datareader_utils1(ut.TestCase):
+    def test_get_multiple_data1(self):
+        ydq = pdut.YahooDailyQuotes()
+        tickers = "SPY IVV".split()
+        df = ydq.get_multiple_data("Adj Close", tickers)
+        #
+        self.check_string(ut.get_df_signature(df))
