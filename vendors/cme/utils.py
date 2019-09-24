@@ -15,11 +15,10 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-DOWNLOAD_URL = 'https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls'
+DOWNLOAD_URL = "https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls"
 
 
 class DownloadProductSlate:
-
     def __init__(self, download_url):
         """
         :param download_url: The url of the product slate
@@ -32,15 +31,17 @@ class DownloadProductSlate:
 
         :param dst_path: The path to save the xls.
         """
-        dbg.dassert_eq(os.path.splitext(self.download_url)[1],
-                       os.path.splitext(dst_path)[1],
-                       "Extensions of the files do not match.")
+        dbg.dassert_eq(
+            os.path.splitext(self.download_url)[1],
+            os.path.splitext(dst_path)[1],
+            "Extensions of the files do not match.",
+        )
         response = requests.get(self.download_url)
         if response.status_code == 200:
-            with open(dst_path, 'wb') as f:
+            with open(dst_path, "wb") as f:
                 f.write(response.content)
         else:
-            raise ValueError(f'Request status code is {response.status_code}.')
+            raise ValueError(f"Request status code is {response.status_code}.")
 
     @staticmethod
     def open_xls_openpyxl(xls_path, first_row=1):
@@ -60,14 +61,14 @@ class DownloadProductSlate:
         openpyxl_sheet = openpyxl_wb.active
         for i, row in enumerate(range(first_row, xlrd_sheet.nrows)):
             for col in range(1, xlrd_sheet.ncols):
-                openpyxl_sheet.cell(row=i + 1,
-                                    column=col).value = xlrd_sheet.cell_value(
-                    row, col)
+                openpyxl_sheet.cell(
+                    row=i + 1, column=col
+                ).value = xlrd_sheet.cell_value(row, col)
         return openpyxl_wb
 
     @staticmethod
     def get_xlsx_path(xls_path):
-        return os.path.splitext(xls_path)[0] + '.xlsx'
+        return os.path.splitext(xls_path)[0] + ".xlsx"
 
     @staticmethod
     def save_xls_to_xlsx(xls_path, first_row):
@@ -80,8 +81,9 @@ class DownloadProductSlate:
             If first_row==1, no rows are dropped (in openpyxl
             the numeration starts at 1).
         """
-        openpyxl_wb = DownloadProductSlate.open_xls_openpyxl(xls_path=xls_path,
-                                                             first_row=first_row)
+        openpyxl_wb = DownloadProductSlate.open_xls_openpyxl(
+            xls_path=xls_path, first_row=first_row
+        )
         xlsx_path = DownloadProductSlate.get_xlsx_path(xls_path)
         openpyxl_wb.save(xlsx_path)
 
@@ -100,7 +102,6 @@ class DownloadProductSlate:
 
 
 class ExtractHyperlinks:
-
     def __init__(self, xlsx_path):
         self.xlsx_path = xlsx_path
         self.hyperlinks = []
@@ -117,8 +118,9 @@ class ExtractHyperlinks:
         workbook = openpyxl.load_workbook(self.xlsx_path)
         ws = workbook[workbook.get_sheet_names()[0]]
         hyperlinks = []
-        for row in ws.iter_rows(min_row=2, min_col=hyperlink_col_loc,
-                                max_col=hyperlink_col_loc):
+        for row in ws.iter_rows(
+            min_row=2, min_col=hyperlink_col_loc, max_col=hyperlink_col_loc
+        ):
             hyperlinks.append(row[0].hyperlink.target)
         return hyperlinks
 
@@ -134,8 +136,9 @@ class ExtractHyperlinks:
         df[hyperlink_col_name] = self.hyperlinks
         return df
 
-    def get_df_with_hyperlinks(self, hyperlink_col_loc=5,
-                               hyperlink_col_name='product_link'):
+    def get_df_with_hyperlinks(
+        self, hyperlink_col_loc=5, hyperlink_col_name="product_link"
+    ):
         """
         Extract hyperlinks from the dataframe and get a dataframe with
         a hyperlinks column.
@@ -148,10 +151,12 @@ class ExtractHyperlinks:
         """
         self.hyperlinks = self.extract(hyperlink_col_loc=hyperlink_col_loc)
         self.df_with_hyperlinks = self.add_hyperlinks_to_df(
-            hyperlink_col_name=hyperlink_col_name)
+            hyperlink_col_name=hyperlink_col_name
+        )
 
-    def save_df_with_hyperlinks(self, dst_path, hyperlink_col_loc=5,
-                                hyperlink_col_name='product_link'):
+    def save_df_with_hyperlinks(
+        self, dst_path, hyperlink_col_loc=5, hyperlink_col_name="product_link"
+    ):
         """
         Extract hyperlinks from the dataframe and save a dataframe with
         a hyperlinks column.
@@ -161,13 +166,14 @@ class ExtractHyperlinks:
         :param hyperlink_col_name: The name of the hyperlinks column
             in the output dataframe
         """
-        self.get_df_with_hyperlinks(hyperlink_col_loc=hyperlink_col_loc,
-                                    hyperlink_col_name=hyperlink_col_name)
+        self.get_df_with_hyperlinks(
+            hyperlink_col_loc=hyperlink_col_loc,
+            hyperlink_col_name=hyperlink_col_name,
+        )
         self.df_with_hyperlinks.to_excel(dst_path)
 
 
 class LoadHTML:
-
     def __init__(self):
         pass
 
@@ -253,8 +259,10 @@ class LoadHTML:
         if req_res.status_code == 200:
             soup = BeautifulSoup(req_res.content, "lxml")
             soup_tables = soup.find_all("table")
-            dfs = [LoadHTML.soup_table_to_df_with_links(soup_table) for
-                   soup_table in soup_tables]
+            dfs = [
+                LoadHTML.soup_table_to_df_with_links(soup_table)
+                for soup_table in soup_tables
+            ]
             if len(dfs) > 0:
                 concatenated_df = pd.concat(dfs)
             else:
@@ -267,15 +275,16 @@ class LoadHTML:
 
 
 class ContractSpecs:
-
     def __init__(self, product_slate):
         """
         :param product_slate: pd.DataFrame
         """
         self.product_slate = product_slate
-        self.name_link = self.product_slate.loc[:,
-                         ['Product Name', 'product_link']].rename(
-            columns={'Product Name': 'product_name'}).set_index('product_name')
+        self.name_link = (
+            self.product_slate.loc[:, ["Product Name", "product_link"]]
+            .rename(columns={"Product Name": "product_name"})
+            .set_index("product_name")
+        )
         self.names_specs_dict = {}
         self.specs_df = pd.DataFrame()
         self.product_slate_with_specs = pd.DataFrame()
@@ -287,8 +296,9 @@ class ContractSpecs:
         :return: {product_name: html}
         """
         product_names_htmls = {}
-        for name, link in tqdm(self.name_link.iterrows(),
-                               total=len(self.name_link)):
+        for name, link in tqdm(
+            self.name_link.iterrows(), total=len(self.name_link)
+        ):
             time.sleep(1)
             html = LoadHTML.load_html_to_df(link[0])
             if html is not None:
@@ -303,10 +313,12 @@ class ContractSpecs:
         :return: pd.DataFrame with product_name as index and contract
             spec html indices as columns
         """
-        html_rows = [self._get_row(html,
-                                   product_name) if html is not None else pd.DataFrame(
-            index=[product_name]) for product_name, html in
-                     self.names_specs_dict.items()]
+        html_rows = [
+            self._get_row(html, product_name)
+            if html is not None
+            else pd.DataFrame(index=[product_name])
+            for product_name, html in self.names_specs_dict.items()
+        ]
         html_rows = [self._rename_duplicate_cols(html) for html in html_rows]
         specs_df = pd.concat(html_rows, sort=False)
         return specs_df
@@ -320,9 +332,9 @@ class ContractSpecs:
         """
         self.names_specs_dict = self.load_htmls()
         self.specs_df = self.specs_dict_to_df()
-        self.product_slate_with_specs = self.product_slate.merge(self.specs_df,
-                                                                 left_on='Product Name',
-                                                                 right_index=True)
+        self.product_slate_with_specs = self.product_slate.merge(
+            self.specs_df, left_on="Product Name", right_index=True
+        )
 
     def save_product_slate_with_contract_specs(self, dst_path):
         """
@@ -355,22 +367,21 @@ class ContractSpecs:
         if cols == [1]:
             squashed_series = df[1]
         else:
-            squashed_series = df[cols].fillna('').apply(" ".join, axis=1)
+            squashed_series = df[cols].fillna("").apply(" ".join, axis=1)
         return squashed_series
 
     @staticmethod
     def _add_links_as_rows(df):
-        link_df = df[['link_1']].dropna()
+        link_df = df[["link_1"]].dropna()
         link_df.columns = [1]
-        series = pd.concat([df, link_df.rename('{} Link'.format)])[[1]]
+        series = pd.concat([df, link_df.rename("{} Link".format)])[[1]]
         return series
 
     @staticmethod
     def _get_row(df, idx):
         df = df.copy()
-        df[1] = ContractSpecs._squash_cols(df,
-                                           ContractSpecs._get_squash_cols(df))
-        df = df[[1, 'link_1']]
+        df[1] = ContractSpecs._squash_cols(df, ContractSpecs._get_squash_cols(df))
+        df = df[[1, "link_1"]]
         tr_df = ContractSpecs._add_links_as_rows(df).T
         tr_df.index = [idx]
         return tr_df
@@ -378,17 +389,19 @@ class ContractSpecs:
     @staticmethod
     def _rename_duplicate_cols(df):
         df = df.copy()
-        dupe_mask = df.columns.duplicated(keep='first')
-        duped_col_names = [f"{col_name}_{i}" for i, col_name in
-                           enumerate(df.columns[dupe_mask])]
+        dupe_mask = df.columns.duplicated(keep="first")
+        duped_col_names = [
+            f"{col_name}_{i}" for i, col_name in enumerate(df.columns[dupe_mask])
+        ]
         new_index = np.array(df.columns)
         new_index[dupe_mask] = duped_col_names
         df.columns = new_index
         return df
 
 
-def get_slate_with_specs_pipeline(download_url, product_slate_xls_dst_path,
-                                  slate_with_specs_csv_dst_path):
+def get_slate_with_specs_pipeline(
+    download_url, product_slate_xls_dst_path, slate_with_specs_csv_dst_path
+):
     """
     A pipeline that download product slate, saves it to xls and xlsx,
     extracts hyperlinks from this table, downloads contract specs from
@@ -403,38 +416,53 @@ def get_slate_with_specs_pipeline(download_url, product_slate_xls_dst_path,
         slate with contract specs csv
     """
     download_product_slate = DownloadProductSlate(download_url=download_url)
-    download_product_slate.save_xlsx(xls_dst_path=product_slate_xls_dst_path,
-                                     first_row=4)
+    download_product_slate.save_xlsx(
+        xls_dst_path=product_slate_xls_dst_path, first_row=4
+    )
     xlsx_path = DownloadProductSlate.get_xlsx_path(product_slate_xls_dst_path)
     extract_hyperlinks = ExtractHyperlinks(xlsx_path=xlsx_path)
-    xlsx_with_hyperlinks_path = os.path.splitext(xlsx_path)[
-                                    0] + '_with_hyperlinks.xlsx'
+    xlsx_with_hyperlinks_path = (
+        os.path.splitext(xlsx_path)[0] + "_with_hyperlinks.xlsx"
+    )
     extract_hyperlinks.save_df_with_hyperlinks(
-        dst_path=xlsx_with_hyperlinks_path, hyperlink_col_loc=5,
-        hyperlink_col_name='product_link')
+        dst_path=xlsx_with_hyperlinks_path,
+        hyperlink_col_loc=5,
+        hyperlink_col_name="product_link",
+    )
     product_slate = pd.read_excel(xlsx_with_hyperlinks_path)
     contract_specs = ContractSpecs(product_slate=product_slate)
     contract_specs.save_product_slate_with_contract_specs(
-        dst_path=slate_with_specs_csv_dst_path)
+        dst_path=slate_with_specs_csv_dst_path
+    )
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--download_url', required=False, action='store',
-                        type=str)
-    parser.add_argument('--product_slate_xls_dst_path', required=True,
-                        action='store', type=str)
-    parser.add_argument('--slate_with_specs_csv_dst_path', required=True,
-                        action='store', type=str)
-    parser.add_argument("-v", dest="log_level", default="INFO",
-                        choices=["DEBUG", "INFO", "WARNING", "ERROR",
-                                 "CRITICAL"], help="Set the logging level", )
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--download_url", required=False, action="store", type=str
+    )
+    parser.add_argument(
+        "--product_slate_xls_dst_path", required=True, action="store", type=str
+    )
+    parser.add_argument(
+        "--slate_with_specs_csv_dst_path", required=True, action="store", type=str
+    )
+    parser.add_argument(
+        "-v",
+        dest="log_level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
 
     args = parser.parse_args()
     if not args.download_url:
         args.download_url = DOWNLOAD_URL
-        _LOG.info(f'download_url not specified, using default {DOWNLOAD_URL}')
-    get_slate_with_specs_pipeline(download_url=args.download_url,
-                                  product_slate_xls_dst_path=args.product_slate_xls_dst_path,
-                                  slate_with_specs_csv_dst_path=args.slate_with_specs_csv_dst_path)
+        _LOG.info(f"download_url not specified, using default {DOWNLOAD_URL}")
+    get_slate_with_specs_pipeline(
+        download_url=args.download_url,
+        product_slate_xls_dst_path=args.product_slate_xls_dst_path,
+        slate_with_specs_csv_dst_path=args.slate_with_specs_csv_dst_path,
+    )
