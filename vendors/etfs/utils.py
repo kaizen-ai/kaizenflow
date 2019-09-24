@@ -1,7 +1,7 @@
 """
 Import as
 
-import vendors.etf.utils as etfut
+import vendors.etfs.utils as etfut
 """
 
 import functools
