@@ -107,6 +107,7 @@ class DownloadProductSlate:
         )
         xlsx_path = DownloadProductSlate.get_xlsx_path(xls_path)
         openpyxl_wb.save(xlsx_path)
+        _LOG.info(f"Converted {xls_path} to {xlsx_path}.")
 
     def save_xlsx(self, xls_dst_path, first_row=4):
         """
@@ -192,6 +193,7 @@ class ExtractHyperlinks:
             hyperlink_col_name=hyperlink_col_name,
         )
         self.df_with_hyperlinks.to_excel(dst_path)
+        _LOG.info(f"Saved dataframe with hyperlinks to {dst_path}.")
 
 
 class LoadHTML:
@@ -366,6 +368,7 @@ class ContractSpecs:
             contract specs csv
         """
         self.get_contract_specs()
+        _LOG.info(f"Saved product slate with contract specs to {dst_path}.")
         self.product_slate_with_specs.to_csv(dst_path)
 
     @staticmethod
