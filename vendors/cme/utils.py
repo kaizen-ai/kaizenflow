@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import time
@@ -13,6 +14,8 @@ from tqdm.autonotebook import tqdm
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
+
+DOWNLOAD_URL = 'https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls'
 
 
 class DownloadProductSlate:
@@ -63,6 +66,10 @@ class DownloadProductSlate:
         return openpyxl_wb
 
     @staticmethod
+    def get_xlsx_path(xls_path):
+        return os.path.splitext(xls_path)[0] + '.xlsx'
+
+    @staticmethod
     def save_xls_to_xlsx(xls_path, first_row):
         """
         Open xls file, convert it to xlsx and save. You can choose from
@@ -75,21 +82,21 @@ class DownloadProductSlate:
         """
         openpyxl_wb = DownloadProductSlate.open_xls_openpyxl(xls_path=xls_path,
                                                              first_row=first_row)
-        xlsx_path = os.path.splitext(xls_path)[0] + '.xlsx'
+        xlsx_path = DownloadProductSlate.get_xlsx_path(xls_path)
         openpyxl_wb.save(xlsx_path)
 
-    def get_xlsx(self, dst_path, first_row=4):
+    def save_xlsx(self, xls_dst_path, first_row=4):
         """
         A function that downloads xls, and saves the table to xlsx
         starting with the first_row row.
 
-        :param dst_path: xls destination path
+        :param xls_dst_path: xls destination path
         :param first_row: From which row to save the file.
             If first_row==1, no rows are dropped (in openpyxl
             the numeration starts at 1).
         """
-        self.download_xls(dst_path)
-        self.save_xls_to_xlsx(xls_path=dst_path, first_row=first_row)
+        self.download_xls(xls_dst_path)
+        self.save_xls_to_xlsx(xls_path=xls_dst_path, first_row=first_row)
 
 
 class ExtractHyperlinks:
@@ -262,6 +269,9 @@ class LoadHTML:
 class ContractSpecs:
 
     def __init__(self, product_slate):
+        """
+        :param product_slate: pd.DataFrame
+        """
         self.product_slate = product_slate
         self.name_link = self.product_slate.loc[:,
                          ['Product Name', 'product_link']].rename(
@@ -314,6 +324,17 @@ class ContractSpecs:
                                                                  left_on='Product Name',
                                                                  right_index=True)
 
+    def save_product_slate_with_contract_specs(self, dst_path):
+        """
+        Download contract specs and merge them to the product slate.
+        save the resulting dataframe.
+
+        :param dst_path: Destination for the product slate with
+            contract specs csv
+        """
+        self.get_contract_specs()
+        self.product_slate_with_specs.to_csv(dst_path)
+
     @staticmethod
     def _get_squash_cols(df):
         """
@@ -364,3 +385,56 @@ class ContractSpecs:
         new_index[dupe_mask] = duped_col_names
         df.columns = new_index
         return df
+
+
+def get_slate_with_specs_pipeline(download_url, product_slate_xls_dst_path,
+                                  slate_with_specs_csv_dst_path):
+    """
+    A pipeline that download product slate, saves it to xls and xlsx,
+    extracts hyperlinks from this table, downloads contract specs from
+    each of those links and saves a dataframe with product slate and
+    contract specs for each product.
+
+    :param download_url: The url from which to download the product
+        slate xls.
+    :param product_slate_xls_dst_path: The path to save the product
+        slate xls.
+    :param slate_with_specs_csv_dst_path: The path to save the product
+        slate with contract specs csv
+    """
+    download_product_slate = DownloadProductSlate(download_url=download_url)
+    download_product_slate.save_xlsx(xls_dst_path=product_slate_xls_dst_path,
+                                     first_row=4)
+    xlsx_path = DownloadProductSlate.get_xlsx_path(product_slate_xls_dst_path)
+    extract_hyperlinks = ExtractHyperlinks(xlsx_path=xlsx_path)
+    xlsx_with_hyperlinks_path = os.path.splitext(xlsx_path)[
+                                    0] + '_with_hyperlinks.xlsx'
+    extract_hyperlinks.save_df_with_hyperlinks(
+        dst_path=xlsx_with_hyperlinks_path, hyperlink_col_loc=5,
+        hyperlink_col_name='product_link')
+    product_slate = pd.read_excel(xlsx_with_hyperlinks_path)
+    contract_specs = ContractSpecs(product_slate=product_slate)
+    contract_specs.save_product_slate_with_contract_specs(
+        dst_path=slate_with_specs_csv_dst_path)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--download_url', required=False, action='store',
+                        type=str)
+    parser.add_argument('--product_slate_xls_dst_path', required=True,
+                        action='store', type=str)
+    parser.add_argument('--slate_with_specs_csv_dst_path', required=True,
+                        action='store', type=str)
+    parser.add_argument("-v", dest="log_level", default="INFO",
+                        choices=["DEBUG", "INFO", "WARNING", "ERROR",
+                                 "CRITICAL"], help="Set the logging level", )
+
+    args = parser.parse_args()
+    if not args.download_url:
+        args.download_url = DOWNLOAD_URL
+        _LOG.info(f'download_url not specified, using default {DOWNLOAD_URL}')
+    get_slate_with_specs_pipeline(download_url=args.download_url,
+                                  product_slate_xls_dst_path=args.product_slate_xls_dst_path,
+                                  slate_with_specs_csv_dst_path=args.slate_with_specs_csv_dst_path)
