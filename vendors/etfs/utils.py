@@ -1,5 +1,5 @@
 """
-Import as
+Import as:
 
 import vendors.etfs.utils as etfut
 """
@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 def _read_data():
     file_name = (
-        "s3://alphamatic/etf_metadata/masterdatareports.fundamentals.csv.gz"
+        "s3://alphamatic/etf/metadata/masterdatareports.fundamentals.csv.gz"
     )
     _LOG.debug("Loading data from %s", file_name)
     meta_df = pd.read_csv(file_name, encoding="ISO-8859-1")

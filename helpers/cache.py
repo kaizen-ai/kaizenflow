@@ -31,7 +31,9 @@ def read_data(*args, **kwargs):
     data = _read_data_from_disk(*args, **kwargs)
     return data
 """
+
 # ##############################################################################
+
 import argparse
 import logging
 import os
@@ -63,6 +65,9 @@ def get_disk_cache():
 
 def reset_disk_cache():
     get_disk_cache().clear(warn=True)
+
+
+# ##############################################################################
 
 
 def _parse():

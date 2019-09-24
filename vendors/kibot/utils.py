@@ -85,6 +85,7 @@ def read_data_from_config(config):
     return read_data(config["file_name"], config.get("nrows", None))
 
 
+# TODO(gp): -> read_multiple_data?
 def read_multiple_symbol_data(symbols, file_name_template, nrows=None):
     """
     Read multiple files for the given symbols.

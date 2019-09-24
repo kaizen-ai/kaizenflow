@@ -132,10 +132,15 @@ def delete_dir(
                 raise e
 
 
-def create_dir(dir_name, incremental, abort_if_exists=False):
+def create_dir(dir_name, incremental, abort_if_exists=False, ask_to_delete=True):
     """
-    Create a directory "dir_name" if it doesn't exist. If "incremental" is
-    false then the directory is deleted and re-created.
+    Create a directory `dir_name` if it doesn't exist.
+
+    - param incremental: if False then the directory is deleted and
+        re-created, otherwise it skips
+    - param abort_if_exists:
+    - param ask_to_delete: if it is not incremental and the dir exists,
+        asks before deleting
     """
     dbg.dassert_is_not(dir_name, None)
     dbg.dassert(
@@ -153,6 +158,11 @@ def create_dir(dir_name, incremental, abort_if_exists=False):
             # os.chmod(dir_name, 0755)
             return
         else:
+            if ask_to_delete:
+                si.query_yes_no(
+                    "Do you really want to delete dir '%s'?" % dir_name,
+                    abort_on_no=True,
+                )
             # The dir exists and we want to create it from scratch (i.e., not
             # incremental), so we need to delete the dir.
             _LOG.debug("Deleting dir '%s'", dir_name)
