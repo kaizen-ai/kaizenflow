@@ -40,8 +40,18 @@ class DownloadProductSlate:
         if response.status_code == 200:
             with open(dst_path, "wb") as f:
                 f.write(response.content)
+            _LOG.info(f"Downloaded {self.download_url} to {dst_path}.")
         else:
             raise ValueError(f"Request status code is {response.status_code}.")
+
+    @staticmethod
+    def _excel_loc(row, col):
+        LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        result = []
+        while col:
+            col, rem = divmod(col - 1, 26)
+            result[:0] = LETTERS[rem]
+        return "".join(result) + str(row)
 
     @staticmethod
     def open_xls_openpyxl(xls_path, first_row=1):
@@ -57,13 +67,24 @@ class DownloadProductSlate:
         """
         xlrd_book = xlrd.open_workbook(xls_path)
         xlrd_sheet = xlrd_book.sheet_by_index(0)
+        hyperlink_map = xlrd_sheet.hyperlink_map
         openpyxl_wb = openpyxl.workbook.Workbook()
         openpyxl_sheet = openpyxl_wb.active
         for i, row in enumerate(range(first_row, xlrd_sheet.nrows)):
-            for col in range(1, xlrd_sheet.ncols):
+            for col in range(0, xlrd_sheet.ncols):
                 openpyxl_sheet.cell(
-                    row=i + 1, column=col
+                    row=i + 1, column=col + 1
                 ).value = xlrd_sheet.cell_value(row, col)
+        for hyperlink_idx in hyperlink_map.keys():
+            row_id = hyperlink_idx[0] - first_row + 1
+            col_id = hyperlink_idx[1] + 1
+            openpyxl_sheet.cell(
+                row=row_id, column=col_id
+            ).hyperlink = openpyxl.worksheet.hyperlink.Hyperlink(
+                ref=DownloadProductSlate._excel_loc(row_id, col_id),
+                display=openpyxl_sheet.cell(row=row_id, column=col_id).value,
+                target=hyperlink_map[hyperlink_idx].url_or_path,
+            )
         return openpyxl_wb
 
     @staticmethod
@@ -264,7 +285,7 @@ class LoadHTML:
                 for soup_table in soup_tables
             ]
             if len(dfs) > 0:
-                concatenated_df = pd.concat(dfs)
+                concatenated_df = pd.concat(dfs, sort=False)
             else:
                 _LOG.info("No tables were extracted from %s", html_url)
                 concatenated_df = None
