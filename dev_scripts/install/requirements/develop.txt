@@ -22,6 +22,7 @@ matplotlib
 numba
 numpy
 pandas
+pandas-datareader
 pyarrow
 pywavelets
 scikit-learn
