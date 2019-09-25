@@ -134,7 +134,7 @@ np.unique(name_link.index).shape
 product_names_htmls = {}
 for name, link in tqdm(name_link.iterrows(), total=len(name_link)):
     time.sleep(1)
-    product_names_htmls[name] = t268.load_html_to_df(link[0])
+    product_names_htmls[name] = t268._extract(link[0])
 
 # %%
 # tgn.notify('Loaded htmls')
