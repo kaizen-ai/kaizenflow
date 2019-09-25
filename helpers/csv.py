@@ -16,18 +16,18 @@ def read_csv_range(csv_path, from_, to, **kwargs):
     Reads [from_, to), e.g., to - from_ lines.
     I.e., follows list slicing semantics.
 
-    :param csv_path: Location of csv file
-    :param from_: First line to read (header is row 0 and is always read)
-    :param to: Last line to read, not inclusive
+    :param csv_path: location of csv file
+    :param from_: first line to read (header is row 0 and is always read)
+    :param to: last line to read, not inclusive
     :return: DataFrame with columns from csv line 0 (header)
     """
     dbg.dassert_lt(0, from_, msg="Row 0 assumed to be header row")
     dbg.dassert_lt(from_, to, msg="Empty range requested!")
-    skiprows = [i for i in range(1, from_)]
+    skiprows = range(1, from_)
     nrows = to - from_
     df = pd.read_csv(csv_path, skiprows=skiprows, nrows=nrows, **kwargs)
     if df.shape[0] < to:
-        _LOG.info("Number of df rows = %i vs requested = %i", df.shape[0], to)
+        _LOG.warning("Number of df rows = %i vs requested = %i", df.shape[0], to)
     return df
 
 
@@ -43,21 +43,20 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
     For memory efficiency, the csv is processed in chunks of size
     `nrows_at_a_time`.
 
-    :param csv_path: Location of csv file
-    :param col_name: Name of column whose values define chunks
-    :param start: First row to process
-    :param nrows_at_a_time: Size of chunks to process
+    :param csv_path: location of csv file
+    :param col_name: name of column whose values define chunks
+    :param start: first row to process
+    :param nrows_at_a_time: size of chunks to process
     :return: DataFrame with columns from csv line 0
     """
     dbg.dassert_lt(0, start)
-    # _LOG.info("row = %i", start)
     stop = False
     dfs = []
     init_df = read_csv_range(csv_path, start, start + 1, **kwargs)
     if init_df.shape[0] < 1:
         return init_df
     val = init_df[col_name].iloc[0]
-    _LOG.info("Building chunk for %s", val)
+    _LOG.debug("Building chunk for %s", val)
     counter = 0
     while not stop:
         from_ = start + counter * nrows_at_a_time
@@ -67,11 +66,11 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
             break
         if not (df[col_name] == val).any():
             break
-        # Stop if we have run out of rows to read
+        # Stop if we have run out of rows to read.
         if df.shape[0] < nrows_at_a_time:
             stop = True
         idx_max = (df[col_name] == val)[::-1].idxmax()
-        # Stop if we have reached a new value
+        # Stop if we have reached a new value.
         if idx_max < (df.shape[0] - 1):
             stop = True
         dfs.append(df.iloc[0 : idx_max + 1])
@@ -87,16 +86,16 @@ def find_first_matching_row(
     """
     Find first row in csv where value in column `col_name` equals `val`.
 
-    :param csv_path: Location of csv file
-    :param col_name: Name of column whose values define chunks
-    :param val: Value to match on
-    :param start: First row (inclusive) to start search on
-    :param nrows_at_a_time: Size of chunks to process
-    :return: Line in csv of first matching row at or past start
+    :param csv_path: location of csv file
+    :param col_name: name of column whose values define chunks
+    :param val: value to match on
+    :param start: first row (inclusive) to start search on
+    :param nrows_at_a_time: size of chunks to process
+    :return: line in csv of first matching row at or past start
     """
     curr = start
     while True:
-        _LOG.info("Start of current chunk = line %i", curr)
+        _LOG.debug("Start of current chunk = line %i", curr)
         df = read_csv_range(csv_path, curr, curr + nrows_at_a_time, **kwargs)
         if df.shape[0] < 1:
             _LOG.info("Value %s not found", val)
@@ -114,6 +113,7 @@ def append(df, path, index=False, **kwargs):
         df.to_csv(f, header=False, index=index, **kwargs)
 
 
+# TODO(Paul): rename to csv_mapreduce
 def csv_mr(
     csv_path, out_dir, key_func, chunk_preprocessor=None, chunksize=1000000
 ):
@@ -123,13 +123,13 @@ def csv_mr(
       - Key each row of the DataFrame using a groupby
       - "Reduce" keyed groups by writing and appending to a csv
 
-    :param csv_path: Input csv path
-    :param out_dir: Output dir for csv's with filenames corresponding to keys
-    :param key_func: Function to apply to each chunk DataFrame to key rows.
+    :param csv_path: input csv path
+    :param out_dir: output dir for csv's with filenames corresponding to keys
+    :param key_func: function to apply to each chunk DataFrame to key rows.
         Should return an iterable with elements like (key, df).
-    :param chunk_preprocessor: Optional. Function to apply to each chunk
+    :param chunk_preprocessor: optional. Function to apply to each chunk
         DataFrame before applying key_func.
-    :param chunksize: Chunksize of input to process
+    :param chunksize: chunksize of input to process
     :return: None
     """
     chunks = pd.read_csv(csv_path, chunksize=chunksize)
@@ -141,6 +141,7 @@ def csv_mr(
             append(df, os.path.join(out_dir, idx + ".csv"))
 
 
+# TODO(Paul): rename to convert_csv_to_pq
 def csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     """
     Converts csv file to parquet file.
@@ -150,10 +151,10 @@ def csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     requires string column names, whereas pandas by default uses integer
     column names.
 
-    :param csv_path: Full path of csv
-    :param pq_path: Full path of parquet
-    :param header: Header specification of csv
-    :param normalizer: Function to apply to df before writing to pq
+    :param csv_path: full path of csv
+    :param pq_path: full path of parquet
+    :param header: header specification of csv
+    :param normalizer: function to apply to df before writing to pq
     :return: None
     """
     # TODO(Paul): Ensure that one of header, normalizer is not None.
@@ -163,21 +164,24 @@ def csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     df.to_parquet(pq_path)
 
 
+# TODO(Paul): rename to convert_csv_dir_to_pq_dir
 def csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
     """
     Applies `csv_to_pq` to all files in csv_dir
 
-    :param csv_dir: Directory of csv's
-    :param pq_dir: Target directory
-    :param normalizer: Function to apply to df before writing to pq
+    :param csv_dir: directory of csv's
+    :param pq_dir: target directory
+    :param normalizer: function to apply to df before writing to pq
     :return: None
     """
+    dbg.dassert_exists(csv_dir)
+    # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
     filenames = os.listdir(csv_dir)
     for filename in filenames:
-        # Remove .csv and add .pq
+        # Remove .csv and add .pq.
         pq_filename = filename[:-4] + ".pq"
         csv_to_pq(
             os.path.join(csv_dir, filename),
             os.path.join(pq_dir, pq_filename),
-            normalizer,
+            normalizer=normalizer,
         )
