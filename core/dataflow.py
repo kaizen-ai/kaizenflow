@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(GP, Paul): Separate higher-level dataflow classes from source-specific
-# inherited extensions.
+#  inherited extensions.
 class Node:
     """
     Represent a computation that depends on other nodes.
@@ -81,10 +81,10 @@ class Node:
         them.
         """
         _LOG.debug("name=%s", self._name)
-        dbg.dassert(not self._is_fit, "Node '%s': already fit", self._name)
-        for node in self._input_nodes:
-            self._fit_input_values.append(node.fit())
-        self._is_fit = True
+        if not self._is_fit:
+            for node in self._input_nodes:
+                self._fit_input_values.append(node.fit())
+            self._is_fit = True
 
     def predict(self):
         """
@@ -216,8 +216,10 @@ class ReadData(Node):
         :return: training set as df
         """
         super().fit()
-        dbg.dassert_is_not(self._train_idxs, None)
-        train_df = self.df.iloc[self._train_idxs]
+        if self._train_idxs:
+            train_df = self.df.iloc[self._train_idxs]
+        else:
+            train_df = self.df
         return train_df
 
     def set_test_idxs(self, test_idxs):
@@ -231,8 +233,10 @@ class ReadData(Node):
         :return: test set as df
         """
         super().predict()
-        dbg.dassert_is_not(self._test_idxs, None)
-        test_df = self.df.iloc[self._test_idxs]
+        if self._test_idxs:
+            test_df = self.df.iloc[self._test_idxs]
+        else:
+            test_df = self.df
         return test_df
 
     def _reset(self):
@@ -252,14 +256,15 @@ class ReadDataFromDf(ReadData):
 class KibotReadData(ReadData):
     def __init__(self, name, file_name, nrows):
         super().__init__(name)
-        dbg.dassert_exists(file_name)
+        print(file_name)
+        #dbg.dassert_exists(file_name)
         self._file_name = file_name
         self._nrows = nrows
         #
         self.df = None
 
     def _lazy_load(self):
-        if not self.df:
+        if self.df is None:
             self.df = kut.read_data(self._file_name, self._nrows)
 
     # TODO(gp): Make it streamable so that it reads only the needed data, if
@@ -269,7 +274,7 @@ class KibotReadData(ReadData):
         :return: training set as df
         """
         self._lazy_load()
-        super().fit()
+        return super().fit()
 
     def __str__(self):
         ret = []
@@ -284,6 +289,17 @@ class KibotReadData(ReadData):
 # ##############################################################################
 
 
+# TODO(gp): Pass "ret_0" and "open" through constructor.
+class PctReturns(StatelessNodeWithOneInput):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def _transform(self, df):
+        df["ret_0"] = df["open"].pct_change()
+        info = None
+        return df, info
+
+
 class Zscore(StatelessNodeWithOneInput):
     def __init__(self, name, tau):
         super().__init__(name)
@@ -291,6 +307,17 @@ class Zscore(StatelessNodeWithOneInput):
 
     def _transform(self, df):
         df_out = sigp.rolling_zscore(df, self.tau)
+        info = None
+        return df_out, info
+
+import core.finance as fin
+
+class FilterAth(StatelessNodeWithOneInput):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def _transform(self, df):
+        df_out = fin.filter_ath(df)
         info = None
         return df_out, info
 
@@ -312,19 +339,55 @@ class ComputeLaggedFeatures(StatelessNodeWithOneInput):
         return df_out, info
 
 
-# class Model(Node):
-#
-#     def __init__(self, name, y_var, x_vars):
-#         self._params = None
-#
-#     def connect(self, input1):
-#         super().connect(input1)
-#
-#     def fit(self, df):
-#         """
-#         A model doesn't return anything since it's a sink.
-#         """
-#         return None
-#
-#     def predict(self, df):
-#         return df + self._params
+from sklearn import linear_model
+import collections
+
+import rolling_model.pipeline as pipe
+
+
+class Model(Node):
+
+    def __init__(self, name, y_var, x_vars):
+        super().__init__(name, num_inputs=1)
+        self.y_var = y_var
+        self.x_vars = x_vars
+
+    def fit(self):
+        """
+        A model fit doesn't return anything since it's a sink.
+        """
+        reg = linear_model.LinearRegression()
+        df = self._fit_input_values[0]
+        x_train = df[self.x_vars]
+        y_train = df[self.y_var]
+        self.model = reg.fit(x_train, y_train)
+        return None
+
+    def predict(self, df):
+        df= self._fit_predict_values[0]
+        x_test = df[self.x_vars]
+        y_test = df[self.y_var]
+        #
+        info = collections.OrderedDict()
+        info["hitrate"] = pipe._compute_model_hitrate(self.model,
+                                                                     x_test,
+                                                                     y_test)
+        hat_y = self.self.model.predict(x_test)
+        pnl_rets = y_test * hat_y
+        info["pnl_rets"] = pnl_rets
+        self.predict_info = copy.copy(info)
+        return hat_y
+
+
+def fit_model_from_config(config, df, source_node, sink_node):
+    splits = pipe.get_splits(config, df)
+    #
+    for i, (train_idxs, test_idxs) in enumerate(splits):
+        sink_node.reset()
+        #
+        source_node.set_train_idxs(train_idxs)
+        sink_node.fit()
+        #
+        source_node.set_test_idxs(test_idxs)
+        sink_node.predict()
+    return sink_node
