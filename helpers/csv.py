@@ -8,6 +8,9 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
+# DUMMY_TO_REVIEW
+
+
 def read_csv_range(csv_path, from_, to, **kwargs):
     """
     Read a specified row range of a csv file and convert to a DataFrame.
@@ -182,4 +185,3 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
             os.path.join(pq_dir, pq_filename),
             normalizer=normalizer,
         )
-
