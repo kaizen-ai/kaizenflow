@@ -113,8 +113,7 @@ def append(df, path, index=False, **kwargs):
         df.to_csv(f, header=False, index=index, **kwargs)
 
 
-# TODO(Paul): rename to csv_mapreduce
-def csv_mr(
+def csv_mapreduce(
     csv_path, out_dir, key_func, chunk_preprocessor=None, chunksize=1000000
 ):
     """
@@ -141,12 +140,11 @@ def csv_mr(
             append(df, os.path.join(out_dir, idx + ".csv"))
 
 
-# TODO(Paul): rename to convert_csv_to_pq
-def csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
+def convert_csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     """
     Converts csv file to parquet file.
 
-    Output of csv_mr is typically headerless (to support append mode), and so
+    Output of csv_mapreduce is typically headerless (to support append mode), and so
     `normalizer` may be used to add appropriate headers. Note that parquet
     requires string column names, whereas pandas by default uses integer
     column names.
@@ -164,10 +162,9 @@ def csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     df.to_parquet(pq_path)
 
 
-# TODO(Paul): rename to convert_csv_dir_to_pq_dir
-def csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
+def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
     """
-    Applies `csv_to_pq` to all files in csv_dir
+    Applies `convert_csv_to_pq` to all files in csv_dir
 
     :param csv_dir: directory of csv's
     :param pq_dir: target directory
@@ -180,7 +177,7 @@ def csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
     for filename in filenames:
         # Remove .csv and add .pq.
         pq_filename = filename[:-4] + ".pq"
-        csv_to_pq(
+        convert_csv_to_pq(
             os.path.join(csv_dir, filename),
             os.path.join(pq_dir, pq_filename),
             normalizer=normalizer,
