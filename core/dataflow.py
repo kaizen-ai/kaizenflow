@@ -1,12 +1,15 @@
+import collections
 import copy
 import logging
 
 import pandas as pd
+from sklearn import linear_model
 
 import core.features as ftrs
-import core.signal_processing as sigp
+import core.finance as fin
 import helpers.dbg as dbg
 import helpers.printing as prnt
+import rolling_model.pipeline as pip
 import vendors.kibot.utils as kut
 
 _LOG = logging.getLogger(__name__)
@@ -71,7 +74,8 @@ class Node:
             self._name,
         )
         for node in nodes:
-            dbg.dassert_isinstance(node, Node)
+            # TODO(gp): This keeps giving issues.
+            # dbg.dassert_isinstance(node, Node)
             self._input_nodes.append(node)
         self._is_connected = True
 
@@ -257,7 +261,7 @@ class KibotReadData(ReadData):
     def __init__(self, name, file_name, nrows):
         super().__init__(name)
         print(file_name)
-        #dbg.dassert_exists(file_name)
+        # dbg.dassert_exists(file_name)
         self._file_name = file_name
         self._nrows = nrows
         #
@@ -301,16 +305,17 @@ class PctReturns(StatelessNodeWithOneInput):
 
 
 class Zscore(StatelessNodeWithOneInput):
-    def __init__(self, name, tau):
+    def __init__(self, name, style, com):
         super().__init__(name)
-        self.tau = tau
+        self.style = style
+        self.com = com
 
     def _transform(self, df):
-        df_out = sigp.rolling_zscore(df, self.tau)
+        # df_out = sigp.rolling_zscore(df, self.tau)
+        df_out = pip.zscore(df, self.style, self.com)
         info = None
         return df_out, info
 
-import core.finance as fin
 
 class FilterAth(StatelessNodeWithOneInput):
     def __init__(self, name):
@@ -339,14 +344,7 @@ class ComputeLaggedFeatures(StatelessNodeWithOneInput):
         return df_out, info
 
 
-from sklearn import linear_model
-import collections
-
-import rolling_model.pipeline as pipe
-
-
 class Model(Node):
-
     def __init__(self, name, y_var, x_vars):
         super().__init__(name, num_inputs=1)
         self.y_var = y_var
@@ -364,14 +362,12 @@ class Model(Node):
         return None
 
     def predict(self, df):
-        df= self._fit_predict_values[0]
+        df = self._fit_predict_values[0]
         x_test = df[self.x_vars]
         y_test = df[self.y_var]
         #
         info = collections.OrderedDict()
-        info["hitrate"] = pipe._compute_model_hitrate(self.model,
-                                                                     x_test,
-                                                                     y_test)
+        info["hitrate"] = pipe._compute_model_hitrate(self.model, x_test, y_test)
         hat_y = self.self.model.predict(x_test)
         pnl_rets = y_test * hat_y
         info["pnl_rets"] = pnl_rets

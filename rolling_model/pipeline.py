@@ -50,25 +50,29 @@ def filter_by_time_from_config(config, df, result_bundle, dt_col_name="datetime"
     return df
 
 
-# TODO(gp): Switch to sigp.rolling_zscore.
-def zscore_from_config(config, df):
-    config.check_params(["zscore_style", "zscore_com"])
-    dbg.dassert_lte(1, df.shape[0])
-    #
-    zscore_com = config["zscore_com"]
+def zscore(df, zscore_style, zscore_com):
     # TODO(gp): z-score by day and by hour.
-    if config["zscore_style"] == "rolling_std":
+    if zscore_style == "rolling_std":
         std = df["ret_0"].ewm(com=zscore_com).std()
         # To avoid issues with future peeking.
         std = std.shift(1)
         df["zret_0"] = df["ret_0"] / std
-    elif config["zscore_style"] == "rolling_mean_std":
+    elif zscore_style == "rolling_mean_std":
         # TODO(gp): Removing the mean seems to create some artifacts.
         mean = df["ret_0"].ewm(com=zscore_com).mean()
         std = df["ret_0"].ewm(com=zscore_com).std()
         df["zret_0"] = (df["ret_0"] - mean) / std
     else:
-        raise ValueError("Invalid param'%s' " % config["zscore_style"])
+        raise ValueError("Invalid param'%s' " % zscore_style)
+    return df
+
+
+# TODO(gp): Switch to sigp.rolling_zscore.
+def zscore_from_config(config, df):
+    config.check_params(["zscore_style", "zscore_com"])
+    dbg.dassert_lte(1, df.shape[0])
+    #
+    df = zscore(df, config["zscore_style"], config["zscore_com"])
     dbg.dassert_lte(1, df.shape[0])
     return df
 
