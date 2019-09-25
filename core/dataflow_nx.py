@@ -13,13 +13,23 @@ class Node:
     Node class for creating DAG pipelines.
     """
     def __init__(self, nid, inputs=None, outputs=None):
+        """
+        :param nid: node identifier. Should be unique in a graph.
+        :param inputs: list-like string names of input_names.
+            # TODO(Paul): Consider splitting into required/optional.
+        :param outputs: list-like string names of output_names. The node is assumed
+            to store the last output.
+            # TODO(Paul): Consider other policies.
+        """
         dbg.dassert_isinstance(nid, str)
+        if not nid:
+            _LOG.warning("Empty string chosen for unique nid!")
         self._nid = nid
-        self._inputs = {}
+        self._inputs = []
         if inputs is not None:
             for input in inputs:
                 dbg.dassert_isinstance(input, str)
-                self._inputs[input] = None
+                self._inputs.append(input)
         self._outputs = {}
         if outputs is not None:
             for output in outputs:
@@ -31,20 +41,25 @@ class Node:
         return self._nid
 
     @property
-    def inputs(self):
+    def input_names(self):
         return self._inputs
 
     @property
-    def outputs(self):
-        return self._outputs
+    def output_names(self):
+        return list(self._outputs.keys())
+
+    def output(self, name):
+        dbg.dassert_in(name, self._outputs.keys(),
+                       "%s is not an output of node %s!", name, self.nid)
+        return self._outputs[name]
 
     def _info(self, **kwargs):
-        _LOG.info("inputs: %s", self._inputs.keys())
-        _LOG.info("outputs: %s", self._outputs.keys())
+        _LOG.info("input_names: %s", self.input_names)
+        _LOG.info("output_names: %s", self.output_names)
         _LOG.info("nid: %s", self._nid)
 
 
-class Pipeline:
+class Graph:
     """
     Class for building pipeline graphs using Nodes.
     """
@@ -89,13 +104,13 @@ class Pipeline:
 
         Raises if the requested edge is invalid.
 
-        TODO(Paul): Support connecting multiple inputs/outputs.
+        TODO(Paul): Support connecting multiple input_names/output_names.
 
         :param parent: tuple of the form (nid, output)
         :param child: tuple of the form (nid, input)
         """
-        dbg.dassert_in(parent[1], self.get_node(parent[0]).outputs.keys())
-        dbg.dassert_in(child[1], self.get_node(child[0]).inputs.keys())
+        dbg.dassert_in(parent[1], self.get_node(parent[0]).output_names)
+        dbg.dassert_in(child[1], self.get_node(child[0]).input_names)
         kwargs = {child[1]: parent[1]}
         self._graph.add_edge(parent[0], child[0], **kwargs)
 
@@ -108,7 +123,7 @@ class Pipeline:
         for pre in self._graph.predecessors(nid):
             kvs = self._graph.edges[[pre, nid]]
             for k, v in kvs.items():
-                kwargs[k] = self.get_node(pre).outputs[v]
+                kwargs[k] = self.get_node(pre).output(v)
         _LOG.info("kwargs are %s", kwargs)
         getattr(self.get_node(nid), method)(**kwargs)
 
