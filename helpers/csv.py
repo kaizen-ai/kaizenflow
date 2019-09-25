@@ -181,3 +181,4 @@ def csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
             os.path.join(pq_dir, pq_filename),
             normalizer,
         )
+
