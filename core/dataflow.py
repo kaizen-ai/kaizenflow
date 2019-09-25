@@ -45,7 +45,19 @@ class Node:
         # List of parent nodes.
         self._input_nodes = []
         # Initialize the resettable state.
-        self._reset()
+        self.reset()
+
+    def reset(self):
+        """
+        Reset part of the state between two successive fit operations.
+        """
+        _LOG.debug("name=%s", self._name)
+        #
+        self._fit_input_values = []
+        self._is_fit = False
+        #
+        self._predict_input_values = []
+        self._output_values = None
 
     @property
     def name(self):
@@ -85,6 +97,7 @@ class Node:
         them.
         """
         _LOG.debug("name=%s", self._name)
+        dbg.dassert(self._is_connected)
         if not self._is_fit:
             for node in self._input_nodes:
                 self._fit_input_values.append(node.fit())
@@ -95,11 +108,11 @@ class Node:
         Accumulate the outputs of each parent nodes after `predict` is called on
         them.
         """
+        dbg.dassert(self._is_connected)
         # We can predict multiple times, so every time we need to re-evaluate
         # the parents from scratch.
-        self._predict_inputs_values = []
         for node in self._input_nodes:
-            self._predict_inputs_values.append(node.predict())
+            self._predict_input_values.append(node.predict())
 
     def __str__(self):
         """
@@ -132,19 +145,8 @@ class Node:
         ret = "\n".join(ret)
         return ret
 
-    # //////////////////////////////////////////////////////////////////////////
 
-    def _reset(self):
-        """
-        Reset part of the state between two successive fit operations.
-        """
-        _LOG.debug("name=%s", self._name)
-        #
-        self._fit_input_values = []
-        self._is_fit = False
-        #
-        self._predict_input_values = []
-        self._output_values = None
+    # //////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _to_string(info):
@@ -189,7 +191,7 @@ class StatelessNodeWithOneInput(Node):
     def predict(self):
         super().predict()
         # Transform the input df.
-        df_in = self._predict_inputs_values[0]
+        df_in = self._predict_input_values[0]
         df_out, info = self._transform(df_in)
         # Save the info in the node: we make a copy just to be safe.
         self.predict_info = copy.copy(info)
@@ -204,7 +206,13 @@ class ReadData(Node):
         super().__init__(name, num_inputs=0)
         #
         self.df = None
-        self._reset()
+        self.reset()
+
+    def reset(self):
+        super().reset()
+        _LOG.debug("name=%s", self._name)
+        self._train_idxs = None
+        self._test_idxs = None
 
     # TODO(gp): Not sure about this approach. We want to reuse the node during
     #  multiple experiments (e.g., cross-validation) so we can't use the ctor
@@ -243,11 +251,10 @@ class ReadData(Node):
             test_df = self.df
         return test_df
 
-    def _reset(self):
-        super()._reset()
-        _LOG.debug("name=%s", self._name)
-        self._train_idxs = None
-        self._test_idxs = None
+    def get_df(self):
+        dbg.dassert_is_not(self.df, None)
+        return self.df
+
 
 
 class ReadDataFromDf(ReadData):
@@ -260,7 +267,6 @@ class ReadDataFromDf(ReadData):
 class KibotReadData(ReadData):
     def __init__(self, name, file_name, nrows):
         super().__init__(name)
-        print(file_name)
         # dbg.dassert_exists(file_name)
         self._file_name = file_name
         self._nrows = nrows
@@ -299,6 +305,7 @@ class PctReturns(StatelessNodeWithOneInput):
         super().__init__(name)
 
     def _transform(self, df):
+        df = df.copy()
         df["ret_0"] = df["open"].pct_change()
         info = None
         return df, info
@@ -334,6 +341,11 @@ class ComputeLaggedFeatures(StatelessNodeWithOneInput):
         self.delay_lag = delay_lag
         self.num_lags = num_lags
 
+    def get_x_vars(self):
+        x_vars = ftrs.get_lagged_feature_names(self.y_var, self.delay_lag,
+                                        self.num_lags)
+        return x_vars
+
     def _transform(self, df):
         # Make a copy to be safe.
         df = df.copy()
@@ -354,6 +366,7 @@ class Model(Node):
         """
         A model fit doesn't return anything since it's a sink.
         """
+        super().fit()
         reg = linear_model.LinearRegression()
         df = self._fit_input_values[0]
         x_train = df[self.x_vars]
@@ -361,22 +374,24 @@ class Model(Node):
         self.model = reg.fit(x_train, y_train)
         return None
 
-    def predict(self, df):
-        df = self._fit_predict_values[0]
+    def predict(self):
+        super().predict()
+        df = self._predict_input_values[0]
         x_test = df[self.x_vars]
         y_test = df[self.y_var]
         #
         info = collections.OrderedDict()
-        info["hitrate"] = pipe._compute_model_hitrate(self.model, x_test, y_test)
-        hat_y = self.self.model.predict(x_test)
+        info["hitrate"] = pip._compute_model_hitrate(self.model, x_test, y_test)
+        hat_y = self.model.predict(x_test)
         pnl_rets = y_test * hat_y
         info["pnl_rets"] = pnl_rets
         self.predict_info = copy.copy(info)
         return hat_y
 
 
-def fit_model_from_config(config, df, source_node, sink_node):
-    splits = pipe.get_splits(config, df)
+def cross_validate(config, source_node, sink_node):
+    df = source_node.get_df()
+    splits = pip.get_splits(config, df)
     #
     for i, (train_idxs, test_idxs) in enumerate(splits):
         sink_node.reset()

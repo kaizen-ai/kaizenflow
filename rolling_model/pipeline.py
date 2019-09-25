@@ -153,12 +153,13 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
 
 def get_splits(config, df):
     cv_split_style = config["cv_split_style"]
-    _LOG.info(
-        "len=%s min_date=%s, max_date=%s",
-        df.shape[0],
-        df.iloc[0]["datetime"],
-        df.iloc[-1]["datetime"],
-    )
+    if "datetime" in df.columns:
+        _LOG.info(
+            "len=%s min_date=%s, max_date=%s",
+            df.shape[0],
+            df.iloc[0]["datetime"],
+            df.iloc[-1]["datetime"],
+        )
     if cv_split_style == "TimeSeriesSplit":
         # Expanding window with n folds.
         n_splits = config["cv_n_splits"]
