@@ -42,6 +42,7 @@ import joblib
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
@@ -75,13 +76,7 @@ def _parse():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("positional", nargs=1, choices=["reset_cache"])
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

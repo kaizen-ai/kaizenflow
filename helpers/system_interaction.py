@@ -15,11 +15,25 @@ _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
+_USER_NAME = None
+
+
+def set_user_name(user_name):
+    """
+    To impersonate a user. To use only in rare cases.
+    """
+    _LOG.warning("Setting user to '%s'", user_name)
+    global _USER_NAME
+    _USER_NAME = user_name
+
 
 def get_user_name():
-    import getpass
+    if _USER_NAME is None:
+        import getpass
 
-    res = getpass.getuser()
+        res = getpass.getuser()
+    else:
+        res = _USER_NAME
     return res
 
 

@@ -1,3 +1,10 @@
+"""
+Import as:
+
+import helpers.parser as prsr
+"""
+
+
 def add_bool_arg(parser, name, default=False, help_=None):
     """
     Add options to a parser like --xyz and --no-xyz (e.g., for --incremental).

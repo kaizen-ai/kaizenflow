@@ -63,7 +63,7 @@ def zscore(df, zscore_style, zscore_com):
         std = df["ret_0"].ewm(com=zscore_com).std()
         df["zret_0"] = (df["ret_0"] - mean) / std
     else:
-        raise ValueError("Invalid param'%s' " % zscore_style)
+        raise ValueError("Invalid param '%s'" % zscore_style)
     return df
 
 

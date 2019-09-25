@@ -1,15 +1,19 @@
+#!/usr/bin/env python
 """
 Import as:
 
 import helpers.user_credentials as usc
 """
 
+import argparse
 import logging
 import os
+import pprint
 
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -17,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 DEV_SERVER = "104.248.187.204"
 
 # pylint: disable=R0915
-# [R0915(too-many-statements), get_credentials] Too many statements (51/50)
+# [R0915(too-many-statements), ] Too many statements (51/50)
 def get_credentials():
     """
     Report information about a user set-up as a function of:
@@ -67,6 +71,15 @@ def get_credentials():
     notebook_html_path = None
     notebook_backup_path = None
     #
+    if server_name == "twitter-data":
+        # P1 old server.
+        conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
+        conda_env_path = "/home/saggese/.conda/envs"
+    elif server_name == "ip-172-31-16-23":
+        # P1 server.
+        conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+        conda_env_path = "/home/saggese/.conda/envs"
+    #
     if user_name == "saggese":
         # GP.
         git_user_name = "saggese"
@@ -86,14 +99,10 @@ def get_credentials():
                 notebook_backup_path = "/Users/saggese/src/notebooks/backup"
         elif server_name == "twitter-data":
             # P1 old server.
-            conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
                 jupyter_port = 10002
         elif server_name == "ip-172-31-16-23":
             # P1 server.
-            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
                 jupyter_port = 10003
         elif server_name.startswith("ip-"):
@@ -111,16 +120,8 @@ def get_credentials():
         git_user_name = "Julia"
         git_user_email = "julia@particle.one"
         if server_name == "vostro":
-            # Local 
+            # Laptop.
             conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/julia/.conda/envs"
-        elif server_name == "twitter-data":
-            # P1 old server.
-            conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/julia/.conda/envs"
-        elif server_name == "ip-172-31-16-23":
-            # P1 server.
-            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/julia/.conda/envs"
     elif user_name == "jenkins":
         # Jenkins.
@@ -170,3 +171,30 @@ def get_credentials():
         "notebook_backup_path": notebook_backup_path,
     }
     return ret
+
+
+# ##############################################################################
+
+
+def _parse():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--user", action="store", default=None, help="Impersonate a user"
+    )
+    prsr.add_verbosity_arg(parser)
+    return parser
+
+
+def _main(parser):
+    args = parser.parse_args()
+    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    if args.user:
+        si.set_user_name(args.user)
+    usc = get_credentials()
+    pprint.pprint(usc)
+
+
+if __name__ == "__main__":
+    _main(_parse())

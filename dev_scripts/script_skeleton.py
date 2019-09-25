@@ -10,6 +10,7 @@ import argparse
 import logging
 
 import helpers.dbg as dbg
+import helpers.parser as prsr
 
 # import helpers.system_interaction as si
 
@@ -24,13 +25,7 @@ def _parse():
     )
     parser.add_argument("positional", nargs="*", help="...")
     parser.add_argument("--dst_dir", action="store", help="Destination dir")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 
