@@ -104,7 +104,9 @@ class Graph:
 
         Raises if the requested edge is invalid.
 
-        TODO(Paul): Support connecting multiple input_names/output_names.
+        If this is called multiple times on the same nid's but with different
+        output/input pairs, the additional input/output pairs are simply added
+        to the existing edge (the previous ones are not overwritten).
 
         :param parent: tuple of the form (nid, output)
         :param child: tuple of the form (nid, input)
