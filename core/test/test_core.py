@@ -198,9 +198,9 @@ class Test_dataflow_ReadData1(ut.TestCase):
         idxs = list(range(df.shape[0]))
         read_data.set_train_idxs(idxs)
         #
-        zscore = dtf.Zscore("zscore", tau=2.0)
+        zscore = dtf.Zscore("zscore", style="rolling_std", com=28)
         zscore.connect(read_data)
-        zscore.fit()
+        #zscore.fit()
         #
         self._check(zscore)
 
