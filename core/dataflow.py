@@ -1,4 +1,5 @@
-import collections import copy
+import collections
+import copy
 import logging
 
 import pandas as pd
