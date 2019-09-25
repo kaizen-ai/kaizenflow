@@ -1,5 +1,4 @@
-import collections
-import copy
+import collections import copy
 import logging
 
 import pandas as pd
@@ -329,7 +328,7 @@ class FilterAth(StatelessNodeWithOneInput):
 
 class ComputeLaggedFeatures(StatelessNodeWithOneInput):
     def __init__(self, name, y_var, delay_lag, num_lags):
-        super().__init__(name, num_inputs=1)
+        super().__init__(name)
         self.y_var = y_var
         self.delay_lag = delay_lag
         self.num_lags = num_lags
