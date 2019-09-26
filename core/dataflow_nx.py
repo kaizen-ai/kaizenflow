@@ -1,3 +1,4 @@
+import functools
 import itertools
 import logging
 
@@ -20,6 +21,54 @@ class Node:
 
     For nodes requiring fit/transform, we can subclass / provide a mixin with
     the desired methods.
+
+    Consider using `functools.lru_cache` for unless `NodeWithOutputStore`
+    subclass is used.
+    """
+    def __init__(self, nid, inputs=None, outputs=None):
+        """
+        :param nid: node identifier. Should be unique in a graph.
+        :param inputs: list-like string names of input_names.
+        """
+        dbg.dassert_isinstance(nid, str)
+        if not nid:
+            _LOG.warning("Empty string chosen for unique nid!")
+        self._nid = nid
+        self._inputs = self._init_validation_helper(inputs)
+        self._outputs = self._init_validation_helper(outputs)
+
+    def _init_validation_helper(self, l):
+        if l is None:
+            return []
+        for item in l:
+            dbg.dassert_isinstance(item, str)
+        return l
+
+    @property
+    def nid(self):
+        return self._nid
+
+    @property
+    def input_names(self):
+        return self._inputs
+
+    @property
+    def output_names(self):
+        return self._outputs
+
+    def _info(self, **kwargs):
+        _LOG.info("input_names: %s", self.input_names)
+        _LOG.info("output_names: %s", self.output_names)
+        _LOG.info("nid: %s", self._nid)
+        dummy_output = {}
+        for output in self.output_names:
+            dummy_output[output] = None
+        return dummy_output
+
+
+class NodeWithOutputStore(Node):
+    """
+    Node subclass that also stores its output when run.
 
     - As currently written, nodes are assumed to manage output state, e.g., if
       a node wraps a function, then when the node (and hence function) is
@@ -52,42 +101,15 @@ class Node:
             to store the last output.
             # TODO(Paul): Consider other policies.
         """
-        dbg.dassert_isinstance(nid, str)
-        if not nid:
-            _LOG.warning("Empty string chosen for unique nid!")
-        self._nid = nid
-        self._inputs = []
-        if inputs is not None:
-            for input in inputs:
-                dbg.dassert_isinstance(input, str)
-                self._inputs.append(input)
-        self._outputs = {}
-        if outputs is not None:
-            for output in outputs:
-                dbg.dassert_isinstance(output, str)
-                self._outputs[output] = None
+        super().__init__(nid=nid, inputs=inputs, outputs=outputs)
+        self._output_vals = {}
+        for output in self._outputs:
+            self._output_vals[output] = None
 
-    @property
-    def nid(self):
-        return self._nid
-
-    @property
-    def input_names(self):
-        return self._inputs
-
-    @property
-    def output_names(self):
-        return list(self._outputs.keys())
-
-    def output(self, name):
-        dbg.dassert_in(name, self._outputs.keys(),
+    def get_output(self, name):
+        dbg.dassert_in(name, self.output_names,
                        "%s is not an output of node %s!", name, self.nid)
-        return self._outputs[name]
-
-    def _info(self, **kwargs):
-        _LOG.info("input_names: %s", self.input_names)
-        _LOG.info("output_names: %s", self.output_names)
-        _LOG.info("nid: %s", self._nid)
+        return self._output_vals[name]
 
 
 class Graph:
@@ -160,14 +182,22 @@ class Graph:
         """
         Helper method for running individual nodes.
         """
-        _LOG.info("Node nid=`%s` executing method `%s`...", nid, method)
+        _LOG.debug("Node nid=`%s` executing method `%s`...", nid, method)
         kwargs = {}
         for pre in self._graph.predecessors(nid):
             kvs = self._graph.edges[[pre, nid]]
-            for k, v in kvs.items():
-                kwargs[k] = self.get_node(pre).output(v)
+            pre_node = self.get_node(pre)
+            if isinstance(pre_node, NodeWithOutputStore):
+                for k, v in kvs.items():
+                    # Retrieve output from store.
+                    kwargs[k] = pre_node.get_output(v)
+            else:
+                # Run previous node and select output.
+                vals = self._run_node(method=method, nid=pre)
+                for k, v in kvs.items():
+                    kwargs[k] = vals[v]
         _LOG.info("kwargs are %s", kwargs)
-        getattr(self.get_node(nid), method)(**kwargs)
+        return getattr(self.get_node(nid), method)(**kwargs)
 
     def run(self, method):
         """
@@ -178,9 +208,9 @@ class Graph:
         """
         dbg.dassert(self.is_dag, "Graph execution requires a DAG!")
         for nid in nx.topological_sort(self._graph):
-            self._run_node(method, nid)
+            self._run_node(method=method, nid=nid)
 
-    def run_node(self, method, nid, eval_mode='full'):
+    def run_node(self, method, nid, eval_mode='all_ancestors'):
         """
         Executes pipeline only up to (and including) `node`.
 
@@ -188,14 +218,14 @@ class Graph:
         :param node: terminal evaluation node
         :param eval_mode: options for rerunning ancestors / caching, etc.
         """
-        if eval_mode == 'full':
+        if eval_mode == 'all_ancestors':
             dbg.dassert(self.is_dag, "Graph execution requires a DAG!")
             ancestors = filter(lambda x: x in nx.ancestors(self._graph, nid),
                                nx.topological_sort(self._graph))
             nids = itertools.chain(ancestors, [nid])
-        elif eval_mode == 'cached':
+        elif eval_mode == 'single_node':
             nids = [nid]
         else:
-            raise ValueError("Supported eval_modes are `full` and `cached`.")
+            raise ValueError("Supported eval_modes are `all_ancestors` and `single_node`.")
         for nid in nids:
-            self._run_node(method, nid)
+            self._run_node(method=method, nid=nid)
