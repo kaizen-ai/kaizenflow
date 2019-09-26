@@ -25,10 +25,20 @@ _DST_DIR = "/data/firstrate/"
 
 
 class FileURL:
-    def __init__(self, timezone, url, category):
+    """
+    A container for file urls.
+
+    :param timezone: The timezone of the dataset
+    :param url: file url
+    :param category: the category of an equity
+    """
+
+    def __init__(self, url, timezone, category, col_names, path=''):
         self.timezone = timezone
         self.url = url
         self.category = category
+        self.col_names = col_names
+        self.path = path
 
 
 class RawDataDownloader:
@@ -45,6 +55,8 @@ class RawDataDownloader:
     def __init__(self, website, dst_dir):
         self.website = website
         self.dst_dir = dst_dir
+        self.file_urls = []
+        self.path_object = {}
 
     def execute(self):
         """
@@ -56,8 +68,11 @@ class RawDataDownloader:
         _LOG.info("Collecting the links")
         all_urls = self.walk_get_all_urls()
         _LOG.info("Downloading the files")
+        path_object = {}
         for url_object in tqdm(all_urls):
             self._download_url_to_path(url_object)
+            path_object[url_object.file_path] = url_object
+        self.path_object = path_object
 
     def walk_get_all_urls(self):
         """
@@ -73,6 +88,7 @@ class RawDataDownloader:
                 category_url
             )
             url_objects.extend(url_objects_category)
+        self.file_urls = url_objects
         return url_objects
 
     @staticmethod
@@ -141,20 +157,32 @@ class RawDataDownloader:
         return urls_for_cards
 
     @staticmethod
-    def _extract_timezones(dataset_soup):
+    def _extract_timezones(card_body):
         """
         Extract timezones from a BeautifulSoup object.
+        Timezones are located in the card-body attribute
 
-        :param dataset_soup: BeautifulSoup object
+        :param card_body: BeautifulSoup object
         :return: list of timezones
         """
         time_zones = []
-        for label in dataset_soup.select("label"):
+        for label in card_body.select("label"):
             if label.string == "Time Zone":
                 time_zones.append(
                     label.next_element.next_element.next_element.string
                 )
         return time_zones
+
+    @staticmethod
+    def _extract_col_names(card_body):
+        columns = []
+        for label in card_body.select("label"):
+            if label.string == "Format : ":
+                cols_label = label.next_element.next_element.next_element.string
+                cols_list = cols_label.split('|')
+                cols_list = list(map(lambda x: x.strip(), cols_list))
+                columns.append(cols_list)
+        return columns
 
     def _get_download_links_and_tzs(self, card_bodies, category):
         """
@@ -171,9 +199,10 @@ class RawDataDownloader:
         url_objects = []
         for card_body in card_bodies:
             tzs = self._extract_timezones(card_body)
+            col_names = self._extract_col_names(card_body)
             urls = self._get_urls(card_body, self.website)
-            for tz, url in zip(tzs, urls):
-                furl = FileURL(tz, url, category)
+            for tz, col_name_list, url in zip(tzs, col_names, urls):
+                furl = FileURL(url, tz, category, col_name_list)
                 url_objects.append(furl)
         return url_objects
 
@@ -205,7 +234,8 @@ class RawDataDownloader:
         file_name = url_object.url.split("/")[-1]
         file_name = f"_{url_object.timezone}.".join(file_name.rsplit("."))
         file_path = os.path.join(category_dir_path, file_name)
-        self._download_file(url_object.url, file_path)
+        url_object.file_path = file_path
+        self._download_file(url_object.url, url_object.file_path)
 
     def _walk_html_with_links_to_download_links(self, html_url):
         """
@@ -252,6 +282,17 @@ class RawDataDownloader:
         return hrefs_categories_urls
 
 
+class ZipCSVCombiner:
+
+    def __init__(self, input_dir, path_object, output_dir):
+        self.input_dir = input_dir
+        self.path_object = path_object
+        self.output_dir = output_dir
+
+    def _read_zipped_csvs(self, zip_path):
+        pass
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -274,3 +315,5 @@ if __name__ == "__main__":
 
     rdd = RawDataDownloader(args.website, args.dst_dir)
     rdd.execute()
+
+    # zcc = ZipCSVCombiner()
