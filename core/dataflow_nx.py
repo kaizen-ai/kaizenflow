@@ -10,7 +10,38 @@ _LOG = logging.getLogger(__name__)
 
 class Node:
     """
-    Node class for creating DAG pipelines.
+    Node class for creating DAG pipelines of functions.
+
+    Common use case: Nodes wrap functions with a common method (e.g., `fit`).
+
+    The Node class provides some convenient introspection (input/output names)
+    accessors and, importantly, a unique identifier (`nid`) for building
+    graphs of nodes. The `nid` is also useful for config purposes.
+
+    For nodes requiring fit/transform, we can subclass / provide a mixin with
+    the desired methods.
+
+    - As currently written, nodes are assumed to manage output state, e.g., if
+      a node wraps a function, then when the node (and hence function) is
+      executed, the output of that function is stored in the node.
+    - This makes it easy to manage node execution in a graph, especially when
+      - We execute nodes sequentially in a topological sorted DAG, but outputs
+        from multiple previous nodes are needed downstream (downstream node has
+        multiple parents).
+      - The output of a node is needed for more multiple downstream nodes
+        (node has multiple child nodes).
+      - We want to work interactively in a notebook
+      - We want to debug node state
+    - An alternative would be to not explicitly store such state, but use
+      caching.
+       - This could work well for interactive and debug use.
+       - This is less straightforward for the multiple parent / children case,
+         e.g., we can execute the nodes in a topological sequentially, but each
+         node execution would require a parent node "re-run" using the cached
+         value.
+       - Caching may make it more difficult to set different state policies
+         (e.g., suppose we want to retain the X most recent values).
+       - What if we use stateful nodes?
     """
     def __init__(self, nid, inputs=None, outputs=None):
         """
@@ -62,6 +93,12 @@ class Node:
 class Graph:
     """
     Class for building pipeline graphs using Nodes.
+
+    The Graph is directed and should be a DAG (TODO(Paul): enforce this when
+    trying to added edges).
+
+    The Graph manages node execution. As currently written, it does not manage
+    Node output state.
     """
     def __init__(self):
         self._graph = nx.DiGraph()
