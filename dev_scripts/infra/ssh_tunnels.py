@@ -18,6 +18,9 @@ import logging
 import os
 
 import helpers.dbg as dbg
+
+# ##############################################################################
+import helpers.git as git
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
 
@@ -26,17 +29,27 @@ _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
-# Server ports.
-_SERVICES = {
-    # TODO(gp): Update this.
-    ("MongoDb", "104.248.187.204", 27017),
-    ("Jenkins", "3.14.143.113", 8080),
-    ("Reviewboard", "3.19.215.69", 8000),
-    # ("Published notebook server", DEV_SERVER, 8181),
-    # Netdata to Jenkins and Dev server.
-    # ("Dev system performance", DEV_SERVER, 19999),
-    # ("Jenkins system performance", DEV_SERVER, 19999),
-}
+
+def _get_env_var(env_var_name):
+    if env_var_name not in os.environ:
+        msg = "Can't find '%s': re-run dev_scripts/setenv.sh" % env_var_name
+        _LOG.error(msg)
+        raise RuntimeError(msg)
+    return os.environ[env_var_name]
+
+
+def _get_services_info():
+    # Server ports.
+    services = {
+        ("MongoDb", _get_env_var("P1_OLD_DEV_SERVER"), 27017),
+        ("Jenkins", _get_env_var("P1_JENKINS_SERVER"), 8080),
+        ("Reviewboard", _get_env_var("P1_REVIEWBOARD_SERVER"), 8000),
+        # ("Published notebook server", DEV_SERVER, 8181),
+        # Netdata to Jenkins and Dev server.
+        # ("Dev system performance", DEV_SERVER, 19999),
+        # ("Jenkins system performance", DEV_SERVER, 19999),
+    }
+    return services
 
 
 def _get_tunnel_info():
@@ -44,8 +57,9 @@ def _get_tunnel_info():
     #
     tunnel_info = credentials["tunnel_info"]
     dbg.dassert_is_not(tunnel_info, None)
-    # Add standard tunnels.
-    tunnel_info.extend(_SERVICES)
+    # Add tunnels for standard services.
+    services = _get_services_info()
+    tunnel_info.extend(services)
     #
     ssh_key_path = credentials["ssh_key_path"]
     dbg.dassert_is_not(ssh_key_path, None)
@@ -182,9 +196,6 @@ def _kill_all_tunnel_processes():
     si.kill_process(get_pids)
 
 
-# ##############################################################################
-
-
 def _main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -210,6 +221,12 @@ def _main():
         help="Set the logging level",
     )
     #
+    repo_name = git.get_repo_symbolic_name(super_module=False)
+    exp_repo_name = "ParticleDev/commodity_research"
+    if repo_name != exp_repo_name:
+        msg = "Need to run from %s and not from %s" % (exp_repo_name, repo_name)
+        _LOG.error(msg)
+        raise RuntimeError(msg)
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     if args.user:

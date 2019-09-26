@@ -11,8 +11,6 @@ echo "Starting $EXEC_NAME ..."
 DIR=$(dirname "$EXEC_NAME")
 EXEC_PATH=$(cd $DIR ; pwd -P)
 
-echo "rc=$rc"
-
 # Make sure conda works.
 conda -V
 rc=$?

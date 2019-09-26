@@ -62,7 +62,8 @@ def get_client_root(super_module):
 
 def get_repo_symbolic_name(super_module):
     """
-    Return the name of the remote repo. E.g., "alphamatic/amp".
+    Return the name of the remote repo.
+    E.g., "alphamatic/amp", "ParticleDev/commodity_research"
 
     :param super_module: like get_client_root()
     """

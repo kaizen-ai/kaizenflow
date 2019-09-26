@@ -33,7 +33,7 @@ class Test_etfs_utils1(ut.TestCase):
         txt = "\n".join(txt)
         _LOG.debug("txt=%s", txt)
         #
-        self.check_string(txt)
+        self.check_string(txt, fuzzy_match=True)
 
 
 # #############################################################################
