@@ -6,6 +6,9 @@ import networkx as nx
 
 import helpers.dbg as dbg
 
+import vendors.kibot.utils as kut
+import pandas as pd
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -103,13 +106,19 @@ class NodeWithOutputStore(Node):
         """
         super().__init__(nid=nid, inputs=inputs, outputs=outputs)
         self._output_vals = {}
-        for output in self._outputs:
-            self._output_vals[output] = None
 
-    def get_output(self, name):
+    def store_output(self, method, name, value):
         dbg.dassert_in(name, self.output_names,
                        "%s is not an output of node %s!", name, self.nid)
-        return self._output_vals[name]
+        if method not in self._output_vals:
+            self._output_vals[method] = {}
+        self._output_vals[method][name] = value
+
+    def get_output(self, method, name):
+        dbg.dassert_in(name, self.output_names,
+                       "%s is not an output of node %s!", name, self.nid)
+        dbg.dassert_in(method, self._output_vals.keys())
+        return self._output_vals[method][name]
 
 
 class Graph:
@@ -190,14 +199,19 @@ class Graph:
             if isinstance(pre_node, NodeWithOutputStore):
                 for k, v in kvs.items():
                     # Retrieve output from store.
-                    kwargs[k] = pre_node.get_output(v)
+                    kwargs[k] = pre_node.get_output(method, v)
             else:
                 # Run previous node and select output.
-                vals = self._run_node(method=method, nid=pre)
+                vals = self._run_node(method, pre)
                 for k, v in kvs.items():
                     kwargs[k] = vals[v]
         _LOG.info("kwargs are %s", kwargs)
-        return getattr(self.get_node(nid), method)(**kwargs)
+        # TODO(Paul): Make the graph store the data
+        node = self.get_node(nid)
+        output = getattr(node, method)(**kwargs)
+        for out in node.output_names:
+            node.store_output(method, out, output[out])
+        # return output
 
     def run(self, method):
         """
@@ -229,3 +243,77 @@ class Graph:
             raise ValueError("Supported eval_modes are `all_ancestors` and `single_node`.")
         for nid in nids:
             self._run_node(method=method, nid=nid)
+
+
+class ReadData(NodeWithOutputStore):
+    def __init__(self, nid):
+        super().__init__(nid, outputs=["out"])
+        #
+        self.df = None
+        self._train_idxs = None
+        self._test_idxs = None
+
+    def set_train_idxs(self, train_idxs):
+        """
+        :param train_idxs: indices of the df to use for fitting
+        """
+        self._train_idxs = train_idxs
+
+    def fit(self):
+        """
+        :return: training set as df
+        """
+        if self._train_idxs:
+            train_df = self.df.iloc[self._train_idxs]
+        else:
+            train_df = self.df
+        self._output_vals
+        return {"out": train_df}
+
+    def set_test_idxs(self, test_idxs):
+        """
+        :param test_idxs: indices of the df to use for predicting
+        """
+        self._test_idxs = test_idxs
+
+    def predict(self):
+        """
+        :return: test set as df
+        """
+        if self._test_idxs:
+            test_df = self.df.iloc[self._test_idxs]
+        else:
+            test_df = self.df
+        return {"out": test_df}
+
+    def get_df(self):
+        dbg.dassert_is_not(self.df, None)
+        return self.df
+
+
+class ReadDataFromDf(ReadData):
+    def __init__(self, nid, df):
+        super().__init__(nid)
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        self.df = df
+
+
+class ReadDataFromKibot(ReadData):
+    def __init__(self, nid, file_name, nrows):
+        super().__init__(nid)
+        # dbg.dassert_exists(file_name)
+        self._file_name = file_name
+        self._nrows = nrows
+        #
+        self.df = None
+
+    def _lazy_load(self):
+        if self.df is None:
+            self.df = kut.read_data(self._file_name, self._nrows)
+
+    def fit(self):
+        """
+        :return: training set as df
+        """
+        self._lazy_load()
+        return super().fit()
