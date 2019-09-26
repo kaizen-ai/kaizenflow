@@ -344,7 +344,7 @@ class ZipCSVCombiner:
         return df
 
 
-def combine_zipped_csvs(input_dir, path_object_dict, dst_dir):
+class MultipleZipCSVCombiner:
     """
     Combine zipped csvs in firstrate directory. Add column names to the
     csvs, add timestamp column and localize it.
@@ -354,36 +354,56 @@ def combine_zipped_csvs(input_dir, path_object_dict, dst_dir):
         RawDataDownloader
     :param dst_dir: destination directory
     """
-    for category_dir in tqdm(os.listdir(input_dir)):
-        category_dir_input_path = os.path.join(input_dir, category_dir)
-        category_dir_dst_path = os.path.join(dst_dir, category_dir)
-        if not os.path.isdir(category_dir_dst_path):
-            os.mkdir(path=category_dir_dst_path)
-            _LOG.info(f"Created {category_dir_dst_path} directory")
-        for zip_path in tqdm(os.listdir(category_dir_input_path)):
-            url_object = path_object_dict[zip_path]
-            csv_name = os.path.splitext(zip_path.split("/")[-1])[0] + ".csv"
-            csv_path = os.path.join(category_dir_dst_path, csv_name)
-            zcc = ZipCSVCombiner(url_object, csv_path)
-            zcc.execute()
+
+    def __init__(self, input_dir, path_object_dict, dst_dir):
+        self.input_dir = input_dir
+        self.path_object_dict = path_object_dict
+        self.dst_dir = dst_dir
+
+    def execute(self):
+        """
+        Combine zipped csvs in firstrate directory. Add column names to the
+        csvs, add timestamp column and localize it.
+        """
+        for category_dir in tqdm(os.listdir(self.input_dir)):
+            category_dir_input_path = os.path.join(self.input_dir, category_dir)
+            category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
+            if not os.path.isdir(category_dir_dst_path):
+                os.mkdir(path=category_dir_dst_path)
+                _LOG.info(f"Created {category_dir_dst_path} directory")
+            for zip_path in tqdm(os.listdir(category_dir_input_path)):
+                url_object = self.path_object_dict[zip_path]
+                csv_name = os.path.splitext(zip_path.split("/")[-1])[0] + ".csv"
+                csv_path = os.path.join(category_dir_dst_path, csv_name)
+                zcc = ZipCSVCombiner(url_object, csv_path)
+                zcc.execute()
 
 
-def save_to_parquet(input_dir, dst_dir):
+class CSVToParquetConverter:
     """
     Save csv files divided by categories into parquet
 
     :param input_dir: input directory with categories
     :param dst_dir: destination directory
     """
-    for category_dir in tqdm(os.listdir(input_dir)):
-        category_dir_input_path = os.path.join(input_dir, category_dir)
-        category_dir_dst_path = os.path.join(dst_dir, category_dir)
-        if not os.path.isdir(category_dir_dst_path):
-            os.mkdir(path=category_dir_dst_path)
-            _LOG.info(f"Created {category_dir_dst_path} directory")
-        csv.convert_csv_dir_to_pq_dir(
-            category_dir_input_path, category_dir_dst_path
-        )
+
+    def __init__(self, input_dir, dst_dir):
+        self.input_dir = input_dir
+        self.dst_dir = dst_dir
+
+    def execute(self):
+        """
+        Save csv files divided by categories into parquet
+        """
+        for category_dir in tqdm(os.listdir(self.input_dir)):
+            category_dir_input_path = os.path.join(self.input_dir, category_dir)
+            category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
+            if not os.path.isdir(category_dir_dst_path):
+                os.mkdir(path=category_dir_dst_path)
+                _LOG.info(f"Created {category_dir_dst_path} directory")
+            csv.convert_csv_dir_to_pq_dir(
+                category_dir_input_path, category_dir_dst_path
+            )
 
 
 if __name__ == "__main__":
@@ -427,8 +447,10 @@ if __name__ == "__main__":
     rdd = RawDataDownloader(args.website, args.zipped_dst_dir)
     rdd.execute()
 
-    combine_zipped_csvs(
+    mzcc = MultipleZipCSVCombiner(
         args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
     )
+    mzcc.execute()
 
-    save_to_parquet(args.unzipped_dst_dir, args.pq_dst_dir)
+    ctpc = CSVToParquetConverter(args.unzipped_dst_dir, args.pq_dst_dir)
+    ctpc.execute()
