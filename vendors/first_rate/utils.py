@@ -10,8 +10,11 @@ Usage example:
 import argparse
 import logging
 import os
+import re
+import zipfile
 
 import numpy as np
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from tqdm.autonotebook import tqdm
@@ -33,9 +36,9 @@ class FileURL:
     :param category: the category of an equity
     """
 
-    def __init__(self, url, timezone, category, col_names, path=''):
-        self.timezone = timezone
+    def __init__(self, url, timezone, category, col_names, path=""):
         self.url = url
+        self.timezone = timezone
         self.category = category
         self.col_names = col_names
         self.path = path
@@ -179,7 +182,7 @@ class RawDataDownloader:
         for label in card_body.select("label"):
             if label.string == "Format : ":
                 cols_label = label.next_element.next_element.next_element.string
-                cols_list = cols_label.split('|')
+                cols_list = cols_label.split("|")
                 cols_list = list(map(lambda x: x.strip(), cols_list))
                 columns.append(cols_list)
         return columns
@@ -283,14 +286,59 @@ class RawDataDownloader:
 
 
 class ZipCSVCombiner:
+    def __init__(self, url_object: FileURL, output_path: str):
+        self.url_object = url_object
+        self.output_path = output_path
 
-    def __init__(self, input_dir, path_object, output_dir):
-        self.input_dir = input_dir
-        self.path_object = path_object
-        self.output_dir = output_dir
+    def execute(self):
+        df = self._read_zipped_csvs()
+        df = self._process_df(df)
+        df.to_csv(self.output_path, index=0)
 
-    def _read_zipped_csvs(self, zip_path):
-        pass
+    def _read_zipped_csvs(self):
+        dfs = []
+        with zipfile.ZipFile(self.url_object.path) as zf:
+            for csv_path in zf.namelist():
+                with zf.open(csv_path) as zc:
+                    df_part = pd.read_csv(zc, sep=",", header=None)
+                dfs.append(df_part)
+        df = pd.concat(dfs)
+        return df
+
+    @staticmethod
+    def _add_col_names(df, col_names):
+        if len(col_names) < len(df.columns):
+            col_names.extend([None] * (len(df.columns) - len(col_names)))
+        df.columns = col_names
+        return df
+
+    @staticmethod
+    def _add_timestamp_col(df):
+        cols = df.columns
+        if "yyyymmdd" in re.sub("[./: ]", "", cols[0]).lower():
+            if "hh" not in cols[0]:
+                if "hhmm" in cols[1]:
+                    df["timestamp"] = df[cols[0]].astype(str) + " " + df[cols[1]]
+                    df["timestamp"] = pd.to_datetime(df["timestamp"])
+                else:
+                    df["timestamp"] = pd.to_datetime(df[cols[0]], format="%Y%m%d")
+            else:
+                df["timestamp"] = pd.to_datetime(df[cols[0]])
+        else:
+            _LOG.warning("No timestamp column was created")
+        return df
+
+    def _process_df(self, df):
+        df = self._add_col_names(df, self.url_object.col_names)
+        df = self._add_timestamp_col(df)
+        if "timestamp" in df.columns:
+            df["timestamp"] = df["timestamp"].tz_localize(
+                self.url_object.timezone
+            )
+            df.sort_values("timestamp", inplace=True)
+        else:
+            df.sort_values(df.columns[0], inplace=True)
+        return df
 
 
 if __name__ == "__main__":
