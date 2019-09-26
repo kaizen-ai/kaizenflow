@@ -19,6 +19,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm.autonotebook import tqdm
 
+import helpers.csv as csv
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ _LOG = logging.getLogger(__name__)
 _WEBSITE = "http://firstratedata.com"
 _ZIPPED_DST_DIR = "/data/firstrate_zipped/"
 _UNZIPPED_DST_DIR = "/data/firstrate_unzipped/"
+_PQ_DST_DIR = "data/firstrate_pq"
 
 
 class FileURL:
@@ -353,17 +355,35 @@ def combine_zipped_csvs(input_dir, path_object_dict, dst_dir):
     :param dst_dir: destination directory
     """
     for category_dir in tqdm(os.listdir(input_dir)):
-        full_category_dir = os.path.join(input_dir, category_dir)
+        category_dir_input_path = os.path.join(input_dir, category_dir)
         category_dir_dst_path = os.path.join(dst_dir, category_dir)
         if not os.path.isdir(category_dir_dst_path):
             os.mkdir(path=category_dir_dst_path)
             _LOG.info(f"Created {category_dir_dst_path} directory")
-        for zip_path in tqdm(os.listdir(full_category_dir)):
+        for zip_path in tqdm(os.listdir(category_dir_input_path)):
             url_object = path_object_dict[zip_path]
             csv_name = os.path.splitext(zip_path.split("/")[-1])[0] + ".csv"
             csv_path = os.path.join(category_dir_dst_path, csv_name)
             zcc = ZipCSVCombiner(url_object, csv_path)
             zcc.execute()
+
+
+def save_to_parquet(input_dir, dst_dir):
+    """
+    Save csv files divided by categories into parquet
+
+    :param input_dir: input directory with categories
+    :param dst_dir: destination directory
+    """
+    for category_dir in tqdm(os.listdir(input_dir)):
+        category_dir_input_path = os.path.join(input_dir, category_dir)
+        category_dir_dst_path = os.path.join(dst_dir, category_dir)
+        if not os.path.isdir(category_dir_dst_path):
+            os.mkdir(path=category_dir_dst_path)
+            _LOG.info(f"Created {category_dir_dst_path} directory")
+        csv.convert_csv_dir_to_pq_dir(
+            category_dir_input_path, category_dir_dst_path
+        )
 
 
 if __name__ == "__main__":
@@ -385,6 +405,13 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
+        "--pq_dst_dir",
+        required=False,
+        action="store",
+        default=_PQ_DST_DIR,
+        type=str,
+    )
+    parser.add_argument(
         "--website", required=False, action="store", default=_WEBSITE, type=str
     )
     parser.add_argument(
@@ -403,3 +430,5 @@ if __name__ == "__main__":
     combine_zipped_csvs(
         args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
     )
+
+    save_to_parquet(args.unzipped_dst_dir, args.pq_dst_dir)
