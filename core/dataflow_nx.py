@@ -97,8 +97,11 @@ class Graph:
     The Graph is directed and should be a DAG (TODO(Paul): enforce this when
     trying to added edges).
 
-    The Graph manages node execution. As currently written, it does not manage
-    Node output state.
+    The Graph manages node execution.
+      - As currently written, it does not manage Node output state.
+        - We could change this and have it manage state explicitly (especially
+          if memory is a concern).
+        - We could do it implicitly through caching.
     """
     def __init__(self):
         self._graph = nx.DiGraph()
@@ -155,7 +158,7 @@ class Graph:
 
     def _run_node(self, method, nid):
         """
-        Helper method for running nodes
+        Helper method for running individual nodes.
         """
         _LOG.info("Node nid=`%s` executing method `%s`...", nid, method)
         kwargs = {}
@@ -168,7 +171,7 @@ class Graph:
 
     def run(self, method):
         """
-        Executes pipeline.
+        Executes entire pipeline.
 
         :param method: Method of class `Node` (or subclass) to be executed for
             the entire DAG.
