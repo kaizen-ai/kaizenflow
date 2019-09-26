@@ -4,6 +4,9 @@ conda info -e
 
 DIR_NAME=$(jupyter --data-dir)
 echo "Jupyter data dir: $DIR_NAME"
+if [[ ! -d $DIR_NAME ]]; then
+  mkdir -p $DIR_NAME
+fi;
 ls $DIR_NAME
 
 if [[ 0 == 1 ]]; then
