@@ -109,6 +109,7 @@ class Node(AbstractNode):
 # #############################################################################
 
 
+# TODO(Paul): Consider renaming `DAG` once we enforce the invariant.
 class Graph:
     """
     Class for building pipeline graphs using Nodes.
@@ -155,6 +156,8 @@ class Graph:
         """
         return self._graph.nodes[nid]['stage']
 
+    # TODO(Paul): Consider making this add the nodes if they don't already exist
+    # TODO(Paul): Automatically infer edge labels when possible (e.g., SISO).
     def connect(self, parent, child):
         """
         Adds a directed edge from parent node output to child node input.
@@ -205,6 +208,7 @@ class Graph:
             self._run_node(method=method, nid=nid)
         # TODO(Paul): Return a list of the outputs of all of the sync nodes.
 
+    # TODO(Paul): Switch the order so that the node id is first.
     def run_node(self, method, nid, eval_mode="default"):
         """
         Executes pipeline only up to (and including) `node` and returns output.
@@ -232,6 +236,7 @@ class Graph:
 # #############################################################################
 
 
+# TODO(Paul): Make the train/test idx behavior a mixin
 class ReadData(Node):
     def __init__(self, nid):
         super().__init__(nid, outputs=["output"])
