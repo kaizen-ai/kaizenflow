@@ -23,7 +23,8 @@ networkx
 numba
 numpy
 pandas
-pandas-datareader
+# PartTask344.
+pandas-datareader=0.8.0
 pyarrow
 pywavelets
 scikit-learn

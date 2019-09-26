@@ -170,5 +170,9 @@ _CONDA_PATH = None
 def get_conda_path():
     global _CONDA_PATH
     if not _CONDA_PATH:
-        _CONDA_PATH = conda_system_to_string("which conda")[1]
+        rc, txt = _CONDA_PATH = conda_system_to_string("which conda", abort_on_error=False)
+        if rc == 0:
+            _CONDA_PATH = txt
+        else:
+            _CONDA_PATH = "n/a"
     return _CONDA_PATH
