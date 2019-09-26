@@ -116,7 +116,7 @@ class Node(AbstractNode):
 
 
 # TODO(Paul): Consider renaming `DAG` once we enforce the invariant.
-class Graph:
+class DAG:
     """
     Class for building pipeline graphs using Nodes.
 
@@ -126,21 +126,11 @@ class Graph:
     The Graph manages node execution.
     """
     def __init__(self):
-        self._graph = nx.DiGraph()
+        self._dag = nx.DiGraph()
 
     @property
-    def graph(self):
-        return self._graph
-
-    # TODO(Paul): Make a function, make private
-    @property
-    def is_dag(self):
-        """
-        Convenience method for checking that the graph is a DAG.
-
-        return: Bool
-        """
-        return nx.is_directed_acyclic_graph(self._graph)
+    def dag(self):
+        return self._dag
 
     def add_node(self, node):
         """
@@ -152,7 +142,7 @@ class Graph:
         """
         dbg.dassert_isinstance(node, Node,
                                "Only graphs of class `Node` are supported!")
-        self._graph.add_node(node.nid, stage=node)
+        self._dag.add_node(node.nid, stage=node)
 
     def get_node(self, nid):
         """
@@ -161,9 +151,8 @@ class Graph:
         :param nid: unique string node id
         :return: Node object
         """
-        return self._graph.nodes[nid]['stage']
+        return self._dag.nodes[nid]['stage']
 
-    # TODO(Paul): Consider making this add the nodes if they don't already exist
     # TODO(Paul): Automatically infer edge labels when possible (e.g., SISO).
     def connect(self, parent, child):
         """
@@ -181,18 +170,22 @@ class Graph:
         dbg.dassert_in(parent[1], self.get_node(parent[0]).output_names)
         dbg.dassert_in(child[1], self.get_node(child[0]).input_names)
         kwargs = {child[1]: parent[1]}
-        # TODO(Paul): Check that graph is a DAG after adding edge; remove and
-        # issue a warning if adding the edge violates.
-        self._graph.add_edge(parent[0], child[0], **kwargs)
+        self._dag.add_edge(parent[0], child[0], **kwargs)
+        if not nx.is_directed_acyclic_graph(self.dag):
+            _LOG.warning("Creating edge %s -> %s failed because it creates a cycle!",
+                         parent[0], child[0])
+            self._dag.remove_edge(parent[0], child[0])
 
-    def _run_node(self, method, nid):
+    def _run_node(self, nid, method):
         """
-        Helper method for running individual nodes.
+        Runs a single node.
+
+        This method DOES NOT run (or re-run) ancestors of `nid`.
         """
         _LOG.debug("Node nid=`%s` executing method `%s`...", nid, method)
         kwargs = {}
-        for pre in self._graph.predecessors(nid):
-            kvs = self._graph.edges[[pre, nid]]
+        for pre in self._dag.predecessors(nid):
+            kvs = self._dag.edges[[pre, nid]]
             pre_node = self.get_node(pre)
             for k, v in kvs.items():
                 # Retrieve output from store.
@@ -202,46 +195,38 @@ class Graph:
         output = getattr(node, method)(**kwargs)
         for out in node.output_names:
             node.store_output(method, out, output[out])
+        return self.get_node(nid).get_outputs(method)
 
-    def run(self, method):
+    def run_dag(self, method):
         """
         Executes entire pipeline.
+
+        Nodes are run according to a topological sort.
 
         :param method: Method of class `Node` (or subclass) to be executed for
             the entire DAG.
         """
-        dbg.dassert(self.is_dag, "Graph execution requires a DAG!")
-        for nid in nx.topological_sort(self._graph):
+        sinks = []
+        for nid in nx.topological_sort(self._dag):
+            if any(True for _ in self._dag.predecessors(nid)):
+                sinks.append(nid)
             self._run_node(method=method, nid=nid)
-        # TODO(Paul): Return a list of the outputs of all of the sync nodes.
+        return [self.get_node(sink).get_outputs(method) for sink in sinks]
 
-    # TODO(Paul): Switch the order so that the node id is first.
-    def run_node(self, method, nid, eval_mode="default"):
+    def run_leq_node(self, nid, method):
         """
         Executes pipeline only up to (and including) `node` and returns output.
 
-        :param method: Same as in `run`.
-        :param node: terminal evaluation node
+        "leq" refers to the partial ordering on the vertices. This method
+        runs a node if and only if there is a directed path from the node to
+        `nid`. Nodes are run according to a topological sort.
         """
-        if eval_mode == "default":
-            dbg.dassert(self.is_dag, "Graph execution requires a DAG!")
-            ancestors = filter(lambda x: x in nx.ancestors(self._graph, nid),
-                               nx.topological_sort(self._graph))
-            nids = itertools.chain(ancestors, [nid])
-        elif eval_mode == "cache":
-            nids = [nid]
-        else:
-            raise ValueError("Supported eval_modes are `default` and `cache`.")
+        ancestors = filter(lambda x: x in nx.ancestors(self._dag, nid),
+                           nx.topological_sort(self._dag))
+        nids = itertools.chain(ancestors, [nid])
         for n in nids:
-            self._run_node(method, n)
+            self._run_node(n, method)
         return self.get_node(nid).get_outputs(method)
-
-    def draw(self):
-        nx.draw_networkx(self.graph,
-                         pos=nx.spectral_layout(self.graph),
-                         node_size=3000,
-                         arrowsize=30,
-                         width=1.5)
 
 
 # TODO(Paul): Move (most of) these to a separate library
@@ -446,15 +431,15 @@ class Model(Node):
         return {'output': hat_y}
 
 
-def cross_validate(config, source_nid, sink_nid, graph):
-    source_node = graph.get_node(source_nid)
+def cross_validate(config, source_nid, sink_nid, dag):
+    source_node = dag.get_node(source_nid)
     df = source_node.get_df()
     splits = pip.get_splits(config, df)
     #
     for i, (train_idxs, test_idxs) in enumerate(splits):
         source_node.set_train_idxs(train_idxs)
-        graph.run_node("fit", sink_nid)
+        dag.run_leq_node(sink_nid, "fit")
         #
         source_node.set_test_idxs(test_idxs)
-        graph.run_node("predict", sink_nid)
-    return graph.get_node(sink_nid)
+        dag.run_leq_node(sink_nid, "predict")
+    return dag.get_node(sink_nid)
