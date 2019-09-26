@@ -5,6 +5,7 @@ import logging
 import networkx as nx
 import pandas as pd
 
+import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
@@ -370,4 +371,26 @@ class FilterAth(StatelessSISONode):
     def _transform(self, df):
         df_out = fin.filter_ath(df)
         info = None
+        return df_out, info
+
+
+class ComputeLaggedFeatures(StatelessSISONode):
+    def __init__(self, nid, y_var, delay_lag, num_lags):
+        super().__init__(nid)
+        self.y_var = y_var
+        self.delay_lag = delay_lag
+        self.num_lags = num_lags
+
+    def get_x_vars(self):
+        x_vars = ftrs.get_lagged_feature_names(self.y_var, self.delay_lag,
+                                        self.num_lags)
+        return x_vars
+
+    def _transform(self, df):
+        # Make a copy to be safe.
+        df = df.copy()
+        df = ftrs.reindex_to_integers(df)
+        df_out, info = ftrs.compute_lagged_features(
+            df, self.y_var, self.delay_lag, self.num_lags
+        )
         return df_out, info
