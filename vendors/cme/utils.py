@@ -14,6 +14,8 @@ Usage example:
  --slate_with_specs_csv_dst_path slate_with_specs.csv
 """
 
+# TODO(gp): Dummy for RB.
+
 import argparse
 import logging
 import os

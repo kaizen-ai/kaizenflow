@@ -29,6 +29,7 @@ _ZIPPED_DST_DIR = "/data/firstrate_zipped/"
 _UNZIPPED_DST_DIR = "/data/firstrate_unzipped/"
 _PQ_DST_DIR = "data/firstrate_pq"
 
+# TODO(gp): Dummy for RB.
 
 class FileURL:
     """
