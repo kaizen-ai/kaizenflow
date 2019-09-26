@@ -7,7 +7,7 @@ import pandas as pd
 from scipy.stats import norm
 
 import core.config as cfg
-import core.dataflow as dtf
+import core.dataflow_old as dtf
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
@@ -142,11 +142,11 @@ class Test_config1(ut.TestCase):
 
 
 # #############################################################################
-# dataflow.py
+# dataflow_old.py
 # #############################################################################
 
 
-class Test_dataflow_Node1(ut.TestCase):
+class Test_dataflow_old_Node1(ut.TestCase):
     def _check(self, n):
         act = n.dag_to_string()
         _LOG.debug("act=%s", act)
@@ -182,7 +182,7 @@ class Test_dataflow_Node1(ut.TestCase):
         self._check(n3)
 
 
-class Test_dataflow_ReadData1(ut.TestCase):
+class Test_dataflow_old_ReadData1(ut.TestCase):
     def _check(self, n):
         act = n.dag_to_string()
         _LOG.debug("act=%s", act)

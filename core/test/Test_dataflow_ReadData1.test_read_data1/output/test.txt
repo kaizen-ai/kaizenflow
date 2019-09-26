@@ -1,2 +1,0 @@
-name=zscore, type=core.dataflow.Zscore, num_inputs=1, is_connected=True, is_fit=False
-  name=read_data, type=core.dataflow.ReadDataFromDf, num_inputs=0, is_connected=True, is_fit=False
