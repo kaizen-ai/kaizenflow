@@ -2,4 +2,4 @@
 
 source helpers.sh
 
-exec "ghi --no-pager list --mine --label IN_PROGRESS"
+execute "ghi --no-pager list --mine --label IN_PROGRESS"

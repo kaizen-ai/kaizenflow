@@ -7,8 +7,8 @@
 source helpers.sh
 
 echo "==================== gup.py ===================="
-exec "gup.py"
+execute "gup.py"
 
 echo
 echo "==================== git push ===================="
-exec "git push"
+execute "git push"

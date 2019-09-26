@@ -44,7 +44,9 @@ def set_incremental_tests(val):
 def get_incremental_tests():
     return _INCREMENTAL_TESTS
 
+
 # #############################################################################
+
 
 def get_random_df(num_cols, seed=None, **kwargs):
     """
@@ -69,7 +71,7 @@ def get_df_signature(df, num_rows=3):
     txt = []
     txt.append("df.shape=%s" % str(df.shape))
     with pd.option_context(
-            "display.max_colwidth", int(1e6), "display.max_columns", None
+        "display.max_colwidth", int(1e6), "display.max_columns", None
     ):
         txt.append("df.head=\n%s" % df.head(num_rows))
         txt.append("df.tail=\n%s" % df.tail(num_rows))
@@ -109,6 +111,7 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
     :param fuzzy: ignore differences in spaces and end of lines (see
       `_remove_spaces`)
     """
+
     def _to_string(obj):
         if isinstance(obj, dict):
             ret = pprint.pformat(obj)
@@ -174,6 +177,7 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
         _LOG.error(msg)
         # Print stack trace.
         raise RuntimeError(msg)
+
 
 # #############################################################################
 # TestCase
@@ -301,8 +305,9 @@ class TestCase(unittest.TestCase):
                 # the golden outcome.
                 expected = io_.from_file(file_name, split=False)
                 test_name = self._get_test_name()
-                _assert_equal(actual, expected, test_name, dir_name,
-                              fuzzy_match=fuzzy_match)
+                _assert_equal(
+                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
+                )
             else:
                 # No golden outcome available: save the result in a tmp file.
                 tmp_file_name = file_name + ".tmp"

@@ -9,5 +9,5 @@ source helpers.sh
 FILES=$*
 echo "Accepting our version of $FILES"
 #cp $* $*.$(timestamp)
-exec "git checkout --ours $FILES"
-exec "git add $FILES"
+execute "git checkout --ours $FILES"
+execute "git add $FILES"

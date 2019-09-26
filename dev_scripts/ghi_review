@@ -2,4 +2,4 @@
 
 source helpers.sh
 
-exec "ghi --no-pager list -g -L TO_REVIEW"
+execute "ghi --no-pager list -g -L TO_REVIEW"

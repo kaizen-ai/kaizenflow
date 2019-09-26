@@ -7,8 +7,8 @@
 
 source helpers.sh
 
-exec "git status --short $*"
+execute "git status --short $*"
 
 echo
 echo "===================== submodule ====================="
-exec "git submodule foreach git status --short $*"
+execute "git submodule foreach git status --short $*"

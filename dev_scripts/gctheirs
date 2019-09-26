@@ -8,6 +8,6 @@ source helpers.sh
 
 FILES=$*
 echo "Accepting $FILES"
-exec "git reset HEAD $FILES"
-exec "git checkout --theirs $FILES"
-exec "git add $FILES"
+execute "git reset HEAD $FILES"
+execute "git checkout --theirs $FILES"
+execute "git add $FILES"

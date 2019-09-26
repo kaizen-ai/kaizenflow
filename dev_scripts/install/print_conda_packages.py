@@ -25,7 +25,8 @@ def _main():
     )
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
-    msg = env.save_env_file(args.conda_env_name, dir_name=None)
+    msg, file_name = env.save_env_file(args.conda_env_name, dir_name=None)
+    print("file_name=%s", file_name)
     print(msg)
 
 

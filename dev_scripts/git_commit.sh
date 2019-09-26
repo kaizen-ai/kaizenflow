@@ -10,12 +10,12 @@ if [[ -z $msg ]]; then
 fi;
 
 cd amp
-exec "git commit -am '$msg'"
+execute "git commit -am '$msg'"
 gp
 
 cd ..
-exec "git submodule update --remote"
-exec "git add amp"
+execute "git submodule update --remote"
+execute "git add amp"
 
-exec "git commit -am '$msg'"
+execute "git commit -am '$msg'"
 gp

@@ -6,5 +6,5 @@
 
 source helpers.sh
 
-exec "git reset HEAD $*"
-exec "git checkout -- $*"
+execute "git reset HEAD $*"
+execute "git checkout -- $*"

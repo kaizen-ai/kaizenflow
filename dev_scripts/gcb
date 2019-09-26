@@ -6,5 +6,5 @@
 
 source helpers.sh
 
-exec "git checkout -b $*"
-exec "git push -u origin $*"
+execute "git checkout -b $*"
+execute "git push -u origin $*"

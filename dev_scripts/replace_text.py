@@ -6,7 +6,11 @@ Replace an instance of text in all py, ipynb, and txt files.
 > replace_text.py --old "import core.finance" --new "import core.finance" --preview
 > replace_text.py --old "alphamatic/kibot/All_Futures" --new "alphamatic/kibot/All_Futures" --preview
 
+# Custom flow:
 > replace_text.py --custom_flow _custom1
+
+# Replace in scripts
+> replace_text.py --old "exec " --new "execute " --preview --dirs dev_scripts --exts None
 
 # To revert all files but this one
 > gs -s | grep -v dev_scripts/replace_text.py | grep -v "\?" | awk '{print $2}' | xargs git checkout --
@@ -21,7 +25,15 @@ import helpers.io_ as io_
 import helpers.printing as pri
 import helpers.system_interaction as si
 
+# TODO(gp):
+#  - allow to read a cfile with a subset of files / points to replace
+#  - allow to work with no filter
+#  - fix the help
+#  - figure out the issue with encoding
+
 _LOG = logging.getLogger(__name__)
+
+_ENCODING = "ISO-8859-1"
 
 
 def _get_extensions(exts):
@@ -32,16 +44,25 @@ def _get_extensions(exts):
 
 
 def _get_file_names(old_string, dirs, exts):
-    dbg.dassert_isinstance(exts, list)
-    dbg.dassert_lte(1, len(exts))
+    """
+    :param exts: if None, no filtering by extentions
+    """
+    if exts is not None:
+        dbg.dassert_isinstance(exts, list)
+        dbg.dassert_lte(1, len(exts))
+        for ext in exts:
+            dbg.dassert(not ext.startswith("."), "Invalid ext='%s'", ext)
     # Get files.
     _LOG.debug("exts=%s", exts)
     file_names = []
     for d in dirs:
         _LOG.debug("Processing dir '%s'", d)
-        for ext in exts:
-            dbg.dassert(not ext.startswith("."), "Invalid ext='%s'", ext)
-            file_names_tmp = io_.find_files(d, "*." + ext)
+        if exts is None:
+            for ext in exts:
+                file_names_tmp = io_.find_files(d, "*." + ext)
+                _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
+        else:
+            file_names_tmp = io_.find_files(d, "*")
             _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
             file_names.extend(file_names_tmp)
     file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
@@ -64,7 +85,7 @@ def _get_file_names(old_string, dirs, exts):
 
 
 def _look_for(file_name, old_string):
-    txt = io_.from_file(file_name, split=False)
+    txt = io_.from_file(file_name, split=False, encoding=_ENCODING)
     txt = txt.split("\n")
     res = []
     found = False
@@ -75,6 +96,9 @@ def _look_for(file_name, old_string):
             res.append("%s:%s:%s" % (file_name, i + 1, line))
             found = True
     return found, res
+
+
+# ##############################################################################
 
 
 def _replace_with_perl(file_name, old_string, new_string, backup):
@@ -111,7 +135,7 @@ def _replace_with_python(file_name, old_string, new_string, backup):
         cmd = "cp %s %s.bak" % (file_name, file_name)
         si.system(cmd)
     #
-    lines = io_.from_file(file_name, split=True)
+    lines = io_.from_file(file_name, split=True, encoding=_ENCODING)
     lines_out = []
     for line in lines:
         _LOG.debug("line='%s'", line)
@@ -174,24 +198,6 @@ def _custom1(args):
 # ##############################################################################
 
 
-def _main(args):
-    dbg.init_logger(args.log_level)
-    if args.custom_flow:
-        eval("%s(args)" % args.custom_flow)
-    else:
-        dirs = args.dirs
-        exts = _get_extensions(args.ext)
-        file_names_to_process, txt = _get_file_names(args.old, dirs, exts)
-        io_.to_file("./cfile", txt)
-        #
-        if args.preview:
-            _LOG.warning("Preview only as required. Results saved in ./cfile")
-            exit(0)
-        # Replace.
-        mode = "replace_with_perl"
-        _replace(file_names_to_process, args.old, args.new, args.backup, mode)
-
-
 def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -211,6 +217,12 @@ def _parse():
         "--preview", action="store_true", help="Preview only the replacement"
     )
     parser.add_argument(
+        "--mode",
+        action="store",
+        default="replace_with_python",
+        choices=["replace_with_python", "replace_with_perl"],
+    )
+    parser.add_argument(
         "--ext",
         action="store",
         type=str,
@@ -221,10 +233,10 @@ def _parse():
         "--backup", action="store_true", help="Keep backups of files"
     )
     parser.add_argument(
+        "-d",
         "--dirs",
         action="append",
-        type=str,
-        default=".",
+        default=None,
         help="Directories to process",
     )
     parser.add_argument(
@@ -234,10 +246,36 @@ def _parse():
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level",
     )
-    #
+    return parser
+
+
+def _main(parser):
     args = parser.parse_args()
-    _main(args)
+    dbg.init_logger(args.log_level)
+    if args.custom_flow:
+        eval("%s(args)" % args.custom_flow)
+    else:
+        # Use command line params.
+        dirs = args.dirs
+        if dirs is None:
+            dirs = ["."]
+        _LOG.info("dirs=%s", dirs)
+        if args.ext == "None":
+            exts = None
+        else:
+            exts = _get_extensions(args.ext)
+        _LOG.info("extensions=%s", exts)
+        file_names_to_process, txt = _get_file_names(args.old, dirs, exts)
+        io_.to_file("./cfile", txt)
+        #
+        if args.preview:
+            _LOG.warning("Preview only as required. Results saved in ./cfile")
+            exit(0)
+        # Replace.
+        _replace(
+            file_names_to_process, args.old, args.new, args.backup, args.mode
+        )
 
 
 if __name__ == "__main__":
-    _parse()
+    _main(_parse())

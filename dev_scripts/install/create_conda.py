@@ -295,7 +295,7 @@ def _main(parser):
     #
     _, file_name = env.save_env_file(conda_env_name, _CONDA_ENVS_DIR)
     # TODO(gp): Not happy to save all the package list in amp. It should go in
-    # a spot with respct to the git root.
+    # a spot with respect to the git root.
     _LOG.warning(
         "You should commit the file '%s' for future reference", file_name
     )

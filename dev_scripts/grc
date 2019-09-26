@@ -4,4 +4,4 @@
 # git rebase --continue
 # ```
 
-exec "git rebase --continue"
+execute "git rebase --continue"

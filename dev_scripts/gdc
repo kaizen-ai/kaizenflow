@@ -6,4 +6,4 @@
 
 source helpers.sh
 
-exec "git difftool --cached"
+execute "git difftool --cached"

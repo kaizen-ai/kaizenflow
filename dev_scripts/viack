@@ -9,5 +9,5 @@
 source helpers.sh
 
 cmd=$*
-exec "$cmd | tee cfile"
+execute "$cmd | tee cfile"
 vic

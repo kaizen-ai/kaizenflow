@@ -6,4 +6,4 @@
 
 source helpers.sh
 
-exec "git diff --name-only --diff-filter=U"
+execute "git diff --name-only --diff-filter=U"

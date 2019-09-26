@@ -25,6 +25,8 @@ _LOG = logging.getLogger(__name__)
 def find_files(directory, pattern):
     """
     Recursive glob.
+
+    :param pattern: pattern to match a filename against
     """
     file_names = []
     for root, _, files in os.walk(directory):
@@ -227,9 +229,9 @@ def to_file(file_name, lines, mode="w", force_flush=False):
 
 
 # TODO(saggese): Remove the split param.
-def from_file(file_name, split=True):
+def from_file(file_name, split=True, encoding=None):
     dbg.dassert_ne(file_name, "")
-    with open(file_name, "r") as f:
+    with open(file_name, "r", encoding=encoding) as f:
         data = f.read()
         dbg.dassert_isinstance(data, str)
         if split:

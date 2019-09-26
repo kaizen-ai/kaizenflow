@@ -8,5 +8,5 @@
 source helpers.sh
 
 # Make a backup.
-exec "gsp.py"
-exec "git clean -fd"
+execute "gsp.py"
+execute "git clean -fd"
