@@ -1,9 +1,13 @@
+import collections
 import copy
 import itertools
 import logging
 
+import matplotlib
+import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
+from sklearn import linear_model
 
 import core.features as ftrs
 import core.finance as fin
@@ -97,7 +101,8 @@ class Node(AbstractNode):
     def get_output(self, method, name):
         dbg.dassert_in(name, self.output_names,
                        "%s is not an output of node %s!", name, self.nid)
-        dbg.dassert_in(method, self._output_vals.keys())
+        dbg.dassert_in(method, self._output_vals.keys(),
+                       "%s of node %s has no output!", method, self.nid)
         return self._output_vals[method][name]
 
     def get_outputs(self, method):
@@ -127,6 +132,7 @@ class Graph:
     def graph(self):
         return self._graph
 
+    # TODO(Paul): Make a function, make private
     @property
     def is_dag(self):
         """
@@ -226,9 +232,16 @@ class Graph:
             nids = [nid]
         else:
             raise ValueError("Supported eval_modes are `default` and `cache`.")
-        for nid in nids:
-            self._run_node(method=method, nid=nid)
+        for n in nids:
+            self._run_node(method, n)
         return self.get_node(nid).get_outputs(method)
+
+    def draw(self):
+        nx.draw_networkx(self.graph,
+                         pos=nx.spectral_layout(self.graph),
+                         node_size=3000,
+                         arrowsize=30,
+                         width=1.5)
 
 
 # TODO(Paul): Move (most of) these to a separate library
@@ -312,6 +325,7 @@ class ReadDataFromKibot(ReadData):
         return super().fit()
 
 
+# TODO(Paul): Rename SISO to Siso
 class StatelessSISONode(Node):
     def __init__(self, nid):
         super().__init__(nid, inputs=["input"], outputs=["output"])
@@ -374,6 +388,8 @@ class FilterAth(StatelessSISONode):
         return df_out, info
 
 
+# TODO(Paul, GP): Confusing interface. If we only sent out the transformed
+# variables, then we wouldn't need `get_x_vars`.
 class ComputeLaggedFeatures(StatelessSISONode):
     def __init__(self, nid, y_var, delay_lag, num_lags):
         super().__init__(nid)
@@ -383,7 +399,7 @@ class ComputeLaggedFeatures(StatelessSISONode):
 
     def get_x_vars(self):
         x_vars = ftrs.get_lagged_feature_names(self.y_var, self.delay_lag,
-                                        self.num_lags)
+                                               self.num_lags)
         return x_vars
 
     def _transform(self, df):
@@ -394,3 +410,51 @@ class ComputeLaggedFeatures(StatelessSISONode):
             df, self.y_var, self.delay_lag, self.num_lags
         )
         return df_out, info
+
+
+class Model(Node):
+    # NOTE: y_var before x_vars?
+    def __init__(self, nid, y_var, x_vars):
+        super().__init__(nid, inputs=['input'], outputs=['output'])
+        self.y_var = y_var
+        self.x_vars = x_vars
+
+    def fit(self, input):
+        """
+        A model fit doesn't return anything since it's a sink.
+
+        # TODO: Consider making `fit` pass-through in terms of dataflow.
+        """
+        df = input
+        reg = linear_model.LinearRegression()
+        x_train = df[self.x_vars]
+        y_train = df[self.y_var]
+        self.model = reg.fit(x_train, y_train)
+        return {'output': None}
+
+    def predict(self, input):
+        df = input
+        x_test = df[self.x_vars]
+        y_test = df[self.y_var]
+        #
+        info = collections.OrderedDict()
+        info["hitrate"] = pip._compute_model_hitrate(self.model, x_test, y_test)
+        hat_y = self.model.predict(x_test)
+        pnl_rets = y_test * hat_y
+        info["pnl_rets"] = pnl_rets
+        self.predict_info = copy.copy(info)
+        return {'output': hat_y}
+
+
+def cross_validate(config, source_nid, sink_nid, graph):
+    source_node = graph.get_node(source_nid)
+    df = source_node.get_df()
+    splits = pip.get_splits(config, df)
+    #
+    for i, (train_idxs, test_idxs) in enumerate(splits):
+        source_node.set_train_idxs(train_idxs)
+        graph.run_node("fit", sink_nid)
+        #
+        source_node.set_test_idxs(test_idxs)
+        graph.run_node("predict", sink_nid)
+    return graph.get_node(sink_nid)
