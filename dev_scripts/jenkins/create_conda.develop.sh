@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 # ```
 # Build "develop" conda env from scratch.
@@ -26,6 +26,7 @@ env
 echo "$EXEC_NAME: source $AMP/dev_scripts/helpers.sh"
 source $AMP/dev_scripts/helpers.sh
 
+# TODO(gp): dev_scripts/create_conda.sh
 CMD="create_conda.py --env_name $CONDA_ENV --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists"
 frame "$EXEC_NAME: $CMD"
 execute $CMD

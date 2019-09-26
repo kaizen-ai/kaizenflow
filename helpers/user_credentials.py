@@ -19,6 +19,15 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
+def _get_p1_dev_server_ip():
+    env_var_name = "P1_DEV_SERVER"
+    if env_var_name not in os.environ:
+        _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh", env_var_name)
+        raise RuntimeError
+    dev_server = os.environ[env_var_name]
+    return dev_server
+
+
 # pylint: disable=R0915
 # [R0915(too-many-statements), ] Too many statements (51/50)
 def get_credentials():
@@ -56,11 +65,6 @@ def get_credentials():
     9) notebook_backup_path: the path where to backup the source .ipynb code of
         notebooks
     """
-    env_var_name = "P1_DEV_SERVER"
-    if env_var_name not in os.environ:
-        _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh", env_var_name)
-        raise RuntimeError
-    dev_server = os.environ[env_var_name]
     #
     user_name = si.get_user_name()
     server_name = si.get_server_name()
@@ -94,7 +98,7 @@ def get_credentials():
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
-                tunnel_info = [("Jupyter1", dev_server, 10002)]
+                tunnel_info = [("Jupyter1", _get_p1_dev_server_ip(), 10002)]
                 jupyter_port = 10001
             elif git_repo_name == "alphamatic/lemonade":
                 # TODO(gp): This should be factored out in the including

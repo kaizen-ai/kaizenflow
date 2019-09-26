@@ -19,6 +19,7 @@ tqdm
 ## pydata
 ## ############################################################################
 matplotlib
+networkx
 numba
 numpy
 pandas
