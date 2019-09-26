@@ -11,15 +11,6 @@ echo "Starting $EXEC_NAME ..."
 DIR=$(dirname "$EXEC_NAME")
 EXEC_PATH=$(cd $DIR ; pwd -P)
 
-# Make sure conda works.
-# TODO(gp): Move this inside _setenv.py
-conda -V
-rc=$?
-if [[ $rc != 0 ]]; then
-  echo "conda not working: exiting"
-  return $rc
-fi;
-
 # Make sure python works.
 python -V
 rc=$?

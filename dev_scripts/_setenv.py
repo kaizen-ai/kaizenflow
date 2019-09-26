@@ -196,8 +196,9 @@ def _main(parser):
     #
     # Check conda.
     #
-    cmd = "conda -V"
-    si.system(cmd)
+    # TODO(gp): After updating to anaconda3, conda doesn't work from python anymore.
+    # cmd = "conda -V"
+    # si.system(cmd)
     #
     # Config git.
     #
