@@ -115,6 +115,13 @@ def get_credentials():
         git_user_email = "smith.paul.anthony@gmail.com"
         conda_sh_path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/Users/paul/.conda/envs"
+    elif user_name == "gad":
+        # Paul.
+        git_user_name = "gad26032"
+        git_user_email = "malanin@particle.one"
+        conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+        conda_env_path = "/home/gad/.conda/envs"
+        jupyter_port = 9111
     elif user_name == "julia":
         # Julia.
         git_user_name = "Julia"
