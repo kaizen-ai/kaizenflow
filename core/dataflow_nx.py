@@ -1,13 +1,21 @@
+import copy
 import itertools
 import logging
 
 import networkx as nx
 import pandas as pd
 
+import core.finance as fin
 import helpers.dbg as dbg
+import rolling_model.pipeline as pip
 import vendors.kibot.utils as kut
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# Core node classes
+# #############################################################################
 
 
 class AbstractNode:
@@ -96,6 +104,11 @@ class Node(AbstractNode):
         return self._output_vals[method]
 
 
+# #############################################################################
+# Graph class for creating and executing a DAG of nodes.
+# #############################################################################
+
+
 class Graph:
     """
     Class for building pipeline graphs using Nodes.
@@ -158,6 +171,8 @@ class Graph:
         dbg.dassert_in(parent[1], self.get_node(parent[0]).output_names)
         dbg.dassert_in(child[1], self.get_node(child[0]).input_names)
         kwargs = {child[1]: parent[1]}
+        # TODO(Paul): Check that graph is a DAG after adding edge; remove and
+        # issue a warning if adding the edge violates.
         self._graph.add_edge(parent[0], child[0], **kwargs)
 
     def _run_node(self, method, nid):
@@ -188,6 +203,7 @@ class Graph:
         dbg.dassert(self.is_dag, "Graph execution requires a DAG!")
         for nid in nx.topological_sort(self._graph):
             self._run_node(method=method, nid=nid)
+        # TODO(Paul): Return a list of the outputs of all of the sync nodes.
 
     def run_node(self, method, nid, eval_mode="default"):
         """
@@ -210,9 +226,15 @@ class Graph:
         return self.get_node(nid).get_outputs(method)
 
 
+# TODO(Paul): Move (most of) these to a separate library
+# #############################################################################
+# DataFrame manipulation nodes
+# #############################################################################
+
+
 class ReadData(Node):
     def __init__(self, nid):
-        super().__init__(nid, outputs=["out"])
+        super().__init__(nid, outputs=["output"])
         #
         self.df = None
         self._train_idxs = None
@@ -233,7 +255,7 @@ class ReadData(Node):
         else:
             train_df = self.df
         self._output_vals
-        return {"out": train_df}
+        return {self.output_names[0]: train_df}
 
     def set_test_idxs(self, test_idxs):
         """
@@ -249,7 +271,7 @@ class ReadData(Node):
             test_df = self.df.iloc[self._test_idxs]
         else:
             test_df = self.df
-        return {"out": test_df}
+        return {self.output_names[0]: test_df}
 
     def get_df(self):
         dbg.dassert_is_not(self.df, None)
@@ -282,3 +304,65 @@ class ReadDataFromKibot(ReadData):
         """
         self._lazy_load()
         return super().fit()
+
+
+class StatelessSISONode(Node):
+    def __init__(self, nid):
+        super().__init__(nid, inputs=["input"], outputs=["output"])
+
+    def _transform(self, df):
+        """
+        :return: df, info
+        """
+        raise NotImplementedError
+
+    def fit(self, input):
+        # Transform the input df.
+        df_out, info = self._transform(input)
+        # Save the info in the node: we make a copy just to be safe.
+        self.fit_info = copy.copy(info)
+        return {"output": df_out}
+
+    def predict(self, input):
+        # Transform the input df.
+        df_out, info = self._transform(input)
+        # Save the info in the node: we make a copy just to be safe.
+        self.predict_info = copy.copy(info)
+        return {"output": df_out}
+
+
+# TODO(Paul): Write a Node builder to automatically generate these from
+# functions.
+# TODO(gp): Pass "ret_0" and "open" through constructor.
+class PctReturns(StatelessSISONode):
+    def __init__(self, nid):
+        super().__init__(nid)
+
+    def _transform(self, df):
+        df = df.copy()
+        df["ret_0"] = df["open"].pct_change()
+        info = None
+        return df, info
+
+
+class Zscore(StatelessSISONode):
+    def __init__(self, nid, style, com):
+        super().__init__(nid)
+        self.style = style
+        self.com = com
+
+    def _transform(self, df):
+        # df_out = sigp.rolling_zscore(df, self.tau)
+        df_out = pip.zscore(df, self.style, self.com)
+        info = None
+        return df_out, info
+
+
+class FilterAth(StatelessSISONode):
+    def __init__(self, nid):
+        super().__init__(nid)
+
+    def _transform(self, df):
+        df_out = fin.filter_ath(df)
+        info = None
+        return df_out, info
