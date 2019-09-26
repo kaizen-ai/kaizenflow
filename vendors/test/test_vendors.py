@@ -61,7 +61,7 @@ class Test_kibot_utils1(ut.TestCase):
 
     def _helper_read_metadata(self, func):
         df = func()
-        self.check_string(ut.get_df_signature(df))
+        self.check_string(ut.get_df_signature(df), fuzzy_match=True)
 
     def test_read_metadata1(self):
         self._helper_read_metadata(kut.read_metadata1)

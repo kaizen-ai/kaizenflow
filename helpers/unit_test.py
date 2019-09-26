@@ -44,19 +44,71 @@ def set_incremental_tests(val):
 def get_incremental_tests():
     return _INCREMENTAL_TESTS
 
+# #############################################################################
+
+def get_random_df(num_cols, seed=None, **kwargs):
+    """
+    Compute df with random data with `num_cols` columns and index obtained by
+    calling `pd.date_range(**kwargs)`.
+
+    :return: df
+    """
+    import pandas as pd
+
+    if seed:
+        np.random.seed(seed)
+    dt = pd.date_range(**kwargs)
+    df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
+    return df
+
+
+def get_df_signature(df, num_rows=3):
+    import pandas as pd
+
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    txt = []
+    txt.append("df.shape=%s" % str(df.shape))
+    with pd.option_context(
+            "display.max_colwidth", int(1e6), "display.max_columns", None
+    ):
+        txt.append("df.head=\n%s" % df.head(num_rows))
+        txt.append("df.tail=\n%s" % df.tail(num_rows))
+    txt = "\n".join(txt)
+    return txt
+
 
 # #############################################################################
 # Helpers.
 # #############################################################################
 
 
-def _assert_equal(actual, expected, full_test_name, test_dir):
+def _remove_spaces(obj):
+    string = str(obj)
+    string = string.replace("\\n", "\n").replace("\\t", "\t")
+    # Convert multiple empty spaces (but not newlines) into a single one.
+    string = re.sub(r"[^\S\n]+", " ", string)
+    # Remove insignificant crap.
+    lines = []
+    for line in string.split("\n"):
+        # Remove leading and trailing spaces.
+        line = re.sub(r"^\s+", "", line)
+        line = re.sub(r"\s+$", "", line)
+        # Skip empty lines.
+        if line != "":
+            lines.append(line)
+    string = "\n".join(lines)
+    return string
+
+
+def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False):
     """
     Implement a better version of self.assertEqual() that reports mismatching
     strings with sdiff and save them to files for further analysis with
     vimdiff.
-    """
 
+    :param fuzzy: ignore differences in spaces and end of lines (see
+      `_remove_spaces`)
+    """
     def _to_string(obj):
         if isinstance(obj, dict):
             ret = pprint.pformat(obj)
@@ -65,12 +117,29 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
         ret = ret.rstrip("\n")
         return ret
 
+    # Convert to strings.
     actual = _to_string(actual)
     expected = _to_string(expected)
+    # Fuzzy match, if needed.
+    if fuzzy_match:
+        _LOG.debug("Useing fuzzy match")
+        actual_orig = actual
+        actual = _remove_spaces(actual)
+        expected_orig = expected
+        expected = _remove_spaces(expected)
+    # Check.
     if expected != actual:
         _LOG.info(
             "%s", "\n" + pri.frame("Test %s failed" % full_test_name, "=", 80)
         )
+        if fuzzy_match:
+            # Set the following var to True to print the purified version (e.g.,
+            # tables too large).
+            print_purified_version = False
+            # print_purified_version = True
+            if print_purified_version:
+                expected = expected_orig
+                actual = actual_orig
         # Dump the actual and expected strings to files.
         _LOG.debug("Actual:\n%s", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir
@@ -105,78 +174,6 @@ def _assert_equal(actual, expected, full_test_name, test_dir):
         _LOG.error(msg)
         # Print stack trace.
         raise RuntimeError(msg)
-
-
-def _remove_spaces(obj):
-    string = str(obj)
-    string = string.replace("\\n", "\n").replace("\\t", "\t")
-    # Convert multiple empty spaces (but not newlines) into a single one.
-    string = re.sub(r"[^\S\n]+", " ", string)
-    # Remove insignificant crap.
-    lines = []
-    for line in string.split("\n"):
-        # Remove leading and trailing spaces.
-        line = re.sub(r"^\s+", "", line)
-        line = re.sub(r"\s+$", "", line)
-        # Skip empty lines.
-        if line != "":
-            lines.append(line)
-    string = "\n".join(lines)
-    return string
-
-
-def _fuzzy_assert_equal(actual, expected, full_test_name, test_dir):
-    """
-    Implement a better version of self.assertEqual() that ignores differences in
-    spaces and end of lines, by calling _remove_spaces().
-    """
-    purified_actual = _remove_spaces(actual)
-    purified_expected = _remove_spaces(expected)
-    if purified_expected != purified_actual:
-        # Set the following var to True to print the purified version (e.g.,
-        # tables too large).
-        print_purified_version = False
-        # print_purified_version = True
-        if print_purified_version:
-            expected = purified_expected
-            actual = purified_actual
-        else:
-            expected = expected
-            actual = actual
-        #
-        _assert_equal(actual, expected, full_test_name, test_dir)
-
-
-def get_random_df(num_cols, seed=None, **kwargs):
-    """
-    Compute df with random data with `num_cols` columns and index obtained by
-    calling `pd.date_range(**kwargs)`.
-
-    :return: df
-    """
-    import pandas as pd
-
-    if seed:
-        np.random.seed(seed)
-    dt = pd.date_range(**kwargs)
-    df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
-    return df
-
-
-def get_df_signature(df, num_rows=3):
-    import pandas as pd
-
-    dbg.dassert_isinstance(df, pd.DataFrame)
-    txt = []
-    txt.append("df.shape=%s" % str(df.shape))
-    with pd.option_context(
-        "display.max_colwidth", int(1e6), "display.max_columns", None
-    ):
-        txt.append("df.head=\n%s" % df.head(num_rows))
-        txt.append("df.tail=\n%s" % df.tail(num_rows))
-    txt = "\n".join(txt)
-    return txt
-
 
 # #############################################################################
 # TestCase
@@ -253,7 +250,7 @@ class TestCase(unittest.TestCase):
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
-    def check_string(self, actual):
+    def check_string(self, actual, fuzzy_match=False):
         """
         Check the actual outcome of a test against the expected outcomes
         contained in the file and/or updates the golden reference file with the
@@ -304,7 +301,8 @@ class TestCase(unittest.TestCase):
                 # the golden outcome.
                 expected = io_.from_file(file_name, split=False)
                 test_name = self._get_test_name()
-                _assert_equal(actual, expected, test_name, dir_name)
+                _assert_equal(actual, expected, test_name, dir_name,
+                              fuzzy_match=fuzzy_match)
             else:
                 # No golden outcome available: save the result in a tmp file.
                 tmp_file_name = file_name + ".tmp"
