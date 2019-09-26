@@ -91,7 +91,7 @@ def get_credentials():
         git_user_email = "saggese@gmail.com"
         if server_name in ("gpmac.local", "gpmac.lan"):
             # Laptop.
-            conda_sh_path = "/Users/saggese/anaconda2/etc/profile.d/conda.sh"
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
                 tunnel_info = [("Jupyter1", dev_server, 10002)]
