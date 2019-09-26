@@ -7,7 +7,7 @@ import pandas as pd
 from scipy.stats import norm
 
 import core.config as cfg
-import core.dataflow_old as dtf
+import core.dataflow_old as dtf_old
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
@@ -153,30 +153,30 @@ class Test_dataflow_old_Node1(ut.TestCase):
         self.check_string(act)
 
     def test_connect1(self):
-        n1 = dtf.Node("n1", num_inputs=0)
+        n1 = dtf_old.Node("n1", num_inputs=0)
         n1.connect()
         #
         self._check(n1)
 
     def test_connect2(self):
-        n1 = dtf.Node("n1", num_inputs=0)
+        n1 = dtf_old.Node("n1", num_inputs=0)
         #
         self._check(n1)
 
     def test_connect3(self):
-        n1 = dtf.Node("n1", num_inputs=0)
+        n1 = dtf_old.Node("n1", num_inputs=0)
         n1.connect()
-        n2 = dtf.Node("n2", num_inputs=1)
+        n2 = dtf_old.Node("n2", num_inputs=1)
         n2.connect(n1)
         #
         self._check(n2)
 
     def test_connect4(self):
-        n1 = dtf.Node("n1", num_inputs=0)
+        n1 = dtf_old.Node("n1", num_inputs=0)
         n1.connect()
-        n2 = dtf.Node("n2", num_inputs=0)
+        n2 = dtf_old.Node("n2", num_inputs=0)
         n2.connect()
-        n3 = dtf.Node("n3", num_inputs=2)
+        n3 = dtf_old.Node("n3", num_inputs=2)
         n3.connect(n2, n1)
         #
         self._check(n3)
@@ -192,13 +192,13 @@ class Test_dataflow_old_ReadData1(ut.TestCase):
         # Create a file.
         df = pd.DataFrame(np.random.rand(10, 3), columns="a b c".split())
         # Build the data flow graph.
-        read_data = dtf.ReadDataFromDf("read_data", df)
+        read_data = dtf_old.ReadDataFromDf("read_data", df)
         read_data.connect()
         #
         idxs = list(range(df.shape[0]))
         read_data.set_train_idxs(idxs)
         #
-        zscore = dtf.Zscore("zscore", style="rolling_std", com=28)
+        zscore = dtf_old.Zscore("zscore", style="rolling_std", com=28)
         zscore.connect(read_data)
         #zscore.fit()
         #
