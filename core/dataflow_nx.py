@@ -1,32 +1,27 @@
-import functools
 import itertools
 import logging
 
 import networkx as nx
+import pandas as pd
 
 import helpers.dbg as dbg
-
 import vendors.kibot.utils as kut
-import pandas as pd
 
 _LOG = logging.getLogger(__name__)
 
 
-class Node:
+class AbstractNode:
     """
-    Node class for creating DAG pipelines of functions.
+    Abstract node class for creating DAG pipelines of functions.
 
     Common use case: Nodes wrap functions with a common method (e.g., `fit`).
 
-    The Node class provides some convenient introspection (input/output names)
+    This class provides some convenient introspection (input/output names)
     accessors and, importantly, a unique identifier (`nid`) for building
     graphs of nodes. The `nid` is also useful for config purposes.
 
     For nodes requiring fit/transform, we can subclass / provide a mixin with
     the desired methods.
-
-    Consider using `functools.lru_cache` for unless `NodeWithOutputStore`
-    subclass is used.
     """
     def __init__(self, nid, inputs=None, outputs=None):
         """
@@ -69,40 +64,16 @@ class Node:
         return dummy_output
 
 
-class NodeWithOutputStore(Node):
+class Node(AbstractNode):
     """
-    Node subclass that also stores its output when run.
-
-    - As currently written, nodes are assumed to manage output state, e.g., if
-      a node wraps a function, then when the node (and hence function) is
-      executed, the output of that function is stored in the node.
-    - This makes it easy to manage node execution in a graph, especially when
-      - We execute nodes sequentially in a topological sorted DAG, but outputs
-        from multiple previous nodes are needed downstream (downstream node has
-        multiple parents).
-      - The output of a node is needed for more multiple downstream nodes
-        (node has multiple child nodes).
-      - We want to work interactively in a notebook
-      - We want to debug node state
-    - An alternative would be to not explicitly store such state, but use
-      caching.
-       - This could work well for interactive and debug use.
-       - This is less straightforward for the multiple parent / children case,
-         e.g., we can execute the nodes in a topological sequentially, but each
-         node execution would require a parent node "re-run" using the cached
-         value.
-       - Caching may make it more difficult to set different state policies
-         (e.g., suppose we want to retain the X most recent values).
-       - What if we use stateful nodes?
+    Concrete node that also stores its output when run.
     """
     def __init__(self, nid, inputs=None, outputs=None):
         """
         :param nid: node identifier. Should be unique in a graph.
         :param inputs: list-like string names of input_names.
-            # TODO(Paul): Consider splitting into required/optional.
         :param outputs: list-like string names of output_names. The node is assumed
             to store the last output.
-            # TODO(Paul): Consider other policies.
         """
         super().__init__(nid=nid, inputs=inputs, outputs=outputs)
         self._output_vals = {}
@@ -120,19 +91,19 @@ class NodeWithOutputStore(Node):
         dbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method][name]
 
+    def get_outputs(self, method):
+        dbg.dassert_in(method, self._output_vals.keys())
+        return self._output_vals[method]
+
 
 class Graph:
     """
     Class for building pipeline graphs using Nodes.
 
-    The Graph is directed and should be a DAG (TODO(Paul): enforce this when
-    trying to added edges).
+    The Graph is directed and should be a DAG.
+    TODO(Paul): enforce this when trying to added edges.
 
     The Graph manages node execution.
-      - As currently written, it does not manage Node output state.
-        - We could change this and have it manage state explicitly (especially
-          if memory is a concern).
-        - We could do it implicitly through caching.
     """
     def __init__(self):
         self._graph = nx.DiGraph()
@@ -158,6 +129,8 @@ class Graph:
 
         :param node: Node object
         """
+        dbg.dassert_isinstance(node, Node,
+                               "Only graphs of class `Node` are supported!")
         self._graph.add_node(node.nid, stage=node)
 
     def get_node(self, nid):
@@ -196,22 +169,14 @@ class Graph:
         for pre in self._graph.predecessors(nid):
             kvs = self._graph.edges[[pre, nid]]
             pre_node = self.get_node(pre)
-            if isinstance(pre_node, NodeWithOutputStore):
-                for k, v in kvs.items():
-                    # Retrieve output from store.
-                    kwargs[k] = pre_node.get_output(method, v)
-            else:
-                # Run previous node and select output.
-                vals = self._run_node(method, pre)
-                for k, v in kvs.items():
-                    kwargs[k] = vals[v]
-        _LOG.info("kwargs are %s", kwargs)
-        # TODO(Paul): Make the graph store the data
+            for k, v in kvs.items():
+                # Retrieve output from store.
+                kwargs[k] = pre_node.get_output(method, v)
+        _LOG.debug("kwargs are %s", kwargs)
         node = self.get_node(nid)
         output = getattr(node, method)(**kwargs)
         for out in node.output_names:
             node.store_output(method, out, output[out])
-        # return output
 
     def run(self, method):
         """
@@ -224,28 +189,28 @@ class Graph:
         for nid in nx.topological_sort(self._graph):
             self._run_node(method=method, nid=nid)
 
-    def run_node(self, method, nid, eval_mode='all_ancestors'):
+    def run_node(self, method, nid, eval_mode="default"):
         """
-        Executes pipeline only up to (and including) `node`.
+        Executes pipeline only up to (and including) `node` and returns output.
 
         :param method: Same as in `run`.
         :param node: terminal evaluation node
-        :param eval_mode: options for rerunning ancestors / caching, etc.
         """
-        if eval_mode == 'all_ancestors':
+        if eval_mode == "default":
             dbg.dassert(self.is_dag, "Graph execution requires a DAG!")
             ancestors = filter(lambda x: x in nx.ancestors(self._graph, nid),
                                nx.topological_sort(self._graph))
             nids = itertools.chain(ancestors, [nid])
-        elif eval_mode == 'single_node':
+        elif eval_mode == "cache":
             nids = [nid]
         else:
-            raise ValueError("Supported eval_modes are `all_ancestors` and `single_node`.")
+            raise ValueError("Supported eval_modes are `default` and `cache`.")
         for nid in nids:
             self._run_node(method=method, nid=nid)
+        return self.get_node(nid).get_outputs(method)
 
 
-class ReadData(NodeWithOutputStore):
+class ReadData(Node):
     def __init__(self, nid):
         super().__init__(nid, outputs=["out"])
         #
