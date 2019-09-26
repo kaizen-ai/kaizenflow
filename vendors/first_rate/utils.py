@@ -24,7 +24,8 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 _WEBSITE = "http://firstratedata.com"
-_DST_DIR = "/data/firstrate/"
+_ZIPPED_DST_DIR = "/data/firstrate_zipped/"
+_UNZIPPED_DST_DIR = "/data/firstrate_unzipped/"
 
 
 class FileURL:
@@ -59,7 +60,7 @@ class RawDataDownloader:
         self.website = website
         self.dst_dir = dst_dir
         self.file_urls = []
-        self.path_object = {}
+        self.path_object_dict = {}
 
     def execute(self):
         """
@@ -75,7 +76,7 @@ class RawDataDownloader:
         for url_object in tqdm(all_urls):
             self._download_url_to_path(url_object)
             path_object[url_object.file_path] = url_object
-        self.path_object = path_object
+        self.path_object_dict = path_object
 
     def walk_get_all_urls(self):
         """
@@ -341,12 +342,47 @@ class ZipCSVCombiner:
         return df
 
 
+def combine_zipped_csvs(input_dir, path_object_dict, dst_dir):
+    """
+    Combine zipped csvs in firstrate directory. Add column names to the
+    csvs, add timestamp column and localize it.
+
+    :param input_dir: firstrate directory with categories
+    :param path_object_dict: path_object_dict attribute of the
+        RawDataDownloader
+    :param dst_dir: destination directory
+    """
+    for category_dir in tqdm(os.listdir(input_dir)):
+        full_category_dir = os.path.join(input_dir, category_dir)
+        category_dir_dst_path = os.path.join(dst_dir, category_dir)
+        if not os.path.isdir(category_dir_dst_path):
+            os.mkdir(path=category_dir_dst_path)
+            _LOG.info(f"Created {category_dir_dst_path} directory")
+        for zip_path in tqdm(os.listdir(full_category_dir)):
+            url_object = path_object_dict[zip_path]
+            csv_name = os.path.splitext(zip_path.split("/")[-1])[0] + ".csv"
+            csv_path = os.path.join(category_dir_dst_path, csv_name)
+            zcc = ZipCSVCombiner(url_object, csv_path)
+            zcc.execute()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--dst_dir", required=False, action="store", default=_DST_DIR, type=str
+        "--zipped_dst_dir",
+        required=False,
+        action="store",
+        default=_ZIPPED_DST_DIR,
+        type=str,
+    )
+    parser.add_argument(
+        "--unzipped_dst_dir",
+        required=False,
+        action="store",
+        default=_UNZIPPED_DST_DIR,
+        type=str,
     )
     parser.add_argument(
         "--website", required=False, action="store", default=_WEBSITE, type=str
@@ -361,7 +397,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     dbg.init_logger(args.log_level)
 
-    rdd = RawDataDownloader(args.website, args.dst_dir)
+    rdd = RawDataDownloader(args.website, args.zipped_dst_dir)
     rdd.execute()
 
-    # zcc = ZipCSVCombiner()
+    combine_zipped_csvs(
+        args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
+    )
