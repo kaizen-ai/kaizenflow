@@ -392,11 +392,11 @@ class _MultipleZipCSVCombiner:
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
-            for zip_path in tqdm(os.listdir(category_dir_input_path)):
+            for zip_name in tqdm(os.listdir(category_dir_input_path)):
                 # Combine csvs from the zip file, process them and save
+                zip_path = os.path.join(category_dir_input_path, zip_name)
                 url_object = self.path_object_dict[zip_path]
-                file_name = os.path.basename(zip_path)
-                csv_name = os.path.splitext(file_name)[0] + ".csv"
+                csv_name = os.path.splitext(zip_name)[0] + ".csv"
                 csv_path = os.path.join(category_dir_dst_path, csv_name)
                 zcc = _ZipCSVCombiner(url_object, csv_path)
                 zcc.execute()
