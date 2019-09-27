@@ -119,6 +119,13 @@ class Node(AbstractNode):
 
 
 def assert_single_element_and_return(l):
+    """
+    Asserts that list `l` has a single element and returns it.
+
+    :param l: list
+    :return: returns the unique element of the list
+    """
+    dbg.dassert_isinstance(l, list)
     dbg.dassert_eq(len(l), 1, "List has {} elements!".format(len(l)))
     return l[0]
 

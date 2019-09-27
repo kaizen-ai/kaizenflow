@@ -1,3 +1,4 @@
+import abc
 import collections
 import copy
 import logging
@@ -6,13 +7,13 @@ import networkx as nx
 import pandas as pd
 from sklearn import linear_model
 
+from core.dataflow_core import Node as Node
+from core.dataflow_core import DAG as DAG
 import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
 import vendors.kibot.utils as kut
-# TODO(Paul): Change this.
-from core.dataflow_core import *
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,20 +34,32 @@ def draw(graph):
 
 
 # #############################################################################
-# DataFrame manipulation nodes
+# Abstract Node classes with sklearn-style interfaces
 # #############################################################################
 
-# TODO(Paul): Introduce SkLearnNode with fit and predict.
-#   - also require "info"
-#   - make a `get_fit_info`
-#   - make a `get_predict_info`
-#   - get_info...
-#   - info {'fit': {}, 'predict': {}}
 
-# TODO(Paul): Make the train/test idx behavior a mixin
-class ReadData(Node):
+class SkLearnNode(Node, abc.ABC):
     def __init__(self, nid):
-        super().__init__(nid, outputs=["output"])
+        super().__init__(nid, inputs=["df_in"], outputs=["df_out"])
+        self._info = collections.OrderedDict()
+
+    @abc.abstractmethod
+    def fit(self, df_in):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def predict(self, df_in):
+        raise NotImplementedError
+
+    def get_info(self, method):
+        dbg.dassert_in(method, self._info.keys(),
+                       "No info found for {}".format(method))
+        return self._info(method)
+
+
+class DataSource(Node, abc.ABC):
+    def __init__(self, nid):
+        super().__init__(nid, outputs=["df_out"])
         #
         self.df = None
         self._train_idxs = None
@@ -89,14 +102,49 @@ class ReadData(Node):
         return self.df
 
 
-class ReadDataFromDf(ReadData):
+class Transformer(SkLearnNode, abc.ABC):
+    """
+    Stateless Single-Input Single-Output node.
+    """
+    # TODO(Paul): Don't use `input` or `in` for default input name.
+    def __init__(self, nid):
+        super().__init__(nid)
+
+    @abc.abstractmethod
+    def _transform(self, df):
+        """
+        :return: df, info
+        """
+        raise NotImplementedError
+
+    def fit(self, df_in):
+        # Transform the input df.
+        df_out, info = self._transform(df_in)
+        # Save the info in the node: we make a copy just to be safe.
+        self._info["fit"] = copy.copy(info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in):
+        # Transform the input df.
+        df_out, info = self._transform(df_in)
+        # Save the info in the node: we make a copy just to be safe.
+        self._info["predict"] = copy.copy(info)
+        return {"df_out": df_out}
+
+
+# #############################################################################
+# Data source nodes
+# #############################################################################
+
+
+class ReadDataFromDf(DataSource):
     def __init__(self, nid, df):
         super().__init__(nid)
         dbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
 
 
-class ReadDataFromKibot(ReadData):
+class ReadDataFromKibot(DataSource):
     def __init__(self, nid, file_name, nrows):
         super().__init__(nid)
         # dbg.dassert_exists(file_name)
@@ -117,41 +165,16 @@ class ReadDataFromKibot(ReadData):
         return super().fit()
 
 
-# TODO(Paul): Make this abstract.
-class StatelessSisoNode(Node):
-    """
-    Stateless Single-Input Single-Output node.
-    """
-
-    # TODO(Paul): Don't use `input` or `in` for default input name.
-    def __init__(self, nid):
-        super().__init__(nid, inputs=["input"], outputs=["output"])
-
-    def _transform(self, df):
-        """
-        :return: df, info
-        """
-        raise NotImplementedError
-
-    def fit(self, input):
-        # Transform the input df.
-        df_out, info = self._transform(input)
-        # Save the info in the node: we make a copy just to be safe.
-        self.fit_info = copy.copy(info)
-        return {"output": df_out}
-
-    def predict(self, input):
-        # Transform the input df.
-        df_out, info = self._transform(input)
-        # Save the info in the node: we make a copy just to be safe.
-        self.predict_info = copy.copy(info)
-        return {"output": df_out}
-
+# #############################################################################
+# Transformer nodes
+# #############################################################################
 
 # TODO(Paul): Write a Node builder to automatically generate these from
 # functions.
+
+
 # TODO(gp): Pass "ret_0" and "open" through constructor.
-class PctReturns(StatelessSisoNode):
+class PctReturns(Transformer):
     def __init__(self, nid):
         super().__init__(nid)
 
@@ -162,7 +185,7 @@ class PctReturns(StatelessSisoNode):
         return df, info
 
 
-class Zscore(StatelessSisoNode):
+class Zscore(Transformer):
     def __init__(self, nid, style, com):
         super().__init__(nid)
         self.style = style
@@ -175,7 +198,7 @@ class Zscore(StatelessSisoNode):
         return df_out, info
 
 
-class FilterAth(StatelessSisoNode):
+class FilterAth(Transformer):
     def __init__(self, nid):
         super().__init__(nid)
 
@@ -187,7 +210,7 @@ class FilterAth(StatelessSisoNode):
 
 # TODO(Paul, GP): Confusing interface. If we only sent out the transformed
 # variables, then we wouldn't need `get_x_vars`.
-class ComputeLaggedFeatures(StatelessSisoNode):
+class ComputeLaggedFeatures(Transformer):
     def __init__(self, nid, y_var, delay_lag, num_lags):
         super().__init__(nid)
         self.y_var = y_var
@@ -210,38 +233,42 @@ class ComputeLaggedFeatures(StatelessSisoNode):
         return df_out, info
 
 
-class Model(Node):
+# #############################################################################
+# Models
+# #############################################################################
+
+
+class Model(SkLearnNode):
     # TODO(GP): y_var before x_vars? Probably should switch.
     def __init__(self, nid, y_var, x_vars):
-        super().__init__(nid, inputs=["input"], outputs=["output"])
+        super().__init__(nid)
         self.y_var = y_var
         self.x_vars = x_vars
 
-    def fit(self, input):
+    def fit(self, df_in):
         """
         A model fit doesn't return anything since it's a sink.
 
         # TODO: Consider making `fit` pass-through in terms of dataflow.
         """
-        df = input
         reg = linear_model.LinearRegression()
-        x_train = df[self.x_vars]
-        y_train = df[self.y_var]
+        x_train = df_in[self.x_vars]
+        y_train = df_in[self.y_var]
         self.model = reg.fit(x_train, y_train)
-        return {"output": None}
+        self._info["fit"] = None
+        return {"df_out": None}
 
-    def predict(self, input):
-        df = input
-        x_test = df[self.x_vars]
-        y_test = df[self.y_var]
+    def predict(self, df_in):
+        x_test = df_in[self.x_vars]
+        y_test = df_in[self.y_var]
         #
         info = collections.OrderedDict()
         info["hitrate"] = pip._compute_model_hitrate(self.model, x_test, y_test)
         hat_y = self.model.predict(x_test)
         pnl_rets = y_test * hat_y
         info["pnl_rets"] = pnl_rets
-        self.predict_info = copy.copy(info)
-        return {"output": hat_y}
+        self._info["predict"] = copy.copy(info)
+        return {"df_out": hat_y}
 
 
 # #############################################################################
