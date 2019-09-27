@@ -166,8 +166,10 @@ class DAG:
         #
         # Note that this usage requires that nid's be unique within a given
         # DAG.
-        dbg.dassert(not self.dag.has_node(node.nid),
-            "A node with nid `%s` is already in the dag!")
+        dbg.dassert(
+            not self.dag.has_node(node.nid),
+            "A node with nid `%s` is already in the dag!",
+        )
         self._dag.add_node(node.nid, stage=node)
 
     def get_node(self, nid):
@@ -202,7 +204,9 @@ class DAG:
             self._dag.remove_edge(parent[0], child[0])
             dbg.dfatal(
                 "Creating edge {} -> {} introduces a cycle!".format(
-                    parent[0], child[0]))
+                    parent[0], child[0]
+                )
+            )
 
     def _run_node(self, nid, method):
         """
