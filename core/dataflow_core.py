@@ -200,30 +200,29 @@ class DAG:
         :param child: tuple of the form (nid, input)
         """
         # Automatically infer output name when the parent has only one output.
-        if not isinstance(parent, tuple):
+        if isinstance(parent, tuple):
+            parent_nid, parent_out = parent
+            dbg.dassert_in(parent_out,
+                           self.get_node(parent_nid).output_names)
+        else:
             parent_nid = parent
-            parent_node = self.get_node(parent_nid)
-            parent_out = parent_node.output_names
-            parent_out = assert_single_element_and_return(parent_out)
-        else:
-            parent_nid = parent[0]
-            parent_node = self.get_node(parent_nid)
-            parent_out = parent[1]
+            parent_out = assert_single_element_and_return(
+                             self.get_node(parent_nid).output_names)
         # Automatically infer input name when the child has only one input.
-        if not isinstance(child, tuple):
-            child_nid = child
-            child_node = self.get_node(child_nid)
-            child_in = child_node.input_names
-            child_in = assert_single_element_and_return(child_in)
+        if isinstance(child, tuple):
+            child_nid, child_in = child
+            dbg.dassert_in(child_in,
+                           self.get_node(child_nid).input_names)
         else:
-            child_nid = child[0]
-            child_node = self.get_node(child_nid)
-            child_in = child[1]
-        #
-        dbg.dassert_in(parent_out, parent_node.output_names)
-        dbg.dassert_in(child_in, child_node.input_names)
+            child_nid = child
+            child_in = assert_single_element_and_return(
+                           self.get_node(child_nid).input_names)
+        # Add the edge along with an `edge attribute` indicating the parent
+        # output to connect to the child input.
         kwargs = {child_in: parent_out}
         self._dag.add_edge(parent_nid, child_nid, **kwargs)
+        # If adding the edge causes the DAG property to be violated, remove the
+        # edge and raise an error.
         if not nx.is_directed_acyclic_graph(self.dag):
             self._dag.remove_edge(parent_nid, child_nid)
             dbg.dfatal(
