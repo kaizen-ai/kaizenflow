@@ -176,11 +176,14 @@ class DAG:
         #
         # Note that this usage requires that nid's be unique within a given
         # DAG.
-        dbg.dassert(
-            not self.dag.has_node(node.nid),
-            "A node with nid `%s` is already in the dag!",
-        )
-        self._dag.add_node(node.nid, stage=node)
+        if not self.dag.has_node(node.nid):
+            self._dag.add_node(node.nid, stage=node)
+            return
+        # Allow `add_node` to be idempotent.
+        if node is self.get_node(node.nid):
+            _LOG.debug("Node `{}` is already in the dag.".format(node.nid))
+        else:
+            dbg.dfatal("A node with nid `{}` is already in the dag!".format(node.nid))
 
     def get_node(self, nid):
         """

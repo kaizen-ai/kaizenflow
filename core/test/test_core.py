@@ -181,13 +181,13 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
     def test_add_nodes2(self):
         """
-        Demonstrates that add_node is not idempotent.
+        Demonstrates that add_node is idempotent.
         """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1")
         dag.add_node(n1)
-        with self.assertRaises(AssertionError):
-            dag.add_node(n1)
+        dag.add_node(n1)
+        self._check(dag.dag)
 
     def test_add_nodes3(self):
         """
