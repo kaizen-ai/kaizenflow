@@ -132,6 +132,7 @@ class DAG:
 
     TODO(Paul): Think about how subgraphs should fit into this framework.
     """
+
     def __init__(self):
         self._dag = nx.DiGraph()
 

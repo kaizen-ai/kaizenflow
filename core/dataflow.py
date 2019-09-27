@@ -1,21 +1,17 @@
 import collections
 import copy
-import itertools
 import logging
 
-import matplotlib
-import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 from sklearn import linear_model
 
-# Import style usually to be avoided, but in this case it may make sense.
-from core.dataflow_core import *
 import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
 import vendors.kibot.utils as kut
+from core.dataflow_core import *
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,11 +22,13 @@ _LOG = logging.getLogger(__name__)
 
 
 def draw(graph):
-    nx.draw_networkx(graph,
-                     pos=nx.spectral_layout(graph),
-                     node_size=3000,
-                     arrowsize=30,
-                     width=1.5)
+    nx.draw_networkx(
+        graph,
+        pos=nx.spectral_layout(graph),
+        node_size=3000,
+        arrowsize=30,
+        width=1.5,
+    )
 
 
 # #############################################################################
@@ -117,6 +115,8 @@ class StatelessSisoNode(Node):
     """
     Stateless Single-Input Single-Output node.
     """
+
+    # TODO(Paul): Don't use `input` or `in` for default input name.
     def __init__(self, nid):
         super().__init__(nid, inputs=["input"], outputs=["output"])
 
