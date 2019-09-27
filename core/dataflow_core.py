@@ -119,8 +119,7 @@ class Node(AbstractNode):
 
 
 def assert_single_element_and_return(l):
-    dbg.dassert_eq(len(l), 1,
-                   "List has {} elements!".format(len(l)))
+    dbg.dassert_eq(len(l), 1, "List has {} elements!".format(len(l)))
     return l[0]
 
 
@@ -202,21 +201,28 @@ class DAG:
         # Automatically infer output name when the parent has only one output.
         if isinstance(parent, tuple):
             parent_nid, parent_out = parent
-            dbg.dassert_in(parent_out,
-                           self.get_node(parent_nid).output_names)
+            dbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         else:
             parent_nid = parent
             parent_out = assert_single_element_and_return(
-                             self.get_node(parent_nid).output_names)
+                self.get_node(parent_nid).output_names
+            )
         # Automatically infer input name when the child has only one input.
         if isinstance(child, tuple):
             child_nid, child_in = child
-            dbg.dassert_in(child_in,
-                           self.get_node(child_nid).input_names)
+            dbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         else:
             child_nid = child
             child_in = assert_single_element_and_return(
-                           self.get_node(child_nid).input_names)
+                self.get_node(child_nid).input_names
+            )
+        # Ensure that `child_in` is not already hooked up to another output
+        for nid in self._dag.predecessors(child_nid):
+            dbg.dassert_not_in(
+                child_in,
+                self.dag.get_edge_data(nid, child_nid),
+                "`{}` already receiving input from node {}".format(child_in, nid),
+            )
         # Add the edge along with an `edge attribute` indicating the parent
         # output to connect to the child input.
         kwargs = {child_in: parent_out}

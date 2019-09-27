@@ -271,6 +271,26 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
             dag.connect("n2", "n1")
 
+    def test_connect_nodes8(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1", "out2"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect(("n1", "out1"), "n2")
+        with self.assertRaises(AssertionError):
+            dag.connect(("n1", "out2"), "n2")
+
+    def test_connected_nodes9(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1", "out2"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1", "in2"])
+        dag.add_node(n2)
+        dag.connect(("n1", "out1"), ("n2", "in1"))
+        dag.connect(("n1", "out2"), ("n2", "in2"))
+        self._check(dag.dag)
+
 
 # #############################################################################
 # dataflow_old.py
