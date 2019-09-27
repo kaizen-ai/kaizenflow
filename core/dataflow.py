@@ -3,8 +3,6 @@ import copy
 import itertools
 import logging
 
-import matplotlib
-import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 from sklearn import linear_model
@@ -36,6 +34,7 @@ class AbstractNode:
     For nodes requiring fit/transform, we can subclass / provide a mixin with
     the desired methods.
     """
+
     def __init__(self, nid, inputs=None, outputs=None):
         """
         :param nid: node identifier. Should be unique in a graph.
@@ -81,6 +80,7 @@ class Node(AbstractNode):
     """
     Concrete node that also stores its output when run.
     """
+
     def __init__(self, nid, inputs=None, outputs=None):
         """
         :param nid: node identifier. Should be unique in a graph.
@@ -92,17 +92,32 @@ class Node(AbstractNode):
         self._output_vals = {}
 
     def store_output(self, method, name, value):
-        dbg.dassert_in(name, self.output_names,
-                       "%s is not an output of node %s!", name, self.nid)
+        dbg.dassert_in(
+            name,
+            self.output_names,
+            "%s is not an output of node %s!",
+            name,
+            self.nid,
+        )
         if method not in self._output_vals:
             self._output_vals[method] = {}
         self._output_vals[method][name] = value
 
     def get_output(self, method, name):
-        dbg.dassert_in(name, self.output_names,
-                       "%s is not an output of node %s!", name, self.nid)
-        dbg.dassert_in(method, self._output_vals.keys(),
-                       "%s of node %s has no output!", method, self.nid)
+        dbg.dassert_in(
+            name,
+            self.output_names,
+            "%s is not an output of node %s!",
+            name,
+            self.nid,
+        )
+        dbg.dassert_in(
+            method,
+            self._output_vals.keys(),
+            "%s of node %s has no output!",
+            method,
+            self.nid,
+        )
         return self._output_vals[method][name]
 
     def get_outputs(self, method):
@@ -125,6 +140,7 @@ class DAG:
 
     The Graph manages node execution.
     """
+
     def __init__(self):
         self._dag = nx.DiGraph()
 
@@ -140,8 +156,9 @@ class DAG:
 
         :param node: Node object
         """
-        dbg.dassert_isinstance(node, Node,
-                               "Only graphs of class `Node` are supported!")
+        dbg.dassert_isinstance(
+            node, Node, "Only graphs of class `Node` are supported!"
+        )
         self._dag.add_node(node.nid, stage=node)
 
     def get_node(self, nid):
@@ -151,7 +168,7 @@ class DAG:
         :param nid: unique string node id
         :return: Node object
         """
-        return self._dag.nodes[nid]['stage']
+        return self._dag.nodes[nid]["stage"]
 
     # TODO(Paul): Automatically infer edge labels when possible (e.g., SISO).
     def connect(self, parent, child):
@@ -172,8 +189,11 @@ class DAG:
         kwargs = {child[1]: parent[1]}
         self._dag.add_edge(parent[0], child[0], **kwargs)
         if not nx.is_directed_acyclic_graph(self.dag):
-            _LOG.warning("Creating edge %s -> %s failed because it creates a cycle!",
-                         parent[0], child[0])
+            _LOG.warning(
+                "Creating edge %s -> %s failed because it creates a cycle!",
+                parent[0],
+                child[0],
+            )
             self._dag.remove_edge(parent[0], child[0])
 
     def _run_node(self, nid, method):
@@ -221,8 +241,10 @@ class DAG:
         runs a node if and only if there is a directed path from the node to
         `nid`. Nodes are run according to a topological sort.
         """
-        ancestors = filter(lambda x: x in nx.ancestors(self._dag, nid),
-                           nx.topological_sort(self._dag))
+        ancestors = filter(
+            lambda x: x in nx.ancestors(self._dag, nid),
+            nx.topological_sort(self._dag),
+        )
         nids = itertools.chain(ancestors, [nid])
         for n in nids:
             self._run_node(n, method)
@@ -383,8 +405,9 @@ class ComputeLaggedFeatures(StatelessSISONode):
         self.num_lags = num_lags
 
     def get_x_vars(self):
-        x_vars = ftrs.get_lagged_feature_names(self.y_var, self.delay_lag,
-                                               self.num_lags)
+        x_vars = ftrs.get_lagged_feature_names(
+            self.y_var, self.delay_lag, self.num_lags
+        )
         return x_vars
 
     def _transform(self, df):
@@ -400,7 +423,7 @@ class ComputeLaggedFeatures(StatelessSISONode):
 class Model(Node):
     # NOTE: y_var before x_vars?
     def __init__(self, nid, y_var, x_vars):
-        super().__init__(nid, inputs=['input'], outputs=['output'])
+        super().__init__(nid, inputs=["input"], outputs=["output"])
         self.y_var = y_var
         self.x_vars = x_vars
 
@@ -415,7 +438,7 @@ class Model(Node):
         x_train = df[self.x_vars]
         y_train = df[self.y_var]
         self.model = reg.fit(x_train, y_train)
-        return {'output': None}
+        return {"output": None}
 
     def predict(self, input):
         df = input
@@ -428,7 +451,7 @@ class Model(Node):
         pnl_rets = y_test * hat_y
         info["pnl_rets"] = pnl_rets
         self.predict_info = copy.copy(info)
-        return {'output': hat_y}
+        return {"output": hat_y}
 
 
 def cross_validate(config, source_nid, sink_nid, dag):
