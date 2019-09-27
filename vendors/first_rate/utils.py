@@ -10,7 +10,7 @@ Download equity data from the http://firstratedata.com.
 - Save csvs to parquet (divided by category)
 
 Usage example:
-> python amp/first_rate/utils.py \
+> python vendors/first_rate/utils.py \
   --zipped_dst_dir /data/first_rate/zipped \
   --zipped_dst_dir /data/first_rate/unzipped \
   --pq_dst_dir /data/first_rate/pq
@@ -124,15 +124,17 @@ class _RawDataDownloader:
             soup = None
         return soup
 
-    def _add_website_to_url(self, url_part):
+    @staticmethod
+    def _add_website_to_url(url_part, website):
         """
         If the first part of the url is cut, add it.
 
         :param url_part: The cut url
+        :param website The first part of the url
         :return: Full url
         """
-        if not url_part.startswith(self.website):
-            full_url = f"{self.website}{url_part}"
+        if not url_part.startswith('http'):
+            full_url = f"{website}{url_part}"
         else:
             full_url = url_part
         return full_url
@@ -289,7 +291,8 @@ class _RawDataDownloader:
         hrefs = list(map(lambda x: x["href"], nav_links))
         hrefs_categories = [href for href in hrefs if "it/" in href]
         hrefs_categories_urls = [
-            self._add_website_to_url(part_url) for part_url in hrefs_categories
+            self._add_website_to_url(part_url, self.website)
+            for part_url in hrefs_categories
         ]
         return hrefs_categories_urls
 
@@ -384,6 +387,7 @@ class _MultipleZipCSVCombiner:
         self.dst_dir = dst_dir
 
     def execute(self):
+        _LOG.info('Combining zipped csvs into one')
         for category_dir in tqdm(os.listdir(self.input_dir)):
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
@@ -411,6 +415,7 @@ class _CSVToParquetConverter:
         self.dst_dir = dst_dir
 
     def execute(self):
+        _LOG.info('Saving to parquet')
         for category_dir in tqdm(os.listdir(self.input_dir)):
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
