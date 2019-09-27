@@ -199,6 +199,9 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
 class Test_dataflow_core_DAG2(_Dataflow_helper):
     def test_connect_nodes1(self):
+        """
+        Simplest case of connecting two nodes.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
@@ -208,6 +211,9 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         self._check(dag.dag)
 
     def test_connect_nodes2(self):
+        """
+        Simplest case, but inferred input/output names.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
@@ -217,6 +223,9 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         self._check(dag.dag)
 
     def test_connect_nodes3(self):
+        """
+        Ensures input/output names are valid.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
@@ -226,6 +235,9 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
            dag.connect(("n2", "out1"), ("n1", "in1"))
 
     def test_connect_nodes4(self):
+        """
+        Forbids creating cycles in DAG.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
         dag.add_node(n1)
@@ -236,6 +248,9 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
             dag.connect(("n2", "out1"), ("n1", "in1"))
 
     def test_connect_nodes5(self):
+        """
+        Forbids creating cycles in DAG (inferred input/output names).
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
         dag.add_node(n1)
@@ -246,6 +261,9 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
             dag.connect("n2", "n1")
 
     def test_connect_nodes6(self):
+        """
+        A nontrivial, multi-input/output example.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
@@ -265,6 +283,9 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         self._check(dag.dag)
 
     def test_connect_nodes7(self):
+        """
+        Forbids connecting a node that doesn't belong to the DAG.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
@@ -272,6 +293,9 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
             dag.connect("n2", "n1")
 
     def test_connect_nodes8(self):
+        """
+        Ensures at most one output connects to any input.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1", "out2"])
         dag.add_node(n1)
@@ -282,13 +306,16 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
             dag.connect(("n1", "out2"), "n2")
 
     def test_connected_nodes9(self):
+        """
+        Allows multi-attribute edges if each input has at most one source.
+        """
         dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1", "out2"])
+        n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
         n2 = dtfc.Node("n2", inputs=["in1", "in2"])
         dag.add_node(n2)
-        dag.connect(("n1", "out1"), ("n2", "in1"))
-        dag.connect(("n1", "out2"), ("n2", "in2"))
+        dag.connect("n1", ("n2", "in1"))
+        dag.connect("n1", ("n2", "in2"))
         self._check(dag.dag)
 
 
