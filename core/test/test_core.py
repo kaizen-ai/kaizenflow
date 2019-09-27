@@ -1,12 +1,15 @@
 import io
 import logging
 
+import json
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
 import core.config as cfg
+import core.dataflow_core as dtfc
 import core.dataflow_old as dtf_old
 import core.explore as exp
 import core.pandas_helpers as pde
@@ -140,6 +143,107 @@ class Test_config1(ut.TestCase):
         #
         self.assertEqual(str(config1), str(config2))
 
+
+# #############################################################################
+# dataflow.py
+# #############################################################################
+
+class _Dataflow_helper(ut.TestCase):
+    def _remove_stage_names(self, node_link_data):
+        """
+        Remove stages names from node_link_data dictionary.
+
+        The stage names refer to Node objects, which are not json serializable.
+        """
+        nld = node_link_data.copy()
+        for data in nld['nodes']:
+            data['stage'] = None
+        return nld
+
+    def _check(self, dag):
+        nld = nx.readwrite.json_graph.node_link_data(dag)
+        nld = self._remove_stage_names(nld)
+        _LOG.debug("stripped node_link_data=%s", nld)
+        json_nld = json.dumps(nld, indent=4, sort_keys=True)
+        self.check_string(json_nld)
+
+
+class Test_dataflow_core_DAG1(_Dataflow_helper):
+    def test_add_nodes1(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1")
+        dag.add_node(n1)
+        self._check(dag.dag)
+
+    def test_add_nodes2(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1")
+        dag.add_node(n1)
+        with self.assertRaises(AssertionError):
+            dag.add_node(n1)
+
+    def test_add_nodes3(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1")
+        dag.add_node(n1)
+        n1_prime = dtfc.Node("n1")
+        with self.assertRaises(AssertionError):
+            dag.add_node(n1_prime)
+
+    def test_add_nodes4(self):
+        dag = dtfc.DAG()
+        for name in ["n1", "n2", "n3", "n4"]:
+            dag.add_node(dtfc.Node(name, inputs=["in1"], outputs=["out1"]))
+        self._check(dag.dag)
+
+
+class Test_dataflow_core_DAG2(_Dataflow_helper):
+    def test_connect_nodes1(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect(("n1", "out1"), ("n2", "in1"))
+        self._check(dag.dag)
+
+    def test_connect_nodes1(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        with self.assertRaises(AssertionError):
+           dag.connect(("n2", "out1"), ("n1", "in1"))
+
+    def test_connect_nodes2(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n2)
+        dag.connect(("n1", "out1"), ("n2", "in1"))
+        with self.assertRaises(AssertionError):
+            dag.connect(("n2", "out1"), ("n1", "in1"))
+
+    def test_connect_nodes3(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1", "out2"])
+        dag.add_node(n2)
+        n3 = dtfc.Node("n3", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n3)
+        n4 = dtfc.Node("n4", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n4)
+        n5 = dtfc.Node("n5", inputs=["in1", "in2"], outputs=["out1"])
+        dag.add_node(n5)
+        dag.connect(("n1", "out1"), ("n2", "in1"))
+        dag.connect(("n2", "out1"), ("n3", "in1"))
+        dag.connect(("n2", "out2"), ("n4", "in1"))
+        dag.connect(("n3", "out1"), ("n5", "in1"))
+        dag.connect(("n4", "out1"), ("n5", "in2"))
+        self._check(dag.dag)
 
 # #############################################################################
 # dataflow_old.py

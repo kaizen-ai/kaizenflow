@@ -11,6 +11,7 @@ import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
 import vendors.kibot.utils as kut
+# TODO(Paul): Change this.
 from core.dataflow_core import *
 
 _LOG = logging.getLogger(__name__)
@@ -35,6 +36,12 @@ def draw(graph):
 # DataFrame manipulation nodes
 # #############################################################################
 
+# TODO(Paul): Introduce SkLearnNode with fit and predict.
+#   - also require "info"
+#   - make a `get_fit_info`
+#   - make a `get_predict_info`
+#   - get_info...
+#   - info {'fit': {}, 'predict': {}}
 
 # TODO(Paul): Make the train/test idx behavior a mixin
 class ReadData(Node):
@@ -110,7 +117,7 @@ class ReadDataFromKibot(ReadData):
         return super().fit()
 
 
-# TODO(Paul): Abstract? Should we?
+# TODO(Paul): Make this abstract.
 class StatelessSisoNode(Node):
     """
     Stateless Single-Input Single-Output node.
@@ -237,6 +244,12 @@ class Model(Node):
         return {"output": hat_y}
 
 
+# #############################################################################
+# Cross-validation
+# #############################################################################
+
+
+# TODO(Paul): Switch to lists
 def cross_validate(config, source_nid, sink_nid, dag):
     source_node = dag.get_node(source_nid)
     df = source_node.get_df()
@@ -249,3 +262,7 @@ def cross_validate(config, source_nid, sink_nid, dag):
         source_node.set_test_idxs(test_idxs)
         dag.run_leq_node(sink_nid, "predict")
     return dag.get_node(sink_nid)
+
+# TODO(Paul): Add an Extractor function that operates on a DAG of SkLearnNodes
+#   - also pass `field`, e.g., fit/predict
+#   - Return a dict of fit/predict/etc. info, keyed by nid

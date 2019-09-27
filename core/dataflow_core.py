@@ -78,8 +78,8 @@ class Node(AbstractNode):
         """
         :param nid: node identifier. Should be unique in a graph.
         :param inputs: list-like string names of input_names.
-        :param outputs: list-like string names of output_names. The node is assumed
-            to store the last output.
+        :param outputs: list-like string names of output_names. The node is
+            assumed to store the last output.
         """
         super().__init__(nid=nid, inputs=inputs, outputs=outputs)
         self._output_vals = {}
@@ -133,12 +133,17 @@ class DAG:
     TODO(Paul): Think about how subgraphs should fit into this framework.
     """
 
-    def __init__(self):
+    def __init__(self, name=None):
         self._dag = nx.DiGraph()
+        self._name = name
 
     @property
     def dag(self):
         return self._dag
+
+    @property
+    def name(self):
+        return self._name
 
     def add_node(self, node):
         """
@@ -148,9 +153,21 @@ class DAG:
 
         :param node: Node object
         """
+        # In principle, AbstractNode could be supported; however, to do so,
+        # the `run` methods below would need to be suitably modified.
         dbg.dassert_isinstance(
             node, Node, "Only graphs of class `Node` are supported!"
         )
+        # NetworkX requires that nodes be hashable and uses hashes for
+        # identifying nodes. Because our Nodes are objects whose hashes can
+        # change as operations are performed, we use the Node.nid as the
+        # NetworkX node and the Node class as a `node attribute`, which we
+        # identifying internally with the keyword `stage`.
+        #
+        # Note that this usage requires that nid's be unique within a given
+        # DAG.
+        dbg.dassert(not self.dag.has_node(node.nid),
+            "A node with nid `%s` is already in the dag!")
         self._dag.add_node(node.nid, stage=node)
 
     def get_node(self, nid):
@@ -160,7 +177,8 @@ class DAG:
         :param nid: unique string node id
         :return: Node object
         """
-        return self._dag.nodes[nid]["stage"]
+        dbg.dassert(self.dag.has_node(nid), "Node `%s` is not in the dag!")
+        return self.dag.nodes[nid]["stage"]
 
     # TODO(Paul): Automatically infer edge labels when possible (e.g., SISO).
     def connect(self, parent, child):
@@ -181,12 +199,10 @@ class DAG:
         kwargs = {child[1]: parent[1]}
         self._dag.add_edge(parent[0], child[0], **kwargs)
         if not nx.is_directed_acyclic_graph(self.dag):
-            _LOG.warning(
-                "Creating edge %s -> %s failed because it creates a cycle!",
-                parent[0],
-                child[0],
-            )
             self._dag.remove_edge(parent[0], child[0])
+            dbg.dfatal(
+                "Creating edge {} -> {} introduces a cycle!".format(
+                    parent[0], child[0]))
 
     def _run_node(self, nid, method):
         """
@@ -227,7 +243,7 @@ class DAG:
             # all nodes have been run.
             if any(True for _ in self._dag.predecessors(nid)):
                 sinks.append(nid)
-            self._run_node(method=method, nid=nid)
+            self._run_node(nid, method)
         return [self.get_node(sink).get_outputs(method) for sink in sinks]
 
     def run_leq_node(self, nid, method):
@@ -242,6 +258,7 @@ class DAG:
             lambda x: x in nx.ancestors(self._dag, nid),
             nx.topological_sort(self._dag),
         )
+        # TODO(Paul): Explain why we need to add nid back
         nids = itertools.chain(ancestors, [nid])
         for n in nids:
             self._run_node(n, method)
