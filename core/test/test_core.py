@@ -318,7 +318,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
             dag.connect(("n1", "out2"), "n2")
 
-    def test_connected_nodes9(self):
+    def test_connect_nodes9(self):
         """
         Allows multi-attribute edges if each input has at most one source.
         """
@@ -329,6 +329,19 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         dag.add_node(n2)
         dag.connect("n1", ("n2", "in1"))
         dag.connect("n1", ("n2", "in2"))
+        self._check(dag.dag)
+
+    def test_connect_nodes10(self):
+        """
+        Demonstrates idempotency.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        dag.connect("n1", "n2")
         self._check(dag.dag)
 
 

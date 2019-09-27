@@ -228,11 +228,17 @@ class DAG:
             )
         # Ensure that `child_in` is not already hooked up to another output.
         for nid in self._dag.predecessors(child_nid):
-            dbg.dassert_not_in(
-                child_in,
-                self.dag.get_edge_data(nid, child_nid),
-                "`{}` already receiving input from node {}".format(child_in, nid),
-            )
+            if nid == parent_nid:
+                # This branch enables idempotency.
+                edge_data = self.dag.get_edge_data(parent_nid, child_nid)
+                if child_in in edge_data:
+                    dbg.dassert_eq(edge_data[child_in], parent_out)
+            else:
+                dbg.dassert_not_in(
+                    child_in,
+                    self.dag.get_edge_data(nid, child_nid),
+                    "`{}` already receiving input from node {}".format(child_in, nid),
+                )
         # Add the edge along with an `edge attribute` indicating the parent
         # output to connect to the child input.
         kwargs = {child_in: parent_out}
