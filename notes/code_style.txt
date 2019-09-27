@@ -4,9 +4,12 @@
   - E.g., see "tab vs space" flame-war from the 90s
 - Unless explicitly noted we prefer to follow the style guide below
 
+- As a rule of thumb we default to Google style unless Python community (in the
+  form of PEP) or tools we rely favor another style
+
 ## Reference
 
-- Google Python Style (GPS) Guide
+- Google Python Style Guide (GPSG)
   - `https://google.github.io/styleguide/pyguide.html`
 
 - Commenting style
@@ -27,16 +30,7 @@
 
 # Comments
 
-## Descriptive vs imperative style
-- GPS suggests to use descriptive comments, e.g., "This function describes",
-  instead than imperative
-- pylint and other python QA tools favor an imperative style
-- Since we prefer to rely on automatic checks, we decided to use an imperative
-  style of comments
-
-## Commenting
-
-### Docstring conventions
+## Docstring conventions
 
 - Code needs to be properly commented
 
@@ -52,7 +46,15 @@
     - epytext
     - numpydoc
 
-- reST (aka re-Structured Text) style is the most widely supported
+## reST style
+
+- reST (aka re-Structured Text) style is:
+    - the most widely supported in the python commpunity
+    - supported by all doc generation tools (e.g., epydoc, sphinx)
+    - default in pycharm
+    - default in pyment
+    - supported by pydocstyle (which does not support Google style as explained
+      [here](https://github.com/PyCQA/pydocstyle/issues/275))
 
 ```python
 """
@@ -68,50 +70,57 @@ This is a reST style.
 """
 ```
 
-- supported by all doc generation tools (e.g., epydoc, sphinx)
-- default in pycharm
-- default in pyment
--  supported by pydocstyle (which doesn’t support Google style as explained
-   [here](https://github.com/PyCQA/pydocstyle/issues/275))
+## Descriptive vs imperative style
 
-#### Alternative parameter description and type
+- GPSG suggests to use descriptive style of comments, e.g., "This function does
+  this and that", instead than imperative style "Do this and that"
 
-- Note that we prefer to alternate param description and its type so the
-  docstring below, although good, doesn’t follow our convention.
+- [PEP-257](https://www.python.org/dev/peps/pep-0257/)
+    ```
+    The docstring is a phrase ending in a period. It prescribes the function or
+    method's effect as a command ("Do this", "Return that"), not as a description;
+    e.g. don't write "Returns the pathname ...".
+    ```
+    - pylint and other python QA tools favor an imperative style
+    - Since we prefer to rely on automatic checks, we decided to use an imperative
+      style of comments
 
-**Bad**
-```python
-:param data: CB data
-:param metrics: CB metrics
-:param fill_na_w_zero: If True, fill NaN values with zeros.
+### Alternate parameter description and type
 
-:type data: pd.DataFrame
-:type metrics: list of str
-:type fill_na_w_zero: bool
+- We prefer to alternate param description and its type so the docstring below,
+  although good, does not follow our convention
+    *Bad**
+    ```python
+    :param data: CB data
+    :param metrics: CB metrics
+    :param fill_na_w_zero: If True, fill NaN values with zeros.
 
-:returns data_merged: Data with two metrics added together.
-:rtype data_merged: pd.DataFrame
-```
+    :type data: pd.DataFrame
+    :type metrics: list of str
+    :type fill_na_w_zero: bool
+
+    :returns data_merged: Data with two metrics added together.
+    :rtype data_merged: pd.DataFrame
+    ```
 
 - The code should be changed into:
-```python
-:param data: CB data
-:type data: pd.DataFrame
-:param metrics: CB metrics
-:type metrics: list of str
-:param fill_na_w_zero: If True, fill NaN values with zeros.
-:type fill_na_w_zero: bool
+    **Good**
+    ```python
+    :param data: CB data
+    :type data: pd.DataFrame
+    :param metrics: CB metrics
+    :type metrics: list of str
+    :param fill_na_w_zero: If True, fill NaN values with zeros.
+    :type fill_na_w_zero: bool
 
-:returns data_merged: Data with two metrics added together.
-:rtype data_merged: pd.DataFrame
-```
+    :returns data_merged: Data with two metrics added together.
+    :rtype data_merged: pd.DataFrame
+    ```
 
-- Examples are
-  [here](https://stackoverflow.com/questions/3898572/what-is-the-standard-python-docstring-format).
+- We pick lowercase after `:param XYZ: ...` unless the first word is a proper
+  noun or type
 
-- `linter.py` uses [pydocstyle](http://www.pydocstyle.org/en/2.1.1/index.html), a
-  static analysis tool for checking compliance with Python docstring conventions
-  with PEP257.
+- Examples are [here](https://stackoverflow.com/questions/3898572)
 
 ### Avoid empty lines in code
 
@@ -161,7 +170,7 @@ This is a reST style.
 
 ### If you find a bug, obsolete docstring in the code
 - The process is:
-    - do` git blame` to find who wrote the code
+    - do a `git blame` to find who wrote the code
     - if it’s an easy bug, you can fix it and ask for a review to the author
     - you can file a comment on Upsource
     - you can file a bug on Github with
@@ -169,3 +178,5 @@ This is a reST style.
         - how to reproduce it, ideally a unit test
         - stacktrace
         - you can use the tag “BUG: ..."
+
+# Logging
