@@ -467,8 +467,6 @@ if __name__ == "__main__":
     rdd = _RawDataDownloader(_WEBSITE, args.zipped_dst_dir)
     rdd.execute()
     
-    print(rdd.path_object_dict.keys())
-    print(list(rdd.path_object_dict.values())[0].__dict__)
     mzcc = _MultipleZipCSVCombiner(
         args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
     )
