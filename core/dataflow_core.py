@@ -216,7 +216,7 @@ class DAG:
             child_in = assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
-        # Ensure that `child_in` is not already hooked up to another output
+        # Ensure that `child_in` is not already hooked up to another output.
         for nid in self._dag.predecessors(child_nid):
             dbg.dassert_not_in(
                 child_in,
