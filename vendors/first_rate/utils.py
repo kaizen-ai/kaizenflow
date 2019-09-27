@@ -11,7 +11,9 @@ Download equity data from the http://firstratedata.com.
 
 Usage example:
 > python amp/first_rate/utils.py \
-  --dst_dir /data/first_rate/
+  --zipped_dst_dir /data/first_rate/zipped \
+  --zipped_dst_dir /data/first_rate/unzipped \
+  --pq_dst_dir /data/first_rate/pq
 """
 import argparse
 import logging
