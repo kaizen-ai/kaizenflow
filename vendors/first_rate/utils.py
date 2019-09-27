@@ -85,7 +85,7 @@ class _RawDataDownloader:
         path_object = {}
         for url_object in tqdm(all_urls):
             self._download_url_to_path(url_object)
-            path_object[url_object.file_path] = url_object
+            path_object[url_object.path] = url_object
         self.path_object_dict = path_object
 
     def _walk_get_all_urls(self):
@@ -133,7 +133,7 @@ class _RawDataDownloader:
         :param website The first part of the url
         :return: Full url
         """
-        if not url_part.startswith('http'):
+        if not url_part.startswith("http"):
             full_url = f"{website}{url_part}"
         else:
             full_url = url_part
@@ -248,8 +248,8 @@ class _RawDataDownloader:
         file_name = os.path.basename(url_object.url)
         file_name = f"_{url_object.timezone}.".join(file_name.rsplit("."))
         file_path = os.path.join(category_dir_path, file_name)
-        url_object.file_path = file_path
-        self._download_file(url_object.url, url_object.file_path)
+        url_object.path = file_path
+        self._download_file(url_object.url, url_object.path)
 
     def _walk_html_with_links_to_download_links(self, html_url):
         """
@@ -347,22 +347,27 @@ class _ZipCSVCombiner:
         if "yyyymmdd" in re.sub("[./: ]", "", cols[0]).lower():
             if "hh" not in cols[0]:
                 if "hhmm" in cols[1]:
-                    df["timestamp"] = df[cols[0]].astype(str) + " " + df[cols[1]]
+                    df["timestamp"] = (
+                        df.iloc[:, 0].astype(str) + " " + df.iloc[:, 1]
+                    )
                     df["timestamp"] = pd.to_datetime(df["timestamp"])
                 else:
-                    df["timestamp"] = pd.to_datetime(df[cols[0]], format="%Y%m%d")
+                    df["timestamp"] = pd.to_datetime(
+                        df.iloc[:, 0], format="%Y%m%d"
+                    )
             else:
-                df["timestamp"] = pd.to_datetime(df[cols[0]])
+                df["timestamp"] = pd.to_datetime(df.iloc[:, 0])
         else:
             _LOG.warning("No timestamp column was created")
         return df
 
     def _process_df(self, df):
+        _TIMEZONES = {"UTC": "UTC", "EST": "US/Eastern"}
         df = self._add_col_names(df, self.url_object.col_names)
         df = self._add_timestamp_col(df)
         if "timestamp" in df.columns:
-            df["timestamp"] = df["timestamp"].tz_localize(
-                self.url_object.timezone
+            df["timestamp"] = df["timestamp"].dt.tz_localize(
+                _TIMEZONES[self.url_object.timezone]
             )
             df.sort_values("timestamp", inplace=True)
         else:
@@ -387,7 +392,7 @@ class _MultipleZipCSVCombiner:
         self.dst_dir = dst_dir
 
     def execute(self):
-        _LOG.info('Combining zipped csvs into one')
+        _LOG.info("Combining zipped csvs into one")
         for category_dir in tqdm(os.listdir(self.input_dir)):
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
@@ -415,7 +420,7 @@ class _CSVToParquetConverter:
         self.dst_dir = dst_dir
 
     def execute(self):
-        _LOG.info('Saving to parquet')
+        _LOG.info("Saving to parquet")
         for category_dir in tqdm(os.listdir(self.input_dir)):
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
@@ -466,7 +471,7 @@ if __name__ == "__main__":
 
     rdd = _RawDataDownloader(_WEBSITE, args.zipped_dst_dir)
     rdd.execute()
-    
+
     mzcc = _MultipleZipCSVCombiner(
         args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
     )
