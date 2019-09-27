@@ -170,12 +170,18 @@ class _Dataflow_helper(ut.TestCase):
 
 class Test_dataflow_core_DAG1(_Dataflow_helper):
     def test_add_nodes1(self):
+        """
+        Creates a node and adds it to a DAG.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1")
         dag.add_node(n1)
         self._check(dag.dag)
 
     def test_add_nodes2(self):
+        """
+        Demonstrates that add_node is not idempotent.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1")
         dag.add_node(n1)
@@ -183,6 +189,9 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
             dag.add_node(n1)
 
     def test_add_nodes3(self):
+        """
+        Requires nid uniqueness in a DAG.
+        """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1")
         dag.add_node(n1)
@@ -191,6 +200,9 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
             dag.add_node(n1_prime)
 
     def test_add_nodes4(self):
+        """
+        Adds multiple nodes to a DAG.
+        """
         dag = dtfc.DAG()
         for name in ["n1", "n2", "n3", "n4"]:
             dag.add_node(dtfc.Node(name, inputs=["in1"], outputs=["out1"]))
