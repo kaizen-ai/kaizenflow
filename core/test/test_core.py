@@ -207,7 +207,16 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         dag.connect(("n1", "out1"), ("n2", "in1"))
         self._check(dag.dag)
 
-    def test_connect_nodes1(self):
+    def test_connect_nodes2(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        self._check(dag.dag)
+
+    def test_connect_nodes3(self):
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
@@ -216,7 +225,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
            dag.connect(("n2", "out1"), ("n1", "in1"))
 
-    def test_connect_nodes2(self):
+    def test_connect_nodes4(self):
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
         dag.add_node(n1)
@@ -226,7 +235,17 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
             dag.connect(("n2", "out1"), ("n1", "in1"))
 
-    def test_connect_nodes3(self):
+    def test_connect_nodes5(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        with self.assertRaises(AssertionError):
+            dag.connect("n2", "n1")
+
+    def test_connect_nodes6(self):
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
@@ -238,11 +257,11 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         dag.add_node(n4)
         n5 = dtfc.Node("n5", inputs=["in1", "in2"], outputs=["out1"])
         dag.add_node(n5)
-        dag.connect(("n1", "out1"), ("n2", "in1"))
-        dag.connect(("n2", "out1"), ("n3", "in1"))
-        dag.connect(("n2", "out2"), ("n4", "in1"))
-        dag.connect(("n3", "out1"), ("n5", "in1"))
-        dag.connect(("n4", "out1"), ("n5", "in2"))
+        dag.connect("n1", ("n2", "in1"))
+        dag.connect(("n2", "out1"), "n3")
+        dag.connect(("n2", "out2"), "n4")
+        dag.connect("n3", ("n5", "in1"))
+        dag.connect("n4", ("n5", "in2"))
         self._check(dag.dag)
 
 # #############################################################################

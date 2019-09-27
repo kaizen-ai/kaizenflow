@@ -1,3 +1,4 @@
+import abc
 import itertools
 import logging
 
@@ -13,8 +14,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(Paul): Make this abstract with ABC
-class AbstractNode:
+class AbstractNode(abc.ABC):
     """
     Abstract node class for creating DAG pipelines of functions.
 
@@ -118,6 +118,12 @@ class Node(AbstractNode):
         return self._output_vals[method]
 
 
+def assert_single_element_and_return(l):
+    dbg.dassert_eq(len(l), 1,
+                   "List has {} elements!".format(len(l)))
+    return l[0]
+
+
 # #############################################################################
 # Graph class for creating and executing a DAG of nodes.
 # #############################################################################
@@ -129,8 +135,6 @@ class DAG:
 
     The DAG manages node execution and storage of outputs (within executed
     nodes).
-
-    TODO(Paul): Think about how subgraphs should fit into this framework.
     """
 
     def __init__(self, name=None):
@@ -182,7 +186,6 @@ class DAG:
         dbg.dassert(self.dag.has_node(nid), "Node `%s` is not in the dag!")
         return self.dag.nodes[nid]["stage"]
 
-    # TODO(Paul): Automatically infer edge labels when possible (e.g., SISO).
     def connect(self, parent, child):
         """
         Adds a directed edge from parent node output to child node input.
@@ -196,15 +199,36 @@ class DAG:
         :param parent: tuple of the form (nid, output)
         :param child: tuple of the form (nid, input)
         """
-        dbg.dassert_in(parent[1], self.get_node(parent[0]).output_names)
-        dbg.dassert_in(child[1], self.get_node(child[0]).input_names)
-        kwargs = {child[1]: parent[1]}
-        self._dag.add_edge(parent[0], child[0], **kwargs)
+        # Automatically infer output name when the parent has only one output.
+        if not isinstance(parent, tuple):
+            parent_nid = parent
+            parent_node = self.get_node(parent_nid)
+            parent_out = parent_node.output_names
+            parent_out = assert_single_element_and_return(parent_out)
+        else:
+            parent_nid = parent[0]
+            parent_node = self.get_node(parent_nid)
+            parent_out = parent[1]
+        # Automatically infer input name when the child has only one input.
+        if not isinstance(child, tuple):
+            child_nid = child
+            child_node = self.get_node(child_nid)
+            child_in = child_node.input_names
+            child_in = assert_single_element_and_return(child_in)
+        else:
+            child_nid = child[0]
+            child_node = self.get_node(child_nid)
+            child_in = child[1]
+        #
+        dbg.dassert_in(parent_out, parent_node.output_names)
+        dbg.dassert_in(child_in, child_node.input_names)
+        kwargs = {child_in: parent_out}
+        self._dag.add_edge(parent_nid, child_nid, **kwargs)
         if not nx.is_directed_acyclic_graph(self.dag):
-            self._dag.remove_edge(parent[0], child[0])
+            self._dag.remove_edge(parent_nid, child_nid)
             dbg.dfatal(
                 "Creating edge {} -> {} introduces a cycle!".format(
-                    parent[0], child[0]
+                    parent_nid, child_nid
                 )
             )
 
@@ -262,7 +286,8 @@ class DAG:
             lambda x: x in nx.ancestors(self._dag, nid),
             nx.topological_sort(self._dag),
         )
-        # TODO(Paul): Explain why we need to add nid back
+        # The `ancestors` filter only returns nodes strictly less than `nid`,
+        # and so we need to add `nid` back.
         nids = itertools.chain(ancestors, [nid])
         for n in nids:
             self._run_node(n, method)
