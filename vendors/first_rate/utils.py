@@ -304,6 +304,7 @@ class _ZipCSVCombiner:
     :param url_object: _FileURL object
     :param output_path: destination path for the csv
     """
+
     def __init__(self, url_object: _FileURL, output_path: str):
         self.url_object = url_object
         self.output_path = output_path

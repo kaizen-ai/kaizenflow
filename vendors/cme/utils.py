@@ -115,6 +115,11 @@ class _ProductListDownloader:
                 result[:0] = letters[rem]
             return "".join(result) + str(row)
 
+<<<<<<< HEAD
+=======
+        # Convert an xls file into openpyxl by copying all the cells
+        # from one to the other.
+>>>>>>> 39a9e33... PartTask274 lint
         xlrd_book = xlrd.open_workbook(self.xls_path)
         xlrd_sheet = xlrd_book.sheet_by_index(0)
         openpyxl_wb = openpyxl.workbook.Workbook()
@@ -472,6 +477,12 @@ def _get_slate_with_specs_pipeline(
 
 
 if __name__ == "__main__":
+<<<<<<< HEAD
+=======
+    _DOWNLOAD_URL = (
+        "https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls"
+    )
+>>>>>>> 39a9e33... PartTask274 lint
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -482,9 +493,13 @@ if __name__ == "__main__":
         default=_DOWNLOAD_URL,
         type=str,
     )
+<<<<<<< HEAD
     parser.add_argument(
         "--product_slate_xls_dst_path", required=True, action="store", type=str
     )
+=======
+    parser.add_argument("--product_list", required=True, action="store", type=str)
+>>>>>>> 39a9e33... PartTask274 lint
     parser.add_argument(
         "--slate_with_specs_csv_dst_path", required=True, action="store", type=str
     )
@@ -497,8 +512,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     dbg.init_logger(args.log_level)
+<<<<<<< HEAD
     _get_slate_with_specs_pipeline(
         download_url=args.download_url,
         product_slate_xls_dst_path=args.product_slate_xls_dst_path,
         slate_with_specs_csv_dst_path=args.slate_with_specs_csv_dst_path,
+=======
+    _get_list_with_specs_pipeline(
+        args.download_url, args.product_list, args.product_specs
+>>>>>>> 39a9e33... PartTask274 lint
     )
