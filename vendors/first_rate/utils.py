@@ -2,10 +2,16 @@
 r"""
 Download equity data from the http://firstratedata.com.
 
+- Save the data as zipped csvs for each equity to one of the
+  [commodity, crypto, fx, index, stock_A-D, stock_E-I, stock_J-N,
+  stock_O-R, stock_S-Z] category directories.
+- Combine zipped csvs for each equity, add "timestamp" column and
+  column names. Save as csv to corresponding category directories
+- Save csvs to parquet (divided by category)
+
 Usage example:
-> python oil/utils/Task274_download_equities_form_firstrate.py \
-  --dst_dir /data/firstrate/ \
-  --website http://firstratedata.com
+> python amp/first_rate/utils.py \
+  --dst_dir /data/first_rate/
 """
 import argparse
 import logging
@@ -21,23 +27,28 @@ from tqdm.autonotebook import tqdm
 
 import helpers.csv as csv
 import helpers.dbg as dbg
+import helpers.io_ as io_
 
 _LOG = logging.getLogger(__name__)
 
-_WEBSITE = "http://firstratedata.com"
-_ZIPPED_DST_DIR = "/data/firstrate_zipped/"
-_UNZIPPED_DST_DIR = "/data/firstrate_unzipped/"
-_PQ_DST_DIR = "data/firstrate_pq"
 
 # TODO(gp): Dummy for RB.
 
-class FileURL:
+
+class _FileURL:
     """
     A container for file urls.
 
-    :param timezone: The timezone of the dataset
     :param url: file url
-    :param category: the category of an equity
+    :param timezone: The timezone from the dataset description on the
+        website
+    :param category: the navigation category in which a file appears on
+        the FirstRate website. The categories are:
+        [commodity, crypto, fx, index, stock_A-D, stock_E-I, stock_J-N,
+        stock_O-R, stock_S-Z]
+    :param col_names: Column names from the "Format" field of the
+        dataset description on the FirstRate website
+    :param path: A path to which this file is saved as zipped csv
     """
 
     def __init__(self, url, timezone, category, col_names, path=""):
@@ -48,7 +59,7 @@ class FileURL:
         self.path = path
 
 
-class RawDataDownloader:
+class _RawDataDownloader:
     """
     Get all category urls from a website, then walk them one by one and
     extract all download links and timezones. Save the files from the
@@ -66,14 +77,8 @@ class RawDataDownloader:
         self.path_object_dict = {}
 
     def execute(self):
-        """
-        Get all category urls from a website, then walk them one by one and
-        extract all download links and timezones. Save the files from the
-        download links to the category directories. The timezone
-        information will be appended to each file name as a suffix.
-        """
         _LOG.info("Collecting the links")
-        all_urls = self.walk_get_all_urls()
+        all_urls = self._walk_get_all_urls()
         _LOG.info("Downloading the files")
         path_object = {}
         for url_object in tqdm(all_urls):
@@ -81,7 +86,7 @@ class RawDataDownloader:
             path_object[url_object.file_path] = url_object
         self.path_object_dict = path_object
 
-    def walk_get_all_urls(self):
+    def _walk_get_all_urls(self):
         """
         Get all category urls from a website, then walk them one by one and
         extract all download links and timezones into FileURL objects.
@@ -124,10 +129,10 @@ class RawDataDownloader:
         :param url_part: The cut url
         :return: Full url
         """
-        if "http" in url_part:
-            full_url = url_part
-        else:
+        if not url_part.startswith(self.website):
             full_url = f"{self.website}{url_part}"
+        else:
+            full_url = url_part
         return full_url
 
     @staticmethod
@@ -143,7 +148,7 @@ class RawDataDownloader:
         hrefs = soup.find_all("a")
         part_urls = [href["href"] for href in hrefs]
         full_urls = [
-            RawDataDownloader._add_website_to_url(part_url, website)
+            _RawDataDownloader._add_website_to_url(part_url, website)
             for part_url in part_urls
         ]
         return full_urls
@@ -194,7 +199,7 @@ class RawDataDownloader:
     def _get_download_links_and_tzs(self, card_bodies, category):
         """
         Extract timezones and download links from a list of BeautifulSoup
-        objects (in firstrate the links and timezones are located in
+        objects (in first_rate the links and timezones are located in
         card_bodies attributes).
 
         :param card_bodies: BeautifulSoup objects
@@ -209,7 +214,7 @@ class RawDataDownloader:
             col_names = self._extract_col_names(card_body)
             urls = self._get_urls(card_body, self.website)
             for tz, col_name_list, url in zip(tzs, col_names, urls):
-                furl = FileURL(url, tz, category, col_name_list)
+                furl = _FileURL(url, tz, category, col_name_list)
                 url_objects.append(furl)
         return url_objects
 
@@ -235,10 +240,8 @@ class RawDataDownloader:
         :param url_object: FileURL object
         """
         category_dir_path = os.path.join(self.dst_dir, url_object.category)
-        if not os.path.isdir(category_dir_path):
-            os.mkdir(path=category_dir_path)
-            _LOG.info(f"Created {category_dir_path} directory")
-        file_name = url_object.url.split("/")[-1]
+        io_.create_dir(category_dir_path, incremental=True)
+        file_name = os.path.basename(url_object.url)
         file_name = f"_{url_object.timezone}.".join(file_name.rsplit("."))
         file_path = os.path.join(category_dir_path, file_name)
         url_object.file_path = file_path
@@ -289,8 +292,19 @@ class RawDataDownloader:
         return hrefs_categories_urls
 
 
-class ZipCSVCombiner:
-    def __init__(self, url_object: FileURL, output_path: str):
+class _ZipCSVCombiner:
+    """
+    - Combine csvs from a zip file
+    - add "timestamp" column
+    - localize that column to the timezone parsed from the FirstRate
+      website
+    - add column names (parsed from the FirstRate website)
+    - save as csv
+
+    :param url_object: _FileURL object
+    :param output_path: destination path for the csv
+    """
+    def __init__(self, url_object: _FileURL, output_path: str):
         self.url_object = url_object
         self.output_path = output_path
 
@@ -318,6 +332,11 @@ class ZipCSVCombiner:
 
     @staticmethod
     def _add_timestamp_col(df):
+        """
+        Create a "timestamp" column from the first one or two columns.
+        The FirstRate datasets have either one column with both date
+        and time, or have them in the separate columns.
+        """
         cols = df.columns
         if "yyyymmdd" in re.sub("[./: ]", "", cols[0]).lower():
             if "hh" not in cols[0]:
@@ -345,12 +364,12 @@ class ZipCSVCombiner:
         return df
 
 
-class MultipleZipCSVCombiner:
+class _MultipleZipCSVCombiner:
     """
-    Combine zipped csvs in firstrate directory. Add column names to the
+    Combine zipped csvs in first_rate directory. Add column names to the
     csvs, add timestamp column and localize it.
 
-    :param input_dir: firstrate directory with categories
+    :param input_dir: first_rate directory with categories
     :param path_object_dict: path_object_dict attribute of the
         RawDataDownloader
     :param dst_dir: destination directory
@@ -362,25 +381,21 @@ class MultipleZipCSVCombiner:
         self.dst_dir = dst_dir
 
     def execute(self):
-        """
-        Combine zipped csvs in firstrate directory. Add column names to the
-        csvs, add timestamp column and localize it.
-        """
         for category_dir in tqdm(os.listdir(self.input_dir)):
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
-            if not os.path.isdir(category_dir_dst_path):
-                os.mkdir(path=category_dir_dst_path)
-                _LOG.info(f"Created {category_dir_dst_path} directory")
+            io_.create_dir(category_dir_dst_path, incremental=True)
             for zip_path in tqdm(os.listdir(category_dir_input_path)):
+                # Combine csvs from the zip file, process them and save
                 url_object = self.path_object_dict[zip_path]
-                csv_name = os.path.splitext(zip_path.split("/")[-1])[0] + ".csv"
+                file_name = os.path.basename(zip_path)
+                csv_name = os.path.splitext(file_name)[0] + ".csv"
                 csv_path = os.path.join(category_dir_dst_path, csv_name)
-                zcc = ZipCSVCombiner(url_object, csv_path)
+                zcc = _ZipCSVCombiner(url_object, csv_path)
                 zcc.execute()
 
 
-class CSVToParquetConverter:
+class _CSVToParquetConverter:
     """
     Save csv files divided by categories into parquet
 
@@ -393,21 +408,20 @@ class CSVToParquetConverter:
         self.dst_dir = dst_dir
 
     def execute(self):
-        """
-        Save csv files divided by categories into parquet
-        """
         for category_dir in tqdm(os.listdir(self.input_dir)):
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
-            if not os.path.isdir(category_dir_dst_path):
-                os.mkdir(path=category_dir_dst_path)
-                _LOG.info(f"Created {category_dir_dst_path} directory")
+            io_.create_dir(category_dir_dst_path, incremental=True)
             csv.convert_csv_dir_to_pq_dir(
                 category_dir_input_path, category_dir_dst_path
             )
 
 
 if __name__ == "__main__":
+    _WEBSITE = "http://firstratedata.com"
+    _ZIPPED_DST_DIR = "/data/first_rate/zipped/"
+    _UNZIPPED_DST_DIR = "/data/first_rate/unzipped/"
+    _PQ_DST_DIR = "/data/first_rate/pq"
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -433,9 +447,6 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
-        "--website", required=False, action="store", default=_WEBSITE, type=str
-    )
-    parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
@@ -445,13 +456,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     dbg.init_logger(args.log_level)
 
-    rdd = RawDataDownloader(args.website, args.zipped_dst_dir)
+    rdd = _RawDataDownloader(_WEBSITE, args.zipped_dst_dir)
     rdd.execute()
 
-    mzcc = MultipleZipCSVCombiner(
+    mzcc = _MultipleZipCSVCombiner(
         args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
     )
     mzcc.execute()
 
-    ctpc = CSVToParquetConverter(args.unzipped_dst_dir, args.pq_dst_dir)
+    ctpc = _CSVToParquetConverter(args.unzipped_dst_dir, args.pq_dst_dir)
     ctpc.execute()
