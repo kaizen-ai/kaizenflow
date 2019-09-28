@@ -218,22 +218,25 @@ _LOG.debug("I am a debug function about %s", a)
       sometimes this happens silently and it is reported only from the OS return
       code
 
-### Use positional args when logging
+## Use positional args when logging
 
 - Instead of doing this:
     **Bad**
     ```python
     _LOG.debug('cmd=%s %s %s' % (cmd1, cmd2, cmd3))
+    _LOG.debug('cmd=%s %s %s'.format(cmd1, cmd2, cmd3))
+    _LOG.debug('cmd={cmd1} {cmd2} {cmd3}')
   do this
     **Good**
     ```
      _LOG.debug('cmd=%s %s %s', cmd1, cmd2, cmd3)
     ```
 
+- The two statements are equivalent from the functional point of view
 - The reason is that in the second case the string is not built unless the
   logging is actually performed, which limits time overhead from logging
 
-### Report warnings
+## Report warnings
 
 - If there is a something that is suspicious but you don't feel like it's
   worthwhile to assert, report a warning with:
@@ -245,3 +248,17 @@ _LOG.warning(...)
     - print the first warning
     - send the rest to warnings.log
     - at the end of the run, reports "there are warnings in warnings.log"
+
+# Assertion
+
+## Use positional args when asserting
+- `dassert_*` is modeled after logging so for the same reasons one should use
+  positional args
+    **Bad**
+    ```
+    dbg.dassert_eq(a, 1, "No info for %s" % method)
+    ```
+    **Good**
+    ```
+    dbg.dassert_eq(a, 1, "No info for %s", method)
+    ```
