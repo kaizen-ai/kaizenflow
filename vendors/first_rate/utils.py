@@ -353,7 +353,7 @@ class _ZipCSVCombiner:
     def _add_col_names(df, col_names):
         col_names = list(map(lambda x: x.lower(), col_names))
         if len(col_names) < len(df.columns):
-            col_names.extend([None] * (len(df.columns) - len(col_names)))
+            col_names.extend([''] * (len(df.columns) - len(col_names)))
         elif len(col_names) > len(df.columns):
             col_names = col_names[: df.shape[1]]
         df.columns = col_names
@@ -375,7 +375,7 @@ class _ZipCSVCombiner:
                         # misleading, and the first column contains date
                         # and time (http://firstratedata.com/i/fx/USDJPY)
                         cols = list(df.columns)
-                        df.columns = cols[:1] + cols[2:] + [None]
+                        df.columns = cols[:1] + cols[2:] + ['']
                         df["timestamp"] = pd.to_datetime(df.iloc[:, 0])
                     else:
                         df["timestamp"] = (
