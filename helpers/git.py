@@ -93,16 +93,45 @@ def get_repo_symbolic_name(super_module):
     return repo_name
 
 
-def get_repo_prefix(git_repo_name):
-    if git_repo_name == "alphamatic/amp":
-        prefix = "Amp"
-    elif git_repo_name == "alphamatic/lemonade":
-        prefix = "Lem"
-    elif git_repo_name == "ParticleDev/commodity_research":
-        prefix = "Par"
-    else:
-        dbg.dfatal("Invalid git repo name '%s'" % git_repo_name)
-    return prefix
+def _get_repo_map():
+    _REPO_MAP = {
+        "alphamatic/amp": "Amp",
+    }
+    # Get info from the including repo, if possible.
+    try:
+        import repo_config as repc
+        _REPO_MAP.update(repc.REPO_MAP)
+    except ImportError:
+        _LOG.debug("No including repo")
+    dbg.dassert_no_duplicates(_REPO_MAP.keys())
+    dbg.dassert_no_duplicates(_REPO_MAP.values())
+    return _REPO_MAP.copy()
+
+
+def get_all_repo_symbolic_names():
+    repo_map = _get_repo_map()
+    return repo_map.values()
+
+
+# TODO(gp): Found a better name.
+def get_repo_prefix(repo_github_name):
+    """
+    Return the symbolic name of a git repo.
+    E.g., for "alphamatic/amp", the function returns "Amp".
+    """
+    repo_map = _get_repo_map()
+    dbg.dassert_in(repo_github_name, repo_map, "Invalid repo github name")
+    return repo_map[repo_github_name]
+
+
+def get_repo_github_name(repo_symbolic_name):
+    # Get the reverse map.
+    repo_map = _get_repo_map()
+    inv_repo_map = {v: k for (k, v) in repo_map.items()}
+    #
+    dbg.dassert_in(repo_symbolic_name, inv_repo_map,
+                   "Invalid repo symbolic name")
+    return inv_repo_map[repo_symbolic_name]
 
 
 def get_path_from_git_root(file_name, super_module):

@@ -30,7 +30,7 @@ class Test_git1(ut.TestCase):
     don't know in which dir we are running. Thus we test that the function
     completes and visually inspect the outcome, if needed.
     TODO(gp): If we have Jenkins on AM side we could test for the outcome at
-    least in that set-up.
+     least in that set-up.
     """
 
     def _helper(self, func_call):
@@ -75,11 +75,28 @@ class Test_git1(ut.TestCase):
         self._helper(func_call)
 
     def test_git_log1(self):
-        _LOG.debug("git_log=\n%s", git.git_log())
+        func_call = "git.git_log()"
+        self._helper(func_call)
 
     def test_git_log2(self):
-        _LOG.debug("git_log=\n%s", git.git_log(my_commits=True))
+        func_call = "git.git_log(my_commits=True)"
+        self._helper(func_call)
 
+    def test_git_all_repo_symbolic_names1(self):
+        func_call = "git.get_all_repo_symbolic_names()"
+        self._helper(func_call)
+
+    def test_git_all_repo_symbolic_names2(self):
+        all_repo_sym_names = git.get_all_repo_symbolic_names()
+        for repo_sym_name in all_repo_sym_names:
+            repo_github_name = git.get_repo_github_name(repo_sym_name)
+            _LOG.debug(
+                ut.to_string("repo_sym_name") + " -> " +
+                ut.to_string("repo_github_name"))
+            repo_sym_name_tmp = git.get_repo_prefix(repo_github_name)
+            _LOG.debug(
+                ut.to_string("repo_sym_name") + " -> " +
+                ut.to_string("repo_sym_name_tmpA"))
 
 # #############################################################################
 # numba.py

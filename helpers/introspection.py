@@ -1,11 +1,35 @@
+"""
+# Import as:
+
+import helpers.introspection as intr
+"""
+
 import inspect
 import sys
+
+import helpers.dbg as dbg
+
+
+def get_function_name(count=0):
+    """
+    Return the name of the function calling this function, i.e., the name of
+    the function calling `get_function_name()`.
+    """
+    ptr = inspect.currentframe()
+    # count=0 corresponds to the calling function, so we need to add an extra
+    # step walking the call stack.
+    count += 1
+    for _ in range(count):
+        dbg.dassert_is_not(ptr, None)
+        ptr = ptr.f_back
+    func_name = ptr.f_code.co_name
+    return func_name
 
 
 # From https://github.com/bosswissam/pysize
 def get_size(obj, seen=None):
     """
-    Recursively finds size of objects in bytes.
+    Recursively find size of an object `obj` in bytes.
     """
     size = sys.getsizeof(obj)
     if seen is None:

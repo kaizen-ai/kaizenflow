@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 """
+Simple wrapper around ghi (GitHub Interface) to implement some typical
+workflows.
+
 # Get all the data relative to issue #257:
 > ghi_show.py 257
 # Github:
@@ -14,6 +17,10 @@ https://github.com/ParticleDev/commodity_research/issues/257
 # Files in the gdrive '/Users/saggese/GoogleDriveParticle':
 '/Users/saggese/GoogleDriveParticle/Tech/Task 257 - ST - Sources Analysis.gdoc'
   https://docs.google.com/open?id=1B70mA0m5UovKmuzAq05XESlKNvToflBR1uqtcYGXhhM
+
+
+# Get all the data relative to issue #13 for a different GitHub repo:
+> ghi_show.py 13 --repo Amp
 """
 
 import argparse
@@ -33,9 +40,13 @@ _LOG = logging.getLogger(__name__)
 _COLOR = "green"
 
 
-def _print_github_info(issue_num):
+def _print_github_info(issue_num, repo_symbolic_name):
     print(pri.color_highlight("# Github:", "green"))
-    cmd = "ghi show %d | head -1" % issue_num
+    ghi_opts = ""
+    if repo_symbolic_name:
+        repo_github_name = git.get_repo_github_name(repo_symbolic_name)
+        ghi_opts = "-- %s" % repo_github_name
+    cmd = "ghi show %d %s | head -1" % (issue_num, ghi_opts)
     _, txt = si.system_to_string(cmd, abort_on_error=False)
     print(txt)
     # Print url.
@@ -112,6 +123,12 @@ def _parse():
     parser.add_argument(
         "--only_github", action="store_true", help="Print only git hub info"
     )
+    parser.add_argument(
+        "-r", "--repo_symbolic_name", action="store",
+        choices=["Part", "Amp", "Lem"],
+        default=None,
+            help="Refer to one of the repos"
+    )
     parser.add_argument("positional", nargs="+", help="Github issue number")
     parser.add_argument(
         "-v",
@@ -126,17 +143,17 @@ def _parse():
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
-    #
+    # Select actions.
     actions = [_print_github_info, _print_files_in_git_repo, _print_gdrive_files]
     if args.only_github:
         actions = [_print_github_info]
-
+    # Scan the issues.
     for issue_num in args.positional:
         issue_num = int(issue_num)
         dbg.dassert_lte(1, issue_num)
         #
         for action in actions:
-            action(issue_num)
+            action(issue_num, args.repo_symbolic_name)
 
 
 if __name__ == "__main__":
