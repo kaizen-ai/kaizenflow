@@ -69,12 +69,14 @@ class AbstractNode(abc.ABC):
         return dummy_output
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) \
-            and isinstance(self, other.__class__) \
-            and self.nid == other.nid \
-            and self.input_names == other.input_names \
-            and self.output_names == other.output_names \
+        return (
+            isinstance(other, self.__class__)
+            and isinstance(self, other.__class__)
+            and self.nid == other.nid
+            and self.input_names == other.input_names
+            and self.output_names == other.output_names
             and isinstance(other, self.__class__)
+        )
 
 
 class Node(AbstractNode):
@@ -189,9 +191,16 @@ class DAG:
             return
         # Allow `add_node` to be idempotent.
         if node == self.get_node(node.nid):
-            _LOG.debug("Node `{}` is already in the dag.".format(node.nid))
+            _LOG.debug(
+                "Node `{}` is already in the dag; updating with new equivalent node.".format(
+                    node.nid
+                )
+            )
+            self._dag.add_node(node.nid, stage=node)
         else:
-            dbg.dfatal("A node with nid=`{}` is already in the dag!".format(node.nid))
+            dbg.dfatal(
+                "A node with nid=`{}` is already in the dag!".format(node.nid)
+            )
 
     def get_node(self, nid):
         """
@@ -245,7 +254,9 @@ class DAG:
                 dbg.dassert_not_in(
                     child_in,
                     self.dag.get_edge_data(nid, child_nid),
-                    "`{}` already receiving input from node {}".format(child_in, nid),
+                    "`{}` already receiving input from node {}".format(
+                        child_in, nid
+                    ),
                 )
         # Add the edge along with an `edge attribute` indicating the parent
         # output to connect to the child input.
