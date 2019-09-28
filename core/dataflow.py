@@ -7,13 +7,13 @@ import networkx as nx
 import pandas as pd
 from sklearn import linear_model
 
-from core.dataflow_core import Node as Node
-from core.dataflow_core import DAG as DAG
 import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
 import vendors.kibot.utils as kut
+from core.dataflow_core import DAG as DAG  # pylint: disable=unused-import
+from core.dataflow_core import Node as Node
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,8 +52,9 @@ class SkLearnNode(Node, abc.ABC):
         raise NotImplementedError
 
     def get_info(self, method):
-        dbg.dassert_in(method, self._info.keys(),
-                       "No info found for {}".format(method))
+        dbg.dassert_in(
+            method, self._info.keys(), "No info found for {}".format(method)
+        )
         return self._info(method)
 
 
@@ -106,7 +107,7 @@ class Transformer(SkLearnNode, abc.ABC):
     """
     Stateless Single-Input Single-Output node.
     """
-    # TODO(Paul): Don't use `input` or `in` for default input name.
+
     def __init__(self, nid):
         super().__init__(nid)
 
@@ -289,6 +290,7 @@ def cross_validate(config, source_nid, sink_nid, dag):
         source_node.set_test_idxs(test_idxs)
         dag.run_leq_node(sink_nid, "predict")
     return dag.get_node(sink_nid)
+
 
 # TODO(Paul): Add an Extractor function that operates on a DAG of SkLearnNodes
 #   - also pass `field`, e.g., fit/predict
