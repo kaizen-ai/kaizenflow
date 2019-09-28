@@ -3,6 +3,9 @@
 Import as:
 
 import helpers.user_credentials as usc
+
+# Test that all the credentials are properly defined.
+> helpers/user_credentials.py
 """
 
 import argparse
@@ -17,6 +20,9 @@ import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
+
+
+# TODO(gp): Add also P1_GDRIVE_PATH and AM_GDRIVE_PATH instead of using the
 
 
 def _get_p1_dev_server_ip():

@@ -38,8 +38,8 @@ class Test_url_py1(ut.TestCase):
     def test_run1(self):
         cmd = (
             "url.py "
-            "http://localhost:9999/notebooks/research"
-            "/Task51_experiment_with_sklearn_pipeline/"
+            "http://localhost:9999/notebooks/research/"
+            "Task51_experiment_with_sklearn_pipeline/"
             "Task51_experiment_with_sklearn_pipeline.ipynb"
         )
         si.system(cmd)
