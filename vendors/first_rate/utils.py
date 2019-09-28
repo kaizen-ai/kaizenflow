@@ -237,7 +237,7 @@ class _RawDataDownloader:
         with requests.get(url, stream=True) as r:
             with open(dst_path, "wb") as fout:
                 fout.write(r.content)
-        _LOG.info(f"Saved {url} to {dst_path}")
+        _LOG.debug(f"Saved {url} to {dst_path}")
 
     def _download_url_to_path(self, url_object):
         """
