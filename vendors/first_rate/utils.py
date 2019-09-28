@@ -455,7 +455,7 @@ class _CSVToParquetConverter:
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
             csv.convert_csv_dir_to_pq_dir(
-                category_dir_input_path, category_dir_dst_path
+                category_dir_input_path, category_dir_dst_path, header='infer'
             )
 
 
