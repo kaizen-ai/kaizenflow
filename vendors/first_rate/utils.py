@@ -218,12 +218,14 @@ class _RawDataDownloader:
             col_names = self._extract_col_names(card_body)
             urls = self._get_urls(card_body, self.website)
             for tz, col_name_list, url in zip(tzs, col_names, urls):
-                if url.split('/')[-2] != 'purchase':
+                if url.split("/")[-2] != "purchase":
                     furl = _FileURL(url, tz, category, col_name_list)
                     url_objects.append(furl)
                 else:
-                    _LOG.warning(f"{url} is a purchase link, not downloading"
-                                 "its contents")
+                    _LOG.warning(
+                        f"{url} is a purchase link, not downloading"
+                        "its contents"
+                    )
         return url_objects
 
     @staticmethod
@@ -330,6 +332,20 @@ class _ZipCSVCombiner:
                 with zf.open(csv_path) as zc:
                     df_part = pd.read_csv(zc, sep=",", header=None)
                 dfs.append(df_part)
+        # If dataframes have different number of columns,
+        # combine the first two columns
+        n_cols = [df.shape[1] for df in dfs]
+        if len(np.unique(n_cols)) > 1:
+            max_n_cols = np.max(n_cols)
+            for df in dfs:
+                if df.shape[1] == max_n_cols:
+                    df.iloc[:, 0] = (
+                        df.iloc[:, 0].astype(str)
+                        + " "
+                        + df.iloc[:, 1].astype(str)
+                    )
+                    df.drop(columns=1, inplace=True)
+                    df.columns = range(df.shape[1])
         df = pd.concat(dfs)
         return df
 
