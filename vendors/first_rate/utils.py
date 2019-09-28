@@ -331,71 +331,69 @@ class _ZipCSVCombiner:
             for csv_path in zf.namelist():
                 with zf.open(csv_path) as zc:
                     df_part = pd.read_csv(zc, sep=",", header=None)
-                dfs.append(df_part)
-        # If dataframes have different number of columns,
-        # combine the first two columns
-        n_cols = [df.shape[1] for df in dfs]
-        if len(np.unique(n_cols)) > 1:
-            max_n_cols = np.max(n_cols)
-            for df in dfs:
-                if df.shape[1] == max_n_cols:
-                    df.iloc[:, 0] = (
-                        df.iloc[:, 0].astype(str)
-                        + " "
-                        + df.iloc[:, 1].astype(str)
-                    )
-                    df.drop(columns=1, inplace=True)
-                    df.columns = range(df.shape[1])
-        df = pd.concat(dfs)
+                dfs.append(df_part)        
+        processed_dfs = []
+        for df in dfs:
+            df = self._process_datetime_cols(df)
+            processed_dfs.append(df)
+        df = pd.concat(processed_dfs)
+        return df
+
+    @staticmethod
+    def _process_datetime_cols(df):
+        first_col = 0
+        second_col = 1
+        if isinstance(df.iloc[0, 0], int) or isinstance(df.iloc[0, 0], np.int64):
+            first_col = "date"
+        elif isinstance(df.iloc[0, 0], str):
+            without_symbols = re.sub("[./\:\- ]", "", df.iloc[0, 0])
+            if len(without_symbols) == 8:
+                first_col = "date"
+            elif len(without_symbols) >= 11:
+                first_col = "datetime"
+        if first_col == "date":
+            if isinstance(df.iloc[0, 1], str):
+                if df.iloc[0, 1][-3] == ":":
+                    second_col = "time"
+        df.rename(columns={0: first_col, 1: second_col}, inplace=True)
+
+        if first_col == "date":
+            if second_col == "time":
+                df["timestamp"] = df.iloc[:, 0].astype(str) + " " + df.iloc[:, 1]
+                df.drop(columns=["time"], inplace=True)
+            else:
+                df["timestamp"] = df.iloc[:, 0]
+                df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y%m%d")
+            df.drop(columns=["date"], inplace=True)
+        elif first_col == "datetime":
+            df["timestamp"] = df.iloc[:, 0]
+            df.drop(columns=["datetime"], inplace=True)
+        else:
+            _LOG.warning("Timestamp column was not found")
+        if "timestamp" in df.columns:
+            df["timestamp"] = pd.to_datetime(df["timestamp"])
+            df = df[["timestamp"] + list(df.columns.drop("timestamp"))]
+            df.columns = ["timestamp"] + list(range(df.shape[1] - 1))
         return df
 
     @staticmethod
     def _add_col_names(df, col_names):
         col_names = list(map(lambda x: x.lower(), col_names))
+        col_names = ["timestamp"] + [
+            col
+            for col in col_names
+            if ("date" not in str(col) and "time" not in str(col))
+        ]
         if len(col_names) < len(df.columns):
-            col_names.extend([''] * (len(df.columns) - len(col_names)))
+            col_names.extend([""] * (len(df.columns) - len(col_names)))
         elif len(col_names) > len(df.columns):
             col_names = col_names[: df.shape[1]]
         df.columns = col_names
         return df
 
-    @staticmethod
-    def _add_timestamp_col(df):
-        """
-        Create a "timestamp" column from the first one or two columns.
-        The FirstRate datasets have either one column with both date
-        and time, or have them in the separate columns.
-        """
-        cols = df.columns
-        if "yyyymmdd" in re.sub("[./: ]", "", cols[0]):
-            if "hh" not in cols[0]:
-                if "hhmm" in re.sub("[./: ]", "", cols[1]):
-                    if len(str(df.iloc[0, 0])) in [17, 19]:
-                        # The first and the second column names are
-                        # misleading, and the first column contains date
-                        # and time (http://firstratedata.com/i/fx/USDJPY)
-                        cols = list(df.columns)
-                        df.columns = cols[:1] + cols[2:] + ['']
-                        df["timestamp"] = pd.to_datetime(df.iloc[:, 0])
-                    else:
-                        df["timestamp"] = (
-                            df.iloc[:, 0].astype(str) + " " + df.iloc[:, 1]
-                        )
-                        df["timestamp"] = pd.to_datetime(df["timestamp"])
-                else:
-                    df["timestamp"] = pd.to_datetime(
-                        df.iloc[:, 0], format="%Y%m%d"
-                    )
-            else:
-                df["timestamp"] = pd.to_datetime(df.iloc[:, 0])
-        else:
-            _LOG.warning("No timestamp column was created")
-        return df
-
     def _process_df(self, df):
         _TIMEZONES = {"UTC": "UTC", "EST": "US/Eastern"}
         df = self._add_col_names(df, self.url_object.col_names)
-        df = self._add_timestamp_col(df)
         if "timestamp" in df.columns:
             df["timestamp"] = df["timestamp"].dt.tz_localize(
                 _TIMEZONES[self.url_object.timezone]
