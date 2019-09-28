@@ -32,20 +32,13 @@ class AbstractNode(abc.ABC):
         """
         :param nid: node identifier. Should be unique in a graph.
         :param inputs: list-like string names of input_names.
+        :param outputs: list-like string names out output_names.
         """
         dbg.dassert_isinstance(nid, str)
-        if not nid:
-            _LOG.warning("Empty string chosen for unique nid!")
+        dbg.dassert(nid, "Empty string chosen for unique nid!")
         self._nid = nid
         self._inputs = self._init_validation_helper(inputs)
         self._outputs = self._init_validation_helper(outputs)
-
-    def _init_validation_helper(self, l):
-        if l is None:
-            return []
-        for item in l:
-            dbg.dassert_isinstance(item, str)
-        return l
 
     @property
     def nid(self):
@@ -58,6 +51,13 @@ class AbstractNode(abc.ABC):
     @property
     def output_names(self):
         return self._outputs
+
+    def _init_validation_helper(self, l):
+        if l is None:
+            return []
+        for item in l:
+            dbg.dassert_isinstance(item, str)
+        return l
 
     def __eq__(self, other):
         return (
@@ -84,18 +84,6 @@ class Node(AbstractNode):
         super().__init__(nid=nid, inputs=inputs, outputs=outputs)
         self._output_vals = {}
 
-    def store_output(self, method, name, value):
-        dbg.dassert_in(
-            name,
-            self.output_names,
-            "%s is not an output of node %s!",
-            name,
-            self.nid,
-        )
-        if method not in self._output_vals:
-            self._output_vals[method] = {}
-        self._output_vals[method][name] = value
-
     def get_output(self, method, name):
         dbg.dassert_in(
             name,
@@ -117,6 +105,21 @@ class Node(AbstractNode):
         dbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method]
 
+    def _store_output(self, method, name, value):
+        """
+        Store the output for a specific method.
+        """
+        dbg.dassert_in(
+            name,
+            self.output_names,
+            "%s is not an output of node %s!",
+            name,
+            self.nid,
+        )
+        if method not in self._output_vals:
+            self._output_vals[method] = {}
+        self._output_vals[method][name] = value
+
 
 def assert_single_element_and_return(l):
     """
@@ -126,7 +129,7 @@ def assert_single_element_and_return(l):
     :return: returns the unique element of the list
     """
     dbg.dassert_isinstance(l, list)
-    dbg.dassert_eq(len(l), 1, "List has {} elements!".format(len(l)))
+    dbg.dassert_eq(len(l), 1, "List has %d elements!", len(l))
     return l[0]
 
 
@@ -137,7 +140,7 @@ def assert_single_element_and_return(l):
 
 class DAG:
     """
-    Class for building pipeline graphs using Nodes.
+    Class for building DAGs using Nodes.
 
     The DAG manages node execution and storage of outputs (within executed
     nodes).
@@ -171,7 +174,7 @@ class DAG:
         # NetworkX requires that nodes be hashable and uses hashes for
         # identifying nodes. Because our Nodes are objects whose hashes can
         # change as operations are performed, we use the Node.nid as the
-        # NetworkX node and the Node class as a `node attribute`, which we
+        # NetworkX node and the Node instance as a `node attribute`, which we
         # identifying internally with the keyword `stage`.
         #
         # Note that this usage requires that nid's be unique within a given
@@ -179,21 +182,17 @@ class DAG:
         if not self.dag.has_node(node.nid):
             self._dag.add_node(node.nid, stage=node)
             return
-        # Allow `add_node` to be idempotent.
+        # Allow `add_node` to be run again on equivalent nodes.
+        # This is useful for research / notebook flows.
         if node == self.get_node(node.nid):
             _LOG.warning(
-                "Node `{}` is already in DAG. Removing existing node (clears"
-                "edges) and adding new equivalent node.".format(
-                    node.nid
-                )
+                "Node `%s` is already in DAG. Removing existing node (clears"
+                "edges) and adding new equivalent node.", node.nid
             )
             self._dag.remove_node(node.nid)
             self._dag.add_node(node.nid, stage=node)
         else:
-            dbg.dfatal("A node with nid=`{}` is already in DAG!".format(
-                node.nid
-            )
-        )
+            dbg.dfatal("A node with nid={} is already in DAG!".format(node.nid))
 
     def get_node(self, nid):
         """
@@ -203,7 +202,7 @@ class DAG:
         :return: Node object
         """
         dbg.dassert(
-            self.dag.has_node(nid), "Node `{}` is not in DAG!".format(nid)
+            self.dag.has_node(nid), "Node `%s` is not in DAG!", nid
         )
         return self.dag.nodes[nid]["stage"]
 
@@ -252,17 +251,15 @@ class DAG:
                 if child_in in edge_data:
                     dbg.dassert_eq(edge_data[child_in], parent_out)
                     _LOG.warning(
-                        "Edge {}:{} -> {}:{} already in DAG.".format(
+                        "Edge %s:%s -> %s:%s already in DAG.",
                             parent_nid, parent_out, child_nid, child_in
-                        )
                     )
             else:
                 dbg.dassert_not_in(
                     child_in,
                     self.dag.get_edge_data(nid, child_nid),
-                    "`{}` already receiving input from node {}".format(
+                    "`%s` already receiving input from node %s",
                         child_in, nid
-                    ),
                 )
         # Add the edge along with an `edge attribute` indicating the parent
         # output to connect to the child input.
@@ -296,7 +293,7 @@ class DAG:
         node = self.get_node(nid)
         output = getattr(node, method)(**kwargs)
         for out in node.output_names:
-            node.store_output(method, out, output[out])
+            node._store_output(method, out, output[out])
         # Convenient for experiments/debugging, but not needed for internal use.
         # Perhaps we should expose a public `run_node` that just invokes
         # `_run_node` and then returns the output as below.
@@ -304,7 +301,7 @@ class DAG:
 
     def run_dag(self, method):
         """
-        Executes entire pipeline.
+        Executes entire DAG.
 
         Nodes are run according to a topological sort.
 
@@ -318,11 +315,11 @@ class DAG:
             if any(True for _ in self._dag.predecessors(nid)):
                 sinks.append(nid)
             self._run_node(nid, method)
-        return [self.get_node(sink).get_outputs(method) for sink in sinks]
+        return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
     def run_leq_node(self, nid, method):
         """
-        Executes pipeline up to (and including) `node` and returns output.
+        Executes DAG up to (and including) Node `nid` and returns output.
 
         "leq" refers to the partial ordering on the vertices. This method
         runs a node if and only if there is a directed path from the node to

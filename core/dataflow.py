@@ -39,26 +39,39 @@ def draw(graph):
 
 
 class SkLearnNode(Node, abc.ABC):
-    def __init__(self, nid):
-        super().__init__(nid, inputs=["df_in"], outputs=["df_out"])
+    """
+    Define an abstract class with sklearn-style `fit` and `predict` functions.
+
+    Nodes may store a dictionary of information for each method following the
+    method's invocation.
+    """
+    def __init__(self, nid, inputs=None, outputs=None):
+        if inputs is None:
+            inputs = ["df_in"]
+        if outputs is None:
+            outputs = ["df_out"]
+        super().__init__(nid=nid, inputs=inputs, outputs=outputs)
         self._info = collections.OrderedDict()
 
     @abc.abstractmethod
     def fit(self, df_in):
-        raise NotImplementedError
+        pass
 
     @abc.abstractmethod
     def predict(self, df_in):
-        raise NotImplementedError
+        pass
 
     def get_info(self, method):
         dbg.dassert_in(
-            method, self._info.keys(), "No info found for {}".format(method)
+            method, self._info.keys(), "No info found for %s", method
         )
         return self._info[method]
 
 
 class DataSource(Node, abc.ABC):
+    """
+    A source node that can be configured for cross-validation.
+    """
     def __init__(self, nid):
         super().__init__(nid, outputs=["df_out"])
         #

@@ -181,7 +181,7 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
     def test_add_nodes2(self):
         """
-        Demonstrates that add_node is idempotent with equivalent nodes.
+        Demonstrates that add_node can be rerun on an equivalent Node.
         """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1")
