@@ -218,7 +218,7 @@ class _RawDataDownloader:
             col_names = self._extract_col_names(card_body)
             urls = self._get_urls(card_body, self.website)
             for tz, col_name_list, url in zip(tzs, col_names, urls):
-                if url.split('/')[-2] != 'purchase'
+                if url.split('/')[-2] != 'purchase':
                     furl = _FileURL(url, tz, category, col_name_list)
                     url_objects.append(furl)
                 else:
