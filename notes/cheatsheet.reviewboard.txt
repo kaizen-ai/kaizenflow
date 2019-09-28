@@ -1,0 +1,31 @@
+# Post a review
+
+* Post a review from a git branch
+
+- Look at all the available branches:
+```
+> git branch -r
+  origin/HEAD -> origin/master
+  origin/ParTask356_RESEARCH_Improve_dataflow_framework1
+...
+```
+
+- Go to the branch you want to ask to be reviewed:
+```
+> git checkout ParTask356_RESEARCH_Improve_dataflow_framework1
+```
+
+- Check what are the commits that are on the current branch but not on `master`
+```bash
+> gll master..
+* fe37b57 paul      ParTask356: bug fix and move more result_bundle-style stats into dataflow nodes. (  16 hours ago) Sat Sep 28 00:30:55 2019  (HEAD -> ParTask356_RESEARCH_Improve_dataflow_framework1, origin/ParTask356_RESEARCH_Improve_dataflow_framework1)
+* ca0f6b0 paul      ParTask356: lint and remove outdated comment                      (  17 hours ago) Fri Sep 27 23:39:05 2019
+...
+* 03a7537 paul      Lint                                                    (  25 hours ago) Fri Sep 27 15:42:30 2019
+* 9ca6f17 paul      ParTask356: add tests                                   (  25 hours ago) Fri Sep 27 15:40:24 2019
+```
+
+- Post the review with the commit range `first..last`:
+```
+> rbt post --summary 'Review for branch ParTask356_RESEARCH_Improve_dataflow_framework1' 9ca6f17..fe37b57
+```
