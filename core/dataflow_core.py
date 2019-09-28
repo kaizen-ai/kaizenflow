@@ -182,15 +182,18 @@ class DAG:
         # Allow `add_node` to be idempotent.
         if node == self.get_node(node.nid):
             _LOG.warning(
-                "Node `{}` is already in DAG; updating with new equivalent node.".format(
+                "Node `{}` is already in DAG. Removing existing node (clears"
+                "edges) and adding new equivalent node.".format(
                     node.nid
                 )
             )
+            self._dag.remove_node(node.nid)
             self._dag.add_node(node.nid, stage=node)
         else:
-            dbg.dfatal(
-                "A node with nid=`{}` is already in DAG!".format(node.nid)
+            dbg.dfatal("A node with nid=`{}` is already in DAG!".format(
+                node.nid
             )
+        )
 
     def get_node(self, nid):
         """
@@ -199,9 +202,16 @@ class DAG:
         :param nid: unique string node id
         :return: Node object
         """
-        dbg.dassert(self.dag.has_node(nid),
-                    "Node `{}` is not in DAG!".format(nid))
+        dbg.dassert(
+            self.dag.has_node(nid), "Node `{}` is not in DAG!".format(nid)
+        )
         return self.dag.nodes[nid]["stage"]
+
+    def remove_node(self, nid):
+        """
+        Removes node from graph (and clears any edges).
+        """
+        self.dag.remove_node(nid)
 
     def connect(self, parent, child):
         """
@@ -241,10 +251,11 @@ class DAG:
                 edge_data = self.dag.get_edge_data(parent_nid, child_nid)
                 if child_in in edge_data:
                     dbg.dassert_eq(edge_data[child_in], parent_out)
-                    _LOG.warning("Edge {}:{} -> {}:{} already in DAG.".format(
-                        parent_nid, parent_out, child_nid, child_in
+                    _LOG.warning(
+                        "Edge {}:{} -> {}:{} already in DAG.".format(
+                            parent_nid, parent_out, child_nid, child_in
+                        )
                     )
-                )
             else:
                 dbg.dassert_not_in(
                     child_in,

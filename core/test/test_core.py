@@ -181,12 +181,13 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
     def test_add_nodes2(self):
         """
-        Demonstrates that add_node is idempotent.
+        Demonstrates that add_node is idempotent with equivalent nodes.
         """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1")
         dag.add_node(n1)
-        dag.add_node(n1)
+        n1_prime = dtfc.Node("n1")
+        dag.add_node(n1_prime)
         self._check(dag.dag)
 
     def test_add_nodes3(self):
@@ -207,6 +208,19 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         dag = dtfc.DAG()
         for name in ["n1", "n2", "n3", "n4"]:
             dag.add_node(dtfc.Node(name, inputs=["in1"], outputs=["out1"]))
+        self._check(dag.dag)
+
+    def test_add_nodes5(self):
+        """
+        Demonstrates that re-adding a node clears edges.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        dag.add_node(n1)
         self._check(dag.dag)
 
 
