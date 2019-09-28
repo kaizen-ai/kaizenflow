@@ -166,7 +166,7 @@ class DAG:
         # In principle, AbstractNode could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
         dbg.dassert_isinstance(
-            node, Node, "Only graphs of class `Node` are supported!"
+            node, Node, "Only DAGs of class `Node` are supported!"
         )
         # NetworkX requires that nodes be hashable and uses hashes for
         # identifying nodes. Because our Nodes are objects whose hashes can
@@ -181,15 +181,15 @@ class DAG:
             return
         # Allow `add_node` to be idempotent.
         if node == self.get_node(node.nid):
-            _LOG.debug(
-                "Node `{}` is already in the dag; updating with new equivalent node.".format(
+            _LOG.warning(
+                "Node `{}` is already in DAG; updating with new equivalent node.".format(
                     node.nid
                 )
             )
             self._dag.add_node(node.nid, stage=node)
         else:
             dbg.dfatal(
-                "A node with nid=`{}` is already in the dag!".format(node.nid)
+                "A node with nid=`{}` is already in DAG!".format(node.nid)
             )
 
     def get_node(self, nid):
@@ -199,7 +199,8 @@ class DAG:
         :param nid: unique string node id
         :return: Node object
         """
-        dbg.dassert(self.dag.has_node(nid), "Node `%s` is not in the dag!")
+        dbg.dassert(self.dag.has_node(nid),
+                    "Node `{}` is not in DAG!".format(nid))
         return self.dag.nodes[nid]["stage"]
 
     def connect(self, parent, child):
@@ -240,6 +241,10 @@ class DAG:
                 edge_data = self.dag.get_edge_data(parent_nid, child_nid)
                 if child_in in edge_data:
                     dbg.dassert_eq(edge_data[child_in], parent_out)
+                    _LOG.warning("Edge {}:{} -> {}:{} already in DAG.".format(
+                        parent_nid, parent_out, child_nid, child_in
+                    )
+                )
             else:
                 dbg.dassert_not_in(
                     child_in,
