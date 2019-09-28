@@ -59,15 +59,6 @@ class AbstractNode(abc.ABC):
     def output_names(self):
         return self._outputs
 
-    def _info(self, **kwargs):
-        _LOG.info("input_names: %s", self.input_names)
-        _LOG.info("output_names: %s", self.output_names)
-        _LOG.info("nid: %s", self._nid)
-        dummy_output = {}
-        for output in self.output_names:
-            dummy_output[output] = None
-        return dummy_output
-
     def __eq__(self, other):
         return (
             isinstance(other, self.__class__)
@@ -75,7 +66,6 @@ class AbstractNode(abc.ABC):
             and self.nid == other.nid
             and self.input_names == other.input_names
             and self.output_names == other.output_names
-            and isinstance(other, self.__class__)
         )
 
 
