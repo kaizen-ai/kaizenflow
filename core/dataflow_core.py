@@ -68,6 +68,14 @@ class AbstractNode(abc.ABC):
             dummy_output[output] = None
         return dummy_output
 
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) \
+            and isinstance(self, other.__class__) \
+            and self.nid == other.nid \
+            and self.input_names == other.input_names \
+            and self.output_names == other.output_names \
+            and isinstance(other, self.__class__)
+
 
 class Node(AbstractNode):
     """
@@ -180,10 +188,10 @@ class DAG:
             self._dag.add_node(node.nid, stage=node)
             return
         # Allow `add_node` to be idempotent.
-        if node is self.get_node(node.nid):
+        if node == self.get_node(node.nid):
             _LOG.debug("Node `{}` is already in the dag.".format(node.nid))
         else:
-            dbg.dfatal("A node with nid `{}` is already in the dag!".format(node.nid))
+            dbg.dfatal("A node with nid=`{}` is already in the dag!".format(node.nid))
 
     def get_node(self, nid):
         """

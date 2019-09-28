@@ -191,12 +191,12 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
     def test_add_nodes3(self):
         """
-        Requires nid uniqueness in a DAG.
+        Requires nid uniqueness in a DAG, up to equivalence of Nodes.
         """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1")
         dag.add_node(n1)
-        n1_prime = dtfc.Node("n1")
+        n1_prime = dtfc.Node("n1", inputs=["in1"])
         with self.assertRaises(AssertionError):
             dag.add_node(n1_prime)
 
