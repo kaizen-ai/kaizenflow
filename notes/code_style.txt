@@ -145,7 +145,7 @@ This is a reST style.
     ...
     ```
 
-- If you don’t want to add just use an empty comment.
+- If you don't want to add just use an empty comment.
     ```python
     ...
     end_y = end_dt.year
@@ -171,7 +171,7 @@ This is a reST style.
 ### If you find a bug, obsolete docstring in the code
 - The process is:
     - do a `git blame` to find who wrote the code
-    - if it’s an easy bug, you can fix it and ask for a review to the author
+    - if it's an easy bug, you can fix it and ask for a review to the author
     - you can file a comment on Upsource
     - you can file a bug on Github with
         - clear info on the problem
@@ -180,3 +180,68 @@ This is a reST style.
         - you can use the tag “BUG: ..."
 
 # Logging
+
+## Always use logging instead of prints
+- Always use logging and never `print()` to report debug, info, warning 
+
+## Our logging idiom
+```python
+import helpers.dbg as dbg
+
+_LOG = logging.getLogger(__name__)
+
+dbg.init_logger(verb=logging.DEBUG)
+
+_LOG.debug("I am a debug function about %s", a)
+```
+
+- In this way one can decide how much debug info are needed (see Unix rule of
+  silence)
+    - E.g., when there is a bug one can run with `-v DEBUG` and see what's
+      happening right before the bug
+
+## Logging level
+
+- Use `_LOG.info` when you want to communicate to the final user, e.g.,
+    - when the script is started
+    - where the script is saving its results
+    - a progress bar indicating the amount of work completed
+
+- Information related to the internal behavior of code should go at the DEBUG
+  level
+    - Do not pollute the output with information a regular user does not care
+      about.
+
+- Make sure the script prints when the work is terminated, e.g., "DONE" or
+  "Results written in ..."
+    - This is useful to indicate that the script did not die in the middle:
+      sometimes this happens silently and it is reported only from the OS return
+      code
+
+### Use positional args when logging
+
+- Instead of doing this:
+    **Bad**
+    ```python
+    _LOG.debug('cmd=%s %s %s' % (cmd1, cmd2, cmd3))
+  do this
+    **Good**
+    ```
+     _LOG.debug('cmd=%s %s %s', cmd1, cmd2, cmd3)
+    ```
+
+- The reason is that in the second case the string is not built unless the
+  logging is actually performed, which limits time overhead from logging
+
+### Report warnings
+
+- If there is a something that is suspicious but you don't feel like it's
+  worthwhile to assert, report a warning with:
+```
+_LOG.warning(...)
+```
+
+- If you know that if there is a warning then there are going to be many many warnings
+    - print the first warning
+    - send the rest to warnings.log
+    - at the end of the run, reports "there are warnings in warnings.log"
