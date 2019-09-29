@@ -371,6 +371,41 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
             dag.connect("n1", "n2")
 
 
+class Test_dataflow_core_DAG3(_Dataflow_helper):
+    def test_sources_sinks1(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        self.assertEqual(dag.get_sources(), ["n1"])
+        self.assertEqual(dag.get_sinks(), ["n2"])
+
+    def test_sources_sinks2(self):
+        dag = dtfc.DAG()
+        src1 = dtfc.Node("src1", outputs=["out1"])
+        dag.add_node(src1)
+        src2 = dtfc.Node("src2", outputs=["out1"])
+        dag.add_node(src2)
+        m1 = dtfc.Node("m1", inputs=["in1", "in2"], outputs=["out1"])
+        dag.add_node(m1)
+        dag.connect("src1", ("m1", "in1"))
+        dag.connect("src2", ("m1", "in2"))
+        snk1 = dtfc.Node("snk1", inputs=["in1"])
+        dag.add_node(snk1)
+        dag.connect("m1", "snk1")
+        snk2 = dtfc.Node("snk2", inputs=["in1"])
+        dag.add_node(snk2)
+        dag.connect("m1", "snk2")
+        sources = dag.get_sources()
+        sources.sort()
+        self.assertListEqual(sources, ["src1", "src2"])
+        sinks = dag.get_sinks()
+        sinks.sort()
+        self.assertListEqual(sinks, ["snk1", "snk2"])
+
+
 # #############################################################################
 # dataflow_old.py
 # #############################################################################

@@ -189,7 +189,7 @@ class DAG:
         # Note that this usage requires that nid's be unique within a given
         # DAG.
         if self.mode == "strict":
-            dbg.dassert(not self.dag.has_node(node.nid))
+            dbg.dassert(not self._dag.has_node(node.nid))
         elif self.mode == "loose":
             # If a node with the same id already belongs to the DAG, remove
             # the node and add the new one. This is useful for notebook
@@ -212,16 +212,16 @@ class DAG:
         :return: Node object
         """
         dbg.dassert(
-            self.dag.has_node(nid), "Node `%s` is not in DAG!", nid
+            self._dag.has_node(nid), "Node `%s` is not in DAG!", nid
         )
-        return self.dag.nodes[nid]["stage"]
+        return self._dag.nodes[nid]["stage"]
 
     def remove_node(self, nid):
         """
         Removes node from graph (and clears any edges).
         """
-        dbg.dassert(self.dag.has_node(nid), "Node `%s` is not in DAG!", nid)
-        self.dag.remove_node(nid)
+        dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
+        self._dag.remove_node(nid)
 
     def connect(self, parent, child):
         """
@@ -258,7 +258,7 @@ class DAG:
         for nid in self._dag.predecessors(child_nid):
             dbg.dassert_not_in(
                 child_in,
-                self.dag.get_edge_data(nid, child_nid),
+                self._dag.get_edge_data(nid, child_nid),
                 "`%s` already receiving input from node %s",
                     child_in, nid
             )
@@ -268,13 +268,27 @@ class DAG:
         self._dag.add_edge(parent_nid, child_nid, **kwargs)
         # If adding the edge causes the DAG property to be violated, remove the
         # edge and raise an error.
-        if not nx.is_directed_acyclic_graph(self.dag):
+        if not nx.is_directed_acyclic_graph(self._dag):
             self._dag.remove_edge(parent_nid, child_nid)
             dbg.dfatal(
                 "Creating edge {} -> {} introduces a cycle!".format(
                     parent_nid, child_nid
                 )
             )
+
+    def get_sources(self):
+        sources = []
+        for nid in nx.topological_sort(self._dag):
+            if not any(True for _ in self._dag.predecessors(nid)):
+                sources.append(nid)
+        return sources
+
+    def get_sinks(self):
+        sinks = []
+        for nid in nx.topological_sort(self._dag):
+            if not any(True for _ in self._dag.successors(nid)):
+                sinks.append(nid)
+        return sinks
 
     def _run_node(self, nid, method):
         """
@@ -309,12 +323,8 @@ class DAG:
         :param method: Method of class `Node` (or subclass) to be executed for
             the entire DAG.
         """
-        sinks = []
+        sinks = self.get_sinks()
         for nid in nx.topological_sort(self._dag):
-            # Collect all sinks so that we can easily output their data after
-            # all nodes have been run.
-            if not any(True for _ in self._dag.successors(nid)):
-                sinks.append(nid)
             self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
