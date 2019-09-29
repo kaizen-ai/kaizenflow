@@ -40,11 +40,10 @@ _LOG = logging.getLogger(__name__)
 _COLOR = "green"
 
 
-def _print_github_info(issue_num, repo_symbolic_name):
+def _print_github_info(issue_num, repo_github_name):
     print(pri.color_highlight("# Github:", "green"))
     ghi_opts = ""
-    if repo_symbolic_name:
-        repo_github_name = git.get_repo_github_name(repo_symbolic_name)
+    if repo_github_name is not None:
         ghi_opts = "-- %s" % repo_github_name
     cmd = "ghi show %d %s | head -1" % (issue_num, ghi_opts)
     _, txt = si.system_to_string(cmd, abort_on_error=False)
@@ -56,6 +55,7 @@ def _print_github_info(issue_num, repo_symbolic_name):
     # github doesn't let ping this url.
     # url.check_url(url_name)
     #
+    print(pri.color_highlight("\n# Tag:", "green"))
     # txt = '#268: PRICE: Download metadata from CME'
     m = re.match("#(\d+):\s*(.*)\s*", txt)
     dbg.dassert(m, "Invalid txt='%s'", txt)
@@ -69,10 +69,11 @@ def _print_github_info(issue_num, repo_symbolic_name):
     prefix = git.get_repo_prefix(git_repo_name)
     # ParTask268
     title = prefix + "Task" + str(issue_num) + "_" + title
-    print("\n" + title)
+    print(title)
 
 
-def _print_files_in_git_repo(issue_num):
+def _print_files_in_git_repo(issue_num, repo_github_name):
+    _ = repo_github_name
     print(pri.color_highlight("\n# Files in the repo:", "green"))
     # regex="Task%d*\.*py*" % issue_num
     regex = r"*%d*\.*py*" % issue_num
@@ -82,7 +83,8 @@ def _print_files_in_git_repo(issue_num):
     print(txt)
 
 
-def _print_gdrive_files(issue_num):
+def _print_gdrive_files(issue_num, repo_github_name):
+    _ = repo_github_name
     env_name = "P1_GDRIVE_PATH"
     if env_name in os.environ:
         dir_name = os.environ[env_name]
@@ -124,10 +126,19 @@ def _parse():
         "--only_github", action="store_true", help="Print only git hub info"
     )
     parser.add_argument(
-        "-r", "--repo_symbolic_name", action="store",
+        "-s",
+        "--repo_symbolic_name",
+        action="store",
         choices=["Part", "Amp", "Lem"],
         default=None,
-            help="Refer to one of the repos"
+        help="Refer to one of the repos through a symbolic name",
+    )
+    parser.add_argument(
+        "-r",
+        "--repo_github_name",
+        action="store",
+        default=None,
+        help="Refer to one of the repos using full git name",
     )
     parser.add_argument("positional", nargs="+", help="Github issue number")
     parser.add_argument(
@@ -147,13 +158,20 @@ def _main(parser):
     actions = [_print_github_info, _print_files_in_git_repo, _print_gdrive_files]
     if args.only_github:
         actions = [_print_github_info]
+    #
+    repo_github_name = None
+    if args.repo_symbolic_name:
+        dbg.dassert_is_not(args.repo_github_name)
+        repo_github_name = git.get_repo_github_name(repo_symbolic_name)
+    elif args.repo_github_name:
+        repo_github_name = args.repo_github_name
     # Scan the issues.
     for issue_num in args.positional:
         issue_num = int(issue_num)
         dbg.dassert_lte(1, issue_num)
         #
         for action in actions:
-            action(issue_num, args.repo_symbolic_name)
+            action(issue_num, repo_github_name)
 
 
 if __name__ == "__main__":

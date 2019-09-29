@@ -1,5 +1,21 @@
 # Post a review
 
+* Post-commit review
+- If you want a review on a single commit (or a few commits) you don't have to
+  create a branch, although still creating a review branch is best
+
+- Find the official name of the GitHub issue with:
+```
+> ghi_show.py 274 --only_github
+> ghi_show.py 274 -r ParticleDev/commodity_research --only_github
+# Github:
+#274: PRICE: Download equity data
+https://github.com/alphamatic/lemonade/issues/274
+
+# Tag:
+LemTask274_PRICE_Download_equity_data
+```
+
 * Post a review from a git branch
 
 - Look at all the available branches:
@@ -29,3 +45,8 @@
 ```
 > rbt post --summary 'Review for branch ParTask356_RESEARCH_Improve_dataflow_framework1' 9ca6f17..fe37b57
 ```
+
+# Close a review
+
+* Ship it!
+- When a review is completed
