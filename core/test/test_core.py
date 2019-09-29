@@ -181,25 +181,37 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
     def test_add_nodes2(self):
         """
-        Demonstrates that add_node can be rerun on an equivalent Node.
+        Demonstrates "strict" and "loose" behavior on repeated add_node().
         """
-        dag = dtfc.DAG()
+        dag_strict = dtfc.DAG(mode="strict")
+        m1 = dtfc.Node("m1")
+        dag_strict.add_node(m1)
+        with self.assertRaises(AssertionError):
+            dag_strict.add_node(m1)
+        #
+        dag_loose = dtfc.DAG(mode="loose")
         n1 = dtfc.Node("n1")
-        dag.add_node(n1)
-        n1_prime = dtfc.Node("n1")
-        dag.add_node(n1_prime)
-        self._check(dag.dag)
+        dag_loose.add_node(n1)
+        dag_loose.add_node(n1)
+        self._check(dag_loose.dag)
 
     def test_add_nodes3(self):
         """
-        Requires nid uniqueness in a DAG, up to equivalence of Nodes.
+        Demonstrates "strict" and "loose" behavior on repeated add_node().
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1")
-        dag.add_node(n1)
-        n1_prime = dtfc.Node("n1", inputs=["in1"])
+        dag_strict = dtfc.DAG(mode="strict")
+        m1 = dtfc.Node("m1")
+        dag_strict.add_node(m1)
+        m1_prime = dtfc.Node("m1")
         with self.assertRaises(AssertionError):
-            dag.add_node(n1_prime)
+            dag_strict.add_node(m1_prime)
+        #
+        dag_loose = dtfc.DAG(mode="loose")
+        n1 = dtfc.Node("n1")
+        dag_loose.add_node(n1)
+        n1_prime = dtfc.Node("n1")
+        dag_loose.add_node(n1_prime)
+        self._check(dag_loose.dag)
 
     def test_add_nodes4(self):
         """
@@ -212,9 +224,9 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
     def test_add_nodes5(self):
         """
-        Demonstrates that re-adding a node clears edges.
+        Demonstrates that re-adding a node clears edges in "loose" mode.
         """
-        dag = dtfc.DAG()
+        dag = dtfc.DAG(mode="loose")
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
         n2 = dtfc.Node("n2", inputs=["in1"])
@@ -347,7 +359,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
 
     def test_connect_nodes10(self):
         """
-        Demonstrates idempotency.
+        Demonstrates adding edges is not idempotent.
         """
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
@@ -355,8 +367,8 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         n2 = dtfc.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
-        dag.connect("n1", "n2")
-        self._check(dag.dag)
+        with self.assertRaises(AssertionError):
+            dag.connect("n1", "n2")
 
 
 # #############################################################################

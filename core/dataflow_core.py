@@ -14,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class AbstractNode(abc.ABC):
+class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAG pipelines of functions.
 
@@ -59,27 +59,15 @@ class AbstractNode(abc.ABC):
             dbg.dassert_isinstance(item, str)
         return l
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, self.__class__)
-            and isinstance(self, other.__class__)
-            and self.nid == other.nid
-            and self.input_names == other.input_names
-            and self.output_names == other.output_names
-        )
 
-
-class Node(AbstractNode):
+class Node(NodeInterface):
     """
-    Concrete node that also stores its output when run.
+    A node class that also can store and retrieve its outputs.
     """
 
     def __init__(self, nid, inputs=None, outputs=None):
         """
-        :param nid: node identifier. Should be unique in a graph.
-        :param inputs: list-like string names of input_names.
-        :param outputs: list-like string names of output_names. The node is
-            assumed to store the last output.
+        Same interface as `NodeInterface`.
         """
         super().__init__(nid=nid, inputs=inputs, outputs=outputs)
         self._output_vals = {}
@@ -146,9 +134,26 @@ class DAG:
     nodes).
     """
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, mode=None):
+        """
+
+        :param name: optional str identifier
+        :param mode: determines how to handle an attempt to add a node to the
+            graph that already belongs to the graph:
+                - "strict": asserts
+                - "loose": deletes old node (also removes edges) and adds new
+                    node
+            mode = "loose" is useful for interactive notebooks and debugging.
+        """
         self._dag = nx.DiGraph()
+        if name is not None:
+            dbg.dassert_isinstance(name, str)
         self._name = name
+        if mode is None:
+            mode = "strict"
+        dbg.dassert_in(mode, ["strict", "loose"],
+                       "Unsupported mode %s requested!", mode)
+        self._mode = mode
 
     @property
     def dag(self):
@@ -158,6 +163,10 @@ class DAG:
     def name(self):
         return self._name
 
+    @property
+    def mode(self):
+        return self._mode
+
     def add_node(self, node):
         """
         Adds `node` to the graph.
@@ -166,7 +175,7 @@ class DAG:
 
         :param node: Node object
         """
-        # In principle, AbstractNode could be supported; however, to do so,
+        # In principle, NodeInterface could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
         dbg.dassert_isinstance(
             node, Node, "Only DAGs of class `Node` are supported!"
@@ -179,22 +188,23 @@ class DAG:
         #
         # Note that this usage requires that nid's be unique within a given
         # DAG.
-        if not self.dag.has_node(node.nid):
-            self._dag.add_node(node.nid, stage=node)
-            return
-        # Allow `add_node` to be run again on equivalent nodes.
-        # This is useful for research / notebook flows.
-        if node == self.get_node(node.nid):
-            _LOG.warning(
-                "Node `%s` is already in DAG. Removing existing node (clears"
-                "edges) and adding new equivalent node.", node.nid
-            )
-            self._dag.remove_node(node.nid)
-            self._dag.add_node(node.nid, stage=node)
+        if self.mode == "strict":
+            dbg.dassert(not self.dag.has_node(node.nid))
+        elif self.mode == "loose":
+            # If a node with the same id already belongs to the DAG, remove
+            # the node and add the new one. This is useful for notebook
+            # research flows.
+            if self._dag.has_node(node.nid):
+                self._dag.remove_node(node.nid)
+                _LOG.warning(
+                    "Node `%s` is already in DAG. Removing existing node (clears"
+                    " any existing edges involving node).", node.nid
+                )
         else:
-            dbg.dfatal("A node with nid={} is already in DAG!".format(node.nid))
+            dgb.dfatal("mode=%s", self.mode)
+        self._dag.add_node(node.nid, stage=node)
 
-    def get_node(self, nid):
+    def get_node(self, nid: str):
         """
         Convenience node accessor.
 
@@ -210,6 +220,7 @@ class DAG:
         """
         Removes node from graph (and clears any edges).
         """
+        dbg.dassert(self.dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         self.dag.remove_node(nid)
 
     def connect(self, parent, child):
@@ -243,24 +254,14 @@ class DAG:
             child_in = assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
-        # Ensure that `child_in` is not already hooked up to another output.
+        # Ensure that `child_in` is not already hooked up to an output.
         for nid in self._dag.predecessors(child_nid):
-            if nid == parent_nid:
-                # This branch enables idempotency.
-                edge_data = self.dag.get_edge_data(parent_nid, child_nid)
-                if child_in in edge_data:
-                    dbg.dassert_eq(edge_data[child_in], parent_out)
-                    _LOG.warning(
-                        "Edge %s:%s -> %s:%s already in DAG.",
-                            parent_nid, parent_out, child_nid, child_in
-                    )
-            else:
-                dbg.dassert_not_in(
-                    child_in,
-                    self.dag.get_edge_data(nid, child_nid),
-                    "`%s` already receiving input from node %s",
-                        child_in, nid
-                )
+            dbg.dassert_not_in(
+                child_in,
+                self.dag.get_edge_data(nid, child_nid),
+                "`%s` already receiving input from node %s",
+                    child_in, nid
+            )
         # Add the edge along with an `edge attribute` indicating the parent
         # output to connect to the child input.
         kwargs = {child_in: parent_out}
@@ -312,7 +313,7 @@ class DAG:
         for nid in nx.topological_sort(self._dag):
             # Collect all sinks so that we can easily output their data after
             # all nodes have been run.
-            if any(True for _ in self._dag.predecessors(nid)):
+            if not any(True for _ in self._dag.successors(nid)):
                 sinks.append(nid)
             self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
