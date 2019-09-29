@@ -122,7 +122,7 @@ def assert_single_element_and_return(l):
 
 
 # #############################################################################
-# Graph class for creating and executing a DAG of nodes.
+# Class for creating and executing a DAG of nodes.
 # #############################################################################
 
 
@@ -139,7 +139,7 @@ class DAG:
 
         :param name: optional str identifier
         :param mode: determines how to handle an attempt to add a node to the
-            graph that already belongs to the graph:
+            DAG that already belongs to the DAG:
                 - "strict": asserts
                 - "loose": deletes old node (also removes edges) and adds new
                     node
@@ -169,7 +169,7 @@ class DAG:
 
     def add_node(self, node):
         """
-        Adds `node` to the graph.
+        Adds `node` to the DAG.
 
         Relies upon the unique nid for identifying the node.
 
@@ -218,7 +218,7 @@ class DAG:
 
     def remove_node(self, nid):
         """
-        Removes node from graph (and clears any edges).
+        Removes node from DAG (and clears any edges).
         """
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         self._dag.remove_node(nid)
@@ -277,6 +277,9 @@ class DAG:
             )
 
     def get_sources(self):
+        """
+        :return: list of nid's of source nodes
+        """
         sources = []
         for nid in nx.topological_sort(self._dag):
             if not any(True for _ in self._dag.predecessors(nid)):
@@ -284,6 +287,9 @@ class DAG:
         return sources
 
     def get_sinks(self):
+        """
+        :return: list of nid's of sink nodes
+        """
         sinks = []
         for nid in nx.topological_sort(self._dag):
             if not any(True for _ in self._dag.successors(nid)):

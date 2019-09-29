@@ -405,6 +405,13 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
         sinks.sort()
         self.assertListEqual(sinks, ["snk1", "snk2"])
 
+    def test_sources_sinks3(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1")
+        dag.add_node(n1)
+        self.assertEqual(dag.get_sources(), ["n1"])
+        self.assertEqual(dag.get_sinks(), ["n1"])
+
 
 # #############################################################################
 # dataflow_old.py
