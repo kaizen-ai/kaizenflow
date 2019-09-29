@@ -18,8 +18,7 @@ _LOG = logging.getLogger(__name__)
 @pytest.mark.skipif('si.get_user_name() != "saggese"')
 class Test_pandoc1(ut.TestCase):
     def _helper(self, in_file):
-        git_dir = git.get_client_root(super_module=False)
-        exec_path = os.path.join(git_dir, "docs/scripts/pandoc.py")
+        exec_path = git.find_file_in_git_tree("pandoc.py")
         dbg.dassert_exists(exec_path)
         #
         tmp_dir = self.get_scratch_space()
@@ -50,6 +49,19 @@ class Test_pandoc1(ut.TestCase):
         act = self._helper(file_name)
         self.check_string(act)
 
+    @pytest.mark.skip
+    def test2(self):
+        """
+        Convert to pdf one txt file and check that the .tex file is as expected.
+        """
+        file_name = "code_style.txt.test"
+        file_name = os.path.join(
+            self.get_input_dir(test_method_name="test1"), file_name
+        )
+        file_name = os.path.abspath(file_name)
+        act = self._helper(file_name)
+        self.check_string(act)
+
     def test_all_notes(self):
         """
         Convert to pdf all the notes in docs/notes.
@@ -67,8 +79,7 @@ class Test_preprocess1(ut.TestCase):
         """
         Check that the output of remove_md_empty_lines.py is the expected one.
         """
-        git_dir = git.get_client_root(super_module=False)
-        exec_path = os.path.join(git_dir, "docs/scripts/remove_md_empty_lines.py")
+        exec_path = git.find_file_in_git_tree("remove_md_empty_lines.py")
         dbg.dassert_exists(exec_path)
         #
         in_file = os.path.join(self.get_input_dir(), "input1.txt")

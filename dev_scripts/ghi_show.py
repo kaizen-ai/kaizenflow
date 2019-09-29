@@ -154,6 +154,9 @@ def _parse():
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
+    # Print url.
+    git_repo_name = git.get_repo_symbolic_name(super_module=True)
+    print("current_repo='%s'\n" % git_repo_name)
     # Select actions.
     actions = [_print_github_info, _print_files_in_git_repo, _print_gdrive_files]
     if args.only_github:
@@ -162,7 +165,7 @@ def _main(parser):
     repo_github_name = None
     if args.repo_symbolic_name:
         dbg.dassert_is_not(args.repo_github_name)
-        repo_github_name = git.get_repo_github_name(repo_symbolic_name)
+        repo_github_name = git.get_repo_github_name(args.repo_symbolic_name)
     elif args.repo_github_name:
         repo_github_name = args.repo_github_name
     # Scan the issues.

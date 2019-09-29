@@ -174,7 +174,7 @@ def _main(parser):
     # TODO(gp): Use git to make sure you are in the root of the repo to
     # configure the environment.
     exec_name = os.path.abspath(sys.argv[0])
-    dbg.dassert_dir_exists(exec_name)
+    dbg.dassert_exists(exec_name)
     _log_var("exec_name", exec_name)
     # Full path of this executable which is the same as setenv.sh.
     exec_path = os.path.dirname(exec_name)
