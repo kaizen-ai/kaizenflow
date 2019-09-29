@@ -29,45 +29,13 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
+_EXEC_DIR_NAME = os.path.abspath(os.path.dirname(sys.argv[0]))
+
 
 # ##############################################################################
 
 
-def _parse():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "-a", "--action", required=True, choices=["pdf"], action="append"
-    )
-    parser.add_argument("--input", action="store", type=str, required=True)
-    parser.add_argument("--output", action="store", type=str, default=None)
-    parser.add_argument("--no_cleanup_before", action="store_true", default=False)
-    parser.add_argument(
-        "--no_remove_empty_lines", action="store_true", default=False
-    )
-    parser.add_argument("--no_run_pandoc", action="store_true", default=False)
-    parser.add_argument("--no_toc", action="store_true", default=False)
-    parser.add_argument(
-        "--no_run_latex_again", action="store_true", default=False
-    )
-    parser.add_argument("--no_gdrive", action="store_true", default=False)
-    parser.add_argument("--no_open_pdf", action="store_true", default=False)
-    parser.add_argument("--no_cleanup", action="store_true", default=False)
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
-    return parser
-
-
-def _main(parser):
-    cmd_line = " ".join(map(str, sys.argv))
-    args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+def _pandoc(args, cmd_line):
     #
     _LOG.info("cmd=%s", cmd_line)
     _LOG.info("actions=%s", " ".join(args.action))
@@ -77,32 +45,14 @@ def _main(parser):
     #
     file_ = args.input
     dbg.dassert_exists(file_)
-    prefix = "tmp.pandoc"
-    #
+    prefix = args.tmp_dir + "/tmp.pandoc"
+    prefix = os.path.abspath(prefix)
     # Cleanup before.
-    #
-    if not args.no_cleanup_before:
-        _LOG.info("\n" + print_.frame("Clean up before", char1="<", char2=">"))
-        cmd = "rm -rf %s*" % prefix
-        _ = si.system(cmd, log_level=logging.INFO)
-    else:
-        _LOG.warning("Skipping: clean up before")
+    _cleanup_before(args, prefix)
     #
     # Pre-process
     #
-    if not args.no_remove_empty_lines:
-        _LOG.info("\n" + print_.frame("Pre-process", char1="<", char2=">"))
-        file1 = file_
-        file2 = "%s.no_spaces.txt" % prefix
-        cmd = "%s/remove_md_empty_lines.py --input %s --output %s" % (
-            curr_path,
-            file1,
-            file2,
-        )
-        _ = si.system(cmd, log_level=logging.INFO)
-        file_ = file2
-    else:
-        _LOG.info("WARNING: skipping remove empty lines")
+    file_ = _remove_empty_lines(args, curr_path, file_, prefix)
     #
     # Run pandoc.
     #
@@ -141,7 +91,18 @@ def _main(parser):
         # Run latex.
         #
         _LOG.info("\n" + print_.frame("Latex", char1="<", char2=">"))
-        cmd = "pdflatex -halt-on-error -shell-escape %s" % file_
+        # pdflatex needs to run in the same dir of latex_abbrevs.sty so we
+        # cd to that dir and save the output in the same dir of the input.
+        dbg.dassert_exists(_EXEC_DIR_NAME + "/latex_abbrevs.sty")
+        cmd = "cd %s; " % _EXEC_DIR_NAME
+        cmd += (
+            "pdflatex"
+            + " -interaction=nonstopmode"
+            + " -halt-on-error"
+            + " -shell-escape"
+            + " -output-directory %s" % os.path.dirname(file_)
+            + " %s" % file_
+        )
 
         def _run_latex():
             rc, txt = si.system_to_string(
@@ -209,16 +170,16 @@ def _main(parser):
         # open $pdfFile
         cmd = (
             """
-/usr/bin/osascript << EOF
-set theFile to POSIX file "%s" as alias
-tell application "Skim"
-activate
-set theDocs to get documents whose path is (get POSIX path of theFile)
-if (count of theDocs) > 0 then revert theDocs
-open theFile
-end tell
-EOF
-        """
+    /usr/bin/osascript << EOF
+    set theFile to POSIX file "%s" as alias
+    tell application "Skim"
+    activate
+    set theDocs to get documents whose path is (get POSIX path of theFile)
+    if (count of theDocs) > 0 then revert theDocs
+    open theFile
+    end tell
+    EOF
+            """
             % pdf_file
         )
         _ = si.system(cmd, log_level=logging.INFO)
@@ -237,6 +198,74 @@ EOF
         _LOG.warning("Skipping: clean up")
     #
     _LOG.info("\n" + print_.frame("SUCCESS"))
+
+
+def _remove_empty_lines(args, curr_path, file_, prefix):
+    if not args.no_remove_empty_lines:
+        _LOG.info("\n" + print_.frame("Pre-process", char1="<", char2=">"))
+        file1 = file_
+        file2 = "%s.no_spaces.txt" % prefix
+        cmd = "%s/remove_md_empty_lines.py --input %s --output %s" % (
+            curr_path,
+            file1,
+            file2,
+        )
+        _ = si.system(cmd, log_level=logging.INFO)
+        file_ = file2
+    else:
+        _LOG.info("WARNING: skipping remove empty lines")
+    return file_
+
+
+def _cleanup_before(args, prefix):
+    if not args.no_cleanup_before:
+        _LOG.info("\n" + print_.frame("Clean up before", char1="<", char2=">"))
+        cmd = "rm -rf %s*" % prefix
+        _ = si.system(cmd, log_level=logging.INFO)
+    else:
+        _LOG.warning("Skipping: clean up before")
+
+
+# ##############################################################################
+
+
+def _parse():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "-a", "--action", required=True, choices=["pdf"], action="append"
+    )
+    parser.add_argument("--input", action="store", type=str, required=True)
+    parser.add_argument("--output", action="store", type=str, default=None)
+    parser.add_argument("--tmp_dir", action="store", type=str, default=".")
+    parser.add_argument("--no_cleanup_before", action="store_true", default=False)
+    parser.add_argument(
+        "--no_remove_empty_lines", action="store_true", default=False
+    )
+    parser.add_argument("--no_run_pandoc", action="store_true", default=False)
+    parser.add_argument("--no_toc", action="store_true", default=False)
+    parser.add_argument(
+        "--no_run_latex_again", action="store_true", default=False
+    )
+    parser.add_argument("--no_gdrive", action="store_true", default=False)
+    parser.add_argument("--no_open_pdf", action="store_true", default=False)
+    parser.add_argument("--no_cleanup", action="store_true", default=False)
+    parser.add_argument(
+        "-v",
+        dest="log_level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
+    return parser
+
+
+def _main(parser):
+    cmd_line = " ".join(map(str, sys.argv))
+    args = parser.parse_args()
+    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    _pandoc(args, cmd_line)
 
 
 if __name__ == "__main__":
