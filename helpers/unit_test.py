@@ -53,8 +53,10 @@ def get_incremental_tests():
 
 # #############################################################################
 
+
 def to_string(var):
     return """f"%s={%s}""" % (var, var)
+
 
 def get_random_df(num_cols, seed=None, **kwargs):
     """

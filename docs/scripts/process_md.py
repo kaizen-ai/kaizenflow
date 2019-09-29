@@ -43,7 +43,7 @@ def read_file(file_name):
     if file_name == "-":
         f = sys.stdin
     else:
-        f = open(file_name, 'r')
+        f = open(file_name, "r")
     # Read.
     txt = []
     for line in f:
@@ -59,6 +59,7 @@ def write_file(file_name, txt):
     else:
         with open(file_name, "w") as f:
             f.write("\n".join(txt))
+
 
 # #############################################################################
 
@@ -86,7 +87,6 @@ def skip_comments(line, skip_block):
     return skip_this_line, skip_block
 
 
-
 def table_of_content(file_name, max_lev):
     skip_block = False
     txt = read_file(file_name)
@@ -98,8 +98,12 @@ def table_of_content(file_name, max_lev):
         #
         for i in range(1, max_lev + 1):
             if l.startswith("#" * i + " "):
-                if (("#########" not in l) and ("///////" not in l) and
-                        ("-------" not in l) and ("======" not in l)):
+                if (
+                    ("#########" not in l)
+                    and ("///////" not in l)
+                    and ("-------" not in l)
+                    and ("======" not in l)
+                ):
                     if i == 1:
                         print()
                     print("%s%s" % ("    " * (i - 1), l))
@@ -112,8 +116,12 @@ def format_text(in_file_name, out_file_name, max_lev):
     txt_tmp = []
     for l in txt:
         # Keep the comments.
-        if not (re.match("#+ ####+", l) or re.match("#+ /////+", l) or
-                re.match("#+ ------+", l) or re.match("#+ ======+", l)):
+        if not (
+            re.match("#+ ####+", l)
+            or re.match("#+ /////+", l)
+            or re.match("#+ ------+", l)
+            or re.match("#+ ======+", l)
+        ):
             txt_tmp.append(l)
     txt = txt_tmp[:]
     # Add proper heading of the correct length.
@@ -161,12 +169,14 @@ def increase_chapter(in_file_name, out_file_name):
 
 # #############################################################################
 
+
 def _parser():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
-        "-a", "--action", choices=["toc", "format", "increase", ], required=True)
+        "-a", "--action", choices=["toc", "format", "increase"], required=True
+    )
     parser.add_argument("-i", "--in_file_name", required=True)
     parser.add_argument("-o", "--out_file_name", required=False, default=None)
     parser.add_argument("-l", "--max_lev", default=5)
@@ -174,8 +184,9 @@ def _parser():
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     return parser
 
 
@@ -191,7 +202,7 @@ def _main(parser):
         out_file_name = in_file_name
     # Print label.
     if in_file_name != "-":
-        os.system('clear')
+        os.system("clear")
         print("in_file_name=", in_file_name)
         print("out_file_name=", out_file_name)
         print("max_lev=", max_lev)
