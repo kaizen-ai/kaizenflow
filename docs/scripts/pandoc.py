@@ -32,172 +32,13 @@ _LOG = logging.getLogger(__name__)
 _EXEC_DIR_NAME = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 
-# ##############################################################################
-
-
-def _pandoc(args, cmd_line):
-    #
-    _LOG.info("cmd=%s", cmd_line)
-    _LOG.info("actions=%s", " ".join(args.action))
-    #
-    curr_path = os.path.abspath(os.path.dirname(sys.argv[0]))
-    _LOG.debug("curr_path=%s", curr_path)
-    #
-    file_ = args.input
-    dbg.dassert_exists(file_)
-    prefix = args.tmp_dir + "/tmp.pandoc"
-    prefix = os.path.abspath(prefix)
-    # Cleanup before.
-    _cleanup_before(args, prefix)
-    #
-    # Pre-process
-    #
-    file_ = _remove_empty_lines(args, curr_path, file_, prefix)
-    #
-    # Run pandoc.
-    #
-    # --filter /Users/$USER/src/github/pandocfilters/examples/tikz.py \
-    # -F /Users/$USER/src/github/pandocfilters/examples/lilypond.py \
-    if not args.no_run_pandoc:
-        _LOG.info("\n" + print_.frame("Pandoc", char1="<", char2=">"))
-        file1 = file_
-        file2 = "%s.tex" % prefix
-        template = "%s/pandoc.latex" % curr_path
-        dbg.dassert_exists(template)
-        # --filter pandoc-imagine
-        cmd = [
-            "pandoc %s" % file1,
-            "-V geometry:margin=1in",
-            "-f markdown",
-            "-t latex",
-            "--template %s" % template,
-            "--number-sections",
-            # - To change the highlight style
-            # https://github.com/jgm/skylighting
-            "--highlight-style=tango",
-            "-s",
-            "-o %s" % file2,
-        ]
-        if not args.no_toc:
-            cmd.extend(["--toc", "--toc-depth 2"])
-        else:
-            args.no_run_latex_again = True
-        # Doesn't work
-        # -f markdown+raw_tex
-        cmd = " ".join(cmd)
-        _ = si.system(cmd, suppress_output=False, log_level=logging.INFO)
-        file_ = file2
-        #
-        # Run latex.
-        #
-        _LOG.info("\n" + print_.frame("Latex", char1="<", char2=">"))
-        # pdflatex needs to run in the same dir of latex_abbrevs.sty so we
-        # cd to that dir and save the output in the same dir of the input.
-        dbg.dassert_exists(_EXEC_DIR_NAME + "/latex_abbrevs.sty")
-        cmd = "cd %s; " % _EXEC_DIR_NAME
-        cmd += (
-            "pdflatex"
-            + " -interaction=nonstopmode"
-            + " -halt-on-error"
-            + " -shell-escape"
-            + " -output-directory %s" % os.path.dirname(file_)
-            + " %s" % file_
-        )
-
-        def _run_latex():
-            rc, txt = si.system_to_string(
-                cmd, abort_on_error=False, log_level=logging.INFO
-            )
-            log_file = file_ + ".latex1.log"
-            io_.to_file(log_file, txt)
-            if rc != 0:
-                txt = txt.split("\n")
-                for i in range(len(txt)):
-                    if txt[i].startswith("!"):
-                        break
-                txt = [
-                    txt[i] for i in range(max(i - 10, 0), min(i + 10, len(txt)))
-                ]
-                txt = "\n".join(txt)
-                _LOG.error(txt)
-                _LOG.error("Log is in %s", log_file)
-                _LOG.error("\n" + print_.frame("cmd is:\n> %s" % cmd))
-                raise RuntimeError("Latex failed")
-
-        _run_latex()
-        #
-        # Run latex again.
-        #
-        _LOG.info("\n" + print_.frame("Latex again", char1="<", char2=">"))
-        if not args.no_run_latex_again:
-            _run_latex()
-        else:
-            _LOG.warning("Skipping: run latex again")
-    else:
-        _LOG.warning("Skipping: run pandoc")
-    #
-    # Copy.
-    #
-    src_pdf_file = "%s.pdf" % prefix
-    if args.output is not None:
-        dst_pdf_file = args.output
-    else:
-        dst_pdf_file = "%s.%s.pdf" % (prefix, os.path.basename(args.input))
-    cmd = "cp -a %s %s" % (src_pdf_file, dst_pdf_file)
-    _ = si.system(cmd, log_level=logging.INFO)
-    pdf_file = dst_pdf_file
-    #
-    # Copy to gdrive.
-    #
-    # TODO(gp): Generalize this.
-    if not args.no_gdrive:
-        _LOG.info("\n" + print_.frame("Copy to gdrive", char1="<", char2=">"))
-        gdrive_dir = "/Users/saggese/GoogleDrive/pdf_notes"
-        dst_file = (
-            gdrive_dir
-            + "/"
-            + os.path.basename(args.input).replace(".txt", ".pdf")
-        )
-        cmd = "cp -a %s %s" % (pdf_file, dst_file)
-        _ = si.system(cmd, log_level=logging.INFO)
-    else:
-        _LOG.warning("Skipping: copy to gdrive")
-    #
-    # Open pdf.
-    #
-    if not args.no_open_pdf:
-        _LOG.info("\n" + print_.frame("Open PDF", char1="<", char2=">"))
-        # open $pdfFile
-        cmd = (
-            """
-    /usr/bin/osascript << EOF
-    set theFile to POSIX file "%s" as alias
-    tell application "Skim"
-    activate
-    set theDocs to get documents whose path is (get POSIX path of theFile)
-    if (count of theDocs) > 0 then revert theDocs
-    open theFile
-    end tell
-    EOF
-            """
-            % pdf_file
-        )
-        _ = si.system(cmd, log_level=logging.INFO)
-        cmd = "open -a Skim %s" % pdf_file
-        _ = si.system(cmd, log_level=logging.INFO)
-    else:
-        _LOG.warning("Skipping: open pdf")
-    #
-    # Cleanup.
-    #
-    if not args.no_cleanup:
-        _LOG.info("\n" + print_.frame("Clean up", char1="<", char2=">"))
+def _cleanup_before(args, prefix):
+    if not args.no_cleanup_before:
+        _LOG.info("\n" + print_.frame("Clean up before", char1="<", char2=">"))
         cmd = "rm -rf %s*" % prefix
         _ = si.system(cmd, log_level=logging.INFO)
     else:
-        _LOG.warning("Skipping: clean up")
-    #
-    _LOG.info("\n" + print_.frame("SUCCESS"))
+        _LOG.warning("Skipping: clean up before")
 
 
 def _remove_empty_lines(args, curr_path, file_, prefix):
@@ -217,13 +58,190 @@ def _remove_empty_lines(args, curr_path, file_, prefix):
     return file_
 
 
-def _cleanup_before(args, prefix):
-    if not args.no_cleanup_before:
-        _LOG.info("\n" + print_.frame("Clean up before", char1="<", char2=">"))
+def _run_pandoc(args, curr_path, file_, prefix):
+    # --filter /Users/$USER/src/github/pandocfilters/examples/tikz.py \
+    # -F /Users/$USER/src/github/pandocfilters/examples/lilypond.py \
+    if not args.no_run_pandoc:
+        _LOG.info("\n" + print_.frame("Pandoc", char1="<", char2=">"))
+        file1 = file_
+        file2 = "%s.tex" % prefix
+        template = "%s/pandoc.latex" % curr_path
+        dbg.dassert_exists(template)
+        # --filter pandoc-imagine
+        if args.action == "pdf":
+            to_format = "latex"
+        elif args.action == "html":
+            to_format = "html"
+        else:
+            raise ValueError("Invalid action '%s'" % args.action)
+        cmd = [
+            "pandoc %s" % file1,
+            "-V geometry:margin=1in",
+            "-f markdown",
+            "-t %s" % to_format,
+            "--template %s" % template,
+            "--number-sections",
+            # - To change the highlight style
+            # https://github.com/jgm/skylighting
+            "--highlight-style=tango",
+            "-s",
+            "-o %s" % file2,
+        ]
+        if not args.no_toc:
+            cmd.extend(["--toc", "--toc-depth 2"])
+        else:
+            args.no_run_latex_again = True
+        # Doesn't work
+        # -f markdown+raw_tex
+        cmd = " ".join(cmd)
+        _ = si.system(cmd, suppress_output=False, log_level=logging.INFO)
+        file_ = file2
+        if args.action == "pdf":
+            #
+            # Run latex.
+            #
+            _LOG.info("\n" + print_.frame("Latex", char1="<", char2=">"))
+            # pdflatex needs to run in the same dir of latex_abbrevs.sty so we
+            # cd to that dir and save the output in the same dir of the input.
+            dbg.dassert_exists(_EXEC_DIR_NAME + "/latex_abbrevs.sty")
+            cmd = "cd %s; " % _EXEC_DIR_NAME
+            cmd += (
+                "pdflatex"
+                + " -interaction=nonstopmode"
+                + " -halt-on-error"
+                + " -shell-escape"
+                + " -output-directory %s" % os.path.dirname(file_)
+                + " %s" % file_
+            )
+
+            def _run_latex():
+                rc, txt = si.system_to_string(
+                    cmd, abort_on_error=False, log_level=logging.INFO
+                )
+                log_file = file_ + ".latex1.log"
+                io_.to_file(log_file, txt)
+                if rc != 0:
+                    txt = txt.split("\n")
+                    for i in range(len(txt)):
+                        if txt[i].startswith("!"):
+                            break
+                    txt = [
+                        txt[i]
+                        for i in range(max(i - 10, 0), min(i + 10, len(txt)))
+                    ]
+                    txt = "\n".join(txt)
+                    _LOG.error(txt)
+                    _LOG.error("Log is in %s", log_file)
+                    _LOG.error("\n" + print_.frame("cmd is:\n> %s" % cmd))
+                    raise RuntimeError("Latex failed")
+
+            _run_latex()
+            # Run latex again.
+            _LOG.info("\n" + print_.frame("Latex again", char1="<", char2=">"))
+            if not args.no_run_latex_again:
+                _run_latex()
+            else:
+                _LOG.warning("Skipping: run latex again")
+    else:
+        _LOG.warning("Skipping: run pandoc")
+
+
+def _copy_to_output(args, prefix):
+    src_pdf_file = "%s.pdf" % prefix
+    if args.output is not None:
+        dst_pdf_file = args.output
+    else:
+        dst_pdf_file = "%s.%s.pdf" % (prefix, os.path.basename(args.input))
+    cmd = "cp -a %s %s" % (src_pdf_file, dst_pdf_file)
+    _ = si.system(cmd, log_level=logging.INFO)
+    pdf_file = dst_pdf_file
+    return pdf_file
+
+
+def _open_pdf(args, pdf_file):
+    if not args.no_open_pdf:
+        _LOG.info("\n" + print_.frame("Open PDF", char1="<", char2=">"))
+        # open $pdfFile
+        cmd = (
+            """
+/usr/bin/osascript << EOF
+set theFile to POSIX file "%s" as alias
+tell application "Skim"
+activate
+set theDocs to get documents whose path is (get POSIX path of theFile)
+if (count of theDocs) > 0 then revert theDocs
+open theFile
+end tell
+EOF
+                """
+            % pdf_file
+        )
+        _ = si.system(cmd, log_level=logging.INFO)
+        cmd = "open -a Skim %s" % pdf_file
+        _ = si.system(cmd, log_level=logging.INFO)
+    else:
+        _LOG.warning("Skipping: open pdf")
+
+
+def _copy_to_gdrive(args, pdf_file):
+    if not args.no_gdrive:
+        _LOG.info("\n" + print_.frame("Copy to gdrive", char1="<", char2=">"))
+        if args.gdrive_dir is not None:
+            gdrive_dir = args.gdrive_dir
+        else:
+            gdrive_dir = "/Users/saggese/GoogleDrive/pdf_notes"
+        dbg.dassert_dir_exists(gdrive_dir)
+        dst_file = (
+            gdrive_dir
+            + "/"
+            + os.path.basename(args.input).replace(".txt", ".pdf")
+        )
+        cmd = "cp -a %s %s" % (pdf_file, dst_file)
+        _ = si.system(cmd, log_level=logging.INFO)
+    else:
+        _LOG.warning("Skipping: copy to gdrive")
+
+
+def _cleanup_after(args, prefix):
+    if not args.no_cleanup:
+        _LOG.info("\n" + print_.frame("Clean up", char1="<", char2=">"))
         cmd = "rm -rf %s*" % prefix
         _ = si.system(cmd, log_level=logging.INFO)
     else:
-        _LOG.warning("Skipping: clean up before")
+        _LOG.warning("Skipping: clean up")
+
+
+# ##############################################################################
+
+
+def _pandoc(args, cmd_line):
+    #
+    _LOG.info("cmd=%s", cmd_line)
+    _LOG.info("actions=%s", " ".join(args.action))
+    #
+    curr_path = os.path.abspath(os.path.dirname(sys.argv[0]))
+    _LOG.debug("curr_path=%s", curr_path)
+    #
+    file_ = args.input
+    dbg.dassert_exists(file_)
+    prefix = args.tmp_dir + "/tmp.pandoc"
+    prefix = os.path.abspath(prefix)
+    #
+    _cleanup_before(args, prefix)
+    #
+    file_ = _remove_empty_lines(args, curr_path, file_, prefix)
+    #
+    _run_pandoc(args, curr_path, file_, prefix)
+    #
+    pdf_file = _copy_to_output(args, prefix)
+    #
+    _copy_to_gdrive(args, pdf_file)
+    #
+    _open_pdf(args, pdf_file)
+    #
+    _cleanup_after(args, prefix)
+    #
+    _LOG.info("\n" + print_.frame("SUCCESS"))
 
 
 # ##############################################################################
@@ -234,11 +252,19 @@ def _parse():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "-a", "--action", required=True, choices=["pdf"], action="append"
+        "-a", "--action", required=True, choices=["pdf", "html"], action="store"
     )
     parser.add_argument("--input", action="store", type=str, required=True)
-    parser.add_argument("--output", action="store", type=str, default=None)
-    parser.add_argument("--tmp_dir", action="store", type=str, default=".")
+    parser.add_argument(
+        "--output", action="store", type=str, default=None, help="Output file"
+    )
+    parser.add_argument(
+        "--tmp_dir",
+        action="store",
+        type=str,
+        default=".",
+        help="Directory where to save artifacts",
+    )
     parser.add_argument("--no_cleanup_before", action="store_true", default=False)
     parser.add_argument(
         "--no_remove_empty_lines", action="store_true", default=False
@@ -249,6 +275,12 @@ def _parse():
         "--no_run_latex_again", action="store_true", default=False
     )
     parser.add_argument("--no_gdrive", action="store_true", default=False)
+    parser.add_argument(
+        "--gdrive_dir",
+        action="store_true",
+        default=None,
+        help="Directory where to save the output",
+    )
     parser.add_argument("--no_open_pdf", action="store_true", default=False)
     parser.add_argument("--no_cleanup", action="store_true", default=False)
     parser.add_argument(

@@ -45,8 +45,9 @@ def get_client_root(super_module):
     Return the full path of the root of the Git client.
     E.g., "/Users/saggese/src/.../amp"
 
-    :param super_module: if True use the root of the Git supermodule, if we are
-        in a submodule, otherwise use the Git submodule root
+    :param super_module: if True use the root of the Git _super_module,
+        if we are in a submodule.
+        Otherwise use the Git _sub_module root
     """
     if super_module and is_inside_submodule():
         # https://stackoverflow.com/questions/957928
@@ -58,6 +59,21 @@ def get_client_root(super_module):
     dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
     client_root = os.path.realpath(out)
     return client_root
+
+
+def find_file_in_git_tree(file_in):
+    """
+    Find the path of a file `file_in` in the outermost git submodule (i.e.,
+    in the super-module).
+    """
+    root_dir = get_client_root(super_module=True)
+    cmd = "find %s -name '%s'" % (root_dir, file_in)
+    _, file_name = si.system_to_string(cmd)
+    # Make sure that there is a single outcome.
+    dbg.dassert_eq(len(file_name.split("\n")), 1)
+    file_name = os.path.abspath(file_name)
+    dbg.dassert_exists(file_name)
+    return file_name
 
 
 def get_repo_symbolic_name(super_module):

@@ -280,25 +280,27 @@ def dassert_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-# TODO(*): -> _file_not_exist
+def dassert_dir_exists(dir_name, msg=None, *args):
+    """
+    Assert unless `dir_name` exists and it's a directory.
+    """
+    dir_name = os.path.abspath(dir_name)
+    is_ok = os.path.exists(dir_name) and os.path.isdie(dir_name)
+    if not is_ok:
+        txt = []
+        txt.append("dir='%s' doesn't exist or it's not a dir" % dir_name)
+        _dfatal(txt, msg, *args)
+
+
 def dassert_not_exists(file_name, msg=None, *args):
+    """
+    Ensures that a file or a dir `file_name` doesn't exist, otherwise raises.
+    """
     file_name = os.path.abspath(file_name)
     # pylint: disable=C0325,C0113
     if not (not os.path.exists(file_name)):
         txt = []
         txt.append("file='%s' already exists" % file_name)
-        _dfatal(txt, msg, *args)
-
-
-# TODO(*): -> dassert_dir_not_exist
-def dassert_dir_exists(dir_name, msg=None, *args):
-    dir_name = os.path.abspath(dir_name)
-    # pylint: disable=C0325
-    # TODO(gp): Not sure it's correct.
-    # if not (os.path.isdir(dir_name) and os.path.exists(dir_name)):
-    if not (os.path.exists(dir_name) and not os.path.isdir(dir_name)):
-        txt = []
-        txt.append("dir='%s' already exists" % dir_name)
         _dfatal(txt, msg, *args)
 
 
