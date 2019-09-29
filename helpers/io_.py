@@ -134,7 +134,8 @@ def delete_dir(
                 raise e
 
 
-def create_dir(dir_name, incremental, abort_if_exists=False, ask_to_delete=True):
+def create_dir(dir_name, incremental, abort_if_exists=False,
+               ask_to_delete=False):
     """
     Create a directory `dir_name` if it doesn't exist.
 

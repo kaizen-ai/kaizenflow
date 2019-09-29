@@ -249,7 +249,7 @@ class TestCase(unittest.TestCase):
         :return: dir name
         :rtype: str
         """
-        dir_name = self._get_current_path()
+        dir_name = self._get_current_path() + "/tmp.scratch"
         io_.create_dir(dir_name, incremental=get_incremental_tests())
         return dir_name
 
