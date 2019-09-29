@@ -1,3 +1,18 @@
+# 
+
+* Show files modified in a commit
+```bash
+> git show --name-only 39a9e335298a3fe604896fa19296d20829801cf2
+commit 39a9e335298a3fe604896fa19296d20829801cf2
+Author: Julia <julia@particle.one>
+Date:   Fri Sep 27 11:43:41 2019
+
+    PartTask274 lint
+
+vendors/cme/utils.py
+vendors/first_rate/utils.py
+```
+
 # Branch
 
 * Naming a branch
@@ -53,3 +68,12 @@
     > git difftool a637594..eb12233
     > gd a637594..eb12233
     ```
+
+* Compare a branch to master
+
+```
+> git ll master..PartTask274 vendors/cme
+* 39a9e33 Julia     PartTask274 lint                                                  (    2 days ago) Fri Sep 27 11:43:41 2019
+* c8e7e1a Julia     PartTask268 modify according to review16                          (    2 days ago) Fri Sep 27 11:41:47 2019
+* a637594 saggese   PartTask274: Add tag for review                                   (    3 days ago) Thu Sep 26 17:13:33 2019
+```
