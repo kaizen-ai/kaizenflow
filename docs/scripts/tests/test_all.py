@@ -49,7 +49,6 @@ class Test_pandoc1(ut.TestCase):
         act = self._helper(file_name)
         self.check_string(act)
 
-    @pytest.mark.skip
     def test2(self):
         """
         Convert to pdf one txt file and check that the .tex file is as expected.
