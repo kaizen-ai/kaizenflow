@@ -232,7 +232,13 @@ def to_file(file_name, lines, mode="w", force_flush=False):
 def from_file(file_name, split=True, encoding=None):
     dbg.dassert_ne(file_name, "")
     with open(file_name, "r", encoding=encoding) as f:
-        data = f.read()
+        try:
+            data = f.read()
+        except UnicodeDecodeError as e:
+            msg = "error=%s" % e
+            msg = "\nfile_name='%s'" % file_name
+            _LOG.error(msg)
+            raise RuntimeError(msg)
         dbg.dassert_isinstance(data, str)
         if split:
             data = data.split("\n")
