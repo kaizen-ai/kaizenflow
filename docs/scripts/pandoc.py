@@ -22,6 +22,7 @@ import sys
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+
 # TODO(gp): print_ -> prnt
 import helpers.printing as print_
 import helpers.system_interaction as si
@@ -31,35 +32,35 @@ _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
+
 def _parse():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
-        '-a',
-        '--action',
-        required=True,
-        choices=[
-            'pdf',
-        ],
-        action='append')
-    parser.add_argument('--input', action='store', type=str, required=True)
-    parser.add_argument('--output', action='store', type=str, default=None)
-    parser.add_argument('--no_cleanup_before', action='store_true', default=False)
-    parser.add_argument('--no_remove_empty_lines', action='store_true',
-                        default=False)
-    parser.add_argument('--no_run_pandoc', action='store_true', default=False)
-    parser.add_argument('--no_toc', action='store_true', default=False)
-    parser.add_argument('--no_run_latex_again', action='store_true', default=False)
-    parser.add_argument('--no_gdrive', action='store_true', default=False)
-    parser.add_argument('--no_open_pdf', action='store_true', default=False)
-    parser.add_argument('--no_cleanup', action='store_true', default=False)
+        "-a", "--action", required=True, choices=["pdf"], action="append"
+    )
+    parser.add_argument("--input", action="store", type=str, required=True)
+    parser.add_argument("--output", action="store", type=str, default=None)
+    parser.add_argument("--no_cleanup_before", action="store_true", default=False)
+    parser.add_argument(
+        "--no_remove_empty_lines", action="store_true", default=False
+    )
+    parser.add_argument("--no_run_pandoc", action="store_true", default=False)
+    parser.add_argument("--no_toc", action="store_true", default=False)
+    parser.add_argument(
+        "--no_run_latex_again", action="store_true", default=False
+    )
+    parser.add_argument("--no_gdrive", action="store_true", default=False)
+    parser.add_argument("--no_open_pdf", action="store_true", default=False)
+    parser.add_argument("--no_cleanup", action="store_true", default=False)
     parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     return parser
 
 
@@ -93,8 +94,11 @@ def _main(parser):
         _LOG.info("\n" + print_.frame("Pre-process", char1="<", char2=">"))
         file1 = file_
         file2 = "%s.no_spaces.txt" % prefix
-        cmd = "%s/remove_md_empty_lines.py --input %s --output %s" % (curr_path,
-                file1, file2)
+        cmd = "%s/remove_md_empty_lines.py --input %s --output %s" % (
+            curr_path,
+            file1,
+            file2,
+        )
         _ = si.system(cmd, log_level=logging.INFO)
         file_ = file2
     else:
@@ -111,21 +115,21 @@ def _main(parser):
         template = "%s/pandoc.latex" % curr_path
         dbg.dassert_exists(template)
         # --filter pandoc-imagine
-        cmd = ["pandoc %s" % file1,
-               "-V geometry:margin=1in",
-               "-f markdown",
-               "-t latex",
-               "--template %s" % template,
-               "--number-sections",
-               # - To change the highlight style
-               # https://github.com/jgm/skylighting
-               "--highlight-style=tango",
-               "-s",
-               "-o %s" % file2]
+        cmd = [
+            "pandoc %s" % file1,
+            "-V geometry:margin=1in",
+            "-f markdown",
+            "-t latex",
+            "--template %s" % template,
+            "--number-sections",
+            # - To change the highlight style
+            # https://github.com/jgm/skylighting
+            "--highlight-style=tango",
+            "-s",
+            "-o %s" % file2,
+        ]
         if not args.no_toc:
-            cmd.extend([
-                "--toc",
-                "--toc-depth 2"])
+            cmd.extend(["--toc", "--toc-depth 2"])
         else:
             args.no_run_latex_again = True
         # Doesn't work
@@ -140,19 +144,19 @@ def _main(parser):
         cmd = "pdflatex -halt-on-error -shell-escape %s" % file_
 
         def _run_latex():
-            rc, txt = si.system_to_string(cmd, abort_on_error=False,
-                    log_level=logging.INFO)
+            rc, txt = si.system_to_string(
+                cmd, abort_on_error=False, log_level=logging.INFO
+            )
             log_file = file_ + ".latex1.log"
             io_.to_file(log_file, txt)
             if rc != 0:
                 txt = txt.split("\n")
-                line = None
                 for i in range(len(txt)):
                     if txt[i].startswith("!"):
-                        line = i
                         break
-                txt = [txt[i] for i in range(
-                    max(i - 10, 0), min(i + 10, len(txt)))]
+                txt = [
+                    txt[i] for i in range(max(i - 10, 0), min(i + 10, len(txt)))
+                ]
                 txt = "\n".join(txt)
                 _LOG.error(txt)
                 _LOG.error("Log is in %s", log_file)
@@ -188,7 +192,11 @@ def _main(parser):
     if not args.no_gdrive:
         _LOG.info("\n" + print_.frame("Copy to gdrive", char1="<", char2=">"))
         gdrive_dir = "/Users/saggese/GoogleDrive/pdf_notes"
-        dst_file = gdrive_dir + "/" + os.path.basename(args.input).replace(".txt", ".pdf")
+        dst_file = (
+            gdrive_dir
+            + "/"
+            + os.path.basename(args.input).replace(".txt", ".pdf")
+        )
         cmd = "cp -a %s %s" % (pdf_file, dst_file)
         _ = si.system(cmd, log_level=logging.INFO)
     else:
@@ -199,7 +207,8 @@ def _main(parser):
     if not args.no_open_pdf:
         _LOG.info("\n" + print_.frame("Open PDF", char1="<", char2=">"))
         # open $pdfFile
-        cmd = """
+        cmd = (
+            """
 /usr/bin/osascript << EOF
 set theFile to POSIX file "%s" as alias
 tell application "Skim"
@@ -209,7 +218,9 @@ if (count of theDocs) > 0 then revert theDocs
 open theFile
 end tell
 EOF
-        """ % pdf_file
+        """
+            % pdf_file
+        )
         _ = si.system(cmd, log_level=logging.INFO)
         cmd = "open -a Skim %s" % pdf_file
         _ = si.system(cmd, log_level=logging.INFO)
@@ -228,5 +239,5 @@ EOF
     _LOG.info("\n" + print_.frame("SUCCESS"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main(_parse())

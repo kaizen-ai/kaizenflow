@@ -10,8 +10,9 @@ import pprint
 import re
 import string
 
+
 def _get_old_map():
-    """
+    r"""
     {'\\aaa': '\\vv{a}',
      '\\aalpha': '\\vv{\\alpha}',
      '\\bb': '\\vv{b}',
@@ -92,13 +93,13 @@ def _get_old_map():
         m = re.match(r"\\newcommand{(\S+)}{(\S+)}", l)
         assert m, "line=%s" % l
         # \vvarepsilon \varepsilon
-        #print("%s -> %s" % (m.group(1), m.group(2)))
+        # print("%s -> %s" % (m.group(1), m.group(2)))
         old_map[m.group(1)] = m.group(2)
     return old_map
 
 
 def _get_new_map():
-    """
+    r"""
     Build a map from new abbreviations to the macro
         '\vvv' -> '\vv{v}'
         '\va' -> '\vv{a}'
@@ -123,7 +124,8 @@ def _get_new_map():
         all_letters = list(string.ascii_letters)
 
         if True:
-            all_letters.extend(r"""
+            all_letters.extend(
+                r"""
             \alpha
             \beta
             \gamma \Gamma
@@ -146,7 +148,8 @@ def _get_new_map():
             \phi \varphi \Phi
             \chi
             \psi \Psi
-            \omega \Omega""".split())
+            \omega \Omega""".split()
+            )
 
         for l in all_letters:
             if l == "v":
@@ -164,7 +167,8 @@ def _get_new_map():
         all_letters = list(string.ascii_uppercase)
 
         if True:
-            all_letters.extend(r"""
+            all_letters.extend(
+                r"""
             \Gamma
             \Delta
             \Lambda
@@ -173,7 +177,8 @@ def _get_new_map():
             \Sigma
             \Upsilon
             \Psi
-            \Omega""".split())
+            \Omega""".split()
+            )
 
         for l in all_letters:
             if l.startswith("\\"):
@@ -191,12 +196,12 @@ def generate_latex():
     map_ = _get_new_map()
     for k in sorted(map_.keys()):
         v = map_[k]
-        cmd = r'\newcommand{%s}{%s}' % (k, v)
+        cmd = r"\newcommand{%s}{%s}" % (k, v)
         txt.append(cmd)
     #
     txt = "\n".join(txt)
     file_name = "./latex_abbrevs.tmp.sty"
-    with open(file_name, mode='w') as f:
+    with open(file_name, mode="w") as f:
         f.write(txt)
     #
     print(txt)
@@ -207,17 +212,19 @@ def generate_vim_spell_check():
     txt = []
     new_map = _get_new_map()
     for k, v in sorted(new_map.items()):
-        arg1 = k.replace('\\', '')
+        arg1 = k.replace("\\", "")
         txt.append(arg1)
     #
     txt = "\n".join(txt)
     file_name = "./vimspell.txt"
-    with open(file_name, mode='w') as f:
+    with open(file_name, mode="w") as f:
         f.write(txt)
     #
     print(txt)
 
+
 # /////////////////////////////////////////////////////////////////////////////
+
 
 def generate_mathcal():
     txt1 = []
@@ -225,18 +232,19 @@ def generate_mathcal():
     #
     for k in string.ascii_letters:
         # \def\calA{\mathcal{D}}
-        cmd = r'\newcommand{\cal%s}{\mathcal{%s}}' % (k, k)
+        cmd = r"\newcommand{\cal%s}{\mathcal{%s}}" % (k, k)
         txt1.append(cmd)
         txt2.append("cal%s" % k)
     #
     print("\n".join(txt1))
     print("\n".join(txt2))
 
+
 # /////////////////////////////////////////////////////////////////////////////
 
 # TODO(gp): This is probably not needed anymore.
 def generate_perl1():
-    """
+    r"""
     Convert long form to old abbreviations.
 
     perl -i -pe 's/\\vv\{A\}/\\vvA/g' $filename
@@ -251,7 +259,7 @@ def generate_perl1():
 
 
 def generate_perl2():
-    """
+    r"""
     Convert long form to new abbreviations.
 
     perl -i -pe 's/\\vv\{A\}/\\vA/g' $filename
@@ -261,14 +269,14 @@ def generate_perl2():
     print("# Convert long form to new abbreviations.")
     new_map = _get_new_map()
     for k, v in sorted(new_map.items()):
-        arg1 = v.replace('\\', '\\\\')
-        arg2 = k.replace('\\', '\\\\')
+        arg1 = v.replace("\\", "\\\\")
+        arg2 = k.replace("\\", "\\\\")
         cmd = r"""perl -i -pe 's/%s/%s/g' $filename""" % (arg1, arg2)
         print(cmd)
 
 
 def generate_perl3():
-    """
+    r"""
     Generate perl from old to new abbreviations.
 
     perl -i -pe 's/\\aaa/\\va/g' $filename
@@ -282,10 +290,10 @@ def generate_perl3():
     for k, v in old_map.items():
         new_macro = rev_new_map[old_map[k]]
         # perl -i -pe 's/\\bb[^RCNZ]/\\vb/g' $filename
-        arg1 = k.replace('\\', '\\\\')
-        arg2 = new_macro.replace('\\', '\\\\')
+        arg1 = k.replace("\\", "\\\\")
+        arg2 = new_macro.replace("\\", "\\\\")
         # To avoid collisions.
-        if arg1 == r'\bb':
+        if arg1 == r"\bb":
             arg1 += "(?![RCNZ])"
         elif arg1 in ("uu", "vvv", "xx"):
             arg1 += "(?!hat)"
@@ -306,9 +314,9 @@ if __name__ == "__main__":
         print("new_map")
         print("*" * 80)
         pprint.pprint(new_map)
-    #generate_latex()
-    #generate_perl1()
-    #generate_perl2()
-    #generate_perl3()
-    #generate_vim_spell_check()
+    # generate_latex()
+    # generate_perl1()
+    # generate_perl2()
+    # generate_perl3()
+    # generate_vim_spell_check()
     generate_mathcal()
