@@ -1,0 +1,55 @@
+# Branch
+
+* Naming a branch
+
+- You can get automatically the name of a branch corresponding to a GitHub issue
+  with:
+    ```
+    > ghi_show.py 274 --only_github
+    > ghi_show.py 274 -r ParticleDev/commodity_research --only_github
+    # Github:
+    #274: PRICE: Download equity data
+    https://github.com/alphamatic/lemonade/issues/274
+
+    # Tag:
+    LemTask274_PRICE_Download_equity_data
+    ```
+
+* Checking what work was done in a branch
+
+- Look at all the branches available:
+    ```bash
+    > git fetch
+    > git branch -r
+      origin/HEAD -> origin/master
+      origin/PartTask274
+      ...
+    ```
+
+- Got to the branch:
+    ```bash
+    > git checkout PartTask274
+    ```
+- Check what are the commits that are in the current branch but not in master:
+    ```bash
+    > gll master..HEAD
+    > git log master..HEAD
+    * eb12233 Julia     PartTask274 verify dataset integrity                    (  13 hours ago) Sat Sep 28 18:55:12 2019  (HEAD -> PartTask274, origin/PartTask274)
+    ...
+    * a637594 saggese   PartTask274: Add tag for review                         (    3 days ago) Thu Sep 26 17:13:33 2019
+    ```
+
+- To see the actual changes in a branch you can't do:
+    **Bad**
+    ```bash
+    > git diff master..HEAD
+    ```
+  since `git diff` compares two commits and not a range of commits like `git log`
+  (yes Git has a horrible API)
+
+- What you need to do is to get the first commit in the branch and the last from
+  `git log` and compare:
+    ```bash
+    > git difftool a637594..eb12233
+    > gd a637594..eb12233
+    ```
