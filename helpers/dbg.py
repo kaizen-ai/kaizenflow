@@ -304,6 +304,19 @@ def dassert_not_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
+def dassert_file_extension(file_name, exp_exts, msg=None, *args):
+    # Handle single extension case.
+    if isinstance(exp_exts, str):
+        exp_exts = [exp_exts]
+    # Make sure extension starts with .
+    exp_exts = ["." + e if not e.startswith(".") else e for e in exp_exts]
+    # Check.
+    act_ext = os.path.splitext(file_name)[-1].lower()
+    dassert_in(
+        act_ext, exp_exts, "Invalid extension %s for %s", act_ext, file_name
+    )
+
+
 def dassert_monotonic_index(obj, msg=None, *args):
     # For some reason importing pandas is slow and we don't want to pay this
     # start up cost unless we have to.
@@ -456,7 +469,7 @@ def _get_logging_format(force_print_format, force_verbose_format):
 
 
 # TODO(gp): maybe replace "force_verbose_format" and "force_print_format" with
-# a "mode" in ("auto", "verbose", "print")
+#  a "mode" in ("auto", "verbose", "print")
 def init_logger(
     verb=logging.INFO,
     use_exec_path=False,

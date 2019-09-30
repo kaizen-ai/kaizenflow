@@ -17,7 +17,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Generalize to all users, or at least Jenkins.
 @pytest.mark.skipif('si.get_user_name() != "saggese"')
 class Test_pandoc1(ut.TestCase):
-    def _helper(self, in_file):
+    def _helper(self, in_file, action, file_ext):
         exec_path = git.find_file_in_git_tree("pandoc.py")
         dbg.dassert_exists(exec_path)
         #
@@ -25,40 +25,49 @@ class Test_pandoc1(ut.TestCase):
         out_file = os.path.join(tmp_dir, "output.pdf")
         cmd = []
         cmd.append(exec_path)
-        cmd.append("-a pdf")
+        cmd.append("-a %s" % action)
         cmd.append("--tmp_dir %s" % tmp_dir)
         cmd.append("--input %s" % in_file)
         cmd.append("--output %s" % out_file)
-        cmd.append("--no_open_pdf")
+        cmd.append("--no_open")
         cmd.append("--no_gdrive")
         cmd.append("--no_cleanup")
         cmd = " ".join(cmd)
         si.system(cmd)
         # Check.
-        out_file = os.path.join(tmp_dir, "tmp.pandoc.tex")
+        if action == "pdf":
+            out_file = os.path.join(tmp_dir, "tmp.pandoc.tex")
+        elif action == "html":
+            out_file = os.path.join(tmp_dir, "tmp.pandoc.html")
+        else:
+            raise ValueError("Invalid action='%s'", action)
         act = io_.from_file(out_file, split=False)
         return act
 
+    # TODO(gp): Generalize to all users, or at least Jenkins.
+    @pytest.mark.skipif('si.get_user_name() != "saggese"')
     def test1(self):
         """
-        Convert to pdf one txt file and check that the .tex file is as expected.
+        Convert one txt file to PDF and check that the .tex file is as expected.
         """
         file_name = "code_style.txt.test"
         file_name = os.path.join(self.get_input_dir(), file_name)
         file_name = os.path.abspath(file_name)
-        act = self._helper(file_name)
+        #
+        act = self._helper(file_name, "pdf", "tex")
         self.check_string(act)
 
     def test2(self):
         """
-        Convert to pdf one txt file and check that the .tex file is as expected.
+        Convert one txt file to HTML and check that the .tex file is as expected.
         """
         file_name = "code_style.txt.test"
         file_name = os.path.join(
             self.get_input_dir(test_method_name="test1"), file_name
         )
         file_name = os.path.abspath(file_name)
-        act = self._helper(file_name)
+        #
+        act = self._helper(file_name, "html", "html")
         self.check_string(act)
 
     def test_all_notes(self):
@@ -70,7 +79,7 @@ class Test_pandoc1(ut.TestCase):
         file_names = glob.glob(dir_name)
         for f in file_names:
             _LOG.debug(prnt.frame("file_name=%s" % f))
-            self._helper(f)
+            self._helper(f, "html", "html")
 
 
 class Test_preprocess1(ut.TestCase):
