@@ -1,6 +1,8 @@
+import abc
 import collections
 import copy
 import logging
+import pprint
 
 import networkx as nx
 import pandas as pd
@@ -11,7 +13,8 @@ import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
 import vendors.kibot.utils as kut
-from core.dataflow_core import *
+from core.dataflow_core import DAG as DAG  # pylint: disable=unused-import
+from core.dataflow_core import Node as Node
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,14 +35,56 @@ def draw(graph):
 
 
 # #############################################################################
-# DataFrame manipulation nodes
+# Abstract Node classes with sklearn-style interfaces
 # #############################################################################
 
 
-# TODO(Paul): Make the train/test idx behavior a mixin
-class ReadData(Node):
-    def __init__(self, nid):
-        super().__init__(nid, outputs=["output"])
+class SkLearnNode(Node, abc.ABC):
+    """
+    Define an abstract class with sklearn-style `fit` and `predict` functions.
+
+    Nodes may store a dictionary of information for each method following the
+    method's invocation.
+    """
+    def __init__(self, nid, inputs=None, outputs=None):
+        if inputs is None:
+            inputs = ["df_in"]
+        if outputs is None:
+            outputs = ["df_out"]
+        super().__init__(nid=nid, inputs=inputs, outputs=outputs)
+        self._info = collections.OrderedDict()
+
+    @abc.abstractmethod
+    def fit(self, df_in):
+        pass
+
+    @abc.abstractmethod
+    def predict(self, df_in):
+        pass
+
+    def get_info(self, method):
+        dbg.dassert_in(
+            method, self._info.keys(), "No info found for %s", method
+        )
+        return self._info[method]
+
+    def _set_info(self, method, values):
+        dbg.dassert_isinstance(method, str)
+        dbg.dassert(getattr(self, method))
+        dbg.dassert_isinstance(values, collections.OrderedDict)
+        self._info[method] = copy.copy(values)
+
+
+class DataSource(SkLearnNode, abc.ABC):
+    """
+    A source node that can be configured for cross-validation.
+    """
+    def __init__(self, nid, outputs=None):
+        if outputs is None:
+            outputs = ["df_out"]
+        # Do not allow any empty list.
+        dbg.dassert(outputs)
+        super().__init__(nid, inputs=[], outputs=outputs)
         #
         self.df = None
         self._train_idxs = None
@@ -82,14 +127,49 @@ class ReadData(Node):
         return self.df
 
 
-class ReadDataFromDf(ReadData):
+class Transformer(SkLearnNode, abc.ABC):
+    """
+    Stateless Single-Input Single-Output node.
+    """
+
+    def __init__(self, nid):
+        super().__init__(nid)
+
+    @abc.abstractmethod
+    def _transform(self, df):
+        """
+        :return: df, info
+        """
+        raise NotImplementedError
+
+    def fit(self, df_in):
+        # Transform the input df.
+        df_out, info = self._transform(df_in)
+        # Save the info in the node: we make a copy just to be safe.
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in):
+        # Transform the input df.
+        df_out, info = self._transform(df_in)
+        # Save the info in the node: we make a copy just to be safe.
+        self._set_info("predict", info)
+        return {"df_out": df_out}
+
+
+# #############################################################################
+# Data source nodes
+# #############################################################################
+
+
+class ReadDataFromDf(DataSource):
     def __init__(self, nid, df):
         super().__init__(nid)
         dbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
 
 
-class ReadDataFromKibot(ReadData):
+class ReadDataFromKibot(DataSource):
     def __init__(self, nid, file_name, nrows):
         super().__init__(nid)
         # dbg.dassert_exists(file_name)
@@ -110,52 +190,27 @@ class ReadDataFromKibot(ReadData):
         return super().fit()
 
 
-# TODO(Paul): Abstract? Should we?
-class StatelessSisoNode(Node):
-    """
-    Stateless Single-Input Single-Output node.
-    """
-
-    # TODO(Paul): Don't use `input` or `in` for default input name.
-    def __init__(self, nid):
-        super().__init__(nid, inputs=["input"], outputs=["output"])
-
-    def _transform(self, df):
-        """
-        :return: df, info
-        """
-        raise NotImplementedError
-
-    def fit(self, input):
-        # Transform the input df.
-        df_out, info = self._transform(input)
-        # Save the info in the node: we make a copy just to be safe.
-        self.fit_info = copy.copy(info)
-        return {"output": df_out}
-
-    def predict(self, input):
-        # Transform the input df.
-        df_out, info = self._transform(input)
-        # Save the info in the node: we make a copy just to be safe.
-        self.predict_info = copy.copy(info)
-        return {"output": df_out}
-
+# #############################################################################
+# Transformer nodes
+# #############################################################################
 
 # TODO(Paul): Write a Node builder to automatically generate these from
 # functions.
+
+
 # TODO(gp): Pass "ret_0" and "open" through constructor.
-class PctReturns(StatelessSisoNode):
+class PctReturns(Transformer):
     def __init__(self, nid):
         super().__init__(nid)
 
     def _transform(self, df):
         df = df.copy()
         df["ret_0"] = df["open"].pct_change()
-        info = None
+        info = collections.OrderedDict()
         return df, info
 
 
-class Zscore(StatelessSisoNode):
+class Zscore(Transformer):
     def __init__(self, nid, style, com):
         super().__init__(nid)
         self.style = style
@@ -164,23 +219,23 @@ class Zscore(StatelessSisoNode):
     def _transform(self, df):
         # df_out = sigp.rolling_zscore(df, self.tau)
         df_out = pip.zscore(df, self.style, self.com)
-        info = None
+        info = collections.OrderedDict()
         return df_out, info
 
 
-class FilterAth(StatelessSisoNode):
+class FilterAth(Transformer):
     def __init__(self, nid):
         super().__init__(nid)
 
     def _transform(self, df):
         df_out = fin.filter_ath(df)
-        info = None
+        info = collections.OrderedDict()
         return df_out, info
 
 
 # TODO(Paul, GP): Confusing interface. If we only sent out the transformed
 # variables, then we wouldn't need `get_x_vars`.
-class ComputeLaggedFeatures(StatelessSisoNode):
+class ComputeLaggedFeatures(Transformer):
     def __init__(self, nid, y_var, delay_lag, num_lags):
         super().__init__(nid)
         self.y_var = y_var
@@ -203,40 +258,72 @@ class ComputeLaggedFeatures(StatelessSisoNode):
         return df_out, info
 
 
-class Model(Node):
+# #############################################################################
+# Models
+# #############################################################################
+
+
+class Model(SkLearnNode):
     # TODO(GP): y_var before x_vars? Probably should switch.
     def __init__(self, nid, y_var, x_vars):
-        super().__init__(nid, inputs=["input"], outputs=["output"])
+        super().__init__(nid)
         self.y_var = y_var
         self.x_vars = x_vars
 
-    def fit(self, input):
+    def fit(self, df_in):
         """
         A model fit doesn't return anything since it's a sink.
 
         # TODO: Consider making `fit` pass-through in terms of dataflow.
         """
-        df = input
         reg = linear_model.LinearRegression()
-        x_train = df[self.x_vars]
-        y_train = df[self.y_var]
+        x_train = df_in[self.x_vars]
+        y_train = df_in[self.y_var]
         self.model = reg.fit(x_train, y_train)
-        return {"output": None}
-
-    def predict(self, input):
-        df = input
-        x_test = df[self.x_vars]
-        y_test = df[self.y_var]
         #
         info = collections.OrderedDict()
-        info["hitrate"] = pip._compute_model_hitrate(self.model, x_test, y_test)
-        hat_y = self.model.predict(x_test)
-        pnl_rets = y_test * hat_y
+        info["model_coeffs"] = [self.model.intercept_] + \
+                                self.model.coef_.tolist()
+        info["model_x_vars"] = ["intercept"] + self.x_vars
+        info["stats"] = self._stats(df_in)
+        info["model_perf"] = self._model_perf(x_train, y_train)
+        self._set_info("fit", info)
+        return {"df_out": None}
+
+    def predict(self, df_in):
+        x_test = df_in[self.x_vars]
+        y_test = df_in[self.y_var]
+        #
+        info = collections.OrderedDict()
+        info["stats"] = self._stats(df_in)
+        info["model_perf"] = self._model_perf(x_test, y_test)
+        self._set_info("predict", info)
+        return {"df_out": hat_y}
+
+    # TODO: Use this to replace "_add_split_stats".
+    def _stats(self, df):
+        info = collections.OrderedDict()
+        # info["min_datetime"] = min(df)
+        # info["max_datetime"] = max(df)
+        info["count"] = df.shape[0]
+        return info
+
+    def _model_perf(self, x, y):
+        info = collections.OrderedDict()
+        info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
+        hat_y = self.model.predict(x)
+        pnl_rets = y * hat_y
         info["pnl_rets"] = pnl_rets
-        self.predict_info = copy.copy(info)
-        return {"output": hat_y}
+        info["sr"] = fin.sharpe_ratio(pnl_rets, time_scaling=252)
+        return info
 
 
+# #############################################################################
+# Cross-validation
+# #############################################################################
+
+
+# TODO(Paul): Switch to lists
 def cross_validate(config, source_nid, sink_nid, dag):
     source_node = dag.get_node(source_nid)
     df = source_node.get_df()
@@ -249,3 +336,8 @@ def cross_validate(config, source_nid, sink_nid, dag):
         source_node.set_test_idxs(test_idxs)
         dag.run_leq_node(sink_nid, "predict")
     return dag.get_node(sink_nid)
+
+
+# TODO(Paul): Add an Extractor function that operates on a DAG of SkLearnNodes
+#   - also pass `field`, e.g., fit/predict
+#   - Return a dict of fit/predict/etc. info, keyed by nid

@@ -1,12 +1,15 @@
 import io
 import logging
 
+import json
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
 import core.config as cfg
+import core.dataflow_core as dtfc
 import core.dataflow_old as dtf_old
 import core.explore as exp
 import core.pandas_helpers as pde
@@ -139,6 +142,278 @@ class Test_config1(ut.TestCase):
         config2 = self._get_nested_config2()
         #
         self.assertEqual(str(config1), str(config2))
+
+
+# #############################################################################
+# dataflow_core.py
+# #############################################################################
+
+
+class _Dataflow_helper(ut.TestCase):
+    def _remove_stage_names(self, node_link_data):
+        """
+        Remove stages names from node_link_data dictionary.
+
+        The stage names refer to Node objects, which are not json serializable.
+        """
+        nld = node_link_data.copy()
+        for data in nld['nodes']:
+            data['stage'] = data['stage'].__class__.__name__
+        return nld
+
+    def _check(self, dag):
+        nld = nx.readwrite.json_graph.node_link_data(dag)
+        nld = self._remove_stage_names(nld)
+        _LOG.debug("stripped node_link_data=%s", nld)
+        json_nld = json.dumps(nld, indent=4, sort_keys=True)
+        self.check_string(json_nld)
+
+
+class Test_dataflow_core_DAG1(_Dataflow_helper):
+    def test_add_nodes1(self):
+        """
+        Creates a node and adds it to a DAG.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1")
+        dag.add_node(n1)
+        self._check(dag.dag)
+
+    def test_add_nodes2(self):
+        """
+        Demonstrates "strict" and "loose" behavior on repeated add_node().
+        """
+        dag_strict = dtfc.DAG(mode="strict")
+        m1 = dtfc.Node("m1")
+        dag_strict.add_node(m1)
+        with self.assertRaises(AssertionError):
+            dag_strict.add_node(m1)
+        #
+        dag_loose = dtfc.DAG(mode="loose")
+        n1 = dtfc.Node("n1")
+        dag_loose.add_node(n1)
+        dag_loose.add_node(n1)
+        self._check(dag_loose.dag)
+
+    def test_add_nodes3(self):
+        """
+        Demonstrates "strict" and "loose" behavior on repeated add_node().
+        """
+        dag_strict = dtfc.DAG(mode="strict")
+        m1 = dtfc.Node("m1")
+        dag_strict.add_node(m1)
+        m1_prime = dtfc.Node("m1")
+        with self.assertRaises(AssertionError):
+            dag_strict.add_node(m1_prime)
+        #
+        dag_loose = dtfc.DAG(mode="loose")
+        n1 = dtfc.Node("n1")
+        dag_loose.add_node(n1)
+        n1_prime = dtfc.Node("n1")
+        dag_loose.add_node(n1_prime)
+        self._check(dag_loose.dag)
+
+    def test_add_nodes4(self):
+        """
+        Adds multiple nodes to a DAG.
+        """
+        dag = dtfc.DAG()
+        for name in ["n1", "n2", "n3", "n4"]:
+            dag.add_node(dtfc.Node(name, inputs=["in1"], outputs=["out1"]))
+        self._check(dag.dag)
+
+    def test_add_nodes5(self):
+        """
+        Re-adding a node clears node, successors, and edges in `loose` mode.
+        """
+        dag = dtfc.DAG(mode="loose")
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        n3 = dtfc.Node("n3", inputs=["in1"])
+        dag.add_node(n3)
+        dag.connect("n2", "n3")
+        dag.add_node(n1)
+        self._check(dag.dag)
+
+
+class Test_dataflow_core_DAG2(_Dataflow_helper):
+    def test_connect_nodes1(self):
+        """
+        Simplest case of connecting two nodes.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect(("n1", "out1"), ("n2", "in1"))
+        self._check(dag.dag)
+
+    def test_connect_nodes2(self):
+        """
+        Simplest case, but inferred input/output names.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        self._check(dag.dag)
+
+    def test_connect_nodes3(self):
+        """
+        Ensures input/output names are valid.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        with self.assertRaises(AssertionError):
+           dag.connect(("n2", "out1"), ("n1", "in1"))
+
+    def test_connect_nodes4(self):
+        """
+        Forbids creating cycles in DAG.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n2)
+        dag.connect(("n1", "out1"), ("n2", "in1"))
+        with self.assertRaises(AssertionError):
+            dag.connect(("n2", "out1"), ("n1", "in1"))
+
+    def test_connect_nodes5(self):
+        """
+        Forbids creating cycles in DAG (inferred input/output names).
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        with self.assertRaises(AssertionError):
+            dag.connect("n2", "n1")
+
+    def test_connect_nodes6(self):
+        """
+        A nontrivial, multi-input/output example.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1", "out2"])
+        dag.add_node(n2)
+        n3 = dtfc.Node("n3", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n3)
+        n4 = dtfc.Node("n4", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n4)
+        n5 = dtfc.Node("n5", inputs=["in1", "in2"], outputs=["out1"])
+        dag.add_node(n5)
+        dag.connect("n1", ("n2", "in1"))
+        dag.connect(("n2", "out1"), "n3")
+        dag.connect(("n2", "out2"), "n4")
+        dag.connect("n3", ("n5", "in1"))
+        dag.connect("n4", ("n5", "in2"))
+        self._check(dag.dag)
+
+    def test_connect_nodes7(self):
+        """
+        Forbids connecting a node that doesn't belong to the DAG.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        with self.assertRaises(AssertionError):
+            dag.connect("n2", "n1")
+
+    def test_connect_nodes8(self):
+        """
+        Ensures at most one output connects to any input.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1", "out2"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect(("n1", "out1"), "n2")
+        with self.assertRaises(AssertionError):
+            dag.connect(("n1", "out2"), "n2")
+
+    def test_connect_nodes9(self):
+        """
+        Allows multi-attribute edges if each input has at most one source.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1", "in2"])
+        dag.add_node(n2)
+        dag.connect("n1", ("n2", "in1"))
+        dag.connect("n1", ("n2", "in2"))
+        self._check(dag.dag)
+
+    def test_connect_nodes10(self):
+        """
+        Demonstrates adding edges is not idempotent.
+        """
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        with self.assertRaises(AssertionError):
+            dag.connect("n1", "n2")
+
+
+class Test_dataflow_core_DAG3(_Dataflow_helper):
+    def test_sources_sinks1(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfc.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        self.assertEqual(dag.get_sources(), ["n1"])
+        self.assertEqual(dag.get_sinks(), ["n2"])
+
+    def test_sources_sinks2(self):
+        dag = dtfc.DAG()
+        src1 = dtfc.Node("src1", outputs=["out1"])
+        dag.add_node(src1)
+        src2 = dtfc.Node("src2", outputs=["out1"])
+        dag.add_node(src2)
+        m1 = dtfc.Node("m1", inputs=["in1", "in2"], outputs=["out1"])
+        dag.add_node(m1)
+        dag.connect("src1", ("m1", "in1"))
+        dag.connect("src2", ("m1", "in2"))
+        snk1 = dtfc.Node("snk1", inputs=["in1"])
+        dag.add_node(snk1)
+        dag.connect("m1", "snk1")
+        snk2 = dtfc.Node("snk2", inputs=["in1"])
+        dag.add_node(snk2)
+        dag.connect("m1", "snk2")
+        sources = dag.get_sources()
+        sources.sort()
+        self.assertListEqual(sources, ["src1", "src2"])
+        sinks = dag.get_sinks()
+        sinks.sort()
+        self.assertListEqual(sinks, ["snk1", "snk2"])
+
+    def test_sources_sinks3(self):
+        dag = dtfc.DAG()
+        n1 = dtfc.Node("n1")
+        dag.add_node(n1)
+        self.assertEqual(dag.get_sources(), ["n1"])
+        self.assertEqual(dag.get_sinks(), ["n1"])
 
 
 # #############################################################################

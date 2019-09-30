@@ -40,6 +40,8 @@ _LOG = logging.getLogger(__name__)
 #       pull information in the `result_bundle`
 
 
+# TODO(GPP): DEPRECATE. PyCharm doesn't find any callers, and we are
+# using "result bundles" differently now.
 def filter_by_time_from_config(config, df, result_bundle, dt_col_name="datetime"):
     dbg.dassert_lte(1, df.shape[0])
     #
