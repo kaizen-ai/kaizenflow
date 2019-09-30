@@ -37,20 +37,21 @@ _LOG = logging.getLogger(__name__)
 class _FileURL:
     """
     A container for file urls.
-
-    :param url: file url
-    :param timezone: The timezone from the dataset description on the
-        website
-    :param category: the navigation category in which a file appears on
-        the FirstRate website. The categories are:
-        [commodity, crypto, fx, index, stock_A-D, stock_E-I, stock_J-N,
-        stock_O-R, stock_S-Z]
-    :param col_names: Column names from the "Format" field of the
-        dataset description on the FirstRate website
-    :param path: A path to which this file is saved as zipped csv
     """
 
     def __init__(self, url, timezone, category, col_names, path=""):
+        """
+        :param url: file url
+        :param timezone: The timezone from the dataset description on the
+            website
+        :param category: the navigation category in which a file appears on
+            the FirstRate website. The categories are:
+            [commodity, crypto, fx, index, stock_A-D, stock_E-I, stock_J-N,
+            stock_O-R, stock_S-Z]
+        :param col_names: Column names from the "Format" field of the
+            dataset description on the FirstRate website
+        :param path: A path to which this file is saved as zipped csv
+        """
         self.url = url
         self.timezone = timezone
         self.category = category
@@ -64,12 +65,13 @@ class _RawDataDownloader:
     extract all download links and timezones. Save the files from the
     download links to the category directories. The timezone
     information will be appended to each file name as a suffix.
-
-    :param website: the website url
-    :param dst_dir: destination directory
     """
 
     def __init__(self, website, dst_dir, max_num_files):
+        """
+        :param website: the website url
+        :param dst_dir: destination directory
+        """
         self.website = website
         self.dst_dir = dst_dir
         self.file_urls = []
@@ -122,7 +124,7 @@ class _RawDataDownloader:
             soup = BeautifulSoup(req_res.content, "lxml")
         else:
             _LOG.warning(
-                f"For {html_url} request status code is {req_res.status_code}"
+                "For %s request status code is %s", html_url, req_res.status_code
             )
             soup = None
         return soup
@@ -226,8 +228,8 @@ class _RawDataDownloader:
                     url_objects.append(furl)
                 else:
                     _LOG.warning(
-                        f"{url} is a purchase link, not downloading"
-                        "its contents"
+                        "%s is a purchase link, not downloading" "its contents",
+                        url,
                     )
         return url_objects
 
@@ -242,7 +244,7 @@ class _RawDataDownloader:
         with requests.get(url, stream=True) as r:
             with open(dst_path, "wb") as fout:
                 fout.write(r.content)
-        _LOG.debug(f"Saved {url} to {dst_path}")
+        _LOG.debug("Saved %s to %s", url, dst_path)
 
     def _download_url_to_path(self, url_object):
         """
@@ -276,12 +278,12 @@ class _RawDataDownloader:
             dataset_soup = self._request_soup(full_url)
             if dataset_soup is None:
                 _LOG.warning(
-                    f"No files found at {full_url}, request returned None"
+                    "No files found at %s, request returned None", full_url
                 )
             else:
                 card_bodies = dataset_soup.find_all(attrs="card-body")
                 if len(card_bodies) == 0:
-                    _LOG.warning(f"No links were found for {full_url}")
+                    _LOG.warning("No links were found for %s", full_url)
                 url_objects = self._get_download_links_and_tzs(
                     card_bodies, category
                 )
@@ -314,12 +316,13 @@ class _ZipCSVCombiner:
       website
     - add column names (parsed from the FirstRate website)
     - save as csv
-
-    :param url_object: _FileURL object
-    :param output_path: destination path for the csv
     """
 
     def __init__(self, url_object: _FileURL, output_path: str):
+        """
+        :param url_object: _FileURL object
+        :param output_path: destination path for the csv
+        """
         self.url_object = url_object
         self.output_path = output_path
 
@@ -411,14 +414,15 @@ class _MultipleZipCSVCombiner:
     """
     Combine zipped csvs in first_rate directory. Add column names to the
     csvs, add timestamp column and localize it.
-
-    :param input_dir: first_rate directory with categories
-    :param path_object_dict: path_object_dict attribute of the
-        RawDataDownloader
-    :param dst_dir: destination directory
     """
 
     def __init__(self, input_dir, path_object_dict, dst_dir):
+        """
+        :param input_dir: first_rate directory with categories
+        :param path_object_dict: path_object_dict attribute of the
+            RawDataDownloader
+        :param dst_dir: destination directory
+        """
         self.input_dir = input_dir
         self.path_object_dict = path_object_dict
         self.dst_dir = dst_dir
@@ -442,12 +446,13 @@ class _MultipleZipCSVCombiner:
 class _CSVToParquetConverter:
     """
     Save csv files divided by categories into parquet
-
-    :param input_dir: input directory with categories
-    :param dst_dir: destination directory
     """
 
     def __init__(self, input_dir, dst_dir):
+        """
+        :param input_dir: input directory with categories
+        :param dst_dir: destination directory
+        """
         self.input_dir = input_dir
         self.dst_dir = dst_dir
 
