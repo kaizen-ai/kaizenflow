@@ -2,6 +2,7 @@ import logging
 
 import pytest
 
+import helpers.system_interaction as si
 import helpers.unit_test as ut
 import vendors.etfs.utils as etfut
 import vendors.kibot.utils as kut
@@ -91,3 +92,17 @@ class Test_pandas_datareader_utils1(ut.TestCase):
         df = ydq.get_multiple_data("Adj Close", tickers)
         #
         self.check_string(ut.get_df_signature(df))
+
+
+@pytest.mark.slow()
+class Test_first_rate1(ut.TestCase):
+    def test_downloader1(self):
+        tmp_dir = self.get_scratch_space()
+        cmd = []
+        cmd.append("vendors/first_rate/utils.py")
+        cmd.append("--zipped_dst_dir %s/zipped" % tmp_dir)
+        cmd.append("--unzipped_dst_dir %s/unzipped" % tmp_dir)
+        cmd.append("--pq_dst_dir %s/pq" % tmp_dir)
+        cmd.append("--max_num_files 1")
+        cmd = " ".join(cmd)
+        si.system(cmd)

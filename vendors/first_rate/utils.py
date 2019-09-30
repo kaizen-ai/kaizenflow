@@ -12,7 +12,7 @@ Download equity data from the http://firstratedata.com.
 Usage example:
 > python vendors/first_rate/utils.py \
   --zipped_dst_dir /data/first_rate/zipped \
-  --zipped_dst_dir /data/first_rate/unzipped \
+  --unzipped_dst_dir /data/first_rate/unzipped \
   --pq_dst_dir /data/first_rate/pq
 """
 import argparse
@@ -32,9 +32,6 @@ import helpers.dbg as dbg
 import helpers.io_ as io_
 
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(gp): Dummy for RB.
 
 
 class _FileURL:
@@ -72,16 +69,22 @@ class _RawDataDownloader:
     :param dst_dir: destination directory
     """
 
-    def __init__(self, website, dst_dir):
+    def __init__(self, website, dst_dir, max_num_files):
         self.website = website
         self.dst_dir = dst_dir
         self.file_urls = []
         self.path_object_dict = {}
+        if max_num_files is not None:
+            _LOG.warning("Limiting number of files to %s", max_num_files)
+        dbg.dassert_lte(1, max_num_files)
+        self.max_num_files = max_num_files
 
     def execute(self):
         _LOG.info("Collecting the links")
         all_urls = self._walk_get_all_urls()
-        _LOG.info("Downloading the files")
+        if self.max_num_files is not None:
+            all_urls = all_urls[: self.max_num_files]
+        _LOG.info("Downloading the %d files", len(all_urls))
         path_object = {}
         for url_object in tqdm(all_urls):
             self._download_url_to_path(url_object)
@@ -331,7 +334,7 @@ class _ZipCSVCombiner:
             for csv_path in zf.namelist():
                 with zf.open(csv_path) as zc:
                     df_part = pd.read_csv(zc, sep=",", header=None)
-                dfs.append(df_part)        
+                dfs.append(df_part)
         processed_dfs = []
         for df in dfs:
             df = self._process_datetime_cols(df)
@@ -455,7 +458,7 @@ class _CSVToParquetConverter:
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
             csv.convert_csv_dir_to_pq_dir(
-                category_dir_input_path, category_dir_dst_path, header='infer'
+                category_dir_input_path, category_dir_dst_path, header="infer"
             )
 
 
@@ -489,6 +492,13 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
+        "--max_num_files",
+        action="store",
+        default=None,
+        type=int,
+        help="Maximum number of files to be downloaded",
+    )
+    parser.add_argument(
         "-v",
         dest="log_level",
         default="INFO",
@@ -498,7 +508,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     dbg.init_logger(args.log_level)
 
-    rdd = _RawDataDownloader(_WEBSITE, args.zipped_dst_dir)
+    rdd = _RawDataDownloader(
+        _WEBSITE, args.zipped_dst_dir, max_num_files=args.max_num_files
+    )
     rdd.execute()
 
     mzcc = _MultipleZipCSVCombiner(
