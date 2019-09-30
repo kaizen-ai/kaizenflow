@@ -16,7 +16,7 @@ _LOG = logging.getLogger(__name__)
 
 class NodeInterface(abc.ABC):
     """
-    Abstract node class for creating DAG pipelines of functions.
+    Abstract node class for creating DAGs of functions.
 
     Common use case: Nodes wrap functions with a common method (e.g., `fit`).
 
@@ -37,8 +37,8 @@ class NodeInterface(abc.ABC):
         dbg.dassert_isinstance(nid, str)
         dbg.dassert(nid, "Empty string chosen for unique nid!")
         self._nid = nid
-        self._inputs = self._init_validation_helper(inputs)
-        self._outputs = self._init_validation_helper(outputs)
+        self._input_names = self._init_validation_helper(inputs)
+        self._output_names = self._init_validation_helper(outputs)
 
     @property
     def nid(self):
@@ -46,11 +46,11 @@ class NodeInterface(abc.ABC):
 
     @property
     def input_names(self):
-        return self._inputs
+        return self._input_names
 
     @property
     def output_names(self):
-        return self._outputs
+        return self._output_names
 
     def _init_validation_helper(self, l):
         if l is None:
@@ -315,7 +315,7 @@ class DAG:
 
         :param method: method of class `Node` (or subclass) to be executed for
             the entire DAG.
-        :return: dict keyed by source node nid with values from node's
+        :return: dict keyed by sink node nid with values from node's
             `get_outputs(method)`.
         """
         sinks = self.get_sinks()
@@ -333,7 +333,7 @@ class DAG:
 
         :param nid: desired terminal node for execution.
         :param method: `Node` subclass method to be executed.
-        :return: result of node's `get_outputs(method)`.
+        :return: result of node nid's `get_outputs(method)`.
         """
         ancestors = filter(
             lambda x: x in nx.ancestors(self._dag, nid),

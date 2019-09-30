@@ -2,6 +2,7 @@ import abc
 import collections
 import copy
 import logging
+import pprint
 
 import networkx as nx
 import pandas as pd
@@ -66,6 +67,12 @@ class SkLearnNode(Node, abc.ABC):
             method, self._info.keys(), "No info found for %s", method
         )
         return self._info[method]
+
+    def _set_info(self, method, values):
+        dbg.dassert_isinstance(method, str)
+        dbg.dassert(getattr(self, method))
+        dbg.dassert_isinstance(values, collections.OrderedDict)
+        self._info[method] = copy.copy(values)
 
 
 class DataSource(SkLearnNode, abc.ABC):
@@ -139,14 +146,14 @@ class Transformer(SkLearnNode, abc.ABC):
         # Transform the input df.
         df_out, info = self._transform(df_in)
         # Save the info in the node: we make a copy just to be safe.
-        self._info["fit"] = copy.copy(info)
+        self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in):
         # Transform the input df.
         df_out, info = self._transform(df_in)
         # Save the info in the node: we make a copy just to be safe.
-        self._info["predict"] = copy.copy(info)
+        self._set_info("predict", info)
         return {"df_out": df_out}
 
 
@@ -199,7 +206,7 @@ class PctReturns(Transformer):
     def _transform(self, df):
         df = df.copy()
         df["ret_0"] = df["open"].pct_change()
-        info = None
+        info = collections.OrderedDict()
         return df, info
 
 
@@ -212,7 +219,7 @@ class Zscore(Transformer):
     def _transform(self, df):
         # df_out = sigp.rolling_zscore(df, self.tau)
         df_out = pip.zscore(df, self.style, self.com)
-        info = None
+        info = collections.OrderedDict()
         return df_out, info
 
 
@@ -222,7 +229,7 @@ class FilterAth(Transformer):
 
     def _transform(self, df):
         df_out = fin.filter_ath(df)
-        info = None
+        info = collections.OrderedDict()
         return df_out, info
 
 
@@ -280,7 +287,7 @@ class Model(SkLearnNode):
         info["model_x_vars"] = ["intercept"] + self.x_vars
         info["stats"] = self._stats(df_in)
         info["model_perf"] = self._model_perf(x_train, y_train)
-        self._info["fit"] = copy.copy(info)
+        self._set_info("fit", info)
         return {"df_out": None}
 
     def predict(self, df_in):
@@ -290,7 +297,7 @@ class Model(SkLearnNode):
         info = collections.OrderedDict()
         info["stats"] = self._stats(df_in)
         info["model_perf"] = self._model_perf(x_test, y_test)
-        self._info["predict"] = copy.copy(info)
+        self._set_info("predict", info)
         return {"df_out": hat_y}
 
     # TODO: Use this to replace "_add_split_stats".
