@@ -189,17 +189,26 @@ class DAG:
         # Note that this usage requires that nid's be unique within a given
         # DAG.
         if self.mode == "strict":
-            dbg.dassert(not self._dag.has_node(node.nid))
+            dbg.dassert(not self._dag.has_node(node.nid),
+                        "A node with nid=%s already belongs to the DAG!", node.nid)
         elif self.mode == "loose":
-            # If a node with the same id already belongs to the DAG, remove
-            # the node and add the new one. This is useful for notebook
-            # research flows.
+            # If a node with the same id already belongs to the DAG:
+            #   - Remove the node and all of its successors (and their incident
+            #     edges)
+            #   - Add the new node to the graph.
+            # This is useful for notebook research flows, e.g., rerunning
+            # blocks that build the DAG incrementally.
             if self._dag.has_node(node.nid):
-                self._dag.remove_node(node.nid)
                 _LOG.warning(
-                    "Node `%s` is already in DAG. Removing existing node (clears"
-                    " any existing edges involving node).", node.nid
+                    "Node `%s` is already in DAG. Removing existing node, "
+                    "successors, and all incident edges of such nodes. ",
+                    node.nid
                 )
+                for nid in nx.descendants(self._dag, node.nid):
+                    _LOG.warning("Removing nid=%s", nid)
+                    self.remove_node(nid)
+                _LOG.warning("Removing nid=%s", node.nid)
+                self.remove_node(node.nid)
         else:
             dgb.dfatal("mode=%s", self.mode)
         self._dag.add_node(node.nid, stage=node)
@@ -239,6 +248,7 @@ class DAG:
         :param child: tuple of the form (nid, input)
         """
         # Automatically infer output name when the parent has only one output.
+        # Ensure that parent node belongs to DAG (through `get_node` call).
         if isinstance(parent, tuple):
             parent_nid, parent_out = parent
             dbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
@@ -248,6 +258,7 @@ class DAG:
                 self.get_node(parent_nid).output_names
             )
         # Automatically infer input name when the child has only one input.
+        # Ensure that child node belongs to DAG (through `get_node` call).
         if isinstance(child, tuple):
             child_nid, child_in = child
             dbg.dassert_in(child_in, self.get_node(child_nid).input_names)

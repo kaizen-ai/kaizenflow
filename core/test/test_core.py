@@ -224,14 +224,17 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
     def test_add_nodes5(self):
         """
-        Demonstrates that re-adding a node clears edges in "loose" mode.
+        Re-adding a node clears node, successors, and edges in `loose` mode.
         """
         dag = dtfc.DAG(mode="loose")
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
+        n3 = dtfc.Node("n3", inputs=["in1"])
+        dag.add_node(n3)
+        dag.connect("n2", "n3")
         dag.add_node(n1)
         self._check(dag.dag)
 

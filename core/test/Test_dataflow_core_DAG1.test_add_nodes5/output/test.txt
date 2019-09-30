@@ -5,10 +5,6 @@
     "multigraph": false,
     "nodes": [
         {
-            "id": "n2",
-            "stage": "Node"
-        },
-        {
             "id": "n1",
             "stage": "Node"
         }
