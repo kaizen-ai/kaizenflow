@@ -285,7 +285,7 @@ def dassert_dir_exists(dir_name, msg=None, *args):
     Assert unless `dir_name` exists and it's a directory.
     """
     dir_name = os.path.abspath(dir_name)
-    is_ok = os.path.exists(dir_name) and os.path.isdie(dir_name)
+    is_ok = os.path.exists(dir_name) and os.path.isdir(dir_name)
     if not is_ok:
         txt = []
         txt.append("dir='%s' doesn't exist or it's not a dir" % dir_name)
