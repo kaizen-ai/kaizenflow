@@ -6,11 +6,11 @@
     "nodes": [
         {
             "id": "n2",
-            "stage": null
+            "stage": "Node"
         },
         {
             "id": "n1",
-            "stage": null
+            "stage": "Node"
         }
     ]
 }

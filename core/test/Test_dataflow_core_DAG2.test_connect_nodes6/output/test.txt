@@ -32,23 +32,23 @@
     "nodes": [
         {
             "id": "n1",
-            "stage": null
+            "stage": "Node"
         },
         {
             "id": "n2",
-            "stage": null
+            "stage": "Node"
         },
         {
             "id": "n3",
-            "stage": null
+            "stage": "Node"
         },
         {
             "id": "n4",
-            "stage": null
+            "stage": "Node"
         },
         {
             "id": "n5",
-            "stage": null
+            "stage": "Node"
         }
     ]
 }

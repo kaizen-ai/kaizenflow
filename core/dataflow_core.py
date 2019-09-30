@@ -212,7 +212,7 @@ class DAG:
         :return: Node object
         """
         dbg.dassert_isinstance(nid, str,
-                               "Expected str nid but got type %s", type(nid))
+                               "Expected str nid but got type %s!", type(nid))
         dbg.dassert(
             self._dag.has_node(nid), "Node `%s` is not in DAG!", nid
         )

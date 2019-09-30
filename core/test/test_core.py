@@ -158,7 +158,7 @@ class _Dataflow_helper(ut.TestCase):
         """
         nld = node_link_data.copy()
         for data in nld['nodes']:
-            data['stage'] = None
+            data['stage'] = data['stage'].__class__.__name__
         return nld
 
     def _check(self, dag):
