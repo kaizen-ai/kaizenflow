@@ -271,34 +271,31 @@ class Model(SkLearnNode):
         self.x_vars = x_vars
 
     def fit(self, df_in):
-        """
-        A model fit doesn't return anything since it's a sink.
-
-        # TODO: Consider making `fit` pass-through in terms of dataflow.
-        """
         reg = linear_model.LinearRegression()
         x_train = df_in[self.x_vars]
         y_train = df_in[self.y_var]
         self.model = reg.fit(x_train, y_train)
+        y_hat = self.model.predict(x_train)
         #
         info = collections.OrderedDict()
         info["model_coeffs"] = [self.model.intercept_] + \
                                 self.model.coef_.tolist()
         info["model_x_vars"] = ["intercept"] + self.x_vars
         info["stats"] = self._stats(df_in)
-        info["model_perf"] = self._model_perf(x_train, y_train)
+        info["model_perf"] = self._model_perf(x_train, y_train, y_hat)
         self._set_info("fit", info)
-        return {"df_out": None}
+        return {"df_out": y_hat}
 
     def predict(self, df_in):
         x_test = df_in[self.x_vars]
         y_test = df_in[self.y_var]
+        y_hat = self.model.predict(x_test)
         #
         info = collections.OrderedDict()
         info["stats"] = self._stats(df_in)
-        info["model_perf"] = self._model_perf(x_test, y_test)
+        info["model_perf"] = self._model_perf(x_test, y_test, y_hat)
         self._set_info("predict", info)
-        return {"df_out": hat_y}
+        return {"df_out": y_hat}
 
     # TODO: Use this to replace "_add_split_stats".
     def _stats(self, df):
@@ -308,11 +305,10 @@ class Model(SkLearnNode):
         info["count"] = df.shape[0]
         return info
 
-    def _model_perf(self, x, y):
+    def _model_perf(self, x, y, y_hat):
         info = collections.OrderedDict()
         info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
-        hat_y = self.model.predict(x)
-        pnl_rets = y * hat_y
+        pnl_rets = y * y_hat
         info["pnl_rets"] = pnl_rets
         info["sr"] = fin.sharpe_ratio(pnl_rets, time_scaling=252)
         return info
