@@ -296,6 +296,43 @@ class DAG:
                 sinks.append(nid)
         return sinks
 
+    def run_dag(self, method):
+        """
+        Executes entire DAG.
+
+        :param method: method of class `Node` (or subclass) to be executed for
+            the entire DAG.
+        :return: dict keyed by source node nid with values from node's
+            `get_outputs(method)`.
+        """
+        sinks = self.get_sinks()
+        for nid in nx.topological_sort(self._dag):
+            self._run_node(nid, method)
+        return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
+
+    def run_leq_node(self, nid, method):
+        """
+        Executes DAG up to (and including) Node `nid` and returns output.
+
+        "leq" refers to the partial ordering on the vertices. This method
+        runs a node if and only if there is a directed path from the node to
+        `nid`. Nodes are run according to a topological sort.
+
+        :param nid: desired terminal node for execution.
+        :param method: `Node` subclass method to be executed.
+        :return: result of node's `get_outputs(method)`.
+        """
+        ancestors = filter(
+            lambda x: x in nx.ancestors(self._dag, nid),
+            nx.topological_sort(self._dag)
+        )
+        # The `ancestors` filter only returns nodes strictly less than `nid`,
+        # and so we need to add `nid` back.
+        nids = itertools.chain(ancestors, [nid])
+        for n in nids:
+            self._run_node(n, method)
+        return self.get_node(nid).get_outputs(method)
+
     def _run_node(self, nid, method):
         """
         Runs a single node.
@@ -315,40 +352,3 @@ class DAG:
         output = getattr(node, method)(**kwargs)
         for out in node.output_names:
             node._store_output(method, out, output[out])
-        # Convenient for experiments/debugging, but not needed for internal use.
-        # Perhaps we should expose a public `run_node` that just invokes
-        # `_run_node` and then returns the output as below.
-        return self.get_node(nid).get_outputs(method)
-
-    def run_dag(self, method):
-        """
-        Executes entire DAG.
-
-        Nodes are run according to a topological sort.
-
-        :param method: Method of class `Node` (or subclass) to be executed for
-            the entire DAG.
-        """
-        sinks = self.get_sinks()
-        for nid in nx.topological_sort(self._dag):
-            self._run_node(nid, method)
-        return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
-
-    def run_leq_node(self, nid, method):
-        """
-        Executes DAG up to (and including) Node `nid` and returns output.
-
-        "leq" refers to the partial ordering on the vertices. This method
-        runs a node if and only if there is a directed path from the node to
-        `nid`. Nodes are run according to a topological sort.
-        """
-        ancestors = filter(
-            lambda x: x in nx.ancestors(self._dag, nid),
-            nx.topological_sort(self._dag),
-        )
-        # The `ancestors` filter only returns nodes strictly less than `nid`,
-        # and so we need to add `nid` back.
-        nids = itertools.chain(ancestors, [nid])
-        for n in nids:
-            self._run_node(n, method)
-        return self.get_node(nid).get_outputs(method)

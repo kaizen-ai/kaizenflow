@@ -68,12 +68,16 @@ class SkLearnNode(Node, abc.ABC):
         return self._info[method]
 
 
-class DataSource(Node, abc.ABC):
+class DataSource(SkLearnNode, abc.ABC):
     """
     A source node that can be configured for cross-validation.
     """
-    def __init__(self, nid):
-        super().__init__(nid, outputs=["df_out"])
+    def __init__(self, nid, outputs=None):
+        if outputs is None:
+            outputs = ["df_out"]
+        # Do not allow any empty list.
+        dbg.dassert(outputs)
+        super().__init__(nid, inputs=[], outputs=outputs)
         #
         self.df = None
         self._train_idxs = None
