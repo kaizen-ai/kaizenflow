@@ -36,18 +36,22 @@ def draw(graph):
     )
 
 
-def extract_info(dag, method):
+def extract_info(dag, methods):
     """
     Extract node info from each DAG node.
 
     :param dag: Dag
-    :param method: Node method info to extract
+    :param method: Node method infos to extract
     :return:  nested OrderedDict
     """
     dbg.dassert_isinstance(dag, DAG)
+    dbg.dassert_isinstance(methods, list)
     info = collections.OrderedDict()
     for nid in dag.dag.nodes():
-        node_info = dag.get_node(nid).get_info(method)
+        node_info = collections.OrderedDict()
+        for method in methods:
+            method_info = dag.get_node(nid).get_info(method)
+            node_info[method] = copy.copy(method_info)
         info[nid] = copy.copy(node_info)
     return info
 
@@ -387,13 +391,14 @@ def cross_validate(config, source_nid, sink_nid, dag):
         split_info = collections.OrderedDict()
         split_info["train_idxs"] = train_idxs
         split_info["test_idxs"] = test_idxs
+        #
         source_node.set_train_idxs(train_idxs)
         dag.run_leq_node(sink_nid, "fit")
-        split_info["fit"] = extract_info(dag, "fit")
         #
         source_node.set_test_idxs(test_idxs)
         dag.run_leq_node(sink_nid, "predict")
-        split_info["predict"] = extract_info(dag, "predict")
+        #
+        split_info["stages"] = extract_info(dag, ["fit", "predict"])
         result_bundle["split_" + str(i)] = split_info
     return result_bundle
 
@@ -407,11 +412,11 @@ def process_result_bundle(result_bundle):
     for split in result_bundle.keys():
         split_names.append(split)
         model_coeffs.append(
-            result_bundle[split]["fit"]["model"]["model_coeffs"])
+            result_bundle[split]["stages"]["model"]["fit"]["model_coeffs"])
         model_x_vars.append(
-            result_bundle[split]["fit"]["model"]["model_x_vars"])
+            result_bundle[split]["stages"]["model"]["fit"]["model_x_vars"])
         pnl_rets.append(
-                result_bundle[split]["predict"]["model"]["model_perf"]["pnl_rets"]
+                result_bundle[split]["stages"]["model"]["predict"]["model_perf"]["pnl_rets"]
         )
     model_df = pd.DataFrame(model_coeffs, index=split_names,
                             columns=model_x_vars[0])
