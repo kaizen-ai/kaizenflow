@@ -1,8 +1,8 @@
 import abc
 import collections
 import copy
+import io
 import logging
-import pprint
 
 import networkx as nx
 import pandas as pd
@@ -25,9 +25,11 @@ _LOG = logging.getLogger(__name__)
 
 
 def draw(graph):
+    pos = nx.kamada_kawai_layout(graph)
+    flipped_pos = {node: (-x, y) for (node, (x, y)) in pos.items()}
     nx.draw_networkx(
         graph,
-        pos=nx.spectral_layout(graph),
+        pos=flipped_pos,
         node_size=3000,
         arrowsize=30,
         width=1.5,
@@ -125,7 +127,7 @@ class DataSource(SkLearnNode, abc.ABC):
         else:
             train_df = self.df
         info = collections.OrderedDict()
-        info["train_df"] = pip.type_for_debug(train_df)
+        info["train_df_info"] = get_df_info_as_string(train_df)
         self._set_info("fit", info)
         return {self.output_names[0]: train_df}
 
@@ -144,8 +146,8 @@ class DataSource(SkLearnNode, abc.ABC):
         else:
             test_df = self.df
         info = collections.OrderedDict()
-        info["test_df"] = pip.type_for_debug(test_df)
-        self._set_info("fit", info)
+        info["test_df_info"] = get_df_info_as_string(test_df)
+        self._set_info("predict", info)
         return {self.output_names[0]: test_df}
 
     def get_df(self):
@@ -232,9 +234,9 @@ class PctReturns(Transformer):
     def _transform(self, df):
         df = df.copy()
         info = collections.OrderedDict()
-        info["df"] = pip.type_for_debug(df)
+        info["df_info"] = get_df_info_as_string(df)
         df["ret_0"] = df["open"].pct_change()
-        info["df_transformed"] = pip.type_for_debug(df)
+        info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
 
@@ -247,9 +249,9 @@ class Zscore(Transformer):
     def _transform(self, df):
         # df_out = sigp.rolling_zscore(df, self.tau)
         info = collections.OrderedDict()
-        info["df"] = pip.type_for_debug(df)
+        info["df_info"] = get_df_info_as_string(df)
         df_out = pip.zscore(df, self.style, self.com)
-        info["df_transformed"] = pip.type_for_debug(df_out)
+        info["df_transformed_info"] = get_df_info_as_string(df_out)
         return df_out, info
 
 
@@ -259,14 +261,12 @@ class FilterAth(Transformer):
 
     def _transform(self, df):
         info = collections.OrderedDict()
-        info["df"] = pip.type_for_debug(df)
+        info["df_info"] = get_df_info_as_string(df)
         df_out = fin.filter_ath(df)
-        info["df_transformed"] = pip.type_for_debug(df_out)
+        info["df_transformed_info"] = get_df_info_as_string(df_out)
         return df_out, info
 
 
-# TODO(Paul, GP): Confusing interface. If we only sent out the transformed
-# variables, then we wouldn't need `get_x_vars`.
 class ComputeLaggedFeatures(Transformer):
     def __init__(self, nid, y_var, delay_lag, num_lags):
         super().__init__(nid)
@@ -280,6 +280,7 @@ class ComputeLaggedFeatures(Transformer):
         )
         return x_vars
 
+    # TODO(Paul): don't change the index in this node; remove this method
     def get_datetime_col(self):
         return "datetime"
 
@@ -461,3 +462,9 @@ def flatten_nested_dict(nested):
     for item in get_nested_dict_iterator(nested):
         d['.'.join(item[0])] = item[1]
     return d
+
+
+def get_df_info_as_string(df):
+    buffer = io.StringIO()
+    df.info(buf=buffer)
+    return buffer.getvalue()
