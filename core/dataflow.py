@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Visualization
+# DAG visiting
 # #############################################################################
 
 
@@ -32,6 +32,22 @@ def draw(graph):
         arrowsize=30,
         width=1.5,
     )
+
+
+def extract_info(dag, method):
+    """
+    Extract node info from each DAG node.
+
+    :param dag: Dag
+    :param method: Node method info to extract
+    :return:  nested OrderedDict
+    """
+    dbg.dassert_isinstance(dag, DAG)
+    info = collections.OrderedDict()
+    for nid in dag.dag.nodes():
+        node_info = dag.get_node(nid).get_info(method)
+        info[nid] = copy.copy(node_info)
+    return info
 
 
 # #############################################################################
@@ -63,10 +79,14 @@ class SkLearnNode(Node, abc.ABC):
         pass
 
     def get_info(self, method):
-        dbg.dassert_in(
-            method, self._info.keys(), "No info found for %s", method
-        )
-        return self._info[method]
+        dbg.dassert_isinstance(method, str)
+        dbg.dassert(getattr(self, method))
+        if method in self._info.keys():
+            return self._info[method]
+        else:
+            _LOG.warning("No info found for nid=%s, method=%s", self.nid,
+                         method)
+            return None
 
     def _set_info(self, method, values):
         dbg.dassert_isinstance(method, str)
@@ -104,6 +124,9 @@ class DataSource(SkLearnNode, abc.ABC):
             train_df = self.df.iloc[self._train_idxs]
         else:
             train_df = self.df
+        info = collections.OrderedDict()
+        info["train_df"] = pip.type_for_debug(train_df)
+        self._set_info("fit", info)
         return {self.output_names[0]: train_df}
 
     def set_test_idxs(self, test_idxs):
@@ -120,6 +143,9 @@ class DataSource(SkLearnNode, abc.ABC):
             test_df = self.df.iloc[self._test_idxs]
         else:
             test_df = self.df
+        info = collections.OrderedDict()
+        info["test_df"] = pip.type_for_debug(test_df)
+        self._set_info("fit", info)
         return {self.output_names[0]: test_df}
 
     def get_df(self):
@@ -205,8 +231,10 @@ class PctReturns(Transformer):
 
     def _transform(self, df):
         df = df.copy()
-        df["ret_0"] = df["open"].pct_change()
         info = collections.OrderedDict()
+        info["df"] = pip.type_for_debug(df)
+        df["ret_0"] = df["open"].pct_change()
+        info["df_transformed"] = pip.type_for_debug(df)
         return df, info
 
 
@@ -218,8 +246,10 @@ class Zscore(Transformer):
 
     def _transform(self, df):
         # df_out = sigp.rolling_zscore(df, self.tau)
-        df_out = pip.zscore(df, self.style, self.com)
         info = collections.OrderedDict()
+        info["df"] = pip.type_for_debug(df)
+        df_out = pip.zscore(df, self.style, self.com)
+        info["df_transformed"] = pip.type_for_debug(df_out)
         return df_out, info
 
 
@@ -228,8 +258,10 @@ class FilterAth(Transformer):
         super().__init__(nid)
 
     def _transform(self, df):
-        df_out = fin.filter_ath(df)
         info = collections.OrderedDict()
+        info["df"] = pip.type_for_debug(df)
+        df_out = fin.filter_ath(df)
+        info["df_transformed"] = pip.type_for_debug(df_out)
         return df_out, info
 
 
@@ -248,6 +280,9 @@ class ComputeLaggedFeatures(Transformer):
         )
         return x_vars
 
+    def get_datetime_col(self):
+        return "datetime"
+
     def _transform(self, df):
         # Make a copy to be safe.
         df = df.copy()
@@ -265,17 +300,25 @@ class ComputeLaggedFeatures(Transformer):
 
 class Model(SkLearnNode):
     # TODO(GP): y_var before x_vars? Probably should switch.
-    def __init__(self, nid, y_var, x_vars):
+    def __init__(self, nid, datetime_col, y_var, x_vars):
         super().__init__(nid)
         self.y_var = y_var
         self.x_vars = x_vars
+        self.datetime_col = datetime_col
 
     def fit(self, df_in):
         reg = linear_model.LinearRegression()
         x_train = df_in[self.x_vars]
         y_train = df_in[self.y_var]
+        datetimes = df_in[self.datetime_col].values
         self.model = reg.fit(x_train, y_train)
         y_hat = self.model.predict(x_train)
+        x_train = pd.DataFrame(x_train.values, index=datetimes,
+                               columns=self.x_vars)
+        y_train = pd.Series(y_train.values, index=datetimes,
+                            name=self.y_var)
+        y_hat = pd.Series(y_hat, index=datetimes,
+                          name=self.y_var + "_hat")
         #
         info = collections.OrderedDict()
         info["model_coeffs"] = [self.model.intercept_] + \
@@ -290,6 +333,13 @@ class Model(SkLearnNode):
         x_test = df_in[self.x_vars]
         y_test = df_in[self.y_var]
         y_hat = self.model.predict(x_test)
+        datetimes = df_in[self.datetime_col].values
+        x_test = pd.DataFrame(x_test.values, datetimes,
+                              columns=self.x_vars)
+        y_test = pd.Series(y_test.values, datetimes,
+                           name=self.y_var)
+        y_hat = pd.Series(y_hat, datetimes,
+                          name=self.y_var + "_hat")
         #
         info = collections.OrderedDict()
         info["stats"] = self._stats(df_in)
@@ -319,21 +369,95 @@ class Model(SkLearnNode):
 # #############################################################################
 
 
-# TODO(Paul): Switch to lists
+# TODO(Paul): Formalize what this returns and what can be done with it.
 def cross_validate(config, source_nid, sink_nid, dag):
+    """
+    Generates splits, runs train/test, collects info.
+
+    :return: DAG info for each split, keyed by split.
+    """
     source_node = dag.get_node(source_nid)
     df = source_node.get_df()
     splits = pip.get_splits(config, df)
     #
+    result_bundle = collections.OrderedDict()
+    #
     for i, (train_idxs, test_idxs) in enumerate(splits):
+        split_info = collections.OrderedDict()
+        split_info["train_idxs"] = train_idxs
+        split_info["test_idxs"] = test_idxs
         source_node.set_train_idxs(train_idxs)
         dag.run_leq_node(sink_nid, "fit")
+        split_info["fit"] = extract_info(dag, "fit")
         #
         source_node.set_test_idxs(test_idxs)
         dag.run_leq_node(sink_nid, "predict")
-    return dag.get_node(sink_nid)
+        split_info["predict"] = extract_info(dag, "predict")
+        result_bundle["split_" + str(i)] = split_info
+    return result_bundle
 
 
-# TODO(Paul): Add an Extractor function that operates on a DAG of SkLearnNodes
-#   - also pass `field`, e.g., fit/predict
-#   - Return a dict of fit/predict/etc. info, keyed by nid
+def process_result_bundle(result_bundle):
+    info = collections.OrderedDict()
+    split_names = []
+    model_coeffs = []
+    model_x_vars = []
+    pnl_rets = []
+    for split in result_bundle.keys():
+        split_names.append(split)
+        model_coeffs.append(
+            result_bundle[split]["fit"]["model"]["model_coeffs"])
+        model_x_vars.append(
+            result_bundle[split]["fit"]["model"]["model_x_vars"])
+        pnl_rets.append(
+                result_bundle[split]["predict"]["model"]["model_perf"]["pnl_rets"]
+        )
+    model_df = pd.DataFrame(model_coeffs, index=split_names,
+                            columns=model_x_vars[0])
+    pnl_rets = pd.concat(pnl_rets)
+    sr = fin.sharpe_ratio(pnl_rets, time_scaling=252)
+    info["model_df"] = copy.copy(model_df)
+    info["pnl_rets"] = copy.copy(pnl_rets)
+    info["sr"] = copy.copy(sr)
+    return info
+
+
+# TODO(Paul): Consider moving these to `helpers.py`
+def get_nested_dict_iterator(nested, path=None):
+    """
+    Return nested dictionary iterator.
+
+    :param nested: nested dictionary
+    :param path:  path to top of tree
+    :return: path to leaf node, value
+    """
+    if path is None:
+        path = []
+    for key, value in nested.items():
+        local_path = path + [key]
+        if isinstance(value, collections.abc.Mapping):
+            yield from get_nested_dict_iterator(value, local_path)
+        else:
+            yield local_path, value
+
+
+def extract_leaf_values(nested, key):
+    """
+    Extract leaf values with key matching `key`.
+
+    :param nested: nested dictionary
+    :param key: leaf key value to match
+    :return: flattened path, value
+    """
+    d = {}
+    for item in get_nested_dict_iterator(nested):
+        if item[0][-1] == key:
+            d['.'.join(item[0])] = item[1]
+    return d
+
+
+def flatten_nested_dict(nested):
+    d = {}
+    for item in get_nested_dict_iterator(nested):
+        d['.'.join(item[0])] = item[1]
+    return d
