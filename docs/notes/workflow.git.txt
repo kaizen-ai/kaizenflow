@@ -102,3 +102,5 @@
     vendors/first_rate/utils.py
     vendors/test/test_vendors.py
     ```
+
+- TODO(gp): Check `--submit-as`

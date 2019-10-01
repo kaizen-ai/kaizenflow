@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 """
-# Publish all notes
-> docs/scripts/publish_all_notes.py
+# Publish all notes:
+> docs/scripts/publish_all_notes.py publish
+
+# Publish all the notes from scratch:
+> docs/scripts/publish_notes.py ls rm publish
 """
 
 # TODO(gp): Add a unit test.
@@ -83,9 +86,10 @@ def _publish_all_files(args):
         "Found %d files\n%s", len(file_names), prnt.space("\n".join(file_names))
     )
     _LOG.info("Saving to dir '%s'", args.dst_dir)
-    targets = ["html", "pdf"]
-    if args.only_html:
-        targets = ["html"]
+    #targets = ["html", "pdf"]
+    #if args.only_html:
+    #    targets = ["html"]
+    targets = ["html"]
     _LOG.info("targets=%s", targets)
     workload = []
     for target in targets:
@@ -106,7 +110,7 @@ def _parse():
     )
     parser.add_argument("positional", nargs="*", choices=["rm", "ls", "publish"])
     parser.add_argument("--no_incremental", action="store_true")
-    parser.add_argument("--only_html", action="store_true")
+    #parser.add_argument("--only_html", action="store_true")
     tmp_dir = "./tmp.publish_all_notes"
     parser.add_argument(
         "--tmp_dir",
