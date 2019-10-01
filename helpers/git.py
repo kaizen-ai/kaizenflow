@@ -69,8 +69,12 @@ def find_file_in_git_tree(file_in):
     root_dir = get_client_root(super_module=True)
     cmd = "find %s -name '%s'" % (root_dir, file_in)
     _, file_name = si.system_to_string(cmd)
+    _LOG.debug("file_name=%s", file_name)
     # Make sure that there is a single outcome.
     dbg.dassert_eq(len(file_name.split("\n")), 1)
+    dbg.dassert(
+        file_name != "", "Can't find file '%s' in dir '%s'", file_in, root_dir
+    )
     file_name = os.path.abspath(file_name)
     dbg.dassert_exists(file_name)
     return file_name
@@ -110,12 +114,11 @@ def get_repo_symbolic_name(super_module):
 
 
 def _get_repo_map():
-    _REPO_MAP = {
-        "alphamatic/amp": "Amp",
-    }
+    _REPO_MAP = {"alphamatic/amp": "Amp"}
     # Get info from the including repo, if possible.
     try:
         import repo_config as repc
+
         _REPO_MAP.update(repc.REPO_MAP)
     except ImportError:
         _LOG.debug("No including repo")
@@ -145,8 +148,7 @@ def get_repo_github_name(repo_symbolic_name):
     repo_map = _get_repo_map()
     inv_repo_map = {v: k for (k, v) in repo_map.items()}
     #
-    dbg.dassert_in(repo_symbolic_name, inv_repo_map,
-                   "Invalid repo symbolic name")
+    dbg.dassert_in(repo_symbolic_name, inv_repo_map, "Invalid repo symbolic name")
     return inv_repo_map[repo_symbolic_name]
 
 

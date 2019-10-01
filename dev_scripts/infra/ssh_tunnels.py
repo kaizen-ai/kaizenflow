@@ -18,9 +18,8 @@ import logging
 import os
 
 import helpers.dbg as dbg
-
-# ##############################################################################
 import helpers.git as git
+import helpers.printing as prnt
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
 
@@ -40,15 +39,16 @@ def _get_env_var(env_var_name):
 
 def _get_services_info():
     # Server ports.
-    services = {
-        ("MongoDb", _get_env_var("P1_OLD_DEV_SERVER"), 27017),
-        ("Jenkins", _get_env_var("P1_JENKINS_SERVER"), 8080),
-        ("Reviewboard", _get_env_var("P1_REVIEWBOARD_SERVER"), 8000),
-        # ("Published notebook server", DEV_SERVER, 8181),
+    services = [
+        # service name, server public IP, local port, remote port.
+        ("MongoDb", _get_env_var("P1_OLD_DEV_SERVER"), 27017, 27017),
+        ("Jenkins", _get_env_var("P1_JENKINS_SERVER"), 8080, 8080),
+        ("Reviewboard", _get_env_var("P1_REVIEWBOARD_SERVER"), 8000, 8000),
+        ("Doc server", _get_env_var("P1_REVIEWBOARD_SERVER"), 8001, 80),
         # Netdata to Jenkins and Dev server.
         # ("Dev system performance", DEV_SERVER, 19999),
         # ("Jenkins system performance", DEV_SERVER, 19999),
-    }
+    ]
     return services
 
 
@@ -63,60 +63,86 @@ def _get_tunnel_info():
     #
     ssh_key_path = credentials["ssh_key_path"]
     dbg.dassert_is_not(ssh_key_path, None)
+    # TODO(gp): Add check to make sure that the source ports are all different.
     return tunnel_info, ssh_key_path
 
 
-def _get_ssh_tunnel_process(port):
+def _tunnel_info_to_string(tunnel_info):
+    ret = "\n".join(map(str, tunnel_info))
+    ret = prnt.space(ret)
+    return ret
+
+
+def _service_to_string(service):
+    service_name, server, local_port, remote_port = service
+    ret = (
+        f"tunnel for service '{service_name}'"
+        + f" server='{server}'"
+        + f" port='{local_port}->{remote_port}'"
+    )
+    return ret
+
+
+def _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match):
     """
     Return the pids of the processes attached to a given port.
     """
 
-    def _keep_line(port, line):
-        keep = ("ssh -i" in line) and (("localhost:%d" % port) in line)
+    def _keep_line(line):
+        keep = "ssh -i" in line
+        if keep:
+            if fuzzy_match:
+                keep = (" %d:localhost " % local_port in line) or (
+                    " localhost:%d " % remote_port in line
+                )
+            else:
+                keep = " %d:localhost:%d " % (local_port, remote_port) in line
         return keep
 
-    _LOG.debug("port=%s", port)
-    keep_line = lambda line: _keep_line(port, line)
+    _LOG.debug("local_port=%d -> remote_port=%d", local_port, remote_port)
+    keep_line = lambda line: _keep_line(line)
     pids, txt = si.get_process_pids(keep_line)
     _LOG.debug("pids=%s", pids)
-    if len(pids) > 1:
-        _LOG.debug("Expected a single process, instead got:\n%s", txt)
+    _LOG.debug("txt=\n%s", txt)
     return pids, txt
 
 
 # ##############################################################################
 
 
-def _create_tunnel(server_name, port, user_name, ssh_key_path):
+def _create_tunnel(server_name, local_port, remote_port, user_name, ssh_key_path):
     """
-    Create tunnel from localhost to 'server' for the given `port` and
-    `user_name`.
+    Create tunnel from localhost to 'server' for the ports `local_port ->
+    remote_port` and `user_name`.
     """
     ssh_key_path = os.path.expanduser(ssh_key_path)
     _LOG.debug("ssh_key_path=%s", ssh_key_path)
     dbg.dassert_exists(ssh_key_path)
     #
     cmd = (
-        "ssh -i {ssh_key_path} -f -nNT -L {port}:localhost:{port}"
+        "ssh -i {ssh_key_path} -f -nNT -L {local_port}:localhost:{remote_port}"
         + " {user_name}@{server}"
     )
     cmd = cmd.format(
         user_name=user_name,
         ssh_key_path=ssh_key_path,
-        port=port,
+        local_port=local_port,
+        remote_port=remote_port,
         server=server_name,
     )
     si.system(cmd, blocking=False)
     # Check that the tunnel is up and running.
-    pids = _get_ssh_tunnel_process(port)
+    pids = _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match=True)
     dbg.dassert_lte(1, len(pids))
 
 
-def _kill_ssh_tunnel_process(port):
+def _kill_ssh_tunnel_process(local_port, remote_port):
     """
-    Kill all the processes attached to a given port.
+    Kill all the processes attached to either local or remote port.
     """
-    get_pids = lambda: _get_ssh_tunnel_process(port)
+    get_pids = lambda: _get_ssh_tunnel_process(
+        local_port, remote_port, fuzzy_match=True
+    )
     si.kill_process(get_pids)
 
 
@@ -130,22 +156,21 @@ def _start_tunnels(user_name):
     _LOG.debug("user_name=%s", user_name)
     # Get tunnel info.
     tunnel_info, ssh_key_path = _get_tunnel_info()
-    _LOG.info("tunnel_info=%s", tunnel_info)
-    for service_name, server, port in tunnel_info:
-        pids, _ = _get_ssh_tunnel_process(port)
+    _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
+    #
+    for service in tunnel_info:
+        service_name, server, local_port, remote_port = service
+        pids, _ = _get_ssh_tunnel_process(
+            local_port, remote_port, fuzzy_match=False
+        )
         if not pids:
-            _LOG.info(
-                "Starting tunnel for service '%s' server=%s port=%s",
-                service_name,
-                server,
-                port,
+            _LOG.info("Starting %s", _service_to_string(service))
+            _create_tunnel(
+                server, local_port, remote_port, user_name, ssh_key_path
             )
-            _create_tunnel(server, port, user_name, ssh_key_path)
         else:
             _LOG.warning(
-                "Tunnel for service '%s' on port %s already exist: skipping",
-                service_name,
-                port,
+                "%s already exists: skipping", _service_to_string(service)
             )
 
 
@@ -155,16 +180,12 @@ def _stop_tunnels():
     """
     # Get the tunnel info.
     tunnel_info, _ = _get_tunnel_info()
-    _LOG.info("tunnel_info=%s", tunnel_info)
+    _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
     #
-    for service_name, server, port in tunnel_info:
-        _LOG.info(
-            "Stopping tunnel for service '%s' server=%s port=%s",
-            service_name,
-            server,
-            port,
-        )
-        _kill_ssh_tunnel_process(port)
+    for service in tunnel_info:
+        service_name, server, local_port, remote_port = service
+        _LOG.info("Stopping %s", _service_to_string(service))
+        _kill_ssh_tunnel_process(local_port, remote_port)
 
 
 def _check_tunnels():
@@ -173,27 +194,34 @@ def _check_tunnels():
     """
     # Get the tunnel info.
     tunnel_info, _ = _get_tunnel_info()
-    _LOG.info("tunnel_info=%s", tunnel_info)
+    _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
     #
-    for service_name, server, port in tunnel_info:
-        pids, _ = _get_ssh_tunnel_process(port)
+    for service in tunnel_info:
+        service_name, server, local_port, remote_port = service
+        pids, _ = _get_ssh_tunnel_process(
+            local_port, remote_port, fuzzy_match=False
+        )
         if pids:
             msg = "exists with pid=%s" % pids
         else:
             msg = "doesn't exist"
-        _LOG.info(
-            "service='%s' server=%s port=%s %s", service_name, server, port, msg
-        )
+        _LOG.info("%s -> %s", _service_to_string(service), msg)
 
 
 def _kill_all_tunnel_processes():
+    """
+    Kill all the processes that have `ssh -i ...:localhost:..."
+    """
     # cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
     def _keep_line(line):
-        keep = ("ssh -i" in line) and ("localhost:" in line)
+        keep = ("ssh -i" in line) and (":localhost:" in line)
         return keep
 
     get_pids = lambda: si.get_process_pids(_keep_line)
     si.kill_process(get_pids)
+
+
+# ##############################################################################
 
 
 def _main():
@@ -221,14 +249,19 @@ def _main():
         help="Set the logging level",
     )
     #
-    repo_name = git.get_repo_symbolic_name(super_module=False)
-    exp_repo_name = "ParticleDev/commodity_research"
-    if repo_name != exp_repo_name:
-        msg = "Need to run from %s and not from %s" % (exp_repo_name, repo_name)
-        _LOG.error(msg)
-        raise RuntimeError(msg)
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    # Check we are in the right repo.
+    repo_name = git.get_repo_symbolic_name(super_module=True)
+    exp_repo_name = "ParticleDev/commodity_research"
+    if repo_name != exp_repo_name:
+        msg = "Need to run from repo '%s' and not from '%s'" % (
+            exp_repo_name,
+            repo_name,
+        )
+        _LOG.error(msg)
+        raise RuntimeError(msg)
+    #
     if args.user:
         user_name = args.user
     else:

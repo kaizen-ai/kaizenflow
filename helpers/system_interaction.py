@@ -84,13 +84,15 @@ def _system(
     :param abort_on_error: whether we should assert in case of error or not
     :param suppress_error: set of error codes to suppress
     :param suppress_output: whether to print the output or not
+        - If "on_debug_level" then print the output if the log level is DEBUG
     :param blocking: blocking system call or not
     :param wrapper: another command to prepend the execution of cmd
     :param output_file: redirect stdout and stderr to this file
     :param tee: if True, tee stdout and stderr to output_file
     :param dry_run: just print the final command but not execute it
-    :param log_level: print the command to execute at level "log_level". If
-        it is equal to "echo" then just print the command line to screen.
+    :param log_level: print the command to execute at level "log_level".
+        - If "echo" then print the command line to screen as print and not
+          logging
     :return: return code (int), output of the command (str)
     """
     orig_cmd = cmd[:]
@@ -111,11 +113,23 @@ def _system(
         cmd += " 2>&1"
     if wrapper:
         cmd = wrapper + " && " + cmd
+    #
+    # TODO(gp): Add a check for the valid values.
+    # TODO(gp): Make it "ECHO".
     if log_level == "echo":
         print("> %s" % orig_cmd)
         _LOG.debug(log_level, "> %s", cmd)
     else:
         _LOG.log(log_level, "> %s", cmd)
+    #
+    dbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
+    if suppress_output == "ON_DEBUG_LEVEL":
+        # print("eff_lev=%s" % eff_level)
+        # print("lev=%s" % logging.DEBUG)
+        _LOG.getEffectiveLevel()
+        # Suppress the output if the verbosity level is higher than DEBUG,
+        # otherwise print.
+        suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
     #
     output = ""
     if dry_run:

@@ -104,7 +104,8 @@ def get_credentials():
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
-                tunnel_info = [("Jupyter1", _get_p1_dev_server_ip(), 10002)]
+                service = ("Jupyter1", _get_p1_dev_server_ip(), 10002, 10002)
+                tunnel_info = [service]
                 jupyter_port = 10001
             elif git_repo_name == "alphamatic/lemonade":
                 # TODO(gp): This should be factored out in the including
@@ -181,6 +182,11 @@ def get_credentials():
         io_.create_dir(conda_env_path, incremental=True)
     dbg.dassert_exists(os.path.dirname(conda_env_path))
     #
+    for service in tunnel_info:
+        # TODO(gp): We should call in ssh_tunnels.py to keep this encapsulated.
+        dbg.dassert_eq(len(service), 4)
+        service_name, server, local_port, remote_port = service
+        _ = service_name, server, local_port, remote_port
     ret = {
         "git_user_name": git_user_name,
         "git_user_email": git_user_email,
