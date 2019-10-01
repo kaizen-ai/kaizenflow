@@ -22,7 +22,7 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Add also P1_GDRIVE_PATH and AM_GDRIVE_PATH instead of using the
+# TODO(gp): Add also P1_GDRIVE_PATH and AM_GDRIVE_PATH instead of using an env var.
 
 
 def _get_p1_dev_server_ip():
@@ -86,14 +86,14 @@ def get_credentials():
     notebook_html_path = None
     notebook_backup_path = None
     #
+    conda_env_path = "~/.conda/envs"
+    conda_env_path = os.path.expanduser(conda_env_path)
     if server_name == "twitter-data":
         # P1 old server.
         conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/home/saggese/.conda/envs"
     elif server_name == "ip-172-31-16-23":
         # P1 server.
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/home/saggese/.conda/envs"
     #
     if user_name == "saggese":
         # GP.
@@ -131,7 +131,7 @@ def get_credentials():
         conda_sh_path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/Users/paul/.conda/envs"
     elif user_name == "gad":
-        # Paul.
+        # Sergey.
         git_user_name = "gad26032"
         git_user_email = "malanin@particle.one"
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
