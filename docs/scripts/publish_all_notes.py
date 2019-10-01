@@ -5,23 +5,50 @@
 > docs/scripts/publish_all_notes.py
 """
 
+# TODO(gp): Add a unit test.
 
 import argparse
 import glob
 import logging
 import os
-import sys
+
+from tqdm.autonotebook import tqdm
 
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as prnt
 import helpers.system_interaction as si
+import helpers.tunnels as tnls
 
 _LOG = logging.getLogger(__name__)
 
 
 # ##############################################################################
+
+
+_DST_DIR = "/http/docs"
+
+
+def _clean_doc_dir():
+    server = tnls.get_server_ip("Doc server")
+    si.query_yes_no(
+        f"Are you sure to delete the remote doc dir '{_DST_DIR}' on "
+        f"server '{server}'",
+        abort_on_no=True,
+    )
+    _LOG.warning("Cleaning %s on server %s", _DST_DIR, server)
+    cmd = f"cd {_DST_DIR} && rm *.pdf *.html"
+    cmd = f"ssh {server} '{cmd}'"
+    si.system(cmd, suppress_output=False)
+
+
+def _list_doc_dir():
+    server = tnls.get_server_ip("Doc server")
+    _LOG.info("List %s on server %s", _DST_DIR, server)
+    cmd = f"cd {_DST_DIR} && ls -lh *.pdf *.html"
+    cmd = f"ssh {server} '{cmd}'"
+    si.system(cmd, suppress_output=False)
 
 
 def _publish_file(args, file_name, action):
@@ -30,7 +57,8 @@ def _publish_file(args, file_name, action):
     #
     tmp_dir = args.tmp_dir
     io_.create_dir(tmp_dir, incremental=False)
-    out_file = os.path.join(tmp_dir, "output.%s" % action)
+    out_file = "%s.%s" % (os.path.basename(file_name).replace(".txt", ""), action)
+    out_file = os.path.join(tmp_dir, out_file)
     cmd = []
     cmd.append(exec_path)
     cmd.append("-a %s" % action)
@@ -38,9 +66,35 @@ def _publish_file(args, file_name, action):
     cmd.append("--output %s" % out_file)
     cmd.append("--tmp_dir %s" % tmp_dir)
     cmd.append("--no_open")
-    cmd.append("--gdrive_dir %s" % args.dst_dir)
+    # cmd.append("--gdrive_dir %s" % args.dst_dir)
     cmd = " ".join(cmd)
     si.system(cmd)
+    # Copy to doc server.
+    server = tnls.get_server_ip("Doc server")
+    cmd = "scp %s %s:%s" % (out_file, server, _DST_DIR)
+    si.system(cmd)
+
+
+def _publish_all_files(args):
+    git_dir = git.get_client_root(super_module=False)
+    dir_name = os.path.join(git_dir, "docs/notes/*.txt")
+    file_names = glob.glob(dir_name)
+    _LOG.info(
+        "Found %d files\n%s", len(file_names), prnt.space("\n".join(file_names))
+    )
+    _LOG.info("Saving to dir '%s'", args.dst_dir)
+    targets = ["html", "pdf"]
+    if args.only_html:
+        targets = ["html"]
+    _LOG.info("targets=%s", targets)
+    workload = []
+    for target in targets:
+        for f in file_names:
+            workload.append((target, f))
+    for target, f in tqdm(workload):
+        _LOG.debug(prnt.frame("action=%s file_name=%s" % (target, f)))
+        _publish_file(args, f, target)
+    _LOG.info("\n" + prnt.frame("SUCCESS"))
 
 
 # ##############################################################################
@@ -50,10 +104,9 @@ def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument(
-        "--only_html",
-        action="store_true",
-    )
+    parser.add_argument("positional", nargs="*", choices=["rm", "ls", "publish"])
+    parser.add_argument("--no_incremental", action="store_true")
+    parser.add_argument("--only_html", action="store_true")
     tmp_dir = "./tmp.publish_all_notes"
     parser.add_argument(
         "--tmp_dir",
@@ -83,24 +136,16 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     #
-    git_dir = git.get_client_root(super_module=False)
-    dir_name = os.path.join(git_dir, "docs/notes/*.txt")
-    file_names = glob.glob(dir_name)
-    _LOG.info("Found %d files\n%s", len(file_names), prnt.space("\n".join(
-        file_names)))
-    #
-    _LOG.info("Saving to dir '%s'", args.dst_dir)
-    actions = ["html", "pdf"]
-    if args.only_html:
-        actions = ["html"]
-    _LOG.info("actions=%s", actions)
-    #
+    actions = args.positional
     for action in actions:
-        for f in file_names:
-            _LOG.info("Publishing: %s", f)
-            _LOG.debug(prnt.frame("file_name=%s" % f))
-            _publish_file(args, f, action)
-    _LOG.info("\n" + prnt.frame("SUCCESS"))
+        if action == "rm":
+            _clean_doc_dir()
+        elif action == "ls":
+            _list_doc_dir()
+        elif action == "publish":
+            _publish_all_files(args)
+        else:
+            raise ValueError("Invalid action='%s'", action)
 
 
 if __name__ == "__main__":
