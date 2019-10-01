@@ -78,7 +78,7 @@ class _RawDataDownloader:
         self.path_object_dict = {}
         if max_num_files is not None:
             _LOG.warning("Limiting number of files to %s", max_num_files)
-        dbg.dassert_lte(1, max_num_files)
+            dbg.dassert_lte(1, max_num_files)
         self.max_num_files = max_num_files
 
     def execute(self):
