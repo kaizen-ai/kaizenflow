@@ -34,6 +34,13 @@
 > git add $FILES
 ```
 
+ours and theirs. The first option represents the current branch from which you executed the command before getting the conflicts, and the second option refers to the branch where the changes are coming from.
+
+git show :1:README
+git show :2:README
+git show :3:README
+Stage #1 is the common ancestor of the files, stage #2 is the target-branch version, and stage #3 is the version you are merging from.
+
 # #############################################################################
 # Revert
 # #############################################################################
