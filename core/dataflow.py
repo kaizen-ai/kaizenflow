@@ -365,7 +365,8 @@ class Model(SkLearnNode):
         info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
         pnl_rets = y * y_hat
         info["pnl_rets"] = pnl_rets
-        info["sr"] = fin.sharpe_ratio(pnl_rets, time_scaling=252)
+        info["sr"] = fin.sharpe_ratio(pnl_rets.resample("1B").sum(),
+                                      time_scaling=252)
         return info
 
 
