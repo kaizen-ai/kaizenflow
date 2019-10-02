@@ -280,8 +280,22 @@ def dassert_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-# TODO(*): -> _file_not_exist
+def dassert_dir_exists(dir_name, msg=None, *args):
+    """
+    Assert unless `dir_name` exists and it's a directory.
+    """
+    dir_name = os.path.abspath(dir_name)
+    is_ok = os.path.exists(dir_name) and os.path.isdir(dir_name)
+    if not is_ok:
+        txt = []
+        txt.append("dir='%s' doesn't exist or it's not a dir" % dir_name)
+        _dfatal(txt, msg, *args)
+
+
 def dassert_not_exists(file_name, msg=None, *args):
+    """
+    Ensures that a file or a dir `file_name` doesn't exist, otherwise raises.
+    """
     file_name = os.path.abspath(file_name)
     # pylint: disable=C0325,C0113
     if not (not os.path.exists(file_name)):
@@ -290,16 +304,17 @@ def dassert_not_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-# TODO(*): -> dassert_dir_not_exist
-def dassert_dir_exists(dir_name, msg=None, *args):
-    dir_name = os.path.abspath(dir_name)
-    # pylint: disable=C0325
-    # TODO(gp): Not sure it's correct.
-    # if not (os.path.isdir(dir_name) and os.path.exists(dir_name)):
-    if not (os.path.exists(dir_name) and not os.path.isdir(dir_name)):
-        txt = []
-        txt.append("dir='%s' already exists" % dir_name)
-        _dfatal(txt, msg, *args)
+def dassert_file_extension(file_name, exp_exts, msg=None, *args):
+    # Handle single extension case.
+    if isinstance(exp_exts, str):
+        exp_exts = [exp_exts]
+    # Make sure extension starts with .
+    exp_exts = ["." + e if not e.startswith(".") else e for e in exp_exts]
+    # Check.
+    act_ext = os.path.splitext(file_name)[-1].lower()
+    dassert_in(
+        act_ext, exp_exts, "Invalid extension %s for %s", act_ext, file_name
+    )
 
 
 def dassert_monotonic_index(obj, msg=None, *args):
@@ -430,12 +445,14 @@ def _get_logging_format(force_print_format, force_verbose_format):
     if force_print_format:
         verbose_format = False
     if verbose_format:
+        # TODO(gp): We might want to print also the executable name, since we
+        #  launch executables from executables.
         # TODO(gp): We would like to have filename.name.funcName:lineno all
-        # justified on the 15.
-        # See https://docs.python.org/3/howto/logging-cookbook.html#use-of-alternative-formatting-styles
-        # Something like:
+        #  justified on the 15.
+        #  See https://docs.python.org/3/howto/logging-cookbook.html#use-of
+        #  -alternative-formatting-styles
+        #  Something like:
         #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
-        #
         # log_format = "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
         log_format = (
             "%(asctime)-5s %(levelname)-5s: "
@@ -454,7 +471,7 @@ def _get_logging_format(force_print_format, force_verbose_format):
 
 
 # TODO(gp): maybe replace "force_verbose_format" and "force_print_format" with
-# a "mode" in ("auto", "verbose", "print")
+#  a "mode" in ("auto", "verbose", "print")
 def init_logger(
     verb=logging.INFO,
     use_exec_path=False,
@@ -465,6 +482,10 @@ def init_logger(
     """
     - Send both stderr and stdout to logging.
     - Optionally tee the logs also to file.
+
+    - Note that:
+        - logging.DEBUG = 10
+        - logging.INFO = 20
 
     :param verb: verbosity to use
     :param use_exec_path: use the name of the executable

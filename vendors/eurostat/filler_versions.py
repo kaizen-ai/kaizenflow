@@ -1,4 +1,4 @@
-from vendors.eurostat.base_clases import EurostatFileSaver
+from vendors.eurostat.base_classes import EurostatFileSaver
 from data import data_config
 
 EUROSTAT_FILLERS = {
@@ -13,4 +13,10 @@ EUROSTAT_FILLERS = {
             }
     },
 
+}
+
+
+IMPORT_FILLER = {
+    'human_name': 'EUROSTAT fillers',
+    'fillers': EUROSTAT_FILLERS
 }

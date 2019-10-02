@@ -56,7 +56,9 @@ black
 ## ############################################################################
 ## Latex
 ## ############################################################################
-#graphviz
+graphviz
+pandoc
+pandocfilters
 ## ############################################################################
 ## AWS
 ## ############################################################################
@@ -80,14 +82,14 @@ pymc3
 ## ############################################################################
 ## Misc
 ## ############################################################################
-pymongo
+# pip install RBTools
+#gdrive                  # To interact with Google Drive.
+#pymongo
+#rclone                  # To back up Google Drive (conda install -c hcc rclone)
 beautifulsoup4
 csvkit                  # To process csv.
 joblib
 jq                      # To process json.
-#pymongo
+pymongo
 quandl
-#rclone                  # To back up Google Drive (conda install -c hcc rclone)
-#gdrive                  # To interact with Google Drive.
-
-# pip install RBTools
+ruby

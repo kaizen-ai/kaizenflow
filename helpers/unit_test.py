@@ -1,3 +1,9 @@
+"""
+# Import as:
+
+import helpers.unit_test as ut
+"""
+
 import inspect
 import logging
 import os
@@ -10,7 +16,7 @@ import numpy as np
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.printing as pri
+import helpers.printing as prnt
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -46,6 +52,10 @@ def get_incremental_tests():
 
 
 # #############################################################################
+
+
+def to_string(var):
+    return """f"%s={%s}""" % (var, var)
 
 
 def get_random_df(num_cols, seed=None, **kwargs):
@@ -133,7 +143,7 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
     # Check.
     if expected != actual:
         _LOG.info(
-            "%s", "\n" + pri.frame("Test %s failed" % full_test_name, "=", 80)
+            "%s", "\n" + prnt.frame("Test %s failed" % full_test_name, "=", 80)
         )
         if fuzzy_match:
             # Set the following var to True to print the purified version (e.g.,
@@ -180,8 +190,6 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
 
 
 # #############################################################################
-# TestCase
-# #############################################################################
 
 
 class TestCase(unittest.TestCase):
@@ -193,6 +201,10 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         random.seed(20000101)
         np.random.seed(20000101)
+        # Print banner to signal starting of a new test.
+        func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
+        _LOG.debug("\n" + prnt.frame(func_name))
+        return
 
     def tearDown(self):
         pass
@@ -239,7 +251,7 @@ class TestCase(unittest.TestCase):
         :return: dir name
         :rtype: str
         """
-        dir_name = self._get_current_path()
+        dir_name = self._get_current_path() + "/tmp.scratch"
         io_.create_dir(dir_name, incremental=get_incremental_tests())
         return dir_name
 

@@ -45,8 +45,9 @@ def get_client_root(super_module):
     Return the full path of the root of the Git client.
     E.g., "/Users/saggese/src/.../amp"
 
-    :param super_module: if True use the root of the Git supermodule, if we are
-        in a submodule, otherwise use the Git submodule root
+    :param super_module: if True use the root of the Git _super_module,
+        if we are in a submodule.
+        Otherwise use the Git _sub_module root
     """
     if super_module and is_inside_submodule():
         # https://stackoverflow.com/questions/957928
@@ -58,6 +59,25 @@ def get_client_root(super_module):
     dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
     client_root = os.path.realpath(out)
     return client_root
+
+
+def find_file_in_git_tree(file_in):
+    """
+    Find the path of a file `file_in` in the outermost git submodule (i.e.,
+    in the super-module).
+    """
+    root_dir = get_client_root(super_module=True)
+    cmd = "find %s -name '%s'" % (root_dir, file_in)
+    _, file_name = si.system_to_string(cmd)
+    _LOG.debug("file_name=%s", file_name)
+    # Make sure that there is a single outcome.
+    dbg.dassert_eq(len(file_name.split("\n")), 1)
+    dbg.dassert(
+        file_name != "", "Can't find file '%s' in dir '%s'", file_in, root_dir
+    )
+    file_name = os.path.abspath(file_name)
+    dbg.dassert_exists(file_name)
+    return file_name
 
 
 def get_repo_symbolic_name(super_module):
@@ -93,16 +113,43 @@ def get_repo_symbolic_name(super_module):
     return repo_name
 
 
-def get_repo_prefix(git_repo_name):
-    if git_repo_name == "alphamatic/amp":
-        prefix = "Amp"
-    elif git_repo_name == "alphamatic/lemonade":
-        prefix = "Lem"
-    elif git_repo_name == "ParticleDev/commodity_research":
-        prefix = "Par"
-    else:
-        dbg.dfatal("Invalid git repo name '%s'" % git_repo_name)
-    return prefix
+def _get_repo_map():
+    _REPO_MAP = {"alphamatic/amp": "Amp"}
+    # Get info from the including repo, if possible.
+    try:
+        import repo_config as repc
+
+        _REPO_MAP.update(repc.REPO_MAP)
+    except ImportError:
+        _LOG.debug("No including repo")
+    dbg.dassert_no_duplicates(_REPO_MAP.keys())
+    dbg.dassert_no_duplicates(_REPO_MAP.values())
+    return _REPO_MAP.copy()
+
+
+def get_all_repo_symbolic_names():
+    repo_map = _get_repo_map()
+    return repo_map.values()
+
+
+# TODO(gp): Found a better name.
+def get_repo_prefix(repo_github_name):
+    """
+    Return the symbolic name of a git repo.
+    E.g., for "alphamatic/amp", the function returns "Amp".
+    """
+    repo_map = _get_repo_map()
+    dbg.dassert_in(repo_github_name, repo_map, "Invalid repo github name")
+    return repo_map[repo_github_name]
+
+
+def get_repo_github_name(repo_symbolic_name):
+    # Get the reverse map.
+    repo_map = _get_repo_map()
+    inv_repo_map = {v: k for (k, v) in repo_map.items()}
+    #
+    dbg.dassert_in(repo_symbolic_name, inv_repo_map, "Invalid repo symbolic name")
+    return inv_repo_map[repo_symbolic_name]
 
 
 def get_path_from_git_root(file_name, super_module):

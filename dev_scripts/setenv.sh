@@ -36,7 +36,7 @@ if [[ $rc != 0 ]]; then
 fi;
 
 # Create the script to execute calling python.
-DATETIME=$(date "+%Y%m%d-%H%M%S")
+DATETIME=$(date "+%Y%m%d-%H%M%S")_$(python -c "import time; print(int(time.time()*1000))")
 #DATETIME=""
 SCRIPT_FILE=/tmp/setenv.${DATETIME}.sh
 echo "SCRIPT_FILE=$SCRIPT_FILE"

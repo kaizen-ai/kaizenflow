@@ -3,6 +3,9 @@
 Import as:
 
 import helpers.user_credentials as usc
+
+# Test that all the credentials are properly defined.
+> helpers/user_credentials.py
 """
 
 import argparse
@@ -17,6 +20,9 @@ import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
+
+
+# TODO(gp): Add also P1_GDRIVE_PATH and AM_GDRIVE_PATH instead of using an env var.
 
 
 def _get_p1_dev_server_ip():
@@ -80,14 +86,14 @@ def get_credentials():
     notebook_html_path = None
     notebook_backup_path = None
     #
+    conda_env_path = "~/.conda/envs"
+    conda_env_path = os.path.expanduser(conda_env_path)
     if server_name == "twitter-data":
         # P1 old server.
         conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/home/saggese/.conda/envs"
     elif server_name == "ip-172-31-16-23":
         # P1 server.
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/home/saggese/.conda/envs"
     #
     if user_name == "saggese":
         # GP.
@@ -98,7 +104,8 @@ def get_credentials():
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
-                tunnel_info = [("Jupyter1", _get_p1_dev_server_ip(), 10002)]
+                service = ("Jupyter1", _get_p1_dev_server_ip(), 10002, 10002)
+                tunnel_info = [service]
                 jupyter_port = 10001
             elif git_repo_name == "alphamatic/lemonade":
                 # TODO(gp): This should be factored out in the including
@@ -135,6 +142,7 @@ def get_credentials():
         # Julia.
         git_user_name = "Julia"
         git_user_email = "julia@particle.one"
+        jupyter_port = 9997
         if server_name == "vostro":
             # Laptop.
             conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
@@ -145,6 +153,24 @@ def get_credentials():
         git_user_email = "sonya@particle.one"
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/home/sonniki/.conda/envs"
+    elif user_name == "liza":
+        #Liza.
+        git_user_name = "lizvladi"
+        git_user_email = "elizaveta@particle.one"
+        jupyter_port = 9992
+        if server_name == "liza-particle-laptop":
+            #Laptop.
+            conda_sh_path = "/home/liza/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/liza/anaconda3/envs"
+    elif user_name == "stas":
+        # Stas.
+        git_user_name = "tsallagov"
+        git_user_email = "stanislav@particle.one"
+        jupyter_port = 9900
+        if server_name == "stas-Vostro-5471":
+            #Laptop.
+            conda_sh_path = "/home/stas/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/stas/anaconda3/envs"    
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.
@@ -181,6 +207,11 @@ def get_credentials():
         io_.create_dir(conda_env_path, incremental=True)
     dbg.dassert_exists(os.path.dirname(conda_env_path))
     #
+    for service in tunnel_info:
+        # TODO(gp): We should call in ssh_tunnels.py to keep this encapsulated.
+        dbg.dassert_eq(len(service), 4)
+        service_name, server, local_port, remote_port = service
+        _ = service_name, server, local_port, remote_port
     ret = {
         "git_user_name": git_user_name,
         "git_user_email": git_user_email,
