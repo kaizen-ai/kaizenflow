@@ -1,9 +1,9 @@
-# Ask somebody if you have a doubt
+# Ask somebody if you have any doubts
 - If you have doubts on how to do something you want to do:
     - Ask your team-members
         - The problem is that sometimes somebody tells you his / hers
           interpretation or their workaround for a problem
-        - So be careful
+        - So, be careful
     - Ask Sergey if he is around
     - Don't hesitate to ask GP & Paul
 
@@ -12,9 +12,9 @@
 ## Why do we need to follow this handbook?
 
 ### Learning from each other
-- Good research and software engineer practices allow to:
+- Good research and software engineer practices allow us to:
     - learn from each other
-    - accumulate and distill wisdom of experts
+    - accumulate and distill the wisdom of experts
     - share lessons that we have learned from our mistakes along the way
 
 ### Consistency and process
@@ -26,11 +26,11 @@
     - help each other in debugging issues
     - add / transfer new people to teams
     - work on multiple projects simultaneously
-    - learn from each other experience and mistakes
-    - review each other work looking for mistakes and improvements
+    - learn from each other's experience and mistakes
+    - review each other's work looking for mistakes and improvements
     - ...
 
-- We are not going to discuss this, rather we assume the above as self-evident
+- We are not going to discuss this, but rather assume the above as self-evident
   truth
 
 ## Sync-ups
@@ -38,7 +38,7 @@
   progress of the many projects we work on
 
 ### All-hands meetings
-- All-hands meeting on Monday have the following goals:
+- All-hands meeting on Mondays has the following goals:
     - summarize projects going on and their status
         - E.g. what are blocking tasks across projects
     - discuss topics of general interest
@@ -55,7 +55,7 @@
     - Try to do it one day before so that everybody knows ahead of time what we
       need to talk about and can come prepared
 
-- Typically 2, 3 issues are more than enough to fill one hour of discussion
+- Typically 2-3 issues are more than enough to fill one hour of discussion
     - Give priority to tasks that are controversial, blocking, or finished
     - No reason to linger on the successes or on the easy stuff
 
@@ -116,7 +116,7 @@
     - make sure people blocked on your tasks know that / whether you are working
       on those tasks
     - broadcast if you are blocked and / or if you don't have tasks
-    - communicate a realistic ETAs (no reason to be optimistic: complex things
+    - communicate realistic ETAs (no reason to be optimistic: complex things
       take time to be done properly)
 
     - Use a date in the usual format (e.g., 2018-10-10) and add "today",
