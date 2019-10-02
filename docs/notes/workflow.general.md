@@ -1,4 +1,4 @@
-* Team synchronization points
+## Team synchronization points
 - We understand that everybody is head-down making progress on their tasks
 - This is great
 - Sometimes we need coordination:
@@ -18,11 +18,11 @@
 
 Ok? Please ack this email replying to all.
 
-* Use the tools we have
+## Use the tools we have
 > find . -name "ssh_tunnels.py"
 ./amp/dev_scripts/infra/ssh_tunnels.py
 
-* File a bug when you have a problem
+## File a bug when you have a problem
 - Report the command
 - The log
 - The more information the better

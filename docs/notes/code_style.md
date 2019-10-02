@@ -1,6 +1,4 @@
-# #############################################################################
 # Style guide references
-# #############################################################################
 
 - We care about at consistency rather than arguing about which approach is better
   - E.g., see "tab vs space" flame-war from the 90s
@@ -9,9 +7,7 @@
 - As a rule of thumb we default to Google style unless Python community (in the
   form of PEP) or tools we rely favor another style
 
-## ############################################################################
 ## Reference
-## ############################################################################
 
 - Google Python Style Guide (GPSG)
   - `https://google.github.io/styleguide/pyguide.html`
@@ -32,13 +28,9 @@
 - Unix rules (although a bit cryptic sometimes)
     - `https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules`
 
-# #############################################################################
 # Comments
-# #############################################################################
 
-## ############################################################################
 ## Docstring conventions
-## ############################################################################
 
 - Code needs to be properly commented
 
@@ -54,9 +46,7 @@
     - epytext
     - numpydoc
 
-## ############################################################################
 ## reST style
-## ############################################################################
 
 - reST (aka re-Structured Text) style is:
     - the most widely supported in the python commpunity
@@ -80,9 +70,7 @@ This is a reST style.
 """
 ```
 
-## ############################################################################
 ## Descriptive vs imperative style
-## ############################################################################
 
 - GPSG suggests to use descriptive style of comments, e.g., "This function does
   this and that", instead than imperative style "Do this and that"
@@ -97,9 +85,7 @@ This is a reST style.
     - Since we prefer to rely on automatic checks, we decided to use an imperative
       style of comments
 
-### ###########################################################################
 ### Alternate parameter description and type
-### ###########################################################################
 
 - We prefer to alternate param description and its type so the docstring below,
   although good, does not follow our convention
@@ -136,9 +122,7 @@ This is a reST style.
 
 - Examples are [here](https://stackoverflow.com/questions/3898572)
 
-### ###########################################################################
 ### Avoid empty lines in code
-### ###########################################################################
 
 - If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
@@ -266,9 +250,7 @@ _LOG.debug("I am a debug function about %s", a)
 - The reason is that in the second case the string is not built unless the
   logging is actually performed, which limits time overhead from logging
 
-## ############################################################################
 ## Report warnings
-## ############################################################################
 
 - If there is a something that is suspicious but you don't feel like it's
   worthwhile to assert, report a warning with:
@@ -281,13 +263,9 @@ _LOG.warning(...)
     - send the rest to warnings.log
     - at the end of the run, reports "there are warnings in warnings.log"
 
-# #############################################################################
 # Assertion
-# #############################################################################
 
-## ############################################################################
 ## Use positional args when asserting
-## ############################################################################
 - `dassert_*` is modeled after logging so for the same reasons one should use
   positional args
     **Bad**

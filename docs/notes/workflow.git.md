@@ -1,8 +1,6 @@
-# #############################################################################
 # Analyzing commits
-# #############################################################################
 
-* Show files modified in a commit
+## Show files modified in a commit
 - You can see the files modified in a given commit hash with:
     ```bash
     > git show --name-only $HASH
@@ -23,11 +21,9 @@
     vendors/first_rate/utils.py
     ```
 
-# #############################################################################
 # Conflicts
-# #############################################################################
 
-* Accepting "theirs"
+## Accepting "theirs"
 ```bash
 > git reset HEAD $FILES
 > git checkout --theirs $FILES
@@ -41,20 +37,16 @@ git show :2:README
 git show :3:README
 Stage #1 is the common ancestor of the files, stage #2 is the target-branch version, and stage #3 is the version you are merging from.
 
-# #############################################################################
 # Revert
-# #############################################################################
 
-* Revert the last local commit
+## Revert the last local commit
 ```bash
 > git reset --soft HEAD~
 ```
 
-# #############################################################################
 # Branch
-# #############################################################################
 
-* Naming a branch
+## Naming a branch
 
 - You can get automatically the name of a branch corresponding to a GitHub issue
   with:
@@ -69,7 +61,7 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     LemTask274_PRICE_Download_equity_data
     ```
 
-* Checking what work was done in a branch
+## Checking what work was done in a branch
 
 - Look at all the branches available:
     ```bash
@@ -108,7 +100,7 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     > gd a637594..eb12233
     ```
 
-* Compare a directory among branches
+## Compare a directory among branches
 
 - This is useful if we want to focus on changes on a single dir
     ```bash
@@ -130,25 +122,21 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     vendors/test/test_vendors.py
     ```
 
-# #############################################################################
 # Branch workflow
-# #############################################################################
 
-* Branches are cheap
+## Branches are cheap
 - One of the advantages of working with Git is that branches are cheap
 
-* `master` is sacred
+## `master` is sacred
 - In an ideal world `master` branch is sacred (see Platinum rule of Git)
     - Development should never be done directly on master;
     - Changes to master should only happen by pull-request or merge;
     - One should avoid working in master except in rare cases, e.g., a simple
       urgent bug-fix needed to unblock people.
 
-## ############################################################################
-## Branch workflow best practices
-## ############################################################################
+# Branch workflow best practices
 
-* Always work in a branch
+## Always work in a branch
 - Call your branch `PartTaskXYZ_descriptive_name`
     - Ideally from the bug report, e.g., `PartTask274_PRICE_Download_equity_data`
 
@@ -165,17 +153,17 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     - E.g., it might be ok to not run unit tests before each commit, but be
       careful!
 
-* Commit to your branch **early** and **often**
+## Commit to your branch **early** and **often**
 - `git commit`
 - Push your local work to the remote branch regularly (with `git push`) at least
   once a day
 
-* Rebase your branch onto master
+## Rebase your branch onto master
 - Rebase onto master **at least once a day**, if the branch stays around that
   long:
 - `git rebase master`
 
-* Keep different changes in separate branches
+## Keep different changes in separate branches
 
 - It is easier for you to keep work sane and separated
 
@@ -187,7 +175,7 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 - Packaging unrelated changes together means no change gets merged until **all**
   the changes are accepted
 
-* Use ReviewBoard review
+## Use ReviewBoard review
 - This is a replacement to pull request
 - Use ReviewBoard **early** and **often**
 
@@ -209,17 +197,15 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 
 - Merged changes are tested in the Jenkins build
 
-### ###########################################################################
 ### Branch workflow best practices
-### ###########################################################################
 
-* Pull changes from master
+## Pull changes from master
 ```bash
 > git checkout master
 > git pull
 ```
 
-* Create and checkout branch
+## Create and checkout branch
 ```bash
 > git branch my_feature
 > git checkout my_feature
@@ -235,7 +221,7 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 - From this point on you commit only in the branch and changes to master will not
   affect your branch
 
-* Commit your code
+## Commit your code
 
 - When you commit, commits are local and stay on your computer
 ```
@@ -251,7 +237,7 @@ On branch my-feature
 
 - Commits stay local until you tell explicitly git to "upload" the commits through push
 
-* Push your commits upstream
+## Push your commits upstream
 
 - When you want your code to be pushed to the server (e.g., to back up or to
   share the changes with someone else), you need to push the branch
@@ -266,7 +252,7 @@ Branch 'my-feature' set up to track remote branch 'my-feature' from 'origin'.
 
 - It is needed only the first time you do it
 
-* Update your branch with changes from master
+## Update your branch with changes from master
 - If your branch lives long, you want to apply changes made on master to show on
   your branch
 - E.g., you can integrate daily by using merge or rebase
@@ -304,7 +290,7 @@ Branch 'my-feature' set up to track remote branch 'my-feature' from 'origin'.
 // You can see that you are ahead of master
 ```
 
-* Create a pull request / ReviewBoard review
+## Create a pull request / ReviewBoard review
 - Create an Upsource review
 - You can raise a pull-request to merge your code into master
     - Go to the branch on the web interface and push "Compare & pull request"
