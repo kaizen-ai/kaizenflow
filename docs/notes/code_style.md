@@ -1,7 +1,7 @@
 # Style guide references
 
 - We care about at consistency rather than arguing about which approach is better
-  - E.g., see "tab vs space" flame-war from the 90s
+    - E.g., see "tab vs space" flame-war from the 90s
 - Unless explicitly noted we prefer to follow the style guide below
 
 - As a rule of thumb we default to Google style unless Python community (in the
@@ -13,8 +13,8 @@
   - `https://google.github.io/styleguide/pyguide.html`
 
 - Commenting style
-  - `http://www.sphinx-doc.org/en/master/`
-  - `https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html`
+    - `http://www.sphinx-doc.org/en/master/`
+    - `https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html`
 
 - Code convention PEP8
     - `https://www.python.org/dev/peps/pep-0008/`
@@ -158,9 +158,7 @@ This is a reST style.
   empty line is used also to separate functions. For this reason we suggest to
   use an empty comment.
 
-### ###########################################################################
 ### Avoid distracting comments
-### ###########################################################################
 
 - Use comments to explain the high level logic / goal of a piece of code and not
   the details
@@ -170,9 +168,7 @@ This is a reST style.
     log.info("Results are %s", ...)
     ```
 
-### ###########################################################################
 ### If you find a bug, obsolete docstring in the code
-### ###########################################################################
 - The process is:
     - do a `git blame` to find who wrote the code
     - if it's an easy bug, you can fix it and ask for a review to the author
@@ -183,18 +179,12 @@ This is a reST style.
         - stacktrace
         - you can use the tag “BUG: ..."
 
-# #############################################################################
 # Logging
-# #############################################################################
 
-## ############################################################################
 ## Always use logging instead of prints
-## ############################################################################
 - Always use logging and never `print()` to report debug, info, warning 
 
-## ############################################################################
 ## Our logging idiom
-## ############################################################################
 ```python
 import helpers.dbg as dbg
 
@@ -210,9 +200,7 @@ _LOG.debug("I am a debug function about %s", a)
     - E.g., when there is a bug one can run with `-v DEBUG` and see what's
       happening right before the bug
 
-## ############################################################################
 ## Logging level
-## ############################################################################
 
 - Use `_LOG.info` when you want to communicate to the final user, e.g.,
     - when the script is started
@@ -230,9 +218,7 @@ _LOG.debug("I am a debug function about %s", a)
       sometimes this happens silently and it is reported only from the OS return
       code
 
-## ############################################################################
 ## Use positional args when logging
-## ############################################################################
 
 - Instead of doing this:
     **Bad**
