@@ -60,7 +60,7 @@ def _publish_file(args, file_name, action):
     #
     tmp_dir = args.tmp_dir
     io_.create_dir(tmp_dir, incremental=False)
-    out_file = "%s.%s" % (os.path.basename(file_name).replace(".txt", ""), action)
+    out_file = "%s.%s" % (os.path.basename(file_name).replace(".md", ""), action)
     out_file = os.path.join(tmp_dir, out_file)
     cmd = []
     cmd.append(exec_path)
@@ -79,13 +79,15 @@ def _publish_file(args, file_name, action):
 
 
 def _publish_all_files(args):
-    git_dir = git.get_client_root(super_module=False)
-    dir_name = os.path.join(git_dir, "docs/notes/*.txt")
+    git_dir = git.get_client_root(super_module=True)
+    _LOG.debug("git_dir=%s", git_dir)
+    dir_name = os.path.join(git_dir, "amp/docs/notes/*.md")
+    _LOG.debug("dir_name=%s", dir_name)
     file_names = glob.glob(dir_name)
     _LOG.info(
         "Found %d files\n%s", len(file_names), prnt.space("\n".join(file_names))
     )
-    _LOG.info("Saving to dir '%s'", args.dst_dir)
+    dbg.dassert_lte(1, len(file_names))
     #targets = ["html", "pdf"]
     #if args.only_html:
     #    targets = ["html"]
