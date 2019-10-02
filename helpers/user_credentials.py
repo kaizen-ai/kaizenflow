@@ -142,6 +142,7 @@ def get_credentials():
         # Julia.
         git_user_name = "Julia"
         git_user_email = "julia@particle.one"
+        jupyter_port = 9997
         if server_name == "vostro":
             # Laptop.
             conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
