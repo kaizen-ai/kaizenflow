@@ -7,7 +7,6 @@
     ```
 
 - E.g.,
-
     ```bash
     > git show --name-only 39a9e335298a3fe604896fa19296d20829801cf2
 
@@ -318,3 +317,8 @@ Branch 'my-feature' set up to track remote branch 'my-feature' from 'origin'.
 ```bash
 > git branch -d my-feature
 ```
+
+# TODO(gp):
+- How to sync both git repos?
+- Merge vs rebase
+- How to move forward the amp / infra markers?
