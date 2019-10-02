@@ -154,8 +154,22 @@ def get_credentials():
         jupyter_port = 9992
         if server_name == "liza-particle-laptop":
             #Laptop.
+<<<<<<< HEAD
             conda_sh_path = "/home/liza/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/liza/anaconda3/envs"
+=======
+            conda_sh_path = "/home/liza/anaconda2/etc/profile.d/conda.sh"
+            conda_env_path = "/home/liza/anaconda2/envs"
+    elif user_name == "stas":
+        # Stas.
+        git_user_name = "tsallagov"
+        git_user_email = "s.i.tsallagov@gmail.com"
+        jupyter_port = 9900
+        if server_name == "stas-Vostro-5471":
+            #Laptop.
+            conda_sh_path = "/home/stas/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/stas/anaconda3/envs"    
+>>>>>>> PartTask#339 added credentials
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.
