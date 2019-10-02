@@ -151,6 +151,7 @@ def get_credentials():
         #Liza.
         git_user_name = "lizvladi"
         git_user_email = "elizaveta@particle.one"
+        jupyter_port = 9992
         if server_name == "liza-particle-laptop":
             #Laptop.
             conda_sh_path = "/home/liza/anaconda2/etc/profile.d/conda.sh"
