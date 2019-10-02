@@ -84,11 +84,6 @@ _LOG = logging.getLogger(__name__)
 # _PYTHON_VERSION = "3.7"
 _PYTHON_VERSION = None
 
-# TODO(gp): Try https://github.com/mwilliamson/stickytape. It doesn't work
-# that well.
-# > cd ~/src/github/stickytape && conda activate develop && python setup.py install
-# > python /usr/local/lib/python2.7/site-packages/stickytape/main.py dev_scripts/create_conda.py --add-python-path . --output-file released_sticky.py
-
 # TODO(gp): Allow yml files with pip deps inside
 # https://stackoverflow.com/questions/35245401/combining-conda-environment-yml-with-pip-requirements-txt
 
