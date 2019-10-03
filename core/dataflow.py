@@ -12,7 +12,7 @@ import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
-import vendors.kibot.utils as kut
+import amp.vendors.kibot.utils as kut
 from core.dataflow_core import DAG as DAG  # pylint: disable=unused-import
 from core.dataflow_core import Node as Node
 
@@ -375,7 +375,9 @@ def cross_validate(config, source_nid, sink_nid, dag):
 
     :return: DAG info for each split, keyed by split.
     """
+    # Warm up source node to get a dataframe from which we can generate splits.
     source_node = dag.get_node(source_nid)
+    dag.run_leq_node(source_nid, "fit")
     df = source_node.get_df()
     splits = pip.get_splits(config, df)
     #
@@ -420,7 +422,7 @@ def process_result_bundle(result_bundle):
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = fin.sharpe_ratio(pnl_rets, time_scaling=252)
+    sr = fin.sharpe_ratio(pnl_rets.resample("1B").sum(), time_scaling=252)
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
     info["sr"] = copy.copy(sr)
