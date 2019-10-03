@@ -36,9 +36,9 @@ def extract_info(dag, methods):
     """
     Extract node info from each DAG node.
 
-    :param dag: Dag
-    :param method: Node method infos to extract
-    :return:  nested OrderedDict
+    :param dag: Dag. Node info is populated upon running.
+    :param methods: Node method infos to extract
+    :return: nested OrderedDict
     """
     dbg.dassert_isinstance(dag, DAG)
     dbg.dassert_isinstance(methods, list)
@@ -82,11 +82,13 @@ class SkLearnNode(Node, abc.ABC):
         pass
 
     def get_info(self, method):
+        # TODO(Paul): Add a dassert_getattr function to use here and in core.
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
         if method in self._info.keys():
             return self._info[method]
         else:
+            # TODO(Paul): Maybe crash if there is no info.
             _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
             return None
 
@@ -235,6 +237,7 @@ class PctReturns(Transformer):
     def _transform(self, df):
         df = df.copy()
         info = collections.OrderedDict()
+        # TODO(Paul): Factor out these info calls.
         info["df_info"] = get_df_info_as_string(df)
         df["ret_0"] = df["open"].pct_change()
         info["df_transformed_info"] = get_df_info_as_string(df)
@@ -429,13 +432,13 @@ def process_result_bundle(result_bundle):
     return info
 
 
-# TODO(Paul): Consider moving these to `helpers.py`
+# TODO(Paul): Move these to `helpers/iterator.py` and add tests.
 def get_nested_dict_iterator(nested, path=None):
     """
     Return nested dictionary iterator.
 
     :param nested: nested dictionary
-    :param path:  path to top of tree
+    :param path: path to top of tree
     :return: path to leaf node, value
     """
     if path is None:
@@ -454,12 +457,12 @@ def extract_leaf_values(nested, key):
 
     :param nested: nested dictionary
     :param key: leaf key value to match
-    :return: flattened path, value
+    :return: dict with key = path as tuple, value = leaf value
     """
     d = {}
     for item in get_nested_dict_iterator(nested):
         if item[0][-1] == key:
-            d[".".join(item[0])] = item[1]
+            d[tuple(item[0])] = item[1]
     return d
 
 
