@@ -22,22 +22,25 @@
 import logging
 import os
 
-from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-sns.set()
+from matplotlib import pyplot as plt
+
+# %%
+from pylab import rcParams
 
 import core.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
-import vendors.particle_one.PartTask269_liquidity_analysis_utils as lau
 import helpers.printing as pri
 import vendors.kibot.utils as kut
+import vendors.particle_one.PartTask269_liquidity_analysis_utils as lau
 
-# %%
-from pylab import rcParams
-rcParams['figure.figsize'] = (20, 5)
+sns.set()
+
+
+rcParams["figure.figsize"] = (20, 5)
 
 # %%
 print(env.get_system_signature())
@@ -78,7 +81,9 @@ print(df4["Exchange"].unique())
 # %%
 # TODO (Julia): After PartTask268_PRICE_Download_metadata_from_CME
 # is merged into master, replace this with a reader
-_PRODUCT_SPECS_PATH = "/data/prices/product_slate_export_with_contract_specs_20190905.csv"
+_PRODUCT_SPECS_PATH = (
+    "/data/prices/product_slate_export_with_contract_specs_20190905.csv"
+)
 product_specs = pd.read_csv(_PRODUCT_SPECS_PATH)
 
 # %%
@@ -91,20 +96,21 @@ product_specs.info()
 # # Explore metadata
 
 # %%
-df4['Exchange'].value_counts()
+df4["Exchange"].value_counts()
 
 # %%
-df3['Exchange'].value_counts()
+df3["Exchange"].value_counts()
 
 # %% [markdown]
 # Kibot only has the CME group futures.
 
 # %%
-product_specs['Globex'].head()
+product_specs["Globex"].head()
 
 # %%
 daily_futures_w_ext = os.listdir(
-    "/data/kibot/All_Futures_Continuous_Contracts_daily/")
+    "/data/kibot/All_Futures_Continuous_Contracts_daily/"
+)
 
 # %%
 daily_futures_w_ext[:5]
@@ -114,32 +120,36 @@ daily_futures = list(map(lambda x: x[:-7], daily_futures_w_ext))
 daily_futures[:5]
 
 # %%
-len(set(daily_futures)), df3['SymbolBase'].nunique()
+len(set(daily_futures)), df3["SymbolBase"].nunique()
 
 # %%
-np.setdiff1d(df3['SymbolBase'].dropna().values, daily_futures)
+np.setdiff1d(df3["SymbolBase"].dropna().values, daily_futures)
 
 # %%
-product_specs['Globex'].nunique()
+product_specs["Globex"].nunique()
 
 # %%
-np.intersect1d(product_specs['Globex'].dropna().unique(),
-               df3['SymbolBase'].dropna().values)
+np.intersect1d(
+    product_specs["Globex"].dropna().unique(), df3["SymbolBase"].dropna().values
+)
 
 # %%
-np.intersect1d(product_specs['Globex'].dropna().unique(),
-               df3['SymbolBase'].dropna().values).shape
+np.intersect1d(
+    product_specs["Globex"].dropna().unique(), df3["SymbolBase"].dropna().values
+).shape
 
 # %%
-np.intersect1d(product_specs['Globex'].dropna().unique(),
-               df2['Symbol'].dropna().values).shape
+np.intersect1d(
+    product_specs["Globex"].dropna().unique(), df2["Symbol"].dropna().values
+).shape
 
 # %%
-np.intersect1d(product_specs['Globex'].dropna().unique(),
-               df1['Symbol'].dropna().values).shape
+np.intersect1d(
+    product_specs["Globex"].dropna().unique(), df1["Symbol"].dropna().values
+).shape
 
 # %%
-product_specs[product_specs['Globex'].isna()]
+product_specs[product_specs["Globex"].isna()]
 
 # %%
 
@@ -179,8 +189,10 @@ print(config)
 
 # %%
 all_symbols = [
-    futures.replace(".csv.gz", "") for futures in os.listdir(
-        "/data/kibot/All_Futures_Continuous_Contracts_daily")
+    futures.replace(".csv.gz", "")
+    for futures in os.listdir(
+        "/data/kibot/All_Futures_Continuous_Contracts_daily"
+    )
 ]
 
 # %%
@@ -191,7 +203,8 @@ symbols
 file_name = "/data/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
 
 daily_price_dict_df = kut.read_multiple_symbol_data(
-    symbols, file_name, nrows=config["read_data"]["nrows"])
+    symbols, file_name, nrows=config["read_data"]["nrows"]
+)
 
 daily_price_dict_df["CL"].tail(2)
 
@@ -216,7 +229,7 @@ mean_vol.sort_values("mean_vol", ascending=False)
 # # Study volume
 
 # %%
-symbol = 'CL'
+symbol = "CL"
 
 # %%
 vs = lau.VolumeStudy(symbol, n_rows=None)
@@ -231,16 +244,16 @@ vs.execute()
 product_specs.head()
 
 # %%
-product_specs[product_specs['Globex'] == symbol]['Open Interest'].values
+product_specs[product_specs["Globex"] == symbol]["Open Interest"].values
 
 # %%
-product_specs[product_specs['Globex'] == symbol]['Volume'].values
+product_specs[product_specs["Globex"] == symbol]["Volume"].values
 
 # %%
-vs.daily_prices['vol'].max()
+vs.daily_prices["vol"].max()
 
 # %%
-vs.minutely_prices['vol'].max()
+vs.minutely_prices["vol"].max()
 
 # %% [markdown]
 # # CME mapping
@@ -255,21 +268,21 @@ pc = lau.ProductSpecs()
 pc.product_specs.info()
 
 # %%
-pc.product_specs['Product Group'].value_counts().plot(kind='bar', rot=0)
-plt.title('Number of futures for each product group in CME')
+pc.product_specs["Product Group"].value_counts().plot(kind="bar", rot=0)
+plt.title("Number of futures for each product group in CME")
 plt.show()
 
 # %%
-pc.product_specs['Sub Group'].value_counts().plot(kind='bar')
-plt.xticks(ha='right', rotation=30, rotation_mode='anchor')
-plt.title('Number of futures for each sub group in CME')
+pc.product_specs["Sub Group"].value_counts().plot(kind="bar")
+plt.xticks(ha="right", rotation=30, rotation_mode="anchor")
+plt.title("Number of futures for each sub group in CME")
 plt.show()
 
 # %%
-pc.product_specs['Category'].astype(str).value_counts()
+pc.product_specs["Category"].astype(str).value_counts()
 
 # %%
-pc.product_specs['Sub Category'].astype(str).value_counts()
+pc.product_specs["Sub Category"].astype(str).value_counts()
 
 # %% [markdown]
 # ## By symbol
@@ -287,8 +300,7 @@ pc.get_trading_hours(symbol)
 # ## For product group
 
 # %%
-energy_symbols = pc.get_symbols_product_group('Energy').values
-print(energy_symbols.shape)
+energy_symbols = pc.get_symbols_product_group("Energy")
 energy_symbols[:4]
 
 # %%
