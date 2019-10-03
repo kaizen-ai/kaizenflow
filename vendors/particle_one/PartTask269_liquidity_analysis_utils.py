@@ -18,15 +18,13 @@ _PRODUCT_SPECS_PATH = (
 )
 
 
-def get_daily_prices(symbols, n_rows):
-    file_name = "/data/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
-    daily_price_dict_df = kut.read_multiple_symbol_data(
-        symbols, file_name, nrows=n_rows
-    )
-    return daily_price_dict_df
-
-
 def get_sum_daily_volume(daily_price_dict_df):
+    """
+    Get sum of the daily volume for each symbol
+
+    :param daily_price_dict_df: {symbol: prices_for_symbol_df}
+    :return: pd.DataFrame indexed by symbol
+    """
     daily_volume_sum_dict = {
         symbol: daily_prices_symbol["vol"].sum()
         for symbol, daily_prices_symbol in daily_price_dict_df.items()
@@ -39,6 +37,12 @@ def get_sum_daily_volume(daily_price_dict_df):
 
 
 def get_mean_daily_volume(daily_price_dict_df):
+    """
+    Get mean of the daily volume for each symbol
+
+    :param daily_price_dict_df: {symbol: prices_for_symbol_df}
+    :return: pd.DataFrame indexed by symbol
+    """
     daily_volume_mean_dict = {
         symbol: daily_prices_symbol["vol"].mean()
         for symbol, daily_prices_symbol in daily_price_dict_df.items()
@@ -51,7 +55,23 @@ def get_mean_daily_volume(daily_price_dict_df):
 
 
 class VolumeStudy:
+    """
+    Perform a basic volume study of daily and minutely prices.
+
+    - Read daily and minutely prices
+    - Plot daily and minutely volume
+        - by year
+        - by month
+        - by day of week
+        - by hour
+    """
+
     def __init__(self, symbol, n_rows):
+        """
+        :param symbol: the symbol for which the volume needs to be
+            studied
+        :param n_rows: the maximum numer of rows to load
+        """
         self.symbol = symbol
         self.n_rows = n_rows
         self.daily_prices = self._read_daily_prices()
@@ -174,6 +194,10 @@ class VolumeStudy:
 
 
 class ProductSpecs:
+    """
+    Read product specs, get data by symbol or product group.
+    """
+
     def __init__(self):
         self.product_specs = pd.read_csv(_PRODUCT_SPECS_PATH)
 
@@ -191,4 +215,4 @@ class ProductSpecs:
         return self.product_specs.set_index("Product Group").loc[product_group]
 
     def get_symbols_product_group(self, product_group):
-        return self.get_specs_product_group(product_group)["Globex"]
+        return self.get_specs_product_group(product_group)["Globex"].values
