@@ -17,6 +17,8 @@ import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.system_interaction as si
 
+from io import StringIO
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -237,3 +239,32 @@ def get_ishares_fundamentals():
         columns="symbol descr price assets avg_volume asset_class".split(),
     )
     return df
+
+
+def generate_sample_data():
+    """
+    Reads SPY data and writes a 10-year subset.
+
+    Column ordering is preserved. This sample data can be used to
+      - Understand the raw data format
+      - Provide a source of market data for unit/integration tests.
+
+    > du -h SPY.csv
+    324K    SPY.csv
+    """
+    # Read SPY data.
+    df = pd.read_csv("s3://alphamatic/etf/data/SPY.csv.gz")
+    # Convert 'Date' column to datetime and filter.
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.set_index("Date")
+    df = df.loc["2007":"2016"]
+    df.reset_index(inplace=True)
+    # Write as csv to buffer.
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    # Write to file.
+    full_path = os.path.realpath(__file__)
+    path, _ = os.path.split(full_path)
+    out_path = os.path.join(path, "sample_data/SPY.csv")
+    _LOG.info("Writing to path=%s", out_path)
+    io_.to_file(out_path, csv_buffer.getvalue())
