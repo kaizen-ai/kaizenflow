@@ -241,7 +241,17 @@ def get_ishares_fundamentals():
     return df
 
 
-def generate_sample_data():
+def _get_sample_data_path(ticker):
+    my_path = os.path.realpath(__file__)
+    my_dir, _ = os.path.split(my_path)
+    rel_path = "sample_data/%s.csv" % ticker
+    path = os.path.join(my_dir, rel_path)
+    dbg.dassert_exists(path,
+                       "No sample data found for ticker=%s", ticker)
+    return path
+
+
+def _generate_sample_data():
     """
     Reads SPY data and writes a 10-year subset.
 
@@ -252,8 +262,10 @@ def generate_sample_data():
     > du -h SPY.csv
     324K    SPY.csv
     """
+    ticker = "SPY"
     # Read SPY data.
-    df = pd.read_csv("s3://alphamatic/etf/data/SPY.csv.gz")
+    source_path = "s3://alphamatic/etf/data/%s.csv.gz" % ticker
+    df = pd.read_csv(source_path)
     # Convert 'Date' column to datetime and filter.
     df["Date"] = pd.to_datetime(df["Date"])
     df = df.set_index("Date")
@@ -263,8 +275,19 @@ def generate_sample_data():
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
     # Write to file.
-    full_path = os.path.realpath(__file__)
-    path, _ = os.path.split(full_path)
-    out_path = os.path.join(path, "sample_data/SPY.csv")
+    out_path = _get_sample_data_path(ticker)
     _LOG.info("Writing to path=%s", out_path)
     io_.to_file(out_path, csv_buffer.getvalue())
+
+
+def read_sample_data(ticker):
+    """
+    Reads sample_data/SPY.csv and performs minimal post-processing.
+
+    :return: pd.DataFrame with DatetimeIndex
+    """
+    path = _get_sample_data_path(ticker)
+    df = pd.read_csv(path)
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.set_index("Date")
+    return df
