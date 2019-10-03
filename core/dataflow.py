@@ -28,11 +28,7 @@ def draw(graph):
     pos = nx.kamada_kawai_layout(graph)
     flipped_pos = {node: (-x, y) for (node, (x, y)) in pos.items()}
     nx.draw_networkx(
-        graph,
-        pos=flipped_pos,
-        node_size=3000,
-        arrowsize=30,
-        width=1.5,
+        graph, pos=flipped_pos, node_size=3000, arrowsize=30, width=1.5
     )
 
 
@@ -68,6 +64,7 @@ class SkLearnNode(Node, abc.ABC):
     Nodes may store a dictionary of information for each method following the
     method's invocation.
     """
+
     def __init__(self, nid, inputs=None, outputs=None):
         if inputs is None:
             inputs = ["df_in"]
@@ -90,8 +87,7 @@ class SkLearnNode(Node, abc.ABC):
         if method in self._info.keys():
             return self._info[method]
         else:
-            _LOG.warning("No info found for nid=%s, method=%s", self.nid,
-                         method)
+            _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
             return None
 
     def _set_info(self, method, values):
@@ -105,6 +101,7 @@ class DataSource(SkLearnNode, abc.ABC):
     """
     A source node that can be configured for cross-validation.
     """
+
     def __init__(self, nid, outputs=None):
         if outputs is None:
             outputs = ["df_out"]
@@ -318,16 +315,14 @@ class Model(SkLearnNode):
         datetimes = df_in[self.datetime_col].values
         self.model = reg.fit(x_train, y_train)
         y_hat = self.model.predict(x_train)
-        x_train = pd.DataFrame(x_train.values, index=datetimes,
-                               columns=self.x_vars)
-        y_train = pd.Series(y_train.values, index=datetimes,
-                            name=self.y_var)
-        y_hat = pd.Series(y_hat, index=datetimes,
-                          name=self.y_var + "_hat")
+        x_train = pd.DataFrame(
+            x_train.values, index=datetimes, columns=self.x_vars
+        )
+        y_train = pd.Series(y_train.values, index=datetimes, name=self.y_var)
+        y_hat = pd.Series(y_hat, index=datetimes, name=self.y_var + "_hat")
         #
         info = collections.OrderedDict()
-        info["model_coeffs"] = [self.model.intercept_] + \
-                                self.model.coef_.tolist()
+        info["model_coeffs"] = [self.model.intercept_] + self.model.coef_.tolist()
         info["model_x_vars"] = ["intercept"] + self.x_vars
         info["stats"] = self._stats(df_in)
         info["model_perf"] = self._model_perf(x_train, y_train, y_hat)
@@ -339,12 +334,9 @@ class Model(SkLearnNode):
         y_test = df_in[self.y_var]
         y_hat = self.model.predict(x_test)
         datetimes = df_in[self.datetime_col].values
-        x_test = pd.DataFrame(x_test.values, datetimes,
-                              columns=self.x_vars)
-        y_test = pd.Series(y_test.values, datetimes,
-                           name=self.y_var)
-        y_hat = pd.Series(y_hat, datetimes,
-                          name=self.y_var + "_hat")
+        x_test = pd.DataFrame(x_test.values, datetimes, columns=self.x_vars)
+        y_test = pd.Series(y_test.values, datetimes, name=self.y_var)
+        y_hat = pd.Series(y_hat, datetimes, name=self.y_var + "_hat")
         #
         info = collections.OrderedDict()
         info["stats"] = self._stats(df_in)
@@ -365,8 +357,9 @@ class Model(SkLearnNode):
         info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
         pnl_rets = y * y_hat
         info["pnl_rets"] = pnl_rets
-        info["sr"] = fin.sharpe_ratio(pnl_rets.resample("1B").sum(),
-                                      time_scaling=252)
+        info["sr"] = fin.sharpe_ratio(
+            pnl_rets.resample("1B").sum(), time_scaling=252
+        )
         return info
 
 
@@ -413,14 +406,19 @@ def process_result_bundle(result_bundle):
     for split in result_bundle.keys():
         split_names.append(split)
         model_coeffs.append(
-            result_bundle[split]["stages"]["model"]["fit"]["model_coeffs"])
-        model_x_vars.append(
-            result_bundle[split]["stages"]["model"]["fit"]["model_x_vars"])
-        pnl_rets.append(
-                result_bundle[split]["stages"]["model"]["predict"]["model_perf"]["pnl_rets"]
+            result_bundle[split]["stages"]["model"]["fit"]["model_coeffs"]
         )
-    model_df = pd.DataFrame(model_coeffs, index=split_names,
-                            columns=model_x_vars[0])
+        model_x_vars.append(
+            result_bundle[split]["stages"]["model"]["fit"]["model_x_vars"]
+        )
+        pnl_rets.append(
+            result_bundle[split]["stages"]["model"]["predict"]["model_perf"][
+                "pnl_rets"
+            ]
+        )
+    model_df = pd.DataFrame(
+        model_coeffs, index=split_names, columns=model_x_vars[0]
+    )
     pnl_rets = pd.concat(pnl_rets)
     sr = fin.sharpe_ratio(pnl_rets, time_scaling=252)
     info["model_df"] = copy.copy(model_df)
@@ -459,14 +457,14 @@ def extract_leaf_values(nested, key):
     d = {}
     for item in get_nested_dict_iterator(nested):
         if item[0][-1] == key:
-            d['.'.join(item[0])] = item[1]
+            d[".".join(item[0])] = item[1]
     return d
 
 
 def flatten_nested_dict(nested):
     d = {}
     for item in get_nested_dict_iterator(nested):
-        d['.'.join(item[0])] = item[1]
+        d[".".join(item[0])] = item[1]
     return d
 
 
