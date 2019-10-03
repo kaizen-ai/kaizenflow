@@ -6,17 +6,15 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python [conda env:.conda-p1_develop] *
 #     language: python
-#     name: python3
+#     name: conda-env-.conda-p1_develop-py
 # ---
 
 # %% [markdown]
 # ## Import
-
-# %%
 
 # %%
 # %load_ext autoreload
@@ -24,13 +22,22 @@
 import logging
 import os
 
+from matplotlib import pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
+sns.set()
 
 import core.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
+import vendors.particle_one.PartTask269_liquidity_analysis_utils as lau
 import helpers.printing as pri
 import vendors.kibot.utils as kut
+
+# %%
+from pylab import rcParams
+rcParams['figure.figsize'] = (20, 5)
 
 # %%
 print(env.get_system_signature())
@@ -66,10 +73,82 @@ print(df4.head(3))
 print(df4["Exchange"].unique())
 
 # %% [markdown]
-# ## Explore metadata
+# # Load product specs
 
 # %%
-mask = ["GAS" in d or "OIL" in d for d in df4["Description"]]
+# TODO (Julia): After PartTask268_PRICE_Download_metadata_from_CME
+# is merged into master, replace this with a reader
+_PRODUCT_SPECS_PATH = "/data/prices/product_slate_export_with_contract_specs_20190905.csv"
+product_specs = pd.read_csv(_PRODUCT_SPECS_PATH)
+
+# %%
+product_specs.head()
+
+# %%
+product_specs.info()
+
+# %% [markdown]
+# # Explore metadata
+
+# %%
+df4['Exchange'].value_counts()
+
+# %%
+df3['Exchange'].value_counts()
+
+# %% [markdown]
+# Kibot only has the CME group futures.
+
+# %%
+product_specs['Globex'].head()
+
+# %%
+daily_futures_w_ext = os.listdir(
+    "/data/kibot/All_Futures_Continuous_Contracts_daily/")
+
+# %%
+daily_futures_w_ext[:5]
+
+# %%
+daily_futures = list(map(lambda x: x[:-7], daily_futures_w_ext))
+daily_futures[:5]
+
+# %%
+len(set(daily_futures)), df3['SymbolBase'].nunique()
+
+# %%
+np.setdiff1d(df3['SymbolBase'].dropna().values, daily_futures)
+
+# %%
+product_specs['Globex'].nunique()
+
+# %%
+np.intersect1d(product_specs['Globex'].dropna().unique(),
+               df3['SymbolBase'].dropna().values)
+
+# %%
+np.intersect1d(product_specs['Globex'].dropna().unique(),
+               df3['SymbolBase'].dropna().values).shape
+
+# %%
+np.intersect1d(product_specs['Globex'].dropna().unique(),
+               df2['Symbol'].dropna().values).shape
+
+# %%
+np.intersect1d(product_specs['Globex'].dropna().unique(),
+               df1['Symbol'].dropna().values).shape
+
+# %%
+product_specs[product_specs['Globex'].isna()]
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+mask = ["GAS" in d or "OIL" in d for d in df4["Description"].astype(str)]
 print(sum(mask))
 print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
 
@@ -77,7 +156,7 @@ print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
 df4[mask]["Symbol"].values
 
 # %% [markdown]
-# # Read data
+# # Read config
 
 # %%
 config = cfg.Config.from_env()
@@ -100,10 +179,8 @@ print(config)
 
 # %%
 all_symbols = [
-    futures.replace(".csv.gz", "")
-    for futures in os.listdir(
-        "/data/kibot/All_Futures_Continuous_Contracts_daily"
-    )
+    futures.replace(".csv.gz", "") for futures in os.listdir(
+        "/data/kibot/All_Futures_Continuous_Contracts_daily")
 ]
 
 # %%
@@ -114,8 +191,7 @@ symbols
 file_name = "/data/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
 
 daily_price_dict_df = kut.read_multiple_symbol_data(
-    symbols, file_name, nrows=config["read_data"]["nrows"]
-)
+    symbols, file_name, nrows=config["read_data"]["nrows"])
 
 daily_price_dict_df["CL"].tail(2)
 
@@ -126,36 +202,99 @@ daily_price_dict_df["CL"].tail(2)
 # ## Sum volume
 
 # %%
-daily_volume_sum_dict = {
-    symbol: daily_prices_symbol["vol"].sum()
-    for symbol, daily_prices_symbol in daily_price_dict_df.items()
-}
-
-# %%
-daily_volume_sum_df = pd.DataFrame.from_dict(
-    daily_volume_sum_dict, orient="index", columns=["sum_vol"]
-)
-daily_volume_sum_df.index.name = "symbol"
-
-# %%
-daily_volume_sum_df.sort_values("sum_vol", ascending=False)
+daily_vol = lau.get_sum_daily_volume(daily_price_dict_df)
+daily_vol.sort_values("sum_vol", ascending=False)
 
 # %% [markdown]
 # ## Mean volume
 
 # %%
-daily_volume_mean_dict = {
-    symbol: daily_prices_symbol["vol"].mean()
-    for symbol, daily_prices_symbol in daily_price_dict_df.items()
-}
+mean_vol = lau.get_mean_daily_volume(daily_price_dict_df)
+mean_vol.sort_values("mean_vol", ascending=False)
+
+# %% [markdown]
+# # Study volume
 
 # %%
-daily_volume_mean_df = pd.DataFrame.from_dict(
-    daily_volume_mean_dict, orient="index", columns=["mean_vol"]
-)
-daily_volume_mean_df.index.name = "symbol"
+symbol = 'CL'
 
 # %%
-daily_volume_mean_df.sort_values("mean_vol", ascending=False)
+vs = lau.VolumeStudy(symbol, n_rows=None)
+
+# %%
+vs.execute()
+
+# %% [markdown]
+# ## How is the volume related to the open interest from the metadata?
+
+# %%
+product_specs.head()
+
+# %%
+product_specs[product_specs['Globex'] == symbol]['Open Interest'].values
+
+# %%
+product_specs[product_specs['Globex'] == symbol]['Volume'].values
+
+# %%
+vs.daily_prices['vol'].max()
+
+# %%
+vs.minutely_prices['vol'].max()
+
+# %% [markdown]
+# # CME mapping
+
+# %% [markdown]
+# ## Groups overview
+
+# %%
+pc = lau.ProductSpecs()
+
+# %%
+pc.product_specs.info()
+
+# %%
+pc.product_specs['Product Group'].value_counts().plot(kind='bar', rot=0)
+plt.title('Number of futures for each product group in CME')
+plt.show()
+
+# %%
+pc.product_specs['Sub Group'].value_counts().plot(kind='bar')
+plt.xticks(ha='right', rotation=30, rotation_mode='anchor')
+plt.title('Number of futures for each sub group in CME')
+plt.show()
+
+# %%
+pc.product_specs['Category'].astype(str).value_counts()
+
+# %%
+pc.product_specs['Sub Category'].astype(str).value_counts()
+
+# %% [markdown]
+# ## By symbol
+
+# %%
+pc.get_metadata_symbol(symbol)
+
+# %%
+pc.get_product_group(symbol)
+
+# %%
+pc.get_trading_hours(symbol)
+
+# %% [markdown]
+# ## For product group
+
+# %%
+energy_symbols = pc.get_symbols_product_group('Energy').values
+print(energy_symbols.shape)
+energy_symbols[:4]
+
+# %%
+np.intersect1d(energy_symbols, daily_futures)
+
+# %%
+np.intersect1d(energy_symbols, daily_futures).shape
 
 # %%
