@@ -175,11 +175,16 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
     :return: None
     """
     dbg.dassert_exists(csv_dir)
-    # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
     filenames = os.listdir(csv_dir)
     for filename in filenames:
-        # Remove .csv and add .pq.
-        pq_filename = filename[:-4] + ".pq"
+        # Remove .csv/.csv.gz and add .pq.
+        if filename.endswith(".csv"):
+            pq_filename = filename[:-4] + ".pq"
+        elif filename.endswith(".csv.gz"):
+            pq_filename = filename[:-7] + ".pq"
+        else:
+            _LOG.info("Skipping filename=%s", filename)
+            continue
         convert_csv_to_pq(
             os.path.join(csv_dir, filename),
             os.path.join(pq_dir, pq_filename),
