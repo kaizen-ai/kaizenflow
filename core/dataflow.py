@@ -248,23 +248,23 @@ class PctReturns(Transformer):
 class Zscore(Transformer):
     def __init__(self, nid, tau, demean, delay, cols=None):
         super().__init__(nid)
-        self.tau = tau
-        self.demean = demean
-        self.delay = delay
-        self.cols = cols
+        self._tau = tau
+        self._demean = demean
+        self._delay = delay
+        self._cols = cols
 
     def _transform(self, df):
         # Copy input to merge with output before returning.
         df_in = df.copy()
         # Restrict columns if requested.
         df = df.copy()
-        if self.cols is not None:
-            df = df[self.cols]
+        if self._cols is not None:
+            df = df[self._cols]
         # Z-score and name columns.
         df_out = sigp.rolling_zscore(df,
-                                     tau=self.tau,
-                                     demean=self.demean,
-                                     delay=self.delay)
+                                     tau=self._tau,
+                                     demean=self._demean,
+                                     delay=self._delay)
         df_out.rename(columns=lambda x: "z" + x, inplace=True)
         dbg.dassert(df_out.columns.intersection(df_in.columns).empty,
                     "Input dataframe has shared column names with zscored "
