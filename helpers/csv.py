@@ -165,29 +165,6 @@ def convert_csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     df.to_parquet(pq_path)
 
 
-def _maybe_remove_extension(filename, extension):
-    """
-    Attempt to remove `extension` from `filename`.
-
-    :param filename: str filename
-    :param extension: e.g., ".csv"
-    :return: returns a copy of filename but without `extension`, if applicable,
-        else returns `None`.
-    """
-    dbg.dassert_isinstance(filename, str)
-    # Assert filename is not empty
-    dbg.dassert(filename)
-    #
-    dbg.dassert_isinstance(extension, str)
-    dbg.dassert(extension.startswith("."),
-                "filename extension expected to start with `.`")
-    #
-    if filename.endswith(extension):
-        return filename[:-len(extension)]
-    else:
-        return None
-
-
 def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
     """
     Applies `convert_csv_to_pq` to all files in csv_dir
@@ -198,17 +175,11 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
     :return: None
     """
     dbg.dassert_exists(csv_dir)
+    # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
     filenames = os.listdir(csv_dir)
     for filename in filenames:
-        # Remove .csv/.csv.gz and add .pq.
-        for extension in [".csv", ".csv.gz"]:
-            csv_stem = _maybe_remove_extension(filename, extension)
-        if csv_stem is None:
-            # TODO(Paul): Consider making this a warning.
-            _LOG.info("Skipping filename=%s", csv_stem)
-            continue
-        else:
-            pq_filename = base_filename + ".pq"
+        # Remove .csv and add .pq.
+        pq_filename = filename[:-4] + ".pq"
         convert_csv_to_pq(
             os.path.join(csv_dir, filename),
             os.path.join(pq_dir, pq_filename),
