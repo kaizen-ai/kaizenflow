@@ -1,0 +1,12 @@
+{
+    "directed": true,
+    "graph": {},
+    "links": [],
+    "multigraph": false,
+    "nodes": [
+        {
+            "id": "n1",
+            "stage": "Node"
+        }
+    ]
+}

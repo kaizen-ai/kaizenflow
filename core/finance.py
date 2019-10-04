@@ -119,6 +119,8 @@ def resample(df, agg_interval):
     return rets
 
 
+# TODO(GPP): DEPRECATE. PyCharm doesn't find any callers, and we are
+# using "result bundles" differently now.
 def filter_by_time(
     df,
     start_dt,
@@ -205,7 +207,8 @@ def log_rets_to_rets(df):
 def sharpe_ratio(df, time_scaling=1):
     sr = df.mean() / df.std()
     sr *= np.sqrt(time_scaling)
-    sr.name = SR_COL
+    if isinstance(sr, pd.Series):
+        sr.name = SR_COL
     return sr
 
 

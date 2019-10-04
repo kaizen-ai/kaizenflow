@@ -15,6 +15,11 @@ Convert a txt file into a PDF / HTML using pandoc.
 > pandoc.py --input notes/IN_PROGRESS/math.The_hundred_page_ML_book.Burkov.2019.txt -a pdf --no_cleanup --no_cleanup_before --no_run_latex_again --no_open
 """
 
+# TODO(gp):
+#  - clean up the file_ file_out logic and make it a pipeline
+#  - factor out the logic from linter.py about actions and use it everywhere
+
+
 import argparse
 import logging
 import os
@@ -189,11 +194,10 @@ def _copy_to_gdrive(args, file_name, ext):
         gdrive_dir = "/Users/saggese/GoogleDrive/pdf_notes"
     # Copy.
     dbg.dassert_dir_exists(gdrive_dir)
-    dst_file = (
-        gdrive_dir
-        + "/"
-        + os.path.basename(args.input).replace(".txt", "." + file_name)
-    )
+    _LOG.debug("gdrive_dir=%s", gdrive_dir)
+    basename = os.path.basename(args.input).replace(".txt", "." + ext)
+    _LOG.debug("basename=%s", basename)
+    dst_file = os.path.join(gdrive_dir, basename)
     cmd = "cp -a %s %s" % (file_name, dst_file)
     _ = si.system(cmd, log_level=logging.INFO)
     _LOG.debug("Saved file='%s' to gdrive", dst_file)
@@ -288,7 +292,8 @@ def _pandoc(args, cmd_line):
     # Copy to gdrive.
     #
     if not args.no_gdrive:
-        _copy_to_gdrive(args, file_final)
+        ext = args.action
+        _copy_to_gdrive(args, file_final, ext)
     else:
         _LOG.warning("Skipping: copy to gdrive")
     #
@@ -352,7 +357,7 @@ def _parse():
     parser.add_argument("--no_gdrive", action="store_true", default=False)
     parser.add_argument(
         "--gdrive_dir",
-        action="store_true",
+        action="store",
         default=None,
         help="Directory where to save the output",
     )

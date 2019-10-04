@@ -17,6 +17,8 @@ import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.system_interaction as si
 
+from io import StringIO
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -236,4 +238,56 @@ def get_ishares_fundamentals():
         data_tmp,
         columns="symbol descr price assets avg_volume asset_class".split(),
     )
+    return df
+
+
+def _get_sample_data_path(ticker):
+    my_path = os.path.realpath(__file__)
+    my_dir, _ = os.path.split(my_path)
+    rel_path = "sample_data/%s.csv" % ticker
+    path = os.path.join(my_dir, rel_path)
+    dbg.dassert_exists(path,
+                       "No sample data found for ticker=%s", ticker)
+    return path
+
+
+def _generate_sample_data():
+    """
+    Reads SPY data and writes a 10-year subset.
+
+    Column ordering is preserved. This sample data can be used to
+      - Understand the raw data format
+      - Provide a source of market data for unit/integration tests.
+
+    > du -h SPY.csv
+    324K    SPY.csv
+    """
+    ticker = "SPY"
+    # Read SPY data.
+    source_path = "s3://alphamatic/etf/data/%s.csv.gz" % ticker
+    df = pd.read_csv(source_path)
+    # Convert 'Date' column to datetime and filter.
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.set_index("Date")
+    df = df.loc["2007":"2016"]
+    df.reset_index(inplace=True)
+    # Write as csv to buffer.
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    # Write to file.
+    out_path = _get_sample_data_path(ticker)
+    _LOG.info("Writing to path=%s", out_path)
+    io_.to_file(out_path, csv_buffer.getvalue())
+
+
+def read_sample_data(ticker):
+    """
+    Reads sample_data/SPY.csv and performs minimal post-processing.
+
+    :return: pd.DataFrame with DatetimeIndex
+    """
+    path = _get_sample_data_path(ticker)
+    df = pd.read_csv(path)
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.set_index("Date")
     return df
