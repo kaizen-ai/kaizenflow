@@ -542,15 +542,14 @@ def _flake8(file_name, pedantic, check_if_possible):
     # Remove some errors.
     is_jupytext_code = is_paired_jupytext_file(file_name)
     _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
-    output_tmp = []
     if is_jupytext_code:
+        output_tmp = []
         for l in output:
             # F821 undefined name 'display' [flake8]
             if "F821" in l and "undefined name 'display'" in l:
                 continue
             output_tmp.append(l)
-    output = output_tmp
-    #
+        output = output_tmp
     return output
 
 
@@ -763,17 +762,17 @@ def _pylint(file_name, pedantic, check_if_possible):
     cmd = executable + " %s %s" % (opts, file_name)
     output = _tee(cmd, executable, abort_on_error=False)
     # Remove some errors.
-    output_tmp = []
     if is_jupytext_code:
+        output_tmp = []
         for l in output:
             # [E0602(undefined-variable), ] Undefined variable 'display'
             if "E0602" in l and "Undefined variable 'display'" in l:
                 continue
             output_tmp.append(l)
-    output = output_tmp
+        output = output_tmp
     #
     output.insert(0, "* file_name=%s" % file_name)
-    output = [l for l in output if "-" * 20 not in l]
+    output = [l for l in output if ("-" * 20) not in l]
     return output
 
 
