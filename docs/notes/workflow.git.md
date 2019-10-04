@@ -196,127 +196,136 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 
 - Merged changes are tested in the Jenkins build
 
-### Branch workflow best practices
+# Branch workflow best practices
 
-## Pull changes from master
-```bash
-> git checkout master
-> git pull
-```
+1) Pull changes from master
+    - You want to branch from the latest version of master to avoid a merge
+    ```bash
+    > git checkout master
+    > git pull
+    ```
 
-## Create and checkout branch
-```bash
-> git branch my_feature
-> git checkout my_feature
-```
+2) Go to the branch
+    - Create and checkout branch
+        ```bash
+        > git branch my_feature
+        > git checkout my_feature
+        ```
+    - You can also create and branch in one command with:
+        ```bash
+        > git checkout -b my_feature
+        ```
+    - From this point on you commit only in the branch and changes to master
+      will not affect your branch
+  
+3) Push your commits upstream
 
-- You can also create and branch in one command with:
+    - When you want your code to be pushed to the server (e.g., to back up or to
+      share the changes with someone else), you need to push the branch upstream
+        ```bash
+        > git push -u origin my_feature
+        ...
+        30194fc..820b296  my-feature -> my-feature
+        Branch 'my-feature' set up to track remote branch 'my-feature' from 'origin'.
+        ```
+    - Note that `-u` tells git to set the upstream of this branch to origin
+    
+    - This operation is needed only the first time you create the branch, but
+      not for each `git push`
 
+4) Commit your code
+    - When you commit, commits are local and stay on your computer
+        ```bash
+        > git status
+        On branch my-feature
+        ...
 
-```
-> git checkout -b my_feature
-```
+        > git add ...
 
-- From this point on you commit only in the branch and changes to master will not
-  affect your branch
+        > git commit
+        [my-feature 820b296] My feature is awesome!
+        ```
+    - Commits stay local until you tell explicitly git to "upload" the commits
+      through `git push`
 
-## Commit your code
+5) Update your branch with changes from `master`
+    - If your branch lives long, you want to apply changes made on master to
+      show on your branch
+        - E.g., you can integrate daily by using merge or rebase
+        - We suggest **rebase your private branch**
+        
+    5.a) Rebase flow
+    - You can rebase into `master`, i.e., you re-apply your changes to
+       `master`
+    - Not the other way around: that would be a disaster!
+        ```bash
+        > git checkout my-feature
+        
+        > git ll ..origin/master
+        // You should see that you have 
 
-- When you commit, commits are local and stay on your computer
-```
-> git status
-On branch my-feature
-...
+        > > git ll origin/master..
+        // You can see that you are ahead of master
+        
+        > git rebase master
 
-> git add ...
+        > git ll ..origin/master
+        // Now you see that there is nothing in master you don't have
 
-> git commit
-[my-feature 820b296] My feature is awesome!
-```
+        > > git ll origin/master..
+        // You can see that you are ahead of master
+        ```
 
-- Commits stay local until you tell explicitly git to "upload" the commits through push
+    5.b) Merge flow
+    
+        - Assume your branch is clean
+            - E.g., everything is committed, or stashed
 
-## Push your commits upstream
+        - Pull changes from `master` on the remote repo
+            ```bash
+            > git checkout master
+            > git pull
+            ```
 
-- When you want your code to be pushed to the server (e.g., to back up or to
-  share the changes with someone else), you need to push the branch
-```bash
-> git push -u origin my_feature
-...
-30194fc..820b296  my-feature -> my-feature
-Branch 'my-feature' set up to track remote branch 'my-feature' from 'origin'.
-```
+        - Checkout your feature branch
+            ```bash
+            > git checkout my_feature
+            ```
 
-- Note that `-u` tells git to set the upstream of this branch to origin
+        - Merge stuff from `master` to `my_feature`
+            ```bash
+            > git merge master --no-ff
+            ```
 
-- It is needed only the first time you do it
-
-## Update your branch with changes from master
-- If your branch lives long, you want to apply changes made on master to show on
-  your branch
-- E.g., you can integrate daily by using merge or rebase
-
-1) Assume your branch is clean
-- E.g., everything is committed, or stashed
-
-2) Pull changes from master on the remote repo
-```bash
-> git checkout master
-> git pull
-```
-
-3) Checkout your feature branch
-```bash
-> git checkout my_feature
-```
-
-4) Merge stuff from master to `my_feature`
-```
-> git merge master --no-ff
-```
-
-... editor will open a message for the merge commit ...
-
-- You can also rebase into master, i.e., you re-apply your changes to master
-    - Not the other way around: that would be a disaster
-```bash
-> git rebase master
-
-> git ll ..origin/master
-// Now you see that there is nothing in master you don't have
-
-> > git ll origin/master..
-// You can see that you are ahead of master
-```
+        ... editor will open a message for the merge commit ...
 
 ## Create a pull request / ReviewBoard review
-- Create an Upsource review
 - You can raise a pull-request to merge your code into master
     - Go to the branch on the web interface and push "Compare & pull request"
 
-- The procedure for manual merges is as follows. Do not merge yourself unless
-  explicitly requested by a reviewer.
+- The procedure for manual merges is as follows
+- Do not merge yourself unless explicitly requested by a reviewer
 
-1) Pull changes from remote master branch
-```bash
-> git checkout master
-> git pull
-```
+1) Pull changes from remote `master` branch
+    ```bash
+    > git checkout master
+    > git pull
+    ```
 
-2) Merge your branch into master without fast-forward
-```bash
-> git merge --no-ff my-feature
-```
+2) Merge your branch into `master` without fast-forward
+    ```bash
+    > git merge --no-ff my-feature
+    ```
 
-3) Push the newly merged master
-```bash
-> git push
-```
+3) Push the newly merged `master`
+    ```bash
+    > git push
+    ```
 
-4) Delete the branch, if you are done with it
-```bash
-> git branch -d my-feature
-```
+4) Delete the branch, if you are done with it:
+    ```bash
+    > git branch -d my-feature
+    ```
 
 # TODO(gp):
 - How to sync both git repos?

@@ -306,7 +306,7 @@ _LOG.warning(...)
     - is evil in many other ways (see
       [StackOverflow](https://stackoverflow.com/questions/2386714/why-is-import-bad))
 
-## Cleaning up the evil "import *"
+## Cleaning up the evil `import *`
 - To clean up the mess you can:
     - for notebooks
         - find & replace (e.g., using jupytext and pycharm)
@@ -319,29 +319,31 @@ _LOG.warning(...)
   tweak the path of symbols exported by a library
     - This is an advanced topic and you should rarely use it
 
-## Prefer "import ... as ..."
+## Avoid `from ... import ...`
 
-- Importing many different functions, like
-```
-from edgar.officer_titles import read_documents, read_test_set, \
-    get_titles, split_titles, get_titles_overview, \
-    word_pattern, symbol_pattern, exact_title, \
-    apply_patterns_to_texts, extract_canonical_names, \
-    get_rules_coverage, text_contains_only_canonical_titles, \
-    compute_stats, NON_MEANING_PATTERNS_BEFORE, patterns
-```
+- Importing many different functions, like:
+    - **Bad**
+    ```python
+    from edgar.officer_titles import read_documents, read_test_set, \
+        get_titles, split_titles, get_titles_overview, \
+        word_pattern, symbol_pattern, exact_title, \
+        apply_patterns_to_texts, extract_canonical_names, \
+        get_rules_coverage, text_contains_only_canonical_titles, \
+        compute_stats, NON_MEANING_PATTERNS_BEFORE, patterns
+    ```
+    - creates lots of maintenance effort
+        - e.g., anytime you want a new function you need to update the import
+          statement
+    - creates potential collisions of the same name
+        - e.g., lots of modules have a `read_data()` function
+    - importing directly in the namespace loses information about the module
+        - e.g.,` read_documents()` is not clear: what documents?
+        - `np.read_documents()` at least give information of which packages
+          is it coming from
+          
+## Examples of imports
 
-- creates lots of maintenance effort, e.g., anytime you want a new function you
-  need to update the import statement
-- creates potential collisions of the same name (e.g., lots of modules have a
-  `read_data()` function)
-- importing directly in the namespace loses information about the module
-    - E.g.,` read_documents()` is not clear: what documents?
-    - Instead `np.read_documents()` at least give information of which packages
-      is it coming from
-
-- Examples of how imports should be
-
+- Example 1
     - **Bad**
        ```python
        from edgar.shared import edgar_api as api
@@ -350,6 +352,7 @@ from edgar.officer_titles import read_documents, read_test_set, \
        import edgar.shared.edgar_api as edg_api
        ```
 
+- Example 2
    - **Bad**
         ```python
         from edgar.shared import headers_extractor as he
@@ -358,6 +361,8 @@ from edgar.officer_titles import read_documents, read_test_set, \
         ```python
         import edgar.shared.headers_extractor as he
         ```
+      
+- Example 3
     - **Bad**
         ```python
         from helpers import dbg
@@ -366,6 +371,8 @@ from edgar.officer_titles import read_documents, read_test_set, \
         ```python
         import helpers.dbg as dbg
         ```
+      
+- Example 4
     - **Bad**
         ```python
        from helpers.misc import check_or_create_dir, get_timestamp
@@ -375,7 +382,7 @@ from edgar.officer_titles import read_documents, read_test_set, \
         import helpers.misc as hm
         ```
 
-## Always import with a full path from the root of the repo
+## Always import with a full path from the root of the repo / submodule
 
 - **Bad**
     ```python
