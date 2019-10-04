@@ -1,4 +1,10 @@
-#!/usr/bin/env python
+"""
+Contain all the code needed to interact with the outside world, e.g., through
+system commands, env vars, ...
+
+# Import as:
+import helpers.system_interaction as si
+"""
 
 import logging
 import os
@@ -56,6 +62,14 @@ def get_os_name():
     # This is not compatible with python2.7
     # return res.sysname
     return res[0]
+
+
+def get_env_var(env_var_name):
+    if env_var_name not in os.environ:
+        msg = "Can't find '%s': re-run dev_scripts/setenv.sh" % env_var_name
+        _LOG.error(msg)
+        raise RuntimeError(msg)
+    return os.environ[env_var_name]
 
 
 # ##############################################################################
@@ -336,7 +350,7 @@ def kill_process(get_pids, timeout_in_secs=5, polltime_in_secs=0.1):
 # ##############################################################################
 
 
-def query_yes_no(question, abort_on_no=True):
+def query_yes_no(question, abort_on_no):
     """
     Ask a yes/no question via raw_input() and return their answer.
 

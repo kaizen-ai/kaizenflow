@@ -1,7 +1,7 @@
 # Style guide references
 
 - We care about at consistency rather than arguing about which approach is better
-  - E.g., see "tab vs space" flame-war from the 90s
+    - E.g., see "tab vs space" flame-war from the 90s
 - Unless explicitly noted we prefer to follow the style guide below
 
 - As a rule of thumb we default to Google style unless Python community (in the
@@ -13,8 +13,8 @@
   - `https://google.github.io/styleguide/pyguide.html`
 
 - Commenting style
-  - `http://www.sphinx-doc.org/en/master/`
-  - `https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html`
+    - `http://www.sphinx-doc.org/en/master/`
+    - `https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html`
 
 - Code convention PEP8
     - `https://www.python.org/dev/peps/pep-0008/`

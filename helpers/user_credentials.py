@@ -129,23 +129,56 @@ def get_credentials():
         # Paul.
         git_user_name = "paul"
         git_user_email = "smith.paul.anthony@gmail.com"
-        conda_sh_path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/Users/paul/.conda/envs"
+        if server_name == "Pauls-MBP":
+            conda_sh_path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/Users/paul/.conda/envs"
     elif user_name == "gad":
         # Sergey.
-        git_user_name = "gad26032"
-        git_user_email = "malanin@particle.one"
-        conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/home/gad/.conda/envs"
-        jupyter_port = 9111
+        if server_name == "ip-172-31-16-23":
+            git_user_name = "gad26032"
+            git_user_email = "malanin@particle.one"
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/gad/.conda/envs"
+            jupyter_port = 9111
+        if server_name == "particle-laptop":
+            git_user_name = "gad26032"
+            git_user_email = "malanin@particle.one"
+            conda_sh_path = "/home/gad/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/gad/.conda/envs"
+            jupyter_port = 9112
     elif user_name == "julia":
         # Julia.
         git_user_name = "Julia"
         git_user_email = "julia@particle.one"
+        jupyter_port = 9997
         if server_name == "vostro":
             # Laptop.
             conda_sh_path = "/home/julia/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/julia/.conda/envs"
+    elif user_name == "sonniki":
+        # Sonya.
+        git_user_name = "sonniki"
+        git_user_email = "sonya@particle.one"
+        conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+        conda_env_path = "/home/sonniki/.conda/envs"
+    elif user_name == "liza":
+        # Liza.
+        git_user_name = "lizvladi"
+        git_user_email = "elizaveta@particle.one"
+        jupyter_port = 9992
+        if server_name == "liza-particle-laptop":
+            # Laptop.
+            conda_sh_path = "/home/liza/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/liza/anaconda3/envs"
+    elif user_name == "stas":
+        # Stas.
+        git_user_name = "tsallagov"
+        git_user_email = "stanislav@particle.one"
+        jupyter_port = 9900
+        if server_name == "stas-Vostro-5471":
+            # Laptop.
+            conda_sh_path = "/home/stas/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/stas/anaconda3/envs"
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.

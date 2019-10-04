@@ -14,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
 
-# TODO(gp): Merge env in system_interaction?
+# TODO(gp): Merge env in system_interaction or conda.py? Or split the functions.
 
 
 def _get_version(lib_name):
@@ -136,6 +136,7 @@ def save_env_file(conda_env_name, dir_name):
     return msg, dst_file
 
 
+# TODO(gp): Move this to a different executable.
 def _main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
