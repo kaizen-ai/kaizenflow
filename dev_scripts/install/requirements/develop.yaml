@@ -1,22 +1,24 @@
 name: amp_develop
+channels:
+  - conda-forge
+  - quantopian
 dependencies:
   ## ############################################################################
-  ## python
+  ## python dev
   ## ############################################################################
-  #python >= 2.7
-  - python >= 3.6
-  #certifi
-  #pytables
+  #- certifi
+  #- pytables
+  #- six
+  #- xlrd
+  #- xmltodict
   - pytest
   - pytest-cov
   - pytest-instafail
   - pytest-xdist
+  - python >= 3.6
   - python-dateutil
   - pytz
-  #six
   - tqdm
-  #xlrd
-  #xmltodict
   ## ############################################################################
   ## pydata
   ## ############################################################################
@@ -35,25 +37,24 @@ dependencies:
   ## ############################################################################
   ## jupyter
   ## ############################################################################
+  - ipykernel
   - jupyter
   - jupyter_contrib_nbextensions
   - jupyter_nbextensions_configurator
   - jupytext
-  - ipykernel
   - nb_conda
   - nb_conda_kernels
   ## ############################################################################
   ## Linter
   ## ############################################################################
+  #- pyment                   # conda install -c akode pyment
+  #- yapf                    # Superseded by black.
   - autoflake
+  - black
   - flake8
   - isort
   - pydocstyle
   - pylint
-  #yapf                    # Superseded by black.
-  - black
-  # conda install -c akode pyment
-  # pyment
   ## ############################################################################
   ## Latex
   ## ############################################################################
@@ -69,28 +70,32 @@ dependencies:
   ## ############################################################################
   ## pymc3
   ## ############################################################################
+  #- pydot
+  #- python-graphviz        # To plot pymc3 graphical models.
   - arviz                   # Needed by pymc3 for some plotting functionality.
   - mkl-service             # pymc3 expects it; not sure why conda doesn't solve for it.
   - pymc3
-  #pydot
-  #python-graphviz        # To plot pymc3 graphical models.
-  ## ############################################################################
-  ## Trading
-  ## ############################################################################
-  # conda install -c quantopian trading-calendars
-  #trading-calendars
-  #pip install ta          # Technical analysis package.
   ## ############################################################################
   ## Misc
   ## ############################################################################
-  # pip install RBTools
-  #gdrive                  # To interact with Google Drive.
-  #pymongo
-  #rclone                  # To back up Google Drive (conda install -c hcc rclone)
+  #- gdrive                  # To interact with Google Drive.
+  #- pymongo
+  #- rclone                  # To back up Google Drive (conda install -c hcc rclone)
+  - git                     # To use latest git client.
   - beautifulsoup4
   - csvkit                  # To process csv.
   - joblib
   - jq                      # To process json.
+  - pip
   - pymongo
   - quandl
   - ruby
+  - pip:
+      ## ############################################################################
+      ## Trading
+      ## ############################################################################
+      #- trading-calendars      # conda install -c quantopian trading-calendars, or pip install ...
+      #- pip install ta          # Technical analysis package.
+         #- ta
+     - trading-calendars
+     - RBTools

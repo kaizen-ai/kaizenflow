@@ -69,6 +69,6 @@
     ```yaml
     name: amp_develop
     channels:
-      #- quantopian
+      - quantopian
     dependencies:
     ```
