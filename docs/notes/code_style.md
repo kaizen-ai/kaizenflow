@@ -421,6 +421,33 @@ _LOG.warning(...)
     ```
 - In this way your code can run without dependency from your current dir
 
+## Baptizing module import
+
+- Each module that can be imported should have a docstring at the very beginning
+  (before any code) describing how it should be imported
+    ```python
+    """
+    # Import as:
+
+    import helpers.printing as prnt
+    """
+    ```
+- Typically we use 4 letters trying to make the import unique
+    - **Bad**
+        ```python
+        # Import as:
+
+        import nlp.utils as util
+        ```
+    - **Good**
+        ```python
+        # Import as:
+
+        import nlp.utils as nlut
+        ```
+- The goal is to have always the same imports so it's easy to move code around,
+  without collisions
+
 # Python scripts
 
 ## Skeleton for a script
