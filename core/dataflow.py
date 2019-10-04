@@ -381,7 +381,7 @@ class Model(SkLearnNode):
         info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
         pnl_rets = y * y_hat
         info["pnl_rets"] = pnl_rets
-        info["sr"] = fin.sharpe_ratio(
+        info["sr"] = fin.compute_sharpe_ratio(
             pnl_rets.resample("1B").sum(), time_scaling=252
         )
         return info
@@ -446,7 +446,8 @@ def process_result_bundle(result_bundle):
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = fin.sharpe_ratio(pnl_rets.resample("1B").sum(), time_scaling=252)
+    sr = fin.compute_sharpe_ratio(pnl_rets.resample("1B").sum(),
+                                  time_scaling=252)
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
     info["sr"] = copy.copy(sr)
