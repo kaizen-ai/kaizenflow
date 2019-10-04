@@ -269,6 +269,26 @@ _LOG.warning(...)
     dbg.dassert_eq(a, 1, "No info for %s", method)
     ```
 
+## Report as much information as possible in an assertion
+- When using a `dassert_*` you want to give to the user as much information as
+  possible to fix the problem
+    - E.g., if you get an assertion after 8 hours of computation you don't want
+      to have to add some logging and run for 8 hours to just know what happened
+- A `dassert_*` typically prints as much info as possible, but it can't report
+  information that are not visible to it:
+    - **Bad**
+        ```python
+        dbg.dassert(string.startswith('hello'))
+        ```
+        - You don't know what is value of `string` is
+    - **Good**
+        ```python
+        dbg.dassert(string.startswith('hello'), "string='%s'", string)
+        ```
+        - Note that often is useful to add `'` because sometimes there are pesky
+          spaces that make the value unclear or to make the error as readable as
+          possible
+
 # Import
 
 ## Importing code from Git submodule
@@ -381,6 +401,13 @@ _LOG.warning(...)
         ```python
         import helpers.misc as hm
         ```
+
+## Exceptions to the import style
+
+- For `typing` it is ok to do:
+    ```python
+    from typing import Iterable, List
+    ```
 
 ## Always import with a full path from the root of the repo / submodule
 
