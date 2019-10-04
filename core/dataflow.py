@@ -10,6 +10,7 @@ from sklearn import linear_model
 
 import core.features as ftrs
 import core.finance as fin
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
 import amp.vendors.kibot.utils as kut
@@ -245,16 +246,28 @@ class PctReturns(Transformer):
 
 
 class Zscore(Transformer):
-    def __init__(self, nid, style, com):
+    def __init__(self, nid, tau, demean, delay, cols=None):
         super().__init__(nid)
-        self.style = style
-        self.com = com
+        self.tau = tau
+        self.demean = demean
+        self.delay = delay
+        self.cols = cols
 
     def _transform(self, df):
-        # df_out = sigp.rolling_zscore(df, self.tau)
+        df_in = df.copy()
+        df = df.copy()
+        if self.cols is not None:
+            df = df[self.cols]
         info = collections.OrderedDict()
         info["df_info"] = get_df_info_as_string(df)
-        df_out = pip.zscore(df, self.style, self.com)
+        df_out = sigp.rolling_zscore(df,
+                                     tau=self.tau,
+                                     demean=self.demean,
+                                     delay=self.delay)
+        df_out.rename(columns=lambda x: "z" + x, inplace=True)
+        dbg.dassert(df_out.columns.intersection(df_in.columns).empty,
+                    "Input dataframe has shared column names with zscored dataframe.")
+        df_out = df_in.merge(df_out, left_index=True, right_index=True)
         info["df_transformed_info"] = get_df_info_as_string(df_out)
         return df_out, info
 
