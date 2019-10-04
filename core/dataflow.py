@@ -230,7 +230,7 @@ class ReadDataFromKibot(DataSource):
 # functions.
 
 
-# TODO(gp): Pass "ret_0" and "open" through constructor.
+# TODO(Paul): Rename PctChange (not particular to price changes).
 class PctReturns(Transformer):
     def __init__(self, nid, cols=None, col_rename_func=None):
         super().__init__(nid)
@@ -249,7 +249,8 @@ class PctReturns(Transformer):
             df.rename(columns=lambda x: self._col_rename_func(x), inplace=True)
         dbg.dassert(
             df.columns.intersection(df_in.columns).empty,
-            "Input dataframe has shared column names with ret_0" "dataframe.",
+            "Input dataframe has shared column names with transformed "
+            "dataframe.",
         )
         #
         df = df_in.merge(df, left_index=True, right_index=True)
@@ -276,24 +277,24 @@ class Zscore(Transformer):
         if self._cols is not None:
             df = df[self._cols]
         # Z-score and name columns.
-        df_out = sigp.rolling_zscore(
+        df = sigp.rolling_zscore(
             df, tau=self._tau, demean=self._demean, delay=self._delay
         )
         if self._col_rename_func is not None:
             dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
-            df_out.rename(
+            df.rename(
                 columns=lambda x: self._col_rename_func(x), inplace=True
             )
         dbg.dassert(
-            df_out.columns.intersection(df_in.columns).empty,
-            "Input dataframe has shared column names with zscored " "dataframe.",
+            df.columns.intersection(df_in.columns).empty,
+            "Input dataframe has shared column names with zscored dataframe.",
         )
         # Merge input dataframe with z-scored columns.
-        df_out = df_in.merge(df_out, left_index=True, right_index=True)
+        df = df_in.merge(df, left_index=True, right_index=True)
         #
         info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df_out)
-        return df_out, info
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
 
 
 class FilterAth(Transformer):
@@ -301,11 +302,26 @@ class FilterAth(Transformer):
         super().__init__(nid)
 
     def _transform(self, df):
-        df_out = fin.filter_ath(df)
+        df = df.copy()
+        df = fin.filter_ath(df)
         #
         info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df_out)
-        return df_out, info
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
+class Resample(Transformer):
+    def __init__(self, nid, rule):
+        super().__init__(nid)
+        self._rule = rule
+
+    def _transform(self, df):
+        df = df.copy()
+        df = df.resample(rule=self._rule, closed="left", label="right").sum()
+        #
+        info = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
 
 
 class ComputeLaggedFeatures(Transformer):
