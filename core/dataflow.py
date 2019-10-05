@@ -229,13 +229,21 @@ class ReadDataFromKibot(DataSource):
 # TODO(Paul): Write a Node builder to automatically generate these from
 # functions.
 
+# TODO(Paul): Consider having more kinds of `Transformer` objects, e.g.,
+#   those that transform cols [or subset] -> cols, and those that change the
+#   index. Different broad considerations may apply (e.g., in the col case, we
+#   want the option to propagate the original columns or not).
+
 
 # TODO(Paul): Rename PctChange (not particular to price changes).
 class PctReturns(Transformer):
-    def __init__(self, nid, cols=None, col_rename_func=None):
+    def __init__(self, nid, cols=None, col_rename_func=None,
+                 join_with_input=None):
         super().__init__(nid)
         self._cols = cols
         self._col_rename_func = col_rename_func
+        if join_with_input is None:
+            self._join_with_input = True
 
     def _transform(self, df):
         df_in = df.copy()
@@ -247,13 +255,14 @@ class PctReturns(Transformer):
         if self._col_rename_func is not None:
             dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
             df.rename(columns=lambda x: self._col_rename_func(x), inplace=True)
-        dbg.dassert(
-            df.columns.intersection(df_in.columns).empty,
-            "Input dataframe has shared column names with transformed "
-            "dataframe.",
-        )
         #
-        df = df_in.merge(df, left_index=True, right_index=True)
+        if self._join_with_input:
+            dbg.dassert(
+                df.columns.intersection(df_in.columns).empty,
+                "Input dataframe has shared column names with transformed "
+                "dataframe.",
+            )
+            df = df_in.merge(df, left_index=True, right_index=True)
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
@@ -261,13 +270,16 @@ class PctReturns(Transformer):
 
 
 class Zscore(Transformer):
-    def __init__(self, nid, tau, demean, delay, cols=None, col_rename_func=None):
+    def __init__(self, nid, tau, demean, delay, cols=None,
+                 col_rename_func=None, join_with_input=None):
         super().__init__(nid)
         self._tau = tau
         self._demean = demean
         self._delay = delay
         self._cols = cols
         self._col_rename_func = col_rename_func
+        if join_with_input is None:
+            self._join_with_input = True
 
     def _transform(self, df):
         # Copy input to merge with output before returning.
@@ -285,12 +297,13 @@ class Zscore(Transformer):
             df.rename(
                 columns=lambda x: self._col_rename_func(x), inplace=True
             )
-        dbg.dassert(
-            df.columns.intersection(df_in.columns).empty,
-            "Input dataframe has shared column names with zscored dataframe.",
-        )
         # Merge input dataframe with z-scored columns.
-        df = df_in.merge(df, left_index=True, right_index=True)
+        if self._join_with_input:
+            dbg.dassert(
+                df.columns.intersection(df_in.columns).empty,
+                "Input dataframe has shared column names with zscored dataframe.",
+            )
+            df = df_in.merge(df, left_index=True, right_index=True)
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
