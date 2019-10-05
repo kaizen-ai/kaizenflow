@@ -235,15 +235,92 @@ class ReadDataFromKibot(DataSource):
 #   want the option to propagate the original columns or not).
 
 
-# TODO(Paul): Rename PctChange (not particular to price changes).
-class PctReturns(Transformer):
-    def __init__(self, nid, cols=None, col_rename_func=None,
-                 join_with_input=None):
+class ColumnTransformer(Transformer):
+    def __init__(
+        self,
+        nid,
+        transformer_func,
+        transformer_kwargs=None,
+        cols=None,
+        col_rename_func=None,
+        col_mode=None,
+    ):
+        """
+        Performs non-index modifying changes of columns.
+
+        :param nid: unique node id
+        :param transformer_func: df -> df
+        :param transformer_kwargs: transformer_func kwargs
+        :param cols: columns to transform; `None` defaults to all available.
+        :param col_rename_func: function for naming transformed columns, e.g.,
+            lambda x: "zscore_" + x
+        :param col_mode: `merge_all`, `replace_selected`, or `replace_all`.
+            Determines what columns are propagated by the node.
+        """
         super().__init__(nid)
         self._cols = cols
         self._col_rename_func = col_rename_func
-        if join_with_input is None:
-            self._join_with_input = True
+        if col_mode is None:
+            self._col_mode = "merge_all"
+        else:
+            self._col_mode = col_mode
+        self._transformer_func = transformer_func
+        if transformer_kwargs is not None:
+            self._transformer_kwargs = transformer_kwargs
+        else:
+            # TODO(Paul): Revisit case where input val is None.
+            self._transformer_kwargs = {}
+
+    def _transform(self, df):
+        df_in = df.copy()
+        df = df.copy()
+        if self._cols is not None:
+            df = df[self._cols]
+        #
+        df = self._transformer_func(df, **self._transformer_kwargs)
+        #
+        if self._col_rename_func is not None:
+            dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
+            df.rename(columns=lambda x: self._col_rename_func(x), inplace=True)
+        #
+        if self._col_mode == "merge_all":
+            dbg.dassert(
+                df.columns.intersection(df_in.columns).empty,
+                "Transformed column names conflict with existing column names.",
+            )
+            df = df_in.merge(df, left_index=True, right_index=True)
+        elif self._col_mode == "replace_selected":
+            dbg.dassert(
+                df.columns.intersection(df_in[self._cols]).empty,
+                "Transformed column names conflict with existing column names.",
+            )
+            df = df_in.drop(self._cols, axis=1).merge(
+                df, left_index=True, right_index=True
+            )
+        elif self._col_mode == "replace_all":
+            pass
+        else:
+            dbg.dfatal("Unsupported column mode %s", self._col_mode)
+        #
+        info = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
+# TODO(Paul): Replace usage with ColumnTransformer.
+# TODO(Paul): Rename PctChange (not particular to price changes).
+class PctReturns(Transformer):
+    def __init__(self, nid, cols=None, col_rename_func=None, col_mode=None):
+        super().__init__(nid)
+        self._cols = cols
+        self._col_rename_func = col_rename_func
+        # modes:
+        #   merge_all: df merged with transformed column df
+        #   replace_selected: df returned with `cols` replaced by transformed
+        #   replace_all: only results of transformed columns propagated
+        #   re
+        if col_mode is None:
+            self._col_mode = "merge_all"
 
     def _transform(self, df):
         df_in = df.copy()
@@ -256,30 +333,47 @@ class PctReturns(Transformer):
             dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
             df.rename(columns=lambda x: self._col_rename_func(x), inplace=True)
         #
-        if self._join_with_input:
+        if self._col_mode == "merge_all":
             dbg.dassert(
                 df.columns.intersection(df_in.columns).empty,
-                "Input dataframe has shared column names with transformed "
-                "dataframe.",
+                "Transformed column names conflict with existing column names.",
             )
             df = df_in.merge(df, left_index=True, right_index=True)
+        elif self._col_mode == "replace_selected":
+            dbg.dassert(
+                df.columns.intersection(df_in[self._cols]).empty,
+                "Transformed column names conflict with existing column names.",
+            )
+        elif self._col_mode == "replace_all":
+            pass
+        else:
+            dbg.dfatal("Unsupported column mode %s", self._col_mode)
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
 
+# TODO(Paul): Replace usage with ColumnTransformer.
 class Zscore(Transformer):
-    def __init__(self, nid, tau, demean, delay, cols=None,
-                 col_rename_func=None, join_with_input=None):
+    def __init__(
+        self,
+        nid,
+        tau,
+        demean,
+        delay,
+        cols=None,
+        col_rename_func=None,
+        col_mode=None,
+    ):
         super().__init__(nid)
         self._tau = tau
         self._demean = demean
         self._delay = delay
         self._cols = cols
         self._col_rename_func = col_rename_func
-        if join_with_input is None:
-            self._join_with_input = True
+        if col_mode is None:
+            self._col_mode = "merge_all"
 
     def _transform(self, df):
         # Copy input to merge with output before returning.
@@ -294,16 +388,16 @@ class Zscore(Transformer):
         )
         if self._col_rename_func is not None:
             dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
-            df.rename(
-                columns=lambda x: self._col_rename_func(x), inplace=True
-            )
+            df.rename(columns=lambda x: self._col_rename_func(x), inplace=True)
         # Merge input dataframe with z-scored columns.
-        if self._join_with_input:
+        if self._col_mode == "merge_all":
             dbg.dassert(
                 df.columns.intersection(df_in.columns).empty,
                 "Input dataframe has shared column names with zscored dataframe.",
             )
             df = df_in.merge(df, left_index=True, right_index=True)
+        else:
+            raise NotImplementedError
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
