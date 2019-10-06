@@ -59,12 +59,15 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     # Tag:
     LemTask274_PRICE_Download_equity_data
     ```
+- The name is `LemTask274_PRICE_Download_equity_data`
 
 ## Checking what work was done in a branch
 
 - Look at all the branches available:
     ```bash
+    # Fetch all the data from origin.
     > git fetch
+    # List all the branches.
     > git branch -r
       origin/HEAD -> origin/master
       origin/PartTask274
@@ -75,7 +78,9 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     ```bash
     > git checkout PartTask274
     ```
-- Check what are the commits that are in the current branch but not in master:
+
+- Check what are the commits that are in the current branch `HEAD` but not in
+  `master`:
     ```bash
     > gll master..HEAD
     > git log master..HEAD
@@ -84,8 +89,7 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     * a637594 saggese   PartTask274: Add tag for review                         (    3 days ago) Thu Sep 26 17:13:33 2019
     ```
 
-- To see the actual changes in a branch you can't do:
-    **Bad**
+- To see the actual changes in a branch you can't do (**Bad**)
     ```bash
     > git diff master..HEAD
     ```
@@ -99,7 +103,18 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     > gd a637594..eb12233
     ```
 
-## Compare a directory among branches
+## Check if you need to merge `master` into your feature branch
+
+- You can see what commits are in `master` but missing in your branch with:
+    ```bash
+    > gll ..master
+    * de51a7c saggese   Improve script to help diffing trees in case of difficult merges. Add notes from reviews (   5 hours ago) Sat Oct 5 11:24:11 2019  (origin/master, origin/HEAD, master)
+    * 8acd60c saggese   Add a basic end-to-end unit test for the linter                   (  19 hours ago) Fri Oct 4 21:28:09 2019
+    ...
+    ```
+- You want to `rebase` your feature branch onto `master`
+
+## Compare the difference of a  directory among branches
 
 - This is useful if we want to focus on changes on a single dir
     ```bash
@@ -121,7 +136,7 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     vendors/test/test_vendors.py
     ```
 
-# Branch workflow
+# Branch workflow best practices
 
 ## Branches are cheap
 - One of the advantages of working with Git is that branches are cheap
@@ -132,8 +147,6 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     - Changes to master should only happen by pull-request or merge;
     - One should avoid working in master except in rare cases, e.g., a simple
       urgent bug-fix needed to unblock people.
-
-# Branch workflow best practices
 
 ## Always work in a branch
 - Call your branch `PartTaskXYZ_descriptive_name`
@@ -198,7 +211,7 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 
 # Branch workflow best practices
 
-1) Pull changes from master
+1) Pull changes from `master`
     - You want to branch from the latest version of master to avoid a merge
     ```bash
     > git checkout master
@@ -219,7 +232,6 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
       will not affect your branch
   
 3) Push your commits upstream
-
     - When you want your code to be pushed to the server (e.g., to back up or to
       share the changes with someone else), you need to push the branch upstream
         ```bash
@@ -261,11 +273,11 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
         ```bash
         > git checkout my-feature
         
-        > git ll ..origin/master
-        // You should see that you have 
-
+        // See that you have that master doesn't have.
         > > git ll origin/master..
-        // You can see that you are ahead of master
+
+        // See that master has that you don't have.
+        > git ll ..origin/master
         
         > git rebase master
 
