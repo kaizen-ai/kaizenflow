@@ -111,7 +111,7 @@ class RawDataDownloader:
             soup = BeautifulSoup(req_res.content, "lxml")
         else:
             _LOG.warning(
-                f"For {html_url} request status code is {req_res.status_code}"
+                "For %s request status code is %s", html_url, req_res.status_code
             )
             soup = None
         return soup
@@ -223,7 +223,7 @@ class RawDataDownloader:
         with requests.get(url, stream=True) as r:
             with open(dst_path, "wb") as fout:
                 fout.write(r.content)
-        _LOG.info(f"Saved {url} to {dst_path}")
+        _LOG.info("Saved %s to %s", url, dst_path)
 
     def _download_url_to_path(self, url_object):
         """
@@ -236,7 +236,7 @@ class RawDataDownloader:
         category_dir_path = os.path.join(self.dst_dir, url_object.category)
         if not os.path.isdir(category_dir_path):
             os.mkdir(path=category_dir_path)
-            _LOG.info(f"Created {category_dir_path} directory")
+            _LOG.info("Created %s directory", category_dir_path)
         file_name = url_object.url.split("/")[-1]
         file_name = f"_{url_object.timezone}.".join(file_name.rsplit("."))
         file_path = os.path.join(category_dir_path, file_name)
@@ -259,12 +259,12 @@ class RawDataDownloader:
             dataset_soup = self._request_soup(full_url)
             if dataset_soup is None:
                 _LOG.warning(
-                    f"No files found at {full_url}, request returned None"
+                    "No files found at %s, request returned None", full_url
                 )
             else:
                 card_bodies = dataset_soup.find_all(attrs="card-body")
                 if len(card_bodies) == 0:
-                    _LOG.warning(f"No links were found for {full_url}")
+                    _LOG.warning("No links were found for %s", full_url)
                 url_objects = self._get_download_links_and_tzs(
                     card_bodies, category
                 )
@@ -289,7 +289,6 @@ class RawDataDownloader:
 
 
 class ZipCSVCombiner:
-    def __init__(self, url_object: FileURL, output_path: str):
     """
     - Combine csvs from a zip file
     - add "timestamp" column
@@ -298,11 +297,11 @@ class ZipCSVCombiner:
     - add column names (parsed from the FirstRate website)
     - save as csv
 
-    :param url_object: _FileURL object
+    :param url_object: FileURL object
     :param output_path: destination path for the csv
     """
 
-    def __init__(self, url_object: _FileURL, output_path: str):
+    def __init__(self, url_object: FileURL, output_path: str):
         self.url_object = url_object
         self.output_path = output_path
 
@@ -383,7 +382,7 @@ class MultipleZipCSVCombiner:
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             if not os.path.isdir(category_dir_dst_path):
                 os.mkdir(path=category_dir_dst_path)
-                _LOG.info(f"Created {category_dir_dst_path} directory")
+                _LOG.info("Created %s directory", category_dir_dst_path)
             for zip_path in tqdm(os.listdir(category_dir_input_path)):
                 url_object = self.path_object_dict[zip_path]
                 csv_name = os.path.splitext(zip_path.split("/")[-1])[0] + ".csv"
@@ -413,7 +412,7 @@ class CSVToParquetConverter:
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             if not os.path.isdir(category_dir_dst_path):
                 os.mkdir(path=category_dir_dst_path)
-                _LOG.info(f"Created {category_dir_dst_path} directory")
+                _LOG.info("Created %s directory", category_dir_dst_path)
             csv.convert_csv_dir_to_pq_dir(
                 category_dir_input_path, category_dir_dst_path
             )

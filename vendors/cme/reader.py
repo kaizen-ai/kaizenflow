@@ -4,7 +4,9 @@ import pandas as pd
 
 _LOG = logging.getLogger(__name__)
 
-_PRODUCT_SPECS_PATH = "/data/prices/product_slate_export_with_contract_specs_20190905.csv"
+_PRODUCT_SPECS_PATH = (
+    "/data/prices/product_slate_export_with_contract_specs_20190905.csv"
+)
 _PRODUCT_LIST_PATH = "/data/prices/product_slate_export_20190904.csv"
 
 

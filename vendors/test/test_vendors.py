@@ -95,6 +95,12 @@ class Test_pandas_datareader_utils1(ut.TestCase):
         self.check_string(ut.get_df_signature(df))
 
 
+# #############################################################################
+# first_rate
+# #############################################################################
+
+
+@pytest.mark.skip
 @pytest.mark.slow()
 class Test_first_rate1(ut.TestCase):
     def test_downloader1(self):
@@ -108,7 +114,13 @@ class Test_first_rate1(ut.TestCase):
         cmd = " ".join(cmd)
         si.system(cmd)
 
+    # TODO(Julia): Add test for reader.
 
+# #############################################################################
+# cme
+# #############################################################################
+
+@pytest.mark.skip
 @pytest.mark.slow()
 class Test_cme1(ut.TestCase):
     def test_downloader1(self):
@@ -124,8 +136,6 @@ class Test_cme1(ut.TestCase):
         cmd = " ".join(cmd)
         si.system(cmd)
 
-
-class Test_cme_reader(ut.TestCase):
     def test_read_product_specs(self):
         cmer.read_product_specs()
 
