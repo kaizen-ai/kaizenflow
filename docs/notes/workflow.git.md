@@ -22,9 +22,15 @@
 
 # Conflicts
 
+## Getting the conflicting files
+- To see the files in conflicts
+    ```bash
+    git diff --name-only --diff-filter=U
+    ```
+- This is what the script `git_conflict_files.sh`
+
 ## Accepting "theirs"
 ```bash
-> git reset HEAD $FILES
 > git checkout --theirs $FILES
 > git add $FILES
 ```
