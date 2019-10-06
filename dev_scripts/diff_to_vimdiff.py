@@ -3,10 +3,14 @@
 """
 Transform the output of `diff -r --brief dir1 dir2` into a script using vimdiff.
 
-# Diff dirs and compare at the same time
+# To clean up the crap in the dirs:
+> git status --ignored
+> git clean -fdx --dry-run
+
+# Diff dirs and compare at the same time:
 > diff_to_vimdiff.py --dir1 /Users/saggese/src/commodity_research2/amp --dir2 /Users/saggese/src/commodity_research3/amp
 
-# Diff and then compare
+# Diff and then compare:
 > diff -r --brief /Users/saggese/src/commodity_research2/amp /Users/saggese/src/commodity_research3/amp | tee diff.txt
 > diff_to_vimdiff.py -i diff.txt
 
