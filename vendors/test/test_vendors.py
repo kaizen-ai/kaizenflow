@@ -2,7 +2,9 @@ import logging
 
 import pytest
 
+import helpers.system_interaction as si
 import helpers.unit_test as ut
+import vendors.cme.reader as cmer
 import vendors.etfs.utils as etfut
 import vendors.kibot.utils as kut
 
@@ -91,3 +93,41 @@ class Test_pandas_datareader_utils1(ut.TestCase):
         df = ydq.get_multiple_data("Adj Close", tickers)
         #
         self.check_string(ut.get_df_signature(df))
+
+
+@pytest.mark.slow()
+class Test_first_rate1(ut.TestCase):
+    def test_downloader1(self):
+        tmp_dir = self.get_scratch_space()
+        cmd = []
+        cmd.append("vendors/first_rate/utils.py")
+        cmd.append("--zipped_dst_dir %s/zipped" % tmp_dir)
+        cmd.append("--unzipped_dst_dir %s/unzipped" % tmp_dir)
+        cmd.append("--pq_dst_dir %s/pq" % tmp_dir)
+        cmd.append("--max_num_files 1")
+        cmd = " ".join(cmd)
+        si.system(cmd)
+
+
+@pytest.mark.slow()
+class Test_cme1(ut.TestCase):
+    def test_downloader1(self):
+        tmp_dir = self.get_scratch_space()
+        cmd = []
+        cmd.append("vendors/cme/utils.py")
+        cmd.append(
+            "--download_url https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls"
+        )
+        cmd.append("--product_list %s/product_list.xls" % tmp_dir)
+        cmd.append("--product_specs %s/list_with_specs.csv" % tmp_dir)
+        cmd.append("--max_num_specs 1")
+        cmd = " ".join(cmd)
+        si.system(cmd)
+
+
+class Test_cme_reader(ut.TestCase):
+    def test_read_product_specs(self):
+        cmer.read_product_specs()
+
+    def test_read_product_list(self):
+        cmer.read_product_list()

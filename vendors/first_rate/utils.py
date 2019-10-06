@@ -290,6 +290,19 @@ class RawDataDownloader:
 
 class ZipCSVCombiner:
     def __init__(self, url_object: FileURL, output_path: str):
+    """
+    - Combine csvs from a zip file
+    - add "timestamp" column
+    - localize that column to the timezone parsed from the FirstRate
+      website
+    - add column names (parsed from the FirstRate website)
+    - save as csv
+
+    :param url_object: _FileURL object
+    :param output_path: destination path for the csv
+    """
+
+    def __init__(self, url_object: _FileURL, output_path: str):
         self.url_object = url_object
         self.output_path = output_path
 
