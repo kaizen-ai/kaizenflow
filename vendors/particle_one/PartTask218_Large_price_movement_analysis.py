@@ -30,6 +30,7 @@ from tqdm.autonotebook import tqdm
 
 import core.signal_processing as sp
 import vendors.kibot.utils as kut
+import vendors.particle_one.price_movement_analysis as pma
 
 # import vendors.particle_one.PartTask269_liquidity_analysis_utils as lau
 
@@ -39,34 +40,6 @@ rcParams["figure.figsize"] = (20, 5)
 
 # %%
 TAU = 2
-
-
-# %%
-def get_zscored_prices_diff(price_dict_df, symbol, tau=TAU):
-    prices_symbol = price_dict_df[symbol]
-    prices_diff = prices_symbol["close"] - prices_symbol["open"]
-    zscored_prices_diff = sp.rolling_zscore(prices_diff, tau)
-    zscored_prices_diff.head()
-    abs_zscored_prices_diff = zscored_prices_diff.abs()
-    return abs_zscored_prices_diff
-
-
-def get_top_movements_by_group(
-    price_dict_df, commodity_symbols_kibot, group, n_movements=100
-):
-    zscored_diffs = []
-    for symbol in commodity_symbols_kibot[group]:
-        zscored_diff = get_zscored_prices_diff(price_dict_df, symbol)
-        zscored_diffs.append(zscored_diff)
-    zscored_diffs = pd.concat(zscored_diffs, axis=1)
-    mean_zscored_diffs = zscored_diffs.mean(axis=1, skipna=True)
-    return mean_zscored_diffs.sort_values(ascending=False).head(n_movements)
-
-
-def get_top_movements_for_symbol(price_dict_df, symbol, tau=TAU, n_movements=100):
-    zscored_diffs = get_zscored_prices_diff(price_dict_df, symbol, tau=tau)
-    return zscored_diffs.sort_values(ascending=False).head(n_movements)
-
 
 # %% [markdown]
 # # Load CME metadata
@@ -164,7 +137,7 @@ daily_price_dict_df["CL"].tail(2)
 # ## Largest movements for a specific symbol
 
 # %%
-# There is a get_top_movements_for_symbol() function that
+# There is a pma.get_top_movements_for_symbol() function that
 # implements this code and the code below. I am not using it
 # in this chapter to provide a clearer view of the algorithm.
 
@@ -219,7 +192,7 @@ commodity_symbols_kibot[group]
 # %%
 zscored_diffs = []
 for symbol in commodity_symbols_kibot[group]:
-    zscored_diff = get_zscored_prices_diff(daily_price_dict_df, symbol)
+    zscored_diff = pma.get_zscored_prices_diff(daily_price_dict_df, symbol)
     zscored_diffs.append(zscored_diff)
 
 # %%
@@ -243,7 +216,7 @@ mean_zscored_diffs.sort_values(ascending=False).head(100)
 
 # %%
 top_100_movements_by_group = {
-    group: get_top_movements_by_group(
+    group: pma.get_top_movements_by_group(
         daily_price_dict_df, commodity_symbols_kibot, group
     )
     for group in commodity_symbols_kibot.keys()
@@ -296,9 +269,6 @@ five_min_price_dict_df = {
     for symbol in minutely_price_dict_df.keys()
 }
 
-# %%
-top_100_movements_cl_5_min["CL"].head()
-
 # %% [markdown]
 # ## Top movements for a symbol
 
@@ -306,9 +276,12 @@ top_100_movements_cl_5_min["CL"].head()
 symbol = "CL"
 
 # %%
-top_100_movements_cl_5_min = get_top_movements_for_symbol(
+top_100_movements_cl_5_min = pma.get_top_movements_for_symbol(
     five_min_price_dict_df, symbol
 )
+
+# %%
+top_100_movements_cl_5_min["CL"].head()
 
 # %%
 top_100_movements_cl_5_min.plot(kind="bar")
@@ -331,14 +304,16 @@ group = "Energy"
 commodity_symbols_kibot[group]
 
 # %%
-get_top_movements_by_group(five_min_price_dict_df, commodity_symbols_kibot, group)
+pma.get_top_movements_by_group(
+    five_min_price_dict_df, commodity_symbols_kibot, group
+)
 
 # %% [markdown]
 # ## Largest movements for each group
 
 # %%
 top_100_5_min_movements_by_group = {
-    group: get_top_movements_by_group(
+    group: pma.get_top_movements_by_group(
         five_min_price_dict_df, commodity_symbols_kibot, group
     )
     for group in tqdm(commodity_symbols_kibot.keys())
