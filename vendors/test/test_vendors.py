@@ -1,10 +1,12 @@
 import logging
+import os
 
 import pytest
 
 import helpers.system_interaction as si
 import helpers.unit_test as ut
 import vendors.etfs.utils as etfut
+import vendors.first_rate.reader as frr
 import vendors.kibot.utils as kut
 
 # #############################################################################
@@ -94,6 +96,7 @@ class Test_pandas_datareader_utils1(ut.TestCase):
         self.check_string(ut.get_df_signature(df))
 
 
+@pytest.mark.skip
 @pytest.mark.slow()
 class Test_first_rate1(ut.TestCase):
     def test_downloader1(self):
@@ -106,3 +109,10 @@ class Test_first_rate1(ut.TestCase):
         cmd.append("--max_num_files 1")
         cmd = " ".join(cmd)
         si.system(cmd)
+
+    def test_reader1(self):
+        dir_name = self._get_current_path() + "/tmp.scratch"
+        pq_dir = "pq_dst_dir %s/pq" % dir_name
+        file_name = os.listdir(pq_dir)[0]
+        file_path = os.path.join(pq_dir, file_name)
+        frr.read_pq(file_path)
