@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
 #     display_name: Python [conda env:develop] *
 #     language: python
@@ -17,6 +17,8 @@
 # %load_ext autoreload
 # %autoreload 2
 
+# %%
+import os
 import platform
 
 # %%
@@ -36,6 +38,7 @@ import sklearn
 # %%
 import helpers.io_ as io_
 import helpers.printing as print_
+import helpers.s3 as hs3
 
 print("python=", platform.python_version())
 
@@ -115,8 +118,9 @@ df.to_csv(tag + ".csv")
 # %%
 df.iloc[0]["links"]
 
-# %%
-pd.read_csv("s3://alphamatic/kibot/All_Futures_Contracts_daily/JY.csv.gz")
+file_name = os.path.join(
+    hs3.get_path(), "kibot/All_Futures_Contracts_daily/JY.csv.gz"
+)
 
 # %% [markdown]
 # # Download

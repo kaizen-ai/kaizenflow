@@ -8,6 +8,7 @@ import functools
 import json
 import logging
 import os
+import io
 
 import numpy as np
 import pandas as pd
@@ -15,19 +16,16 @@ import pandas as pd
 import helpers.cache as cache
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.s3 as hs3
 import helpers.system_interaction as si
 
-from io import StringIO
 
 _LOG = logging.getLogger(__name__)
 
 
-# ##############################################################################
-
-
 def _read_data():
-    file_name = (
-        "s3://alphamatic/etf/metadata/masterdatareports.fundamentals.csv.gz"
+    file_name = os.path.join(
+        hs3.get_path(), "etf/metadata/masterdatareports.fundamentals.csv.gz"
     )
     _LOG.debug("Loading data from %s", file_name)
     meta_df = pd.read_csv(file_name, encoding="ISO-8859-1")
@@ -246,8 +244,7 @@ def _get_sample_data_path(ticker):
     my_dir, _ = os.path.split(my_path)
     rel_path = "sample_data/%s.csv" % ticker
     path = os.path.join(my_dir, rel_path)
-    dbg.dassert_exists(path,
-                       "No sample data found for ticker=%s", ticker)
+    dbg.dassert_exists(path, "No sample data found for ticker=%s", ticker)
     return path
 
 
@@ -264,7 +261,7 @@ def _generate_sample_data():
     """
     ticker = "SPY"
     # Read SPY data.
-    source_path = "s3://alphamatic/etf/data/%s.csv.gz" % ticker
+    os.path.join(hs3.get_path(), "etf/data/%s.csv.gz" % ticker)
     df = pd.read_csv(source_path)
     # Convert 'Date' column to datetime and filter.
     df["Date"] = pd.to_datetime(df["Date"])
@@ -272,7 +269,7 @@ def _generate_sample_data():
     df = df.loc["2007":"2016"]
     df.reset_index(inplace=True)
     # Write as csv to buffer.
-    csv_buffer = StringIO()
+    csv_buffer = io.StringIO()
     df.to_csv(csv_buffer, index=False)
     # Write to file.
     out_path = _get_sample_data_path(ticker)
