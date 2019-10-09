@@ -5,7 +5,7 @@ import helpers.s3 as hs3
 """
 
 
-def get_s3_bucket_path():
+def get_path():
     """
     Return the path corresponding to the default s3 bucket.
     Make sure your ~/.aws/credentials uses the right key to access this bucket
