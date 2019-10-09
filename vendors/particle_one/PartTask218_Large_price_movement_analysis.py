@@ -49,7 +49,8 @@ TAU = 2
 
 # %%
 _PRODUCT_SPECS_PATH = (
-    "/data/prices/product_slate_export_with_contract_specs_20190905.csv"
+    #"/data/prices/product_slate_export_with_contract_specs_20190905.csv"
+    "s3://default00-bucket/cme/product_slate_export_with_contract_specs_20190905.csv"
 )
 product_list = pd.read_csv(_PRODUCT_SPECS_PATH)
 
