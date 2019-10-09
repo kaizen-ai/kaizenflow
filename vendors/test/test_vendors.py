@@ -3,15 +3,12 @@ import os
 
 import pytest
 
+import helpers.s3 as hs3
 import helpers.system_interaction as si
 import helpers.unit_test as ut
 import vendors.etfs.utils as etfut
 import vendors.first_rate.reader as frr
 import vendors.kibot.utils as kut
-
-# #############################################################################
-# pandas_datareader/utils.py
-# #############################################################################
 import vendors.pandas_datareader.utils as pdut
 
 _LOG = logging.getLogger(__name__)
@@ -22,8 +19,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): #354
-@pytest.mark.skipif('si.get_user_name() == "jenkins"')
 class Test_etfs_utils1(ut.TestCase):
     def test_MasterdataReports1(self):
         mrep = etfut.MasterdataReports()
@@ -48,12 +43,12 @@ class Test_etfs_utils1(ut.TestCase):
 # #############################################################################
 
 
-# TODO(gp): #354
-@pytest.mark.skipif('si.get_user_name() == "jenkins"')
 class Test_kibot_utils1(ut.TestCase):
     def test_read_data1(self):
         # TODO(gp): Use unit test cache.
-        file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
+        file_name = os.path.join(
+            hs3.get_path(), "kibot/All_Futures_Contracts_1min/ES.csv.gz"
+        )
         nrows = 100
         df = kut._read_data(file_name, nrows)
         _LOG.debug("df=%s", df.head())
@@ -85,8 +80,11 @@ class Test_kibot_utils1(ut.TestCase):
         self._helper_read_metadata(kut.read_metadata4)
 
 
-# TODO(gp): #354
-@pytest.mark.skipif('si.get_user_name() == "jenkins"')
+# #############################################################################
+# pandas_datareader/utils.py
+# #############################################################################
+
+
 class Test_pandas_datareader_utils1(ut.TestCase):
     def test_get_multiple_data1(self):
         ydq = pdut.YahooDailyQuotes()
