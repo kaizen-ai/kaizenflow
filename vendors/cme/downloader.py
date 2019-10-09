@@ -59,7 +59,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     dbg.init_logger(args.log_level)
-    cmeu._get_list_with_specs_pipeline(
+    #
+    cmeu.get_list_with_specs_pipeline(
         args.download_url,
         args.product_list,
         args.product_specs,
