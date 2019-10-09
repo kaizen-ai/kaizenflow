@@ -1,12 +1,14 @@
 #!/bin/bash -xe
 
+# TODO(gp): -> clean_build.run_fast_coverage_tests.sh
+
 # ```
 # - Build conda env
 # - Run the fast tests with coverage
 # ```
 
 VERB=DEBUG
-ENV_NAME=develop.fast_clean
+ENV_NAME=develop.fast_clean_coverage
 
 source ~/.bashrc
 
