@@ -1,4 +1,5 @@
 import logging
+import os
 
 import pytest
 
@@ -6,6 +7,7 @@ import helpers.system_interaction as si
 import helpers.unit_test as ut
 import vendors.cme.reader as cmer
 import vendors.etfs.utils as etfut
+import vendors.first_rate.reader as frr
 import vendors.kibot.utils as kut
 
 # #############################################################################
@@ -114,7 +116,12 @@ class Test_first_rate1(ut.TestCase):
         cmd = " ".join(cmd)
         si.system(cmd)
 
-    # TODO(Julia): Add test for reader.
+    def test_reader1(self):
+        dir_name = self._get_current_path() + "/tmp.scratch"
+        pq_dir = "pq_dst_dir %s/pq" % dir_name
+        file_name = os.listdir(pq_dir)[0]
+        file_path = os.path.join(pq_dir, file_name)
+        frr.read_pq(file_path)
 
 # #############################################################################
 # cme
