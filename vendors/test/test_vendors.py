@@ -105,20 +105,25 @@ class Test_first_rate1(ut.TestCase):
     def test_downloader1(self):
         tmp_dir = self.get_scratch_space()
         cmd = []
-        cmd.append("vendors/first_rate/utils.py")
+        # TODO(Julia): Rename download.py
+        cmd.append("vendors/first_rate/downloader.py")
         cmd.append("--zipped_dst_dir %s/zipped" % tmp_dir)
         cmd.append("--unzipped_dst_dir %s/unzipped" % tmp_dir)
         cmd.append("--pq_dst_dir %s/pq" % tmp_dir)
         cmd.append("--max_num_files 1")
         cmd = " ".join(cmd)
         si.system(cmd)
-
-    def test_reader1(self):
+        # TODO(Julia): Test the dowloaded data with the code below.
         dir_name = self._get_current_path() + "/tmp.scratch"
         pq_dir = "pq_dst_dir %s/pq" % dir_name
         file_name = os.listdir(pq_dir)[0]
         file_path = os.path.join(pq_dir, file_name)
         frr.read_pq(file_path)
+
+    def test_reader1(self):
+        # TODO(Julia): We want to add a test the official s3 location of this
+        # data. The data has been uploaded.
+        pass
 
 
 # #############################################################################
@@ -131,9 +136,11 @@ class Test_cme1(ut.TestCase):
     def test_downloader1(self):
         tmp_dir = self.get_scratch_space()
         cmd = []
-        cmd.append("vendors/cme/utils.py")
+        # TODO(Julia): Rename download.py
+        cmd.append("vendors/cme/downloader.py")
         cmd.append(
-            "--download_url https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls"
+            "--download_url"
+            " https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls"
         )
         cmd.append("--product_list %s/product_list.xls" % tmp_dir)
         cmd.append("--product_specs %s/list_with_specs.csv" % tmp_dir)

@@ -1,4 +1,9 @@
 r"""
+Import as:
+
+import vendors.first_rate.utils as fru
+
+
 Download equity data from the http://firstratedata.com.
 
 - Save the data as zipped csvs for each equity to one of the
@@ -14,6 +19,7 @@ Usage example:
   --unzipped_dst_dir /data/first_rate/unzipped \
   --pq_dst_dir /data/first_rate/pq
 """
+
 import logging
 import os
 import re
@@ -57,7 +63,7 @@ class _FileURL:
         self.path = path
 
 
-class _RawDataDownloader:
+class RawDataDownloader:
     """
     Get all category urls from a website, then walk them one by one and
     extract all download links and timezones. Save the files from the
@@ -155,7 +161,7 @@ class _RawDataDownloader:
         hrefs = soup.find_all("a")
         part_urls = [href["href"] for href in hrefs]
         full_urls = [
-            _RawDataDownloader._add_website_to_url(part_url, website)
+            RawDataDownloader._add_website_to_url(part_url, website)
             for part_url in part_urls
         ]
         return full_urls
@@ -347,7 +353,7 @@ class _ZipCSVCombiner:
     def _process_datetime_cols(df):
         first_col = 0
         second_col = 1
-        if isinstance(df.iloc[0, 0], int) or isinstance(df.iloc[0, 0], np.int64):
+        if isinstance(df.iloc[0, 0], (int, np.int64)):
             first_col = "date"
         elif isinstance(df.iloc[0, 0], str):
             without_symbols = re.sub("[./\:\- ]", "", df.iloc[0, 0])
@@ -408,7 +414,7 @@ class _ZipCSVCombiner:
         return df
 
 
-class _MultipleZipCSVCombiner:
+class MultipleZipCSVCombiner:
     """
     Combine zipped csvs in first_rate directory. Add column names to the
     csvs, add timestamp column and localize it.
@@ -432,7 +438,7 @@ class _MultipleZipCSVCombiner:
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
             for zip_name in tqdm(os.listdir(category_dir_input_path)):
-                # Combine csvs from the zip file, process them and save
+                # Combine csvs from the zip file, process them and save.
                 zip_path = os.path.join(category_dir_input_path, zip_name)
                 url_object = self.path_object_dict[zip_path]
                 csv_name = os.path.splitext(zip_name)[0] + ".csv"
@@ -441,7 +447,7 @@ class _MultipleZipCSVCombiner:
                 zcc.execute()
 
 
-class _CSVToParquetConverter:
+class CSVToParquetConverter:
     """
     Save csv files divided by categories into parquet
     """
