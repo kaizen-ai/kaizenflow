@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
 VERB=DEBUG
-ENV_NAME=develop.slow_clean
+ENV_NAME=develop.clean_build.run_slow_tests_coverage
 
 source ~/.bashrc
 
