@@ -152,17 +152,17 @@ def increase_chapter(in_file_name, out_file_name):
     txt = read_file(in_file_name)
     #
     txt_tmp = []
-    for l in txt:
-        skip_this_line, skip_block = skip_comments(l, skip_block)
+    for line in txt:
+        skip_this_line, skip_block = skip_comments(line, skip_block)
         if skip_this_line:
             continue
         #
-        l = l.rstrip("\n")
+        line = line.rstrip(r"\n")
         for i in range(1, 5):
-            if l.startswith("#" * i + " "):
-                l = l.replace("#" * i + " ", "#" * (i + 1) + " ")
+            if line.startswith("#" * i + " "):
+                line = line.replace("#" * i + " ", "#" * (i + 1) + " ")
                 break
-        txt_tmp.append(l)
+        txt_tmp.append(line)
     #
     write_file(out_file_name, txt_tmp)
 

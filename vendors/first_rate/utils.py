@@ -14,7 +14,6 @@ Usage example:
   --unzipped_dst_dir /data/first_rate/unzipped \
   --pq_dst_dir /data/first_rate/pq
 """
-import argparse
 import logging
 import os
 import re
