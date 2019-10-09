@@ -5,10 +5,10 @@ import vendors.etfs.utils as etfut
 """
 
 import functools
+import io
 import json
 import logging
 import os
-import io
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,6 @@ import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.s3 as hs3
 import helpers.system_interaction as si
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,10 +52,10 @@ class MasterdataReports:
     @staticmethod
     def download():
         """
+        We downloaded a snapshot of the data using a free account and saved it.
         This website:
             http://www.masterdatareports.com/ETFData-Sample/Fundamentals.csv
-        requires a membership. We downloaded a snapshot of the data using a free
-        account and saved it.
+        requires a membership.
         """
 
     def __init__(self):
@@ -261,7 +260,7 @@ def _generate_sample_data():
     """
     ticker = "SPY"
     # Read SPY data.
-    os.path.join(hs3.get_path(), "etf/data/%s.csv.gz" % ticker)
+    source_path = os.path.join(hs3.get_path(), "etf/data/%s.csv.gz" % ticker)
     df = pd.read_csv(source_path)
     # Convert 'Date' column to datetime and filter.
     df["Date"] = pd.to_datetime(df["Date"])
