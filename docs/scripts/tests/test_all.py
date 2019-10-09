@@ -44,8 +44,6 @@ class Test_pandoc1(ut.TestCase):
         act = io_.from_file(out_file, split=False)
         return act
 
-    # TODO(gp): Generalize to all users, or at least Jenkins.
-    @pytest.mark.skipif('si.get_user_name() != "saggese"')
     def test1(self):
         """
         Convert one txt file to PDF and check that the .tex file is as expected.
