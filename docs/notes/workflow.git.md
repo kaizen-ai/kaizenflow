@@ -42,6 +42,40 @@ git show :2:README
 git show :3:README
 Stage #1 is the common ancestor of the files, stage #2 is the target-branch version, and stage #3 is the version you are merging from.
 
+## How to get out of a messy/un-mergeable branch
+
+- If one screws up a branch
+
+1) rebase to master
+2) resolve the conflicts
+    - E.g., pick the `master` version when needed:
+        `git checkout --theirs ...; git add ...`
+3) diff the changes in the branch vs another client at `master`
+    ```bash
+    > diff_to_vimdiff.py --dir1 $DIR1/amp --dir2 $DIR2/amp --skip_vim
+    Saving log to file '/Users/saggese/src/commodity_research2/amp/dev_scripts/diff_to_vimdiff.py.log'
+    10-06_15:22 INFO : _parse_diff_output:36  : Reading '/tmp/tmp.diff_to_vimdiff.txt'
+    #       DIFF: README.md
+    #       DIFF: core/dataflow.py
+    #       DIFF: core/dataflow_core.py
+    #       DIFF: core/test/test_core.py
+    #       DIFF: dev_scripts/diff_to_vimdiff.py
+    #       ONLY: diff_to_vimdiff.py.log in $DIR1/dev_scripts
+    #       DIFF: dev_scripts/grc
+    #       ONLY: code_style.txt in $DIR2/docs/notes
+    ...
+    #       DIFF: vendors/test/test_vendors.py
+    ```
+3) diff / merge manually the files that are different
+    ```bash
+    > diff_to_vimdiff.py --dir1 $DIR1/commodity_research2/amp --dir2 $DIR2/commodity_research3/amp --skip_vim --only_diff_content
+    #       DIFF: README.md
+    #       DIFF: core/dataflow.py
+    #       DIFF: core/dataflow_core.py
+    #       DIFF: core/test/test_core.py
+    ...
+    ```
+
 # Revert
 
 ## Revert the last local commit

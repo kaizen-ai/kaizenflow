@@ -170,7 +170,7 @@ def increase_chapter(in_file_name, out_file_name):
 # #############################################################################
 
 
-def _parser():
+def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -218,4 +218,4 @@ def _main(parser):
 
 
 if __name__ == "__main__":
-    _main(parser)
+    _main(_parse())
