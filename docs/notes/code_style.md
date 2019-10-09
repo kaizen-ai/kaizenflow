@@ -49,7 +49,7 @@
 ## reST style
 
 - reST (aka re-Structured Text) style is:
-    - the most widely supported in the python commpunity
+    - the most widely supported in the python community
     - supported by all doc generation tools (e.g., epydoc, sphinx)
     - default in pycharm
     - default in pyment
@@ -182,9 +182,11 @@ This is a reST style.
 # Logging
 
 ## Always use logging instead of prints
+
 - Always use logging and never `print()` to report debug, info, warning 
 
 ## Our logging idiom
+
 ```python
 import helpers.dbg as dbg
 
@@ -307,7 +309,7 @@ _LOG.warning(...)
 
 - In this way code can be moved across repos without changing the imports
 
-## Don't use evil "import *"
+## Don't use evil `import *`
 
 - Do not use in notebooks or code this evil import
     - **Bad**
@@ -318,7 +320,7 @@ _LOG.warning(...)
         ```python
         import edgar.utils as edu
         ```
-- The` from ... import *`
+- The `from ... import *`
     - pollutes the namespace with the symbols and spreads over everywhere, making
       painful to clean up
     - makes unclear from where each function is coming from, losing context that
@@ -327,6 +329,7 @@ _LOG.warning(...)
       [StackOverflow](https://stackoverflow.com/questions/2386714/why-is-import-bad))
 
 ## Cleaning up the evil `import *`
+
 - To clean up the mess you can:
     - for notebooks
         - find & replace (e.g., using jupytext and pycharm)
@@ -409,12 +412,17 @@ _LOG.warning(...)
     from typing import Iterable, List
     ```
 
+- Other exceptions are:
+    ```python
+    from tqdm.autonotebook import tqdm
+    ```
+
 ## Always import with a full path from the root of the repo / submodule
 
 - **Bad**
     ```python
     import timestamp
-    ``
+    ```
 - **Good**
     ```
     import compustat.timestamp
@@ -500,6 +508,7 @@ _LOG.warning(...)
   context)
 
 - E.g., for a script generating a dataset there should be an (umbrella) bug for
-  this dataset, that we refer in the bug name, e.g.,`TaskXYZ_edgar_timestamp_dataset_extractor.py`
+  this dataset, that we refer in the bug name,
+  e.g.,`TaskXYZ_edgar_timestamp_dataset_extractor.py`
 
 - Also where the script is located should give some clue of what is related to
