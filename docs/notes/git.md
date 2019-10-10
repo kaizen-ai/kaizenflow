@@ -199,21 +199,28 @@ and stage #3 is the version you are merging from.
     - Changes to master should only happen by pull-request or merge
     - One should avoid working in master except in rare cases, e.g., a simple
       urgent bug-fix needed to unblock people
+    - `master` should be always never broken (all tests are passing and it is
+      deployable)
 
 ## Always work in a branch
 - Call your branch `PartTaskXYZ_descriptive_name`
-    - Ideally from the bug report, e.g., `PartTask274_PRICE_Download_equity_data`
+    - Ideally from the bug report using `git_show.py`, e.g.,
+      `PartTask274_PRICE_Download_equity_data`
 
 - Generally it is best to be the sole contributor to your branch
     - If you need to collaborate with somebody on a branch, remember that the
       golden rule of rebase still applies to this "public" branch: "do not rebase
       pushed commits"
 - It is ok to open multiple branches for a given task if needed
+    - E.g., if you have multiple chunks of work or multiple people are working on
+      orthogonal changes
+    - It might be that the task is too big and needs to be broken in smaller bugs
     - In this case try to give a meaningful name to the branch: e.g.,
-      `TaskXYZ_v2` is definitively not ok
-- All the rules that apply to `master` apply also to a branch.
+      `TaskXYZ_meaningful_name_01` is ok
+
+- All the rules that apply to `master` apply also to a branch
     - E.g., commit often, use meaningful commit messages.
-    - We are ok with a little looser attitude
+    - We are ok with a little looser attitude in your branch
     - E.g., it might be ok to not run unit tests before each commit, but be
       careful!
 
@@ -223,9 +230,27 @@ and stage #3 is the version you are merging from.
   once a day
 
 ## Merge master into your branch regularly 
-- Merge `master` into your feature branch **at least once a day**,
-  if the branch stays around that long:
-- `git merge master`
+- Merge `master` into your feature branch **at least once a day**, if the branch
+  stays around that long:
+    ```bash
+    // Get the .git from the server
+    > git fetch
+    // Make your master up to origin/master.
+    > git checkout master
+    > git pull
+    // Merge master into my_feature branch.
+    > git checkout my_feature
+    > git merge master
+    ```
+- A simpler flow which should be equivalent
+    - TODO(gp): Verify that
+    ```bash
+    // Get the .git from the server
+    > git fetch
+    // Merge master into my_feature branch.
+    > git checkout my_feature
+    > git merge origin/master
+    ```
 
 ## Keep different changes in separate branches
 
@@ -239,15 +264,20 @@ and stage #3 is the version you are merging from.
 - Packaging unrelated changes together that means no change gets merged until
   **all** of the changes are accepted
 
-## Use Pull Requests (PRs) for reviews 
+## Use Pull-requests (PRs) for reviews 
 
-- **Make sure your PR is coherent**
+- We are moving towards a flow where everything is reviewed and goes into master
+  through PRs
+
+- Make sure your PR is coherent
     - It may not need to do everything the Task requires, but the PR should be
       self-contained and not break anything
 
 - If you **absolutely** need changes under review to keep going, create the new
-  branch from the old branch rather than from master (less ideal). Try to avoid
-  needing to do this.
+  branch from the old branch rather than from master (less ideal)
+    - Try to avoid branching from branches
+        - This creates also dependencies on the order of committing branches
+        - You end up with a spiderweb of branches
 
 - Frequent small PRs are easier to review
     - you will also experience faster review turnaround
@@ -259,6 +289,10 @@ and stage #3 is the version you are merging from.
   is progressing earlier on in the process, and give you feedback
     - E.g., "here it is a much simpler way of doing this", or even better "you
       don’t need to write any code, just do <this_and_that>"
+
+- Add Paul and GP as reviewers, plus anybody else that might be interested
+
+- After the review process Paul or GP will merge the code
 
 - Merged changes are tested in the Jenkins build
 
@@ -317,7 +351,42 @@ and stage #3 is the version you are merging from.
     - If your branch lives long, you want to apply changes made on master to
       show on your branch
         
-    5.a) Rebase flow (advanced; please avoid this flow)
+    - Merge flow
+    
+    - Assume your branch is clean
+        - E.g., everything is committed, or stashed
+
+    - Pull changes from `master` on the remote repo
+        ```bash
+        > git checkout master
+        > git pull
+        ```
+
+    - Checkout your feature branch
+        ```bash
+        > git checkout my_feature
+        ```
+
+    - Merge stuff from `master` to `my_feature`
+        ```bash
+        > git merge master --no-ff
+        ```
+
+    ... editor will open a message for the merge commit ...
+
+    - In few informal words, the `--no-ff` option means that commits are not
+      "inlined" (similar to rebase) even if possible, but a merge commit is
+      always used
+        - The problem is that if the commits are "inlined" then you can't revert
+          the change in one shot like we would do for a merge commit, but you
+          need to revert all the inlined changes
+
+- **For now we are suggesting to avoid rebase flow**
+    - Rebase flow is advanced; please avoid this flow
+
+    - The reason is that rebase makes thing cleaner when used properly, but can
+      get you in trouble if not used properly
+
     - You can rebase into `master`, i.e., you re-apply your changes to
        `master`
     - Not the other way around: that would be a disaster!
@@ -339,30 +408,7 @@ and stage #3 is the version you are merging from.
         // You can see that you are ahead of master
         ```
 
-    5.b) Merge flow
-    
-        - Assume your branch is clean
-            - E.g., everything is committed, or stashed
-
-        - Pull changes from `master` on the remote repo
-            ```bash
-            > git checkout master
-            > git pull
-            ```
-
-        - Checkout your feature branch
-            ```bash
-            > git checkout my_feature
-            ```
-
-        - Merge stuff from `master` to `my_feature`
-            ```bash
-            > git merge master --no-ff
-            ```
-
-        ... editor will open a message for the merge commit ...
-
-## Create a pull request / ReviewBoard review
+## Create a pull request
 - You can create a Pull Request to merge your code into master
     - Go to the branch on the web interface and push "Compare & pull request"
 
@@ -392,5 +438,4 @@ and stage #3 is the version you are merging from.
 
 # TODO(gp):
 - How to sync both git repos?
-- Merge vs rebase [merge instead of rebase]
 - How to move forward the amp / infra markers?
