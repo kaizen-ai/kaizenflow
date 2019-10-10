@@ -48,9 +48,6 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
-        "--website", required=False, action="store", default=_WEBSITE, type=str
-    )
-    parser.add_argument(
         "--max_num_files",
         action="store",
         default=None,
@@ -68,7 +65,7 @@ if __name__ == "__main__":
     dbg.init_logger(args.log_level)
     #
     rdd = fru.RawDataDownloader(
-        args.website, args.zipped_dst_dir, args.max_num_files
+        _WEBSITE, args.zipped_dst_dir, args.max_num_files
     )
     rdd.execute()
     #
