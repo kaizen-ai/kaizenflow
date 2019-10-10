@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# ```
+# """
 # > git difftool $*
-# ```
+# """
 
 source helpers.sh
 

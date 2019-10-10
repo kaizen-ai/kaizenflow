@@ -1,14 +1,14 @@
 #!/bin/bash -xe
 
-# TODO(gp): -> clean_build.run_slow_tests.sh
+# TODO(gp): -> clean_build.run_fast_tests.sh
 
 # """
 # - Build conda env
-# - Run the slow tests
+# - Run the fast tests
 # """
 
 VERB=DEBUG
-ENV_NAME=develop.clean_build.run_slow_tests_coverage
+ENV_NAME=develop.fast_clean
 
 source ~/.bashrc
 
@@ -23,5 +23,5 @@ dev_scripts/install/create_conda.py --delete_env_if_exists --env_name $ENV_NAME 
 source dev_scripts/setenv.sh -e $ENV_NAME
 
 # Run tests.
-OPTS='--coverage'
-dev_scripts/run_tests.py --test slow --jenkins $OPTS -v $VERB
+OPTS=''
+dev_scripts/run_tests.py --test fast --jenkins $OPTS -v $VERB
