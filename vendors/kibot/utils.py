@@ -13,6 +13,7 @@ import pandas as pd
 
 import helpers.cache as cache
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
@@ -102,7 +103,8 @@ def read_multiple_symbol_data(symbols, file_name_template, nrows=None):
 # Read metadata.
 # #############################################################################
 
-_KIBOT_DIRNAME = "s3://alphamatic/kibot/metadata"
+
+_KIBOT_DIRNAME = os.path.join(hs3.get_path(), "kibot/metadata")
 
 
 # TODO(gp): I don't have a clear understanding of what the metadata means and
