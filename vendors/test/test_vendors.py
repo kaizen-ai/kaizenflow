@@ -6,7 +6,7 @@ import pytest
 import helpers.s3 as hs3
 import helpers.system_interaction as si
 import helpers.unit_test as ut
-import vendors.cme.reader as cmer
+import vendors.cme.read as cmer
 import vendors.etfs.utils as etfut
 import vendors.first_rate.read as frr
 import vendors.kibot.utils as kut
@@ -115,8 +115,7 @@ class Test_first_rate1(ut.TestCase):
         cmd = " ".join(cmd)
         si.system(cmd)
         # TODO(Julia): Test the dowloaded data with the code below.
-        dir_name = self._get_current_path() + "/tmp.scratch"
-        pq_dir = "pq_dst_dir %s/pq" % dir_name
+        pq_dir = "%s/pq" % tmp_dir
         file_name = os.listdir(pq_dir)[0]
         file_path = os.path.join(pq_dir, file_name)
         frr.read_data(file_path)
@@ -138,7 +137,7 @@ class Test_cme1(ut.TestCase):
         tmp_dir = self.get_scratch_space()
         cmd = []
         # TODO(Julia): Rename download.py
-        cmd.append("vendors/cme/downloader.py")
+        cmd.append("vendors/cme/download.py")
         cmd.append(
             "--download_url"
             " https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls"
