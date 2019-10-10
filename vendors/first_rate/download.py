@@ -4,7 +4,7 @@ r"""
 Download equity data from the http://firstratedata.com.
 
 Usage example:
-> python vendors/first_rate/downloader.py \
+> python vendors/first_rate/download.py \
   --dst_dir /data/firstrate/ \
   --website http://firstratedata.com
 """
