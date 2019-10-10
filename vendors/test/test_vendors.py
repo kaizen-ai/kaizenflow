@@ -111,8 +111,11 @@ class Test_first_rate1(ut.TestCase):
         si.system(cmd)
 
     def test_reader1(self):
-        dir_name = self._get_current_path() + "/tmp.scratch"
-        pq_dir = "pq_dst_dir %s/pq" % dir_name
+        dir_name = (
+            self._get_current_path(test_method_name="test_downloader1")
+            + "/tmp.scratch"
+        )
+        pq_dir = "%s/pq" % dir_name
         file_name = os.listdir(pq_dir)[0]
         file_path = os.path.join(pq_dir, file_name)
         frr.read_pq(file_path)
