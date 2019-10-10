@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# ```
+# """
 # Find files with git conflicts.
-# ```
+# """
 
 source helpers.sh
 

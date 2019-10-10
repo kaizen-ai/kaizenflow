@@ -2,10 +2,10 @@
 
 # TODO(gp): -> clean_build.run_slow_tests.sh
 
-# ```
+# """
 # - Build conda env
 # - Run the slow tests
-# ```
+# """
 
 VERB=DEBUG
 ENV_NAME=develop.slow_clean

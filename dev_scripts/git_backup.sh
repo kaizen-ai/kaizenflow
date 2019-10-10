@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# ```
-# Create a tarball of all the files added / modified.
-# ```
+# """
+# Create a tarball of all the files added / modified according to git_files.sh
+# """
 
 source helpers.sh
 

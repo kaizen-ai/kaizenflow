@@ -1,9 +1,9 @@
 #!/bin/bash -e
 
-# ```
+# """
 # Git diff all the python files.
-# gd $(git_files.sh)
-# ```
+# > gd $(git_files.sh)
+# """
 
 source helpers.sh
 
