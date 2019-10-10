@@ -79,10 +79,14 @@ print(df4["Exchange"].unique())
 # # Load product specs
 
 # %%
+import helpers.s3 as hs3
+
+# %%
 # TODO (Julia): After PartTask268_PRICE_Download_metadata_from_CME
 # is merged into master, replace this with a reader
-_PRODUCT_SPECS_PATH = (
-    "/data/prices/product_slate_export_with_contract_specs_20190905.csv"
+_PRODUCT_SPECS_PATH = os.path.join(
+    hs3.get_path(),
+    "cme/product_slate_export_with_contract_specs_20190905.csv"
 )
 product_specs = pd.read_csv(_PRODUCT_SPECS_PATH)
 
@@ -108,9 +112,12 @@ df3["Exchange"].value_counts()
 product_specs["Globex"].head()
 
 # %%
-daily_futures_w_ext = os.listdir(
-    "/data/kibot/All_Futures_Continuous_Contracts_daily/"
-)
+#daily_futures_w_ext = os.listdir
+#    "/data/kibot/All_Futures_Continuous_Contracts_daily/"
+#)
+
+file_path = os.path.join(hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily")
+daily_futures_w_ext = hs3.ls(file_path)
 
 # %%
 daily_futures_w_ext[:5]
