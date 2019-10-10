@@ -101,30 +101,3 @@ develop               *  /Users/saggese/.conda/envs/develop
 > create_conda.py --req_file dev_scripts/install/requirements/pymc.txt --env_name pymc3 --delete_env_if_exists -v DEBUG
 > conda create sage -n sage
 ` ``
-
-# Running unit tests
-
-- To enable debug info
-```bash
-> pytest --dbg_verbosity DEBUG
-```
-
-- To update golden outcomes
-```bash
-> pytest --update_outcomes
-```
-
-- To stop at first failure
-```bash
-> pytest -x
-```
-
-- To run a single class
-```bash
-> pytest -k TestPcaFactorComputer1
-```
-
-- To run a single test method
-```bash
-> pytest core/test/test_core.py::TestPcaFactorComputer1::test_linearize_eigval_eigvec
-```

@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# ```
+# """
 # Retrieve the files checked in by the current user in the n last commits.
-# ```
+# """
 
 if [[ -z $1 ]]; then
   num_commits=1

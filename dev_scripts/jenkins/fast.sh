@@ -1,9 +1,9 @@
 #!/bin/bash -xe
 
-# ```
+# """
 # - (No conda env build)
 # - Run the fast tests
-# ```
+# """
 
 VERB=DEBUG
 ENV_NAME=develop

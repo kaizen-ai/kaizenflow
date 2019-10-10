@@ -1,8 +1,8 @@
 #!/bin/bash -xe
 
-# ```
+# """
 # - Run linter on the entire tree.
-# ```
+# """
 
 VERB=DEBUG
 ENV_NAME=develop
