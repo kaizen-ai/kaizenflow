@@ -189,12 +189,13 @@ def _maybe_remove_extension(filename, extension):
         return None
 
 
-def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
+def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
     """
     Applies `convert_csv_to_pq` to all files in csv_dir
 
     :param csv_dir: directory of csv's
     :param pq_dir: target directory
+    :param header: header specification of csv
     :param normalizer: function to apply to df before writing to pq
     :return: None
     """
@@ -215,4 +216,5 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None):
             os.path.join(csv_dir, filename),
             os.path.join(pq_dir, pq_filename),
             normalizer=normalizer,
+            header=header,
         )
