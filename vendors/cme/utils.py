@@ -1,4 +1,8 @@
 r"""
+Import as:
+
+import vendors.cme.utils as cmeu
+
 Download product lists and contract specs from CME.
 
 In more detail:
@@ -462,7 +466,7 @@ class _ContractSpecsDownloader:
         return df
 
 
-def _get_list_with_specs_pipeline(
+def get_list_with_specs_pipeline(
     download_url,
     product_list_xls_dst_path,
     list_with_specs_csv_dst_path,
@@ -488,13 +492,13 @@ def _get_list_with_specs_pipeline(
         download_url=download_url, xls_path=product_list_xls_dst_path
     )
     pld.execute()
-
+    #
     xlsx_with_hyperlinks_path = (
         os.path.splitext(pld.xlsx_path)[0] + "_with_hyperlinks.xlsx"
     )
     he = _HyperlinksExtractor(pld.xlsx_path)
     xlsx_with_hyperlinks_path = he.execute(xlsx_with_hyperlinks_path)
-
+    #
     product_list = pd.read_excel(xlsx_with_hyperlinks_path)
     csd = _ContractSpecsDownloader(product_list, max_num_specs)
     csd.execute(list_with_specs_csv_dst_path)

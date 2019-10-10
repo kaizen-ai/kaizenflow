@@ -1,31 +1,49 @@
 # Running unit tests
 
-## Enable debug info
+## Using the `run_tests.py` wrapper
+
+### Run fast tests
+    ```
+    > run_tests.py
+    > run_tests.py --test fast
+    ```
+
+### Run parallel tests
+- You can use the switch `--num_cpus -1` to use all the available CPUs
+
+### Run slow tests
+    ```
+    > run_tests.py --test slow
+    ```
+
+## Using `pytest` directly
+
+### Enable debug info
     ```bash
     > pytest --dbg_verbosity DEBUG
     ```
 
-## Update golden outcomes
+### Update golden outcomes
     ```bash
     > pytest --update_outcomes
     ```
 
-## Stop at first failure
+### Stop at first failure
     ```bash
     > pytest -x
     ```
 
-## Run a single class
+### Run a single class
     ```bash
     > pytest -k TestPcaFactorComputer1
     ```
 
-## Run a single test method
+### Run a single test method
     ```bash
     > pytest core/test/test_core.py::TestPcaFactorComputer1::test_linearize_eigval_eigvec
     ```
 
-## Remove cache artifacts
+### Remove cache artifacts
     ```bash
     > find . -name "__pycache__" -o -name ".pytest_cache"
     ./.pytest_cache
@@ -36,7 +54,7 @@
     > find . -name "__pycache__" -o -name ".pytest_cache" | xargs rm -rf
     ```
 
-## Run with a clear cache
+### Run with a clear cache
     ```bash
     > pytest --cache-clear
     ```
