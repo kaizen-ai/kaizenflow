@@ -115,8 +115,7 @@ class Test_first_rate1(ut.TestCase):
         cmd = " ".join(cmd)
         si.system(cmd)
         # TODO(Julia): Test the dowloaded data with the code below.
-        dir_name = self._get_current_path() + "/tmp.scratch"
-        pq_dir = "pq_dst_dir %s/pq" % dir_name
+        pq_dir = "%s/pq" % tmp_dir
         file_name = os.listdir(pq_dir)[0]
         file_path = os.path.join(pq_dir, file_name)
         frr.read_pq(file_path)
