@@ -8,7 +8,7 @@ import helpers.system_interaction as si
 import helpers.unit_test as ut
 import vendors.cme.reader as cmer
 import vendors.etfs.utils as etfut
-import vendors.first_rate.reader as frr
+import vendors.first_rate.read as frr
 import vendors.kibot.utils as kut
 import vendors.pandas_datareader.utils as pdut
 
@@ -107,7 +107,7 @@ class Test_first_rate1(ut.TestCase):
         tmp_dir = self.get_scratch_space()
         cmd = []
         # TODO(Julia): Rename download.py
-        cmd.append("vendors/first_rate/downloader.py")
+        cmd.append("vendors/first_rate/download.py")
         cmd.append("--zipped_dst_dir %s/zipped" % tmp_dir)
         cmd.append("--unzipped_dst_dir %s/unzipped" % tmp_dir)
         cmd.append("--pq_dst_dir %s/pq" % tmp_dir)
@@ -119,7 +119,7 @@ class Test_first_rate1(ut.TestCase):
         pq_dir = "pq_dst_dir %s/pq" % dir_name
         file_name = os.listdir(pq_dir)[0]
         file_path = os.path.join(pq_dir, file_name)
-        frr.read_pq(file_path)
+        frr.read_data(file_path)
 
     def test_reader1(self):
         # TODO(Julia): We want to add a test the official s3 location of this

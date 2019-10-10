@@ -5,7 +5,7 @@ import pandas as pd
 _LOG = logging.getLogger(__name__)
 
 
-def read_pq(file_path):
+def read_data(file_path):
     """
     Read a parquet file into pandas.
 
