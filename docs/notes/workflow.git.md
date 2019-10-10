@@ -27,7 +27,7 @@
     ```bash
     git diff --name-only --diff-filter=U
     ```
-- This is what the script `git_conflict_files.sh`
+- This is what the script `git_conflict_files.sh` does
 
 ## Accepting "theirs"
 ```bash
@@ -35,12 +35,21 @@
 > git add $FILES
 ```
 
-ours and theirs. The first option represents the current branch from which you executed the command before getting the conflicts, and the second option refers to the branch where the changes are coming from.
+ours and theirs. The first option represents the current branch from which you
+executed the command before getting the conflicts, and the second option refers
+to the branch where the changes are coming from.
 
-git show :1:README
-git show :2:README
-git show :3:README
-Stage #1 is the common ancestor of the files, stage #2 is the target-branch version, and stage #3 is the version you are merging from.
+```
+> git show :1:README
+
+> git show :2:README
+
+> git show :3:README
+```
+
+Stage #1 is the common ancestor of the files,
+stage #2 is the target-branch version,
+and stage #3 is the version you are merging from.
 
 ## How to get out of a messy/un-mergeable branch
 
@@ -100,6 +109,9 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
     LemTask274_PRICE_Download_equity_data
     ```
 - The name is `LemTask274_PRICE_Download_equity_data`
+
+- To use multiple branches for a given task, append a numeral to the name,
+  e.g., `LemTask274_PRICE_Download_equity_data01`
 
 ## Checking what work was done in a branch
 
@@ -183,10 +195,10 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 
 ## `master` is sacred
 - In an ideal world `master` branch is sacred (see Platinum rule of Git)
-    - Development should never be done directly on master;
-    - Changes to master should only happen by pull-request or merge;
+    - Development should never be done directly on master
+    - Changes to master should only happen by pull-request or merge
     - One should avoid working in master except in rare cases, e.g., a simple
-      urgent bug-fix needed to unblock people.
+      urgent bug-fix needed to unblock people
 
 ## Always work in a branch
 - Call your branch `PartTaskXYZ_descriptive_name`
@@ -210,10 +222,10 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 - Push your local work to the remote branch regularly (with `git push`) at least
   once a day
 
-## Rebase your branch onto master
-- Rebase onto master **at least once a day**, if the branch stays around that
-  long:
-- `git rebase master`
+## Merge master into your branch regularly 
+- Merge `master` into your feature branch **at least once a day**,
+  if the branch stays around that long:
+- `git merge master`
 
 ## Keep different changes in separate branches
 
@@ -224,23 +236,24 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 - You are testing / debugging all at once which might make your life more
   difficult
 - Reviewing unrelated changes slows down the review process
-- Packaging unrelated changes together means no change gets merged until **all**
-  the changes are accepted
+- Packaging unrelated changes together that means no change gets merged until
+  **all** of the changes are accepted
 
-## Use ReviewBoard review
-- This is a replacement to pull request
-- Use ReviewBoard **early** and **often**
+## Use Pull Requests (PRs) for reviews 
 
-- **Make sure your CL is coherent**
-    - It may not need to do everything the Task requires, but the CL should be
+- **Make sure your PR is coherent**
+    - It may not need to do everything the Task requires, but the PR should be
       self-contained and not break anything
 
-- If you need changes under review to keep going, create the new branch from
-  the old branch rather than from master (less ideal)
+- If you **absolutely** need changes under review to keep going, create the new
+  branch from the old branch rather than from master (less ideal). Try to avoid
+  needing to do this.
 
-- Frequent small CLs are easier to review
+- Frequent small PRs are easier to review
     - you will also experience faster review turnaround
     - reviewers like working on smaller changes more than working on larger ones
+    - PR review time does not scale linearly with lines changed (may be more
+      like exponential) 
 
 - Merging changes frequently means other people can more easily see how the code
   is progressing earlier on in the process, and give you feedback
@@ -303,10 +316,8 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 5) Update your branch with changes from `master`
     - If your branch lives long, you want to apply changes made on master to
       show on your branch
-        - E.g., you can integrate daily by using merge or rebase
-        - We suggest **rebase your private branch**
         
-    5.a) Rebase flow
+    5.a) Rebase flow (advanced; please avoid this flow)
     - You can rebase into `master`, i.e., you re-apply your changes to
        `master`
     - Not the other way around: that would be a disaster!
@@ -352,7 +363,7 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
         ... editor will open a message for the merge commit ...
 
 ## Create a pull request / ReviewBoard review
-- You can raise a pull-request to merge your code into master
+- You can create a Pull Request to merge your code into master
     - Go to the branch on the web interface and push "Compare & pull request"
 
 - The procedure for manual merges is as follows
@@ -381,5 +392,5 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
 
 # TODO(gp):
 - How to sync both git repos?
-- Merge vs rebase
+- Merge vs rebase [merge instead of rebase]
 - How to move forward the amp / infra markers?
