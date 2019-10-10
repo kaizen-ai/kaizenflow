@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 r"""
 Download equity data from the http://firstratedata.com.
 
@@ -15,7 +14,6 @@ Usage example:
   --unzipped_dst_dir /data/first_rate/unzipped \
   --pq_dst_dir /data/first_rate/pq
 """
-import argparse
 import logging
 import os
 import re
@@ -465,63 +463,3 @@ class _CSVToParquetConverter:
             csv.convert_csv_dir_to_pq_dir(
                 category_dir_input_path, category_dir_dst_path, header="infer"
             )
-
-
-if __name__ == "__main__":
-    _WEBSITE = "http://firstratedata.com"
-    _ZIPPED_DST_DIR = "/data/first_rate/zipped/"
-    _UNZIPPED_DST_DIR = "/data/first_rate/unzipped/"
-    _PQ_DST_DIR = "/data/first_rate/pq"
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--zipped_dst_dir",
-        required=False,
-        action="store",
-        default=_ZIPPED_DST_DIR,
-        type=str,
-    )
-    parser.add_argument(
-        "--unzipped_dst_dir",
-        required=False,
-        action="store",
-        default=_UNZIPPED_DST_DIR,
-        type=str,
-    )
-    parser.add_argument(
-        "--pq_dst_dir",
-        required=False,
-        action="store",
-        default=_PQ_DST_DIR,
-        type=str,
-    )
-    parser.add_argument(
-        "--max_num_files",
-        action="store",
-        default=None,
-        type=int,
-        help="Maximum number of files to be downloaded",
-    )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
-    args = parser.parse_args()
-    dbg.init_logger(args.log_level)
-
-    rdd = _RawDataDownloader(
-        _WEBSITE, args.zipped_dst_dir, max_num_files=args.max_num_files
-    )
-    rdd.execute()
-
-    mzcc = _MultipleZipCSVCombiner(
-        args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
-    )
-    mzcc.execute()
-
-    ctpc = _CSVToParquetConverter(args.unzipped_dst_dir, args.pq_dst_dir)
-    ctpc.execute()

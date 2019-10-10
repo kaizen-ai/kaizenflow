@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# ```
-# Run: `conda info --envs`
-# ```
+# """
+# > conda info --envs
+# """
 
 source helpers.sh
 

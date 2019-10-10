@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# ```
+# """
 # Sync client with gup.py and then push local commits.
-# ```
+# """
 
 source helpers.sh
 
