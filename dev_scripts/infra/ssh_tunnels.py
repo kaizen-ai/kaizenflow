@@ -54,18 +54,19 @@ def _main():
     #
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
-    # Disable paranoid check.
-    if False:
-        # Check we are in the right repo.
-        repo_name = git.get_repo_symbolic_name(super_module=True)
-        exp_repo_name = "ParticleDev/commodity_research"
-        if repo_name != exp_repo_name:
-            msg = "Need to run from repo '%s' and not from '%s'" % (
-                exp_repo_name,
-                repo_name,
-            )
-            _LOG.error(msg)
-            raise RuntimeError(msg)
+    # Check that we are in the P1 repo since to open the tunnel we need some
+    # env vars set by setenv.sh. This is also preventing Test_ssh_tunnel to be
+    # run by Jenkins.
+    # TODO(gp): Improve this.
+    repo_name = git.get_repo_symbolic_name(super_module=True)
+    exp_repo_name = "ParticleDev/commodity_research"
+    if repo_name != exp_repo_name:
+        msg = "Need to run from repo '%s' and not from '%s'" % (
+            exp_repo_name,
+            repo_name,
+        )
+        _LOG.error(msg)
+        raise RuntimeError(msg)
     #
     if args.user:
         user_name = args.user
