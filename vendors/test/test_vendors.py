@@ -100,7 +100,6 @@ class Test_pandas_datareader_utils1(ut.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skip()
 @pytest.mark.slow()
 class Test_first_rate1(ut.TestCase):
     def test_downloader1(self):
