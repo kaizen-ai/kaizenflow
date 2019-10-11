@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -30,6 +30,7 @@ import core.finance as fin
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
+import helpers.s3 as hs3
 import vendors.kibot.utils as kut
 
 # %%
@@ -97,8 +98,8 @@ print(config)
 
 # %%
 symbols = "CL NG RB BZ".split()
-file_name = (
-    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
+file_name = os.path.join(
+    hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
 )
 
 daily_price_dict_df = kut.read_multiple_symbol_data(
@@ -147,8 +148,8 @@ daily_rets.to_csv("oil_daily_zrets.csv")
 
 # %%
 symbols = "CL NG RB BZ".split()
-file_name = (
-    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+file_name = os.path.join(
+    hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
 )
 min_price_dict_df = kut.read_multiple_symbol_data(
     symbols, file_name, nrows=config["read_data"]["nrows"]

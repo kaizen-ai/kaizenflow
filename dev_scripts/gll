@@ -1,6 +1,6 @@
 #!/bin/bash -xe
 
-# ```
+# """
 # List commits in a fancy full-screen format like:
 #
 #    * 299ad8e saggese   Improve scripts for tunnelling and handling notebooks             (   4 hours ago) Sat Sep 14 11:28:29 2019  (HEAD -> master, origin/master, origin/HEAD)
@@ -13,7 +13,7 @@
 #
 # # Show the last 5 commits:
 # > gll -5
-# ```
+# """
 
 git log \
   --date=local \

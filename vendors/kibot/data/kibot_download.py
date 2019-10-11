@@ -2,10 +2,10 @@
 """
 Download data from kibot.com, compress each file, upload it to S3.
 
-- Start from scratch
+# Start from scratch
 > futures_1mins/kibot_download.py -t All_Futures_Contracts_daily --zipped --delete_s3_dir
 
-- Debug
+# Debug
 > futures_1mins/kibot_download.py -t All_Futures_Contracts_daily --zipped --serial -v DEBUG
 """
 
@@ -21,13 +21,12 @@ from joblib import Parallel, delayed
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.s3 as hs3
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
-
-_BUCKET_NAME = "alphamatic"
 
 
 def _extract_links(src_file):
@@ -158,10 +157,10 @@ def _main(parser):
     dst_dir = "./" + tag
     io_.create_dir(dst_dir, incremental=False)
     #
-    aws_dir = _BUCKET_NAME + "/" + tag
+    aws_dir = os.path.join(hs3.get_path(), "kibot", tag)
     if args.delete_s3_dir:
         _LOG.warning("Deleting s3 file %s", aws_dir)
-        cmd = "aws s3 rm --recursive s3://%s" % aws_dir
+        cmd = "aws s3 rm --recursive %s" % aws_dir
         si.system(cmd)
     # Download data.
     if not args.serial:

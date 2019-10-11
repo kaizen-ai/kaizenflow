@@ -4,8 +4,9 @@
     - E.g., see "tab vs space" flame-war from the 90s
 - Unless explicitly noted we prefer to follow the style guide below
 
-- As a rule of thumb we default to Google style unless Python community (in the
-  form of PEP) or tools we rely favor another style
+- As a rule of thumb we default to the Google style guidelines, unless the
+  Python community (in the form of [PEPs](https://www.python.org/dev/peps/) or
+  the tools we rely upon favor another style
 
 ## Reference
 
@@ -28,16 +29,24 @@
 - Unix rules (although a bit cryptic sometimes)
     - `https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules`
 
+# Naming conventions
+
+- Name executable files (scripts) and library functions using verbs (e.g.,
+  `download.py`, `download_data()`)
+
+- Name classes and (non-executable) files using nouns (e.g., `Downloader()`,
+  `downloader.py`)
+
 # Comments
 
 ## Docstring conventions
 
 - Code needs to be properly commented
 
-- We follow python standard [PEP257](https://www.python.org/dev/peps/pep-0257/)
+- We follow python standard [PEP 257](https://www.python.org/dev/peps/pep-0257/)
   for commenting
-    - PEP257 standardizes what and how comments should be expressed (e.g., use a
-      triple quotes for commenting a function), but it does not specify what
+    - PEP 257 standardizes what and how comments should be expressed (e.g., use
+      a triple quotes for commenting a function), but it does not specify what
       markup syntax should be used to describe comments
 
 - Different conventions have been developed for documenting interfaces
@@ -49,7 +58,7 @@
 ## reST style
 
 - reST (aka re-Structured Text) style is:
-    - the most widely supported in the python commpunity
+    - the most widely supported in the python community
     - supported by all doc generation tools (e.g., epydoc, sphinx)
     - default in pycharm
     - default in pyment
@@ -70,59 +79,33 @@ This is a reST style.
 """
 ```
 
+- We pick lowercase after `:param XYZ: ...` unless the first word is a proper
+  noun or type
+
+- Examples are [here](https://stackoverflow.com/questions/3898572)
+
 ## Descriptive vs imperative style
 
-- GPSG suggests to use descriptive style of comments, e.g., "This function does
-  this and that", instead than imperative style "Do this and that"
+- GPSG suggests using descriptive comments, e.g., "This function does
+  this and that", instead of an imperative style "Do this and that"
 
-- [PEP-257](https://www.python.org/dev/peps/pep-0257/)
+- [PEP 257](https://www.python.org/dev/peps/pep-0257/)
     ```
     The docstring is a phrase ending in a period. It prescribes the function or
     method's effect as a command ("Do this", "Return that"), not as a description;
     e.g. don't write "Returns the pathname ...".
     ```
     - pylint and other python QA tools favor an imperative style
-    - Since we prefer to rely on automatic checks, we decided to use an imperative
-      style of comments
+    - Since we prefer to rely upon automatic checks, we decided to use an
+      imperative style of comments
 
-### Alternate parameter description and type
+## Use type hints
 
-- We prefer to alternate param description and its type so the docstring below,
-  although good, does not follow our convention
-    *Bad**
-    ```python
-    :param data: CB data
-    :param metrics: CB metrics
-    :param fill_na_w_zero: If True, fill NaN values with zeros.
+- See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
 
-    :type data: pd.DataFrame
-    :type metrics: list of str
-    :type fill_na_w_zero: bool
+- [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
 
-    :returns data_merged: Data with two metrics added together.
-    :rtype data_merged: pd.DataFrame
-    ```
-
-- The code should be changed into:
-    **Good**
-    ```python
-    :param data: CB data
-    :type data: pd.DataFrame
-    :param metrics: CB metrics
-    :type metrics: list of str
-    :param fill_na_w_zero: If True, fill NaN values with zeros.
-    :type fill_na_w_zero: bool
-
-    :returns data_merged: Data with two metrics added together.
-    :rtype data_merged: pd.DataFrame
-    ```
-
-- We pick lowercase after `:param XYZ: ...` unless the first word is a proper
-  noun or type
-
-- Examples are [here](https://stackoverflow.com/questions/3898572)
-
-### Avoid empty lines in code
+## Avoid empty lines in code
 
 - If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
@@ -158,7 +141,7 @@ This is a reST style.
   empty line is used also to separate functions. For this reason we suggest to
   use an empty comment.
 
-### Avoid distracting comments
+## Avoid distracting comments
 
 - Use comments to explain the high level logic / goal of a piece of code and not
   the details
@@ -168,11 +151,11 @@ This is a reST style.
     log.info("Results are %s", ...)
     ```
 
-### If you find a bug, obsolete docstring in the code
+## If you find a bug, obsolete docstring in the code
 - The process is:
     - do a `git blame` to find who wrote the code
-    - if it's an easy bug, you can fix it and ask for a review to the author
-    - you can file a comment on Upsource
+    - if it's an easy bug, you can fix it and ask for a review from the author
+    - you can comment on a PR (if there is one)
     - you can file a bug on Github with
         - clear info on the problem
         - how to reproduce it, ideally a unit test
@@ -182,9 +165,11 @@ This is a reST style.
 # Logging
 
 ## Always use logging instead of prints
+
 - Always use logging and never `print()` to report debug, info, warning 
 
 ## Our logging idiom
+
 ```python
 import helpers.dbg as dbg
 
@@ -307,7 +292,7 @@ _LOG.warning(...)
 
 - In this way code can be moved across repos without changing the imports
 
-## Don't use evil "import *"
+## Don't use evil `import *`
 
 - Do not use in notebooks or code this evil import
     - **Bad**
@@ -318,7 +303,7 @@ _LOG.warning(...)
         ```python
         import edgar.utils as edu
         ```
-- The` from ... import *`
+- The `from ... import *`
     - pollutes the namespace with the symbols and spreads over everywhere, making
       painful to clean up
     - makes unclear from where each function is coming from, losing context that
@@ -327,6 +312,7 @@ _LOG.warning(...)
       [StackOverflow](https://stackoverflow.com/questions/2386714/why-is-import-bad))
 
 ## Cleaning up the evil `import *`
+
 - To clean up the mess you can:
     - for notebooks
         - find & replace (e.g., using jupytext and pycharm)
@@ -409,12 +395,17 @@ _LOG.warning(...)
     from typing import Iterable, List
     ```
 
+- Other exceptions are:
+    ```python
+    from tqdm.autonotebook import tqdm
+    ```
+
 ## Always import with a full path from the root of the repo / submodule
 
 - **Bad**
     ```python
     import timestamp
-    ``
+    ```
 - **Good**
     ```
     import compustat.timestamp
@@ -500,6 +491,7 @@ _LOG.warning(...)
   context)
 
 - E.g., for a script generating a dataset there should be an (umbrella) bug for
-  this dataset, that we refer in the bug name, e.g.,`TaskXYZ_edgar_timestamp_dataset_extractor.py`
+  this dataset, that we refer in the bug name,
+  e.g.,`TaskXYZ_edgar_timestamp_dataset_extractor.py`
 
 - Also where the script is located should give some clue of what is related to

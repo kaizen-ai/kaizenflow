@@ -1,9 +1,9 @@
 #!/bin/bash -e
 
-# ```
+# """
 # Create a patch file for the entire repo client from the base revision.
 # This script accepts a list of files to package, if specified.
-# ```
+# """
 
 # TODO(gp): Improve this.
 
