@@ -54,11 +54,6 @@ class Config:
             if isinstance(v, Config):
                 txt_tmp = str(v)
                 txt.append("%s:\n%s" % (k, pri.space(txt_tmp)))
-            # TODO(Paul): revisit this approach. The goal here is to prevent
-            # memory locations from ending up in the str summary (since they
-            # aren't reproducible in tests).
-            elif isinstance(v, collections.Callable):
-                txt.append("%s: %s" % (k, v.__name__))
             else:
                 txt.append("%s: %s" % (k, v))
         txt = "\n".join(txt)

@@ -3,6 +3,7 @@ import collections
 import copy
 import io
 import logging
+from typing import Any, Callable, Iterable, Optional
 
 import networkx as nx
 import pandas as pd
@@ -10,12 +11,11 @@ from sklearn import linear_model
 
 import core.features as ftrs
 import core.finance as fin
-import core.signal_processing as sigp
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
 import vendors.kibot.utils as kut
-from core.dataflow_core import DAG as DAG  # pylint: disable=unused-import
-from core.dataflow_core import Node as Node
+from core.dataflow_core import DAG  # pylint: disable=unused-import
+from core.dataflow_core import Node
 
 _LOG = logging.getLogger(__name__)
 
@@ -88,10 +88,9 @@ class SkLearnNode(Node, abc.ABC):
         dbg.dassert(getattr(self, method))
         if method in self._info.keys():
             return self._info[method]
-        else:
-            # TODO(Paul): Maybe crash if there is no info.
-            _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
-            return None
+        # TODO(Paul): Maybe crash if there is no info.
+        _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
+        return None
 
     def _set_info(self, method, values):
         dbg.dassert_isinstance(method, str)
@@ -122,6 +121,8 @@ class DataSource(SkLearnNode, abc.ABC):
         """
         self._fit_idxs = fit_idxs
 
+    # TODO(Paul): Decide what to do about the fact that we override the
+    # superclass function interface.
     def fit(self):
         """
         :return: training set as df
@@ -226,8 +227,6 @@ class ReadDataFromKibot(DataSource):
 # Transformer nodes
 # #############################################################################
 
-# TODO(Paul): Write a Node builder to automatically generate these from
-# functions.
 
 # TODO(Paul): Consider having more kinds of `Transformer` objects, e.g.,
 #   those that transform cols [or subset] -> cols, and those that change the
@@ -238,13 +237,14 @@ class ReadDataFromKibot(DataSource):
 class ColumnTransformer(Transformer):
     def __init__(
         self,
-        nid,
-        transformer_func,
-        transformer_kwargs=None,
-        cols=None,
-        col_rename_func=None,
-        col_mode=None,
-    ):
+        nid: str,
+        transformer_func: Callable[..., pd.DataFrame],
+        # TODO(Paul): Tighten this type annotation.
+        transformer_kwargs: Optional[Any] = None,
+        cols: Optional[Iterable[str]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+    ) -> None:
         """
         Performs non-index modifying changes of columns.
 
@@ -281,18 +281,24 @@ class ColumnTransformer(Transformer):
         #
         if self._col_rename_func is not None:
             dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
-            df.rename(columns=lambda x: self._col_rename_func(x), inplace=True)
+            df.rename(columns=self._col_rename_func, inplace=True)
         #
         if self._col_mode == "merge_all":
             dbg.dassert(
                 df.columns.intersection(df_in.columns).empty,
-                "Transformed column names conflict with existing column names.",
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df.columns,
+                df_in.columns,
             )
             df = df_in.merge(df, left_index=True, right_index=True)
         elif self._col_mode == "replace_selected":
             dbg.dassert(
                 df.columns.intersection(df_in[self._cols]).empty,
-                "Transformed column names conflict with existing column names.",
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df.columns,
+                self._cols,
             )
             df = df_in.drop(self._cols, axis=1).merge(
                 df, left_index=True, right_index=True
@@ -300,104 +306,7 @@ class ColumnTransformer(Transformer):
         elif self._col_mode == "replace_all":
             pass
         else:
-            dbg.dfatal("Unsupported column mode %s", self._col_mode)
-        #
-        info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
-        return df, info
-
-
-# TODO(Paul): Replace usage with ColumnTransformer.
-# TODO(Paul): Rename PctChange (not particular to price changes).
-class PctReturns(Transformer):
-    def __init__(self, nid, cols=None, col_rename_func=None, col_mode=None):
-        super().__init__(nid)
-        self._cols = cols
-        self._col_rename_func = col_rename_func
-        # modes:
-        #   merge_all: df merged with transformed column df
-        #   replace_selected: df returned with `cols` replaced by transformed
-        #   replace_all: only results of transformed columns propagated
-        #   re
-        if col_mode is None:
-            self._col_mode = "merge_all"
-
-    def _transform(self, df):
-        df_in = df.copy()
-        df = df.copy()
-        if self._cols is not None:
-            df = df[self._cols]
-        #
-        df = df.pct_change()
-        if self._col_rename_func is not None:
-            dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
-            df.rename(columns=lambda x: self._col_rename_func(x), inplace=True)
-        #
-        if self._col_mode == "merge_all":
-            dbg.dassert(
-                df.columns.intersection(df_in.columns).empty,
-                "Transformed column names conflict with existing column names.",
-            )
-            df = df_in.merge(df, left_index=True, right_index=True)
-        elif self._col_mode == "replace_selected":
-            dbg.dassert(
-                df.columns.intersection(df_in[self._cols]).empty,
-                "Transformed column names conflict with existing column names.",
-            )
-        elif self._col_mode == "replace_all":
-            pass
-        else:
-            dbg.dfatal("Unsupported column mode %s", self._col_mode)
-        #
-        info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
-        return df, info
-
-
-# TODO(Paul): Replace usage with ColumnTransformer.
-class Zscore(Transformer):
-    def __init__(
-        self,
-        nid,
-        tau,
-        demean,
-        delay,
-        cols=None,
-        col_rename_func=None,
-        col_mode=None,
-    ):
-        super().__init__(nid)
-        self._tau = tau
-        self._demean = demean
-        self._delay = delay
-        self._cols = cols
-        self._col_rename_func = col_rename_func
-        if col_mode is None:
-            self._col_mode = "merge_all"
-
-    def _transform(self, df):
-        # Copy input to merge with output before returning.
-        df_in = df.copy()
-        # Restrict columns if requested.
-        df = df.copy()
-        if self._cols is not None:
-            df = df[self._cols]
-        # Z-score and name columns.
-        df = sigp.rolling_zscore(
-            df, tau=self._tau, demean=self._demean, delay=self._delay
-        )
-        if self._col_rename_func is not None:
-            dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
-            df.rename(columns=lambda x: self._col_rename_func(x), inplace=True)
-        # Merge input dataframe with z-scored columns.
-        if self._col_mode == "merge_all":
-            dbg.dassert(
-                df.columns.intersection(df_in.columns).empty,
-                "Input dataframe has shared column names with zscored dataframe.",
-            )
-            df = df_in.merge(df, left_index=True, right_index=True)
-        else:
-            raise NotImplementedError
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
