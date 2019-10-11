@@ -35,7 +35,7 @@ import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
 import vendors.kibot.utils as kut
-import vendors.particle_one.PartTask269_liquidity_analysis_utils as lau
+import vendors.kibot.PartTask269_liquidity_analysis_utils as lau
 
 sns.set()
 
