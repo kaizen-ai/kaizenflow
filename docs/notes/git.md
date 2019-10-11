@@ -138,6 +138,15 @@
 
 # Best Practices
 
+## Do not check in large data files
+- Avoid checking in large data files
+    - The reason is that large files bloat the repo
+    - One a large file is checked in, it never goes away
+    - Therefore, **DO NOT CHECK IN DATA FILES IN EXCESS OF 500K**
+    - If in doubt (even on a branch), ask first!
+- Sometimes is makes sense to check in some representative data for unit tests
+- BUT, larger tests should obtain their data from s3 or MongoDB
+
 ## Branch workflow best practices
 
 ### Branches are cheap
@@ -190,7 +199,7 @@
 - Packaging unrelated changes together that means no change gets merged until
   **all** of the changes are accepted
 
-## Pull request (PRs) best practices
+## Pull request (PR) best practices
 
 - Make sure your PR is coherent
     - It may not need to do everything the Task requires, but the PR should be
