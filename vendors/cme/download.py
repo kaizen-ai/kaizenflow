@@ -11,7 +11,7 @@ In more detail:
 - save a dataframe with product list and contract specs for each product
 
 Usage example:
-> python vendors/cme/utils.py \
+> python vendors/cme/download.py \
    --download_url https://www.cmegroup.com/CmeWS/mvc/ProductSlate/V1/Download.xls \
    --product_list product_list.xls \
    --product_specs list_with_specs.csv
