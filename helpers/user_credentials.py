@@ -129,7 +129,7 @@ def get_credentials():
         # Paul.
         git_user_name = "paul"
         git_user_email = "smith.paul.anthony@gmail.com"
-        if server_name == "Pauls-MacBook-Pro.local":
+        if server_name in ("Pauls-MacBook-Pro.local", "Pauls-MBP"):
             conda_sh_path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/paul/.conda/envs"
     elif user_name == "gad":
