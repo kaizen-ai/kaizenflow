@@ -119,7 +119,7 @@ class Test_install_create_conda_py1(ut.TestCase):
     def test_create_conda1(self):
         # TODO(gp): Use git.find_file_in_git_tree()
         file_name = git.find_file_in_git_tree("create_conda.py")
-        cmd = f'{file_name} --test_install -v DEBUG'
+        cmd = f'{file_name} --test_install --delete_env_if_exists -v DEBUG'
         si.system(cmd)
 
 

@@ -154,7 +154,7 @@ def _parse():
                         action="append",
                         default=[],
                         help="Requirement file")
-   # Debug options.
+    # Debug options.
     parser.add_argument(
         "--test_install",
         action="store_true",

@@ -91,11 +91,8 @@ dependencies:
   - quandl
   - ruby
   - pip:
-      ## ############################################################################
-      ## Trading
-      ## ############################################################################
-      #- trading-calendars      # conda install -c quantopian trading-calendars, or pip install ...
-      #- pip install ta          # Technical analysis package.
-         #- ta
-     - trading-calendars
-     - RBTools
+    ## ############################################################################
+    ## Trading
+    ## ############################################################################
+    #- ta                   # Technical analysis package.
+    - trading-calendars
