@@ -1,3 +1,5 @@
+import pandas as pd
+
 import core.signal_processing as sp
 
 TAU = 2
