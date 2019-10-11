@@ -18,6 +18,9 @@
 
 ## Using `pytest` directly
 
+### Usage and Invocations reference
+    See [documentation](http://doc.pytest.org/en/latest/usage.html)
+
 ### Enable debug info
     ```bash
     > pytest --dbg_verbosity DEBUG
