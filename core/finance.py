@@ -161,12 +161,11 @@ def filter_by_time(
 
 
 # TODO(gp): ATHs vary over futures. Use volume to estimate them.
-def filter_ath(df, dt_col_name=None, log_level=logging.INFO):
+def filter_ath(df, dt_col_name=None):
     """
     Filter according to active trading hours.
     """
     dbg.dassert_lte(1, df.shape[0])
-    _LOG.log(log_level, "Filtering by ATH")
     if dt_col_name:
         times = np.array([dt.time() for dt in df[dt_col_name]])
     else:
@@ -180,12 +179,8 @@ def filter_ath(df, dt_col_name=None, log_level=logging.INFO):
     end_time = datetime.time(15, 59)
     mask = (start_time <= times) & (times <= end_time)
     #
-    df = df[mask]
-    # Need to make a copy to avoid warnings
-    #   "A value is trying to be set on a copy of a slice from a DataFrame"
-    # downstream
     df = df.copy()
-    _LOG.log(log_level, "df.shape=%s", df.shape)
+    df = df[mask]
     dbg.dassert_lte(1, df.shape[0])
     return df
 
