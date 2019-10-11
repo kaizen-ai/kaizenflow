@@ -23,13 +23,10 @@ import logging
 import os
 
 import numpy as np
-import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
 # %%
-from pylab import rcParams
-
 import core.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
@@ -37,13 +34,16 @@ import helpers.printing as pri
 
 # %%
 import helpers.s3 as hs3
+import vendors.cme.read as cmer
 import vendors.kibot.PartTask269_liquidity_analysis_utils as lau
 import vendors.kibot.utils as kut
 
+# %%
+# import infra.helpers.telegram_notify.telegram_notify as tg
+# tgn = tg.TelegramNotify()
+
+# %%
 sns.set()
-
-
-rcParams["figure.figsize"] = (20, 5)
 
 # %%
 print(env.get_system_signature())
@@ -83,12 +83,7 @@ print(df4["Exchange"].unique())
 
 
 # %%
-# TODO (Julia): After PartTask268_PRICE_Download_metadata_from_CME
-# is merged into master, replace this with a reader
-_PRODUCT_SPECS_PATH = os.path.join(
-    hs3.get_path(), "cme/product_slate_export_with_contract_specs_20190905.csv"
-)
-product_specs = pd.read_csv(_PRODUCT_SPECS_PATH)
+product_specs = cmer.read_product_specs()
 
 # %%
 product_specs.head()
@@ -116,10 +111,10 @@ product_specs["Globex"].head()
 #    "/data/kibot/All_Futures_Continuous_Contracts_daily/"
 # )
 
-file_path = os.path.join(
+daily_futures_path = os.path.join(
     hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily"
 )
-daily_futures_w_ext = hs3.ls(file_path)
+daily_futures_w_ext = hs3.ls(daily_futures_path)
 
 # %%
 daily_futures_w_ext[:5]
@@ -197,20 +192,14 @@ print(config)
 # ## Read daily prices
 
 # %%
-all_symbols = [
-    futures.replace(".csv.gz", "")
-    for futures in os.listdir(
-        "/data/kibot/All_Futures_Continuous_Contracts_daily"
-    )
-]
+all_symbols = daily_futures.copy()
 
 # %%
 symbols = df4[mask]["Symbol"].values
 symbols
 
 # %%
-file_name = "/data/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
-
+file_name = os.path.join(daily_futures_path, "%s.csv.gz")
 daily_price_dict_df = kut.read_multiple_symbol_data(
     symbols, file_name, nrows=config["read_data"]["nrows"]
 )
@@ -241,10 +230,17 @@ mean_vol.sort_values("mean_vol", ascending=False)
 symbol = "CL"
 
 # %%
+# %%time
 vs = lau.PricesStudy(lau.read_kibot_prices, symbol, lau.KIBOT_VOL, n_rows=None)
 
 # %%
+# tgn.notify('Kibot prices are loaded.')
+
+# %%
 vs.execute()
+
+# %%
+# tgn.notify('Prices study is complete')
 
 # %% [markdown]
 # ## How is the volume related to the open interest from the metadata?
