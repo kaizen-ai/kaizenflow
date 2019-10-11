@@ -160,7 +160,7 @@ class PricesStudy:
             figsize=(20, 5 * len(yearly_resample)),
             sharey=sharey,
         )
-        for i, year_prices in enumerate(yearly_resample[{self._price_col}]):
+        for i, year_prices in enumerate(yearly_resample[self._price_col]):
             year_prices[1].plot(ax=axis[i], title=year_prices[0].year)
         plt.suptitle(
             f"{frequency.capitalize()} {self._price_col} changes by year"
