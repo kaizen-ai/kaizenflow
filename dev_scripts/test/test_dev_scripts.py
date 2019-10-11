@@ -37,6 +37,7 @@ class Test_url_py1(ut.TestCase):
         self.assertEqual(act, exp)
 
     def test_run1(self):
+        # TODO(gp): Use git.find_file_in_git_tree()
         cmd = (
             "url.py "
             "http://localhost:9999/notebooks/research/"
@@ -62,6 +63,7 @@ class Test_set_env1(ut.TestCase):
         """
         Find _setenv.py executable and run it.
         """
+        # TODO(gp): Use git.find_file_in_git_tree()
         cmd = "find . -name _setenv.py"
         _, txt = si.system_to_string(cmd)
         _LOG.debug("txt=%s", txt)
@@ -105,6 +107,19 @@ class Test_jack1(ut.TestCase):
 
     def test_jacktxt(self):
         cmd = 'jacktxt "python"'
+        si.system(cmd)
+
+
+# #############################################################################
+
+import helpers.git as git
+
+class Test_install_create_conda_py1(ut.TestCase):
+
+    def test_create_conda1(self):
+        # TODO(gp): Use git.find_file_in_git_tree()
+        file_name = git.find_file_in_git_tree("create_conda.py")
+        cmd = f'{file_name} --test_install --delete_env_if_exists -v DEBUG'
         si.system(cmd)
 
 
