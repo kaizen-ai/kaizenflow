@@ -141,7 +141,7 @@
 ## Do not check in large data files
 - Avoid checking in large data files
     - The reason is that large files bloat the repo
-    - One a large file is checked in, it never goes away
+    - Once a large file is checked in, it never goes away
     - Therefore, **DO NOT CHECK IN DATA FILES IN EXCESS OF 500K**
     - If in doubt (even on a branch), ask first!
 - Sometimes is makes sense to check in some representative data for unit tests
