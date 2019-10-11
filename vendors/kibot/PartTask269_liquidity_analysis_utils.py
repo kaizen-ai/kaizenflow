@@ -1,196 +1,221 @@
 import logging
+import os
+from typing import Callable, Dict, Optional
 
+import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot as plt
-from pylab import rcParams
 
-from vendors.kibot import utils as kut
-
-sns.set()
-
-rcParams["figure.figsize"] = (20, 5)
+import helpers.dbg as dbg
+import helpers.s3 as hs3
+import vendors.cme.read as cmer
+import vendors.kibot.utils as kut
 
 _LOG = logging.getLogger(__name__)
 
-_PRODUCT_SPECS_PATH = (
-    "/data/prices/product_slate_export_with_contract_specs_20190905.csv"
-)
+KIBOT_VOL = "vol"
 
 
-def get_sum_daily_volume(daily_price_dict_df):
+def get_sum_daily_prices(
+    daily_price_dict_df: Dict[str, pd.DataFrame], price_col: str
+) -> pd.DataFrame:
     """
-    Get sum of the daily volume for each symbol
+    Get sum of the daily prices for each symbol.
 
     :param daily_price_dict_df: {symbol: prices_for_symbol_df}
+    :param price_col: The name of the price column
     :return: pd.DataFrame indexed by symbol
     """
-    daily_volume_sum_dict = {
-        symbol: daily_prices_symbol["vol"].sum()
-        for symbol, daily_prices_symbol in daily_price_dict_df.items()
-    }
-    daily_volume_sum_df = pd.DataFrame.from_dict(
-        daily_volume_sum_dict, orient="index", columns=["sum_vol"]
-    )
-    daily_volume_sum_df.index.name = "symbol"
-    return daily_volume_sum_df
+    daily_prices_sum_df = _get_daily_prices(daily_price_dict_df, price_col, "sum")
+    return daily_prices_sum_df
 
 
-def get_mean_daily_volume(daily_price_dict_df):
+def get_mean_daily_prices(
+    daily_price_dict_df: Dict[str, pd.DataFrame], price_col: str
+) -> pd.DataFrame:
     """
-    Get mean of the daily volume for each symbol
+    Get mean of the daily prices for each symbol.
 
     :param daily_price_dict_df: {symbol: prices_for_symbol_df}
+    :param price_col: The name of the price column
     :return: pd.DataFrame indexed by symbol
     """
-    daily_volume_mean_dict = {
-        symbol: daily_prices_symbol["vol"].mean()
-        for symbol, daily_prices_symbol in daily_price_dict_df.items()
-    }
-    daily_volume_mean_df = pd.DataFrame.from_dict(
-        daily_volume_mean_dict, orient="index", columns=["mean_vol"]
+    daily_prices_mean_df = _get_daily_prices(
+        daily_price_dict_df, price_col, "mean"
     )
-    daily_volume_mean_df.index.name = "symbol"
-    return daily_volume_mean_df
+    return daily_prices_mean_df
 
 
-class VolumeStudy:
+def read_kibot_prices(
+    frequency: str, symbol: str, n_rows: Optional[int]
+) -> pd.DataFrame:
+    dbg.dassert_in(
+        frequency,
+        ["daily", "minutely"],
+        "Only daily and minutely frequencies are supported.",
+    )
+    if frequency == "minutely":
+        dir_path = os.path.join(
+            hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_1min"
+        )
+    else:
+        dir_path = os.path.join(
+            hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily"
+        )
+    file_name = os.path.join(dir_path, f"{symbol}.csv.gz")
+    prices = kut.read_data(file_name, nrows=n_rows)
+    return prices
+
+
+def _get_daily_prices(
+    daily_price_dict_df: Dict[str, pd.DataFrame], price_col: str, func_name: str
+) -> pd.DataFrame:
     """
-    Perform a basic volume study of daily and minutely prices.
+    Get grouped daily prices for each symbol.
+
+    :param daily_price_dict_df: {symbol: prices_for_symbol_df}
+    :param price_col: The name of the price column
+    :param func_name: The name of the function that needs to be applied
+        to the prices for each symbol
+    :return: pd.DataFrame indexed by symbol
+    """
+    daily_price_dict = {
+        symbol: getattr(daily_prices[price_col], func_name)()
+        for symbol, daily_prices in daily_price_dict_df.items()
+    }
+    daily_price_df = pd.DataFrame.from_dict(
+        daily_price_dict, orient="index", columns=[f"{func_name}_{price_col}"]
+    )
+    daily_price_df.index.name = "symbol"
+    return daily_price_df
+
+
+class PricesStudy:
+    """
+    Perform a basic study of daily and minutely prices.
 
     - Read daily and minutely prices
-    - Plot daily and minutely volume
+    - Plot daily and minutely prices for column
         - by year
         - by month
         - by day of week
         - by hour
     """
 
-    def __init__(self, symbol, n_rows):
+    def __init__(
+        self,
+        data_reader: Callable[[str, str, Optional[int]], pd.DataFrame],
+        symbol: str,
+        price_col: str,
+        n_rows: Optional[int],
+    ):
         """
-        :param symbol: the symbol for which the volume needs to be
+        :param data_reader: A function that takes frequency
+            (daily/minutely), symbol and n_rows as input parameters
+            and returns a prices dataframe.
+        :param symbol: The symbol for which the price needs to be
             studied
+        :param price_col: The name of the price column
         :param n_rows: the maximum numer of rows to load
         """
-        self.symbol = symbol
-        self.n_rows = n_rows
-        self.daily_prices = self._read_daily_prices()
-        self.minutely_prices = self._read_minutely_prices()
+        self._symbol = symbol
+        self._nrows = n_rows
+        self._data_reader = data_reader
+        self.daily_prices = self._data_reader("daily", self._symbol, self._nrows)
+        self.minutely_prices = self._data_reader(
+            "minutely", self._symbol, self._nrows
+        )
+        self._price_col = price_col
 
     def execute(self):
-        self._plot_daily_volume()
-        self._plot_daily_volume_changes_by_year()
-        self._mean_daily_volume_day_of_month()
-        self._mean_daily_volume_day_of_week()
+        self.plot_prices("daily")
+        self.plot_price_changes_by_year("daily")
+        self.plot_mean_price_day_of_month("daily")
+        self.plot_mean_price_day_of_week("daily")
         #
-        self._plot_minutely_volume()
-        self._plot_minutely_volume_changes_by_year()
-        self._plot_minutely_volume_day_of_week()
-        self._plot_minutely_volume_hour()
+        self.plot_prices("minutely")
+        self.plot_price_changes_by_year("minutely")
+        self.plot_mean_price_day_of_week("minutely")
+        self.plot_minutely_price_hour()
 
-    def _read_daily_prices(self):
-        file_name = "/data/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
-        prices_symbol = kut.read_data(file_name % self.symbol, nrows=self.n_rows)
-        return prices_symbol
-
-    def _read_minutely_prices(self):
-        file_name = "/data/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
-        mins_prices_symbol = kut.read_data(
-            file_name % self.symbol, nrows=self.n_rows
+    def plot_prices(self, frequency: str):
+        prices = self._choose_prices_frequency(frequency)
+        prices[self._price_col].plot()
+        plt.title(
+            f"{frequency.capitalize()} {self._price_col} "
+            f"for the {self._symbol} symbol"
         )
-        return mins_prices_symbol
-
-    def _plot_daily_volume(self):
-        self.daily_prices["vol"].plot()
-        plt.title(f"Daily volume for the {self.symbol} symbol")
         plt.xticks(
-            self.daily_prices.resample("YS")["vol"].sum().index,
+            prices.resample("YS")[self._price_col].sum().index,
             ha="right",
             rotation=30,
             rotation_mode="anchor",
         )
         plt.show()
 
-    def _plot_daily_volume_changes_by_year(self, sharey=False):
-        yearly_resample = self.daily_prices.resample("y")
+    def plot_price_changes_by_year(self, frequency, sharey=False):
+        prices = self._choose_prices_frequency(frequency)
+        yearly_resample = prices.resample("y")
         fig, axis = plt.subplots(
             len(yearly_resample),
             figsize=(20, 5 * len(yearly_resample)),
             sharey=sharey,
         )
-        for i, year_vol in enumerate(yearly_resample["vol"]):
-            year_vol[1].plot(ax=axis[i], title=year_vol[0].year)
+        for i, year_prices in enumerate(yearly_resample[{self._price_col}]):
+            year_prices[1].plot(ax=axis[i], title=year_prices[0].year)
         plt.suptitle(
-            f"Daily volume changes by year for the {self.symbol} symbol", y=1.005
-        )
-        plt.tight_layout()
-
-    def _mean_daily_volume_day_of_month(self):
-        self.daily_prices.groupby(self.daily_prices.index.day)["vol"].mean().plot(
-            kind="bar", rot=0
-        )
-        plt.xlabel("day of month")
-        plt.title("Mean volume on different days of month")
-        plt.show()
-
-    def _mean_daily_volume_day_of_week(self):
-        self.daily_prices.groupby(self.daily_prices.index.dayofweek)[
-            "vol"
-        ].mean().plot(kind="bar", rot=0)
-        plt.xlabel("day of week")
-        plt.title(
-            f"Mean volume on different days of week for the "
-            f"{self.symbol} symbol"
-        )
-        plt.show()
-
-    def _plot_minutely_volume(self):
-        self.minutely_prices["vol"].plot()
-        plt.xticks(
-            self.minutely_prices.resample("YS")["vol"].sum().index,
-            ha="right",
-            rotation=30,
-            rotation_mode="anchor",
-        )
-        plt.title(f"Minutely volume for the {self.symbol} symbol")
-        plt.show()
-
-    def _plot_minutely_volume_changes_by_year(self):
-        yearly_resample = self.minutely_prices.resample("y")
-        fig, axis = plt.subplots(
-            len(yearly_resample), figsize=(20, 5 * len(yearly_resample))
-        )
-        for i, year_vol in enumerate(yearly_resample["vol"]):
-            year_vol[1].plot(ax=axis[i], title=year_vol[0].year)
-        plt.suptitle(
-            f"Minutely mean volume changes by year for the "
-            f"{self.symbol} symbol",
+            f"{frequency.capitalize()} {self._price_col} changes by year"
+            f" for the {self._symbol} symbol",
             y=1.005,
         )
         plt.tight_layout()
 
-    def _plot_minutely_volume_day_of_week(self):
-        self.minutely_prices.groupby(self.minutely_prices.index.dayofweek)[
-            "vol"
-        ].mean().plot(kind="bar", rot=0)
-        plt.xlabel("day of week")
+    def plot_mean_price_day_of_month(self, frequency):
+        prices = self._choose_prices_frequency(frequency)
+        prices.groupby(prices.index.day)[self._price_col].mean().plot(
+            kind="bar", rot=0
+        )
+        plt.xlabel("day of month")
         plt.title(
-            f"Mean volume on different days of week for the "
-            f"{self.symbol} symbol"
+            f"Mean {frequency} {self._price_col} on different days of month"
         )
         plt.show()
 
-    def _plot_minutely_volume_hour(self):
+    def plot_mean_price_day_of_week(self, frequency):
+        prices = self._choose_prices_frequency(frequency)
+        prices.groupby(prices.index.dayofweek)[self._price_col].mean().plot(
+            kind="bar", rot=0
+        )
+        plt.xlabel("day of week")
+        plt.title(
+            f"Mean {frequency} {self._price_col} on different days of "
+            f"week for the {self._symbol} symbol"
+        )
+        plt.show()
+
+    def plot_minutely_price_hour(self):
         # TODO (Julia): maybe check this year by year in case there was
-        # a change in the later years? E.g., trading pits closed
+        # a change in the later years? E.g., trading pits closed.
         self.minutely_prices.groupby(self.minutely_prices.index.hour)[
-            "vol"
+            self._price_col
         ].mean().plot(kind="bar", rot=0)
         plt.title(
-            f"Mean volume during different hours for the {self.symbol} symbol"
+            f"Mean {self._price_col} during different hours "
+            f"for the {self._symbol} symbol"
         )
         plt.xlabel("hour")
         plt.show()
+
+    def _choose_prices_frequency(self, frequency):
+        dbg.dassert_in(
+            frequency,
+            ["daily", "minutely"],
+            "Only daily and minutely frequencies are supported.",
+        )
+        if frequency == "minutely":
+            prices = self.minutely_prices
+        else:
+            prices = self.daily_prices
+        return prices
 
 
 class ProductSpecs:
@@ -199,13 +224,13 @@ class ProductSpecs:
     """
 
     def __init__(self):
-        self.product_specs = pd.read_csv(_PRODUCT_SPECS_PATH)
+        self.product_specs = cmer.read_product_specs()
 
     def get_metadata_symbol(self, symbol):
         return self.product_specs.loc[self.product_specs["Globex"] == symbol]
 
     def get_trading_hours(self, symbol):
-        # Only nans are repeated, so we can return the first element
+        # Only nans are repeated, so we can return the first element.
         return self.get_metadata_symbol(symbol)["Trading Hours"].iloc[0]
 
     def get_product_group(self, symbol):

@@ -34,8 +34,11 @@ import core.config as cfg
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
-import vendors.kibot.utils as kut
+
+# %%
+import helpers.s3 as hs3
 import vendors.kibot.PartTask269_liquidity_analysis_utils as lau
+import vendors.kibot.utils as kut
 
 sns.set()
 
@@ -78,15 +81,12 @@ print(df4["Exchange"].unique())
 # %% [markdown]
 # # Load product specs
 
-# %%
-import helpers.s3 as hs3
 
 # %%
 # TODO (Julia): After PartTask268_PRICE_Download_metadata_from_CME
 # is merged into master, replace this with a reader
 _PRODUCT_SPECS_PATH = os.path.join(
-    hs3.get_path(),
-    "cme/product_slate_export_with_contract_specs_20190905.csv"
+    hs3.get_path(), "cme/product_slate_export_with_contract_specs_20190905.csv"
 )
 product_specs = pd.read_csv(_PRODUCT_SPECS_PATH)
 
@@ -112,11 +112,13 @@ df3["Exchange"].value_counts()
 product_specs["Globex"].head()
 
 # %%
-#daily_futures_w_ext = os.listdir
+# daily_futures_w_ext = os.listdir
 #    "/data/kibot/All_Futures_Continuous_Contracts_daily/"
-#)
+# )
 
-file_path = os.path.join(hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily")
+file_path = os.path.join(
+    hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily"
+)
 daily_futures_w_ext = hs3.ls(file_path)
 
 # %%
@@ -222,14 +224,14 @@ daily_price_dict_df["CL"].tail(2)
 # ## Sum volume
 
 # %%
-daily_vol = lau.get_sum_daily_volume(daily_price_dict_df)
+daily_vol = lau.get_sum_daily_prices(daily_price_dict_df, price_col=lau.KIBOT_VOL)
 daily_vol.sort_values("sum_vol", ascending=False)
 
 # %% [markdown]
 # ## Mean volume
 
 # %%
-mean_vol = lau.get_mean_daily_volume(daily_price_dict_df)
+mean_vol = lau.get_mean_daily_prices(daily_price_dict_df, price_col=lau.KIBOT_VOL)
 mean_vol.sort_values("mean_vol", ascending=False)
 
 # %% [markdown]
@@ -239,7 +241,7 @@ mean_vol.sort_values("mean_vol", ascending=False)
 symbol = "CL"
 
 # %%
-vs = lau.VolumeStudy(symbol, n_rows=None)
+vs = lau.PricesStudy(lau.read_kibot_prices, symbol, lau.KIBOT_VOL, n_rows=None)
 
 # %%
 vs.execute()
@@ -257,10 +259,10 @@ product_specs[product_specs["Globex"] == symbol]["Open Interest"].values
 product_specs[product_specs["Globex"] == symbol]["Volume"].values
 
 # %%
-vs.daily_prices["vol"].max()
+vs.daily_prices[lau.KIBOT_VOL].max()
 
 # %%
-vs.minutely_prices["vol"].max()
+vs.minutely_prices[lau.KIBOT_VOL].max()
 
 # %% [markdown]
 # # CME mapping
