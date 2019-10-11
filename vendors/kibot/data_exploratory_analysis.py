@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
 #     display_name: Python [conda env:develop] *
 #     language: python
@@ -87,9 +87,10 @@ print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
 s = "CL"
 # nrows = None
 nrows = 10000
-# file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/%s.csv.gz" % s
-file_name = (
-    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz" % s
+s3_path = hs3.get_path()
+# file_name = os.path.join(hs3.get_path(), "kibot/All_Futures_Contracts_1min/%s.csv.gz" % s)
+file_name = os.path.join(
+    hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz" % s
 )
 df = kut.read_data(file_name, nrows)
 df.head(3)
@@ -101,9 +102,9 @@ df.head(3)
 s = "CL"
 # nrows = None
 nrows = 10000
-# file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/%s.csv.gz" % s
+# file_name = hs3.get_path() + "kibot/All_Futures_Contracts_1min/%s.csv.gz" % s
 file_name = (
-    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
+    hs3.get_path() + "/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
 )
 df = kut.read_data(file_name, nrows)
 df.head(3)
@@ -117,7 +118,7 @@ df.head(3)
 # %%
 symbols = "CL NG RB BZ".split()
 file_name = (
-    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
+    hs3.get_path() + "/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
 )
 nrows = 10000
 
@@ -133,7 +134,7 @@ daily_price_dict_df["CL"].head(3)
 # %%
 symbols = "CL NG RB BZ".split()
 file_name = (
-    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+    hs3.get_path() + "kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
 )
 nrows = 10000
 
@@ -153,7 +154,7 @@ if config is None:
     config = cfg.Config()
     config_tmp = config.add_subconfig("read_data")
     # Use the data from S3.
-    file_name = "s3://alphamatic/kibot/All_Futures_Contracts_1min/ES.csv.gz"
+    file_name = hs3.get_path() + "/kibot/All_Futures_Contracts_1min/ES.csv.gz"
     config_tmp["file_name"] = file_name
     config_tmp["nrows"] = 100000
 
@@ -172,7 +173,7 @@ _LOG.info("df=\n%s", df.head(3))
 # %%
 s = "CL"
 file_name = (
-    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
+    hs3.get_path() + "/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz" % s
 )
 nrows = 10000
 
@@ -196,7 +197,7 @@ df.head(3)
 # Read multiple futures.
 symbols = "CL NG RB BZ".split()
 file_name = (
-    "s3://alphamatic/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+    hs3.get_path() + "/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
 )
 nrows = 100000
 min_price_dict_df = kut.read_multiple_symbol_data(symbols, file_name, nrows=nrows)

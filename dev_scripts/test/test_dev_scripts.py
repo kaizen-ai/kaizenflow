@@ -6,6 +6,7 @@ import pytest
 import dev_scripts.url as url
 import helpers.dbg as dbg
 import helpers.env as env
+import helpers.io_ as io_
 import helpers.system_interaction as si
 import helpers.unit_test as ut
 
@@ -120,3 +121,45 @@ class Test_install_create_conda_py1(ut.TestCase):
         file_name = git.find_file_in_git_tree("create_conda.py")
         cmd = f'{file_name} --test_install -v DEBUG'
         si.system(cmd)
+
+
+# #############################################################################
+
+
+class Test_linter_py1(ut.TestCase):
+    def test_linter1(self):
+        horrible_python_code = r"""
+import python
+
+
+if __name__ == "main":
+    txt = "hello"
+    m = re.search("\s", txt)
+"""
+        dir_name = self.get_scratch_space()
+        file_name = os.path.join(dir_name, "input.py")
+        file_name = os.path.abspath(file_name)
+        io_.to_file(file_name, horrible_python_code)
+        #
+        linter_log = "./linter.log"
+        # We run in the target dir so we have only relative paths, and we can
+        # do a check of the output.
+        base_name = os.path.basename(file_name)
+        cmd = (
+            f"cd {dir_name} && linter.py -f {base_name} --linter_log "
+            f"{linter_log}"
+        )
+        si.system(cmd, abort_on_error=False)
+        # Read log.
+        linter_log = os.path.abspath(os.path.join(dir_name, linter_log))
+        txt = io_.from_file(linter_log, split=False)
+        output = []
+        for l in txt.split("\n"):
+            # Remove the line:
+            #   cmd line='.../linter.py -f input.py --linter_log ./linter.log'
+            if "cmd line=" in l:
+                continue
+            output.append(l)
+        output = "\n".join(output)
+        # Check.
+        self.check_string(output)

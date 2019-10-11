@@ -204,7 +204,7 @@ def log_rets_to_rets(df):
     return np.exp(df) - 1
 
 
-def sharpe_ratio(df, time_scaling=1):
+def compute_sharpe_ratio(df, time_scaling=1):
     sr = df.mean() / df.std()
     sr *= np.sqrt(time_scaling)
     if isinstance(sr, pd.Series):
@@ -213,8 +213,7 @@ def sharpe_ratio(df, time_scaling=1):
 
 
 def annualize_sharpe_ratio(df):
-    df_tmp = df.resample("1D").sum()
-    return df_tmp.mean() / df_tmp.std() * np.sqrt(252)
+    return compute_sr(df)
 
 
 def compute_sr(rets):
@@ -230,8 +229,7 @@ def compute_sr(rets):
     # sr = rets.mean() / rets.std()
     # sr *= np.sqrt(252 * ((16 - 9.5) * 60))
     daily_rets = rets.resample("1D").sum()
-    sr = daily_rets.mean() / daily_rets.std()
-    sr *= np.sqrt(252)
+    sr = compute_sharpe_ratio(daily_rets, 252)
     return sr
 
 
@@ -256,7 +254,7 @@ def compute_kratio(rets, y_var):
     return kratio
 
 
-def drawdown(log_rets):
+def _compute_drawdown(log_rets):
     r"""
     Define the drawdown at index location j to be
         d_j := max_{0 \leq i \leq j} \log(p_i / p_j)
@@ -270,17 +268,18 @@ def drawdown(log_rets):
 
     # TODO(Paul): Extend this to dataframes
     """
-    # Keep track of maximum drawdown ending at index location i + 1
+    dbg.dassert_isinstance(log_rets, pd.Series)
+    # Keep track of maximum drawdown ending at index location i + 1.
     sums = log_rets.dropna()
     for i in range(sums.shape[0] - 1):
         if sums.iloc[i] <= 0:
             sums.iloc[i + 1] += sums.iloc[i]
     # Correction for case where max occurs at i == j.
     sums[sums > 0] = 0
-    # Sign normalization
+    # Sign normalization.
     return -sums
 
 
-def max_perc_loss_from_high_water_mark(log_rets):
-    dd = drawdown(log_rets)
+def compute_max_perc_loss_from_high_water_mark(log_rets):
+    dd = _compute_drawdown(log_rets)
     return 1 - np.exp(-dd)

@@ -1,0 +1,7 @@
+input.py:3:9: F821 undefined name 're' [flake8]
+input.py:3:20: W605 invalid escape sequence '\s' [flake8]
+* file_name=input.py [pylint]
+************* Module input [pylint]
+input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
+input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
+Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]

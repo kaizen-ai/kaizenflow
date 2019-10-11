@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# ```
+# """
 # Accept our changes in case of a conflict.
-# ```
+# """
 
 source helpers.sh
 

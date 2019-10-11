@@ -53,6 +53,12 @@ def dfatal(message, assertion_type=None):
 #  builds, or at least know how much time is spent in the assertions.
 
 
+# INVARIANT:
+# - `dassert_COND()` checks that COND is true, and raises if COND is False
+# - For this reason the condition inside the `dassert` is typically in the form
+#   `if not (...):`, even this might annoy the linter or look weird
+
+
 def _to_msg(msg, *args):
     """
     Format the error message with the params.

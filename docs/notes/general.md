@@ -253,6 +253,8 @@
   when I learned English (late in life at 25 starting from no-English-whatsoever,
   so you can do it too)
 
+# Mix (to reorg)
+
 ## Use the tools we have
 > find . -name "ssh_tunnels.py"
 ./amp/dev_scripts/infra/ssh_tunnels.py
@@ -261,3 +263,12 @@
 - Report the command
 - The log
 - The more information the better
+
+## Review
+- We try to review all the changes that go directly to `master` as post-commit
+    - Code authors are invited to make changes right away before we all forget
+    - Please refrain from committing to `master` and use feature branches unless
+      it's a small change or emergency
+
+- We don't review changes that go in feature branches unless the author is ready
+  for merging back to `master`

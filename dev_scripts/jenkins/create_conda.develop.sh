@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# ```
-# Build "develop" conda env from scratch.
-# ```
+# """
+# Build "amp_develop" conda env from scratch.
+# """
 
 CONDA_ENV="develop"
 EXEC_NAME="dev_scripts/jenkins/create_conda.$CONDA_ENV.sh"
