@@ -216,7 +216,7 @@ def convert_pct_rets_to_log_rets(
     """
     Converts percentage returns to log returns.
 
-    :param pct_rets: time series of pct returns
+    :param pct_rets: time series of percentage returns
     :return: time series of log returns
     """
     return np.log(pct_rets + 1)
