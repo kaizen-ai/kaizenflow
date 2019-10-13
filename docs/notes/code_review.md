@@ -11,13 +11,21 @@
   although creating a review branch and pull request is still best
 - The alternative is to comment on the relevant lines in an individual commit 
 
+## GitHub 
+
+https://help.github.com/en/articles/commenting-on-a-pull-request
+
+- Comment: Submit general feedback without explicit approval.
+- Approve: Submit feedback and approve merging these changes.
+- Request changes: Submit feedback that must be addressed before merging.
+
 # General rules about code review
 
 ## Read the Google code review best practices
-- From the developer's perspective
-    - `https://google.github.io/eng-practices/review/developer`
-- From the reviewer's perspective
-    - `https://google.github.io/eng-practices/review/reviewer`
+- From the [developer's
+  perspective](https://google.github.io/eng-practices/review/developer)
+- From the [reviewer's
+  perspective](https://google.github.io/eng-practices/review/reviewer)
 - Where the Google guide says "CL", think "PR" 
 - Read it (several times, if you need to)
 - Think about it

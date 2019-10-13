@@ -201,10 +201,11 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         random.seed(20000101)
         np.random.seed(20000101)
+        # Name of the dir with artifacts for this test.
+        self._scratch_dir = None
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n" + prnt.frame(func_name))
-        return
 
     def tearDown(self):
         pass
@@ -242,7 +243,8 @@ class TestCase(unittest.TestCase):
         dir_name = self._get_current_path() + "/output"
         return dir_name
 
-    def get_scratch_space(self):
+    # TODO(gp): -> get_scratch_dir().
+    def get_scratch_space(self) -> str:
         """
         Return the path of the directory storing scratch data for this test class.
         The directory is also created and cleaned up based on whether the
@@ -251,9 +253,12 @@ class TestCase(unittest.TestCase):
         :return: dir name
         :rtype: str
         """
-        dir_name = self._get_current_path() + "/tmp.scratch"
-        io_.create_dir(dir_name, incremental=get_incremental_tests())
-        return dir_name
+        if self._scratch_dir is None:
+            # Create the dir on the first invocation on a given test.
+            dir_name = os.path.join(self._get_current_path(), "tmp.scratch")
+            io_.create_dir(dir_name, incremental=get_incremental_tests())
+            self._scratch_dir = dir_name
+        return self._scratch_dir
 
     def assert_equal(self, actual, expected):
         dbg.dassert_in(type(actual), (bytes, str))

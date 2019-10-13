@@ -1,6 +1,6 @@
 # Style guide references
 
-- We care about at consistency rather than arguing about which approach is better
+- We care about consistency rather than arguing about which approach is better
     - E.g., see "tab vs space" flame-war from the 90s
 - Unless explicitly noted we prefer to follow the style guide below
 
@@ -10,8 +10,11 @@
 
 ## Reference
 
-- Google Python Style Guide (GPSG)
-  - `https://google.github.io/styleguide/pyguide.html`
+- [Google Python Style Guide (GPSG)](`https://google.github.io/styleguide/pyguide.html`)
+
+- [Reviewing code](https://google.github.io/eng-practices)
+    - [Author guide to getting through code review](https://google.github.io/eng-practices/review/developer)
+    - [How to do a code review](https://google.github.io/eng-practices/review/reviewer)
 
 - Commenting style
     - `http://www.sphinx-doc.org/en/master/`
@@ -495,3 +498,12 @@ _LOG.warning(...)
   e.g.,`TaskXYZ_edgar_timestamp_dataset_extractor.py`
 
 - Also where the script is located should give some clue of what is related to
+
+# Functions
+
+## Try to make functions work on multiple types
+
+- It's great when a function can work on both `pd.Series` and `pd.DataFrame`
+  since in this case one doesn't have to remember, but it can just use it
+
+- 
