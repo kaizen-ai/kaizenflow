@@ -10,11 +10,7 @@
 
 ## Reference
 
-- [Google Python Style Guide (GPSG)](`https://google.github.io/styleguide/pyguide.html`)
-
-- [Reviewing code](https://google.github.io/eng-practices)
-    - [Author guide to getting through code review](https://google.github.io/eng-practices/review/developer)
-    - [How to do a code review](https://google.github.io/eng-practices/review/reviewer)
+- [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)
 
 - Commenting style
     - `http://www.sphinx-doc.org/en/master/`
