@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Generalize to all users, or at least Jenkins.
 @pytest.mark.skipif('si.get_user_name() != "saggese"')
 class Test_pandoc1(ut.TestCase):
-    def _helper(self, in_file, action, file_ext):
+    def _helper(self, in_file, action):
         exec_path = git.find_file_in_git_tree("pandoc.py")
         dbg.dassert_exists(exec_path)
         #
@@ -44,7 +44,7 @@ class Test_pandoc1(ut.TestCase):
         elif action == "html":
             out_file = os.path.join(tmp_dir, "tmp.pandoc.html")
         else:
-            raise ValueError("Invalid action='%s'", action)
+            raise ValueError("Invalid action='%s'" % action)
         act = io_.from_file(out_file, split=False)
         return act
 
@@ -56,7 +56,7 @@ class Test_pandoc1(ut.TestCase):
         file_name = os.path.join(self.get_input_dir(), file_name)
         file_name = os.path.abspath(file_name)
         #
-        act = self._helper(file_name, "pdf", "tex")
+        act = self._helper(file_name, "pdf")
         self.check_string(act)
 
     def test2(self):
@@ -69,7 +69,7 @@ class Test_pandoc1(ut.TestCase):
         )
         file_name = os.path.abspath(file_name)
         #
-        act = self._helper(file_name, "html", "html")
+        act = self._helper(file_name, "html")
         self.check_string(act)
 
     def test_all_notes(self):
@@ -98,7 +98,6 @@ def _run_preprocess(in_file : str, out_file : str) -> str:
     dbg.dassert_exists(exec_path)
     #
     dbg.dassert_exists(in_file)
-    dbg.dassert_not_exists(out_file)
     #
     cmd = []
     cmd.append(exec_path)
