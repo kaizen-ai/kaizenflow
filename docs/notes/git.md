@@ -13,24 +13,24 @@
 
 2. Checkout `master` and `pull`
 
-    You want to branch from the latest version of master to avoid a merge:
-    ```bash
-    # Checkout the `master` branch.
-    > git checkout master
-    # Make sure your local `master` is in sync with the remote.
-    > git pull --rebase
-    ```
-    Alternatively, and especially if you have local changes to move to a
-    new branch, run
-    ```bash
-    > git checkout master
-    > gup.py
-    ```
-    instead.
+    - You want to branch from the latest version of master to avoid a merge:
+        ```bash
+        # Checkout the `master` branch.
+        > git checkout master
+        # Make sure your local `master` is in sync with the remote.
+        > git pull --rebase
+        ```
+    - Alternatively, and especially if you have local changes to move to a new
+      branch, run
+        ```bash
+        > git checkout master
+        > gup.py
+        ```
+      instead.
 
 3. Name a branch after its corresponding issue
     - The canonical name for a new feature branch is obtained by running
-    `ghi_show.py`:
+      `ghi_show.py`:
         ```bash
         > ghi_show.py 274 --only_github
         > ghi_show.py 274 -r ParticleDev/commodity_research --only_github

@@ -14,10 +14,8 @@
 # General rules about code review
 
 ## Read the Google code review best practices
-- From the developer's perspective
-    - `https://google.github.io/eng-practices/review/developer`
-- From the reviewer's perspective
-    - `https://google.github.io/eng-practices/review/reviewer`
+- From the [developer's perspective](https://google.github.io/eng-practices/review/developer)
+- From the [reviewer's perspective](https://google.github.io/eng-practices/review/reviewer)
 - Where the Google guide says "CL", think "PR" 
 - Read it (several times, if you need to)
 - Think about it
