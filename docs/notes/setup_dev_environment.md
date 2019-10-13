@@ -98,6 +98,9 @@
     ```bash
     source dev_scripts/setenv.sh
     ```
+    
+## Delete/Recreate environment
+todo: (GP) please add procedure for Delete/Recreate
 
 ## Working with multiple clients
 - Different people have different set-ups that reflect their workflows

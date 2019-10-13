@@ -104,9 +104,10 @@ def get_credentials():
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
-                # TODO(gp): it is not obvious how to use this part, we have to introduce this way to the team.
-                # it seems that nobody uses this way tho forward ports for jupyter or any else service
-                service = ("Jupyter1", _get_p1_dev_server_ip(), 10002, 10002)
+                # TODO(gp): It is not obvious how to use this part, we have to
+                # introduce this way to the team. it seems that nobody uses
+                # this way tho forward ports for jupyter or any else service.
+                service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
                 tunnel_info = [service]
                 jupyter_port = 10001
             elif git_repo_name == "alphamatic/lemonade":
@@ -140,13 +141,13 @@ def get_credentials():
             git_user_name = "gad26032"
             git_user_email = "malanin@particle.one"
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/gad/.conda/envs"
+            conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
         if server_name == "particle-laptop":
             git_user_name = "gad26032"
             git_user_email = "malanin@particle.one"
-            conda_sh_path = "/home/gad/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/gad/.conda/envs"
+            conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
         service = ("Jupyter", _get_p1_dev_server_ip(), jupyter_port, jupyter_port)
         tunnel_info.append(service)
