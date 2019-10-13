@@ -141,13 +141,13 @@ def get_credentials():
             git_user_name = "gad26032"
             git_user_email = "malanin@particle.one"
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/gad/.conda/envs"
+            conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
         if server_name == "particle-laptop":
             git_user_name = "gad26032"
             git_user_email = "malanin@particle.one"
-            conda_sh_path = "/home/gad/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/home/gad/.conda/envs"
+            conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
         service = ("Jupyter", _get_p1_dev_server_ip(), jupyter_port, jupyter_port)
         tunnel_info.append(service)
