@@ -23,6 +23,13 @@
 
 # Some other remarks based on our experience
 
+## Give priority to code review
+- We target to give feedback on a PR in 24hr so that the author is not blocked
+  for too long
+- Advanced user: to keep working on a related changes and make progress, one can:
+    - merge the branch under review with another branch; or
+    - branch from a branch
+
 ## Why do we review code
 - We spend time reviewing each other code so that we can:
     - build a better product
