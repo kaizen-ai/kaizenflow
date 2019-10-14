@@ -12,6 +12,16 @@
 # Useful reference
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
 
+# Style for numbered lists
+- We use number lists like:
+```
+1. Foo bar!
+    - hello
+    - world
+    
+2. Baz
+```
+
 # The team member list
 - In reversed alphabetical order (just to be fair)
     - [ ] Stas
