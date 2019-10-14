@@ -224,6 +224,64 @@
 
 - Merged changes are tested in the Jenkins build
 
+## Deleting a branch
+
+- You can run the script `dev_scripts/git_branch.sh` to get all the branches
+  together with some information, e.g., last commit and creator
+
+- E.g., let's assume we believe that `PartTask354_INFRA_Populate_S3_bucket` is
+  obsolete and we want to delete it
+
+1. Get `master` up to date
+    ```bash
+    > git checkout master
+    > git fetch
+    > git pull
+    ```
+
+2. Merge `master` into the target branch
+    - Pull and merge
+        ```bash
+        > git checkout PartTask354_INFRA_Populate_S3_bucket
+        > git pull
+        > git merge master 
+        ```
+    - Resolve conflicts
+        ```bash
+        > git commit
+        > git pull
+    ```
+
+3a. Ask Git if branch is merged
+    - One approach is to ask Git if all the changes in master are also in the branch
+        ```bash
+        > git branch `PartTask354_INFRA_Populate_S3_bucket` --no-merged
+          PartTask354_INFRA_Populate_S3_bucket
+        ```
+    - Note that Git is very strict here, e.g., `PartTask354_INFRA_Populate_S3_bucket`
+      is not completely merged since I've moved code "manually" (not only through
+      `git cherry-pick`, `git merge`)
+    - One approach is to just merge `PartTask354_INFRA_Populate_S3_bucket` into
+      master and run `git branch` again
+
+3b. Manually check if there is any textual difference
+    - Another approach is to check what are the differences between the branch and
+       `origin/master`
+        ```bash
+        > git log master..HEAD
+        6465b0c saggese, 25 seconds ago : Merge branch 'master' into PartTask354_INFRA_Populate_S3_bucket  (HEAD -> PartTask354_INFRA_Populate_S3_bucket, origin/PartTask354_INFRA_Populate_S3_bucket)
+        > git log HEAD..master
+        ```
+    - Here we see that there are no textual differences
+    - So we can either merge the branch into `master` or just kill directly
+
+4. Kill-kill-kill!
+    - To delete both local and remote branch you can do
+        ```bash
+        > git branch -d PartTask354_INFRA_Populate_S3_bucket
+        > git push origin --delete PartTask354_INFRA_Populate_S3_bucket
+        ```
+
 # How-to and troubleshooting
 
 ## Analyzing commits

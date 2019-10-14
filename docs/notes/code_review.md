@@ -71,3 +71,8 @@
 
 ## Look at the code top-to-bottom
 - E.g., if you do search & replace, make sure everything is fine
+
+## Close the PR and delete the branch
+- When code is merged into `master` by one of the reviewers through the UI one
+  can select the delete branch option
+- Otherwise you can delete the branch using the procedure in `git.md`
