@@ -503,3 +503,15 @@ _LOG.warning(...)
   since in this case one doesn't have to remember, but it can just use it
 
 - 
+        if server_name == "ip-172-31-16-23":
+            git_user_name = "gad26032"
+            git_user_email = "malanin@particle.one"
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "~/.conda/envs"
+            jupyter_port = 9111
+        if server_name == "particle-laptop":
+            git_user_name = "gad26032"
+            git_user_email = "malanin@particle.one"
+            conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "~/.conda/envs"
+            jupyter_port = 9111

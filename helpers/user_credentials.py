@@ -63,7 +63,20 @@ def get_credentials():
 
     The optional information are:
     5) ssh_key_path: the path of the ssh key to use
-    6) tunnel_info: list of ports to forward
+    6) tunnel_info: list of "personal" ports to forward
+        - This is an advanced behavior that allows to specify in your user
+          config a set of ports to forward from one computer (typically your
+          laptop) to a set of services that are specific of your set-up (e.g.,
+          started through `run_jupyter_server.py`)
+        - E.g., 
+          ```python
+            if server_name in ("gpmac.local", "gpmac.lan"):
+                if git_repo_name == "ParticleDev/commodity_research":
+                    service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
+          ```
+          when GP runs `ssh_tunnels.py` from his laptop in a
+          `ParticleDev/commodity_research` client, a tunnel is open to the dev
+          server where `run_jupyter_server.py` will have started a notebook server
     7) jupyter_port: on which port to start a jupyter server on a specific server
         - It's a good idea for everybody to have a different port to avoid port
           collisions
@@ -104,11 +117,10 @@ def get_credentials():
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
-                # TODO(gp): It is not obvious how to use this part, we have to
-                # introduce this way to the team. it seems that nobody uses
-                # this way tho forward ports for jupyter or any else service.
+                # Forward port 10003 to the notebook server that is started by
+                # `run_jupyter_server.py` when executed on the dev server.
                 service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
-                tunnel_info = [service]
+                tunnel_info.append(service)
                 jupyter_port = 10001
             elif git_repo_name == "alphamatic/lemonade":
                 # TODO(gp): This should be factored out in the including
@@ -143,7 +155,7 @@ def get_credentials():
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
-        if server_name == "particle-laptop":
+        elif server_name == "particle-laptop":
             git_user_name = "gad26032"
             git_user_email = "malanin@particle.one"
             conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"

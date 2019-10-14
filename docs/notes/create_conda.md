@@ -27,9 +27,9 @@
 - It allows to save in the repo a list of all packages installed for future
   reference
   
-# Using yaml files
+# Using YAML files
 
-- yaml files (instead of `.txt`) allow to specify also pip packages
+- YAML files (instead of `.txt`) allow to specify also pip packages
 - Refs:
     - [https://stackoverflow.com/questions/35245401]
     - [https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#create-env-file-manually]
@@ -39,36 +39,56 @@
     > conda env create -f dev_scripts/install/requirements/develop.yaml -n test
     ```
   
-- One can merge different yaml files automatically with multiple `-f` options
+## Merging multiple YAML
+- One can merge different YAML files automatically with multiple `-f` options
 
-- Does pip install works?
-    - It does work, e.g.,
-        ```yaml
-        ...
-        - pip
-        - pip:
-              # works for regular pip packages
-              - docx
-              - gooey
-              # and for wheels
-              - http://www.lfd.uci.edu/~gohlke/pythonlibs/bofhrmxk/opencv_python-3.1.0-cp35-none-win_amd64.whl
-        ```
-    - In our case:
-        ```yaml
-        name: amp_develop
-        dependencies:
-          - python >= 3.6
-          - networkx
-          - pip
-          - pip:
-             #pip install ta
-             - ta
-        ```
+## Does pip install works?
+- It does work, e.g.,
+    ```yaml
+    ...
+    - pip
+    - pip:
+          # works for regular pip packages
+          - docx
+          - gooey
+          # and for wheels
+          - http://www.lfd.uci.edu/~gohlke/pythonlibs/bofhrmxk/opencv_python-3.1.0-cp35-none-win_amd64.whl
+    ```
+- In our case:
+    ```yaml
+    name: amp_develop
+    dependencies:
+      - python >= 3.6
+      - networkx
+      - pip
+      - pip:
+         #pip install ta
+         - ta
+    ```
       
-- How to specify multiple conda channel?
+## How to specify multiple conda channel?
+- One can use the `channels` statement
     ```yaml
     name: amp_develop
     channels:
       - quantopian
     dependencies:
     ```
+
+## Commented out packages
+- We comment out some packages to remember we used them in the past and for some
+  reason we are not using them anymore or because they are creating problems
+    ```yaml
+    #- ta                   # Technical analysis package.
+    #- python-graphviz      # To plot pymc3 graphical models.
+    ```
+
+## Comments
+- We had comments to track why we need packages and what they are
+    ```yaml
+    - arviz                 # Needed by pymc3 for some plotting functionality.
+    - mkl-service           # pymc3 expects it; not sure why conda doesn't solve for it.
+    - pandas-datareader=0.8.0     # PartTask344.
+    ```
+- We use some tags, e.g., `# Not on Mac.`, to do conditional builds, since
+  `conda` doesn't support them out of the box
