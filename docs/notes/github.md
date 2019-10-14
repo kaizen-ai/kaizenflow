@@ -61,7 +61,7 @@
 
 ## Apply reviewers' comments for post-commit / optional review
 - You can check in directly in `master` using the right task number (e.g., 
-  PartTask351: ...)
+  `PartTask351: ...`)
 
 ## Try not to commit to `master`
 - Exceptions are small commits that are not part of a feature
