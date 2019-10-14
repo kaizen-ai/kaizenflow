@@ -224,7 +224,7 @@ def convert_pct_rets_to_log_rets(
 
 def compute_sharpe_ratio(
     log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
-) -> float:
+) -> Union[float, pd.Series]:
     r"""
     Calculate Sharpe Ratio (SR) from log returns and rescale.
 
@@ -238,7 +238,7 @@ def compute_sharpe_ratio(
           ticks per year (e.g., =252 if daily returns are provided)
     :return: Sharpe Ratio
     """
-    dbg.dassert_lte(0, time_scaling, "Time scaling factor must be positive!")
+    dbg.dassert_lte(1, time_scaling, "Time scaling factor must be positive!")
     sr = log_rets.mean() / log_rets.std()
     sr *= np.sqrt(time_scaling)
     if isinstance(sr, pd.Series):
