@@ -19,40 +19,39 @@
 # %load_ext autoreload
 # %autoreload 2
 
+import logging 
+import os
+
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from matplotlib import pyplot as plt
 
 # %%
-from pylab import rcParams
 from tqdm.autonotebook import tqdm
 
-import core.signal_processing as sp
+import core.signal_processing as sigp
+import helpers.dbg as dbg
+import helpers.env as env
+import helpers.printing as pri
+import helpers.s3 as hs3
 import vendors.kibot.utils as kut
 import vendors.particle_one.price_movement_analysis as pma
-
-# import vendors.particle_one.PartTask269_liquidity_analysis_utils as lau
-
-sns.set()
-
-rcParams["figure.figsize"] = (20, 5)
+import vendors.cme.read as cmer
 
 # %%
-TAU = 2
+print(env.get_system_signature())
+
+pri.config_notebook()
+
+dbg.init_logger(verb=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
 
 # %% [markdown]
 # # Load CME metadata
 
 # %%
-# Change this to library code from #269 once it is merged into master
-
-# %%
-_PRODUCT_SPECS_PATH = (
-    #"/data/prices/product_slate_export_with_contract_specs_20190905.csv"
-    "s3://default00-bucket/cme/product_slate_export_with_contract_specs_20190905.csv"
-)
-product_list = pd.read_csv(_PRODUCT_SPECS_PATH)
+product_list = cmer.read_product_specs()
 
 # %%
 product_list.head()
@@ -126,10 +125,11 @@ for comm_group in commodity_symbols_kibot.values():
 comm_list[:5]
 
 # %%
-file_name = "/data/kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
+s3_path = hs3.get_path()
+kibot_path = os.path.join(s3_path, "kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz")
 
 daily_price_dict_df = kut.read_multiple_symbol_data(
-    comm_list, file_name, nrows=None
+    comm_list, kibot_path, nrows=None
 )
 
 daily_price_dict_df["CL"].tail(2)
@@ -138,46 +138,14 @@ daily_price_dict_df["CL"].tail(2)
 # ## Largest movements for a specific symbol
 
 # %%
-# There is a pma.get_top_movements_for_symbol() function that
-# implements this code and the code below. I am not using it
-# in this chapter to provide a clearer view of the algorithm.
-
-# %%
 symbol = "CL"
 
 # %%
-cl_prices = daily_price_dict_df[symbol]
+top_daily_movements_cl = pma.get_top_movements_for_symbol(daily_price_dict_df, symbol, 'daily')
+top_daily_movements_cl.head()
 
 # %%
-cl_prices_diff = cl_prices["close"] - cl_prices["open"]
-
-# %%
-zscored_cl_prices_diff = sp.rolling_zscore(cl_prices_diff, TAU)
-zscored_cl_prices_diff.head()
-
-# %%
-abs_zscored_cl_prices_diff = zscored_cl_prices_diff.abs()
-
-# %%
-abs_zscored_cl_prices_diff.max()
-
-# %%
-top_100_movements_cl = abs_zscored_cl_prices_diff.sort_values(
-    ascending=False
-).head(100)
-
-# %%
-top_100_movements_cl.plot(kind="bar")
-ax = plt.gca()
-xlabels = [item.get_text()[:10] for item in ax.get_xticklabels()]
-ax.set_xticklabels(xlabels)
-plt.title(
-    f"Largest price movements in a single day (in z-score space) for {symbol} symbol"
-)
-plt.show()
-
-# %%
-top_100_movements_cl.index.year.value_counts(sort=False).plot(kind="bar")
+top_daily_movements_cl.index.year.value_counts(sort=False).plot(kind="bar")
 plt.title("How many of the top-100 price movements occured during each year")
 plt.show()
 
@@ -191,52 +159,29 @@ group = "Energy"
 commodity_symbols_kibot[group]
 
 # %%
-zscored_diffs = []
-for symbol in commodity_symbols_kibot[group]:
-    zscored_diff = pma.get_zscored_prices_diff(daily_price_dict_df, symbol)
-    zscored_diffs.append(zscored_diff)
-
-# %%
-zscored_diffs = pd.concat(zscored_diffs, axis=1)
-zscored_diffs.head()
-
-# %%
-mean_zscored_diffs = zscored_diffs.mean(axis=1, skipna=True)
-
-# %%
-mean_zscored_diffs.head()
-
-# %%
-mean_zscored_diffs.tail()
-
-# %%
-mean_zscored_diffs.sort_values(ascending=False).head(100)
+pma.get_top_movements_by_group(
+    daily_price_dict_df, commodity_symbols_kibot, group, 'daily'
+)
 
 # %% [markdown]
 # ## Largest movements for each group
 
 # %%
-top_100_movements_by_group = {
+top_100_daily_movements_by_group = {
     group: pma.get_top_movements_by_group(
-        daily_price_dict_df, commodity_symbols_kibot, group
+        daily_price_dict_df, commodity_symbols_kibot, group, 'daily'
     )
-    for group in commodity_symbols_kibot.keys()
+    for group in tqdm(commodity_symbols_kibot.keys())
 }
 
 # %%
-top_100_movements_by_group.keys()
-
-# %%
-top_100_movements_by_group["Energy"].head()
-
-# %%
-top_100_movements_by_group["Agriculture"].head()
-
-# %%
-top_100_movements_by_group["Metals"].head()
+{
+    group: head_prices_group.head(15)
+    for group, head_prices_group in top_100_daily_movements_by_group.items()
+}
 
 # %% [markdown]
-# # 5-minute price movements
+# # 1-minute price movements
 
 # %% [markdown]
 # ## Load 1-minute prices
@@ -253,22 +198,23 @@ np.array_equal(
 )
 
 # %%
-file_name = "/data/kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+s3_path = hs3.get_path()
+kibot_path = os.path.join(s3_path, "kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz")
 
 minutely_price_dict_df = kut.read_multiple_symbol_data(
-    comm_list, file_name, nrows=None
+    comm_list, kibot_path, nrows=None
 )
 
-minutely_price_dict_df["CL"].tail(2)
+daily_price_dict_df["CL"].tail(2)
 
 # %%
 minutely_price_dict_df["CL"].head()
 
 # %%
-five_min_price_dict_df = {
-    symbol: minutely_price_dict_df[symbol].resample("5Min").sum()
-    for symbol in minutely_price_dict_df.keys()
-}
+# five_min_price_dict_df = {
+#     symbol: minutely_price_dict_df[symbol].resample("5Min").sum()
+#     for symbol in minutely_price_dict_df.keys()
+# }
 
 # %% [markdown]
 # ## Top movements for a symbol
@@ -277,23 +223,31 @@ five_min_price_dict_df = {
 symbol = "CL"
 
 # %%
-top_100_movements_cl_5_min = pma.get_top_movements_for_symbol(
-    five_min_price_dict_df, symbol
+top_100_movements_cl_1_min = pma.get_top_movements_for_symbol(
+    minutely_price_dict_df, symbol, 'minutely'
 )
 
 # %%
-top_100_movements_cl_5_min["CL"].head()
+top_100_movements_cl_1_min.head()
 
 # %%
-top_100_movements_cl_5_min.plot(kind="bar")
+# top_100_movements_cl_5_min = pma.get_top_movements_for_symbol(
+#     five_min_price_dict_df, symbol
+# )
+
+# %%
+# top_100_movements_cl_5_min.head()
+
+# %%
+top_100_movements_cl_1_min.plot(kind="bar")
 plt.title(
-    f"Largest price movements in in a 5 min interval (in z-score space) for {symbol} symbol"
+    f"Largest price movements in a 1 min interval (in z-score space) for {symbol} symbol"
 )
 plt.show()
 
 # %%
 print(f"Top 100 of the price movements for {symbol} occur at the following time:")
-print(pd.Series(top_100_movements_cl_5_min.index).dt.time.value_counts())
+print(pd.Series(top_100_movements_cl_1_min.index).dt.time.value_counts())
 
 # %% [markdown]
 # ## Largest movements for energy group
@@ -306,16 +260,16 @@ commodity_symbols_kibot[group]
 
 # %%
 pma.get_top_movements_by_group(
-    five_min_price_dict_df, commodity_symbols_kibot, group
+    minutely_price_dict_df, commodity_symbols_kibot, group, 'minutely'
 )
 
 # %% [markdown]
 # ## Largest movements for each group
 
 # %%
-top_100_5_min_movements_by_group = {
+top_100_1_min_movements_by_group = {
     group: pma.get_top_movements_by_group(
-        five_min_price_dict_df, commodity_symbols_kibot, group
+        minutely_price_dict_df, commodity_symbols_kibot, group, 'minutely'
     )
     for group in tqdm(commodity_symbols_kibot.keys())
 }
@@ -323,7 +277,7 @@ top_100_5_min_movements_by_group = {
 # %%
 {
     group: head_prices_group.head()
-    for group, head_prices_group in top_100_5_min_movements_by_group.items()
+    for group, head_prices_group in top_100_1_min_movements_by_group.items()
 }
 
 # %%
