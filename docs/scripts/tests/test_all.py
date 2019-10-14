@@ -13,11 +13,15 @@ import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 
+# ##############################################################################
+# pandoc.py
+# ##############################################################################
+
 
 # TODO(gp): Generalize to all users, or at least Jenkins.
 @pytest.mark.skipif('si.get_user_name() != "saggese"')
 class Test_pandoc1(ut.TestCase):
-    def _helper(self, in_file, action, file_ext):
+    def _helper(self, in_file, action):
         exec_path = git.find_file_in_git_tree("pandoc.py")
         dbg.dassert_exists(exec_path)
         #
@@ -40,7 +44,7 @@ class Test_pandoc1(ut.TestCase):
         elif action == "html":
             out_file = os.path.join(tmp_dir, "tmp.pandoc.html")
         else:
-            raise ValueError("Invalid action='%s'", action)
+            raise ValueError("Invalid action='%s'" % action)
         act = io_.from_file(out_file, split=False)
         return act
 
@@ -52,7 +56,7 @@ class Test_pandoc1(ut.TestCase):
         file_name = os.path.join(self.get_input_dir(), file_name)
         file_name = os.path.abspath(file_name)
         #
-        act = self._helper(file_name, "pdf", "tex")
+        act = self._helper(file_name, "pdf")
         self.check_string(act)
 
     def test2(self):
@@ -65,7 +69,7 @@ class Test_pandoc1(ut.TestCase):
         )
         file_name = os.path.abspath(file_name)
         #
-        act = self._helper(file_name, "html", "html")
+        act = self._helper(file_name, "html")
         self.check_string(act)
 
     def test_all_notes(self):
@@ -80,24 +84,47 @@ class Test_pandoc1(ut.TestCase):
             self._helper(f, "html", "html")
 
 
+# ##############################################################################
+# preprocess_md_for_pandoc.py
+# ##############################################################################
+
+
+def _run_preprocess(in_file: str, out_file: str) -> str:
+    """
+    Execute the end-to-end flow for preprocess_md_for_pandoc.py returning
+    the output as string.
+    """
+    exec_path = git.find_file_in_git_tree("preprocess_md_for_pandoc.py")
+    dbg.dassert_exists(exec_path)
+    #
+    dbg.dassert_exists(in_file)
+    #
+    cmd = []
+    cmd.append(exec_path)
+    cmd.append("--input %s" % in_file)
+    cmd.append("--output %s" % out_file)
+    cmd = " ".join(cmd)
+    si.system(cmd)
+    # Check.
+    act = io_.from_file(out_file, split=False)
+    return act
+
+
 class Test_preprocess1(ut.TestCase):
-    def _helper(self):
-        """
-        Check that the output of remove_md_empty_lines.py is the expected one.
-        """
-        exec_path = git.find_file_in_git_tree("remove_md_empty_lines.py")
-        dbg.dassert_exists(exec_path)
-        #
+    """
+    Check that the output of preprocess_md_for_pandoc.py is the expected one
+    using:
+    - an end-to-end flow;
+    - checked in files.
+    """
+
+    def _helper(self) -> None:
+        # Set up.
         in_file = os.path.join(self.get_input_dir(), "input1.txt")
-        out_file = os.path.join(self.get_scratch_space() + "output.txt")
-        cmd = []
-        cmd.append(exec_path)
-        cmd.append("--input %s" % in_file)
-        cmd.append("--output %s" % out_file)
-        cmd = " ".join(cmd)
-        si.system(cmd)
+        out_file = os.path.join(self.get_scratch_space(), "output.txt")
+        # Run.
+        act = _run_preprocess(in_file, out_file)
         # Check.
-        act = io_.from_file(out_file, split=False)
         self.check_string(act)
 
     def test1(self):

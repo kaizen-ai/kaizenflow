@@ -1,6 +1,6 @@
 # Style guide references
 
-- We care about at consistency rather than arguing about which approach is better
+- We care about consistency rather than arguing about which approach is better
     - E.g., see "tab vs space" flame-war from the 90s
 - Unless explicitly noted we prefer to follow the style guide below
 
@@ -10,8 +10,7 @@
 
 ## Reference
 
-- Google Python Style Guide (GPSG)
-  - `https://google.github.io/styleguide/pyguide.html`
+- [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)
 
 - Commenting style
     - `http://www.sphinx-doc.org/en/master/`
