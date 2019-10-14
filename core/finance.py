@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -161,7 +162,9 @@ def filter_by_time(
 
 
 # TODO(gp): ATHs vary over futures. Use volume to estimate them.
-def filter_ath(df, dt_col_name=None):
+def filter_ath(
+    df: pd.DataFrame, dt_col_name: Optional[Any] = None
+) -> pd.DataFrame:
     """
     Filter according to active trading hours.
     """
@@ -195,12 +198,48 @@ def show_distribution_by(by, ascending=False):
 # #############################################################################
 
 
-def log_rets_to_rets(df):
-    return np.exp(df) - 1
+def convert_log_rets_to_pct_rets(
+    log_rets: Union[pd.Series, pd.DataFrame]
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Convert log returns to percentage returns.
+
+    :param log_rets: time series of log returns
+    :return: time series of percentage returns
+    """
+    return np.exp(log_rets) - 1
 
 
-def compute_sharpe_ratio(df, time_scaling=1):
-    sr = df.mean() / df.std()
+def convert_pct_rets_to_log_rets(
+    pct_rets: Union[pd.Series, pd.DataFrame]
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Convert percentage returns to log returns.
+
+    :param pct_rets: time series of percentage returns
+    :return: time series of log returns
+    """
+    return np.log(pct_rets + 1)
+
+
+def compute_sharpe_ratio(
+    log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
+) -> Union[float, pd.Series]:
+    r"""
+    Calculate Sharpe Ratio (SR) from log returns and rescale.
+
+    For a detailed exploration of SR, see
+    http://www.gilgamath.com/pages/ssc.html.
+
+    :param log_rets: time series of log returns
+    :param time_scaling: rescales SR by a factor of \sqrt(time_scaling).
+        - For SR with respect to the sampling frequency, set equal to 1
+        - For annualization, set equal to the number of sampling frequency
+          ticks per year (e.g., =252 if daily returns are provided)
+    :return: Sharpe Ratio
+    """
+    dbg.dassert_lte(1, time_scaling, "Time scaling factor must be positive!")
+    sr = log_rets.mean() / log_rets.std()
     sr *= np.sqrt(time_scaling)
     if isinstance(sr, pd.Series):
         sr.name = SR_COL
@@ -249,8 +288,10 @@ def compute_kratio(rets, y_var):
     return kratio
 
 
-def _compute_drawdown(log_rets):
+def _compute_drawdown(log_rets: pd.Series) -> pd.Series:
     r"""
+    Calculate drawdown of a time series of log returns.
+
     Define the drawdown at index location j to be
         d_j := max_{0 \leq i \leq j} \log(p_i / p_j)
     where p_k is price. Though this definition is in terms of prices, we
@@ -258,7 +299,7 @@ def _compute_drawdown(log_rets):
 
     Using this definition, drawdown is always nonnegative.
 
-    :param log_rets: log returns
+    :param log_rets: time series of log returns
     :return: drawdown time series
 
     # TODO(Paul): Extend this to dataframes
@@ -275,6 +316,12 @@ def _compute_drawdown(log_rets):
     return -sums
 
 
-def compute_max_perc_loss_from_high_water_mark(log_rets):
+def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
+    """
+    Calculate drawdown in terms of percentage loss.
+
+    :param log_rets: time series of log returns
+    :return: drawdown time series as percentage loss
+    """
     dd = _compute_drawdown(log_rets)
     return 1 - np.exp(-dd)

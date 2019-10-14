@@ -47,7 +47,7 @@
         - what is the problem and why it is different from what you expected
     - Try to make the life easy to who is going to have to fix the bug
 
-- TODO(gp): The rest of this stuff should maybe go into code_review.md
+- TODO(gp): The rest of this should maybe go into `code_review.md` ?
 
 ## Use branches and PR
 - We try to get all the code to be reviewed before it's merged into `master`
