@@ -307,6 +307,9 @@ def dataframe_to_str(
 def config_notebook():
     import pandas as pd
     import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    sns.set()
 
     pd.set_option("display.max_rows", 500)
     pd.set_option("display.max_columns", 500)

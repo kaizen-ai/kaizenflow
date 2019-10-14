@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 
 """
-# Install the amp default package
-> create_conda.py
+# Install the amp default environment:
 > create_conda.py --env_name develop --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists
 
-# Install the amp default package
+# Install the `p1_develop` default environment:
 > create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/develop.txt --req_file dev_scripts/install/requirements/p1_develop.txt --delete_env_if_exists
-# Quick install to test the script
+
+# Quick install to test the script:
 > create_conda.py --test_install -v DEBUG
 
-# Test the develop environment
+# Test the `develop` environment:
 > create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists
 
-# Create pymc3
+# Install pymc3 env:
 > create_conda.py --env_name pymc3 --req_file dev_scripts/install/requirements/pymc.txt -v DEBUG
 """
 
@@ -80,62 +80,66 @@ import helpers.user_credentials as usc  # isort:skip
 
 _LOG = logging.getLogger(__name__)
 
+# To override python version from the yaml file.
 # _PYTHON_VERSION = "2.7"
 # _PYTHON_VERSION = "3.7"
 _PYTHON_VERSION = None
 
-# TODO(gp): Try https://github.com/mwilliamson/stickytape. It doesn't work
-# that well.
-# > cd ~/src/github/stickytape && conda activate develop && python setup.py install
-# > python /usr/local/lib/python2.7/site-packages/stickytape/main.py dev_scripts/create_conda.py --add-python-path . --output-file released_sticky.py
-
-# TODO(gp): Allow yml files with pip deps inside
-# https://stackoverflow.com/questions/35245401/combining-conda-environment-yml-with-pip-requirements-txt
-
-# ##############################################################################
-
-# dev_scripts/install/requirements
+# Dir of the current create_conda.py.
 _CURR_DIR = os.path.dirname(sys.argv[0])
 
+# The following paths are expressed relative to create_conda.py.
+# TODO(gp): Allow them to tweak so we can be independent with respect to amp.
 # dev_scripts/install/requirements
-_REQUIREMENT_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
+_REQUIREMENTS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
 
 # dev_scripts/install/conda_envs
 _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 
 
-def _get_requirements_file():
-    file_name = os.path.join(_REQUIREMENT_DIR, "develop.txt")
-    dbg.dassert_exists(file_name)
-    return file_name
+# The script leverages the fact that `conda create` can merge multiple
+# requirements files.
 
-
-def _process_requirements(req_files):
+def _process_requirements_file(req_file):
     """
-    - Read a list of req_file
+    - Read a requirements file `req_file`
     - Skip lines like:
         # docx    # Not on Mac.
-    - Write the result in a tmp file
+      to allow configuration based on target.
+    - Merge the result in a tmp file that is created in the same dir as the
+      `req_file`
     :return: name of the new file
     """
-    dbg.dassert_isinstance(req_files, list)
     txt = []
-    for req_file in req_files:
-        # Read file.
-        req_file = os.path.abspath(req_file)
-        _LOG.debug("req_file=%s", req_file)
-        dbg.dassert_exists(req_file)
-        txt_tmp = io_.from_file(req_file, split=True)
-        # Process.
-        for l in txt_tmp:
-            if "# Not on Mac." in l:
-                continue
-            txt.append(l)
+    # Read file.
+    req_file = os.path.abspath(req_file)
+    _LOG.debug("req_file=%s", req_file)
+    dbg.dassert_exists(req_file)
+    txt_tmp = io_.from_file(req_file, split=True)
+    # Process.
+    for l in txt_tmp:
+        # TODO(gp): Can one do conditional builds for different machines?
+        #  I don't think so.
+        if "# Not on Mac." in l:
+            continue
+        txt.append(l)
     # Save file.
     txt = "\n".join(txt)
-    dst_req_file = req_file + ".tmp"
+    dst_req_file = os.path.join(
+        os.path.dirname(req_file),
+        "tmp." + os.path.basename(req_file))
     io_.to_file(dst_req_file, txt)
     return dst_req_file
+
+
+def _process_requirements_files(req_files):
+    dbg.dassert_isinstance(req_files, list)
+    dbg.dassert_lte(1, len(req_files))
+    out_files = []
+    for req_file in req_files:
+        out_file = _process_requirements_file(req_file)
+        out_files.append(out_file)
+    return out_files
 
 
 def _parse():
@@ -146,10 +150,16 @@ def _parse():
     parser.add_argument(
         "--env_name", help="Environment name", default="develop", type=str
     )
-    parser.add_argument("--req_file", help="Requirement file", action="append")
+    parser.add_argument("--yaml", action="store_true")
+    parser.add_argument("--req_file",
+                        action="append",
+                        default=[],
+                        help="Requirements file")
     # Debug options.
     parser.add_argument(
-        "--test_install", help="Just test the install step", action="store_true"
+        "--test_install",
+        action="store_true",
+        help="Just test the install step",
     )
     parser.add_argument(
         "--python_version", default="3.7", type=str, action="store"
@@ -173,9 +183,10 @@ def _main(parser):
     #
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     _LOG.info("\n%s", env.get_system_info(add_frame=True))
-    dbg.dassert_exists(_REQUIREMENT_DIR)
+    dbg.dassert_exists(_REQUIREMENTS_DIR)
     dbg.dassert_exists(_CONDA_ENVS_DIR)
     #
+    # TODO(gp): Break in a sequence of functions to highlight the structure.
     delete_old_conda_if_exists = args.delete_env_if_exists
     install_new_conda = True
     #
@@ -215,7 +226,8 @@ def _main(parser):
         if (
             conda_env_name in conda_env_dict
             or
-            # Sometimes conda is flaky and says that there is no env, even if the dir exists.
+            # Sometimes conda is flaky and says that there is no env, even if
+            # the dir exists.
             os.path.exists(conda_env_path)
         ):
             _LOG.warning("Conda env '%s' exists", conda_env_path)
@@ -248,33 +260,29 @@ def _main(parser):
         _LOG.warning("Skipping")
     else:
         if install_new_conda:
-            req_files = args.req_file
-            if not req_files:
-                req_files = _get_requirements_file()
-            if isinstance(req_files, str):
-                req_files = [req_files]
-            dbg.dassert_isinstance(req_files, list)
-            tmp_req_file = _process_requirements(req_files)
-            _LOG.info("final req_file=%s", tmp_req_file)
             #
             # Install.
             #
-            cmd = (
-                # yapf: disable
-                "conda create" + " --yes" + " --name %s" % conda_env_name
-                # yapf: enable
-            )
+            cmd = []
+            if args.yaml:
+                cmd.append("conda env create")
+            else:
+                cmd.append("conda create")
+                # Start installation without prompting the user.
+                cmd.append("--yes")
+                cmd.append("--name %s" % conda_env_name)
+                # cmd.append("--override-channels")
+                # TODO(gp): Move to yaml?
+                cmd.append("-c conda-forge")
             if args.test_install:
                 pass
             else:
-                cmd += (
-                    # yapf: disable
-                    #" --override-channels " +
-                    " -c conda-forge" + " --file %s" % tmp_req_file
-                    # yapf: enable
-                )
+                req_files = args.req_file
+                tmp_req_files = _process_requirements_files(req_files)
+                cmd.append(" ".join(["--file %s" % f for f in tmp_req_files]))
             if _PYTHON_VERSION is not None:
-                cmd += " python=%s" % _PYTHON_VERSION
+                cmd.append("python=%s" % _PYTHON_VERSION)
+            cmd = " ".join(cmd)
             hco.conda_system(cmd, suppress_output=False)
         else:
             _LOG.warning("Skipping")
@@ -285,17 +293,11 @@ def _main(parser):
     cmd = "conda activate %s && conda info --envs" % conda_env_name
     hco.conda_system(cmd, suppress_output=False)
     #
-    # Install other stuff if needed.
-    #
-    # TODO(gp): Do this.
-    #
-    # pip install git+https://github.com/dadadel/pyment.git
-    #
     # Check packages.
     #
     _, file_name = env.save_env_file(conda_env_name, _CONDA_ENVS_DIR)
     # TODO(gp): Not happy to save all the package list in amp. It should go in
-    # a spot with respect to the git root.
+    #  a spot with respect to the git root.
     _LOG.warning(
         "You should commit the file '%s' for future reference", file_name
     )

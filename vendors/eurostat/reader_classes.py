@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 import glob
 import os
 import pandas as pd
@@ -18,7 +18,7 @@ class EurostatReader(FileReader):
             output.extend(glob.glob(os.path.join(self.src_dir, prefix + '*')))
         return output
 
-    def read_data(self, prefixes: List[str]) -> List[dict]:
+    def read_data(self, prefixes: List[str]) -> Dict[str, pd.DataFrame]:
         """
         Reading data in dict structure
         "file_name" - full file name
@@ -27,11 +27,10 @@ class EurostatReader(FileReader):
         file with all prefixes explained https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?sort=1&file=table_of_contents_en.pdf
         :return: list of dicts
         """
-        output = []
+        output = dict()
         file_names = self.get_filenames(prefixes)
         for file_name in file_names:
             with gzip.open(file_name) as f:
-                df = pd.read_csv(f, sep='\t')
-                output.append({'file_name': file_name,
-                               'data': df})
+                df: pd.DataFrame = pd.read_csv(f, sep='\t')
+                output[file_name] = df
         return output

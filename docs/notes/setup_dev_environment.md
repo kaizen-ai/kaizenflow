@@ -81,6 +81,7 @@
     ```bash
     > cd commodity_research
     > ./dev_scripts/create_conda.p1_develop.sh
+    ```
 
 ## Check conda environment
 - Check that your conda environment is working
@@ -98,6 +99,82 @@
     ```bash
     source dev_scripts/setenv.sh
     ```
+    
+## Delete / recreate environment
+
+### Overwrite a conda environment with `create_conda.py`
+- You can use the option `--delete_env_if_exists` to overwrite a conda env,
+  creating it from scratch
+- This is the typical approach
+
+- There are some pre-packaged command lines to create the standard environments,
+  e.g., `./dev_scripts/create_conda.p1_develop.sh`
+      ```bash
+      > amp/dev_scripts/install/create_conda.py \
+        --env_name $CONDA_ENV \
+        --req_file amp/dev_scripts/install/requirements/develop.txt \
+        --req_file dev_scripts/install/requirements/p1_develop.txt \
+        --delete_env_if_exists
+      ```
+
+- The `create_conda.py` help as some useful examples of command lines
+    ```bash
+    > create_conda.py -h
+    ...
+
+    # Install the amp default environment:
+    > create_conda.py --env_name develop --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists
+
+    # Install the `p1_develop` default environment:
+    > create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/develop.txt --req_file dev_scripts/install/requirements/p1_develop.txt --delete_env_if_exists
+
+    # Quick install to test the script:
+    > create_conda.py --test_install -v DEBUG
+
+    # Test the `develop` environment:
+    > create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists
+
+    # Install pymc3 env:
+    > create_conda.py --env_name pymc3 --req_file dev_scripts/install/requirements/pymc.txt -v DEBUG
+    ```
+
+### Manually delete a conda environment
+- You can delete a conda environment by simply deleting the corresponding
+  directory
+- The conda command tries to be smart removing the packages and leaving the dir,
+  but IMO it doesn't always work
+- You look at the environments with:
+    ```bash
+    > conda info --envs
+    # conda environments:
+    #
+    ...
+    develop               *  /Users/saggese/.conda/envs/develop
+    ...
+    ```
+- Then you can delete with:
+    ```bash
+    > rm -rf /Users/saggese/.conda/envs/develop
+    ```
+- It's a good idea to move it so you can resume it if something goes wrong:
+    ```bash
+    > mv /Users/saggese/.conda/envs/develop > /Users/saggese/.conda/envs/develop.OLD
+    ```
+    - Note that `develop.OLD` might not work anymore since all the links are
+      broken by the move
+
+### To delete the entire conda installation (advanced users)
+- This is a dangerous operation, since it deletes the executable `conda`
+    - You want to do this only when your environment is screwed up: a more expert
+      team member can help you diagnose it
+- If you want to delete your conda installation, find the base env
+    ```bash
+    > conda info --envs
+    base                     /anaconda3
+    ...
+    ```
+- Run `rm -rf /anaconda3`
+- A good idea is to move it so you can resume the state
 
 ## Working with multiple clients
 - Different people have different set-ups that reflect their workflows
@@ -108,14 +185,21 @@
   `//Amp`
 
 ## GP's set-up
-- two Git clients `commodity_research1` and `commodity_research2`
+- My set-up is a bit on the complicated side:
+    - I like to have multiple clients (a residual behavior from subversion that
+      doesn't allow to switch clients as quickly as Git)
+    - One client is always at `master`
+    - One client for checking out branches to do reviews
+    - One client for development
+
+- Two Git clients `commodity_research1` and `commodity_research2`
     - one for development
     - one for review CLs
-- one terminal window per Git client
+- One terminal window per Git client
     - (So I can switch easily between Git clients)
-- one pycharm project for each Git client
+- One Pycharm project for each Git client
     - To edit the code
-- one tmux session in each terminal with:
+- One tmux session in each terminal with:
     - (So I can switch easily between dirs of the project)
     - one shell cd-ed in `commodity_research*`
     - one shell running jupyter
