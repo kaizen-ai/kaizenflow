@@ -91,7 +91,7 @@ _CURR_DIR = os.path.dirname(sys.argv[0])
 # The following paths are expressed relative to create_conda.py.
 # TODO(gp): Allow them to tweak so we can be independent with respect to amp.
 # dev_scripts/install/requirements
-_REQUIREMENT_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
+_REQUIREMENTS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
 
 # dev_scripts/install/conda_envs
 _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
@@ -154,7 +154,7 @@ def _parse():
     parser.add_argument("--req_file",
                         action="append",
                         default=[],
-                        help="Requirement file")
+                        help="Requirements file")
     # Debug options.
     parser.add_argument(
         "--test_install",
@@ -183,7 +183,7 @@ def _main(parser):
     #
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     _LOG.info("\n%s", env.get_system_info(add_frame=True))
-    dbg.dassert_exists(_REQUIREMENT_DIR)
+    dbg.dassert_exists(_REQUIREMENTS_DIR)
     dbg.dassert_exists(_CONDA_ENVS_DIR)
     #
     # TODO(gp): Break in a sequence of functions to highlight the structure.

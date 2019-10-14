@@ -254,7 +254,7 @@
 
 3a. Ask Git if branch is merged
     - One approach is to ask Git if all the changes in master are also in the branch
-        ```
+        ```bash
         > git branch `PartTask354_INFRA_Populate_S3_bucket` --no-merged
           PartTask354_INFRA_Populate_S3_bucket
         ```
@@ -267,13 +267,20 @@
 3b. Manually check if there is any textual difference
     - Another approach is to check what are the differences between the branch and
        `origin/master`
-        ```
+        ```bash
         > git log master..HEAD
         6465b0c saggese, 25 seconds ago : Merge branch 'master' into PartTask354_INFRA_Populate_S3_bucket  (HEAD -> PartTask354_INFRA_Populate_S3_bucket, origin/PartTask354_INFRA_Populate_S3_bucket)
         > git log HEAD..master
         ```
     - Here we see that there are no textual differences
     - So we can either merge the branch into `master` or just kill directly
+
+4. Kill-kill-kill!
+    - To delete both local and remote branch you can do
+        ```bash
+        > git branch -d PartTask354_INFRA_Populate_S3_bucket
+        > git push origin --delete PartTask354_INFRA_Populate_S3_bucket
+        ```
 
 # How-to and troubleshooting
 
@@ -314,6 +321,7 @@
 > git add $FILES
 ```
 
+- TODO(gp): Fix this
 ours and theirs. The first option represents the current branch from which you
 executed the command before getting the conflicts, and the second option refers
 to the branch where the changes are coming from.
@@ -448,68 +456,68 @@ and stage #3 is the version you are merging from.
     vendors/test/test_vendors.py
     ```
 
-  
 ## Merging `master`
 
-    - If your branch lives long, you want to apply changes made on master to
-      show on your branch
-        
-    - Merge flow
+- If your branch lives long, you want to apply changes made on master to
+  show on your branch
     
-    - Assume your branch is clean
-        - E.g., everything is committed, or stashed
+- Merge flow
 
-    - Pull changes from `master` on the remote repo
-        ```bash
-        > git checkout master
-        > git pull
-        ```
+- Assume your branch is clean
+    - E.g., everything is committed, or stashed
 
-    - Checkout your feature branch
-        ```bash
-        > git checkout my_feature
-        ```
+- Pull changes from `master` on the remote repo
+    ```bash
+    > git checkout master
+    > git pull
+    ```
 
-    - Merge stuff from `master` to `my_feature`
-        ```bash
-        > git merge master --no-ff
-        ```
+- Checkout your feature branch
+    ```bash
+    > git checkout my_feature
+    ```
 
-    ... editor will open a message for the merge commit ...
+- Merge stuff from `master` to `my_feature`
+    ```bash
+    > git merge master --no-ff
+    ```
 
-    - In few informal words, the `--no-ff` option means that commits are not
-      "inlined" (similar to rebase) even if possible, but a merge commit is
-      always used
-        - The problem is that if the commits are "inlined" then you can't revert
-          the change in one shot like we would do for a merge commit, but you
-          need to revert all the inlined changes
+... editor will open a message for the merge commit ...
+
+- In few informal words, the `--no-ff` option means that commits are not
+  "inlined" (similar to rebase) even if possible, but a merge commit is
+  always used
+    - The problem is that if the commits are "inlined" then you can't revert
+      the change in one shot like we would do for a merge commit, but you
+      need to revert all the inlined changes
 
 ## Rebasing
+
 - **For now, we suggest avoiding the rebase flow**
 
-    - The reason is that rebase makes things cleaner when used properly, but can
-      get you into deep trouble if not used properly
+- The reason is that rebase makes things cleaner when used properly, but can
+  get you into deep trouble if not used properly
 
-    - You can rebase onto `master`, i.e., you re-apply your changes to
-       `master`
-    - Not the other way around: that would be a disaster!
-        ```bash
-        > git checkout my-feature
-        
-        // See that you have that master doesn't have.
-        > > git ll origin/master..
+- You can rebase onto `master`, i.e., you re-apply your changes to
+   `master`
+- Not the other way around: that would be a disaster!
+    ```bash
+    > git checkout my-feature
+    
+    // See that you have that master doesn't have.
+    > > git ll origin/master..
 
-        // See that master has that you don't have.
-        > git ll ..origin/master
-        
-        > git rebase master
+    // See that master has that you don't have.
+    > git ll ..origin/master
+    
+    > git rebase master
 
-        > git ll ..origin/master
-        // Now you see that there is nothing in master you don't have
+    > git ll ..origin/master
+    // Now you see that there is nothing in master you don't have
 
-        > > git ll origin/master..
-        // You can see that you are ahead of master
-        ```
+    > > git ll origin/master..
+    // You can see that you are ahead of master
+    ```
 
 ## Merging pull requests
 
