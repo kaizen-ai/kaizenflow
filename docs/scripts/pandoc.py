@@ -91,7 +91,7 @@ _COMMON_PANDOC_OPTS = [
 
 
 def _run_pandoc_to_pdf(args, curr_path, file_, prefix):
-    _LOG.info("%s\n", prnt.frame("Pandoc to pdf", char1="<", char2=">"))
+    _LOG.info("\n%s", prnt.frame("Pandoc to pdf", char1="<", char2=">"))
     #
     file1 = file_
     cmd = []
@@ -118,7 +118,7 @@ def _run_pandoc_to_pdf(args, curr_path, file_, prefix):
     #
     # Run latex.
     #
-    _LOG.info("%s\n", prnt.frame("Latex", char1="<", char2=">"))
+    _LOG.info("\n%s", prnt.frame("Latex", char1="<", char2=">"))
     # pdflatex needs to run in the same dir of latex_abbrevs.sty so we
     # cd to that dir and save the output in the same dir of the input.
     dbg.dassert_exists(_EXEC_DIR_NAME + "/latex_abbrevs.sty")
@@ -145,12 +145,12 @@ def _run_pandoc_to_pdf(args, curr_path, file_, prefix):
             txt = "\n".join(txt)
             _LOG.error(txt)
             _LOG.error("Log is in %s", log_file)
-            _LOG.error("%s\n", prnt.frame("cmd is:\n> %s" % cmd))
+            _LOG.error("\n%s", prnt.frame("cmd is:\n> %s" % cmd))
             raise RuntimeError("Latex failed")
 
     _run_latex()
     # Run latex again.
-    _LOG.info("%s\n", prnt.frame("Latex again", char1="<", char2=">"))
+    _LOG.info("\n%s", prnt.frame("Latex again", char1="<", char2=">"))
     if not args.no_run_latex_again:
         _run_latex()
     else:
@@ -163,7 +163,7 @@ def _run_pandoc_to_pdf(args, curr_path, file_, prefix):
 
 
 def _run_pandoc_to_html(args, file_in, prefix):
-    _LOG.info("%s\n", prnt.frame("Pandoc to html", char1="<", char2=">"))
+    _LOG.info("\n%s", prnt.frame("Pandoc to html", char1="<", char2=">"))
     #
     cmd = []
     cmd.append("pandoc %s" % file_in)
@@ -203,7 +203,7 @@ def _copy_to_output(args, file_in, prefix):
 
 
 def _copy_to_gdrive(args, file_name, ext):
-    _LOG.info("%s\n", prnt.frame("Copy to gdrive", char1="<", char2=">"))
+    _LOG.info("\n%s", prnt.frame("Copy to gdrive", char1="<", char2=">"))
     dbg.dassert(not ext.startswith("."), "Invalid file_name='%s'", file_name)
     if args.gdrive_dir is not None:
         gdrive_dir = args.gdrive_dir
@@ -221,7 +221,7 @@ def _copy_to_gdrive(args, file_name, ext):
 
 
 def _open_pdf(file_name):
-    _LOG.info("%s\n", prnt.frame("Open PDF", char1="<", char2=">"))
+    _LOG.info("\n%s", prnt.frame("Open PDF", char1="<", char2=">"))
     dbg.dassert_exists(file_name)
     dbg.dassert_file_extension(file_name, "pdf")
     #
@@ -246,7 +246,7 @@ EOF
 
 
 def _open_html(file_name):
-    _LOG.info("%s\n", prnt.frame("Open HTML", char1="<", char2=">"))
+    _LOG.info("\n%s", prnt.frame("Open HTML", char1="<", char2=">"))
     dbg.dassert_exists(file_name)
     dbg.dassert_file_extension(file_name, "html")
     #
@@ -256,7 +256,7 @@ def _open_html(file_name):
 
 
 def _cleanup_after(prefix):
-    _LOG.info("%s\n", prnt.frame("Clean up", char1="<", char2=">"))
+    _LOG.info("\n%s", prnt.frame("Clean up", char1="<", char2=">"))
     cmd = "rm -rf %s*" % prefix
     _ = _system(cmd)
 
@@ -350,7 +350,7 @@ def _pandoc(args, cmd_line):
         io_.to_file(args.script, txt)
         _LOG.info("Saved script into '%s'", args.script)
     #
-    _LOG.info("%s\n", prnt.frame("SUCCESS"))
+    _LOG.info("\n%s", prnt.frame("SUCCESS"))
 
 
 # ##############################################################################
