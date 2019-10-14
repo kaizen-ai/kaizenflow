@@ -11,3 +11,13 @@
 
 # Useful reference
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+
+# The team member list
+- In reversed alphabetical order (just to be fair)
+    - [ ] Stas
+    - [ ] Sonya
+    - [ ] Sergey
+    - [ ] Paul
+    - [ ] Liza
+    - [ ] Julia
+    - [ ] GP

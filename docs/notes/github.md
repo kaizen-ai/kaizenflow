@@ -47,6 +47,8 @@
         - what is the problem and why it is different from what you expected
     - Try to make the life easy to who is going to have to fix the bug
 
+- TODO(gp): The rest of this stuff should maybe go into code_review.md
+
 ## Use branches and PR
 - We try to get all the code to be reviewed before it's merged into `master`
 
@@ -56,6 +58,10 @@
 - The approach is just post the link to the PR in the task and use a @mention
   to get attention
     - We can also ping via email / IM to notify the person
+
+## Apply reviewers' comments for post-commit / optional review
+- You can check in directly in `master` using the right task number (e.g., 
+  PartTask351: ...)
 
 ## Try not to commit to `master`
 - Exceptions are small commits that are not part of a feature

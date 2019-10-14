@@ -502,7 +502,7 @@ _LOG.warning(...)
 - It's great when a function can work on both `pd.Series` and `pd.DataFrame`
   since in this case one doesn't have to remember, but it can just use it
 
-- 
+## Robust code
         if server_name == "ip-172-31-16-23":
             git_user_name = "gad26032"
             git_user_email = "malanin@particle.one"
@@ -515,3 +515,10 @@ _LOG.warning(...)
             conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
+
+
+## Decorator names
+
+Yes, because it isn't a verb (at least not a present tense one, and in any
+case reads more naturally as an adjective than a past tense verb). I agree
+that we may want a different standard for decorators.

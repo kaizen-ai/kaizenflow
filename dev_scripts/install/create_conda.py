@@ -98,15 +98,16 @@ _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 
 
 # The script leverages the fact that `conda create` can merge multiple
-# requirement files.
+# requirements files.
 
-def _process_requirement_file(req_file):
+def _process_requirements_file(req_file):
     """
-    - Read a req_file
+    - Read a requirements file `req_file`
     - Skip lines like:
         # docx    # Not on Mac.
       to allow configuration based on target.
-    - Merge the result in a tmp file
+    - Merge the result in a tmp file that is created in the same dir as the
+      `req_file`
     :return: name of the new file
     """
     txt = []
@@ -131,12 +132,12 @@ def _process_requirement_file(req_file):
     return dst_req_file
 
 
-def _process_requirement_files(req_files):
+def _process_requirements_files(req_files):
     dbg.dassert_isinstance(req_files, list)
     dbg.dassert_lte(1, len(req_files))
     out_files = []
     for req_file in req_files:
-        out_file = _process_requirement_file(req_file)
+        out_file = _process_requirements_file(req_file)
         out_files.append(out_file)
     return out_files
 
@@ -277,7 +278,7 @@ def _main(parser):
                 pass
             else:
                 req_files = args.req_file
-                tmp_req_files = _process_requirement_files(req_files)
+                tmp_req_files = _process_requirements_files(req_files)
                 cmd.append(" ".join(["--file %s" % f for f in tmp_req_files]))
             if _PYTHON_VERSION is not None:
                 cmd.append("python=%s" % _PYTHON_VERSION)

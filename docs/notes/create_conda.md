@@ -29,7 +29,7 @@
   
 # Using YAML files
 
-- YAML files (instead of `.txt`) allow to specify also pip packages
+- YAML files (instead of `.txt`) allow specifying also pip packages
 - Refs:
     - [https://stackoverflow.com/questions/35245401]
     - [https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#create-env-file-manually]
