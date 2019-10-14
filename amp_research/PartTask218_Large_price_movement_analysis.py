@@ -19,7 +19,7 @@
 # %load_ext autoreload
 # %autoreload 2
 
-import logging 
+import logging
 import os
 
 import numpy as np
@@ -29,14 +29,13 @@ from matplotlib import pyplot as plt
 # %%
 from tqdm.autonotebook import tqdm
 
-import core.signal_processing as sigp
+import amp_research.price_movement_analysis as pma
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
 import helpers.s3 as hs3
-import vendors.kibot.utils as kut
-import vendors.particle_one.price_movement_analysis as pma
 import vendors.cme.read as cmer
+import vendors.kibot.utils as kut
 
 # %%
 print(env.get_system_signature())
@@ -126,7 +125,9 @@ comm_list[:5]
 
 # %%
 s3_path = hs3.get_path()
-kibot_path = os.path.join(s3_path, "kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz")
+kibot_path = os.path.join(
+    s3_path, "kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
+)
 
 daily_price_dict_df = kut.read_multiple_symbol_data(
     comm_list, kibot_path, nrows=None
@@ -141,7 +142,9 @@ daily_price_dict_df["CL"].tail(2)
 symbol = "CL"
 
 # %%
-top_daily_movements_cl = pma.get_top_movements_for_symbol(daily_price_dict_df, symbol, 'daily')
+top_daily_movements_cl = pma.get_top_movements_for_symbol(
+    daily_price_dict_df, symbol, "daily"
+)
 top_daily_movements_cl.head()
 
 # %%
@@ -160,7 +163,7 @@ commodity_symbols_kibot[group]
 
 # %%
 pma.get_top_movements_by_group(
-    daily_price_dict_df, commodity_symbols_kibot, group, 'daily'
+    daily_price_dict_df, commodity_symbols_kibot, group, "daily"
 )
 
 # %% [markdown]
@@ -169,7 +172,7 @@ pma.get_top_movements_by_group(
 # %%
 top_100_daily_movements_by_group = {
     group: pma.get_top_movements_by_group(
-        daily_price_dict_df, commodity_symbols_kibot, group, 'daily'
+        daily_price_dict_df, commodity_symbols_kibot, group, "daily"
     )
     for group in tqdm(commodity_symbols_kibot.keys())
 }
@@ -199,7 +202,9 @@ np.array_equal(
 
 # %%
 s3_path = hs3.get_path()
-kibot_path = os.path.join(s3_path, "kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz")
+kibot_path = os.path.join(
+    s3_path, "kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
+)
 
 minutely_price_dict_df = kut.read_multiple_symbol_data(
     comm_list, kibot_path, nrows=None
@@ -224,7 +229,7 @@ symbol = "CL"
 
 # %%
 top_100_movements_cl_1_min = pma.get_top_movements_for_symbol(
-    minutely_price_dict_df, symbol, 'minutely'
+    minutely_price_dict_df, symbol, "minutely"
 )
 
 # %%
@@ -260,7 +265,7 @@ commodity_symbols_kibot[group]
 
 # %%
 pma.get_top_movements_by_group(
-    minutely_price_dict_df, commodity_symbols_kibot, group, 'minutely'
+    minutely_price_dict_df, commodity_symbols_kibot, group, "minutely"
 )
 
 # %% [markdown]
@@ -269,7 +274,7 @@ pma.get_top_movements_by_group(
 # %%
 top_100_1_min_movements_by_group = {
     group: pma.get_top_movements_by_group(
-        minutely_price_dict_df, commodity_symbols_kibot, group, 'minutely'
+        minutely_price_dict_df, commodity_symbols_kibot, group, "minutely"
     )
     for group in tqdm(commodity_symbols_kibot.keys())
 }

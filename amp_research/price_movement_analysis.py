@@ -5,7 +5,6 @@ import pandas as pd
 
 import core.signal_processing as sigp
 import helpers.dbg as dbg
-
 import vendors.kibot.utils as kut
 
 _LOG = logging.getLogger(__name__)
@@ -17,16 +16,18 @@ TAU = 18
 def get_zscored_returns(
     price_df_dict: Dict[str, pd.DataFrame],
     symbol: str,
-    period: str, 
+    period: str,
     tau: int = TAU,
     demean: bool = False,
 ):
-    dbg.dassert_in(period, ['daily', 'minutely'])
+    dbg.dassert_in(period, ["daily", "minutely"])
     prices_symbol = price_df_dict[symbol]
-    if period == 'minutely':
-        rets = kut.compute_ret_0_from_1min_prices(prices_symbol, 'pct_change')
+    if period == "minutely":
+        rets = kut.compute_ret_0_from_1min_prices(prices_symbol, "pct_change")
     else:
-        rets = kut.compute_ret_0_from_daily_prices(prices_symbol, 'open', 'pct_change')
+        rets = kut.compute_ret_0_from_daily_prices(
+            prices_symbol, "open", "pct_change"
+        )
     zscored_rets = sigp.rolling_zscore(rets, tau, demean=demean)
     _LOG.debug("zscored_rets=\n%s", zscored_rets.head())
     abs_zscored_rets = zscored_rets.abs()
@@ -50,7 +51,10 @@ def get_top_movements_by_group(
 
 
 def get_top_movements_for_symbol(
-    price_df_dict: Dict[str, pd.DataFrame], symbol: str, period: str, n_movements: int = 100
+    price_df_dict: Dict[str, pd.DataFrame],
+    symbol: str,
+    period: str,
+    n_movements: int = 100,
 ):
     zscored_rets = get_zscored_returns(price_df_dict, symbol, period)
     return zscored_rets.sort_values(ascending=False).head(n_movements)

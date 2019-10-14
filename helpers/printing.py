@@ -304,13 +304,13 @@ def dataframe_to_str(
 # TODO(gp): Move to explore.py
 
 
-def config_notebook():
+def config_notebook(sns_set=True):
     import pandas as pd
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    sns.set()
-
+    if sns_set:
+        sns.set()
     pd.set_option("display.max_rows", 500)
     pd.set_option("display.max_columns", 500)
     pd.set_option("display.width", 1000)
