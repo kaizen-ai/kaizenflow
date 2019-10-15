@@ -21,6 +21,8 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
+# #############################################################################
+
 # Global setter / getter for updating test.
 
 # This controls whether the output of a test is updated or not.
@@ -35,6 +37,8 @@ def set_update_tests(val):
 def get_update_tests():
     return _UPDATE_TESTS
 
+
+# #############################################################################
 
 # Global setter / getter for incremental mode.
 

@@ -116,10 +116,95 @@ class Test_jack1(ut.TestCase):
 
 class Test_install_create_conda_py1(ut.TestCase):
     def test_create_conda1(self):
-        # TODO(gp): Use git.find_file_in_git_tree()
-        file_name = git.find_file_in_git_tree("create_conda.py")
-        cmd = f"{file_name} --test_install --delete_env_if_exists -v DEBUG"
+        """
+        Run create_conda with --test_install to exercise the script.
+        """
+        exec_file = git.find_file_in_git_tree("create_conda.py")
+        cmd = f"{exec_file} --test_install --delete_env_if_exists -v DEBUG"
         si.system(cmd)
+        # Remove env.
+        cmd = cmd + "--skip_install_env --skip_test_env"
+        si.system(cmd)
+
+    @pytest.mark.slow
+    def test_create_conda_yaml1(self):
+        """
+        Run create_conda.py with a single yaml file.
+        """
+        yaml = """
+name: test_yaml
+channels:
+  - conda-forge
+  - quantopian
+dependencies:
+  - pandas
+  - pandas-datareader=0.8.0     # PartTask344.
+  - pip:
+    #- ta                   # Technical analysis package.
+    - trading-calendars
+    """
+        yaml_file = os.path.join(self.get_scratch_space(), "reqs.yaml")
+        io_.to_file(yaml_file, yaml)
+        exec_file = git.find_file_in_git_tree("create_conda.py")
+        env_name = "test_create_conda_yaml1"
+        cmd = (
+            f"{exec_file} --env_name {env_name} --req_file {yaml_file} "
+            "--delete_env_if_exists -v DEBUG"
+        )
+        si.system(cmd)
+        # TODO(gp): Find a way to check the output looking at the packages.
+        if ut.get_incremental_tests():
+            # No clean up for manual inspection.
+            _LOG.warning("No clean up as per incremental test mode")
+        else:
+            # Remove env.
+            cmd = cmd + " --skip_install_env --skip_test_env"
+            si.system(cmd)
+
+    @pytest.mark.slow
+    def test_create_conda_yaml2(self):
+        """
+        Run create_conda.py with a two yaml files.
+        """
+        yaml1 = """
+name: test_yaml
+channels:
+  - conda-forge
+  - quantopian
+dependencies:
+  - pandas
+  - pandas-datareader=0.8.0     # PartTask344.
+  - pip:
+    #- ta                   # Technical analysis package.
+    - trading-calendars """
+        yaml_file1 = os.path.join(self.get_scratch_space(), "reqs1.yaml")
+        io_.to_file(yaml_file1, yaml1)
+        #
+        yaml2 = """
+name: test_yaml
+channels:
+  - conda-forge
+  - quantopian
+dependencies:
+  - numpy"""
+        yaml_file2 = os.path.join(self.get_scratch_space(), "reqs2.yaml")
+        io_.to_file(yaml_file1, yaml2)
+        #
+        exec_file = git.find_file_in_git_tree("create_conda.py")
+        env_name = "test_create_conda_yaml2"
+        cmd = (
+            f"{exec_file} --env_name {env_name} --req_file {yaml_file1} "
+            f"--req_file {yaml_file2} --delete_env_if_exists -v DEBUG"
+        )
+        si.system(cmd)
+        # TODO(gp): Find a way to check the output looking at the packages.
+        if ut.get_incremental_tests():
+            # No clean up for manual inspection.
+            _LOG.warning("No clean up as per incremental test mode")
+        else:
+            # Remove env.
+            cmd = cmd + " --skip_install_env --skip_test_env"
+            si.system(cmd)
 
 
 # #############################################################################
