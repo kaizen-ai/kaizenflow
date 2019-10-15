@@ -9,6 +9,7 @@ from tqdm import tqdm
 class EurostatFileSaver(FileFiller):
     """
     Saves data using root_url.
+
     Search all files from root_url using pattern *.tsv.gz
     """
 

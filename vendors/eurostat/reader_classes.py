@@ -7,6 +7,7 @@ from generalized_reader.base_clases import FileReader
 
 
 class EurostatReader(FileReader):
+
     def __init__(self,
                  filler_version: str):
         super().__init__(filler_version=filler_version)
