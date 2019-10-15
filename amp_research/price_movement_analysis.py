@@ -14,20 +14,13 @@ TAU = 18
 
 
 def get_zscored_returns(
-    price_df_dict: Dict[str, pd.DataFrame],
-    symbol: str,
-    period: str,
-    tau: int = TAU,
-    demean: bool = False,
+    prices: pd.DataFrame, period: str, tau: int = TAU, demean: bool = False
 ):
     dbg.dassert_in(period, ["daily", "minutely"])
-    prices_symbol = price_df_dict[symbol]
     if period == "minutely":
-        rets = kut.compute_ret_0_from_1min_prices(prices_symbol, "pct_change")
+        rets = kut.compute_ret_0_from_1min_prices(prices, "log_rets")
     else:
-        rets = kut.compute_ret_0_from_daily_prices(
-            prices_symbol, "open", "pct_change"
-        )
+        rets = kut.compute_ret_0_from_daily_prices(prices, "open", "log_rets")
     zscored_rets = sigp.rolling_zscore(rets, tau, demean=demean)
     _LOG.debug("zscored_rets=\n%s", zscored_rets.head())
     abs_zscored_rets = zscored_rets.abs()
@@ -43,7 +36,7 @@ def get_top_movements_by_group(
 ):
     zscored_returns = []
     for symbol in commodity_symbols_kibot[group]:
-        zscored_ret = get_zscored_returns(price_df_dict, symbol, period)
+        zscored_ret = get_zscored_returns(price_df_dict[symbol], period)
         zscored_returns.append(zscored_ret)
     zscored_returns = pd.concat(zscored_returns, axis=1)
     mean_zscored_rets = zscored_returns.mean(axis=1, skipna=True)
@@ -56,5 +49,5 @@ def get_top_movements_for_symbol(
     period: str,
     n_movements: int = 100,
 ):
-    zscored_rets = get_zscored_returns(price_df_dict, symbol, period)
+    zscored_rets = get_zscored_returns(price_df_dict[symbol], period)
     return zscored_rets.sort_values(ascending=False).head(n_movements)
