@@ -23,6 +23,13 @@
 
 # Some other remarks based on our experience
 
+## Give priority to code review
+- We target to give feedback on a PR in 24hr so that the author is not blocked
+  for too long
+- Advanced user: to keep working on a related changes and make progress, one can:
+    - merge the branch under review with another branch; or
+    - branch from a branch
+
 ## Why do we review code
 - We spend time reviewing each other code so that we can:
     - build a better product
@@ -64,3 +71,8 @@
 
 ## Look at the code top-to-bottom
 - E.g., if you do search & replace, make sure everything is fine
+
+## Close the PR and delete the branch
+- When code is merged into `master` by one of the reviewers through the UI one
+  can select the delete branch option
+- Otherwise you can delete the branch using the procedure in `git.md`
