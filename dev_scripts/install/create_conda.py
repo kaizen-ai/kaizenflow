@@ -96,48 +96,6 @@ _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 # ##############################################################################
 
 
-def _process_requirements_file(req_file):
-    """
-    - Read a requirements file `req_file`
-    - Skip lines like:
-        # docx    # Not on Mac.
-      to allow configuration based on target.
-    - Merge the result in a tmp file that is created in the same dir as the
-      `req_file`
-    :return: name of the new file
-    """
-    txt = []
-    # Read file.
-    req_file = os.path.abspath(req_file)
-    _LOG.debug("req_file=%s", req_file)
-    dbg.dassert_exists(req_file)
-    txt_tmp = io_.from_file(req_file, split=True)
-    # Process.
-    for l in txt_tmp:
-        # TODO(gp): Can one do conditional builds for different machines?
-        #  I don't think so.
-        if "# Not on Mac." in l:
-            continue
-        txt.append(l)
-    # Save file.
-    txt = "\n".join(txt)
-    dst_req_file = os.path.join(
-        os.path.dirname(req_file), "tmp." + os.path.basename(req_file)
-    )
-    io_.to_file(dst_req_file, txt)
-    return dst_req_file
-
-
-def _process_requirements_files(req_files):
-    dbg.dassert_isinstance(req_files, list)
-    dbg.dassert_lte(1, len(req_files))
-    out_files = []
-    for req_file in req_files:
-        out_file = _process_requirements_file(req_file)
-        out_files.append(out_file)
-    return out_files
-
-
 def _set_conda_root_dir():
     conda_env_path = usc.get_credentials()["conda_env_path"]
     hco.set_conda_env_root(conda_env_path)
@@ -149,7 +107,7 @@ def _set_conda_root_dir():
     hco.conda_system(cmd, suppress_output=False)
 
 
-def _delete_conda_env(args):
+def _delete_conda_env(args, conda_env_name):
     """
     Deactivate current conda environment and delete the old conda env.
     """
@@ -158,12 +116,9 @@ def _delete_conda_env(args):
     # Deactivate conda.
     #
     _LOG.info("\n%s", prnt.frame("Check conda status after deactivation"))
+    #
     cmd = "conda deactivate; conda info --envs"
     hco.conda_system(cmd, suppress_output=False)
-    #
-    conda_env_name = args.env_name
-    if args.test_install:
-        conda_env_name = "test_conda"
     #
     # Create a package from scratch (otherwise conda is unhappy).
     #
@@ -204,6 +159,48 @@ def _delete_conda_env(args):
         else:
             _LOG.warning("Skipping")
     return conda_env_name
+
+
+def _process_requirements_file(req_file):
+    """
+    - Read a requirements file `req_file`
+    - Skip lines like:
+        # docx    # Not on Mac.
+      to allow configuration based on target.
+    - Merge the result in a tmp file that is created in the same dir as the
+      `req_file`
+    :return: name of the new file
+    """
+    txt = []
+    # Read file.
+    req_file = os.path.abspath(req_file)
+    _LOG.debug("req_file=%s", req_file)
+    dbg.dassert_exists(req_file)
+    txt_tmp = io_.from_file(req_file, split=True)
+    # Process.
+    for l in txt_tmp:
+        # TODO(gp): Can one do conditional builds for different machines?
+        #  I don't think so.
+        if "# Not on Mac." in l:
+            continue
+        txt.append(l)
+    # Save file.
+    txt = "\n".join(txt)
+    dst_req_file = os.path.join(
+        os.path.dirname(req_file), "tmp." + os.path.basename(req_file)
+    )
+    io_.to_file(dst_req_file, txt)
+    return dst_req_file
+
+
+def _process_requirements_files(req_files):
+    dbg.dassert_isinstance(req_files, list)
+    dbg.dassert_lte(1, len(req_files))
+    out_files = []
+    for req_file in req_files:
+        out_file = _process_requirements_file(req_file)
+        out_files.append(out_file)
+    return out_files
 
 
 def _install_conda_env(args, conda_env_name):
@@ -298,7 +295,11 @@ def _main(parser):
     #
     _set_conda_root_dir()
     #
-    conda_env_name = _delete_conda_env(args)
+    conda_env_name = args.env_name
+    if args.test_install:
+        conda_env_name = "test_conda"
+    #
+    _delete_conda_env(args, conda_env_name)
     #
     _install_conda_env(args, conda_env_name)
     #
