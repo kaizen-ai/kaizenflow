@@ -134,6 +134,7 @@ class Test_preprocess1(ut.TestCase):
         self._helper()
 
 
+@pytest.mark.skip
 class Test_preprocess2(ut.TestCase):
     """
     Check that the output of preprocess_md_for_pandoc.py is the expected one
