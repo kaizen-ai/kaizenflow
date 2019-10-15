@@ -127,13 +127,23 @@ def _delete_conda_env(args, conda_env_name):
     conda_env_dict, _ = hco.get_conda_info_envs()
     conda_env_root = hco.get_conda_envs_dirs()[0]
     conda_env_path = os.path.join(conda_env_root, conda_env_name)
-    if (
-        conda_env_name in conda_env_dict
-        or
-        # Sometimes conda is flaky and says that there is no env, even if
-        # the dir exists.
-        os.path.exists(conda_env_path)
-    ):
+    #
+    conda_env_exists = conda_env_name in conda_env_dict
+    _LOG.debug(
+        "conda_env_name=%s in conda_env_dict=%s -> conda_env_exists=%s",
+        conda_env_name,
+        conda_env_dict,
+        conda_env_exists,
+    )
+    # Sometimes conda is flaky and says that there is no env, even if the dir
+    # exists.
+    conda_env_exists = conda_env_exists or os.path.exists(conda_env_path)
+    _LOG.debug(
+        "conda_env_path=%s -> conda_env_exists=%s",
+        conda_env_path,
+        conda_env_exists,
+    )
+    if conda_env_exists:
         _LOG.warning("Conda env '%s' exists", conda_env_path)
         if args.delete_env_if_exists:
             # Back up the old environment.
@@ -228,9 +238,9 @@ def _create_conda_env(args, conda_env_name):
             cmd.append("conda create")
             # Start installation without prompting the user.
             cmd.append("--yes")
-            cmd.append("--name %s" % conda_env_name)
             # cmd.append("--override-channels")
             cmd.append("-c conda-forge")
+        cmd.append("--name %s" % conda_env_name)
         req_files = args.req_file
         tmp_req_files = _process_requirements_files(req_files)
         # We leverage the fact that `conda create` can merge multiple
@@ -244,7 +254,7 @@ def _create_conda_env(args, conda_env_name):
 
 def _test_conda_env(conda_env_name):
     # Test activating.
-    _LOG.info("\n%s", prnt.frame("Test activate"))
+    _LOG.info("\n%s", prnt.frame("Test activate conda env '%s'" % conda_env_name))
     cmd = "conda activate %s && conda info --envs" % conda_env_name
     hco.conda_system(cmd, suppress_output=False)
     # Check packages.
@@ -265,10 +275,14 @@ def _parse():
     )
     parser.add_argument("--delete_env_if_exists", action="store_true")
     parser.add_argument(
-        "--env_name", type=str, default=None, help="Environment name"
+        "--env_name", type=str, required=True, help="Environment name"
     )
     parser.add_argument(
-        "--req_file", action="append", default=[], help="Requirements file"
+        "--req_file",
+        action="append",
+        default=[],
+        required=True,
+        help="Requirements file",
     )
     # Debug options.
     parser.add_argument(
@@ -303,14 +317,7 @@ def _main(parser):
     #
     _set_conda_root_dir()
     #
-    if args.test_install:
-        conda_env_name = "test_conda"
-    else:
-        dbg.dassert_is_not(args.env_name, None, "You need to specify an env_name")
-        conda_env_name = args.env_name
-        dbg.dassert_lte(
-            1, len(args.req_file), msg="You need to specify requirements files"
-        )
+    conda_env_name = args.env_name
     #
     if args.skip_delete_env:
         _LOG.warning("Skip delete conda env per user request")
