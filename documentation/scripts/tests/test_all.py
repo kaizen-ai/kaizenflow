@@ -79,9 +79,9 @@ class Test_pandoc1(ut.TestCase):
         git_dir = git.get_client_root(super_module=False)
         dir_name = os.path.join(git_dir, "docs/notes/*.txt")
         file_names = glob.glob(dir_name)
-        for f in file_names:
-            _LOG.debug(prnt.frame("file_name=%s" % f))
-            self._helper(f, "html", "html")
+        for file_name in file_names:
+            _LOG.debug(prnt.frame("file_name=%s" % file_name))
+            self._helper(file_name, "html")
 
 
 # ##############################################################################
@@ -89,7 +89,7 @@ class Test_pandoc1(ut.TestCase):
 # ##############################################################################
 
 
-def _run_preprocess(in_file : str, out_file : str) -> str:
+def _run_preprocess(in_file: str, out_file: str) -> str:
     """
     Execute the end-to-end flow for preprocess_md_for_pandoc.py returning
     the output as string.
@@ -155,7 +155,6 @@ class Test_preprocess2(ut.TestCase):
         act = _run_preprocess(in_file, out_file)
         # Check.
         self.assert_equal(act, exp)
-
 
     def test1(self):
         txt_in = """

@@ -69,6 +69,9 @@ def get_random_df(num_cols, seed=None, **kwargs):
 
     :return: df
     """
+    # Sometimes pandas takes several seconds to import, so we don't import
+    # unless necessary.
+    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     if seed:
@@ -79,6 +82,9 @@ def get_random_df(num_cols, seed=None, **kwargs):
 
 
 def get_df_signature(df, num_rows=3):
+    # Sometimes pandas takes several seconds to import, so we don't import
+    # unless necessary.
+    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     dbg.dassert_isinstance(df, pd.DataFrame)
@@ -209,7 +215,7 @@ class TestCase(unittest.TestCase):
         self._scratch_dir = None
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
-        _LOG.debug("\n" + prnt.frame(func_name))
+        _LOG.debug("\n%s", prnt.frame(func_name))
 
     def tearDown(self):
         pass

@@ -501,17 +501,21 @@ _LOG.warning(...)
 
 - We welcome functions that can work on multiple related types since in this case
   one doesn't have to remember multiple functions:
-    - E.g., a function `demean(obj)` that can work `pd.Series` and `pd.DataFrame`
-    - Instead of `
-- In these case
+    - E.g., a function `demean(obj)` that can work `pd.Series` and
+      `pd.DataFrame`, instead of `demean_series()`, `demean_dataframe()`
+- In this way we take full advantage of duck typing to achieve something similar
+  to C++ function overloading
+- You can call the variable `obj` since its type is not known until run-time
+- Try to return the same type of the input, if possible
+    - E.g., the function called on a `pd.Series` returns a `pd.Series` and so on
+- You can try to go full duck typing 
 
 ## Robust code
         if server_name == "ip-172-31-16-23":
             git_user_name = "gad26032"
             git_user_email = "malanin@particle.one"
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "~/.conda/envs"
-            jupyter_port = 9111
+            conda_env_path = "~/.conda/envs" jupyter_port = 9111
         if server_name == "particle-laptop":
             git_user_name = "gad26032"
             git_user_email = "malanin@particle.one"
@@ -533,15 +537,81 @@ _LOG.warning(...)
     ```
 
 ## Capitalized words
+
 - In documentation we capitalize abbreviations (e.g., `YAML`, `CSV`)
 - In the code we use camel case, when appropriate (e.g., `ConvertCsvToYaml`,
   since `ConvertCSVToYAML` is difficult to read)
 
-## In comments we
-- We use 
+## Referring to an object in the code
+- We prefer to refer to objects in the code using Markdown like `this` (this is a
+  convention used in the documentation system Sphinx)
+
     ```python
-    def timed(f):
-        """
-        Decorator adding a timer around function `f`.
-        """
+    """
+    Decorator adding a timer around function `f`.
+    """
+    ```
+- This is useful to distinguish the object code from the real life object
+- E.g.,
+    ```python
+    # The df `df_tmp` is used for ...
+    ```
+
+## Inline comments
+- In general we prefer to avoid comments on the same line as code since they
+  require extra maintenance (e.g., when the line becomes too long)
+    - **Bad**
+        ```python
+        print("hello world")      # Introduce yourself.
+        ```
+    - **Good**
+        ```python
+        # Introduce yourself.
+        print("hello world")
+        ```
+
+## Disabling linter messages
+
+- By default we assume that linter messages are correct
+    - We try to understand what's the rationale for the lints and change the code
+      to follow their suggestion
+
+1) If you think a message is too pedantic please file a bug with the example
+  and as a team we can consider to exclude that message from our list
+
+2) If you think the message is a false positive then we try to change the code to
+   make the linter happy
+    - E.g., the code depends on some run-time behavior that the linter can't infer
+      then you should wonder if that behavior is really needed
+    - A human reader would probably be as confused as the linter is
+
+3) If you really believe that you can override the linter in this particular case
+   then use something like:
+    ```python
+    # pylint: disable=some-message,another-one
+    ```
+    - You need to explain why you are overriding the linter.
+
+- Don't use code numbers, but the symbolic name whenever possible
+  - **Bad**
+    ```python
+     # pylint: disable=W0611
+    import config.logging_settings
+    ```
+  - **Good**
+    ```python
+    # pylint: disable=unused-import
+    import config.logging_settings
+    ```
+
+- Although we don't like inlined comments sometimes there is no choice to get the
+  linter to understand which line we are referring too:
+  - **Bad but ok if needed**
+    ```python
+    # pylint: disable=unused-import
+    import config.logging_settings
+    ```
+  - **Good**
+    ```python
+    import config.logging_settings  # pylint: disable=unused-import
     ```

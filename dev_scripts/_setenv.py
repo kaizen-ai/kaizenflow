@@ -149,7 +149,6 @@ def _parse():
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
-    #
     txt = []
 
     def _frame(comment):
@@ -158,13 +157,17 @@ def _main(parser):
         txt_tmp.append("\necho '%s'" % line)
         txt_tmp.append("echo " + comment)
         txt_tmp.append("echo '%s'" % line)
+        # pylint: disable=no-member
         txt.extend(txt_tmp)
 
     def _execute(cmd):
+        # pylint: disable=no-member
         txt.append("echo '> %s'" % cmd)
+        # pylint: disable=no-member
         txt.append(cmd)
 
     def _log_var(var_name, var_val):
+        # pylint: disable=no-member
         txt.append("echo '%s=%s'" % (var_name, var_val))
         _LOG.debug("%s='%s'", var_name, var_val)
 

@@ -29,7 +29,7 @@ def _standard_cleanup(in_file, aggressive):
     dbg.dassert_exists(in_file)
     txt = io_.from_file(in_file)
     out = []
-    for l in txt:
+    for line in txt:
         for s, d in [
             ("gaussian", "Gaussian"),
             ("iid", "IID"),
@@ -47,8 +47,8 @@ def _standard_cleanup(in_file, aggressive):
             # see https://oeis.org/wiki/List_of_LaTeX_mathematical_symbols
         ]:
             # l = l.replace(s, d)
-            l = re.sub("\\b" + s + "\\b", d, l)
-            l = re.sub("\\b" + s.capitalize() + "\\b", d.capitalize(), l)
+            line = re.sub("\\b" + s + "\\b", d, line)
+            line = re.sub("\\b" + s.capitalize() + "\\b", d.capitalize(), line)
         for re1, re2 in [
             # Replace "iff" with "$\iff$" unless it's in a word or it's
             # alread $\iff$.
@@ -59,22 +59,47 @@ def _standard_cleanup(in_file, aggressive):
             # (\textit{} -> _ _)
             (r"\\textit{(.*?)}", r"_\1_"),
         ]:
-            l = re.sub(re1, re2, l)
+            line = re.sub(re1, re2, line)
         # This can't be automatic, but needs to be verified by hand.
         if aggressive:
             for s, d in [(r"\\d=", r"\\dd=")]:
-                l = re.sub("\\b" + s + "\\b", d, l)
-                l = re.sub("\\b" + s.capitalize() + "\\b", d.capitalize(), l)
+                line = re.sub("\\b" + s + "\\b", d, line)
+                line = re.sub(
+                    "\\b" + s.capitalize() + "\\b", d.capitalize(), line
+                )
 
             def _repl_func(m):
                 return m.group(1) + m.group(2).upper() + m.group(3)
 
-            l = re.sub("^(\s*- )(\S)(.*)", _repl_func, l)
+            line = re.sub(r"^(\s*- )(\S)(.*)", _repl_func, line)
         # Remove spaces at the end of the line.
-        l = re.sub("\s+$", "", l)
-        out.append(l)
+        line = re.sub(r"\s+$", "", line)
+        out.append(line)
     out = "\n".join(out)
     io_.to_file(in_file, out)
+
+
+def _parse():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "-a",
+        "--action",
+        required=True,
+        choices=["checkout", "pandoc_before", "pandoc_after", "replace"],
+        action="append",
+    )
+    parser.add_argument("--file", action="store", type=str, required=True)
+    parser.add_argument("--aggressive", action="store_true")
+    parser.add_argument(
+        "-v",
+        dest="log_level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
+    return parser
 
 
 def _main(parser):
@@ -99,23 +124,4 @@ def _main(parser):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "-a",
-        "--action",
-        required=True,
-        choices=["checkout", "pandoc_before", "pandoc_after", "replace"],
-        action="append",
-    )
-    parser.add_argument("--file", action="store", type=str, required=True)
-    parser.add_argument("--aggressive", action="store_true")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
-    _main(parser)
+    _main(_parse())
