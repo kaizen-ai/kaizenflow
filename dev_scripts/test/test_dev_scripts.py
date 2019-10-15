@@ -6,6 +6,7 @@ import pytest
 import dev_scripts.url as url
 import helpers.dbg as dbg
 import helpers.env as env
+import helpers.git as git
 import helpers.io_ as io_
 import helpers.system_interaction as si
 import helpers.unit_test as ut
@@ -112,14 +113,12 @@ class Test_jack1(ut.TestCase):
 
 # #############################################################################
 
-import helpers.git as git
 
 class Test_install_create_conda_py1(ut.TestCase):
-
     def test_create_conda1(self):
         # TODO(gp): Use git.find_file_in_git_tree()
         file_name = git.find_file_in_git_tree("create_conda.py")
-        cmd = f'{file_name} --test_install --delete_env_if_exists -v DEBUG'
+        cmd = f"{file_name} --test_install --delete_env_if_exists -v DEBUG"
         si.system(cmd)
 
 

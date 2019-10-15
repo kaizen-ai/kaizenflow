@@ -49,6 +49,7 @@ def _bootstrap(rel_path_to_helpers):
     assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
     # Update path.
     if False:
+        # For debug purposes.
         print("PATH=%s" % _PATH)
         print("PYTHONPATH=%s" % _PYTHONPATH)
         print("amp_path=%s" % amp_path)
@@ -80,11 +81,6 @@ import helpers.user_credentials as usc  # isort:skip
 
 _LOG = logging.getLogger(__name__)
 
-# To override python version from the yaml file.
-# _PYTHON_VERSION = "2.7"
-# _PYTHON_VERSION = "3.7"
-_PYTHON_VERSION = None
-
 # Dir of the current create_conda.py.
 _CURR_DIR = os.path.dirname(sys.argv[0])
 
@@ -96,9 +92,8 @@ _REQUIREMENTS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
 # dev_scripts/install/conda_envs
 _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 
+# ##############################################################################
 
-# The script leverages the fact that `conda create` can merge multiple
-# requirements files.
 
 def _process_requirements_file(req_file):
     """
@@ -126,8 +121,8 @@ def _process_requirements_file(req_file):
     # Save file.
     txt = "\n".join(txt)
     dst_req_file = os.path.join(
-        os.path.dirname(req_file),
-        "tmp." + os.path.basename(req_file))
+        os.path.dirname(req_file), "tmp." + os.path.basename(req_file)
+    )
     io_.to_file(dst_req_file, txt)
     return dst_req_file
 
@@ -142,6 +137,9 @@ def _process_requirements_files(req_files):
     return out_files
 
 
+# ##############################################################################
+
+
 def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -151,18 +149,15 @@ def _parse():
         "--env_name", help="Environment name", default="develop", type=str
     )
     parser.add_argument("--yaml", action="store_true")
-    parser.add_argument("--req_file",
-                        action="append",
-                        default=[],
-                        help="Requirements file")
+    parser.add_argument(
+        "--req_file", action="append", default=[], help="Requirements file"
+    )
     # Debug options.
     parser.add_argument(
-        "--test_install",
-        action="store_true",
-        help="Just test the install step",
+        "--test_install", action="store_true", help="Just test the install step"
     )
     parser.add_argument(
-        "--python_version", default="3.7", type=str, action="store"
+        "--python_version", default=None, type=str, action="store"
     )
     parser.add_argument("--skip_delete_env", action="store_true")
     parser.add_argument("--skip_install_env", action="store_true")
@@ -180,15 +175,12 @@ def _parse():
 def _main(parser):
     args = parser.parse_args()
     dbg.dassert_is_not(args.env_name, None)
-    #
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     _LOG.info("\n%s", env.get_system_info(add_frame=True))
     dbg.dassert_exists(_REQUIREMENTS_DIR)
     dbg.dassert_exists(_CONDA_ENVS_DIR)
     #
     # TODO(gp): Break in a sequence of functions to highlight the structure.
-    delete_old_conda_if_exists = args.delete_env_if_exists
-    install_new_conda = True
     #
     # Set conda root dir.
     #
@@ -231,7 +223,7 @@ def _main(parser):
             os.path.exists(conda_env_path)
         ):
             _LOG.warning("Conda env '%s' exists", conda_env_path)
-            if delete_old_conda_if_exists:
+            if args.delete_env_if_exists:
                 #
                 # Back up the old environment.
                 #
@@ -253,39 +245,35 @@ def _main(parser):
         else:
             _LOG.warning("Skipping")
     #
-    # Process requirements file.
+    # Process requirements file and install conda.
     #
     _LOG.info("\n%s", pri.frame("Create new conda env '%s'" % conda_env_name))
     if args.skip_install_env:
         _LOG.warning("Skipping")
     else:
-        if install_new_conda:
-            #
-            # Install.
-            #
-            cmd = []
-            if args.yaml:
-                cmd.append("conda env create")
-            else:
-                cmd.append("conda create")
-                # Start installation without prompting the user.
-                cmd.append("--yes")
-                cmd.append("--name %s" % conda_env_name)
-                # cmd.append("--override-channels")
-                # TODO(gp): Move to yaml?
-                cmd.append("-c conda-forge")
-            if args.test_install:
-                pass
-            else:
-                req_files = args.req_file
-                tmp_req_files = _process_requirements_files(req_files)
-                cmd.append(" ".join(["--file %s" % f for f in tmp_req_files]))
-            if _PYTHON_VERSION is not None:
-                cmd.append("python=%s" % _PYTHON_VERSION)
-            cmd = " ".join(cmd)
-            hco.conda_system(cmd, suppress_output=False)
+        cmd = []
+        if args.yaml:
+            cmd.append("conda env create")
         else:
-            _LOG.warning("Skipping")
+            cmd.append("conda create")
+            # Start installation without prompting the user.
+            cmd.append("--yes")
+            cmd.append("--name %s" % conda_env_name)
+            # cmd.append("--override-channels")
+            # TODO(gp): Move to yaml?
+            cmd.append("-c conda-forge")
+        if args.test_install:
+            pass
+        else:
+            req_files = args.req_file
+            tmp_req_files = _process_requirements_files(req_files)
+            # We leverage the fact that `conda create` can merge multiple
+            # requirements files.
+            cmd.append(" ".join(["--file %s" % f for f in tmp_req_files]))
+        if args.python_version is not None:
+            cmd.append("python=%s" % args.python_version)
+        cmd = " ".join(cmd)
+        hco.conda_system(cmd, suppress_output=False)
     #
     # Test activating.
     #
