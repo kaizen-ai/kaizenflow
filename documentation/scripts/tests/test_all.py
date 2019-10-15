@@ -79,9 +79,9 @@ class Test_pandoc1(ut.TestCase):
         git_dir = git.get_client_root(super_module=False)
         dir_name = os.path.join(git_dir, "docs/notes/*.txt")
         file_names = glob.glob(dir_name)
-        for f in file_names:
-            _LOG.debug(prnt.frame("file_name=%s" % f))
-            self._helper(f, "html", "html")
+        for file_name in file_names:
+            _LOG.debug(prnt.frame("file_name=%s" % file_name))
+            self._helper(file_name, "html")
 
 
 # ##############################################################################
