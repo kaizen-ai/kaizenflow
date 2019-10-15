@@ -235,33 +235,27 @@ since pytest will take care of that.
 ## Using the `run_tests.py` wrapper
 
 ### Run fast tests
-    ```
+    ```bash
     > run_tests.py
     > run_tests.py --test fast
     ```
 
+### Run slow tests
+    ```bash
+    > run_tests.py --test slow
+    ```
+
 ### Run parallel tests
 - You can use the switch `--num_cpus -1` to use all the available CPUs
-
-### Run slow tests
-    ```
-    > run_tests.py --test slow
+    ```bash
+    > run_tests.py --test slow --num_cpus -1
     ```
 
 ## Using `pytest` directly
 
 ### Usage and Invocations reference
-- See [documentation](http://doc.pytest.org/en/latest/usage.html)
 
-### Enable debug info
-    ```bash
-    > pytest --dbg_verbosity DEBUG
-    ```
-
-### Update golden outcomes
-    ```bash
-    > pytest --update_outcomes
-    ```
+- See [pytest documentation](http://doc.pytest.org/en/latest/usage.html)
 
 ### Stop at first failure
     ```bash
@@ -294,14 +288,25 @@ since pytest will take care of that.
     > pytest --cache-clear
     ```
 
-### Tweaking the logging behavior
-- To tweak the logging behavior you can add `--log-level=DEBUG -s`
+## Custom pytest options behaviors
 
-- Even better is the option --log-cli-level=DEBUG aka "live log" which writes the
-  log on the fly
-
-### Updating the outcomes
-- If you want to update the expected values you can do
+### Enable debug info
     ```bash
-    > pytest XYZ.py --update_outcomes
+    > pytest --dbg_verbosity DEBUG
+    ```
+
+### Update golden outcomes
+- This switch allows to overwrite the golden outcomes that are used as reference
+  in the unit tests to detect failures
+    ```bash
+    > pytest --update_outcomes
+    ```
+
+### Incremental test mode (advanced users)
+- This switch allows to reuse artifacts in the test directory and to skip the
+  clean up phase
+- It is used to re-run tests from the middle when they are very long and one
+  wants to debug them
+    ```bash
+    > pytest --incremental
     ```
