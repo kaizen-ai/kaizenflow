@@ -499,8 +499,11 @@ _LOG.warning(...)
 
 ## Try to make functions work on multiple types
 
-- It's great when a function can work on both `pd.Series` and `pd.DataFrame`
-  since in this case one doesn't have to remember, but it can just use it
+- We welcome functions that can work on multiple related types since in this case
+  one doesn't have to remember multiple functions:
+    - E.g., a function `demean(obj)` that can work `pd.Series` and `pd.DataFrame`
+    - Instead of `
+- In these case
 
 ## Robust code
         if server_name == "ip-172-31-16-23":
@@ -519,6 +522,26 @@ _LOG.warning(...)
 
 ## Decorator names
 
-Yes, because it isn't a verb (at least not a present tense one, and in any
-case reads more naturally as an adjective than a past tense verb). I agree
-that we may want a different standard for decorators.
+- For decorator we don't use a verb like for functions, but rather an adjective
+  or a past tense verb, e.g.,
+    ```python
+    def timed(f):
+        """
+        Decorator adding a timer around function `f`.
+        """
+        ...
+    ```
+
+## Capitalized words
+- In documentation we capitalize abbreviations (e.g., `YAML`, `CSV`)
+- In the code we use camel case, when appropriate (e.g., `ConvertCsvToYaml`,
+  since `ConvertCSVToYAML` is difficult to read)
+
+## In comments we
+- We use 
+    ```python
+    def timed(f):
+        """
+        Decorator adding a timer around function `f`.
+        """
+    ```
