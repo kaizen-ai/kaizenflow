@@ -68,7 +68,7 @@ def get_credentials():
           config a set of ports to forward from one computer (typically your
           laptop) to a set of services that are specific of your set-up (e.g.,
           started through `run_jupyter_server.py`)
-        - E.g., 
+        - E.g.,
           ```python
             if server_name in ("gpmac.local", "gpmac.lan"):
                 if git_repo_name == "ParticleDev/commodity_research":

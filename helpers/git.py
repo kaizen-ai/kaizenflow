@@ -27,6 +27,8 @@ def get_git_name():
     return git_name
 
 
+# TODO(gp): Add mem caching to some functions below. We assume that one doesn't
+#  change dir (which is a horrible idea) and thus we can memoize.
 def is_inside_submodule():
     """
     Return whether we are inside a Git submodule or in a Git supermodule.
@@ -117,6 +119,7 @@ def _get_repo_map():
     _REPO_MAP = {"alphamatic/amp": "Amp"}
     # Get info from the including repo, if possible.
     try:
+        # pylint: disable=import-outside-toplevel
         import repo_config as repc
 
         _REPO_MAP.update(repc.REPO_MAP)

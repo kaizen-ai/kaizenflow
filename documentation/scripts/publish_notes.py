@@ -88,8 +88,8 @@ def _publish_all_files(args):
         "Found %d files\n%s", len(file_names), prnt.space("\n".join(file_names))
     )
     dbg.dassert_lte(1, len(file_names))
-    #targets = ["html", "pdf"]
-    #if args.only_html:
+    # targets = ["html", "pdf"]
+    # if args.only_html:
     #    targets = ["html"]
     targets = ["html"]
     _LOG.info("targets=%s", targets)
@@ -100,7 +100,7 @@ def _publish_all_files(args):
     for target, f in tqdm(workload):
         _LOG.debug(prnt.frame("action=%s file_name=%s" % (target, f)))
         _publish_file(args, f, target)
-    _LOG.info("\n" + prnt.frame("SUCCESS"))
+    _LOG.info("\n%s", prnt.frame("SUCCESS"))
 
 
 # ##############################################################################
@@ -112,7 +112,7 @@ def _parse():
     )
     parser.add_argument("positional", nargs="*", choices=["rm", "ls", "publish"])
     parser.add_argument("--no_incremental", action="store_true")
-    #parser.add_argument("--only_html", action="store_true")
+    # parser.add_argument("--only_html", action="store_true")
     tmp_dir = "./tmp.publish_all_notes"
     parser.add_argument(
         "--tmp_dir",
@@ -151,7 +151,7 @@ def _main(parser):
         elif action == "publish":
             _publish_all_files(args)
         else:
-            raise ValueError("Invalid action='%s'", action)
+            raise ValueError("Invalid action='%s'" % action)
 
 
 if __name__ == "__main__":
