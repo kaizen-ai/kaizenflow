@@ -163,7 +163,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         # Clean up the env.
         self._run_create_conda(cmd_opts, cleanup=True)
 
-    def test_create_conda1(self):
+    def test_create_conda_test_install1(self):
         """
         Run create_conda with --test_install to exercise the script.
         """
@@ -177,7 +177,7 @@ class Test_install_create_conda_py1(ut.TestCase):
     @pytest.mark.slow
     def test_create_conda_yaml1(self):
         """
-        Run create_conda.py with a single yaml file.
+        Run create_conda.py with a single YAML file.
         """
         yaml = """
 channels:
@@ -203,7 +203,7 @@ dependencies:
     @pytest.mark.slow
     def test_create_conda_yaml2(self):
         """
-        Run create_conda.py with two yaml files.
+        Run create_conda.py with two YAML files.
         """
         yaml1 = """
 channels:
