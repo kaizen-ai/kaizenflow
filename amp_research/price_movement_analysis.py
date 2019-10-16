@@ -3,6 +3,7 @@ from typing import Dict, Iterable
 
 import pandas as pd
 
+import core.explore as coex
 import core.signal_processing as sigp
 import helpers.dbg as dbg
 import vendors.kibot.utils as kut
@@ -38,6 +39,9 @@ def get_top_movements_by_group(
     for symbol in commodity_symbols_kibot[group]:
         zscored_ret = get_zscored_returns(price_df_dict[symbol], period, tau)
         zscored_ret = _choose_movements(zscored_ret, sign)
+        zscored_ret = coex.drop_na(pd.DataFrame(zscored_ret), drop_infs=True)[
+            "ret_0"
+        ]
         zscored_returns.append(zscored_ret)
     zscored_returns = pd.concat(zscored_returns, axis=1)
     mean_zscored_rets = zscored_returns.mean(axis=1, skipna=True)
@@ -62,6 +66,9 @@ def get_top_movements_for_symbol(
         ascending = True
     else:
         ascending = False
+    zscored_rets = coex.drop_na(pd.DataFrame(zscored_rets), drop_infs=True)[
+        "ret_0"
+    ]
     return zscored_rets.sort_values(ascending=ascending).head(n_movements)
 
 
