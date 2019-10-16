@@ -89,7 +89,7 @@ class Test_pandoc1(ut.TestCase):
 # ##############################################################################
 
 
-def _run_preprocess(in_file : str, out_file : str) -> str:
+def _run_preprocess(in_file: str, out_file: str) -> str:
     """
     Execute the end-to-end flow for preprocess_md_for_pandoc.py returning
     the output as string.
@@ -121,7 +121,7 @@ class Test_preprocess1(ut.TestCase):
     def _helper(self) -> None:
         # Set up.
         in_file = os.path.join(self.get_input_dir(), "input1.txt")
-        out_file = os.path.join(self.get_scratch_space() + "output.txt")
+        out_file = os.path.join(self.get_scratch_space(), "output.txt")
         # Run.
         act = _run_preprocess(in_file, out_file)
         # Check.
@@ -132,68 +132,3 @@ class Test_preprocess1(ut.TestCase):
 
     def test2(self):
         self._helper()
-
-
-@pytest.mark.skip
-class Test_preprocess2(ut.TestCase):
-    """
-    Check that the output of preprocess_md_for_pandoc.py is the expected one
-    using:
-    - an end-to-end flow;
-    - small snippets of text.
-    """
-
-    def _helper(self, txt_in: str, exp: str) -> None:
-        # Set up.
-        in_file = os.path.join(self.get_scratch_space(), "input1.txt")
-        io_.to_file(in_file, txt_in)
-        dbg.dassert_exists(in_file)
-        _LOG.debug("Written %s", in_file)
-        #
-        out_file = os.path.join(self.get_scratch_space(), "output.txt")
-        # Run.
-        act = _run_preprocess(in_file, out_file)
-        # Check.
-        self.assert_equal(act, exp)
-
-
-    def test1(self):
-        txt_in = """
-# ##########
-# Python: nested functions
-# ##########
-- Functions can be declared in the body of another function
-- E.g., to hide utility functions in the scope of the function that uses them
-    ```python
-    def print_integers(values):
-
-        def _is_integer(value):
-            try:
-                return value == int(value)
-            except:
-                return False
-
-        for v in values:
-            if _is_integer(v):
-                print(v)
-    ```
-"""
-        txt_out = """
-# Python: nested functions
-- Functions can be declared in the body of another function
-- E.g., to hide utility functions in the scope of the function that uses them
-```python
-    def print_integers(values):
-
-        def _is_integer(value):
-            try:
-                return value == int(value)
-            except:
-                return False
-
-        for v in values:
-            if _is_integer(v):
-                print(v)
-```strunz
-"""
-        self._helper(txt_in, txt_out)

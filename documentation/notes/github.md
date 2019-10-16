@@ -73,13 +73,3 @@
 - We don't expect code in a branch to be reviewed until a PR
 - It's ok to cut corners during the development of the code, although the code
   needs to be production quality when it's merged into `master`
-
-## Reviewers vs assignees
-
-https://stackoverflow.com/questions/41087206/on-github-whats-the-difference-between-reviewer-and-assignee
-
-## Do not change the assignee for a task
-- If you need someone to do something just @mention it
-
-- The rationale is that we want one person to be responsible for the task from
-  beginning to end
