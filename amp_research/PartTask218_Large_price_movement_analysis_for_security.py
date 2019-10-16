@@ -115,7 +115,10 @@ top_daily_movements_by_year.tail()
 # # 1-min movements
 
 # %%
-zscored_1min_rets = pma.get_zscored_returns(minutely_prices, "minutely")
+tau = 18
+
+zscored_1min_rets = pma.get_zscored_returns(minutely_prices, "minutely", tau=tau)
+zscored_1min_rets = zscored_1min_rets.abs()
 top_1min_movements = get_top_100(zscored_1min_rets)
 
 # %%
@@ -136,7 +139,10 @@ top_1min_movements_by_year.head()
 # # 5-min movements
 
 # %%
-zscored_5min_rets = pma.get_zscored_returns(five_min_prices, "minutely")
+tau = 18
+
+zscored_5min_rets = pma.get_zscored_returns(five_min_prices, "minutely", tau=tau)
+zscored_5min_rets = zscored_5min_rets.abs()
 top_5min_movements = get_top_100(zscored_5min_rets)
 
 # %%
@@ -154,3 +160,5 @@ top_5min_movements_by_year.head()
 
 # %%
 top_5min_movements_by_year.tail()
+
+# %%
