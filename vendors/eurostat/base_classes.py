@@ -19,14 +19,15 @@ class EurostatFileFiller(gf_bc.FileFiller):
 
     def paranoid_handler(self) -> Tuple[bool, str]:
         """
-        Folder shouldn't exists or must be empty.
-        :return:
+        Return (True, msg) if dst_dir doesn't exist, otherwise returns (False, msg).
         """
         if not os.path.exists(self.dst_dir):
-            return True, "OK"
-        if not os.listdir(self.dst_dir):
-            return True, "OK, folder exists but it's empty."
-        return False, "Folder exists and not empty."
+            status = True
+            msg = "OK"
+            return status, msg
+        status = False
+        msg = "Folder exist."
+        return status, msg
 
     def data_reader(self) -> Generator[Dict[str, Union[str, bytes]], None, None]:
         r = requests.get(self.root_url)
