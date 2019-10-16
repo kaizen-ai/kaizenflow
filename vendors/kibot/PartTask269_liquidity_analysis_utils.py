@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 from typing import Callable, Dict, Optional
@@ -15,45 +16,43 @@ _LOG = logging.getLogger(__name__)
 KIBOT_VOL = "vol"
 
 
-def get_sum_daily_prices(
-    daily_price_dict_df: Dict[str, pd.DataFrame], price_col: str
+def get_sum_prices(
+    price_df_dict: Dict[str, pd.DataFrame], price_col: str
 ) -> pd.DataFrame:
     """
-    Get sum of the daily prices for each symbol.
+    Get sum of the prices for each symbol.
 
-    :param daily_price_dict_df: {symbol: prices_for_symbol_df}
+    :param price_df_dict: {symbol: prices_for_symbol_df}
     :param price_col: The name of the price column
     :return: pd.DataFrame indexed by symbol
     """
-    daily_prices_sum_df = _get_daily_prices(daily_price_dict_df, price_col, "sum")
-    return daily_prices_sum_df
+    prices_sum_df = _get_prices(price_df_dict, price_col, "sum")
+    return prices_sum_df
 
 
-def get_mean_daily_prices(
-    daily_price_dict_df: Dict[str, pd.DataFrame], price_col: str
+def get_mean_prices(
+    price_df_dict: Dict[str, pd.DataFrame], price_col: str
 ) -> pd.DataFrame:
     """
-    Get mean of the daily prices for each symbol.
+    Get mean of the prices for each symbol.
 
-    :param daily_price_dict_df: {symbol: prices_for_symbol_df}
+    :param price_df_dict: {symbol: prices_for_symbol_df}
     :param price_col: The name of the price column
     :return: pd.DataFrame indexed by symbol
     """
-    daily_prices_mean_df = _get_daily_prices(
-        daily_price_dict_df, price_col, "mean"
-    )
-    return daily_prices_mean_df
+    prices_mean_df = _get_prices(price_df_dict, price_col, "mean")
+    return prices_mean_df
 
 
-def read_kibot_prices(
+def get_kibot_reader(
     frequency: str, symbol: str, n_rows: Optional[int]
-) -> pd.DataFrame:
+) -> Callable:
     dbg.dassert_in(
         frequency,
-        ["daily", "minutely"],
-        "Only daily and minutely frequencies are supported.",
+        ["D", "M"],
+        "Only daily ('D') and minutely ('M') frequencies are supported.",
     )
-    if frequency == "minutely":
+    if frequency == "M":
         dir_path = os.path.join(
             hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_1min"
         )
@@ -62,31 +61,39 @@ def read_kibot_prices(
             hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily"
         )
     file_name = os.path.join(dir_path, f"{symbol}.csv.gz")
-    prices = kut.read_data(file_name, nrows=n_rows)
+    reader = functools.partial(kut.read_data, file_name, nrows=n_rows)
+    return reader
+
+
+def read_kibot_prices(
+    frequency: str, symbol: str, n_rows: Optional[int]
+) -> pd.DataFrame:
+    reader = get_kibot_reader(frequency, symbol, n_rows)
+    prices = reader()
     return prices
 
 
-def _get_daily_prices(
-    daily_price_dict_df: Dict[str, pd.DataFrame], price_col: str, func_name: str
+def _get_prices(
+    price_df_dict: Dict[str, pd.DataFrame], price_col: str, agg_func: str
 ) -> pd.DataFrame:
     """
-    Get grouped daily prices for each symbol.
+    Get grouped prices for each symbol.
 
-    :param daily_price_dict_df: {symbol: prices_for_symbol_df}
+    :param price_df_dict: {symbol: prices_for_symbol_df}
     :param price_col: The name of the price column
-    :param func_name: The name of the function that needs to be applied
-        to the prices for each symbol
+    :param agg_func: The name of the aggregation function that needs to
+        be applied to the prices for each symbol
     :return: pd.DataFrame indexed by symbol
     """
-    daily_price_dict = {
-        symbol: getattr(daily_prices[price_col], func_name)()
-        for symbol, daily_prices in daily_price_dict_df.items()
+    price_dict = {
+        symbol: getattr(prices[price_col], agg_func)()
+        for symbol, prices in price_df_dict.items()
     }
-    daily_price_df = pd.DataFrame.from_dict(
-        daily_price_dict, orient="index", columns=[f"{func_name}_{price_col}"]
+    price_df = pd.DataFrame.from_dict(
+        price_dict, orient="index", columns=[f"{agg_func}_{price_col}"]
     )
-    daily_price_df.index.name = "symbol"
-    return daily_price_df
+    price_df.index.name = "symbol"
+    return price_df
 
 
 class PricesStudy:
