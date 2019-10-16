@@ -30,11 +30,14 @@ def get_top_movements_by_group(
     commodity_symbols_kibot: Dict[str, Iterable],
     group: str,
     period: str,
+    tau: int,
+    sign: str,
     n_movements: int = 100,
 ):
     zscored_returns = []
     for symbol in commodity_symbols_kibot[group]:
-        zscored_ret = get_zscored_returns(price_df_dict[symbol], period)
+        zscored_ret = get_zscored_returns(price_df_dict[symbol], period, tau)
+        zscored_ret = _choose_movements(zscored_ret, sign)
         zscored_returns.append(zscored_ret)
     zscored_returns = pd.concat(zscored_returns, axis=1)
     mean_zscored_rets = zscored_returns.mean(axis=1, skipna=True)
@@ -45,7 +48,21 @@ def get_top_movements_for_symbol(
     price_df_dict: Dict[str, pd.DataFrame],
     symbol: str,
     period: str,
+    tau: int,
+    sign: str,
     n_movements: int = 100,
 ):
-    zscored_rets = get_zscored_returns(price_df_dict[symbol], period)
+    zscored_rets = get_zscored_returns(price_df_dict[symbol], period, tau)
+    zscored_rets = _choose_movements(zscored_rets, sign)
     return zscored_rets.sort_values(ascending=False).head(n_movements)
+
+
+def _choose_movements(zscored_rets, sign):
+    dbg.dassert_in(sign, ["pos", "neg", "all"])
+    if sign == "pos":
+        zscored_rets = zscored_rets.loc[zscored_rets >= 0]
+    elif sign == "neg":
+        zscored_rets = zscored_rets.loc[zscored_rets < 0]
+    else:
+        zscored_rets = zscored_rets.abs()
+    return zscored_rets
