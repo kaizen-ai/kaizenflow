@@ -3,10 +3,18 @@
 r"""
 Download equity data from the http://firstratedata.com.
 
+- Save the data as zipped csvs for each equity to one of the
+  [commodity, crypto, fx, index, stock_A-D, stock_E-I, stock_J-N,
+  stock_O-R, stock_S-Z] category directories.
+- Combine zipped csvs for each equity, add "timestamp" column and
+  column names. Save as csv to corresponding category directories
+- Save csvs to parquet (divided by category)
+
 Usage example:
 > python vendors/first_rate/download.py \
-  --dst_dir /data/firstrate/ \
-  --website http://firstratedata.com
+  --zipped_dst_dir /data/first_rate/zipped \
+  --unzipped_dst_dir /data/first_rate/unzipped \
+  --pq_dst_dir /data/first_rate/pq
 """
 
 import argparse
@@ -18,9 +26,9 @@ import vendors.first_rate.utils as fru
 _LOG = logging.getLogger(__name__)
 
 _WEBSITE = "http://firstratedata.com"
-_ZIPPED_DST_DIR = "/data/firstrate_zipped/"
-_UNZIPPED_DST_DIR = "/data/firstrate_unzipped/"
-_PQ_DST_DIR = "data/firstrate_pq"
+_ZIPPED_DST_DIR = "/data/first_rate/zipped/"
+_UNZIPPED_DST_DIR = "/data/first_rate/unzipped/"
+_PQ_DST_DIR = "data/first_rate/pq"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -64,9 +72,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     dbg.init_logger(args.log_level)
     #
-    rdd = fru.RawDataDownloader(
-        _WEBSITE, args.zipped_dst_dir, args.max_num_files
-    )
+    rdd = fru.RawDataDownloader(_WEBSITE, args.zipped_dst_dir, args.max_num_files)
     rdd.execute()
     #
     mzcc = fru.MultipleZipCSVCombiner(
@@ -74,7 +80,7 @@ if __name__ == "__main__":
     )
     mzcc.execute()
     #
-    ctpc = fru.CSVToParquetConverter(args.unzipped_dst_dir, args.pq_dst_dir)
+    ctpc = fru.CsvToParquetConverter(args.unzipped_dst_dir, args.pq_dst_dir)
     ctpc.execute()
     # TODO(Julia): We should also transfer the data on AWS. It's ok not to do
     # it for now.

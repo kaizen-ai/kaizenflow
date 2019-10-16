@@ -12,12 +12,6 @@ Download equity data from the http://firstratedata.com.
 - Combine zipped csvs for each equity, add "timestamp" column and
   column names. Save as csv to corresponding category directories
 - Save csvs to parquet (divided by category)
-
-Usage example:
-> python vendors/first_rate/utils.py \
-  --zipped_dst_dir /data/first_rate/zipped \
-  --unzipped_dst_dir /data/first_rate/unzipped \
-  --pq_dst_dir /data/first_rate/pq
 """
 
 import logging
@@ -63,7 +57,7 @@ class _FileURL:
         self.path = path
 
 
-class _RawDataDownloader:
+class RawDataDownloader:
     """
     Get all category urls from a website, then walk them one by one and
     extract all download links and timezones. Save the files from the
@@ -161,7 +155,7 @@ class _RawDataDownloader:
         hrefs = soup.find_all("a")
         part_urls = [href["href"] for href in hrefs]
         full_urls = [
-            _RawDataDownloader._add_website_to_url(part_url, website)
+            RawDataDownloader._add_website_to_url(part_url, website)
             for part_url in part_urls
         ]
         return full_urls
@@ -356,7 +350,10 @@ class _ZipCSVCombiner:
         if isinstance(df.iloc[0, 0], (int, np.int64)):
             first_col = "date"
         elif isinstance(df.iloc[0, 0], str):
-            without_symbols = re.sub("[./\:\- ]", "", df.iloc[0, 0])
+            chars_regexp = re.compile(r"[\./:\s-]")
+            backslash_regexp = re.compile(r"\\")
+            without_symbols = re.sub(chars_regexp, "", df.iloc[0, 0])
+            without_symbols = re.sub(backslash_regexp, "", without_symbols)
             if len(without_symbols) == 8:
                 first_col = "date"
             elif len(without_symbols) >= 11:
@@ -414,7 +411,7 @@ class _ZipCSVCombiner:
         return df
 
 
-class _MultipleZipCSVCombiner:
+class MultipleZipCSVCombiner:
     """
     Combine zipped csvs in first_rate directory. Add column names to the
     csvs, add timestamp column and localize it.
@@ -447,7 +444,7 @@ class _MultipleZipCSVCombiner:
                 zcc.execute()
 
 
-class _CSVToParquetConverter:
+class CsvToParquetConverter:
     """
     Save csv files divided by categories into parquet
     """
@@ -467,5 +464,13 @@ class _CSVToParquetConverter:
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
             csv.convert_csv_dir_to_pq_dir(
-                category_dir_input_path, category_dir_dst_path, header="infer"
+                category_dir_input_path,
+                category_dir_dst_path,
+                header="infer",
+                normalizer=self._ts_to_datetime,
             )
+
+    @staticmethod
+    def _ts_to_datetime(df):
+        df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0])
+        return df
