@@ -7,9 +7,9 @@
 #       format_version: '1.2'
 #       jupytext_version: 1.2.4
 #   kernelspec:
-#     display_name: Python [conda env:.conda-p1_develop] *
+#     display_name: Python 3
 #     language: python
-#     name: conda-env-.conda-p1_develop-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -145,8 +145,10 @@ daily_price_dict_df["CL"].tail(2)
 symbol = "CL"
 
 # %%
+tau = 18
+
 top_daily_movements_cl = pma.get_top_movements_for_symbol(
-    daily_price_dict_df, symbol, "daily"
+    daily_price_dict_df, symbol, "daily", tau, 'all'
 )
 top_daily_movements_cl.head()
 
@@ -154,6 +156,16 @@ top_daily_movements_cl.head()
 top_daily_movements_cl.index.year.value_counts(sort=False).plot(kind="bar")
 plt.title("How many of the top-100 price movements occured during each year")
 plt.show()
+
+# %%
+top_pos_daily_movements_cl = pma.get_top_movements_for_symbol(
+    daily_price_dict_df, symbol, "daily", tau, 'pos')
+top_pos_daily_movements_cl.head()
+
+# %%
+top_neg_daily_movements_cl = pma.get_top_movements_for_symbol(
+    daily_price_dict_df, symbol, "daily", tau, 'neg')
+top_neg_daily_movements_cl.head()
 
 # %% [markdown]
 # ## Largest movement for energy group
@@ -165,17 +177,31 @@ group = "Energy"
 commodity_symbols_kibot[group]
 
 # %%
+tau = 18
+
 pma.get_top_movements_by_group(
-    daily_price_dict_df, commodity_symbols_kibot, group, "daily"
-)
+    daily_price_dict_df, commodity_symbols_kibot, group, "daily", tau, 'all'
+).head(15)
+
+# %%
+pma.get_top_movements_by_group(
+    daily_price_dict_df, commodity_symbols_kibot, group, "daily", tau, 'pos'
+).head(15)
+
+# %%
+pma.get_top_movements_by_group(
+    daily_price_dict_df, commodity_symbols_kibot, group, "daily", tau, 'neg'
+).head(15)
 
 # %% [markdown]
 # ## Largest movements for each group
 
 # %%
+tau = 18
+
 top_100_daily_movements_by_group = {
     group: pma.get_top_movements_by_group(
-        daily_price_dict_df, commodity_symbols_kibot, group, "daily"
+        daily_price_dict_df, commodity_symbols_kibot, group, "daily", tau, 'all'
     )
     for group in tqdm(commodity_symbols_kibot.keys())
 }
@@ -235,11 +261,21 @@ symbol = "CL"
 
 # %%
 top_100_movements_cl_1_min = pma.get_top_movements_for_symbol(
-    minutely_price_dict_df, symbol, "minutely"
+    minutely_price_dict_df, symbol, "minutely", tau, 'all'
 )
 
 # %%
 top_100_movements_cl_1_min.head()
+
+# %%
+pma.get_top_movements_for_symbol(
+    minutely_price_dict_df, symbol, "minutely", tau, 'pos'
+).head()
+
+# %%
+pma.get_top_movements_for_symbol(
+    minutely_price_dict_df, symbol, "minutely", tau, 'neg'
+).head()
 
 # %%
 # top_100_movements_cl_5_min = pma.get_top_movements_for_symbol(
@@ -271,7 +307,7 @@ commodity_symbols_kibot[group]
 
 # %%
 pma.get_top_movements_by_group(
-    minutely_price_dict_df, commodity_symbols_kibot, group, "minutely"
+    minutely_price_dict_df, commodity_symbols_kibot, group, "minutely", tau, 'all'
 )
 
 # %% [markdown]
@@ -280,7 +316,7 @@ pma.get_top_movements_by_group(
 # %%
 top_100_1_min_movements_by_group = {
     group: pma.get_top_movements_by_group(
-        minutely_price_dict_df, commodity_symbols_kibot, group, "minutely"
+        minutely_price_dict_df, commodity_symbols_kibot, group, "minutely", tau, 'all'
     )
     for group in tqdm(commodity_symbols_kibot.keys())
 }

@@ -7,9 +7,9 @@
 #       format_version: '1.2'
 #       jupytext_version: 1.2.4
 #   kernelspec:
-#     display_name: Python [conda env:.conda-p1_develop] *
+#     display_name: Python 3
 #     language: python
-#     name: conda-env-.conda-p1_develop-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -49,8 +49,8 @@ SYMBOL = "CL"
 
 
 # %%
-def get_top_100(series):
-    return series.sort_values(ascending=False).head(100)
+def get_top_100(series, ascending=False):
+    return series.sort_values(ascending=ascending).head(100)
 
 
 # %% [markdown]
@@ -118,7 +118,7 @@ top_daily_pos_movements_by_year = pos_zscored_rets.resample("Y").apply(get_top_1
 top_daily_pos_movements_by_year.head()
 
 # %%
-top_daily_neg_movements_by_year = neg_zscored_rets.resample("Y").apply(get_top_100)
+top_daily_neg_movements_by_year = neg_zscored_rets.resample("Y").apply(get_top_100, True)
 top_daily_neg_movements_by_year.head()
 
 # %% [markdown]
@@ -154,7 +154,7 @@ top_1min_pos_movements_by_year = pos_zscored_1min_rets.resample("Y").apply(get_t
 top_1min_pos_movements_by_year.head()
 
 # %%
-top_1min_neg_movements_by_year = neg_zscored_1min_rets.resample("Y").apply(get_top_100)
+top_1min_neg_movements_by_year = neg_zscored_1min_rets.resample("Y").apply(get_top_100, True)
 top_1min_neg_movements_by_year.head()
 
 # %% [markdown]
@@ -191,7 +191,7 @@ top_5min_pos_movements_by_year = pos_zscored_5min_rets.resample("Y").apply(get_t
 top_5min_pos_movements_by_year.head()
 
 # %%
-top_5min_neg_movements_by_year = neg_zscored_5min_rets.resample("Y").apply(get_top_100)
+top_5min_neg_movements_by_year = neg_zscored_5min_rets.resample("Y").apply(get_top_100, True)
 top_5min_neg_movements_by_year.head()
 
 # %%
