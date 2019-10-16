@@ -257,7 +257,7 @@ product_specs[product_specs["Globex"] == symbol]["Open Interest"].values
 product_specs[product_specs["Globex"] == symbol]["Volume"].values
 
 # %%
-vs.daily_data[lau.KIBOT_VOL].max()
+vs.data[lau.KIBOT_VOL].max()
 
 # %%
 vs.minutely_data[lau.KIBOT_VOL].max()

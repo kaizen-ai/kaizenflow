@@ -186,7 +186,7 @@ class TimeSeriesStudy:
 class TimeSeriesDailyStudy(TimeSeriesStudy):
     def __init__(
         self,
-        data_reader: Callable[[str, str, Optional[int]], pd.DataFrame],
+        data_reader: Callable[[], pd.DataFrame],
         symbol: str,
         col_name: str,
         n_rows: Optional[int],
@@ -205,7 +205,7 @@ class TimeSeriesDailyStudy(TimeSeriesStudy):
 class TimeSeriesMinStudy(TimeSeriesStudy):
     def __init__(
         self,
-        data_reader: Callable[[str, str, Optional[int]], pd.DataFrame],
+        data_reader: Callable[[], pd.DataFrame],
         symbol: str,
         col_name: str,
         n_rows: Optional[int],
