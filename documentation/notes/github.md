@@ -47,7 +47,16 @@
         - what is the problem and why it is different from what you expected
     - Try to make life easy for the person who is going to have to fix the bug
 
+## Do not change the assignee for a task
+- If you need someone to do something just @mention it
+
+- The rationale is that we want one person to be responsible for the task from
+  beginning to end
+
 - TODO(gp): The rest of this should maybe go into `code_review.md` ?
+
+## Try not to commit to `master`
+- Exceptions are small commits that are not part of a feature
 
 ## Use branches and PR
 - We try to get all the code to be reviewed before it's merged into `master`
@@ -63,23 +72,34 @@
 - You can check in directly in `master` using the right task number (e.g., 
   `PartTask351: ...`)
 
-## Try not to commit to `master`
-- Exceptions are small commits that are not part of a feature
-
 ## Post-commit comments
 - We follow commits to `master` and might ask to perform some fixes
 
-## Don't follow a branch
+## Reviewers don't follow a branch
 - We don't expect code in a branch to be reviewed until a PR
-- It's ok to cut corners during the development of the code, although the code
-  needs to be production quality when it's merged into `master`
+- It's ok to cut corners during the development of the code (e.g., running all
+  tests or linting after every commit)
+    - The code needs to be production quality when it's merged into `master`
 
 ## Reviewers vs assignees
 
 https://stackoverflow.com/questions/41087206/on-github-whats-the-difference-between-reviewer-and-assignee
 
-## Do not change the assignee for a task
-- If you need someone to do something just @mention it
+## Reviewers and authors interactions
+- If the reviewer's comment is clear to the author and agreed upon
+    - The author addresses the comment with a code change and *after* changing
+      the code (everywhere the comment it applies) marks it as RESOLVED.
+   - Here we trust the authors to do a good job / not skip comments, otherwise a
+     review will take forever to check on the fixes and so on
+   - This mechanism only works if the author is diligent
 
-- The rationale is that we want one person to be responsible for the task from
-  beginning to end
+- If the comment needs further discussion the author adds a note explaining why
+  he/she disagrees and the discussion continues until consensus is reached
+
+- We don’t want to leave comments not addressed since otherwise we don’t know if
+  it was agreed upon and done or forgot
+
+- We are ok with doing multiple commits in the branch or a single commit for all
+  the comments
+   - The goal is for the author to keep the CL clear and minimize his / hers
+     overhead
