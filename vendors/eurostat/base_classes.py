@@ -6,7 +6,7 @@ import generalized_filler.base_classes as gf_bc
 from tqdm import tqdm
 
 
-class EurostatFileSaver(gf_bc.FileFiller):
+class EurostatFileFiller(gf_bc.FileFiller):
     """
     Saves data using root_url.
     Search all files from root_url using pattern *.tsv.gz
