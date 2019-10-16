@@ -10,21 +10,19 @@ import vendors.kibot.utils as kut
 _LOG = logging.getLogger(__name__)
 
 
-TAU = 18
-
-
 def get_zscored_returns(
-    prices: pd.DataFrame, period: str, tau: int = TAU, demean: bool = False
+    prices: pd.DataFrame, period: str, tau: int, demean: bool = False
 ):
     dbg.dassert_in(period, ["daily", "minutely"])
+    # Compute returns.
     if period == "minutely":
         rets = kut.compute_ret_0_from_1min_prices(prices, "log_rets")
     else:
         rets = kut.compute_ret_0_from_daily_prices(prices, "open", "log_rets")
+    # z-score.
     zscored_rets = sigp.rolling_zscore(rets, tau, demean=demean)
     _LOG.debug("zscored_rets=\n%s", zscored_rets.head())
-    abs_zscored_rets = zscored_rets.abs()
-    return abs_zscored_rets
+    return zscored_rets
 
 
 def get_top_movements_by_group(

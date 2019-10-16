@@ -124,6 +124,9 @@ for comm_group in commodity_symbols_kibot.values():
 comm_list[:5]
 
 # %%
+len(comm_list)
+
+# %%
 s3_path = hs3.get_path()
 kibot_path = os.path.join(
     s3_path, "kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
@@ -199,6 +202,9 @@ minutely_metadata.head()
 np.array_equal(
     minutely_metadata["Symbol"].values, minutely_metadata["Symbol"].values
 )
+
+# %%
+len(comm_list)
 
 # %%
 s3_path = hs3.get_path()

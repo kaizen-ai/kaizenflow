@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# # Imports
+# ## Imports
 
 # %%
 # %load_ext autoreload
@@ -33,14 +33,6 @@ import helpers.s3 as hs3
 import vendors.kibot.utils as kut
 
 # %%
-
-
-# %%
-def get_top_100(series):
-    return series.sort_values(ascending=False).head(100)
-
-
-# %%
 print(env.get_system_signature())
 
 pri.config_notebook()
@@ -49,13 +41,23 @@ dbg.init_logger(verb=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
+# %% [markdown]
+# ## Helper functions
+
 # %%
 SYMBOL = "CL"
+
+
+# %%
+def get_top_100(series):
+    return series.sort_values(ascending=False).head(100)
+
 
 # %% [markdown]
 # # Load daily and minutely data
 
 # %%
+# Daily data.
 s3_path = hs3.get_path()
 kibot_path = os.path.join(
     s3_path, "kibot/All_Futures_Continuous_Contracts_daily/%s.csv.gz"
@@ -67,6 +69,7 @@ daily_prices = kut.read_data(file_name, nrows=None)
 daily_prices.tail(2)
 
 # %%
+# Minute data.
 s3_path = hs3.get_path()
 kibot_path = os.path.join(
     s3_path, "kibot/All_Futures_Continuous_Contracts_1min/%s.csv.gz"
@@ -77,6 +80,7 @@ minutely_prices = kut.read_data(file_name, nrows=None)
 minutely_prices.tail(2)
 
 # %%
+# TODO(Julia): Should we move the code to downsample in kut?
 five_min_prices = minutely_prices.resample("5Min").last()
 
 # %%
@@ -86,8 +90,14 @@ five_min_prices.head()
 # # Daily price movements
 
 # %%
-zscored_rets = pma.get_zscored_returns(daily_prices, "daily")
+tau = 18
+zscored_rets = pma.get_zscored_returns(daily_prices, "daily", tau=tau)
+
+zscored_rets = zscored_rets.abs()
+
 top_daily_movements = get_top_100(zscored_rets)
+
+top_daily_movements.head(10)
 
 # %%
 top_daily_movements.index.year.value_counts(sort=False).plot(kind="bar")
@@ -144,5 +154,3 @@ top_5min_movements_by_year.head()
 
 # %%
 top_5min_movements_by_year.tail()
-
-# %%
