@@ -110,58 +110,45 @@ class TimeSeriesStudy:
 
     def __init__(
         self,
-        data_reader: Callable[[str, str, Optional[int]], pd.DataFrame],
+        data_reader: Callable[[], pd.DataFrame],
         symbol: str,
         col_name: str,
+        freq: str,
         n_rows: Optional[int],
     ):
         """
-        :param data_reader: A function that takes frequency
-            (daily/minutely), symbol and n_rows as input parameters
-            and returns a dataframe with the time series column
+        :param data_reader: A function that returns a pd.DataFrame with
+            the col_name column
         :param symbol: The symbol for which the time series needs to be
             studied
         :param col_name: The name of the time series column
+        :param freq: Frequency to write in plot titles
         :param n_rows: the maximum number of rows to load
         """
         self._symbol = symbol
         self._nrows = n_rows
         self._data_reader = data_reader
-        self.daily_data = self._data_reader("daily", self._symbol, self._nrows)
-        self.minutely_data = self._data_reader(
-            "minutely", self._symbol, self._nrows
-        )
+        self.data = self._data_reader()
         self._col_name = col_name
+        self.time_series = self.data[self._col_name]
+        self.freq = freq
 
-    def execute(self):
-        self.plot_time_series("daily")
-        self.plot_changes_by_year("daily")
-        self.plot_mean_day_of_month("daily")
-        self.plot_mean_day_of_week("daily")
-        #
-        self.plot_time_series("minutely")
-        self.plot_changes_by_year("minutely")
-        self.plot_mean_day_of_week("minutely")
-        self.plot_minutely_hour()
-
-    def plot_time_series(self, frequency: str):
-        ts = self._choose_frequency(frequency)
-        ts[self._col_name].plot()
+    def plot_time_series(self,):
+        self.time_series.plot()
         plt.title(
-            f"{frequency.capitalize()} {self._col_name} "
+            f"{self.freq.capitalize()} {self._col_name} "
             f"for the {self._symbol} symbol"
         )
         plt.xticks(
-            ts.resample("YS")[self._col_name].sum().index,
+            self.data.resample("YS")[self._col_name].sum().index,
             ha="right",
             rotation=30,
             rotation_mode="anchor",
         )
         plt.show()
 
-    def plot_changes_by_year(self, frequency, sharey=False):
-        ts = self._choose_frequency(frequency)
-        yearly_resample = ts.resample("y")
+    def plot_changes_by_year(self, sharey=False):
+        yearly_resample = self.data.resample("y")
         fig, axis = plt.subplots(
             len(yearly_resample),
             figsize=(20, 5 * len(yearly_resample)),
@@ -170,55 +157,81 @@ class TimeSeriesStudy:
         for i, year_ts in enumerate(yearly_resample[self._col_name]):
             year_ts[1].plot(ax=axis[i], title=year_ts[0].year)
         plt.suptitle(
-            f"{frequency.capitalize()} {self._col_name} changes by year"
+            f"{self.freq.capitalize()} {self._col_name} changes by year"
             f" for the {self._symbol} symbol",
             y=1.005,
         )
         plt.tight_layout()
 
-    def plot_mean_day_of_month(self, frequency):
-        ts = self._choose_frequency(frequency)
-        ts.groupby(ts.index.day)[self._col_name].mean().plot(kind="bar", rot=0)
-        plt.xlabel("day of month")
-        plt.title(f"Mean {frequency} {self._col_name} on different days of month")
-        plt.show()
-
-    def plot_mean_day_of_week(self, frequency):
-        ts = self._choose_frequency(frequency)
-        ts.groupby(ts.index.dayofweek)[self._col_name].mean().plot(
+    def plot_mean_day_of_month(self):
+        self.data.groupby(self.time_series.index.day)[self._col_name].mean().plot(
             kind="bar", rot=0
         )
+        plt.xlabel("day of month")
+        plt.title(f"Mean {self.freq} {self._col_name} on different days of month")
+        plt.show()
+
+    def plot_mean_day_of_week(self):
+        self.data.groupby(self.time_series.index.dayofweek)[
+            self._col_name
+        ].mean().plot(kind="bar", rot=0)
         plt.xlabel("day of week")
         plt.title(
-            f"Mean {frequency} {self._col_name} on different days of "
+            f"Mean {self.freq} {self._col_name} on different days of "
             f"week for the {self._symbol} symbol"
         )
         plt.show()
 
+
+class TimeSeriesDailyStudy(TimeSeriesStudy):
+    def __init__(
+        self,
+        data_reader: Callable[[str, str, Optional[int]], pd.DataFrame],
+        symbol: str,
+        col_name: str,
+        n_rows: Optional[int],
+    ):
+        super(TimeSeriesDailyStudy, self).__init__(
+            data_reader, symbol, col_name, "daily", n_rows
+        )
+
+    def execute(self):
+        self.plot_time_series()
+        self.plot_changes_by_year()
+        self.plot_mean_day_of_month()
+        self.plot_mean_day_of_week()
+
+
+class TimeSeriesMinStudy(TimeSeriesStudy):
+    def __init__(
+        self,
+        data_reader: Callable[[str, str, Optional[int]], pd.DataFrame],
+        symbol: str,
+        col_name: str,
+        n_rows: Optional[int],
+    ):
+        super(TimeSeriesMinStudy, self).__init__(
+            data_reader, symbol, col_name, "minutely", n_rows
+        )
+
+    def execute(self):
+        self.plot_time_series()
+        self.plot_changes_by_year()
+        self.plot_mean_day_of_week()
+        self.plot_minutely_hour()
+
     def plot_minutely_hour(self):
         # TODO (Julia): maybe check this year by year in case there was
         # a change in the later years? E.g., trading pits closed.
-        self.minutely_data.groupby(self.minutely_data.index.hour)[
-            self._col_name
-        ].mean().plot(kind="bar", rot=0)
+        self.data.groupby(self.data.index.hour)[self._col_name].mean().plot(
+            kind="bar", rot=0
+        )
         plt.title(
             f"Mean {self._col_name} during different hours "
             f"for the {self._symbol} symbol"
         )
         plt.xlabel("hour")
         plt.show()
-
-    def _choose_frequency(self, frequency):
-        dbg.dassert_in(
-            frequency,
-            ["daily", "minutely"],
-            "Only daily and minutely frequencies are supported.",
-        )
-        if frequency == "minutely":
-            data = self.minutely_data
-        else:
-            data = self.daily_data
-        return data
 
 
 class ProductSpecs:
