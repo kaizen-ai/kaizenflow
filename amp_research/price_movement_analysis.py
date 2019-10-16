@@ -41,7 +41,11 @@ def get_top_movements_by_group(
         zscored_returns.append(zscored_ret)
     zscored_returns = pd.concat(zscored_returns, axis=1)
     mean_zscored_rets = zscored_returns.mean(axis=1, skipna=True)
-    return mean_zscored_rets.sort_values(ascending=False).head(n_movements)
+    if sign == "neg":
+        ascending = True
+    else:
+        ascending = False
+    return mean_zscored_rets.sort_values(ascending=ascending).head(n_movements)
 
 
 def get_top_movements_for_symbol(
@@ -54,7 +58,11 @@ def get_top_movements_for_symbol(
 ):
     zscored_rets = get_zscored_returns(price_df_dict[symbol], period, tau)
     zscored_rets = _choose_movements(zscored_rets, sign)
-    return zscored_rets.sort_values(ascending=False).head(n_movements)
+    if sign == "neg":
+        ascending = True
+    else:
+        ascending = False
+    return zscored_rets.sort_values(ascending=ascending).head(n_movements)
 
 
 def _choose_movements(zscored_rets, sign):
