@@ -151,16 +151,16 @@ def _get_new_map():
             \omega \Omega""".split()
             )
 
-        for l in all_letters:
-            if l == "v":
+        for line in all_letters:
+            if line == "v":
                 # \newcommand{\vvv}{\vv{v}}
                 new_map[r"\vvv"] = r"\vv{v}"
-            elif l.startswith("\\"):
+            elif line.startswith("\\"):
                 # \newcommand{\valpha}{\vv{\alpha}}
-                new_map[r"\v%s" % l[1:]] = r"\vv{%s}" % l
+                new_map[r"\v%s" % line[1:]] = r"\vv{%s}" % line
             else:
                 # \newcommand{\va}{\vv{a}}
-                new_map[r"\v%s" % l] = r"\vv{%s}" % l
+                new_map[r"\v%s" % line] = r"\vv{%s}" % line
 
     # Matrix.
     if True:

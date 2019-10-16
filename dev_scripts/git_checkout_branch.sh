@@ -8,4 +8,5 @@ source helpers.sh
 
 execute "git checkout -b $1"
 execute "git branch -u origin/$1"
-#execute "git push --set-upstream origin origin $1"
+execute "git commit"
+execute "git push --set-upstream origin $1"

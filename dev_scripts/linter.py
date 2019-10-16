@@ -704,6 +704,9 @@ def _pylint(file_name, pedantic, check_if_possible):
         "W0125",
         # [W0511(fixme), ]
         "W0511",
+        # [W0603(global-statement), ] Using the global statement
+        # We assume we are mature enough to use `global` properly.
+        "W0603",
         # TODO(gp): Not clear what is the problem.
         # [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
         # positional arguments list in the definition of
