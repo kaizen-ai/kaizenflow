@@ -16,6 +16,12 @@ if not hasattr(hut, "conftest_already_parsed"):
             help="Update golden outcomes of test",
         )
         parser.addoption(
+            "--incremental",
+            action="store_true",
+            default=False,
+            help="Reuse and not clean up test artifacts",
+        )
+        parser.addoption(
             "--dbg_verbosity",
             dest="log_level",
             default="INFO",
@@ -28,6 +34,9 @@ if not hasattr(hut, "conftest_already_parsed"):
         if config.getoption("--update_outcomes"):
             print("\nWARNING: Updating test outcomes")
             hut.set_update_tests(True)
+        if config.getoption("--incremental"):
+            print("\nWARNING: Using incremental test mode")
+            hut.set_incremental_tests(True)
         if config.getoption("--dbg_verbosity"):
             print("\nWARNING: Setting verb level")
             dbg.init_logger(config.getoption("--dbg_verbosity"))

@@ -63,6 +63,7 @@ def _main(parser):
     in_skip_block = False
     # During a code block.
     in_code_block = False
+    # pylint: disable=consider-using-enumerate
     for i in range(len(lines)):
         line = lines[i]
         _LOG.debug("%s:line=%s", i, line)
@@ -81,21 +82,21 @@ def _main(parser):
             _LOG.debug("  -> skip")
             continue
         # Handle code block.
-        if re.match("^(\s*)```", line):
+        if re.match(r"^(\s*)```", line):
             _LOG.debug("  -> code block")
             in_code_block = not in_code_block
             # Add empty line.
             if (
                 in_code_block
                 and (i + 1 < len(lines))
-                and re.match("\s*", lines[i + 1])
+                and re.match(r"\s*", lines[i + 1])
             ):
                 out.append("\n")
             out.append("    " + line)
             if (
                 not in_code_block
                 and (i + 1 < len(lines))
-                and re.match("\s*", lines[i + 1])
+                and re.match(r"\s*", lines[i + 1])
             ):
                 out.append("\n")
             continue
@@ -111,9 +112,9 @@ def _main(parser):
             continue
         # Skip frame.
         if (
-            re.match("\#+ -----", line)
-            or re.match("\#+ \#\#\#\#\#", line)
-            or re.match("\#+ =====", line)
+            re.match(r"\#+ -----", line)
+            or re.match(r"\#+ \#\#\#\#\#", line)
+            or re.match(r"\#+ =====", line)
             or re.match(r"\#+ \/\/\/\/\/", line)
         ):
             _LOG.debug("  -> skip")
