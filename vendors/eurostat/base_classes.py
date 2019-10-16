@@ -1,12 +1,12 @@
 import os
 from typing import Tuple, Generator, Dict, Union
-from bs4 import BeautifulSoup
+import bs4
 import requests
-from generalized_filler.base_classes import FileFiller
+import generalized_filler.base_classes as gf_bc
 from tqdm import tqdm
 
 
-class EurostatFileSaver(FileFiller):
+class EurostatFileSaver(gf_bc.FileFiller):
     """
     Saves data using root_url.
     Search all files from root_url using pattern *.tsv.gz
@@ -31,7 +31,7 @@ class EurostatFileSaver(FileFiller):
     def data_reader(self) -> Generator[Dict[str, Union[str, bytes]], None, None]:
         r = requests.get(self.root_url)
         data = r.content
-        soup = BeautifulSoup(data, 'html5lib')
+        soup = bs4.BeautifulSoup(data, 'html5lib')
         soup_a = soup.find_all('a')
         list_a = [i for i in filter(lambda x: x.text == 'Download', soup_a)]
         for link in tqdm(list_a):
