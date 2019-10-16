@@ -26,6 +26,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 import amp_research.price_movement_analysis as pma
+import core.explore as coex
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
@@ -50,6 +51,9 @@ SYMBOL = "CL"
 
 # %%
 def get_top_100(series, ascending=False):
+    # Cannot use this: series = coex.drop_na(pd.DataFrame(series))['ret_0']
+    # with resample
+    series = series.dropna()
     return series.sort_values(ascending=ascending).head(100)
 
 
@@ -105,6 +109,9 @@ top_daily_movements.head(10)
 top_daily_movements.index.year.value_counts(sort=False).plot(kind="bar")
 plt.title("How many of the top-100 price movements occured during each year")
 plt.show()
+
+# %%
+zscored_rets.resample("Y").apply(get_top_100)
 
 # %%
 top_daily_movements_by_year = zscored_rets.resample("Y").apply(get_top_100)
