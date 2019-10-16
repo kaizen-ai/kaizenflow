@@ -231,7 +231,9 @@ symbol = "CL"
 
 # %%
 # %%time
-vs = lau.PricesStudy(lau.read_kibot_prices, symbol, lau.KIBOT_VOL, n_rows=None)
+vs = lau.TimeSeriesStudy(
+    lau.read_kibot_prices, symbol, lau.KIBOT_VOL, n_rows=None
+)
 
 # %%
 # tgn.notify('Kibot prices are loaded.')
@@ -255,10 +257,10 @@ product_specs[product_specs["Globex"] == symbol]["Open Interest"].values
 product_specs[product_specs["Globex"] == symbol]["Volume"].values
 
 # %%
-vs.daily_prices[lau.KIBOT_VOL].max()
+vs.daily_data[lau.KIBOT_VOL].max()
 
 # %%
-vs.minutely_prices[lau.KIBOT_VOL].max()
+vs.minutely_data[lau.KIBOT_VOL].max()
 
 # %% [markdown]
 # # CME mapping

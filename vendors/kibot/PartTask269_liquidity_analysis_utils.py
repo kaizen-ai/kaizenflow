@@ -96,12 +96,12 @@ def _get_prices(
     return price_df
 
 
-class PricesStudy:
+class TimeSeriesStudy:
     """
-    Perform a basic study of daily and minutely prices.
+    Perform a basic study of daily and minutely time series.
 
-    - Read daily and minutely prices
-    - Plot daily and minutely prices for column
+    - Read daily and minutely time series
+    - Plot daily and minutely time series for column
         - by year
         - by month
         - by day of week
@@ -112,117 +112,113 @@ class PricesStudy:
         self,
         data_reader: Callable[[str, str, Optional[int]], pd.DataFrame],
         symbol: str,
-        price_col: str,
+        col_name: str,
         n_rows: Optional[int],
     ):
         """
         :param data_reader: A function that takes frequency
             (daily/minutely), symbol and n_rows as input parameters
-            and returns a prices dataframe.
-        :param symbol: The symbol for which the price needs to be
+            and returns a dataframe with the time series column
+        :param symbol: The symbol for which the time series needs to be
             studied
-        :param price_col: The name of the price column
-        :param n_rows: the maximum numer of rows to load
+        :param col_name: The name of the time series column
+        :param n_rows: the maximum number of rows to load
         """
         self._symbol = symbol
         self._nrows = n_rows
         self._data_reader = data_reader
-        self.daily_prices = self._data_reader("daily", self._symbol, self._nrows)
-        self.minutely_prices = self._data_reader(
+        self.daily_data = self._data_reader("daily", self._symbol, self._nrows)
+        self.minutely_data = self._data_reader(
             "minutely", self._symbol, self._nrows
         )
-        self._price_col = price_col
+        self._col_name = col_name
 
     def execute(self):
-        self.plot_prices("daily")
-        self.plot_price_changes_by_year("daily")
-        self.plot_mean_price_day_of_month("daily")
-        self.plot_mean_price_day_of_week("daily")
+        self.plot_time_series("daily")
+        self.plot_changes_by_year("daily")
+        self.plot_mean_day_of_month("daily")
+        self.plot_mean_day_of_week("daily")
         #
-        self.plot_prices("minutely")
-        self.plot_price_changes_by_year("minutely")
-        self.plot_mean_price_day_of_week("minutely")
-        self.plot_minutely_price_hour()
+        self.plot_time_series("minutely")
+        self.plot_changes_by_year("minutely")
+        self.plot_mean_day_of_week("minutely")
+        self.plot_minutely_hour()
 
-    def plot_prices(self, frequency: str):
-        prices = self._choose_prices_frequency(frequency)
-        prices[self._price_col].plot()
+    def plot_time_series(self, frequency: str):
+        ts = self._choose_frequency(frequency)
+        ts[self._col_name].plot()
         plt.title(
-            f"{frequency.capitalize()} {self._price_col} "
+            f"{frequency.capitalize()} {self._col_name} "
             f"for the {self._symbol} symbol"
         )
         plt.xticks(
-            prices.resample("YS")[self._price_col].sum().index,
+            ts.resample("YS")[self._col_name].sum().index,
             ha="right",
             rotation=30,
             rotation_mode="anchor",
         )
         plt.show()
 
-    def plot_price_changes_by_year(self, frequency, sharey=False):
-        prices = self._choose_prices_frequency(frequency)
-        yearly_resample = prices.resample("y")
+    def plot_changes_by_year(self, frequency, sharey=False):
+        ts = self._choose_frequency(frequency)
+        yearly_resample = ts.resample("y")
         fig, axis = plt.subplots(
             len(yearly_resample),
             figsize=(20, 5 * len(yearly_resample)),
             sharey=sharey,
         )
-        for i, year_prices in enumerate(yearly_resample[self._price_col]):
-            year_prices[1].plot(ax=axis[i], title=year_prices[0].year)
+        for i, year_ts in enumerate(yearly_resample[self._col_name]):
+            year_ts[1].plot(ax=axis[i], title=year_ts[0].year)
         plt.suptitle(
-            f"{frequency.capitalize()} {self._price_col} changes by year"
+            f"{frequency.capitalize()} {self._col_name} changes by year"
             f" for the {self._symbol} symbol",
             y=1.005,
         )
         plt.tight_layout()
 
-    def plot_mean_price_day_of_month(self, frequency):
-        prices = self._choose_prices_frequency(frequency)
-        prices.groupby(prices.index.day)[self._price_col].mean().plot(
-            kind="bar", rot=0
-        )
+    def plot_mean_day_of_month(self, frequency):
+        ts = self._choose_frequency(frequency)
+        ts.groupby(ts.index.day)[self._col_name].mean().plot(kind="bar", rot=0)
         plt.xlabel("day of month")
-        plt.title(
-            f"Mean {frequency} {self._price_col} on different days of month"
-        )
+        plt.title(f"Mean {frequency} {self._col_name} on different days of month")
         plt.show()
 
-    def plot_mean_price_day_of_week(self, frequency):
-        prices = self._choose_prices_frequency(frequency)
-        prices.groupby(prices.index.dayofweek)[self._price_col].mean().plot(
+    def plot_mean_day_of_week(self, frequency):
+        ts = self._choose_frequency(frequency)
+        ts.groupby(ts.index.dayofweek)[self._col_name].mean().plot(
             kind="bar", rot=0
         )
         plt.xlabel("day of week")
         plt.title(
-            f"Mean {frequency} {self._price_col} on different days of "
+            f"Mean {frequency} {self._col_name} on different days of "
             f"week for the {self._symbol} symbol"
         )
         plt.show()
 
-    def plot_minutely_price_hour(self):
+    def plot_minutely_hour(self):
         # TODO (Julia): maybe check this year by year in case there was
         # a change in the later years? E.g., trading pits closed.
-        self.minutely_prices.groupby(self.minutely_prices.index.hour)[
-            self._price_col
+        self.minutely_data.groupby(self.minutely_data.index.hour)[
+            self._col_name
         ].mean().plot(kind="bar", rot=0)
         plt.title(
-            f"Mean {self._price_col} during different hours "
+            f"Mean {self._col_name} during different hours "
             f"for the {self._symbol} symbol"
         )
         plt.xlabel("hour")
         plt.show()
 
-    def _choose_prices_frequency(self, frequency):
+    def _choose_frequency(self, frequency):
         dbg.dassert_in(
             frequency,
             ["daily", "minutely"],
             "Only daily and minutely frequencies are supported.",
         )
         if frequency == "minutely":
-            prices = self.minutely_prices
+            data = self.minutely_data
         else:
-            prices = self.daily_prices
-        return prices
+            data = self.daily_data
+        return data
 
 
 class ProductSpecs:
