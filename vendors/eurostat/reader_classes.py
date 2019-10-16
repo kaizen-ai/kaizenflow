@@ -34,7 +34,6 @@ class EurostatReader(gr_bc.FileReader):
         File with all prefixes explained:
          https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?sort=1&file=table_of_contents_en.pdf
 
-
         :param prefixes: list of strings or ["*"] to get all the data,
         :return: dict, {"/some/file/full/path.ext": pd.DataFrame}
         """
