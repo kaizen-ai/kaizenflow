@@ -10,6 +10,7 @@ from sklearn import linear_model
 
 import core.features as ftrs
 import core.finance as fin
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
 import amp.vendors.kibot.utils as kut
@@ -112,46 +113,46 @@ class DataSource(SkLearnNode, abc.ABC):
         super().__init__(nid, inputs=[], outputs=outputs)
         #
         self.df = None
-        self._train_idxs = None
-        self._test_idxs = None
+        self._fit_idxs = None
+        self._predict_idxs = None
 
-    def set_train_idxs(self, train_idxs):
+    def set_fit_idxs(self, fit_idxs):
         """
-        :param train_idxs: indices of the df to use for fitting
+        :param fit_idxs: indices of the df to use for fitting
         """
-        self._train_idxs = train_idxs
+        self._fit_idxs = fit_idxs
 
     def fit(self):
         """
         :return: training set as df
         """
-        if self._train_idxs:
-            train_df = self.df.iloc[self._train_idxs]
+        if self._fit_idxs:
+            fit_df = self.df.iloc[self._fit_idxs]
         else:
-            train_df = self.df
+            fit_df = self.df
         info = collections.OrderedDict()
-        info["train_df_info"] = get_df_info_as_string(train_df)
+        info["fit_df_info"] = get_df_info_as_string(fit_df)
         self._set_info("fit", info)
-        return {self.output_names[0]: train_df}
+        return {self.output_names[0]: fit_df}
 
-    def set_test_idxs(self, test_idxs):
+    def set_predict_idxs(self, predict_idxs):
         """
-        :param test_idxs: indices of the df to use for predicting
+        :param predict_idxs: indices of the df to use for predicting
         """
-        self._test_idxs = test_idxs
+        self._predict_idxs = predict_idxs
 
     def predict(self):
         """
         :return: test set as df
         """
-        if self._test_idxs:
-            test_df = self.df.iloc[self._test_idxs]
+        if self._predict_idxs:
+            predict_df = self.df.iloc[self._predict_idxs]
         else:
-            test_df = self.df
+            predict_df = self.df
         info = collections.OrderedDict()
-        info["test_df_info"] = get_df_info_as_string(test_df)
+        info["predict_df_info"] = get_df_info_as_string(predict_df)
         self._set_info("predict", info)
-        return {self.output_names[0]: test_df}
+        return {self.output_names[0]: predict_df}
 
     def get_df(self):
         dbg.dassert_is_not(self.df, None)
@@ -258,25 +259,42 @@ class PctReturns(Transformer):
 
     def _transform(self, df):
         df = df.copy()
-        info = collections.OrderedDict()
         # TODO(Paul): Factor out these info calls.
-        info["df_info"] = get_df_info_as_string(df)
         df["ret_0"] = df["open"].pct_change()
+        #
+        info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
 
 class Zscore(Transformer):
-    def __init__(self, nid, style, com):
+    def __init__(self, nid, tau, demean, delay, cols=None):
         super().__init__(nid)
-        self.style = style
-        self.com = com
+        self._tau = tau
+        self._demean = demean
+        self._delay = delay
+        self._cols = cols
 
     def _transform(self, df):
-        # df_out = sigp.rolling_zscore(df, self.tau)
+        # Copy input to merge with output before returning.
+        df_in = df.copy()
+        # Restrict columns if requested.
+        df = df.copy()
+        if self._cols is not None:
+            df = df[self._cols]
+        # Z-score and name columns.
+        df_out = sigp.rolling_zscore(df,
+                                     tau=self._tau,
+                                     demean=self._demean,
+                                     delay=self._delay)
+        df_out.rename(columns=lambda x: "z" + x, inplace=True)
+        dbg.dassert(df_out.columns.intersection(df_in.columns).empty,
+                    "Input dataframe has shared column names with zscored "
+                    "dataframe.")
+        # Merge input dataframe with z-scored columns.
+        df_out = df_in.merge(df_out, left_index=True, right_index=True)
+        #
         info = collections.OrderedDict()
-        info["df_info"] = get_df_info_as_string(df)
-        df_out = pip.zscore(df, self.style, self.com)
         info["df_transformed_info"] = get_df_info_as_string(df_out)
         return df_out, info
 
@@ -286,9 +304,9 @@ class FilterAth(Transformer):
         super().__init__(nid)
 
     def _transform(self, df):
-        info = collections.OrderedDict()
-        info["df_info"] = get_df_info_as_string(df)
         df_out = fin.filter_ath(df)
+        #
+        info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df_out)
         return df_out, info
 
@@ -317,6 +335,9 @@ class ComputeLaggedFeatures(Transformer):
         df_out, info = ftrs.compute_lagged_features(
             df, self.y_var, self.delay_lag, self.num_lags
         )
+        #
+        info = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df_out)
         return df_out, info
 
 
@@ -382,7 +403,7 @@ class Model(SkLearnNode):
         info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
         pnl_rets = y * y_hat
         info["pnl_rets"] = pnl_rets
-        info["sr"] = fin.sharpe_ratio(
+        info["sr"] = fin.compute_sharpe_ratio(
             pnl_rets.resample("1B").sum(), time_scaling=252
         )
         return info
@@ -410,13 +431,13 @@ def cross_validate(config, source_nid, sink_nid, dag):
     #
     for i, (train_idxs, test_idxs) in enumerate(splits):
         split_info = collections.OrderedDict()
-        split_info["train_idxs"] = train_idxs
-        split_info["test_idxs"] = test_idxs
+        split_info["fit_idxs"] = train_idxs
+        split_info["predict_idxs"] = test_idxs
         #
-        source_node.set_train_idxs(train_idxs)
+        source_node.set_fit_idxs(train_idxs)
         dag.run_leq_node(sink_nid, "fit")
         #
-        source_node.set_test_idxs(test_idxs)
+        source_node.set_predict_idxs(test_idxs)
         dag.run_leq_node(sink_nid, "predict")
         #
         split_info["stages"] = extract_info(dag, ["fit", "predict"])
@@ -447,7 +468,8 @@ def process_result_bundle(result_bundle):
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = fin.sharpe_ratio(pnl_rets.resample("1B").sum(), time_scaling=252)
+    sr = fin.compute_sharpe_ratio(pnl_rets.resample("1B").sum(),
+                                  time_scaling=252)
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
     info["sr"] = copy.copy(sr)

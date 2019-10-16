@@ -1,8 +1,8 @@
 #!/bin/bash -xe
 
-# ```
+# """
 # - Collect tests
-# ```
+# """
 
 VERB=DEBUG
 ENV_NAME=develop

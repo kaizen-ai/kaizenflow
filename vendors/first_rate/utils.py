@@ -1,5 +1,9 @@
-#!/usr/bin/env python
 r"""
+Import as:
+
+import vendors.first_rate.utils as fru
+
+
 Download equity data from the http://firstratedata.com.
 
 - Save the data as zipped csvs for each equity to one of the
@@ -15,7 +19,7 @@ Usage example:
   --unzipped_dst_dir /data/first_rate/unzipped \
   --pq_dst_dir /data/first_rate/pq
 """
-import argparse
+
 import logging
 import os
 import re
@@ -349,7 +353,7 @@ class _ZipCSVCombiner:
     def _process_datetime_cols(df):
         first_col = 0
         second_col = 1
-        if isinstance(df.iloc[0, 0], int) or isinstance(df.iloc[0, 0], np.int64):
+        if isinstance(df.iloc[0, 0], (int, np.int64)):
             first_col = "date"
         elif isinstance(df.iloc[0, 0], str):
             without_symbols = re.sub("[./\:\- ]", "", df.iloc[0, 0])
@@ -434,7 +438,7 @@ class _MultipleZipCSVCombiner:
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
             for zip_name in tqdm(os.listdir(category_dir_input_path)):
-                # Combine csvs from the zip file, process them and save
+                # Combine csvs from the zip file, process them and save.
                 zip_path = os.path.join(category_dir_input_path, zip_name)
                 url_object = self.path_object_dict[zip_path]
                 csv_name = os.path.splitext(zip_name)[0] + ".csv"
@@ -465,63 +469,3 @@ class _CSVToParquetConverter:
             csv.convert_csv_dir_to_pq_dir(
                 category_dir_input_path, category_dir_dst_path, header="infer"
             )
-
-
-if __name__ == "__main__":
-    _WEBSITE = "http://firstratedata.com"
-    _ZIPPED_DST_DIR = "/data/first_rate/zipped/"
-    _UNZIPPED_DST_DIR = "/data/first_rate/unzipped/"
-    _PQ_DST_DIR = "/data/first_rate/pq"
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--zipped_dst_dir",
-        required=False,
-        action="store",
-        default=_ZIPPED_DST_DIR,
-        type=str,
-    )
-    parser.add_argument(
-        "--unzipped_dst_dir",
-        required=False,
-        action="store",
-        default=_UNZIPPED_DST_DIR,
-        type=str,
-    )
-    parser.add_argument(
-        "--pq_dst_dir",
-        required=False,
-        action="store",
-        default=_PQ_DST_DIR,
-        type=str,
-    )
-    parser.add_argument(
-        "--max_num_files",
-        action="store",
-        default=None,
-        type=int,
-        help="Maximum number of files to be downloaded",
-    )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
-    args = parser.parse_args()
-    dbg.init_logger(args.log_level)
-
-    rdd = _RawDataDownloader(
-        _WEBSITE, args.zipped_dst_dir, max_num_files=args.max_num_files
-    )
-    rdd.execute()
-
-    mzcc = _MultipleZipCSVCombiner(
-        args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
-    )
-    mzcc.execute()
-
-    ctpc = _CSVToParquetConverter(args.unzipped_dst_dir, args.pq_dst_dir)
-    ctpc.execute()

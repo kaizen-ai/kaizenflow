@@ -1,5 +1,9 @@
 #!/bin/bash -e
 
+# """
+# Plot a graphical view of the branches, using different level of details
+# """
+
 source helpers.sh
 
 mode=$1
@@ -15,5 +19,4 @@ else
   exit -1
 fi;
 
-cmd="git $opts --all"
-eval $cmd
+execute "git $opts --all"

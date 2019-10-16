@@ -102,7 +102,7 @@ def _filter_target_files(file_names):
     for file_name in file_names:
         _, file_ext = os.path.splitext(file_name)
         # TODO(gp): We can probably consider only the .py files after jupytext
-        # is part of the main flow.
+        #  is part of the main flow.
         # is_valid = file_ext in (".py", ".ipynb")
         is_valid = file_ext in (".py",)
         is_valid &= ".ipynb_checkpoints/" not in file_name
@@ -189,16 +189,18 @@ def _get_files(args):
     """
     file_names = []
     if args.files:
+        _LOG.debug("Specified files")
         # Files are specified.
         file_names = args.files
     else:
         if args.previous_git_commit_files is not None:
+            _LOG.debug("Looking for previous git committed files")
             # Get all the git in user previous commit.
             n_commits = args.previous_git_commit_files
             _LOG.info("Using %s previous commits", n_commits)
             file_names = git.get_previous_committed_files(n_commits)
         elif args.dir_name:
-            if args.dir_name == "GIT_ROOT":
+            if args.dir_name == "$GIT_ROOT":
                 dir_name = git.get_client_root(super_module=True)
             else:
                 dir_name = args.dir_name
@@ -211,8 +213,11 @@ def _get_files(args):
         if not file_names or args.current_git_files:
             # Get all the git modified files.
             file_names = git.get_modified_files()
+    _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
     # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
+    _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
+    dbg.dassert_lte(1, len(file_names))
     # Remove files.
     if args.skip_py:
         file_names = [f for f in file_names if not is_py_file(f)]
@@ -542,15 +547,14 @@ def _flake8(file_name, pedantic, check_if_possible):
     # Remove some errors.
     is_jupytext_code = is_paired_jupytext_file(file_name)
     _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
-    output_tmp = []
     if is_jupytext_code:
+        output_tmp = []
         for l in output:
             # F821 undefined name 'display' [flake8]
             if "F821" in l and "undefined name 'display'" in l:
                 continue
             output_tmp.append(l)
-    output = output_tmp
-    #
+        output = output_tmp
     return output
 
 
@@ -763,17 +767,17 @@ def _pylint(file_name, pedantic, check_if_possible):
     cmd = executable + " %s %s" % (opts, file_name)
     output = _tee(cmd, executable, abort_on_error=False)
     # Remove some errors.
-    output_tmp = []
     if is_jupytext_code:
+        output_tmp = []
         for l in output:
             # [E0602(undefined-variable), ] Undefined variable 'display'
             if "E0602" in l and "Undefined variable 'display'" in l:
                 continue
             output_tmp.append(l)
-    output = output_tmp
+        output = output_tmp
     #
     output.insert(0, "* file_name=%s" % file_name)
-    output = [l for l in output if "-" * 20 not in l]
+    output = [l for l in output if ("-" * 20) not in l]
     return output
 
 

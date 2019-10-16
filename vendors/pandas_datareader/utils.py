@@ -22,11 +22,13 @@ import helpers.cache as cache
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
+import helpers.s3 as hs3
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+
+_S3_DIR = os.path.join(hs3.get_path(), "etf/data")
 
 
 def _read_data(ticker):
@@ -51,9 +53,6 @@ def read_data(*args, **kwargs):
     _LOG.debug("args=%s kwargs=%s", str(*args), str(**kwargs))
     obj = _read_data_from_disk_cache(*args, **kwargs)
     return obj
-
-
-_S3_DIR = "s3://alphamatic/etf/data"
 
 
 class YahooDailyQuotes:

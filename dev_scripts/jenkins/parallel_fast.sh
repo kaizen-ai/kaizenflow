@@ -1,11 +1,11 @@
 #!/bin/bash -xe
 
-# ```
+# """
 # - (No conda env build)
 # - Run tests
 #   - fast
 #   - parallel
-# ```
+# """
 
 VERB=DEBUG
 ENV_NAME=develop
