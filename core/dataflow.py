@@ -446,12 +446,8 @@ class SkLearnModel(SkLearnNode):
         x_predict = df[x_vars]
         y_predict = df[y_vars]
         y_hat = self._model.predict(x_predict)
-        x_predict = pd.DataFrame(
-            x_predict.values, index=idx, columns=x_vars
-        )
-        y_predict = pd.DataFrame(
-            y_predict.values, index=idx, columns=y_vars
-        )
+        x_predict = pd.DataFrame(x_predict.values, index=idx, columns=x_vars)
+        y_predict = pd.DataFrame(y_predict.values, index=idx, columns=y_vars)
         y_hat = pd.DataFrame(
             y_hat, index=idx, columns=[y + "_hat" for y in y_vars]
         )
@@ -599,9 +595,9 @@ def process_result_bundle(result_bundle):
     pnl_rets = []
     for split in result_bundle.keys():
         split_names.append(split)
-        #model_coeffs.append(
+        # model_coeffs.append(
         #    result_bundle[split]["stages"]["model"]["fit"]["model_coeffs"]
-        #)
+        # )
         model_x_vars.append(
             result_bundle[split]["stages"]["model"]["fit"]["model_x_vars"]
         )
