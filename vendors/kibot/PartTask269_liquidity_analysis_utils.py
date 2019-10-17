@@ -129,6 +129,7 @@ class TimeSeriesStudy:
         self._nrows = n_rows
         self._data_reader = data_reader
         self.data = self._data_reader()
+        self._check_data_index()
         self._col_name = col_name
         self.time_series = self.data[self._col_name]
         self.freq = freq
@@ -168,7 +169,9 @@ class TimeSeriesStudy:
             kind="bar", rot=0
         )
         plt.xlabel("day of month")
-        plt.title(f"Mean {self.freq} {self._col_name} on different days of month")
+        plt.title(
+            f"Mean {self.freq} {self._col_name} " f"on different days of month"
+        )
         plt.show()
 
     def plot_mean_day_of_week(self):
@@ -181,6 +184,14 @@ class TimeSeriesStudy:
             f"week for the {self._symbol} symbol"
         )
         plt.show()
+
+    def _check_data_index(self):
+        assert isinstance(
+            self.data.index, pd.DatetimeIndex
+        ), "The index should have pd.DatetimeIndex format."
+        dbg.dassert_monotonic_index(
+            self.data.index, "The index should be monotonic increasing"
+        )
 
 
 class TimeSeriesDailyStudy(TimeSeriesStudy):
