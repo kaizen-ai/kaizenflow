@@ -655,3 +655,12 @@ _LOG.warning(...)
 - In the code we use camel case, when appropriate
     - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
     - E.g., `csv_file_name` as a variable name
+
+## Regex
+
+- The rule of thumb is to compile a regex expression, e.g.,
+    ```python
+    backslash_regexp = re.compile(r"\\")
+    ```
+  only if it's called more than once, otherwise the overhead of compilation and
+  creating another var is not justified
