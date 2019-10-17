@@ -1,39 +1,56 @@
 #!/bin/bash -e
 
 # """
-# Build "amp_develop" conda env from scratch.
+# - Build "amp_develop" conda env from scratch.
 # """
 
-CONDA_ENV="develop"
-EXEC_NAME="dev_scripts/jenkins/create_conda.$CONDA_ENV.sh"
+EXEC_NAME=`basename "$0"`
 AMP="."
+# TODO(gp): -> amp_develop.daily_build
+CONDA_ENV="develop"
+VERB="DEBUG"
 
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Init.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 echo "$EXEC_NAME: source ~/.bashrc"
 source ~/.bashrc
-export PYTHONPATH=""
-
-# Activate conda.
-echo "$EXEC_NAME: conda activate base"
-conda activate base
-
-# Configure environment.
-echo "$EXEC_NAME: source $AMP/dev_scripts/setenv.sh -e base"
-source $AMP/dev_scripts/setenv.sh -e base
-
-echo "$EXEC_NAME: env"
-env
+# TODO(gp): This used to be needed.
+#export PYTHONPATH=""
 
 echo "$EXEC_NAME: source $AMP/dev_scripts/helpers.sh"
 source $AMP/dev_scripts/helpers.sh
 
-# TODO(gp): dev_scripts/create_conda.sh
-CMD="create_conda.py --env_name $CONDA_ENV --req_file dev_scripts/install/requirements/develop.txt --delete_env_if_exists"
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Build env.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+# Activate conda base environment.
+echo "$EXEC_NAME: conda activate base"
+conda activate base
+
+# Configure base environment.
+echo "$EXEC_NAME: source $AMP/dev_scripts/setenv.sh -e base"
+source $AMP/dev_scripts/setenv.sh -e base
+
+# Print env.
+echo "$EXEC_NAME: env"
+env
+
+# From dev_scripts/create_conda.sh
+CMD="create_conda.py --env_name $CONDA_ENV --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists -v $VERB"
 frame "$EXEC_NAME: $CMD"
 execute $CMD
 
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Setenv.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+# Config environment.
 echo "$EXEC_NAME: source dev_scripts/setenv.sh -e $CONDA_ENV"
 source dev_scripts/setenv.sh -e $CONDA_ENV
 
+# Check conda env.
 CMD="print_conda_packages.py"
 frame "$EXEC_NAME: $CMD"
 execute $CMD
