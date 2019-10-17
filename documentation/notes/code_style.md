@@ -64,24 +64,27 @@
     - supported by pydocstyle (which does not support Google style as explained
       [here](https://github.com/PyCQA/pydocstyle/issues/275))
 
-```python
-"""
-This is a reST style.
+- An example of a function comment is:
+    ```python
+    """
+    This is a reST style.
 
-:param param1: this is a first param
-:type param1: str
-:param param2: this is a second param
-:type param2: int
-:returns: this is a description of what is returned
-:rtype: bool
-:raises keyError: raises an exception
-"""
-```
+    :param param1: this is a first param
+    :type param1: str
+    :param param2: this is a second param
+    :type param2: int
+    :returns: this is a description of what is returned
+    :rtype: bool
+    :raises keyError: raises an exception
+    """
+    ```
+    - We pick lowercase after `:param XYZ: ...` unless the first word is a proper
+      noun or type
+    - Type hinting makes the `:type ...` redundant and you should use only type
+      hinting
 
-- We pick lowercase after `:param XYZ: ...` unless the first word is a proper
-  noun or type
-
-- Examples are [here](https://stackoverflow.com/questions/3898572)
+- Morew examples and discussions of python docstring are
+  [here](https://stackoverflow.com/questions/3898572)
 
 ## Descriptive vs imperative style
 
@@ -100,11 +103,15 @@ This is a reST style.
 
 ## Use type hints
 
-- See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
+- We expect the new code to use type hints any time possible
+    - See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
+    - [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
+- At some point we will start adding type hints also to old code
 
-- [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
+- We plan to start using static analyzer (e.g., `mypy`) to check for bugs from
+  type mistakes and enforce type hints at run-time, whenever possible
 
-## Avoid empty lines in code
+## Replace empty lines in code with comments
 
 - If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
@@ -151,6 +158,7 @@ This is a reST style.
     ```
 
 ## If you find a bug, obsolete docstring in the code
+
 - The process is:
     - do a `git blame` to find who wrote the code
     - if it's an easy bug, you can fix it and ask for a review from the author
@@ -160,6 +168,92 @@ This is a reST style.
         - how to reproduce it, ideally a unit test
         - stacktrace
         - you can use the tag “BUG: ..."
+
+## Referring to an object in the code
+
+- We prefer to refer to objects in the code using Markdown like `this` (this is a
+  convention used in the documentation system Sphinx)
+
+    ```python
+    """
+    Decorator adding a timer around function `f`.
+    """
+    ```
+- This is useful to distinguish the object code from the real life object
+- E.g.,
+    ```python
+    # The df `df_tmp` is used for ...
+    ```
+
+## Inline comments
+
+- In general we prefer to avoid comments on the same line as code since they
+  require extra maintenance (e.g., when the line becomes too long)
+    - **Bad**
+        ```python
+        print("hello world")      # Introduce yourself.
+        ```
+    - **Good**
+        ```python
+        # Introduce yourself.
+        print("hello world")
+        ```
+
+# Linter
+
+## Disabling linter messages
+
+- When the linter reports a problem
+    - We assume that linter messages are correct, until the linter is proven
+      wrong
+    - We try to understand what's the rationale for the linter complaints
+    - We then change the code to follow the linter suggestion and remove the lint
+
+1) If you think a message is too pedantic please file a bug with the example and
+   as a team we will consider whether to exclude that message from our list of
+   linter suggestions
+
+2) If you think the message is a false positive, then you try to change the code
+   to make the linter happy
+    - E.g., if the code depends on some run-time behavior that the linter can't
+      infer then you should wonder if that behavior is really needed
+    - A human reader would probably be as confused as the linter is
+
+3) If you really believe that you should override the linter in this particular
+   case then use something like:
+    ```python
+    # pylint: disable=some-message,another-one
+    ```
+    - You then need to explain in a comment why you are overriding the linter.
+
+- Don't use linter code numbers, but the symbolic name whenever possible:
+  - **Bad**
+    ```python
+     # pylint: disable=W0611
+    import config.logging_settings
+    ```
+  - **Good**
+    ```python
+    # pylint: disable=unused-import
+    # This is needed when evaluating code at run-time that depends from
+    # this import.
+    import config.logging_settings
+    ```
+
+## Prefer non-inlined linter comments
+
+- Although we don't like inlined comments sometimes there is no other choice than
+  an inlined comment to get the linter to understand which line we are referring
+  too:
+  - **Bad but ok if needed**
+    ```python
+    # pylint: disable=unused-import
+    import config.logging_settings
+    ```
+  - **Good**
+    ```python
+    import config.logging_settings  # pylint: disable=unused-import
+    ```
 
 # Logging
 
@@ -446,6 +540,7 @@ _LOG.warning(...)
 - You can copy this file and change it
 
 ## Use the script framework
+
 - We have several libraries that make writing scripts in python very easy, e.g.,
   `//amp/helpers/system_interaction.py`
 
@@ -453,6 +548,7 @@ _LOG.warning(...)
   `//amp/dev_scripts/linter.py`
 
 ## Python executable characteristics
+
 - All python scripts that are meant to be executed directly should:
     1) be marked as executable files with:
         ```bash
@@ -494,3 +590,68 @@ _LOG.warning(...)
   e.g.,`TaskXYZ_edgar_timestamp_dataset_extractor.py`
 
 - Also where the script is located should give some clue of what is related to
+
+# Functions
+
+## Try to make functions work on multiple types
+
+- We encourage implementing functions that can work on multiple related types:
+    - **Bad**: implement `demean_series()`, `demean_dataframe()`
+    - **Good**: implement a function `demean(obj)` that can work `pd.Series` and
+      `pd.DataFrame`
+        - One convention is to call `obj` the variable whose type is not known
+          until run-time
+- In this way we take full advantage of duck typing to achieve something similar
+  to C++ function overloading (actually even more expressive) 
+- Try to return the same type of the input, if possible
+    - E.g., the function called on a `pd.Series` returns a `pd.Series`
+
+## Decorator names
+
+- For decorator we don't use a verb, like for functions, but rather an adjective
+  or a past tense verb, e.g.,
+    ```python
+    def timed(f):
+        """
+        Decorator adding a timer around function `f`.
+        """
+        ...
+    ```
+
+# Misc (to reorg)
+
+## Write robust code
+
+- Consider the following code:
+    ```python
+    if server_name == "ip-172-31-16-23":
+        out = 1
+    if server_name == "ip-172-32-15-23":
+        out = 2
+    ```
+- This code is brittle since if you change the first part to:
+    ```python
+    if server_name.startswith("ip-172"):
+        out = 1
+    if server_name == "ip-172-32-15-23":
+        out = 2
+    ```
+  executing the code with `server_name = "ip-172-32-15-23"` will give `out=2`
+
+- The proper approach is to enumerate all the cases like:
+    ```python
+    if server_name == "ip-172-31-16-23":
+        out = 1
+    elif server_name == "ip-172-32-15-23":
+        out = 2
+    ...
+    else:
+        raise ValueError("Invalid server_name='%s'" % server_name)
+    ```
+
+## Capitalized words
+
+- In documentation and comments we capitalize abbreviations (e.g., `YAML`, `CSV`)
+- In the code we use camel case, when appropriate
+    - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
+    - E.g., `csv_file_name` as a variable name
