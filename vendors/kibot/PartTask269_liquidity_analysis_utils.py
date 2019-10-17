@@ -118,7 +118,7 @@ class TimeSeriesStudy:
     ):
         """
         :param data_reader: A function that returns a pd.DataFrame with
-            the col_name column
+            the col_name column and a datetime index
         :param symbol: The symbol for which the time series needs to be
             studied
         :param col_name: The name of the time series column
@@ -140,7 +140,7 @@ class TimeSeriesStudy:
             f"for the {self._symbol} symbol"
         )
         plt.xticks(
-            self.data.resample("YS")[self._col_name].sum().index,
+            self.time_series.resample("YS").sum().index,
             ha="right",
             rotation=30,
             rotation_mode="anchor",
@@ -148,13 +148,13 @@ class TimeSeriesStudy:
         plt.show()
 
     def plot_changes_by_year(self, sharey=False):
-        yearly_resample = self.data.resample("y")
+        yearly_resample = self.time_series.resample("y")
         fig, axis = plt.subplots(
             len(yearly_resample),
             figsize=(20, 5 * len(yearly_resample)),
             sharey=sharey,
         )
-        for i, year_ts in enumerate(yearly_resample[self._col_name]):
+        for i, year_ts in enumerate(yearly_resample):
             year_ts[1].plot(ax=axis[i], title=year_ts[0].year)
         plt.suptitle(
             f"{self.freq.capitalize()} {self._col_name} changes by year"
@@ -164,7 +164,7 @@ class TimeSeriesStudy:
         plt.tight_layout()
 
     def plot_mean_day_of_month(self):
-        self.data.groupby(self.time_series.index.day)[self._col_name].mean().plot(
+        self.time_series.groupby(self.time_series.index.day).mean().plot(
             kind="bar", rot=0
         )
         plt.xlabel("day of month")
@@ -172,9 +172,9 @@ class TimeSeriesStudy:
         plt.show()
 
     def plot_mean_day_of_week(self):
-        self.data.groupby(self.time_series.index.dayofweek)[
-            self._col_name
-        ].mean().plot(kind="bar", rot=0)
+        self.time_series.groupby(self.time_series.index.dayofweek).mean().plot(
+            kind="bar", rot=0
+        )
         plt.xlabel("day of week")
         plt.title(
             f"Mean {self.freq} {self._col_name} on different days of "
@@ -221,9 +221,7 @@ class TimeSeriesMinStudy(TimeSeriesStudy):
         self.plot_minutely_hour()
 
     def plot_minutely_hour(self):
-        # TODO (Julia): maybe check this year by year in case there was
-        # a change in the later years? E.g., trading pits closed.
-        self.data.groupby(self.data.index.hour)[self._col_name].mean().plot(
+        self.time_series.groupby(self.time_series.index.hour).mean().plot(
             kind="bar", rot=0
         )
         plt.title(
