@@ -244,7 +244,7 @@
         ```bash
         > git checkout PartTask354_INFRA_Populate_S3_bucket
         > git pull
-        > git merge master 
+        > git merge master
         ```
     - Resolve conflicts
         ```bash
@@ -283,6 +283,41 @@
         ```
 
 # How-to and troubleshooting
+
+## Do not mess up your branch
+
+- If you are working in a branch, before doing `git push` make sure the
+  branch is not broken (e.g., from a mistake in merge / rebase mess)
+
+- A way to check that the branch is sane is the following:
+
+1) Make sure that you don't have extra commits in your branch:
+    - The difference between your branch <BRANCH> and master
+        ```bash
+        > git fetch
+        > git checkout <BRANCH>
+        > git log origin/master..HEAD
+        ```
+    shows only commits made by you or, if you are not the only one working on the
+    branch, only commits belonging to the branch with the same `PartTaskXYZ`
+
+    - E.g., if George is working on PartTask275 and sees:
+        ```bash
+        a379826 Ringo, 3 weeks ago : LemTask54: finish dataflow through cross-validation
+        33a46b2 George, 2 weeks ago : PartTask275 Move class attributes docstrings to init, change logging
+        ```
+      something funny is going on
+
+2) Make sure the files modified in your branch are only the file you expect to be
+   modified
+    ```bash
+    > git fetch
+    > git checkout <BRANCH>
+    > git diff --name-only master..HEAD
+    ```
+
+- If you see that there is a problem, don't push upstream (because the branch
+  will be broken for everybody) and ask a Git expert
 
 ## Analyzing commits
 
@@ -460,7 +495,7 @@ and stage #3 is the version you are merging from.
 
 - If your branch lives long, you want to apply changes made on master to
   show on your branch
-    
+
 - Merge flow
 
 - Assume your branch is clean
@@ -503,13 +538,13 @@ and stage #3 is the version you are merging from.
 - Not the other way around: that would be a disaster!
     ```bash
     > git checkout my-feature
-    
+
     // See that you have that master doesn't have.
     > > git ll origin/master..
 
     // See that master has that you don't have.
     > git ll ..origin/master
-    
+
     > git rebase master
 
     > git ll ..origin/master
