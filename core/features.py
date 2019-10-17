@@ -79,14 +79,20 @@ def compute_lagged_features(df, y_var, delay_lag, num_lags):
     return df, info
 
 
-def compute_lagged_columns(df, lag_delay, num_lags):
+def compute_lagged_columns(
+    df: pd.DataFrame, lag_delay: int, num_lags: int
+) -> pd.DataFrame:
     """
-
-    :param df:
-    :param lag_delay:
-    :param num_lags:
-    :return:
+    Computes lags of each column in df.
     """
+    if lag_delay < 1:
+        _LOG.warning(
+            "Using anticausal features since lag_delay=%d < 1. This "
+            "could be lead to future peeking.",
+            lag_delay,
+        )
+    dbg.dassert_lte(1, num_lags)
+    #
     shifts = list(range(1 + lag_delay, 1 + lag_delay + num_lags))
     out_cols = []
     for col in df.columns:
@@ -94,5 +100,4 @@ def compute_lagged_columns(df, lag_delay, num_lags):
             out_col = df[col].shift(num_shifts)
             out_col.name += "_%i" % num_shifts
             out_cols.append(out_col)
-            _LOG.warning("name=%s", out_col.name)
     return pd.concat(out_cols, axis=1)
