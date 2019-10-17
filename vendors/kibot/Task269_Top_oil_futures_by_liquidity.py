@@ -158,10 +158,6 @@ product_specs[product_specs["Globex"].isna()]
 # %%
 
 # %%
-
-# %%
-
-# %%
 mask = ["GAS" in d or "OIL" in d for d in df4["Description"].astype(str)]
 print(sum(mask))
 print(df4[mask].drop(["SymbolBase", "Size(MB)"], axis=1))
@@ -230,19 +226,37 @@ mean_vol.sort_values("mean_vol", ascending=False)
 symbol = "CL"
 
 # %%
+# # %%time
+# vs = lau.TimeSeriesStudy(
+#     lau.read_kibot_prices, symbol, lau.KIBOT_VOL, n_rows=None
+# )
+
+# %%
+daily_reader = lau.get_kibot_reader("D", symbol)
+
+# %%
 # %%time
-vs = lau.TimeSeriesStudy(
-    lau.read_kibot_prices, symbol, lau.KIBOT_VOL, n_rows=None
+tsds = lau.TimeSeriesDailyStudy(
+    daily_reader, col_name=lau.KIBOT_VOL, data_name=symbol
 )
 
 # %%
-# tgn.notify('Kibot prices are loaded.')
+tsds.execute()
 
 # %%
-vs.execute()
+minutely_reader = lau.get_kibot_reader("min", symbol)
 
 # %%
-# tgn.notify('Prices study is complete')
+# %%time
+tsms = lau.TimeSeriesMinStudy(
+    minutely_reader, col_name=lau.KIBOT_VOL, data_name=symbol
+)
+
+# %%
+tsms.execute()
+
+# %%
+# tgn.notify('Volume study is complete')
 
 # %% [markdown]
 # ## How is the volume related to the open interest from the metadata?
@@ -257,10 +271,10 @@ product_specs[product_specs["Globex"] == symbol]["Open Interest"].values
 product_specs[product_specs["Globex"] == symbol]["Volume"].values
 
 # %%
-vs.data[lau.KIBOT_VOL].max()
+tsds.data[lau.KIBOT_VOL].max()
 
 # %%
-vs.minutely_data[lau.KIBOT_VOL].max()
+tsms.data[lau.KIBOT_VOL].max()
 
 # %% [markdown]
 # # CME mapping
