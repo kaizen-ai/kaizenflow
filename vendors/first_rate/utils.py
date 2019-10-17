@@ -449,13 +449,18 @@ class CsvToParquetConverter:
     Save csv files divided by categories into parquet
     """
 
-    def __init__(self, input_dir, dst_dir):
+    def __init__(self, input_dir, dst_dir, to_datetime, timestamp_col):
         """
         :param input_dir: input directory with categories
         :param dst_dir: destination directory
+        :param to_datetime: whether to transform timestamp column to
+            datetime format
+        :param timestamp_col: the name of the timestamp column
         """
         self.input_dir = input_dir
         self.dst_dir = dst_dir
+        self._to_datetime = to_datetime
+        self._timestamp_col = timestamp_col
 
     def execute(self):
         _LOG.info("Saving to parquet")
@@ -463,14 +468,17 @@ class CsvToParquetConverter:
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
+            if self._to_datetime:
+                normalizer = self._ts_to_datetime
+            else:
+                normalizer = None
             csv.convert_csv_dir_to_pq_dir(
                 category_dir_input_path,
                 category_dir_dst_path,
                 header="infer",
-                normalizer=self._ts_to_datetime,
+                normalizer=normalizer,
             )
 
-    @staticmethod
-    def _ts_to_datetime(df):
-        df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0])
+    def _ts_to_datetime(self, df):
+        df[self._timestamp_col] = pd.to_datetime(df[self._timestamp_col])
         return df

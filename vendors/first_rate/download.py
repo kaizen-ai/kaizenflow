@@ -80,7 +80,9 @@ if __name__ == "__main__":
     )
     mzcc.execute()
     #
-    ctpc = fru.CsvToParquetConverter(args.unzipped_dst_dir, args.pq_dst_dir)
+    ctpc = fru.CsvToParquetConverter(
+        args.unzipped_dst_dir, args.pq_dst_dir, True, "timestamp"
+    )
     ctpc.execute()
     # TODO(Julia): We should also transfer the data on AWS. It's ok not to do
     # it for now.
