@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 # """
 # Like gll / git ll but only referring to your commits.
@@ -7,7 +7,11 @@
 # > gllmy -5
 # """
 
-git log --date=local --oneline --graph --date-order --decorate \
-  --pretty=format:'%Creset%Cgreen%h %C(reset)%C(cyan)%<(8)%aN%Creset %Creset%C(bold white) %<(65)%s %C(bold black)(%>(14)%ar) %C(red)%ad %C(yellow)%<(10)%d%C(reset)' \
-  --author $(git config user.name) \
-  $*
+source dev_scripts/helpers.sh
+
+# From dev_scripts/gll
+GIT_OPTS="--pretty=format:'$GIT_LOG_OPTS'"
+GIT_OPTS+=" --author $(git config user.name)"
+
+CMD="git log --date=local --oneline --date-order $GIT_OPTS $*"
+execute $CMD

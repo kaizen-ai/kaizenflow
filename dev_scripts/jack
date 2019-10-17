@@ -1,7 +1,10 @@
 #!/bin/bash -e
 
+# """
+# Search in all files.
+# """
+
 source helpers.sh
 
 cmd="ack $ACK_OPTS --ignore-file=is:tags --ignore-file=is:cscope.out --ignore-file=is:cscope.files '$*'"
-#echo "+ $cmd"
-eval $cmd
+execute $cmd
