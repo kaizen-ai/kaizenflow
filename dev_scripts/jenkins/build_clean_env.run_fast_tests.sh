@@ -1,7 +1,5 @@
 #!/bin/bash -xe
 
-# TODO(gp): -> build_clean_env.run_fast_tests.sh
-
 # """
 # - Build conda env
 # - Run the fast tests

@@ -1,9 +1,8 @@
-#!/bin/bash -xe
-
-# TODO(gp): -> run_liner.sh
+#!/bin/bash -e
 
 # """
-# - Run linter on the entire tree.
+# - No conda env is built, but we rely on `develop` being already build
+# - Run the fast tests
 # """
 
 EXEC_NAME=`basename "$0"`
@@ -48,16 +47,8 @@ execute $CMD
 # Run.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-# Collect tests.
-CMD="pytest --collect-only -q -rs"
-frame "$EXEC_NAME: $CMD"
-execute $CMD
-
-CMD="pytest --collect-only -qq -rs"
-frame "$EXEC_NAME: $CMD"
-execute $CMD
-
-# Run (ignoring the rc).
-CMD="linter.py -d . --jenkins --num_threads serial"
+# Run tests.
+OPTS="--test fast"
+CMD="dev_scripts/run_tests.py $OPTS --jenkins -v $VERB"
 frame "$EXEC_NAME: $CMD"
 execute $CMD
