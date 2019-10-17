@@ -11,15 +11,24 @@ import vendors.kibot.utils as kut
 _LOG = logging.getLogger(__name__)
 
 
-def get_zscored_returns(
-    prices: pd.DataFrame, period: str, tau: int, demean: bool = False
-):
-    dbg.dassert_in(period, ["daily", "minutely"])
-    # Compute returns.
+def compute_kibot_returns(prices: pd.DataFrame, period: str):
     if period == "minutely":
         rets = kut.compute_ret_0_from_1min_prices(prices, "log_rets")
-    else:
+    elif period == "daily":
         rets = kut.compute_ret_0_from_daily_prices(prices, "open", "log_rets")
+    else:
+        raise ValueError(
+            'Only "daily" and "minutely" periods are supported, ' "passed %s",
+            period,
+        )
+    return rets
+
+
+def get_zscored_kibot_returns(
+    prices: pd.DataFrame, period: str, tau: int, demean: bool = False
+):
+    # Compute returns.
+    rets = compute_kibot_returns(prices, period)
     # z-score.
     zscored_rets = sigp.rolling_zscore(rets, tau, demean=demean)
     _LOG.debug("zscored_rets=\n%s", zscored_rets.head())
@@ -37,7 +46,9 @@ def get_top_movements_by_group(
 ):
     zscored_returns = []
     for symbol in commodity_symbols_kibot[group]:
-        zscored_ret = get_zscored_returns(price_df_dict[symbol], period, tau)
+        zscored_ret = get_zscored_kibot_returns(
+            price_df_dict[symbol], period, tau
+        )
         zscored_ret = _choose_movements(zscored_ret, sign)
         zscored_ret = coex.drop_na(pd.DataFrame(zscored_ret), drop_infs=True)[
             "ret_0"
@@ -45,10 +56,7 @@ def get_top_movements_by_group(
         zscored_returns.append(zscored_ret)
     zscored_returns = pd.concat(zscored_returns, axis=1)
     mean_zscored_rets = zscored_returns.mean(axis=1, skipna=True)
-    if sign == "neg":
-        ascending = True
-    else:
-        ascending = False
+    ascending = _get_order(sign)
     return mean_zscored_rets.sort_values(ascending=ascending).head(n_movements)
 
 
@@ -60,12 +68,9 @@ def get_top_movements_for_symbol(
     sign: str,
     n_movements: int = 100,
 ):
-    zscored_rets = get_zscored_returns(price_df_dict[symbol], period, tau)
+    zscored_rets = get_zscored_kibot_returns(price_df_dict[symbol], period, tau)
     zscored_rets = _choose_movements(zscored_rets, sign)
-    if sign == "neg":
-        ascending = True
-    else:
-        ascending = False
+    ascending = _get_order(sign)
     zscored_rets = coex.drop_na(pd.DataFrame(zscored_rets), drop_infs=True)[
         "ret_0"
     ]
@@ -78,6 +83,22 @@ def _choose_movements(zscored_rets, sign):
         zscored_rets = zscored_rets.loc[zscored_rets >= 0]
     elif sign == "neg":
         zscored_rets = zscored_rets.loc[zscored_rets < 0]
-    else:
+    elif sign == "all":
         zscored_rets = zscored_rets.abs()
+    else:
+        raise ValueError(
+            'Only ["pos", "neg", "all"] signs ' "are supported, passed %s", sign
+        )
     return zscored_rets
+
+
+def _get_order(sign: str):
+    if sign == "neg":
+        ascending = True
+    elif sign in ["pos", "all"]:
+        ascending = False
+    else:
+        raise ValueError(
+            'Only ["pos", "neg", "all"] signs ' "are supported, passed %s", sign
+        )
+    return ascending

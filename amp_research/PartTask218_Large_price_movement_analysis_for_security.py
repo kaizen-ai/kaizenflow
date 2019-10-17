@@ -26,7 +26,6 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 import amp_research.price_movement_analysis as pma
-import core.explore as coex
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
@@ -95,7 +94,7 @@ five_min_prices.head()
 
 # %%
 tau = 18
-zscored_rets = pma.get_zscored_returns(daily_prices, "daily", tau=tau)
+zscored_rets = pma.get_zscored_kibot_returns(daily_prices, "daily", tau=tau)
 
 abs_zscored_rets = zscored_rets.abs()
 pos_zscored_rets = zscored_rets.loc[zscored_rets >= 0]
@@ -121,11 +120,15 @@ top_daily_movements_by_year.head()
 top_daily_movements_by_year.tail()
 
 # %%
-top_daily_pos_movements_by_year = pos_zscored_rets.resample("Y").apply(get_top_100)
+top_daily_pos_movements_by_year = pos_zscored_rets.resample("Y").apply(
+    get_top_100
+)
 top_daily_pos_movements_by_year.head()
 
 # %%
-top_daily_neg_movements_by_year = neg_zscored_rets.resample("Y").apply(get_top_100, True)
+top_daily_neg_movements_by_year = neg_zscored_rets.resample("Y").apply(
+    get_top_100, True
+)
 top_daily_neg_movements_by_year.head()
 
 # %% [markdown]
@@ -134,7 +137,9 @@ top_daily_neg_movements_by_year.head()
 # %%
 tau = 18
 
-zscored_1min_rets = pma.get_zscored_returns(minutely_prices, "minutely", tau=tau)
+zscored_1min_rets = pma.get_zscored_kibot_returns(
+    minutely_prices, "minutely", tau=tau
+)
 
 abs_zscored_1min_rets = zscored_1min_rets.abs()
 pos_zscored_1min_rets = zscored_1min_rets.loc[zscored_1min_rets >= 0]
@@ -157,11 +162,15 @@ top_1min_movements_by_year = zscored_1min_rets.resample("Y").apply(get_top_100)
 top_1min_movements_by_year.head()
 
 # %%
-top_1min_pos_movements_by_year = pos_zscored_1min_rets.resample("Y").apply(get_top_100)
+top_1min_pos_movements_by_year = pos_zscored_1min_rets.resample("Y").apply(
+    get_top_100
+)
 top_1min_pos_movements_by_year.head()
 
 # %%
-top_1min_neg_movements_by_year = neg_zscored_1min_rets.resample("Y").apply(get_top_100, True)
+top_1min_neg_movements_by_year = neg_zscored_1min_rets.resample("Y").apply(
+    get_top_100, True
+)
 top_1min_neg_movements_by_year.head()
 
 # %% [markdown]
@@ -170,7 +179,9 @@ top_1min_neg_movements_by_year.head()
 # %%
 tau = 18
 
-zscored_5min_rets = pma.get_zscored_returns(five_min_prices, "minutely", tau=tau)
+zscored_5min_rets = pma.get_zscored_kibot_returns(
+    five_min_prices, "minutely", tau=tau
+)
 abs_zscored_5min_rets = zscored_5min_rets.abs()
 pos_zscored_5min_rets = zscored_5min_rets.loc[zscored_5min_rets >= 0]
 neg_zscored_5min_rets = zscored_5min_rets.loc[zscored_5min_rets < 0]
@@ -194,11 +205,15 @@ top_5min_movements_by_year.head()
 top_5min_movements_by_year.tail()
 
 # %%
-top_5min_pos_movements_by_year = pos_zscored_5min_rets.resample("Y").apply(get_top_100)
+top_5min_pos_movements_by_year = pos_zscored_5min_rets.resample("Y").apply(
+    get_top_100
+)
 top_5min_pos_movements_by_year.head()
 
 # %%
-top_5min_neg_movements_by_year = neg_zscored_5min_rets.resample("Y").apply(get_top_100, True)
+top_5min_neg_movements_by_year = neg_zscored_5min_rets.resample("Y").apply(
+    get_top_100, True
+)
 top_5min_neg_movements_by_year.head()
 
 # %%
