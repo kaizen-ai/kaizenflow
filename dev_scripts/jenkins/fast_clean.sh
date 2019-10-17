@@ -1,27 +1,73 @@
 #!/bin/bash -xe
 
-# TODO(gp): -> clean_build.run_fast_tests.sh
+# TODO(gp): -> build_clean_env.run_fast_tests.sh
 
 # """
 # - Build conda env
 # - Run the fast tests
 # """
 
-VERB=DEBUG
-ENV_NAME=develop.fast_clean
+EXEC_NAME=`basename "$0"`
+AMP="."
+CONDA_ENV="amp_develop.build_clean_env.run_fast_tests"
+VERB="DEBUG"
 
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Init.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+echo "$EXEC_NAME: source ~/.bashrc"
 source ~/.bashrc
+# TODO(gp): This used to be needed.
+#export PYTHONPATH=""
 
-# Create a fresh conda install.
-export PYTHONPATH=""
+echo "$EXEC_NAME: source $AMP/dev_scripts/helpers.sh"
+source $AMP/dev_scripts/helpers.sh
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Build env.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+# Activate conda base environment.
+echo "$EXEC_NAME: conda activate base"
 conda activate base
-source dev_scripts/setenv.sh -e base
-env
-dev_scripts/install/create_conda.py --delete_env_if_exists --env_name $ENV_NAME -v $VERB
 
-# Config.
-source dev_scripts/setenv.sh -e $ENV_NAME
+# Configure base environment.
+echo "$EXEC_NAME: source $AMP/dev_scripts/setenv.sh -e base"
+source $AMP/dev_scripts/setenv.sh -e base
+
+# Print env.
+echo "$EXEC_NAME: env"
+env
+
+# From dev_scripts/create_conda.sh
+CMD="create_conda.py --env_name $CONDA_ENV --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists -v $VERB"
+frame "$EXEC_NAME: $CMD"
+execute $CMD
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Setenv.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+# Config environment.
+echo "$EXEC_NAME: source dev_scripts/setenv.sh -e $CONDA_ENV"
+source dev_scripts/setenv.sh -e $CONDA_ENV
+
+# Check conda env.
+CMD="print_conda_packages.py"
+frame "$EXEC_NAME: $CMD"
+execute $CMD
+
+CMD="check_develop_packages.py"
+frame "$EXEC_NAME: $CMD"
+execute $CMD
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Run.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # Run tests.
-OPTS=''
-dev_scripts/run_tests.py --test fast --jenkins $OPTS -v $VERB
+OPTS='--test fast'
+CMD="dev_scripts/run_tests.py $OPTS --jenkins -v $VERB"
+frame "$EXEC_NAME: $CMD"
+execute $CMD

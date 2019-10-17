@@ -310,7 +310,7 @@ def dassert_not_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_file_extension(file_name, exp_exts, msg=None, *args):
+def dassert_file_extension(file_name, exp_exts):
     # Handle single extension case.
     if isinstance(exp_exts, str):
         exp_exts = [exp_exts]
@@ -319,13 +319,14 @@ def dassert_file_extension(file_name, exp_exts, msg=None, *args):
     # Check.
     act_ext = os.path.splitext(file_name)[-1].lower()
     dassert_in(
-        act_ext, exp_exts, "Invalid extension %s for %s", act_ext, file_name
+        act_ext, exp_exts, msg_tmp, act_ext, file_name
     )
 
 
 def dassert_monotonic_index(obj, msg=None, *args):
     # For some reason importing pandas is slow and we don't want to pay this
     # start up cost unless we have to.
+    # pylint=disable(import-outside-toplevel)
     import pandas as pd
 
     if isinstance(obj, pd.Index):
@@ -437,6 +438,15 @@ class _ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, colored_record)
 
 
+# Copied from `helpers/system_interaction.py` to avoid circular dependencies.
+def get_user_name():
+    # pylint=disable(import-outside-toplevel)
+    import getpass
+
+    res = getpass.getuser()
+    return res
+
+
 def _get_logging_format(force_print_format, force_verbose_format):
     if is_running_in_ipynb():
         print("WARNING: Running in Jupyter")
@@ -451,8 +461,6 @@ def _get_logging_format(force_print_format, force_verbose_format):
     if force_print_format:
         verbose_format = False
     if verbose_format:
-        # TODO(gp): We might want to print also the executable name, since we
-        #  launch executables from executables.
         # TODO(gp): We would like to have filename.name.funcName:lineno all
         #  justified on the 15.
         #  See https://docs.python.org/3/howto/logging-cookbook.html#use-of
@@ -468,6 +476,12 @@ def _get_logging_format(force_print_format, force_verbose_format):
         )
         # date_fmt = "%Y-%m-%d %I:%M:%S %p"
         date_fmt = "%m-%d_%H:%M"
+        # Print also the executable name, since Jenkins scripts launch
+        # executables from executables.
+        if get_user_name() == "jenkins":
+            exec_name = os.path.basename(get_exec_name())
+            print("WARNING: Running as jenkins: exec_name='%s'" % exec_name)
+            log_format = exec_name + "::" + log_format
     else:
         # Make logging look like a normal print().
         # TODO(gp): We want to still prefix with WARNING and ERROR.
@@ -540,6 +554,7 @@ def init_logger(
     if use_exec_path and log_filename is None:
         dassert_is(log_filename, None, msg="Can't specify conflicting filenames")
         # Use the name of the executable.
+        # pylint=disable(import-outside-toplevel)
         import inspect
 
         frame = inspect.stack()[1]
@@ -639,7 +654,12 @@ def test_logger():
 # Sample at the beginning of time before we start fiddling with command line
 # args.
 _CMD_LINE = " ".join(arg for arg in sys.argv)
+_EXEC_NAME = os.path.abspath(sys.argv[0])
 
 
 def get_command_line():
     return _CMD_LINE
+
+
+def get_exec_name():
+    return _EXEC_NAME
