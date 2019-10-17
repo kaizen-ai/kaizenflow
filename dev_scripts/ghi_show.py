@@ -40,6 +40,23 @@ _LOG = logging.getLogger(__name__)
 _COLOR = "green"
 
 
+def _parse_issue_title(txt):
+    m = re.match("#(\d+):\s*(.*)\s*", txt)
+    issue_num = m.group(1)
+    issue_num = int(issue_num)
+    # Extract the bug subject.
+    title = m.group(2)
+    _LOG.debug("txt=%s ->\n  issue_num=%s\n  title=%s", txt, issue_num, title)
+    # Remove some annoying chars.
+    for char in ": + ( ) /".split():
+        title = title.replace(char, "")
+    # Replace multiple spaces with one.
+    title = re.sub("\s+", " ", title)
+    #
+    title = title.replace(" ", "_")
+    return issue_num, title
+
+
 def _print_github_info(issue_num, repo_github_name):
     print(pri.color_highlight("# Github:", "green"))
     ghi_opts = ""
@@ -56,16 +73,12 @@ def _print_github_info(issue_num, repo_github_name):
     # url.check_url(url_name)
     #
     print(pri.color_highlight("\n# Tag:", "green"))
+    # TODO(gp): Add unit tests for these inputs.
     # txt = '#268: PRICE: Download metadata from CME'
-    m = re.match("#(\d+):\s*(.*)\s*", txt)
-    dbg.dassert(m, "Invalid txt='%s'", txt)
+    # txt = "#406: INFRA: Add decorator for caching function in disk / mem"
+    issue_num, title = _parse_issue_title(txt)
     #
-    dbg.dassert_eq(int(m.group(1)), issue_num)
-    title = m.group(2)
-    for char in ": + ( )".split():
-        title = title.replace(char, "")
-    title = title.replace(" ", "_")
-    #
+    dbg.dassert_eq(issue_num, issue_num)
     prefix = git.get_repo_prefix(git_repo_name)
     # ParTask268
     title = prefix + "Task" + str(issue_num) + "_" + title

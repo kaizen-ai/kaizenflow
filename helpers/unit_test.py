@@ -21,6 +21,8 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
+# #############################################################################
+
 # Global setter / getter for updating test.
 
 # This controls whether the output of a test is updated or not.
@@ -35,6 +37,8 @@ def set_update_tests(val):
 def get_update_tests():
     return _UPDATE_TESTS
 
+
+# #############################################################################
 
 # Global setter / getter for incremental mode.
 
@@ -65,6 +69,9 @@ def get_random_df(num_cols, seed=None, **kwargs):
 
     :return: df
     """
+    # Sometimes pandas takes several seconds to import, so we don't import
+    # unless necessary.
+    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     if seed:
@@ -75,6 +82,9 @@ def get_random_df(num_cols, seed=None, **kwargs):
 
 
 def get_df_signature(df, num_rows=3):
+    # Sometimes pandas takes several seconds to import, so we don't import
+    # unless necessary.
+    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     dbg.dassert_isinstance(df, pd.DataFrame)
@@ -201,10 +211,11 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         random.seed(20000101)
         np.random.seed(20000101)
+        # Name of the dir with artifacts for this test.
+        self._scratch_dir = None
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
-        _LOG.debug("\n" + prnt.frame(func_name))
-        return
+        _LOG.debug("\n%s", prnt.frame(func_name))
 
     def tearDown(self):
         pass
@@ -242,7 +253,8 @@ class TestCase(unittest.TestCase):
         dir_name = self._get_current_path() + "/output"
         return dir_name
 
-    def get_scratch_space(self):
+    # TODO(gp): -> get_scratch_dir().
+    def get_scratch_space(self) -> str:
         """
         Return the path of the directory storing scratch data for this test class.
         The directory is also created and cleaned up based on whether the
@@ -251,9 +263,12 @@ class TestCase(unittest.TestCase):
         :return: dir name
         :rtype: str
         """
-        dir_name = self._get_current_path() + "/tmp.scratch"
-        io_.create_dir(dir_name, incremental=get_incremental_tests())
-        return dir_name
+        if self._scratch_dir is None:
+            # Create the dir on the first invocation on a given test.
+            dir_name = os.path.join(self._get_current_path(), "tmp.scratch")
+            io_.create_dir(dir_name, incremental=get_incremental_tests())
+            self._scratch_dir = dir_name
+        return self._scratch_dir
 
     def assert_equal(self, actual, expected):
         dbg.dassert_in(type(actual), (bytes, str))
