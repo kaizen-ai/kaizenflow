@@ -319,14 +319,14 @@ def dassert_file_extension(file_name, exp_exts):
     # Check.
     act_ext = os.path.splitext(file_name)[-1].lower()
     dassert_in(
-        act_ext, exp_exts, msg_tmp, act_ext, file_name
+        act_ext, exp_exts, "Invalid extension %s for %s", act_ext, file_name
     )
 
 
 def dassert_monotonic_index(obj, msg=None, *args):
     # For some reason importing pandas is slow and we don't want to pay this
     # start up cost unless we have to.
-    # pylint=disable(import-outside-toplevel)
+    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     if isinstance(obj, pd.Index):
@@ -440,7 +440,7 @@ class _ColoredFormatter(logging.Formatter):
 
 # Copied from `helpers/system_interaction.py` to avoid circular dependencies.
 def get_user_name():
-    # pylint=disable(import-outside-toplevel)
+    # pylint: disable=import-outside-toplevel
     import getpass
 
     res = getpass.getuser()
@@ -554,7 +554,7 @@ def init_logger(
     if use_exec_path and log_filename is None:
         dassert_is(log_filename, None, msg="Can't specify conflicting filenames")
         # Use the name of the executable.
-        # pylint=disable(import-outside-toplevel)
+        # pylint: disable=import-outside-toplevel
         import inspect
 
         frame = inspect.stack()[1]
