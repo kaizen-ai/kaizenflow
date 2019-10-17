@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 # """
 # List commits in a fancy full-screen format like:
@@ -15,11 +15,12 @@
 # > gll -5
 # """
 
-git log \
-  --date=local \
-  --oneline \
-  --graph \
-  --date-order \
-  --decorate \
-  --pretty=format:'%Creset%Cgreen%h %C(reset)%C(cyan)%<(8)%aN%Creset %Creset%C(bold white) %<(55)%s %C(bold black)(%>(14)%ar) %C(red)%ad %C(yellow)%<(10)%d%C(reset)' \
-  $*
+source dev_scripts/helpers.sh
+
+# TODO(gp): Make sure that the commit message doesn't overflow.
+# TODO(gp): Remove the Git branch pointers.
+#GIT_OPTS="--graph --decorate"
+GIT_OPTS="--pretty=format:'$GIT_LOG_OPTS'"
+
+CMD="git log --date=local --oneline --date-order $GIT_OPTS $*"
+execute $CMD

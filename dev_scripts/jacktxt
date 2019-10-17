@@ -1,6 +1,10 @@
 #!/bin/bash -e
+
+# """
+# Search in txt and md files.
+# """
+
 source helpers.sh
 
-cmd="find . \( -name '*.txt' \) -print0 | xargs -0 ack $ACK_OPTS '$@'"
-#echo "+ $cmd"
-eval $cmd
+cmd="find . \( -name '*.txt' -o -name '*.md' \) -print0 | xargs -0 ack $ACK_OPTS '$@'"
+execute $cmd
