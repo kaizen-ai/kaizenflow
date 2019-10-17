@@ -121,7 +121,7 @@ class Test_preprocess1(ut.TestCase):
     def _helper(self) -> None:
         # Set up.
         in_file = os.path.join(self.get_input_dir(), "input1.txt")
-        out_file = os.path.join(self.get_scratch_space() + "output.txt")
+        out_file = os.path.join(self.get_scratch_space(), "output.txt")
         # Run.
         act = _run_preprocess(in_file, out_file)
         # Check.
@@ -193,6 +193,6 @@ class Test_preprocess2(ut.TestCase):
         for v in values:
             if _is_integer(v):
                 print(v)
-```strunz
+```
 """
         self._helper(txt_in, txt_out)
