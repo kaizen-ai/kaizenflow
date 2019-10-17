@@ -271,19 +271,30 @@ class ColumnTransformer(Transformer):
         else:
             # TODO(Paul): Revisit case where input val is None.
             self._transformer_kwargs = {}
+        self._transformed_col_names = None
+
+    def transformed_col_names(self):
+        # TODO(Paul): Consider raising if `None`.
+        return self._transformed_col_names
 
     def _transform(self, df):
         df_in = df.copy()
         df = df.copy()
         if self._cols is not None:
             df = df[self._cols]
-        #
+        # Perform the column transformation operations.
+        pre_transformed_cols = df.columns
         df = self._transformer_func(df, **self._transformer_kwargs)
-        #
+        dbg.dassert(df.index.equals(df_in.index),
+                    "Input/output indices differ but are expected to be the "
+                    "same!")
+        # Maybe rename transformed columns.
         if self._col_rename_func is not None:
             dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
             df.rename(columns=self._col_rename_func, inplace=True)
-        #
+        # Store names of transformed columns.
+        self._transformed_col_names = df.columns.tolist()
+        # Maybe merge transformed columns with a subset of input df columns.
         if self._col_mode == "merge_all":
             dbg.dassert(
                 df.columns.intersection(df_in.columns).empty,
@@ -311,9 +322,6 @@ class ColumnTransformer(Transformer):
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
-        dbg.dassert(df.index.equals(df_in.index),
-                    "Input/output indices differ but are expected to be the "
-                    "same!")
         return df, info
 
 
@@ -449,7 +457,7 @@ class SkLearnModel(SkLearnNode):
     def _model_perf(selfself, x, y, y_hat):
         info = collections.OrderedDict()
         pnl_rets = y.multiply(y_hat)
-        info["pnl_rets"]i = pnl_rets
+        info["pnl_rets"] = pnl_rets
         info["sr"] = fin.compute_sharpe_ratio(
             pnl_rets.resample("1B").sum(), time_scaling=252
         )
@@ -465,32 +473,45 @@ class Model(SkLearnNode):
         self.datetime_col = datetime_col
 
     def fit(self, df_in):
+        df_in = df_in.copy()
         reg = linear_model.LinearRegression()
-        x_train = df_in[self.x_vars]
+        df_in = df_in.dropna()
+        datetimes = df_in.index.values
+        df_in = df_in.reset_index()
+        if callable(self.x_vars):
+            x_vars = self.x_vars()
+        else:
+            x_vars = self.x_vars
+        x_train = df_in[x_vars]
         y_train = df_in[self.y_var]
-        datetimes = df_in[self.datetime_col].values
         self.model = reg.fit(x_train, y_train)
         y_hat = self.model.predict(x_train)
         x_train = pd.DataFrame(
-            x_train.values, index=datetimes, columns=self.x_vars
+            x_train.values, index=datetimes, columns=x_vars
         )
         y_train = pd.Series(y_train.values, index=datetimes, name=self.y_var)
         y_hat = pd.Series(y_hat, index=datetimes, name=self.y_var + "_hat")
         #
         info = collections.OrderedDict()
         info["model_coeffs"] = [self.model.intercept_] + self.model.coef_.tolist()
-        info["model_x_vars"] = ["intercept"] + self.x_vars
+        info["model_x_vars"] = ["intercept"] + x_vars
         info["stats"] = self._stats(df_in)
         info["model_perf"] = self._model_perf(x_train, y_train, y_hat)
         self._set_info("fit", info)
         return {"df_out": y_hat}
 
     def predict(self, df_in):
-        x_test = df_in[self.x_vars]
+        df_in = df_in.dropna()
+        datetimes = df_in.index.values
+        df_in = df_in.reset_index()
+        if callable(self.x_vars):
+            x_vars = self.x_vars()
+        else:
+            x_vars = self.x_vars
+        x_test = df_in[x_vars]
         y_test = df_in[self.y_var]
         y_hat = self.model.predict(x_test)
-        datetimes = df_in[self.datetime_col].values
-        x_test = pd.DataFrame(x_test.values, datetimes, columns=self.x_vars)
+        x_test = pd.DataFrame(x_test.values, datetimes, columns=x_vars)
         y_test = pd.Series(y_test.values, datetimes, name=self.y_var)
         y_hat = pd.Series(y_hat, datetimes, name=self.y_var + "_hat")
         #

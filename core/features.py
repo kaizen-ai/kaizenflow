@@ -7,6 +7,8 @@ import core.features as ftrs
 import collections
 import logging
 
+import pandas as pd
+
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -75,3 +77,22 @@ def compute_lagged_features(df, y_var, delay_lag, num_lags):
     _LOG.debug("df.shape=%s", df.shape)
     info["after_df.shape"] = df.shape
     return df, info
+
+
+def compute_lagged_columns(df, lag_delay, num_lags):
+    """
+
+    :param df:
+    :param lag_delay:
+    :param num_lags:
+    :return:
+    """
+    shifts = list(range(1 + lag_delay, 1 + lag_delay + num_lags))
+    out_cols = []
+    for col in df.columns:
+        for num_shifts in shifts:
+            out_col = df[col].shift(num_shifts)
+            out_col.name += "_%i" % num_shifts
+            out_cols.append(out_col)
+            _LOG.warning("name=%s", out_col.name)
+    return pd.concat(out_cols, axis=1)
