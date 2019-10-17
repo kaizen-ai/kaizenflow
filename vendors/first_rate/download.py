@@ -28,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 _WEBSITE = "http://firstratedata.com"
 _ZIPPED_DST_DIR = "/data/first_rate/zipped/"
 _UNZIPPED_DST_DIR = "/data/first_rate/unzipped/"
-_PQ_DST_DIR = "data/first_rate/pq"
+_PQ_DST_DIR = "/data/first_rate/pq"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
