@@ -45,21 +45,23 @@ def get_mean_prices(
 
 
 def get_kibot_reader(
-    frequency: str, symbol: str, n_rows: Optional[int]
+    frequency: str, symbol: str, n_rows: Optional[int] = None
 ) -> Callable:
     dbg.dassert_in(
         frequency,
-        ["D", "M"],
-        "Only daily ('D') and minutely ('M') frequencies are supported.",
+        ["D", "T", "min"],
+        "Only daily ('D') and minutely ('T', 'min') frequencies are supported.",
     )
-    if frequency == "M":
+    if frequency in ["T", "min"]:
         dir_path = os.path.join(
             hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_1min"
         )
-    else:
+    elif frequency == "D":
         dir_path = os.path.join(
             hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily"
         )
+    else:
+        raise ValueError("The %s frequency is not supported", frequency)
     file_name = os.path.join(dir_path, f"{symbol}.csv.gz")
     reader = functools.partial(kut.read_data, file_name, nrows=n_rows)
     return reader
@@ -113,9 +115,9 @@ class TimeSeriesStudy:
         data_reader: Callable[[], pd.DataFrame],
         col_name: str,
         freq_name: str,
-        data_name: Optional[str],
-        resample_freq: Optional[str],
-        resample_agg_func: Optional[str],
+        data_name: Optional[str] = None,
+        resample_freq: Optional[str] = None,
+        resample_agg_func: Optional[str] = None,
     ):
         """
         :param data_reader: A function that returns a pd.DataFrame with
@@ -126,7 +128,8 @@ class TimeSeriesStudy:
         :param data_name: The name of the data to add to plot titles
             (for example, symbol).
         :param resample_freq: pandas frequency passed to the resample
-            function
+            function. The list of supported frequencies:
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
         :param resample_agg_func: Aggregation function applied to the
             resample
         """
@@ -217,10 +220,10 @@ class TimeSeriesDailyStudy(TimeSeriesStudy):
         self,
         data_reader: Callable[[], pd.DataFrame],
         col_name: str,
-        freq_name: Optional[str],
-        data_name: Optional[str],
-        resample_freq: Optional[str],
-        resample_agg_func: Optional[str],
+        freq_name: Optional[str] = None,
+        data_name: Optional[str] = None,
+        resample_freq: Optional[str] = None,
+        resample_agg_func: Optional[str] = None,
     ):
         if not freq_name:
             freq_name = "daily"
@@ -245,10 +248,10 @@ class TimeSeriesMinStudy(TimeSeriesStudy):
         self,
         data_reader: Callable[[], pd.DataFrame],
         col_name: str,
-        freq_name: Optional[str],
-        data_name: Optional[str],
-        resample_freq: Optional[str],
-        resample_agg_func: Optional[str],
+        freq_name: Optional[str] = None,
+        data_name: Optional[str] = None,
+        resample_freq: Optional[str] = None,
+        resample_agg_func: Optional[str] = None,
     ):
         if not freq_name:
             freq_name = "minutely"
