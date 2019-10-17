@@ -159,7 +159,7 @@ def convert_csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     :return: None
     """
     # TODO(Paul): Ensure that one of header, normalizer is not None.
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path, header=header)
     if normalizer is not None:
         df = normalizer(df)
     df.to_parquet(pq_path)

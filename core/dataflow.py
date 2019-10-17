@@ -3,6 +3,7 @@ import collections
 import copy
 import io
 import logging
+from typing import Any, Callable, Iterable, Optional
 
 import networkx as nx
 import pandas as pd
@@ -10,12 +11,11 @@ from sklearn import linear_model
 
 import core.features as ftrs
 import core.finance as fin
-import core.signal_processing as sigp
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
-import amp.vendors.kibot.utils as kut
-from core.dataflow_core import DAG as DAG  # pylint: disable=unused-import
-from core.dataflow_core import Node as Node
+import vendors.kibot.utils as kut
+from core.dataflow_core import DAG  # pylint: disable=unused-import
+from core.dataflow_core import Node
 
 _LOG = logging.getLogger(__name__)
 
@@ -88,10 +88,9 @@ class SkLearnNode(Node, abc.ABC):
         dbg.dassert(getattr(self, method))
         if method in self._info.keys():
             return self._info[method]
-        else:
-            # TODO(Paul): Maybe crash if there is no info.
-            _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
-            return None
+        # TODO(Paul): Maybe crash if there is no info.
+        _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
+        return None
 
     def _set_info(self, method, values):
         dbg.dassert_isinstance(method, str)
@@ -122,6 +121,8 @@ class DataSource(SkLearnNode, abc.ABC):
         """
         self._fit_idxs = fit_idxs
 
+    # TODO(Paul): Decide what to do about the fact that we override the
+    # superclass function interface.
     def fit(self):
         """
         :return: training set as df
@@ -226,77 +227,90 @@ class ReadDataFromKibot(DataSource):
 # Transformer nodes
 # #############################################################################
 
-# TODO(Paul): Write a Node builder to automatically generate these from
-# functions.
 
-    def _transform(self, df):
+# TODO(Paul): Consider having more kinds of `Transformer` objects, e.g.,
+#   those that transform cols [or subset] -> cols, and those that change the
+#   index. Different broad considerations may apply (e.g., in the col case, we
+#   want the option to propagate the original columns or not).
+
+
+class ColumnTransformer(Transformer):
+    def __init__(
+        self,
+        nid: str,
+        transformer_func: Callable[..., pd.DataFrame],
+        # TODO(Paul): Tighten this type annotation.
+        transformer_kwargs: Optional[Any] = None,
+        cols: Optional[Iterable[str]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+    ) -> None:
         """
-        :return: df, info
+        Performs non-index modifying changes of columns.
+
+        :param nid: unique node id
+        :param transformer_func: df -> df
+        :param transformer_kwargs: transformer_func kwargs
+        :param cols: columns to transform; `None` defaults to all available.
+        :param col_rename_func: function for naming transformed columns, e.g.,
+            lambda x: "zscore_" + x
+        :param col_mode: `merge_all`, `replace_selected`, or `replace_all`.
+            Determines what columns are propagated by the node.
         """
-        raise NotImplementedError
-
-    def fit(self, input):
-        # Transform the input df.
-        df_out, info = self._transform(input)
-        # Save the info in the node: we make a copy just to be safe.
-        self.fit_info = copy.copy(info)
-        return {"output": df_out}
-
-    def predict(self, input):
-        # Transform the input df.
-        df_out, info = self._transform(input)
-        # Save the info in the node: we make a copy just to be safe.
-        self.predict_info = copy.copy(info)
-        return {"output": df_out}
-
-
-# TODO(Paul): Write a Node builder to automatically generate these from
-# functions.
-# TODO(gp): Pass "ret_0" and "open" through constructor.
-class PctReturns(Transformer):
-    def __init__(self, nid):
         super().__init__(nid)
+        self._cols = cols
+        self._col_rename_func = col_rename_func
+        if col_mode is None:
+            self._col_mode = "merge_all"
+        else:
+            self._col_mode = col_mode
+        self._transformer_func = transformer_func
+        if transformer_kwargs is not None:
+            self._transformer_kwargs = transformer_kwargs
+        else:
+            # TODO(Paul): Revisit case where input val is None.
+            self._transformer_kwargs = {}
 
     def _transform(self, df):
+        df_in = df.copy()
         df = df.copy()
-        # TODO(Paul): Factor out these info calls.
-        df["ret_0"] = df["open"].pct_change()
+        if self._cols is not None:
+            df = df[self._cols]
+        #
+        df = self._transformer_func(df, **self._transformer_kwargs)
+        #
+        if self._col_rename_func is not None:
+            dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
+            df.rename(columns=self._col_rename_func, inplace=True)
+        #
+        if self._col_mode == "merge_all":
+            dbg.dassert(
+                df.columns.intersection(df_in.columns).empty,
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df.columns,
+                df_in.columns,
+            )
+            df = df_in.merge(df, left_index=True, right_index=True)
+        elif self._col_mode == "replace_selected":
+            dbg.dassert(
+                df.columns.intersection(df_in[self._cols]).empty,
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df.columns,
+                self._cols,
+            )
+            df = df_in.drop(self._cols, axis=1).merge(
+                df, left_index=True, right_index=True
+            )
+        elif self._col_mode == "replace_all":
+            pass
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
-
-
-class Zscore(Transformer):
-    def __init__(self, nid, tau, demean, delay, cols=None):
-        super().__init__(nid)
-        self._tau = tau
-        self._demean = demean
-        self._delay = delay
-        self._cols = cols
-
-    def _transform(self, df):
-        # Copy input to merge with output before returning.
-        df_in = df.copy()
-        # Restrict columns if requested.
-        df = df.copy()
-        if self._cols is not None:
-            df = df[self._cols]
-        # Z-score and name columns.
-        df_out = sigp.rolling_zscore(df,
-                                     tau=self._tau,
-                                     demean=self._demean,
-                                     delay=self._delay)
-        df_out.rename(columns=lambda x: "z" + x, inplace=True)
-        dbg.dassert(df_out.columns.intersection(df_in.columns).empty,
-                    "Input dataframe has shared column names with zscored "
-                    "dataframe.")
-        # Merge input dataframe with z-scored columns.
-        df_out = df_in.merge(df_out, left_index=True, right_index=True)
-        #
-        info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df_out)
-        return df_out, info
 
 
 class FilterAth(Transformer):
@@ -304,11 +318,26 @@ class FilterAth(Transformer):
         super().__init__(nid)
 
     def _transform(self, df):
-        df_out = fin.filter_ath(df)
+        df = df.copy()
+        df = fin.filter_ath(df)
         #
         info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df_out)
-        return df_out, info
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
+class Resample(Transformer):
+    def __init__(self, nid, rule):
+        super().__init__(nid)
+        self._rule = rule
+
+    def _transform(self, df):
+        df = df.copy()
+        df = df.resample(rule=self._rule, closed="left", label="right").sum()
+        #
+        info = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
 
 
 class ComputeLaggedFeatures(Transformer):
@@ -468,8 +497,7 @@ def process_result_bundle(result_bundle):
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = fin.compute_sharpe_ratio(pnl_rets.resample("1B").sum(),
-                                  time_scaling=252)
+    sr = fin.compute_sharpe_ratio(pnl_rets.resample("1B").sum(), time_scaling=252)
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
     info["sr"] = copy.copy(sr)

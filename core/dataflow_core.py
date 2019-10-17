@@ -210,7 +210,7 @@ class DAG:
                 _LOG.warning("Removing nid=%s", node.nid)
                 self.remove_node(node.nid)
         else:
-            dbg.dfatal("mode=%s", self.mode)
+            dgb.dfatal("mode=%s", self.mode)
         self._dag.add_node(node.nid, stage=node)
 
     def get_node(self, nid: str):
