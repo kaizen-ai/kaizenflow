@@ -3,7 +3,7 @@ import collections
 import copy
 import io
 import logging
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import networkx as nx
 import pandas as pd
@@ -173,7 +173,7 @@ class Transformer(SkLearnNode, abc.ABC):
         """
         :return: df, info
         """
-        raise NotImplementedError
+        pass
 
     def fit(self, df_in):
         # Transform the input df.
@@ -234,6 +234,7 @@ class ReadDataFromKibot(DataSource):
 #   want the option to propagate the original columns or not).
 
 
+# TODO(Paul): Add a method to get the output column names.
 class ColumnTransformer(Transformer):
     def __init__(
         self,
@@ -310,6 +311,9 @@ class ColumnTransformer(Transformer):
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
+        dbg.dassert(df.index.equals(df_in.index),
+                    "Input/output indices differ but are expected to be the "
+                    "same!")
         return df, info
 
 
@@ -373,6 +377,83 @@ class ComputeLaggedFeatures(Transformer):
 # #############################################################################
 # Models
 # #############################################################################
+
+
+class SkLearnModel(SkLearnNode):
+    def __init__(
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        model_kwargs: Optional[Any] = None,
+        x_vars = List[str],
+        y_vars = List[str],
+    ) -> None:
+        super().__init__(nid)
+        self._model_func = model_func
+        if model_kwargs is not None:
+            self._model_kwargs = model_kwargs
+        else:
+            self._model_kwargs = {}
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df = df_in.copy()
+        datetime_idx = df.index
+        #
+        df = df.reset_index(inplace=True)
+        x_fit = df[self._x_vars]
+        y_fit = df[self._y_vars]
+        self._model = model_func(**model_kwargs)
+        self._model = self._model.fit(x_fit, y_fit)
+        y_hat = self._model.predict(x_fit)
+        #
+        x_fit = pd.DataFrame(
+            x_fit.values, index=datetime_idx, columns=self._x_vars
+        )
+        y_fit = pd.DataFrame(
+            y_fit.values, index=datetime_idx, columns=self._y_vars
+        )
+        y_hat = pd.DataFrame(
+            y_hat.values, index=datetime_idx,
+            columns=[y + "_hat" for y in self._y_vars]
+        )
+        # TODO(Paul): Summarize model perf or make configurable.
+        # TODO(Paul): Consider separating model eval from fit/predict.
+        info = collections.OrderedDict()
+        self._set_info("fit", info)
+        return {"df_out": y_hat}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df = df_in.copy()
+        datetime_idx = df.index
+        #
+        df = df.reset_index(inplace=True)
+        x_predict = df[self._x_vars]
+        y_predict = df[self._y_vars]
+        y_hat = self._model.predict(x_predict)
+        x_predict = pd.DataFrame(
+            x_predict.values, index=datetime_idx, columns=self._x_vars
+        )
+        y_predict = pd.DataFrame(
+            y_predict.values, index=datetime_idx, columns=self._y_vars
+        )
+        y_hat = pd.DataFrame(
+            y_hat.values, index=datetime_idx,
+            columns=[y + "_hat" for y in self._y_vars]
+        )
+        info = collections.OrderedDict()
+        self._set_info("predict", info)
+        return {"df_out": y_hat}
+
+    def _model_perf(selfself, x, y, y_hat):
+        info = collections.OrderedDict()
+        pnl_rets = y.multiply(y_hat)
+        info["pnl_rets"]i = pnl_rets
+        info["sr"] = fin.compute_sharpe_ratio(
+            pnl_rets.resample("1B").sum(), time_scaling=252
+        )
+        return info
 
 
 class Model(SkLearnNode):
