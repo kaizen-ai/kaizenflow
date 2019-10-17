@@ -127,8 +127,8 @@ class DataSource(SkLearnNode, abc.ABC):
         """
         :return: training set as df
         """
-        if self._fit_idxs:
-            fit_df = self.df.iloc[self._fit_idxs]
+        if self._fit_idxs is not None:
+            fit_df = self.df.loc[self._fit_idxs]
         else:
             fit_df = self.df
         info = collections.OrderedDict()
@@ -146,8 +146,8 @@ class DataSource(SkLearnNode, abc.ABC):
         """
         :return: test set as df
         """
-        if self._predict_idxs:
-            predict_df = self.df.iloc[self._predict_idxs]
+        if self._predict_idxs is not None:
+            predict_df = self.df.loc[self._predict_idxs]
         else:
             predict_df = self.df
         info = collections.OrderedDict()
@@ -202,7 +202,7 @@ class ReadDataFromDf(DataSource):
 
 
 class ReadDataFromKibot(DataSource):
-    def __init__(self, nid, file_name, nrows):
+    def __init__(self, nid, file_name, nrows=None):
         super().__init__(nid)
         # dbg.dassert_exists(file_name)
         self._file_name = file_name
@@ -406,11 +406,12 @@ class SkLearnModel(SkLearnNode):
         self._y_vars = y_vars
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
         df = df_in.copy()
-        datetime_idx = df.index
         #
         df = df.dropna()
-        df = df.reset_index(inplace=True)
+        idx = df.index
+        df = df.reset_index()
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         #
@@ -420,23 +421,25 @@ class SkLearnModel(SkLearnNode):
         self._model = self._model.fit(x_fit, y_fit)
         y_hat = self._model.predict(x_fit)
         #
-        x_fit = pd.DataFrame(x_fit.values, index=datetime_idx, columns=x_vars)
-        y_fit = pd.DataFrame(y_fit.values, index=datetime_idx, columns=y_vars)
+        x_fit = pd.DataFrame(x_fit.values, index=idx, columns=x_vars)
+        y_fit = pd.DataFrame(y_fit.values, index=idx, columns=y_vars)
         y_hat = pd.DataFrame(
-            y_hat.values, index=datetime_idx, columns=[y + "_hat" for y in y_vars]
+            y_hat, index=idx, columns=[y + "_hat" for y in y_vars]
         )
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
         self._set_info("fit", info)
         return {"df_out": y_hat}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
         df = df_in.copy()
-        datetime_idx = df.index
         #
         df = df.dropna()
-        df = df.reset_index(inplace=True)
+        idx = df.index
+        df = df.reset_index()
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         #
@@ -444,21 +447,22 @@ class SkLearnModel(SkLearnNode):
         y_predict = df[y_vars]
         y_hat = self._model.predict(x_predict)
         x_predict = pd.DataFrame(
-            x_predict.values, index=datetime_idx, columns=x_vars
+            x_predict.values, index=idx, columns=x_vars
         )
         y_predict = pd.DataFrame(
-            y_predict.values, index=datetime_idx, columns=y_vars
+            y_predict.values, index=idx, columns=y_vars
         )
         y_hat = pd.DataFrame(
-            y_hat.values, index=datetime_idx, columns=[y + "_hat" for y in y_vars]
+            y_hat, index=idx, columns=[y + "_hat" for y in y_vars]
         )
         info = collections.OrderedDict()
+        info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
         return {"df_out": y_hat}
 
     def _model_perf(self, x, y, y_hat):
         info = collections.OrderedDict()
-        pnl_rets = y.multiply(y_hat)
+        pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
         info["sr"] = fin.compute_sharpe_ratio(
             pnl_rets.resample("1B").sum(), time_scaling=252
@@ -468,9 +472,13 @@ class SkLearnModel(SkLearnNode):
     def _to_list(
         self, to_list: Union[List[str], Callable[[], List[str]]]
     ) -> List[str]:
+        if callable(to_list):
+            l = to_list()
+            dbg.dassert_isinstance(l, list)
+            return l
         if isinstance(to_list, list):
             return to_list
-        return to_list()
+        raise TypeError("Data type=%s", type(to_list))
 
 
 class Model(SkLearnNode):
@@ -563,7 +571,7 @@ def cross_validate(config, source_nid, sink_nid, dag):
     source_node = dag.get_node(source_nid)
     dag.run_leq_node(source_nid, "fit")
     df = source_node.get_df()
-    splits = pip.get_splits(config, df)
+    splits = pip.get_time_series_rolling_folds(df, config["cv_n_splits"])
     #
     result_bundle = collections.OrderedDict()
     #
@@ -591,9 +599,9 @@ def process_result_bundle(result_bundle):
     pnl_rets = []
     for split in result_bundle.keys():
         split_names.append(split)
-        model_coeffs.append(
-            result_bundle[split]["stages"]["model"]["fit"]["model_coeffs"]
-        )
+        #model_coeffs.append(
+        #    result_bundle[split]["stages"]["model"]["fit"]["model_coeffs"]
+        #)
         model_x_vars.append(
             result_bundle[split]["stages"]["model"]["fit"]["model_x_vars"]
         )
