@@ -111,34 +111,44 @@ class TimeSeriesStudy:
     def __init__(
         self,
         data_reader: Callable[[], pd.DataFrame],
-        symbol: str,
         col_name: str,
-        freq: str,
-        n_rows: Optional[int],
+        freq_name: str,
+        data_name: Optional[str],
+        resample_freq: Optional[str],
+        resample_agg_func: Optional[str],
     ):
         """
         :param data_reader: A function that returns a pd.DataFrame with
             the col_name column and a datetime index
-        :param symbol: The symbol for which the time series needs to be
-            studied
         :param col_name: The name of the time series column
-        :param freq: Frequency to write in plot titles
-        :param n_rows: the maximum number of rows to load
+        :param freq_name: The name of the data frequency to add to plot
+            titles (for example, 'daily').
+        :param data_name: The name of the data to add to plot titles
+            (for example, symbol).
+        :param resample_freq: pandas frequency passed to the resample
+            function
+        :param resample_agg_func: Aggregation function applied to the
+            resample
         """
-        self._symbol = symbol
-        self._nrows = n_rows
         self._data_reader = data_reader
         self.data = self._data_reader()
         self._check_data_index()
         self._col_name = col_name
+        self._data_name = data_name
         self.time_series = self.data[self._col_name]
-        self.freq = freq
+        self.freq_name = freq_name
+        self.resample_freq = resample_freq
+        self.agg_func = resample_agg_func
+        if self.resample_freq:
+            self.time_series = getattr(
+                self.time_series.resample(resample_freq), self.agg_func
+            )()
 
     def plot_time_series(self,):
         self.time_series.plot()
         plt.title(
-            f"{self.freq.capitalize()} {self._col_name} "
-            f"for the {self._symbol} symbol"
+            f"{self.freq_name.capitalize()} {self._col_name}"
+            f"{self._title_suffix}"
         )
         plt.xticks(
             self.time_series.resample("YS").sum().index,
@@ -158,8 +168,8 @@ class TimeSeriesStudy:
         for i, year_ts in enumerate(yearly_resample):
             year_ts[1].plot(ax=axis[i], title=year_ts[0].year)
         plt.suptitle(
-            f"{self.freq.capitalize()} {self._col_name} changes by year"
-            f" for the {self._symbol} symbol",
+            f"{self.freq_name.capitalize()} {self._col_name} changes by year"
+            f"{self._title_suffix}",
             y=1.005,
         )
         plt.tight_layout()
@@ -170,7 +180,8 @@ class TimeSeriesStudy:
         )
         plt.xlabel("day of month")
         plt.title(
-            f"Mean {self.freq} {self._col_name} " f"on different days of month"
+            f"Mean {self.freq_name} {self._col_name} on different days of "
+            f"month{self._title_suffix}"
         )
         plt.show()
 
@@ -180,8 +191,8 @@ class TimeSeriesStudy:
         )
         plt.xlabel("day of week")
         plt.title(
-            f"Mean {self.freq} {self._col_name} on different days of "
-            f"week for the {self._symbol} symbol"
+            f"Mean {self.freq_name} {self._col_name} on different days of "
+            f"week{self._title_suffix}"
         )
         plt.show()
 
@@ -193,17 +204,33 @@ class TimeSeriesStudy:
             self.data.index, "The index should be monotonic increasing"
         )
 
+    @property
+    def _title_suffix(self):
+        if self._data_name is not None:
+            return f" for {self._data_name}"
+        else:
+            return ""
+
 
 class TimeSeriesDailyStudy(TimeSeriesStudy):
     def __init__(
         self,
         data_reader: Callable[[], pd.DataFrame],
-        symbol: str,
         col_name: str,
-        n_rows: Optional[int],
+        freq_name: Optional[str],
+        data_name: Optional[str],
+        resample_freq: Optional[str],
+        resample_agg_func: Optional[str],
     ):
+        if not freq_name:
+            freq_name = "daily"
         super(TimeSeriesDailyStudy, self).__init__(
-            data_reader, symbol, col_name, "daily", n_rows
+            data_reader=data_reader,
+            col_name=col_name,
+            freq_name=freq_name,
+            data_name=data_name,
+            resample_freq=resample_freq,
+            resample_agg_func=resample_agg_func,
         )
 
     def execute(self):
@@ -217,12 +244,21 @@ class TimeSeriesMinStudy(TimeSeriesStudy):
     def __init__(
         self,
         data_reader: Callable[[], pd.DataFrame],
-        symbol: str,
         col_name: str,
-        n_rows: Optional[int],
+        freq_name: Optional[str],
+        data_name: Optional[str],
+        resample_freq: Optional[str],
+        resample_agg_func: Optional[str],
     ):
+        if not freq_name:
+            freq_name = "minutely"
         super(TimeSeriesMinStudy, self).__init__(
-            data_reader, symbol, col_name, "minutely", n_rows
+            data_reader=data_reader,
+            col_name=col_name,
+            freq_name=freq_name,
+            data_name=data_name,
+            resample_freq=resample_freq,
+            resample_agg_func=resample_agg_func,
         )
 
     def execute(self):
@@ -236,8 +272,8 @@ class TimeSeriesMinStudy(TimeSeriesStudy):
             kind="bar", rot=0
         )
         plt.title(
-            f"Mean {self._col_name} during different hours "
-            f"for the {self._symbol} symbol"
+            f"Mean {self._col_name} during different hours"
+            f"{self._title_suffix}"
         )
         plt.xlabel("hour")
         plt.show()
