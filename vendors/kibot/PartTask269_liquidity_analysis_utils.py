@@ -15,6 +15,45 @@ _LOG = logging.getLogger(__name__)
 
 KIBOT_VOL = "vol"
 
+# Offset descriptions from
+# https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+_PANDAS_OFFSET_DESCRIPTIONS = {
+    "B": "business day",
+    "C": "custom business day",
+    "D": "calendar day",
+    "W": "weekly",
+    "M": "month end",
+    "SM": "semi-month end",
+    "BM": "business month end",
+    "CBM": "custom business month end",
+    "MS": "month start",
+    "SMS": "semi-month start",
+    "BMS": "business month start",
+    "CBMS": "custom business month start",
+    "Q": "quarter end",
+    "BQ": "business quarter end",
+    "QS": "quarter start",
+    "BQS": "business quarter start",
+    "A": "year end",
+    "Y": "year end",
+    "BA": "business year end",
+    "BY": "business year end",
+    "AS": "year start",
+    "YS": "year start",
+    "BAS": "business year start",
+    "BYS": "business year start",
+    "BH": "business hour",
+    "H": "hourly",
+    "T": "minutely",
+    "min": "minutely",
+    "S": "secondly",
+    "L": "milliseconds",
+    "ms": "milliseconds",
+    "U": "microseconds",
+    "us": "microseconds",
+    "N": "nanoseconds",
+}
+
 
 def _get_kibot_reader(
     frequency: str, symbol: str, n_rows: Optional[int] = None
@@ -29,7 +68,7 @@ def _get_kibot_reader(
         )
     else:
         raise ValueError(
-            "Only D, T and min frequencies are supported, " "passed %s", frequency
+            "Only D, T and min frequencies are supported, passed %s", frequency
         )
     file_name = os.path.join(dir_path, f"{symbol}.csv.gz")
     reader = functools.partial(kut.read_data, file_name, nrows=n_rows)
@@ -100,25 +139,26 @@ class TimeSeriesStudy:
         :param resample_agg_func: Aggregation function applied to the
             resample
         """
-        self.time_series = time_series
+        self._time_series = time_series
         self._ts_name = time_series.name
         self._data_name = data_name
-        self.freq_name = freq_name
-        self.resample_freq = resample_freq
-        self.agg_func = resample_agg_func
-        if self.resample_freq:
-            self.time_series = getattr(
-                self.time_series.resample(resample_freq), self.agg_func
+        self._freq_name = freq_name
+        self._resample_freq = resample_freq
+        self._agg_func = resample_agg_func
+        if self._resample_freq:
+            self._time_series = getattr(
+                self._time_series.resample(resample_freq), self._agg_func
             )()
+            self._check_freq_name()
 
     def plot_time_series(self,):
-        self.time_series.plot()
+        self._time_series.plot()
         plt.title(
-            f"{self.freq_name.capitalize()} {self._ts_name}"
+            f"{self._freq_name.capitalize()} {self._ts_name}"
             f"{self._title_suffix}"
         )
         plt.xticks(
-            self.time_series.resample("YS").sum().index,
+            self._time_series.resample("YS").sum().index,
             ha="right",
             rotation=30,
             rotation_mode="anchor",
@@ -126,7 +166,7 @@ class TimeSeriesStudy:
         plt.show()
 
     def plot_changes_by_year(self, sharey=False):
-        yearly_resample = self.time_series.resample("y")
+        yearly_resample = self._time_series.resample("y")
         fig, axis = plt.subplots(
             len(yearly_resample),
             figsize=(20, 5 * len(yearly_resample)),
@@ -135,41 +175,54 @@ class TimeSeriesStudy:
         for i, year_ts in enumerate(yearly_resample):
             year_ts[1].plot(ax=axis[i], title=year_ts[0].year)
         plt.suptitle(
-            f"{self.freq_name.capitalize()} {self._ts_name} changes by year"
+            f"{self._freq_name.capitalize()} {self._ts_name} changes by year"
             f"{self._title_suffix}",
             y=1.005,
         )
         plt.tight_layout()
 
     def plot_mean_day_of_month(self):
-        self.time_series.groupby(self.time_series.index.day).mean().plot(
+        self._time_series.groupby(self._time_series.index.day).mean().plot(
             kind="bar", rot=0
         )
         plt.xlabel("day of month")
         plt.title(
-            f"Mean {self.freq_name} {self._ts_name} on different days of "
+            f"Mean {self._freq_name} {self._ts_name} on different days of "
             f"month{self._title_suffix}"
         )
         plt.show()
 
     def plot_mean_day_of_week(self):
-        self.time_series.groupby(self.time_series.index.dayofweek).mean().plot(
+        self._time_series.groupby(self._time_series.index.dayofweek).mean().plot(
             kind="bar", rot=0
         )
         plt.xlabel("day of week")
         plt.title(
-            f"Mean {self.freq_name} {self._ts_name} on different days of "
+            f"Mean {self._freq_name} {self._ts_name} on different days of "
             f"week{self._title_suffix}"
         )
         plt.show()
 
     def _check_data_index(self):
         assert isinstance(
-            self.time_series.index, pd.DatetimeIndex
+            self._time_series.index, pd.DatetimeIndex
         ), "The index should have pd.DatetimeIndex format."
         dbg.dassert_monotonic_index(
-            self.time_series.index, "The index should be monotonic increasing"
+            self._time_series.index, "The index should be monotonic increasing"
         )
+
+    def _check_freq_name(self):
+        if self._resample_freq:
+            freq_name = _PANDAS_OFFSET_DESCRIPTIONS[self._resample_freq]
+            if freq_name.lower() != self._freq_name.lower():
+                _LOG.warning(
+                    "You are resampling in %s frequency. "
+                    "Changing frequency name on plots from %s to %s.",
+                    self._resample_freq,
+                    self._freq_name,
+                    freq_name,
+                )
+                self._freq_name = freq_name
 
     @property
     def _title_suffix(self):
@@ -231,7 +284,7 @@ class TimeSeriesMinuteStudy(TimeSeriesStudy):
         self.plot_minutely_hour()
 
     def plot_minutely_hour(self):
-        self.time_series.groupby(self.time_series.index.hour).mean().plot(
+        self._time_series.groupby(self._time_series.index.hour).mean().plot(
             kind="bar", rot=0
         )
         plt.title(
