@@ -121,8 +121,9 @@ class DataSource(SkLearnNode, abc.ABC):
         """
         self._fit_idxs = fit_idxs
 
-    # TODO(Paul): Decide what to do about the fact that we override the
-    # superclass function interface.
+    # DataSource does not have a `df_in` in either `fit` or `predict` as a
+    # typical `SkLearnNode` does.
+    # pylint: disable=arguments-differ
     def fit(self):
         """
         :return: training set as df
@@ -142,6 +143,7 @@ class DataSource(SkLearnNode, abc.ABC):
         """
         self._predict_idxs = predict_idxs
 
+    # pylint: disable=arguments-differ
     def predict(self):
         """
         :return: test set as df
@@ -156,7 +158,7 @@ class DataSource(SkLearnNode, abc.ABC):
         return {self.output_names[0]: predict_df}
 
     def get_df(self):
-        dbg.dassert_is_not(self.df, None)
+        dbg.dassert_is_not(self.df, None, "No DataFrame found!")
         return self.df
 
 
@@ -275,9 +277,12 @@ class ColumnTransformer(Transformer):
         self._transformed_col_names = None
 
     def transformed_col_names(self) -> List[str]:
-        dbg.dassert_is_not(self._transformed_col_names, None,
-                           "No transformed column names. This may indicate "
-                           "an invocation prior to graph execution.")
+        dbg.dassert_is_not(
+            self._transformed_col_names,
+            None,
+            "No transformed column names. This may indicate "
+            "an invocation prior to graph execution.",
+        )
         return self._transformed_col_names
 
     # TODO(Paul): Add type hints (or rely on parent class?).
@@ -329,9 +334,6 @@ class ColumnTransformer(Transformer):
 
 
 class FilterAth(Transformer):
-    def __init__(self, nid):
-        super().__init__(nid)
-
     def _transform(self, df):
         df = df.copy()
         df = fin.filter_ath(df)
@@ -408,6 +410,7 @@ class SkLearnModel(SkLearnNode):
             self._model_kwargs = {}
         self._x_vars = x_vars
         self._y_vars = y_vars
+        self._model = None
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
@@ -431,6 +434,9 @@ class SkLearnModel(SkLearnNode):
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         df = df_in.copy()
         idx, x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
+        dbg.dassert_is_not(
+            self._model, None, "Model not found! Check if `fit` has been run."
+        )
         y_hat = self._model.predict(x_predict)
         x_predict, y_predict, y_hat = self._from_sklearn_format(
             idx, x_vars, x_predict, y_vars, y_predict, y_hat
@@ -441,7 +447,9 @@ class SkLearnModel(SkLearnNode):
         return {"df_out": y_hat}
 
     # TODO(Paul): Add type hints.
-    def _model_perf(self, x, y, y_hat):
+    @staticmethod
+    def _model_perf(x, y, y_hat):
+        _ = x
         info = collections.OrderedDict()
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
@@ -456,6 +464,7 @@ class SkLearnModel(SkLearnNode):
         df = df.dropna()
         idx = df.index
         df = df.reset_index()
+        # TODO(Paul): replace with class name
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         x_vals = df[x_vars]
@@ -463,15 +472,15 @@ class SkLearnModel(SkLearnNode):
         return idx, x_vars, x_vals, y_vars, y_vals
 
     # TODO(Paul): Add type hints.
-    def _from_sklearn_format(self, idx, x_vars, x_vals, y_vars, y_vals, y_hat):
+    @staticmethod
+    def _from_sklearn_format(idx, x_vars, x_vals, y_vars, y_vals, y_hat):
         x = pd.DataFrame(x_vals.values, index=idx, columns=x_vars)
         y = pd.DataFrame(y_vals.values, index=idx, columns=y_vars)
         y_h = pd.DataFrame(y_hat, index=idx, columns=[y + "_hat" for y in y_vars])
         return x, y, y_h
 
-    def _to_list(
-        self, to_list: Union[List[str], Callable[[], List[str]]]
-    ) -> List[str]:
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
         """
         Returns a list given its input.
 
