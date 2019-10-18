@@ -36,8 +36,6 @@
 - Name classes and (non-executable) files using nouns (e.g., `Downloader()`,
   `downloader.py`)
 
-# Naming things
-
 ## Finding the best names
 
 - Naming things properly is one of the most difficult task of a programmer / data
