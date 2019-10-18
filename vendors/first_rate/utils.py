@@ -6,12 +6,12 @@ import vendors.first_rate.utils as fru
 
 Download equity data from the http://firstratedata.com.
 
-- Save the data as zipped csvs for each equity to one of the
+- Save the data as zipped CSVs for each equity to one of the
   [commodity, crypto, fx, index, stock_A-D, stock_E-I, stock_J-N,
   stock_O-R, stock_S-Z] category directories.
-- Combine zipped csvs for each equity, add "timestamp" column and
-  column names. Save as csv to corresponding category directories
-- Save csvs to parquet (divided by category)
+- Combine zipped CSVs for each equity, add "timestamp" column and
+  column names. Save as CSV to corresponding category directories
+- Save CSVs to parquet (divided by category)
 """
 
 import logging
