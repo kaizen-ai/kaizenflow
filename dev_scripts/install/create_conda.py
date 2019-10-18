@@ -199,6 +199,7 @@ def _process_requirements_file(req_file):
 def _process_requirements_files(req_files):
     dbg.dassert_isinstance(req_files, list)
     dbg.dassert_lte(1, len(req_files))
+    _LOG.debug("req_files=%s", req_files)
     out_files = []
     for req_file in req_files:
         out_file = _process_requirements_file(req_file)
