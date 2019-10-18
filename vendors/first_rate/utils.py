@@ -350,8 +350,12 @@ class _ZipCSVCombiner:
         if isinstance(df.iloc[0, 0], (int, np.int64)):
             first_col = "date"
         elif isinstance(df.iloc[0, 0], str):
-            chars_regexp = re.compile(r"[\./:\s-]")
-            backslash_regexp = re.compile(r"\\")
+            # Remove any of the '\', '.', '/', ':', '-', ' ' symbols
+            # from the date/datetime col. If the length of the cleaned
+            # element is 8, it means it is a date column. If the
+            # length >= 11, the column contains both date and time.
+            chars_regexp = r"[\./:\s-]"
+            backslash_regexp = r"\\"
             without_symbols = re.sub(chars_regexp, "", df.iloc[0, 0])
             without_symbols = re.sub(backslash_regexp, "", without_symbols)
             if len(without_symbols) == 8:
