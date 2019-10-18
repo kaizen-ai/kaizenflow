@@ -44,9 +44,9 @@
 
 - We follow python standard [PEP 257](https://www.python.org/dev/peps/pep-0257/)
   for commenting
-    - PEP 257 standardizes what and how comments should be expressed (e.g., use
-      a triple quotes for commenting a function), but it does not specify what
-      markup syntax should be used to describe comments
+    - PEP 257 standardizes what comments should express and how they should do
+      it (e.g., use triple quotes for commenting a function), but does not
+      specify what markup syntax should be used to describe comments
 
 - Different conventions have been developed for documenting interfaces
     - reST
@@ -83,7 +83,7 @@
     - Type hinting makes the `:type ...` redundant and you should use only type
       hinting
 
-- Morew examples and discussions of python docstring are
+- More examples of and discussions on python docstrings are
   [here](https://stackoverflow.com/questions/3898572)
 
 ## Descriptive vs imperative style
@@ -98,18 +98,18 @@
     e.g. don't write "Returns the pathname ...".
     ```
     - pylint and other python QA tools favor an imperative style
-    - Since we prefer to rely upon automatic checks, we decided to use an
-      imperative style of comments
+    - Since we prefer to rely upon automatic checks, we have decided to use
+      the imperative style
 
 ## Use type hints
 
-- We expect the new code to use type hints any time possible
+- We expect new code to use type hints whenever possible
     - See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
     - [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
-- At some point we will start adding type hints also to old code
+- At some point we will start adding type hints to old code
 
-- We plan to start using static analyzer (e.g., `mypy`) to check for bugs from
-  type mistakes and enforce type hints at run-time, whenever possible
+- We plan to start using static analyzers (e.g., `mypy`) to check for bugs from
+  type mistakes and to enforce type hints at run-time, whenever possible
 
 ## Replace empty lines in code with comments
 
@@ -144,8 +144,8 @@
     ```
 
 - The problem with empty lines is that they are visually confusing since one
-  empty line is used also to separate functions. For this reason we suggest to
-  use an empty comment.
+  empty line is used also to separate functions. For this reason we suggest
+  using an empty comment.
 
 ## Avoid distracting comments
 
@@ -157,7 +157,7 @@
     log.info("Results are %s", ...)
     ```
 
-## If you find a bug, obsolete docstring in the code
+## If you find a bug or obsolete docstring/TODO in the code
 
 - The process is:
     - do a `git blame` to find who wrote the code
@@ -169,7 +169,7 @@
         - stacktrace
         - you can use the tag “BUG: ..."
 
-## Referring to an object in the code
+## Referring to an object in code comments 
 
 - We prefer to refer to objects in the code using Markdown like `this` (this is a
   convention used in the documentation system Sphinx)
@@ -179,7 +179,7 @@
     Decorator adding a timer around function `f`.
     """
     ```
-- This is useful to distinguish the object code from the real life object
+- This is useful for distinguishing the object code from the real-life object
 - E.g.,
     ```python
     # The df `df_tmp` is used for ...
@@ -187,8 +187,8 @@
 
 ## Inline comments
 
-- In general we prefer to avoid comments on the same line as code since they
-  require extra maintenance (e.g., when the line becomes too long)
+- In general we prefer to avoid writing comments on the same line as code since
+  they require extra maintenance (e.g., when the line becomes too long)
     - **Bad**
         ```python
         print("hello world")      # Introduce yourself.
@@ -206,21 +206,22 @@
 - When the linter reports a problem
     - We assume that linter messages are correct, until the linter is proven
       wrong
-    - We try to understand what's the rationale for the linter complaints
-    - We then change the code to follow the linter suggestion and remove the lint
+    - We try to understand what the rationale for the linter's complaints
+    - We then change the code to follow the linter's suggestion and remove the
+      lint
 
-1) If you think a message is too pedantic please file a bug with the example and
-   as a team we will consider whether to exclude that message from our list of
-   linter suggestions
+1) If you think a message is too pedantic, please file a bug with the example
+   and as a team we will consider whether to exclude that message from our list
+   of linter suggestions
 
-2) If you think the message is a false positive, then you try to change the code
-   to make the linter happy
+2) If you think the message is a false positive, then try to change the code to
+   make the linter happy
     - E.g., if the code depends on some run-time behavior that the linter can't
-      infer then you should wonder if that behavior is really needed
+      infer, then you should question whether that behavior is really needed
     - A human reader would probably be as confused as the linter is
 
 3) If you really believe that you should override the linter in this particular
-   case then use something like:
+   case, then use something like:
     ```python
     # pylint: disable=some-message,another-one
     ```
@@ -273,7 +274,7 @@ dbg.init_logger(verb=logging.DEBUG)
 _LOG.debug("I am a debug function about %s", a)
 ```
 
-- In this way one can decide how much debug info are needed (see Unix rule of
+- In this way one can decide how much debug info is needed (see Unix rule of
   silence)
     - E.g., when there is a bug one can run with `-v DEBUG` and see what's
       happening right before the bug
@@ -297,7 +298,7 @@ _LOG.debug("I am a debug function about %s", a)
       about
 
 - Make sure the script prints when the work is terminated, e.g., "DONE" or
-  "Results written in ..."
+  "Results written to ..."
     - This is useful to indicate that the script did not die in the middle:
       sometimes this happens silently and it is reported only from the OS return
       code
@@ -333,7 +334,7 @@ _LOG.warning(...)
     - send the rest to warnings.log
     - at the end of the run, reports "there are warnings in warnings.log"
 
-# Assertion
+# Assertions
 
 ## Use positional args when asserting
 - `dassert_*` is modeled after logging so for the same reasons one should use
@@ -353,7 +354,7 @@ _LOG.warning(...)
     - E.g., if you get an assertion after 8 hours of computation you don't want
       to have to add some logging and run for 8 hours to just know what happened
 - A `dassert_*` typically prints as much info as possible, but it can't report
-  information that are not visible to it:
+  information that is not visible to it:
     - **Bad**
         ```python
         dbg.dassert(string.startswith('hello'))
@@ -367,9 +368,9 @@ _LOG.warning(...)
           spaces that make the value unclear or to make the error as readable as
           possible
 
-# Import
+# Imports
 
-## Importing code from Git submodule
+## Importing code from a Git submodule
 - If you are in `p1` and you need to import something from `amp`:
     - **Bad**
         ```python
@@ -399,7 +400,7 @@ _LOG.warning(...)
 - The `from ... import *`
     - pollutes the namespace with the symbols and spreads over everywhere, making
       painful to clean up
-    - makes unclear from where each function is coming from, losing context that
+    - obscures where each function is coming from, removing the context that
       comes from the namespace
     - is evil in many other ways (see
       [StackOverflow](https://stackoverflow.com/questions/2386714/why-is-import-bad))
@@ -503,7 +504,7 @@ _LOG.warning(...)
     ```
     import compustat.timestamp
     ```
-- In this way your code can run without dependency from your current dir
+- In this way your code can run without depending upon your current dir
 
 ## Baptizing module import
 
@@ -572,7 +573,7 @@ _LOG.warning(...)
 
 ## Use clear names for the scripts
 
-- In general scripts (like functions) should have name like “action_verb”.
+- In general scripts (like functions) should have a name like “action_verb”.
     - **Bad**
         - Example of bad names are` timestamp_extractor.py` and
           `timestamp_extractor_v2.py`
@@ -608,8 +609,8 @@ _LOG.warning(...)
 
 ## Decorator names
 
-- For decorator we don't use a verb, like for functions, but rather an adjective
-  or a past tense verb, e.g.,
+- For decorators we don't use a verb as we do for normal functions, but rather
+  an adjective or a past tense verb, e.g.,
     ```python
     def timed(f):
         """
