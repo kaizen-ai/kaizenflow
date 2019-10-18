@@ -259,6 +259,8 @@ class ColumnTransformer(Transformer):
         """
         super().__init__(nid)
         self._cols = cols
+        if col_rename_func is not None:
+            dbg.dassert_isinstance(col_rename_func, collections.Callable)
         self._col_rename_func = col_rename_func
         if col_mode is None:
             self._col_mode = "merge_all"
@@ -270,6 +272,7 @@ class ColumnTransformer(Transformer):
         else:
             # TODO(Paul): Revisit case where input val is None.
             self._transformer_kwargs = {}
+        # Store the list of columns after the transformation.
         self._transformed_col_names = None
 
     def transformed_col_names(self):
@@ -282,15 +285,13 @@ class ColumnTransformer(Transformer):
         if self._cols is not None:
             df = df[self._cols]
         # Perform the column transformation operations.
-        df.columns
         df = self._transformer_func(df, **self._transformer_kwargs)
         dbg.dassert(
             df.index.equals(df_in.index),
-            "Input/output indices differ but are expected to be the " "same!",
+            "Input/output indices differ but are expected to be the same!",
         )
         # Maybe rename transformed columns.
         if self._col_rename_func is not None:
-            dbg.dassert_isinstance(self._col_rename_func, collections.Callable)
             df.rename(columns=self._col_rename_func, inplace=True)
         # Store names of transformed columns.
         self._transformed_col_names = df.columns.tolist()
@@ -408,23 +409,13 @@ class SkLearnModel(SkLearnNode):
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         df = df_in.copy()
-        #
-        df = df.dropna()
-        idx = df.index
-        df = df.reset_index()
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
-        #
-        x_fit = df[x_vars]
-        y_fit = df[y_vars]
+        idx, x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, y_fit)
         y_hat = self._model.predict(x_fit)
         #
-        x_fit = pd.DataFrame(x_fit.values, index=idx, columns=x_vars)
-        y_fit = pd.DataFrame(y_fit.values, index=idx, columns=y_vars)
-        y_hat = pd.DataFrame(
-            y_hat, index=idx, columns=[y + "_hat" for y in y_vars]
+        x_fit, y_fit, y_hat = self._from_sklearn_format(
+            idx, x_vars, x_fit, y_vars, y_fit, y_hat
         )
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
@@ -436,20 +427,10 @@ class SkLearnModel(SkLearnNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         df = df_in.copy()
-        #
-        df = df.dropna()
-        idx = df.index
-        df = df.reset_index()
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
-        #
-        x_predict = df[x_vars]
-        y_predict = df[y_vars]
+        idx, x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
         y_hat = self._model.predict(x_predict)
-        x_predict = pd.DataFrame(x_predict.values, index=idx, columns=x_vars)
-        y_predict = pd.DataFrame(y_predict.values, index=idx, columns=y_vars)
-        y_hat = pd.DataFrame(
-            y_hat, index=idx, columns=[y + "_hat" for y in y_vars]
+        x_predict, y_predict, y_hat = self._from_sklearn_format(
+            idx, x_vars, x_predict, y_vars, y_predict, y_hat
         )
         info = collections.OrderedDict()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
@@ -465,16 +446,51 @@ class SkLearnModel(SkLearnNode):
         )
         return info
 
+    def _to_sklearn_format(self, df):
+        # Drop NaNs and prepare the index for sklearn.
+        df = df.dropna()
+        idx = df.index
+        df = df.reset_index()
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        x_vals = df[x_vars]
+        y_vals = df[y_vars]
+        return idx, x_vars, x_vals, y_vars, y_vals
+
+    def _from_sklearn_format(self, idx, x_vars, x_vals, y_vars, y_vals, y_hat):
+        x = pd.DataFrame(x_vals.values, index=idx, columns=x_vars)
+        y = pd.DataFrame(y_vals.values, index=idx, columns=y_vars)
+        y_h = pd.DataFrame(y_hat, index=idx, columns=[y + "_hat" for y in y_vars])
+        return x, y, y_h
+
     def _to_list(
         self, to_list: Union[List[str], Callable[[], List[str]]]
     ) -> List[str]:
+        """
+        Returns a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
         if callable(to_list):
-            l = to_list()
-            dbg.dassert_isinstance(l, list)
-            return l
+            to_list = to_list()
         if isinstance(to_list, list):
             return to_list
-        raise TypeError("Data type=%s", type(to_list))
+        raise TypeError("Data type=`%s`" % type(to_list))
 
 
 class Model(SkLearnNode):
