@@ -274,10 +274,13 @@ class ColumnTransformer(Transformer):
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
 
-    def transformed_col_names(self):
-        # TODO(Paul): Consider raising if `None`.
+    def transformed_col_names(self) -> List[str]:
+        dbg.dassert_is_not(self._transformed_col_names, None,
+                           "No transformed column names. This may indicate "
+                           "an invocation prior to graph execution.")
         return self._transformed_col_names
 
+    # TODO(Paul): Add type hints (or rely on parent class?).
     def _transform(self, df):
         df_in = df.copy()
         df = df.copy()
@@ -437,6 +440,7 @@ class SkLearnModel(SkLearnNode):
         self._set_info("predict", info)
         return {"df_out": y_hat}
 
+    # TODO(Paul): Add type hints.
     def _model_perf(self, x, y, y_hat):
         info = collections.OrderedDict()
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
@@ -446,6 +450,7 @@ class SkLearnModel(SkLearnNode):
         )
         return info
 
+    # TODO(Paul): Add type hints.
     def _to_sklearn_format(self, df):
         # Drop NaNs and prepare the index for sklearn.
         df = df.dropna()
@@ -457,6 +462,7 @@ class SkLearnModel(SkLearnNode):
         y_vals = df[y_vars]
         return idx, x_vars, x_vals, y_vars, y_vals
 
+    # TODO(Paul): Add type hints.
     def _from_sklearn_format(self, idx, x_vars, x_vals, y_vars, y_vals, y_hat):
         x = pd.DataFrame(x_vals.values, index=idx, columns=x_vars)
         y = pd.DataFrame(y_vals.values, index=idx, columns=y_vars)
