@@ -7,8 +7,16 @@ import vendors.first_rate.utils as fru
 Download equity data from the http://firstratedata.com.
 
 - Save the data as zipped CSVs for each equity to one of the
-  [commodity, crypto, fx, index, stock_A-D, stock_E-I, stock_J-N,
-  stock_O-R, stock_S-Z] category directories.
+    - commodity
+    - crypto
+    - fx
+    - index
+    - stock_A-D
+    - stock_E-I
+    - stock_J-N
+    - stock_O-R
+    - stock_S-Z
+  category directories.
 - Combine zipped CSVs for each equity, add "timestamp" column and
   column names. Save as CSV to corresponding category directories
 - Save CSVs to parquet (divided by category)
@@ -17,6 +25,7 @@ Download equity data from the http://firstratedata.com.
 import logging
 import os
 import re
+import typing
 import zipfile
 
 import numpy as np
@@ -37,7 +46,14 @@ class _FileURL:
     A container for file urls.
     """
 
-    def __init__(self, url, timezone, category, col_names, path=""):
+    def __init__(
+        self,
+        url: str,
+        timezone: str,
+        category: str,
+        col_names: typing.Iterable[str],
+        path: typing.Optional[str] = "",
+    ):
         """
         :param url: file url
         :param timezone: The timezone from the dataset description on the
@@ -48,7 +64,7 @@ class _FileURL:
             stock_O-R, stock_S-Z]
         :param col_names: Column names from the "Format" field of the
             dataset description on the FirstRate website
-        :param path: A path to which this file is saved as zipped csv
+        :param path: A path to which this file is saved as zipped CSV
         """
         self.url = url
         self.timezone = timezone
@@ -65,7 +81,7 @@ class RawDataDownloader:
     information will be appended to each file name as a suffix.
     """
 
-    def __init__(self, website, dst_dir, max_num_files):
+    def __init__(self, website: str, dst_dir: str, max_num_files: int):
         """
         :param website: the website url
         :param dst_dir: destination directory
@@ -308,18 +324,18 @@ class RawDataDownloader:
 
 class _ZipCSVCombiner:
     """
-    - Combine csvs from a zip file
+    - Combine CSVs from a zip file
     - add "timestamp" column
     - localize that column to the timezone parsed from the FirstRate
       website
     - add column names (parsed from the FirstRate website)
-    - save as csv
+    - save as CSV
     """
 
     def __init__(self, url_object: _FileURL, output_path: str):
         """
         :param url_object: _FileURL object
-        :param output_path: destination path for the csv
+        :param output_path: destination path for the CSV
         """
         self.url_object = url_object
         self.output_path = output_path
@@ -417,11 +433,16 @@ class _ZipCSVCombiner:
 
 class MultipleZipCSVCombiner:
     """
-    Combine zipped csvs in first_rate directory. Add column names to the
-    csvs, add timestamp column and localize it.
+    Combine zipped CSVs in first_rate directory. Add column names to the
+    CSVs, add timestamp column and localize it.
     """
 
-    def __init__(self, input_dir, path_object_dict, dst_dir):
+    def __init__(
+        self,
+        input_dir: str,
+        path_object_dict: typing.Dict[str, _FileURL],
+        dst_dir: str,
+    ):
         """
         :param input_dir: first_rate directory with categories
         :param path_object_dict: path_object_dict attribute of the
@@ -433,13 +454,13 @@ class MultipleZipCSVCombiner:
         self.dst_dir = dst_dir
 
     def execute(self):
-        _LOG.info("Combining zipped csvs into one")
+        _LOG.info("Combining zipped CSVs into one")
         for category_dir in tqdm(os.listdir(self.input_dir)):
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
             for zip_name in tqdm(os.listdir(category_dir_input_path)):
-                # Combine csvs from the zip file, process them and save.
+                # Combine CSVs from the zip file, process them and save.
                 zip_path = os.path.join(category_dir_input_path, zip_name)
                 url_object = self.path_object_dict[zip_path]
                 csv_name = os.path.splitext(zip_name)[0] + ".csv"
@@ -450,20 +471,23 @@ class MultipleZipCSVCombiner:
 
 class CsvToParquetConverter:
     """
-    Save csv files divided by categories into parquet
+    Save CSV files divided by categories into parquet
     """
 
-    def __init__(self, input_dir, dst_dir, to_datetime, timestamp_col):
+    def __init__(
+        self,
+        input_dir: str,
+        dst_dir: str,
+        timestamp_col: typing.Optional[str] = None,
+    ):
         """
         :param input_dir: input directory with categories
         :param dst_dir: destination directory
-        :param to_datetime: whether to transform timestamp column to
-            datetime format
-        :param timestamp_col: the name of the timestamp column
+        :param timestamp_col: If not None, will transform this column
+            to datetime
         """
         self.input_dir = input_dir
         self.dst_dir = dst_dir
-        self._to_datetime = to_datetime
         self._timestamp_col = timestamp_col
 
     def execute(self):
@@ -472,7 +496,7 @@ class CsvToParquetConverter:
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
-            if self._to_datetime:
+            if self._timestamp_col:
                 normalizer = self._ts_to_datetime
             else:
                 normalizer = None
