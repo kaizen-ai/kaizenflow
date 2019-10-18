@@ -58,6 +58,31 @@
             print("done!")
         ```
 
+## Indenting `code` style
+
+- GitHub / pandoc seems to render incorrectly a code block unless it's indented
+  over the previous line
+
+```
+- **Bad**
+```bash
+> git push
+```
+- **Good**
+    ```bash
+    > git push
+    ```
+```
+
+- **Bad**
+```bash
+> git push
+```
+- **Good**
+    ```bash
+    > git push
+    ```
+
 ## Use bullet lists
 - We like using bullet list since one can represent thought process more clearly,
   e.g.,
