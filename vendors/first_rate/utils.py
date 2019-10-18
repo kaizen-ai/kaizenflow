@@ -25,8 +25,8 @@ Download equity data from the http://firstratedata.com.
 import logging
 import os
 import re
-import typing
 import zipfile
+from typing import Dict, Iterable, Optional
 
 import numpy as np
 import pandas as pd
@@ -51,8 +51,8 @@ class _FileURL:
         url: str,
         timezone: str,
         category: str,
-        col_names: typing.Iterable[str],
-        path: typing.Optional[str] = "",
+        col_names: Iterable[str],
+        path: Optional[str] = "",
     ):
         """
         :param url: file url
@@ -322,7 +322,7 @@ class RawDataDownloader:
         return hrefs_categories_urls
 
 
-class _ZipCSVCombiner:
+class _ZipCsvCombiner:
     """
     - Combine CSVs from a zip file
     - add "timestamp" column
@@ -431,17 +431,14 @@ class _ZipCSVCombiner:
         return df
 
 
-class MultipleZipCSVCombiner:
+class MultipleZipCsvCombiner:
     """
     Combine zipped CSVs in first_rate directory. Add column names to the
     CSVs, add timestamp column and localize it.
     """
 
     def __init__(
-        self,
-        input_dir: str,
-        path_object_dict: typing.Dict[str, _FileURL],
-        dst_dir: str,
+        self, input_dir: str, path_object_dict: Dict[str, _FileURL], dst_dir: str
     ):
         """
         :param input_dir: first_rate directory with categories
@@ -465,7 +462,7 @@ class MultipleZipCSVCombiner:
                 url_object = self.path_object_dict[zip_path]
                 csv_name = os.path.splitext(zip_name)[0] + ".csv"
                 csv_path = os.path.join(category_dir_dst_path, csv_name)
-                zcc = _ZipCSVCombiner(url_object, csv_path)
+                zcc = _ZipCsvCombiner(url_object, csv_path)
                 zcc.execute()
 
 
@@ -475,20 +472,25 @@ class CsvToParquetConverter:
     """
 
     def __init__(
-        self,
-        input_dir: str,
-        dst_dir: str,
-        timestamp_col: typing.Optional[str] = None,
+        self, input_dir: str, dst_dir: str, timestamp_col: Optional[str] = None
     ):
         """
         :param input_dir: input directory with categories
         :param dst_dir: destination directory
-        :param timestamp_col: If not None, will transform this column
+        :param timestamp_col: if not `None`, will transform this column
             to datetime
         """
         self.input_dir = input_dir
         self.dst_dir = dst_dir
         self._timestamp_col = timestamp_col
+        if self._timestamp_col is not None:
+            dbg.dassert(
+                timestamp_col,
+                "",
+                "Passed empty string as timestamp_col. "
+                "If no column needs to be transformed to datetime pass None. "
+                "Otherwise pass the column name.",
+            )
 
     def execute(self):
         _LOG.info("Saving to parquet")
@@ -496,7 +498,7 @@ class CsvToParquetConverter:
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
-            if self._timestamp_col:
+            if self._timestamp_col is not None:
                 normalizer = self._ts_to_datetime
             else:
                 normalizer = None

@@ -83,13 +83,13 @@ if __name__ == "__main__":
     rdd = fru.RawDataDownloader(_WEBSITE, args.zipped_dst_dir, args.max_num_files)
     rdd.execute()
     #
-    mzcc = fru.MultipleZipCSVCombiner(
+    mzcc = fru.MultipleZipCsvCombiner(
         args.zipped_dst_dir, rdd.path_object_dict, args.unzipped_dst_dir
     )
     mzcc.execute()
     #
     ctpc = fru.CsvToParquetConverter(
-        args.unzipped_dst_dir, args.pq_dst_dir, True, "timestamp"
+        args.unzipped_dst_dir, args.pq_dst_dir, "timestamp"
     )
     ctpc.execute()
     # TODO(Julia): We should also transfer the data on AWS. It's ok not to do
