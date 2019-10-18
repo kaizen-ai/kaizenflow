@@ -153,6 +153,23 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
     return result_split
 
 
+def get_time_series_rolling_folds(df, n_splits):
+    dbg.dassert_lte(1, n_splits)
+    idxs = range(df.shape[0])
+    # Split in equal chunks.
+    chunk_size = int(math.ceil(len(idxs) / n_splits))
+    dbg.dassert_lte(1, chunk_size)
+    chunks = [
+        idxs[i: i + chunk_size] for i in range(0, len(idxs), chunk_size)
+    ]
+    dbg.dassert_eq(len(chunks), n_splits)
+    #
+    idx_splits = [df.index[chunk] for chunk in chunks]
+    #
+    splits = list(zip(idx_splits[:-1], idx_splits[1:]))
+    return splits
+
+
 def get_splits(config, df):
     cv_split_style = config["cv_split_style"]
     if "datetime" in df.columns:
