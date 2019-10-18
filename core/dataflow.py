@@ -233,7 +233,6 @@ class ReadDataFromKibot(DataSource):
 #   want the option to propagate the original columns or not).
 
 
-# TODO(Paul): Add a method to get the output column names.
 class ColumnTransformer(Transformer):
     def __init__(
         self,
@@ -353,6 +352,7 @@ class Resample(Transformer):
         return df, info
 
 
+# TODO(Paul): Deprecate and delete.
 class ComputeLaggedFeatures(Transformer):
     def __init__(self, nid, y_var, delay_lag, num_lags):
         super().__init__(nid)
@@ -493,6 +493,7 @@ class SkLearnModel(SkLearnNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
+# TODO(Paul): Deprecate and delete.
 class Model(SkLearnNode):
     # TODO(GP): y_var before x_vars? Probably should switch.
     def __init__(self, nid, datetime_col, y_var, x_vars):
