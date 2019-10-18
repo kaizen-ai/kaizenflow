@@ -76,7 +76,7 @@ def _get_kibot_reader(
 
 
 def read_kibot_prices(
-    frequency: str, symbol: str, n_rows: Optional[int]
+    frequency: str, symbol: str, n_rows: Optional[int] = None
 ) -> pd.DataFrame:
     reader = _get_kibot_reader(frequency, symbol, n_rows)
     prices = reader()

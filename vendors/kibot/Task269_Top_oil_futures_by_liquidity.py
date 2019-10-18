@@ -232,25 +232,21 @@ symbol = "CL"
 # )
 
 # %%
-daily_reader = lau._get_kibot_reader("D", symbol)
+daily_prices = lau.read_kibot_prices("D", symbol)
 
 # %%
 # %%time
-tsds = lau.TimeSeriesDailyStudy(
-    daily_reader, col_name=lau.KIBOT_VOL, data_name=symbol
-)
+tsds = lau.TimeSeriesDailyStudy(daily_prices[lau.KIBOT_VOL], data_name=symbol)
 
 # %%
 tsds.execute()
 
 # %%
-minutely_reader = lau._get_kibot_reader("min", symbol)
+minutely_prices = lau.read_kibot_prices("T", symbol)
 
 # %%
 # %%time
-tsms = lau.TimeSeriesMinuteStudy(
-    minutely_reader, col_name=lau.KIBOT_VOL, data_name=symbol
-)
+tsms = lau.TimeSeriesMinuteStudy(minutely_prices[lau.KIBOT_VOL], data_name=symbol)
 
 # %%
 tsms.execute()
@@ -271,10 +267,10 @@ product_specs[product_specs["Globex"] == symbol]["Open Interest"].values
 product_specs[product_specs["Globex"] == symbol]["Volume"].values
 
 # %%
-tsds.data[lau.KIBOT_VOL].max()
+daily_prices[lau.KIBOT_VOL].max()
 
 # %%
-tsms.data[lau.KIBOT_VOL].max()
+minutely_prices[lau.KIBOT_VOL].max()
 
 # %% [markdown]
 # # CME mapping
