@@ -8,7 +8,7 @@
   Python community (in the form of [PEPs](https://www.python.org/dev/peps/) or
   the tools we rely upon favor another style
 
-## Reference
+## References
 
 - [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)
 
@@ -35,6 +35,16 @@
 
 - Name classes and (non-executable) files using nouns (e.g., `Downloader()`,
   `downloader.py`)
+
+- For decorators we don't use a verb as we do for normal functions, but rather
+  an adjective or a past tense verb, e.g.,
+    ```python
+    def timed(f):
+        """
+        Decorator adding a timer around function `f`.
+        """
+        ...
+    ```
 
 ## Finding the best names
 
@@ -672,6 +682,23 @@ _LOG.warning(...)
 
 # Functions
 
+## Arguments
+
+- Avoid using `bool` arguments
+    - While a simple `True`/`False` switch may suffice for today's needs, very
+      often more flexibility is eventually needed
+    - If more flexibility is needed for a `bool` argument, you are faced with
+      the choice of
+        - Adding another parameter (then parameter combinations grow
+            exponentially and may not all make sense)
+        - Changing the parameter type to something else
+        - Either way, you have to change the function interface
+    - To maintain flexibility from the start, opt for a `str` parameter
+      "mode", which is allowed to take a small well-defined set of values.
+    - If an implicit default is desirable, consider making the default value
+      of the parameter `None`. This is only a good route if the default
+      operation is non-controversial / intuitively obvious.
+
 ## Try to make functions work on multiple types
 
 - We encourage implementing functions that can work on multiple related types:
@@ -685,17 +712,35 @@ _LOG.warning(...)
 - Try to return the same type of the input, if possible
     - E.g., the function called on a `pd.Series` returns a `pd.Series`
 
-## Decorator names
+## Avoid hard-wired column name dependencies
 
-- For decorators we don't use a verb as we do for normal functions, but rather
-  an adjective or a past tense verb, e.g.,
-    ```python
-    def timed(f):
-        """
-        Decorator adding a timer around function `f`.
-        """
-        ...
-    ```
+- When working with dataframes, we often want need handle certain columns
+  differently, or perform an operation on a strict subset of columns
+- In these cases, it is tempting to assume that the special columns will have
+  specific names, e.g., "datetime"
+- The problem is that column names are
+    - rarely obvious (e.g., compare "datetime" vs "timestamp" vs "Datetime")
+    - tied to specific use cases
+        - the function you are writing may be written for a specific use case
+          today, but what if it is more general
+        - if someone wants to reuse your function in a different setting where
+          different column names make sense, why should they have to conform
+          to your specific use case's needs?
+    - may overwrite existing column names
+        - for example, you may decided to call a column "output", but what if
+          the dataframe already has a column with that name?
+- To get around this, allow the caller to communicate to the function the names
+  of any special columns
+- Make sure that you require column names only if they are actually used by the
+  function
+- If you must use hard-write column names internally or for some application,
+  define the column name in the library file, like
+  ```
+  DATETIME_COL = "datetime"
+  ```
+    - Users of the library can now access the column name through imports
+    - This prevents hidden column name dependencies from spreading like a
+      virus throughout the codebase
 
 # Misc (to reorg)
 
