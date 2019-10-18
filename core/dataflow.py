@@ -7,9 +7,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import networkx as nx
 import pandas as pd
-from sklearn import linear_model
 
-import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
@@ -229,12 +227,6 @@ class ReadDataFromKibot(DataSource):
 # #############################################################################
 
 
-# TODO(Paul): Consider having more kinds of `Transformer` objects, e.g.,
-#   those that transform cols [or subset] -> cols, and those that change the
-#   index. Different broad considerations may apply (e.g., in the col case, we
-#   want the option to propagate the original columns or not).
-
-
 class ColumnTransformer(Transformer):
     def __init__(
         self,
@@ -293,6 +285,8 @@ class ColumnTransformer(Transformer):
             df = df[self._cols]
         # Perform the column transformation operations.
         df = self._transformer_func(df, **self._transformer_kwargs)
+        # TODO(Paul): Consider supporting the option of relaxing or
+        # foregoing this check.
         dbg.dassert(
             df.index.equals(df_in.index),
             "Input/output indices differ but are expected to be the same!",
@@ -355,37 +349,6 @@ class Resample(Transformer):
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
-
-
-# TODO(Paul): Deprecate and delete.
-class ComputeLaggedFeatures(Transformer):
-    def __init__(self, nid, y_var, delay_lag, num_lags):
-        super().__init__(nid)
-        self.y_var = y_var
-        self.delay_lag = delay_lag
-        self.num_lags = num_lags
-
-    def get_x_vars(self):
-        x_vars = ftrs.get_lagged_feature_names(
-            self.y_var, self.delay_lag, self.num_lags
-        )
-        return x_vars
-
-    # TODO(Paul): don't change the index in this node; remove this method
-    def get_datetime_col(self):
-        return "datetime"
-
-    def _transform(self, df):
-        # Make a copy to be safe.
-        df = df.copy()
-        df = ftrs.reindex_to_integers(df)
-        df_out, info = ftrs.compute_lagged_features(
-            df, self.y_var, self.delay_lag, self.num_lags
-        )
-        #
-        info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df_out)
-        return df_out, info
 
 
 # #############################################################################
@@ -451,6 +414,7 @@ class SkLearnModel(SkLearnNode):
     def _model_perf(x, y, y_hat):
         _ = x
         info = collections.OrderedDict()
+        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
         info["sr"] = fin.compute_sharpe_ratio(
@@ -506,81 +470,6 @@ class SkLearnModel(SkLearnNode):
         if isinstance(to_list, list):
             return to_list
         raise TypeError("Data type=`%s`" % type(to_list))
-
-
-# TODO(Paul): Deprecate and delete.
-class Model(SkLearnNode):
-    # TODO(GP): y_var before x_vars? Probably should switch.
-    def __init__(self, nid, datetime_col, y_var, x_vars):
-        super().__init__(nid)
-        self.y_var = y_var
-        self.x_vars = x_vars
-        self.datetime_col = datetime_col
-
-    def fit(self, df_in):
-        df_in = df_in.copy()
-        reg = linear_model.LinearRegression()
-        df_in = df_in.dropna()
-        datetimes = df_in.index.values
-        df_in = df_in.reset_index()
-        if callable(self.x_vars):
-            x_vars = self.x_vars()
-        else:
-            x_vars = self.x_vars
-        x_train = df_in[x_vars]
-        y_train = df_in[self.y_var]
-        self.model = reg.fit(x_train, y_train)
-        y_hat = self.model.predict(x_train)
-        x_train = pd.DataFrame(x_train.values, index=datetimes, columns=x_vars)
-        y_train = pd.Series(y_train.values, index=datetimes, name=self.y_var)
-        y_hat = pd.Series(y_hat, index=datetimes, name=self.y_var + "_hat")
-        #
-        info = collections.OrderedDict()
-        info["model_coeffs"] = [self.model.intercept_] + self.model.coef_.tolist()
-        info["model_x_vars"] = ["intercept"] + x_vars
-        info["stats"] = self._stats(df_in)
-        info["model_perf"] = self._model_perf(x_train, y_train, y_hat)
-        self._set_info("fit", info)
-        return {"df_out": y_hat}
-
-    def predict(self, df_in):
-        df_in = df_in.dropna()
-        datetimes = df_in.index.values
-        df_in = df_in.reset_index()
-        if callable(self.x_vars):
-            x_vars = self.x_vars()
-        else:
-            x_vars = self.x_vars
-        x_test = df_in[x_vars]
-        y_test = df_in[self.y_var]
-        y_hat = self.model.predict(x_test)
-        x_test = pd.DataFrame(x_test.values, datetimes, columns=x_vars)
-        y_test = pd.Series(y_test.values, datetimes, name=self.y_var)
-        y_hat = pd.Series(y_hat, datetimes, name=self.y_var + "_hat")
-        #
-        info = collections.OrderedDict()
-        info["stats"] = self._stats(df_in)
-        info["model_perf"] = self._model_perf(x_test, y_test, y_hat)
-        self._set_info("predict", info)
-        return {"df_out": y_hat}
-
-    # TODO: Use this to replace "_add_split_stats".
-    def _stats(self, df):
-        info = collections.OrderedDict()
-        # info["min_datetime"] = min(df)
-        # info["max_datetime"] = max(df)
-        info["count"] = df.shape[0]
-        return info
-
-    def _model_perf(self, x, y, y_hat):
-        info = collections.OrderedDict()
-        info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
-        pnl_rets = y * y_hat
-        info["pnl_rets"] = pnl_rets
-        info["sr"] = fin.compute_sharpe_ratio(
-            pnl_rets.resample("1B").sum(), time_scaling=252
-        )
-        return info
 
 
 # #############################################################################
