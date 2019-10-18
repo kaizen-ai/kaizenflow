@@ -16,42 +16,9 @@ _LOG = logging.getLogger(__name__)
 KIBOT_VOL = "vol"
 
 
-def get_sum_prices(
-    price_df_dict: Dict[str, pd.DataFrame], price_col: str
-) -> pd.DataFrame:
-    """
-    Get sum of the prices for each symbol.
-
-    :param price_df_dict: {symbol: prices_for_symbol_df}
-    :param price_col: The name of the price column
-    :return: pd.DataFrame indexed by symbol
-    """
-    prices_sum_df = _get_prices(price_df_dict, price_col, "sum")
-    return prices_sum_df
-
-
-def get_mean_prices(
-    price_df_dict: Dict[str, pd.DataFrame], price_col: str
-) -> pd.DataFrame:
-    """
-    Get mean of the prices for each symbol.
-
-    :param price_df_dict: {symbol: prices_for_symbol_df}
-    :param price_col: The name of the price column
-    :return: pd.DataFrame indexed by symbol
-    """
-    prices_mean_df = _get_prices(price_df_dict, price_col, "mean")
-    return prices_mean_df
-
-
-def get_kibot_reader(
+def _get_kibot_reader(
     frequency: str, symbol: str, n_rows: Optional[int] = None
 ) -> Callable:
-    dbg.dassert_in(
-        frequency,
-        ["D", "T", "min"],
-        "Only daily ('D') and minutely ('T', 'min') frequencies are supported.",
-    )
     if frequency in ["T", "min"]:
         dir_path = os.path.join(
             hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_1min"
@@ -61,7 +28,9 @@ def get_kibot_reader(
             hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily"
         )
     else:
-        raise ValueError("The %s frequency is not supported", frequency)
+        raise ValueError(
+            "Only D, T and min frequencies are supported, " "passed %s", frequency
+        )
     file_name = os.path.join(dir_path, f"{symbol}.csv.gz")
     reader = functools.partial(kut.read_data, file_name, nrows=n_rows)
     return reader
@@ -70,12 +39,12 @@ def get_kibot_reader(
 def read_kibot_prices(
     frequency: str, symbol: str, n_rows: Optional[int]
 ) -> pd.DataFrame:
-    reader = get_kibot_reader(frequency, symbol, n_rows)
+    reader = _get_kibot_reader(frequency, symbol, n_rows)
     prices = reader()
     return prices
 
 
-def _get_prices(
+def get_prices(
     price_df_dict: Dict[str, pd.DataFrame], price_col: str, agg_func: str
 ) -> pd.DataFrame:
     """
@@ -236,7 +205,7 @@ class TimeSeriesDailyStudy(TimeSeriesStudy):
         self.plot_mean_day_of_week()
 
 
-class TimeSeriesMinStudy(TimeSeriesStudy):
+class TimeSeriesMinuteStudy(TimeSeriesStudy):
     def __init__(
         self,
         time_series: pd.Series,
@@ -247,7 +216,7 @@ class TimeSeriesMinStudy(TimeSeriesStudy):
     ):
         if not freq_name:
             freq_name = "minutely"
-        super(TimeSeriesMinStudy, self).__init__(
+        super(TimeSeriesMinuteStudy, self).__init__(
             time_series=time_series,
             freq_name=freq_name,
             data_name=data_name,

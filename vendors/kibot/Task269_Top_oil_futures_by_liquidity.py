@@ -209,14 +209,14 @@ daily_price_dict_df["CL"].tail(2)
 # ## Sum volume
 
 # %%
-daily_vol = lau.get_sum_prices(daily_price_dict_df, price_col=lau.KIBOT_VOL)
+daily_vol = lau.get_prices(daily_price_dict_df, lau.KIBOT_VOL, "sum")
 daily_vol.sort_values("sum_vol", ascending=False)
 
 # %% [markdown]
 # ## Mean volume
 
 # %%
-mean_vol = lau.get_mean_prices(daily_price_dict_df, price_col=lau.KIBOT_VOL)
+mean_vol = lau.get_prices(daily_price_dict_df, lau.KIBOT_VOL, "mean")
 mean_vol.sort_values("mean_vol", ascending=False)
 
 # %% [markdown]
@@ -232,7 +232,7 @@ symbol = "CL"
 # )
 
 # %%
-daily_reader = lau.get_kibot_reader("D", symbol)
+daily_reader = lau._get_kibot_reader("D", symbol)
 
 # %%
 # %%time
@@ -244,11 +244,11 @@ tsds = lau.TimeSeriesDailyStudy(
 tsds.execute()
 
 # %%
-minutely_reader = lau.get_kibot_reader("min", symbol)
+minutely_reader = lau._get_kibot_reader("min", symbol)
 
 # %%
 # %%time
-tsms = lau.TimeSeriesMinStudy(
+tsms = lau.TimeSeriesMinuteStudy(
     minutely_reader, col_name=lau.KIBOT_VOL, data_name=symbol
 )
 
