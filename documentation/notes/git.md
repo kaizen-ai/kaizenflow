@@ -252,7 +252,7 @@
         > git pull
     ```
 
-3a. Ask Git if branch is merged
+3a. Ask Git if the branch is merged
     - One approach is to ask Git if all the changes in master are also in the branch
         ```bash
         > git branch `PartTask354_INFRA_Populate_S3_bucket` --no-merged
@@ -265,7 +265,7 @@
       master and run `git branch` again
 
 3b. Manually check if there is any textual difference
-    - Another approach is to check what are the differences between the branch and
+    - Another approach is to check what the differences are between the branch and
        `origin/master`
         ```bash
         > git log master..HEAD
@@ -276,7 +276,7 @@
     - So we can either merge the branch into `master` or just kill directly
 
 4. Kill-kill-kill!
-    - To delete both local and remote branch you can do
+    - To delete both the local and remote branch you can do
         ```bash
         > git branch -d PartTask354_INFRA_Populate_S3_bucket
         > git push origin --delete PartTask354_INFRA_Populate_S3_bucket
