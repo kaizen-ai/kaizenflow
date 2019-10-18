@@ -6,24 +6,27 @@ import vendors.first_rate.utils as fru
 
 Download equity data from the http://firstratedata.com.
 
-- Save the data as zipped csvs for each equity to one of the
-  [commodity, crypto, fx, index, stock_A-D, stock_E-I, stock_J-N,
-  stock_O-R, stock_S-Z] category directories.
-- Combine zipped csvs for each equity, add "timestamp" column and
-  column names. Save as csv to corresponding category directories
-- Save csvs to parquet (divided by category)
-
-Usage example:
-> python vendors/first_rate/utils.py \
-  --zipped_dst_dir /data/first_rate/zipped \
-  --unzipped_dst_dir /data/first_rate/unzipped \
-  --pq_dst_dir /data/first_rate/pq
+- Save the data as zipped CSVs for each equity to one of the
+    - commodity
+    - crypto
+    - fx
+    - index
+    - stock_A-D
+    - stock_E-I
+    - stock_J-N
+    - stock_O-R
+    - stock_S-Z
+  category directories.
+- Combine zipped CSVs for each equity, add "timestamp" column and
+  column names. Save as CSV to corresponding category directories
+- Save CSVs to parquet (divided by category)
 """
 
 import logging
 import os
 import re
 import zipfile
+from typing import Dict, Iterable, Optional
 
 import numpy as np
 import pandas as pd
@@ -43,7 +46,14 @@ class _FileURL:
     A container for file urls.
     """
 
-    def __init__(self, url, timezone, category, col_names, path=""):
+    def __init__(
+        self,
+        url: str,
+        timezone: str,
+        category: str,
+        col_names: Iterable[str],
+        path: Optional[str] = "",
+    ):
         """
         :param url: file url
         :param timezone: The timezone from the dataset description on the
@@ -54,7 +64,7 @@ class _FileURL:
             stock_O-R, stock_S-Z]
         :param col_names: Column names from the "Format" field of the
             dataset description on the FirstRate website
-        :param path: A path to which this file is saved as zipped csv
+        :param path: A path to which this file is saved as zipped CSV
         """
         self.url = url
         self.timezone = timezone
@@ -71,7 +81,7 @@ class RawDataDownloader:
     information will be appended to each file name as a suffix.
     """
 
-    def __init__(self, website, dst_dir, max_num_files):
+    def __init__(self, website: str, dst_dir: str, max_num_files: int):
         """
         :param website: the website url
         :param dst_dir: destination directory
@@ -312,20 +322,20 @@ class RawDataDownloader:
         return hrefs_categories_urls
 
 
-class _ZipCSVCombiner:
+class _ZipCsvCombiner:
     """
-    - Combine csvs from a zip file
+    - Combine CSVs from a zip file
     - add "timestamp" column
     - localize that column to the timezone parsed from the FirstRate
       website
     - add column names (parsed from the FirstRate website)
-    - save as csv
+    - save as CSV
     """
 
     def __init__(self, url_object: _FileURL, output_path: str):
         """
         :param url_object: _FileURL object
-        :param output_path: destination path for the csv
+        :param output_path: destination path for the CSV
         """
         self.url_object = url_object
         self.output_path = output_path
@@ -356,7 +366,14 @@ class _ZipCSVCombiner:
         if isinstance(df.iloc[0, 0], (int, np.int64)):
             first_col = "date"
         elif isinstance(df.iloc[0, 0], str):
-            without_symbols = re.sub("[./\:\- ]", "", df.iloc[0, 0])
+            # Remove any of the '\', '.', '/', ':', '-', ' ' symbols
+            # from the date/datetime col. If the length of the cleaned
+            # element is 8, it means it is a date column. If the
+            # length >= 11, the column contains both date and time.
+            chars_regexp = r"[\./:\s-]"
+            backslash_regexp = r"\\"
+            without_symbols = re.sub(chars_regexp, "", df.iloc[0, 0])
+            without_symbols = re.sub(backslash_regexp, "", without_symbols)
             if len(without_symbols) == 8:
                 first_col = "date"
             elif len(without_symbols) >= 11:
@@ -414,13 +431,15 @@ class _ZipCSVCombiner:
         return df
 
 
-class MultipleZipCSVCombiner:
+class MultipleZipCsvCombiner:
     """
-    Combine zipped csvs in first_rate directory. Add column names to the
-    csvs, add timestamp column and localize it.
+    Combine zipped CSVs in first_rate directory. Add column names to the
+    CSVs, add timestamp column and localize it.
     """
 
-    def __init__(self, input_dir, path_object_dict, dst_dir):
+    def __init__(
+        self, input_dir: str, path_object_dict: Dict[str, _FileURL], dst_dir: str
+    ):
         """
         :param input_dir: first_rate directory with categories
         :param path_object_dict: path_object_dict attribute of the
@@ -432,33 +451,46 @@ class MultipleZipCSVCombiner:
         self.dst_dir = dst_dir
 
     def execute(self):
-        _LOG.info("Combining zipped csvs into one")
+        _LOG.info("Combining zipped CSVs into one")
         for category_dir in tqdm(os.listdir(self.input_dir)):
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
             for zip_name in tqdm(os.listdir(category_dir_input_path)):
-                # Combine csvs from the zip file, process them and save.
+                # Combine CSVs from the zip file, process them and save.
                 zip_path = os.path.join(category_dir_input_path, zip_name)
                 url_object = self.path_object_dict[zip_path]
                 csv_name = os.path.splitext(zip_name)[0] + ".csv"
                 csv_path = os.path.join(category_dir_dst_path, csv_name)
-                zcc = _ZipCSVCombiner(url_object, csv_path)
+                zcc = _ZipCsvCombiner(url_object, csv_path)
                 zcc.execute()
 
 
-class CSVToParquetConverter:
+class CsvToParquetConverter:
     """
-    Save csv files divided by categories into parquet
+    Save CSV files divided by categories into parquet
     """
 
-    def __init__(self, input_dir, dst_dir):
+    def __init__(
+        self, input_dir: str, dst_dir: str, timestamp_col: Optional[str] = None
+    ):
         """
         :param input_dir: input directory with categories
         :param dst_dir: destination directory
+        :param timestamp_col: if not `None`, will transform this column
+            to datetime
         """
         self.input_dir = input_dir
         self.dst_dir = dst_dir
+        self._timestamp_col = timestamp_col
+        if self._timestamp_col is not None:
+            dbg.dassert(
+                timestamp_col,
+                "",
+                "Passed empty string as timestamp_col. "
+                "If no column needs to be transformed to datetime pass None. "
+                "Otherwise pass the column name.",
+            )
 
     def execute(self):
         _LOG.info("Saving to parquet")
@@ -466,6 +498,17 @@ class CSVToParquetConverter:
             category_dir_input_path = os.path.join(self.input_dir, category_dir)
             category_dir_dst_path = os.path.join(self.dst_dir, category_dir)
             io_.create_dir(category_dir_dst_path, incremental=True)
+            if self._timestamp_col is not None:
+                normalizer = self._ts_to_datetime
+            else:
+                normalizer = None
             csv.convert_csv_dir_to_pq_dir(
-                category_dir_input_path, category_dir_dst_path, header="infer"
+                category_dir_input_path,
+                category_dir_dst_path,
+                header="infer",
+                normalizer=normalizer,
             )
+
+    def _ts_to_datetime(self, df):
+        df[self._timestamp_col] = pd.to_datetime(df[self._timestamp_col])
+        return df
