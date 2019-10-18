@@ -111,19 +111,19 @@
      otherwise a review will take forever to check on the fixes and so on
    - This mechanism only works if the author is diligent
 
-- If the comment needs further discussion the author adds a note explaining why
+- If the comment needs further discussion, the author adds a note explaining why
   he/she disagrees and the discussion continues until consensus is reached
 
-- We don’t want to leave comments not addressed since otherwise we don’t know if
-  it was agreed upon and done or forgot
+- We don’t want to leave comments unaddressed since otherwise we don’t know if
+  it was agreed upon and done or forgotten
 
 - We are ok with doing multiple commits in the branch or a single commit for all
   the comments
-   - The goal is for the author to keep the CL clear and minimize his / hers
+   - The goal is for the author to keep the CL clear and minimize his / her
      overhead
 
 ## "Pending" comments
 
 - Comments that are marked as "pending" in GitHub are not published yet and
   visible only to the author
-- Once you publish the review then email is sent and comments become visible
+- Once you publish the review then an email is sent and comments become visible

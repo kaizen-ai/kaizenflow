@@ -8,7 +8,7 @@
   Python community (in the form of [PEPs](https://www.python.org/dev/peps/) or
   the tools we rely upon favor another style
 
-## Reference
+## References
 
 - [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)
 
@@ -35,6 +35,70 @@
 
 - Name classes and (non-executable) files using nouns (e.g., `Downloader()`,
   `downloader.py`)
+
+- For decorators we don't use a verb as we do for normal functions, but rather
+  an adjective or a past tense verb, e.g.,
+    ```python
+    def timed(f):
+        """
+        Decorator adding a timer around function `f`.
+        """
+        ...
+    ```
+
+## Finding the best names
+
+- Naming things properly is one of the most difficult task of a programmer / data
+  scientist
+    - The name needs to be short and memorable
+    - The name should capture what the object represents, without reference to
+      things that can change or to details that are not important
+    - The name needs to be non-controversial: people need to be able to map the
+      name in their mental model
+    - The name needs to sound good in English
+
+- Think hard about how to call functions, files, variables, classes
+
+## Horrible names
+
+- `raw_df` is a terrible name
+    - "raw" with respect to what? Cooked? Read-After-Write race condition?
+
+- `person_dict` is bad
+    - What if we switch from a dictionary to an object?
+        - Then we need to change the name everywhere!
+    - The name should capture what the data structure represents and not how it
+      is implemented
+
+## No Hungarian notation please
+
+- The concept is to use names including information about the type, e.g.,
+  `vUsing adjHungarian nnotation vmakes nreading ncode adjdifficult`
+    - [https://en.wikipedia.org/wiki/Hungarian_notation]
+    - [https://stackoverflow.com/questions/111933]
+
+- We are not at Microsoft in the 80s: don't use it
+
+## No code stutter
+
+- An example of code stutter is in a module `git` a function called
+  `get_git_root_path()` and then client code does
+    - **Bad**
+        ```python
+        import helpers.git as git
+
+        ... git.get_git_root_path()
+        ```
+- You see that the module is already specifying we are talking about Git
+
+- **Good**
+    ```python
+    import helpers.git as git
+
+    ... git.get_root_path()
+    ```
+
+- This is not only aestitical reason but a bit related to a weak form of DRY
 
 # Comments
 
@@ -264,15 +328,17 @@
 
 ## Our logging idiom
 
-```python
-import helpers.dbg as dbg
+- In order to use our logging framework (e.g., `-v` from command lines, and much
+  more) use:
+    ```python
+    import helpers.dbg as dbg
 
-_LOG = logging.getLogger(__name__)
+    _LOG = logging.getLogger(__name__)
 
-dbg.init_logger(verb=logging.DEBUG)
+    dbg.init_logger(verb=logging.DEBUG)
 
-_LOG.debug("I am a debug function about %s", a)
-```
+    _LOG.debug("I am a debug function about %s", a)
+    ```
 
 - In this way one can decide how much debug info is needed (see Unix rule of
   silence)
@@ -305,21 +371,43 @@ _LOG.debug("I am a debug function about %s", a)
 
 ## Use positional args when logging
 
-- Instead of doing this:
-    **Bad**
+- **Bad**
     ```python
     _LOG.debug('cmd=%s %s %s' % (cmd1, cmd2, cmd3))
     _LOG.debug('cmd=%s %s %s'.format(cmd1, cmd2, cmd3))
     _LOG.debug('cmd={cmd1} {cmd2} {cmd3}')
-  do this
-    **Good**
     ```
+- **Good**
+    ```python
      _LOG.debug('cmd=%s %s %s', cmd1, cmd2, cmd3)
     ```
 
 - The two statements are equivalent from the functional point of view
 - The reason is that in the second case the string is not built unless the
   logging is actually performed, which limits time overhead from logging
+
+## Exceptions don't allow positional args
+
+- For some reason people tend to believe that using the logging / dassert
+  approach of positional param to exceptions
+    - **Bad** (use positional args)
+        ```python
+        raise ValueError("Invalid server_name='%s'", server_name)
+        ```
+    - **Good** (use string interpolation)
+        ```python
+        raise ValueError("Invalid server_name='%s'" % server_name)
+        ```
+    - **Best** (use string format)
+        ```python
+        raise ValueError(f"Invalid server_name='{server_name}'")
+        ```
+- The constructor of an exception accepts a string
+
+- Using the string f-format is best since
+    - it's more readable
+    - there is little time overhead since if you get to the exception probably
+      the code is going to terminate, and it's not in a hot loop
 
 ## Report warnings
 
@@ -594,6 +682,23 @@ _LOG.warning(...)
 
 # Functions
 
+## Arguments
+
+- Avoid using `bool` arguments
+    - While a simple `True`/`False` switch may suffice for today's needs, very
+      often more flexibility is eventually needed
+    - If more flexibility is needed for a `bool` argument, you are faced with
+      the choice of
+        - Adding another parameter (then parameter combinations grow
+            exponentially and may not all make sense)
+        - Changing the parameter type to something else
+        - Either way, you have to change the function interface
+    - To maintain flexibility from the start, opt for a `str` parameter
+      "mode", which is allowed to take a small well-defined set of values.
+    - If an implicit default is desirable, consider making the default value
+      of the parameter `None`. This is only a good route if the default
+      operation is non-controversial / intuitively obvious.
+
 ## Try to make functions work on multiple types
 
 - We encourage implementing functions that can work on multiple related types:
@@ -607,21 +712,45 @@ _LOG.warning(...)
 - Try to return the same type of the input, if possible
     - E.g., the function called on a `pd.Series` returns a `pd.Series`
 
-## Decorator names
+## Avoid hard-wired column name dependencies
 
-- For decorators we don't use a verb as we do for normal functions, but rather
-  an adjective or a past tense verb, e.g.,
-    ```python
-    def timed(f):
-        """
-        Decorator adding a timer around function `f`.
-        """
-        ...
-    ```
+- When working with dataframes, we often want need handle certain columns
+  differently, or perform an operation on a strict subset of columns
+- In these cases, it is tempting to assume that the special columns will have
+  specific names, e.g., "datetime"
+- The problem is that column names are
+    - rarely obvious (e.g., compare "datetime" vs "timestamp" vs "Datetime")
+    - tied to specific use cases
+        - the function you are writing may be written for a specific use case
+          today, but what if it is more general
+        - if someone wants to reuse your function in a different setting where
+          different column names make sense, why should they have to conform
+          to your specific use case's needs?
+    - may overwrite existing column names
+        - for example, you may decided to call a column "output", but what if
+          the dataframe already has a column with that name?
+- To get around this, allow the caller to communicate to the function the names
+  of any special columns
+- Make sure that you require column names only if they are actually used by the
+  function
+- If you must use hard-write column names internally or for some application,
+  define the column name in the library file, like
+  ```
+  DATETIME_COL = "datetime"
+  ```
+    - Users of the library can now access the column name through imports
+    - This prevents hidden column name dependencies from spreading like a
+      virus throughout the codebase
 
 # Misc (to reorg)
 
+- TODO(*): Start moving these functions in the right place once we have more
+  a better document structure
+
 ## Write robust code
+
+- Write code where there is minimal coupling between different different parts
+    - This is a corollary of DRY, since not following DRY implies coupling
 
 - Consider the following code:
     ```python
@@ -665,3 +794,129 @@ _LOG.warning(...)
     ```
   only if it's called more than once, otherwise the overhead of compilation and
   creating another var is not justified
+
+## Order of functions in a file
+
+- We try to organize code in a file to represent the logical flow of the code
+  execution, e.g.,
+    - at the beginning of the file: functions / classes for reading data
+    - then: functions / classes to process the data
+    - finally at the end of the file: functions / classes to save the data
+
+- Try to put private helper functions close to the functions that are using them
+    - This rule of thumb is a bit at odds with clearly separating public and
+      private section in classes
+        - A possible justification is that classes typically contain less code
+          than a file and tend to be used through their API
+        - A file contains larger amount of loosely coupled code and so we want
+          to keep implementation and API close together
+
+## Use layers design pattern
+
+- A "layer" design pattern (see Unix architecture) is a piece of code that talks
+  / has dependency only to one outermost layer and one innermost layer
+
+- You can use this approach in your files representing data processing pipelines
+
+- You can split code in sections using 80 characters # comments, e.g.,
+    ```python
+    # ###################...
+    # Read.
+    # ###################...
+
+    ...
+
+    # ###################...
+    # Process.
+    # ###################...
+
+
+    ...
+
+    # ###################...
+    # Process.
+    # ###################...
+
+- This often suggests to split the code in classes to represent namespaces of
+  related functions
+
+## Write complete `if-then-else`
+
+- Consider this good piece of code
+
+    ```python
+    dbg.dassert_in(
+        frequency,
+        ["D", "T"]
+        "Only daily ('D') and minutely ('T') frequencies are supported.",
+    )
+    if frequency == "T":
+        ...
+    elif frequency == "D":
+        ...
+    else:
+        raise ValueError("The %s frequency is not supported" % frequency)
+    ```
+
+- This code is robust and correct
+
+- Still the `if-then-else` is enough and the assertion is not needed
+    - DRY here wins: you don't want to have to keep two pieces of code in sync
+
+- It makes sense to check early only when you want to fail before doing more work
+    - E.g., sanity checking the parameters of a long running function, so that it
+      doesn't run for 1 hr and then crash because the name of the file is
+      incorrect
+
+## Do not be stingy at typing
+
+- Why calling an object `TimeSeriesMinStudy` instead of `TimeSeriesMinuteStudy`?
+    - Saving 3 letters is not worth
+    - The reader might interpret `Min` as `Minimal` (or `Miniature`, `Minnie`,
+      `Minotaur`)
+
+- If you don't like to type, we suggest you get a better keyboard, e.g.,
+  [this](https://kinesis-ergo.com/shop/advantage2/)
+
+## Research quality vs production quality
+
+- Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`) and
+  production (e.g., `//p1/db`, `vendors`) needs to meet high quality standards,
+  e.g.,
+    - well commented
+    - following our style guide
+    - thoroughly reviewed
+    - good design
+    - comprehensive unit tests
+
+- Research code in notebook and python can follow slightly looser standards, e.g.,
+    - sprinkled with some TODOs
+    - not perfectly general
+
+- The reason is that:
+    - research code is still evolving and we want to keep the structure flexible
+    - we don't want to invest the time in making it perfect if the research
+      doesn't pan out
+
+- Note that research code still needs to be:
+    - understandable / usable by not authors
+    - well commented
+    - follow the style guide
+    - somehow unit tested
+
+- We should be able to raise the quality of a piece of research code to
+  production quality when that research goes into production
+
+## No ugly hacks
+
+- We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be
+  undone (much more than the effort to do it right in the first place)
+    - Especially an ugly design hack, e.g., a Singleton, or some unnecessary
+      dependency between distant pieces of code
+    - Ugly hacks spreads everywhere in the code base
+
+## Life cycle of research code
+
+- Often the life cycle of a piece of code is to start as research and then be
+  promoted to higher level libraries to be used in multiple research, after its
+  quality reaches production quality
