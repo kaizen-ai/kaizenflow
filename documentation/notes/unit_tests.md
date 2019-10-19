@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # Running unit tests
 
 ## Using the `run_tests.py` wrapper

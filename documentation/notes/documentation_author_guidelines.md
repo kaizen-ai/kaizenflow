@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # Guidelines for writing workflows
 
 - Make no assumptions on the user
@@ -106,3 +109,14 @@
     - [ ] Liza
     - [ ] Julia
     - [ ] GP
+
+# Install tools
+
+## Generate table of content with `gh-md-toc`
+
+- From [https://github.com/ekalinin/github-markdown-toc]
+    ```python
+    > wget https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/gh-md-toc
+    > chmod +x gh-md-toc
+    > mv gh-md-toc documents/scripts
+    ```

@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # Github flow
 
 ## Everything we work on comes as a GitHub task

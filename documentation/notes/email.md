@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # Mailing lists
 
 - `all@particle.one` is the mailing list with everybody at the company

@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # Ask somebody if you have any doubts
 - If you have doubts on how to do something you want to do:
     - Ask your team-members

@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # Set up a new machine
 
 - You need to set up any machine you use (e.g., laptop and AWS) in order to

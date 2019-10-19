@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # `create_conda` design notes
 
 - `create_conda.py` is used to create a complete dev environment in a

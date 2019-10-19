@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # Jenkins builds
 
 ## Naming conventions for Jenkins builds
