@@ -1,7 +1,7 @@
 import io
+import json
 import logging
 
-import json
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -10,7 +10,6 @@ from scipy.stats import norm
 
 import core.config as cfg
 import core.dataflow_core as dtfc
-import core.dataflow_old as dtf_old
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
@@ -157,8 +156,8 @@ class _Dataflow_helper(ut.TestCase):
         The stage names refer to Node objects, which are not json serializable.
         """
         nld = node_link_data.copy()
-        for data in nld['nodes']:
-            data['stage'] = data['stage'].__class__.__name__
+        for data in nld["nodes"]:
+            data["stage"] = data["stage"].__class__.__name__
         return nld
 
     def _check(self, dag):
@@ -274,7 +273,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         n2 = dtfc.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         with self.assertRaises(AssertionError):
-           dag.connect(("n2", "out1"), ("n1", "in1"))
+            dag.connect(("n2", "out1"), ("n1", "in1"))
 
     def test_connect_nodes4(self):
         """
@@ -414,70 +413,6 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
         dag.add_node(n1)
         self.assertEqual(dag.get_sources(), ["n1"])
         self.assertEqual(dag.get_sinks(), ["n1"])
-
-
-# #############################################################################
-# dataflow_old.py
-# #############################################################################
-
-
-class Test_dataflow_old_Node1(ut.TestCase):
-    def _check(self, n):
-        act = n.dag_to_string()
-        _LOG.debug("act=%s", act)
-        self.check_string(act)
-
-    def test_connect1(self):
-        n1 = dtf_old.Node("n1", num_inputs=0)
-        n1.connect()
-        #
-        self._check(n1)
-
-    def test_connect2(self):
-        n1 = dtf_old.Node("n1", num_inputs=0)
-        #
-        self._check(n1)
-
-    def test_connect3(self):
-        n1 = dtf_old.Node("n1", num_inputs=0)
-        n1.connect()
-        n2 = dtf_old.Node("n2", num_inputs=1)
-        n2.connect(n1)
-        #
-        self._check(n2)
-
-    def test_connect4(self):
-        n1 = dtf_old.Node("n1", num_inputs=0)
-        n1.connect()
-        n2 = dtf_old.Node("n2", num_inputs=0)
-        n2.connect()
-        n3 = dtf_old.Node("n3", num_inputs=2)
-        n3.connect(n2, n1)
-        #
-        self._check(n3)
-
-
-class Test_dataflow_old_ReadData1(ut.TestCase):
-    def _check(self, n):
-        act = n.dag_to_string()
-        _LOG.debug("act=%s", act)
-        self.check_string(act)
-
-    def test_read_data1(self):
-        # Create a file.
-        df = pd.DataFrame(np.random.rand(10, 3), columns="a b c".split())
-        # Build the data flow graph.
-        read_data = dtf_old.ReadDataFromDf("read_data", df)
-        read_data.connect()
-        #
-        idxs = list(range(df.shape[0]))
-        read_data.set_train_idxs(idxs)
-        #
-        zscore = dtf_old.Zscore("zscore", style="rolling_std", com=28)
-        zscore.connect(read_data)
-        #zscore.fit()
-        #
-        self._check(zscore)
 
 
 # #############################################################################
