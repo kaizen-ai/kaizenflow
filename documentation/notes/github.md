@@ -1,22 +1,22 @@
 <!--ts-->
-   * [Github flow](documentation/notes/github.md#github-flow)
-      * [Everything we work on comes as a GitHub task](documentation/notes/github.md#everything-we-work-on-comes-as-a-github-task)
-      * [Use the proper labels](documentation/notes/github.md#use-the-proper-labels)
-      * [Done means "DONE"](documentation/notes/github.md#done-means-done)
-      * [Tend your tasks](documentation/notes/github.md#tend-your-tasks)
-      * [File descriptive GH tasks](documentation/notes/github.md#file-descriptive-gh-tasks)
-      * [Do not change the assignee for a task](documentation/notes/github.md#do-not-change-the-assignee-for-a-task)
-      * [Try not to commit to master](documentation/notes/github.md#try-not-to-commit-to-master)
-      * [Use branches and PR](documentation/notes/github.md#use-branches-and-pr)
-      * [Optional review](documentation/notes/github.md#optional-review)
-      * [Apply reviewers' comments for post-commit / optional review](documentation/notes/github.md#apply-reviewers-comments-for-post-commit--optional-review)
-      * [Post-commit comments](documentation/notes/github.md#post-commit-comments)
-      * [Reviewers don't follow a branch](documentation/notes/github.md#reviewers-dont-follow-a-branch)
-      * [Reviewers vs assignees](documentation/notes/github.md#reviewers-vs-assignees)
-      * [Reviewers and authors interactions](documentation/notes/github.md#reviewers-and-authors-interactions)
-      * ["Pending" comments](documentation/notes/github.md#pending-comments)
+   * [Github flow](github.md#github-flow)
+      * [Everything we work on comes as a GitHub task](github.md#everything-we-work-on-comes-as-a-github-task)
+      * [Use the proper labels](github.md#use-the-proper-labels)
+      * [Done means "DONE"](github.md#done-means-done)
+      * [Tend your tasks](github.md#tend-your-tasks)
+      * [File descriptive GH tasks](github.md#file-descriptive-gh-tasks)
+      * [Do not change the assignee for a task](github.md#do-not-change-the-assignee-for-a-task)
+      * [Try not to commit to master](github.md#try-not-to-commit-to-master)
+      * [Use branches and PR](github.md#use-branches-and-pr)
+      * [Optional review](github.md#optional-review)
+      * [Apply reviewers' comments for post-commit / optional review](github.md#apply-reviewers-comments-for-post-commit--optional-review)
+      * [Post-commit comments](github.md#post-commit-comments)
+      * [Reviewers don't follow a branch](github.md#reviewers-dont-follow-a-branch)
+      * [Reviewers vs assignees](github.md#reviewers-vs-assignees)
+      * [Reviewers and authors interactions](github.md#reviewers-and-authors-interactions)
+      * ["Pending" comments](github.md#pending-comments)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:38:39 EDT 2019 -->
+<!-- Added by: saggese, at: Sat Oct 19 19:46:49 EDT 2019 -->
 
 <!--te-->
 

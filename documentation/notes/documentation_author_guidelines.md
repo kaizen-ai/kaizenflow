@@ -1,23 +1,23 @@
 <!--ts-->
-   * [Guidelines for writing workflows](documentation/notes/documentation_author_guidelines.md#guidelines-for-writing-workflows)
-   * [Useful reference](documentation/notes/documentation_author_guidelines.md#useful-reference)
-   * [Style and cosmetic lints](documentation/notes/documentation_author_guidelines.md#style-and-cosmetic-lints)
-      * [Use nice 80 columns formatting](documentation/notes/documentation_author_guidelines.md#use-nice-80-columns-formatting)
-      * [Empty line after heading](documentation/notes/documentation_author_guidelines.md#empty-line-after-heading)
-      * [Style for numbered lists](documentation/notes/documentation_author_guidelines.md#style-for-numbered-lists)
-      * [Using code style](documentation/notes/documentation_author_guidelines.md#using-code-style)
-      * [Indenting code style](documentation/notes/documentation_author_guidelines.md#indenting-code-style)
-      * [Use bullet lists](documentation/notes/documentation_author_guidelines.md#use-bullet-lists)
-      * [Improve your written English](documentation/notes/documentation_author_guidelines.md#improve-your-written-english)
-      * [Make sure your markdown looks good](documentation/notes/documentation_author_guidelines.md#make-sure-your-markdown-looks-good)
-      * [Table of content (TOC)](documentation/notes/documentation_author_guidelines.md#table-of-content-toc)
-         * [Markdown TOC](documentation/notes/documentation_author_guidelines.md#markdown-toc)
-         * [To insert a TOC](documentation/notes/documentation_author_guidelines.md#to-insert-a-toc)
-         * [To update all markdown files](documentation/notes/documentation_author_guidelines.md#to-update-all-markdown-files)
-         * [Script installation](documentation/notes/documentation_author_guidelines.md#script-installation)
-   * [The team member list](documentation/notes/documentation_author_guidelines.md#the-team-member-list)
+   * [Guidelines for writing workflows](documentation_author_guidelines.md#guidelines-for-writing-workflows)
+   * [Useful reference](documentation_author_guidelines.md#useful-reference)
+   * [Style and cosmetic lints](documentation_author_guidelines.md#style-and-cosmetic-lints)
+      * [Use nice 80 columns formatting](documentation_author_guidelines.md#use-nice-80-columns-formatting)
+      * [Empty line after heading](documentation_author_guidelines.md#empty-line-after-heading)
+      * [Style for numbered lists](documentation_author_guidelines.md#style-for-numbered-lists)
+      * [Using code style](documentation_author_guidelines.md#using-code-style)
+      * [Indenting code style](documentation_author_guidelines.md#indenting-code-style)
+      * [Use bullet lists](documentation_author_guidelines.md#use-bullet-lists)
+      * [Improve your written English](documentation_author_guidelines.md#improve-your-written-english)
+      * [Make sure your markdown looks good](documentation_author_guidelines.md#make-sure-your-markdown-looks-good)
+      * [Table of content (TOC)](documentation_author_guidelines.md#table-of-content-toc)
+         * [Markdown TOC](documentation_author_guidelines.md#markdown-toc)
+         * [To insert a TOC](documentation_author_guidelines.md#to-insert-a-toc)
+         * [To update all markdown files](documentation_author_guidelines.md#to-update-all-markdown-files)
+         * [Script installation](documentation_author_guidelines.md#script-installation)
+   * [The team member list](documentation_author_guidelines.md#the-team-member-list)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:38:38 EDT 2019 -->
+<!-- Added by: saggese, at: Sat Oct 19 19:46:48 EDT 2019 -->
 
 <!--te-->
 
@@ -132,25 +132,25 @@
 - Add the tags at the beginning of the markdown file
     ```markdown
     <!--ts-->
-   * [Guidelines for writing workflows](documentation/notes/documentation_author_guidelines.md#guidelines-for-writing-workflows)
-   * [Useful reference](documentation/notes/documentation_author_guidelines.md#useful-reference)
-   * [Style and cosmetic lints](documentation/notes/documentation_author_guidelines.md#style-and-cosmetic-lints)
-      * [Use nice 80 columns formatting](documentation/notes/documentation_author_guidelines.md#use-nice-80-columns-formatting)
-      * [Empty line after heading](documentation/notes/documentation_author_guidelines.md#empty-line-after-heading)
-      * [Style for numbered lists](documentation/notes/documentation_author_guidelines.md#style-for-numbered-lists)
-      * [Using code style](documentation/notes/documentation_author_guidelines.md#using-code-style)
-      * [Indenting code style](documentation/notes/documentation_author_guidelines.md#indenting-code-style)
-      * [Use bullet lists](documentation/notes/documentation_author_guidelines.md#use-bullet-lists)
-      * [Improve your written English](documentation/notes/documentation_author_guidelines.md#improve-your-written-english)
-      * [Make sure your markdown looks good](documentation/notes/documentation_author_guidelines.md#make-sure-your-markdown-looks-good)
-      * [Table of content (TOC)](documentation/notes/documentation_author_guidelines.md#table-of-content-toc)
-         * [Markdown TOC](documentation/notes/documentation_author_guidelines.md#markdown-toc)
-         * [To insert a TOC](documentation/notes/documentation_author_guidelines.md#to-insert-a-toc)
-         * [To update all markdown files](documentation/notes/documentation_author_guidelines.md#to-update-all-markdown-files)
-         * [Script installation](documentation/notes/documentation_author_guidelines.md#script-installation)
-   * [The team member list](documentation/notes/documentation_author_guidelines.md#the-team-member-list)
+   * [Guidelines for writing workflows](documentation_author_guidelines.md#guidelines-for-writing-workflows)
+   * [Useful reference](documentation_author_guidelines.md#useful-reference)
+   * [Style and cosmetic lints](documentation_author_guidelines.md#style-and-cosmetic-lints)
+      * [Use nice 80 columns formatting](documentation_author_guidelines.md#use-nice-80-columns-formatting)
+      * [Empty line after heading](documentation_author_guidelines.md#empty-line-after-heading)
+      * [Style for numbered lists](documentation_author_guidelines.md#style-for-numbered-lists)
+      * [Using code style](documentation_author_guidelines.md#using-code-style)
+      * [Indenting code style](documentation_author_guidelines.md#indenting-code-style)
+      * [Use bullet lists](documentation_author_guidelines.md#use-bullet-lists)
+      * [Improve your written English](documentation_author_guidelines.md#improve-your-written-english)
+      * [Make sure your markdown looks good](documentation_author_guidelines.md#make-sure-your-markdown-looks-good)
+      * [Table of content (TOC)](documentation_author_guidelines.md#table-of-content-toc)
+         * [Markdown TOC](documentation_author_guidelines.md#markdown-toc)
+         * [To insert a TOC](documentation_author_guidelines.md#to-insert-a-toc)
+         * [To update all markdown files](documentation_author_guidelines.md#to-update-all-markdown-files)
+         * [Script installation](documentation_author_guidelines.md#script-installation)
+   * [The team member list](documentation_author_guidelines.md#the-team-member-list)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:38:38 EDT 2019 -->
+<!-- Added by: saggese, at: Sat Oct 19 19:46:48 EDT 2019 -->
 
     <!--te-->
     ```

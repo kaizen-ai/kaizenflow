@@ -1,16 +1,16 @@
 <!--ts-->
-   * [Mailing lists](documentation/notes/email.md#mailing-lists)
-   * [Organizing email flow](documentation/notes/email.md#organizing-email-flow)
-   * [Anatomy of email messages from infra](documentation/notes/email.md#anatomy-of-email-messages-from-infra)
-      * [Filtering emails with Gmail](documentation/notes/email.md#filtering-emails-with-gmail)
-      * [Notifications from GitHub](documentation/notes/email.md#notifications-from-github)
-      * [GitHub pull requests](documentation/notes/email.md#github-pull-requests)
-      * [GitHub issue activity](documentation/notes/email.md#github-issue-activity)
-      * [Commits](documentation/notes/email.md#commits)
-      * [Gdocs](documentation/notes/email.md#gdocs)
-      * [Jenkins](documentation/notes/email.md#jenkins)
+   * [Mailing lists](email.md#mailing-lists)
+   * [Organizing email flow](email.md#organizing-email-flow)
+   * [Anatomy of email messages from infra](email.md#anatomy-of-email-messages-from-infra)
+      * [Filtering emails with Gmail](email.md#filtering-emails-with-gmail)
+      * [Notifications from GitHub](email.md#notifications-from-github)
+      * [GitHub pull requests](email.md#github-pull-requests)
+      * [GitHub issue activity](email.md#github-issue-activity)
+      * [Commits](email.md#commits)
+      * [Gdocs](email.md#gdocs)
+      * [Jenkins](email.md#jenkins)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:38:38 EDT 2019 -->
+<!-- Added by: saggese, at: Sat Oct 19 19:46:48 EDT 2019 -->
 
 <!--te-->
 
