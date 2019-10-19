@@ -1,4 +1,35 @@
 <!--ts-->
+   * [Ask somebody if you have any doubts](documentation/notes/general.md#ask-somebody-if-you-have-any-doubts)
+   * [Collaboration](documentation/notes/general.md#collaboration)
+      * [Why do we need to follow this handbook?](documentation/notes/general.md#why-do-we-need-to-follow-this-handbook)
+         * [Learning from each other](documentation/notes/general.md#learning-from-each-other)
+         * [Consistency and process](documentation/notes/general.md#consistency-and-process)
+      * [Sync-ups](documentation/notes/general.md#sync-ups)
+         * [All-hands meetings](documentation/notes/general.md#all-hands-meetings)
+         * [Technical sync-ups](documentation/notes/general.md#technical-sync-ups)
+         * [Ad-hoc meetings](documentation/notes/general.md#ad-hoc-meetings)
+         * [Org emails](documentation/notes/general.md#org-emails)
+         * [The need for synchronization points](documentation/notes/general.md#the-need-for-synchronization-points)
+         * [Synchronization point](documentation/notes/general.md#synchronization-point)
+         * [Morning Moscow sync ups](documentation/notes/general.md#morning-moscow-sync-ups)
+         * [Morning email](documentation/notes/general.md#morning-email)
+         * [Morning email: example](documentation/notes/general.md#morning-email-example)
+      * [Communication](documentation/notes/general.md#communication)
+         * [Use the right form of communication](documentation/notes/general.md#use-the-right-form-of-communication)
+         * [DRY applies also to documentation](documentation/notes/general.md#dry-applies-also-to-documentation)
+         * [Avoid write-once code / research](documentation/notes/general.md#avoid-write-once-code--research)
+         * [Consistency](documentation/notes/general.md#consistency)
+         * [Training period](documentation/notes/general.md#training-period)
+         * [Go slowly to go faster](documentation/notes/general.md#go-slowly-to-go-faster)
+      * [Improve your English!](documentation/notes/general.md#improve-your-english)
+         * [Study an English grammar book](documentation/notes/general.md#study-an-english-grammar-book)
+   * [Mix (to reorg)](documentation/notes/general.md#mix-to-reorg)
+      * [Use the tools we have](documentation/notes/general.md#use-the-tools-we-have)
+      * [File a bug when you have a problem](documentation/notes/general.md#file-a-bug-when-you-have-a-problem)
+      * [Review](documentation/notes/general.md#review)
+
+<!-- Added by: saggese, at: Sat Oct 19 19:38:38 EDT 2019 -->
+
 <!--te-->
 
 # Ask somebody if you have any doubts

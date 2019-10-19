@@ -272,7 +272,8 @@ gh_toc_app() {
     done
 
     echo ""
-    echo "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)"
+    # gp: commented out.
+    #echo "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)"
 }
 
 #

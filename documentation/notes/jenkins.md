@@ -1,4 +1,18 @@
 <!--ts-->
+   * [Jenkins builds](documentation/notes/jenkins.md#jenkins-builds)
+      * [Naming conventions for Jenkins builds](documentation/notes/jenkins.md#naming-conventions-for-jenkins-builds)
+      * [Naming conventions for scripts](documentation/notes/jenkins.md#naming-conventions-for-scripts)
+      * [Brief description of the scripts](documentation/notes/jenkins.md#brief-description-of-the-scripts)
+      * [Description of the Jenkins builds](documentation/notes/jenkins.md#description-of-the-jenkins-builds)
+   * [dev Jenkins build](documentation/notes/jenkins.md#dev-jenkins-build)
+      * [Goal](documentation/notes/jenkins.md#goal)
+      * [Setup](documentation/notes/jenkins.md#setup)
+      * [Running a dev build](documentation/notes/jenkins.md#running-a-dev-build)
+   * [Installing / setting up Jenkins](documentation/notes/jenkins.md#installing--setting-up-jenkins)
+   * [Expose webpages](documentation/notes/jenkins.md#expose-webpages)
+
+<!-- Added by: saggese, at: Sat Oct 19 19:38:39 EDT 2019 -->
+
 <!--te-->
 
 # Jenkins builds

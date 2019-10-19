@@ -1,4 +1,14 @@
 <!--ts-->
+   * [create_conda design notes](documentation/notes/create_conda.md#create_conda-design-notes)
+   * [Using YAML files](documentation/notes/create_conda.md#using-yaml-files)
+      * [Merging multiple YAML](documentation/notes/create_conda.md#merging-multiple-yaml)
+      * [Does pip install works?](documentation/notes/create_conda.md#does-pip-install-works)
+      * [How to specify multiple conda channel?](documentation/notes/create_conda.md#how-to-specify-multiple-conda-channel)
+      * [Commented out packages](documentation/notes/create_conda.md#commented-out-packages)
+      * [Comments](documentation/notes/create_conda.md#comments)
+
+<!-- Added by: saggese, at: Sat Oct 19 19:38:37 EDT 2019 -->
+
 <!--te-->
 
 # `create_conda` design notes

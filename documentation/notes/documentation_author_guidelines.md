@@ -1,4 +1,24 @@
 <!--ts-->
+   * [Guidelines for writing workflows](documentation/notes/documentation_author_guidelines.md#guidelines-for-writing-workflows)
+   * [Useful reference](documentation/notes/documentation_author_guidelines.md#useful-reference)
+   * [Style and cosmetic lints](documentation/notes/documentation_author_guidelines.md#style-and-cosmetic-lints)
+      * [Use nice 80 columns formatting](documentation/notes/documentation_author_guidelines.md#use-nice-80-columns-formatting)
+      * [Empty line after heading](documentation/notes/documentation_author_guidelines.md#empty-line-after-heading)
+      * [Style for numbered lists](documentation/notes/documentation_author_guidelines.md#style-for-numbered-lists)
+      * [Using code style](documentation/notes/documentation_author_guidelines.md#using-code-style)
+      * [Indenting code style](documentation/notes/documentation_author_guidelines.md#indenting-code-style)
+      * [Use bullet lists](documentation/notes/documentation_author_guidelines.md#use-bullet-lists)
+      * [Improve your written English](documentation/notes/documentation_author_guidelines.md#improve-your-written-english)
+      * [Make sure your markdown looks good](documentation/notes/documentation_author_guidelines.md#make-sure-your-markdown-looks-good)
+      * [Table of content (TOC)](documentation/notes/documentation_author_guidelines.md#table-of-content-toc)
+         * [Markdown TOC](documentation/notes/documentation_author_guidelines.md#markdown-toc)
+         * [To insert a TOC](documentation/notes/documentation_author_guidelines.md#to-insert-a-toc)
+         * [To update all markdown files](documentation/notes/documentation_author_guidelines.md#to-update-all-markdown-files)
+         * [Script installation](documentation/notes/documentation_author_guidelines.md#script-installation)
+   * [The team member list](documentation/notes/documentation_author_guidelines.md#the-team-member-list)
+
+<!-- Added by: saggese, at: Sat Oct 19 19:38:38 EDT 2019 -->
+
 <!--te-->
 
 # Guidelines for writing workflows
@@ -100,6 +120,59 @@
     - check in a branch and use GitHub to render it
     - use pycharm to edit, which also renders it side-by-side
 
+## Table of content (TOC)
+
+### Markdown TOC
+- Unfortunately both markdown and GitHub don't support automatically generating a
+  TOC for a document
+- We work around this problem using a script that post-process the markdown
+  adding links to create a TOC
+
+### To insert a TOC
+- Add the tags at the beginning of the markdown file
+    ```markdown
+    <!--ts-->
+   * [Guidelines for writing workflows](documentation/notes/documentation_author_guidelines.md#guidelines-for-writing-workflows)
+   * [Useful reference](documentation/notes/documentation_author_guidelines.md#useful-reference)
+   * [Style and cosmetic lints](documentation/notes/documentation_author_guidelines.md#style-and-cosmetic-lints)
+      * [Use nice 80 columns formatting](documentation/notes/documentation_author_guidelines.md#use-nice-80-columns-formatting)
+      * [Empty line after heading](documentation/notes/documentation_author_guidelines.md#empty-line-after-heading)
+      * [Style for numbered lists](documentation/notes/documentation_author_guidelines.md#style-for-numbered-lists)
+      * [Using code style](documentation/notes/documentation_author_guidelines.md#using-code-style)
+      * [Indenting code style](documentation/notes/documentation_author_guidelines.md#indenting-code-style)
+      * [Use bullet lists](documentation/notes/documentation_author_guidelines.md#use-bullet-lists)
+      * [Improve your written English](documentation/notes/documentation_author_guidelines.md#improve-your-written-english)
+      * [Make sure your markdown looks good](documentation/notes/documentation_author_guidelines.md#make-sure-your-markdown-looks-good)
+      * [Table of content (TOC)](documentation/notes/documentation_author_guidelines.md#table-of-content-toc)
+         * [Markdown TOC](documentation/notes/documentation_author_guidelines.md#markdown-toc)
+         * [To insert a TOC](documentation/notes/documentation_author_guidelines.md#to-insert-a-toc)
+         * [To update all markdown files](documentation/notes/documentation_author_guidelines.md#to-update-all-markdown-files)
+         * [Script installation](documentation/notes/documentation_author_guidelines.md#script-installation)
+   * [The team member list](documentation/notes/documentation_author_guidelines.md#the-team-member-list)
+
+<!-- Added by: saggese, at: Sat Oct 19 19:38:38 EDT 2019 -->
+
+    <!--te-->
+    ```
+
+### To update all markdown files
+- Run:
+    ```bash
+    > documentation/scripts/lint_md.sh
+    ```
+
+### Script installation 
+- To install the script follow the instructions
+  [here](https://github.com/ekalinin/github-markdown-toc):
+    ```python
+    > wget https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/gh-md-toc
+    > chmod +x gh-md-toc
+    > mv gh-md-toc documents/scripts
+    ```
+
+- We have installed it in the repo but the script might need to be updated once
+  in a while
+
 # The team member list
 - In reversed alphabetical order (just to be fair)
     - [ ] Stas
@@ -109,14 +182,3 @@
     - [ ] Liza
     - [ ] Julia
     - [ ] GP
-
-# Install tools
-
-## Generate table of content with `gh-md-toc`
-
-- From [https://github.com/ekalinin/github-markdown-toc]
-    ```python
-    > wget https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/gh-md-toc
-    > chmod +x gh-md-toc
-    > mv gh-md-toc documents/scripts
-    ```

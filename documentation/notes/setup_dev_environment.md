@@ -1,4 +1,29 @@
 <!--ts-->
+   * [Set up a new machine](documentation/notes/setup_dev_environment.md#set-up-a-new-machine)
+      * [Definitions](documentation/notes/setup_dev_environment.md#definitions)
+      * [Connect to the server](documentation/notes/setup_dev_environment.md#connect-to-the-server)
+      * [(optional) Install python3](documentation/notes/setup_dev_environment.md#optional-install-python3)
+      * [(optional) Install anaconda](documentation/notes/setup_dev_environment.md#optional-install-anaconda)
+      * [(optional) Configure anaconda](documentation/notes/setup_dev_environment.md#optional-configure-anaconda)
+   * [Create a Git client](documentation/notes/setup_dev_environment.md#create-a-git-client)
+      * [Check out the git code](documentation/notes/setup_dev_environment.md#check-out-the-git-code)
+      * [Configure git submodules](documentation/notes/setup_dev_environment.md#configure-git-submodules)
+      * [Configure user credentials](documentation/notes/setup_dev_environment.md#configure-user-credentials)
+      * [Create conda environment](documentation/notes/setup_dev_environment.md#create-conda-environment)
+      * [Check conda environment](documentation/notes/setup_dev_environment.md#check-conda-environment)
+      * [Configure conda environment](documentation/notes/setup_dev_environment.md#configure-conda-environment)
+      * [Delete / recreate environment](documentation/notes/setup_dev_environment.md#delete--recreate-environment)
+         * [Overwrite a conda environment with create_conda.py](documentation/notes/setup_dev_environment.md#overwrite-a-conda-environment-with-create_condapy)
+         * [Manually delete a conda environment](documentation/notes/setup_dev_environment.md#manually-delete-a-conda-environment)
+         * [To delete the entire conda installation (advanced users)](documentation/notes/setup_dev_environment.md#to-delete-the-entire-conda-installation-advanced-users)
+   * [Be patient](documentation/notes/setup_dev_environment.md#be-patient)
+   * [Workflow examples](documentation/notes/setup_dev_environment.md#workflow-examples)
+      * [Working with multiple clients](documentation/notes/setup_dev_environment.md#working-with-multiple-clients)
+      * [A simple set-up](documentation/notes/setup_dev_environment.md#a-simple-set-up)
+      * [GP's set-up](documentation/notes/setup_dev_environment.md#gps-set-up)
+
+<!-- Added by: saggese, at: Sat Oct 19 19:38:40 EDT 2019 -->
+
 <!--te-->
 
 # Set up a new machine
