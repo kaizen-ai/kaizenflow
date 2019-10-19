@@ -1,19 +1,19 @@
 <!--ts-->
-   * [Code review workflows](documentation/notes/code_review.md#code-review-workflows)
-      * [Pull request](documentation/notes/code_review.md#pull-request)
-      * [Post-commit review](documentation/notes/code_review.md#post-commit-review)
-   * [General rules about code review](documentation/notes/code_review.md#general-rules-about-code-review)
-      * [Read the Google code review best practices](documentation/notes/code_review.md#read-the-google-code-review-best-practices)
-   * [Some other remarks based on our experience](documentation/notes/code_review.md#some-other-remarks-based-on-our-experience)
-      * [Give priority to code review](documentation/notes/code_review.md#give-priority-to-code-review)
-      * [Why do we review code](documentation/notes/code_review.md#why-do-we-review-code)
-      * [Reviewing other people's code is usually not fun](documentation/notes/code_review.md#reviewing-other-peoples-code-is-usually-not-fun)
-      * [The first reviews are painful](documentation/notes/code_review.md#the-first-reviews-are-painful)
-      * [Apply review comments everywhere](documentation/notes/code_review.md#apply-review-comments-everywhere)
-      * [Look at the code top-to-bottom](documentation/notes/code_review.md#look-at-the-code-top-to-bottom)
-      * [Close the PR and delete the branch](documentation/notes/code_review.md#close-the-pr-and-delete-the-branch)
+   * [Code review workflows](#code-review-workflows)
+      * [Pull request](#pull-request)
+      * [Post-commit review](#post-commit-review)
+   * [General rules about code review](#general-rules-about-code-review)
+      * [Read the Google code review best practices](#read-the-google-code-review-best-practices)
+   * [Some other remarks based on our experience](#some-other-remarks-based-on-our-experience)
+      * [Give priority to code review](#give-priority-to-code-review)
+      * [Why do we review code](#why-do-we-review-code)
+      * [Reviewing other people's code is usually not fun](#reviewing-other-peoples-code-is-usually-not-fun)
+      * [The first reviews are painful](#the-first-reviews-are-painful)
+      * [Apply review comments everywhere](#apply-review-comments-everywhere)
+      * [Look at the code top-to-bottom](#look-at-the-code-top-to-bottom)
+      * [Close the PR and delete the branch](#close-the-pr-and-delete-the-branch)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:38:37 EDT 2019 -->
+<!-- Added by: saggese, at: Sat Oct 19 19:42:19 EDT 2019 -->
 
 <!--te-->
 
