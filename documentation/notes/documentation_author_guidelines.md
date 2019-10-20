@@ -17,7 +17,7 @@
          * [Script installation](documentation_author_guidelines.md#script-installation)
    * [The team member list](documentation_author_guidelines.md#the-team-member-list)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:48 EDT 2019 -->
+
 
 <!--te-->
 
@@ -150,7 +150,7 @@
          * [Script installation](documentation_author_guidelines.md#script-installation)
    * [The team member list](documentation_author_guidelines.md#the-team-member-list)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:48 EDT 2019 -->
+
 
     <!--te-->
     ```

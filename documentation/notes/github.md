@@ -16,7 +16,7 @@
       * [Reviewers and authors interactions](github.md#reviewers-and-authors-interactions)
       * ["Pending" comments](github.md#pending-comments)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:49 EDT 2019 -->
+
 
 <!--te-->
 

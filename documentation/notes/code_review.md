@@ -13,7 +13,7 @@
       * [Look at the code top-to-bottom](code_review.md#look-at-the-code-top-to-bottom)
       * [Close the PR and delete the branch](code_review.md#close-the-pr-and-delete-the-branch)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:46 EDT 2019 -->
+
 
 <!--te-->
 

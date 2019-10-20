@@ -22,7 +22,7 @@
       * [A simple set-up](setup_dev_environment.md#a-simple-set-up)
       * [GP's set-up](setup_dev_environment.md#gps-set-up)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:50 EDT 2019 -->
+
 
 <!--te-->
 

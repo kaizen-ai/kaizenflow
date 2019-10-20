@@ -28,7 +28,7 @@
       * [File a bug when you have a problem](general.md#file-a-bug-when-you-have-a-problem)
       * [Review](general.md#review)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:48 EDT 2019 -->
+
 
 <!--te-->
 

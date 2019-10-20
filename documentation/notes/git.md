@@ -28,7 +28,7 @@
       * [Merging pull requests](git.md#merging-pull-requests)
    * [TODO(gp):](git.md#todogp)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:49 EDT 2019 -->
+
 
 <!--te-->
 

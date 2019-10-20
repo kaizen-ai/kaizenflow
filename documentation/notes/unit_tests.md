@@ -16,7 +16,7 @@
          * [Update golden outcomes](unit_tests.md#update-golden-outcomes)
          * [Incremental test mode (advanced users)](unit_tests.md#incremental-test-mode-advanced-users)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:50 EDT 2019 -->
+
 
 <!--te-->
 

@@ -7,7 +7,7 @@
       * [Commented out packages](create_conda.md#commented-out-packages)
       * [Comments](create_conda.md#comments)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:47 EDT 2019 -->
+
 
 <!--te-->
 

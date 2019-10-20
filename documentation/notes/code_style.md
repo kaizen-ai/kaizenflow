@@ -59,7 +59,7 @@
       * [No ugly hacks](code_style.md#no-ugly-hacks)
       * [Life cycle of research code](code_style.md#life-cycle-of-research-code)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:47 EDT 2019 -->
+
 
 <!--te-->
 

@@ -11,7 +11,7 @@
    * [Installing / setting up Jenkins](jenkins.md#installing--setting-up-jenkins)
    * [Expose webpages](jenkins.md#expose-webpages)
 
-<!-- Added by: saggese, at: Sat Oct 19 19:46:49 EDT 2019 -->
+
 
 <!--te-->
 
