@@ -1,3 +1,19 @@
+<!--ts-->
+   * [Mailing lists](email.md#mailing-lists)
+   * [Organizing email flow](email.md#organizing-email-flow)
+   * [Anatomy of email messages from infra](email.md#anatomy-of-email-messages-from-infra)
+      * [Filtering emails with Gmail](email.md#filtering-emails-with-gmail)
+      * [Notifications from GitHub](email.md#notifications-from-github)
+      * [GitHub pull requests](email.md#github-pull-requests)
+      * [GitHub issue activity](email.md#github-issue-activity)
+      * [Commits](email.md#commits)
+      * [Gdocs](email.md#gdocs)
+      * [Jenkins](email.md#jenkins)
+
+
+
+<!--te-->
+
 # Mailing lists
 
 - `all@particle.one` is the mailing list with everybody at the company

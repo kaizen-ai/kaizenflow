@@ -1,3 +1,37 @@
+<!--ts-->
+   * [Workflow](git.md#workflow)
+   * [Best Practices](git.md#best-practices)
+      * [Do not check in large data files](git.md#do-not-check-in-large-data-files)
+      * [Branch workflow best practices](git.md#branch-workflow-best-practices)
+         * [Branches are cheap](git.md#branches-are-cheap)
+         * [master is sacred](git.md#master-is-sacred)
+         * [Always work in a branch](git.md#always-work-in-a-branch)
+         * [Keep different changes in separate branches](git.md#keep-different-changes-in-separate-branches)
+      * [Pull request (PR) best practices](git.md#pull-request-pr-best-practices)
+      * [Deleting a branch](git.md#deleting-a-branch)
+   * [How-to and troubleshooting](git.md#how-to-and-troubleshooting)
+      * [Do not mess up your branch](git.md#do-not-mess-up-your-branch)
+      * [Analyzing commits](git.md#analyzing-commits)
+         * [Show files modified in a commit](git.md#show-files-modified-in-a-commit)
+      * [Conflicts](git.md#conflicts)
+         * [Getting the conflicting files](git.md#getting-the-conflicting-files)
+         * [Accepting "theirs"](git.md#accepting-theirs)
+      * [How to get out of a messy/un-mergeable branch](git.md#how-to-get-out-of-a-messyun-mergeable-branch)
+      * [Reverting](git.md#reverting)
+         * [Reverting the last local commit](git.md#reverting-the-last-local-commit)
+      * [Branching](git.md#branching)
+         * [Checking what work has been done in a branch](git.md#checking-what-work-has-been-done-in-a-branch)
+         * [Checking if you need to merge master into your feature branch](git.md#checking-if-you-need-to-merge-master-into-your-feature-branch)
+         * [Comparing the difference of a directory among branches](git.md#comparing-the-difference-of-a-directory-among-branches)
+      * [Merging master](git.md#merging-master)
+      * [Rebasing](git.md#rebasing)
+      * [Merging pull requests](git.md#merging-pull-requests)
+   * [TODO(gp):](git.md#todogp)
+
+
+
+<!--te-->
+
 # Workflow
 
 1. Run `git fetch`

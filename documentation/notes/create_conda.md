@@ -1,3 +1,16 @@
+<!--ts-->
+   * [create_conda design notes](create_conda.md#create_conda-design-notes)
+   * [Using YAML files](create_conda.md#using-yaml-files)
+      * [Merging multiple YAML](create_conda.md#merging-multiple-yaml)
+      * [Does pip install works?](create_conda.md#does-pip-install-works)
+      * [How to specify multiple conda channel?](create_conda.md#how-to-specify-multiple-conda-channel)
+      * [Commented out packages](create_conda.md#commented-out-packages)
+      * [Comments](create_conda.md#comments)
+
+
+
+<!--te-->
+
 # `create_conda` design notes
 
 - `create_conda.py` is used to create a complete dev environment in a
