@@ -16,7 +16,6 @@ from tqdm import tqdm
 import helpers.cache as cache
 import helpers.csv as csv
 import helpers.dbg as dbg
-import helpers.io_ as io_
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -225,8 +224,8 @@ def convert_kibot_csv_gz_to_pq():
     s3_kibot_path = os.path.join(s3_path, "kibot")
     pq_dir = os.path.join(s3_kibot_path, "pq")
     for kibot_subdir in tqdm(iter(kibot_subdirs)):
-        _LOG.info("Attempting to convert files in %s dir", kibot_subdir)
         csv_subdir_path = os.path.join(s3_kibot_path, kibot_subdir)
+        _LOG.info("Converting files in %s directory", csv_subdir_path)
         if kibot_subdir in [
             "All_Futures_Contracts_1min",
             "All_Futures_Continuous_Contracts_1min",
@@ -245,7 +244,7 @@ def convert_kibot_csv_gz_to_pq():
                 normalizer=normalizer,
             )
             _LOG.info(
-                "Converted the files in %s dir and saved them to %s.",
+                "Converted the files in %s directory and saved them to %s.",
                 csv_subdir_path,
                 pq_subdir_path,
             )

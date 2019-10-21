@@ -1,10 +1,10 @@
 import logging
 import os
 
-import boto3
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
@@ -192,25 +192,6 @@ def _maybe_remove_extension(filename, extension):
         return None
 
 
-def _list_s3_files(s3_path):
-    AMAZON_MAX_INT = 2147483647
-    split_path = s3_path.split("/")
-    s3_bucket = split_path[2]
-    dir_path = "/".join(split_path[3:])
-    s3 = boto3.client("s3")
-    s3_objects = s3.list_objects_v2(
-        Bucket=s3_bucket, StartAfter=dir_path, MaxKeys=AMAZON_MAX_INT
-    )
-    contents = s3_objects["Contents"]
-    file_names = [cont["Key"] for cont in contents]
-    file_names = [
-        os.path.basename(file_name)
-        for file_name in file_names
-        if os.path.dirname(file_name) == dir_path
-    ]
-    return file_names
-
-
 def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
     """
     Applies `convert_csv_to_pq` to all files in csv_dir
@@ -226,7 +207,7 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
         # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
         filenames = os.listdir(csv_dir)
     else:
-        filenames = _list_s3_files(csv_dir)
+        filenames = hs3.listdir(csv_dir)
         dbg.dassert(filenames, "No files in the %s directory.", csv_dir)
     for filename in filenames:
         # Remove .csv/.csv.gz and add .pq.
