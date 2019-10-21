@@ -8,11 +8,15 @@ import functools
 import logging
 import os
 
+import boto3
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 import helpers.cache as cache
+import helpers.csv as csv
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -170,6 +174,85 @@ def read_metadata4():
     _LOG.debug("df=\n%s", df.head(3))
     _LOG.debug("df.shape=%s", df.shape)
     return df
+
+
+# #############################################################################
+# Convert .csv.gz to parquet.
+# #############################################################################
+def _normalize_1_min(df: pd.DataFrame):
+    df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
+    df.drop(columns=[1], inplace=True)
+    df.columns = "datetime open high low close vol".split()
+    df.set_index("datetime", drop=True, inplace=True)
+    _LOG.debug("Add columns")
+    df["time"] = [d.time() for d in df.index]
+    return df
+
+
+def _normalize_daily(df: pd.DataFrame):
+    df[0] = pd.to_datetime(df[0], format="%m/%d/%Y")
+    df.columns = "date open high low close vol".split()
+    df.set_index("date", drop=True, inplace=True)
+    # TODO(GP): Should this be renamed to datetime as described
+    # in kibot/utils.py L56?
+    return df
+
+
+def convert_kibot_csv_gz_to_pq():
+    """
+    Convert the files in the following subdirs of `kibot` dir on S3:
+    - `All_Futures_Contracts_1min`
+    - `All_Futures_Continuous_Contracts_1min`
+    - `All_Futures_Continuous_Contracts_daily`
+    to Parquet and save them to `kibot/pq` dir on S3.
+    """
+    # Get the list of kibot subdirs in the kibot directory on S3.
+    s3_path = hs3.get_path()
+    s3_bucket = s3_path.split("//")[1]
+    AMAZON_MAX_INT = 2147483647
+    s3 = boto3.client("s3")
+    s3_objects = s3.list_objects_v2(
+        Bucket=s3_bucket, StartAfter="kibot", MaxKeys=AMAZON_MAX_INT
+    )
+    contents = s3_objects["Contents"]
+    kibot_files = [cont["Key"] for cont in contents]
+    kibot_subdirs = set(map(lambda x: x.split("/")[1], kibot_files))
+    _LOG.debug(
+        "Will attempt to convert files in the following dirs: %s", kibot_subdirs
+    )
+    # For each of the kibot subdirectories, transform the files in them
+    # to parquet.
+    s3_kibot_path = os.path.join(s3_path, "kibot")
+    pq_dir = os.path.join(s3_kibot_path, "pq")
+    io_.create_dir(pq_dir, incremental=True)
+    for kibot_subdir in tqdm(iter(kibot_subdirs)):
+        _LOG.info("Attempting to convert files in %s dir", kibot_subdir)
+        csv_subdir_path = os.path.join(s3_kibot_path, kibot_subdir)
+        if kibot_subdir in [
+            "All_Futures_Contracts_1min",
+            "All_Futures_Continuous_Contracts_1min",
+        ]:
+            normalizer = _normalize_1_min
+        elif kibot_subdir == "All_Futures_Continuous_Contracts_daily":
+            normalizer = _normalize_daily
+        else:
+            normalizer = None
+        if normalizer is not None:
+            pq_subdir_path = os.path.join(pq_dir, kibot_subdir)
+            io_.create_dir(pq_subdir_path, incremental=True)
+            csv.convert_csv_dir_to_pq_dir(
+                csv_subdir_path,
+                pq_subdir_path,
+                header=None,
+                normalizer=normalizer,
+            )
+            _LOG.info(
+                "Converted the files in %s dir and saved them to %s.",
+                csv_subdir_path,
+                pq_subdir_path,
+            )
+        else:
+            _LOG.warning("Not converting %s.", kibot_subdir)
 
 
 # #############################################################################
