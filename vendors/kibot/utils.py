@@ -224,7 +224,6 @@ def convert_kibot_csv_gz_to_pq():
     # to parquet.
     s3_kibot_path = os.path.join(s3_path, "kibot")
     pq_dir = os.path.join(s3_kibot_path, "pq")
-    io_.create_dir(pq_dir, incremental=True)
     for kibot_subdir in tqdm(iter(kibot_subdirs)):
         _LOG.info("Attempting to convert files in %s dir", kibot_subdir)
         csv_subdir_path = os.path.join(s3_kibot_path, kibot_subdir)
@@ -239,7 +238,6 @@ def convert_kibot_csv_gz_to_pq():
             normalizer = None
         if normalizer is not None:
             pq_subdir_path = os.path.join(pq_dir, kibot_subdir)
-            io_.create_dir(pq_subdir_path, incremental=True)
             csv.convert_csv_dir_to_pq_dir(
                 csv_subdir_path,
                 pq_subdir_path,
