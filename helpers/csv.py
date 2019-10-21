@@ -204,7 +204,7 @@ def _list_s3_files(s3_path):
     contents = s3_objects["Contents"]
     file_names = [cont["Key"] for cont in contents]
     file_names = [
-        file_name
+        os.path.basename(file_name)
         for file_name in file_names
         if os.path.dirname(file_name) == dir_path
     ]
