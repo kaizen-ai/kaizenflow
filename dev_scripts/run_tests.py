@@ -28,12 +28,6 @@ def _parse():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--conda_env_name",
-        action="store",
-        type=str,
-        help="Use a given conda environment to run the tests",
-    )
-    parser.add_argument(
         "--test",
         action="store",
         default="fast",
@@ -66,11 +60,6 @@ def _parse():
         "--skip_collect", action="store_true", help="Skip the collection step"
     )
     parser.add_argument(
-        "--use_setenv",
-        action="store_true",
-        help="Execute setenv.sh before each command",
-    )
-    parser.add_argument(
         "--jenkins", action="store_true", help="Run tests as Jenkins"
     )
     #
@@ -85,13 +74,11 @@ def _parse():
     return parser
 
 
+# TODO(gp): Refactor this function in smaller pieces.
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level, use_exec_path=True)
     #
-    conda_env_name = args.conda_env_name
-    if not conda_env_name:
-        conda_env_name = "develop"
     test = args.test
     log_level = logging.getLevelName(args.log_level)
     _LOG.debug("%s -> %s", args.log_level, log_level)
@@ -99,10 +86,6 @@ def _main(parser):
     # Report current setup.
     #
     wrapper = []
-    if False and args.jenkins:
-        wrapper.append("source ~/.bashrc")
-    if False and (args.use_setenv or args.jenkins):
-        wrapper.append("source dev_scripts/setenv.sh -e %s" % conda_env_name)
     if wrapper:
         wrapper = " && ".join(wrapper)
         if args.log_level >= logging.DEBUG:
@@ -125,13 +108,14 @@ def _main(parser):
     #
     if args.jenkins:
         cmds = [
+            # TODO(gp): For some reason `system("conda")` doesn't work from
+            # this script. Maybe we need to use the hco.conda_system().
+            # "conda list",
             "git log -5",
             "whoami",
             "printenv",
-            "conda list",
             "pwd",
             "date",
-            "which conda",
         ]
         for cmd in cmds:
             _system(cmd, dry_run=False)
@@ -188,6 +172,7 @@ def _main(parser):
         else:
             # Parallel mode.
             if args.num_cpus == -1:
+                # pylint: disable=import-outside-toplevel
                 import joblib
 
                 n_jobs = joblib.cpu_count()

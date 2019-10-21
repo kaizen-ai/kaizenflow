@@ -4,8 +4,10 @@ import os
 import pytest
 
 import dev_scripts.url as url
+import helpers.conda as hco
 import helpers.dbg as dbg
 import helpers.env as env
+import helpers.git as git
 import helpers.io_ as io_
 import helpers.system_interaction as si
 import helpers.unit_test as ut
@@ -13,6 +15,8 @@ import helpers.unit_test as ut
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# url.py
 # #############################################################################
 
 
@@ -50,11 +54,16 @@ class Test_url_py1(ut.TestCase):
 # #############################################################################
 
 
+# TODO(gp): Move this to test to the proper dir `helpers/test/test.py`
+
+
 class Test_env1(ut.TestCase):
     def test_get_system_signature1(self):
         _ = env.get_system_signature()
 
 
+# #############################################################################
+# _setenv.py
 # #############################################################################
 
 
@@ -81,6 +90,8 @@ class Test_set_env1(ut.TestCase):
         si.system(cmd)
 
 
+# #############################################################################
+# jack*
 # #############################################################################
 
 
@@ -111,18 +122,121 @@ class Test_jack1(ut.TestCase):
 
 
 # #############################################################################
+# create_conda.py
+# #############################################################################
 
-import helpers.git as git
 
 class Test_install_create_conda_py1(ut.TestCase):
+    def _run_create_conda(self, cmd_opts, cleanup):
+        """
+        Run a create_conda command using custom options `cmd_opts`.
 
-    def test_create_conda1(self):
-        # TODO(gp): Use git.find_file_in_git_tree()
-        file_name = git.find_file_in_git_tree("create_conda.py")
-        cmd = f'{file_name} --test_install --delete_env_if_exists -v DEBUG'
-        si.system(cmd)
+        :param cleanup: True if we want to cleanup the conda env instead of
+            creating it.
+        """
+        exec_file = git.find_file_in_git_tree("create_conda.py")
+        cmd = []
+        cmd.append(exec_file)
+        cmd.extend(cmd_opts)
+        cmd.append("--delete_env_if_exists")
+        cmd.append("-v DEBUG")
+        # TODO(gp): Find a way to check the output looking at the packages.
+        if cleanup:
+            if ut.get_incremental_tests():
+                # No clean up for manual inspection with:
+                _LOG.warning("No clean up as per incremental test mode")
+                return
+            # Remove env.
+            cmd.append("--skip_install_env")
+            cmd.append("--skip_test_env")
+        cmd_tmp = " ".join(cmd)
+        si.system(cmd_tmp)
+
+    def _helper(self, env_name, cmd_opts):
+        """
+        Run create_conda with custom options `cmd_opts` and then remove the env.
+        """
+        self._run_create_conda(cmd_opts, cleanup=False)
+        #
+        cmd = "conda activate %s && conda info --envs" % env_name
+        hco.conda_system(cmd, suppress_output=False)
+        # Clean up the env.
+        self._run_create_conda(cmd_opts, cleanup=True)
+
+    def test_create_conda_test_install1(self):
+        """
+        Run create_conda with --test_install to exercise the script.
+        """
+        cmd_opts = [""]
+        env_name = "test_install"
+        cmd_opts.append(f"--env_name {env_name}")
+        cmd_opts.append("--req_file dummy")
+        cmd_opts.append("--test_install")
+        self._helper(env_name, cmd_opts)
+
+    @pytest.mark.slow
+    def test_create_conda_yaml1(self):
+        """
+        Run create_conda.py with a single YAML file.
+        """
+        yaml = """
+channels:
+  - conda-forge
+  - quantopian
+dependencies:
+  - pandas
+  - pandas-datareader=0.8.0     # PartTask344.
+  - pip
+  - pip:
+    #- ta                   # Technical analysis package.
+    - trading-calendars
+    """
+        yaml_file = os.path.join(self.get_scratch_space(), "reqs.yaml")
+        io_.to_file(yaml_file, yaml)
+        #
+        cmd_opts = []
+        env_name = "test_create_conda_yaml1"
+        cmd_opts.append(f"--env_name {env_name}")
+        cmd_opts.append(f"--req_file {yaml_file}")
+        self._helper(env_name, cmd_opts)
+
+    @pytest.mark.slow
+    def test_create_conda_yaml2(self):
+        """
+        Run create_conda.py with two YAML files.
+        """
+        yaml1 = """
+channels:
+  - conda-forge
+  - quantopian
+dependencies:
+  - pandas
+  - pandas-datareader=0.8.0     # PartTask344.
+  - pip:
+    #- ta                   # Technical analysis package.
+    - trading-calendars """
+        yaml_file1 = os.path.join(self.get_scratch_space(), "reqs1.yaml")
+        io_.to_file(yaml_file1, yaml1)
+        #
+        yaml2 = """
+channels:
+  - conda-forge
+  - quantopian
+dependencies:
+  - numpy"""
+        yaml_file2 = os.path.join(self.get_scratch_space(), "reqs2.yaml")
+        io_.to_file(yaml_file2, yaml2)
+        #
+        cmd_opts = []
+        env_name = "test_create_conda_yaml2"
+        cmd_opts.append(f"--env_name {env_name}")
+        cmd_opts.append(f"--req_file {yaml_file1}")
+        cmd_opts.append(f"--req_file {yaml_file2}")
+        self._helper(env_name, cmd_opts)
 
 
+# #############################################################################
+# linter.py
 # #############################################################################
 
 
