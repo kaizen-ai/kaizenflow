@@ -1,9 +1,9 @@
-from vendors.eurostat.base_classes import EurostatFileFiller
-from data import data_config
+import vendors.eurostat.base_classes as euro_bc
+import data.data_config as data_config
 
 EUROSTAT_FILLERS = {
     'TASK302_EUROSTAT_RAW_DATA': {
-        'class': EurostatFileFiller,
+        'class': euro_bc.EurostatDirFiller,
         'settings': {
             'dst_dir': data_config.TASK302_RAW_DATA,
             'paranoid': True,
