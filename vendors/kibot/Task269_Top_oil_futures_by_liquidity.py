@@ -23,7 +23,6 @@ import logging
 import os
 
 import numpy as np
-import seaborn as sns
 from matplotlib import pyplot as plt
 
 # %%
@@ -41,9 +40,6 @@ import vendors.kibot.utils as kut
 # %%
 # import infra.helpers.telegram_notify.telegram_notify as tg
 # tgn = tg.TelegramNotify()
-
-# %%
-sns.set()
 
 # %%
 print(env.get_system_signature())
@@ -226,16 +222,9 @@ mean_vol.sort_values("mean_vol", ascending=False)
 symbol = "CL"
 
 # %%
-# # %%time
-# vs = lau.TimeSeriesStudy(
-#     lau.read_kibot_prices, symbol, lau.KIBOT_VOL, n_rows=None
-# )
-
-# %%
 daily_prices = lau.read_kibot_prices("D", symbol)
 
 # %%
-# %%time
 tsds = lau.TimeSeriesDailyStudy(daily_prices[lau.KIBOT_VOL], data_name=symbol)
 
 # %%
@@ -245,14 +234,25 @@ tsds.execute()
 minutely_prices = lau.read_kibot_prices("T", symbol)
 
 # %%
-# %%time
 tsms = lau.TimeSeriesMinuteStudy(minutely_prices[lau.KIBOT_VOL], data_name=symbol)
 
 # %%
 tsms.execute()
 
 # %%
-# tgn.notify('Volume study is complete')
+five_min_vol = minutely_prices[lau.KIBOT_VOL].resample("5min").sum()
+five_min_vol.head()
+
+# %%
+tsms_five_min = lau.TimeSeriesMinuteStudy(
+    five_min_vol, data_name=symbol, freq_name="Five minute"
+)
+
+# %%
+tsms_five_min.execute()
+
+# %%
+# tgn.notify("Volume study is complete")
 
 # %% [markdown]
 # ## How is the volume related to the open interest from the metadata?
