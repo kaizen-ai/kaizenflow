@@ -17,7 +17,7 @@ def compute_kibot_returns(prices: pd.DataFrame, period: str):
         rets = kut.compute_ret_0_from_daily_prices(prices, "open", "log_rets")
     else:
         raise ValueError(
-            'Only daily and minutely"periods are supported, ' "passed %s", period
+            "Only daily and minutely periods are supported, passed %s" % period
         )
     return rets
 
@@ -84,7 +84,7 @@ def _choose_movements(zscored_rets, sign):
         zscored_rets = zscored_rets.abs()
     else:
         raise ValueError(
-            "Only pos, neg, all signs are supported, passed %s", sign
+            "Only pos, neg, all signs are supported, passed %s" % sign
         )
     return zscored_rets
 
@@ -96,6 +96,6 @@ def _get_order(sign: str):
         ascending = False
     else:
         raise ValueError(
-            "Only pos, neg, all signs are supported, passed %s", sign
+            "Only pos, neg, all signs are supported, passed %s" % sign
         )
     return ascending
