@@ -51,7 +51,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
         file_names = [file_name.split("/")[0] for file_name in file_names]
         file_names = list(set(file_names))
     elif mode == "non-recursive":
-        pass
+        file_names.sort()
     else:
         raise ValueError(
             "Only recursive and non-recursive modes are supported, passed %s."
