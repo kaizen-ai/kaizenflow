@@ -40,6 +40,7 @@ def _bootstrap(rel_path_to_helpers):
     assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
     # Update path.
     if False:
+        # For debug purposes.
         print("PATH=%s" % _PATH)
         print("PYTHONPATH=%s" % _PYTHONPATH)
         print("amp_path=%s" % amp_path)
@@ -60,10 +61,11 @@ def _bootstrap(rel_path_to_helpers):
 _bootstrap("..")
 
 
-import helpers.dbg as dbg  # isort:skip
-import helpers.io_ as io_  # isort:skip
-import helpers.system_interaction as si  # isort:skip
-import helpers.user_credentials as usc  # isort:skip
+# pylint: disable=C0413
+import helpers.dbg as dbg  # isort:skip # noqa: E402
+import helpers.io_ as io_  # isort:skip # noqa: E402
+import helpers.system_interaction as si  # isort:skip # noqa: E402
+import helpers.user_credentials as usc  # isort:skip # noqa: E402
 
 # ##############################################################################
 
@@ -147,7 +149,6 @@ def _parse():
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
-    #
     txt = []
 
     def _frame(comment):
@@ -156,13 +157,17 @@ def _main(parser):
         txt_tmp.append("\necho '%s'" % line)
         txt_tmp.append("echo " + comment)
         txt_tmp.append("echo '%s'" % line)
+        # pylint: disable=no-member
         txt.extend(txt_tmp)
 
     def _execute(cmd):
+        # pylint: disable=no-member
         txt.append("echo '> %s'" % cmd)
+        # pylint: disable=no-member
         txt.append(cmd)
 
     def _log_var(var_name, var_val):
+        # pylint: disable=no-member
         txt.append("echo '%s=%s'" % (var_name, var_val))
         _LOG.debug("%s='%s'", var_name, var_val)
 
