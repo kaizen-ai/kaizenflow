@@ -54,7 +54,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
         pass
     else:
         raise ValueError(
-            "Only recursive and non-recursive modes are " "supported, passed %s",
-            mode,
+            "Only recursive and non-recursive modes are supported, passed %s."
+            % mode
         )
     return file_names
