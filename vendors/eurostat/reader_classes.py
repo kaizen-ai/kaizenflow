@@ -6,7 +6,7 @@ from typing import List, Dict
 
 import pandas as pd
 
-import generalized_reader.base_clases as gr_bc
+import etl.generalized_reader.base_clases as gr_bc
 
 _LOG = logging.getLogger(__name__)
 

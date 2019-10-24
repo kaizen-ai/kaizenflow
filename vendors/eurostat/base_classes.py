@@ -7,7 +7,7 @@ import requests
 from tqdm import tqdm
 
 import amp.helpers.dbg as dbg
-import generalized_filler.base_classes as gf_bc
+import etl.generalized_filler.base_classes as gf_bc
 
 
 class EurostatFileFillerV1(ABC):
@@ -39,10 +39,10 @@ class EurostatDirFiller(EurostatFileFillerV1, gf_bc.FileFiller):
     Search all files from root_url.
 
     runnable script:
-    generalized_filler/filler.py
+    etl.generalized_filler/filler.py
 
     usage:
-    python generalized_filler/filler.py \
+    python etl.generalized_filler/filler.py \
     --filler_version SOME_FILLER_VERSION \
     --class_version v2
 
