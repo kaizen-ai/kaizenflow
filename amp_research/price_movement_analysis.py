@@ -22,17 +22,6 @@ def compute_kibot_returns(prices: pd.DataFrame, period: str):
     return rets
 
 
-def get_zscored_kibot_returns(
-    prices: pd.DataFrame, period: str, tau: int, demean: bool = False
-):
-    # Compute returns.
-    rets = compute_kibot_returns(prices, period)
-    # z-score.
-    zscored_rets = sigp.rolling_zscore(rets, tau, demean=demean)
-    _LOG.debug("zscored_rets=\n%s", zscored_rets.head())
-    return zscored_rets
-
-
 def get_top_movements_by_group(
     price_df_dict: Dict[str, pd.DataFrame],
     commodity_symbols_kibot: Dict[str, Iterable],
@@ -44,9 +33,8 @@ def get_top_movements_by_group(
 ):
     zscored_returns = []
     for symbol in commodity_symbols_kibot[group]:
-        zscored_ret = get_zscored_kibot_returns(
-            price_df_dict[symbol], period, tau
-        )
+        rets = compute_kibot_returns(price_df_dict[symbol], period)
+        zscored_ret = sigp.rolling_zscore(rets, tau, demean=False)
         zscored_ret = _choose_movements(zscored_ret, sign)
         zscored_ret = coex.drop_na(pd.DataFrame(zscored_ret), drop_infs=True)[
             "ret_0"
@@ -66,7 +54,8 @@ def get_top_movements_for_symbol(
     sign: str,
     n_movements: int = 100,
 ):
-    zscored_rets = get_zscored_kibot_returns(price_df_dict[symbol], period, tau)
+    rets = compute_kibot_returns(price_df_dict[symbol], period)
+    zscored_rets = sigp.rolling_zscore(rets, tau, demean=False)
     zscored_rets = _choose_movements(zscored_rets, sign)
     ascending = _get_order(sign)
     zscored_rets = coex.drop_na(pd.DataFrame(zscored_rets), drop_infs=True)[

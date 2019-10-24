@@ -26,6 +26,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 import amp_research.price_movement_analysis as pma
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
@@ -54,6 +55,17 @@ def get_top_100(series, ascending=False):
     # with resample
     series = series.dropna()
     return series.sort_values(ascending=ascending).head(100)
+
+
+def get_zscored_kibot_returns(
+    prices: pd.DataFrame, period: str, tau: int, demean: bool = False
+):
+    # Compute returns.
+    rets = pma.compute_kibot_returns(prices, period)
+    # z-score.
+    zscored_rets = sigp.rolling_zscore(rets, tau, demean=demean)
+    _LOG.debug("zscored_rets=\n%s", zscored_rets.head())
+    return zscored_rets
 
 
 # %% [markdown]
@@ -94,7 +106,7 @@ five_min_prices.head()
 
 # %%
 tau = 18
-zscored_rets = pma.get_zscored_kibot_returns(daily_prices, "daily", tau=tau)
+zscored_rets = get_zscored_kibot_returns(daily_prices, "daily", tau=tau)
 
 abs_zscored_rets = zscored_rets.abs()
 pos_zscored_rets = zscored_rets.loc[zscored_rets >= 0]
@@ -137,7 +149,7 @@ top_daily_neg_movements_by_year.head()
 # %%
 tau = 18
 
-zscored_1min_rets = pma.get_zscored_kibot_returns(
+zscored_1min_rets = get_zscored_kibot_returns(
     minutely_prices, "minutely", tau=tau
 )
 
@@ -179,7 +191,7 @@ top_1min_neg_movements_by_year.head()
 # %%
 tau = 18
 
-zscored_5min_rets = pma.get_zscored_kibot_returns(
+zscored_5min_rets = get_zscored_kibot_returns(
     five_min_prices, "minutely", tau=tau
 )
 abs_zscored_5min_rets = zscored_5min_rets.abs()
