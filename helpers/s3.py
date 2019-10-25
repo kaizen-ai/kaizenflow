@@ -35,28 +35,29 @@ def get_path() -> str:
     return s3_path
 
 
-def parse_path(file_path: str) -> Tuple[str, str]:
+def parse_path(path: str) -> Tuple[str, str]:
     """
-    Extract bucket name and a file path from an s3 full path.
+    Extract bucket name and a file or folder path from an s3 full path.
     E.g., for
         s3://default00-bucket/kibot/All_Futures_Continuous_Contracts_daily
     the result is:
         bucket_name = "default00-bucket"
-        file_path = "kibot/All_Futures_Continuous_Contracts_daily"
+        path = "kibot/All_Futures_Continuous_Contracts_daily"
     """
     prefix = "s3://"
     dbg.dassert(
-        file_path.startswith(prefix),
+        path.startswith(prefix),
         "Path='%s' doesn't start with prefix '%s",
-        file_path,
+        path,
         prefix,
     )
-    file_path = file_path[len(prefix) :]
-    file_path = file_path.split("/")
-    bucket_name = file_path[0]
+    path = path[len(prefix):]
+    path = path.split("/")
+    dbg.dassert(path, "The %s path is empty.", path)
+    bucket_name = path[0]
     bucket_name = bucket_name.replace("s3://", "")
-    file_path = "/".join(file_path[1:])
-    return bucket_name, file_path
+    path = "/".join(path[1:])
+    return bucket_name, path
 
 
 def ls(file_path: str) -> List[str]:
