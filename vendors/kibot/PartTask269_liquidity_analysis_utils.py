@@ -19,7 +19,7 @@ KIBOT_VOL = "vol"
 def _get_kibot_reader(
     frequency: str, symbol: str, n_rows: Optional[int] = None
 ) -> Callable:
-    if frequency in ["T", "min"]:
+    if frequency == "T":
         dir_path = os.path.join(
             hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_1min"
         )
@@ -29,7 +29,7 @@ def _get_kibot_reader(
         )
     else:
         raise ValueError(
-            "Only D, T and min frequencies are supported, passed %s", frequency
+            "Only D and T frequencies are supported, passed %s", frequency
         )
     file_name = os.path.join(dir_path, f"{symbol}.csv.gz")
     reader = functools.partial(kut.read_data, file_name, nrows=n_rows)
