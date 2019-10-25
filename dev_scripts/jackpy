@@ -1,6 +1,10 @@
 #!/bin/bash -e
+
+# """
+# Search in .py python (not .ipynb) files.
+# """
+
 source helpers.sh
 
 cmd="ack $ACK_OPTS --type=python '$@'"
-#echo "+ $cmd"
-eval $cmd
+execute $cmd

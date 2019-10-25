@@ -1,6 +1,10 @@
 #!/bin/bash -e
+
+# """
+# Search in .ipynb files.
+# """
+
 source helpers.sh
 
 cmd="find . \( -name '*.ipynb' \) -print0 | xargs -0 ack $ACK_OPTS '$@'"
-#echo "+ $cmd"
-eval $cmd
+execute $cmd

@@ -1,3 +1,37 @@
+<!--ts-->
+   * [Ask somebody if you have any doubts](general.md#ask-somebody-if-you-have-any-doubts)
+   * [Collaboration](general.md#collaboration)
+      * [Why do we need to follow this handbook?](general.md#why-do-we-need-to-follow-this-handbook)
+         * [Learning from each other](general.md#learning-from-each-other)
+         * [Consistency and process](general.md#consistency-and-process)
+      * [Sync-ups](general.md#sync-ups)
+         * [All-hands meetings](general.md#all-hands-meetings)
+         * [Technical sync-ups](general.md#technical-sync-ups)
+         * [Ad-hoc meetings](general.md#ad-hoc-meetings)
+         * [Org emails](general.md#org-emails)
+         * [The need for synchronization points](general.md#the-need-for-synchronization-points)
+         * [Synchronization point](general.md#synchronization-point)
+         * [Morning Moscow sync ups](general.md#morning-moscow-sync-ups)
+         * [Morning email](general.md#morning-email)
+         * [Morning email: example](general.md#morning-email-example)
+      * [Communication](general.md#communication)
+         * [Use the right form of communication](general.md#use-the-right-form-of-communication)
+         * [DRY applies also to documentation](general.md#dry-applies-also-to-documentation)
+         * [Avoid write-once code / research](general.md#avoid-write-once-code--research)
+         * [Consistency](general.md#consistency)
+         * [Training period](general.md#training-period)
+         * [Go slowly to go faster](general.md#go-slowly-to-go-faster)
+      * [Improve your English!](general.md#improve-your-english)
+         * [Study an English grammar book](general.md#study-an-english-grammar-book)
+   * [Mix (to reorg)](general.md#mix-to-reorg)
+      * [Use the tools we have](general.md#use-the-tools-we-have)
+      * [File a bug when you have a problem](general.md#file-a-bug-when-you-have-a-problem)
+      * [Review](general.md#review)
+
+
+
+<!--te-->
+
 # Ask somebody if you have any doubts
 - If you have doubts on how to do something you want to do:
     - Ask your team-members
