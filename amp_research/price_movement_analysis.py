@@ -14,7 +14,7 @@ def compute_kibot_returns(prices: pd.DataFrame, period: str):
     if period == "minutely":
         rets = kut.compute_ret_0_from_1min_prices(prices, "log_rets")
     elif period == "daily":
-        rets = kut.compute_ret_0_from_daily_prices(prices, "open", "log_rets")
+        rets = kut.compute_ret_0_from_daily_prices(prices, "close", "log_rets")
     else:
         raise ValueError(
             "Only daily and minutely periods are supported, passed %s" % period
