@@ -60,9 +60,10 @@ notebook settings. In particular, using them makes it easy to write blocks
 of code in a notebook that will return the same results when re-executed
 out of order.
 
-### Prefer [pure functions](https://en.wikipedia.org/wiki/Pure_function) by default
+### Prefer pure functions by default
 
-Pure functions have two key properties:
+[Pure functions](https://en.wikipedia.org/wiki/Pure_function)
+have two key properties:
   1. If the function arguments do not change, then the return value returned
      does not change (in contrast to, e.g., functions that rely upon global
      state)
