@@ -37,7 +37,7 @@ In other words, by using design patterns, you
 
 # Functions
 
-### Avoid modifying the function input
+## Avoid modifying the function input
 
 If, for example, a function `f` accepts a dataframe `df` as its (sole)
 argument, then, ideally, `f(df)` will not modify `df`. If modifications are
@@ -60,7 +60,7 @@ notebook settings. In particular, using them makes it easy to write blocks
 of code in a notebook that will return the same results when re-executed
 out of order.
 
-### Prefer pure functions by default
+## Prefer pure functions by default
 
 [Pure functions](https://en.wikipedia.org/wiki/Pure_function)
 have two key properties:
