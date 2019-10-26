@@ -1,6 +1,18 @@
-# Design philosophy
+# Philosophy
 
-## Design patterns
+## Keep it simple
+
+Follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle).
+
+Pursue simple, elegant solutions. Some things are inherently complex, but even
+complex systems can be broken down into simple pieces.
+
+Designs that are simple are easier to understand, easier to modify, and
+easier to debug.
+
+# Architecture
+
+## Use design patterns
 
 [Design patterns](https://en.wikipedia.org/wiki/Software_design_pattern)
 are idioms or recipes for solving problems that commonly appear in
@@ -23,7 +35,7 @@ In other words, by using design patterns, you
   - Simplify the high-level picture of your code
   - Make it easier for other people to understand your code
 
-## Functions
+# Functions
 
 ### Avoid modifying the function input
 
