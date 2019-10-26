@@ -48,15 +48,14 @@ notebook settings. In particular, using them makes it easy to write blocks
 of code in a notebook that will return the same results when re-executed
 out of order.
 
-### Prefer [pure functions](https://en.wikipedia.org/wiki/Pure_function) by
-    default
+### Prefer [pure functions](https://en.wikipedia.org/wiki/Pure_function) by default
 
 Pure functions have two key properties:
   1. If the function arguments do not change, then the return value returned
      does not change (in contrast to, e.g., functions that rely upon global
      state)
   2. Function evaluation does not have
-     [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science))
+     [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science)
      
 Some nice properties enjoyed by pure functions are:
   - They are easy to understand and easy to test
