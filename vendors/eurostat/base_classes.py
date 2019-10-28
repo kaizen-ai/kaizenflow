@@ -6,7 +6,7 @@ import bs4
 import requests
 from tqdm import tqdm
 
-import amp.helpers.dbg as dbg
+import helpers.dbg as dbg
 import etl.generalized_filler.base_classes as gf_bc
 
 
