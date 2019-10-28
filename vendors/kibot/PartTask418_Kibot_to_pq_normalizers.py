@@ -42,43 +42,6 @@ dbg.init_logger(verb=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
-
-# %% [markdown]
-# ## Functions
-
-# %%
-def get_file_names_s3_objects(s3_objects):
-    contents = s3_objects["Contents"]
-    return [cont["Key"] for cont in contents]
-
-
-def _get_subdirs(file_names):
-    return set(map(lambda x: x.split("/")[1], file_names))
-
-
-# %%
-def normalize_1_min(df):
-    df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
-    df.drop(columns=[1], inplace=True)
-    df.columns = "datetime open high low close vol".split()
-    df.set_index("datetime", drop=True, inplace=True)
-    _LOG.debug("Add columns")
-    df["time"] = [d.time() for d in df.index]
-    return df
-
-
-def normalize_daily(df):
-    df[0] = pd.to_datetime(df[0], format="%m/%d/%Y")
-    df.columns = "date open high low close vol".split()
-    df.set_index("date", drop=True, inplace=True)
-    # TODO(GP): Should this be renamed to datetime as described
-    # in kibot/utils.py L56?
-    return df
-
-
-# %%
-AMAZON_MAX_INT = 2147483647
-
 # %% [markdown]
 # # List s3 files
 
@@ -86,23 +49,15 @@ AMAZON_MAX_INT = 2147483647
 # sys.maxsize is larger than Amazon's max int
 
 # %%
-s3 = boto3.client("s3")
-s3_objects = s3.list_objects_v2(
-    Bucket="default00-bucket", StartAfter="kibot", MaxKeys=AMAZON_MAX_INT
-)
-s3_objects
+s3_path = hs3.get_path()
 
 # %%
-kibot_files = get_file_names_s3_objects(s3_objects)
-kibot_files
-
-# %%
-subdirs = _get_subdirs(kibot_files)
-subdirs
-
-# %%
-kibot_dir = os.path.join(hs3.get_path(), "kibot")
+kibot_dir= os.path.join(s3_path, 'kibot')
 kibot_dir
+
+# %%
+subdirs = hs3.listdir(s3_kibot, mode='non-recursive')
+subdirs
 
 # %%
 kibot_subdir = os.path.join(kibot_dir, list(subdirs)[0])
