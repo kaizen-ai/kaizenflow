@@ -1,8 +1,12 @@
 import logging
+import os
+
+import pytest
 
 import helpers.env as env
 import helpers.git as git
 import helpers.printing as prnt
+import helpers.s3 as hs3
 import helpers.unit_test as ut
 import helpers.user_credentials as usc
 
@@ -91,12 +95,17 @@ class Test_git1(ut.TestCase):
         for repo_sym_name in all_repo_sym_names:
             repo_github_name = git.get_repo_github_name(repo_sym_name)
             _LOG.debug(
-                ut.to_string("repo_sym_name") + " -> " +
-                ut.to_string("repo_github_name"))
-            repo_sym_name_tmp = git.get_repo_prefix(repo_github_name)
+                ut.to_string("repo_sym_name")
+                + " -> "
+                + ut.to_string("repo_github_name")
+            )
+            git.get_repo_prefix(repo_github_name)
             _LOG.debug(
-                ut.to_string("repo_sym_name") + " -> " +
-                ut.to_string("repo_sym_name_tmpA"))
+                ut.to_string("repo_sym_name")
+                + " -> "
+                + ut.to_string("repo_sym_name_tmpA")
+            )
+
 
 # #############################################################################
 # numba.py
@@ -116,8 +125,34 @@ class Test_numba_1(ut.TestCase):
 
 class Test_printing1(ut.TestCase):
     def test_color_highlight1(self):
-        for c in prnt.COLOR_MAP.keys():
+        for _, c in prnt.COLOR_MAP:
             _LOG.debug(prnt.color_highlight(c, c))
+
+
+# #############################################################################
+# s3.py
+# #############################################################################
+
+
+class Test_s3_1(ut.TestCase):
+    def test_get_path1(self):
+        file_path = (
+            "s3://default00-bucket/kibot/All_Futures_Continuous_Contracts_daily"
+        )
+        bucket_name, file_path = hs3.parse_path(file_path)
+        self.assertEqual(bucket_name, "default00-bucket")
+        self.assertEqual(
+            file_path, "kibot/All_Futures_Continuous_Contracts_daily"
+        )
+
+    @pytest.mark.slow
+    def test_ls1(self):
+        file_path = os.path.join(
+            hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily"
+        )
+        file_names = hs3.ls(file_path)
+        # We rely on the fact that Kibot data is not changing.
+        self.assertEqual(len(file_names), 252)
 
 
 # #############################################################################
