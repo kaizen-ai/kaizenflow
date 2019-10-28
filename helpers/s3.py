@@ -35,6 +35,8 @@ def get_path() -> str:
     return s3_path
 
 
+# TODO(GP): Maybe we should add an S3Path class which will contain
+# prefix, bucket_name and path attributes?
 def parse_path(path: str) -> Tuple[str, str]:
     """
     Extract bucket name and a file or folder path from an s3 full path.
@@ -53,13 +55,15 @@ def parse_path(path: str) -> Tuple[str, str]:
     )
     path = path[len(prefix):]
     path = path.split("/")
-    dbg.dassert(path, "The %s path is empty.", path)
+    dbg.dassert(path, "The path is empty.")
     bucket_name = path[0]
     bucket_name = bucket_name.replace("s3://", "")
     path = "/".join(path[1:])
     return bucket_name, path
 
 
+# TODO(Julia): When PartTask418_PRICE_Convert_Kibot_data_from_csv is
+# merged, choose between this ls() and listdir() functions.
 def ls(file_path: str) -> List[str]:
     """
     Return the file lists in `file_path`

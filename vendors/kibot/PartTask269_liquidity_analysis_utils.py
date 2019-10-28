@@ -44,7 +44,7 @@ def read_kibot_prices(
     return prices
 
 
-def get_prices(
+def get_price_data(
     price_df_dict: Dict[str, pd.DataFrame], price_col: str, agg_func: str
 ) -> pd.DataFrame:
     """

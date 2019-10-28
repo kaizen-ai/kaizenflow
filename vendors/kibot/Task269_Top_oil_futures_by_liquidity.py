@@ -205,14 +205,14 @@ daily_price_dict_df["CL"].tail(2)
 # ## Sum volume
 
 # %%
-daily_vol = lau.get_prices(daily_price_dict_df, lau.KIBOT_VOL, "sum")
+daily_vol = lau.get_price_data(daily_price_dict_df, lau.KIBOT_VOL, "sum")
 daily_vol.sort_values("sum_vol", ascending=False)
 
 # %% [markdown]
 # ## Mean volume
 
 # %%
-mean_vol = lau.get_prices(daily_price_dict_df, lau.KIBOT_VOL, "mean")
+mean_vol = lau.get_price_data(daily_price_dict_df, lau.KIBOT_VOL, "mean")
 mean_vol.sort_values("mean_vol", ascending=False)
 
 # %% [markdown]
