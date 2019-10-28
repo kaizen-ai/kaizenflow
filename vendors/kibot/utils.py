@@ -8,7 +8,6 @@ import functools
 import logging
 import os
 
-import boto3
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -190,10 +189,8 @@ def _normalize_1_min(df: pd.DataFrame):
 
 def _normalize_daily(df: pd.DataFrame):
     df[0] = pd.to_datetime(df[0], format="%m/%d/%Y")
-    df.columns = "date open high low close vol".split()
-    df.set_index("date", drop=True, inplace=True)
-    # TODO(GP): Should this be renamed to datetime as described
-    # in kibot/utils.py L56?
+    df.columns = "datetime open high low close vol".split()
+    df.set_index("datetime", drop=True, inplace=True)
     return df
 
 
@@ -207,15 +204,8 @@ def convert_kibot_csv_gz_to_pq():
     """
     # Get the list of kibot subdirs in the kibot directory on S3.
     s3_path = hs3.get_path()
-    s3_bucket = s3_path.split("//")[1]
-    AMAZON_MAX_INT = 2147483647
-    s3 = boto3.client("s3")
-    s3_objects = s3.list_objects_v2(
-        Bucket=s3_bucket, StartAfter="kibot", MaxKeys=AMAZON_MAX_INT
-    )
-    contents = s3_objects["Contents"]
-    kibot_files = [cont["Key"] for cont in contents]
-    kibot_subdirs = set(map(lambda x: x.split("/")[1], kibot_files))
+    kibot_dir_path = os.path.join(s3_path, "kibot")
+    kibot_subdirs = hs3.listdir(kibot_dir_path, mode="non-recursive")
     _LOG.debug(
         "Will attempt to convert files in the following dirs: %s", kibot_subdirs
     )
@@ -231,7 +221,10 @@ def convert_kibot_csv_gz_to_pq():
             "All_Futures_Continuous_Contracts_1min",
         ]:
             normalizer = _normalize_1_min
-        elif kibot_subdir == "All_Futures_Continuous_Contracts_daily":
+        elif kibot_subdir in [
+            "All_Futures_Continuous_Contracts_daily",
+            "All_Futures_Contracts_daily",
+        ]:
             normalizer = _normalize_daily
         else:
             normalizer = None
