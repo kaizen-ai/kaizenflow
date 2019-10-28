@@ -202,13 +202,13 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
     :param normalizer: function to apply to df before writing to pq
     :return: None
     """
-    if not csv_dir.startswith("s3://"):
+    if not hs3.is_s3_path:
         dbg.dassert_exists(csv_dir)
         # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
         filenames = os.listdir(csv_dir)
     else:
         filenames = hs3.listdir(csv_dir)
-        dbg.dassert(filenames, "No files in the %s directory.", csv_dir)
+    dbg.dassert(filenames, "No files in the %s directory.", csv_dir)
     for filename in filenames:
         # Remove .csv/.csv.gz and add .pq.
         csv_stem = _maybe_remove_extension(filename, ".csv")
