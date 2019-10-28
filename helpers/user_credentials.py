@@ -177,7 +177,7 @@ def get_credentials():
         git_user_name = "sonniki"
         git_user_email = "sonya@particle.one"
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/home/sonniki/.conda/envs"
+        conda_env_path = os.path.expanduser("~/.conda/envs")
     elif user_name == "liza":
         # Liza.
         git_user_name = "lizvladi"

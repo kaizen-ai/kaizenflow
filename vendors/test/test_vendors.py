@@ -1,13 +1,18 @@
 import logging
 import os
 
+import bs4
 import pytest
 
+import helpers.dbg as dbg
 import helpers.s3 as hs3
 import helpers.system_interaction as si
 import helpers.unit_test as ut
 import vendors.cme.read as cmer
 import vendors.etfs.utils as etfut
+# TODO: https://github.com/ParticleDev/commodity_research/issues/456
+# import vendors.eurostat.base_classes as euro_bc
+# import vendors.eurostat.filler_versions as euro_fv
 import vendors.first_rate.read as frr
 import vendors.kibot.utils as kut
 import vendors.pandas_datareader.utils as pdut
@@ -152,3 +157,54 @@ class Test_cme1(ut.TestCase):
 
     def test_read_product_list(self):
         cmer.read_product_list()
+
+
+# #############################################################################
+# Eurostat
+# #############################################################################
+
+# TODO: https://github.com/ParticleDev/commodity_research/issues/456
+
+# @pytest.mark.slow()
+# class Test_eurostat(ut.TestCase):
+#     @staticmethod
+#     def _get_class(filler_version):
+#         version_config = euro_fv.EUROSTAT_FILLERS[filler_version]
+#         return version_config['class']
+#
+#     @classmethod
+#     def _get_instance(cls, filler_version):
+#         version_class = cls._get_class(filler_version=filler_version)
+#         return version_class(filler_version=filler_version)
+#
+#     # General cases, no depends on optional settings.
+#     # These cases can be moved in upper level.
+#     def test_filler_versions(self):
+#         for version in euro_fv.EUROSTAT_FILLERS:
+#             self._get_instance(filler_version=version)
+#
+#     # Tests for interface EurostatFileFillerV1
+#
+#     def test_EurostatFileFillerV1_source_availability(self):
+#         for filler_version in euro_fv.EUROSTAT_FILLERS:
+#             version_class = self._get_instance(filler_version=filler_version)
+#             if issubclass(version_class, euro_bc.EurostatFileFillerV1):
+#                 version_instance = version_class(filler_version=filler_version)
+#                 source = version_instance.get_source_page()
+#                 dbg.dassert_isinstance(source, bs4.BeautifulSoup)
+#
+#     def test_EurostatFileFillerV1_get_links(self):
+#         for filler_version in euro_fv.EUROSTAT_FILLERS:
+#             version_class = self._get_instance(filler_version=filler_version)
+#             if issubclass(version_class, euro_bc.EurostatFileFillerV1):
+#                 version_instance = version_class(filler_version=filler_version)
+#                 links = version_instance.get_links()
+#                 dbg.dassert_isinstance(links, list)
+#                 dbg.dassert_lte(0,
+#                                 len(links),
+#                                 msg='No links found. Page structure changed.')
+#
+#     def test_data_reader(self):
+#         for version in euro_fv.EUROSTAT_FILLERS:
+#             version_class = self._get_instance(filler_version=version)
+#             version_class.data_reader().__next__()
