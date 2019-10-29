@@ -125,7 +125,7 @@ class Test_numba_1(ut.TestCase):
 
 class Test_printing1(ut.TestCase):
     def test_color_highlight1(self):
-        for _, c in prnt.COLOR_MAP:
+        for c in prnt.COLOR_MAP:
             _LOG.debug(prnt.color_highlight(c, c))
 
 
