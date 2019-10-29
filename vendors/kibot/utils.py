@@ -194,6 +194,36 @@ def _normalize_daily(df: pd.DataFrame):
     return df
 
 
+def _convert_kibot_subdir_csv_gz_to_pq(csv_subdir_path, pq_dir):
+    csv_subdir_path = csv_subdir_path.rstrip("/")
+    kibot_subdir = os.path.basename(csv_subdir_path)
+    _LOG.info("Converting files in %s directory", csv_subdir_path)
+    if kibot_subdir in [
+        "All_Futures_Contracts_1min",
+        "All_Futures_Continuous_Contracts_1min",
+    ]:
+        normalizer = _normalize_1_min
+    elif kibot_subdir in [
+        "All_Futures_Continuous_Contracts_daily",
+        "All_Futures_Contracts_daily",
+    ]:
+        normalizer = _normalize_daily
+    else:
+        normalizer = None
+    if normalizer is not None:
+        pq_subdir_path = os.path.join(pq_dir, kibot_subdir)
+        csv.convert_csv_dir_to_pq_dir(
+            csv_subdir_path, pq_subdir_path, header=None, normalizer=normalizer
+        )
+        _LOG.info(
+            "Converted the files in %s directory and saved them to %s.",
+            csv_subdir_path,
+            pq_subdir_path,
+        )
+    else:
+        _LOG.warning("Not converting %s.", kibot_subdir)
+
+
 def convert_kibot_csv_gz_to_pq():
     """
     Convert the files in the following subdirs of `kibot` dir on S3:
@@ -211,38 +241,10 @@ def convert_kibot_csv_gz_to_pq():
     )
     # For each of the kibot subdirectories, transform the files in them
     # to parquet.
-    s3_kibot_path = os.path.join(s3_path, "kibot")
-    pq_dir = os.path.join(s3_kibot_path, "pq")
+    pq_dir = os.path.join(kibot_dir_path, "pq")
     for kibot_subdir in tqdm(iter(kibot_subdirs)):
-        csv_subdir_path = os.path.join(s3_kibot_path, kibot_subdir)
-        _LOG.info("Converting files in %s directory", csv_subdir_path)
-        if kibot_subdir in [
-            "All_Futures_Contracts_1min",
-            "All_Futures_Continuous_Contracts_1min",
-        ]:
-            normalizer = _normalize_1_min
-        elif kibot_subdir in [
-            "All_Futures_Continuous_Contracts_daily",
-            "All_Futures_Contracts_daily",
-        ]:
-            normalizer = _normalize_daily
-        else:
-            normalizer = None
-        if normalizer is not None:
-            pq_subdir_path = os.path.join(pq_dir, kibot_subdir)
-            csv.convert_csv_dir_to_pq_dir(
-                csv_subdir_path,
-                pq_subdir_path,
-                header=None,
-                normalizer=normalizer,
-            )
-            _LOG.info(
-                "Converted the files in %s directory and saved them to %s.",
-                csv_subdir_path,
-                pq_subdir_path,
-            )
-        else:
-            _LOG.warning("Not converting %s.", kibot_subdir)
+        csv_subdir_path = os.path.join(kibot_dir_path, kibot_subdir)
+        _convert_kibot_subdir_csv_gz_to_pq(csv_subdir_path, pq_dir)
 
 
 # #############################################################################
