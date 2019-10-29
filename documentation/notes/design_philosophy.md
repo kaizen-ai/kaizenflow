@@ -10,6 +10,46 @@ complex systems can be broken down into simple pieces.
 Designs that are simple are easier to understand, easier to modify, and
 easier to debug.
 
+## Tips from a pro
+
+Adapted from
+[these slides](https://static.googleusercontent.com/media/research.google.com/en//people/jeff/stanford-295-talk.pdf)
+from a Stanford talk given by
+[Jeff Dean](https://en.wikipedia.org/wiki/Jeff_Dean_(computer_scientist))
+(the Chuck Norris of SWE)
+
+### Designing software systems is tricky
+
+Need to balance:
+  - Simplicity [note that this comes first!]
+  - Scalability
+  - Performance
+  - Reliability
+  - Generality
+  - Features [note that this comes last!]
+
+### Get Advice Early!
+
+- Get advice
+  - before you write any code
+  - before you write any lengthy design documents [notice the implicit
+    assumption that there is a design documented!]
+
+- Before writing a doc or code
+  - jot down some rough ideas (a few paragraphs)
+  - chat about the design with colleagues
+  - consider discussing multiple potential designs
+
+### Interfaces
+
+Think carefully about interfaces in your system!
+
+- Imagine other hypothetical clients trying to use your interface
+- Document precisely, but avoid constraining the implementation
+- Get feedback on your interfaces before implementing!
+- The best way to learn is to look at well-designed interfaces
+
+
 # Architecture
 
 ## Use design patterns
