@@ -193,6 +193,7 @@ def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         _LOG.debug("Add columns")
         df["time"] = [d.time() for d in df.index]
     else:
+        df.columns = df.columns.astype(str)
         _LOG.warning("The dataframe has only one column: %s", df)
     return df
 
