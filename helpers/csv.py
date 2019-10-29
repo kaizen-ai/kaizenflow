@@ -166,6 +166,7 @@ def convert_csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     df.to_parquet(pq_path)
 
 
+# TODO(gp): Promote to io_.
 def _maybe_remove_extension(filename, extension):
     """
     Attempt to remove `extension` from `filename`.
