@@ -25,6 +25,48 @@ def is_s3_path(path):
     return path.startswith("s3://")
 
 
+def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
+    """
+    A wrapper around `list_objects_v2` method that bypasses its
+    restriction for only the first 1000 of the contents.
+    Returns only the `Key` fields of the `Contents` field, which contain
+    file paths.
+
+    Note:
+    `list_objects_v2` `StartAfter` parameter lists more files than it
+    should. That is why you will get files that are not actually in the
+    `dir_path` in your query.
+
+    :param s3_bucket: the name of the bucket
+    :param dir_path: path to the directory that needs to be listed
+    :return: list of paths
+    """
+    # Create an s3 object to query.
+    s3 = boto3.client("s3")
+    # Query until the response is not truncated.
+    AMAZON_MAX_INT = 2147483647
+    continuation_token = None
+    is_truncated = True
+    contents_keys = []
+    while is_truncated:
+        if continuation_token is not None:
+            continuation_arg = {"ContinuationToken": continuation_token}
+        else:
+            continuation_arg = {}
+        s3_objects = s3.list_objects_v2(
+            Bucket=s3_bucket,
+            StartAfter=dir_path,
+            MaxKeys=AMAZON_MAX_INT,
+            **continuation_arg
+        )
+        # Extract the `Key` from each element.
+        keys = [content["Key"] for content in s3_objects["Contents"]]
+        contents_keys.extend(keys)
+        continuation_token = s3_objects.get("NextContinuationToken")
+        is_truncated = s3_objects["IsTruncated"]
+    return contents_keys
+
+
 def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     """
     List files in s3 directory.
@@ -38,7 +80,6 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     :return: list of paths
     """
     # Parse the s3_path, extracting bucket and directory.
-    AMAZON_MAX_INT = 2147483647
     dbg.dassert(is_s3_path(s3_path), "s3 path should start with s3://")
     if not s3_path.endswith("/"):
         s3_path = s3_path + "/"
@@ -48,16 +89,9 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     # 'kibot', 'All_Futures_Continuous_Contracts_daily', ''].
     s3_bucket = split_path[2]
     dir_path = "/".join(split_path[3:])
-    # Create an s3 object to query.
-    s3 = boto3.client("s3")
-    s3_objects = s3.list_objects_v2(
-        Bucket=s3_bucket, StartAfter=dir_path, MaxKeys=AMAZON_MAX_INT
-    )
-    contents = s3_objects["Contents"]
-    # Extract the `Key` from each element, which contains the name of
-    # the file.
-    file_names = [cont["Key"] for cont in contents]
-    # Remove the initial `dir_path` from the files.
+    file_names = _list_s3_keys(s3_bucket, dir_path)
+    # Filter file names that do not start with the initial `dir_path`,
+    # remove `dir_path` from the file names.
     file_names = [
         file_name.replace(dir_path, "", 1)
         for file_name in file_names
