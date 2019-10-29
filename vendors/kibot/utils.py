@@ -50,7 +50,10 @@ def _read_data(file_name, nrows):
         df.set_index("datetime", drop=True, inplace=True)
         _LOG.debug("Add columns")
         df["time"] = [d.time() for d in df.index]
-    elif dir_name == "All_Futures_Continuous_Contracts_daily":
+    elif dir_name in (
+        "All_Futures_Continuous_Contracts_daily",
+        "All_Futures_Contracts_daily",
+    ):
         # Daily data.
         df = pd.read_csv(file_name, header=None, parse_dates=[0], nrows=nrows)
         df.columns = "date open high low close vol".split()
@@ -236,6 +239,7 @@ def convert_kibot_csv_gz_to_pq():
     Convert the files in the following subdirs of `kibot` dir on S3:
     - `All_Futures_Contracts_1min`
     - `All_Futures_Continuous_Contracts_1min`
+    - `All_Futures_Contracts_daily`
     - `All_Futures_Continuous_Contracts_daily`
     to Parquet and save them to `kibot/pq` dir on S3.
     """
