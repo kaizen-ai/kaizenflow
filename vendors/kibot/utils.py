@@ -177,24 +177,31 @@ def read_metadata4():
 # #############################################################################
 # Convert .csv.gz to parquet.
 # #############################################################################
-def _normalize_1_min(df: pd.DataFrame):
-    df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
-    df.drop(columns=[1], inplace=True)
-    df.columns = "datetime open high low close vol".split()
-    df.set_index("datetime", drop=True, inplace=True)
-    _LOG.debug("Add columns")
-    df["time"] = [d.time() for d in df.index]
+def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
+    # There are cases in which the dataframes consist of only one column,
+    # with the first row containing a `405 Data Not Found` string, and
+    # the second one containing `No data found for the specified period
+    # for BTSQ14.`
+    if 1 in df.columns:
+        df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
+        df.drop(columns=[1], inplace=True)
+        df.columns = "datetime open high low close vol".split()
+        df.set_index("datetime", drop=True, inplace=True)
+        _LOG.debug("Add columns")
+        df["time"] = [d.time() for d in df.index]
+    else:
+        _LOG.warning("The dataframe has only one column: %s", df)
     return df
 
 
-def _normalize_daily(df: pd.DataFrame):
+def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
     df[0] = pd.to_datetime(df[0], format="%m/%d/%Y")
     df.columns = "datetime open high low close vol".split()
     df.set_index("datetime", drop=True, inplace=True)
     return df
 
 
-def _convert_kibot_subdir_csv_gz_to_pq(csv_subdir_path, pq_dir):
+def _convert_kibot_subdir_csv_gz_to_pq(csv_subdir_path: str, pq_dir: str):
     csv_subdir_path = csv_subdir_path.rstrip("/")
     kibot_subdir = os.path.basename(csv_subdir_path)
     _LOG.info("Converting files in %s directory", csv_subdir_path)
