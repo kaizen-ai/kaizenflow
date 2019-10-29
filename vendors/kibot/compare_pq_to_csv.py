@@ -32,11 +32,11 @@ def compare():
         for file_name in hs3.listdir(subdir_path_csv):
             # Read dataframe from csv.
             csv_path = os.path.join(subdir_path_csv, file_name)
-            csv_df = kut.read_data(csv_path)
+            csv_df = kut.read_data(csv_path, nrows=None)
             csv_df.rename(columns={"date": "datetime"}, inplace=True)
             # Read dataframe from parquet.
             pq_file_name = (
-                csv._maybe_remove_extension(file_name, ".csv.gz") + "pq"
+                csv._maybe_remove_extension(file_name, ".csv.gz") + ".pq"
             )
             pq_path = os.path.join(subdir_path_pq, pq_file_name)
             pq_df = pd.read_parquet(pq_path)
