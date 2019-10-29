@@ -121,6 +121,7 @@ def read_metadata1():
     JYF18    http://api.kibot.com/?action=download&link=vrv...    JAPANESE YEN JANUARY 2018
     """
     file_name = _KIBOT_DIRNAME + "/All_Futures_Contracts_1min.csv.gz"
+    _LOG.debug("file_name=%s", file_name)
     df = pd.read_csv(file_name, index_col=0)
     df = df.iloc[:, 1:]
     _LOG.debug("df=\n%s", df.head(3))
@@ -135,6 +136,7 @@ def read_metadata2():
     JYF18    http://api.kibot.com/?action=download&link=vrv...    JAPANESE YEN JANUARY 2018
     """
     file_name = _KIBOT_DIRNAME + "/All_Futures_Contracts_daily.csv.gz"
+    _LOG.debug("file_name=%s", file_name)
     df = pd.read_csv(file_name, index_col=0)
     df = df.iloc[:, 1:]
     _LOG.debug("df=\n%s", df.head(3))
@@ -149,6 +151,7 @@ def read_metadata3():
     ES            ESH11     4/6/2010     891.0       E-MINI S&P 500 MARCH 2011             Chicago Mercantile Exchange Mini Sized Contrac...
     """
     file_name = _KIBOT_DIRNAME + "/Futures_tickbidask.txt.gz"
+    _LOG.debug("file_name=%s", file_name)
     df = pd.read_csv(file_name, index_col=0, skiprows=5, header=None, sep="\t")
     df.columns = (
         "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
@@ -167,6 +170,7 @@ def read_metadata4():
     FV         FV      9/27/2009  171.0       CONTINUOUS 5 YR US TREASURY NOTE CONTRACT    Chicago Board Of Trade (CBOT GLOBEX)
     """
     file_name = _KIBOT_DIRNAME + "/FuturesContinuous_intraday.txt.gz"
+    _LOG.debug("file_name=%s", file_name)
     df = pd.read_csv(file_name, index_col=0, skiprows=5, header=None, sep="\t")
     df.columns = (
         "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
