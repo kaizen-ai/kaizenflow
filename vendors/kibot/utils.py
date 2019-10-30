@@ -32,11 +32,12 @@ def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
     # for BTSQ14.`
     # TODO(Julia): Find a better invariant, e.g., len(df.columns) > 2
     if 1 in df.columns:
-        # Convedrt
-        df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
-        df.drop(columns=[1], inplace=True)
         # According to Kibot the columns are:
         #   Date,Time,Open,High,Low,Close,Volume
+        # Convert date and time into a datetime.
+        df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
+        df.drop(columns=[1], inplace=True)
+        # Rename columns.
         df.columns = "datetime open high low close vol".split()
         df.set_index("datetime", drop=True, inplace=True)
         _LOG.debug("Add columns")
@@ -50,10 +51,12 @@ def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
+    # Convert date and time into a datetime.
     df[0] = pd.to_datetime(df[0], format="%m/%d/%Y")
+    # Rename columns.
     df.columns = "datetime open high low close vol".split()
     df.set_index("datetime", drop=True, inplace=True)
-    # TODO(gp): Turn it into datetime using EOD timestamp. Check on Kibot.
+    # TODO(gp): Turn date into datetime using EOD timestamp. Check on Kibot.
     dbg.dassert(df.index.is_monotonic_increasing)
     dbg.dassert(df.index.is_unique)
     return df
@@ -223,19 +226,17 @@ def _convert_kibot_subdir_csv_gz_to_pq(csv_subdir_path: str, pq_dir: str):
     ]:
         normalizer = _normalize_daily
     else:
-        normalizer = None
-    if normalizer is not None:
-        pq_subdir_path = os.path.join(pq_dir, kibot_subdir)
-        csv.convert_csv_dir_to_pq_dir(
-            csv_subdir_path, pq_subdir_path, header=None, normalizer=normalizer
-        )
-        _LOG.info(
-            "Converted the files in %s directory and saved them to %s.",
-            csv_subdir_path,
-            pq_subdir_path,
-        )
-    else:
-        _LOG.warning("Not converting %s.", kibot_subdir)
+        _LOG.warning("Skipping dir '%s'", kibot_subdir)
+        return
+    pq_subdir_path = os.path.join(pq_dir, kibot_subdir)
+    csv.convert_csv_dir_to_pq_dir(
+        csv_subdir_path, pq_subdir_path, header=None, normalizer=normalizer
+    )
+    _LOG.info(
+        "Converted the files in %s directory and saved them to %s.",
+        csv_subdir_path,
+        pq_subdir_path,
+    )
 
 
 def convert_kibot_csv_gz_to_pq():
@@ -251,9 +252,7 @@ def convert_kibot_csv_gz_to_pq():
     s3_path = hs3.get_path()
     kibot_dir_path = os.path.join(s3_path, "kibot")
     kibot_subdirs = hs3.listdir(kibot_dir_path, mode="non-recursive")
-    _LOG.debug(
-        "Will attempt to convert files in the following dirs: %s", kibot_subdirs
-    )
+    _LOG.debug("Convert files in the following dirs: %s", kibot_subdirs)
     # For each of the kibot subdirectories, transform the files in them
     # to parquet.
     pq_dir = os.path.join(kibot_dir_path, "pq")
