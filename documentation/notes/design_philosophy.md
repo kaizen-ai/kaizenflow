@@ -5,10 +5,12 @@
 Follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle).
 
 Pursue simple, elegant solutions. Some things are inherently complex, but even
-complex systems can be broken down into simple pieces.
+complex systems can (and should) be broken down into simple pieces.
 
-Designs that are simple are easier to understand, easier to modify, and
-easier to debug.
+Designs that are simple are easier to
+  - understand
+  - modify
+  - debug
 
 ## Tips from a pro
 
@@ -49,7 +51,6 @@ Think carefully about interfaces in your system!
 - Get feedback on your interfaces before implementing!
 - The best way to learn is to look at well-designed interfaces
 
-
 # Architecture
 
 ## Use design patterns
@@ -82,7 +83,7 @@ In other words, by using design patterns, you
 If, for example, a function `f` accepts a dataframe `df` as its (sole)
 argument, then, ideally, `f(df)` will not modify `df`. If modifications are
 desired, then instead one can do
-```
+```python
 def f(df):
     df = df.copy()
     ...
@@ -108,11 +109,13 @@ have two key properties:
      does not change (in contrast to, e.g., functions that rely upon global
      state)
   2. Function evaluation does not have
-     [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science)
+     [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science))
      
 Some nice properties enjoyed by pure functions are:
   - They are easy to understand and easy to test
   - Using pure functions makes refactoring easier
+  - They allow to [chain](https://en.wikipedia.org/wiki/Method_chaining) in an
+    elegant way
   - They are often a natural choice for data manipulation and analysis
   - They are convenient in notebooks
 
