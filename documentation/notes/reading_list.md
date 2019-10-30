@@ -22,3 +22,11 @@
     - Reading is not enough: you should have tried *all* the examples of the book
     - Remember: whatever you want to do, there is a more effective pandas way to
       do it in one line
+
+# SRE
+
+- [Site Reliability Engineering](https://landing.google.com/sre/sre-book/toc/index.html)
+    - "Members of the SRE team explain how their engagement with the entire
+      software lifecycle has enabled Google to build, deploy, monitor, and
+      maintain some of the largest software systems in the world."
+    - An outstanding reference drawing on a wealth of experience
