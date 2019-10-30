@@ -30,8 +30,7 @@ def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
     # with the first row containing a `405 Data Not Found` string, and
     # the second one containing `No data found for the specified period
     # for BTSQ14.`
-    # TODO(Julia): Find a better invariant, e.g., len(df.columns) > 2
-    if 1 in df.columns:
+    if df.shape[1] > 1:
         # According to Kibot the columns are:
         #   Date,Time,Open,High,Low,Close,Volume
         # Convert date and time into a datetime.
