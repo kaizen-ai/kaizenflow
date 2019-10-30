@@ -13,8 +13,23 @@ are converted to Parquet and saved to 'kibot/pq` in corresponding
 subdirectories.
 
 Usage example:
-> python vendors/kibot/convert_kibot_to_pq.py \
-  -v DEBUG
+> python vendors/kibot/convert_kibot_to_pq.py -v DEBUG
+
+After the conversion the data layout looks like:
+> aws s3 ls default00-bucket/kibot/
+                           PRE All_Futures_Continuous_Contracts_1min/
+                           PRE All_Futures_Continuous_Contracts_daily/
+                           PRE All_Futures_Continuous_Contracts_tick/
+                           PRE All_Futures_Contracts_1min/
+                           PRE All_Futures_Contracts_daily/
+                           PRE metadata/
+                           PRE pq/
+
+> aws s3 ls default00-bucket/kibot/pq/
+                           PRE All_Futures_Continuous_Contracts_1min/
+                           PRE All_Futures_Continuous_Contracts_daily/
+                           PRE All_Futures_Contracts_1min/
+                           PRE All_Futures_Contracts_daily/
 """
 
 import argparse

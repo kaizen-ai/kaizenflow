@@ -9,9 +9,6 @@ import helpers.s3 as hs3
 _LOG = logging.getLogger(__name__)
 
 
-# DUMMY_TO_REVIEW
-
-
 def read_csv_range(csv_path, from_, to, **kwargs):
     """
     Read a specified row range of a csv file and convert to a DataFrame.
@@ -188,14 +185,15 @@ def _maybe_remove_extension(filename, extension):
     )
     #
     if filename.endswith(extension):
-        return filename[: -len(extension)]
+        ret = filename[: -len(extension)]
     else:
-        return None
+        ret = None
+    return ret
 
 
 def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
     """
-    Applies `convert_csv_to_pq` to all files in csv_dir
+    Applies `convert_csv_to_pq` to all files in csv_dir.
 
     :param csv_dir: directory of csv's
     :param pq_dir: target directory
@@ -203,7 +201,7 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
     :param normalizer: function to apply to df before writing to pq
     :return: None
     """
-    if not hs3.is_s3_path:
+    if not hs3.is_s3_path(csv_dir):
         dbg.dassert_exists(csv_dir)
         # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
         filenames = os.listdir(csv_dir)

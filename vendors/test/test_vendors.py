@@ -110,7 +110,6 @@ class Test_first_rate1(ut.TestCase):
     def test_downloader1(self):
         tmp_dir = self.get_scratch_space()
         cmd = []
-        # TODO(Julia): Rename download.py
         cmd.append("vendors/first_rate/download.py")
         cmd.append("--zipped_dst_dir %s/zipped" % tmp_dir)
         cmd.append("--unzipped_dst_dir %s/unzipped" % tmp_dir)
@@ -118,7 +117,7 @@ class Test_first_rate1(ut.TestCase):
         cmd.append("--max_num_files 1")
         cmd = " ".join(cmd)
         si.system(cmd)
-        # TODO(Julia): Test the dowloaded data with the code below.
+        # Test the dowloaded data with the code below.
         pq_dir = "%s/pq" % tmp_dir
         file_name = os.listdir(pq_dir)[0]
         file_path = os.path.join(pq_dir, file_name)

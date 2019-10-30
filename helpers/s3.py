@@ -93,7 +93,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     :return: list of paths
     """
     # Parse the s3_path, extracting bucket and directory.
-    dbg.dassert(is_s3_path(s3_path), "s3 path should start with s3://")
+    dbg.dassert(is_s3_path(s3_path), "Path '%s' is not an s3 path", s3_path)
     if not s3_path.endswith("/"):
         s3_path = s3_path + "/"
     split_path = s3_path.split("/")

@@ -25,6 +25,40 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Add timezone or use _ET suffix.
+def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
+    # There are cases in which the dataframes consist of only one column,
+    # with the first row containing a `405 Data Not Found` string, and
+    # the second one containing `No data found for the specified period
+    # for BTSQ14.`
+    # TODO(Julia): Find a better invariant, e.g., len(df.columns) > 2
+    if 1 in df.columns:
+        # Convedrt
+        df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
+        df.drop(columns=[1], inplace=True)
+        # According to Kibot the columns are:
+        #   Date,Time,Open,High,Low,Close,Volume
+        df.columns = "datetime open high low close vol".split()
+        df.set_index("datetime", drop=True, inplace=True)
+        _LOG.debug("Add columns")
+        df["time"] = [d.time() for d in df.index]
+    else:
+        df.columns = df.columns.astype(str)
+        _LOG.warning("The dataframe has only one column: %s", df)
+    dbg.dassert(df.index.is_monotonic_increasing)
+    dbg.dassert(df.index.is_unique)
+    return df
+
+
+def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
+    df[0] = pd.to_datetime(df[0], format="%m/%d/%Y")
+    df.columns = "datetime open high low close vol".split()
+    df.set_index("datetime", drop=True, inplace=True)
+    # TODO(gp): Turn it into datetime using EOD timestamp. Check on Kibot.
+    dbg.dassert(df.index.is_monotonic_increasing)
+    dbg.dassert(df.index.is_unique)
+    return df
+
+
 def _read_data(file_name, nrows):
     """
     Read row data from disk and perform basic transformations such as:
@@ -36,35 +70,23 @@ def _read_data(file_name, nrows):
     if nrows is not None:
         _LOG.warning("Reading only the first nrows=%s rows", nrows)
     dir_name = os.path.basename(os.path.dirname(file_name))
+    df = pd.read_csv(file_name, header=None, nrows=nrows)
     if dir_name in (
         "All_Futures_Contracts_1min",
         "All_Futures_Continuous_Contracts_1min",
     ):
         # 1 minute data.
-        df = pd.read_csv(
-            file_name, header=None, parse_dates=[[0, 1]], nrows=nrows
-        )
-        # According to Kibot the columns are:
-        #   Date,Time,Open,High,Low,Close,Volume
-        df.columns = "datetime open high low close vol".split()
-        df.set_index("datetime", drop=True, inplace=True)
-        _LOG.debug("Add columns")
-        df["time"] = [d.time() for d in df.index]
+        df = _normalize_1_min(df)
     elif dir_name in (
         "All_Futures_Continuous_Contracts_daily",
         "All_Futures_Contracts_daily",
     ):
         # Daily data.
-        df = pd.read_csv(file_name, header=None, parse_dates=[0], nrows=nrows)
-        df.columns = "date open high low close vol".split()
-        df.set_index("date", drop=True, inplace=True)
-        # TODO(gp): Turn it into datetime using EOD timestamp. Check on Kibot.
+        df = _normalize_daily(df)
     else:
         raise ValueError(
             "Invalid dir_name='%s' in file_name='%s'" % (dir_name, file_name)
         )
-    dbg.dassert(df.index.is_monotonic_increasing)
-    dbg.dassert(df.index.is_unique)
     return df
 
 
@@ -184,29 +206,6 @@ def read_metadata4():
 # #############################################################################
 # Convert .csv.gz to parquet.
 # #############################################################################
-def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
-    # There are cases in which the dataframes consist of only one column,
-    # with the first row containing a `405 Data Not Found` string, and
-    # the second one containing `No data found for the specified period
-    # for BTSQ14.`
-    if 1 in df.columns:
-        df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
-        df.drop(columns=[1], inplace=True)
-        df.columns = "datetime open high low close vol".split()
-        df.set_index("datetime", drop=True, inplace=True)
-        _LOG.debug("Add columns")
-        df["time"] = [d.time() for d in df.index]
-    else:
-        df.columns = df.columns.astype(str)
-        _LOG.warning("The dataframe has only one column: %s", df)
-    return df
-
-
-def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
-    df[0] = pd.to_datetime(df[0], format="%m/%d/%Y")
-    df.columns = "datetime open high low close vol".split()
-    df.set_index("datetime", drop=True, inplace=True)
-    return df
 
 
 def _convert_kibot_subdir_csv_gz_to_pq(csv_subdir_path: str, pq_dir: str):
