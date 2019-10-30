@@ -4,11 +4,9 @@ import os
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
-
-
-# DUMMY_TO_REVIEW
 
 
 def read_csv_range(csv_path, from_, to, **kwargs):
@@ -180,19 +178,22 @@ def _maybe_remove_extension(filename, extension):
     dbg.dassert(filename)
     #
     dbg.dassert_isinstance(extension, str)
-    dbg.dassert(extension.startswith("."),
-                "filename extension=`%s` expected to start with `.`",
-                extension)
+    dbg.dassert(
+        extension.startswith("."),
+        "filename extension=`%s` expected to start with `.`",
+        extension,
+    )
     #
     if filename.endswith(extension):
-        return filename[:-len(extension)]
+        ret = filename[: -len(extension)]
     else:
-        return None
+        ret = None
+    return ret
 
 
 def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
     """
-    Applies `convert_csv_to_pq` to all files in csv_dir
+    Applies `convert_csv_to_pq` to all files in csv_dir.
 
     :param csv_dir: directory of csv's
     :param pq_dir: target directory
@@ -200,9 +201,13 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
     :param normalizer: function to apply to df before writing to pq
     :return: None
     """
-    dbg.dassert_exists(csv_dir)
-    # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
-    filenames = os.listdir(csv_dir)
+    if not hs3.is_s3_path(csv_dir):
+        dbg.dassert_exists(csv_dir)
+        # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
+        filenames = os.listdir(csv_dir)
+    else:
+        filenames = hs3.listdir(csv_dir)
+    dbg.dassert(filenames, "No files in the %s directory.", csv_dir)
     for filename in filenames:
         # Remove .csv/.csv.gz and add .pq.
         csv_stem = _maybe_remove_extension(filename, ".csv")

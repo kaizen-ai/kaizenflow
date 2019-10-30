@@ -10,8 +10,10 @@ import os
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 import helpers.cache as cache
+import helpers.csv as csv
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 
@@ -23,6 +25,43 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Add timezone or use _ET suffix.
+def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
+    # There are cases in which the dataframes consist of only one column,
+    # with the first row containing a `405 Data Not Found` string, and
+    # the second one containing `No data found for the specified period
+    # for BTSQ14.`
+    # TODO(Julia): Find a better invariant, e.g., len(df.columns) > 2
+    if 1 in df.columns:
+        # According to Kibot the columns are:
+        #   Date,Time,Open,High,Low,Close,Volume
+        # Convert date and time into a datetime.
+        df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
+        df.drop(columns=[1], inplace=True)
+        # Rename columns.
+        df.columns = "datetime open high low close vol".split()
+        df.set_index("datetime", drop=True, inplace=True)
+        _LOG.debug("Add columns")
+        df["time"] = [d.time() for d in df.index]
+    else:
+        df.columns = df.columns.astype(str)
+        _LOG.warning("The dataframe has only one column: %s", df)
+    dbg.dassert(df.index.is_monotonic_increasing)
+    dbg.dassert(df.index.is_unique)
+    return df
+
+
+def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
+    # Convert date and time into a datetime.
+    df[0] = pd.to_datetime(df[0], format="%m/%d/%Y")
+    # Rename columns.
+    df.columns = "datetime open high low close vol".split()
+    df.set_index("datetime", drop=True, inplace=True)
+    # TODO(gp): Turn date into datetime using EOD timestamp. Check on Kibot.
+    dbg.dassert(df.index.is_monotonic_increasing)
+    dbg.dassert(df.index.is_unique)
+    return df
+
+
 def _read_data(file_name, nrows):
     """
     Read row data from disk and perform basic transformations such as:
@@ -34,32 +73,23 @@ def _read_data(file_name, nrows):
     if nrows is not None:
         _LOG.warning("Reading only the first nrows=%s rows", nrows)
     dir_name = os.path.basename(os.path.dirname(file_name))
+    df = pd.read_csv(file_name, header=None, nrows=nrows)
     if dir_name in (
         "All_Futures_Contracts_1min",
         "All_Futures_Continuous_Contracts_1min",
     ):
         # 1 minute data.
-        df = pd.read_csv(
-            file_name, header=None, parse_dates=[[0, 1]], nrows=nrows
-        )
-        # According to Kibot the columns are:
-        #   Date,Time,Open,High,Low,Close,Volume
-        df.columns = "datetime open high low close vol".split()
-        df.set_index("datetime", drop=True, inplace=True)
-        _LOG.debug("Add columns")
-        df["time"] = [d.time() for d in df.index]
-    elif dir_name == "All_Futures_Continuous_Contracts_daily":
+        df = _normalize_1_min(df)
+    elif dir_name in (
+        "All_Futures_Continuous_Contracts_daily",
+        "All_Futures_Contracts_daily",
+    ):
         # Daily data.
-        df = pd.read_csv(file_name, header=None, parse_dates=[0], nrows=nrows)
-        df.columns = "date open high low close vol".split()
-        df.set_index("date", drop=True, inplace=True)
-        # TODO(gp): Turn it into datetime using EOD timestamp. Check on Kibot.
+        df = _normalize_daily(df)
     else:
         raise ValueError(
             "Invalid dir_name='%s' in file_name='%s'" % (dir_name, file_name)
         )
-    dbg.dassert(df.index.is_monotonic_increasing)
-    dbg.dassert(df.index.is_unique)
     return df
 
 
@@ -174,6 +204,61 @@ def read_metadata4():
     _LOG.debug("df=\n%s", df.head(3))
     _LOG.debug("df.shape=%s", df.shape)
     return df
+
+
+# #############################################################################
+# Convert .csv.gz to parquet.
+# #############################################################################
+
+
+def _convert_kibot_subdir_csv_gz_to_pq(csv_subdir_path: str, pq_dir: str):
+    csv_subdir_path = csv_subdir_path.rstrip("/")
+    kibot_subdir = os.path.basename(csv_subdir_path)
+    _LOG.info("Converting files in %s directory", csv_subdir_path)
+    if kibot_subdir in [
+        "All_Futures_Contracts_1min",
+        "All_Futures_Continuous_Contracts_1min",
+    ]:
+        normalizer = _normalize_1_min
+    elif kibot_subdir in [
+        "All_Futures_Continuous_Contracts_daily",
+        "All_Futures_Contracts_daily",
+    ]:
+        normalizer = _normalize_daily
+    else:
+        _LOG.warning("Skipping dir '%s'", kibot_subdir)
+        return
+    pq_subdir_path = os.path.join(pq_dir, kibot_subdir)
+    csv.convert_csv_dir_to_pq_dir(
+        csv_subdir_path, pq_subdir_path, header=None, normalizer=normalizer
+    )
+    _LOG.info(
+        "Converted the files in %s directory and saved them to %s.",
+        csv_subdir_path,
+        pq_subdir_path,
+    )
+
+
+def convert_kibot_csv_gz_to_pq():
+    """
+    Convert the files in the following subdirs of `kibot` dir on S3:
+    - `All_Futures_Contracts_1min`
+    - `All_Futures_Continuous_Contracts_1min`
+    - `All_Futures_Contracts_daily`
+    - `All_Futures_Continuous_Contracts_daily`
+    to Parquet and save them to `kibot/pq` dir on S3.
+    """
+    # Get the list of kibot subdirs in the kibot directory on S3.
+    s3_path = hs3.get_path()
+    kibot_dir_path = os.path.join(s3_path, "kibot")
+    kibot_subdirs = hs3.listdir(kibot_dir_path, mode="non-recursive")
+    _LOG.debug("Convert files in the following dirs: %s", kibot_subdirs)
+    # For each of the kibot subdirectories, transform the files in them
+    # to parquet.
+    pq_dir = os.path.join(kibot_dir_path, "pq")
+    for kibot_subdir in tqdm(iter(kibot_subdirs)):
+        csv_subdir_path = os.path.join(kibot_dir_path, kibot_subdir)
+        _convert_kibot_subdir_csv_gz_to_pq(csv_subdir_path, pq_dir)
 
 
 # #############################################################################

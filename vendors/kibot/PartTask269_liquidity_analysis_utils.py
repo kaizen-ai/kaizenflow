@@ -16,6 +16,7 @@ _LOG = logging.getLogger(__name__)
 KIBOT_VOL = "vol"
 
 
+# TODO(gp): This might belong to kibot/utils.py
 def _get_kibot_reader(
     frequency: str, symbol: str, n_rows: Optional[int] = None
 ) -> Callable:
@@ -29,7 +30,7 @@ def _get_kibot_reader(
         )
     else:
         raise ValueError(
-            "Only D and T frequencies are supported, passed %s", frequency
+            "Only D and T frequencies are supported, passed %s" % frequency
         )
     file_name = os.path.join(dir_path, f"{symbol}.csv.gz")
     reader = functools.partial(kut.read_data, file_name, nrows=n_rows)
@@ -114,7 +115,7 @@ class TimeSeriesStudy:
 
     def plot_changes_by_year(self, sharey=False):
         yearly_resample = self._time_series.resample("y")
-        fig, axis = plt.subplots(
+        _, axis = plt.subplots(
             len(yearly_resample),
             figsize=(20, 5 * len(yearly_resample)),
             sharey=sharey,
@@ -161,9 +162,10 @@ class TimeSeriesStudy:
     @property
     def _title_suffix(self):
         if self._data_name is not None:
-            return f" for {self._data_name}"
+            ret = f" for {self._data_name}"
         else:
-            return ""
+            ret = ""
+        return ret
 
 
 class TimeSeriesDailyStudy(TimeSeriesStudy):
