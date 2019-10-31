@@ -515,20 +515,24 @@ def _flake8(file_name, pedantic, check_if_possible):
     # TODO(gp): Does -j 4 help?
     opts = "--exit-zero --doctests --max-line-length=82 -j 4"
     ignore = [
-        # Because of black, disable
-        #   "W503 line break before binary operator"
+        # - "W503 line break before binary operator"
+        #     - Disabled because in contrast with black formatting
         "W503",
-        # E266 too many leading '#' for block comment
-        # We have disabled this since it is a false positive for jupytext files.
+        # - E203 whitespace before ':'
+        #     - Disabled because in contrast with black formatting
+        "E203",
+        # - E266 too many leading '#' for block comment
+        #     - We have disabled this since it is a false positive for jupytext
+        #       files.
         "E266,"
-        # E501 line too long (> 82 characters)
-        # We have disabled this since it triggers also for docstrings at the
-        # beginning of the line. We let pylint pick the lines too long, since
-        # it seems to be smarter.
+        # - E501 line too long (> 82 characters)
+        #     - We have disabled this since it triggers also for docstrings at
+        #       the beginning of the line. We let pylint pick the lines too
+        #       long, since it seems to be smarter.
         "E501",
-        # E731 do not assign a lambda expression, use a def
+        # - E731 do not assign a lambda expression, use a def
         "E731",
-        # E265 block comment should start with '# '
+        # - E265 block comment should start with '# '
         "E265",
     ]
     is_jupytext_code = is_paired_jupytext_file(file_name)
