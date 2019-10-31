@@ -114,7 +114,7 @@ have two key properties:
 Some nice properties enjoyed by pure functions are:
   - They are easy to understand and easy to test
   - Using pure functions makes refactoring easier
-  - They allow to [chain](https://en.wikipedia.org/wiki/Method_chaining) in an
+  - They allow [chaining](https://en.wikipedia.org/wiki/Method_chaining) in an
     elegant way
   - They are often a natural choice for data manipulation and analysis
   - They are convenient in notebooks
