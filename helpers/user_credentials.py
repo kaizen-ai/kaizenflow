@@ -119,9 +119,10 @@ def get_credentials():
             if git_repo_name == "ParticleDev/commodity_research":
                 # Forward port 10003 to the notebook server that is started by
                 # `run_jupyter_server.py` when executed on the dev server.
-                service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
-                tunnel_info.append(service)
-                jupyter_port = 10001
+                #service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
+                #tunnel_info.append(service)
+                #jupyter_port = 10001
+                pass
             elif git_repo_name == "alphamatic/lemonade":
                 # TODO(gp): This should be factored out in the including
                 #  superproject.
@@ -177,7 +178,7 @@ def get_credentials():
         git_user_name = "sonniki"
         git_user_email = "sonya@particle.one"
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-        conda_env_path = "/home/sonniki/.conda/envs"
+        conda_env_path = os.path.expanduser("~/.conda/envs")
     elif user_name == "liza":
         # Liza.
         git_user_name = "lizvladi"

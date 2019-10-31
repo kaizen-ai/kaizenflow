@@ -20,7 +20,7 @@
 
 <!--te-->
 
-# Github flow
+# Task management with GitHub
 
 ## Everything we work on comes as a GitHub task
 
@@ -42,6 +42,34 @@
 - `UMBRELLA`: when a task is tracking multiple sub-tasks
 - `BLOCKING`: there is an action that needs to be taken in order to make progress
   unblocking the task
+
+## Life cycle of a bug
+
+- When you start working on a bug, mark it as in `PROGRESS`
+- Make sure the label, the description, and the assignees are up to date
+- Try to have `IN_PROGRESS` only for the bugs on which you are actually doing work
+- A rule of thumb is that you should not have more than 2-3 `IN_PROGRESS` bugs
+- Give priority to bugs that are close to be completed, rather than starting a
+  new bug
+
+- Update a bug often, like at least once a day of work
+    - Show the progress with quick updates
+    - Update your bug with pointers to gdocs, PRs, notebooks
+    - If you have questions, post them on the bug and 
+
+- When for a bug, in your opinion, there is no more work to be done on your side
+  (besides somebody to review it) please mark it as `TO_CLOSE` or `TO_REVIEW`
+  label and remove `IN_PROGRESS` labels
+- If we decide to stop the work, replace `IN_PROGRESS` with `PAUSED` label
+- If there is something that needs to be done, please update the bug summarizing
+  status and next actions
+- If the code needs to be reviewed then file a PR, add the link to the bug and
+  mark it as `TO_REVIEW`
+
+- We leave bugs in the `TO_CLOSE` state when we need to so some other work after
+  it, and we don’t want to forget about this by closing it
+- The rule is that only who filed the bug should close the bug, after verifying
+  that all work has done up to our standards
 
 ## Done means "DONE"
 
@@ -81,8 +109,7 @@
 - The rationale is that we want one person to be responsible for the task from
   beginning to end
 
-- TODO(gp): The rest of this should maybe go into `code_review.md` in a section
-  like "Reviewing with GitHub" ?
+# Code review with GitHub
 
 ## Try not to commit to `master`
 

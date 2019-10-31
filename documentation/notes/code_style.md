@@ -39,8 +39,10 @@
       * [Always import with a full path from the root of the repo / submodule](code_style.md#always-import-with-a-full-path-from-the-root-of-the-repo--submodule)
       * [Baptizing module import](code_style.md#baptizing-module-import)
    * [Python scripts](code_style.md#python-scripts)
+      * [Use Python and not bash for scripting](code_style.md#use-python-and-not-bash-for-scripting)
       * [Skeleton for a script](code_style.md#skeleton-for-a-script)
-      * [Use the script framework](code_style.md#use-the-script-framework)
+      * [Some useful patterns](code_style.md#some-useful-patterns)
+      * [Use scripts and not notebooks for long-running jobs](code_style.md#use-scripts-and-not-notebooks-for-long-running-jobs)
       * [Python executable characteristics](code_style.md#python-executable-characteristics)
       * [Use clear names for the scripts](code_style.md#use-clear-names-for-the-scripts)
    * [Functions](code_style.md#functions)
@@ -688,18 +690,69 @@ _LOG.warning(...)
 
 # Python scripts
 
+## Use Python and not bash for scripting
+
+- We prefer to always use python, instead of bash scripts with very few
+  exceptions
+    - E.g., scripts that need to modify the environment by setting env vars, like
+      `setenv.sh`
+
+- The problem with bash scripts is that it's very easy to put together a sequence
+  of commands to automate a workflow
+- Quickly things always become more complicated than what you thought, e.g.,
+    - you might want to interrupt if one command in the script fails
+    - you want to use command line options
+    - you want to use logging to see what's going on inside the script
+    - you want to do a loop with a regex check inside
+- Thus you need to use the more complex features of bash scripting and bash
+  scripting is absolutely horrible, much worse than perl (e.g., just think of
+  `if [ ... ]` vs `if [[ ... ]]`)
+
+- Our approach is to make simple to create scripts in python that are equivalent
+  to sequencing shell commands, so that can evolve in complex scripts
+
 ## Skeleton for a script
 
-- The official reference for a script is `//amp/dev_scripts/script_skeleton.py`
+- The ingredients are:
+    - `dev_scripts/script_skeleton.py`: a template to write simple scripts
+      you can copy and modify it
+    - `helpers/system_interaction.py`: a set of utilities that make simple to
+      run shell commands (e.g., capturing their output, breaking on error or not,
+      tee-ing to file, logging, ...)
+    - `helpers` has lots of useful libraries
+
+- The official reference for a script is `dev_scripts/script_skeleton.py`
 - You can copy this file and change it
 
-## Use the script framework
+- A simple example is: `dev_scripts/gup.py`
+- A complex example is: `dev_scripts/linter.py`
 
-- We have several libraries that make writing scripts in python very easy, e.g.,
-  `//amp/helpers/system_interaction.py`
+## Some useful patterns
 
-- As an interesting example of complex scripts you can check out:
-  `//amp/dev_scripts/linter.py`
+- Some useful patterns / idioms that are supported by the framework are:
+    - incremental mode: you skip an action if its outcome is already present
+      (e.g., skipping creating a dir, if it already exists and it contains all
+      the results)
+    - non-incremental mode: clean and execute everything from scratch
+    - dry-run mode: the commands are written to screen instead of being executed
+
+## Use scripts and not notebooks for long-running jobs
+
+- We prefer to use scripts to execute code that might take long time (e.g.,
+  hours) to run, instead of notebooks
+
+- Pros of script
+    - All the parameters are completely specified by a command line
+    - Reproducible and re-runnable
+
+- Cons of notebooks
+    - Tend to crash / hang for long jobs
+    - Not easy to understand if the notebook is doing progress
+    - Not easy to get debug output
+
+- Notebooks are designed for interactive computing / debugging and not batch jobs
+    - You can experiment with notebooks, move the code into a library, and wrap
+      it in a script
 
 ## Python executable characteristics
 

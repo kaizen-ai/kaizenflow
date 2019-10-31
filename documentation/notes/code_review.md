@@ -1,9 +1,10 @@
 <!--ts-->
+   * [General rules about code review](code_review.md#general-rules-about-code-review)
+      * [Read the Google code review best practices](code_review.md#read-the-google-code-review-best-practices)
    * [Code review workflows](code_review.md#code-review-workflows)
       * [Pull request](code_review.md#pull-request)
       * [Post-commit review](code_review.md#post-commit-review)
-   * [General rules about code review](code_review.md#general-rules-about-code-review)
-      * [Read the Google code review best practices](code_review.md#read-the-google-code-review-best-practices)
+   * [PR checklist](code_review.md#pr-checklist)
    * [Some other remarks based on our experience](code_review.md#some-other-remarks-based-on-our-experience)
       * [Give priority to code review](code_review.md#give-priority-to-code-review)
       * [Why do we review code](code_review.md#why-do-we-review-code)
@@ -16,6 +17,16 @@
 
 
 <!--te-->
+
+# General rules about code review
+
+## Read the Google code review best practices
+- From the [developer's perspective](https://google.github.io/eng-practices/review/developer)
+- From the [reviewer's perspective](https://google.github.io/eng-practices/review/reviewer)
+- Where the Google guide says "CL", think "PR" 
+- Read it (several times, if you need to)
+- Think about it
+- Understand it
 
 # Code review workflows 
 
@@ -30,15 +41,22 @@
   although creating a review branch and pull request is still best
 - The alternative is to comment on the relevant lines in an individual commit 
 
-# General rules about code review
+# PR checklist
+- From [Google reviewer
+  checklist](https://google.github.io/eng-practices/review/reviewer/looking-for.html):
 
-## Read the Google code review best practices
-- From the [developer's perspective](https://google.github.io/eng-practices/review/developer)
-- From the [reviewer's perspective](https://google.github.io/eng-practices/review/reviewer)
-- Where the Google guide says "CL", think "PR" 
-- Read it (several times, if you need to)
-- Think about it
-- Understand it
+- In asking (and doing) a code review, you should make sure that:
+    - [ ] The code is well-designed.
+    - [ ] The functionality is good for the users of the code.
+    - [ ] The code isn’t more complex than it needs to be.
+    - [ ] The developer isn’t implementing things they might need in the future
+      but don’t know they need now.
+    - [ ] Code has appropriate unit tests.
+    - [ ] Tests are well-designed.
+    - [ ] The developer used clear names for everything.
+    - [ ] Comments are clear and useful, and mostly explain why instead of what.
+    - [ ] Code is appropriately documented.
+    - [ ] The code conforms to our style guides.
 
 # Some other remarks based on our experience
 

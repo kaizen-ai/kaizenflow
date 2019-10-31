@@ -589,6 +589,8 @@ def set_logger_verb(verb, module_name=None):
 
     Passing a module_name (e.g., matplotlib) one can change the logging of
     that specific module.
+
+    E.g., set_logger_verb(logging.WARNING, "matplotlib")
     """
     logger = logging.getLogger(module_name)
     if module_name is None and not logger.handlers:
@@ -609,16 +611,41 @@ def get_logger_verb():
 
 
 def get_all_loggers():
+    """
+    Return list of all registered loggers.
+    """
     loggers = [
         logging.getLogger(name) for name in logging.root.manager.loggerDict
     ]
     return loggers
 
 
-def get_matching_loggers(module_name):
+def get_matching_loggers(module_names):
+    """
+    Find loggers that match a name or a name in a set.
+    """
     loggers = get_all_loggers()
-    sel_loggers = [logger for logger in loggers if module_name in str(logger)]
+    if isinstance(module_names, str):
+        module_names = [module_names]
+    sel_loggers = []
+    for module_name in module_names:
+        sel_loggers_tmp = [logger for logger in loggers if module_name in str(
+            logger)]
+        sel_loggers.extend(sel_loggers_tmp)
+    #sel_loggers = sorted(list(set(sel_loggers)))
     return sel_loggers
+
+
+def shutup_chatty_modules(verb=logging.CRITICAL):
+    """
+    Reduce the verbosity for external modules that are very chatty.
+    """
+    module_names = ["matplotlib", "boto", 'urllib3', 's3transfer', 'boto3',
+               'botocore', 'nose']
+    loggers = get_matching_loggers(module_names)
+    print("Shutting up modules: (%d) %s" % (len(loggers), loggers))
+    for logger in loggers:
+        logger.setLevel(verb)
 
 
 # TODO(gp): Remove this.
