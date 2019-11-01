@@ -1038,3 +1038,57 @@ _LOG.warning(...)
 - Often the life cycle of a piece of code is to start as research and then be
   promoted to higher level libraries to be used in multiple research, after its
   quality reaches production quality
+
+*
+
+@staticmethod
+def _get_zero_element(list_: list):
+    if not list_:
+        return None
+    else:
+        return list_[0]
+
+vendors/kibot/utils.py:394: [R1705(no-else-return), ExpiryContractMapper.extract_contract_expiry] Unnecessary "else" after "return" [pylint]
+
+- Try to have a single exit point from a function, since this guarantees that
+  the return value is always the same
+- In general returning different data structures from the same function (e.g., a
+  list in one case and a float in another) is indication of bad design
+    - There are exceptions like a function that works on different types (e.g.,
+      accepts a dataframe or a series and then returns a dataframe or a series,
+      but the input and output is the same)
+    - Returning different types (e.g., float and string) is also bad
+    - Returning a type or None is typically ok
+- Try to return values that are consistent so that the client doesn't have to
+  switch statement, using `isinstance(...)`
+    - E.g., return a `float` and if the value can't be computed return `np.nan`
+      (instead of `None`) so that the client can use the return value in a
+      uniform way
+
+@staticmethod
+def _get_zero_element(list_: list):
+    if not list_:
+        ret = None
+    else:
+        ret = list_[0]
+    return ret
+
+
+def _get_zero_element(list_: list):
+    ret = None if not list_ else list_[0]
+    return ret
+
+
+- It's ok to have functions like:
+def ...(...):
+    // Handle simple cases.
+    ...
+    if ...:
+        return
+    // lots of code
+    ...
+    return ...
+
+# Document what notebooks are for
+
+Can we add to each notebook a description of what it does (prototyping, analysis, tutorial)
