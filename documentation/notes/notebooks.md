@@ -1,4 +1,37 @@
 <!--ts-->
+      * [Write beautiful code, even in notebooks](#write-beautiful-code-even-in-notebooks)
+      * [General](#general)
+      * [Use keyboard shortcuts](#use-keyboard-shortcuts)
+      * [Dependencies among cells](#dependencies-among-cells)
+      * [Re-execute from scratch](#re-execute-from-scratch)
+      * [Comment](#comment)
+      * [Do not cut &amp; paste code](#do-not-cut--paste-code)
+      * [Avoid "wall-of-code" cell](#avoid-wall-of-code-cell)
+      * [Avoid data biases](#avoid-data-biases)
+      * [Avoid hardwired constants](#avoid-hardwired-constants)
+      * [Add a description for a notebook](#add-a-description-for-a-notebook)
+      * [General format of a notebook](#general-format-of-a-notebook)
+   * [Plots](#plots)
+      * [Use the proper y-scale](#use-the-proper-y-scale)
+      * [Make each plot self-explanatory](#make-each-plot-self-explanatory)
+      * [Avoid wall-of-text tables](#avoid-wall-of-text-tables)
+      * [Use common axes to allow visual comparisons](#use-common-axes-to-allow-visual-comparisons)
+      * [Use the right plot](#use-the-right-plot)
+   * [Notebooks and libraries](#notebooks-and-libraries)
+      * [Pros](#pros)
+      * [Cons](#cons)
+   * [Make the notebook flow clear](#make-the-notebook-flow-clear)
+   * [Useful plugins](#useful-plugins)
+      * [Vim bindings](#vim-bindings)
+      * [Table of content (2)](#table-of-content-2)
+      * [ExecuteTime](#executetime)
+      * [Spellchecker](#spellchecker)
+      * [AutoSaveTime](#autosavetime)
+      * [Notify](#notify)
+      * [Jupytext](#jupytext)
+
+
+
 <!--te-->
 
 ## Write beautiful code, even in notebooks

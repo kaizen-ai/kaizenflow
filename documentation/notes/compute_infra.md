@@ -1,4 +1,12 @@
 <!--ts-->
+   * [Setup research instance](#setup-research-instance)
+      * [Vendor info](#vendor-info)
+      * [Folders structure](#folders-structure)
+      * [Home directories](#home-directories)
+      * [Setup research server](#setup-research-server)
+
+
+
 <!--te-->
 
 # Setup research instance

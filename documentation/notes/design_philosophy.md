@@ -1,4 +1,18 @@
 <!--ts-->
+   * [Philosophy](#philosophy)
+      * [Keep it simple](#keep-it-simple)
+      * [Tips from a pro](#tips-from-a-pro)
+         * [Designing software systems is tricky](#designing-software-systems-is-tricky)
+         * [Get Advice Early!](#get-advice-early)
+         * [Interfaces](#interfaces)
+   * [Architecture](#architecture)
+      * [Use design patterns](#use-design-patterns)
+   * [Functions](#functions)
+      * [Avoid modifying the function input](#avoid-modifying-the-function-input)
+      * [Prefer pure functions by default](#prefer-pure-functions-by-default)
+
+
+
 <!--te-->
 
 # Philosophy

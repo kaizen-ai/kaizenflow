@@ -165,7 +165,7 @@
 - If the comment needs further discussion, the author adds a note explaining why
   he/she disagrees and the discussion continues until consensus is reached
 
-- We don't want to leave comments unaddressed since otherwise we don’t know if
+- We don't want to leave comments unaddressed since otherwise we don't know if
   it was agreed upon and done or forgotten
 
 - We are ok with doing multiple commits in the branch or a single commit for all
