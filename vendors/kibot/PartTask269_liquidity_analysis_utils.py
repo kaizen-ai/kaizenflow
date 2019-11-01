@@ -68,16 +68,26 @@ def get_price_data(
     return price_df
 
 
+# ##############################################################################
+
+# TODO(Julia): #482: This should be promoted to core/timeseries_study.py
+# TODO(Julia): Add some small unit tests with random data to make sure it
+#  works.
+# TODO(Julia): Add a notebook in core/gallery.timeseries_study showing some
+#  examples of how to use this class. In practice we want to make the unit test
+#  also in a notebook, so we can have functions to generate some random data
+#  and call it from both unit tests and notebook.
+# TODO(Julia): Isn't this private _TimeSeries...?
+# TODO(gp): -> TimeSeriesAnalyzer?
 class TimeSeriesStudy:
     """
-    Perform a basic study of time series.
-
-    - Read time series
-    - Plot time series for column
-        - by year
-        - by month
-        - by day of week
-        - by hour
+    Perform basic study of time series, such as:
+        - analysis at different time frequencies by resampling
+        - plot time series for column
+            - by year
+            - by month
+            - by day of week
+            - by hour
     """
 
     def __init__(
@@ -99,7 +109,10 @@ class TimeSeriesStudy:
         self._data_name = data_name
         self._freq_name = freq_name
 
-    def plot_time_series(self,):
+    def plot_time_series(self):
+        """
+        Plot timeseries on its original time scale.
+        """
         self._time_series.plot()
         plt.title(
             f"{self._freq_name.capitalize()} {self._ts_name}"
@@ -113,23 +126,48 @@ class TimeSeriesStudy:
         )
         plt.show()
 
+    # TODO(Julia): -> plot_by_year. We don't know if this is a timeseries of
+    #  changes or not.
+    # TODO(Julia): I would use sharey=True so it's on the same scale.
     def plot_changes_by_year(self, sharey=False):
+        """
+        Resample yearly and then plot each year on a different plot.
+        """
+        # Split by year.
         yearly_resample = self._time_series.resample("y")
+        # Create as many subplots as years.
         _, axis = plt.subplots(
             len(yearly_resample),
             figsize=(20, 5 * len(yearly_resample)),
             sharey=sharey,
         )
+        # Plot each year in a subplot.
         for i, year_ts in enumerate(yearly_resample):
-            year_ts[1].plot(ax=axis[i], title=year_ts[0].year)
+            # resample() is a groupby() returning the value on which we
+            # perform the split and the extracted time series.
+            group_by, ts = year_ts
+            ts.plot(ax=axis[i], title=group_by.year)
         plt.suptitle(
-            f"{self._freq_name.capitalize()} {self._ts_name} changes by year"
+            f"{self._freq_name.capitalize()} {self._ts_name} by year"
             f"{self._title_suffix}",
+            # TODO(Julia): Add a comment explaining this.
             y=1.005,
         )
         plt.tight_layout()
 
+    # TODO(gp): Think if it makes sense to generalize this by passing a lambda
+    #  that define the timescale, e.g.,
+    #   groupby_func = lambda ts: ts.index.day
+    #  to sample on many frequencies (e.g., monthly, hourly, minutely, ...)
+    #  The goal is to look for seasonality at many frequencies.
+    # TODO(gp): It would be nice to plot the timeseries broken down by
+    #  different timescales instead of doing the mean in each step
+    #  (see https://en.wikipedia.org/wiki/Seasonality#Detecting_seasonality)
+    # TODO(Julia): I think a box plot is better instead than mean().
     def plot_mean_day_of_month(self):
+        """
+        Plot the mean value of the timeseries for each day.
+        """
         self._time_series.groupby(self._time_series.index.day).mean().plot(
             kind="bar", rot=0
         )
@@ -141,6 +179,9 @@ class TimeSeriesStudy:
         plt.show()
 
     def plot_mean_day_of_week(self):
+        """
+        Plot the mean value of the timeseries for year.
+        """
         self._time_series.groupby(self._time_series.index.dayofweek).mean().plot(
             kind="bar", rot=0
         )
@@ -152,6 +193,7 @@ class TimeSeriesStudy:
         plt.show()
 
     def _check_data_index(self):
+        # TODO(Julia): -> dassert_isinstance
         assert isinstance(
             self._time_series.index, pd.DatetimeIndex
         ), "The index should have pd.DatetimeIndex format."
@@ -168,6 +210,10 @@ class TimeSeriesStudy:
         return ret
 
 
+# TODO(gp): Not sure this is needed if we generalize the super class to work
+#  at different frequency. We can have a check that makes sure we always
+#  downsample (e.g., we don't plot at minutely timescale if the frequency of the
+#  timeseries is hourly).
 class TimeSeriesDailyStudy(TimeSeriesStudy):
     def __init__(
         self,
@@ -216,6 +262,9 @@ class TimeSeriesMinuteStudy(TimeSeriesStudy):
         )
         plt.xlabel("hour")
         plt.show()
+
+
+# ##############################################################################
 
 
 class ProductSpecs:

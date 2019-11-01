@@ -131,7 +131,7 @@ have two key properties:
 Some nice properties enjoyed by pure functions are:
     - They are easy to understand and easy to test
     - Using pure functions makes refactoring easier
-    - They allow to [chain](https://en.wikipedia.org/wiki/Method_chaining) in an
+    - They allow [chaining](https://en.wikipedia.org/wiki/Method_chaining) in an
     elegant way
     - They are often a natural choice for data manipulation and analysis
     - They are convenient in notebooks
@@ -141,4 +141,3 @@ Though it is good to develop an appreciation for
 and we like to adopt that style when appropriate, we recognize that it is not
 pragmatic to dogmatically insist upon a functional style (especially in our
 domain and when using Python). 
-

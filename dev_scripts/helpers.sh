@@ -1,5 +1,5 @@
 # Make output white.
-echo -e '\033[0;0m'
+echo -e '\033[0;0m\c'
 
 
 function execute {
