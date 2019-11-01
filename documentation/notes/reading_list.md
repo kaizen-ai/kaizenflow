@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 - Let's keep this reading list short (e.g., one / two books per topic) with
   really the best of the best
 

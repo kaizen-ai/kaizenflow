@@ -5,8 +5,21 @@
 cd documentation/notes
 
 FILES=$(ls *.md)
+echo "files=$FILES"
 
-../scripts/gh-md-toc --insert $FILES
+for f in $FILES; do
+    echo "======================================================="
+    echo $f
+    echo "======================================================="
+    # Ignore failure.
+    ../scripts/gh-md-toc --insert $f || true
+    # Remove some artifacts when copying from gdoc.
+    perl -i -pe "s/’/'/;" $f
+    perl -i -pe 's/“/"/;' $f
+    perl -i -pe 's/”/"/;' $f
+    # Remind that we use 4 spaces indent like in python.
+    perl -i -pe 's/^  \-/    -/;' $f
+done
 
 # Clean up.
 #git clean -fd

@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 # Philosophy
 
 ## Keep it simple
@@ -8,9 +11,9 @@ Pursue simple, elegant solutions. Some things are inherently complex, but even
 complex systems can (and should) be broken down into simple pieces.
 
 Designs that are simple are easier to
-  - understand
-  - modify
-  - debug
+    - understand
+    - modify
+    - debug
 
 ## Tips from a pro
 
@@ -23,24 +26,24 @@ from a Stanford talk given by
 ### Designing software systems is tricky
 
 Need to balance:
-  - Simplicity [note that this comes first!]
-  - Scalability
-  - Performance
-  - Reliability
-  - Generality
-  - Features [note that this comes last!]
+    - Simplicity [note that this comes first!]
+    - Scalability
+    - Performance
+    - Reliability
+    - Generality
+    - Features [note that this comes last!]
 
 ### Get Advice Early!
 
 - Get advice
-  - before you write any code
-  - before you write any lengthy design documents [notice the implicit
+    - before you write any code
+    - before you write any lengthy design documents [notice the implicit
     assumption that there is a design documented!]
 
 - Before writing a doc or code
-  - jot down some rough ideas (a few paragraphs)
-  - chat about the design with colleagues
-  - consider discussing multiple potential designs
+    - jot down some rough ideas (a few paragraphs)
+    - chat about the design with colleagues
+    - consider discussing multiple potential designs
 
 ### Interfaces
 
@@ -65,16 +68,16 @@ A free python-focused reference is available
 
 Expanding your knowledge of design patterns is a worthwhile investment,
 because design patterns
-  - Capture elegant solutions that have been developed by many
+    - Capture elegant solutions that have been developed by many
     experienced programmers over a long period of time
-  - Provide a framework and reference point for software architecture
-  - Are widely used and well-known and therefore quickly recognized by skilled
+    - Provide a framework and reference point for software architecture
+    - Are widely used and well-known and therefore quickly recognized by skilled
     programmers
 
 In other words, by using design patterns, you
-  - Don't have to re-invent the wheel
-  - Simplify the high-level picture of your code
-  - Make it easier for other people to understand your code
+    - Don't have to re-invent the wheel
+    - Simplify the high-level picture of your code
+    - Make it easier for other people to understand your code
 
 # Functions
 
@@ -112,12 +115,12 @@ have two key properties:
      [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science))
      
 Some nice properties enjoyed by pure functions are:
-  - They are easy to understand and easy to test
-  - Using pure functions makes refactoring easier
-  - They allow to [chain](https://en.wikipedia.org/wiki/Method_chaining) in an
+    - They are easy to understand and easy to test
+    - Using pure functions makes refactoring easier
+    - They allow to [chain](https://en.wikipedia.org/wiki/Method_chaining) in an
     elegant way
-  - They are often a natural choice for data manipulation and analysis
-  - They are convenient in notebooks
+    - They are often a natural choice for data manipulation and analysis
+    - They are convenient in notebooks
 
 Though it is good to develop an appreciation for
 [functional programming](https://en.wikipedia.org/wiki/Functional_programming),

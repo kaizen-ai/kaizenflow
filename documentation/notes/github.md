@@ -1,20 +1,22 @@
 <!--ts-->
-   * [Github flow](github.md#github-flow)
-      * [Everything we work on comes as a GitHub task](github.md#everything-we-work-on-comes-as-a-github-task)
-      * [Use the proper labels](github.md#use-the-proper-labels)
-      * [Done means "DONE"](github.md#done-means-done)
-      * [Tend your tasks](github.md#tend-your-tasks)
-      * [File descriptive GH tasks](github.md#file-descriptive-gh-tasks)
-      * [Do not change the assignee for a task](github.md#do-not-change-the-assignee-for-a-task)
-      * [Try not to commit to master](github.md#try-not-to-commit-to-master)
-      * [Use branches and PR](github.md#use-branches-and-pr)
-      * [Optional review](github.md#optional-review)
-      * [Apply reviewers' comments for post-commit / optional review](github.md#apply-reviewers-comments-for-post-commit--optional-review)
-      * [Post-commit comments](github.md#post-commit-comments)
-      * [Reviewers don't follow a branch](github.md#reviewers-dont-follow-a-branch)
-      * [Reviewers vs assignees](github.md#reviewers-vs-assignees)
-      * [Reviewers and authors interactions](github.md#reviewers-and-authors-interactions)
-      * ["Pending" comments](github.md#pending-comments)
+   * [Task management with GitHub](#task-management-with-github)
+      * [Everything we work on comes as a GitHub task](#everything-we-work-on-comes-as-a-github-task)
+      * [Use the proper labels](#use-the-proper-labels)
+      * [Life cycle of a bug](#life-cycle-of-a-bug)
+      * [Done means "DONE"](#done-means-done)
+      * [Tend your tasks](#tend-your-tasks)
+      * [File descriptive GH tasks](#file-descriptive-gh-tasks)
+      * [Do not change the assignee for a task](#do-not-change-the-assignee-for-a-task)
+   * [Code review with GitHub](#code-review-with-github)
+      * [Try not to commit to master](#try-not-to-commit-to-master)
+      * [Use branches and PR](#use-branches-and-pr)
+      * [Optional review](#optional-review)
+      * [Apply reviewers' comments for post-commit / optional review](#apply-reviewers-comments-for-post-commit--optional-review)
+      * [Post-commit comments](#post-commit-comments)
+      * [Reviewers don't follow a branch](#reviewers-dont-follow-a-branch)
+      * [Reviewers vs assignees](#reviewers-vs-assignees)
+      * [Reviewers and authors interactions](#reviewers-and-authors-interactions)
+      * ["Pending" comments](#pending-comments)
 
 
 
@@ -67,7 +69,7 @@
   mark it as `TO_REVIEW`
 
 - We leave bugs in the `TO_CLOSE` state when we need to so some other work after
-  it, and we don’t want to forget about this by closing it
+  it, and we don't want to forget about this by closing it
 - The rule is that only who filed the bug should close the bug, after verifying
   that all work has done up to our standards
 
@@ -163,7 +165,7 @@
 - If the comment needs further discussion, the author adds a note explaining why
   he/she disagrees and the discussion continues until consensus is reached
 
-- We don’t want to leave comments unaddressed since otherwise we don’t know if
+- We don't want to leave comments unaddressed since otherwise we don’t know if
   it was agreed upon and done or forgotten
 
 - We are ok with doing multiple commits in the branch or a single commit for all

@@ -106,9 +106,9 @@ gh_toc(){
     # Show "TOC" string only if working with one document
     if [ "$gh_ttl_docs" = "1" ]; then
 
-        echo "Table of Contents"
-        echo "================="
-        echo ""
+        #echo "Table of Contents"
+        #echo "================="
+        #echo ""
         gh_src_copy=""
 
     fi
@@ -141,7 +141,7 @@ gh_toc(){
              exit 1
         fi
         local toc=`echo "$rawhtml" | gh_toc_grab "$gh_src_copy"`
-        echo "$toc"
+        #echo "$toc"
         if [ "$need_replace" = "yes" ]; then
             if grep -Fxq "<!--ts-->" $gh_src && grep -Fxq "<!--te-->" $gh_src; then
                 echo "Found markers"
@@ -168,11 +168,12 @@ gh_toc(){
             else
                 sed -i "/${ts}/r ${toc_path}" "$gh_src"
             fi
-            echo
-            echo "!! TOC was added into: '$gh_src'"
-            echo "!! Origin version of the file: '${gh_src}${ext}'"
-            echo "!! TOC added into a separate file: '${toc_path}'"
-            echo
+            # gp: commented out.
+            #echo
+            #echo "!! TOC was added into: '$gh_src'"
+            #echo "!! Origin version of the file: '${gh_src}${ext}'"
+            #echo "!! TOC added into a separate file: '${toc_path}'"
+            #echo
         fi
     fi
 }

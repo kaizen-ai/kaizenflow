@@ -1,11 +1,11 @@
 <!--ts-->
-   * [create_conda design notes](create_conda.md#create_conda-design-notes)
-   * [Using YAML files](create_conda.md#using-yaml-files)
-      * [Merging multiple YAML](create_conda.md#merging-multiple-yaml)
-      * [Does pip install works?](create_conda.md#does-pip-install-works)
-      * [How to specify multiple conda channel?](create_conda.md#how-to-specify-multiple-conda-channel)
-      * [Commented out packages](create_conda.md#commented-out-packages)
-      * [Comments](create_conda.md#comments)
+   * [create_conda design notes](#create_conda-design-notes)
+   * [Using YAML files](#using-yaml-files)
+      * [Merging multiple YAML](#merging-multiple-yaml)
+      * [Does pip install works?](#does-pip-install-works)
+      * [How to specify multiple conda channel?](#how-to-specify-multiple-conda-channel)
+      * [Commented out packages](#commented-out-packages)
+      * [Comments](#comments)
 
 
 

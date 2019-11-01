@@ -1,3 +1,6 @@
+<!--ts-->
+<!--te-->
+
 ## Write beautiful code, even in notebooks
 - Follow the conventions and suggestions for Python code
     - E.g., `code_style.md`, `design_philosophy.md`
@@ -229,7 +232,7 @@
 
 - Each notebook needs to follow a clear and logical flow, e.g.,
     - load data
-        - for each data structure it’s good to show a snippet, e.g., df.head(3)
+        - for each data structure it's good to show a snippet, e.g., df.head(3)
     - compute stats / results
     - clean data
     - compute stats, show some results
@@ -252,9 +255,9 @@
     - you and others can understand the logical flow
     - one could split the notebook in parts (e.g., when it becomes too big) and
       it will not break when you want to re-run a section of the notebook, so you
-      can do “Cells -> Run all below” after one heading, instead of having to do
-      “Cells -> Run all”
-    - you can collapse the cells and don’t scroll back and forth too much
+      can do "Cells -> Run all below" after one heading, instead of having to do
+      "Cells -> Run all"
+    - you can collapse the cells and don't scroll back and forth too much
 
 # Useful plugins
 
