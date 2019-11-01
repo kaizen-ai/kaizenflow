@@ -182,7 +182,7 @@
 
 - Different conventions have been developed for documenting interfaces
     - reST
-    - Google (which is cross-language, e.g., C++, python, …)
+    - Google (which is cross-language, e.g., C++, python, ...)
     - epytext
     - numpydoc
 

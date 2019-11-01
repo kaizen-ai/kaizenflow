@@ -17,6 +17,7 @@ for f in $FILES; do
     perl -i -pe "s/’/'/;" $f
     perl -i -pe 's/“/"/;' $f
     perl -i -pe 's/”/"/;' $f
+    perl -i -pe 's/…/.../;' $f
     # Remind that we use 4 spaces indent like in python.
     perl -i -pe 's/^  \-/    -/;' $f
 done

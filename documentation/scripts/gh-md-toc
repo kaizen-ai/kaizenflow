@@ -174,7 +174,8 @@ gh_toc(){
             #echo "!! Origin version of the file: '${gh_src}${ext}'"
             #echo "!! TOC added into a separate file: '${toc_path}'"
             #echo
-            rm -f ${gh_src}${ext}
+            # TODO(gp): Clean up the leftovers!
+            #rm -f ${gh_src}${ext}
         fi
     fi
 }
