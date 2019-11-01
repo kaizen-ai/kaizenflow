@@ -164,10 +164,10 @@
         ```
 
 # Plots
-- Use the proper y-scale
-    - E.g., if one quantity can vary from -1.0 to 1.0 force the y-scale between
-      those limits so that the values are absolutes, unless this would squash the
-      plot
+
+## Use the proper y-scale
+- E.g., if one quantity can vary from -1.0 to 1.0 force the y-scale between those
+  limits so that the values are absolutes, unless this would squash the plot
 
 ## Make each plot self-explanatory
 - Make sure that each plot has a descriptive title, x and y label
@@ -176,15 +176,85 @@
     - Add this information also to the plots
 
 ## Avoid wall-of-text tables
-- try to use plots
+- Try to use plots summarizing the results besides the raw results in a table
 
 ## Use common axes to allow visual comparisons
-- Try to use the same axes for multiple graphs when possible to allow visual
-  comparison between graphs If that's not possible / convenient use plots with
-  different scales, and add a plot with multiple graphs inside on the same axis
-  (e.g., with y-log)
-Pick the right type of graph to make your point
-pandas, seaborn, matplotlib are your friends
+- Try to use same axes for multiple graphs when possible to allow visual
+  comparison between graphs
+- If that's not possible or convenient make individual plots with different
+  scales and add a plot with multiple graphs inside on the same axis (e.g., with
+  y-log)
+
+## Use the right plot
+- Pick the right type of graph to make your point
+    - pandas, seaborn, matplotlib are your friends
+
+# Notebooks and libraries
+
+- It's ok to use functions in notebooks when building the analysis to leverage
+  notebook interactivity
+- Once the notebook is "stable", often it's better to move the code in a library,
+  i.e., a python file.
+
+## Pros
+- The same notebook code can be used for different notebooks
+    - E.g., the function to read the data from disk is an obvious example
+- More people can reuse the same code for different analyses
+- If one changes the code in a library, Git can help tracking changes and
+  merging, while notebooks are difficult to diff / merge
+- Cleaning up / commenting / untangling the code can help reason carefully about
+  the assumptions to find issues
+- The notebook becomes more streamlined and easy to understand since now it's a
+  sequence of functions `do_this_and_that` and presenting the results
+- One can speed up / parallelize analyses with multiprocessing
+    - Notebooks are not great for this
+    - E.g., when one does the analyses on a small subset of the data and then
+      wants to run on the entire large dataset
+- The exploratory analysis can be moved towards modeling and then production
+
+## Cons
+- One disadvantage is that changes that were immediate in the notebook are not
+  immediate anymore
+    - That's actually not true, since using
+        ```python
+        %load_ext autoreload
+        %autoreload 2
+        ```
+      the notebook reads the changes automatically and you don't even need to
+      execute the cell with the change
+    - One doesn't have to scroll back and forth to execute the cell with the
+      functions with all the possible mistakes
+
+# Make the notebook flow clear
+
+- Each notebook needs to follow a clear and logical flow, e.g.,
+    - load data
+        - for each data structure it’s good to show a snippet, e.g., df.head(3)
+    - compute stats / results
+    - clean data
+    - compute stats, show some results
+    - do analysis
+    - show results
+
+- The flow should be highlighted using headings in markdown:
+    ```python
+    # Level 1
+
+    ## Level 2
+
+    ### Level 3
+    ```
+
+- Use the extension for navigating the notebook (see our suggestions for Jupyter
+  plug-ins)
+
+- Keep related code and analysis close together so
+    - you and others can understand the logical flow
+    - one could split the notebook in parts (e.g., when it becomes too big) and
+      it will not break when you want to re-run a section of the notebook, so you
+      can do “Cells -> Run all below” after one heading, instead of having to do
+      “Cells -> Run all”
+    - you can collapse the cells and don’t scroll back and forth too much
 
 # Useful plugins
 
