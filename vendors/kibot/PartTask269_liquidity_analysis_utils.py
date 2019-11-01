@@ -163,6 +163,7 @@ class TimeSeriesStudy:
     # TODO(gp): It would be nice to plot the timeseries broken down by
     #  different timescales instead of doing the mean in each step
     #  (see https://en.wikipedia.org/wiki/Seasonality#Detecting_seasonality)
+    # TODO(Julia): I think a box plot is better instead than mean().
     def plot_mean_day_of_month(self):
         """
         Plot the mean value of the timeseries for each day.
