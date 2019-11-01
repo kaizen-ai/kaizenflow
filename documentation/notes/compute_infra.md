@@ -1,10 +1,21 @@
+<!--ts-->
+   * [Setup research instance](#setup-research-instance)
+      * [Vendor info](#vendor-info)
+      * [Folders structure](#folders-structure)
+      * [Home directories](#home-directories)
+      * [Setup research server](#setup-research-server)
+
+
+
+<!--te-->
+
 # Setup research instance
+
 ## Vendor info
 
 - Preferable we use Amazon AWS Services
 - Account owner: Nikolskiy Ilya 
 - Email: ilya@particle.one
-
 
 ## Folders structure
 During the setup process we create some additional folders.
@@ -40,9 +51,9 @@ During the setup process we create some additional folders.
 ## Home directories
 
 - root user in:
-  - /home/root/
-  - /home/ubuntu
-  - /root
+    - /home/root/
+    - /home/ubuntu
+    - /root
   
   Depends on system.   
   By default on AWS instance, OS type Ubuntu: root user equals to ubuntu user 

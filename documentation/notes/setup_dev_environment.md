@@ -1,26 +1,26 @@
 <!--ts-->
-   * [Set up a new machine](setup_dev_environment.md#set-up-a-new-machine)
-      * [Definitions](setup_dev_environment.md#definitions)
-      * [Connect to the server](setup_dev_environment.md#connect-to-the-server)
-      * [(optional) Install python3](setup_dev_environment.md#optional-install-python3)
-      * [(optional) Install anaconda](setup_dev_environment.md#optional-install-anaconda)
-      * [(optional) Configure anaconda](setup_dev_environment.md#optional-configure-anaconda)
-   * [Create a Git client](setup_dev_environment.md#create-a-git-client)
-      * [Check out the git code](setup_dev_environment.md#check-out-the-git-code)
-      * [Configure git submodules](setup_dev_environment.md#configure-git-submodules)
-      * [Configure user credentials](setup_dev_environment.md#configure-user-credentials)
-      * [Create conda environment](setup_dev_environment.md#create-conda-environment)
-      * [Check conda environment](setup_dev_environment.md#check-conda-environment)
-      * [Configure conda environment](setup_dev_environment.md#configure-conda-environment)
-      * [Delete / recreate environment](setup_dev_environment.md#delete--recreate-environment)
-         * [Overwrite a conda environment with create_conda.py](setup_dev_environment.md#overwrite-a-conda-environment-with-create_condapy)
-         * [Manually delete a conda environment](setup_dev_environment.md#manually-delete-a-conda-environment)
-         * [To delete the entire conda installation (advanced users)](setup_dev_environment.md#to-delete-the-entire-conda-installation-advanced-users)
-   * [Be patient](setup_dev_environment.md#be-patient)
-   * [Workflow examples](setup_dev_environment.md#workflow-examples)
-      * [Working with multiple clients](setup_dev_environment.md#working-with-multiple-clients)
-      * [A simple set-up](setup_dev_environment.md#a-simple-set-up)
-      * [GP's set-up](setup_dev_environment.md#gps-set-up)
+   * [Set up a new machine](#set-up-a-new-machine)
+      * [Definitions](#definitions)
+      * [Connect to the server](#connect-to-the-server)
+      * [(optional) Install python3](#optional-install-python3)
+      * [(optional) Install anaconda](#optional-install-anaconda)
+      * [(optional) Configure anaconda](#optional-configure-anaconda)
+   * [Create a Git client](#create-a-git-client)
+      * [Check out the git code](#check-out-the-git-code)
+      * [Configure git submodules](#configure-git-submodules)
+      * [Configure user credentials](#configure-user-credentials)
+      * [Create conda environment](#create-conda-environment)
+      * [Check conda environment](#check-conda-environment)
+      * [Configure conda environment](#configure-conda-environment)
+      * [Delete / recreate environment](#delete--recreate-environment)
+         * [Overwrite a conda environment with create_conda.py](#overwrite-a-conda-environment-with-create_condapy)
+         * [Manually delete a conda environment](#manually-delete-a-conda-environment)
+         * [To delete the entire conda installation (advanced users)](#to-delete-the-entire-conda-installation-advanced-users)
+   * [Be patient](#be-patient)
+   * [Workflow examples](#workflow-examples)
+      * [Working with multiple clients](#working-with-multiple-clients)
+      * [A simple set-up](#a-simple-set-up)
+      * [GP's set-up](#gps-set-up)
 
 
 
@@ -74,7 +74,7 @@
     > DST_DIR="commodity_research"
     > git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
     ```
-  - If you encounter the error
+    - If you encounter the error
         ```buildoutcfg
         git@github.com: Permission denied (publickey).
         fatal: Could not read from remote repository.

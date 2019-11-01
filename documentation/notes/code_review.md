@@ -1,18 +1,18 @@
 <!--ts-->
-   * [General rules about code review](code_review.md#general-rules-about-code-review)
-      * [Read the Google code review best practices](code_review.md#read-the-google-code-review-best-practices)
-   * [Code review workflows](code_review.md#code-review-workflows)
-      * [Pull request](code_review.md#pull-request)
-      * [Post-commit review](code_review.md#post-commit-review)
-   * [PR checklist](code_review.md#pr-checklist)
-   * [Some other remarks based on our experience](code_review.md#some-other-remarks-based-on-our-experience)
-      * [Give priority to code review](code_review.md#give-priority-to-code-review)
-      * [Why do we review code](code_review.md#why-do-we-review-code)
-      * [Reviewing other people's code is usually not fun](code_review.md#reviewing-other-peoples-code-is-usually-not-fun)
-      * [The first reviews are painful](code_review.md#the-first-reviews-are-painful)
-      * [Apply review comments everywhere](code_review.md#apply-review-comments-everywhere)
-      * [Look at the code top-to-bottom](code_review.md#look-at-the-code-top-to-bottom)
-      * [Close the PR and delete the branch](code_review.md#close-the-pr-and-delete-the-branch)
+   * [General rules about code review](#general-rules-about-code-review)
+      * [Read the Google code review best practices](#read-the-google-code-review-best-practices)
+   * [Code review workflows](#code-review-workflows)
+      * [Pull request](#pull-request)
+      * [Post-commit review](#post-commit-review)
+   * [PR checklist](#pr-checklist)
+   * [Some other remarks based on our experience](#some-other-remarks-based-on-our-experience)
+      * [Give priority to code review](#give-priority-to-code-review)
+      * [Why do we review code](#why-do-we-review-code)
+      * [Reviewing other people's code is usually not fun](#reviewing-other-peoples-code-is-usually-not-fun)
+      * [The first reviews are painful](#the-first-reviews-are-painful)
+      * [Apply review comments everywhere](#apply-review-comments-everywhere)
+      * [Look at the code top-to-bottom](#look-at-the-code-top-to-bottom)
+      * [Close the PR and delete the branch](#close-the-pr-and-delete-the-branch)
 
 
 
@@ -48,9 +48,9 @@
 - In asking (and doing) a code review, you should make sure that:
     - [ ] The code is well-designed.
     - [ ] The functionality is good for the users of the code.
-    - [ ] The code isn’t more complex than it needs to be.
-    - [ ] The developer isn’t implementing things they might need in the future
-      but don’t know they need now.
+    - [ ] The code isn't more complex than it needs to be.
+    - [ ] The developer isn't implementing things they might need in the future
+      but don't know they need now.
     - [ ] Code has appropriate unit tests.
     - [ ] Tests are well-designed.
     - [ ] The developer used clear names for everything.

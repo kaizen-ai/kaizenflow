@@ -1,3 +1,20 @@
+<!--ts-->
+   * [Philosophy](#philosophy)
+      * [Keep it simple](#keep-it-simple)
+      * [Tips from a pro](#tips-from-a-pro)
+         * [Designing software systems is tricky](#designing-software-systems-is-tricky)
+         * [Get Advice Early!](#get-advice-early)
+         * [Interfaces](#interfaces)
+   * [Architecture](#architecture)
+      * [Use design patterns](#use-design-patterns)
+   * [Functions](#functions)
+      * [Avoid modifying the function input](#avoid-modifying-the-function-input)
+      * [Prefer pure functions by default](#prefer-pure-functions-by-default)
+
+
+
+<!--te-->
+
 # Philosophy
 
 ## Keep it simple
@@ -8,9 +25,9 @@ Pursue simple, elegant solutions. Some things are inherently complex, but even
 complex systems can (and should) be broken down into simple pieces.
 
 Designs that are simple are easier to
-  - understand
-  - modify
-  - debug
+    - understand
+    - modify
+    - debug
 
 ## Tips from a pro
 
@@ -23,24 +40,24 @@ from a Stanford talk given by
 ### Designing software systems is tricky
 
 Need to balance:
-  - Simplicity [note that this comes first!]
-  - Scalability
-  - Performance
-  - Reliability
-  - Generality
-  - Features [note that this comes last!]
+    - Simplicity [note that this comes first!]
+    - Scalability
+    - Performance
+    - Reliability
+    - Generality
+    - Features [note that this comes last!]
 
 ### Get Advice Early!
 
 - Get advice
-  - before you write any code
-  - before you write any lengthy design documents [notice the implicit
-    assumption that there is a design documented!]
+    - before you write any code
+    - before you write any lengthy design documents [notice the implicit
+      assumption that there is a design documented!]
 
 - Before writing a doc or code
-  - jot down some rough ideas (a few paragraphs)
-  - chat about the design with colleagues
-  - consider discussing multiple potential designs
+    - jot down some rough ideas (a few paragraphs)
+    - chat about the design with colleagues
+    - consider discussing multiple potential designs
 
 ### Interfaces
 
@@ -65,16 +82,16 @@ A free python-focused reference is available
 
 Expanding your knowledge of design patterns is a worthwhile investment,
 because design patterns
-  - Capture elegant solutions that have been developed by many
-    experienced programmers over a long period of time
-  - Provide a framework and reference point for software architecture
-  - Are widely used and well-known and therefore quickly recognized by skilled
+    - Capture elegant solutions that have been developed by many experienced
+      programmers over a long period of time
+    - Provide a framework and reference point for software architecture
+    - Are widely used and well-known and therefore quickly recognized by skilled
     programmers
 
 In other words, by using design patterns, you
-  - Don't have to re-invent the wheel
-  - Simplify the high-level picture of your code
-  - Make it easier for other people to understand your code
+    - Don't have to re-invent the wheel
+    - Simplify the high-level picture of your code
+    - Make it easier for other people to understand your code
 
 # Functions
 
@@ -83,12 +100,12 @@ In other words, by using design patterns, you
 If, for example, a function `f` accepts a dataframe `df` as its (sole)
 argument, then, ideally, `f(df)` will not modify `df`. If modifications are
 desired, then instead one can do
-```python
-def f(df):
-    df = df.copy()
-    ...
-    return df
-```
+    ```python
+    def f(df):
+        df = df.copy()
+        ...
+        return df
+    ```
 in the function so that `f(df)` returns the desired new dataframe without
 modifying the dataframe that was passed in to the function.
 
@@ -105,23 +122,22 @@ out of order.
 
 [Pure functions](https://en.wikipedia.org/wiki/Pure_function)
 have two key properties:
-  1. If the function arguments do not change, then the return value returned
-     does not change (in contrast to, e.g., functions that rely upon global
-     state)
-  2. Function evaluation does not have
-     [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science))
+    1. If the function arguments do not change, then the return value returned
+       does not change (in contrast to, e.g., functions that rely upon global
+       state)
+    2. Function evaluation does not have
+       [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science))
      
 Some nice properties enjoyed by pure functions are:
-  - They are easy to understand and easy to test
-  - Using pure functions makes refactoring easier
-  - They allow [chaining](https://en.wikipedia.org/wiki/Method_chaining) in an
-    elegant way
-  - They are often a natural choice for data manipulation and analysis
-  - They are convenient in notebooks
+    - They are easy to understand and easy to test
+    - Using pure functions makes refactoring easier
+    - They allow [chaining](https://en.wikipedia.org/wiki/Method_chaining) in an
+      elegant way
+    - They are often a natural choice for data manipulation and analysis
+    - They are convenient in notebooks
 
 Though it is good to develop an appreciation for
 [functional programming](https://en.wikipedia.org/wiki/Functional_programming),
 and we like to adopt that style when appropriate, we recognize that it is not
 pragmatic to dogmatically insist upon a functional style (especially in our
 domain and when using Python). 
-

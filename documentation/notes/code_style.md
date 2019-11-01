@@ -1,65 +1,66 @@
 <!--ts-->
-   * [Style guide references](code_style.md#style-guide-references)
-      * [References](code_style.md#references)
-   * [Naming conventions](code_style.md#naming-conventions)
-      * [Finding the best names](code_style.md#finding-the-best-names)
-      * [Horrible names](code_style.md#horrible-names)
-      * [No Hungarian notation please](code_style.md#no-hungarian-notation-please)
-      * [No code stutter](code_style.md#no-code-stutter)
-   * [Comments](code_style.md#comments)
-      * [Docstring conventions](code_style.md#docstring-conventions)
-      * [reST style](code_style.md#rest-style)
-      * [Descriptive vs imperative style](code_style.md#descriptive-vs-imperative-style)
-      * [Use type hints](code_style.md#use-type-hints)
-      * [Replace empty lines in code with comments](code_style.md#replace-empty-lines-in-code-with-comments)
-      * [Avoid distracting comments](code_style.md#avoid-distracting-comments)
-      * [If you find a bug or obsolete docstring/TODO in the code](code_style.md#if-you-find-a-bug-or-obsolete-docstringtodo-in-the-code)
-      * [Referring to an object in code comments](code_style.md#referring-to-an-object-in-code-comments)
-      * [Inline comments](code_style.md#inline-comments)
-   * [Linter](code_style.md#linter)
-      * [Disabling linter messages](code_style.md#disabling-linter-messages)
-      * [Prefer non-inlined linter comments](code_style.md#prefer-non-inlined-linter-comments)
-   * [Logging](code_style.md#logging)
-      * [Always use logging instead of prints](code_style.md#always-use-logging-instead-of-prints)
-      * [Our logging idiom](code_style.md#our-logging-idiom)
-      * [Logging level](code_style.md#logging-level)
-      * [Use positional args when logging](code_style.md#use-positional-args-when-logging)
-      * [Exceptions don't allow positional args](code_style.md#exceptions-dont-allow-positional-args)
-      * [Report warnings](code_style.md#report-warnings)
-   * [Assertions](code_style.md#assertions)
-      * [Use positional args when asserting](code_style.md#use-positional-args-when-asserting)
-      * [Report as much information as possible in an assertion](code_style.md#report-as-much-information-as-possible-in-an-assertion)
-   * [Imports](code_style.md#imports)
-      * [Importing code from a Git submodule](code_style.md#importing-code-from-a-git-submodule)
-      * [Don't use evil import *](code_style.md#dont-use-evil-import-)
-      * [Cleaning up the evil import *](code_style.md#cleaning-up-the-evil-import-)
-      * [Avoid from ... import ...](code_style.md#avoid-from--import-)
-      * [Examples of imports](code_style.md#examples-of-imports)
-      * [Exceptions to the import style](code_style.md#exceptions-to-the-import-style)
-      * [Always import with a full path from the root of the repo / submodule](code_style.md#always-import-with-a-full-path-from-the-root-of-the-repo--submodule)
-      * [Baptizing module import](code_style.md#baptizing-module-import)
-   * [Python scripts](code_style.md#python-scripts)
-      * [Use Python and not bash for scripting](code_style.md#use-python-and-not-bash-for-scripting)
-      * [Skeleton for a script](code_style.md#skeleton-for-a-script)
-      * [Some useful patterns](code_style.md#some-useful-patterns)
-      * [Use scripts and not notebooks for long-running jobs](code_style.md#use-scripts-and-not-notebooks-for-long-running-jobs)
-      * [Python executable characteristics](code_style.md#python-executable-characteristics)
-      * [Use clear names for the scripts](code_style.md#use-clear-names-for-the-scripts)
-   * [Functions](code_style.md#functions)
-      * [Arguments](code_style.md#arguments)
-      * [Try to make functions work on multiple types](code_style.md#try-to-make-functions-work-on-multiple-types)
-      * [Avoid hard-wired column name dependencies](code_style.md#avoid-hard-wired-column-name-dependencies)
-   * [Misc (to reorg)](code_style.md#misc-to-reorg)
-      * [Write robust code](code_style.md#write-robust-code)
-      * [Capitalized words](code_style.md#capitalized-words)
-      * [Regex](code_style.md#regex)
-      * [Order of functions in a file](code_style.md#order-of-functions-in-a-file)
-      * [Use layers design pattern](code_style.md#use-layers-design-pattern)
-      * [Write complete if-then-else](code_style.md#write-complete-if-then-else)
-      * [Do not be stingy at typing](code_style.md#do-not-be-stingy-at-typing)
-      * [Research quality vs production quality](code_style.md#research-quality-vs-production-quality)
-      * [No ugly hacks](code_style.md#no-ugly-hacks)
-      * [Life cycle of research code](code_style.md#life-cycle-of-research-code)
+   * [Style guide references](#style-guide-references)
+      * [References](#references)
+   * [Naming conventions](#naming-conventions)
+      * [Finding the best names](#finding-the-best-names)
+      * [Horrible names](#horrible-names)
+      * [No Hungarian notation please](#no-hungarian-notation-please)
+      * [No code stutter](#no-code-stutter)
+   * [Comments](#comments)
+      * [Docstring conventions](#docstring-conventions)
+      * [reST style](#rest-style)
+      * [Descriptive vs imperative style](#descriptive-vs-imperative-style)
+      * [Use type hints](#use-type-hints)
+      * [Replace empty lines in code with comments](#replace-empty-lines-in-code-with-comments)
+      * [Avoid distracting comments](#avoid-distracting-comments)
+      * [If you find a bug or obsolete docstring/TODO in the code](#if-you-find-a-bug-or-obsolete-docstringtodo-in-the-code)
+      * [Referring to an object in code comments](#referring-to-an-object-in-code-comments)
+      * [Inline comments](#inline-comments)
+   * [Linter](#linter)
+      * [Disabling linter messages](#disabling-linter-messages)
+      * [Prefer non-inlined linter comments](#prefer-non-inlined-linter-comments)
+   * [Logging](#logging)
+      * [Always use logging instead of prints](#always-use-logging-instead-of-prints)
+      * [Our logging idiom](#our-logging-idiom)
+      * [Logging level](#logging-level)
+      * [Use positional args when logging](#use-positional-args-when-logging)
+      * [Exceptions don't allow positional args](#exceptions-dont-allow-positional-args)
+      * [Report warnings](#report-warnings)
+   * [Assertions](#assertions)
+      * [Use positional args when asserting](#use-positional-args-when-asserting)
+      * [Report as much information as possible in an assertion](#report-as-much-information-as-possible-in-an-assertion)
+   * [Imports](#imports)
+      * [Importing code from a Git submodule](#importing-code-from-a-git-submodule)
+      * [Don't use evil import *](#dont-use-evil-import-)
+      * [Cleaning up the evil import *](#cleaning-up-the-evil-import-)
+      * [Avoid from ... import ...](#avoid-from--import-)
+      * [Examples of imports](#examples-of-imports)
+      * [Exceptions to the import style](#exceptions-to-the-import-style)
+      * [Always import with a full path from the root of the repo / submodule](#always-import-with-a-full-path-from-the-root-of-the-repo--submodule)
+      * [Baptizing module import](#baptizing-module-import)
+   * [Python scripts](#python-scripts)
+      * [Use Python and not bash for scripting](#use-python-and-not-bash-for-scripting)
+      * [Skeleton for a script](#skeleton-for-a-script)
+      * [Some useful patterns](#some-useful-patterns)
+      * [Use scripts and not notebooks for long-running jobs](#use-scripts-and-not-notebooks-for-long-running-jobs)
+      * [Python executable characteristics](#python-executable-characteristics)
+      * [Use clear names for the scripts](#use-clear-names-for-the-scripts)
+   * [Functions](#functions)
+      * [Arguments](#arguments)
+      * [Try to make functions work on multiple types](#try-to-make-functions-work-on-multiple-types)
+      * [Avoid hard-wired column name dependencies](#avoid-hard-wired-column-name-dependencies)
+   * [Misc (to reorg)](#misc-to-reorg)
+      * [Write robust code](#write-robust-code)
+      * [Capitalized words](#capitalized-words)
+      * [Regex](#regex)
+      * [Order of functions in a file](#order-of-functions-in-a-file)
+      * [Use layers design pattern](#use-layers-design-pattern)
+      * [Write complete if-then-else](#write-complete-if-then-else)
+      * [Do not be stingy at typing](#do-not-be-stingy-at-typing)
+      * [Research quality vs production quality](#research-quality-vs-production-quality)
+      * [No ugly hacks](#no-ugly-hacks)
+      * [Life cycle of research code](#life-cycle-of-research-code)
+   * [Document what notebooks are for](#document-what-notebooks-are-for)
 
 
 
@@ -181,7 +182,7 @@
 
 - Different conventions have been developed for documenting interfaces
     - reST
-    - Google (which is cross-language, e.g., C++, python, …)
+    - Google (which is cross-language, e.g., C++, python, ...)
     - epytext
     - numpydoc
 
@@ -298,7 +299,7 @@
         - clear info on the problem
         - how to reproduce it, ideally a unit test
         - stacktrace
-        - you can use the tag “BUG: ..."
+        - you can use the tag "BUG: ..."
 
 ## Referring to an object in code comments 
 
@@ -359,12 +360,12 @@
     - You then need to explain in a comment why you are overriding the linter.
 
 - Don't use linter code numbers, but the symbolic name whenever possible:
-  - **Bad**
+    - **Bad**
     ```python
      # pylint: disable=W0611
     import config.logging_settings
     ```
-  - **Good**
+    - **Good**
     ```python
     # pylint: disable=unused-import
     # This is needed when evaluating code at run-time that depends from
@@ -377,12 +378,12 @@
 - Although we don't like inlined comments sometimes there is no other choice than
   an inlined comment to get the linter to understand which line we are referring
   too:
-  - **Bad but ok if needed**
+    - **Bad but ok if needed**
     ```python
     # pylint: disable=unused-import
     import config.logging_settings
     ```
-  - **Good**
+    - **Good**
     ```python
     import config.logging_settings  # pylint: disable=unused-import
     ```
@@ -779,7 +780,7 @@ _LOG.warning(...)
 
 ## Use clear names for the scripts
 
-- In general scripts (like functions) should have a name like “action_verb”.
+- In general scripts (like functions) should have a name like "action_verb".
     - **Bad**
         - Example of bad names are` timestamp_extractor.py` and
           `timestamp_extractor_v2.py`

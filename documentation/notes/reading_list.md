@@ -1,3 +1,12 @@
+<!--ts-->
+   * [Coding](#coding)
+   * [Data analysis](#data-analysis)
+   * [SRE](#sre)
+
+
+
+<!--te-->
+
 - Let's keep this reading list short (e.g., one / two books per topic) with
   really the best of the best
 

@@ -1,15 +1,15 @@
 <!--ts-->
-   * [Jenkins builds](jenkins.md#jenkins-builds)
-      * [Naming conventions for Jenkins builds](jenkins.md#naming-conventions-for-jenkins-builds)
-      * [Naming conventions for scripts](jenkins.md#naming-conventions-for-scripts)
-      * [Brief description of the scripts](jenkins.md#brief-description-of-the-scripts)
-      * [Description of the Jenkins builds](jenkins.md#description-of-the-jenkins-builds)
-   * [dev Jenkins build](jenkins.md#dev-jenkins-build)
-      * [Goal](jenkins.md#goal)
-      * [Setup](jenkins.md#setup)
-      * [Running a dev build](jenkins.md#running-a-dev-build)
-   * [Installing / setting up Jenkins](jenkins.md#installing--setting-up-jenkins)
-   * [Expose webpages](jenkins.md#expose-webpages)
+   * [Jenkins builds](#jenkins-builds)
+      * [Naming conventions for Jenkins builds](#naming-conventions-for-jenkins-builds)
+      * [Naming conventions for scripts](#naming-conventions-for-scripts)
+      * [Brief description of the scripts](#brief-description-of-the-scripts)
+      * [Description of the Jenkins builds](#description-of-the-jenkins-builds)
+   * [dev Jenkins build](#dev-jenkins-build)
+      * [Goal](#goal)
+      * [Setup](#setup)
+      * [Running a dev build](#running-a-dev-build)
+   * [Installing / setting up Jenkins](#installing--setting-up-jenkins)
+   * [Expose webpages](#expose-webpages)
 
 
 
