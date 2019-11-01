@@ -10,6 +10,8 @@ import vendors.kibot.utils as kut
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Julia): The same is in too many places. Let's consolidate / merge in
+#  kibot/utils.py
 def compute_kibot_returns(prices: pd.DataFrame, period: str):
     if period == "minutely":
         rets = kut.compute_ret_0_from_1min_prices(prices, "log_rets")
@@ -22,6 +24,13 @@ def compute_kibot_returns(prices: pd.DataFrame, period: str):
     return rets
 
 
+# TODO(Julia): Let's make this code independent on price, like we did for
+#  TimeSeriesStudy, and then we can merge this analysis inside
+#  TimeSeries so that one can ask questions like "what was the largest movement
+#  by day" resampling on the flight.
+#  Unfortunately this code needs a data frame so we can't easily put this
+#  inside TimeSeriesStudy. Maybe we can have a DataFrameAnalyzer that does this
+#  cross-sectional analysis.
 def get_top_movements_by_group(
     price_df_dict: Dict[str, pd.DataFrame],
     commodity_symbols_kibot: Dict[str, Iterable],
@@ -33,9 +42,13 @@ def get_top_movements_by_group(
 ):
     zscored_returns = []
     for symbol in commodity_symbols_kibot[group]:
+        # TODO(J): This should not be here, but done by the client.
         rets = compute_kibot_returns(price_df_dict[symbol], period)
+        # TODO(J): This should be optional, since the client might have
+        #  already done that.
         zscored_ret = sigp.rolling_zscore(rets, tau, demean=False)
         zscored_ret = _choose_movements(zscored_ret, sign)
+        # TODO(J): Parametrize with respect to the column.
         zscored_ret = coex.drop_na(pd.DataFrame(zscored_ret), drop_infs=True)[
             "ret_0"
         ]
@@ -46,6 +59,9 @@ def get_top_movements_by_group(
     return mean_zscored_rets.sort_values(ascending=ascending).head(n_movements)
 
 
+# TODO(J): Not sure the replication of this and the above function is necessary.
+#  The general case is a function that gets a dataframe, then one can
+#  select a group of securities or a single one to perform the analysis.
 def get_top_movements_for_symbol(
     price_df_dict: Dict[str, pd.DataFrame],
     symbol: str,
