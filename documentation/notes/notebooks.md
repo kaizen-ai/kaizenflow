@@ -1,26 +1,35 @@
 <!--ts-->
+   * [Structure of a notebook](#structure-of-a-notebook)
+      * [Add a description for a notebook](#add-a-description-for-a-notebook)
+      * [General format of a notebook](#general-format-of-a-notebook)
+      * [Make the notebook flow clear](#make-the-notebook-flow-clear)
+   * [General](#general)
       * [Write beautiful code, even in notebooks](#write-beautiful-code-even-in-notebooks)
-      * [General](#general)
+      * [Show how data is transformed as you go](#show-how-data-is-transformed-as-you-go)
       * [Use keyboard shortcuts](#use-keyboard-shortcuts)
+      * [Strive for simplicity](#strive-for-simplicity)
       * [Dependencies among cells](#dependencies-among-cells)
       * [Re-execute from scratch](#re-execute-from-scratch)
-      * [Comment](#comment)
+      * [Add comments for complex cells](#add-comments-for-complex-cells)
       * [Do not cut &amp; paste code](#do-not-cut--paste-code)
       * [Avoid "wall-of-code" cell](#avoid-wall-of-code-cell)
       * [Avoid data biases](#avoid-data-biases)
       * [Avoid hardwired constants](#avoid-hardwired-constants)
-      * [Add a description for a notebook](#add-a-description-for-a-notebook)
-      * [General format of a notebook](#general-format-of-a-notebook)
+      * [Explain where data is coming from](#explain-where-data-is-coming-from)
+      * [Use ET times](#use-et-times)
+      * [Fix warnings](#fix-warnings)
+      * [Make cells idempotent](#make-cells-idempotent)
+      * [Always look at the discarded data](#always-look-at-the-discarded-data)
+      * [Use a progress bar](#use-a-progress-bar)
+   * [Notebooks and libraries](#notebooks-and-libraries)
+      * [Pros](#pros)
+      * [Cons](#cons)
    * [Plots](#plots)
       * [Use the proper y-scale](#use-the-proper-y-scale)
       * [Make each plot self-explanatory](#make-each-plot-self-explanatory)
       * [Avoid wall-of-text tables](#avoid-wall-of-text-tables)
       * [Use common axes to allow visual comparisons](#use-common-axes-to-allow-visual-comparisons)
       * [Use the right plot](#use-the-right-plot)
-   * [Notebooks and libraries](#notebooks-and-libraries)
-      * [Pros](#pros)
-      * [Cons](#cons)
-   * [Make the notebook flow clear](#make-the-notebook-flow-clear)
    * [Useful plugins](#useful-plugins)
       * [Vim bindings](#vim-bindings)
       * [Table of content (2)](#table-of-content-2)
@@ -282,7 +291,7 @@
 
 - ***Bad***
     ```python
-    df["id"] = df[“id”] + 1
+    df["id"] = df["id"] + 1
     ```
     - This computation is not idempotent, since if you execute it multiple times
       is going to increment the column "id" at every iteration
@@ -290,7 +299,7 @@
 - ***Good***
     - A better approach is to always create a new "copy", e.g.,
     ```python
-    df["incremented_df"] = df[“id”] + 1
+    df["incremented_df"] = df["id"] + 1
     ```
 
 - For data frames and variables is a good idea to create copies of the data along
