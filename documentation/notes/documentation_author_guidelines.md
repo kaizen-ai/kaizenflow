@@ -132,27 +132,7 @@
 - Add the tags at the beginning of the markdown file
     ```markdown
     <!--ts-->
-   * [Guidelines for writing workflows](#guidelines-for-writing-workflows)
-   * [Useful reference](#useful-reference)
-   * [Style and cosmetic lints](#style-and-cosmetic-lints)
-      * [Use nice 80 columns formatting](#use-nice-80-columns-formatting)
-      * [Empty line after heading](#empty-line-after-heading)
-      * [Style for numbered lists](#style-for-numbered-lists)
-      * [Using code style](#using-code-style)
-      * [Indenting code style](#indenting-code-style)
-      * [Use bullet lists](#use-bullet-lists)
-      * [Improve your written English](#improve-your-written-english)
-      * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
-      * [Table of content (TOC)](#table-of-content-toc)
-         * [Markdown TOC](#markdown-toc)
-         * [To insert a TOC](#to-insert-a-toc)
-         * [To update all markdown files](#to-update-all-markdown-files)
-         * [Script installation](#script-installation)
-   * [The team member list](#the-team-member-list)
-
-
-
-    <!--te-->
+    < !--te-->
     ```
 
 ### To update all markdown files

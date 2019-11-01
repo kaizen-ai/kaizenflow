@@ -52,7 +52,7 @@ Need to balance:
 - Get advice
     - before you write any code
     - before you write any lengthy design documents [notice the implicit
-    assumption that there is a design documented!]
+      assumption that there is a design documented!]
 
 - Before writing a doc or code
     - jot down some rough ideas (a few paragraphs)
@@ -82,11 +82,11 @@ A free python-focused reference is available
 
 Expanding your knowledge of design patterns is a worthwhile investment,
 because design patterns
-    - Capture elegant solutions that have been developed by many
-    experienced programmers over a long period of time
+    - Capture elegant solutions that have been developed by many experienced
+      programmers over a long period of time
     - Provide a framework and reference point for software architecture
     - Are widely used and well-known and therefore quickly recognized by skilled
-    programmers
+      programmers
 
 In other words, by using design patterns, you
     - Don't have to re-invent the wheel
@@ -100,12 +100,12 @@ In other words, by using design patterns, you
 If, for example, a function `f` accepts a dataframe `df` as its (sole)
 argument, then, ideally, `f(df)` will not modify `df`. If modifications are
 desired, then instead one can do
-```python
-def f(df):
-    df = df.copy()
-    ...
-    return df
-```
+    ```python
+    def f(df):
+        df = df.copy()
+        ...
+        return df
+    ```
 in the function so that `f(df)` returns the desired new dataframe without
 modifying the dataframe that was passed in to the function.
 
@@ -122,17 +122,17 @@ out of order.
 
 [Pure functions](https://en.wikipedia.org/wiki/Pure_function)
 have two key properties:
-  1. If the function arguments do not change, then the return value returned
-     does not change (in contrast to, e.g., functions that rely upon global
-     state)
-  2. Function evaluation does not have
-     [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science))
+    1. If the function arguments do not change, then the return value returned
+       does not change (in contrast to, e.g., functions that rely upon global
+       state)
+    2. Function evaluation does not have
+       [side effects](https://en.wikipedia.org/wiki/Side_effect_(computer_science))
      
 Some nice properties enjoyed by pure functions are:
     - They are easy to understand and easy to test
     - Using pure functions makes refactoring easier
     - They allow [chaining](https://en.wikipedia.org/wiki/Method_chaining) in an
-    elegant way
+      elegant way
     - They are often a natural choice for data manipulation and analysis
     - They are convenient in notebooks
 
