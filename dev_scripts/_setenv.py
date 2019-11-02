@@ -67,9 +67,12 @@ import helpers.io_ as io_  # isort:skip # noqa: E402
 import helpers.system_interaction as si  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
 
-# ##############################################################################
 
 _LOG = logging.getLogger(__name__)
+
+# ##############################################################################
+# Helpers for the phases.
+# ##############################################################################
 
 
 # TODO(gp): This is kind of useless since the cleaning of the path is done at
@@ -120,6 +123,141 @@ def _export_env_var(val_name, vals):
     return txt
 
 
+def _frame(comment, txt):
+    txt_tmp = []
+    line = "#" * 80
+    txt_tmp.append("\necho '%s'" % line)
+    txt_tmp.append("echo " + comment)
+    txt_tmp.append("echo '%s'" % line)
+    txt.extend(txt_tmp)
+
+
+def _execute(cmd, txt):
+    txt.append("echo '> %s'" % cmd)
+    txt.append(cmd)
+
+
+def _log_var(var_name, var_val, txt):
+    txt.append("echo '%s=%s'" % (var_name, var_val))
+    _LOG.debug("%s='%s'", var_name, var_val)
+
+
+# ##############################################################################
+# Various phases.
+# ##############################################################################
+
+
+def _report_info(txt):
+    _frame("Info", txt)
+    _log_var("cmd_line", dbg.get_command_line(), txt)
+    # TODO(gp): Use git to make sure you are in the root of the repo to
+    # configure the environment.
+    exec_name = os.path.abspath(sys.argv[0])
+    dbg.dassert_exists(exec_name)
+    _log_var("exec_name", exec_name, txt)
+    # Full path of this executable which is the same as setenv.sh.
+    exec_path = os.path.dirname(exec_name)
+    _log_var("exec_path", exec_path, txt)
+    dbg.dassert(
+        os.path.basename(exec_path), "dev_scripts", "exec_path=%s", exec_path
+    )
+    # Get the path of helpers.
+    submodule_path = os.path.abspath(os.path.join(exec_path, ".."))
+    dbg.dassert_exists(submodule_path)
+    # Current dir.
+    curr_path = os.getcwd()
+    _log_var("curr_path", curr_path, txt)
+    # Get name.
+    user_name = si.get_user_name()
+    _log_var("user_name", user_name, txt)
+    server_name = si.get_server_name()
+    _log_var("server_name", server_name, txt)
+    return exec_path, submodule_path, user_name
+
+
+def _check_conda():
+    cmd = "conda -V"
+    si.system(cmd)
+
+
+def _config_git(txt, user_name):
+    _frame("Config git", txt)
+    user_credentials = usc.get_credentials()
+    git_user_name = user_credentials["git_user_name"]
+    if git_user_name:
+        cmd = 'git config --local user.name "%s"' % git_user_name
+        _execute(cmd, txt)
+    #
+    git_user_email = user_credentials["git_user_email"]
+    if git_user_email:
+        cmd = 'git config --local user.email "%s"' % git_user_email
+        _execute(cmd, txt)
+    #
+    if user_name == "jenkins":
+        cmd = "git config --list"
+        _execute(cmd, txt)
+    return user_credentials
+
+
+def _config_python(submodule_path, txt):
+    _frame("Config python", txt)
+    #
+    txt.append("# Disable python code caching.")
+    txt.append("export PYTHONDONTWRITEBYTECODE=x")
+    #
+    txt.append("# Append current dir to PYTHONPATH.")
+    pythonpath = [submodule_path] + ["$PYTHONPATH"]
+    txt.extend(_export_env_var("PYTHONPATH", pythonpath))
+
+
+def _config_conda(args, txt, user_credentials):
+    _frame("Config conda", txt)
+    #
+    conda_sh_path = user_credentials["conda_sh_path"]
+    _log_var("conda_sh_path", conda_sh_path, txt)
+    # TODO(gp): This makes conda not working for some reason.
+    # txt.append("source %s" % conda_sh_path)
+    dbg.dassert_exists(conda_sh_path)
+    #
+    txt.append('echo "CONDA_PATH="$(which conda)')
+    txt.append('echo "CONDA_VER="$(conda -V)')
+    cmd = "conda info --envs"
+    _execute(cmd, txt)
+    cmd = "conda activate %s" % args.conda_env
+    _execute(cmd, txt)
+    cmd = "conda info --envs"
+    _execute(cmd, txt)
+
+
+def _config_bash(exec_path, txt):
+    _frame("Config bash", txt)
+    #
+    dirs = [".", "aws", "infra", "install", "notebooks"]
+    dirs = sorted(dirs)
+    dirs = [os.path.abspath(os.path.join(exec_path, d)) for d in dirs]
+    for d in dirs:
+        dbg.dassert_exists(d)
+    path = dirs + ["$PATH"]
+    txt.extend(_export_env_var("PATH", path))
+
+
+def _test_packages(exec_path, txt):
+    _frame("Test packages", txt)
+    script = os.path.join(exec_path, "install/check_develop_packages.py")
+    script = os.path.abspath(script)
+    dbg.dassert_exists(script)
+    _execute(script, txt)
+
+
+def _save_script(args, txt):
+    txt = "\n".join(txt)
+    if args.output_file:
+        io_.to_file(args.output_file, txt)
+    else:
+        # stdout.
+        print(txt)
+
+
 # ##############################################################################
 
 
@@ -150,135 +288,23 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)
     txt = []
-
-    def _frame(comment):
-        txt_tmp = []
-        line = "#" * 80
-        txt_tmp.append("\necho '%s'" % line)
-        txt_tmp.append("echo " + comment)
-        txt_tmp.append("echo '%s'" % line)
-        # pylint: disable=no-member
-        txt.extend(txt_tmp)
-
-    def _execute(cmd):
-        # pylint: disable=no-member
-        txt.append("echo '> %s'" % cmd)
-        # pylint: disable=no-member
-        txt.append(cmd)
-
-    def _log_var(var_name, var_val):
-        # pylint: disable=no-member
-        txt.append("echo '%s=%s'" % (var_name, var_val))
-        _LOG.debug("%s='%s'", var_name, var_val)
-
     #
-    # Info.
-    #
-    _frame("Info")
-    _log_var("cmd_line", dbg.get_command_line())
-    # TODO(gp): Use git to make sure you are in the root of the repo to
-    # configure the environment.
-    exec_name = os.path.abspath(sys.argv[0])
-    dbg.dassert_exists(exec_name)
-    _log_var("exec_name", exec_name)
-    # Full path of this executable which is the same as setenv.sh.
-    exec_path = os.path.dirname(exec_name)
-    _log_var("exec_path", exec_path)
-    dbg.dassert(
-        os.path.basename(exec_path), "dev_scripts", "exec_path=%s", exec_path
-    )
-    # Get the path of helpers.
-    submodule_path = os.path.abspath(os.path.join(exec_path, ".."))
-    dbg.dassert_exists(submodule_path)
-    # Current dir.
-    curr_path = os.getcwd()
-    _log_var("curr_path", curr_path)
-    # Get name.
-    user_name = si.get_user_name()
-    _log_var("user_name", user_name)
-    server_name = si.get_server_name()
-    _log_var("server_name", server_name)
-    #
-    # Check conda.
+    exec_path, submodule_path, user_name = _report_info(txt)
     #
     # TODO(gp): After updating to anaconda3, conda doesn't work from python anymore.
-    # cmd = "conda -V"
-    # si.system(cmd)
+    # _check_conda()
     #
-    # Config git.
+    user_credentials = _config_git(txt, user_name)
     #
-    _frame("Config git")
-    user_credentials = usc.get_credentials()
-    git_user_name = user_credentials["git_user_name"]
-    if git_user_name:
-        cmd = 'git config --local user.name "%s"' % git_user_name
-        _execute(cmd)
+    _config_python(submodule_path, txt)
     #
-    git_user_email = user_credentials["git_user_email"]
-    if git_user_email:
-        cmd = 'git config --local user.email "%s"' % git_user_email
-        _execute(cmd)
+    _config_conda(args, txt, user_credentials)
     #
-    if user_name == "jenkins":
-        cmd = "git config --list"
-        _execute(cmd)
+    _config_bash(exec_path, txt)
     #
-    # Config python.
+    _test_packages(exec_path, txt)
     #
-    _frame("Config python")
-    #
-    txt.append("# Disable python code caching.")
-    txt.append("export PYTHONDONTWRITEBYTECODE=x")
-    #
-    txt.append("# Append current dir to PYTHONPATH.")
-    pythonpath = [submodule_path] + ["$PYTHONPATH"]
-    txt.extend(_export_env_var("PYTHONPATH", pythonpath))
-    #
-    # Config conda.
-    #
-    _frame("Config conda")
-    #
-    conda_sh_path = user_credentials["conda_sh_path"]
-    _log_var("conda_sh_path", conda_sh_path)
-    # TODO(gp): This makes conda not working for some reason.
-    # txt.append("source %s" % conda_sh_path)
-    dbg.dassert_exists(conda_sh_path)
-    #
-    txt.append('echo "CONDA_PATH="$(which conda)')
-    txt.append('echo "CONDA_VER="$(conda -V)')
-    cmd = "conda info --envs"
-    _execute(cmd)
-    cmd = "conda activate %s" % args.conda_env
-    _execute(cmd)
-    cmd = "conda info --envs"
-    _execute(cmd)
-    #
-    # Config bash.
-    #
-    _frame("Config bash")
-    #
-    dirs = [".", "aws", "infra", "install", "notebooks"]
-    dirs = sorted(dirs)
-    dirs = [os.path.abspath(os.path.join(exec_path, d)) for d in dirs]
-    for d in dirs:
-        dbg.dassert_exists(d)
-    path = dirs + ["$PATH"]
-    txt.extend(_export_env_var("PATH", path))
-    #
-    # Test packages.
-    #
-    _frame("Test packages")
-    script = os.path.join(exec_path, "install/check_develop_packages.py")
-    script = os.path.abspath(script)
-    dbg.dassert_exists(script)
-    _execute(script)
-    #
-    txt = "\n".join(txt)
-    if args.output_file:
-        io_.to_file(args.output_file, txt)
-    else:
-        # stdout.
-        print(txt)
+    _save_script(args, txt)
 
 
 if __name__ == "__main__":
