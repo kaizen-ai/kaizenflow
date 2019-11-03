@@ -973,6 +973,7 @@ def _run_linter(actions, args, file_names):
         _LOG.info(
             "Using %s threads", num_threads if num_threads > 0 else "all CPUs"
         )
+        # pylint: disable=import-outside-toplevel
         from joblib import Parallel, delayed
 
         output_tmp = Parallel(n_jobs=num_threads, verbose=50)(

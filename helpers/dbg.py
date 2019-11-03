@@ -629,10 +629,11 @@ def get_matching_loggers(module_names):
         module_names = [module_names]
     sel_loggers = []
     for module_name in module_names:
-        sel_loggers_tmp = [logger for logger in loggers if module_name in str(
-            logger)]
+        sel_loggers_tmp = [
+            logger for logger in loggers if module_name in str(logger)
+        ]
         sel_loggers.extend(sel_loggers_tmp)
-    #sel_loggers = sorted(list(set(sel_loggers)))
+    # sel_loggers = sorted(list(set(sel_loggers)))
     return sel_loggers
 
 
@@ -640,8 +641,15 @@ def shutup_chatty_modules(verb=logging.CRITICAL):
     """
     Reduce the verbosity for external modules that are very chatty.
     """
-    module_names = ["matplotlib", "boto", 'urllib3', 's3transfer', 'boto3',
-               'botocore', 'nose']
+    module_names = [
+        "matplotlib",
+        "boto",
+        "urllib3",
+        "s3transfer",
+        "boto3",
+        "botocore",
+        "nose",
+    ]
     loggers = get_matching_loggers(module_names)
     print("Shutting up modules: (%d) %s" % (len(loggers), loggers))
     for logger in loggers:
