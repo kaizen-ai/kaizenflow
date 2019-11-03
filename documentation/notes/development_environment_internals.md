@@ -11,6 +11,58 @@
 
 <!--te-->
 
+# Design principles for multiple Git repos
+
+- We support multiple Git repos using Git submodules
+
+- Avoid bash scripts at all costs
+    - bash scripts are just flaky and unmanageable
+    - use python whenever possible
+    - if we really need to use bash scripts, we prefer to use python scripts that
+      generate bash scripts to source (see `setenv.sh` and `_setenv.py`)
+      
+- Avoid using scripts from external repos calling into internal repos
+    - We prefer to:
+        - add general code performing the actions in the innermost repo (e.g.,
+          `create_conda.py`)
+        - each repo has a way to specify the actions needed through functions,
+          config files (e.g., `YAML` files)
+        - outer repos collect the actions from the needed repos, merge the
+          actions into a single work plan, and call the code to perform the work
+
+- Avoid messing up with `PATH` to automatically find executables
+    - Better to be explicit with full path
+
+- Avoid calling scripts with the same name in different repos
+    - It's just too confusing
+
+- Avoid factoring too much (e.g., bash scripts) since this creates all sort of
+  subtle dependencies, especially when bootstrapping the environment
+    - It's ok to have some redundancy (e.g., `setenv.sh`)
+
+- Tweak `PYTHONPATH` to find each Git repo
+
+- The outermost repo decides global configuration (e.g., Git user, emails, conda
+  package) and all repos inherit these parameters
+
+## Steps requiring composition of Git repos
+
+1) installing a conda env
+    - `create_conda.py`
+    - we need to compute the union of the packages required by all repos
+    - we should not use pinning of packages (yet another reasons why pinning is
+      evil): otherwise we should let conda resolve the constraints, including `>=`
+
+2) configuring a client
+    - `setenv.sh`
+    - we need to compute the union of the variables set, updating (e.g., `PATH`,
+      `PYTHONPATH`) or overwriting some
+
+3) handling credentials
+    - E.g., for tunnels, for Git
+
+4) handling `pytest`
+
 # Configuring a Git client
 
 ## Bootstrapping
@@ -170,7 +222,6 @@
     - do the specific work to configure the repo
 
 # To debug
-
 ```bash
 > (cd /Users/saggese/src/commodity_research1/amp; dev_scripts/_setenv.py)
 > (cd /Users/saggese/src/commodity_research1/amp; source dev_scripts/setenv.sh)
