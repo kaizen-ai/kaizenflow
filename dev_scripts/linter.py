@@ -687,7 +687,7 @@ def _pylint(file_name, pedantic, check_if_possible):
         "C0304",
         # [C0330(bad-continuation), ] Wrong hanging indentation before block
         #   (add 4 spaces).
-        # Black and pylint don't agree on the formatting.
+        # - Black and pylint don't agree on the formatting.
         "C0330",
         # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
         "C0412",
@@ -709,11 +709,11 @@ def _pylint(file_name, pedantic, check_if_possible):
         # [W0511(fixme), ]
         "W0511",
         # [W0603(global-statement), ] Using the global statement
-        # We assume we are mature enough to use `global` properly.
+        # - We assume that we are mature enough to use `global` properly.
         "W0603",
-        # TODO(gp): Not clear what is the problem.
         # [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
-        # positional arguments list in the definition of
+        #   positional arguments list in the definition of
+        # - TODO(gp): Not clear what is the problem.
         "W1113",
     ]
     is_test_code = "test" in file_name.split("/")
