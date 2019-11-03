@@ -86,7 +86,7 @@ because design patterns
       programmers over a long period of time
     - Provide a framework and reference point for software architecture
     - Are widely used and well-known and therefore quickly recognized by skilled
-    programmers
+      programmers
 
 In other words, by using design patterns, you
     - Don't have to re-invent the wheel
