@@ -24,54 +24,10 @@ import logging
 import os
 import sys
 
-# ##############################################################################
-
-
-# # TODO(gp): Share this as an eval.
-# def _bootstrap(rel_path_to_helpers):
-#     """
-#     Tweak PYTHONPATH to pick up amp libraries while we are configuring amp,
-#     breaking the circular dependency.
-#
-#     Same code for dev_scripts/_setenv.py and dev_scripts/install/create_conda.py
-#
-#     # TODO(gp): It is not easy to share it as an import. Maybe we can just read
-#     # it from a file an eval it.
-#     """
-#     # Store the values before any modification, by making a copy (out of paranoia).
-#     _PATH = str(os.environ["PATH"]) if "PATH" in os.environ else ""
-#     _PYTHONPATH = str(
-#         os.environ["PYTHONPATH"]) if "PYTHONPATH" in os.environ else ""
-#     exec_name = os.path.abspath(sys.argv[0])
-#     amp_path = os.path.abspath(
-#         os.path.join(os.path.dirname(exec_name), rel_path_to_helpers)
-#     )
-#     # Check that helpers exists.
-#     helpers_path = os.path.join(amp_path, "helpers")
-#     assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
-#     # Update path.
-#     if False:
-#         # For debug purposes.
-#         print("PATH=%s" % _PATH)
-#         print("PYTHONPATH=%s" % _PYTHONPATH)
-#         print("amp_path=%s" % amp_path)
-#     # We can't update os.environ since the script is already running.
-#     sys.path.insert(0, amp_path)
-#     # Test the imports.
-#     try:
-#         import helpers.dbg as dbg_test  # isort:skip # noqa: E402
-#     except ImportError as e:
-#         print("PATH=%s" % _PATH)
-#         print("PYTHONPATH=%s" % _PYTHONPATH)
-#         print("amp_path=%s" % amp_path)
-#         raise e
-
-
 import dev_scripts._bootstrap as boot
 # This script is `//amp/dev_scripts/install/create_conda.py`, so we need to go up
 # two levels to reach `//amp/helpers`.
 boot.bootstrap("../..")
-
 
 # pylint: disable=C0413
 import helpers.conda as hco  # isort:skip # noqa: E402

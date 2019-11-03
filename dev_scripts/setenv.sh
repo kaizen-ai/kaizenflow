@@ -38,21 +38,5 @@ if [[ $rc != 0 ]]; then
   return $rc
 fi;
 
+# Create and execure the setenv.sh script to configure the env.
 execute_setenv
-
-## Create the script to execute calling python.
-#echo "Creating setenv script ... done"
-#DATETIME=$(date "+%Y%m%d-%H%M%S")_$(python -c "import time; print(int(time.time()*1000))")
-##DATETIME=""
-#SCRIPT_FILE=/tmp/setenv.${DATETIME}.sh
-#echo "SCRIPT_FILE=$SCRIPT_FILE"
-#cmd="$EXEC_PATH/_setenv.py --output_file $SCRIPT_FILE $*"
-#execute $cmd
-#echo "Creating setenv script '$SCRIPT_FILE' ... done"
-#
-## Execute the newly generated script.
-#echo "Sourcing '$SCRIPT_FILE' ..."
-#source $SCRIPT_FILE
-#echo "Sourcing '$SCRIPT_FILE' ... done"
-#
-#echo "Running '$EXEC_NAME' ... done"
