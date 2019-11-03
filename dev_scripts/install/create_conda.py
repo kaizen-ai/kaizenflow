@@ -68,7 +68,7 @@ def _bootstrap(rel_path_to_helpers):
 _bootstrap("../..")
 
 
-# pylint: disable=C0413
+# pylint: disable=wrong-import-position
 import helpers.conda as hco  # isort:skip # noqa: E402
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.env as env  # isort:skip # noqa: E402

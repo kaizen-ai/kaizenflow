@@ -36,8 +36,7 @@ def check_url(url):
     try:
         request = requests.get(url)
         exists = request.status_code == 200
-        # pylint: disable=W0703
-        # [W0703(broad-except), ] Catching too general exception Exception
+        # pylint: disable=broad-except
     except Exception:
         # TODO(gp): RuntimeError doesn't seem to catch. Find a narrower
         #  exception to catch.

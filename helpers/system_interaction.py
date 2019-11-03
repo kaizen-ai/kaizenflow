@@ -35,6 +35,7 @@ def set_user_name(user_name):
 
 def get_user_name():
     if _USER_NAME is None:
+        # pylint: disable=import-outside-toplevel
         import getpass
 
         res = getpass.getuser()
@@ -74,11 +75,7 @@ def get_env_var(env_var_name):
 
 # ##############################################################################
 
-# pylint: disable=R0912, R0913, R0914, R0915
-# [R0912(too-many-branches), _system] Too many branches
-# [R0915(too-many-statements), _system] Too many statements
-# [R0913(too-many-arguments), _system] Too many arguments (10/5) [pylint]
-# [R0914(too-many-locals), _system] Too many local variables (21/15) [pylint]
+# pylint: disable=too-many-branches,too-many-statements,too-many-arguments,too-many-locals
 def _system(
     cmd,
     abort_on_error,
@@ -206,8 +203,7 @@ def _system(
     return rc, output
 
 
-# pylint: disable=R0913
-# [R0913(too-many-arguments), system] Too many arguments (10/5) [pylint]
+# pylint: disable=too-many-arguments
 def system(
     cmd,
     abort_on_error=True,
@@ -335,6 +331,7 @@ def kill_process(get_pids, timeout_in_secs=5, polltime_in_secs=0.1):
             _LOG.warning(str(e))
     #
     _LOG.info("Waiting %d processes (%s) to die", len(pids), pids)
+    # pylint: disable=import-outside-toplevel
     import tqdm
 
     for _ in tqdm.tqdm(range(int(timeout_in_secs / polltime_in_secs))):

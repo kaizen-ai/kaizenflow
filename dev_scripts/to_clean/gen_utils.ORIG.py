@@ -1528,13 +1528,13 @@ def regress(
         "param_names": param_names,
         "coeffs": model.params,
         "pvals": model.pvalues,
-        # pylint: disable=E1101
+        # pylint: disable=no-member
         "rsquared": model.rsquared,
         "adj_rsquared": model.rsquared_adj,
         "model": model,
     }
     if print_model_stats:
-        # pylint: disable=E1101
+        # pylint: disable=no-member
         print(model.summary().as_text())
     if tsplot or jointplot_:
         if max_nrows is not None and df.shape[0] > max_nrows:

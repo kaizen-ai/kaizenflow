@@ -676,7 +676,7 @@ class TestPcaFactorComputer1(ut.TestCase):
     # ##########################################################################
 
     def _test_sort_eigval_helper(self, eigval, eigvec, are_eigval_sorted_exp):
-        # pylint: disable=W0641
+        # pylint: disable=possibly-unused-variable
         obj = res.PcaFactorComputer.sort_eigval(eigval, eigvec)
         are_eigval_sorted, eigval_tmp, eigvec_tmp = obj
         self.assertEqual(are_eigval_sorted, are_eigval_sorted_exp)
