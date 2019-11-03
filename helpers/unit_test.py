@@ -15,6 +15,7 @@ import unittest
 import numpy as np
 
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as prnt
 import helpers.system_interaction as si
@@ -99,11 +100,21 @@ def get_df_signature(df, num_rows=3):
     return txt
 
 
-# #############################################################################
-# Helpers.
+def purify_from_client(txt: str) -> str:
+    """
+    Remove from a string all the information specific of a git client:
+        - replace the git path with `$GIT_ROOT`
+    """
+    super_module_path = git.get_client_root(super_module=True)
+    txt = txt.replace(super_module_path, "$GIT_ROOT")
+    # TODO(gp): Remove conda_sh_path.
+    return txt
+
+
 # #############################################################################
 
 
+# TODO(gp): Make these functions static of TestCase.
 def _remove_spaces(obj):
     string = str(obj)
     string = string.replace("\\n", "\n").replace("\\t", "\t")
@@ -197,9 +208,6 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
         _LOG.error(msg)
         # Print stack trace.
         raise RuntimeError(msg)
-
-
-# #############################################################################
 
 
 class TestCase(unittest.TestCase):
