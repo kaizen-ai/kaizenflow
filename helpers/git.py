@@ -63,17 +63,17 @@ def get_client_root(super_module):
     return client_root
 
 
-def find_file_in_git_tree(file_in):
+def find_file_in_git_tree(file_in, super_module=True):
     """
     Find the path of a file `file_in` in the outermost git submodule (i.e.,
     in the super-module).
     """
-    root_dir = get_client_root(super_module=True)
+    root_dir = get_client_root(super_module=super_module)
     cmd = "find %s -name '%s'" % (root_dir, file_in)
     _, file_name = si.system_to_string(cmd)
     _LOG.debug("file_name=%s", file_name)
     # Make sure that there is a single outcome.
-    dbg.dassert_eq(len(file_name.split("\n")), 1)
+    dbg.dassert_eq(len(file_name.split("\n")), 1, "file_name=%s", file_name)
     dbg.dassert(
         file_name != "", "Can't find file '%s' in dir '%s'", file_in, root_dir
     )

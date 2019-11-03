@@ -21,8 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_url_py1(ut.TestCase):
-    # TODO(gp): -> test_get_file_name
-    def test1(self):
+    def test_get_file_name1(self):
         url_tmp = (
             "http://localhost:10001/notebooks/oil/ST/"
             + "Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
@@ -31,7 +30,7 @@ class Test_url_py1(ut.TestCase):
         exp = "oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         self.assertEqual(act, exp)
 
-    def test2(self):
+    def test_get_file_name2(self):
         url_tmp = (
             "https://github.com/ParticleDev/commodity_research/blob/"
             + "master/oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
@@ -41,10 +40,9 @@ class Test_url_py1(ut.TestCase):
         self.assertEqual(act, exp)
 
     def test_run1(self):
-        # TODO(gp): Use git.find_file_in_git_tree()
+        exec_name = git.find_file_in_git_tree("url.py")
         cmd = (
-            "url.py "
-            "http://localhost:9999/notebooks/research/"
+            "%s " % exec_name + "http://localhost:9999/notebooks/research/"
             "Task51_experiment_with_sklearn_pipeline/"
             "Task51_experiment_with_sklearn_pipeline.ipynb"
         )
@@ -72,15 +70,27 @@ class Test_set_env1(ut.TestCase):
         """
         Find _setenv.py executable and run it.
         """
-        # TODO(gp): Use git.find_file_in_git_tree()
-        cmd = "find . -name _setenv.py"
-        _, txt = si.system_to_string(cmd)
-        _LOG.debug("txt=%s", txt)
-        #
-        executable = os.path.abspath(txt)
+        executable = git.find_file_in_git_tree("_setenv.py", super_module=False)
+        executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
         dbg.dassert_exists(executable)
         si.system(executable)
+
+    # Since there are dependency from the user environment, we freeze a
+    # particular run of _setenv.py.
+    @pytest.mark.skipif('si.get_user_name() != "saggese"')
+    def test_setenv_py2(self):
+        """
+        Find _setenv.py executable, run it, and freeze the output.
+        """
+        executable = git.find_file_in_git_tree("_setenv.py", super_module=False)
+        executable = os.path.abspath(executable)
+        _LOG.debug("executable=%s", executable)
+        dbg.dassert_exists(executable)
+        # Run _setup.py and get its output.
+        _, txt = si.system_to_string(executable)
+        txt = ut.purify_from_client(txt)
+        self.check_string(txt)
 
     def test_setenv_sh1(self):
         """
