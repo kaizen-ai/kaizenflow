@@ -24,7 +24,8 @@ import logging
 import os
 import sys
 
-import dev_scripts._bootstrap as boot
+import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
+
 # This script is `//amp/dev_scripts/install/create_conda.py`, so we need to go up
 # two levels to reach `//amp/helpers`.
 boot.bootstrap("../..")

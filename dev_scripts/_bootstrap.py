@@ -26,8 +26,9 @@ def bootstrap(rel_path_to_amp_helpers):
     # Store the values before any modification, by making a copy out of
     # paranoia.
     _PATH = str(os.environ["PATH"]) if "PATH" in os.environ else ""
-    _PYTHONPATH = str(
-        os.environ["PYTHONPATH"]) if "PYTHONPATH" in os.environ else ""
+    _PYTHONPATH = (
+        str(os.environ["PYTHONPATH"]) if "PYTHONPATH" in os.environ else ""
+    )
     exec_name = os.path.abspath(sys.argv[0])
     amp_path = os.path.abspath(
         os.path.join(os.path.dirname(exec_name), rel_path_to_amp_helpers)
@@ -51,7 +52,9 @@ def bootstrap(rel_path_to_amp_helpers):
     sys.path.insert(0, amp_path)
     # Test the imports.
     try:
-        import helpers.dbg as dbg_test  # isort:skip # noqa: E402
+        # pylint: disable=import-outside-toplevel
+        import helpers.dbg as dbg_test  # isort:skip # noqa: E402,F401
+
         print("* Boostrap successful *")
     except ImportError as e:
         print("* Bootstrap failed *")

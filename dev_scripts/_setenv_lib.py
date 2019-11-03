@@ -16,7 +16,6 @@ import sys
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.io_ as io_  # isort:skip # noqa: E402
 import helpers.system_interaction as si  # isort:skip # noqa: E402
-import helpers.user_credentials as usc  # isort:skip # noqa: E402
 
 
 _LOG = logging.getLogger(__name__)
@@ -61,8 +60,8 @@ def _export_env_var(val_name, vals):
     # TODO(gp): Improve this script. It doesn't seem to work for the empty
     # paths and with repeated paths.
     txt_tmp += (
-            " | perl -e "
-            + """'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))'"""
+        " | perl -e "
+        + """'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))'"""
     )
     txt_tmp += ")"
     txt.append(txt_tmp)
@@ -99,10 +98,18 @@ def _log_var(var_name, var_val, txt):
 
 
 def report_info(txt):
+    """
+    Add to the bash script `txt` diagnostic informations.
+
+    :return:
+        - submodule: the directory that includes the executable as
+          `dev_scripts/_setenv.py` (i.e., the dir that is ../exec_path)
+        - user_name
+    """
     _frame("Info", txt)
     _log_var("cmd_line", dbg.get_command_line(), txt)
     # TODO(gp): Use git to make sure you are in the root of the repo to
-    # configure the environment.
+    #  configure the environment.
     exec_name = os.path.abspath(sys.argv[0])
     dbg.dassert_exists(exec_name)
     _log_var("exec_name", exec_name, txt)
@@ -123,17 +130,20 @@ def report_info(txt):
     _log_var("user_name", user_name, txt)
     server_name = si.get_server_name()
     _log_var("server_name", server_name, txt)
-    return exec_path, submodule_path, user_name
+    return submodule_path, user_name
 
 
-def _check_conda():
+def check_conda():
     cmd = "conda -V"
     si.system(cmd)
 
 
-def config_git(user_name, txt):
+def config_git(user_name, user_credentials, txt):
+    """
+    Add to the bash script in `txt` instructions to:
+        - configure git user name and user email
+    """
     _frame("Config git", txt)
-    user_credentials = usc.get_credentials()
     git_user_name = user_credentials["git_user_name"]
     if git_user_name:
         cmd = 'git config --local user.name "%s"' % git_user_name
@@ -147,21 +157,26 @@ def config_git(user_name, txt):
     if user_name == "jenkins":
         cmd = "git config --list"
         _execute(cmd, txt)
-    return user_credentials
 
 
 def config_python(submodule_path, txt):
+    """
+    Add to the bash script `txt` instructions to configure python by:
+        - disable python caching
+        - appending the submodule path to $PYTHONPATH
+    """
+
     _frame("Config python", txt)
     #
     txt.append("# Disable python code caching.")
     txt.append("export PYTHONDONTWRITEBYTECODE=x")
     #
-    txt.append("# Append current dir to PYTHONPATH.")
-    pythonpath = [submodule_path] + ["$PYTHONPATH"]
-    txt.extend(_export_env_var("PYTHONPATH", pythonpath))
+    txt.append("# Append submodule path to PYTHONPATH.")
+    python_path = [submodule_path] + ["$PYTHONPATH"]
+    txt.extend(_export_env_var("PYTHONPATH", python_path))
 
 
-def config_conda(args, txt, user_credentials):
+def config_conda(args, user_credentials, txt):
     _frame("Config conda", txt)
     #
     conda_sh_path = user_credentials["conda_sh_path"]
@@ -180,21 +195,21 @@ def config_conda(args, txt, user_credentials):
     _execute(cmd, txt)
 
 
-def config_bash(exec_path, txt):
+def config_bash(path, dirs, txt):
     _frame("Config bash", txt)
     #
-    dirs = [".", "aws", "infra", "install", "notebooks"]
     dirs = sorted(dirs)
-    dirs = [os.path.abspath(os.path.join(exec_path, d)) for d in dirs]
+    dirs = [os.path.abspath(os.path.join(path, d)) for d in dirs]
     for d in dirs:
         dbg.dassert_exists(d)
     path = dirs + ["$PATH"]
     txt.extend(_export_env_var("PATH", path))
 
 
-def test_packages(exec_path, txt):
+def test_packages(amp_path, txt):
     _frame("Test packages", txt)
-    script = os.path.join(exec_path, "install/check_develop_packages.py")
+    script = os.path.join(amp_path,
+                          "dev_scripts/install/check_develop_packages.py")
     script = os.path.abspath(script)
     dbg.dassert_exists(script)
     _execute(script, txt)
