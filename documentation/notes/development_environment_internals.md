@@ -11,6 +11,54 @@
 
 <!--te-->
 
+# Configuring a Git client
+
+## Bootstrapping
+
+- The problem of bootstrapping is related to using our python libraries to create
+  a python development environment in which we can use our python libraries
+
+- In other words, think of the problem of using code from `helpers` from `//amp`
+  before changing `PYTHONPATH` so that python can find `helpers`
+
+- Our solution is to modify the running `PYTHONPATH` by injecting paths to the
+  `//amp` libraries we use, e.g., `helpers`
+
+## When bootstrapping happens
+
+- There are 2 points for bootstrapping the development environment:
+    1) when creating a conda environment in `create_conda.py`
+        - we want to use our libraries (e.g., `dbg.dassert*`, `si.system`,
+          logging), but we don't have a conda environment and we haven't
+          configured yet our development environment
+        - also `create_conda.py` can depend only from python system libraries
+
+    2) when configuring a git client with `setenv.sh`
+        - we want to use our libraries, but we haven't configured yet our
+          development environment
+        - since `setenv.sh` runs after `create_conda.py` we can use python
+          libraries installed in our conda environment, although we prefer to
+          avoid this
+
+## Mechanics of bootstrapping
+
+- `//amp/dev_scripts/_bootstrap.py` contains a function that updates the running
+  library path using a relative path that points to `helpers`
+
+- To avoid to replicate the `bootstrap` function we use relative imports to
+  `bootstrap.py`, e.g., in `//amp/dev_scripts/_setenv.py`
+    ```python
+    # This script is `//amp/dev_scripts/_setenv.sh`, so we need to go up one level to
+    # reach `//amp/helpers`.
+    import _bootstrap as boot
+    boot.bootstrap("..")
+    ```
+- After this call, we can import `//amp/helpers` libraries
+    ```python
+    # pylint: disable=C0413
+    import helpers.dbg as dbg  # isort:skip # noqa: E402
+    ```
+
 # `create_conda` design notes
 
 - `create_conda.py` is used to create a complete dev environment in a
@@ -105,3 +153,18 @@
     ```
 - We use some tags, e.g., `# Not on Mac.`, to do conditional builds, since
   `conda` doesn't support them out of the box
+
+# `setenv.sh` design notes
+
+- Each `setenv.sh` (e.g., `//amp/dev_scripts/setenv.sh`,
+  `//p1/dev_scripts/setenv.sh`)
+    - contains some boiler plate code (calls `helpers.sh`, checks python version)
+    - `execute_setenv`
+        - calls `_setenv.py` to generate a bash script to configure
+        - executes the bash script and configures the environment
+    - is typically the same besides the pointer to `helpers.sh`
+
+- `_setenv.py`
+    - bootstraps the dev env
+    - import `_setenv_lib` to get code that is used by all `_setenv.py`
+    - do the specific work to configure the repo
