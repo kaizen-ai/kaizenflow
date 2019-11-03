@@ -34,8 +34,7 @@ def _get_p1_dev_server_ip():
     return dev_server
 
 
-# pylint: disable=R0915
-# [R0915(too-many-statements), ] Too many statements (51/50)
+# pylint: disable=too-many-statements
 def get_credentials():
     """
     Report information about a user set-up as a function of:

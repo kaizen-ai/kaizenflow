@@ -404,8 +404,7 @@ def _python_compile(file_name, pedantic, check_if_possible):
         return output
     try:
         py_compile.compile(file_name, doraise=True)
-        # pylint: disable=W0703
-        # [W0703(broad-except), ] Catching too general exception Exception.
+        # pylint: disable=broad-except
     except Exception as e:
         output.append(str(e))
     return output
