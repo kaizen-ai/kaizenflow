@@ -18,14 +18,15 @@ import os
 # This import is relative to the top of the repo.
 import _bootstrap as boot  # isort:skip # noqa: E402
 
-# This script is `//amp/dev_scripts/_setenv.py`, so we need ".." to go from the
-# position of this executable to `//amp/helpers`.
+# This script is `//amp/dev_scripts/_setenv_amp.py`, so we need ".." to go from
+# the position of this executable to `//amp/helpers`.
 # pylint: disable=no-member
 boot.bootstrap("..")
 
 # pylint: disable=import-outside-toplevel,wrong-import-position
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
+
 # This import is relative to the top of the repo.
 # pylint: disable=wrong-import-position
 import _setenv_lib as selib  # isort:skip # noqa: E402
@@ -58,8 +59,10 @@ def _main(parser):
     #
     selib.config_conda(args, user_credentials, txt)
     #
-    dirs = ["dev_scripts/%s" % d for d in
-            (".", "aws", "infra", "install", "notebooks")]
+    dirs = [
+        "dev_scripts/%s" % d
+        for d in (".", "aws", "infra", "install", "notebooks")
+    ]
     selib.config_bash(amp_path, dirs, txt)
     #
     selib.test_packages(amp_path, txt)

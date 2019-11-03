@@ -3,7 +3,7 @@ Import as:
 
 import _setenv_lib as selib
 
-This library contains functions used by a `setenv.py` script in a repo to
+This library contains functions used by a `setenv_*.py` script in a repo to
 generate a bash script that is executed to configure the development
 environment.
 """
@@ -103,7 +103,7 @@ def report_info(txt):
 
     :return:
         - submodule: the directory that includes the executable as
-          `dev_scripts/_setenv.py` (i.e., the dir that is ../exec_path)
+          `dev_scripts/_setenv_*.py` (i.e., the dir that is ../exec_path)
         - user_name
     """
     _frame("Info", txt)
@@ -113,7 +113,7 @@ def report_info(txt):
     exec_name = os.path.abspath(sys.argv[0])
     dbg.dassert_exists(exec_name)
     _log_var("exec_name", exec_name, txt)
-    # Full path of this executable which is the same as setenv.sh.
+    # Full path of this executable which is the same as setenv_*.sh.
     exec_path = os.path.dirname(exec_name)
     _log_var("exec_path", exec_path, txt)
     dbg.dassert(
@@ -208,8 +208,9 @@ def config_bash(path, dirs, txt):
 
 def test_packages(amp_path, txt):
     _frame("Test packages", txt)
-    script = os.path.join(amp_path,
-                          "dev_scripts/install/check_develop_packages.py")
+    script = os.path.join(
+        amp_path, "dev_scripts/install/check_develop_packages.py"
+    )
     script = os.path.abspath(script)
     dbg.dassert_exists(script)
     _execute(script, txt)

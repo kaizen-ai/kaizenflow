@@ -39,4 +39,4 @@ if [[ $rc != 0 ]]; then
 fi;
 
 # Create and execure the setenv.sh script to configure the env.
-execute_setenv
+execute_setenv "_setenv_amp"

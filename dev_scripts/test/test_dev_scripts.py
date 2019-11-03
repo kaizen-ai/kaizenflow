@@ -68,22 +68,26 @@ class Test_env1(ut.TestCase):
 class Test_set_env1(ut.TestCase):
     def test_setenv_py1(self):
         """
-        Find _setenv.py executable and run it.
+        Find _setenv_amp.py executable and run it.
         """
-        executable = git.find_file_in_git_tree("_setenv.py", super_module=False)
+        executable = git.find_file_in_git_tree(
+            "_setenv_amp.py", super_module=False
+        )
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
         dbg.dassert_exists(executable)
         si.system(executable)
 
     # Since there are dependency from the user environment, we freeze a
-    # particular run of _setenv.py.
+    # particular run of _setenv_amp.py.
     @pytest.mark.skipif('si.get_user_name() != "saggese"')
     def test_setenv_py2(self):
         """
-        Find _setenv.py executable, run it, and freeze the output.
+        Find _setenv_amp.py executable, run it, and freeze the output.
         """
-        executable = git.find_file_in_git_tree("_setenv.py", super_module=False)
+        executable = git.find_file_in_git_tree(
+            "_setenv_amp.py", super_module=False
+        )
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
         dbg.dassert_exists(executable)
@@ -94,9 +98,9 @@ class Test_set_env1(ut.TestCase):
 
     def test_setenv_sh1(self):
         """
-        Execute setenv.sh.
+        Execute setenv_amp.sh.
         """
-        cmd = "source dev_scripts/setenv.sh"
+        cmd = "source dev_scripts/setenv_amp.sh"
         si.system(cmd)
 
 

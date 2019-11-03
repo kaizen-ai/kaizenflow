@@ -35,6 +35,7 @@ def set_user_name(user_name):
 
 def get_user_name():
     if _USER_NAME is None:
+        # pylint: disable=import-outside-toplevel
         import getpass
 
         res = getpass.getuser()
@@ -66,7 +67,7 @@ def get_os_name():
 
 def get_env_var(env_var_name):
     if env_var_name not in os.environ:
-        msg = "Can't find '%s': re-run dev_scripts/setenv.sh" % env_var_name
+        msg = "Can't find '%s': re-run dev_scripts/setenv.sh?" % env_var_name
         _LOG.error(msg)
         raise RuntimeError(msg)
     return os.environ[env_var_name]
@@ -335,6 +336,7 @@ def kill_process(get_pids, timeout_in_secs=5, polltime_in_secs=0.1):
             _LOG.warning(str(e))
     #
     _LOG.info("Waiting %d processes (%s) to die", len(pids), pids)
+    # pylint: disable=import-outside-toplevel
     import tqdm
 
     for _ in tqdm.tqdm(range(int(timeout_in_secs / polltime_in_secs))):
