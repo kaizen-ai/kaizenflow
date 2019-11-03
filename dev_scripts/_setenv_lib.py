@@ -13,6 +13,8 @@ import logging
 import os
 import sys
 
+import helpers.git as git
+
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.io_ as io_  # isort:skip # noqa: E402
 import helpers.system_interaction as si  # isort:skip # noqa: E402
@@ -102,14 +104,12 @@ def report_info(txt):
     Add to the bash script `txt` diagnostic informations.
 
     :return:
-        - submodule: the directory that includes the executable as
+        - client_root_path: the directory that includes the executable as
           `dev_scripts/_setenv_*.py` (i.e., the dir that is ../exec_path)
         - user_name
     """
     _frame("Info", txt)
     _log_var("cmd_line", dbg.get_command_line(), txt)
-    # TODO(gp): Use git to make sure you are in the root of the repo to
-    #  configure the environment.
     exec_name = os.path.abspath(sys.argv[0])
     dbg.dassert_exists(exec_name)
     _log_var("exec_name", exec_name, txt)
@@ -119,9 +119,9 @@ def report_info(txt):
     dbg.dassert(
         os.path.basename(exec_path), "dev_scripts", "exec_path=%s", exec_path
     )
-    # Get the path of helpers.
-    submodule_path = os.path.abspath(os.path.join(exec_path, ".."))
-    dbg.dassert_exists(submodule_path)
+    # Get the path of the root of the Git client.
+    client_root_path = os.path.abspath(os.path.join(exec_path, ".."))
+    dbg.dassert_exists(client_root_path)
     # Current dir.
     curr_path = os.getcwd()
     _log_var("curr_path", curr_path, txt)
@@ -130,12 +130,7 @@ def report_info(txt):
     _log_var("user_name", user_name, txt)
     server_name = si.get_server_name()
     _log_var("server_name", server_name, txt)
-    return submodule_path, user_name
-
-
-def check_conda():
-    cmd = "conda -V"
-    si.system(cmd)
+    return client_root_path, user_name
 
 
 def config_git(user_name, user_credentials, txt):
@@ -159,24 +154,31 @@ def config_git(user_name, user_credentials, txt):
         _execute(cmd, txt)
 
 
-def config_python(submodule_path, txt):
+def config_python(dirs, txt):
     """
     Add to the bash script `txt` instructions to configure python by:
         - disable python caching
         - appending the submodule path to $PYTHONPATH
     """
-
     _frame("Config python", txt)
     #
     txt.append("# Disable python code caching.")
     txt.append("export PYTHONDONTWRITEBYTECODE=x")
     #
-    txt.append("# Append submodule path to PYTHONPATH.")
-    python_path = [submodule_path] + ["$PYTHONPATH"]
+    txt.append("# Append paths to PYTHONPATH.")
+    dbg.dassert_isinstance(dirs, list)
+    dirs = sorted(dirs)
+    dirs = [os.path.abspath(d) for d in dirs]
+    for d in dirs:
+        dbg.dassert_exists(d)
+    python_path = dirs + ["$PYTHONPATH"]
     txt.extend(_export_env_var("PYTHONPATH", python_path))
 
 
-def config_conda(args, user_credentials, txt):
+def config_conda(conda_env, user_credentials, txt):
+    """
+    Add to the bash script `txt` instructions to activate a conda environment.
+    """
     _frame("Config conda", txt)
     #
     conda_sh_path = user_credentials["conda_sh_path"]
@@ -189,17 +191,20 @@ def config_conda(args, user_credentials, txt):
     txt.append('echo "CONDA_VER="$(conda -V)')
     cmd = "conda info --envs"
     _execute(cmd, txt)
-    cmd = "conda activate %s" % args.conda_env
+    cmd = "conda activate %s" % conda_env
     _execute(cmd, txt)
     cmd = "conda info --envs"
     _execute(cmd, txt)
 
 
-def config_bash(path, dirs, txt):
-    _frame("Config bash", txt)
-    #
+def config_path(dirs, txt):
+    """
+    Prepend to PATH the directories `dirs` rooted in `path`.
+    """
+    _frame("Config path", txt)
+    dbg.dassert_isinstance(dirs, list)
     dirs = sorted(dirs)
-    dirs = [os.path.abspath(os.path.join(path, d)) for d in dirs]
+    dirs = [os.path.abspath(d) for d in dirs]
     for d in dirs:
         dbg.dassert_exists(d)
     path = dirs + ["$PATH"]
@@ -236,7 +241,7 @@ def parse():
         "-o", "--output_file", default=None, help="File to write. None for stdout"
     )
     parser.add_argument(
-        "-e", "--conda_env", default="develop", help="Select the conda env to use"
+        "-e", "--conda_env", default=None, help="Select the conda env to use."
     )
     parser.add_argument(
         "-v",
