@@ -75,7 +75,7 @@
     > git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
     ```
     - If you encounter the error
-        ```buildoutcfg
+        ```bash
         git@github.com: Permission denied (publickey).
         fatal: Could not read from remote repository.
 
@@ -137,7 +137,7 @@
 - Every time you cd in a shell:
 - You need to run:
     ```bash
-    source dev_scripts/setenv.sh
+    source dev_scripts/setenv_p1.sh
     ```
     
 ## Delete / recreate environment
@@ -152,10 +152,10 @@
   e.g., `./dev_scripts/create_conda.p1_develop.sh`
       ```bash
       > amp/dev_scripts/install/create_conda.py \
-        --env_name $CONDA_ENV \
-        --req_file amp/dev_scripts/install/requirements/develop.yaml \
-        --req_file dev_scripts/install/requirements/p1_develop.yaml \
-        --delete_env_if_exists
+            --env_name $CONDA_ENV \
+            --req_file amp/dev_scripts/install/requirements/develop.yaml \
+            --req_file dev_scripts/install/requirements/p1_develop.yaml \
+            --delete_env_if_exists
       ```
 
 - The `create_conda.py` help as some useful examples of command lines, see the

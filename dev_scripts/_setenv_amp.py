@@ -59,7 +59,7 @@ def _main(parser):
     #
     # - Config conda.
     #
-    conda_env = "p1_develop"
+    conda_env = "amp_develop"
     if args.conda_env:
         _LOG.warning(
             "Overriding the default conda env '%s' with '%s'",

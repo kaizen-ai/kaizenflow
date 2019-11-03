@@ -37,8 +37,8 @@ echo "CONDA_PATH="$(which conda)
 echo "CONDA_VER="$(conda -V)
 echo '> conda info --envs'
 conda info --envs
-echo '> conda activate p1_develop'
-conda activate p1_develop
+echo '> conda activate amp_develop'
+conda activate amp_develop
 echo '> conda info --envs'
 conda info --envs
 

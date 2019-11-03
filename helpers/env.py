@@ -133,24 +133,3 @@ def save_env_file(conda_env_name, dir_name):
     else:
         dst_file = None
     return msg, dst_file
-
-
-# TODO(gp): Move this to a different executable.
-def _main():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
-    parser.add_argument(
-        "--conda_env_name", help="Environment name", default="develop", type=str
-    )
-    args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
-    msg = save_env_file(args.conda_env_name, dir_name=None)
-    print(msg)

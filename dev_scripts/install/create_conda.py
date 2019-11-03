@@ -6,7 +6,7 @@ before setenv.sh, on a new system with nothing installed. It can use //amp
 libraries.
 
 # Install the `amp` default environment:
-> create_conda.py --env_name develop --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists
+> create_conda.py --env_name amp_develop --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists
 
 # Install the `p1_develop` default environment:
 > create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/develop.yaml --req_file dev_scripts/install/requirements/p1_develop.yaml --delete_env_if_exists
