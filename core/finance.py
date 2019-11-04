@@ -13,6 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 
 SR_COL = "sharpe"
+RET_0_COL = "ret_0"
 
 
 def zscore(obj, com, demean, standardize, delay, min_periods=None):
@@ -198,6 +199,24 @@ def show_distribution_by(by, ascending=False):
 # #############################################################################
 
 
+def compute_ret_0(
+    prices: Union[pd.Series, pd.DataFrame], mode: str
+) -> Union[pd.Series, pd.DataFrame]:
+    if mode == "pct_change":
+        ret_0 = prices.pct_change()
+    elif mode == "log_rets":
+        ret_0 = np.log(prices) - np.log(prices.shift(1))
+    elif mode == "diff":
+        # TODO(gp): Use shifts for clarity, e.g.,
+        # ret_0 = prices - prices.shift(1)
+        ret_0 = prices.diff()
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    if isinstance(ret_0, pd.Series):
+        ret_0.name = RET_0_COL
+    return ret_0
+
+
 def convert_log_rets_to_pct_rets(
     log_rets: Union[pd.Series, pd.DataFrame]
 ) -> Union[pd.Series, pd.DataFrame]:
@@ -246,6 +265,7 @@ def compute_sharpe_ratio(
     return sr
 
 
+# TODO(Paul): Deprecate and remove.
 def annualize_sharpe_ratio(df):
     return compute_sr(df)
 
