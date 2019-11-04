@@ -13,8 +13,6 @@ import logging
 import os
 import sys
 
-import helpers.git as git
-
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.io_ as io_  # isort:skip # noqa: E402
 import helpers.system_interaction as si  # isort:skip # noqa: E402

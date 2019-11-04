@@ -29,7 +29,7 @@ function setenv() {
     execute $CMD
 
     # Check conda env.
-    CMD="print_conda_packages.py"
+    CMD="print_conda_packages.py --conda_env_name $CONDA_ENV"
     execute $CMD
 
     # Check packages.

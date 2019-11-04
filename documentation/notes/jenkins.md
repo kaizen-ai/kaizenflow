@@ -18,10 +18,12 @@
 # Jenkins builds
 
 ## Naming conventions for Jenkins builds
+
 - Builds are called in Jenkins as `<REPO>.<BRANCH>.<SCRIPT_NAME>`
     - E.g., `amp.master.run_fast_tests`, `p1.master.run_linter`
 
 ## Naming conventions for scripts
+
 - The script name describes the action taken by the script and corresponds to
   scripts under `dev_scripts/jenkins`
     - E.g., `build_clean_env.run_slow_coverage_tests.sh` means that
@@ -29,6 +31,7 @@
         2) tests in the `slow` test lists are run with coverage
 
 ## Brief description of the scripts
+
 - The tests are under:
     ```bash
     > ls -1 dev_scripts/jenkins
@@ -167,7 +170,7 @@
     # <<< conda initialize <<<
     ```
 
-4) The build script for Jenkins is like
+4) A trampoline script in Jenkins has the following template:
     ```bash
     #!/bin/bash -xe
 
@@ -181,6 +184,21 @@
 
 ## Backup Jenkins config
 
-- 
+- Login as a normal user (e.g., saggese) and run on Jenkins server:
+    ```
+    > dev_scripts/jenkins/backup/jenkins_backup.sh
+    ```
+
+- Locally on a dev server:
+    ```bash
+    > cd dev_scripts/jenkins/backup/configs
+    > scp $P1_JENKINS_SERVER:$DST_FILE jenkins_backup.tgz
+    > tar xvzf $DST_FILE
+    ```
 
 ## Test Jenkins builds locally
+
+- Run:
+    ```bash
+    > dev_scripts/jenkins/smoke_test.sh 2>&1 | tee log.txt
+    ```

@@ -37,10 +37,14 @@ echo "CONDA_PATH="$(which conda)
 echo "CONDA_VER="$(conda -V)
 echo '> conda info --envs'
 conda info --envs
+echo '> which python'
+which python
 echo '> conda activate amp_develop'
 conda activate amp_develop
 echo '> conda info --envs'
 conda info --envs
+echo '> which python'
+which python
 
 echo '################################################################################'
 echo Config path

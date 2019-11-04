@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-import os
-import sys
 
 # These imports are relative to the top of the repo.
 import dev_scripts._bootstrap as boot
+
 boot.bootstrap("../..")
 
 import helpers.env as env  # isort:skip
