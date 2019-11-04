@@ -14,7 +14,6 @@ import os
 
 # This import is relative to the top of the repo.
 import _bootstrap as boot  # isort:skip # noqa: E402
-import _setenv_lib as selib  # isort:skip # noqa: E402
 
 # This script is `//amp/dev_scripts/_setenv_amp.py`, so we need ".." to go from
 # the position of this executable to `//amp/helpers`.
@@ -24,6 +23,7 @@ boot.bootstrap("..")
 # pylint: disable=import-outside-toplevel,wrong-import-position
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
+import _setenv_lib as selib  # isort:skip # noqa: E402
 
 
 # ##############################################################################

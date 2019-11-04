@@ -189,11 +189,20 @@ def config_conda(conda_env, user_credentials, txt):
     #
     txt.append('echo "CONDA_PATH="$(which conda)')
     txt.append('echo "CONDA_VER="$(conda -V)')
+    #
     cmd = "conda info --envs"
     _execute(cmd, txt)
+    #
+    cmd = "which python"
+    _execute(cmd, txt)
+    #
     cmd = "conda activate %s" % conda_env
     _execute(cmd, txt)
+    #
     cmd = "conda info --envs"
+    _execute(cmd, txt)
+    #
+    cmd = "which python"
     _execute(cmd, txt)
 
 

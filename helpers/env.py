@@ -24,7 +24,7 @@ def _get_version(lib_name):
         # pylint: disable=exec-used
         exec(cmd)
     except ImportError:
-        version = "- (can't import)"
+        version = "ERROR: can't import"
     else:
         cmd = "%s.__version__" % lib_name
         version = eval(cmd)
@@ -50,8 +50,12 @@ def get_system_signature(git_commit_type="all"):
         "statsmodels",
     ]
     libs = sorted(libs)
+    failed_imports = 0
     for lib in libs:
-        packages.append((lib, _get_version(lib)))
+        version = _get_version(lib)
+        if version.startswith("ERROR"):
+            failed_imports += 1
+        packages.append((lib, version))
     txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
     # Add git signature.
     if git_commit_type == "all":
@@ -68,7 +72,7 @@ def get_system_signature(git_commit_type="all"):
         raise ValueError("Invalid value='%s'" % git_commit_type)
     #
     txt = "\n".join(txt)
-    return txt
+    return txt, failed_imports
 
 
 # ##############################################################################
