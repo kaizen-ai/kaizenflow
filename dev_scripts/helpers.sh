@@ -36,16 +36,21 @@ END
 function execute_setenv() {
   if [[ -z $1 ]]; then
     echo "ERROR: Need to specify a parameter representing setenv"
-    return;
+    return 1
   fi;
   SETENV=$1
+  if [[ -z $2 ]]; then
+    echo "ERROR: Need to specify the env to use"
+    return 1
+  fi;
+  ENV_NAME=$2
   # Create the script to execute calling python.
   echo "Creating setenv script ... done"
   DATETIME=$(date "+%Y%m%d-%H%M%S")_$(python -c "import time; print(int(time.time()*1000))")
   #DATETIME=""
   SCRIPT_FILE=/tmp/$SETENV.${DATETIME}.sh
   echo "SCRIPT_FILE=$SCRIPT_FILE"
-  cmd="$EXEC_PATH/$SETENV.py --output_file $SCRIPT_FILE"
+  cmd="$EXEC_PATH/$SETENV.py --output_file $SCRIPT_FILE -e $ENV_NAME"
   execute $cmd
   echo "Creating setenv script '$SCRIPT_FILE' ... done"
 

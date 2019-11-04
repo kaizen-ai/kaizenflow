@@ -21,6 +21,12 @@ EXEC_PATH=$(cd $EXEC_DIR; pwd -P)
 echo "EXEC_DIR=$EXEC_DIR"
 echo "EXEC_PATH=$EXEC_PATH"
 
+if [[ -z $1 ]]; then
+    ENV_NAME="amp_develop"
+else
+    ENV_NAME=$2
+fi
+
 # source helpers.sh
 HELPERS_PATH=$EXEC_PATH/helpers.sh
 echo "HELPERS_PATH=$HELPERS_PATH"
@@ -38,5 +44,5 @@ if [[ $rc != 0 ]]; then
   return $rc
 fi;
 
-# Create and execure the setenv.sh script to configure the env.
-execute_setenv "_setenv_amp"
+# Create and execute the setenv.sh script to configure the env.
+execute_setenv "_setenv_amp" $ENV_NAME
