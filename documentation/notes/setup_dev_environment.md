@@ -204,6 +204,28 @@
 - Run `rm -rf /anaconda3`
 - A good idea is to move it so you can resume the state
 
+## Update anaconda
+
+- To update anaconda (i.e., the framework that manages conda packages and `conda`
+  executable)
+  ```bash
+  > conda activate base
+  # Remove index cache, lock files, tarballs, unused cache packages, and source
+  # cache.
+  > conda clean --all
+  > conda update conda
+  > conda update anaconda
+  > conda -V
+  conda 4.7.12
+  ```
+
+- You can try to activate one environment
+    ```bash
+    > conda activate amp_develop
+    > which python
+    /Users/saggese/.conda/envs/amp_develop/bin/python
+    ```
+
 # Be patient
 
 - The `create_conda.py` flow is designed to make our projects portable across:
