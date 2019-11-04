@@ -7,24 +7,22 @@
 EXEC_NAME=`basename "$0"`
 AMP="."
 CONDA_ENV="amp_develop.daily_build"
-VERB="DEBUG"
-CREATE_CONDA_PY="./dev_scripts/install/create_conda.py"
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-echo "$EXEC_NAME: source ~/.bashrc"
-source ~/.bashrc
-## TODO(gp): This used to be needed.
-##export PYTHONPATH=""
+
+CMD="source ~/.bashrc"
+echo "+ $CMD"
+eval $CMD
 
 CMD="source $AMP/dev_scripts/helpers.sh"
-echo "$EXEC_NAME: $CMD"
+echo "+ $CMD"
 eval $CMD
 
 CMD="source $AMP/dev_scripts/jenkins/jenkins_helpers.sh"
-echo "$EXEC_NAME: $CMD"
-source $CMD
+echo "+ $CMD"
+eval $CMD
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Build env.
@@ -41,6 +39,8 @@ source $CMD
 ## Print env.
 #echo "$EXEC_NAME: env"
 #env
+
+prepare_to_build_env
 
 # From dev_scripts/create_conda.sh
 CMD="$CREATE_CONDA_PY --env_name $CONDA_ENV --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists -v $VERB"

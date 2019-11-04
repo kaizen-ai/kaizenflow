@@ -18,7 +18,6 @@ _LOG = logging.getLogger(__name__)
 
 
 def _get_version(lib_name):
-    version = None
     try:
         cmd = "import %s" % lib_name
         # pylint: disable=exec-used

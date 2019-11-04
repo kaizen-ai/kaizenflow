@@ -7,48 +7,34 @@
 
 EXEC_NAME=`basename "$0"`
 AMP="."
-CONDA_ENV="develop"
-VERB="DEBUG"
+CONDA_ENV="amp_develop.daily_build"
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-# Init.
-echo "$EXEC_NAME: source ~/.bashrc"
-source ~/.bashrc
-# TODO(gp): This used to be needed.
-#export PYTHONPATH=""
+CMD="source ~/.bashrc"
+echo "+ $CMD"
+eval $CMD
 
-echo "$EXEC_NAME: source $AMP/dev_scripts/helpers.sh"
-source $AMP/dev_scripts/helpers.sh
+CMD="source $AMP/dev_scripts/helpers.sh"
+echo "+ $CMD"
+eval $CMD
+
+CMD="source $AMP/dev_scripts/jenkins/jenkins_helpers.sh"
+echo "+ $CMD"
+eval $CMD
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Setenv.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-# Config environment.
-echo "$EXEC_NAME: source dev_scripts/setenv.sh -e $CONDA_ENV"
-source dev_scripts/setenv.sh -e $CONDA_ENV
-# Print env.
-echo "$EXEC_NAME: env"
-env
-
-# Check conda env.
-CMD="print_conda_packages.py"
-frame "$EXEC_NAME: $CMD"
-execute $CMD
-
-CMD="check_develop_packages.py"
-frame "$EXEC_NAME: $CMD"
-execute $CMD
+setenv $CONDA_ENV
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# Run.
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
 # Run tests.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 OPTS="--test fast"
-CMD="dev_scripts/run_tests.py $OPTS --jenkins -v $VERB"
-frame "$EXEC_NAME: $CMD"
+CMD="$RUN_TESTS_PY $OPTS --jenkins -v $VERB"
 execute $CMD

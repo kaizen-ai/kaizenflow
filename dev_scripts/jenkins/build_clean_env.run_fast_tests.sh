@@ -15,49 +15,33 @@ CREATE_CONDA_PY="./dev_scripts/install/create_conda.py"
 # Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-echo "$EXEC_NAME: source ~/.bashrc"
-source ~/.bashrc
+CMD="source ~/.bashrc"
+echo "+ $CMD"
+eval $CMD
 
-echo "$EXEC_NAME: source $AMP/dev_scripts/helpers.sh"
-source $AMP/dev_scripts/helpers.sh
+CMD="source $AMP/dev_scripts/helpers.sh"
+echo "+ $CMD"
+eval $CMD
+
+CMD="source $AMP/dev_scripts/jenkins/jenkins_helpers.sh"
+echo "+ $CMD"
+eval $CMD
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Build env.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-# Activate conda base environment.
-echo "$EXEC_NAME: conda activate base"
-conda activate base
-
-## Configure base environment.
-#echo "$EXEC_NAME: source $AMP/dev_scripts/setenv.sh -e base"
-#source $AMP/dev_scripts/setenv.sh -e base
-
-# Print env.
-echo "$EXEC_NAME: env"
-env
+prepare_to_build_env
 
 # From dev_scripts/create_conda.sh
 CMD="$CREATE_CONDA_PY --env_name $CONDA_ENV --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists -v $VERB"
-frame "$EXEC_NAME: $CMD"
 execute $CMD
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Setenv.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-# Config environment.
-echo "$EXEC_NAME: source dev_scripts/setenv_amp.sh -e $CONDA_ENV"
-source dev_scripts/setenv.sh -e $CONDA_ENV
-
-# Check conda env.
-CMD="print_conda_packages.py"
-frame "$EXEC_NAME: $CMD"
-execute $CMD
-
-CMD="check_develop_packages.py"
-frame "$EXEC_NAME: $CMD"
-execute $CMD
+setenv $CONDA_ENV
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Run.
@@ -65,6 +49,5 @@ execute $CMD
 
 # Run tests.
 OPTS='--test fast'
-CMD="dev_scripts/run_tests.py $OPTS --jenkins -v $VERB"
-frame "$EXEC_NAME: $CMD"
+CMD="$RUN_TESTS_PY $OPTS --jenkins -v $VERB"
 execute $CMD
