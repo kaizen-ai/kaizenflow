@@ -103,10 +103,12 @@ def get_credentials():
     if server_name == "twitter-data":
         # P1 old server.
         conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
-    elif server_name == "ip-172-31-16-23":
-        # P1 server.
+    elif server_name in (
+            # P1 dev server.
+            "ip-172-31-16-23", 
+            # P1 Jenkins server.
+            "ip-172-31-12-239"):
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-    #
     if user_name == "saggese":
         # GP.
         git_user_name = "saggese"
@@ -136,10 +138,6 @@ def get_credentials():
             # P1 server.
             if git_repo_name == "ParticleDev/commodity_research":
                 jupyter_port = 10003
-        elif server_name.startswith("ip-"):
-            # AM server.
-            conda_sh_path = "/data/root/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/data/saggese/.conda/envs"
     elif user_name == "paul":
         # Paul.
         git_user_name = "paul"
