@@ -1,11 +1,23 @@
 #!/usr/bin/env python
 
+import os
+import sys
 
-# These imports are relative to the top of the repo.
+# Dir of the current executable.
+_CURR_DIR = os.path.dirname(sys.argv[0])
+
+# This script is `//amp/dev_scripts/install/check_develop_packages.py`, so we
+# need to go up two levels to reach `//amp`.
+_AMP_REL_PATH = "../.."
+_AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
+sys.path.insert(0, _AMP_PATH)
+
+# This imports is relative to the top of the repo.
 import dev_scripts._bootstrap as boot
 
-boot.bootstrap("../..")
+boot.bootstrap(_AMP_REL_PATH)
 
+# pylint: wrong-import-position
 import helpers.env as env  # isort:skip
 
 if __name__ == "__main__":

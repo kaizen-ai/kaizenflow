@@ -24,11 +24,18 @@ import logging
 import os
 import sys
 
+# Dir of the current create_conda.py.
+_CURR_DIR = os.path.dirname(sys.argv[0])
+
+# This script is `//amp/dev_scripts/install/create_conda.py`, so we need to go
+# up two levels to reach `//amp`.
+_AMP_REL_PATH="../.."
+_AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
+sys.path.insert(0, _AMP_PATH)
+# pylint: disable=wrong-import-position
 import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
 
-# This script is `//amp/dev_scripts/install/create_conda.py`, so we need to go up
-# two levels to reach `//amp/helpers`.
-boot.bootstrap("../..")
+boot.bootstrap(_AMP_REL_PATH)
 
 # pylint: disable=wrong-import-position
 import helpers.conda as hco  # isort:skip # noqa: E402
@@ -41,9 +48,6 @@ import helpers.user_credentials as usc  # isort:skip # noqa: E402
 _LOG = logging.getLogger(__name__)
 
 # ##############################################################################
-
-# Dir of the current create_conda.py.
-_CURR_DIR = os.path.dirname(sys.argv[0])
 
 # The following paths are expressed relative to create_conda.py.
 # TODO(gp): Allow them to tweak so we can be independent with respect to amp.

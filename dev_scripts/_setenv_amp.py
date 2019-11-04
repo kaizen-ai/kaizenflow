@@ -11,14 +11,24 @@ This script:
 
 import logging
 import os
+import sys
+
+# Dir of the current executable.
+_CURR_DIR = os.path.dirname(sys.argv[0])
+
+# This script is `//amp/dev_scripts/_setenv_amp.py`, so we need to go up one
+# levels to reach `//amp`.
+_AMP_REL_PATH = ".."
+_AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
+sys.path.insert(0, _AMP_PATH)
 
 # This import is relative to the top of the repo.
-import _bootstrap as boot  # isort:skip # noqa: E402
+import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
 
 # This script is `//amp/dev_scripts/_setenv_amp.py`, so we need ".." to go from
 # the position of this executable to `//amp/helpers`.
 # pylint: disable=no-member
-boot.bootstrap("..")
+boot.bootstrap(_AMP_REL_PATH)
 
 # pylint: disable=import-outside-toplevel,wrong-import-position
 import helpers.dbg as dbg  # isort:skip # noqa: E402
