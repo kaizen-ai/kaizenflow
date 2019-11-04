@@ -251,6 +251,8 @@ class ColumnTransformer(Transformer):
             Determines what columns are propagated by the node.
         """
         super().__init__(nid)
+        if cols is not None:
+            dbg.dassert_isinstance(cols, list)
         self._cols = cols
         if col_rename_func is not None:
             dbg.dassert_isinstance(col_rename_func, collections.Callable)
