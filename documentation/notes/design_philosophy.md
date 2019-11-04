@@ -17,6 +17,8 @@
 
 # Philosophy
 
+[hacker-laws](https://github.com/dwmkerr/hacker-laws)
+
 ## Keep it simple
 
 Follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle).
