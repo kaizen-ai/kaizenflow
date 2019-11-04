@@ -222,11 +222,12 @@
     - do the specific work to configure the repo
 
 # To debug
-```bash
-> (cd $HOME/src/commodity_research1/amp; dev_scripts/_setenv_amp.py)
-> (cd $HOME/src/commodity_research1/amp; source dev_scripts/setenv.sh)
-> (cd $HOME/src/commodity_research1/amp; dev_scripts/install/create_conda.py -h)
+- From `dev_scripts/install/test_bootstrap.sh`
+    ```bash
+    > (cd $HOME/src/commodity_research1/amp; dev_scripts/_setenv_amp.py)
+    > (cd $HOME/src/commodity_research1/amp; source dev_scripts/setenv.sh)
+    > (cd $HOME/src/commodity_research1/amp; dev_scripts/install/create_conda.py -h)
 
-> (cd $HOME/src/commodity_research1; dev_scripts/_setenv_p1.py)
-> (cd $HOME/src/commodity_research1; source dev_scripts/setenv.sh)
-```
+    > (cd $HOME/src/commodity_research1; dev_scripts/_setenv_p1.py)
+    > (cd $HOME/src/commodity_research1; source dev_scripts/setenv.sh)
+    ```
