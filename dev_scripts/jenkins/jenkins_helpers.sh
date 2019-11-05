@@ -17,7 +17,7 @@ function prepare_to_build_env() {
     #source $AMP/dev_scripts/setenv.sh -e base
 
     # Print env.
-    CMD="env"
+    CMD="env | sort"
     execute $CMD
 }
 
