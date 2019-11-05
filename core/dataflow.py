@@ -3,7 +3,7 @@ import collections
 import copy
 import io
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import networkx as nx
 import pandas as pd
@@ -251,6 +251,8 @@ class ColumnTransformer(Transformer):
             Determines what columns are propagated by the node.
         """
         super().__init__(nid)
+        if cols is not None:
+            dbg.dassert_isinstance(cols, list)
         self._cols = cols
         if col_rename_func is not None:
             dbg.dassert_isinstance(col_rename_func, collections.Callable)
@@ -338,13 +340,28 @@ class FilterAth(Transformer):
 
 
 class Resample(Transformer):
-    def __init__(self, nid, rule):
+    def __init__(
+        self,
+        nid: str,
+        rule: Union[pd.DateOffset, pd.Timedelta, str],
+        agg_func: str,
+    ):
+        """
+        :param nid: node identifier
+        :param rule: resampling frequency passed into
+            pd.DataFrame.resample
+        :param agg_func: a function that is applied to the resampler
+        """
         super().__init__(nid)
         self._rule = rule
+        self._agg_func = agg_func
 
-    def _transform(self, df):
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        df = df.resample(rule=self._rule, closed="left", label="right").sum()
+        resampler = df.resample(rule=self._rule, closed="left", label="right")
+        df = getattr(resampler, self._agg_func)()
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)

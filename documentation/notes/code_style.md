@@ -166,7 +166,36 @@
     ... git.get_root_path()
     ```
 
-- This is not only aestitical reason but a bit related to a weak form of DRY
+- This is not only aesthetic reason but a bit related to a weak form of DRY
+
+# Using third-party libraries
+
+## Problem
+- On one side, you are free (even encouraged) to install and experiment with any
+  3-rd party library that can be useful
+    - Anything goes for research, as long as it's clearly marked as such
+    - E.g., the notebook should have in the description an indication that is an
+      experiment with a library
+
+- On the other side we don't want to add dependencies in `master` from packages
+  that we experiment with but are not adopted
+    - Otherwise the conda recipe becomes bloated and slow
+
+## Solution
+
+- Install the package in whatever way you want (`conda`, `pip`, install from
+  source) on top of your `p1_develop` conda environment
+    - If you don't know how to install, file a bug for Sergey and we can help
+
+- You should document how you install the package so that anyone who runs the
+  notebook can install the package on top of `p1_develop` in the same way
+
+- Once the code is reviewed and promoted to a lib / unit tested, the conda recipe
+  is updated as part of the PR
+    - The team needs to update their `p1_develop` package to pick up the
+      dependencies
+
+- This applies to both code and notebooks
 
 # Comments
 
