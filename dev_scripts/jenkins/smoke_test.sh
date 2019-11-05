@@ -1,12 +1,42 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
-#dev_scripts/jenkins/build_clean_env.amp_develop.sh
+# """
+# - Run all the Jenkins builds locally to debug.
+# - To run
+#   > (cd $HOME/src/commodity_research1/amp; dev_scripts/jenkins/smoke_test.sh 2>&1 | tee log.txt)
+# """
 
-dev_scripts/jenkins/run_pytest_collect.run_linter.sh
+function frame() {
+  echo "********************************************************************"
+  echo "$*"
+  echo "********************************************************************"
+}
 
-dev_scripts/jenkins/run_fast_tests.sh
-dev_scripts/jenkins/run_parallel_fast_tests.sh
+function execute() {
+  frame "$*"
+  eval $*
+}
 
-dev_scripts/jenkins/build_clean_env.run_fast_coverage_tests.sh
-dev_scripts/jenkins/build_clean_env.run_fast_tests.sh
-dev_scripts/jenkins/build_clean_env.run_slow_coverage_tests.sh
+CMD="dev_scripts/jenkins/build_clean_env.amp_develop.sh"
+execute $CMD
+
+# This modifies the client, so we disable it by default.
+if [[ 0 == 1 ]]; then
+    $CMD="dev_scripts/jenkins/run_pytest_collect.run_linter.sh"
+    execute $CMD
+fi;
+
+CMD="dev_scripts/jenkins/run_fast_tests.sh"
+execute $CMD
+
+CMD="dev_scripts/jenkins/run_parallel_fast_tests.sh"
+execute $CMD
+
+CMD="dev_scripts/jenkins/build_clean_env.run_fast_coverage_tests.sh"
+execute $CMD
+
+CMD="dev_scripts/jenkins/build_clean_env.run_fast_tests.sh"
+execute $CMD
+
+CMD="dev_scripts/jenkins/build_clean_env.run_slow_coverage_tests.sh"
+execute $CMD

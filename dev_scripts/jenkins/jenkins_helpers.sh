@@ -7,6 +7,7 @@ VERB="DEBUG"
 
 
 function prepare_to_build_env() {
+    frame "prepare_to_build_env()"
     # Activate conda base environment.
     CMD="conda activate base"
     execute $CMD
@@ -22,12 +23,15 @@ function prepare_to_build_env() {
 
 
 function setenv() {
+    frame "sentenv($*)"
+    #
     SETENV_EXEC=$1
+    shift
     if [[ -z $SETENV_EXEC ]]; then
         echo "ERROR: SETENV_EXEC='$SETENV_EXEC'"
         return 1
     fi;
-    CONDA_ENV=$1
+    CONDA_ENV=$*
     if [[ -z $CONDA_ENV ]]; then
         echo "ERROR: CONDA_ENV='$CONDA_ENV'"
         return 1
@@ -48,12 +52,15 @@ function setenv() {
 
 function create_conda() {
     # Create conda.
+    frame "create_conda($*)"
+    #
     AMP=$1
+    shift
     if [[ -z $AMP ]]; then
         echo "ERROR: AMP='$AMP'"
         return 1
     fi;
-    OPTS=$2
+    OPTS=$*
     if [[ -z $OPTS ]]; then
         echo "ERROR: OPTS='$OPTS'"
         return 1
@@ -67,19 +74,22 @@ function create_conda() {
 
 function run_tests() {
     # Run tests.
+    frame "run_tests($*)"
+    #
     AMP=$1
+    shift
     if [[ -z $AMP ]]; then
         echo "ERROR: AMP='$AMP'"
         return 1
     fi;
-    OPTS=$2
+    OPTS=$*
     if [[ -z $OPTS ]]; then
         echo "ERROR: OPTS='$OPTS'"
         return 1
     fi;
     #
-    OPTS=" $OPTS --jenkins"
     RUN_TESTS_PY="$AMP/dev_scripts/run_tests.py"
+    OPTS=" $OPTS --jenkins"
     CMD="$RUN_TESTS_PY $OPTS"
     execute $CMD
 }
