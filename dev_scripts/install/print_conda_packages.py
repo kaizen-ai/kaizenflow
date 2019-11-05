@@ -21,7 +21,7 @@ def _main():
         help="Set the logging level",
     )
     parser.add_argument(
-        "--conda_env_name", help="Environment name", default="develop", type=str
+        "--conda_env_name", help="Environment name", type=str, required=True,
     )
     args = parser.parse_args()
     dbg.init_logger(verb=args.log_level)

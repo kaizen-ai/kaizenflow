@@ -3,41 +3,26 @@
 import os
 import sys
 
-# Store the values before any modification, by making a copy (out of paranoia).
-_PATH = str(os.environ["PATH"])
-_PYTHONPATH = str(os.environ["PYTHONPATH"])
+# Dir of the current executable.
+_CURR_DIR = os.path.dirname(sys.argv[0])
 
+# This script is `//amp/dev_scripts/install/check_develop_packages.py`, so we
+# need to go up two levels to reach `//amp`.
+_AMP_REL_PATH = "../.."
+_AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
+assert os.path.exists(_AMP_PATH), "Can't find '%s'" % _AMP_PATH
+sys.path.insert(0, _AMP_PATH)
 
-def _config_env():
-    """
-    Tweak PYTHONPATH to pick up amp.
-    """
-    exec_name = os.path.abspath(sys.argv[0])
-    # This script is in dev_scripts/install, so we need to go two level up to
-    # find "helpers".
-    amp_path = os.path.abspath(
-        os.path.join(os.path.dirname(exec_name), "..", "..")
-    )
-    # Check that helpers exists.
-    helpers_path = os.path.join(amp_path, "helpers")
-    assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
-    # Update path.
-    # We can't update os.environ since the script is already running.
-    sys.path.insert(0, amp_path)
-    # Test the imports.
-    try:
-        pass
-    except ImportError as e:
-        print("PYTHONPATH=%s" % _PYTHONPATH)
-        print("amp_path=%s" % amp_path)
-        raise e
+# pylint: wrong-import-position
+import dev_scripts._bootstrap as boot  # isort:skip
 
+boot.bootstrap(_AMP_REL_PATH)
 
-# We need to tweak the PYTHONPATH before importing.
-_config_env()
-
-
+# pylint: wrong-import-position
 import helpers.env as env  # isort:skip
 
 if __name__ == "__main__":
-    print(env.get_system_signature())
+    txt, failed = env.get_system_signature()
+    print(txt)
+    if failed:
+        raise RuntimeError("Can't import some libraries")

@@ -1,11 +1,11 @@
-#!/usr/bin/env python
-
 """
-Generate and print a bash script that is used to configure the environment.
+Import as:
 
-This script:
-- is used to configure the environment
-- should have no dependency other than basic python library
+import _setenv_lib as selib
+
+This library contains functions used by a `setenv_*.py` script in a repo to
+generate a bash script that is executed to configure the development
+environment.
 """
 
 import argparse
@@ -13,59 +13,9 @@ import logging
 import os
 import sys
 
-# ##############################################################################
-
-
-# Store the values before any modification, by making a copy (out of paranoia).
-_PATH = str(os.environ["PATH"]) if "PATH" in os.environ else ""
-_PYTHONPATH = str(os.environ["PYTHONPATH"]) if "PYTHONPATH" in os.environ else ""
-
-
-def _bootstrap(rel_path_to_helpers):
-    """
-    Tweak PYTHONPATH to pick up amp libraries while we are configuring amp,
-    breaking the circular dependency.
-
-    Same code for dev_scripts/_setenv.py and dev_scripts/install/create_conda.py
-
-    # TODO(gp): It is not easy to share it as an import. Maybe we can just read
-    # it from a file an eval it.
-    """
-    exec_name = os.path.abspath(sys.argv[0])
-    amp_path = os.path.abspath(
-        os.path.join(os.path.dirname(exec_name), rel_path_to_helpers)
-    )
-    # Check that helpers exists.
-    helpers_path = os.path.join(amp_path, "helpers")
-    assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
-    # Update path.
-    if False:
-        # For debug purposes.
-        print("PATH=%s" % _PATH)
-        print("PYTHONPATH=%s" % _PYTHONPATH)
-        print("amp_path=%s" % amp_path)
-    # We can't update os.environ since the script is already running.
-    sys.path.insert(0, amp_path)
-    # Test the imports.
-    try:
-        pass
-    except ImportError as e:
-        print("PATH=%s" % _PATH)
-        print("PYTHONPATH=%s" % _PYTHONPATH)
-        print("amp_path=%s" % amp_path)
-        raise e
-
-
-# This script is dev_scripts/_setenv.sh, so we need to go up one level to reach
-# "helpers".
-_bootstrap("..")
-
-
-# pylint: disable=C0413
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.io_ as io_  # isort:skip # noqa: E402
 import helpers.system_interaction as si  # isort:skip # noqa: E402
-import helpers.user_credentials as usc  # isort:skip # noqa: E402
 
 
 _LOG = logging.getLogger(__name__)
@@ -147,23 +97,29 @@ def _log_var(var_name, var_val, txt):
 # ##############################################################################
 
 
-def _report_info(txt):
+def report_info(txt):
+    """
+    Add to the bash script `txt` diagnostic informations.
+
+    :return:
+        - client_root_path: the directory that includes the executable as
+          `dev_scripts/_setenv_*.py` (i.e., the dir that is ../exec_path)
+        - user_name
+    """
     _frame("Info", txt)
     _log_var("cmd_line", dbg.get_command_line(), txt)
-    # TODO(gp): Use git to make sure you are in the root of the repo to
-    # configure the environment.
     exec_name = os.path.abspath(sys.argv[0])
     dbg.dassert_exists(exec_name)
     _log_var("exec_name", exec_name, txt)
-    # Full path of this executable which is the same as setenv.sh.
+    # Full path of this executable which is the same as setenv_*.sh.
     exec_path = os.path.dirname(exec_name)
     _log_var("exec_path", exec_path, txt)
     dbg.dassert(
         os.path.basename(exec_path), "dev_scripts", "exec_path=%s", exec_path
     )
-    # Get the path of helpers.
-    submodule_path = os.path.abspath(os.path.join(exec_path, ".."))
-    dbg.dassert_exists(submodule_path)
+    # Get the path of the root of the Git client.
+    client_root_path = os.path.abspath(os.path.join(exec_path, ".."))
+    dbg.dassert_exists(client_root_path)
     # Current dir.
     curr_path = os.getcwd()
     _log_var("curr_path", curr_path, txt)
@@ -172,17 +128,15 @@ def _report_info(txt):
     _log_var("user_name", user_name, txt)
     server_name = si.get_server_name()
     _log_var("server_name", server_name, txt)
-    return exec_path, submodule_path, user_name
+    return client_root_path, user_name
 
 
-def _check_conda():
-    cmd = "conda -V"
-    si.system(cmd)
-
-
-def _config_git(txt, user_name):
+def config_git(user_name, user_credentials, txt):
+    """
+    Add to the bash script in `txt` instructions to:
+        - configure git user name and user email
+    """
     _frame("Config git", txt)
-    user_credentials = usc.get_credentials()
     git_user_name = user_credentials["git_user_name"]
     if git_user_name:
         cmd = 'git config --local user.name "%s"' % git_user_name
@@ -196,21 +150,33 @@ def _config_git(txt, user_name):
     if user_name == "jenkins":
         cmd = "git config --list"
         _execute(cmd, txt)
-    return user_credentials
 
 
-def _config_python(submodule_path, txt):
+def config_python(dirs, txt):
+    """
+    Add to the bash script `txt` instructions to configure python by:
+        - disable python caching
+        - appending the submodule path to $PYTHONPATH
+    """
     _frame("Config python", txt)
     #
     txt.append("# Disable python code caching.")
     txt.append("export PYTHONDONTWRITEBYTECODE=x")
     #
-    txt.append("# Append current dir to PYTHONPATH.")
-    pythonpath = [submodule_path] + ["$PYTHONPATH"]
-    txt.extend(_export_env_var("PYTHONPATH", pythonpath))
+    txt.append("# Append paths to PYTHONPATH.")
+    dbg.dassert_isinstance(dirs, list)
+    dirs = sorted(dirs)
+    dirs = [os.path.abspath(d) for d in dirs]
+    for d in dirs:
+        dbg.dassert_exists(d)
+    python_path = dirs + ["$PYTHONPATH"]
+    txt.extend(_export_env_var("PYTHONPATH", python_path))
 
 
-def _config_conda(args, txt, user_credentials):
+def config_conda(conda_env, user_credentials, txt):
+    """
+    Add to the bash script `txt` instructions to activate a conda environment.
+    """
     _frame("Config conda", txt)
     #
     conda_sh_path = user_credentials["conda_sh_path"]
@@ -221,35 +187,48 @@ def _config_conda(args, txt, user_credentials):
     #
     txt.append('echo "CONDA_PATH="$(which conda)')
     txt.append('echo "CONDA_VER="$(conda -V)')
-    cmd = "conda info --envs"
-    _execute(cmd, txt)
-    cmd = "conda activate %s" % args.conda_env
-    _execute(cmd, txt)
-    cmd = "conda info --envs"
-    _execute(cmd, txt)
-
-
-def _config_bash(exec_path, txt):
-    _frame("Config bash", txt)
     #
-    dirs = [".", "aws", "infra", "install", "notebooks"]
+    cmd = "conda info --envs"
+    _execute(cmd, txt)
+    #
+    cmd = "which python"
+    _execute(cmd, txt)
+    #
+    cmd = "conda activate %s" % conda_env
+    _execute(cmd, txt)
+    #
+    cmd = "conda info --envs"
+    _execute(cmd, txt)
+    #
+    cmd = "which python"
+    _execute(cmd, txt)
+
+
+def config_path(dirs, txt):
+    """
+    Prepend to PATH the directories `dirs` rooted in `path`.
+    """
+    _frame("Config path", txt)
+    dbg.dassert_isinstance(dirs, list)
     dirs = sorted(dirs)
-    dirs = [os.path.abspath(os.path.join(exec_path, d)) for d in dirs]
+    dirs = [os.path.abspath(d) for d in dirs]
     for d in dirs:
         dbg.dassert_exists(d)
     path = dirs + ["$PATH"]
     txt.extend(_export_env_var("PATH", path))
 
 
-def _test_packages(exec_path, txt):
+def test_packages(amp_path, txt):
     _frame("Test packages", txt)
-    script = os.path.join(exec_path, "install/check_develop_packages.py")
+    script = os.path.join(
+        amp_path, "dev_scripts/install/check_develop_packages.py"
+    )
     script = os.path.abspath(script)
     dbg.dassert_exists(script)
     _execute(script, txt)
 
 
-def _save_script(args, txt):
+def save_script(args, txt):
     txt = "\n".join(txt)
     if args.output_file:
         io_.to_file(args.output_file, txt)
@@ -261,7 +240,7 @@ def _save_script(args, txt):
 # ##############################################################################
 
 
-def _parse():
+def parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -269,7 +248,7 @@ def _parse():
         "-o", "--output_file", default=None, help="File to write. None for stdout"
     )
     parser.add_argument(
-        "-e", "--conda_env", default="develop", help="Select the conda env to use"
+        "-e", "--conda_env", default=None, help="Select the conda env to use."
     )
     parser.add_argument(
         "-v",
@@ -282,30 +261,3 @@ def _parse():
     # source on some systems.
     parser.add_argument("positional", nargs="*", help="...")
     return parser
-
-
-def _main(parser):
-    args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
-    txt = []
-    #
-    exec_path, submodule_path, user_name = _report_info(txt)
-    #
-    # TODO(gp): After updating to anaconda3, conda doesn't work from python anymore.
-    # _check_conda()
-    #
-    user_credentials = _config_git(txt, user_name)
-    #
-    _config_python(submodule_path, txt)
-    #
-    _config_conda(args, txt, user_credentials)
-    #
-    _config_bash(exec_path, txt)
-    #
-    _test_packages(exec_path, txt)
-    #
-    _save_script(args, txt)
-
-
-if __name__ == "__main__":
-    _main(_parse())

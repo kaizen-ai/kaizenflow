@@ -67,7 +67,7 @@ def get_os_name():
 
 def get_env_var(env_var_name):
     if env_var_name not in os.environ:
-        msg = "Can't find '%s': re-run dev_scripts/setenv.sh" % env_var_name
+        msg = "Can't find '%s': re-run dev_scripts/setenv.sh?" % env_var_name
         _LOG.error(msg)
         raise RuntimeError(msg)
     return os.environ[env_var_name]

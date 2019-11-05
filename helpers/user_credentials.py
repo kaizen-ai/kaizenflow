@@ -28,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 def _get_p1_dev_server_ip():
     env_var_name = "P1_DEV_SERVER"
     if env_var_name not in os.environ:
-        _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh", env_var_name)
+        _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh?", env_var_name)
         raise RuntimeError
     dev_server = os.environ[env_var_name]
     return dev_server
@@ -104,10 +104,11 @@ def get_credentials():
         # P1 old server.
         conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
     elif server_name in (
-            # P1 dev server.
-            "ip-172-31-16-23", 
-            # P1 Jenkins server.
-            "ip-172-31-12-239"):
+        # P1 dev server.
+        "ip-172-31-16-23",
+        # P1 Jenkins server.
+        "ip-172-31-12-239",
+    ):
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
     if user_name == "saggese":
         # GP.

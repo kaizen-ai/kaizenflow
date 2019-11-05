@@ -1,10 +1,8 @@
-import argparse
 import logging
 import os
 import platform
 
 import helpers.conda as hco
-import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as pri
@@ -18,13 +16,12 @@ _LOG = logging.getLogger(__name__)
 
 
 def _get_version(lib_name):
-    version = None
     try:
         cmd = "import %s" % lib_name
         # pylint: disable=exec-used
         exec(cmd)
     except ImportError:
-        version = "- (can't import)"
+        version = "ERROR: can't import"
     else:
         cmd = "%s.__version__" % lib_name
         version = eval(cmd)
@@ -50,8 +47,12 @@ def get_system_signature(git_commit_type="all"):
         "statsmodels",
     ]
     libs = sorted(libs)
+    failed_imports = 0
     for lib in libs:
-        packages.append((lib, _get_version(lib)))
+        version = _get_version(lib)
+        if version.startswith("ERROR"):
+            failed_imports += 1
+        packages.append((lib, version))
     txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
     # Add git signature.
     if git_commit_type == "all":
@@ -68,7 +69,7 @@ def get_system_signature(git_commit_type="all"):
         raise ValueError("Invalid value='%s'" % git_commit_type)
     #
     txt = "\n".join(txt)
-    return txt
+    return txt, failed_imports
 
 
 # ##############################################################################
@@ -133,24 +134,3 @@ def save_env_file(conda_env_name, dir_name):
     else:
         dst_file = None
     return msg, dst_file
-
-
-# TODO(gp): Move this to a different executable.
-def _main():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
-    parser.add_argument(
-        "--conda_env_name", help="Environment name", default="develop", type=str
-    )
-    args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
-    msg = save_env_file(args.conda_env_name, dir_name=None)
-    print(msg)
