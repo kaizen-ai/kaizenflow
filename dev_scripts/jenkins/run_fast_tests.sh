@@ -6,35 +6,27 @@
 # """
 
 EXEC_NAME=`basename "$0"`
-AMP="."
 CONDA_ENV="amp_develop.daily_build"
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-CMD="source ~/.bashrc"
+CMD="source ./dev_scripts/jenkins/jenkins_amp_helpers.sh"
 echo "+ $CMD"
 eval $CMD
 
-CMD="source $AMP/dev_scripts/helpers.sh"
-echo "+ $CMD"
-eval $CMD
-
-CMD="source $AMP/dev_scripts/jenkins/jenkins_helpers.sh"
-echo "+ $CMD"
-eval $CMD
+source_scripts
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Setenv.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-setenv $CONDA_ENV
+setenv "setenv_amp.sh" $CONDA_ENV
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Run tests.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-OPTS="--test fast"
-CMD="$RUN_TESTS_PY $OPTS --jenkins -v $VERB"
-execute $CMD
+OPTS="--test fast -v $VERB"
+run_tests $AMP $OPTS
