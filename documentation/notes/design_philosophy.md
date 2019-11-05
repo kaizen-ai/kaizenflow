@@ -17,7 +17,73 @@
 
 # Philosophy
 
-[hacker-laws](https://github.com/dwmkerr/hacker-laws)
+## Measure seven times, cut once (Russian proverb)
+
+- Before doing any work, sit down and plan
+
+    1) Describe somewhere *in writing* (e.g., in a doc, in the GitHub task, in
+       a python file) what you want to do, an high level plan with all the goals,
+       e.g.,
+        - what should the code do?
+        - what are the functionalities you want to implement?
+        - what are the functionalities you don't want to implement since out
+          of scope?
+        - what is more important, what is less important? E.g., in terms of
+          P0, P1, P2
+        - what are the invariants?
+        - what is the semantic of the entities involved?
+        - what are the analyses, the comparisons, and the plots?
+        - no code, just a description of the ideas
+
+        - ETA: Spend quality time thinking about it (e.g., 30 mins, 1 hr)
+
+    2) Review the plan
+        - Look at the plan again with fresh eyes (e.g., go for a 5 min walk)
+        - Does the plan make sense?
+        - What can you remove?
+        - How to make things simple?
+        - What is not elegant?
+        - What entity is a special case of another?
+        - What is similar to what?
+
+        - ETA: Spend 30 mins thinking
+
+    3) Ask for someone to review the plan
+        - Don't be ashamed of asking for advice
+
+    4) Implement a design
+        - Transform the plan into high-level code, e.g.,
+            - What are the objects / functions involved?
+            - What are the responsibilities of each class / functions?
+            - What are the code invariants?
+            - What are the data structures?
+        - Write the interfaces
+            - Only the interfaces! Refrain from implementing the logic
+            - Comment the interfaces clearly
+        - Think of how the objects / functions interact (who does what, what is
+          the data passed around)
+        - Sprinkle TODOs with ideas about potential problems, simpler approaches
+
+        - ETA: Spend 1/2 day, 1 day
+
+    5) Do a PR of the design
+
+    6) Once we converge on the design:
+        - implement the functions
+        - unit test
+        - PR
+
+- Remember:
+    - we want to do quick interactions: every day there is communication, update,
+      discussion
+    - do not disappear for one week and coming back with something that makes
+      sense only to you, but others didn't get their buy-in
+
+## Hacker laws
+
+- A list of interesting "laws" (some are more rule of thumbs / heuristics)
+  related to computing:
+    - [hacker-laws](https://github.com/dwmkerr/hacker-laws)
 
 ## Keep it simple
 
