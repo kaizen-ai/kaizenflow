@@ -12,7 +12,7 @@ CONDA_ENV="amp_develop.daily_build"
 # Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-CMD="source ./dev_scripts/jenkins/jenkins_amp_helpers.sh"
+CMD="source ./dev_scripts/jenkins/amp.jenkins_helpers.sh"
 echo "+ $CMD"
 eval $CMD
 

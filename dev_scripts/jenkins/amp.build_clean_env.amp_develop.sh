@@ -1,18 +1,17 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 # """
-# - Build conda env
-# - Run the fast tests
+# - Build "amp_develop" conda env from scratch.
 # """
 
 EXEC_NAME=`basename "$0"`
-CONDA_ENV="amp_develop.build_clean_env.run_fast_tests"
+CONDA_ENV="amp_develop.daily_build"
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-CMD="source ./dev_scripts/jenkins/jenkins_amp_helpers.sh"
+CMD="source ./dev_scripts/jenkins/amp.jenkins_helpers.sh"
 echo "+ $CMD"
 eval $CMD
 
@@ -33,11 +32,3 @@ create_conda $AMP $OPTS
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 setenv "setenv_amp.sh" $CONDA_ENV
-
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# Run.
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-# Run tests.
-OPTS="--test fast -v $VERB"
-run_tests $AMP $OPTS

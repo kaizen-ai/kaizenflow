@@ -17,26 +17,26 @@ function execute() {
   eval $*
 }
 
-CMD="dev_scripts/jenkins/build_clean_env.amp_develop.sh"
+CMD="dev_scripts/jenkins/amp.build_clean_env.amp_develop.sh"
 execute $CMD
 
 # This modifies the client, so we disable it by default.
 if [[ 0 == 1 ]]; then
-    $CMD="dev_scripts/jenkins/run_pytest_collect.run_linter.sh"
+    $CMD="dev_scripts/jenkins/amp.run_pytest_collect.run_linter.sh"
     execute $CMD
 fi;
 
-CMD="dev_scripts/jenkins/run_fast_tests.sh"
+CMD="dev_scripts/jenkins/amp.run_fast_tests.sh"
 execute $CMD
 
-CMD="dev_scripts/jenkins/run_parallel_fast_tests.sh"
+CMD="dev_scripts/jenkins/amp.run_parallel_fast_tests.sh"
 execute $CMD
 
-CMD="dev_scripts/jenkins/build_clean_env.run_fast_coverage_tests.sh"
+CMD="dev_scripts/jenkins/amp.build_clean_env.run_fast_coverage_tests.sh"
 execute $CMD
 
-CMD="dev_scripts/jenkins/build_clean_env.run_fast_tests.sh"
+CMD="dev_scripts/jenkins/amp.build_clean_env.run_fast_tests.sh"
 execute $CMD
 
-CMD="dev_scripts/jenkins/build_clean_env.run_slow_coverage_tests.sh"
+CMD="dev_scripts/jenkins/amp.build_clean_env.run_slow_coverage_tests.sh"
 execute $CMD

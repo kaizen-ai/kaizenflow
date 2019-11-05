@@ -1,18 +1,18 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 # """
 # - Build conda env
-# - Run the fast tests with coverage
+# - Run the slow tests with coverage
 # """
 
 EXEC_NAME=`basename "$0"`
-CONDA_ENV="amp_develop.build_clean_env.run_fast_coverage_tests"
+CONDA_ENV="amp_develop.build_clean_env.run_slow_coverage_tests"
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-CMD="source ./dev_scripts/jenkins/jenkins_amp_helpers.sh"
+CMD="source ./dev_scripts/jenkins/amp.jenkins_helpers.sh"
 echo "+ $CMD"
 eval $CMD
 
@@ -22,7 +22,7 @@ source_scripts
 # Build env.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-prepare_to_build_env "base"
+prepare_to_build_env
 
 # From dev_scripts/create_conda.sh
 OPTS="--env_name $CONDA_ENV --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists -v $VERB"
@@ -39,5 +39,5 @@ setenv "setenv_amp.sh" $CONDA_ENV
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # Run tests.
-OPTS="--test fast --coverage -v $VERB"
+OPTS="--test slow --coverage -v $VERB"
 run_tests $AMP $OPTS
