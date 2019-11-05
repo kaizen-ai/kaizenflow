@@ -16,6 +16,7 @@
          * [Overwrite a conda environment with create_conda.py](#overwrite-a-conda-environment-with-create_condapy)
          * [Manually delete a conda environment](#manually-delete-a-conda-environment)
          * [To delete the entire conda installation (advanced users)](#to-delete-the-entire-conda-installation-advanced-users)
+      * [Update anaconda](#update-anaconda)
    * [Be patient](#be-patient)
    * [Workflow examples](#workflow-examples)
       * [Working with multiple clients](#working-with-multiple-clients)

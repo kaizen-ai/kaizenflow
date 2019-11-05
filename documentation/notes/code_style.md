@@ -6,6 +6,9 @@
       * [Horrible names](#horrible-names)
       * [No Hungarian notation please](#no-hungarian-notation-please)
       * [No code stutter](#no-code-stutter)
+   * [Using third-party libraries](#using-third-party-libraries)
+      * [Problem](#problem)
+      * [Solution](#solution)
    * [Comments](#comments)
       * [Docstring conventions](#docstring-conventions)
       * [reST style](#rest-style)
@@ -60,7 +63,6 @@
       * [Research quality vs production quality](#research-quality-vs-production-quality)
       * [No ugly hacks](#no-ugly-hacks)
       * [Life cycle of research code](#life-cycle-of-research-code)
-   * [Document what notebooks are for](#document-what-notebooks-are-for)
 
 
 

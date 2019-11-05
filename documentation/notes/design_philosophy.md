@@ -1,5 +1,7 @@
 <!--ts-->
    * [Philosophy](#philosophy)
+      * [Measure seven times, cut once (Russian proverb)](#measure-seven-times-cut-once-russian-proverb)
+      * [Hacker laws](#hacker-laws)
       * [Keep it simple](#keep-it-simple)
       * [Tips from a pro](#tips-from-a-pro)
          * [Designing software systems is tricky](#designing-software-systems-is-tricky)
