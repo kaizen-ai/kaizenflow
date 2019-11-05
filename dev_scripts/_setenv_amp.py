@@ -20,6 +20,7 @@ _CURR_DIR = os.path.dirname(sys.argv[0])
 # levels to reach `//amp`.
 _AMP_REL_PATH = ".."
 _AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
+assert os.path.exists(_AMP_PATH), "Can't find '%s'" % _AMP_PATH
 sys.path.insert(0, _AMP_PATH)
 
 # This import is relative to the top of the repo.
