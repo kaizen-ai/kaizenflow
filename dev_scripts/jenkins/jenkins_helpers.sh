@@ -37,7 +37,8 @@ function setenv() {
         return 1
     fi;
     # Config environment.
-    CMD="$SETENV_EXEC $CONDA_ENV"
+    # We need to source setenv.sh to inherit conda (conda is a bash function).
+    CMD="source $SETENV_EXEC $CONDA_ENV"
     execute $CMD
 
     # Check conda env.
