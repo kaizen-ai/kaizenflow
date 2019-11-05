@@ -24,7 +24,7 @@ source_scripts
 prepare_to_build_env
 
 # From dev_scripts/create_conda.sh
-OPTS="--env_name $CONDA_ENV --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists -v $VERB"
+OPTS="--env_name $CONDA_ENV $CREATE_CONDA_OPTS -v $VERB"
 create_conda $AMP $OPTS
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

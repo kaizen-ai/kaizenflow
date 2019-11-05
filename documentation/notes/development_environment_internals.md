@@ -149,7 +149,7 @@
     
 - One can override the name of the package with:
     ```bash
-    > conda env create -f dev_scripts/install/requirements/develop.yaml -n test
+    > conda env create -f dev_scripts/install/requirements/amp_develop.yaml -n test
     ```
   
 ## Merging multiple YAML

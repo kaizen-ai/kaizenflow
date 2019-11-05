@@ -4,6 +4,7 @@
 
 AMP="."
 
+CREATE_CONDA_OPTS="--req_file dev_scripts/install/requirements/amp_develop.yaml --delete_env_if_exists"
 
 function source_scripts() {
     CMD="source ~/.bashrc"
