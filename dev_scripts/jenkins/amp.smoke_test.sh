@@ -3,7 +3,7 @@
 # """
 # - Run all the Jenkins builds locally to debug.
 # - To run
-#   > (cd $HOME/src/commodity_research1/amp; dev_scripts/jenkins/smoke_test.sh 2>&1 | tee log.txt)
+#   > (cd $HOME/src/commodity_research1/amp; dev_scripts/jenkins/amp.smoke_test.sh 2>&1 | tee log.txt)
 # """
 
 function frame() {
