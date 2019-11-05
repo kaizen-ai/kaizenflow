@@ -21,9 +21,9 @@
 
 - Before doing any work, sit down and plan
 
-    1) Describe somewhere *in writing* (e.g., in a doc, in the GitHub task, in
-       a python file) what you want to do, an high level plan with all the goals,
-       e.g.,
+    1) Describe somewhere *in writing* (e.g., ideally in a Google doc so it's
+       easier to collaborate, review) what you want to do, an high level plan
+       with all the goals, e.g.:
         - what should the code do?
         - what are the functionalities you want to implement?
         - what are the functionalities you don't want to implement since out
