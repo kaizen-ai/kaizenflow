@@ -13,8 +13,8 @@ _AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
 assert os.path.exists(_AMP_PATH), "Can't find '%s'" % _AMP_PATH
 sys.path.insert(0, _AMP_PATH)
 
-# This imports is relative to the top of the repo.
-import dev_scripts._bootstrap as boot
+# pylint: wrong-import-position
+import dev_scripts._bootstrap as boot  # isort:skip
 
 boot.bootstrap(_AMP_REL_PATH)
 

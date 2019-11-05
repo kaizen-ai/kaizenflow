@@ -104,10 +104,11 @@ def get_credentials():
         # P1 old server.
         conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
     elif server_name in (
-            # P1 dev server.
-            "ip-172-31-16-23", 
-            # P1 Jenkins server.
-            "ip-172-31-12-239"):
+        # P1 dev server.
+        "ip-172-31-16-23",
+        # P1 Jenkins server.
+        "ip-172-31-12-239",
+    ):
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
     if user_name == "saggese":
         # GP.
