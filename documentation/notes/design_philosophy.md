@@ -21,27 +21,26 @@
 
 - Before doing any work, sit down and plan
 
-    1) Describe somewhere *in writing* (e.g., ideally in a Google doc so it's
-       easier to collaborate, review) what you want to do, an high level plan
-       with all the goals, e.g.:
-        - what should the code do?
-        - what are the functionalities you want to implement?
-        - what are the functionalities you don't want to implement since out
-          of scope?
-        - what is more important, what is less important? E.g., in terms of
+    1) Describe somewhere *in writing* your high-level plan. Put it in a Google
+       doc to make it easier to collaborate and review.
+        - What should the code do?
+        - What are the functionalities you want to implement?
+        - What are the functionalities you don't want to implement (what are
+          you explicitly considering to be out-of-scope?)?
+        - What is more important, what is less important? E.g., in terms of
           P0, P1, P2
-        - what are the invariants?
-        - what is the semantic of the entities involved?
-        - what are the analyses, the comparisons, and the plots?
-        - no code, just a description of the ideas
+        - What are the requirements/invariants?
+        - What are the semantics of the entities involved?
+        - What are the analyses, the comparisons, and the plots?
+        - What are the ideas (expressed without any code!)?
 
         - ETA: Spend quality time thinking about it (e.g., 30 mins, 1 hr)
 
     2) Review the plan
-        - Look at the plan again with fresh eyes (e.g., go for a 5 min walk)
+        - Look at the plan again with fresh eyes (e.g., go for a 5-min walk)
         - Does the plan make sense?
         - What can you remove?
-        - How to make things simple?
+        - Can you make things simpler?
         - What is not elegant?
         - What entity is a special case of another?
         - What is similar to what?
@@ -54,7 +53,7 @@
     4) Implement a design
         - Transform the plan into high-level code, e.g.,
             - What are the objects / functions involved?
-            - What are the responsibilities of each class / functions?
+            - What are the responsibilities of each class / function?
             - What are the code invariants?
             - What are the data structures?
         - Write the interfaces
@@ -69,15 +68,15 @@
     5) Do a PR of the design
 
     6) Once we converge on the design:
-        - implement the functions
-        - unit test
+        - Implement the functions
+        - Unit test
         - PR
 
 - Remember:
-    - we want to do quick interactions: every day there is communication, update,
+    - We want to do quick interactions: every day there is communication, update,
       discussion
-    - do not disappear for one week and coming back with something that makes
-      sense only to you, but others didn't get their buy-in
+    - Do not disappear for one week and come back with something that makes
+      sense only to you, or that you didn't get buy-in from others on
 
 ## Hacker laws
 
