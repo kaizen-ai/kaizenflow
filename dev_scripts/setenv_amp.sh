@@ -7,7 +7,10 @@
 #   > ./setenv.sh
 # in order to set the env vars in the calling shell.
 #
-# All the parameters passed to this script are propagated to _setenv.py
+# Parameters passed to this script are propagated to _setenv.py
+#
+# Keep this script in sync with:
+# > vimdiff ./dev_scripts/setenv_p1.sh amp/dev_scripts/setenv_amp.sh
 # """
 
 # Name of the current script, e.g,. `./dev_scripts/setenv.sh`
@@ -24,14 +27,15 @@ echo "EXEC_PATH=$EXEC_PATH"
 if [[ -z $1 ]]; then
     ENV_NAME="amp_develop"
 else
-    ENV_NAME=$2
+    ENV_NAME=$1
 fi
+echo "ENV_NAME=$ENV_NAME"
 
 # source helpers.sh
 HELPERS_PATH=$EXEC_PATH/helpers.sh
 echo "HELPERS_PATH=$HELPERS_PATH"
 if [[ ! -e $HELPERS_PATH ]]; then
-    echo "File '$HELPERS_PATH' doesn't exist: exiting"
+    echo "ERROR($EXEC_NAME): File '$HELPERS_PATH' doesn't exist: exiting"
     return 1
 fi
 source $HELPERS_PATH
@@ -40,7 +44,7 @@ source $HELPERS_PATH
 get_python_version
 rc=$?
 if [[ $rc != 0 ]]; then
-  echo "python is too old: exiting"
+  echo "ERROR($EXEC_NAME): python is too old: exiting"
   return $rc
 fi;
 

@@ -28,12 +28,12 @@ function setenv() {
     SETENV_EXEC=$1
     shift
     if [[ -z $SETENV_EXEC ]]; then
-        echo "ERROR: SETENV_EXEC='$SETENV_EXEC'"
+        echo "ERROR($EXEC_NAME): SETENV_EXEC='$SETENV_EXEC'"
         return 1
     fi;
     CONDA_ENV=$*
     if [[ -z $CONDA_ENV ]]; then
-        echo "ERROR: CONDA_ENV='$CONDA_ENV'"
+        echo "ERROR($EXEC_NAME): CONDA_ENV='$CONDA_ENV'"
         return 1
     fi;
     # Config environment.
@@ -57,12 +57,12 @@ function create_conda() {
     AMP=$1
     shift
     if [[ -z $AMP ]]; then
-        echo "ERROR: AMP='$AMP'"
+        echo "ERROR($EXEC_NAME): AMP='$AMP'"
         return 1
     fi;
     OPTS=$*
     if [[ -z $OPTS ]]; then
-        echo "ERROR: OPTS='$OPTS'"
+        echo "ERROR($EXEC_NAME): OPTS='$OPTS'"
         return 1
     fi;
     #
@@ -79,12 +79,12 @@ function run_tests() {
     AMP=$1
     shift
     if [[ -z $AMP ]]; then
-        echo "ERROR: AMP='$AMP'"
+        echo "ERROR($EXEC_NAME): AMP='$AMP'"
         return 1
     fi;
     OPTS=$*
     if [[ -z $OPTS ]]; then
-        echo "ERROR: OPTS='$OPTS'"
+        echo "ERROR($EXEC_NAME): OPTS='$OPTS'"
         return 1
     fi;
     #

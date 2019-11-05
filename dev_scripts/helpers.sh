@@ -35,12 +35,12 @@ END
 
 function execute_setenv() {
   if [[ -z $1 ]]; then
-    echo "ERROR: Need to specify a parameter representing setenv"
+    echo "ERROR($EXEC_NAME): Need to specify a parameter representing setenv"
     return 1
   fi;
   SETENV=$1
   if [[ -z $2 ]]; then
-    echo "ERROR: Need to specify the env to use"
+    echo "ERROR($EXEC_NAME): Need to specify the env to use"
     return 1
   fi;
   ENV_NAME=$2
