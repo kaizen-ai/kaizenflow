@@ -21,7 +21,7 @@ source_scripts
 # Setenv.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-setenv "setenv_amp.sh" $CONDA_ENV
+setenv "$AMP/dev_scripts/setenv_amp.sh" $CONDA_ENV
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Run tests.

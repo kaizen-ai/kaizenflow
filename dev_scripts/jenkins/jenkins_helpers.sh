@@ -37,7 +37,7 @@ function setenv() {
         return 1
     fi;
     # Config environment.
-    CMD="source $AMP/dev_scripts/$SETENV_EXEC -e $CONDA_ENV"
+    CMD="$SETENV_EXEC -e $CONDA_ENV"
     execute $CMD
 
     # Check conda env.
