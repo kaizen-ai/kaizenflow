@@ -80,6 +80,18 @@ class Config:
         res = self._config[key] if key in self._config else val
         return res
 
+    def pop(self, key):
+        """
+        Equivalent to `dict.pop()`
+        """
+        return self._config.pop(key)
+
+    def copy(self):
+        """
+        Equivalent to `dict.copy()`
+        """
+        return self._config.copy()
+
     @classmethod
     def from_python(cls, code):
         """
