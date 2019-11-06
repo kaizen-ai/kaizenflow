@@ -880,9 +880,11 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
     timestamps = corr_df.index.get_level_values(0).unique()
     for dt in tqdm.tqdm(timestamps):
         dbg.dassert_isinstance(dt, datetime.date)
-        corr_tmp = corr_df.loc[dt]
+        corr_tmp = corr_df.loc[dt].copy()
         # Compute rolling eigenvalues and eigenvectors.
-        eigval, eigvec = np.linalg.eig(corr_tmp.fillna(0.0))
+        corr_tmp.replace([np.inf, -np.inf], np.nan, inplace=True)
+        corr_tmp.fillna(0.0, inplace=True)
+        eigval, eigvec = np.linalg.eig(corr_tmp)
         # Sort eigenvalues, if needed.
         if not (sorted(eigval) == eigval).all():
             _LOG.debug("eigvals not sorted: %s", eigval)
