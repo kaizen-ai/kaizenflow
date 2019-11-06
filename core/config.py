@@ -86,6 +86,12 @@ class Config:
         """
         return self._config.pop(key)
 
+    def copy(self):
+        """
+        Equivalent to `dict.copy()`
+        """
+        return self._config.copy()
+
     @classmethod
     def from_python(cls, code):
         """
