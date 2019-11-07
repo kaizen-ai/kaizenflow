@@ -371,6 +371,34 @@ class ColumnTransformer(Transformer):
         return df, info
 
 
+class DataframeMethodRunner(Transformer):
+    def __init__(
+        self,
+        nid: str,
+        method: str,
+        method_kwargs: Optional[Any] = None,
+    ):
+        super().__init__(nid)
+        dbg.dassert(method)
+        # TODO(Paul): Ensure that this is a valid method.
+        self._method = method
+        if method_kwargs is not None:
+            self._method_kwargs = method_kwargs
+        else:
+            self._method_kwargs = {}
+
+    def _transform(self, df):
+        df = df.copy()
+        df = getattr(df, self._method)(**self._method_kwargs)
+        # Not all methods return DataFrames. We want to restrict to those that
+        # do.
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        #
+        info = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
 class FilterAth(Transformer):
     def _transform(self, df):
         df = df.copy()
