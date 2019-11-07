@@ -437,7 +437,7 @@ class SkLearnModel(SkLearnNode):
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         dbg.dassert_eq(df_in.first_valid_index(),
-                       df.index[0],
+                       df_in.index[0],
                        "NaNs detected prior to index label=`%s`",
                        str(df_in.first_valid_index()))
         df = df_in.copy()
