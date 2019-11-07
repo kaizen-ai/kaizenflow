@@ -882,6 +882,7 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
         dbg.dassert_isinstance(dt, datetime.date)
         corr_tmp = corr_df.loc[dt].copy()
         # Compute rolling eigenvalues and eigenvectors.
+        # TODO(gp): Count and report inf and nans as warning.
         corr_tmp.replace([np.inf, -np.inf], np.nan, inplace=True)
         corr_tmp.fillna(0.0, inplace=True)
         eigval, eigvec = np.linalg.eig(corr_tmp)
