@@ -37,7 +37,8 @@ class Test_git1(ut.TestCase):
      least in that set-up.
     """
 
-    def _helper(self, func_call):
+    @staticmethod
+    def _helper(func_call):
         act = eval(func_call)
         _LOG.debug("%s=%s", func_call, act)
 
