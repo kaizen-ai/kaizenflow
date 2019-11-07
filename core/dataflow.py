@@ -211,12 +211,9 @@ class Merger(SkLearnNode):
     """
     Performs a merge of two inputs.
     """
+
     # TODO(Paul): Support different input/output names.
-    def __init__(
-        self,
-        nid: str,
-        merge_kwargs: Optional[Any] = None,
-    )-> None:
+    def __init__(self, nid: str, merge_kwargs: Optional[Any] = None) -> None:
         super().__init__(nid, inputs=["df_in1", "df_in2"])
         if merge_kwargs is not None:
             self._merge_kwargs = merge_kwargs
