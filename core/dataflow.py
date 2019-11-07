@@ -436,6 +436,10 @@ class SkLearnModel(SkLearnNode):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_eq(df_in.first_valid_index(),
+                       df.index[0],
+                       "NaNs detected prior to index label=`%s`",
+                       str(df_in.first_valid_index()))
         df = df_in.copy()
         idx, x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
         self._model = self._model_func(**self._model_kwargs)
@@ -483,8 +487,6 @@ class SkLearnModel(SkLearnNode):
 
     # TODO(Paul): Add type hints.
     def _to_sklearn_format(self, df):
-        # Drop NaNs and prepare the index for sklearn.
-        df = df.dropna()
         idx = df.index
         df = df.reset_index()
         # TODO(Paul): replace with class name
