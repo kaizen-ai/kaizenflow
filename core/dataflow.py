@@ -11,7 +11,6 @@ import pandas as pd
 import core.finance as fin
 import helpers.dbg as dbg
 import rolling_model.pipeline as pip
-import vendors.kibot.utils as kut
 from core.dataflow_core import DAG  # pylint: disable=unused-import
 from core.dataflow_core import Node
 
@@ -201,27 +200,6 @@ class ReadDataFromDf(DataSource):
         super().__init__(nid)
         dbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
-
-
-class ReadDataFromKibot(DataSource):
-    def __init__(self, nid, file_name, nrows=None):
-        super().__init__(nid)
-        # dbg.dassert_exists(file_name)
-        self._file_name = file_name
-        self._nrows = nrows
-        #
-        self.df = None
-
-    def _lazy_load(self):
-        if self.df is None:
-            self.df = kut.read_data(self._file_name, self._nrows)
-
-    def fit(self):
-        """
-        :return: training set as df
-        """
-        self._lazy_load()
-        return super().fit()
 
 
 # #############################################################################
