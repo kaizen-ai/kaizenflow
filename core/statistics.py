@@ -57,9 +57,7 @@ def get_time_series_rolling_folds(
     # Split into equal chunks.
     chunk_size = int(math.ceil(idx.size) / n_splits)
     dbg.dassert_lte(1, chunk_size)
-    chunks = [
-        idx[i: i + chunk_size] for i in range(0, idx.size, chunk_size)
-    ]
+    chunks = [idx[i : i + chunk_size] for i in range(0, idx.size, chunk_size)]
     dbg.dassert_eq(len(chunks), n_splits)
     #
     idx_splits = [idx[chunk] for chunk in chunks]
