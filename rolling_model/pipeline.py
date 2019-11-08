@@ -19,9 +19,6 @@ import helpers.pickle_ as pickle_
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
-# Transform.
-# #############################################################################
 
 # Design and invariants for a model pipeline
 # - config is built by the user and after then it's read-only
@@ -40,85 +37,11 @@ _LOG = logging.getLogger(__name__)
 #       pull information in the `result_bundle`
 
 
-# TODO(GPP): DEPRECATE. PyCharm doesn't find any callers, and we are
-# using "result bundles" differently now.
-def filter_by_time_from_config(config, df, result_bundle, dt_col_name="datetime"):
-    dbg.dassert_lte(1, df.shape[0])
-    #
-    start_dt = config.get("start_dt", None)
-    end_dt = config.get("end_dt", None)
-    df = fin.filter_by_time(df, start_dt, end_dt, result_bundle=result_bundle)
-    dbg.dassert_lte(1, df.shape[0])
-    return df
-
-
-def zscore(df, zscore_style, zscore_com):
-    # TODO(gp): z-score by day and by hour.
-    if zscore_style == "rolling_std":
-        std = df["ret_0"].ewm(com=zscore_com).std()
-        # To avoid issues with future peeking.
-        std = std.shift(1)
-        df["zret_0"] = df["ret_0"] / std
-    elif zscore_style == "rolling_mean_std":
-        # TODO(gp): Removing the mean seems to create some artifacts.
-        mean = df["ret_0"].ewm(com=zscore_com).mean()
-        std = df["ret_0"].ewm(com=zscore_com).std()
-        df["zret_0"] = (df["ret_0"] - mean) / std
-    else:
-        raise ValueError("Invalid param '%s'" % zscore_style)
-    return df
-
-
-# TODO(gp): Switch to sigp.rolling_zscore.
-def zscore_from_config(config, df):
-    config.check_params(["zscore_style", "zscore_com"])
-    dbg.dassert_lte(1, df.shape[0])
-    #
-    df = zscore(df, config["zscore_style"], config["zscore_com"])
-    dbg.dassert_lte(1, df.shape[0])
-    return df
-
-
-# TODO(gp): Pass "mode", eg us_equity_hours, futures_ath_hours.
-def filter_ath_from_config(config, df):
-    """
-    Filter according to active trading hours.
-    """
-    dbg.dassert_lte(1, df.shape[0])
-    if config["filter_ath"]:
-        df = fin.filter_ath(df)
-    _LOG.info("df.shape=%s", df.shape)
-    dbg.dassert_lte(1, df.shape[0])
-    return df
-
-
-# #############################################################################
-# Features.
-# #############################################################################
-
-
-def compute_features_from_config(config, df, result_bundle):
-    """
-    Compute features in-place.
-    """
-    config.check_params(["target_y_var", "delay_lag", "num_lags"])
-    # df = df.copy()
-    df = ftrs.reindex_to_integers(df)
-    df_out, info = ftrs.compute_lagged_features(
-        df, config["target_y_var"], config["delay_lag"], config["num_lags"]
-    )
-    #
-    # TODO(gp): Not sure if we should replicate this (since it's already in
-    # config) just to make things symmetric.
-    result_bundle.update(info)
-    return df_out, result_bundle
-
-
 # #############################################################################
 # Learn.
 # #############################################################################
 
-# TODO: result_bundle as object? Config also as object?
+# TODO: result_bundle as object?
 
 # TODO: Maybe ResultSplit, FitModelFromConfig
 # RsultSplit and RsultBundle can inherit from dict or OrderedDict
@@ -318,6 +241,7 @@ def fit_model_from_config(config, df, result_bundle):
     return result_bundle
 
 
+# TODO(Paul): Find a new home for similar functionality in `core`.
 # #############################################################################
 # Evaluate model.
 # #############################################################################
