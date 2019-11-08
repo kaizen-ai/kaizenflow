@@ -2,16 +2,12 @@ import collections
 import functools
 import glob
 import logging
-import math
 
 import numpy as np
 import pandas as pd
 import tqdm
 from IPython.display import display
-from sklearn import linear_model
-from sklearn.model_selection import TimeSeriesSplit
 
-import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -76,169 +72,68 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
     return result_split
 
 
-def get_time_series_rolling_folds(df, n_splits):
-    dbg.dassert_lte(1, n_splits)
-    idxs = range(df.shape[0])
-    # Split in equal chunks.
-    chunk_size = int(math.ceil(len(idxs) / n_splits))
-    dbg.dassert_lte(1, chunk_size)
-    chunks = [
-        idxs[i: i + chunk_size] for i in range(0, len(idxs), chunk_size)
-    ]
-    dbg.dassert_eq(len(chunks), n_splits)
-    #
-    idx_splits = [df.index[chunk] for chunk in chunks]
-    #
-    splits = list(zip(idx_splits[:-1], idx_splits[1:]))
-    return splits
-
-
-def get_splits(config, df):
-    cv_split_style = config["cv_split_style"]
-    if "datetime" in df.columns:
-        _LOG.info(
-            "len=%s min_date=%s, max_date=%s",
-            df.shape[0],
-            df.iloc[0]["datetime"],
-            df.iloc[-1]["datetime"],
-        )
-    if cv_split_style == "TimeSeriesSplit":
-        # Expanding window with n folds.
-        n_splits = config["cv_n_splits"]
-        dbg.dassert_lte(1, n_splits)
-        tscv = TimeSeriesSplit(n_splits=n_splits)
-        splits = list(tscv.split(df))
-    elif cv_split_style == "TimeSeriesRollingFolds":
-        # Rolling window using n folds.
-        n_splits = config["cv_n_splits"]
-        dbg.dassert_lte(1, n_splits)
-        idxs = range(df.shape[0])
-        # Split in equal chunks.
-        chunk_size = int(math.ceil(len(idxs) / n_splits))
-        dbg.dassert_lte(1, chunk_size)
-        chunks = [
-            idxs[i : i + chunk_size] for i in range(0, len(idxs), chunk_size)
-        ]
-        dbg.dassert_eq(len(chunks), n_splits)
-        #
-        splits = list(zip(chunks[:-1], chunks[1:]))
-    elif cv_split_style == "TrainTest":
-        # TODO: Pass this through config
-        # cutoff_date = "2016-01-04 09:30:00"
-        cutoff_date = "2010-01-12 09:30:00"
-        cutoff_date = pd.to_datetime(cutoff_date)
-        # Look for the cutoff_date.
-        idx = np.where(df["datetime"] == cutoff_date)
-        _LOG.debug("idx=%s", idx)
-        dbg.dassert_lt(0, len(idx))
-        idx = idx[0][0]
-        _LOG.debug("idx=%s", idx)
-        splits = [(range(idx), range(idx, df.shape[0]))]
-    elif cv_split_style == "TrainTestPct":
-        train_pct = config["cv_train_pct"]
-        dbg.dassert_lte(0.0, train_pct)
-        dbg.dassert_lte(train_pct, 1.0)
-        #
-        idx = int(train_pct * df.shape[0])
-        dbg.dassert_lte(0, idx)
-        dbg.dassert_lte(idx, df.shape[0])
-        _LOG.debug("idx=%s", idx)
-        splits = [(range(idx), range(idx, df.shape[0]))]
-    else:
-        raise ValueError("Invalid cv_split_style='%s'" % cv_split_style)
-    return splits
-
-
-def splits_to_string(splits, df=None):
-    txt = "n_splits=%s\n" % len(splits)
-    for train_idxs, test_idxs in splits:
-        if df is None:
-            txt += "  train=%s [%s, %s]" % (
-                len(train_idxs),
-                min(train_idxs),
-                max(train_idxs),
-            )
-            txt += ", test=[%s, %s] %s" % (
-                len(test_idxs),
-                min(test_idxs),
-                max(test_idxs),
-            )
-        else:
-            txt += "  train=%s [%s, %s]" % (
-                len(train_idxs),
-                min(df.iloc[train_idxs]),
-                max(df.iloc[train_idxs]),
-            )
-            txt += ", test=%s [%s, %s]" % (
-                len(test_idxs),
-                min(df.iloc[test_idxs]),
-                max(df.iloc[test_idxs]),
-            )
-        txt += "\n"
-    return txt
-
-
-def fit_model_from_config(config, df, result_bundle):
-    # Compute the splits to be used in the train / test loop.
-    splits = get_splits(config, df)
-    #
-    y_var = result_bundle["y_var"]
-    x_vars = result_bundle["x_vars"]
-    # TODO: Fix this
-    # result_bundle["num_splits"] = len(splits)
-    result_bundle["num_splits"] = 0
-    #
-    result_splits = []
-    for i, (train_idxs, test_idxs) in enumerate(splits):
-        # Check that there is no intersection between train / test.
-        # This is not true when we use the entire dataset for both train / test.
-        dbg.dassert_eq(len(set(train_idxs).intersection(set(test_idxs))), 0)
-        result_bundle["num_splits"] += 1
-        result_split = {}
-
-        # ==== Train ====
-        tag = "train"
-        x_train = df.iloc[train_idxs][x_vars]
-        y_train = df.iloc[train_idxs][y_var]
-        #
-        reg = linear_model.LinearRegression()
-        model = reg.fit(x_train, y_train)
-        result_split["idx"] = i
-        # TODO: Improve the name of the split.
-        result_split["name"] = "split_%s" % i
-        result_split["model_coeffs"] = [model.intercept_] + model.coef_.tolist()
-        # TODO: Should we pass a 1 column in the dataframe and make all the
-        # predictors handled in the same way?
-        result_split["model_x_vars"] = ["intercept"] + x_vars
-        # Add stats about splits and model.
-        result_split = _add_split_stats(df, train_idxs, tag, result_split)
-        result_split = _add_model_perf(
-            tag, model, df, train_idxs, x_train, y_train, result_split
-        )
-        perf_as_string = _model_perf_to_string(result_split, tag)
-
-        # ==== Test ====
-        tag = "test"
-        x_test = df.iloc[test_idxs][x_vars]
-        y_test = df.iloc[test_idxs][y_var]
-        # Add stats about splits and model.
-        result_split = _add_split_stats(df, test_idxs, tag, result_split)
-        result_split = _add_model_perf(
-            tag, model, df, test_idxs, x_test, y_test, result_split
-        )
-        perf_as_string += " " + _model_perf_to_string(result_split, tag)
-
-        # Print results for this split.
-        result_split["perf_as_string"] = perf_as_string
-        _LOG.info("%s", perf_as_string)
-
-        result_splits.append(result_split)
-    #
-    result_bundle["result_split"] = result_splits
-    dbg.dassert_eq(
-        len(result_bundle["result_split"]), result_bundle["num_splits"]
-    )
-    return result_bundle
+# TODO(Paul): Delete this once we migrate the remaining pieces to core.
+# def fit_model_from_config(config, df, result_bundle):
+#     # Compute the splits to be used in the train / test loop.
+#     splits = get_splits(config, df)
+#     #
+#     y_var = result_bundle["y_var"]
+#     x_vars = result_bundle["x_vars"]
+#     # TODO: Fix this
+#     # result_bundle["num_splits"] = len(splits)
+#     result_bundle["num_splits"] = 0
+#     #
+#     result_splits = []
+#     for i, (train_idxs, test_idxs) in enumerate(splits):
+#         # Check that there is no intersection between train / test.
+#         # This is not true when we use the entire dataset for both train / test.
+#         dbg.dassert_eq(len(set(train_idxs).intersection(set(test_idxs))), 0)
+#         result_bundle["num_splits"] += 1
+#         result_split = {}
+#
+#         # ==== Train ====
+#         tag = "train"
+#         x_train = df.iloc[train_idxs][x_vars]
+#         y_train = df.iloc[train_idxs][y_var]
+#         #
+#         reg = linear_model.LinearRegression()
+#         model = reg.fit(x_train, y_train)
+#         result_split["idx"] = i
+#         # TODO: Improve the name of the split.
+#         result_split["name"] = "split_%s" % i
+#         result_split["model_coeffs"] = [model.intercept_] + model.coef_.tolist()
+#         # TODO: Should we pass a 1 column in the dataframe and make all the
+#         # predictors handled in the same way?
+#         result_split["model_x_vars"] = ["intercept"] + x_vars
+#         # Add stats about splits and model.
+#         result_split = _add_split_stats(df, train_idxs, tag, result_split)
+#         result_split = _add_model_perf(
+#             tag, model, df, train_idxs, x_train, y_train, result_split
+#         )
+#         perf_as_string = _model_perf_to_string(result_split, tag)
+#
+#         # ==== Test ====
+#         tag = "test"
+#         x_test = df.iloc[test_idxs][x_vars]
+#         y_test = df.iloc[test_idxs][y_var]
+#         # Add stats about splits and model.
+#         result_split = _add_split_stats(df, test_idxs, tag, result_split)
+#         result_split = _add_model_perf(
+#             tag, model, df, test_idxs, x_test, y_test, result_split
+#         )
+#         perf_as_string += " " + _model_perf_to_string(result_split, tag)
+#
+#         # Print results for this split.
+#         result_split["perf_as_string"] = perf_as_string
+#         _LOG.info("%s", perf_as_string)
+#
+#         result_splits.append(result_split)
+#     #
+#     result_bundle["result_split"] = result_splits
+#     dbg.dassert_eq(
+#         len(result_bundle["result_split"]), result_bundle["num_splits"]
+#     )
+#     return result_bundle
 
 
 # TODO(Paul): Find a new home for similar functionality in `core`.

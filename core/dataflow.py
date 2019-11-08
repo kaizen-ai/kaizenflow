@@ -9,8 +9,8 @@ import networkx as nx
 import pandas as pd
 
 import core.finance as fin
+import core.statistics as stat
 import helpers.dbg as dbg
-import rolling_model.pipeline as pip
 from core.dataflow_core import DAG  # pylint: disable=unused-import
 from core.dataflow_core import Node
 
@@ -575,7 +575,7 @@ def cross_validate(config, source_nid, sink_nid, dag):
     source_node = dag.get_node(source_nid)
     dag.run_leq_node(source_nid, "fit")
     df = source_node.get_df()
-    splits = pip.get_time_series_rolling_folds(df, config["cv_n_splits"])
+    splits = stat.get_rolling_splits(df.index, config["cv_n_splits"])
     #
     result_bundle = collections.OrderedDict()
     #
