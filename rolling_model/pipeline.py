@@ -11,7 +11,6 @@ from IPython.display import display
 from sklearn import linear_model
 from sklearn.model_selection import TimeSeriesSplit
 
-import core.features as ftrs
 import core.finance as fin
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -76,23 +75,6 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
     return result_split
 
 
-def get_time_series_rolling_folds(df, n_splits):
-    dbg.dassert_lte(1, n_splits)
-    idxs = range(df.shape[0])
-    # Split in equal chunks.
-    chunk_size = int(math.ceil(len(idxs) / n_splits))
-    dbg.dassert_lte(1, chunk_size)
-    chunks = [
-        idxs[i: i + chunk_size] for i in range(0, len(idxs), chunk_size)
-    ]
-    dbg.dassert_eq(len(chunks), n_splits)
-    #
-    idx_splits = [df.index[chunk] for chunk in chunks]
-    #
-    splits = list(zip(idx_splits[:-1], idx_splits[1:]))
-    return splits
-
-
 def get_splits(config, df):
     cv_split_style = config["cv_split_style"]
     if "datetime" in df.columns:
@@ -147,35 +129,6 @@ def get_splits(config, df):
     else:
         raise ValueError("Invalid cv_split_style='%s'" % cv_split_style)
     return splits
-
-
-def splits_to_string(splits, df=None):
-    txt = "n_splits=%s\n" % len(splits)
-    for train_idxs, test_idxs in splits:
-        if df is None:
-            txt += "  train=%s [%s, %s]" % (
-                len(train_idxs),
-                min(train_idxs),
-                max(train_idxs),
-            )
-            txt += ", test=[%s, %s] %s" % (
-                len(test_idxs),
-                min(test_idxs),
-                max(test_idxs),
-            )
-        else:
-            txt += "  train=%s [%s, %s]" % (
-                len(train_idxs),
-                min(df.iloc[train_idxs]),
-                max(df.iloc[train_idxs]),
-            )
-            txt += ", test=%s [%s, %s]" % (
-                len(test_idxs),
-                min(df.iloc[test_idxs]),
-                max(df.iloc[test_idxs]),
-            )
-        txt += "\n"
-    return txt
 
 
 def fit_model_from_config(config, df, result_bundle):

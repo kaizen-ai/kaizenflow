@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import scipy as sp
@@ -36,6 +36,65 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
         index=df.columns,
     )
     return result
+
+
+# #############################################################################
+# Cross-validation
+# #############################################################################
+
+
+def get_time_series_rolling_folds(
+    idx: pd.Index, n_splits: int
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Partitions index into chunks and returns pairs of successive chunks.
+
+    If the index looks like
+      [0, 1, 2, 3, 4, 5, 6, 7]
+    and
+    """
+    dbg.dassert_lte(1, n_splits)
+    # Split into equal chunks.
+    chunk_size = int(math.ceil(idx.size) / n_splits)
+    dbg.dassert_lte(1, chunk_size)
+    chunks = [
+        idx[i: i + chunk_size] for i in range(0, idx.size, chunk_size)
+    ]
+    dbg.dassert_eq(len(chunks), n_splits)
+    #
+    idx_splits = [idx[chunk] for chunk in chunks]
+    #
+    splits = list(zip(idx_splits[:-1], idx_splits[1:]))
+    return splits
+
+
+def convert_splits_to_string(splits, df=None):
+    txt = "n_splits=%s\n" % len(splits)
+    for train_idxs, test_idxs in splits:
+        if df is None:
+            txt += "  train=%s [%s, %s]" % (
+                len(train_idxs),
+                min(train_idxs),
+                max(train_idxs),
+            )
+            txt += ", test=[%s, %s] %s" % (
+                len(test_idxs),
+                min(test_idxs),
+                max(test_idxs),
+            )
+        else:
+            txt += "  train=%s [%s, %s]" % (
+                len(train_idxs),
+                min(df.iloc[train_idxs]),
+                max(df.iloc[train_idxs]),
+            )
+            txt += ", test=%s [%s, %s]" % (
+                len(test_idxs),
+                min(df.iloc[test_idxs]),
+                max(df.iloc[test_idxs]),
+            )
+        txt += "\n"
+    return txt
 
 
 # #############################################################################
