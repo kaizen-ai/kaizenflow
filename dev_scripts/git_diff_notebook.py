@@ -149,7 +149,7 @@ def _main(args):
     file_names = []
     for f in file_names_tmp:
         _LOG.debug("f=%s", f)
-        # pylint: disable=C0301
+        # pylint: disable=line-too-long
         # Make files wrt git client become absolute.
         # E.g.,
         #   altdata/python/src/agriculture/notebooks/data_explorations/
@@ -159,7 +159,7 @@ def _main(args):
         #       notebooks/data_explorations/ThomsonReuters_db.ipynb
         abs_file_name = git_client_root + "/" + f
         dbg.dassert_exists(abs_file_name)
-        # pylint: disable=C0301
+        # pylint: disable=line-too-long
         # Remove the cwd path to get the path relative to the current dir.
         # E.g.,
         #   /Users/gp/src/mac_tcm2/altdata/python/src/agriculture/

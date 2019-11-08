@@ -110,21 +110,21 @@ def dassert_eq(val1, val2, msg=None, *args):
 
 
 def dassert_ne(val1, val2, msg=None, *args):
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (val1 != val2):
         txt = "'%s'\n!=\n'%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
 def dassert_lt(val1, val2, msg=None, *args):
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (val1 < val2):
         txt = "'%s' < '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
 def dassert_lte(val1, val2, msg=None, *args):
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (val1 <= val2):
         txt = "'%s' <= '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
@@ -144,7 +144,7 @@ def dassert_lgt(
 
 
 def dassert_in(value, valid_values, msg=None, *args):
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (value in valid_values):
         txt = "'%s' in '%s'" % (value, valid_values)
         _dfatal(txt, msg, *args)
@@ -157,28 +157,28 @@ def dassert_not_in(value, valid_values, msg=None, *args):
 
 
 def dassert_is(val1, val2, msg=None, *args):
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (val1 is val2):
         txt = "'%s' is '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
 def dassert_is_not(val1, val2, msg=None, *args):
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (val1 is not val2):
         txt = "'%s' is not '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
 def dassert_type_is(val1, val2, msg=None, *args):
-    # pylint: disable=C0325, C0123
+    # pylint: disable=superfluous-parens,unidiomatic-typecheck
     if not (type(val1) is val2):
         txt = "type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
 
 def dassert_type_in(val1, val2, msg=None, *args):
-    # pylint: disable=C0325, C0123
+    # pylint: disable=superfluous-parens,unidiomatic-typecheck
     if not (type(val1) in val2):
         txt = "type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
@@ -195,7 +195,7 @@ def dassert_isinstance(val1, val2, msg=None, *args):
 
 
 def dassert_imply(val1, val2, msg=None, *args):
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (not val1 or val2):
         txt = "'%s' implies '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
@@ -204,7 +204,7 @@ def dassert_imply(val1, val2, msg=None, *args):
 def dassert_set_eq(val1, val2, msg=None, *args):
     val1 = set(val1)
     val2 = set(val2)
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (val1 == val2):
         txt = []
         txt.append("val1 - val2=" + str(val1.difference(val2)))
@@ -249,7 +249,7 @@ def dassert_not_intersection(val1, val2, msg=None, *args):
 
 
 def dassert_no_duplicates(val1, msg=None, *args):
-    # pylint: disable=C0325
+    # pylint: disable=superfluous-parens
     if not (len(set(val1)) == len(val1)):
         # Count the occurrences of each element of the seq.
         v_to_num = [(v, val1.count(v)) for v in set(val1)]
@@ -303,7 +303,7 @@ def dassert_not_exists(file_name, msg=None, *args):
     Ensures that a file or a dir `file_name` doesn't exist, otherwise raises.
     """
     file_name = os.path.abspath(file_name)
-    # pylint: disable=C0325,C0113
+    # pylint: disable=superfluous-parens,unneeded-not
     if not (not os.path.exists(file_name)):
         txt = []
         txt.append("file='%s' already exists" % file_name)
@@ -516,7 +516,7 @@ def init_logger(
     """
     sys.stdout.write("\033[0m")
     if isinstance(verb, str):
-        # pylint: disable=W0212
+        # pylint: disable=protected-access
         verb = logging._checkLevel(verb)
     # From https://stackoverflow.com/questions/14058453
     root_logger = logging.getLogger()
@@ -629,10 +629,11 @@ def get_matching_loggers(module_names):
         module_names = [module_names]
     sel_loggers = []
     for module_name in module_names:
-        sel_loggers_tmp = [logger for logger in loggers if module_name in str(
-            logger)]
+        sel_loggers_tmp = [
+            logger for logger in loggers if module_name in str(logger)
+        ]
         sel_loggers.extend(sel_loggers_tmp)
-    #sel_loggers = sorted(list(set(sel_loggers)))
+    # sel_loggers = sorted(list(set(sel_loggers)))
     return sel_loggers
 
 
@@ -640,8 +641,15 @@ def shutup_chatty_modules(verb=logging.CRITICAL):
     """
     Reduce the verbosity for external modules that are very chatty.
     """
-    module_names = ["matplotlib", "boto", 'urllib3', 's3transfer', 'boto3',
-               'botocore', 'nose']
+    module_names = [
+        "matplotlib",
+        "boto",
+        "urllib3",
+        "s3transfer",
+        "boto3",
+        "botocore",
+        "nose",
+    ]
     loggers = get_matching_loggers(module_names)
     print("Shutting up modules: (%d) %s" % (len(loggers), loggers))
     for logger in loggers:

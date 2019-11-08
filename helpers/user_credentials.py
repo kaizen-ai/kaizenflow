@@ -28,14 +28,13 @@ _LOG = logging.getLogger(__name__)
 def _get_p1_dev_server_ip():
     env_var_name = "P1_DEV_SERVER"
     if env_var_name not in os.environ:
-        _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh", env_var_name)
+        _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh?", env_var_name)
         raise RuntimeError
     dev_server = os.environ[env_var_name]
     return dev_server
 
 
-# pylint: disable=R0915
-# [R0915(too-many-statements), ] Too many statements (51/50)
+# pylint: disable=too-many-statements
 def get_credentials():
     """
     Report information about a user set-up as a function of:
@@ -104,10 +103,13 @@ def get_credentials():
     if server_name == "twitter-data":
         # P1 old server.
         conda_sh_path = "/usr/sbin/anaconda3/etc/profile.d/conda.sh"
-    elif server_name == "ip-172-31-16-23":
-        # P1 server.
+    elif server_name in (
+        # P1 dev server.
+        "ip-172-31-16-23",
+        # P1 Jenkins server.
+        "ip-172-31-12-239",
+    ):
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
-    #
     if user_name == "saggese":
         # GP.
         git_user_name = "saggese"
@@ -119,9 +121,9 @@ def get_credentials():
             if git_repo_name == "ParticleDev/commodity_research":
                 # Forward port 10003 to the notebook server that is started by
                 # `run_jupyter_server.py` when executed on the dev server.
-                #service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
-                #tunnel_info.append(service)
-                #jupyter_port = 10001
+                # service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
+                # tunnel_info.append(service)
+                # jupyter_port = 10001
                 pass
             elif git_repo_name == "alphamatic/lemonade":
                 # TODO(gp): This should be factored out in the including
@@ -137,10 +139,6 @@ def get_credentials():
             # P1 server.
             if git_repo_name == "ParticleDev/commodity_research":
                 jupyter_port = 10003
-        elif server_name.startswith("ip-"):
-            # AM server.
-            conda_sh_path = "/data/root/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/data/saggese/.conda/envs"
     elif user_name == "paul":
         # Paul.
         git_user_name = "paul"

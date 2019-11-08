@@ -404,8 +404,7 @@ def _python_compile(file_name, pedantic, check_if_possible):
         return output
     try:
         py_compile.compile(file_name, doraise=True)
-        # pylint: disable=W0703
-        # [W0703(broad-except), ] Catching too general exception Exception.
+        # pylint: disable=broad-except
     except Exception as e:
         output.append(str(e))
     return output
@@ -974,6 +973,7 @@ def _run_linter(actions, args, file_names):
         _LOG.info(
             "Using %s threads", num_threads if num_threads > 0 else "all CPUs"
         )
+        # pylint: disable=import-outside-toplevel
         from joblib import Parallel, delayed
 
         output_tmp = Parallel(n_jobs=num_threads, verbose=50)(

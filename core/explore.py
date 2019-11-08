@@ -880,9 +880,12 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
     timestamps = corr_df.index.get_level_values(0).unique()
     for dt in tqdm.tqdm(timestamps):
         dbg.dassert_isinstance(dt, datetime.date)
-        corr_tmp = corr_df.loc[dt]
+        corr_tmp = corr_df.loc[dt].copy()
         # Compute rolling eigenvalues and eigenvectors.
-        eigval, eigvec = np.linalg.eig(corr_tmp.fillna(0.0))
+        # TODO(gp): Count and report inf and nans as warning.
+        corr_tmp.replace([np.inf, -np.inf], np.nan, inplace=True)
+        corr_tmp.fillna(0.0, inplace=True)
+        eigval, eigvec = np.linalg.eig(corr_tmp)
         # Sort eigenvalues, if needed.
         if not (sorted(eigval) == eigval).all():
             _LOG.debug("eigvals not sorted: %s", eigval)
@@ -1188,13 +1191,13 @@ def ols_regress(
         "param_names": param_names,
         "coeffs": model.params,
         "pvals": model.pvalues,
-        # pylint: disable=E1101
+        # pylint: disable=no-member
         "rsquared": model.rsquared,
         "adj_rsquared": model.rsquared_adj,
         "model": model,
     }
     if print_model_stats:
-        # pylint: disable=E1101
+        # pylint: disable=no-member
         _LOG.info(model.summary().as_text())
     if tsplot or jointplot_:
         if max_nrows is not None and df.shape[0] > max_nrows:

@@ -16,6 +16,7 @@
          * [Overwrite a conda environment with create_conda.py](#overwrite-a-conda-environment-with-create_condapy)
          * [Manually delete a conda environment](#manually-delete-a-conda-environment)
          * [To delete the entire conda installation (advanced users)](#to-delete-the-entire-conda-installation-advanced-users)
+      * [Update anaconda](#update-anaconda)
    * [Be patient](#be-patient)
    * [Workflow examples](#workflow-examples)
       * [Working with multiple clients](#working-with-multiple-clients)
@@ -75,7 +76,7 @@
     > git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
     ```
     - If you encounter the error
-        ```buildoutcfg
+        ```bash
         git@github.com: Permission denied (publickey).
         fatal: Could not read from remote repository.
 
@@ -137,7 +138,7 @@
 - Every time you cd in a shell:
 - You need to run:
     ```bash
-    source dev_scripts/setenv.sh
+    source dev_scripts/setenv_p1.sh
     ```
     
 ## Delete / recreate environment
@@ -152,10 +153,10 @@
   e.g., `./dev_scripts/create_conda.p1_develop.sh`
       ```bash
       > amp/dev_scripts/install/create_conda.py \
-        --env_name $CONDA_ENV \
-        --req_file amp/dev_scripts/install/requirements/develop.yaml \
-        --req_file dev_scripts/install/requirements/p1_develop.yaml \
-        --delete_env_if_exists
+            --env_name $CONDA_ENV \
+            --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \
+            --req_file dev_scripts/install/requirements/p1_develop.yaml \
+            --delete_env_if_exists
       ```
 
 - The `create_conda.py` help as some useful examples of command lines, see the
@@ -203,6 +204,28 @@
     ```
 - Run `rm -rf /anaconda3`
 - A good idea is to move it so you can resume the state
+
+## Update anaconda
+
+- To update anaconda (i.e., the framework that manages conda packages and `conda`
+  executable)
+  ```bash
+  > conda activate base
+  # Remove index cache, lock files, tarballs, unused cache packages, and source
+  # cache.
+  > conda clean --all
+  > conda update conda
+  > conda update anaconda
+  > conda -V
+  conda 4.7.12
+  ```
+
+- You can try to activate one environment
+    ```bash
+    > conda activate amp_develop
+    > which python
+    /Users/saggese/.conda/envs/amp_develop/bin/python
+    ```
 
 # Be patient
 

@@ -1,18 +1,22 @@
 #!/usr/bin/env python
 
 """
+This script should have *no* dependencies from anything: it should be able to run
+before setenv.sh, on a new system with nothing installed. It can use //amp
+libraries.
+
 # Install the `amp` default environment:
-> create_conda.py --env_name develop --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists
+> create_conda.py --env_name amp_develop --req_file dev_scripts/install/requirements/amp_develop.yaml --delete_env_if_exists
 
 # Install the `p1_develop` default environment:
-> create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/develop.yaml --req_file dev_scripts/install/requirements/p1_develop.yaml --delete_env_if_exists
+> create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/amp_develop.yaml --req_file dev_scripts/install/requirements/p1_develop.yaml --delete_env_if_exists
 
 # Quick install to test the script:
 > create_conda.py --test_install -v DEBUG
 
 # Test the `develop` environment with a different name before switching the old
 # develop env:
-> create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/develop.yaml --delete_env_if_exists
+> create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/amp_develop.yaml --delete_env_if_exists
 """
 
 import argparse
@@ -20,55 +24,21 @@ import logging
 import os
 import sys
 
-# ##############################################################################
+# Dir of the current create_conda.py.
+_CURR_DIR = os.path.dirname(sys.argv[0])
 
+# This script is `//amp/dev_scripts/install/create_conda.py`, so we need to go
+# up two levels to reach `//amp`.
+_AMP_REL_PATH = "../.."
+_AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
+assert os.path.exists(_AMP_PATH), "Can't find '%s'" % _AMP_PATH
+sys.path.insert(0, _AMP_PATH)
+# pylint: disable=wrong-import-position
+import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
 
-# Store the values before any modification, by making a copy (out of paranoia).
-_PATH = str(os.environ["PATH"]) if "PATH" in os.environ else ""
-_PYTHONPATH = str(os.environ["PYTHONPATH"]) if "PYTHONPATH" in os.environ else ""
+boot.bootstrap(_AMP_REL_PATH)
 
-
-def _bootstrap(rel_path_to_helpers):
-    """
-    Tweak PYTHONPATH to pick up amp libraries while we are configuring amp,
-    breaking the circular dependency.
-
-    Same code for dev_scripts/_setenv.py and dev_scripts/install/create_conda.py
-
-    # TODO(gp): It is not easy to share it as an import. Maybe we can just read
-    # it from a file an eval it.
-    """
-    exec_name = os.path.abspath(sys.argv[0])
-    amp_path = os.path.abspath(
-        os.path.join(os.path.dirname(exec_name), rel_path_to_helpers)
-    )
-    # Check that helpers exists.
-    helpers_path = os.path.join(amp_path, "helpers")
-    assert os.path.exists(helpers_path), "Can't find '%s'" % helpers_path
-    # Update path.
-    if False:
-        # For debug purposes.
-        print("PATH=%s" % _PATH)
-        print("PYTHONPATH=%s" % _PYTHONPATH)
-        print("amp_path=%s" % amp_path)
-    # We can't update os.environ since the script is already running.
-    sys.path.insert(0, amp_path)
-    # Test the imports.
-    try:
-        pass
-    except ImportError as e:
-        print("PATH=%s" % _PATH)
-        print("PYTHONPATH=%s" % _PYTHONPATH)
-        print("amp_path=%s" % amp_path)
-        raise e
-
-
-# This script is dev_scripts/install/create_conda.py, so we need to go up two
-# levels to reach "helpers".
-_bootstrap("../..")
-
-
-# pylint: disable=C0413
+# pylint: disable=wrong-import-position
 import helpers.conda as hco  # isort:skip # noqa: E402
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.env as env  # isort:skip # noqa: E402
@@ -76,12 +46,9 @@ import helpers.io_ as io_  # isort:skip # noqa: E402
 import helpers.printing as prnt  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
 
-# ##############################################################################
-
 _LOG = logging.getLogger(__name__)
 
-# Dir of the current create_conda.py.
-_CURR_DIR = os.path.dirname(sys.argv[0])
+# ##############################################################################
 
 # The following paths are expressed relative to create_conda.py.
 # TODO(gp): Allow them to tweak so we can be independent with respect to amp.

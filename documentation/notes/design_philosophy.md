@@ -1,5 +1,7 @@
 <!--ts-->
    * [Philosophy](#philosophy)
+      * [Measure seven times, cut once (Russian proverb)](#measure-seven-times-cut-once-russian-proverb)
+      * [Hacker laws](#hacker-laws)
       * [Keep it simple](#keep-it-simple)
       * [Tips from a pro](#tips-from-a-pro)
          * [Designing software systems is tricky](#designing-software-systems-is-tricky)
@@ -16,6 +18,73 @@
 <!--te-->
 
 # Philosophy
+
+## Measure seven times, cut once (Russian proverb)
+
+- Before doing any work, sit down and plan
+
+    1) Describe somewhere *in writing* your high-level plan. Put it in a Google
+       doc to make it easier to collaborate and review.
+        - What should the code do?
+        - What are the functionalities you want to implement?
+        - What are the functionalities you don't want to implement (what are
+          you explicitly considering to be out-of-scope?)?
+        - What is more important, what is less important? E.g., in terms of
+          P0, P1, P2
+        - What are the requirements/invariants?
+        - What are the semantics of the entities involved?
+        - What are the analyses, the comparisons, and the plots?
+        - What are the ideas (expressed without any code!)?
+
+        - ETA: Spend quality time thinking about it (e.g., 30 mins, 1 hr)
+
+    2) Review the plan
+        - Look at the plan again with fresh eyes (e.g., go for a 5-min walk)
+        - Does the plan make sense?
+        - What can you remove?
+        - Can you make things simpler?
+        - What is not elegant?
+        - What entity is a special case of another?
+        - What is similar to what?
+
+        - ETA: Spend 30 mins thinking
+
+    3) Ask for someone to review the plan
+        - Don't be ashamed of asking for advice
+
+    4) Implement a design
+        - Transform the plan into high-level code, e.g.,
+            - What are the objects / functions involved?
+            - What are the responsibilities of each class / function?
+            - What are the code invariants?
+            - What are the data structures?
+        - Write the interfaces
+            - Only the interfaces! Refrain from implementing the logic
+            - Comment the interfaces clearly
+        - Think of how the objects / functions interact (who does what, what is
+          the data passed around)
+        - Sprinkle TODOs with ideas about potential problems, simpler approaches
+
+        - ETA: Spend 1/2 day, 1 day
+
+    5) Do a PR of the design
+
+    6) Once we converge on the design:
+        - Implement the functions
+        - Unit test
+        - PR
+
+- Remember:
+    - We want to do quick interactions: every day there is communication, update,
+      discussion
+    - Do not disappear for one week and come back with something that makes
+      sense only to you, or that you didn't get buy-in from others on
+
+## Hacker laws
+
+- A list of interesting "laws" (some are more rule of thumbs / heuristics)
+  related to computing:
+    - [hacker-laws](https://github.com/dwmkerr/hacker-laws)
 
 ## Keep it simple
 
