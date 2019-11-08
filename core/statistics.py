@@ -2,11 +2,10 @@ import logging
 import math
 from typing import List, Optional, Tuple
 
-from sklearn.model_selection import TimeSeriesSplit
-
 import pandas as pd
 import scipy as sp
 import statsmodels as sm
+from sklearn.model_selection import TimeSeriesSplit
 
 import helpers.dbg as dbg
 
@@ -76,8 +75,7 @@ def get_rolling_splits(
 
 
 def get_oos_start_split(
-    idx: pd.Index,
-    datetime_,
+    idx: pd.Index, datetime_
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Split index using OOS (out-of-sample) start datetime.
@@ -89,8 +87,7 @@ def get_oos_start_split(
 
 # TODO(Paul): Support train/test/validation or more.
 def get_train_test_pct_split(
-    idx: pd.Index,
-    train_pct: float,
+    idx: pd.Index, train_pct: float
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Split index into train and test sets by percentage.
@@ -106,8 +103,7 @@ def get_train_test_pct_split(
 
 
 def get_expanding_window_splits(
-    idx: pd.Index,
-    n_splits: int
+    idx: pd.Index, n_splits: int
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Generate splits with expanding overlapping windows.
