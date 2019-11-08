@@ -53,12 +53,18 @@ def get_time_series_rolling_folds(
     Partitions index into chunks and returns pairs of successive chunks.
 
     If the index looks like
-      [0, 1, 2, 3, 4, 5, 6, 7]
-    and
+        [0, 1, 2, 3, 4, 5, 6]
+    and n_splits = 4, then the splits would be
+        [([0, 1], [2, 3]),
+         ([2, 3], [4, 5]),
+         ([4, 5], [6])]
+
+    A typical use case is where the index is a monotonic increasing datetime
+    index. For such cases, causality is respected by the splits.
     """
     dbg.dassert_lte(1, n_splits)
     # Split into equal chunks.
-    chunk_size = int(math.ceil(idx.size) / n_splits)
+    chunk_size = int(math.ceil(idx.size / n_splits))
     dbg.dassert_lte(1, chunk_size)
     chunks = [idx[i : i + chunk_size] for i in range(0, idx.size, chunk_size)]
     dbg.dassert_eq(len(chunks), n_splits)
