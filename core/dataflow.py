@@ -373,10 +373,7 @@ class ColumnTransformer(Transformer):
 
 class DataframeMethodRunner(Transformer):
     def __init__(
-        self,
-        nid: str,
-        method: str,
-        method_kwargs: Optional[Any] = None,
+        self, nid: str, method: str, method_kwargs: Optional[Any] = None
     ):
         super().__init__(nid)
         dbg.dassert(method)
@@ -464,9 +461,11 @@ class SkLearnModel(SkLearnNode):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
-        dbg.dassert(df_in[df_in.isna().any(axis=1)].index.empty,
-                    "NaNs detected at index `%s`",
-                    str(df_in[df_in.isna().any(axis=1)].head().index))
+        dbg.dassert(
+            df_in[df_in.isna().any(axis=1)].index.empty,
+            "NaNs detected at index `%s`",
+            str(df_in[df_in.isna().any(axis=1)].head().index),
+        )
         df = df_in.copy()
         idx, x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
         self._model = self._model_func(**self._model_kwargs)
