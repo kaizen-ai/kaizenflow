@@ -16,35 +16,6 @@ SR_COL = "sharpe"
 RET_0_COL = "ret_0"
 
 
-def zscore(obj, com, demean, standardize, delay, min_periods=None):
-    """
-    DEPRECATE in favor of rolling_zscore in signal_processing.py.
-    """
-    dbg.dassert_type_in(obj, (pd.Series, pd.DataFrame))
-    # z-scoring might not be causal with delay=0, especially for predicted
-    # variables.
-    dbg.dassert_lte(0, delay)
-    # TODO(gp): Extend this to series.
-    dbg.dassert_monotonic_index(obj)
-    obj = obj.copy()
-    if min_periods is None:
-        min_periods = 3 * com
-    if demean:
-        mean = obj.ewm(com=com, min_periods=min_periods).mean()
-        if delay != 0:
-            mean = mean.shift(delay)
-        # TODO: Check the logic here (if demean=True, standardize=True, and
-        # delay > 0, then we end up shifting an already-shifted series...
-        obj = obj - mean
-    if standardize:
-        # TODO(gp): Remove nans, if needed.
-        std = obj.ewm(com=com, min_periods=min_periods).std()
-        if delay != 0:
-            std = std.shift(delay)
-        obj = obj / std
-    return obj
-
-
 def resample_1min(df, skip_weekends):
     """
     Resample a df to one minute resolution leaving np.nan for the empty minutes.
@@ -265,11 +236,7 @@ def compute_sharpe_ratio(
     return sr
 
 
-# TODO(Paul): Deprecate and remove.
-def annualize_sharpe_ratio(df):
-    return compute_sr(df)
-
-
+# TODO(Paul): Consider renaming.
 def compute_sr(rets):
     """
     NOTE: The current implementation of this resamples to daily but does not
@@ -336,6 +303,7 @@ def _compute_drawdown(log_rets: pd.Series) -> pd.Series:
     return -sums
 
 
+# TODO(Paul): Extend to DataFrames.
 def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     """
     Calculate drawdown in terms of percentage loss.
