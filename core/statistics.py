@@ -43,9 +43,11 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 # #############################################################################
 
 
-def ttest_1samp(df: pd.DataFrame,
-                popmean: Optional[float] = None,
-                nan_policy: Optional[str] = None) -> pd.DataFrame:
+def ttest_1samp(
+    df: pd.DataFrame,
+    popmean: Optional[float] = None,
+    nan_policy: Optional[str] = None,
+) -> pd.DataFrame:
     """
     Thin wrapper around scipy's ttest.
 
@@ -69,8 +71,7 @@ def ttest_1samp(df: pd.DataFrame,
     return result
 
 
-def multipletests(srs: pd.Series,
-                  method: Optional[str] = None) -> pd.Series:
+def multipletests(srs: pd.Series, method: Optional[str] = None) -> pd.Series:
     """
     Thin wrapper around statsmodel's multipletests.
 
@@ -89,10 +90,12 @@ def multipletests(srs: pd.Series,
     return pd.Series(pvals_corrected, index=srs.index, name=ADJ_PVAL_COL)
 
 
-def multi_ttest(df: pd.DataFrame,
-                popmean: Optional[float] = None,
-                nan_policy: Optional[str] = None,
-                method: Optional[str] = None) -> pd.DataFrame:
+def multi_ttest(
+    df: pd.DataFrame,
+    popmean: Optional[float] = None,
+    nan_policy: Optional[str] = None,
+    method: Optional[str] = None,
+) -> pd.DataFrame:
     """
     Combines ttest and multitest pvalue adjustment.
     """
