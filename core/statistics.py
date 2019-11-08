@@ -115,31 +115,20 @@ def get_expanding_window_splits(
     return splits
 
 
-def convert_splits_to_string(splits, df=None):
+def convert_splits_to_string(splits):
     txt = "n_splits=%s\n" % len(splits)
     for train_idxs, test_idxs in splits:
-        if df is None:
-            txt += "  train=%s [%s, %s]" % (
-                len(train_idxs),
-                min(train_idxs),
-                max(train_idxs),
-            )
-            txt += ", test=[%s, %s] %s" % (
-                len(test_idxs),
-                min(test_idxs),
-                max(test_idxs),
-            )
-        else:
-            txt += "  train=%s [%s, %s]" % (
-                len(train_idxs),
-                min(df.iloc[train_idxs]),
-                max(df.iloc[train_idxs]),
-            )
-            txt += ", test=%s [%s, %s]" % (
-                len(test_idxs),
-                min(df.iloc[test_idxs]),
-                max(df.iloc[test_idxs]),
-            )
+        txt += "train=%s [%s, %s]" % (
+            len(train_idxs),
+            min(train_idxs),
+            max(train_idxs),
+        )
+        txt += "\n"
+        txt += "test=%s [%s, %s]" % (
+            len(test_idxs),
+            min(test_idxs),
+            max(test_idxs),
+        )
         txt += "\n"
     return txt
 
