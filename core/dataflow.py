@@ -55,7 +55,7 @@ def extract_info(dag, methods):
 # #############################################################################
 
 
-class SkLearnNode(Node, abc.ABC):
+class FitPredictNode(Node, abc.ABC):
     """
     Define an abstract class with sklearn-style `fit` and `predict` functions.
 
@@ -96,7 +96,7 @@ class SkLearnNode(Node, abc.ABC):
         self._info[method] = copy.copy(values)
 
 
-class DataSource(SkLearnNode, abc.ABC):
+class DataSource(FitPredictNode, abc.ABC):
     """
     A source node that can be configured for cross-validation.
     """
@@ -119,7 +119,7 @@ class DataSource(SkLearnNode, abc.ABC):
         self._fit_idxs = fit_idxs
 
     # DataSource does not have a `df_in` in either `fit` or `predict` as a
-    # typical `SkLearnNode` does.
+    # typical `FitPredictNode` does.
     # pylint: disable=arguments-differ
     def fit(self):
         """
@@ -159,7 +159,7 @@ class DataSource(SkLearnNode, abc.ABC):
         return self.df
 
 
-class Transformer(SkLearnNode, abc.ABC):
+class Transformer(FitPredictNode, abc.ABC):
     """
     Stateless Single-Input Single-Output node.
     """
@@ -207,7 +207,7 @@ class ReadDataFromDf(DataSource):
 # #############################################################################
 
 
-class Merger(SkLearnNode):
+class Merger(FitPredictNode):
     """
     Performs a merge of two inputs.
     """
@@ -440,7 +440,7 @@ class Resample(Transformer):
 # #############################################################################
 
 
-class SkLearnModel(SkLearnNode):
+class SkLearnModel(FitPredictNode):
     def __init__(
         self,
         nid: str,
