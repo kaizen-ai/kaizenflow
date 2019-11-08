@@ -5,6 +5,7 @@ import core.config as cfg
 """
 
 import collections
+import copy
 import logging
 
 # #############################################################################
@@ -88,12 +89,9 @@ class Config:
 
     def copy(self):
         """
-        Equivalent to `dict.copy()`
+        Create a deep copy of the Config object.
         """
-        config_dict = self._config.copy()
-        config_copy = Config()
-        config_copy._config = config_dict
-        return config_copy
+        return copy.deepcopy(self)
 
     @classmethod
     def from_python(cls, code):
