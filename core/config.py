@@ -90,7 +90,10 @@ class Config:
         """
         Equivalent to `dict.copy()`
         """
-        return self._config.copy()
+        config_dict = self._config.copy()
+        config_copy = Config()
+        config_copy._config = config_dict
+        return config_copy
 
     @classmethod
     def from_python(cls, code):
