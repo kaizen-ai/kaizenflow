@@ -371,6 +371,34 @@ class ColumnTransformer(Transformer):
         return df, info
 
 
+class DataframeMethodRunner(Transformer):
+    def __init__(
+        self,
+        nid: str,
+        method: str,
+        method_kwargs: Optional[Any] = None,
+    ):
+        super().__init__(nid)
+        dbg.dassert(method)
+        # TODO(Paul): Ensure that this is a valid method.
+        self._method = method
+        if method_kwargs is not None:
+            self._method_kwargs = method_kwargs
+        else:
+            self._method_kwargs = {}
+
+    def _transform(self, df):
+        df = df.copy()
+        df = getattr(df, self._method)(**self._method_kwargs)
+        # Not all methods return DataFrames. We want to restrict to those that
+        # do.
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        #
+        info = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
 class FilterAth(Transformer):
     def _transform(self, df):
         df = df.copy()
@@ -436,6 +464,9 @@ class SkLearnModel(SkLearnNode):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert(df_in[df_in.isna().any(axis=1)].index.empty,
+                    "NaNs detected at index `%s`",
+                    str(df_in[df_in.isna().any(axis=1)].head().index))
         df = df_in.copy()
         idx, x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
         self._model = self._model_func(**self._model_kwargs)
@@ -483,8 +514,6 @@ class SkLearnModel(SkLearnNode):
 
     # TODO(Paul): Add type hints.
     def _to_sklearn_format(self, df):
-        # Drop NaNs and prepare the index for sklearn.
-        df = df.dropna()
         idx = df.index
         df = df.reset_index()
         # TODO(Paul): replace with class name
