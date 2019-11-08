@@ -24,10 +24,19 @@
 
 # Task management with GitHub
 
+## GH stands for GitHub
+
 ## Everything we work on comes as a GitHub task
 
 - We file tasks and then prioritize and distribute the workload
 - We try to work always on P0 tasks
+
+## Issues vs bugs vs tasks
+
+- We call GitHub issues interchangeably issues, bugs, and tasks
+- "Bugs" is improper since many times we use GitHub to track ideas, activities,
+  improvements and not only defect in the code
+- Probably the best name is "tasks"
 
 ## Use the proper labels
 
@@ -45,7 +54,7 @@
 - `BLOCKING`: there is an action that needs to be taken in order to make progress
   unblocking the task
 
-## Life cycle of a bug
+## Life cycle of a bug / task
 
 - When you start working on a bug, mark it as in `PROGRESS`
 - Make sure the label, the description, and the assignees are up to date
@@ -117,26 +126,65 @@
 
 - Exceptions are small commits that are not part of a feature
 
+## Post-commit comments
+
+- We follow commits to `master` and might ask to perform some fixes after the
+  commit
+- Try not to miss those emails, given the high number of emails we get
+- Solutions:
+    - Improve your email workflow, e.g., by using "flags" in Gmail web interface
+      and / or an email client. Do not rely on "unread" emails as a reminder of
+      what to do. It's easy to mark an email as read by mistake
+    - Try to do the fix as soon as possible, so you don't forget
+    - If you disagree with the proposed change say so and do not linger the
+      comment in the oblivion
+
+## Addressing post-commit comments
+
+- Once the CL addressing the reviewer's comments is checked in:
+    - Refer to the GH task number (e.g, `PartTask...`)
+    - Add a comment to the commit like "Do-this-and-that as per reviewers
+      request"
+    - Reply to the GitHub email with the comment with "DONE" to notify the
+      reviewer that the comment was addressed
+
 ## Use branches and PR
 
 - We try to get all the code to be reviewed before it's merged into `master`
 
-## Optional review
+## Optional PR review
 
-- Sometimes we want to track an "optional" PR in GitHub
-- Doing a PR and then merging (even through command line) closes the PR
-- The approach is just post the link to the PR in the task and use a @mention
-  to get attention
+- Sometimes we want to do an "optional" review in GitHub
+
+- The process is:
+    - Create a PR
+    - Tag the reviewers, adding a description if needed
+    - Merge the PR without waiting for the review
+
+- The problem is that merging closes the PR
+    - 
+    - One approach is to post the link to the PR in the task and use a @mention to
+  get attention
     - We can also ping via email / IM to notify the person
+
+- The problem is that once the reviewers get to that PR and add comments, emails
+  are sent, but GitHub doesn't track the PR as open
+    - The comments are there but not "resolved"
+    - One needs to go to the PR address, e.g.,
+      `https://github.com/alphamatic/amp/pull/52` to see the comments but there
+      is no way to reopen the PR to signal that there is something to address
+    - Unfortunately this requires discipline and organization in the email
+      management of the person that is managing the PR
+
+- As usual for all the post-commit review:
+    - address the comments as soon as possible
+    - close the conversation on GH marking them as resolved
+    - tag commits as addressing reviewers' comments
 
 ## Apply reviewers' comments for post-commit / optional review
 
 - You can check in directly in `master` using the right task number (e.g., 
   `PartTask351: ...`)
-
-## Post-commit comments
-
-- We follow commits to `master` and might ask to perform some fixes
 
 ## Reviewers don't follow a branch
 

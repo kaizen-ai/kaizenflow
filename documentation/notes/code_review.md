@@ -41,6 +41,11 @@
   although creating a review branch and pull request is still best
 - The alternative is to comment on the relevant lines in an individual commit 
 
+## Close the PR and delete the branch
+- When code is merged into `master` by one of the reviewers through the UI one
+  can select the delete branch option
+- Otherwise you can delete the branch using the procedure in `git.md`
+
 # PR checklist
 - From [Google reviewer
   checklist](https://google.github.io/eng-practices/review/reviewer/looking-for.html):
@@ -67,10 +72,11 @@
     - merge the branch under review with another branch; or
     - branch from a branch
 
-## Why do we review code
+## Why we review code
 - We spend time reviewing each other code so that we can:
-    - build a better product
-    - learn from each other
+    - Build a better product, by letting other people look for bugs
+    - Propagate knowledge of the code base through the team
+    - Learn from each other
 
 ## Reviewing other people's code is usually not fun
 - Reviewing code is time-consuming and tedious
@@ -108,8 +114,3 @@
 
 ## Look at the code top-to-bottom
 - E.g., if you do search & replace, make sure everything is fine
-
-## Close the PR and delete the branch
-- When code is merged into `master` by one of the reviewers through the UI one
-  can select the delete branch option
-- Otherwise you can delete the branch using the procedure in `git.md`

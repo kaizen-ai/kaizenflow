@@ -162,7 +162,7 @@
        - [ ] All files in the PR have been linted with `linter.py`
        - [ ] All tests pass
    - If your work is ready for review, make a pull request
-       - Use the GitHub UI (for now; we may replace with a script).
+       - Use the GitHub UI (for now; we may replace with a script)
          Go to the branch on the web interface and push "Compare & pull request"
        - Make sure that GP and Paul are assigned as reviewers, as well as
          anyone else who may be interested

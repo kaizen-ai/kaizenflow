@@ -1,0 +1,221 @@
+# Kibot
+
+- http://www.kibot.com/
+
+- Kibot offers market data for:
+    - US stocks
+    - ETFs
+    - Futures
+    - Forex
+
+- Both 1-minute level and tick data (time and sales)
+    - From 1-minute level data Kibot creates bar data for 5, 30, 60 minutes data
+
+- History length
+    - 21 years of minute-level intraday data for stocks and ETFs
+    - 10 years of minute level intraday for Forex and Futures
+    - 10 years of tick-by-tick stock, ETFs, Forex, and Futures
+
+- Historical data are verified for accuracy
+    - TODO(gp): Not clear how
+
+## Buy
+- From [here](http://www.kibot.com/buy.aspx)
+
+- Do not provide real-time or streaming data
+- Daily (end-of-day) data is free / included with tick, second, or minute data
+    - TODO(gp): Probably because EOD can be regenerated from higher frequency
+      data for most of the data sets (maybe not for futures?)
+- Aggregated data (1, 5, 15, 30 mins) is free / included with tick data
+- Data include
+    - pre-market and after-market data for stocks / ETFs
+    - 24h trading for futures and forex
+- Stocks / ETFs adjustments
+    - Unadjusted
+    - Adjusted for splits and dividends
+    - Adjusted for splits
+
+### Subscription
+
+- Premium subscription (from [here](http://www.kibot.com/updates.aspx))
+    - Daily data updates
+    - 4 years of minute data for Stocks, ETFs, Futures and Forex
+    - Up to 57 years of EOD historical data
+    - $139 / month
+- Maybe Professional subscription is fine
+    - Same as Premium but only 2 years of minute data
+    - $69 / month
+
+### Historical data
+
+- There is the list of all names included in each package
+
+- 200 most liquid stocks
+    - 200 names
+    - 1 minute data, from 1998 -> $520
+    - Tick + bid / ask, from 2009 -> $2,250
+
+- SP500
+    - 591 names (it seems that it has no survivorship bias)
+    - 1 minute data, from 1998 -> $750 (<--)
+    - Tick + bid / ask, from 2009 -> $1,500
+
+- All stocks
+    - 8300 names
+    - 1 minute data, from 1998 -> $3,000
+    - Tick + bid / ask, from 2009 -> $9,000
+
+- All ETFs
+    - 1950 names
+    - 1 minute data, from 1998 -> $1,200
+    - Tick + bid / ask, from 2009 -> $3,600
+
+- All forex
+    - 1189 names
+    - 1 minute data, from 2009 -> $350
+    - Tick + bid / ask, from 2009 -> $990
+
+- All futures (continuous and individual contracts)
+    - 5621 names
+    - 1 minute data, from 2009 -> $820
+    - Tick + bid / ask, from 2009 -> $3,750
+
+## API
+- From [here](http://www.kibot.com/api/historical_data_api_sdk.aspx)
+- All data is available after the close of the regular market session
+- US stocks and ETFs minute data is delayed 30 mins during market hours
+    - Both adjusted and unadjusted data is available
+    - Adjusted for splits only (and not dividends) with the same methodology of
+      Yahoo / Google Finance
+
+## FAQs
+- From [here](http://www.kibot.com/Support.aspx)
+
+### Data delivery
+- Data is delivered through website or FTP
+
+- List of symbols
+    - [Active](http://www.kibot.com/files/2/allactive.txt)
+    - [Delisted](http://www.kibot.com/files/2/alldelisted.txt)
+    - Files are updated once per week
+
+### Historical minute data format
+
+- CSV files
+- For minute (and higher) data the format is:
+    - Date `MM/DD/YYYY`, Time `hh:mm`, Open, High, Low, Close, Volume
+    - Time zone is always ET
+
+- Aggregated data have a time value indicating the time when the bar opened
+    ```
+    a time stamp of 10:00 AM is for a period between 10:00:00 AM and 10:00:59 AM.
+    All records with a time stamp between 9:30:00 AM and 3:59:59 PM represent the
+    regular US stock market trading session.
+    ```
+
+### Historical tick data format
+
+- CSV files
+- The format is:
+    - Date, Time, Bid, Ask, Size
+
+- The bid / ask prices are recorded when a trade occurs and represent NBBO across
+  multiple exchanges and ECNs
+- Trade is recorded with transaction price and volume
+- All transactions are included, and are not aggregated
+
+### Historical aggregate bid / ask data
+
+- The format is:
+    - Date, Time,
+    - BidOpen, BidHigh, BidLow, BidClose
+    - AskOpen, AskHigh, AskLow, AskClose
+
+### Time zone
+- The time zone is always ET, even if data comes from CBOT (in the CT timezone)
+- Time values are conformed to EST (standard time, UTC-5) and EDT (daylight
+  saving time, UTC-4)
+
+### Market sessions
+- Our stocks and ETFs have:
+    - pre-market session: 8:00-9:30am ET
+    - regular session: 9:30-16:00 ET
+    - after market: 16:00-18:30 ET
+- Some liquid ETFs (e..g, SPY) trades from 4am to 8pm ET
+
+### Missing minutes
+- If a bar is missing it means that there were no trades in that interval
+    - E.g., during pre / after market sessions, or for less liquid stocks
+
+### Historical tick data
+- Only transaction volume is recorded together with best bid / ask prices at the
+  moment of the transaction (across multiple exchanges, NBBO)
+- Kibot doesn't record bid / ask volume or multiple bid / ask levels
+    - According to SEC 97% of orders are cancelled, thus bid / ask volume are
+      unreliable
+
+### Prices outside bid/ask spread
+- Prices can be outside bid / ask spreads for several reasons
+
+1) For illiquid instruments an order cannot be filled with the first bid / ask
+   spread
+- The price registered becomes the average of multiple price levels included in
+  the trade
+
+2) A large block trade can be handled by the block desk at a market maker firm
+   and reported to the exchange
+- The price can be at a price outside bid / ask spread at the report time
+
+3) Bid / ask are taken across multiple markets
+
+### Historical futures data
+
+- The continuous contract rolls to the contract
+- No back-adjust previous contract data
+    - TODO(gp): Then there could be a little jump
+- Rollover happens on (or 2-7 days before) the expiration date
+    - TODO(gp): Unclear when exactly
+- The expiration date is available in the metadata
+    - Expiration is 9:30am ET on the third Friday of the delivery month
+
+### Settlement price
+
+- The settlement price is set by the exchange as weighted average price shortly
+  before the close of the market
+- The close value of the last bar in the daily data reflects the settlement price
+
+- For this reason the last minute price might be different from the closing price
+
+### Historical forex data
+
+- Forex market is not organized in a central exchange
+- Historical forex data has no price or volume, but has bid / ask prices only
+- Volume is reported as the number of times the bid / ask has changed in that
+  minute
+
+### Indexes
+
+- Kibot doesn't track changes to indices, like SP500
+
+### Data quality
+
+- The feed you receive from your broker should have the same data as Kibot
+    - The feed is combined as NBBO
+
+- Due to lack of liquidity it is possible to have spikes in the pre / after
+  sessions
+    - TODO(gp): Compute sensitivity by using all market data vs regular session
+
+- Kibot adjusted stock data should match Yahoo "Adj Close"
+- Kibot unadjusted stock data should match Yahoo "Close"
+
+### Missing bars
+- There are no always 390 1-minute bar per day in a regular session
+    $$(16:00 - 9:30) * 60 = 6.5 * 60 = 390$$
+
+
+## Data format
+- http://www.kibot.com/Data_Format.aspx
+
+## Comparing to other sources
+- http://www.kibot.com/comparedata.aspx
