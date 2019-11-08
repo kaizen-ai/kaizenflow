@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import tqdm
 from IPython.display import display
-from sklearn import linear_model
 
 import core.finance as fin
 import helpers.dbg as dbg
@@ -73,67 +72,68 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
     return result_split
 
 
-def fit_model_from_config(config, df, result_bundle):
-    # Compute the splits to be used in the train / test loop.
-    splits = get_splits(config, df)
-    #
-    y_var = result_bundle["y_var"]
-    x_vars = result_bundle["x_vars"]
-    # TODO: Fix this
-    # result_bundle["num_splits"] = len(splits)
-    result_bundle["num_splits"] = 0
-    #
-    result_splits = []
-    for i, (train_idxs, test_idxs) in enumerate(splits):
-        # Check that there is no intersection between train / test.
-        # This is not true when we use the entire dataset for both train / test.
-        dbg.dassert_eq(len(set(train_idxs).intersection(set(test_idxs))), 0)
-        result_bundle["num_splits"] += 1
-        result_split = {}
-
-        # ==== Train ====
-        tag = "train"
-        x_train = df.iloc[train_idxs][x_vars]
-        y_train = df.iloc[train_idxs][y_var]
-        #
-        reg = linear_model.LinearRegression()
-        model = reg.fit(x_train, y_train)
-        result_split["idx"] = i
-        # TODO: Improve the name of the split.
-        result_split["name"] = "split_%s" % i
-        result_split["model_coeffs"] = [model.intercept_] + model.coef_.tolist()
-        # TODO: Should we pass a 1 column in the dataframe and make all the
-        # predictors handled in the same way?
-        result_split["model_x_vars"] = ["intercept"] + x_vars
-        # Add stats about splits and model.
-        result_split = _add_split_stats(df, train_idxs, tag, result_split)
-        result_split = _add_model_perf(
-            tag, model, df, train_idxs, x_train, y_train, result_split
-        )
-        perf_as_string = _model_perf_to_string(result_split, tag)
-
-        # ==== Test ====
-        tag = "test"
-        x_test = df.iloc[test_idxs][x_vars]
-        y_test = df.iloc[test_idxs][y_var]
-        # Add stats about splits and model.
-        result_split = _add_split_stats(df, test_idxs, tag, result_split)
-        result_split = _add_model_perf(
-            tag, model, df, test_idxs, x_test, y_test, result_split
-        )
-        perf_as_string += " " + _model_perf_to_string(result_split, tag)
-
-        # Print results for this split.
-        result_split["perf_as_string"] = perf_as_string
-        _LOG.info("%s", perf_as_string)
-
-        result_splits.append(result_split)
-    #
-    result_bundle["result_split"] = result_splits
-    dbg.dassert_eq(
-        len(result_bundle["result_split"]), result_bundle["num_splits"]
-    )
-    return result_bundle
+# TODO(Paul): Delete this once we migrate the remaining pieces to core.
+# def fit_model_from_config(config, df, result_bundle):
+#     # Compute the splits to be used in the train / test loop.
+#     splits = get_splits(config, df)
+#     #
+#     y_var = result_bundle["y_var"]
+#     x_vars = result_bundle["x_vars"]
+#     # TODO: Fix this
+#     # result_bundle["num_splits"] = len(splits)
+#     result_bundle["num_splits"] = 0
+#     #
+#     result_splits = []
+#     for i, (train_idxs, test_idxs) in enumerate(splits):
+#         # Check that there is no intersection between train / test.
+#         # This is not true when we use the entire dataset for both train / test.
+#         dbg.dassert_eq(len(set(train_idxs).intersection(set(test_idxs))), 0)
+#         result_bundle["num_splits"] += 1
+#         result_split = {}
+#
+#         # ==== Train ====
+#         tag = "train"
+#         x_train = df.iloc[train_idxs][x_vars]
+#         y_train = df.iloc[train_idxs][y_var]
+#         #
+#         reg = linear_model.LinearRegression()
+#         model = reg.fit(x_train, y_train)
+#         result_split["idx"] = i
+#         # TODO: Improve the name of the split.
+#         result_split["name"] = "split_%s" % i
+#         result_split["model_coeffs"] = [model.intercept_] + model.coef_.tolist()
+#         # TODO: Should we pass a 1 column in the dataframe and make all the
+#         # predictors handled in the same way?
+#         result_split["model_x_vars"] = ["intercept"] + x_vars
+#         # Add stats about splits and model.
+#         result_split = _add_split_stats(df, train_idxs, tag, result_split)
+#         result_split = _add_model_perf(
+#             tag, model, df, train_idxs, x_train, y_train, result_split
+#         )
+#         perf_as_string = _model_perf_to_string(result_split, tag)
+#
+#         # ==== Test ====
+#         tag = "test"
+#         x_test = df.iloc[test_idxs][x_vars]
+#         y_test = df.iloc[test_idxs][y_var]
+#         # Add stats about splits and model.
+#         result_split = _add_split_stats(df, test_idxs, tag, result_split)
+#         result_split = _add_model_perf(
+#             tag, model, df, test_idxs, x_test, y_test, result_split
+#         )
+#         perf_as_string += " " + _model_perf_to_string(result_split, tag)
+#
+#         # Print results for this split.
+#         result_split["perf_as_string"] = perf_as_string
+#         _LOG.info("%s", perf_as_string)
+#
+#         result_splits.append(result_split)
+#     #
+#     result_bundle["result_split"] = result_splits
+#     dbg.dassert_eq(
+#         len(result_bundle["result_split"]), result_bundle["num_splits"]
+#     )
+#     return result_bundle
 
 
 # TODO(Paul): Find a new home for similar functionality in `core`.
