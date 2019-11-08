@@ -2,14 +2,12 @@ import collections
 import functools
 import glob
 import logging
-import math
 
 import numpy as np
 import pandas as pd
 import tqdm
 from IPython.display import display
 from sklearn import linear_model
-from sklearn.model_selection import TimeSeriesSplit
 
 import core.finance as fin
 import helpers.dbg as dbg
@@ -73,62 +71,6 @@ def _add_model_perf(tag, model, df, idxs, x, y, result_split):
     )
     result_split[tag + ".sr"] = fin.compute_sr(result_split[tag + ".pnl_rets"])
     return result_split
-
-
-def get_splits(config, df):
-    cv_split_style = config["cv_split_style"]
-    if "datetime" in df.columns:
-        _LOG.info(
-            "len=%s min_date=%s, max_date=%s",
-            df.shape[0],
-            df.iloc[0]["datetime"],
-            df.iloc[-1]["datetime"],
-        )
-    if cv_split_style == "TimeSeriesSplit":
-        # Expanding window with n folds.
-        n_splits = config["cv_n_splits"]
-        dbg.dassert_lte(1, n_splits)
-        tscv = TimeSeriesSplit(n_splits=n_splits)
-        splits = list(tscv.split(df))
-    elif cv_split_style == "TimeSeriesRollingFolds":
-        # Rolling window using n folds.
-        n_splits = config["cv_n_splits"]
-        dbg.dassert_lte(1, n_splits)
-        idxs = range(df.shape[0])
-        # Split in equal chunks.
-        chunk_size = int(math.ceil(len(idxs) / n_splits))
-        dbg.dassert_lte(1, chunk_size)
-        chunks = [
-            idxs[i : i + chunk_size] for i in range(0, len(idxs), chunk_size)
-        ]
-        dbg.dassert_eq(len(chunks), n_splits)
-        #
-        splits = list(zip(chunks[:-1], chunks[1:]))
-    elif cv_split_style == "TrainTest":
-        # TODO: Pass this through config
-        # cutoff_date = "2016-01-04 09:30:00"
-        cutoff_date = "2010-01-12 09:30:00"
-        cutoff_date = pd.to_datetime(cutoff_date)
-        # Look for the cutoff_date.
-        idx = np.where(df["datetime"] == cutoff_date)
-        _LOG.debug("idx=%s", idx)
-        dbg.dassert_lt(0, len(idx))
-        idx = idx[0][0]
-        _LOG.debug("idx=%s", idx)
-        splits = [(range(idx), range(idx, df.shape[0]))]
-    elif cv_split_style == "TrainTestPct":
-        train_pct = config["cv_train_pct"]
-        dbg.dassert_lte(0.0, train_pct)
-        dbg.dassert_lte(train_pct, 1.0)
-        #
-        idx = int(train_pct * df.shape[0])
-        dbg.dassert_lte(0, idx)
-        dbg.dassert_lte(idx, df.shape[0])
-        _LOG.debug("idx=%s", idx)
-        splits = [(range(idx), range(idx, df.shape[0]))]
-    else:
-        raise ValueError("Invalid cv_split_style='%s'" % cv_split_style)
-    return splits
 
 
 def fit_model_from_config(config, df, result_bundle):

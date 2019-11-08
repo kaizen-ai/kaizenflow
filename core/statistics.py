@@ -2,6 +2,8 @@ import logging
 import math
 from typing import List, Optional, Tuple
 
+from sklearn.model_selection import TimeSeriesSplit
+
 import pandas as pd
 import scipy as sp
 import statsmodels as sm
@@ -46,7 +48,7 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 # #############################################################################
 
 
-def get_time_series_rolling_folds(
+def get_rolling_splits(
     idx: pd.Index, n_splits: int
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
@@ -62,16 +64,58 @@ def get_time_series_rolling_folds(
     A typical use case is where the index is a monotonic increasing datetime
     index. For such cases, causality is respected by the splits.
     """
-    dbg.dassert_lte(1, n_splits)
+    dbg.dassert_lte(2, n_splits)
     # Split into equal chunks.
     chunk_size = int(math.ceil(idx.size / n_splits))
     dbg.dassert_lte(1, chunk_size)
     chunks = [idx[i : i + chunk_size] for i in range(0, idx.size, chunk_size)]
     dbg.dassert_eq(len(chunks), n_splits)
     #
-    idx_splits = [idx[chunk] for chunk in chunks]
+    splits = list(zip(chunks[:-1], chunks[1:]))
+    return splits
+
+
+def get_oos_start_split(
+    idx: pd.Index,
+    datetime_,
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Split index using OOS (out-of-sample) start datetime.
+    """
+    ins = idx[idx < datetime_]
+    oos = idx[idx >= datetime_]
+    return [(ins, oos)]
+
+
+# TODO(Paul): Support train/test/validation or more.
+def get_train_test_pct_split(
+    idx: pd.Index,
+    train_pct: float,
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Split index into train and test sets by percentage.
+    """
+    dbg.dassert_lte(0.0, train_pct)
+    dbg.dassert_lte(train_pct, 1.0)
     #
-    splits = list(zip(idx_splits[:-1], idx_splits[1:]))
+    train_size = int(train_pct * idx.size)
+    dbg.dassert_lte(0, train_size)
+    train_split = idx[:train_size]
+    test_split = idx[train_size:]
+    return [(train_split, test_split)]
+
+
+def get_expanding_window_splits(
+    idx: pd.Index,
+    n_splits: int
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Generate splits with expanding overlapping windows.
+    """
+    dbg.dassert_lte(1, n_splits)
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+    locs = list(tscv.split(idx))
+    splits = [(idx[loc[0]], idx[loc[1]]) for loc in locs]
     return splits
 
 
