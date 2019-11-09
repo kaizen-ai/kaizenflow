@@ -51,7 +51,7 @@ def get_rolling_splits(
     idx: pd.Index, n_splits: int
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
-    Partitions index into chunks and returns pairs of successive chunks.
+    Partition index into chunks and returns pairs of successive chunks.
 
     If the index looks like
         [0, 1, 2, 3, 4, 5, 6]
@@ -63,6 +63,7 @@ def get_rolling_splits(
     A typical use case is where the index is a monotonic increasing datetime
     index. For such cases, causality is respected by the splits.
     """
+    dbg.dassert_monotonic_index(idx)
     dbg.dassert_lte(2, n_splits)
     # Split into equal chunks.
     chunk_size = int(math.ceil(idx.size / n_splits))
@@ -80,8 +81,13 @@ def get_oos_start_split(
     """
     Split index using OOS (out-of-sample) start datetime.
     """
-    ins = idx[idx < datetime_]
-    oos = idx[idx >= datetime_]
+    dbg.dassert_monotonic_index(idx)
+    ins_mask = idx < datetime_
+    dbg.dassert_lte(1, ins_mask.sum())
+    oos_mask = ~ins_mask
+    dbg.dassert_lte(1, oos_mask.sum())
+    ins = idx[ins_mask]
+    oos = idx[oos_mask]
     return [(ins, oos)]
 
 
@@ -92,8 +98,9 @@ def get_train_test_pct_split(
     """
     Split index into train and test sets by percentage.
     """
-    dbg.dassert_lte(0.0, train_pct)
-    dbg.dassert_lte(train_pct, 1.0)
+    dbg.dassert_monotonic_index(idx)
+    dbg.dassert_lt(0.0, train_pct)
+    dbg.dassert_lt(train_pct, 1.0)
     #
     train_size = int(train_pct * idx.size)
     dbg.dassert_lte(0, train_size)
@@ -108,6 +115,7 @@ def get_expanding_window_splits(
     """
     Generate splits with expanding overlapping windows.
     """
+    dbg.dassert_monotonic_index(idx)
     dbg.dassert_lte(1, n_splits)
     tscv = TimeSeriesSplit(n_splits=n_splits)
     locs = list(tscv.split(idx))
