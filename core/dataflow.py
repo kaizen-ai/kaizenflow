@@ -556,7 +556,7 @@ class SkLearnModel(FitPredictNode):
 
 def _get_source_idxs(dag: DAG):
     """
-    Warms up source nodes and extracts dataframe indices.
+    Warm up source nodes and extract dataframe indices.
     """
     # Warm up source nodes to get dataframes from which we can generate splits.
     source_nids = dag.get_sources()
@@ -572,11 +572,15 @@ def _get_source_idxs(dag: DAG):
 # TODO(Paul): Formalize what this returns and what can be done with it.
 def cross_validate(dag, split_func, split_func_kwargs):
     """
-    Generates splits, runs train/test, collects info.
+    Generate splits, run train/test, collect info.
 
     :return: DAG info for each split, keyed by split.
     """
     source_idxs = _get_source_idxs(dag)
+    # TODO(Paul): `union` may be a good choice if we make some assumptions
+    # on the source indices, e.g., that they cover the same time period.
+    # If additional assumptions are not made, then the splits that result
+    # may have various undesirable characteristics.
     idx_union = functools.reduce(lambda x, y: x.union(y), source_idxs.values())
     splits = split_func(idx_union, **split_func_kwargs)
     _LOG.debug(stat.convert_splits_to_string(splits))
