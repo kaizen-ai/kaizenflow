@@ -221,10 +221,10 @@ def get_credentials():
             server_name,
             __file__,
         )
-    conda_sh_path = os.path.abspath(conda_sh_path)
+    conda_sh_path = os.path.abspath(os.path.expanduser(conda_sh_path))
     dbg.dassert_exists(conda_sh_path)
     #
-    conda_env_path = os.path.abspath(conda_env_path)
+    conda_env_path = os.path.abspath(os.path.expanduser(conda_env_path))
     # Not necessarily the conda_env_path exists.
     if not os.path.exists(conda_env_path):
         _LOG.warning("The dir '%s' doesn't exist: creating it", conda_env_path)

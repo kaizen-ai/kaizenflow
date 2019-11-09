@@ -9,9 +9,8 @@ import networkx as nx
 import pandas as pd
 
 import core.finance as fin
+import core.statistics as stat
 import helpers.dbg as dbg
-import rolling_model.pipeline as pip
-import vendors.kibot.utils as kut
 from core.dataflow_core import DAG  # pylint: disable=unused-import
 from core.dataflow_core import Node
 
@@ -56,7 +55,7 @@ def extract_info(dag, methods):
 # #############################################################################
 
 
-class SkLearnNode(Node, abc.ABC):
+class FitPredictNode(Node, abc.ABC):
     """
     Define an abstract class with sklearn-style `fit` and `predict` functions.
 
@@ -94,10 +93,11 @@ class SkLearnNode(Node, abc.ABC):
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
         dbg.dassert_isinstance(values, collections.OrderedDict)
+        # Save the info in the node: we make a copy just to be safe.
         self._info[method] = copy.copy(values)
 
 
-class DataSource(SkLearnNode, abc.ABC):
+class DataSource(FitPredictNode, abc.ABC):
     """
     A source node that can be configured for cross-validation.
     """
@@ -120,7 +120,7 @@ class DataSource(SkLearnNode, abc.ABC):
         self._fit_idxs = fit_idxs
 
     # DataSource does not have a `df_in` in either `fit` or `predict` as a
-    # typical `SkLearnNode` does.
+    # typical `FitPredictNode` does.
     # pylint: disable=arguments-differ
     def fit(self):
         """
@@ -160,11 +160,13 @@ class DataSource(SkLearnNode, abc.ABC):
         return self.df
 
 
-class Transformer(SkLearnNode, abc.ABC):
+class Transformer(FitPredictNode, abc.ABC):
     """
     Stateless Single-Input Single-Output node.
     """
 
+    # TODO(Paul): Consider giving users the option of renaming the single
+    # input and single output (but verify there is only one of each).
     def __init__(self, nid):
         super().__init__(nid)
 
@@ -177,14 +179,12 @@ class Transformer(SkLearnNode, abc.ABC):
     def fit(self, df_in):
         # Transform the input df.
         df_out, info = self._transform(df_in)
-        # Save the info in the node: we make a copy just to be safe.
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in):
         # Transform the input df.
         df_out, info = self._transform(df_in)
-        # Save the info in the node: we make a copy just to be safe.
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -201,25 +201,68 @@ class ReadDataFromDf(DataSource):
         self.df = df
 
 
-class ReadDataFromKibot(DataSource):
-    def __init__(self, nid, file_name, nrows=None):
-        super().__init__(nid)
-        # dbg.dassert_exists(file_name)
-        self._file_name = file_name
-        self._nrows = nrows
-        #
-        self.df = None
+# #############################################################################
+# Plumbing nodes
+# #############################################################################
 
-    def _lazy_load(self):
-        if self.df is None:
-            self.df = kut.read_data(self._file_name, self._nrows)
 
-    def fit(self):
+class Merger(FitPredictNode):
+    """
+    Performs a merge of two inputs.
+    """
+
+    # TODO(Paul): Support different input/output names.
+    def __init__(self, nid: str, merge_kwargs: Optional[Any] = None) -> None:
         """
-        :return: training set as df
+        Configures dataframe merging policy.
+
+        :param nid: unique node id
+        :param merge_kwargs: arguments to pd.merge
         """
-        self._lazy_load()
-        return super().fit()
+        super().__init__(nid, inputs=["df_in1", "df_in2"])
+        self._merge_kwargs = merge_kwargs or {}
+        self._df_in1_col_names = None
+        self._df_in2_col_names = None
+
+    def df_in1_col_names(self) -> List[str]:
+        dbg.dassert_is_not(
+            self._df_in1_col_names,
+            None,
+            "No column names. This may indicate "
+            "an invocation prior to graph execution.",
+        )
+        return self._df_in1_col_names
+
+    def df_in2_col_names(self) -> List[str]:
+        # TODO(Paul): Factor out.
+        dbg.dassert_is_not(
+            self._df_in2_col_names,
+            None,
+            "No column names. This may indicate "
+            "an invocation prior to graph execution.",
+        )
+        return self._df_in2_col_names
+
+    # pylint: disable=arguments-differ
+    def fit(self, df_in1, df_in2):
+        df_out, info = self._merge(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    # pylint: disable=arguments-differ
+    def predict(self, df_in1, df_in2):
+        df_out, info = self._merge(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def _merge(self, df_in1, df_in2):
+        self._df_in1_col_names = df_in1.columns.tolist()
+        self._df_in2_col_names = df_in2.columns.tolist()
+        # TODO(Paul): Add meaningful info.
+        df_out = df_in1.merge(df_in2, **self._merge_kwargs)
+        info = collections.OrderedDict()
+        info["df_merged_info"] = get_df_info_as_string(df_out)
+        return df_out, info
 
 
 # #############################################################################
@@ -234,6 +277,7 @@ class ColumnTransformer(Transformer):
         transformer_func: Callable[..., pd.DataFrame],
         # TODO(Paul): Tighten this type annotation.
         transformer_kwargs: Optional[Any] = None,
+        # TODO(Paul): May need to assume `List` instead.
         cols: Optional[Iterable[str]] = None,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
         col_mode: Optional[str] = None,
@@ -257,16 +301,9 @@ class ColumnTransformer(Transformer):
         if col_rename_func is not None:
             dbg.dassert_isinstance(col_rename_func, collections.Callable)
         self._col_rename_func = col_rename_func
-        if col_mode is None:
-            self._col_mode = "merge_all"
-        else:
-            self._col_mode = col_mode
+        self._col_mode = col_mode or "merge_all"
         self._transformer_func = transformer_func
-        if transformer_kwargs is not None:
-            self._transformer_kwargs = transformer_kwargs
-        else:
-            # TODO(Paul): Revisit case where input val is None.
-            self._transformer_kwargs = {}
+        self._transformer_kwargs = transformer_kwargs or {}
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
 
@@ -329,6 +366,28 @@ class ColumnTransformer(Transformer):
         return df, info
 
 
+class DataframeMethodRunner(Transformer):
+    def __init__(
+        self, nid: str, method: str, method_kwargs: Optional[Any] = None
+    ):
+        super().__init__(nid)
+        dbg.dassert(method)
+        # TODO(Paul): Ensure that this is a valid method.
+        self._method = method
+        self._method_kwargs = method_kwargs or {}
+
+    def _transform(self, df):
+        df = df.copy()
+        df = getattr(df, self._method)(**self._method_kwargs)
+        # Not all methods return DataFrames. We want to restrict to those that
+        # do.
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        #
+        info = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
 class FilterAth(Transformer):
     def _transform(self, df):
         df = df.copy()
@@ -373,7 +432,7 @@ class Resample(Transformer):
 # #############################################################################
 
 
-class SkLearnModel(SkLearnNode):
+class SkLearnModel(FitPredictNode):
     def __init__(
         self,
         nid: str,
@@ -384,16 +443,18 @@ class SkLearnModel(SkLearnNode):
     ) -> None:
         super().__init__(nid)
         self._model_func = model_func
-        if model_kwargs is not None:
-            self._model_kwargs = model_kwargs
-        else:
-            self._model_kwargs = {}
+        self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
         self._model = None
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert(
+            df_in[df_in.isna().any(axis=1)].index.empty,
+            "NaNs detected at index `%s`",
+            str(df_in[df_in.isna().any(axis=1)].head().index),
+        )
         df = df_in.copy()
         idx, x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
         self._model = self._model_func(**self._model_kwargs)
@@ -441,8 +502,6 @@ class SkLearnModel(SkLearnNode):
 
     # TODO(Paul): Add type hints.
     def _to_sklearn_format(self, df):
-        # Drop NaNs and prepare the index for sklearn.
-        df = df.dropna()
         idx = df.index
         df = df.reset_index()
         # TODO(Paul): replace with class name
@@ -505,7 +564,7 @@ def cross_validate(config, source_nid, sink_nid, dag):
     source_node = dag.get_node(source_nid)
     dag.run_leq_node(source_nid, "fit")
     df = source_node.get_df()
-    splits = pip.get_time_series_rolling_folds(df, config["cv_n_splits"])
+    splits = stat.get_rolling_splits(df.index, config["cv_n_splits"])
     #
     result_bundle = collections.OrderedDict()
     #
