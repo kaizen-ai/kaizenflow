@@ -581,6 +581,9 @@ def cross_validate(dag, split_func, split_func_kwargs):
     # on the source indices, e.g., that they cover the same time period.
     # If additional assumptions are not made, then the splits that result
     # may have various undesirable characteristics.
+    # An alternative approach is to take the start and end dates of the
+    # intersection of all indices, use those dates to restrict each index,
+    # and then take the union of the restriction.
     idx_union = functools.reduce(lambda x, y: x.union(y), source_idxs.values())
     splits = split_func(idx_union, **split_func_kwargs)
     _LOG.debug(stat.convert_splits_to_string(splits))
