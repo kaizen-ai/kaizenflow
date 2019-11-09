@@ -1,6 +1,7 @@
 import abc
 import collections
 import copy
+import functools
 import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -127,9 +128,9 @@ class DataSource(FitPredictNode, abc.ABC):
         :return: training set as df
         """
         if self._fit_idxs is not None:
-            fit_df = self.df.loc[self._fit_idxs]
+            fit_df = self.df.loc[self._fit_idxs].copy()
         else:
-            fit_df = self.df
+            fit_df = self.df.copy()
         info = collections.OrderedDict()
         info["fit_df_info"] = get_df_info_as_string(fit_df)
         self._set_info("fit", info)
@@ -147,9 +148,9 @@ class DataSource(FitPredictNode, abc.ABC):
         :return: test set as df
         """
         if self._predict_idxs is not None:
-            predict_df = self.df.loc[self._predict_idxs]
+            predict_df = self.df.loc[self._predict_idxs].copy()
         else:
-            predict_df = self.df
+            predict_df = self.df.copy()
         info = collections.OrderedDict()
         info["predict_df_info"] = get_df_info_as_string(predict_df)
         self._set_info("predict", info)
@@ -553,31 +554,57 @@ class SkLearnModel(FitPredictNode):
 # #############################################################################
 
 
-# TODO(Paul): Formalize what this returns and what can be done with it.
-def cross_validate(config, source_nid, sink_nid, dag):
+def _get_source_idxs(dag: DAG) -> Dict[str, pd.Index]:
     """
-    Generates splits, runs train/test, collects info.
+    Warm up source nodes and extract dataframe indices.
+    """
+    # Warm up source nodes to get dataframes from which we can generate splits.
+    source_nids = dag.get_sources()
+    for nid in source_nids:
+        dag.run_leq_node(nid, "fit")
+    # Collect source dataframe indices.
+    source_idxs = {}
+    for nid in source_nids:
+        source_idxs[nid] = dag.get_node(nid).get_df().index
+    return source_idxs
+
+
+# TODO(Paul): Formalize what this returns and what can be done with it.
+def cross_validate(dag, split_func, split_func_kwargs):
+    """
+    Generate splits, run train/test, collect info.
 
     :return: DAG info for each split, keyed by split.
     """
-    # Warm up source node to get a dataframe from which we can generate splits.
-    source_node = dag.get_node(source_nid)
-    dag.run_leq_node(source_nid, "fit")
-    df = source_node.get_df()
-    splits = stat.get_rolling_splits(df.index, config["cv_n_splits"])
+    source_idxs = _get_source_idxs(dag)
+    # TODO(Paul): `union` may be a good choice if we make some assumptions
+    # on the source indices, e.g., that they cover the same time period.
+    # If additional assumptions are not made, then the splits that result
+    # may have various undesirable characteristics.
+    # An alternative approach is to take the start and end dates of the
+    # intersection of all indices, use those dates to restrict each index,
+    # and then take the union of the restriction.
+    idx_union = functools.reduce(lambda x, y: x.union(y), source_idxs.values())
+    splits = split_func(idx_union, **split_func_kwargs)
+    _LOG.debug(stat.convert_splits_to_string(splits))
     #
     result_bundle = collections.OrderedDict()
-    #
+    # TODO(Paul): rename train/test to fit/predict.
     for i, (train_idxs, test_idxs) in enumerate(splits):
         split_info = collections.OrderedDict()
-        split_info["fit_idxs"] = train_idxs
-        split_info["predict_idxs"] = test_idxs
-        #
-        source_node.set_fit_idxs(train_idxs)
-        dag.run_leq_node(sink_nid, "fit")
-        #
-        source_node.set_predict_idxs(test_idxs)
-        dag.run_leq_node(sink_nid, "predict")
+        for nid, idx in source_idxs.items():
+            node_info = collections.OrderedDict()
+            node_train_idxs = idx.intersection(train_idxs)
+            node_info["fit_idxs"] = node_train_idxs
+            dag.get_node(nid).set_fit_idxs(node_train_idxs)
+            #
+            node_test_idxs = idx.intersection(test_idxs)
+            node_info["predict_idxs"] = node_test_idxs
+            dag.get_node(nid).set_predict_idxs(node_test_idxs)
+            #
+            split_info[nid] = node_info
+        dag.run_dag("fit")
+        dag.run_dag("predict")
         #
         split_info["stages"] = extract_info(dag, ["fit", "predict"])
         result_bundle["split_" + str(i)] = split_info
