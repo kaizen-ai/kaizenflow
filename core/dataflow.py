@@ -554,7 +554,7 @@ class SkLearnModel(FitPredictNode):
 # #############################################################################
 
 
-def _get_source_idxs(dag: DAG):
+def _get_source_idxs(dag: DAG) -> Dict[str, pd.Index]:
     """
     Warm up source nodes and extract dataframe indices.
     """
