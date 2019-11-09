@@ -93,6 +93,7 @@ class FitPredictNode(Node, abc.ABC):
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
         dbg.dassert_isinstance(values, collections.OrderedDict)
+        # Save the info in the node: we make a copy just to be safe.
         self._info[method] = copy.copy(values)
 
 
@@ -178,14 +179,12 @@ class Transformer(FitPredictNode, abc.ABC):
     def fit(self, df_in):
         # Transform the input df.
         df_out, info = self._transform(df_in)
-        # Save the info in the node: we make a copy just to be safe.
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in):
         # Transform the input df.
         df_out, info = self._transform(df_in)
-        # Save the info in the node: we make a copy just to be safe.
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -214,11 +213,14 @@ class Merger(FitPredictNode):
 
     # TODO(Paul): Support different input/output names.
     def __init__(self, nid: str, merge_kwargs: Optional[Any] = None) -> None:
+        """
+        Configures dataframe merging policy.
+
+        :param nid: unique node id
+        :param merge_kwargs: arguments to pd.merge
+        """
         super().__init__(nid, inputs=["df_in1", "df_in2"])
-        if merge_kwargs is not None:
-            self._merge_kwargs = merge_kwargs
-        else:
-            self._merge_kwargs = {}
+        self._merge_kwargs = merge_kwargs or {}
         self._df_in1_col_names = None
         self._df_in2_col_names = None
 
@@ -299,16 +301,9 @@ class ColumnTransformer(Transformer):
         if col_rename_func is not None:
             dbg.dassert_isinstance(col_rename_func, collections.Callable)
         self._col_rename_func = col_rename_func
-        if col_mode is None:
-            self._col_mode = "merge_all"
-        else:
-            self._col_mode = col_mode
+        self._col_mode = col_mode or "merge_all"
         self._transformer_func = transformer_func
-        if transformer_kwargs is not None:
-            self._transformer_kwargs = transformer_kwargs
-        else:
-            # TODO(Paul): Revisit case where input val is None.
-            self._transformer_kwargs = {}
+        self._transformer_kwargs = transformer_kwargs or {}
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
 
@@ -379,10 +374,7 @@ class DataframeMethodRunner(Transformer):
         dbg.dassert(method)
         # TODO(Paul): Ensure that this is a valid method.
         self._method = method
-        if method_kwargs is not None:
-            self._method_kwargs = method_kwargs
-        else:
-            self._method_kwargs = {}
+        self._method_kwargs = method_kwargs or {}
 
     def _transform(self, df):
         df = df.copy()
@@ -451,10 +443,7 @@ class SkLearnModel(FitPredictNode):
     ) -> None:
         super().__init__(nid)
         self._model_func = model_func
-        if model_kwargs is not None:
-            self._model_kwargs = model_kwargs
-        else:
-            self._model_kwargs = {}
+        self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
         self._model = None
