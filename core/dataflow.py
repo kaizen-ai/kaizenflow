@@ -12,7 +12,7 @@ import pandas as pd
 import core.finance as fin
 import core.statistics as stat
 import helpers.dbg as dbg
-from core.dataflow_core import DAG  # pylint: disable=unused-import
+from core.dataflow_core import DAG
 from core.dataflow_core import Node
 
 _LOG = logging.getLogger(__name__)
