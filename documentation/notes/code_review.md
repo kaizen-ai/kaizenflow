@@ -113,4 +113,4 @@
           a clean-up bug, if you need a reminder
 
 ## Look at the code top-to-bottom
-- E.g., if you do search & replace, make sure everything is fine
+- E.g., if you do a search & replace, make sure everything is fine
