@@ -293,13 +293,16 @@
 - We don't count the vacation days
     - We expect people to take vacations on a as-needed basis in a responsible
       way
+    - E.g., if you know that in January there is going to be a product release,
+      try to schedule vacation after the deadline
 
 ## Taking days off
 - If you need to take some day off here and there, please send an email to the
-  ORG folks (Tanya, Ilya, Paul, GP) as soon as you know the dates
+  ORG folks (Tanya, Ilya, Paul, GP) as soon as you know the dates you need to be
+  off
     - Please indicate the days you need to be off
     - Indicate if you are going to be completely unreachable ("I am going to go
-      for a hike in Antarctica, that has known to have spotty WiFi") vs you still
+      for a hike in Antarctica, that is known to have spotty WiFi") vs you still
       have your phone / computer in case of emergency
 
 ## Mark the calendar
@@ -309,34 +312,38 @@
     - Send an email to the entire team with an heads up
         - "I am going on vacation from ... to .... I won't be reachable unless
           for emergencies"
-    - Remind people like 1 week before the day that your time off is coming
-      up
-    - Think about what 
+    - Send a reminder email to the team, like 1 week before the day that your
+      time off is coming up, so that people can plan around you
+    - Try to mitigate your absence, e.g.,
+        - Think about what you need to finish
+        - Think about what work you can pass to someone else
+        - Think of who can cover for you
 
 ## Long vacations
 - E.g., for Christmas, New Year, summer break
-- We try to take vacation all together whenever possible
-    - Small startups often implement a shutdown where everybody goes in vacation
-      at the same time
+- We try to take vacation all at the same time, whenever possible
+    - Small startups often implement a "shutdown" where everybody goes in
+      vacation at the same time
 - The reasons for this (counter-intuitive) approach are:
     1) We don't have redundancy for all roles
         - If one team member for which we don't have extra coverage is on vacation,
           it might not be possible for the rest of the team to make progress
-        - So the people that are "working" work with low efficiency or are stuck
+        - So the people that are not on vacation, work with low efficiency or are
+          stuck
     2) It's difficult and stressful for who goes on vacation to get back and
        rebuild the state of what happened while on vacation
         - There are thousands of emails sent by others that one needs to catch up
           with
         - Part of the state is lost
         - Fixes were not reviewed, new bugs entered the system, ...
-- For all these reasons, in the end, the vacation period becomes the union of the
-  vacation of all the team members
-    - We want to maximize the overlap of each team member vacation
+- For all these reasons, in practice, the vacation period becomes the union of
+  the vacation of all the team members
+    - Therefore we want to maximize the overlap of each team member vacation
 
 ## When you are off, you are off
 - Completely disconnect and recharge
     - Don't think about work
-    - Vacation means "vacate"
+    - Vacation means "vacate your mind"
 - If you want to catch up on reading (e.g., "The pragmatic programmer", technical
   papers on machine learning), that's fine
 
