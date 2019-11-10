@@ -4,15 +4,15 @@
    * [Code review workflows](#code-review-workflows)
       * [Pull request](#pull-request)
       * [Post-commit review](#post-commit-review)
+      * [Close the PR and delete the branch](#close-the-pr-and-delete-the-branch)
    * [PR checklist](#pr-checklist)
    * [Some other remarks based on our experience](#some-other-remarks-based-on-our-experience)
       * [Give priority to code review](#give-priority-to-code-review)
-      * [Why do we review code](#why-do-we-review-code)
+      * [Why we review code](#why-we-review-code)
       * [Reviewing other people's code is usually not fun](#reviewing-other-peoples-code-is-usually-not-fun)
       * [The first reviews are painful](#the-first-reviews-are-painful)
       * [Apply review comments everywhere](#apply-review-comments-everywhere)
       * [Look at the code top-to-bottom](#look-at-the-code-top-to-bottom)
-      * [Close the PR and delete the branch](#close-the-pr-and-delete-the-branch)
 
 
 

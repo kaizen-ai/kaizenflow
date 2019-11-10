@@ -9,7 +9,9 @@
       * [Setup](#setup)
       * [Running a dev build](#running-a-dev-build)
    * [Installing / setting up Jenkins](#installing--setting-up-jenkins)
-   * [Expose webpages](#expose-webpages)
+      * [Expose webpages](#expose-webpages)
+      * [Backup Jenkins config](#backup-jenkins-config)
+      * [Test Jenkins builds locally](#test-jenkins-builds-locally)
 
 
 
