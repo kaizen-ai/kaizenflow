@@ -144,7 +144,7 @@
 
 ## Addressing post-commit comments
 
-- Once the CL addressing the reviewer's comments is ready:
+- Once the commit addressing the reviewer's comments is ready:
     - Refer to the GH task number for the commit message (e.g, `PartTask...`)
     - Add a comment to the commit like "Do-this-and-that as per reviewers
       request", so that the reviewer can see that his/her comments were addressed
@@ -224,7 +224,7 @@
 
 - We are ok with doing multiple commits in the branch or a single commit for all
   the comments
-   - The goal is for the author to keep the CL clear and minimize his / her
+   - The goal is for the author to keep the PR clear and minimize his / her
      overhead
 
 ## "Pending" comments
