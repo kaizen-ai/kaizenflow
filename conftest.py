@@ -40,3 +40,33 @@ if not hasattr(hut, "conftest_already_parsed"):
         if config.getoption("--dbg_verbosity"):
             print("\nWARNING: Setting verb level")
             dbg.init_logger(config.getoption("--dbg_verbosity"))
+
+    pyannotate = True
+    if pyannotate:
+        print("\nWARNING: Collecting information about types through pyannotate")
+        # From https://github.com/dropbox/pyannotate/blob/master/example/example_conftest.py
+        import pytest
+
+        def pytest_collection_finish(session):
+            """
+            Handle the pytest collection finish hook: configure pyannotate.
+            Explicitly delay importing `collect_types` until all tests have
+            been collected.  This gives gevent a chance to monkey patch the
+            world before importing pyannotate.
+            """
+            from pyannotate_runtime import collect_types
+            collect_types.init_types_collection()
+
+
+        @pytest.fixture(autouse=True)
+        def collect_types_fixture():
+            from pyannotate_runtime import collect_types
+            collect_types.start()
+            yield
+            collect_types.stop()
+
+
+        def pytest_sessionfinish(session, exitstatus):
+            from pyannotate_runtime import collect_types
+            collect_types.dump_stats("type_info.json")
+            print("\n*** Collected types ***")
