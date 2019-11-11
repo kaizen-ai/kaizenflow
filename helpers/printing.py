@@ -5,6 +5,8 @@ import helpers.printing as prnt
 """
 
 import helpers.dbg as dbg
+from typing import Any
+from typing import Optional
 
 # #############################################################################
 # Debug output
@@ -28,7 +30,7 @@ def clear_screen():
     print((chr(27) + "[2J"))
 
 
-def line(char=None, num_chars=None):
+def line(char: str = None, num_chars: int = None) -> str:
     """
     Return a line with the desired character.
     """
@@ -37,7 +39,7 @@ def line(char=None, num_chars=None):
     return char * num_chars
 
 
-def frame(message, char1=None, num_chars=None, char2=None, thickness=1):
+def frame(message: str, char1: Optional[Any] = None, num_chars: Optional[Any] = None, char2: Optional[Any] = None, thickness: int = 1) -> str:
     """
     Print a frame around a message.
     """

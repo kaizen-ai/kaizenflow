@@ -14,6 +14,8 @@ import time
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
+from typing import Any
+from typing import Optional
 
 _LOG = logging.getLogger(__name__)
 
@@ -134,7 +136,7 @@ def delete_dir(
                 raise e
 
 
-def create_dir(dir_name, incremental, abort_if_exists=False, ask_to_delete=False):
+def create_dir(dir_name: str, incremental: bool, abort_if_exists: bool = False, ask_to_delete: bool = False) -> None:
     """
     Create a directory `dir_name` if it doesn't exist.
 
@@ -229,7 +231,7 @@ def to_file(file_name, lines, mode="w", force_flush=False):
 
 
 # TODO(saggese): Remove the split param.
-def from_file(file_name, split=True, encoding=None):
+def from_file(file_name: str, split: bool = True, encoding: Optional[Any] = None) -> str:
     dbg.dassert_ne(file_name, "")
     with open(file_name, "r", encoding=encoding) as f:
         try:

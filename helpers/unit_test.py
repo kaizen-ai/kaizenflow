@@ -19,6 +19,8 @@ import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as prnt
 import helpers.system_interaction as si
+from typing import Any
+from typing import Optional
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,7 +37,7 @@ def set_update_tests(val):
     _UPDATE_TESTS = val
 
 
-def get_update_tests():
+def get_update_tests() -> bool:
     return _UPDATE_TESTS
 
 
@@ -133,7 +135,7 @@ def _remove_spaces(obj):
     return string
 
 
-def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False):
+def _assert_equal(actual: str, expected: str, full_test_name: str, test_dir: str, fuzzy_match: bool = False) -> None:
     """
     Implement a better version of self.assertEqual() that reports mismatching
     strings with sdiff and save them to files for further analysis with
@@ -143,7 +145,7 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
       `_remove_spaces`)
     """
 
-    def _to_string(obj):
+    def _to_string(obj: str) -> str:
         if isinstance(obj, dict):
             ret = pprint.pformat(obj)
         else:
@@ -216,7 +218,7 @@ class TestCase(unittest.TestCase):
     as txt.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         random.seed(20000101)
         np.random.seed(20000101)
         # Name of the dir with artifacts for this test.
@@ -225,7 +227,7 @@ class TestCase(unittest.TestCase):
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", prnt.frame(func_name))
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         pass
 
     def create_io_dirs(self):
@@ -251,7 +253,7 @@ class TestCase(unittest.TestCase):
         )
         return dir_name
 
-    def get_output_dir(self):
+    def get_output_dir(self) -> str:
         """
         Return the path of the directory storing output data for this test class.
 
@@ -289,7 +291,7 @@ class TestCase(unittest.TestCase):
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
-    def check_string(self, actual, fuzzy_match=False):
+    def check_string(self, actual: str, fuzzy_match: bool = False) -> None:
         """
         Check the actual outcome of a test against the expected outcomes
         contained in the file and/or updates the golden reference file with the
@@ -353,14 +355,14 @@ class TestCase(unittest.TestCase):
                 )
                 raise RuntimeError(msg)
 
-    def _get_test_name(self):
+    def _get_test_name(self) -> str:
         """
         :return: full test name as class.method.
         :rtype: str
         """
         return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
 
-    def _get_current_path(self, test_class_name=None, test_method_name=None):
+    def _get_current_path(self, test_class_name: Optional[Any] = None, test_method_name: Optional[Any] = None) -> str:
         dir_name = os.path.dirname(inspect.getfile(self.__class__))
         if test_class_name is None:
             test_class_name = self.__class__.__name__

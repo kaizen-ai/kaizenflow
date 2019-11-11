@@ -14,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 # to make reference to git again.
 
 
-# TODO(gp): -> get_user_name()
+# TODO(gp): -> get_user_name(). No stuttering.
 def get_git_name():
     """
     Return the git user name.
