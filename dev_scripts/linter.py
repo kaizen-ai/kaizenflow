@@ -613,8 +613,6 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
                 "D104",
                 # D107: Missing docstring in __init__
                 "D107",
-                # D401: First line should be in imperative mood
-                "D401",
             ]
         )
     opts = ""
@@ -672,9 +670,6 @@ def _pyment(file_name, pedantic, check_if_possible):
 
 
 def _pylint(file_name, pedantic, check_if_possible):
-    """
-    Considers and adds.
-    """
     executable = "pylint"
     if check_if_possible:
         return _check_exec(executable)
@@ -827,7 +822,7 @@ def _mypy(file_name, pedantic, check_if_possible):
             line.startswith("Found ")
             or
             # note: See https://mypy.readthedocs.io
-            "note: See https" in line:
+            "note: See https" in line
         ):
             continue
         output_tmp.append(line)

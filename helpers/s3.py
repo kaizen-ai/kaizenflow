@@ -41,6 +41,8 @@ def is_s3_path(path):
 
 def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
     """
+    List s3 keys.
+
     A wrapper around `list_objects_v2` method that bypasses its
     restriction for only the first 1000 of the contents.
     Returns only the `Key` fields of the `Contents` field, which contain

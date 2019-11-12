@@ -87,9 +87,6 @@ def _to_msg(msg: Optional[str], *args: str) -> str:
 def _dfatal(
     txt: Union[str, Iterable[str]], msg: Optional[str], *args: str
 ) -> NoReturn:
-    """
-    Package the error to raise.
-    """
     dfatal_txt = "* Failed assertion *\n"
     if isinstance(txt, list):
         dfatal_txt += "\n".join(txt)
@@ -333,7 +330,7 @@ def dassert_dir_exists(dir_name: str, msg: Optional[str] = None, *args):
 
 def dassert_not_exists(file_name: str, msg: Optional[str] = None, *args: str):
     """
-    Ensures that a file or a dir `file_name` doesn't exist, otherwise raises.
+    Ensure that a file or a dir `file_name` doesn't exist, otherwise raises.
     """
     file_name = os.path.abspath(file_name)
     # pylint: disable=superfluous-parens,unneeded-not
@@ -621,7 +618,7 @@ def init_logger(
 
 def set_logger_verb(verb, module_name=None):
     """
-    Used to change the verbosity of the logging after the initialization.
+    Change the verbosity of the logging after the initialization.
 
     Passing a module_name (e.g., matplotlib) one can change the logging of
     that specific module.
