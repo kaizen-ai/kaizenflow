@@ -195,6 +195,15 @@ def get_credentials():
             # Laptop.
             conda_sh_path = "/home/stas/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/stas/anaconda3/envs"
+    elif user_name == 'daniil':
+        # Daniil.
+        git_user_name = "mongolianjesus"
+        git_user_email = "daniil@particle.one"
+        jupyter_port = 9699
+        if server_name == "daniil":
+            # Laptop.
+            conda_sh_path = "/home/daniil/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/daniil/anaconda3/envs"
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.

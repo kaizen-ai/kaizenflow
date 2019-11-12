@@ -370,3 +370,32 @@ class TestCase(unittest.TestCase):
             test_method_name = self._testMethodName
         dir_name = dir_name + "/%s.%s" % (test_class_name, test_method_name)
         return dir_name
+
+
+# #############################################################################
+# Notebook testing.
+# #############################################################################
+
+
+def run_notebook(file_name, scratch_dir):
+    """
+    Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
+    storing the output.
+
+    Assert if the notebook doesn't complete successfully.
+    """
+    file_name = os.path.abspath(file_name)
+    dbg.dassert_exists(file_name)
+    dbg.dassert_exists(scratch_dir)
+    # Build command line.
+    cmd = []
+    cmd.append("cd %s && " % scratch_dir)
+    cmd.append("jupyter nbconvert %s" % file_name)
+    cmd.append("--execute")
+    cmd.append("--to html")
+    cmd.append("--ExecutePreprocessor.kernel_name=python")
+    # No time-out.
+    cmd.append("--ExecutePreprocessor.timeout=-1")
+    # Execute.
+    cmd = " ".join(cmd)
+    si.system(cmd, abort_on_error=True)
