@@ -100,7 +100,7 @@ def _dfatal(
     dfatal(dfatal_txt)
 
 
-def dassert(cond: bool, msg: Optional[str] = None, *args: str) -> None:
+def dassert(cond: Any, msg: Optional[str] = None, *args: str) -> None:
     if not cond:
         txt = "cond=%s" % cond
         _dfatal(txt, msg, *args)

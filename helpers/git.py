@@ -104,7 +104,7 @@ def get_repo_symbolic_name(super_module: bool) -> str:
     _, output = si.system_to_string(cmd)
     data = output.split()
     _LOG.debug("data=%s", data)
-    dbg.dassert(len(data), 3, "data='%s'", data)
+    dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
     # git@github.com:alphamatic/amp
     repo_name = data[1]
     m = re.match(r"^.*\.com:(.*)$", repo_name)

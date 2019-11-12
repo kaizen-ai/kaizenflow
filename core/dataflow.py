@@ -9,10 +9,10 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import networkx as nx
 import pandas as pd
 
+import core.dataflow_core as dtf
 import core.finance as fin
 import core.statistics as stat
 import helpers.dbg as dbg
-import core.dataflow_core as dtf
 
 _LOG = logging.getLogger(__name__)
 

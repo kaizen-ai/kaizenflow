@@ -4,8 +4,8 @@ from typing import List, Optional, Tuple
 
 import pandas as pd
 import scipy as sp
-import statsmodels as sm
 import sklearn.model_selection
+import statsmodels as sm
 
 import helpers.dbg as dbg
 

@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
+import core.residualizer as res
 import helpers.dbg as dbg
 import helpers.printing as pri
-import core.residualizer as res
 
 _LOG = logging.getLogger(__name__)
 
