@@ -1,11 +1,15 @@
+import collections
 import io
 import json
 import logging
+import os
+import pprint
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
+import pytest
 from scipy.stats import norm
 
 import core.config as cfg
@@ -15,6 +19,7 @@ import core.pandas_helpers as pde
 import core.residualizer as res
 import core.signal_processing as sigp
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.printing as pri
 import helpers.unit_test as ut
 
@@ -149,7 +154,8 @@ class Test_config1(ut.TestCase):
 
 
 class _Dataflow_helper(ut.TestCase):
-    def _remove_stage_names(self, node_link_data):
+    @staticmethod
+    def _remove_stage_names(node_link_data):
         """
         Remove stages names from node_link_data dictionary.
 
@@ -827,6 +833,7 @@ class TestPcaFactorComputer2(ut.TestCase):
 # #############################################################################
 
 
+# TODO(*): -> Test_signal_processing_rolling_zcore1()
 class TestSignalProcessingRollingZScore1(ut.TestCase):
     def test_default_values1(self):
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
@@ -837,3 +844,54 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
+
+
+class Test_signal_processing_process_outliers1(ut.TestCase):
+    @staticmethod
+    def _get_data():
+        np.random.seed(100)
+        n = 100000
+        data = np.random.normal(loc=0.0, scale=1.0, size=n)
+        return pd.Series(data)
+
+    def _helper(self, mode, lower_quantile, **kwargs):
+        srs = self._get_data()
+        stats = collections.OrderedDict()
+        srs_out = sigp.process_outliers(
+            srs, mode, lower_quantile, stats=stats, **kwargs
+        )
+        _ = srs_out
+        self.check_string(pprint.pformat(stats))
+
+    def test_winsorize1(self):
+        mode = "winsorize"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(mode, lower_quantile)
+
+    def test_set_to_nan1(self):
+        mode = "set_to_nan"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(mode, lower_quantile)
+
+    def test_set_to_zero1(self):
+        mode = "set_to_zero"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(mode, lower_quantile)
+
+
+# TODO(*): We should convert core/notebooks/gallery_signal_processing.ipynb
+#  into unit tests to get some coverage for the functions.
+
+
+@pytest.mark.slow
+class Test_gallery_signal_processing1(ut.TestCase):
+    def test_notebook1(self):
+        file_name = os.path.join(
+            git.get_amp_abs_path(),
+            "core/notebooks/gallery_signal_processing.ipynb",
+        )
+        scratch_dir = self.get_scratch_space()
+        ut.run_notebook(file_name, scratch_dir)

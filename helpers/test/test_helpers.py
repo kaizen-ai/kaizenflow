@@ -107,6 +107,12 @@ class Test_git1(ut.TestCase):
                 + ut.to_string("repo_sym_name_tmpA")
             )
 
+    def test_get_amp_abs_path1(self):
+        amp_dir = git.get_amp_abs_path()
+        # Check.
+        self.assertTrue(os.path.exists(amp_dir))
+        self.assert_equal(os.path.basename(amp_dir), "amp")
+
 
 # #############################################################################
 # numba.py

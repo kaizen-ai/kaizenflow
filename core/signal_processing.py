@@ -618,6 +618,100 @@ def rolling_zcorr(
 
 
 # #############################################################################
+# Outlier handling.
+# #############################################################################
+
+
+def process_outliers(
+    srs: pd.Series,
+    mode: str,
+    lower_quantile: float,
+    upper_quantile: float = None,
+    stats: dict = None,
+):
+    """
+    Process outliers in `srs` according to different modes (e.g., winsorize,
+    remove, set to nan), given lower / upper quantiles.
+
+    The interval of data kept without any changes is [lower, upper]. In other
+    terms the outliers with quantiles strictly smaller and larger than the bounds
+    are processed.
+
+    :param srs: pd.Series to process
+    :param lower_quantile: lower quantile (in range [0, 1]) of the values to keep
+    :param upper_quantile: upper quantile with the same semantic as
+        lower_quantile. If None, the quantile symmetric of the lower
+        quantile with respect to 0.5 is taken. E.g., an upper quantile equal to
+        0.7 is taken for a lower_quantile = 0.3
+    :param mode: it can be "winsorize", "set_to_nan", "set_to_zero"
+    :param stats: empty dict-like object that this function will populate with
+        statistics about the performed operation
+
+    :return: transformed series with the same number of elements as the input
+        series. The operation is not in place.
+    """
+    # Check parameters.
+    dbg.dassert_isinstance(srs, pd.Series)
+    dbg.dassert_lte(0.0, lower_quantile)
+    if upper_quantile is None:
+        upper_quantile = 1.0 - lower_quantile
+    dbg.dassert_lte(lower_quantile, upper_quantile)
+    dbg.dassert_lte(upper_quantile, 1.0)
+    # Compute bounds.
+    bounds = np.quantile(srs, [lower_quantile, upper_quantile])
+    _LOG.debug(
+        "Removing outliers in [%s, %s] -> %s with mode=%s",
+        lower_quantile,
+        upper_quantile,
+        bounds,
+        mode,
+    )
+    # Compute stats.
+    if stats is not None:
+        dbg.dassert_isinstance(stats, dict)
+        # Dictionary should be empty.
+        dbg.dassert(not stats)
+        stats["num_elems_before"] = len(srs)
+        stats["num_nans_before"] = np.isnan(srs).sum()
+        stats["num_infs_before"] = np.isinf(srs).sum()
+        stats["quantiles"] = (lower_quantile, upper_quantile)
+        stats["mode"] = mode
+    #
+    srs = srs.copy()
+    # Here we implement the functions instead of using library functions (e.g,
+    # `scipy.stats.mstats.winsorize`) since we want to compute some statistics
+    # that are not readily available from the library function.
+    l_mask = srs < bounds[0]
+    u_mask = bounds[1] < srs
+    if mode == "winsorize":
+        # Assign the outliers to the value of the bounds.
+        srs[l_mask] = bounds[0]
+        srs[u_mask] = bounds[1]
+    else:
+        mask = u_mask | l_mask
+        if mode == "set_to_nan":
+            srs[mask] = np.nan
+        elif mode == "set_to_zero":
+            srs[mask] = 0.0
+        else:
+            dbg.dfatal("Invalid mode='%s'" % mode)
+    # Append more the stats.
+    if stats is not None:
+        stats["bounds"] = bounds
+        num_removed = np.sum(l_mask) + np.sum(u_mask)
+        stats["num_elems_removed"] = num_removed
+        stats["num_elems_after"] = (
+            stats["num_elems_before"] - stats["num_elems_removed"]
+        )
+        stats["percentage_removed"] = (
+            100.0 * stats["num_elems_removed"] / stats["num_elems_before"]
+        )
+        stats["num_nans_after"] = np.isnan(srs).sum()
+        stats["num_infs_after"] = np.isinf(srs).sum()
+    return srs
+
+
+# #############################################################################
 # Incremental PCA
 # #############################################################################
 
