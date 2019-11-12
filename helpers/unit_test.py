@@ -410,5 +410,5 @@ def run_notebook(file_name: str, scratch_dir: str) -> None:
     # No time-out.
     cmd.append("--ExecutePreprocessor.timeout=-1")
     # Execute.
-    cmd = " ".join(cmd)
-    si.system(cmd, abort_on_error=True)
+    cmd_as_str = " ".join(cmd)
+    si.system(cmd_as_str, abort_on_error=True)

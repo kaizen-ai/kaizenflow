@@ -12,7 +12,7 @@ import logging
 # Config
 # #############################################################################
 import os
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -34,7 +34,7 @@ class Config:
         :param array: array of (key, value), where value can be a python
         type or a Config in case of nested config.
         """
-        self._config: Dict[str, Any] = collections.OrderedDict()
+        self._config: collections.OrderedDict[str, Any] = collections.OrderedDict()
         if array is not None:
             for k, v in array:
                 self._config[k] = v
@@ -46,7 +46,7 @@ class Config:
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         self._config[key] = val
 
-    def __getitem__(self, key: str) -> Union["Config", int]:
+    def __getitem__(self, key: str) -> Any:
         """
         Get value for `key` or assert, if it doesn't exist.
         """
@@ -70,8 +70,9 @@ class Config:
 
     def add_subconfig(self, key: str) -> "Config":
         dbg.dassert_not_in(key, self._config)
-        self._config[key] = Config()
-        return self._config[key]
+        config = Config()
+        self._config[key] = config
+        return config
 
     def update(self, dict_: dict):
         """
@@ -108,13 +109,13 @@ class Config:
         """
         val = eval(code)
         dbg.dassert_isinstance(val, Config)
-        return val
+        return val  # type: ignore
 
-    def to_dict(self) -> collections.OrderedDict:
+    def to_dict(self) -> Dict[str, Any]:
         """
         Convert to a ordered dict of order dicts, removing the class.
         """
-        dict_: Dict[str, Any] = collections.OrderedDict()
+        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
             if isinstance(v, Config):
                 dict_[k] = v.to_dict()

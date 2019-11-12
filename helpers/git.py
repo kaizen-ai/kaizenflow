@@ -109,7 +109,7 @@ def get_repo_symbolic_name(super_module: bool) -> str:
     repo_name = data[1]
     m = re.match(r"^.*\.com:(.*)$", repo_name)
     dbg.dassert(m, "Can't parse '%s'", repo_name)
-    repo_name = m.group(1)
+    repo_name = m.group(1)  # type: ignore
     _LOG.debug("repo_name=%s", repo_name)
     # We expect something like "alphamatic/amp".
     m = re.match(r"^\S+/\S+$", repo_name)
