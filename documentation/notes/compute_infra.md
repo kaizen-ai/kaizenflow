@@ -1,9 +1,9 @@
 <!--ts-->
-   * [Setup research instance](#setup-research-instance)
+   * [Set up research instance](#set-up-research-instance)
       * [Vendor info](#vendor-info)
       * [Folders structure](#folders-structure)
       * [Home directories](#home-directories)
-      * [Setup research server](#setup-research-server)
+      * [Set up research server](#set-up-research-server)
 
 
 
