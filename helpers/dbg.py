@@ -4,13 +4,9 @@ import os
 import pprint
 import sys
 from logging import LogRecord
+from typing import Any, Iterable, Optional, Union
+
 from mypy_extensions import NoReturn
-from typing import Any
-from typing import Optional
-from typing import Iterable
-from typing import List
-from typing import Union
-from typing import Tuple
 
 _LOG = logging.getLogger(__name__)
 
@@ -88,7 +84,9 @@ def _to_msg(msg: Optional[str], *args: str) -> str:
     return res
 
 
-def _dfatal(txt: Union[str, Iterable[str]], msg: Optional[str], *args: str) -> NoReturn:
+def _dfatal(
+    txt: Union[str, Iterable[str]], msg: Optional[str], *args: str
+) -> NoReturn:
     """
     Package the error to raise.
     """
@@ -111,13 +109,17 @@ def dassert(cond: bool, msg: Optional[str] = None, *args: str) -> None:
         _dfatal(txt, msg, *args)
 
 
-def dassert_eq(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_eq(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     if not val1 == val2:
         txt = "'%s'\n==\n'%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_ne(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_ne(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 != val2):
         txt = "'%s'\n!=\n'%s'" % (val1, val2)
@@ -131,7 +133,9 @@ def dassert_lt(val1: Any, val2: Any, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_lte(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_lte(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 <= val2):
         txt = "'%s' <= '%s'" % (val1, val2)
@@ -151,7 +155,9 @@ def dassert_lgt(
         dassert_lt(x, upper_bound)
 
 
-def dassert_in(value: Any, valid_values: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_in(
+    value: Any, valid_values: Any, msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (value in valid_values):
         txt = "'%s' in '%s'" % (value, valid_values)
@@ -164,14 +170,21 @@ def dassert_not_in(value, valid_values, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_is(val1: Optional[str], val2: Optional[Any], msg: Optional[str] = None, *args: str) -> None:
+def dassert_is(
+    val1: Optional[str],
+    val2: Optional[Any],
+    msg: Optional[str] = None,
+    *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 is val2):
         txt = "'%s' is '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_is_not(val1: Any, val2: Optional[Any], msg: Optional[str] = None, *args: str) -> None:
+def dassert_is_not(
+    val1: Any, val2: Optional[Any], msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 is not val2):
         txt = "'%s' is not '%s'" % (val1, val2)
@@ -185,14 +198,16 @@ def dassert_type_is(val1: Any, val2: Any, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_type_in(val1: Any, val2:Any, msg=None, *args):
+def dassert_type_in(val1: Any, val2: Any, msg=None, *args):
     # pylint: disable=superfluous-parens,unidiomatic-typecheck
     if not (type(val1) in val2):
         txt = "type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_isinstance(val1: Any, val2: type, msg: Optional[str] = None, *args: str) -> None:
+def dassert_isinstance(
+    val1: Any, val2: type, msg: Optional[str] = None, *args: str
+) -> None:
     if not isinstance(val1, val2):
         txt = "instance of '%s' is '%s' instead of '%s'" % (
             val1,
@@ -202,14 +217,16 @@ def dassert_isinstance(val1: Any, val2: type, msg: Optional[str] = None, *args: 
         _dfatal(txt, msg, *args)
 
 
-def dassert_imply(val1: Any, val2:Any, msg=None, *args):
+def dassert_imply(val1: Any, val2: Any, msg=None, *args):
     # pylint: disable=superfluous-parens
     if not (not val1 or val2):
         txt = "'%s' implies '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_set_eq(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_set_eq(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     val1 = set(val1)
     val2 = set(val2)
     # pylint: disable=superfluous-parens
@@ -226,7 +243,9 @@ def dassert_set_eq(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) 
 
 
 # TODO(gp): -> dassert_issubset
-def dassert_is_subset(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_is_subset(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     """
     Check that val1 is a subset of val2, raise otherwise.
     """
@@ -241,7 +260,9 @@ def dassert_is_subset(val1: Any, val2: Any, msg: Optional[str] = None, *args: st
         _dfatal(txt, msg, *args)
 
 
-def dassert_not_intersection(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_not_intersection(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     """
     Check that val1 has no intersection val2, raise otherwise.
     """
@@ -256,7 +277,9 @@ def dassert_not_intersection(val1: Any, val2: Any, msg: Optional[str] = None, *a
         _dfatal(txt, msg, *args)
 
 
-def dassert_no_duplicates(val1: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_no_duplicates(
+    val1: Any, msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (len(set(val1)) == len(val1)):
         # Count the occurrences of each element of the seq.
@@ -270,7 +293,9 @@ def dassert_no_duplicates(val1: Any, msg: Optional[str] = None, *args: str) -> N
         _dfatal(txt, msg, *args)
 
 
-def dassert_eq_all(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_eq_all(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     val1 = list(val1)
     val2 = list(val2)
     is_equal = val1 == val2
@@ -294,7 +319,7 @@ def dassert_exists(file_name: str, msg: Optional[str] = None, *args: str) -> Non
         _dfatal(txt, msg, *args)
 
 
-def dassert_dir_exists(dir_name: str, msg: Optional[str]=None, *args):
+def dassert_dir_exists(dir_name: str, msg: Optional[str] = None, *args):
     """
     Assert unless `dir_name` exists and it's a directory.
     """
@@ -306,7 +331,7 @@ def dassert_dir_exists(dir_name: str, msg: Optional[str]=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_not_exists(file_name: str, msg: Optional[str]=None, *args: str):
+def dassert_not_exists(file_name: str, msg: Optional[str] = None, *args: str):
     """
     Ensures that a file or a dir `file_name` doesn't exist, otherwise raises.
     """
@@ -331,10 +356,9 @@ def dassert_file_extension(file_name: str, exp_exts):
     )
 
 
-def dassert_monotonic_index(obj, msg: Optional[str]=None, *args: str):
+def dassert_monotonic_index(obj, msg: Optional[str] = None, *args: str):
     # For some reason importing pandas is slow and we don't want to pay this
     # start up cost unless we have to.
-    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     if isinstance(obj, pd.Index):
@@ -348,7 +372,11 @@ def dassert_monotonic_index(obj, msg: Optional[str]=None, *args: str):
 
 
 def dassert_array_has_same_type_element(
-        obj1: Any, obj2:Any, only_first_elem: bool, msg: Optional[str]=None, *args : str
+    obj1: Any,
+    obj2: Any,
+    only_first_elem: bool,
+    msg: Optional[str] = None,
+    *args: str
 ):
     """
     Check that two objects iterables like arrays (e.g., pd.Index) have
@@ -450,7 +478,6 @@ class _ColoredFormatter(logging.Formatter):
 
 # Copied from `helpers/system_interaction.py` to avoid circular dependencies.
 def get_user_name():
-    # pylint: disable=import-outside-toplevel
     import getpass
 
     res = getpass.getuser()
@@ -564,7 +591,6 @@ def init_logger(
     if use_exec_path and log_filename is None:
         dassert_is(log_filename, None, msg="Can't specify conflicting filenames")
         # Use the name of the executable.
-        # pylint: disable=import-outside-toplevel
         import inspect
 
         frame = inspect.stack()[1]

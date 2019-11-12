@@ -11,6 +11,7 @@ import pprint
 import random
 import re
 import unittest
+from typing import Any, Optional
 
 import numpy as np
 
@@ -19,8 +20,6 @@ import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as prnt
 import helpers.system_interaction as si
-from typing import Any
-from typing import Optional
 
 _LOG = logging.getLogger(__name__)
 
@@ -74,7 +73,6 @@ def get_random_df(num_cols, seed=None, **kwargs):
     """
     # Sometimes pandas takes several seconds to import, so we don't import
     # unless necessary.
-    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     if seed:
@@ -87,7 +85,6 @@ def get_random_df(num_cols, seed=None, **kwargs):
 def get_df_signature(df, num_rows=3):
     # Sometimes pandas takes several seconds to import, so we don't import
     # unless necessary.
-    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     dbg.dassert_isinstance(df, pd.DataFrame)
@@ -135,7 +132,13 @@ def _remove_spaces(obj):
     return string
 
 
-def _assert_equal(actual: str, expected: str, full_test_name: str, test_dir: str, fuzzy_match: bool = False) -> None:
+def _assert_equal(
+    actual: str,
+    expected: str,
+    full_test_name: str,
+    test_dir: str,
+    fuzzy_match: bool = False,
+) -> None:
     """
     Implement a better version of self.assertEqual() that reports mismatching
     strings with sdiff and save them to files for further analysis with
@@ -200,12 +203,11 @@ def _assert_equal(actual: str, expected: str, full_test_name: str, test_dir: str
         io_.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
         si.system(cmd)
-        msg = (
-            "Diff with:",
-            "> " + vimdiff_cmd,
-            "or running:",
-            "> " + diff_script,
-        )
+        msg = []
+        msg.append("Diff with:")
+        msg.append("> " + vimdiff_cmd)
+        msg.append("or running:")
+        msg.append("> " + diff_script)
         msg = "\n".join(msg)
         _LOG.error(msg)
         # Print stack trace.
@@ -222,7 +224,7 @@ class TestCase(unittest.TestCase):
         random.seed(20000101)
         np.random.seed(20000101)
         # Name of the dir with artifacts for this test.
-        self._scratch_dir = None
+        self._scratch_dir : Optional[str] = None
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", prnt.frame(func_name))
@@ -362,7 +364,11 @@ class TestCase(unittest.TestCase):
         """
         return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
 
-    def _get_current_path(self, test_class_name: Optional[Any] = None, test_method_name: Optional[Any] = None) -> str:
+    def _get_current_path(
+        self,
+        test_class_name: Optional[Any] = None,
+        test_method_name: Optional[Any] = None,
+    ) -> str:
         dir_name = os.path.dirname(inspect.getfile(self.__class__))
         if test_class_name is None:
             test_class_name = self.__class__.__name__

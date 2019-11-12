@@ -31,7 +31,6 @@ import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
 # pylint: disable=no-member
 boot.bootstrap(_AMP_REL_PATH)
 
-# pylint: disable=import-outside-toplevel,wrong-import-position
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
 import _setenv_lib as selib  # isort:skip # noqa: E402

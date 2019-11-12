@@ -11,11 +11,10 @@ import logging
 import os
 import shutil
 import time
+from typing import Any, List, Optional, Union
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
-from typing import Any, Union, List
-from typing import Optional
 
 _LOG = logging.getLogger(__name__)
 
@@ -127,7 +126,7 @@ def delete_dir(
                 if i > num_retries:
                     dbg.dfatal(
                         "Couldn't delete %s after %s attempts (%s)"
-                        % (dir_, num_retries, dbg.get_exception_as_string())
+                        % (dir_, num_retries, str(e))
                     )
                 else:
                     time.sleep(num_secs_retry)
@@ -136,7 +135,12 @@ def delete_dir(
                 raise e
 
 
-def create_dir(dir_name: str, incremental: bool, abort_if_exists: bool = False, ask_to_delete: bool = False) -> None:
+def create_dir(
+    dir_name: str,
+    incremental: bool,
+    abort_if_exists: bool = False,
+    ask_to_delete: bool = False,
+) -> None:
     """
     Create a directory `dir_name` if it doesn't exist.
 
@@ -161,19 +165,18 @@ def create_dir(dir_name: str, incremental: bool, abort_if_exists: bool = False, 
             # incremental), so we are done.
             # os.chmod(dir_name, 0755)
             return
-        else:
-            if ask_to_delete:
-                si.query_yes_no(
-                    "Do you really want to delete dir '%s'?" % dir_name,
-                    abort_on_no=True,
-                )
-            # The dir exists and we want to create it from scratch (i.e., not
-            # incremental), so we need to delete the dir.
-            _LOG.debug("Deleting dir '%s'", dir_name)
-            if os.path.islink(dir_name):
-                delete_file(dir_name)
-            else:
-                shutil.rmtree(dir_name)
+    if ask_to_delete:
+        si.query_yes_no(
+            "Do you really want to delete dir '%s'?" % dir_name,
+            abort_on_no=True,
+        )
+    # The dir exists and we want to create it from scratch (i.e., not
+    # incremental), so we need to delete the dir.
+    _LOG.debug("Deleting dir '%s'", dir_name)
+    if os.path.islink(dir_name):
+        delete_file(dir_name)
+    else:
+        shutil.rmtree(dir_name)
     _LOG.debug("Creating directory '%s'", dir_name)
     # Note that makedirs raises OSError if the target directory already exists.
     # A race condition can happen when another process creates our target
@@ -231,7 +234,9 @@ def to_file(file_name, lines, mode="w", force_flush=False):
 
 
 # TODO(saggese): Remove the split param.
-def from_file(file_name: str, split: bool = True, encoding: Optional[Any] = None) -> Union[str, List[str]]:
+def from_file(
+    file_name: str, split: bool = True, encoding: Optional[Any] = None
+) -> Union[str, List[str]]:
     dbg.dassert_ne(file_name, "")
     with open(file_name, "r", encoding=encoding) as f:
         try:

@@ -4,9 +4,9 @@ Import as:
 import helpers.printing as prnt
 """
 
-import helpers.dbg as dbg
-from typing import Any
 from typing import Optional
+
+import helpers.dbg as dbg
 
 # #############################################################################
 # Debug output
@@ -39,7 +39,13 @@ def line(char: str = None, num_chars: int = None) -> str:
     return char * num_chars
 
 
-def frame(message: str, char1: Optional[str] = None, num_chars: Optional[int] = None, char2: Optional[str] = None, thickness: int = 1) -> str:
+def frame(
+    message: str,
+    char1: Optional[str] = None,
+    num_chars: Optional[int] = None,
+    char2: Optional[str] = None,
+    thickness: int = 1,
+) -> str:
     """
     Print a frame around a message.
     """
@@ -211,6 +217,7 @@ def format_list(v, sep=" ", max_n=None, tag=None):
     else:
         txt += sep.join(map(str, v[: max_n / 2]))
         txt += " ... "
+        # pylint: disable=invalid-unary-operand-type
         txt += sep.join(map(str, v[(-max_n) / 2 :]))
     return txt
 

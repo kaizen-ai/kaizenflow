@@ -691,6 +691,8 @@ def _pylint(file_name, pedantic, check_if_possible):
         "C0330",
         # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
         "C0412",
+        # [C0415(import-outside-toplevel), ] Import outside toplevel
+        "C0415",
         # [R0903(too-few-public-methods), ] Too few public methods (/2)
         "R0903",
         # [R0912(too-many-branches), ] Too many branches (/12)
@@ -800,9 +802,11 @@ def _mypy(file_name, pedantic, check_if_possible):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
     cmd = executable + " %s" % file_name
-    _system(cmd,
-            # mypy returns -1 if there are errors.
-            abort_on_error=False)
+    _system(
+        cmd,
+        # mypy returns -1 if there are errors.
+        abort_on_error=False,
+    )
     output = _tee(cmd, executable, abort_on_error=False)
     # Remove some errors.
     output_tmp = []
@@ -1002,7 +1006,6 @@ def _run_linter(actions, args, file_names):
         _LOG.info(
             "Using %s threads", num_threads if num_threads > 0 else "all CPUs"
         )
-        # pylint: disable=import-outside-toplevel
         from joblib import Parallel, delayed
 
         output_tmp = Parallel(n_jobs=num_threads, verbose=50)(

@@ -1,3 +1,37 @@
+# Why type hints?
+- We use python3 type hints to:
+    1) improve documentation
+    2) allow `mypy` to perform static checking of the code, looking for bugs
+    3) enforce the type checks at run-time, through automatic assertions (not
+       implemented yet)
+
+## What to annotate with type hints
+- We expect all new library code (i.e., that is not in a notebook) to have type
+  annotations
+- We annotate the function signature
+- We don't annotate the variables inside a function unless `mypy` reports that it
+  can't infer the type
+
+- We strive to get no errors / warnings from the linter, including `mypy`
+
+## Disabling `mypy` errors
+
+- If `mypy` reports an error and you don't understand why, please ping one of the
+  python experts asking for help
+
+- If you are sure that you understand why `mypy` reports and error and that you
+  can override it, you 
+- When you want to disable an error reported by `mypy`:
+    - add a comment reporting the mypy error
+    - explain why this is not a problem
+    - add `# type: ignore` with two spaces as usual for the inline comment
+
+    ```python
+    # mypy: Cannot find module named 'pyannotate_runtime'
+    # pyannotate is not always installed
+    from pyannotate_runtime import collect_types  # type: ignore
+    ```
+
 # Inferring types using unit tests
 
 - Install pyannotate
