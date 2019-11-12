@@ -12,16 +12,26 @@ import logging
 # Config
 # #############################################################################
 import os
+from collections import OrderedDict
+from typing import Any, List, Optional, Tuple, Union
 
 import helpers.dbg as dbg
 import helpers.printing as pri
+from core.config import Config
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Add mechanism to check if a value was assigned but not used.
 class Config:
-    def __init__(self, array=None):
+    def __init__(
+        self,
+        array: Union[
+            List[Tuple[str, Union[List[int], str]]],
+            List[Tuple[str, Union[int, str]]],
+            None,
+        ] = None,
+    ) -> None:
         """
         :param array: array of (key, value), where value can be a python
         type or a Config in case of nested config.
@@ -31,14 +41,14 @@ class Config:
             for k, v in array:
                 self._config[k] = v
 
-    def __setitem__(self, key, val):
+    def __setitem__(self, key: str, val: Union[List[int], int, str]) -> None:
         """
         Set / update `key` to `val`.
         """
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         self._config[key] = val
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Union[Config, int]:
         """
         Get value for `key` or assert, if it doesn't exist.
         """
@@ -60,7 +70,7 @@ class Config:
         txt = "\n".join(txt)
         return txt
 
-    def add_subconfig(self, key):
+    def add_subconfig(self, key: str) -> Config:
         dbg.dassert_not_in(key, self._config)
         self._config[key] = Config()
         return self._config[key]
@@ -71,7 +81,7 @@ class Config:
         """
         self._config.update(dict_)
 
-    def get(self, key, val):
+    def get(self, key: str, val: Optional[Any]) -> Optional[int]:
         """
         Equivalent to `dict.get()`
         """
@@ -94,7 +104,7 @@ class Config:
         return copy.deepcopy(self)
 
     @classmethod
-    def from_python(cls, code):
+    def from_python(cls, code: str) -> Config:
         """
         Create an object from the code returned by `to_python()`.
         """
@@ -102,7 +112,7 @@ class Config:
         dbg.dassert_isinstance(val, Config)
         return val
 
-    def to_dict(self):
+    def to_dict(self) -> OrderedDict:
         """
         Convert to a ordered dict of order dicts, removing the class.
         """
@@ -114,7 +124,7 @@ class Config:
                 dict_[k] = v
         return dict_
 
-    def to_python(self, check=True):
+    def to_python(self, check: bool = True) -> str:
         config_as_str = str(self.to_dict())
         # We don't need 'cfg.' since we are inside the config module.
         config_as_str = config_as_str.replace("OrderedDict", "Config")

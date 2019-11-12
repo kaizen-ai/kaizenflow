@@ -15,9 +15,13 @@ Each of the 3 components:
 
 import collections
 import logging
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from numpy import bool_, float64, int64, ndarray
+from pandas.core.frame import DataFrame
+from pandas.core.series import Series
 from scipy.spatial.distance import cosine
 
 import core.explore as exp
@@ -27,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): This is probably general and should be moved somewhere else.
-def linearize_df(df, prefix):
+def linearize_df(df: DataFrame, prefix: str) -> Series:
     """
     Transform a pd.DataFrame like:
                  0         1         2
@@ -61,7 +65,7 @@ def linearize_df(df, prefix):
 # TODO(gp): Make sure it's sklearn complaint
 # TODO(gp): Use abstract classes (see https://docs.python.org/3/library/abc.html).
 class FactorComputer:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def fit(self):
@@ -75,7 +79,7 @@ class FactorComputer:
     def get_factors(self):
         raise NotImplementedError
 
-    def __call__(self, obj, *args, **kwargs):
+    def __call__(self, obj: DataFrame, *args: int, **kwargs: Any) -> Series:
         if isinstance(obj, pd.Series):
             df = pd.DataFrame(obj)
         else:
@@ -99,11 +103,11 @@ class PcaFactorComputer(FactorComputer):
 
     def __init__(
         self,
-        nan_mode_in_data,
-        nan_mode_in_corr,
-        do_sort_eigvals,
-        do_stabilize_eig,
-    ):
+        nan_mode_in_data: str,
+        nan_mode_in_corr: str,
+        do_sort_eigvals: bool,
+        do_stabilize_eig: bool,
+    ) -> None:
         """
 
         :param nan_mode_in_data: how to handle NAs in data passed for processing
@@ -127,7 +131,7 @@ class PcaFactorComputer(FactorComputer):
         self._eig_comp_num = None
 
     @property
-    def eig_num(self):
+    def eig_num(self) -> int:
         """
         Number of eigenvalue / vectors.
         """
@@ -140,7 +144,7 @@ class PcaFactorComputer(FactorComputer):
         """
         return self._eig_comp_num
 
-    def get_eigval_names(self):
+    def get_eigval_names(self) -> List[str]:
         """
         Return the names of the eigenvalues column in the result df.
         """
@@ -156,7 +160,9 @@ class PcaFactorComputer(FactorComputer):
 
     # TODO(gp): -> private
     @staticmethod
-    def linearize_eigval_eigvec(eigval_df, eigvec_df):
+    def linearize_eigval_eigvec(
+        eigval_df: DataFrame, eigvec_df: DataFrame
+    ) -> Series:
         res = linearize_df(eigvec_df, "eigvec")
         #
         dbg.dassert_isinstance(eigval_df, pd.DataFrame)
@@ -166,7 +172,7 @@ class PcaFactorComputer(FactorComputer):
         res = res.append(eigval_df.iloc[:, 0])
         return res
 
-    def _execute(self, df, ts):
+    def _execute(self, df: DataFrame, ts: int) -> Series:
         _LOG.debug("ts=%s", ts)
         dbg.dassert_monotonic_index(df)
         # Compute correlation.
@@ -213,7 +219,9 @@ class PcaFactorComputer(FactorComputer):
         dbg.dassert_isinstance(res, pd.Series)
         return res
 
-    def _stabilize_eig(self, eigval_df, eigvec_df):
+    def _stabilize_eig(
+        self, eigval_df: DataFrame, eigvec_df: DataFrame
+    ) -> Tuple[DataFrame, DataFrame]:
         if not self._ts:
             return eigval_df, eigvec_df
         # Get previous ts.
@@ -254,7 +262,9 @@ class PcaFactorComputer(FactorComputer):
         return eigval_df, eigvec_df
 
     @staticmethod
-    def sort_eigval(eigval, eigvec):
+    def sort_eigval(
+        eigval: ndarray, eigvec: ndarray
+    ) -> Tuple[bool_, ndarray, ndarray]:
         are_eigval_sorted = (np.diff(eigval) <= 0).all()
         if not are_eigval_sorted:
             _LOG.debug(
@@ -270,7 +280,7 @@ class PcaFactorComputer(FactorComputer):
 
     # TODO(gp): -> eig_distance
     @staticmethod
-    def eigvec_distance(v1, v2):
+    def eigvec_distance(v1: Series, v2: Series) -> float64:
         # TODO(gp): Maybe the max of the diff of the component is a better
         # metric.
         diff = np.linalg.norm(v1 - v2)
@@ -278,7 +288,10 @@ class PcaFactorComputer(FactorComputer):
         return diff
 
     @staticmethod
-    def check_stabilized_eigvec(col_map, n):
+    def check_stabilized_eigvec(
+        col_map: Union[Dict[int, Tuple[int, int]], Dict[int, Tuple[int, int64]]],
+        n: int,
+    ) -> bool:
         # Check that col_map contains a permutation of the index.
         col_map_src = col_map.keys()
         col_map_dst = [x[1] for x in col_map.values()]
@@ -288,7 +301,9 @@ class PcaFactorComputer(FactorComputer):
         return True
 
     @staticmethod
-    def _build_stable_eig_map(prev_eigvec_df, eigvec_df):
+    def _build_stable_eig_map(
+        prev_eigvec_df: DataFrame, eigvec_df: DataFrame
+    ) -> Tuple[Dict[int, Tuple[int, int64]], ndarray]:
         """
         Try to find a permutation and sign changes of the columns in
         `prev_eigvec_df` to ensure continuity with `eigvec_df`.
@@ -297,7 +312,7 @@ class PcaFactorComputer(FactorComputer):
             of transformed eigvec)
         """
 
-        def dist(v1, v2):
+        def dist(v1: Series, v2: Series) -> float64:
             # return res.PcaFactorComputer.eigvec_distance(v1, v2)
             return 1 - cosine(v1, v2)
 
@@ -324,12 +339,16 @@ class PcaFactorComputer(FactorComputer):
         return col_map, distances
 
     @staticmethod
-    def _build_stable_eig_map2(prev_eigvec_df, eigvec_df):
+    def _build_stable_eig_map2(
+        prev_eigvec_df: DataFrame, eigvec_df: DataFrame
+    ) -> Tuple[Dict[int, Tuple[int, int]], None]:
         """
         Different implementation of `_build_stable_eig_map()`.
         """
 
-        def eigvec_coeff(v1, v2, thr=1e-3):
+        def eigvec_coeff(
+            v1: Series, v2: Series, thr: float = 1e-3
+        ) -> Optional[int]:
             for sign in (-1, 1):
                 diff = PcaFactorComputer.eigvec_distance(v1, sign * v2)
                 _LOG.debug("v1=\n%s\nv2=\n%s\n-> diff=%s", v1, sign * v2, diff)
@@ -365,7 +384,11 @@ class PcaFactorComputer(FactorComputer):
         return col_map, dummy
 
     @staticmethod
-    def shuffle_eigval_eigvec(eigval_df, eigvec_df, col_map):
+    def shuffle_eigval_eigvec(
+        eigval_df: DataFrame,
+        eigvec_df: DataFrame,
+        col_map: Union[Dict[int, Tuple[int, int]], Dict[int, Tuple[int, int64]]],
+    ) -> Tuple[DataFrame, DataFrame]:
         """
         Transform the eigenvalues / eigenvectors according to a col_map
         returned by `_build_stable_eig_map()`.
@@ -390,7 +413,9 @@ class PcaFactorComputer(FactorComputer):
         return shuffled_eigval_df, shuffled_eigvec_df
 
     @staticmethod
-    def are_eigenvectors_stable(prev_eigvec_df, eigvec_df, thr=0.1):
+    def are_eigenvectors_stable(
+        prev_eigvec_df: DataFrame, eigvec_df: DataFrame, thr: float = 0.1
+    ) -> int:
         """
         Return whether eigvec_df are "stable" in the sense that the change of
         corresponding of each eigenvec is smaller than a certain threshold.
@@ -416,7 +441,9 @@ class PcaFactorComputer(FactorComputer):
         return num_fails
 
     @staticmethod
-    def are_eigenvalues_stable(prev_eigval_df, eigval_df, thr=1e-3):
+    def are_eigenvalues_stable(
+        prev_eigval_df: DataFrame, eigval_df: DataFrame, thr: float = 1e-3
+    ) -> bool:
         _LOG.debug(
             "prev_eigval_df=\n%s\neigval_df=\n%s\n", prev_eigval_df, eigval_df
         )

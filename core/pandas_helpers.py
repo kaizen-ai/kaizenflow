@@ -5,13 +5,18 @@ Package with general pandas helpers.
 import collections
 import logging
 import types
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from pandas._libs.tslibs.timestamps import Timestamp
+from pandas.core.frame import DataFrame
+from pandas.core.indexes.datetimes import DatetimeIndex
 from tqdm.auto import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as pri
+from core.residualizer import PcaFactorComputer
 
 _LOG = logging.getLogger(__name__)
 
@@ -19,7 +24,9 @@ _LOG = logging.getLogger(__name__)
 # ##############################################################################
 
 
-def resample_index(index, time=None, **kwargs):
+def resample_index(
+    index: DatetimeIndex, time: Tuple[int, int] = None, **kwargs: Any
+) -> DatetimeIndex:
     """
     Resample `index` with options compatible with pd.date_range().
     Implementation inspired by https://stackoverflow.com/questions/37853623
@@ -46,7 +53,7 @@ def resample_index(index, time=None, **kwargs):
 # ##############################################################################
 
 
-def _build_empty_df(metadata):
+def _build_empty_df(metadata: Dict[str, Any]) -> DataFrame:
     """
     Build an empty dataframe using the data in `metadata`, which is populated
     in the previous calls of the rolling function.
@@ -66,7 +73,15 @@ def _build_empty_df(metadata):
     return empty_df
 
 
-def _loop(i, ts, df, func, window, metadata, abort_on_error):
+def _loop(
+    i: int,
+    ts: Union[int, Timestamp, str],
+    df: DataFrame,
+    func: Union[Callable, PcaFactorComputer],
+    window: int,
+    metadata: Optional[Dict[str, Any]],
+    abort_on_error: bool,
+) -> Tuple[Optional[DataFrame], Optional[Dict[str, Any]]]:
     """
     Apply `func` to a slice of `df` given by `i` and `window`.
     """
@@ -129,14 +144,14 @@ def _loop(i, ts, df, func, window, metadata, abort_on_error):
 
 
 def df_rolling_apply(
-    df,
-    window,
-    func,
-    timestamps=None,
-    convert_to_df=True,
-    progress_bar=False,
-    abort_on_error=True,
-):
+    df: DataFrame,
+    window: int,
+    func: Union[Callable, PcaFactorComputer],
+    timestamps: Optional[DatetimeIndex] = None,
+    convert_to_df: bool = True,
+    progress_bar: bool = False,
+    abort_on_error: bool = True,
+) -> DataFrame:
     """
     Apply function `func` to a rolling window over `df` with `window` columns.
     Timing semantic:

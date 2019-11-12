@@ -11,6 +11,7 @@ more complex pipelines. The output is reported through logging.
 import datetime
 import logging
 import math
+from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,6 +21,8 @@ import seaborn as sns
 import statsmodels
 import statsmodels.api
 import tqdm
+from pandas.core.frame import DataFrame
+from pandas.core.series import Series
 
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -732,7 +735,7 @@ def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
 
 
 # TODO(gp): Add some stats about how many nans where filled.
-def handle_nans(df, nan_mode):
+def handle_nans(df: DataFrame, nan_mode: str) -> DataFrame:
     if nan_mode == "drop":
         df = df.dropna(how="any")
     elif nan_mode == "fill_with_zero":
@@ -1048,7 +1051,14 @@ def plot_time_distributions(dts, mode, density=True):
 
 
 # TODO(gp): It can't accept ax. Remove this limitation.
-def jointplot(df, predicted_var, predictor_var, height=None, *args, **kwargs):
+def jointplot(
+    df: DataFrame,
+    predicted_var: str,
+    predictor_var: str,
+    height: int = None,
+    *args: Any,
+    **kwargs: Any,
+) -> None:
     """
     Wrapper to perform a scatterplot of two columns of a dataframe using
     seaborn.jointplot().
@@ -1072,13 +1082,13 @@ def jointplot(df, predicted_var, predictor_var, height=None, *args, **kwargs):
 
 
 def _preprocess_regression(
-    df,
-    intercept,
-    predicted_var,
-    predicted_var_delay,
-    predictor_vars,
-    predictor_vars_delay,
-):
+    df: DataFrame,
+    intercept: bool,
+    predicted_var: str,
+    predicted_var_delay: int,
+    predictor_vars: str,
+    predictor_vars_delay: int,
+) -> Tuple[DataFrame, List[str], List[str]]:
     """
     Preprocess data in dataframe form in order to perform a regression.
     """
@@ -1141,19 +1151,19 @@ def _preprocess_regression(
 
 
 def ols_regress(
-    df,
-    predicted_var,
-    predictor_vars,
-    intercept,
-    print_model_stats=True,
-    tsplot=False,
-    tsplot_figsize=None,
-    jointplot_=True,
-    jointplot_height=None,
-    predicted_var_delay=0,
-    predictor_vars_delay=0,
-    max_nrows=1e4,
-):
+    df: DataFrame,
+    predicted_var: str,
+    predictor_vars: str,
+    intercept: bool,
+    print_model_stats: bool = True,
+    tsplot: bool = False,
+    tsplot_figsize: Optional[Any] = None,
+    jointplot_: bool = True,
+    jointplot_height: Optional[Any] = None,
+    predicted_var_delay: int = 0,
+    predictor_vars_delay: int = 0,
+    max_nrows: float = 1e4,
+) -> Dict[str, Any]:
     """
     Perform OLS on columns of a dataframe.
 
@@ -1231,7 +1241,7 @@ def ols_regress(
     return regr_res
 
 
-def to_series(obj):
+def to_series(obj: Series) -> Series:
     if isinstance(obj, np.ndarray):
         dbg.dassert(obj.shape, 1)
         srs = pd.Series(obj)
@@ -1242,14 +1252,14 @@ def to_series(obj):
 
 
 def ols_regress_series(
-    srs1,
-    srs2,
-    intercept,
-    srs1_name=None,
-    srs2_name=None,
-    convert_to_dates=False,
-    **kwargs,
-):
+    srs1: Series,
+    srs2: Series,
+    intercept: bool,
+    srs1_name: Optional[Any] = None,
+    srs2_name: Optional[Any] = None,
+    convert_to_dates: bool = False,
+    **kwargs: Any,
+) -> Dict[str, Any]:
     """
     Wrapper around regress() to regress series against each other.
     """
