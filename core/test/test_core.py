@@ -9,10 +9,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
-from networkx.classes.digraph import DiGraph
-from numpy import ndarray
-from pandas.core.frame import DataFrame
-from scipy.stats import norm
+import scipy
 
 import core.config as cfg
 import core.dataflow_core as dtfc
@@ -24,8 +21,6 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.printing as pri
 import helpers.unit_test as ut
-from core.config import Config
-from core.residualizer import PcaFactorComputer
 
 _LOG = logging.getLogger(__name__)
 
@@ -44,7 +39,7 @@ class Test_config1(ut.TestCase):
         config["hello"] = "world"
         self.check_string(str(config))
 
-    def _check_python(self, config: Config) -> str:
+    def _check_python(self, config: cfg.Config) -> str:
         code = config.to_python()
         _LOG.debug("code=%s", code)
         config2 = cfg.Config.from_python(code)
@@ -58,7 +53,7 @@ class Test_config1(ut.TestCase):
         return act
 
     @staticmethod
-    def _get_flat_config1() -> Config:
+    def _get_flat_config1() -> cfg.Config:
         config = cfg.Config()
         config["hello"] = "world"
         config["foo"] = [1, 2, 3]
@@ -86,7 +81,7 @@ class Test_config1(ut.TestCase):
         self.assertEqual(config.get("nrows_tmp", None), None)
 
     @staticmethod
-    def _get_nested_config1() -> Config:
+    def _get_nested_config1() -> cfg.Config:
         config = cfg.Config()
         config["nrows"] = 10000
         #
@@ -127,7 +122,7 @@ class Test_config1(ut.TestCase):
         self.check_string(act)
 
     @staticmethod
-    def _get_nested_config2() -> Config:
+    def _get_nested_config2() -> cfg.Config:
         config = cfg.Config()
         config["nrows"] = 10000
         #
@@ -171,7 +166,7 @@ class _Dataflow_helper(ut.TestCase):
             data["stage"] = data["stage"].__class__.__name__
         return nld
 
-    def _check(self, dag: DiGraph) -> None:
+    def _check(self, dag: nx.classes.digraph.DiGraph) -> None:
         nld = nx.readwrite.json_graph.node_link_data(dag)
         nld = self._remove_stage_names(nld)
         _LOG.debug("stripped node_link_data=%s", nld)
@@ -595,7 +590,7 @@ class TestDfRollingApply(ut.TestCase):
 # TODO(gp): -> Test_residualizer1
 class TestPcaFactorComputer1(ut.TestCase):
     @staticmethod
-    def get_ex1() -> Tuple[DataFrame, DataFrame, DataFrame, DataFrame]:
+    def get_ex1() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         df_str = pri.dedent(
             """
         ,0,1,2
@@ -689,7 +684,7 @@ class TestPcaFactorComputer1(ut.TestCase):
     # ##########################################################################
 
     def _test_sort_eigval_helper(
-        self, eigval: ndarray, eigvec: ndarray, are_eigval_sorted_exp: bool
+        self, eigval: np.ndarray, eigvec: np.ndarray, are_eigval_sorted_exp: bool
     ) -> None:
         # pylint: disable=possibly-unused-variable
         obj = res.PcaFactorComputer.sort_eigval(eigval, eigvec)
@@ -752,7 +747,7 @@ class TestPcaFactorComputer2(ut.TestCase):
             plt.show()
         # Generate samples from three independent normally distributed random
         # variables with mean 0 and std dev 1.
-        x = norm.rvs(size=(3, num_samples))
+        x = scipy.stats.norm.rvs(size=(3, num_samples))
         if report_stats:
             _LOG.info("x=\n%s", x[:2, :])
         # We need a matrix `c` for which `c*c^T = r`.
@@ -797,7 +792,7 @@ class TestPcaFactorComputer2(ut.TestCase):
         report_stats: bool,
         stabilize_eig: bool,
         window: int,
-    ) -> Tuple[PcaFactorComputer, DataFrame]:
+    ) -> Tuple[res.PcaFactorComputer, pd.DataFrame]:
         result = self._get_data(num_samples, report_stats)
         _LOG.debug("result=%s", result.keys())
         #
@@ -814,7 +809,7 @@ class TestPcaFactorComputer2(ut.TestCase):
             comp.plot_over_time(df_res, num_pcs_to_plot=-1)
         return comp, df_res
 
-    def _check(self, comp: PcaFactorComputer, df_res: DataFrame) -> None:
+    def _check(self, comp: res.PcaFactorComputer, df_res: pd.DataFrame) -> None:
         txt = []
         txt.append("comp.get_eigval_names()=\n%s" % comp.get_eigval_names())
         txt.append("df_res.mean()=\n%s" % df_res.mean())

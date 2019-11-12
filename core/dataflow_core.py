@@ -4,10 +4,8 @@ import logging
 from typing import Any, List, Optional, Tuple, Union
 
 import networkx as nx
-from networkx.classes.digraph import DiGraph
 
 import helpers.dbg as dbg
-from core.dataflow_core import Node
 
 _LOG = logging.getLogger(__name__)
 
@@ -172,7 +170,7 @@ class DAG:
         self._mode = mode
 
     @property
-    def dag(self) -> DiGraph:
+    def dag(self) -> nx.DiGraph:
         return self._dag
 
     @property
