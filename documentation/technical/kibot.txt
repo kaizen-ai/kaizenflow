@@ -210,7 +210,7 @@
 - Kibot unadjusted stock data should match Yahoo "Close"
 
 ### Missing bars
-- There are no always 390 1-minute bar per day in a regular session
+- There are not always 390 1-minute bar per day in a regular session
 - Regular session is from 9:30am to 15:59
     $$(16:00 - 9:30) * 60 = 6.5 * 60 = 390$$
 
@@ -253,7 +253,7 @@
 
 - Kibot does not include odd lot transactions, for neither price or volume
 
-- Odd lots can not set a last price, by exchange rules
+- Odd lots cannot set a last price, by exchange rules
 - The official volume from the exchange include transactions smaller than 100
   shares (odd lots)
 
@@ -286,17 +286,17 @@
 
 - Split multipliers are determined by split ratio
     - 2:1 split (i.e., each share becomes 2 after the split date)    
-        - the pre-split data is multiplied by 0.5
+        - Then the pre-split data is multiplied by 0.5
     - 4:1 split (i.e., each share becomes 4 after the split date)
-        - the pre-split data is multiplied by 0.25
+        - Then the pre-split data is multiplied by 0.25
     - 1:5 reverse split (i.e., each 5 share becomes 1 share after the split date)
-        - the pre-split data is multiplied by 5
+        - Then the pre-split data is multiplied by 5
 
 ### Dividend multipliers
 
 - If a $0.08 cash dividend is distributed on Feb 19 (ex-date) and the Feb 18
   closing price is $24.96
-    - The pre-dividend data is multiplied by (1 - 0.08 / 24.96) = 0.9968
+    - Then the pre-dividend data is multiplied by (1 - 0.08 / 24.96) = 0.9968
 
 ### Adjustment
 
@@ -322,5 +322,5 @@
 
 - Yahoo Finance website has recently changed the meaning of "adj close" column,
   which shows unadjusted prices (instead of adjusted!)
-    - It looks like [Singapore version](http://sg.finance.yahoo.com/) is still
-      using the correct definition
+    - It looks like the [Singapore version](http://sg.finance.yahoo.com/) of
+      Yahoo finance is still using the correct definition
