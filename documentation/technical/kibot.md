@@ -1,3 +1,40 @@
+<!--ts-->
+   * [Kibot](#kibot)
+      * [Buy](#buy)
+         * [Subscription](#subscription)
+         * [Historical data](#historical-data)
+      * [API](#api)
+      * [FAQs](#faqs)
+         * [Data delivery](#data-delivery)
+         * [Historical minute data format](#historical-minute-data-format)
+         * [Historical tick data format](#historical-tick-data-format)
+         * [Historical aggregate bid / ask data](#historical-aggregate-bid--ask-data)
+         * [Time zone](#time-zone)
+         * [Market sessions](#market-sessions)
+         * [Missing minutes](#missing-minutes)
+         * [Historical tick data](#historical-tick-data)
+         * [Prices outside bid/ask spread](#prices-outside-bidask-spread)
+         * [Historical futures data](#historical-futures-data)
+         * [Settlement price](#settlement-price)
+         * [Historical forex data](#historical-forex-data)
+         * [Indexes](#indexes)
+         * [Data quality](#data-quality)
+         * [Missing bars](#missing-bars)
+         * [Price in bars can be discontinuous](#price-in-bars-can-be-discontinuous)
+         * [Closing prices](#closing-prices)
+         * [Odd lots](#odd-lots)
+         * [Price sources](#price-sources)
+         * [Why adjusted data?](#why-adjusted-data)
+         * [Adjustment methods for splits and dividends](#adjustment-methods-for-splits-and-dividends)
+         * [Split multipliers](#split-multipliers)
+         * [Dividend multipliers](#dividend-multipliers)
+         * [Adjustment](#adjustment)
+      * [Comparing to other sources](#comparing-to-other-sources)
+
+
+
+<!--te-->
+
 # Kibot
 
 - http://www.kibot.com/
