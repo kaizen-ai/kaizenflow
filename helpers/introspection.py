@@ -4,10 +4,17 @@
 import helpers.introspection as intr
 """
 
+import collections.abc as abc
 import inspect
 import sys
 
 import helpers.dbg as dbg
+
+
+def is_iterable(obj):
+    # From https://stackoverflow.com/questions/1952464
+    # Note that a string is iterable in python, so we need to exclude it.
+    return not isinstance(obj, str) and isinstance(obj, abc.Iterable)
 
 
 def get_function_name(count=0):
