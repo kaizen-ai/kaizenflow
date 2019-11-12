@@ -1,11 +1,13 @@
 import io
 import json
 import logging
+import os
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
+import pytest
 from scipy.stats import norm
 
 import core.config as cfg
@@ -15,6 +17,7 @@ import core.pandas_helpers as pde
 import core.residualizer as res
 import core.signal_processing as sigp
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.printing as pri
 import helpers.unit_test as ut
 
@@ -837,3 +840,14 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
+
+
+@pytest.mark.slow
+class Test_gallery_signal_processing1(ut.TestCase):
+    def test_notebook1(self):
+        file_name = os.path.join(
+            git.get_amp_abs_path(),
+            "core/notebooks/gallery_signal_processing.ipynb",
+        )
+        scratch_dir = self.get_scratch_space()
+        ut.run_notebook(file_name, scratch_dir)
