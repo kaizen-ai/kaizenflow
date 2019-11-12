@@ -4,6 +4,8 @@ Import as:
 import helpers.printing as prnt
 """
 
+from typing import Optional
+
 import helpers.dbg as dbg
 
 # #############################################################################
@@ -28,7 +30,7 @@ def clear_screen():
     print((chr(27) + "[2J"))
 
 
-def line(char=None, num_chars=None):
+def line(char: str = None, num_chars: int = None) -> str:
     """
     Return a line with the desired character.
     """
@@ -37,7 +39,13 @@ def line(char=None, num_chars=None):
     return char * num_chars
 
 
-def frame(message, char1=None, num_chars=None, char2=None, thickness=1):
+def frame(
+    message: str,
+    char1: Optional[str] = None,
+    num_chars: Optional[int] = None,
+    char2: Optional[str] = None,
+    thickness: int = 1,
+) -> str:
     """
     Print a frame around a message.
     """
@@ -209,6 +217,7 @@ def format_list(v, sep=" ", max_n=None, tag=None):
     else:
         txt += sep.join(map(str, v[: max_n / 2]))
         txt += " ... "
+        # pylint: disable=invalid-unary-operand-type
         txt += sep.join(map(str, v[(-max_n) / 2 :]))
     return txt
 

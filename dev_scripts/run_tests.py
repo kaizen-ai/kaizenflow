@@ -172,7 +172,6 @@ def _main(parser):
         else:
             # Parallel mode.
             if args.num_cpus == -1:
-                # pylint: disable=import-outside-toplevel
                 import joblib
 
                 n_jobs = joblib.cpu_count()

@@ -52,7 +52,6 @@ def bootstrap(rel_path_to_amp_helpers):
     sys.path.insert(0, amp_path)
     # Test the imports.
     try:
-        # pylint: disable=import-outside-toplevel
         import helpers.dbg as dbg_test  # isort:skip # noqa: E402,F401
 
         print("* Boostrap successful *")

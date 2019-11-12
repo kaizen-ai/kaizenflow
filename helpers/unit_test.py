@@ -11,6 +11,7 @@ import pprint
 import random
 import re
 import unittest
+from typing import Any, Optional
 
 import numpy as np
 
@@ -35,7 +36,7 @@ def set_update_tests(val):
     _UPDATE_TESTS = val
 
 
-def get_update_tests():
+def get_update_tests() -> bool:
     return _UPDATE_TESTS
 
 
@@ -72,7 +73,6 @@ def get_random_df(num_cols, seed=None, **kwargs):
     """
     # Sometimes pandas takes several seconds to import, so we don't import
     # unless necessary.
-    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     if seed:
@@ -85,7 +85,6 @@ def get_random_df(num_cols, seed=None, **kwargs):
 def get_df_signature(df, num_rows=3):
     # Sometimes pandas takes several seconds to import, so we don't import
     # unless necessary.
-    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     dbg.dassert_isinstance(df, pd.DataFrame)
@@ -133,7 +132,13 @@ def _remove_spaces(obj):
     return string
 
 
-def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False):
+def _assert_equal(
+    actual: str,
+    expected: str,
+    full_test_name: str,
+    test_dir: str,
+    fuzzy_match: bool = False,
+) -> None:
     """
     Implement a better version of self.assertEqual() that reports mismatching
     strings with sdiff and save them to files for further analysis with
@@ -143,7 +148,7 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
       `_remove_spaces`)
     """
 
-    def _to_string(obj):
+    def _to_string(obj: str) -> str:
         if isinstance(obj, dict):
             ret = pprint.pformat(obj)
         else:
@@ -198,13 +203,15 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
         io_.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
         si.system(cmd)
-        msg = (
-            "Diff with:",
-            "> " + vimdiff_cmd,
-            "or running:",
-            "> " + diff_script,
-        )
-        msg = "\n".join(msg)
+        msg = []
+        msg.append("Diff with:")
+        msg.append("> " + vimdiff_cmd)
+        msg.append("or running:")
+        msg.append("> " + diff_script)
+        # TODO(gp): Understand why mypy reports:
+        #   Incompatible types in assignment (expression has type "str",
+        #   variable has type "List[str]")
+        msg = "\n".join(msg)  # type: ignore
         _LOG.error(msg)
         # Print stack trace.
         raise RuntimeError(msg)
@@ -216,16 +223,16 @@ class TestCase(unittest.TestCase):
     as txt.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         random.seed(20000101)
         np.random.seed(20000101)
         # Name of the dir with artifacts for this test.
-        self._scratch_dir = None
+        self._scratch_dir: Optional[str] = None
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", prnt.frame(func_name))
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         pass
 
     def create_io_dirs(self):
@@ -251,7 +258,7 @@ class TestCase(unittest.TestCase):
         )
         return dir_name
 
-    def get_output_dir(self):
+    def get_output_dir(self) -> str:
         """
         Return the path of the directory storing output data for this test class.
 
@@ -289,7 +296,7 @@ class TestCase(unittest.TestCase):
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
-    def check_string(self, actual, fuzzy_match=False):
+    def check_string(self, actual: str, fuzzy_match: bool = False) -> None:
         """
         Check the actual outcome of a test against the expected outcomes
         contained in the file and/or updates the golden reference file with the
@@ -340,8 +347,12 @@ class TestCase(unittest.TestCase):
                 # the golden outcome.
                 expected = io_.from_file(file_name, split=False)
                 test_name = self._get_test_name()
+                # The problem is that from_file can return a List[str] split =
+                # True, so mypy gets confused:
+                #   mypy: Argument 2 to "_assert_equal" has incompatible type
+                #   "Union[str, List[str]]"; expected "str"
                 _assert_equal(
-                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
+                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match  # type: ignore
                 )
             else:
                 # No golden outcome available: save the result in a tmp file.
@@ -353,14 +364,18 @@ class TestCase(unittest.TestCase):
                 )
                 raise RuntimeError(msg)
 
-    def _get_test_name(self):
+    def _get_test_name(self) -> str:
         """
         :return: full test name as class.method.
         :rtype: str
         """
         return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
 
-    def _get_current_path(self, test_class_name=None, test_method_name=None):
+    def _get_current_path(
+        self,
+        test_class_name: Optional[Any] = None,
+        test_method_name: Optional[Any] = None,
+    ) -> str:
         dir_name = os.path.dirname(inspect.getfile(self.__class__))
         if test_class_name is None:
             test_class_name = self.__class__.__name__
