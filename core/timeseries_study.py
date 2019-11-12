@@ -32,19 +32,23 @@ class _TimeSeriesStudy:
         time_series: pd.Series,
         freq_name: str,
         data_name: Optional[str] = None,
+        sharey: Optional[bool] = False,
     ):
         """
         :param time_series: pd.Series for which the study needs to be
             conducted
-        :param freq_name: The name of the data frequency to add to plot
-            titles (for example, 'daily').
-        :param data_name: The name of the data to add to plot titles
-            (for example, symbol).
+        :param freq_name: the name of the data frequency to add to plot
+            titles (for example, 'daily')
+        :param data_name: the name of the data to add to plot titles
+            (for example, symbol)
+        :param sharey: a parameter passed into plt.subplots in
+            `plot_by_year` method
         """
         self._time_series = time_series
         self._ts_name = time_series.name
         self._data_name = data_name
         self._freq_name = freq_name
+        self._sharey = sharey
 
     def plot_time_series(self):
         """
@@ -63,8 +67,7 @@ class _TimeSeriesStudy:
         )
         plt.show()
 
-    # TODO(Julia): I would use sharey=True so it's on the same scale.
-    def plot_by_year(self, sharey=False):
+    def plot_by_year(self):
         """
         Resample yearly and then plot each year on a different plot.
         """
@@ -74,7 +77,7 @@ class _TimeSeriesStudy:
         _, axis = plt.subplots(
             len(yearly_resample),
             figsize=(20, 5 * len(yearly_resample)),
-            sharey=sharey,
+            sharey=self._sharey,
         )
         # Plot each year in a subplot.
         for i, year_ts in enumerate(yearly_resample):
@@ -85,7 +88,7 @@ class _TimeSeriesStudy:
         plt.suptitle(
             f"{self._freq_name.capitalize()} {self._ts_name} by year"
             f"{self._title_suffix}",
-            # TODO(Julia): Add a comment explaining this.
+            # Set suptitle at the top of the plots.
             y=1.005,
         )
         plt.tight_layout()
