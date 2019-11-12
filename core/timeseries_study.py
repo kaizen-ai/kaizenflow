@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.introspection as intr
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ class _TimeSeriesStudy:
         """
         Plot timeseries on its original time scale.
         """
+        _LOG.debug(intr.get_function_name())
         self._time_series.plot()
         plt.title(
             f"{self._freq_name.capitalize()} {self._ts_name}"
@@ -71,6 +73,7 @@ class _TimeSeriesStudy:
         """
         Resample yearly and then plot each year on a different plot.
         """
+        _LOG.debug(intr.get_function_name())
         # Split by year.
         yearly_resample = self._time_series.resample("y")
         # Create as many subplots as years.
@@ -92,6 +95,7 @@ class _TimeSeriesStudy:
             y=1.005,
         )
         plt.tight_layout()
+        plt.show()
 
     # TODO(gp): Think if it makes sense to generalize this by passing a lambda
     #  that define the timescale, e.g.,
@@ -105,6 +109,7 @@ class _TimeSeriesStudy:
         """
         Plot the mean value of the timeseries for each day.
         """
+        _LOG.debug(intr.get_function_name())
         self._boxplot(self._time_series, self._time_series.index.day)
         plt.xlabel("day of month")
         plt.title(
@@ -112,11 +117,15 @@ class _TimeSeriesStudy:
             f"month{self._title_suffix}"
         )
         plt.show()
+        # We need to close the plot otherwise there is a coupling between
+        # plots that makes matplotlib assert.
+        plt.close()
 
     def boxplot_day_of_week(self):
         """
         Plot the mean value of the timeseries for year.
         """
+        _LOG.debug(intr.get_function_name())
         self._boxplot(self._time_series, self._time_series.index.dayofweek)
         plt.xlabel("day of week")
         plt.title(
@@ -124,6 +133,9 @@ class _TimeSeriesStudy:
             f"week{self._title_suffix}"
         )
         plt.show()
+        # We need to close the plot otherwise there is a coupling between
+        # plots that makes matplotlib assert.
+        plt.close()
 
     @staticmethod
     def _boxplot(ts, groupby):
@@ -131,13 +143,14 @@ class _TimeSeriesStudy:
         ts_df["groupby"] = groupby
         ts_df.boxplot(by="groupby", column=ts.name)
         plt.suptitle("")
+        plt.show()
 
     def _check_data_index(self):
         dbg.dassert_isinstance(
             self._time_series.index, pd.DatetimeIndex
-        ), "The index should have pd.DatetimeIndex format."
+        )
         dbg.dassert_monotonic_index(
-            self._time_series.index, "The index should be monotonic increasing"
+            self._time_series.index
         )
 
     @property
@@ -186,16 +199,17 @@ class TimeSeriesMinuteStudy(_TimeSeriesStudy):
             time_series=time_series, freq_name=freq_name, data_name=data_name
         )
 
-    def execute(self):
-        self.plot_time_series()
-        self.plot_by_year()
-        self.boxplot_day_of_week()
-        self.boxplot_minutely_hour()
-
     def boxplot_minutely_hour(self):
+        _LOG.debug(intr.get_function_name())
         self._boxplot(self._time_series, self._time_series.index.hour)
         plt.title(
             f"{self._ts_name} during different hours" f"{self._title_suffix}"
         )
         plt.xlabel("hour")
         plt.show()
+
+    def execute(self):
+        self.plot_time_series()
+        self.plot_by_year()
+        self.boxplot_day_of_week()
+        self.boxplot_minutely_hour()

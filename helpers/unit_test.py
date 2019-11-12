@@ -13,6 +13,7 @@ import re
 import unittest
 from typing import Any, Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 import helpers.dbg as dbg
@@ -226,6 +227,8 @@ class TestCase(unittest.TestCase):
     def setUp(self) -> None:
         random.seed(20000101)
         np.random.seed(20000101)
+        # Disable matplotlib plotting by overwriting the `show` function.
+        plt.show = lambda : 0
         # Name of the dir with artifacts for this test.
         self._scratch_dir: Optional[str] = None
         # Print banner to signal starting of a new test.
@@ -233,7 +236,9 @@ class TestCase(unittest.TestCase):
         _LOG.debug("\n%s", prnt.frame(func_name))
 
     def tearDown(self) -> None:
-        pass
+        # Force matplotlib to close plots to decouple tests.
+        plt.close()
+        plt.clf()
 
     def create_io_dirs(self):
         dir_name = self.get_input_dir()
@@ -248,7 +253,6 @@ class TestCase(unittest.TestCase):
         Return the path of the directory storing input data for this test class.
 
         :return: dir name
-        :rtype: str
         """
         dir_name = (
             self._get_current_path(
@@ -263,7 +267,6 @@ class TestCase(unittest.TestCase):
         Return the path of the directory storing output data for this test class.
 
         :return: dir name
-        :rtype: str
         """
         dir_name = self._get_current_path() + "/output"
         return dir_name
@@ -276,7 +279,6 @@ class TestCase(unittest.TestCase):
         incremental behavior is enabled or not.
 
         :return: dir name
-        :rtype: str
         """
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
@@ -303,7 +305,6 @@ class TestCase(unittest.TestCase):
         actual outcome.
 
         :param: actual
-        :type: str or unicode
 
         Raises if there is an error.
         """
