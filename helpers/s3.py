@@ -156,8 +156,8 @@ def parse_path(path: str) -> Tuple[str, str]:
     dbg.dassert(bool(ret_path), "The path '%s' is empty.", path)
     bucket_name = ret_path[0]
     bucket_name = bucket_name.replace(prefix, "")
-    ret_path = "/".join(ret_path[1:])
-    return bucket_name, ret_path
+    ret = "/".join(ret_path[1:])
+    return bucket_name, ret
 
 
 # TODO(Julia): When PartTask418_PRICE_Convert_Kibot_data_from_csv is

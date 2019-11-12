@@ -516,8 +516,11 @@ def _flake8(file_name, pedantic, check_if_possible):
     opts = "--exit-zero --doctests --max-line-length=82 -j 4"
     ignore = [
         # - "W503 line break before binary operator"
-        #     - Disabled because in contrast with black formatting
+        #     - Disabled because in contrast with black formatting.
         "W503",
+        # - W504 line break after binary operator
+        #     - Disabled because in contrast with black formatting.
+        "W504",
         # - E203 whitespace before ':'
         #     - Disabled because in contrast with black formatting
         "E203",
@@ -669,6 +672,9 @@ def _pyment(file_name, pedantic, check_if_possible):
 
 
 def _pylint(file_name, pedantic, check_if_possible):
+    """
+    Considers and adds.
+    """
     executable = "pylint"
     if check_if_possible:
         return _check_exec(executable)
@@ -818,12 +824,14 @@ def _mypy(file_name, pedantic, check_if_possible):
             line.startswith("Success:")
             or
             # Found 2 errors in 1 file (checked 1 source file)
-            line.startswith("Found )")
+            line.startswith("Found ")
+            or
+            # note: See https://mypy.readthedocs.io
+            "note: See https" in line:
         ):
             continue
         output_tmp.append(line)
     output = output_tmp
-    #
     # if output:
     #    output.insert(0, "* file_name=%s" % file_name)
     return output
