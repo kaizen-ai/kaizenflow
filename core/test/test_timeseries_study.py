@@ -6,7 +6,6 @@ import core.timeseries_study as tss
 import helpers.unit_test as ut
 
 
-@pytest.mark.skip
 class TestTimeSeriesDailyStudy(ut.TestCase):
     def test_usual_case(self):
         idx = pd.date_range("2018-12-31", "2019-01-31")
@@ -16,7 +15,6 @@ class TestTimeSeriesDailyStudy(ut.TestCase):
         tsds.execute()
 
 
-@pytest.mark.skip
 class TestTimeSeriesMinuteStudy(ut.TestCase):
     def test_usual_case(self):
         idx = pd.date_range("2018-12-31", "2019-01-31", freq="5T")
