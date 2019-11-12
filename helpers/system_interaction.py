@@ -12,12 +12,10 @@ import signal
 import subprocess
 import sys
 import time
+from typing import Any, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.printing as pri
-from typing import Any
-from typing import Optional
-from typing import Tuple
 
 _LOG = logging.getLogger(__name__)
 
@@ -251,7 +249,11 @@ def system(
 
 
 def system_to_string(
-    cmd: str, abort_on_error: bool = True, wrapper: Optional[Any] = None, dry_run: bool = False, log_level: int = logging.DEBUG
+    cmd: str,
+    abort_on_error: bool = True,
+    wrapper: Optional[Any] = None,
+    dry_run: bool = False,
+    log_level: int = logging.DEBUG,
 ) -> Tuple[int, str]:
     """
     Execute a shell command and capture its output.

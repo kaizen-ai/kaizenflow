@@ -34,7 +34,7 @@ class Config:
         :param array: array of (key, value), where value can be a python
         type or a Config in case of nested config.
         """
-        self._config : Dict[str, Any] = collections.OrderedDict()
+        self._config: Dict[str, Any] = collections.OrderedDict()
         if array is not None:
             for k, v in array:
                 self._config[k] = v
@@ -46,7 +46,7 @@ class Config:
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         self._config[key] = val
 
-    def __getitem__(self, key: str) -> Union['Config', int]:
+    def __getitem__(self, key: str) -> Union["Config", int]:
         """
         Get value for `key` or assert, if it doesn't exist.
         """
@@ -68,7 +68,7 @@ class Config:
         ret = "\n".join(txt)
         return ret
 
-    def add_subconfig(self, key: str) -> 'Config':
+    def add_subconfig(self, key: str) -> "Config":
         dbg.dassert_not_in(key, self._config)
         self._config[key] = Config()
         return self._config[key]
@@ -102,7 +102,7 @@ class Config:
         return copy.deepcopy(self)
 
     @classmethod
-    def from_python(cls, code: str) -> 'Config':
+    def from_python(cls, code: str) -> "Config":
         """
         Create an object from the code returned by `to_python()`.
         """
@@ -114,7 +114,7 @@ class Config:
         """
         Convert to a ordered dict of order dicts, removing the class.
         """
-        dict_ : Dict[str, Any] = collections.OrderedDict()
+        dict_: Dict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
             if isinstance(v, Config):
                 dict_[k] = v.to_dict()

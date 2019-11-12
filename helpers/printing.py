@@ -4,12 +4,9 @@ Import as:
 import helpers.printing as prnt
 """
 
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import helpers.dbg as dbg
-from typing import Any
-from typing import Dict
-from typing import List
 
 # #############################################################################
 # Debug output

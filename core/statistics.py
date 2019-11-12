@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import scipy as sp
 import statsmodels as sm
-from sklearn.model_selection import TimeSeriesSplit
+import sklearn.model_selection
 
 import helpers.dbg as dbg
 
@@ -118,7 +118,7 @@ def get_expanding_window_splits(
     """
     dbg.dassert_monotonic_index(idx)
     dbg.dassert_lte(1, n_splits)
-    tscv = TimeSeriesSplit(n_splits=n_splits)
+    tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=n_splits)
     locs = list(tscv.split(idx))
     splits = [(idx[loc[0]], idx[loc[1]]) for loc in locs]
     return splits

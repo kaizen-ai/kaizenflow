@@ -9,14 +9,11 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pandas._libs.tslibs.timestamps import Timestamp
-from pandas.core.frame import DataFrame
-from pandas.core.indexes.datetimes import DatetimeIndex
 from tqdm.auto import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as pri
-from core.residualizer import PcaFactorComputer
+import core.residualizer as res
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,8 +22,8 @@ _LOG = logging.getLogger(__name__)
 
 
 def resample_index(
-    index: DatetimeIndex, time: Tuple[int, int] = None, **kwargs: Any
-) -> DatetimeIndex:
+    index: pd.DatetimeIndex, time: Tuple[int, int] = None, **kwargs: Any
+) -> pd.DatetimeIndex:
     """
     Resample `index` with options compatible with pd.date_range().
     Implementation inspired by https://stackoverflow.com/questions/37853623
@@ -53,7 +50,7 @@ def resample_index(
 # ##############################################################################
 
 
-def _build_empty_df(metadata: Dict[str, Any]) -> DataFrame:
+def _build_empty_df(metadata: Dict[str, Any]) -> pd.DataFrame:
     """
     Build an empty dataframe using the data in `metadata`, which is populated
     in the previous calls of the rolling function.
@@ -75,13 +72,13 @@ def _build_empty_df(metadata: Dict[str, Any]) -> DataFrame:
 
 def _loop(
     i: int,
-    ts: Union[int, Timestamp, str],
-    df: DataFrame,
-    func: Union[Callable, PcaFactorComputer],
+    ts: Union[int, pd.Timestamp, str],
+    df: pd.DataFrame,
+    func: Union[Callable, res.PcaFactorComputer],
     window: int,
     metadata: Optional[Dict[str, Any]],
     abort_on_error: bool,
-) -> Tuple[Optional[DataFrame], Optional[Dict[str, Any]]]:
+) -> Tuple[Optional[pd.DataFrame], Optional[Dict[str, Any]]]:
     """
     Apply `func` to a slice of `df` given by `i` and `window`.
     """
@@ -144,14 +141,14 @@ def _loop(
 
 
 def df_rolling_apply(
-    df: DataFrame,
+    df: pd.DataFrame,
     window: int,
-    func: Union[Callable, PcaFactorComputer],
-    timestamps: Optional[DatetimeIndex] = None,
+    func: Union[Callable, res.PcaFactorComputer],
+    timestamps: Optional[pd.DatetimeIndex] = None,
     convert_to_df: bool = True,
     progress_bar: bool = False,
     abort_on_error: bool = True,
-) -> DataFrame:
+) -> pd.DataFrame:
     """
     Apply function `func` to a rolling window over `df` with `window` columns.
     Timing semantic:

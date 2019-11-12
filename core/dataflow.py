@@ -12,7 +12,7 @@ import pandas as pd
 import core.finance as fin
 import core.statistics as stat
 import helpers.dbg as dbg
-from core.dataflow_core import DAG, Node
+import core.dataflow_core as dtf
 
 _LOG = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def extract_info(dag, methods):
     :param methods: Node method infos to extract
     :return: nested OrderedDict
     """
-    dbg.dassert_isinstance(dag, DAG)
+    dbg.dassert_isinstance(dag, dtf.DAG)
     dbg.dassert_isinstance(methods, list)
     info = collections.OrderedDict()
     for nid in dag.dag.nodes():
@@ -55,7 +55,7 @@ def extract_info(dag, methods):
 # #############################################################################
 
 
-class FitPredictNode(Node, abc.ABC):
+class FitPredictNode(dtf.Node, abc.ABC):
     """
     Define an abstract class with sklearn-style `fit` and `predict` functions.
 
@@ -553,7 +553,7 @@ class SkLearnModel(FitPredictNode):
 # #############################################################################
 
 
-def _get_source_idxs(dag: DAG) -> Dict[str, pd.Index]:
+def _get_source_idxs(dag: dtf.DAG) -> Dict[str, pd.Index]:
     """
     Warm up source nodes and extract dataframe indices.
     """

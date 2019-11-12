@@ -590,7 +590,9 @@ class TestDfRollingApply(ut.TestCase):
 # TODO(gp): -> Test_residualizer1
 class TestPcaFactorComputer1(ut.TestCase):
     @staticmethod
-    def get_ex1() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def get_ex1() -> Tuple[
+        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
+    ]:
         df_str = pri.dedent(
             """
         ,0,1,2

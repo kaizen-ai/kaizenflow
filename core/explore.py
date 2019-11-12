@@ -21,8 +21,6 @@ import seaborn as sns
 import statsmodels
 import statsmodels.api
 import tqdm
-from pandas.core.frame import DataFrame
-from pandas.core.series import Series
 
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -735,7 +733,7 @@ def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
 
 
 # TODO(gp): Add some stats about how many nans where filled.
-def handle_nans(df: DataFrame, nan_mode: str) -> DataFrame:
+def handle_nans(df: pd.DataFrame, nan_mode: str) -> pd.DataFrame:
     if nan_mode == "drop":
         df = df.dropna(how="any")
     elif nan_mode == "fill_with_zero":
@@ -1052,7 +1050,7 @@ def plot_time_distributions(dts, mode, density=True):
 
 # TODO(gp): It can't accept ax. Remove this limitation.
 def jointplot(
-    df: DataFrame,
+    df: pd.DataFrame,
     predicted_var: str,
     predictor_var: str,
     height: int = None,
@@ -1082,13 +1080,13 @@ def jointplot(
 
 
 def _preprocess_regression(
-    df: DataFrame,
+    df: pd.DataFrame,
     intercept: bool,
     predicted_var: str,
     predicted_var_delay: int,
     predictor_vars: str,
     predictor_vars_delay: int,
-) -> Tuple[DataFrame, List[str], List[str]]:
+) -> Tuple[pd.DataFrame, List[str], List[str]]:
     """
     Preprocess data in dataframe form in order to perform a regression.
     """
@@ -1151,7 +1149,7 @@ def _preprocess_regression(
 
 
 def ols_regress(
-    df: DataFrame,
+    df: pd.DataFrame,
     predicted_var: str,
     predictor_vars: str,
     intercept: bool,
@@ -1241,7 +1239,7 @@ def ols_regress(
     return regr_res
 
 
-def to_series(obj: Series) -> Series:
+def to_series(obj: pd.Series) -> pd.Series:
     if isinstance(obj, np.ndarray):
         dbg.dassert(obj.shape, 1)
         srs = pd.Series(obj)
@@ -1252,8 +1250,8 @@ def to_series(obj: Series) -> Series:
 
 
 def ols_regress_series(
-    srs1: Series,
-    srs2: Series,
+    srs1: pd.Series,
+    srs2: pd.Series,
     intercept: bool,
     srs1_name: Optional[Any] = None,
     srs2_name: Optional[Any] = None,
