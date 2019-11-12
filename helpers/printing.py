@@ -39,7 +39,7 @@ def line(char: str = None, num_chars: int = None) -> str:
     return char * num_chars
 
 
-def frame(message: str, char1: Optional[Any] = None, num_chars: Optional[Any] = None, char2: Optional[Any] = None, thickness: int = 1) -> str:
+def frame(message: str, char1: Optional[str] = None, num_chars: Optional[int] = None, char2: Optional[str] = None, thickness: int = 1) -> str:
     """
     Print a frame around a message.
     """

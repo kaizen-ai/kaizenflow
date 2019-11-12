@@ -123,14 +123,15 @@ def get_repo_symbolic_name(super_module):
 
 def _get_repo_map():
     _REPO_MAP = {"alphamatic/amp": "Amp"}
-    # Get info from the including repo, if possible.
-    try:
-        # pylint: disable=import-outside-toplevel
-        import repo_config as repc
-
-        _REPO_MAP.update(repc.REPO_MAP)
-    except ImportError:
-        _LOG.debug("No including repo")
+    # TODO(gp): Extend this somehow.
+    ## Get info from the including repo, if possible.
+    #try:
+    #    # pylint: disable=import-outside-toplevel
+    #    import repo_config as repc
+    #
+    #    _REPO_MAP.update(repc.REPO_MAP)
+    #except ImportError:
+    #    _LOG.debug("No including repo")
     dbg.dassert_no_duplicates(_REPO_MAP.keys())
     dbg.dassert_no_duplicates(_REPO_MAP.values())
     return _REPO_MAP.copy()

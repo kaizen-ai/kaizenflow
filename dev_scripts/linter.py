@@ -285,6 +285,7 @@ def _get_action_func(action):
         "flake8": _flake8,
         "ipynb_format": _ipynb_format,
         "isort": _isort,
+        "mypy": _mypy,
         "pydocstyle": _pydocstyle,
         "pylint": _pylint,
         "pyment": _pyment,
@@ -747,7 +748,6 @@ def _pylint(file_name, pedantic, check_if_possible):
                 "W0621",
             ]
         )
-
     if not pedantic:
         ignore.extend(
             [
@@ -781,9 +781,38 @@ def _pylint(file_name, pedantic, check_if_possible):
                 continue
             output_tmp.append(l)
         output = output_tmp
-    #
-    output.insert(0, "* file_name=%s" % file_name)
+    # Remove lines.
     output = [l for l in output if ("-" * 20) not in l]
+    if output:
+        output.insert(0, "* file_name=%s" % file_name)
+    return output
+
+
+def _mypy(file_name, pedantic, check_if_possible):
+    _ = pedantic
+    executable = "mypy"
+    if check_if_possible:
+        return _check_exec(executable)
+    #
+    dbg.dassert(file_name)
+    # Applicable to only python library files.
+    if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
+        _LOG.debug("Skipping file_name='%s'", file_name)
+        return []
+    cmd = executable + " %s" % file_name
+    _system(cmd,
+            # mypy returns -1 if there are errors.
+            abort_on_error=False)
+    output = _tee(cmd, executable, abort_on_error=False)
+    # Remove some errors.
+    output_tmp = []
+    for l in output:
+        if not l.startswith("Success:"):
+            output_tmp.append(l)
+    output = output_tmp
+    #
+    if output:
+        output.insert(0, "* file_name=%s" % file_name)
     return output
 
 
@@ -1017,6 +1046,7 @@ _VALID_ACTIONS_META = [
     # ("pyment", "w",
     #   "Create, update or convert docstring."),
     ("pylint", "w", "Check that module(s) satisfy a coding standard."),
+    ("mypy", "r", "Static code analyzer using the hint types."),
     ("sync_jupytext", "w", "Create / sync jupytext files."),
     ("test_jupytext", "r", "Test jupytext files."),
     # Superseded by "sync_jupytext".

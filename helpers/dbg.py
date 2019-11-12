@@ -7,6 +7,7 @@ from logging import LogRecord
 from mypy_extensions import NoReturn
 from typing import Any
 from typing import Optional
+from typing import Iterable
 from typing import List
 from typing import Union
 from typing import Tuple
@@ -87,21 +88,21 @@ def _to_msg(msg: Optional[str], *args: str) -> str:
     return res
 
 
-def _dfatal(cond: bool, msg: Optional[str], *args: str) -> NoReturn:
+def _dfatal(txt: Union[str, Iterable[str]], msg: Optional[str], *args: str) -> NoReturn:
     """
     Package the error to raise.
     """
-    txt = "* Failed assertion *\n"
-    if isinstance(cond, list):
-        txt += "\n".join(cond)
+    dfatal_txt = "* Failed assertion *\n"
+    if isinstance(txt, list):
+        dfatal_txt += "\n".join(txt)
     else:
-        txt += cond
+        dfatal_txt += str(txt)
     msg = _to_msg(msg, *args)
     if msg:
-        if not txt.endswith("\n"):
-            txt += "\n"
-        txt += msg
-    dfatal(txt)
+        if not dfatal_txt.endswith("\n"):
+            dfatal_txt += "\n"
+        dfatal_txt += msg
+    dfatal(dfatal_txt)
 
 
 def dassert(cond: bool, msg: Optional[str] = None, *args: str) -> None:
@@ -110,7 +111,7 @@ def dassert(cond: bool, msg: Optional[str] = None, *args: str) -> None:
         _dfatal(txt, msg, *args)
 
 
-def dassert_eq(val1: Any , val2: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert_eq(val1: Any, val2: Any, msg: Optional[str] = None, *args: str) -> None:
     if not val1 == val2:
         txt = "'%s'\n==\n'%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
@@ -340,8 +341,10 @@ def dassert_monotonic_index(obj, msg: Optional[str]=None, *args: str):
         index = obj
     else:
         index = obj.index
-    dassert(index.is_monotonic_increasing, msg=msg, *args)
-    dassert(index.is_unique, msg=msg, *args)
+    # TODO(gp): Understand why mypy reports:
+    #   error: "dassert" gets multiple values for keyword argument "msg"
+    dassert(index.is_monotonic_increasing, msg=msg, *args)  # type: ignore
+    dassert(index.is_unique, msg=msg, *args)  # type: ignore
 
 
 def dassert_array_has_same_type_element(
