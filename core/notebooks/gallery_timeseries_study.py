@@ -23,14 +23,10 @@ import logging
 import numpy as np
 import pandas as pd
 
-# TODO(Julia): When the code is moved to  core/timeseries_study
-# delete `import vendors.kibot.PartTask269_liquidity_analysis_utils`
-# and uncomment `import core.timeseries_study as tss`
-# import core.timeseries_study as tss
+import core.timeseries_study as tss
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
-import vendors.kibot.PartTask269_liquidity_analysis_utils as tss
 
 # %%
 print(env.get_system_signature())
