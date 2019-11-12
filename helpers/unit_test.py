@@ -208,7 +208,10 @@ def _assert_equal(
         msg.append("> " + vimdiff_cmd)
         msg.append("or running:")
         msg.append("> " + diff_script)
-        msg = "\n".join(msg)
+        # TODO(gp): Understand why mypy reports:
+        #   Incompatible types in assignment (expression has type "str",
+        #   variable has type "List[str]")
+        msg = "\n".join(msg)  # type: ignore
         _LOG.error(msg)
         # Print stack trace.
         raise RuntimeError(msg)
@@ -224,7 +227,7 @@ class TestCase(unittest.TestCase):
         random.seed(20000101)
         np.random.seed(20000101)
         # Name of the dir with artifacts for this test.
-        self._scratch_dir : Optional[str] = None
+        self._scratch_dir: Optional[str] = None
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", prnt.frame(func_name))
@@ -344,8 +347,12 @@ class TestCase(unittest.TestCase):
                 # the golden outcome.
                 expected = io_.from_file(file_name, split=False)
                 test_name = self._get_test_name()
+                # The problem is that from_file can return a List[str] split =
+                # True, so mypy gets confused:
+                #   mypy: Argument 2 to "_assert_equal" has incompatible type
+                #   "Union[str, List[str]]"; expected "str"
                 _assert_equal(
-                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
+                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match  # type: ignore
                 )
             else:
                 # No golden outcome available: save the result in a tmp file.

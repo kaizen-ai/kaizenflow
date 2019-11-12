@@ -553,11 +553,11 @@ def _flake8(file_name, pedantic, check_if_possible):
     _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
     if is_jupytext_code:
         output_tmp = []
-        for l in output:
+        for line in output:
             # F821 undefined name 'display' [flake8]
-            if "F821" in l and "undefined name 'display'" in l:
+            if "F821" in line and "undefined name 'display'" in line:
                 continue
-            output_tmp.append(l)
+            output_tmp.append(line)
         output = output_tmp
     return output
 
@@ -775,18 +775,21 @@ def _pylint(file_name, pedantic, check_if_possible):
     cmd = executable + " %s %s" % (opts, file_name)
     output = _tee(cmd, executable, abort_on_error=False)
     # Remove some errors.
-    if is_jupytext_code:
-        output_tmp = []
-        for l in output:
+    output_tmp = []
+    for line in output:
+        if is_jupytext_code:
             # [E0602(undefined-variable), ] Undefined variable 'display'
-            if "E0602" in l and "Undefined variable 'display'" in l:
+            if "E0602" in line and "Undefined variable 'display'" in line:
                 continue
-            output_tmp.append(l)
-        output = output_tmp
+        if line.startswith("Your code has been rated"):
+            # Your code has been rated at 10.00/10 (previous run: ...
+            line = file_name + ": " + line
+        output_tmp.append(line)
+    output = output_tmp
     # Remove lines.
     output = [l for l in output if ("-" * 20) not in l]
-    if output:
-        output.insert(0, "* file_name=%s" % file_name)
+    # if output:
+    #    output.insert(0, "* file_name=%s" % file_name)
     return output
 
 
@@ -810,13 +813,19 @@ def _mypy(file_name, pedantic, check_if_possible):
     output = _tee(cmd, executable, abort_on_error=False)
     # Remove some errors.
     output_tmp = []
-    for l in output:
-        if not l.startswith("Success:"):
-            output_tmp.append(l)
+    for line in output:
+        if (
+            line.startswith("Success:")
+            or
+            # Found 2 errors in 1 file (checked 1 source file)
+            line.startswith("Found )")
+        ):
+            continue
+        output_tmp.append(line)
     output = output_tmp
     #
-    if output:
-        output.insert(0, "* file_name=%s" % file_name)
+    # if output:
+    #    output.insert(0, "* file_name=%s" % file_name)
     return output
 
 
@@ -1083,6 +1092,9 @@ def _main(args):
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Run linter.
     output = _run_linter(actions, args, file_names)
+    dbg.dassert_isinstance(output, list)
+    # Sort the errors.
+    output = sorted(output)
     # Print linter output.
     print(pri.frame(args.linter_log, char1="/").rstrip("\n"))
     print("\n".join(output) + "\n")

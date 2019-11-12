@@ -165,18 +165,18 @@ def create_dir(
             # incremental), so we are done.
             # os.chmod(dir_name, 0755)
             return
-    if ask_to_delete:
-        si.query_yes_no(
-            "Do you really want to delete dir '%s'?" % dir_name,
-            abort_on_no=True,
-        )
-    # The dir exists and we want to create it from scratch (i.e., not
-    # incremental), so we need to delete the dir.
-    _LOG.debug("Deleting dir '%s'", dir_name)
-    if os.path.islink(dir_name):
-        delete_file(dir_name)
-    else:
-        shutil.rmtree(dir_name)
+        if ask_to_delete:
+            si.query_yes_no(
+                "Do you really want to delete dir '%s'?" % dir_name,
+                abort_on_no=True,
+            )
+        # The dir exists and we want to create it from scratch (i.e., not
+        # incremental), so we need to delete the dir.
+        _LOG.debug("Deleting dir '%s'", dir_name)
+        if os.path.islink(dir_name):
+            delete_file(dir_name)
+        else:
+            shutil.rmtree(dir_name)
     _LOG.debug("Creating directory '%s'", dir_name)
     # Note that makedirs raises OSError if the target directory already exists.
     # A race condition can happen when another process creates our target
