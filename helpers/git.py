@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.git as git
+"""
+
 import logging
 import os
 import re
@@ -69,7 +75,7 @@ def find_file_in_git_tree(file_in, super_module=True):
     in the super-module).
     """
     root_dir = get_client_root(super_module=super_module)
-    cmd = "find %s -name '%s'" % (root_dir, file_in)
+    cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_in)
     _, file_name = si.system_to_string(cmd)
     _LOG.debug("file_name=%s", file_name)
     # Make sure that there is a single outcome.
@@ -170,6 +176,28 @@ def get_path_from_git_root(file_name, super_module):
     # _, git_file_name = si.system_to_string(cmd)
     # dbg.dassert_ne(git_file_name, "")
     return ret
+
+
+def get_amp_abs_path():
+    """
+    Return the absolute path of `amp` dir.
+    """
+    repo_sym_name = get_repo_symbolic_name(super_module=False)
+    if repo_sym_name == "amp":
+        # If we are in the amp repo, then the git client root is the amp
+        # directory.
+        git_root = get_client_root(super_module=False)
+        amp_dir = git_root
+    else:
+        # If we are not in the amp repo, then look for the amp dir.
+        amp_dir = find_file_in_git_tree("amp", super_module=True)
+        git_root = get_client_root(super_module=True)
+        amp_dir = os.path.join(git_root, amp_dir)
+    amp_dir = os.path.abspath(amp_dir)
+    # Sanity check.
+    dbg.dassert_dir_exists(amp_dir)
+    dbg.dassert_eq(os.path.basename(amp_dir), "amp")
+    return amp_dir
 
 
 # ##############################################################################
