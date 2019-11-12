@@ -161,7 +161,7 @@ def dassert_in(
         _dfatal(txt, msg, *args)
 
 
-def dassert_not_in(value, valid_values, msg=None, *args):
+def dassert_not_in(value: Any, valid_values: Iterable[Any], msg: Optional[str] = None, *args: str) -> None:
     if value in valid_values:
         txt = "'%s' not in '%s'" % (value, valid_values)
         _dfatal(txt, msg, *args)

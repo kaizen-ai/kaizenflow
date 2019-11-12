@@ -42,7 +42,7 @@ if not hasattr(hut, "conftest_already_parsed"):
             print("\nWARNING: Setting verb level")
             dbg.init_logger(config.getoption("--dbg_verbosity"))
 
-    pyannotate = False
+    pyannotate = True
     if pyannotate:
         print("\nWARNING: Collecting information about types through pyannotate")
         # From https://github.com/dropbox/pyannotate/blob/master/example/example_conftest.py

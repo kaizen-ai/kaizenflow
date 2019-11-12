@@ -15,6 +15,9 @@ import time
 
 import helpers.dbg as dbg
 import helpers.printing as pri
+from typing import Any
+from typing import Optional
+from typing import Tuple
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,17 +79,17 @@ def get_env_var(env_var_name):
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-arguments,too-many-locals
 def _system(
-    cmd,
-    abort_on_error,
-    suppress_error,
-    suppress_output,
-    blocking,
-    wrapper,
-    output_file,
-    tee,
-    dry_run,
-    log_level,
-):
+    cmd: str,
+    abort_on_error: bool,
+    suppress_error: Optional[Any],
+    suppress_output: bool,
+    blocking: bool,
+    wrapper: Optional[Any],
+    output_file: Optional[Any],
+    tee: bool,
+    dry_run: bool,
+    log_level: int,
+) -> Tuple[int, str]:
     """
     Execute a shell command.
 
@@ -204,17 +207,17 @@ def _system(
 
 # pylint: disable=too-many-arguments
 def system(
-    cmd,
-    abort_on_error=True,
-    suppressed_error=None,
-    suppress_output=True,
-    blocking=True,
-    wrapper=None,
-    output_file=None,
-    tee=False,
-    dry_run=False,
-    log_level=logging.DEBUG,
-):
+    cmd: str,
+    abort_on_error: bool = True,
+    suppressed_error: Optional[Any] = None,
+    suppress_output: bool = True,
+    blocking: bool = True,
+    wrapper: Optional[Any] = None,
+    output_file: Optional[Any] = None,
+    tee: bool = False,
+    dry_run: bool = False,
+    log_level: int = logging.DEBUG,
+) -> int:
     """
     Execute a shell command, without capturing its output.
     See _system() for options.
@@ -248,8 +251,8 @@ def system(
 
 
 def system_to_string(
-    cmd, abort_on_error=True, wrapper=None, dry_run=False, log_level=logging.DEBUG
-):
+    cmd: str, abort_on_error: bool = True, wrapper: Optional[Any] = None, dry_run: bool = False, log_level: int = logging.DEBUG
+) -> Tuple[int, str]:
     """
     Execute a shell command and capture its output.
     See _system() for options.

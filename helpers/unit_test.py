@@ -53,7 +53,7 @@ def set_incremental_tests(val):
     _INCREMENTAL_TESTS = val
 
 
-def get_incremental_tests():
+def get_incremental_tests() -> bool:
     return _INCREMENTAL_TESTS
 
 
@@ -285,7 +285,7 @@ class TestCase(unittest.TestCase):
             self._scratch_dir = dir_name
         return self._scratch_dir
 
-    def assert_equal(self, actual, expected):
+    def assert_equal(self, actual: str, expected: str) -> None:
         dbg.dassert_in(type(actual), (bytes, str))
         dbg.dassert_in(type(expected), (bytes, str))
         #
@@ -390,7 +390,7 @@ class TestCase(unittest.TestCase):
 # #############################################################################
 
 
-def run_notebook(file_name, scratch_dir):
+def run_notebook(file_name: str, scratch_dir: str) -> None:
     """
     Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
     storing the output.
