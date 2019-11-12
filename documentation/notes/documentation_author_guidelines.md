@@ -130,9 +130,11 @@
 
 ### To insert a TOC
 - Add the tags at the beginning of the markdown file
+- Note that in the text below we interspersed spaces to avoid the TOC processor
+  to add a table of content also here
     ```markdown
-    <!--ts-->
-    < !--te-->
+    < ! - - t s - - >
+    < ! - - t e - - >
     ```
 
 ### To update all markdown files

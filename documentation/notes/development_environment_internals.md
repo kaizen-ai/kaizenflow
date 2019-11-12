@@ -1,4 +1,10 @@
 <!--ts-->
+   * [Design principles for multiple Git repos](#design-principles-for-multiple-git-repos)
+      * [Steps requiring composition of Git repos](#steps-requiring-composition-of-git-repos)
+   * [Configuring a Git client](#configuring-a-git-client)
+      * [Bootstrapping](#bootstrapping)
+      * [When bootstrapping happens](#when-bootstrapping-happens)
+      * [Mechanics of bootstrapping](#mechanics-of-bootstrapping)
    * [create_conda design notes](#create_conda-design-notes)
    * [Using YAML files](#using-yaml-files)
       * [Merging multiple YAML](#merging-multiple-yaml)
@@ -6,6 +12,8 @@
       * [How to specify multiple conda channel?](#how-to-specify-multiple-conda-channel)
       * [Commented out packages](#commented-out-packages)
       * [Comments](#comments)
+   * [setenv.sh design notes](#setenvsh-design-notes)
+   * [To debug](#to-debug)
 
 
 

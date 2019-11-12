@@ -1,18 +1,21 @@
 <!--ts-->
    * [Task management with GitHub](#task-management-with-github)
+      * [GH stands for GitHub](#gh-stands-for-github)
       * [Everything we work on comes as a GitHub task](#everything-we-work-on-comes-as-a-github-task)
+      * [Issues vs bugs vs tasks](#issues-vs-bugs-vs-tasks)
       * [Use the proper labels](#use-the-proper-labels)
-      * [Life cycle of a bug](#life-cycle-of-a-bug)
+      * [Life cycle of a bug / task](#life-cycle-of-a-bug--task)
       * [Done means "DONE"](#done-means-done)
       * [Tend your tasks](#tend-your-tasks)
       * [File descriptive GH tasks](#file-descriptive-gh-tasks)
       * [Do not change the assignee for a task](#do-not-change-the-assignee-for-a-task)
    * [Code review with GitHub](#code-review-with-github)
       * [Try not to commit to master](#try-not-to-commit-to-master)
-      * [Use branches and PR](#use-branches-and-pr)
-      * [Optional review](#optional-review)
-      * [Apply reviewers' comments for post-commit / optional review](#apply-reviewers-comments-for-post-commit--optional-review)
       * [Post-commit comments](#post-commit-comments)
+      * [Addressing post-commit comments](#addressing-post-commit-comments)
+      * [Use branches and PR](#use-branches-and-pr)
+      * [Optional PR review](#optional-pr-review)
+      * [Apply reviewers' comments for post-commit / optional review](#apply-reviewers-comments-for-post-commit--optional-review)
       * [Reviewers don't follow a branch](#reviewers-dont-follow-a-branch)
       * [Reviewers vs assignees](#reviewers-vs-assignees)
       * [Reviewers and authors interactions](#reviewers-and-authors-interactions)
@@ -36,7 +39,7 @@
 - We call GitHub issues interchangeably "issues", "bugs", and "tasks"
 - "Bugs" is a bit improper since many times we use GitHub to track ideas,
   activities, and improvements, and not only defect in the code
-- Probably the best name is "tasks" or "issues"
+- The best names are "tasks" and "issues"
 
 ## Use the proper labels
 
@@ -122,15 +125,14 @@
 
 # Code review with GitHub
 
-## Try not to commit to `master`
+## Avoid committing to `master`
 
 - Exceptions are small commits that are not part of a feature
 
 ## Post-commit comments
 
-- We follow commits to `master` and might ask to perform some fixes after the
-  commit
-- Try not to miss those emails, despite the large number of emails we get
+- We follow commits to `master` and may ask for fixes post-commit
+- Do not miss those emails, in spite of the large number of emails we get
 - Solutions:
     - Improve your email workflow, e.g., by using "flags" in Gmail web interface
       and / or an email client. Do not rely on "unread" emails as a reminder of
@@ -141,8 +143,7 @@
 
 ## Addressing post-commit comments
 
-- Once the CL addressing the reviewer's comments is ready:
-    - Refer to the GH task number for the commit message (e.g, `PartTask...`)
+- Once the commit addressing the reviewer's comments is ready:
     - Add a comment to the commit like "Do-this-and-that as per reviewers
       request", so that the reviewer can see that his/her comments were addressed
     - Reply to the GitHub email with the comment with "DONE" to notify the
@@ -150,7 +151,7 @@
 
 ## Use branches and PR
 
-- We try to get all the code to be reviewed before it's merged into `master`
+- All code should be reviewed before it is merged into `master`
 
 ## Optional PR review
 
@@ -221,7 +222,7 @@
 
 - We are ok with doing multiple commits in the branch or a single commit for all
   the comments
-   - The goal is for the author to keep the CL clear and minimize his / her
+   - The goal is for the author to keep the PR clear and minimize his / her
      overhead
 
 ## "Pending" comments
