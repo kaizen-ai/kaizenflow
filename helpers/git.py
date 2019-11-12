@@ -35,7 +35,7 @@ def get_git_name():
 
 # TODO(gp): Add mem caching to some functions below. We assume that one doesn't
 #  change dir (which is a horrible idea) and thus we can memoize.
-def is_inside_submodule():
+def is_inside_submodule() -> bool:
     """
     Return whether we are inside a Git submodule or in a Git supermodule.
     """
@@ -48,7 +48,7 @@ def is_inside_submodule():
     return ret
 
 
-def get_client_root(super_module):
+def get_client_root(super_module: bool) -> str:
     """
     Return the full path of the root of the Git client.
     E.g., "/Users/saggese/src/.../amp"
@@ -69,7 +69,7 @@ def get_client_root(super_module):
     return client_root
 
 
-def find_file_in_git_tree(file_in, super_module=True):
+def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
     """
     Find the path of a file `file_in` in the outermost git submodule (i.e.,
     in the super-module).
@@ -88,7 +88,7 @@ def find_file_in_git_tree(file_in, super_module=True):
     return file_name
 
 
-def get_repo_symbolic_name(super_module):
+def get_repo_symbolic_name(super_module: bool) -> str:
     """
     Return the name of the remote repo.
     E.g., "alphamatic/amp", "ParticleDev/commodity_research"
@@ -104,12 +104,12 @@ def get_repo_symbolic_name(super_module):
     _, output = si.system_to_string(cmd)
     data = output.split()
     _LOG.debug("data=%s", data)
-    dbg.dassert(len(data), 3, "data='%s'", data)
+    dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
     # git@github.com:alphamatic/amp
     repo_name = data[1]
     m = re.match(r"^.*\.com:(.*)$", repo_name)
     dbg.dassert(m, "Can't parse '%s'", repo_name)
-    repo_name = m.group(1)
+    repo_name = m.group(1)  # type: ignore
     _LOG.debug("repo_name=%s", repo_name)
     # We expect something like "alphamatic/amp".
     m = re.match(r"^\S+/\S+$", repo_name)
@@ -178,7 +178,7 @@ def get_path_from_git_root(file_name, super_module):
     return ret
 
 
-def get_amp_abs_path():
+def get_amp_abs_path() -> str:
     """
     Return the absolute path of `amp` dir.
     """

@@ -195,7 +195,7 @@ def get_credentials():
             # Laptop.
             conda_sh_path = "/home/stas/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/stas/anaconda3/envs"
-    elif user_name == 'daniil':
+    elif user_name == "daniil":
         # Daniil.
         git_user_name = "mongolianjesus"
         git_user_email = "daniil@particle.one"

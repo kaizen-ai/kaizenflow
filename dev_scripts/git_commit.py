@@ -251,8 +251,9 @@ def _main(parser):
         args, actions, commit_file, commit_msg
     )
     # Run tests.
-    actions, unit_test_passing = _run_unit_tests(args, actions, commit_file,
-                                           commit_msg)
+    actions, unit_test_passing = _run_unit_tests(
+        args, actions, commit_file, commit_msg
+    )
     # Commit.
     _commit(args, commit_file, num_lints, unit_test_passing)
 

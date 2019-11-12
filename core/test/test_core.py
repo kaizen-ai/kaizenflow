@@ -2,13 +2,14 @@ import io
 import json
 import logging
 import os
+from typing import Any, Callable, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
-from scipy.stats import norm
+import scipy
 
 import core.config as cfg
 import core.dataflow_core as dtfc
@@ -30,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_config1(ut.TestCase):
-    def test_config1(self):
+    def test_config1(self) -> None:
         """
         Test print flatten config.
         """
@@ -38,7 +39,7 @@ class Test_config1(ut.TestCase):
         config["hello"] = "world"
         self.check_string(str(config))
 
-    def _check_python(self, config):
+    def _check_python(self, config: cfg.Config) -> str:
         code = config.to_python()
         _LOG.debug("code=%s", code)
         config2 = cfg.Config.from_python(code)
@@ -52,13 +53,13 @@ class Test_config1(ut.TestCase):
         return act
 
     @staticmethod
-    def _get_flat_config1():
+    def _get_flat_config1() -> cfg.Config:
         config = cfg.Config()
         config["hello"] = "world"
         config["foo"] = [1, 2, 3]
         return config
 
-    def test_config2(self):
+    def test_config2(self) -> None:
         """
         Test serialization / deserialization for flat config.
         """
@@ -67,7 +68,7 @@ class Test_config1(ut.TestCase):
         act = self._check_python(config)
         self.check_string(act)
 
-    def test_config3(self):
+    def test_config3(self) -> None:
         """
         Test Config.get()
         """
@@ -80,7 +81,7 @@ class Test_config1(ut.TestCase):
         self.assertEqual(config.get("nrows_tmp", None), None)
 
     @staticmethod
-    def _get_nested_config1():
+    def _get_nested_config1() -> cfg.Config:
         config = cfg.Config()
         config["nrows"] = 10000
         #
@@ -95,7 +96,7 @@ class Test_config1(ut.TestCase):
         config["zscore"]["com"] = 28
         return config
 
-    def test_config4(self):
+    def test_config4(self) -> None:
         """
         Test print nested config.
         """
@@ -103,7 +104,7 @@ class Test_config1(ut.TestCase):
         act = str(config)
         self.check_string(act)
 
-    def test_config5(self):
+    def test_config5(self) -> None:
         """
         Test to_python() nested config.
         """
@@ -111,7 +112,7 @@ class Test_config1(ut.TestCase):
         act = config.to_python()
         self.check_string(act)
 
-    def test_config6(self):
+    def test_config6(self) -> None:
         """
         Test serialization / deserialization for nested config.
         """
@@ -121,7 +122,7 @@ class Test_config1(ut.TestCase):
         self.check_string(act)
 
     @staticmethod
-    def _get_nested_config2():
+    def _get_nested_config2() -> cfg.Config:
         config = cfg.Config()
         config["nrows"] = 10000
         #
@@ -136,7 +137,7 @@ class Test_config1(ut.TestCase):
         config_tmp["com"] = 28
         return config
 
-    def test_config7(self):
+    def test_config7(self) -> None:
         """
         Compare two different styles of building a nested config.
         """
@@ -152,7 +153,9 @@ class Test_config1(ut.TestCase):
 
 
 class _Dataflow_helper(ut.TestCase):
-    def _remove_stage_names(self, node_link_data):
+    def _remove_stage_names(
+        self, node_link_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Remove stages names from node_link_data dictionary.
 
@@ -163,7 +166,7 @@ class _Dataflow_helper(ut.TestCase):
             data["stage"] = data["stage"].__class__.__name__
         return nld
 
-    def _check(self, dag):
+    def _check(self, dag: nx.classes.digraph.DiGraph) -> None:
         nld = nx.readwrite.json_graph.node_link_data(dag)
         nld = self._remove_stage_names(nld)
         _LOG.debug("stripped node_link_data=%s", nld)
@@ -172,7 +175,7 @@ class _Dataflow_helper(ut.TestCase):
 
 
 class Test_dataflow_core_DAG1(_Dataflow_helper):
-    def test_add_nodes1(self):
+    def test_add_nodes1(self) -> None:
         """
         Creates a node and adds it to a DAG.
         """
@@ -181,7 +184,7 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         dag.add_node(n1)
         self._check(dag.dag)
 
-    def test_add_nodes2(self):
+    def test_add_nodes2(self) -> None:
         """
         Demonstrates "strict" and "loose" behavior on repeated add_node().
         """
@@ -197,7 +200,7 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         dag_loose.add_node(n1)
         self._check(dag_loose.dag)
 
-    def test_add_nodes3(self):
+    def test_add_nodes3(self) -> None:
         """
         Demonstrates "strict" and "loose" behavior on repeated add_node().
         """
@@ -215,7 +218,7 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         dag_loose.add_node(n1_prime)
         self._check(dag_loose.dag)
 
-    def test_add_nodes4(self):
+    def test_add_nodes4(self) -> None:
         """
         Adds multiple nodes to a DAG.
         """
@@ -224,7 +227,7 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
             dag.add_node(dtfc.Node(name, inputs=["in1"], outputs=["out1"]))
         self._check(dag.dag)
 
-    def test_add_nodes5(self):
+    def test_add_nodes5(self) -> None:
         """
         Re-adding a node clears node, successors, and edges in `loose` mode.
         """
@@ -242,7 +245,7 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
 
 
 class Test_dataflow_core_DAG2(_Dataflow_helper):
-    def test_connect_nodes1(self):
+    def test_connect_nodes1(self) -> None:
         """
         Simplest case of connecting two nodes.
         """
@@ -254,7 +257,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         dag.connect(("n1", "out1"), ("n2", "in1"))
         self._check(dag.dag)
 
-    def test_connect_nodes2(self):
+    def test_connect_nodes2(self) -> None:
         """
         Simplest case, but inferred input/output names.
         """
@@ -266,7 +269,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         dag.connect("n1", "n2")
         self._check(dag.dag)
 
-    def test_connect_nodes3(self):
+    def test_connect_nodes3(self) -> None:
         """
         Ensures input/output names are valid.
         """
@@ -278,7 +281,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
             dag.connect(("n2", "out1"), ("n1", "in1"))
 
-    def test_connect_nodes4(self):
+    def test_connect_nodes4(self) -> None:
         """
         Forbids creating cycles in DAG.
         """
@@ -291,7 +294,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
             dag.connect(("n2", "out1"), ("n1", "in1"))
 
-    def test_connect_nodes5(self):
+    def test_connect_nodes5(self) -> None:
         """
         Forbids creating cycles in DAG (inferred input/output names).
         """
@@ -304,7 +307,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
             dag.connect("n2", "n1")
 
-    def test_connect_nodes6(self):
+    def test_connect_nodes6(self) -> None:
         """
         A nontrivial, multi-input/output example.
         """
@@ -326,7 +329,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         dag.connect("n4", ("n5", "in2"))
         self._check(dag.dag)
 
-    def test_connect_nodes7(self):
+    def test_connect_nodes7(self) -> None:
         """
         Forbids connecting a node that doesn't belong to the DAG.
         """
@@ -336,7 +339,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
             dag.connect("n2", "n1")
 
-    def test_connect_nodes8(self):
+    def test_connect_nodes8(self) -> None:
         """
         Ensures at most one output connects to any input.
         """
@@ -349,7 +352,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         with self.assertRaises(AssertionError):
             dag.connect(("n1", "out2"), "n2")
 
-    def test_connect_nodes9(self):
+    def test_connect_nodes9(self) -> None:
         """
         Allows multi-attribute edges if each input has at most one source.
         """
@@ -362,7 +365,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         dag.connect("n1", ("n2", "in2"))
         self._check(dag.dag)
 
-    def test_connect_nodes10(self):
+    def test_connect_nodes10(self) -> None:
         """
         Demonstrates adding edges is not idempotent.
         """
@@ -377,7 +380,7 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
 
 
 class Test_dataflow_core_DAG3(_Dataflow_helper):
-    def test_sources_sinks1(self):
+    def test_sources_sinks1(self) -> None:
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1", outputs=["out1"])
         dag.add_node(n1)
@@ -387,7 +390,7 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
         self.assertEqual(dag.get_sources(), ["n1"])
         self.assertEqual(dag.get_sinks(), ["n2"])
 
-    def test_sources_sinks2(self):
+    def test_sources_sinks2(self) -> None:
         dag = dtfc.DAG()
         src1 = dtfc.Node("src1", outputs=["out1"])
         dag.add_node(src1)
@@ -410,7 +413,7 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
         sinks.sort()
         self.assertListEqual(sinks, ["snk1", "snk2"])
 
-    def test_sources_sinks3(self):
+    def test_sources_sinks3(self) -> None:
         dag = dtfc.DAG()
         n1 = dtfc.Node("n1")
         dag.add_node(n1)
@@ -424,7 +427,7 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
 
 
 class Test_explore1(ut.TestCase):
-    def test_ols_regress_series(self):
+    def test_ols_regress_series(self) -> None:
         x = 5 * np.random.randn(100)
         y = x + np.random.randn(*x.shape)
         df = pd.DataFrame()
@@ -442,7 +445,7 @@ class Test_explore1(ut.TestCase):
 
 # TODO(gp): -> Test_pandas_helper1
 class TestResampleIndex1(ut.TestCase):
-    def test1(self):
+    def test1(self) -> None:
         index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
         df = pd.DataFrame(np.random.rand(len(index), 3), index=index)
         txt = []
@@ -463,7 +466,7 @@ class TestResampleIndex1(ut.TestCase):
 
 # TODO(gp): -> Test_pandas_helper2
 class TestDfRollingApply(ut.TestCase):
-    def test1(self):
+    def test1(self) -> None:
         """
         Test with function returning a pd.Series.
         """
@@ -499,7 +502,7 @@ class TestDfRollingApply(ut.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
-    def test2(self):
+    def test2(self) -> None:
         """
         Test with function returning a pd.Series.
         """
@@ -514,7 +517,7 @@ class TestDfRollingApply(ut.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
-    def test3(self):
+    def test3(self) -> None:
         """
         Test with function returning a pd.DataFrame.
         """
@@ -532,7 +535,7 @@ class TestDfRollingApply(ut.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
-    def test4(self):
+    def test4(self) -> None:
         """
         Test with function returning a pd.DataFrame with multiple lines.
         """
@@ -544,7 +547,7 @@ class TestDfRollingApply(ut.TestCase):
         # Check.
         self.check_string(df_act.to_string())
 
-    def test5(self):
+    def test5(self) -> None:
         """
         Like test1 but with a down-sampled version of the data.
         """
@@ -587,7 +590,9 @@ class TestDfRollingApply(ut.TestCase):
 # TODO(gp): -> Test_residualizer1
 class TestPcaFactorComputer1(ut.TestCase):
     @staticmethod
-    def get_ex1():
+    def get_ex1() -> Tuple[
+        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
+    ]:
         df_str = pri.dedent(
             """
         ,0,1,2
@@ -614,7 +619,9 @@ class TestPcaFactorComputer1(ut.TestCase):
             dbg.dassert_monotonic_index(obj)
         return prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df
 
-    def _test_stabilize_eigenvec_helper(self, data_func, eval_func):
+    def _test_stabilize_eigenvec_helper(
+        self, data_func: Callable, eval_func: Callable
+    ) -> None:
         # Get data.
         prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df = data_func()
         # Check if they are stable.
@@ -650,19 +657,19 @@ class TestPcaFactorComputer1(ut.TestCase):
             )
         )
 
-    def test_stabilize_eigenvec1(self):
+    def test_stabilize_eigenvec1(self) -> None:
         data_func = self.get_ex1
         eval_func = res.PcaFactorComputer._build_stable_eig_map
         self._test_stabilize_eigenvec_helper(data_func, eval_func)
 
-    def test_stabilize_eigenvec2(self):
+    def test_stabilize_eigenvec2(self) -> None:
         data_func = self.get_ex1
         eval_func = res.PcaFactorComputer._build_stable_eig_map2
         self._test_stabilize_eigenvec_helper(data_func, eval_func)
 
     # ##########################################################################
 
-    def test_linearize_eigval_eigvec(self):
+    def test_linearize_eigval_eigvec(self) -> None:
         # Get data.
         eigval_df, _, eigvec_df, _ = self.get_ex1()
         # Evaluate.
@@ -678,7 +685,9 @@ class TestPcaFactorComputer1(ut.TestCase):
 
     # ##########################################################################
 
-    def _test_sort_eigval_helper(self, eigval, eigvec, are_eigval_sorted_exp):
+    def _test_sort_eigval_helper(
+        self, eigval: np.ndarray, eigvec: np.ndarray, are_eigval_sorted_exp: bool
+    ) -> None:
         # pylint: disable=possibly-unused-variable
         obj = res.PcaFactorComputer.sort_eigval(eigval, eigvec)
         are_eigval_sorted, eigval_tmp, eigvec_tmp = obj
@@ -696,7 +705,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         txt = pri.vars_to_debug_string(vars_as_str, locals())
         self.check_string(txt)
 
-    def test_sort_eigval1(self):
+    def test_sort_eigval1(self) -> None:
         eigval = np.array([1.30610138, 0.99251131, 0.70138731])
         eigvec = np.array(
             [
@@ -708,7 +717,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         are_eigval_sorted_exp = True
         self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
 
-    def test_sort_eigval2(self):
+    def test_sort_eigval2(self) -> None:
         eigval = np.array([0.99251131, 0.70138731, 1.30610138])
         eigvec = np.array(
             [
@@ -726,7 +735,7 @@ class TestPcaFactorComputer1(ut.TestCase):
 
 class TestPcaFactorComputer2(ut.TestCase):
     @staticmethod
-    def _get_data(num_samples, report_stats):
+    def _get_data(num_samples: int, report_stats: bool) -> Dict[str, Any]:
         # The desired covariance matrix.
         # r = np.array([
         #         [  3.40, -2.75, -2.00],
@@ -740,7 +749,7 @@ class TestPcaFactorComputer2(ut.TestCase):
             plt.show()
         # Generate samples from three independent normally distributed random
         # variables with mean 0 and std dev 1.
-        x = norm.rvs(size=(3, num_samples))
+        x = scipy.stats.norm.rvs(size=(3, num_samples))
         if report_stats:
             _LOG.info("x=\n%s", x[:2, :])
         # We need a matrix `c` for which `c*c^T = r`.
@@ -779,7 +788,13 @@ class TestPcaFactorComputer2(ut.TestCase):
         }
         return result
 
-    def _helper(self, num_samples, report_stats, stabilize_eig, window):
+    def _helper(
+        self,
+        num_samples: int,
+        report_stats: bool,
+        stabilize_eig: bool,
+        window: int,
+    ) -> Tuple[res.PcaFactorComputer, pd.DataFrame]:
         result = self._get_data(num_samples, report_stats)
         _LOG.debug("result=%s", result.keys())
         #
@@ -796,7 +811,7 @@ class TestPcaFactorComputer2(ut.TestCase):
             comp.plot_over_time(df_res, num_pcs_to_plot=-1)
         return comp, df_res
 
-    def _check(self, comp, df_res):
+    def _check(self, comp: res.PcaFactorComputer, df_res: pd.DataFrame) -> None:
         txt = []
         txt.append("comp.get_eigval_names()=\n%s" % comp.get_eigval_names())
         txt.append("df_res.mean()=\n%s" % df_res.mean())
@@ -804,7 +819,7 @@ class TestPcaFactorComputer2(ut.TestCase):
         txt = "\n".join(txt)
         self.check_string(txt)
 
-    def test1(self):
+    def test1(self) -> None:
         num_samples = 100
         report_stats = False
         stabilize_eig = False
@@ -814,7 +829,7 @@ class TestPcaFactorComputer2(ut.TestCase):
         )
         self._check(comp, df_res)
 
-    def test2(self):
+    def test2(self) -> None:
         num_samples = 100
         report_stats = False
         stabilize_eig = True
@@ -831,12 +846,12 @@ class TestPcaFactorComputer2(ut.TestCase):
 
 
 class TestSignalProcessingRollingZScore1(ut.TestCase):
-    def test_default_values1(self):
+    def test_default_values1(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.rolling_zscore(heaviside, tau=40)
         self.check_string(zscored.to_string())
 
-    def test_default_values2(self):
+    def test_default_values2(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
@@ -844,7 +859,7 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
 
 @pytest.mark.slow
 class Test_gallery_signal_processing1(ut.TestCase):
-    def test_notebook1(self):
+    def test_notebook1(self) -> None:
         file_name = os.path.join(
             git.get_amp_abs_path(),
             "core/notebooks/gallery_signal_processing.ipynb",

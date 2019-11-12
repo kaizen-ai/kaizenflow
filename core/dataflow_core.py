@@ -1,6 +1,7 @@
 import abc
 import itertools
 import logging
+from typing import Any, List, Optional, Tuple, Union
 
 import networkx as nx
 
@@ -28,7 +29,12 @@ class NodeInterface(abc.ABC):
     the desired methods.
     """
 
-    def __init__(self, nid, inputs=None, outputs=None):
+    def __init__(
+        self,
+        nid: str,
+        inputs: Optional[List[str]] = None,
+        outputs: Optional[List[str]] = None,
+    ) -> None:
         """
         :param nid: node identifier. Should be unique in a graph.
         :param inputs: list-like string names of input_names.
@@ -41,18 +47,18 @@ class NodeInterface(abc.ABC):
         self._output_names = self._init_validation_helper(outputs)
 
     @property
-    def nid(self):
+    def nid(self) -> str:
         return self._nid
 
     @property
-    def input_names(self):
+    def input_names(self) -> List[str]:
         return self._input_names
 
     @property
-    def output_names(self):
+    def output_names(self) -> List[str]:
         return self._output_names
 
-    def _init_validation_helper(self, l):
+    def _init_validation_helper(self, l: Optional[List[str]]) -> List[str]:
         if l is None:
             return []
         for item in l:
@@ -65,7 +71,12 @@ class Node(NodeInterface):
     A node class that also can store and retrieve its outputs.
     """
 
-    def __init__(self, nid, inputs=None, outputs=None):
+    def __init__(
+        self,
+        nid: str,
+        inputs: Optional[List[str]] = None,
+        outputs: Optional[List[str]] = None,
+    ) -> None:
         """
         Same interface as `NodeInterface`.
         """
@@ -109,7 +120,7 @@ class Node(NodeInterface):
         self._output_vals[method][name] = value
 
 
-def assert_single_element_and_return(l):
+def assert_single_element_and_return(l: List[str]) -> str:
     """
     Asserts that list `l` has a single element and returns it.
 
@@ -134,7 +145,9 @@ class DAG:
     nodes).
     """
 
-    def __init__(self, name=None, mode=None):
+    def __init__(
+        self, name: Optional[Any] = None, mode: Optional[str] = None
+    ) -> None:
         """
 
         :param name: optional str identifier
@@ -151,12 +164,13 @@ class DAG:
         self._name = name
         if mode is None:
             mode = "strict"
-        dbg.dassert_in(mode, ["strict", "loose"],
-                       "Unsupported mode %s requested!", mode)
+        dbg.dassert_in(
+            mode, ["strict", "loose"], "Unsupported mode %s requested!", mode
+        )
         self._mode = mode
 
     @property
-    def dag(self):
+    def dag(self) -> nx.DiGraph:
         return self._dag
 
     @property
@@ -164,10 +178,10 @@ class DAG:
         return self._name
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         return self._mode
 
-    def add_node(self, node):
+    def add_node(self, node: Node) -> None:
         """
         Adds `node` to the DAG.
 
@@ -189,8 +203,11 @@ class DAG:
         # Note that this usage requires that nid's be unique within a given
         # DAG.
         if self.mode == "strict":
-            dbg.dassert(not self._dag.has_node(node.nid),
-                        "A node with nid=%s already belongs to the DAG!", node.nid)
+            dbg.dassert(
+                not self._dag.has_node(node.nid),
+                "A node with nid=%s already belongs to the DAG!",
+                node.nid,
+            )
         elif self.mode == "loose":
             # If a node with the same id already belongs to the DAG:
             #   - Remove the node and all of its successors (and their incident
@@ -202,7 +219,7 @@ class DAG:
                 _LOG.warning(
                     "Node `%s` is already in DAG. Removing existing node, "
                     "successors, and all incident edges of such nodes. ",
-                    node.nid
+                    node.nid,
                 )
                 for nid in nx.descendants(self._dag, node.nid):
                     _LOG.warning("Removing nid=%s", nid)
@@ -220,21 +237,24 @@ class DAG:
         :param nid: unique string node id
         :return: Node object
         """
-        dbg.dassert_isinstance(nid, str,
-                               "Expected str nid but got type %s!", type(nid))
-        dbg.dassert(
-            self._dag.has_node(nid), "Node `%s` is not in DAG!", nid
+        dbg.dassert_isinstance(
+            nid, str, "Expected str nid but got type %s!", type(nid)
         )
+        dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         return self._dag.nodes[nid]["stage"]
 
-    def remove_node(self, nid):
+    def remove_node(self, nid: str) -> None:
         """
         Removes node from DAG (and clears any edges).
         """
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         self._dag.remove_node(nid)
 
-    def connect(self, parent, child):
+    def connect(
+        self,
+        parent: Union[Tuple[str, str], str],
+        child: Union[Tuple[str, str], str],
+    ) -> None:
         """
         Adds a directed edge from parent node output to child node input.
 
@@ -273,7 +293,8 @@ class DAG:
                 child_in,
                 self._dag.get_edge_data(nid, child_nid),
                 "`%s` already receiving input from node %s",
-                    child_in, nid
+                child_in,
+                nid,
             )
         # Add the edge along with an `edge attribute` indicating the parent
         # output to connect to the child input.
@@ -289,7 +310,7 @@ class DAG:
                 )
             )
 
-    def get_sources(self):
+    def get_sources(self) -> List[str]:
         """
         :return: list of nid's of source nodes
         """
@@ -299,7 +320,7 @@ class DAG:
                 sources.append(nid)
         return sources
 
-    def get_sinks(self):
+    def get_sinks(self) -> List[str]:
         """
         :return: list of nid's of sink nodes
         """
@@ -337,7 +358,7 @@ class DAG:
         """
         ancestors = filter(
             lambda x: x in nx.ancestors(self._dag, nid),
-            nx.topological_sort(self._dag)
+            nx.topological_sort(self._dag),
         )
         # The `ancestors` filter only returns nodes strictly less than `nid`,
         # and so we need to add `nid` back.

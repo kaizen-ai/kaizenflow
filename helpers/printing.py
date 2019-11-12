@@ -4,7 +4,7 @@ Import as:
 import helpers.printing as prnt
 """
 
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import helpers.dbg as dbg
 
@@ -79,14 +79,14 @@ def frame(
 
 
 # TODO(gp): -> indent
-def space(str_, num_spaces=2):
+def space(str_: str, num_spaces: int = 2) -> str:
     """
     Add "num_spaces" spaces before each line of the string str_.
     """
     return prepend(str_, " " * num_spaces)
 
 
-def dedent(txt):
+def dedent(txt: str) -> str:
     """
     Remove all extra leadning / trailing spaces and empty lines
     """
@@ -98,7 +98,7 @@ def dedent(txt):
     return "\n".join(txt_out)
 
 
-def prepend(str_, prefix):
+def prepend(str_: str, prefix: str) -> str:
     """
     Add "prefix" before each line of the string str_.
     """
@@ -107,7 +107,7 @@ def prepend(str_, prefix):
     return "\n".join(lines)
 
 
-def vars_to_debug_string(vars_as_str, locals_):
+def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str:
     """
     Create a string with var name -> var value.
     E.g., ["var1", "var2"] is converted into:

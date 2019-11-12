@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import List
 
 import pytest
 
@@ -21,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_url_py1(ut.TestCase):
-    def test_get_file_name1(self):
+    def test_get_file_name1(self) -> None:
         url_tmp = (
             "http://localhost:10001/notebooks/oil/ST/"
             + "Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
@@ -30,7 +31,7 @@ class Test_url_py1(ut.TestCase):
         exp = "oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         self.assertEqual(act, exp)
 
-    def test_get_file_name2(self):
+    def test_get_file_name2(self) -> None:
         url_tmp = (
             "https://github.com/ParticleDev/commodity_research/blob/"
             + "master/oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
@@ -39,7 +40,7 @@ class Test_url_py1(ut.TestCase):
         exp = "oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         self.assertEqual(act, exp)
 
-    def test_run1(self):
+    def test_run1(self) -> None:
         exec_name = git.find_file_in_git_tree("url.py")
         cmd = (
             "%s " % exec_name + "http://localhost:9999/notebooks/research/"
@@ -56,7 +57,7 @@ class Test_url_py1(ut.TestCase):
 
 
 class Test_env1(ut.TestCase):
-    def test_get_system_signature1(self):
+    def test_get_system_signature1(self) -> None:
         _ = env.get_system_signature()
 
 
@@ -66,7 +67,7 @@ class Test_env1(ut.TestCase):
 
 
 class Test_set_env1(ut.TestCase):
-    def test_setenv_py1(self):
+    def test_setenv_py1(self) -> None:
         """
         Find _setenv_amp.py executable and run it.
         """
@@ -100,7 +101,7 @@ class Test_set_env1(ut.TestCase):
         # echo 'curr_path=$GIT_ROOT/amp' |     echo 'curr_path=$GIT_ROOT'
         self.check_string(txt)
 
-    def test_setenv_sh1(self):
+    def test_setenv_sh1(self) -> None:
         """
         Execute setenv_amp.sh.
         """
@@ -132,15 +133,15 @@ class Test_jack1(ut.TestCase):
         cmd = 'jackpy "def dassert"'
         si.system(cmd)
 
-    def test_jackipynb(self):
+    def test_jackipynb(self) -> None:
         cmd = 'jackipynb "import"'
         si.system(cmd)
 
-    def test_jackppy(self):
+    def test_jackppy(self) -> None:
         cmd = 'jackipynb "import"'
         si.system(cmd)
 
-    def test_jacktxt(self):
+    def test_jacktxt(self) -> None:
         cmd = 'jacktxt "python"'
         si.system(cmd)
 
@@ -151,7 +152,7 @@ class Test_jack1(ut.TestCase):
 
 
 class Test_install_create_conda_py1(ut.TestCase):
-    def _run_create_conda(self, cmd_opts, cleanup):
+    def _run_create_conda(self, cmd_opts: List[str], cleanup: bool) -> None:
         """
         Run a create_conda command using custom options `cmd_opts`.
 
@@ -176,7 +177,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         cmd_tmp = " ".join(cmd)
         si.system(cmd_tmp)
 
-    def _helper(self, env_name, cmd_opts):
+    def _helper(self, env_name: str, cmd_opts: List[str]) -> None:
         """
         Run create_conda with custom options `cmd_opts` and then remove the env.
         """
@@ -187,7 +188,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         # Clean up the env.
         self._run_create_conda(cmd_opts, cleanup=True)
 
-    def test_create_conda_test_install1(self):
+    def test_create_conda_test_install1(self) -> None:
         """
         Run create_conda with --test_install to exercise the script.
         """
@@ -265,7 +266,7 @@ dependencies:
 
 
 class Test_linter_py1(ut.TestCase):
-    def test_linter1(self):
+    def test_linter1(self) -> None:
         horrible_python_code = r"""
 import python
 
