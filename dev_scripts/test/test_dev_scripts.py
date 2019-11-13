@@ -266,29 +266,53 @@ dependencies:
 
 
 class Test_linter_py1(ut.TestCase):
-    def test_linter1(self) -> None:
-        horrible_python_code = r"""
+
+    @staticmethod
+    def _get_horrible_python_code1():
+        txt = r"""
 import python
 
 
 if __name__ == "main":
     txt = "hello"
     m = re.search("\s", txt)
-"""
+        """
+        return txt
+
+    def _write_input_file(self, txt):
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "input.py")
         file_name = os.path.abspath(file_name)
-        io_.to_file(file_name, horrible_python_code)
-        #
+        io_.to_file(file_name, txt)
+        return dir_name, file_name
+
+    def _run_linter(self, dir_name, file_name, as_system):
         linter_log = "./linter.log"
         # We run in the target dir so we have only relative paths, and we can
         # do a check of the output.
         base_name = os.path.basename(file_name)
-        cmd = (
-            f"cd {dir_name} && linter.py -f {base_name} --linter_log "
-            f"{linter_log}"
-        )
-        si.system(cmd, abort_on_error=False)
+        if as_system:
+            cmd = (
+                f"cd {dir_name} && linter.py -f {base_name} --linter_log "
+                f"{linter_log}"
+            )
+            si.system(cmd, abort_on_error=False)
+        else:
+            prev_dir = os.getcwd()
+            try:
+                os.chdir(os.path.expanduser(dir_name))
+                args = {}
+                args["f"] = base_name
+                args["linter_log"] = linter_log
+            finally:
+                os.chdir(prev_dir)
+
+
+    def test_linter1(self) -> None:
+        txt = self._get_horrible_python_code1()
+        dir_name, file_name = self._write_input_file(txt)
+        #
+
         # Read log.
         linter_log = os.path.abspath(os.path.join(dir_name, linter_log))
         txt = io_.from_file(linter_log, split=False)

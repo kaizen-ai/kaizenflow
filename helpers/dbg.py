@@ -487,8 +487,8 @@ def _get_logging_format(force_print_format, force_verbose_format):
     verbose_format = not is_running_in_ipynb()
     dassert(
         not (force_verbose_format and force_print_format),
-        ("Can't use both force_verbose_format=%s and " "force_print_format=%s")
-        % (force_verbose_format, force_print_format),
+        "Can't use both force_verbose_format=%s and force_print_format=%s",
+        force_verbose_format, force_print_format
     )
     if force_verbose_format:
         verbose_format = True

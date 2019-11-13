@@ -238,6 +238,7 @@ def from_file(
     file_name: str, split: bool = True, encoding: Optional[Any] = None
 ) -> Union[str, List[str]]:
     dbg.dassert_ne(file_name, "")
+    dbg.dassert_exists(file_name)
     with open(file_name, "r", encoding=encoding) as f:
         try:
             data = f.read()

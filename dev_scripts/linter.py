@@ -69,6 +69,8 @@ _LOG = logging.getLogger(__name__)
 # Use the current dir and not the dir of the executable.
 _TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
 
+from typing import Iterable
+
 # #############################################################################
 # Utils.
 # #############################################################################
@@ -351,6 +353,12 @@ def _test_actions():
 # :param check_if_possible: check if the action can be executed on filename
 # :return: list of strings representing the output
 
+def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
+    txt = "\n".join(txt)
+    txt_new = "\n".join(txt_new)
+    if txt != txt_new:
+        io_.to_file(file_name, txt_new)
+
 
 def _basic_hygiene(file_name, pedantic, check_if_possible):
     _ = pedantic
@@ -375,18 +383,13 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
         # dos2unix.
         line = line.replace("\r\n", "\n")
         # TODO(gp): Remove empty lines in functions.
-        #
         txt_new.append(line.rstrip("\n"))
     # Remove whitespaces at the end of file.
     while txt_new and (txt_new[-1] == "\n"):
         # While the last item in the list is blank, removes last element.
         txt_new.pop(-1)
     # Write.
-    txt = "\n".join(txt)
-    txt_new = "\n".join(txt_new)
-    if txt != txt_new:
-        io_.to_file(file_name, txt_new)
-    #
+    _write_file_back(file_name, txt, txt_new)
     return output
 
 
@@ -408,6 +411,27 @@ def _python_compile(file_name, pedantic, check_if_possible):
         # pylint: disable=broad-except
     except Exception as e:
         output.append(str(e))
+    return output
+
+
+def _custom_python_checks(file_name, pedantic, check_if_possible):
+    _ = pedantic
+    if check_if_possible:
+        # We don't need any special executable, so we can always run this action.
+        return True
+    output = []
+    # Read file.
+    dbg.dassert(file_name)
+    txt = io_.from_file(file_name, split=True)
+    # Process file.
+    txt_new = []
+    for line in txt:
+        pass
+    # Write file back.
+    txt = "\n".join(txt)
+    txt_new = "\n".join(txt_new)
+    if txt != txt_new:
+        io_.to_file(file_name, txt_new)
     return output
 
 
@@ -491,7 +515,8 @@ def _isort(file_name, pedantic, check_if_possible):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
     cmd = executable + " %s" % file_name
-    return _tee(cmd, executable, abort_on_error=False)
+    output = _tee(cmd, executable, abort_on_error=False)
+    return output
 
 
 def _flake8(file_name, pedantic, check_if_possible):
@@ -649,7 +674,6 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         if cnt % 2 == 1:
             line = "".join(lines)
             output.append(line)
-    #
     return output
 
 
