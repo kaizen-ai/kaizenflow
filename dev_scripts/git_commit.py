@@ -235,7 +235,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     actions = _select_phases(args)
     # TODO(gp): Make sure that index is empty.
     # Check commit message

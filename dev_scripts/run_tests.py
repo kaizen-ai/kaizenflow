@@ -77,7 +77,7 @@ def _parse():
 # TODO(gp): Refactor this function in smaller pieces.
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     test = args.test
     log_level = logging.getLevelName(args.log_level)

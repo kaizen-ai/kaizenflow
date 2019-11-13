@@ -31,7 +31,7 @@ import helpers.printing as pri
 # %%
 print(env.get_system_signature())
 pri.config_notebook()
-dbg.init_logger(verb=logging.INFO)
+dbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
 
 # %% [markdown]

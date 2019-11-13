@@ -183,7 +183,7 @@ def _main():
     )
     #
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     #
     src_dir = args.src_dir
     if args.config == "P1":

@@ -28,7 +28,7 @@ def _print_help(parser):
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     positional = args.positional
     # Error check.
     if len(positional) < 1:

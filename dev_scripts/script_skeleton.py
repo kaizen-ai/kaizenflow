@@ -31,7 +31,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Insert your code here.
     # - Use _LOG.info(), _LOG.debug() instead of printing.
     # - Use dbg.dassert_*() for assertion.

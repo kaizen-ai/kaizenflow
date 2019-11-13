@@ -50,7 +50,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Slurp file.
     lines = io_.from_file(args.input)
     lines = [l.rstrip("\n") for l in lines]

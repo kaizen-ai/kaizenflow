@@ -39,7 +39,7 @@ if not hasattr(hut, "conftest_already_parsed"):
             print("\nWARNING: Using incremental test mode")
             hut.set_incremental_tests(True)
         if config.getoption("--dbg_verbosity"):
-            print("\nWARNING: Setting verb level")
+            print("\nWARNING: Setting verbosity level")
             dbg.init_logger(config.getoption("--dbg_verbosity"))
 
     pyannotate = False
