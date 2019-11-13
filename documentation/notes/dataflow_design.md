@@ -105,8 +105,11 @@
 ## How to handle multiple features for a single instrument
 - E.g., close and volume for a single futures instrument
 - In this case we can use a dataframe with two columns `close_price` and `volume`
-    - Maybe the solution is to keep columns in the same dataframe either if they are processed in the same way (i.e., vectorized) or if the computing node needs to have to have both features available (like sklearn model)
-    - If close_price and volume are "independent" should go in different branches of the graph using a "Y" split
+    - Maybe the solution is to keep columns in the same dataframe either if they
+      are processed in the same way (i.e., vectorized) or if the computing node
+      needs to have to have both features available (like sklearn model)
+    - If close_price and volume are "independent" should go in different branches
+      of the graph using a "Y" split
 
 ## How to handle multiple instruments?
 - E.g., close price for multiple futures
