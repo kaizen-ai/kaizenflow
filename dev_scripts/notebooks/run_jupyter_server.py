@@ -111,7 +111,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     # Get the default port.
     credentials = usc.get_credentials()
     jupyter_port = credentials["jupyter_port"]

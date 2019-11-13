@@ -84,7 +84,7 @@ def _main(args):
             args.ext,
             graph_file,
         )
-        utils.jos.system(dot_cmd, verb=0)
+        utils.jos.system(dot_cmd, verbosity=0)
         log.info("Output profile graph: %s", graph_file)
         dbg.dassert(os.path.exists(graph_file), msg="Can't find %s" % graph_file)
         # > eog output.png

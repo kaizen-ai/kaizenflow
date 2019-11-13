@@ -53,7 +53,7 @@ def _main():
     )
     #
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Check that we are in the P1 repo since to open the tunnel we need some
     # env vars set by setenv.sh. This is also preventing Test_ssh_tunnel to be
     # run by Jenkins.

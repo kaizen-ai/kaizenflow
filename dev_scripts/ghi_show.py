@@ -150,7 +150,8 @@ def _parse():
         "-r",
         "--repo_github_name",
         action="store",
-        default=None,
+        # TODO(gp): This is a workaround for #.
+        default="ParticleDev/commodity_research",
         help="Refer to one of the repos using full git name",
     )
     parser.add_argument("positional", nargs="+", help="Github issue number")
@@ -166,7 +167,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     # Print url.
     git_repo_name = git.get_repo_symbolic_name(super_module=True)
     print("current_repo='%s'\n" % git_repo_name)

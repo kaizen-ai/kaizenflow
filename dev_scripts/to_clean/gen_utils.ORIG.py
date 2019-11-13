@@ -27,9 +27,9 @@ import utils.stats
 
 
 def init_notebook(num_git_commits=3):
-    verb = 1
-    print("Setting verbosity to %s" % verb)
-    dbg.set_verbosity_level(verb)
+    verbosity = 1
+    print("Setting verbosity to %s" % verbosity)
+    dbg.set_verbosity_level(verbosity)
     #
     # print matplotlib.rcParams
     config_matplotlib()
@@ -82,7 +82,7 @@ def apply_to_dict_panel(
     #
     res = {}
     if progress_bar:
-        pb = utils.timer.ProgressBar(0, len(obj), descr=func_name, verb=0)
+        pb = utils.timer.ProgressBar(0, len(obj), descr=func_name, verbosity=0)
     for k, v in obj.items():
         log.debug("Execute for k=%s", k)
         res[k] = f(v)
@@ -412,13 +412,13 @@ def check_index_type(series):
 
 
 def filter_by_period(
-    obj, start_time, end_time, axis=None, mode=None, verb=logging.DEBUG
+    obj, start_time, end_time, axis=None, mode=None, verbosity=logging.DEBUG
 ):
     """
     Filter an obj that can be sliced with [start_time:end_time] reporting
     stats.
     """
-    log.log(verb, "# Filtering in [%s, %s]", start_time, end_time)
+    log.log(verbosity, "# Filtering in [%s, %s]", start_time, end_time)
     if isinstance(obj, pd.Panel) or isinstance(obj, pd.Panel4D):
         dbg.dassert_is_not(axis, None)
         index = obj.axes[axis]
@@ -426,12 +426,12 @@ def filter_by_period(
         index = obj.index
     else:
         raise ValueError("Invalid type(obj)=%s" % type(obj))
-    log.log(verb, "before=%s", min_max(index))
+    log.log(verbosity, "before=%s", min_max(index))
     # Slice index.
     index_tmp = slice_index(index, start_time, end_time, mode=mode)
     dbg.dassert_lte(1, len(index_tmp))
     # Assign.
-    log.log(verb, "after=%s", min_max(index_tmp))
+    log.log(verbosity, "after=%s", min_max(index_tmp))
     # TODO(gp): Find out how to do it systematically.
     if isinstance(obj, pd.DataFrame):
         if axis == 0:

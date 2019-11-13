@@ -134,39 +134,39 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, force_print_format=True)
+    dbg.init_logger(verbosity=args.log_level, force_print_format=True)
     #
     positional = args.positional
     if len(positional) != 1:
         print("Need to specify one 'url'")
         sys.exit(-1)
     #
-    verb = not args.short
+    verbosity = not args.short
     github_prefix, jupyter_prefix = _get_prefixes()
-    _print("github_prefix", github_prefix, verb)
-    _print("jupyter_prefix", jupyter_prefix, verb)
+    _print("github_prefix", github_prefix, verbosity)
+    _print("jupyter_prefix", jupyter_prefix, verbosity)
     #
     url = positional[0]
     rel_file_name = _get_file_name(url)
-    _print("rel_file_name", rel_file_name, verb)
+    _print("rel_file_name", rel_file_name, verbosity)
     if not rel_file_name:
         msg = "Can't extract the name of a file from '%s'" % url
         raise ValueError(msg)
     #
-    _print("file_name", rel_file_name, verb)
+    _print("file_name", rel_file_name, verbosity)
     #
     abs_file_name = git.get_client_root(super_module=True) + "/" + rel_file_name
-    _print("abs file_name", abs_file_name, verb)
+    _print("abs file_name", abs_file_name, verbosity)
     #
     github_url = github_prefix + "/" + rel_file_name
-    _print("github_url", github_url, verb)
+    _print("github_url", github_url, verbosity)
     #
     jupyter_url = jupyter_prefix + "/" + rel_file_name
-    _print("jupyter_url", jupyter_url, verb)
+    _print("jupyter_url", jupyter_url, verbosity)
     #
     if rel_file_name.endswith(".ipynb"):
         cmd = "publish_notebook.py --file %s --action open" % abs_file_name
-        _print("read notebook", cmd, verb)
+        _print("read notebook", cmd, verbosity)
 
     #
     print()
