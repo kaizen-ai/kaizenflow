@@ -2,17 +2,18 @@
 
 # In order to get the link generated correctly we need to run gh-md-toc in the
 # dir with the markdown.
-cd documentation/notes
+cd documentation
 
-FILES=$(ls *.md)
-echo "files=$FILES"
+FILES=$(find . -name *.md)
+echo "files="
+echo "$FILES"
 
 for f in $FILES; do
     echo "======================================================="
     echo $f
     echo "======================================================="
     # Ignore failure.
-    ../scripts/gh-md-toc --insert $f || true
+    ./scripts/gh-md-toc --insert $f || true
     # Remove some artifacts when copying from gdoc.
     perl -i -pe "s/’/'/;" $f
     perl -i -pe 's/“/"/;' $f

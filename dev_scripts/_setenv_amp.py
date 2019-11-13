@@ -24,6 +24,7 @@ assert os.path.exists(_AMP_PATH), "Can't find '%s'" % _AMP_PATH
 sys.path.insert(0, _AMP_PATH)
 
 # This import is relative to the top of the repo.
+# pylint: disable=wrong-import-position
 import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
 
 # This script is `//amp/dev_scripts/_setenv_amp.py`, so we need ".." to go from
@@ -31,10 +32,10 @@ import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
 # pylint: disable=no-member
 boot.bootstrap(_AMP_REL_PATH)
 
-# pylint: disable=import-outside-toplevel,wrong-import-position
+# pylint: disable=wrong-import-position
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
-import _setenv_lib as selib  # isort:skip # noqa: E402
+import _setenv_lib as selib  # isort:skip # noqa: E402 # type: ignore
 
 
 # ##############################################################################

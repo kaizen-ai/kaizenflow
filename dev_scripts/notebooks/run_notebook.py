@@ -50,9 +50,7 @@ def build_configs(dst_dir, dry_run):
     for f in futures:
         config["descr"] = f
         config_tmp = copy.deepcopy(config)
-        file_name = (
-            "s3://kibot/All_Futures_Contracts_1min/%s.csv.gz" % f
-        )
+        file_name = "s3://kibot/All_Futures_Contracts_1min/%s.csv.gz" % f
         config_tmp["file_name"] = file_name
         config_tmp["sim_tag"] = f
         configs.append(config_tmp)

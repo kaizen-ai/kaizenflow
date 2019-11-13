@@ -64,7 +64,7 @@ def _get_prefixes():
     return github_prefix, jupyter_prefix
 
 
-def _get_file_name(url):
+def _get_file_name(url: str) -> str:
     """
     Given a url from Jupyter server or github extract the path corresponding
     to the file.

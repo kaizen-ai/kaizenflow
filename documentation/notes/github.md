@@ -10,7 +10,7 @@
       * [File descriptive GH tasks](#file-descriptive-gh-tasks)
       * [Do not change the assignee for a task](#do-not-change-the-assignee-for-a-task)
    * [Code review with GitHub](#code-review-with-github)
-      * [Try not to commit to master](#try-not-to-commit-to-master)
+      * [Avoid committing to master](#avoid-committing-to-master)
       * [Post-commit comments](#post-commit-comments)
       * [Addressing post-commit comments](#addressing-post-commit-comments)
       * [Use branches and PR](#use-branches-and-pr)

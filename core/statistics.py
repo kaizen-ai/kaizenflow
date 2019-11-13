@@ -4,8 +4,8 @@ from typing import List, Optional, Tuple
 
 import pandas as pd
 import scipy as sp
+import sklearn.model_selection
 import statsmodels as sm
-from sklearn.model_selection import TimeSeriesSplit
 
 import helpers.dbg as dbg
 
@@ -64,12 +64,13 @@ def get_rolling_splits(
     index. For such cases, causality is respected by the splits.
     """
     dbg.dassert_monotonic_index(idx)
-    dbg.dassert_lte(2, n_splits)
+    n_chunks = n_splits + 1
+    dbg.dassert_lte(1, n_splits)
     # Split into equal chunks.
-    chunk_size = int(math.ceil(idx.size / n_splits))
+    chunk_size = int(math.ceil(idx.size / n_chunks))
     dbg.dassert_lte(1, chunk_size)
     chunks = [idx[i : i + chunk_size] for i in range(0, idx.size, chunk_size)]
-    dbg.dassert_eq(len(chunks), n_splits)
+    dbg.dassert_eq(len(chunks), n_chunks)
     #
     splits = list(zip(chunks[:-1], chunks[1:]))
     return splits
@@ -117,7 +118,7 @@ def get_expanding_window_splits(
     """
     dbg.dassert_monotonic_index(idx)
     dbg.dassert_lte(1, n_splits)
-    tscv = TimeSeriesSplit(n_splits=n_splits)
+    tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=n_splits)
     locs = list(tscv.split(idx))
     splits = [(idx[loc[0]], idx[loc[1]]) for loc in locs]
     return splits

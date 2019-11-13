@@ -14,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Only Jenkins can run this to avoid to kill the tunnel. Enable this
 # test somehow.
-#@pytest.mark.skipif('si.get_user_name() != "jenkins"')
+# @pytest.mark.skipif('si.get_user_name() != "jenkins"')
 @pytest.mark.skip
 class Test_ssh_tunnel(ut.TestCase):
     def test1(self):

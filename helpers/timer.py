@@ -1,6 +1,7 @@
 import logging
 import time
 
+from typing import Any, Dict
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -105,7 +106,7 @@ class Timer:
 
 # #############################################################################
 
-_DTIMER_INFO = {}
+_DTIMER_INFO : Dict[int, Any] = {}
 
 
 def dtimer_start(log_level, message):

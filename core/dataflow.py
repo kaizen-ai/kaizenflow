@@ -214,7 +214,7 @@ class Merger(FitPredictNode):
     # TODO(Paul): Support different input/output names.
     def __init__(self, nid: str, merge_kwargs: Optional[Any] = None) -> None:
         """
-        Configures dataframe merging policy.
+        Configure dataframe merging policy.
 
         :param nid: unique node id
         :param merge_kwargs: arguments to pd.merge
@@ -283,7 +283,7 @@ class ColumnTransformer(Transformer):
         col_mode: Optional[str] = None,
     ) -> None:
         """
-        Performs non-index modifying changes of columns.
+        Perform non-index modifying changes of columns.
 
         :param nid: unique node id
         :param transformer_func: df -> df
@@ -422,7 +422,9 @@ class Resample(Transformer):
         resampler = df.resample(rule=self._rule, closed="left", label="right")
         df = getattr(resampler, self._agg_func)()
         #
-        info = collections.OrderedDict()
+        info: collections.OrderedDict[
+            str, pd.DataFrame
+        ] = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
