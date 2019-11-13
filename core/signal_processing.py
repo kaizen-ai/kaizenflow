@@ -14,7 +14,6 @@ import pywt
 import scipy as sp
 import statsmodels.api as sm
 from numpy import float64
-from pandas.core.series import Series
 
 import helpers.dbg as dbg
 
@@ -294,11 +293,11 @@ def _com_to_tau(com):
     return 1.0 / np.log(1 + 1.0 / com)
 
 
-def _tau_to_com(tau: int) -> float64:
+def _tau_to_com(tau: float) -> float64:
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
-def ema(df: Series, tau: int, min_periods: int, depth: int = 1) -> Series:
+def ema(df: Union[pd.DataFrame, pd.Series], tau: float, min_periods: int, depth: int = 1) -> Union[pd.DataFrame, pd.Series]:
     r"""
     Iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
 
@@ -388,12 +387,12 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
 
 
 def smooth_moving_average(
-    df: Series,
-    tau: int,
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
-) -> Series:
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Moving average operator defined in terms of iterated ema's.
     Choosing min_depth > 1 results in a lagged operator.
@@ -425,26 +424,26 @@ def smooth_moving_average(
 
 
 def rolling_moment(
-    df: Series,
-    tau: int,
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
-    p_moment: int = 2,
-) -> Series:
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     return smooth_moving_average(
         np.abs(df) ** p_moment, tau, min_periods, min_depth, max_depth
     )
 
 
 def rolling_norm(
-    df: Series,
-    tau: int,
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
-    p_moment: int = 2,
-) -> Series:
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Smooth moving average norm (when p_moment >= 1).
 
@@ -483,15 +482,15 @@ def rolling_demean(df, tau, min_periods=0, min_depth=1, max_depth=1):
 
 
 def rolling_zscore(
-    df: Series,
-    tau: int,
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
-    p_moment: int = 2,
+    p_moment: float = 2,
     demean: bool = True,
     delay: int = 0,
-) -> Series:
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Z-score using smooth_moving_average and rolling_std.
 
@@ -771,7 +770,7 @@ def eigenvector_diffs(eigenvecs):
 # #############################################################################
 
 
-def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> Series:
+def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
     """
     Generate Heaviside pd.Series.
     """

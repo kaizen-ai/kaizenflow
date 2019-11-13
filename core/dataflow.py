@@ -12,6 +12,7 @@ import pandas as pd
 import core.finance as fin
 import core.statistics as stat
 import helpers.dbg as dbg
+# TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow_core import DAG, Node
 
 _LOG = logging.getLogger(__name__)
@@ -423,7 +424,7 @@ class Resample(Transformer):
         df = getattr(resampler, self._agg_func)()
         #
         info: collections.OrderedDict[
-            str, pd.DataFrame
+            str, Any
         ] = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
