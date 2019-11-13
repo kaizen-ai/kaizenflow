@@ -7,9 +7,8 @@ import core.config as cfg
 import collections
 import copy
 import logging
-
 import os
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import helpers.dbg as dbg
 import helpers.introspection as intr
@@ -36,7 +35,10 @@ class Config:
         :param array: array of (key, value), where value can be a python
             type or a Config in case of nested config.
         """
-        self._config: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        # pylint: disable=unsubscriptable-object
+        self._config: collections.OrderedDict[
+            str, Any
+        ] = collections.OrderedDict()
         if array is not None:
             for k, v in array:
                 self._config[k] = v
@@ -57,7 +59,7 @@ class Config:
         or we assert if the element doesn't exist.
         """
         if intr.is_iterable(key):
-            head_key, tail_key = key[0], key[1:]
+            head_key, tail_key = key[0], key[1:]  # type: ignore
             _LOG.debug(
                 "key=%s -> head_key=%s tail_key=%s", key, head_key, tail_key
             )
@@ -75,7 +77,8 @@ class Config:
         _LOG.debug("key=%s", key)
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         dbg.dassert_in(key, self._config.keys())
-        return self._config[key]
+        ret = self._config[key]  # type: ignore
+        return ret
 
     def __str__(self) -> str:
         """
@@ -88,8 +91,8 @@ class Config:
                 txt.append("%s:\n%s" % (k, pri.space(txt_tmp)))
             else:
                 txt.append("%s: %s" % (k, v))
-        txt = "\n".join(txt)
-        return txt
+        ret = "\n".join(txt)
+        return ret
 
     def __repr__(self) -> str:
         """
@@ -100,7 +103,7 @@ class Config:
         return str(self)
 
     def add_subconfig(self, key: str) -> "Config":
-        dbg.dassert_not_in(key, self._config.key(), "Key already present")
+        dbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
         self._config[key] = config
         return config
@@ -113,8 +116,8 @@ class Config:
 
     def get(self, key, val):
         """
-        Same as `__getitem__` but returning `val` if the value corresponding to
-        key doesn't exist.
+        Implement the same functionality as `__getitem__` but returning `val`
+        if the value corresponding to key doesn't exist.
         """
         try:
             ret = self.__getitem__(key)
@@ -148,6 +151,7 @@ class Config:
         """
         Convert to a ordered dict of order dicts, removing the class.
         """
+        # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
             if isinstance(v, Config):
