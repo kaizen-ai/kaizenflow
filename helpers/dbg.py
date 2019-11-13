@@ -689,19 +689,6 @@ def shutup_chatty_modules(verb=logging.CRITICAL):
         logger.setLevel(verb)
 
 
-# TODO(gp): Remove this.
-def init_logger2(verb=logging.INFO):
-    # From https://stackoverflow.com/questions/14058453
-    root = logging.getLogger()
-    root.setLevel(verb)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(verb)
-    log_format = "%(asctime)-15s %(funcName)-20s: %(levelname)-5s %(message)s"
-    formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %I:%M:%S %p")
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
-
-
 def test_logger() -> None:
     print("# Testing logger ...")
     _log = logging.getLogger(__name__)

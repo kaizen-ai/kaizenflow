@@ -75,7 +75,7 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
 
 
 def _main(args):
-    dbg.init_logger2(args.log_level)
+    dbg.init_logger(args.log_level)
     # Find list of files.
     if not args.file:
         # Find files in conflict.
