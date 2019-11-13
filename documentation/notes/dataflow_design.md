@@ -1,4 +1,4 @@
-- This is a list of design principles for designing the `dataflow` component
+- This is a list of design principles for the `dataflow` component
 
 # Building a DAG
 
@@ -10,26 +10,58 @@
 ## Config
 - The config:
     - Is hierarchical with one subconfig per DAG node
-    - Should only include parameters of the DAG, but not information about
-      DAG connectivity, which is specified in the DAG builder
+    - Can specify if a block is present or not in a DAG
+    - Should only include parameters of the DAG, but not information about DAG
+      connectivity, which is specified in the DAG builder
+
+## Config builders
+- Configs are built through functions that can complete a "template" config with
+  some parameters passed from command line
+- E.g.,
+    ```python
+    def get_kibot_returns_config(symbol: str) -> cfg.Config:
+        """
+        A template configuration for `get_kibot_returns_dag`.
+        """
+        ...
+    ```
 
 ## DAG builder methods
-- It accepts a config and returns a fully formed DAG
-- There are factory methods associated with DAG builder methods that create
-  configs
-    - These methods accept certain 
+- DAG builder methods accept a config and return a fully formed DAG
+- E.g.,
+    ```python
+    def get_kibot_returns_dag(config: cfg.Config, dag: dtf.DAG) -> dtf.DAG:
+        """
+        Build a DAG (which in this case is a linear pipeline) for loading Kibot
+        data and generating processed returns.
+
+        The stages are:
+          - read Kibot price data
+          - compute returns
+          - resample returns (optional)
+          - zscore returns (optional)
+          - filter returns by ATH (optional)
+
+        - `config` must reference required stages and conform to specific node
+           interfaces
+        """
+    ```
+
+- The DAG and config builder functions are typically paired, e.g., a function to
+  create a config with all and only the params needed by a `dag_builder`
 
 ## DAG and Nodes
 - The DAG doesn't care about what data is exchanged between nodes
-    - We assume that it is a `pd.DataFrame` that can be column multi-index
-    - The DAG `node`s are wrapper around pandas dataframes
+    - We assume that it is a `pd.DataFrame` (e.g., that can be column
+      multi-index)
+    - The DAG `node`s are wrappers around pandas dataframes
         - E.g., if a node receives a column multi-index dataframe (e.g., with
           multiple instruments and multiple features per instruments), the node
           knows how to melt and pivot columns
 
 ## Keeping `config` and `dag_builder` in sync
-- `config` asserts if a `dag_builder` tries to access a hierarchical
-  parameter that doesn't exist and reports a meaningful error
+- `config` asserts if a `dag_builder` tries to access a hierarchical parameter
+  that doesn't exist and reports a meaningful error of what is the problem
 - `config` tracks what parameters are accessed by `dag_builder` function
     - a method `sanity_check` is called after the DAG is completely built
       and reports a warning for all the parameters that were not used
@@ -56,6 +88,19 @@
 - We wrap pandas functions (e.g., from `signal_processing.py`) in Nodes
 
 # Problems
+
+## One vs multiple graphs
+
+- We still don't have a final answer about this design issue
+
+- Pros of one graph:
+    - Everything is in one place
+    - One config for the whole graph
+- Pros of multiple graphs:
+    - Easier to parallelize
+    - Easier to manage memory
+    - Simpler to configure (IMO), e.g., templatize config
+    - One connected component (instead of a number depending upon the number of tickers)
 
 ## How to handle multiple features for a single instrument
 - E.g., close and volume for a single futures instrument
