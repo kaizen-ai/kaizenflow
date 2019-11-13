@@ -527,7 +527,7 @@ def _get_logging_format(force_print_format, force_verbose_format):
 # TODO(gp): maybe replace "force_verbose_format" and "force_print_format" with
 #  a "mode" in ("auto", "verbose", "print")
 def init_logger(
-    verb=logging.INFO,
+    verbosity=logging.INFO,
     use_exec_path=False,
     log_filename=None,
     force_verbose_format=False,
@@ -541,7 +541,7 @@ def init_logger(
         - logging.DEBUG = 10
         - logging.INFO = 20
 
-    :param verb: verbosity to use
+    :param verbosity: verbosity to use
     :param use_exec_path: use the name of the executable
     :param log_filename: log to that file
     :param force_verbose_format: use the verbose format for the logging in any
@@ -549,13 +549,13 @@ def init_logger(
     :param force_print_format: use the print format for the logging in any case
     """
     sys.stdout.write("\033[0m")
-    if isinstance(verb, str):
+    if isinstance(verbosity, str):
         # pylint: disable=protected-access
-        verb = logging._checkLevel(verb)
+        verbosity = logging._checkLevel(verbosity)
     # From https://stackoverflow.com/questions/14058453
     root_logger = logging.getLogger()
     # Set verbosity for all loggers.
-    root_logger.setLevel(verb)
+    root_logger.setLevel(verbosity)
     # if False:
     #     eff_level = root_logger.getEffectiveLevel()
     #     print(
@@ -563,16 +563,16 @@ def init_logger(
     #         % (eff_level, logging.getLevelName(eff_level))
     #     )
     # if False:
-    #     # dassert_eq(root_logger.getEffectiveLevel(), verb)
+    #     # dassert_eq(root_logger.getEffectiveLevel(), verbosity)
     #     for handler in root_logger.handlers:
-    #         handler.setLevel(verb)
+    #         handler.setLevel(verbosity)
     # Exit to avoid to replicate the same output multiple times.
     if root_logger.handlers:
         print("WARNING: Logger already initialized: skipping")
         return
     #
     ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(verb)
+    ch.setLevel(verbosity)
     # Decide whether to use verbose or print format.
     date_fmt, log_format = _get_logging_format(
         force_print_format, force_verbose_format
@@ -616,27 +616,27 @@ def init_logger(
     # test_logger()
 
 
-def set_logger_verb(verb, module_name=None):
+def set_logger_verbosity(verbosity, module_name=None):
     """
     Change the verbosity of the logging after the initialization.
 
     Passing a module_name (e.g., matplotlib) one can change the logging of
     that specific module.
 
-    E.g., set_logger_verb(logging.WARNING, "matplotlib")
+    E.g., set_logger_verbosity(logging.WARNING, "matplotlib")
     """
     logger = logging.getLogger(module_name)
     if module_name is None and not logger.handlers:
         assert 0, "ERROR: Logger not initialized"
-    logger.setLevel(verb)
+    logger.setLevel(verbosity)
     eff_level = logger.getEffectiveLevel()
     print(
         "effective level= %s (%s)" % (eff_level, logging.getLevelName(eff_level))
     )
-    dassert_eq(logger.getEffectiveLevel(), verb)
+    dassert_eq(logger.getEffectiveLevel(), verbosity)
 
 
-def get_logger_verb():
+def get_logger_verbosity():
     root_logger = logging.getLogger()
     if not root_logger.handlers:
         assert 0, "ERROR: Logger not initialized"
@@ -670,7 +670,7 @@ def get_matching_loggers(module_names):
     return sel_loggers
 
 
-def shutup_chatty_modules(verb=logging.CRITICAL):
+def shutup_chatty_modules(verbosity=logging.CRITICAL):
     """
     Reduce the verbosity for external modules that are very chatty.
     """
@@ -686,16 +686,16 @@ def shutup_chatty_modules(verb=logging.CRITICAL):
     loggers = get_matching_loggers(module_names)
     print("Shutting up modules: (%d) %s" % (len(loggers), loggers))
     for logger in loggers:
-        logger.setLevel(verb)
+        logger.setLevel(verbosity)
 
 
 # TODO(gp): Remove this.
-def init_logger2(verb=logging.INFO):
+def init_logger2(verbosity=logging.INFO):
     # From https://stackoverflow.com/questions/14058453
     root = logging.getLogger()
-    root.setLevel(verb)
+    root.setLevel(verbosity)
     ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(verb)
+    ch.setLevel(verbosity)
     log_format = "%(asctime)-15s %(funcName)-20s: %(levelname)-5s %(message)s"
     formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %I:%M:%S %p")
     ch.setFormatter(formatter)

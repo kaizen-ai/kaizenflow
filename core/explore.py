@@ -274,7 +274,7 @@ def add_pct(
 
 # TODO(gp): Explain what this is supposed to do.
 def breakdown_table(
-    df, col_name, num_digits=2, use_thousands_separator=True, verb=False
+    df, col_name, num_digits=2, use_thousands_separator=True, verbosity=False
 ):
     if isinstance(col_name, list):
         for c in col_name:
@@ -283,7 +283,7 @@ def breakdown_table(
             print(res)
         return None
     #
-    if verb:
+    if verbosity:
         print(("# col_name=%s" % col_name))
     first_col_name = df.columns[0]
     res = df.groupby(col_name)[first_col_name].count()
@@ -305,7 +305,7 @@ def breakdown_table(
         pri.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
         for v in res["pct"]
     ]
-    if verb:
+    if verbosity:
         for k, df_tmp in df.groupby(col_name):
             print((pri.frame("%s=%s" % (col_name, k))))
             cols = [col_name, "description"]

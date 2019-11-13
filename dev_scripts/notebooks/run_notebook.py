@@ -108,7 +108,7 @@ def _run_notebook(i, notebook_file, config, dst_dir):
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     dst_dir = os.path.abspath(args.dst_dir)
     io_.create_dir(dst_dir, incremental=not args.no_incremental)

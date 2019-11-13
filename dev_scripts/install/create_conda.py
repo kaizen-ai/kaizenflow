@@ -277,7 +277,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     _LOG.info("\n%s", env.get_system_info(add_frame=True))
     dbg.dassert_exists(_REQUIREMENTS_DIR)

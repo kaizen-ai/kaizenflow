@@ -408,7 +408,7 @@ def _parse():
 def _main(parser):
     cmd_line = " ".join(map(str, sys.argv))
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _pandoc(args, cmd_line)
 
 
