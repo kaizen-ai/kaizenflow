@@ -6,8 +6,6 @@ import sys
 from logging import LogRecord
 from typing import Any, Iterable, Optional, Union
 
-from mypy_extensions import NoReturn
-
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
@@ -37,7 +35,7 @@ def _frame(x: str, chars: str = "#", num_cols: int = 80) -> str:
     return ret
 
 
-def dfatal(message: str, assertion_type: Optional[Any] = None) -> NoReturn:
+def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
     """
     Print an error message and exits.
     """
@@ -86,7 +84,7 @@ def _to_msg(msg: Optional[str], *args: str) -> str:
 
 def _dfatal(
     txt: Union[str, Iterable[str]], msg: Optional[str], *args: str
-) -> NoReturn:
+) -> None:
     dfatal_txt = "* Failed assertion *\n"
     if isinstance(txt, list):
         dfatal_txt += "\n".join(txt)
