@@ -65,7 +65,7 @@ def _export_env_var(val_name, vals):
     )
     txt_tmp += ")"
     txt.append(txt_tmp)
-    txt.append("echo %s=$%s" % (val_name, val_name))
+    txt.append("export %s=$%s" % (val_name, val_name))
     txt.append(
         "echo $%s" % val_name
         + """ | perl -e 'print "  "; print join("\\n  ", split(/:/, scalar <>))'"""
