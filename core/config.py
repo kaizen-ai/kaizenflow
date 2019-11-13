@@ -29,7 +29,7 @@ class Config:
     def __init__(self, array=None):
         """
         :param array: array of (key, value), where value can be a python
-        type or a Config in case of nested config.
+            type or a Config in case of nested config.
         """
         self._config = collections.OrderedDict()
         if array is not None:
@@ -46,6 +46,7 @@ class Config:
     def __getitem__(self, key: Union[str, Iterable[str]]) -> Any:
         """
         Get value for `key` or assert, if it doesn't exist.
+
         If `key` is an iterable of keys (e.g., `("read_data", "file_name")`,
         then the hierarchy is navigated until the corresponding element is found
         or we assert if the element doesn't exist.
@@ -88,6 +89,7 @@ class Config:
     def __repr__(self) -> str:
         """
         Return as unambiguous representation the same as str().
+
         This is used by Jupyter notebook when printing.
         """
         return str(self)
@@ -105,8 +107,8 @@ class Config:
 
     def get(self, key, val):
         """
-        Same as `__getitem__` but returning `val` if the value corresponding
-        to key doesn't exist.
+        Same as `__getitem__` but returning `val` if the value corresponding to
+        key doesn't exist.
         """
         try:
             ret = self.__getitem__(key)

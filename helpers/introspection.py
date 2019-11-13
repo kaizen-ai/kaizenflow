@@ -12,8 +12,13 @@ import helpers.dbg as dbg
 
 
 def is_iterable(obj):
+    """
+    Return whether obj can be iterated upon or not.
+
+    Note that a string is iterable in python, but typically we refer to iterables
+    as lists, tuples, so we exclude it.
+    """
     # From https://stackoverflow.com/questions/1952464
-    # Note that a string is iterable in python, so we need to exclude it.
     return not isinstance(obj, str) and isinstance(obj, abc.Iterable)
 
 
