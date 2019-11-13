@@ -4,10 +4,22 @@
 import helpers.introspection as intr
 """
 
+import collections.abc as abc
 import inspect
 import sys
 
 import helpers.dbg as dbg
+
+
+def is_iterable(obj):
+    """
+    Return whether obj can be iterated upon or not.
+
+    Note that a string is iterable in python, but typically we refer to iterables
+    as lists, tuples, so we exclude it.
+    """
+    # From https://stackoverflow.com/questions/1952464
+    return not isinstance(obj, str) and isinstance(obj, abc.Iterable)
 
 
 def get_function_name(count=0):

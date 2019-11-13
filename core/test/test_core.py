@@ -96,6 +96,21 @@ class Test_config1(ut.TestCase):
         config["zscore"]["com"] = 28
         return config
 
+    def test_get2(self):
+        """
+        Test Config.get() with missing key.
+        """
+        config = self._get_nested_config1()
+        _LOG.debug("config=%s", config)
+        with self.assertRaises(AssertionError):
+            _ = config["read_data2"]
+        with self.assertRaises(AssertionError):
+            _ = config["read_data"]["file_name2"]
+        with self.assertRaises(AssertionError):
+            _ = config["read_data2"]["file_name2"]
+        elem = config["read_data"]["file_name"]
+        self.assertEqual(elem, "foo_bar.txt")
+
     def test_config4(self) -> None:
         """
         Test print nested config.
@@ -146,6 +161,56 @@ class Test_config1(ut.TestCase):
         #
         self.assertEqual(str(config1), str(config2))
 
+    def test_hierarchical_getitem1(self):
+        """
+        Test accessing the config with hierarchical access.
+        """
+        config = self._get_nested_config1()
+        _LOG.debug("config=%s", config)
+        elem1 = config[("read_data", "file_name")]
+        elem2 = config["read_data"]["file_name"]
+        self.assertEqual(str(elem1), str(elem2))
+
+    def test_hierarchical_getitem2(self):
+        """
+        Test accessing the config with hierarchical access with correct and
+        incorrect paths.
+        """
+        config = self._get_nested_config1()
+        _LOG.debug("config=%s", config)
+        with self.assertRaises(AssertionError):
+            _ = config["read_data2"]
+        with self.assertRaises(AssertionError):
+            _ = config[("read_data2", "file_name")]
+        with self.assertRaises(AssertionError):
+            _ = config[("read_data2")]
+        with self.assertRaises(AssertionError):
+            _ = config[["read_data2"]]
+        #
+        elem = config[("read_data", "file_name")]
+        self.assertEqual(elem, "foo_bar.txt")
+
+    def test_hierarchical_get1(self):
+        """
+        Show that hierarchical access is equivalent to chained access.
+        """
+        config = self._get_nested_config1()
+        elem1 = config.get(("read_data", "file_name"), None)
+        elem2 = config["read_data"]["file_name"]
+        self.assertEqual(str(elem1), str(elem2))
+
+    def test_hierarchical_get2(self):
+        """
+        Test `get()` with hierarchical access.
+        """
+        config = self._get_nested_config1()
+        elem = config.get(("read_data2", "file_name"), "hello_world1")
+        self.assertEqual(elem, "hello_world1")
+        elem = config.get(("read_data2", "file_name2"), "hello_world2")
+        self.assertEqual(elem, "hello_world2")
+        elem = config.get(("read_data", "file_name2"), "hello_world3")
+        self.assertEqual(elem, "hello_world3")
+
 
 # #############################################################################
 # dataflow_core.py
@@ -153,8 +218,8 @@ class Test_config1(ut.TestCase):
 
 
 class _Dataflow_helper(ut.TestCase):
-    def _remove_stage_names(
-        self, node_link_data: Dict[str, Any]
+    @staticmethod
+    def _remove_stage_names(node_link_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Remove stages names from node_link_data dictionary.
