@@ -150,7 +150,7 @@ def _parse():
         "-r",
         "--repo_github_name",
         action="store",
-        # TODO(gp): This is a workaround for #.
+        # TODO(gp): This is a workaround for PartTask551.
         default="ParticleDev/commodity_research",
         help="Refer to one of the repos using full git name",
     )
