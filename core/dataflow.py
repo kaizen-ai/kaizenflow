@@ -12,8 +12,7 @@ import pandas as pd
 import core.finance as fin
 import core.statistics as stat
 import helpers.dbg as dbg
-
-from dataflow_core import DAG, Node
+from core.dataflow_core import DAG, Node
 
 _LOG = logging.getLogger(__name__)
 
@@ -423,7 +422,9 @@ class Resample(Transformer):
         resampler = df.resample(rule=self._rule, closed="left", label="right")
         df = getattr(resampler, self._agg_func)()
         #
-        info : collections.OrderedDict[str, pd.DataFrame] = collections.OrderedDict()
+        info: collections.OrderedDict[
+            str, pd.DataFrame
+        ] = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
