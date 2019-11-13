@@ -126,9 +126,9 @@ def _get_repo_map():
     # TODO(gp): The proper fix is #PartTask551.
     # Get info from the including repo, if possible.
     try:
-       import repo_config as repc
-    
-       _REPO_MAP.update(repc.REPO_MAP)
+        import repo_config as repc  # type: ignore
+
+        _REPO_MAP.update(repc.REPO_MAP)
     except ImportError:
        _LOG.debug("No including repo")
     dbg.dassert_no_duplicates(_REPO_MAP.keys())

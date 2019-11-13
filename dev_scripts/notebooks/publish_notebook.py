@@ -206,7 +206,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger2(args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     src_file_name = _get_path(args.file)
     # Export to html, add timestamp, archive html.
     if args.action == "open":

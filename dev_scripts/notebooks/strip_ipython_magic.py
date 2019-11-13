@@ -58,7 +58,7 @@ def strip_magic(file_in, file_out):
 
 
 def _main(args):
-    dbg.init_logger2(args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     for f in args.files:
         _LOG.info("Converting %s", f)
         dbg.dassert(f.endswith(".ipynb"), msg="Invalid file=%s" % f)
