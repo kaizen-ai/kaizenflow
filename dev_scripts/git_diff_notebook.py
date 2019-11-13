@@ -126,7 +126,7 @@ def _get_files(args):
 
 
 def _main(args):
-    dbg.init_logger(args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     # Get the files.
     file_names = _get_files(args)
     # Select the ipynb files.
