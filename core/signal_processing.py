@@ -6,6 +6,7 @@ import core.signal_processing as sigp
 
 import functools
 import logging
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +15,6 @@ import pywt
 import scipy as sp
 import statsmodels.api as sm
 from numpy import float64
-from pandas.core.series import Series
 
 import helpers.dbg as dbg
 
@@ -67,7 +67,7 @@ def plot_spectrogram(signal):
         "Spectrograms can be used as a way of visualizing the change of a
          nonstationary signal's frequency content over time."
     """
-    freqs, times, spectrogram = sp.signal.spectrogram(signal)
+    _, _, spectrogram = sp.signal.spectrogram(signal)
     plt.figure(figsize=(5, 4))
     plt.imshow(spectrogram, aspect="auto", cmap="hot_r", origin="lower")
     plt.title("Spectrogram")
@@ -84,13 +84,13 @@ def plot_wavelet_levels(signal, wavelet_name, levels):
     :param wavelet_name: One of the names in pywt.wavelist()
     :param levels: The number of levels to plot
     """
-    fig, ax = plt.subplots(figsize=(6, 1))
+    _, ax = plt.subplots(figsize=(6, 1))
     ax.set_title("Original signal")
     ax.plot(signal)
     plt.show()
 
     data = signal.copy()
-    fig, axarr = plt.subplots(nrows=levels, ncols=2, figsize=(6, 6))
+    _, axarr = plt.subplots(nrows=levels, ncols=2, figsize=(6, 6))
     for idx in range(levels):
         (data, coeff_d) = pywt.dwt(data, wavelet_name)
         axarr[idx, 0].plot(data, "r")
@@ -137,7 +137,7 @@ def plot_low_pass(signal, wavelet_name, threshold):
     """
     Overlays signal with result of low_pass_filter()
     """
-    fig, ax = plt.subplots(figsize=(12, 8))
+    _, ax = plt.subplots(figsize=(12, 8))
     ax.plot(signal, color="b", alpha=0.5, label="original signal")
     rec = low_pass_filter(signal, wavelet_name, threshold)
     ax.plot(rec, "k", label="DWT smoothing}", linewidth=2)
@@ -158,7 +158,7 @@ def plot_scaleogram(
     xlabel="Time",
 ):
     r"""
-    Plots wavelet-based spectrogram (aka scaleogram).
+    Plot wavelet-based spectrogram (aka scaleogram).
 
     A nice reference and utility for plotting can be found at
     https://github.com/alsauve/scaleogram.
@@ -249,7 +249,7 @@ def fit_random_walk_plus_noise(signal):
 
 def plot_crosscorrelation(x, y):
     r"""
-    Assumes x, y have been approximately demeaned and normalized (e.g.,
+    Assume x, y have been approximately demeaned and normalized (e.g.,
     z-scored with ewma).
 
     At index `k` in the result, the value is given by
@@ -274,7 +274,7 @@ def plot_crosscorrelation(x, y):
 
 def squash(df, scale=1):
     """
-    Applies squashing function to data.
+    Apply squashing function to data.
 
     :param df: data
     :param scale: Divide data by scale and multiply squashed output by scale.
@@ -294,13 +294,18 @@ def _com_to_tau(com):
     return 1.0 / np.log(1 + 1.0 / com)
 
 
-def _tau_to_com(tau: int) -> float64:
+def _tau_to_com(tau: float) -> float64:
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
-def ema(df: Series, tau: int, min_periods: int, depth: int = 1) -> Series:
+def ema(
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    min_periods: int,
+    depth: int = 1,
+) -> Union[pd.DataFrame, pd.Series]:
     r"""
-    Iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
+    Implement iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
 
     depth=1 corresponds to a single application of exponential smoothing.
 
@@ -336,7 +341,7 @@ def ema(df: Series, tau: int, min_periods: int, depth: int = 1) -> Series:
     com = _tau_to_com(tau)
     _LOG.debug("com = %0.2f", com)
     df_hat = df.copy()
-    for i in range(0, depth):
+    for _ in range(0, depth):
         df_hat = df_hat.ewm(
             com=com, min_periods=min_periods, adjust=True, ignore_na=False, axis=0
         ).mean()
@@ -382,20 +387,20 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
         return differential / (tau ** scaling)
 
     df_diff = df.copy()
-    for i in range(0, order):
+    for _ in range(0, order):
         df_diff = order_one(df_diff)
     return df_diff
 
 
 def smooth_moving_average(
-    df: Series,
-    tau: int,
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
-) -> Series:
+) -> Union[pd.DataFrame, pd.Series]:
     """
-    Moving average operator defined in terms of iterated ema's.
+    Implement moving average operator defined in terms of iterated ema's.
     Choosing min_depth > 1 results in a lagged operator.
     Choosing min_depth = max_depth = 1 reduces to a single ema.
 
@@ -425,28 +430,28 @@ def smooth_moving_average(
 
 
 def rolling_moment(
-    df: Series,
-    tau: int,
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
-    p_moment: int = 2,
-) -> Series:
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     return smooth_moving_average(
         np.abs(df) ** p_moment, tau, min_periods, min_depth, max_depth
     )
 
 
 def rolling_norm(
-    df: Series,
-    tau: int,
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
-    p_moment: int = 2,
-) -> Series:
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
-    Smooth moving average norm (when p_moment >= 1).
+    Implement smooth moving average norm (when p_moment >= 1).
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
@@ -456,7 +461,7 @@ def rolling_norm(
 
 def rolling_var(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     """
-    Smooth moving average central moment.
+    Implement smooth moving average central moment.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
@@ -466,7 +471,7 @@ def rolling_var(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
 
 def rolling_std(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
     """
-    Normalized smooth moving average central moment.
+    Implement normalized smooth moving average central moment.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
@@ -476,22 +481,22 @@ def rolling_std(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
 
 def rolling_demean(df, tau, min_periods=0, min_depth=1, max_depth=1):
     """
-    Demeans df on a rolling basis with smooth_moving_average
+    Demean df on a rolling basis with smooth_moving_average
     """
     df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
     return df - df_ma
 
 
 def rolling_zscore(
-    df: Series,
-    tau: int,
+    df: Union[pd.DataFrame, pd.Series],
+    tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
-    p_moment: int = 2,
+    p_moment: float = 2,
     demean: bool = True,
     delay: int = 0,
-) -> Series:
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Z-score using smooth_moving_average and rolling_std.
 
@@ -509,13 +514,13 @@ def rolling_zscore(
         df_std = rolling_norm(
             df - df_ma, tau, min_periods, min_depth, max_depth, p_moment
         )
-        return (df - df_ma.shift(delay)) / df_std.shift(delay)
-
+        ret = (df - df_ma.shift(delay)) / df_std.shift(delay)
     else:
         df_std = rolling_norm(
             df, tau, min_periods, min_depth, max_depth, p_moment
         )
-        return df / df_std.shift(delay)
+        ret = df / df_std.shift(delay)
+    return ret
 
 
 def rolling_skew(
@@ -832,7 +837,7 @@ def ipca(df, num_pc, alpha):
 
 def unit_vector_angular_distance(df):
     """
-    Accepts a df of unit eigenvectors (rows) and returns a series with angular
+    Accept a df of unit eigenvectors (rows) and returns a series with angular
     distance from index i to index i + 1.
 
     The angular distance lies in [0, 1].
@@ -848,7 +853,7 @@ def unit_vector_angular_distance(df):
 
 def eigenvector_diffs(eigenvecs):
     """
-    Takes a list of eigenvectors and returns a df of angular distances
+    Take a list of eigenvectors and returns a df of angular distances.
     """
     ang_chg = []
     for i, vec in enumerate(eigenvecs):
@@ -864,7 +869,7 @@ def eigenvector_diffs(eigenvecs):
 # #############################################################################
 
 
-def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> Series:
+def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
     """
     Generate Heaviside pd.Series.
     """

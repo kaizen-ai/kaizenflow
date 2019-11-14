@@ -1239,7 +1239,7 @@ def ols_regress(
     return regr_res
 
 
-def to_series(obj: pd.Series) -> pd.Series:
+def to_series(obj: Any) -> pd.Series:
     if isinstance(obj, np.ndarray):
         dbg.dassert(obj.shape, 1)
         srs = pd.Series(obj)

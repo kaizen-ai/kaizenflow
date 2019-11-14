@@ -33,6 +33,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): This is probably general and should be moved somewhere else.
+# TODO(gp): -> stack_df or better name.
 def linearize_df(df: DataFrame, prefix: str) -> Series:
     """
     Transform a pd.DataFrame like:

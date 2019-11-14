@@ -53,7 +53,7 @@ def resample_index(
 def _build_empty_df(metadata: Dict[str, Any]) -> pd.DataFrame:
     """
     Build an empty dataframe using the data in `metadata`, which is populated
-    in the previous calls of the rolling function.
+    in the previous calls of the `df_rolling_apply` function.
     This is used to generate missing data when applying the rolling function.
     """
     dbg.dassert_is_not(metadata, None)
