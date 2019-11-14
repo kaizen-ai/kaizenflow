@@ -196,7 +196,10 @@ def get_amp_abs_path() -> str:
     amp_dir = os.path.abspath(amp_dir)
     # Sanity check.
     dbg.dassert_dir_exists(amp_dir)
-    dbg.dassert_eq(os.path.basename(amp_dir), "amp")
+    if si.get_user_name() != "jenkins":
+        # Jenkins checks out amp repo in directories with different names,
+        # e.g., amp.dev.build_clean_env.run_slow_coverage_tests.
+        dbg.dassert_eq(os.path.basename(amp_dir), "amp")
     return amp_dir
 
 
