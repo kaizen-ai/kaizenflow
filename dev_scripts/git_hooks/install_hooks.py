@@ -47,7 +47,7 @@ def _main():
     )
     #
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     #
     git_root = git.get_client_root(super_module=True)
     _LOG.info("git_root=%s", git_root)

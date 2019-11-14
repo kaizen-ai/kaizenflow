@@ -6,7 +6,8 @@ import helpers.unit_test as hut
 # Hack to workaround pytest not happy with multiple redundant conftest.py
 # (bug #34).
 if not hasattr(hut, "conftest_already_parsed"):
-    hut.conftest_already_parsed = True
+    # mypy: Module has no attribute "conftest_already_parsed"
+    hut.conftest_already_parsed = True  # type: ignore
 
     def pytest_addoption(parser):
         parser.addoption(
@@ -38,5 +39,39 @@ if not hasattr(hut, "conftest_already_parsed"):
             print("\nWARNING: Using incremental test mode")
             hut.set_incremental_tests(True)
         if config.getoption("--dbg_verbosity"):
-            print("\nWARNING: Setting verb level")
+            print("\nWARNING: Setting verbosity level")
             dbg.init_logger(config.getoption("--dbg_verbosity"))
+
+    pyannotate = False
+    if pyannotate:
+        print("\nWARNING: Collecting information about types through pyannotate")
+        # From https://github.com/dropbox/pyannotate/blob/master/example/example_conftest.py
+        import pytest
+
+        def pytest_collection_finish(session):
+            """
+            Handle the pytest collection finish hook: configure pyannotate.
+            Explicitly delay importing `collect_types` until all tests have
+            been collected.  This gives gevent a chance to monkey patch the
+            world before importing pyannotate.
+            """
+            # mypy: Cannot find module named 'pyannotate_runtime'
+            from pyannotate_runtime import collect_types  # type: ignore
+
+            _ = session
+            collect_types.init_types_collection()
+
+        @pytest.fixture(autouse=True)
+        def collect_types_fixture():
+            from pyannotate_runtime import collect_types
+
+            collect_types.start()
+            yield
+            collect_types.stop()
+
+        def pytest_sessionfinish(session, exitstatus):
+            from pyannotate_runtime import collect_types
+
+            _ = session, exitstatus
+            collect_types.dump_stats("type_info.json")
+            print("\n*** Collected types ***")

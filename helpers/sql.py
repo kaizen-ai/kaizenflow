@@ -6,6 +6,7 @@ import os
 import pickle
 import socket
 
+from typing import Any, Dict
 import pandas as pd
 
 import helpers.dbg as dbg
@@ -71,7 +72,7 @@ def sql_execute_query(conn_string, qq):
     return df
 
 
-_sql_cache = {}
+_SQL_CACHE : Dict[Any, Any] = {}
 
 
 def query(
@@ -83,7 +84,7 @@ def query(
     profile=False,
     verbose=True,
 ):
-    global _sql_cache
+    global _SQL_CACHE
     if limit is not None:
         qq += " LIMIT %s" % limit
     if profile:
@@ -94,9 +95,9 @@ def query(
     df = None
     #
     key = conn_string, qq
-    if use_cache and (key in _sql_cache):
+    if use_cache and (key in _SQL_CACHE):
         _log.debug("Getting cache value for '%s'", key)
-        df = copy.deepcopy(_sql_cache[key])
+        df = copy.deepcopy(_SQL_CACHE[key])
     else:
         # Compute.
         if not use_cache and use_timer:
@@ -114,9 +115,9 @@ def query(
                     print((e.pgerror))
                     raise pg.Error
         if use_cache:
-            dbg.dassert_not_in(key, _sql_cache)
-            _sql_cache[key] = df
-            df = copy.deepcopy(_sql_cache[key])
+            dbg.dassert_not_in(key, _SQL_CACHE)
+            _SQL_CACHE[key] = df
+            df = copy.deepcopy(_SQL_CACHE[key])
         if not use_cache and use_timer:
             timer.dtimer_stop(idx)
     if profile:

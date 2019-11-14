@@ -3,9 +3,10 @@
 
 import helpers.s3 as hs3
 """
+
 import logging
 import os
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import boto3
 
@@ -40,12 +41,13 @@ def is_s3_path(path):
 
 def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
     """
+    List s3 keys.
+
     A wrapper around `list_objects_v2` method that bypasses its
     restriction for only the first 1000 of the contents.
     Returns only the `Key` fields of the `Contents` field, which contain
     file paths.
 
-    Note:
     `list_objects_v2` `StartAfter` parameter lists more files than it
     should. That is why you will get files that are not actually in the
     `dir_path` in your query.
@@ -62,10 +64,9 @@ def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
     is_truncated = True
     contents_keys = []
     while is_truncated:
+        continuation_arg: Dict[str, Any] = {}
         if continuation_token is not None:
-            continuation_arg = {"ContinuationToken": continuation_token}
-        else:
-            continuation_arg = {}
+            continuation_arg["ContinuationToken"] = continuation_token
         s3_objects = s3.list_objects_v2(
             Bucket=s3_bucket,
             StartAfter=dir_path,
@@ -153,13 +154,12 @@ def parse_path(path: str) -> Tuple[str, str]:
         path,
         prefix,
     )
-    path = path[len(prefix) :]
-    path = path.split("/")
-    dbg.dassert(path, "The path is empty.")
-    bucket_name = path[0]
-    bucket_name = bucket_name.replace("s3://", "")
-    path = "/".join(path[1:])
-    return bucket_name, path
+    ret_path = path[len(prefix) :].split("/")
+    dbg.dassert(bool(ret_path), "The path '%s' is empty.", path)
+    bucket_name = ret_path[0]
+    bucket_name = bucket_name.replace(prefix, "")
+    ret = "/".join(ret_path[1:])
+    return bucket_name, ret
 
 
 # TODO(Julia): When PartTask418_PRICE_Convert_Kibot_data_from_csv is
@@ -171,6 +171,7 @@ def ls(file_path: str) -> List[str]:
     s3 = boto3.resource("s3")
     bucket_name, file_path = parse_path(file_path)
     _LOG.debug("bucket_name=%s, file_path=%s", bucket_name, file_path)
+    # pylint: disable=no-member
     my_bucket = s3.Bucket(bucket_name)
     res = my_bucket.objects.filter(Prefix=file_path)
     # list(res.all())[0] looks like:

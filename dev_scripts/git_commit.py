@@ -235,7 +235,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     actions = _select_phases(args)
     # TODO(gp): Make sure that index is empty.
     # Check commit message
@@ -251,8 +251,9 @@ def _main(parser):
         args, actions, commit_file, commit_msg
     )
     # Run tests.
-    actions, unit_test_passing = _run_unit_tests(args, actions, commit_file,
-                                           commit_msg)
+    actions, unit_test_passing = _run_unit_tests(
+        args, actions, commit_file, commit_msg
+    )
     # Commit.
     _commit(args, commit_file, num_lints, unit_test_passing)
 

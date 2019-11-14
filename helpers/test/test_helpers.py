@@ -6,6 +6,7 @@ import pytest
 import helpers.env as env
 import helpers.git as git
 import helpers.printing as prnt
+import helpers.system_interaction as si
 import helpers.s3 as hs3
 import helpers.unit_test as ut
 import helpers.user_credentials as usc
@@ -107,6 +108,7 @@ class Test_git1(ut.TestCase):
                 + ut.to_string("repo_sym_name_tmpA")
             )
 
+    @pytest.mark.skipif('si.get_user_name() == "jenkins"')
     def test_get_amp_abs_path1(self):
         amp_dir = git.get_amp_abs_path()
         # Check.

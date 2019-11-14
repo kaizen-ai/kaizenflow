@@ -29,7 +29,7 @@ def _print(msg):
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     #
     _print("# Saving local changes...")
     tag, was_stashed = git.git_stash_push(

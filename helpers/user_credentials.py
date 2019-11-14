@@ -195,7 +195,7 @@ def get_credentials():
             # Laptop.
             conda_sh_path = "/home/stas/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/stas/anaconda3/envs"
-    elif user_name == 'daniil':
+    elif user_name == "daniil":
         # Daniil.
         git_user_name = "mongolianjesus"
         git_user_email = "daniil@particle.one"
@@ -275,7 +275,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.user:
         si.set_user_name(args.user)
     usc = get_credentials()

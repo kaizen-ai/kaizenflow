@@ -87,7 +87,8 @@ def _parse_diff_output(input_file, src_dir, dst_dir, args):
                 dirs = dir_.split("/")
                 dir_ = dirs[0]
                 file_ = os.path.join(
-                    *dirs[1:], _get_symbolic_filepath(src_dir, dst_dir, m.group(2))
+                    *dirs[1:],
+                    _get_symbolic_filepath(src_dir, dst_dir, m.group(2))
                 )
                 if args.src_dir_name is not None:
                     dir_ = dir_.replace("$SRC_DIR", args.src_dir_name)
@@ -163,17 +164,19 @@ def _parse():
     )
     # Name dir
     parser.add_argument(
-        "--src_dir_name", action="store", help="A symbolic name for the "
-                                               "src_dir, e.g., branch_XYZ"
+        "--src_dir_name",
+        action="store",
+        help="A symbolic name for the " "src_dir, e.g., branch_XYZ",
     )
     parser.add_argument(
-        "--dst_dir_name", action = "store", help = "A symbolic name for the "
-        "dst_dir, e.g., branch_XYZ"
+        "--dst_dir_name",
+        action="store",
+        help="A symbolic name for the " "dst_dir, e.g., branch_XYZ",
     )
-#
+    #
     parser.add_argument(
-    "-o",
-    "--output_file",
+        "-o",
+        "--output_file",
         action="store",
         help="Output file. Don't specify anything for stdout",
     )
@@ -199,7 +202,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     src_dir = os.path.abspath(args.src_dir)
     dst_dir = os.path.abspath(args.dst_dir)

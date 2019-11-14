@@ -51,7 +51,7 @@ def _gest_inst_status():
 def _main(parser):
     args = parser.parse_args()
     inst_id = _get_instance_id()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.action == "start":
         status = _gest_inst_status()
         _LOG.info("Current instance status: %s", status)
