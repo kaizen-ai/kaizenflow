@@ -847,22 +847,74 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
 
 
 class Test_signal_processing_process_outliers1(ut.TestCase):
+    def _helper(self, srs, mode, lower_quantile, **kwargs):
+        stats = collections.OrderedDict()
+        srs_out = sigp.process_outliers(
+            srs, mode, lower_quantile, stats=stats, **kwargs
+        )
+        txt = []
+        txt.append("# stats")
+        txt.append(pprint.pformat(stats))
+        txt.append("# srs_out")
+        txt.append(str(srs_out.head(5)))
+        self.check_string("\n".join(txt))
+
     @staticmethod
-    def _get_data():
+    def _get_data1():
         np.random.seed(100)
         n = 100000
         data = np.random.normal(loc=0.0, scale=1.0, size=n)
         return pd.Series(data)
 
-    def _helper(self, mode, lower_quantile, **kwargs):
-        srs = self._get_data()
-        stats = collections.OrderedDict()
-        srs_out = sigp.process_outliers(
-            srs, mode, lower_quantile, stats=stats, **kwargs
-        )
-        _ = srs_out
-        self.check_string(pprint.pformat(stats))
+    def test_winsorize1(self):
+        srs = self._get_data1()
+        mode = "winsorize"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
 
+    def test_set_to_nan1(self):
+        srs = self._get_data1()
+        mode = "set_to_nan"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    def test_set_to_zero1(self):
+        srs = self._get_data1()
+        mode = "set_to_zero"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    @staticmethod
+    def _get_data2():
+        return pd.Series(range(1, 10))
+
+    def test_winsorize2(self):
+        srs = self._get_data2()
+        mode = "winsorize"
+        lower_quantile = 0.2
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    def test_set_to_nan2(self):
+        srs = self._get_data2()
+        mode = "set_to_nan"
+        lower_quantile = 0.2
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    def test_set_to_zero2(self):
+        srs = self._get_data2()
+        mode = "set_to_zero"
+        lower_quantile = 0.2
+        upper_quantile = 0.3
+        # Check.
+        self._helper(srs, mode, lower_quantile, upper_quantile=upper_quantile)
+
+
+class Test_signal_processing_process_outliers2(ut.TestCase):
     def test_winsorize1(self):
         mode = "winsorize"
         lower_quantile = 0.01

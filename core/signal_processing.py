@@ -630,19 +630,17 @@ def process_outliers(
     stats: dict = None,
 ):
     """
-    Process outliers in `srs` according to different modes (e.g., winsorize,
-    remove, set to nan), given lower / upper quantiles.
-
-    The interval of data kept without any changes is [lower, upper]. In other
-    terms the outliers with quantiles strictly smaller and larger than the bounds
-    are processed.
+    Process outliers in different ways given lower / upper quantiles.
 
     :param srs: pd.Series to process
     :param lower_quantile: lower quantile (in range [0, 1]) of the values to keep
+        The interval of data kept without any changes is [lower, upper]. In other
+        terms the outliers with quantiles strictly smaller and larger than the
+        respective bounds are processed.
     :param upper_quantile: upper quantile with the same semantic as
-        lower_quantile. If None, the quantile symmetric of the lower
-        quantile with respect to 0.5 is taken. E.g., an upper quantile equal to
-        0.7 is taken for a lower_quantile = 0.3
+        lower_quantile. If `None`, the quantile symmetric of the lower quantile
+        with respect to 0.5 is taken. E.g., an upper quantile equal to 0.7 is
+        taken for a lower_quantile = 0.3
     :param mode: it can be "winsorize", "set_to_nan", "set_to_zero"
     :param stats: empty dict-like object that this function will populate with
         statistics about the performed operation
@@ -671,6 +669,7 @@ def process_outliers(
         dbg.dassert_isinstance(stats, dict)
         # Dictionary should be empty.
         dbg.dassert(not stats)
+        stats["series_name"] = srs.name
         stats["num_elems_before"] = len(srs)
         stats["num_nans_before"] = np.isnan(srs).sum()
         stats["num_infs_before"] = np.isinf(srs).sum()
