@@ -1,7 +1,9 @@
+import collections
 import io
 import json
 import logging
 import os
+import pprint
 from typing import Any, Callable, Dict, Tuple
 
 import matplotlib.pyplot as plt
@@ -219,8 +221,7 @@ class Test_config1(ut.TestCase):
 
 class _Dataflow_helper(ut.TestCase):
     @staticmethod
-    def _remove_stage_names(node_link_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _remove_stage_names(node_link_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Remove stages names from node_link_data dictionary.
 
@@ -910,6 +911,7 @@ class TestPcaFactorComputer2(ut.TestCase):
 # #############################################################################
 
 
+# TODO(*): -> Test_signal_processing_rolling_zcore1()
 class TestSignalProcessingRollingZScore1(ut.TestCase):
     def test_default_values1(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
@@ -920,6 +922,84 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
+
+
+class Test_signal_processing_process_outliers1(ut.TestCase):
+    def _helper(self, srs, mode, lower_quantile, num_df_rows=10, **kwargs):
+        stats = collections.OrderedDict()
+        srs_out = sigp.process_outliers(
+            srs, mode, lower_quantile, stats=stats, **kwargs
+        )
+        txt = []
+        txt.append("# stats")
+        txt.append(pprint.pformat(stats))
+        txt.append("# srs_out")
+        txt.append(str(srs_out.head(num_df_rows)))
+        self.check_string("\n".join(txt))
+
+    @staticmethod
+    def _get_data1():
+        np.random.seed(100)
+        n = 100000
+        data = np.random.normal(loc=0.0, scale=1.0, size=n)
+        return pd.Series(data)
+
+    def test_winsorize1(self):
+        srs = self._get_data1()
+        mode = "winsorize"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    def test_set_to_nan1(self):
+        srs = self._get_data1()
+        mode = "set_to_nan"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    def test_set_to_zero1(self):
+        srs = self._get_data1()
+        mode = "set_to_zero"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    @staticmethod
+    def _get_data2():
+        return pd.Series(range(1, 10))
+
+    def test_winsorize2(self):
+        srs = self._get_data2()
+        mode = "winsorize"
+        lower_quantile = 0.2
+        # Check.
+        self._helper(srs, mode, lower_quantile, num_df_rows=len(srs))
+
+    def test_set_to_nan2(self):
+        srs = self._get_data2()
+        mode = "set_to_nan"
+        lower_quantile = 0.2
+        # Check.
+        self._helper(srs, mode, lower_quantile, num_df_rows=len(srs))
+
+    def test_set_to_zero2(self):
+        srs = self._get_data2()
+        mode = "set_to_zero"
+        lower_quantile = 0.2
+        upper_quantile = 0.5
+        # Check.
+        self._helper(
+            srs,
+            mode,
+            lower_quantile,
+            num_df_rows=len(srs),
+            upper_quantile=upper_quantile,
+        )
+
+
+# TODO(*): We should convert core/notebooks/gallery_signal_processing.ipynb
+#  into unit tests to get some coverage for the functions.
 
 
 @pytest.mark.slow
