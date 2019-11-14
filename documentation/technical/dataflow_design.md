@@ -27,7 +27,7 @@
     ```
 
 ## DAG builder methods
-- DAG builder methods accept a config and return a fully formed DAG
+- DAG builder methods accept a config and return a DAG
 - E.g.,
     ```python
     def get_kibot_returns_dag(config: cfg.Config, dag: dtf.DAG) -> dtf.DAG:
@@ -46,6 +46,9 @@
            interfaces
         """
     ```
+- Some DAG builders can also add nodes to user-specified or inferred nodes
+  (e.g., a unique sink node) of an existing DAG. Thus builders allow one to
+  build a complex DAG by adding in multiple steps subgraphs of nodes.
 
 - The DAG and config builder functions are typically paired, e.g., a function to
   create a config with all and only the params needed by a `dag_builder`
