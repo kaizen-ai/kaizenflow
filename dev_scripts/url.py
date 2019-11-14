@@ -24,6 +24,7 @@ import requests
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.parser as prsr
 import helpers.printing as prnt
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
@@ -122,13 +123,7 @@ def _parse():
     )
     parser.add_argument("positional", nargs="*")
     parser.add_argument("--short", action="store_true", help="Short output form")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

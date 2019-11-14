@@ -19,6 +19,7 @@ import sys
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -38,13 +39,7 @@ def _main():
         choices=["install", "remove", "status"],
         action="store",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     #
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)

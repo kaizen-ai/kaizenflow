@@ -48,6 +48,7 @@ import sys
 import helpers.datetime_ as datetime_
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -139,13 +140,7 @@ def _parse():
     parser.add_argument(
         "--dst_dir", action="store", default=None, help="Destination dir"
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

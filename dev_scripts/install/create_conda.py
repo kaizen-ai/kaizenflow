@@ -24,6 +24,8 @@ import logging
 import os
 import sys
 
+import helpers.parser as prsr
+
 # Dir of the current create_conda.py.
 _CURR_DIR = os.path.dirname(sys.argv[0])
 
@@ -277,13 +279,7 @@ def _parse():
     parser.add_argument("--skip_install_env", action="store_true")
     parser.add_argument("--skip_test_env", action="store_true")
     #
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 
