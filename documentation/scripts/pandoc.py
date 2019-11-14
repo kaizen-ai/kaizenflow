@@ -27,6 +27,7 @@ import sys
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.printing as prnt
 import helpers.system_interaction as si
 
@@ -395,13 +396,7 @@ def _parse():
     parser.add_argument("--no_open", action="store_true", default=False)
     parser.add_argument("--no_cleanup", action="store_true", default=False)
     #
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

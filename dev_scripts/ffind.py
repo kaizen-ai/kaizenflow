@@ -17,6 +17,7 @@ import os
 import sys
 
 import helpers.dbg as dbg
+import helpers.parser as prsr
 
 _log = logging.getLogger(__name__)
 
@@ -66,11 +67,5 @@ if __name__ == "__main__":
         help="First param is regex, optional second param is dirname",
     )
     parser.add_argument("--only_files", action="store_true", help="Only files")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     _main(parser)

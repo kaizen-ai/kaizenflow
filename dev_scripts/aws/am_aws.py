@@ -8,6 +8,7 @@ import logging
 import os
 
 import helpers.dbg as dbg
+import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -91,13 +92,7 @@ def _parse():
         required=True,
         help="Select action to execute",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     #
     _main(parser)
 
