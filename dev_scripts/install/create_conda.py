@@ -48,11 +48,10 @@ import helpers.user_credentials as usc  # isort:skip # noqa: E402
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
 
 # The following paths are expressed relative to create_conda.py.
 # TODO(gp): Allow them to tweak so we can be independent with respect to amp.
-# dev_scripts/install/requirements
+#  dev_scripts/install/requirements
 _REQUIREMENTS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
 
 # dev_scripts/install/conda_envs
@@ -133,12 +132,15 @@ def _delete_conda_env(args, conda_env_name):
 
 def _process_requirements_file(req_file):
     """
+    Process a requirement file to allow conditional builds.
+
     - Read a requirements file `req_file`
     - Skip lines like:
         # docx    # Not on Mac.
       to allow configuration based on target.
     - Merge the result in a tmp file that is created in the same dir as the
       `req_file`
+
     :return: name of the new file
     """
     txt = []
@@ -164,6 +166,11 @@ def _process_requirements_file(req_file):
 
 
 def _process_requirements_files(req_files):
+    """
+    Apply _process_requirements_file() to multiple files.
+
+    :return: list of names of the transformed files.
+    """
     dbg.dassert_isinstance(req_files, list)
     dbg.dassert_lte(1, len(req_files))
     _LOG.debug("req_files=%s", req_files)
@@ -211,6 +218,11 @@ def _create_conda_env(args, conda_env_name):
         cmd.append("--name %s" % conda_env_name)
         req_files = args.req_file
         tmp_req_files = _process_requirements_files(req_files)
+        _LOG.debug("tmp_req_files=%s", tmp_req_files)
+        # Report the files so we can see what we are actually installing.
+        for f in tmp_req_files:
+            _LOG.debug("tmp_req_file=%s\n%s", f, io_.from_file(f, split=False))
+        # TODO(gp): Merge the yaml files (see #579).
         # We leverage the fact that `conda create` can merge multiple
         # requirements files.
         cmd.append(" ".join(["--file %s" % f for f in tmp_req_files]))
