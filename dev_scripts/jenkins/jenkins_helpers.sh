@@ -3,7 +3,7 @@
 # amp.
 # """
 
-VERB="DEBUG"
+VERBOSITY="DEBUG"
 
 
 function prepare_to_build_env() {

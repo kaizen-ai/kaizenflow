@@ -24,7 +24,7 @@ source_scripts
 prepare_to_build_env
 
 # From dev_scripts/create_conda.sh
-OPTS="--env_name $CONDA_ENV $CREATE_CONDA_OPTS -v $VERB"
+OPTS="--env_name $CONDA_ENV $CREATE_CONDA_OPTS -v $VERBOSITY"
 create_conda $AMP $OPTS
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

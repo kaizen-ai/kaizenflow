@@ -434,7 +434,7 @@
 
     _LOG = logging.getLogger(__name__)
 
-    dbg.init_logger(verb=logging.DEBUG)
+    dbg.init_logger(verbosity=logging.DEBUG)
 
     _LOG.debug("I am a debug function about %s", a)
     ```

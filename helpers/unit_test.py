@@ -100,6 +100,18 @@ def get_df_signature(df, num_rows=3):
     return txt
 
 
+def filter_text(regex: str, txt: str) -> str:
+    _LOG.debug("Filtering with '%s'", regex)
+    txt_out = []
+    for line in txt.split("\n"):
+        if re.search(regex, line):
+            _LOG.info("Skipping line='%s'", line)
+            continue
+        txt_out.append(txt)
+    txt = "\n".join(txt_out)
+    return txt
+
+
 def purify_from_client(txt: str) -> str:
     """
     Remove from a string all the information specific of a git client:
@@ -196,8 +208,8 @@ def _assert_equal(
         _LOG.error(res)
         # Report how to diff.
         vimdiff_cmd = "vimdiff %s %s" % (
-            os.path.abspath(act_file_name),
             os.path.abspath(exp_file_name),
+            os.path.abspath(act_file_name),
         )
         # Save a script to diff.
         diff_script = "./tmp_diff.sh"
