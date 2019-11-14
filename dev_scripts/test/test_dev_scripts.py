@@ -65,6 +65,9 @@ class Test_env1(ut.TestCase):
 # _setenv.py
 # #############################################################################
 
+# TODO(gp): Call _setenv.py as a library to increase converage and get
+#  annotations from pyannotate.
+
 
 class Test_set_env1(ut.TestCase):
     def test_setenv_py1(self) -> None:
@@ -98,7 +101,7 @@ class Test_set_env1(ut.TestCase):
         # There is a difference between running the same test from different
         # repos, so we remove this line.
         # echo 'curr_path=$GIT_ROOT/amp' |     echo 'curr_path=$GIT_ROOT'
-        txt = ut.filter_text("^curr_path=", txt)
+        txt = ut.filter_text("curr_path=", txt)
         self.check_string(txt)
 
     def test_setenv_sh1(self) -> None:
