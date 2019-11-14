@@ -6,7 +6,7 @@ import core.signal_processing as sigp
 
 import functools
 import logging
-from typing import Union
+from typing import Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +14,6 @@ import pandas as pd
 import pywt
 import scipy as sp
 import statsmodels.api as sm
-from numpy import float64
 
 import helpers.dbg as dbg
 
@@ -33,7 +32,9 @@ _LOG = logging.getLogger(__name__)
 #   - etc.
 
 
-def plot_autocorrelation(signal, lags=40):
+def plot_autocorrelation(
+    signal: Union[pd.DataFrame, pd.Series], lags: int = 40
+) -> None:
     """
     Plot autocorrelation and partial autocorrelation of series.
     """
@@ -44,7 +45,7 @@ def plot_autocorrelation(signal, lags=40):
     fig = sm.graphics.tsa.plot_pacf(signal, lags=lags, ax=ax2)
 
 
-def plot_power_spectral_density(signal):
+def plot_power_spectral_density(signal: Union[pd.DataFrame, pd.Series]) -> None:
     """
     Estimates the power spectral density using Welch's method.
 
@@ -59,7 +60,7 @@ def plot_power_spectral_density(signal):
     plt.tight_layout()
 
 
-def plot_spectrogram(signal):
+def plot_spectrogram(signal: Union[pd.DataFrame, pd.Series]) -> None:
     """
     Plot spectrogram of signal.
 
@@ -76,7 +77,9 @@ def plot_spectrogram(signal):
     plt.tight_layout()
 
 
-def plot_wavelet_levels(signal, wavelet_name, levels):
+def plot_wavelet_levels(
+    signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, levels: int
+) -> None:
     """
     Wavelet level decomposition plot. Higher levels are smoother.
 
@@ -107,7 +110,9 @@ def plot_wavelet_levels(signal, wavelet_name, levels):
     plt.show()
 
 
-def low_pass_filter(signal, wavelet_name, threshold):
+def low_pass_filter(
+    signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, threshold: float
+) -> pd.Series:
     """
     Wavelet low-pass filtering using a threshold.
 
@@ -133,7 +138,9 @@ def low_pass_filter(signal, wavelet_name, threshold):
     return reconstructed_signal
 
 
-def plot_low_pass(signal, wavelet_name, threshold):
+def plot_low_pass(
+    signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, threshold: float
+) -> None:
     """
     Overlays signal with result of low_pass_filter()
     """
@@ -149,14 +156,14 @@ def plot_low_pass(signal, wavelet_name, threshold):
 
 
 def plot_scaleogram(
-    signal,
-    scales,
-    wavelet_name,
-    cmap=plt.cm.seismic,
-    title="Wavelet Spectrogram of signal",
-    ylabel="Period",
-    xlabel="Time",
-):
+    signal: Union[pd.DataFrame, pd.Series],
+    scales: np.array,
+    wavelet_name: str,
+    cmap: plt.cm = plt.cm.seismic,
+    title: str = "Wavelet Spectrogram of signal",
+    ylabel: str = "Period",
+    xlabel: str = "Time",
+) -> None:
     r"""
     Plot wavelet-based spectrogram (aka scaleogram).
 
@@ -211,7 +218,9 @@ def plot_scaleogram(
 # #############################################################################
 
 
-def fit_random_walk_plus_noise(signal):
+def fit_random_walk_plus_noise(
+    signal: Union[pd.DataFrame, pd.Series]
+) -> Tuple[sm.tsa.UnobservedComponents, sm.tsa.statespace.MLEResults]:
     """
     Fit a random walk + Gaussian noise model using state space methods.
 
@@ -247,7 +256,9 @@ def fit_random_walk_plus_noise(signal):
 # #############################################################################
 
 
-def plot_crosscorrelation(x, y):
+def plot_crosscorrelation(
+    x: Union[pd.DataFrame, pd.Series], y: Union[pd.DataFrame, pd.Series]
+) -> None:
     r"""
     Assume x, y have been approximately demeaned and normalized (e.g.,
     z-scored with ewma).
@@ -272,17 +283,19 @@ def plot_crosscorrelation(x, y):
 # #############################################################################
 
 
-def squash(df, scale=1):
+def squash(
+    signal: Union[pd.DataFrame, pd.Series], scale: int = 1
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Apply squashing function to data.
 
-    :param df: data
+    :param signal: data
     :param scale: Divide data by scale and multiply squashed output by scale.
         Rescaling approximately preserves behavior in a neighborhood of the
         origin where the squashing function is approximately linear.
     :return: squashed data
     """
-    return scale * np.tanh(df / scale)
+    return scale * np.tanh(signal / scale)
 
 
 # #############################################################################
@@ -290,16 +303,16 @@ def squash(df, scale=1):
 # #############################################################################
 
 
-def _com_to_tau(com):
+def _com_to_tau(com: float) -> float:
     return 1.0 / np.log(1 + 1.0 / com)
 
 
-def _tau_to_com(tau: float) -> float64:
+def _tau_to_com(tau: float) -> float:
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
 def ema(
-    df: Union[pd.DataFrame, pd.Series],
+    signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int,
     depth: int = 1,
@@ -340,15 +353,21 @@ def ema(
     _LOG.debug("tau = %0.2f", tau)
     com = _tau_to_com(tau)
     _LOG.debug("com = %0.2f", com)
-    df_hat = df.copy()
-    for _ in range(0, depth):
+    df_hat = signal.copy()
+    for i in range(0, depth):
         df_hat = df_hat.ewm(
             com=com, min_periods=min_periods, adjust=True, ignore_na=False, axis=0
         ).mean()
     return df_hat
 
 
-def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
+def smooth_derivative(
+    signal: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    min_periods: int,
+    scaling: int = 0,
+    order: int = 1,
+) -> Union[pd.DataFrame, pd.Series]:
     r"""
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 
@@ -364,7 +383,7 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
     tau.
 
     The `order` parameter refers to the number of times the smooth_derivative operator
-    is applied to the original df.
+    is applied to the original signal.
     """
     dbg.dassert_isinstance(order, int)
     dbg.dassert_lte(0, order)
@@ -377,23 +396,25 @@ def smooth_derivative(df, tau, min_periods, scaling=0, order=1):
     tau2 = alpha * beta * tau
     _LOG.debug("tau2 = %0.2f", tau2)
 
-    def order_one(df):
-        s1 = ema(df, tau1, min_periods, 1)
-        s2 = ema(df, tau1, min_periods, 2)
-        s3 = -2.0 * ema(df, tau2, min_periods, 4)
+    def order_one(
+        signal: Union[pd.DataFrame, pd.Series]
+    ) -> Union[pd.DataFrame, pd.Series]:
+        s1 = ema(signal, tau1, min_periods, 1)
+        s2 = ema(signal, tau1, min_periods, 2)
+        s3 = -2.0 * ema(signal, tau2, min_periods, 4)
         differential = gamma * (s1 + s2 + s3)
         if scaling == 0:
             return differential
         return differential / (tau ** scaling)
 
-    df_diff = df.copy()
-    for _ in range(0, order):
-        df_diff = order_one(df_diff)
-    return df_diff
+    signal_diff = signal.copy()
+    for i in range(0, order):
+        signal_diff = order_one(signal_diff)
+    return signal_diff
 
 
 def smooth_moving_average(
-    df: Union[pd.DataFrame, pd.Series],
+    signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
@@ -417,7 +438,7 @@ def smooth_moving_average(
     dbg.dassert_lte(min_depth, max_depth)
     range_ = tau * (min_depth + max_depth) / 2.0
     _LOG.debug("Range = %0.2f", range_)
-    ema_eval = functools.partial(ema, df, tau, min_periods)
+    ema_eval = functools.partial(ema, signal, tau, min_periods)
     denom = float(max_depth - min_depth + 1)
     # Not the most efficient implementation, but follows 3.56 of Dacorogna
     # directly.
@@ -430,7 +451,7 @@ def smooth_moving_average(
 
 
 def rolling_moment(
-    df: Union[pd.DataFrame, pd.Series],
+    signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
@@ -438,12 +459,12 @@ def rolling_moment(
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
     return smooth_moving_average(
-        np.abs(df) ** p_moment, tau, min_periods, min_depth, max_depth
+        np.abs(signal) ** p_moment, tau, min_periods, min_depth, max_depth
     )
 
 
 def rolling_norm(
-    df: Union[pd.DataFrame, pd.Series],
+    signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
@@ -455,40 +476,70 @@ def rolling_norm(
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_p = rolling_moment(df, tau, min_periods, min_depth, max_depth, p_moment)
-    return df_p ** (1.0 / p_moment)
+    signal_p = rolling_moment(
+        signal, tau, min_periods, min_depth, max_depth, p_moment
+    )
+    return signal_p ** (1.0 / p_moment)
 
 
-def rolling_var(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
+def rolling_var(
+    signal: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Implement smooth moving average central moment.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
-    return rolling_moment(df - df_ma, tau, min_periods, min_depth, max_depth)
+    signal_ma = smooth_moving_average(
+        signal, tau, min_periods, min_depth, max_depth
+    )
+    return rolling_moment(
+        signal - signal_ma, tau, min_periods, min_depth, max_depth
+    )
 
 
-def rolling_std(df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2):
+def rolling_std(
+    signal: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Implement normalized smooth moving average central moment.
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
     """
-    df_tmp = rolling_var(df, tau, min_periods, min_depth, max_depth, p_moment)
-    return df_tmp ** (1.0 / p_moment)
+    signal_tmp = rolling_var(
+        signal, tau, min_periods, min_depth, max_depth, p_moment
+    )
+    return signal_tmp ** (1.0 / p_moment)
 
 
-def rolling_demean(df, tau, min_periods=0, min_depth=1, max_depth=1):
+def rolling_demean(
+    signal: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+) -> Union[pd.DataFrame, pd.Series]:
     """
-    Demean df on a rolling basis with smooth_moving_average
+    Demeans signal on a rolling basis with smooth_moving_average
     """
-    df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
-    return df - df_ma
+    signal_ma = smooth_moving_average(
+        signal, tau, min_periods, min_depth, max_depth
+    )
+    return signal - signal_ma
 
 
 def rolling_zscore(
-    df: Union[pd.DataFrame, pd.Series],
+    signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
     min_depth: int = 1,
@@ -505,46 +556,65 @@ def rolling_zscore(
 
     Moving average corresponds to ema when min_depth = max_depth = 1.
 
-    TODO(Paul): determine whether df == df.shift(0) always.
+    TODO(Paul): determine whether signal == signal.shift(0) always.
     """
     if demean:
         # Equivalent to invoking rolling_demean and rolling_std, but this way
-        # we avoid calculating df_ma twice.
-        df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
-        df_std = rolling_norm(
-            df - df_ma, tau, min_periods, min_depth, max_depth, p_moment
+        # we avoid calculating signal_ma twice.
+        signal_ma = smooth_moving_average(
+            signal, tau, min_periods, min_depth, max_depth
         )
-        ret = (df - df_ma.shift(delay)) / df_std.shift(delay)
+        signal_std = rolling_norm(
+            signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
+        )
+        ret = (signal - signal_ma.shift(delay)) / signal_std.shift(delay)
+
     else:
-        df_std = rolling_norm(
-            df, tau, min_periods, min_depth, max_depth, p_moment
+        signal_std = rolling_norm(
+            signal, tau, min_periods, min_depth, max_depth, p_moment
         )
-        ret = df / df_std.shift(delay)
+        ret = signal / signal_std.shift(delay)
     return ret
 
 
 def rolling_skew(
-    df, tau_z, tau_s, min_periods=0, min_depth=1, max_depth=1, p_moment=2
-):
+    signal: Union[pd.DataFrame, pd.Series],
+    tau_z: float,
+    tau_s: float,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
-    Smooth moving average skew of z-scored df.
+    Smooth moving average skew of z-scored signal.
     """
-    z_df = rolling_zscore(df, tau_z, min_periods, min_depth, max_depth, p_moment)
+    z_signal = rolling_zscore(
+        signal, tau_z, min_periods, min_depth, max_depth, p_moment
+    )
     skew = smooth_moving_average(
-        z_df ** 3, tau_s, min_periods, min_depth, max_depth
+        z_signal ** 3, tau_s, min_periods, min_depth, max_depth
     )
     return skew
 
 
 def rolling_kurtosis(
-    df, tau_z, tau_s, min_periods=0, min_depth=1, max_depth=1, p_moment=2
-):
+    signal: Union[pd.DataFrame, pd.Series],
+    tau_z: float,
+    tau_s: float,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
-    Smooth moving average kurtosis of z-scored df.
+    Smooth moving average kurtosis of z-scored signal.
     """
-    z_df = rolling_zscore(df, tau_z, min_periods, min_depth, max_depth, p_moment)
+    z_signal = rolling_zscore(
+        signal, tau_z, min_periods, min_depth, max_depth, p_moment
+    )
     kurt = smooth_moving_average(
-        z_df ** 4, tau_s, min_periods, min_depth, max_depth
+        z_signal ** 4, tau_s, min_periods, min_depth, max_depth
     )
     return kurt
 
@@ -555,17 +625,24 @@ def rolling_kurtosis(
 
 
 def rolling_sharpe_ratio(
-    df, tau, min_periods=0, min_depth=1, max_depth=1, p_moment=2
-):
+    signal: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Sharpe ratio using smooth_moving_average and rolling_std.
     """
-    df_ma = smooth_moving_average(df, tau, min_periods, min_depth, max_depth)
-    df_std = rolling_norm(
-        df - df_ma, tau, min_periods, min_depth, max_depth, p_moment
+    signal_ma = smooth_moving_average(
+        signal, tau, min_periods, min_depth, max_depth
+    )
+    signal_std = rolling_norm(
+        signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
     )
     # TODO(Paul): Annualize appropriately.
-    return df_ma / df_std
+    return signal_ma / signal_std
 
 
 # #############################################################################
@@ -574,15 +651,15 @@ def rolling_sharpe_ratio(
 
 
 def rolling_corr(
-    srs1,
-    srs2,
-    tau,
-    demean=True,
-    min_periods=0,
-    min_depth=1,
-    max_depth=1,
-    p_moment=2,
-):
+    srs1: Union[pd.DataFrame, pd.Series],
+    srs2: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    demean: bool = True,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Smooth moving correlation.
 
@@ -611,15 +688,15 @@ def rolling_corr(
 
 
 def rolling_zcorr(
-    srs1,
-    srs2,
-    tau,
-    demean=True,
-    min_periods=0,
-    min_depth=1,
-    max_depth=1,
-    p_moment=2,
-):
+    srs1: Union[pd.DataFrame, pd.Series],
+    srs2: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    demean: bool = True,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
     """
     Z-scores srs1, srs2 then calculates moving average of product.
 
@@ -653,9 +730,9 @@ def process_outliers(
     srs: pd.Series,
     mode: str,
     lower_quantile: float,
-    upper_quantile: float = None,
-    stats: dict = None,
-):
+    upper_quantile: Optional[float] = None,
+    stats: Optional[dict] = None,
+) -> pd.Series:
     """
     Process outliers in different ways given lower / upper quantiles.
 
@@ -742,7 +819,9 @@ def process_outliers(
 # #############################################################################
 
 
-def ipca_step(u, v, alpha):
+def ipca_step(
+    u: pd.Series, v: pd.Series, alpha: float
+) -> Tuple[pd.Series, pd.Series]:
     """
     Single step of incremental PCA.
 
@@ -762,7 +841,9 @@ def ipca_step(u, v, alpha):
     return u_next, v_next
 
 
-def ipca(df, num_pc, alpha):
+def ipca(
+    df: pd.DataFrame, num_pc: int, alpha: float
+) -> Tuple[pd.dataFrame, List[pd.DataFrame]]:
     """
     Incremental PCA.
 
@@ -835,7 +916,7 @@ def ipca(df, num_pc, alpha):
     return lambda_df, unit_eigenvec_dfs
 
 
-def unit_vector_angular_distance(df):
+def unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
     """
     Accept a df of unit eigenvectors (rows) and returns a series with angular
     distance from index i to index i + 1.
@@ -851,7 +932,7 @@ def unit_vector_angular_distance(df):
     return srs
 
 
-def eigenvector_diffs(eigenvecs):
+def eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
     """
     Take a list of eigenvectors and returns a df of angular distances.
     """
@@ -882,7 +963,7 @@ def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
     return srs
 
 
-def get_impulse(a, b, tick):
+def get_impulse(a: int, b: int, tick: int) -> pd.Series:
     """
     Generate unit impulse pd.Series.
     """
@@ -892,7 +973,12 @@ def get_impulse(a, b, tick):
     return impulse
 
 
-def get_binomial_tree(p, vol, size, seed=None):
+def get_binomial_tree(
+    p: Union[float, np.ndarray, Iterable[Union[int, float]], int],
+    vol: Union[float, int],
+    size: Union[int, Iterable[Union[int, float]], Tuple[int], None],
+    seed: Optional[int] = None,
+) -> pd.Series:
     # binomial_tree(0.5, 0.1, 252, seed=0).plot()
     np.random.seed(seed=seed)
     pos = np.random.binomial(1, p, size)
@@ -901,7 +987,12 @@ def get_binomial_tree(p, vol, size, seed=None):
     return pd.Series(np.exp(delta.cumsum()), name="binomial_walk")
 
 
-def get_gaussian_walk(drift, vol, size, seed=None):
+def get_gaussian_walk(
+    drift: Union[float, np.ndarray, Iterable[Union[int, float]], int],
+    vol: Union[float, np.ndarray, Iterable[Union[int, float]], int],
+    size: Union[int, Iterable[Union[int, float]], Tuple[int], None],
+    seed: Optional[int] = None,
+) -> pd.Series:
     # get_gaussian_walk(0, .2, 252, seed=10)
     np.random.seed(seed=seed)
     gauss = np.random.normal(drift, vol, size)
