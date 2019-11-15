@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# """
+# Apply process_jupytext.py to all the ipynb files.
+# """
+
 #ACTION="$*"
 #ACTION="pair"
 #ACTION="test"
