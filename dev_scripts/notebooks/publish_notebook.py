@@ -22,6 +22,7 @@ import sys
 from datetime import datetime
 
 import helpers.dbg as dbg
+import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
 
@@ -194,13 +195,7 @@ def _parse():
         choices=["open", "publish"],
         help="Open with Chrome without publish, or archive / publish as html",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

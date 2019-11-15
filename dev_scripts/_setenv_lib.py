@@ -15,6 +15,7 @@ import sys
 
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.io_ as io_  # isort:skip # noqa: E402
+import helpers.parser as prsr  # isort:skip # noqa: E402
 import helpers.system_interaction as si  # isort:skip # noqa: E402
 
 
@@ -250,13 +251,7 @@ def parse():
     parser.add_argument(
         "-e", "--conda_env", default=None, help="Select the conda env to use."
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     # To capture some dummy command options (e.g., "bell-style none") passed by
     # source on some systems.
     parser.add_argument("positional", nargs="*", help="...")

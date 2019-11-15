@@ -5,6 +5,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.env as env
+import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
@@ -13,13 +14,7 @@ def _main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     parser.add_argument(
         "--conda_env_name", help="Environment name", type=str, required=True,
     )

@@ -14,6 +14,31 @@
 
 - We strive to get no errors / warnings from the linter, including `mypy`
 
+## Handling the annoying `Incompatible types in assignment`
+- `mypy` assigns a single type to each variable for its entire scope
+
+- The problem is in common idioms like
+    ```python
+    output : str = ...
+    output = output.split("\n")
+    ...
+    # Process output.
+    ...
+    output = "\n".join(output)
+    ```
+  (where we use the same variable to store different representations of the same
+  data) annoy `mypy`, which in turns annoys us
+
+- Unfortunately the proper solution is to use different variables
+    ```python
+    output : str = ...
+    output_as_array = output.split("\n")
+    ...
+    # Process output.
+    ...
+    output = "\n".join(output_as_array)
+    ```
+
 ## Disabling `mypy` errors
 
 - If `mypy` reports an error and you don't understand why, please ping one of the
