@@ -33,17 +33,26 @@ _LOG = logging.getLogger(__name__)
 
 
 def plot_autocorrelation(
-    signal: Union[pd.DataFrame, pd.Series], lags: int = 40
+    signal: Union[pd.DataFrame, pd.Series],
+    lags: int = 40,
+    scale_mode: str = "auto",
 ) -> None:
     """
     Plot autocorrelation and partial autocorrelation of series.
     """
     dbg.dassert_lte(1, lags)
     fig = plt.figure(figsize=(12, 8))
+    if scale_mode == "auto":
+        pass
+    elif scale_mode == "fixed":
+        plt.ylim(-1, 1)
+    else:
+        raise ValueError("scale_mode='%s' is not supported" % scale_mode)
     ax1 = fig.add_subplot(211)
-    fig = sm.graphics.tsa.plot_acf(signal, lags=lags, ax=ax1)
+    # Exclude lag zero so that the y-axis does not get squashed.
+    fig = sm.graphics.tsa.plot_acf(signal, lags=lags, ax=ax1, zero=False)
     ax2 = fig.add_subplot(212)
-    fig = sm.graphics.tsa.plot_pacf(signal, lags=lags, ax=ax2)
+    fig = sm.graphics.tsa.plot_pacf(signal, lags=lags, ax=ax2, zero=False)
 
 
 def plot_power_spectral_density(signal: Union[pd.DataFrame, pd.Series]) -> None:
