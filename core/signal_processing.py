@@ -854,7 +854,7 @@ def ipca_step(
 
 def ipca(
     df: pd.DataFrame, num_pc: int, alpha: float
-) -> Tuple[pd.dataFrame, List[pd.DataFrame]]:
+) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """
     Incremental PCA.
 
