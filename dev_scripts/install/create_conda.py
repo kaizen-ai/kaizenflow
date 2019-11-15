@@ -24,8 +24,6 @@ import logging
 import os
 import sys
 
-import helpers.parser as prsr
-
 # Dir of the current create_conda.py.
 _CURR_DIR = os.path.dirname(sys.argv[0])
 
@@ -45,6 +43,7 @@ import helpers.conda as hco  # isort:skip # noqa: E402
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.env as env  # isort:skip # noqa: E402
 import helpers.io_ as io_  # isort:skip # noqa: E402
+import helpers.parser as prsr  # isort:skip # noqa: E402
 import helpers.printing as prnt  # isort:skip # noqa: E402
 import helpers.user_credentials as usc  # isort:skip # noqa: E402
 
