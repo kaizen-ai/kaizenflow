@@ -38,6 +38,7 @@ def plot_autocorrelation(
     """
     Plot autocorrelation and partial autocorrelation of series.
     """
+    dbg.dassert_lte(1, lags)
     fig = plt.figure(figsize=(12, 8))
     ax1 = fig.add_subplot(211)
     fig = sm.graphics.tsa.plot_acf(signal, lags=lags, ax=ax1)
@@ -47,7 +48,7 @@ def plot_autocorrelation(
 
 def plot_power_spectral_density(signal: Union[pd.DataFrame, pd.Series]) -> None:
     """
-    Estimates the power spectral density using Welch's method.
+    Estimate the power spectral density using Welch's method.
 
     Related to autocorrelation via the Fourier transform (Wiener-Khinchin).
     """
@@ -142,7 +143,7 @@ def plot_low_pass(
     signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, threshold: float
 ) -> None:
     """
-    Overlays signal with result of low_pass_filter()
+    Overlay signal with result of low_pass_filter().
     """
     _, ax = plt.subplots(figsize=(12, 8))
     ax.plot(signal, color="b", alpha=0.5, label="original signal")
@@ -236,13 +237,13 @@ def fit_random_walk_plus_noise(
         signal, level="local level", initialization="diffuse"
     )
     result = model.fit(method="powell", disp=True)
-    # Signal-to-noise ratio
+    # Signal-to-noise ratio.
     q = result.params[1] / result.params[0]
     _LOG.info("Signal-to-noise ratio q = %f", q)
     p = 0.5 * (q + np.sqrt(q ** 2 + 4 * q))
     kalman_gain = p / (p + 1)
     _LOG.info("Steady-state Kalman gain = %f", kalman_gain)
-    # EWMA com
+    # EWMA com.
     com = 1 / kalman_gain - 1
     _LOG.info("EWMA com = %f", com)
     print(result.summary())
@@ -295,6 +296,7 @@ def squash(
         origin where the squashing function is approximately linear.
     :return: squashed data
     """
+    dbg.dassert_lt(0, scale)
     return scale * np.tanh(signal / scale)
 
 
@@ -353,12 +355,12 @@ def ema(
     _LOG.debug("tau = %0.2f", tau)
     com = _tau_to_com(tau)
     _LOG.debug("com = %0.2f", com)
-    df_hat = signal.copy()
+    signal_hat = signal.copy()
     for i in range(0, depth):
-        df_hat = df_hat.ewm(
+        signal_hat = signal_hat.ewm(
             com=com, min_periods=min_periods, adjust=True, ignore_na=False, axis=0
         ).mean()
-    return df_hat
+    return signal_hat
 
 
 def smooth_derivative(
@@ -371,7 +373,7 @@ def smooth_derivative(
     r"""
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 
-    Computes difference of around time "now" over a time interval \tau_1
+    Compute difference of around time "now" over a time interval \tau_1
     and an average around time "now - \tau" over a time interval \tau_2.
     Here, \tau_1, \tau_2 are taken to be approximately \tau / 2.
 
@@ -408,7 +410,7 @@ def smooth_derivative(
         return differential / (tau ** scaling)
 
     signal_diff = signal.copy()
-    for i in range(0, order):
+    for _ in range(0, order):
         signal_diff = order_one(signal_diff)
     return signal_diff
 
@@ -530,7 +532,7 @@ def rolling_demean(
     max_depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-    Demeans signal on a rolling basis with smooth_moving_average
+    Demean signal on a rolling basis with smooth_moving_average.
     """
     signal_ma = smooth_moving_average(
         signal, tau, min_periods, min_depth, max_depth
@@ -698,7 +700,7 @@ def rolling_zcorr(
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-    Z-scores srs1, srs2 then calculates moving average of product.
+    Z-score srs1, srs2 then calculate moving average of product.
 
     Not guaranteed to lie in [-1, 1], but bilinear in the z-scored variables.
     """
@@ -874,29 +876,29 @@ def ipca(
     _LOG.info("com = %0.2f", 1.0 / alpha - 1)
     lambdas = []
     # V's are eigenvectors with norm equal to corresponding eigenvalue
-    # vsl = [[v1], [v2], ...]
+    # vsl = [[v1], [v2], ...].
     vsl = []
     unit_eigenvecs = []
     step = 0
     for n in df.index:
         step += 1
-        # Initialize u1(n)
-        # Handle NaN's by replacing with 0
+        # Initialize u1(n).
+        # Handle NaN's by replacing with 0.
         ul = [df.loc[n].fillna(value=0)]
         for i in range(1, min(num_pc, step) + 1):
-            # Initialize ith eigenvector
+            # Initialize ith eigenvector.
             if i == step:
                 _LOG.info("Initializing eigenvector %i...", i)
                 v = ul[-1]
-                # Bookkeeping
+                # Bookkeeping.
                 vsl.append([v])
                 norm = np.linalg.norm(v)
                 lambdas.append([norm])
                 unit_eigenvecs.append([v / norm])
             else:
-                # Main update step for eigenvector i
+                # Main update step for eigenvector i.
                 u, v = ipca_step(ul[-1], vsl[i - 1][-1], alpha)
-                # Bookkeeping
+                # Bookkeeping.
                 u.name = n
                 v.name = n
                 ul.append(u)
@@ -905,8 +907,8 @@ def ipca(
                 lambdas[i - 1].append(norm)
                 unit_eigenvecs[i - 1].append(v / norm)
     _LOG.info("Completed %i steps of incremental PCA.", step)
-    # Convert lambda list of lists to list of series
-    # Convert unit_eigenvecs list of lists to list of dataframes
+    # Convert lambda list of lists to list of series.
+    # Convert unit_eigenvecs list of lists to list of dataframes.
     lambdas_srs = []
     unit_eigenvec_dfs = []
     for i in range(0, num_pc):
@@ -925,7 +927,7 @@ def unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
     """
     vecs = df.values
     # If all of the vectors are unit vectors, then
-    # np.diag(vecs.dot(vecs.T)) should return an array of all 1.'s
+    # np.diag(vecs.dot(vecs.T)) should return an array of all 1.'s.
     cos_sim = np.diag(vecs[:-1, :].dot(vecs[1:, :].T))
     ang_dist = np.arccos(cos_sim) / np.pi
     srs = pd.Series(index=df.index[1:], data=ang_dist, name="angular change")
@@ -974,9 +976,9 @@ def get_impulse(a: int, b: int, tick: int) -> pd.Series:
 
 
 def get_binomial_tree(
-    p: Union[float, np.ndarray, Iterable[Union[int, float]], int],
-    vol: Union[float, int],
-    size: Union[int, Iterable[Union[int, float]], Tuple[int], None],
+    p: Union[float, Iterable[float]],
+    vol: float,
+    size: Union[int, Tuple[int, ...], None],
     seed: Optional[int] = None,
 ) -> pd.Series:
     # binomial_tree(0.5, 0.1, 252, seed=0).plot()
@@ -988,9 +990,9 @@ def get_binomial_tree(
 
 
 def get_gaussian_walk(
-    drift: Union[float, np.ndarray, Iterable[Union[int, float]], int],
-    vol: Union[float, np.ndarray, Iterable[Union[int, float]], int],
-    size: Union[int, Iterable[Union[int, float]], Tuple[int], None],
+    drift: Union[float, Iterable[float]],
+    vol: Union[float, Iterable[float]],
+    size: Union[int, Tuple[int, ...], None],
     seed: Optional[int] = None,
 ) -> pd.Series:
     # get_gaussian_walk(0, .2, 252, seed=10)
