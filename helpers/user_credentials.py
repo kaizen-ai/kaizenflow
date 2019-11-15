@@ -160,8 +160,8 @@ def get_credentials():
             conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
-        service = ("Jupyter", _get_p1_dev_server_ip(), jupyter_port, jupyter_port)
-        tunnel_info.append(service)
+        # service = ("Jupyter", _get_p1_dev_server_ip(), jupyter_port, jupyter_port)
+        # tunnel_info.append(service)
     elif user_name == "julia":
         # Julia.
         git_user_name = "Julia"
