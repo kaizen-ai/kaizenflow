@@ -11,8 +11,8 @@
 - The config:
     - Is hierarchical with one subconfig per DAG node
     - Can specify if a block is present or not in a DAG
-    - Should only include parameters of the DAG, but not information about DAG
-      connectivity, which is specified in the DAG builder
+    - Should only include DAG node configuration parameters, and not information
+      about DAG connectivity, which is specified in the DAG builder
 
 ## Config builders
 - Configs are built through functions that can complete a "template" config with
@@ -27,7 +27,7 @@
     ```
 
 ## DAG builder methods
-- DAG builder methods accept a config and return a fully formed DAG
+- DAG builder methods accept a config and return a DAG
 - E.g.,
     ```python
     def get_kibot_returns_dag(config: cfg.Config, dag: dtf.DAG) -> dtf.DAG:
@@ -46,31 +46,39 @@
            interfaces
         """
     ```
+- Some DAG builders can also add nodes to user-specified or inferred nodes
+  (e.g., a unique sink node) of an existing DAG. Thus builders allow one to
+  build a complex DAG by adding in multiple steps subgraphs of nodes.
 
 - The DAG and config builder functions are typically paired, e.g., a function to
   create a config with all and only the params needed by a `dag_builder`
 
 ## DAG and Nodes
-- The DAG doesn't care about what data is exchanged between nodes
-    - We assume that it is a `pd.DataFrame` (e.g., that can be column
-      multi-index)
+- The DAG structure does not know about what data is exchanged between nodes.
+  Structural assumptions, e.g., column names, can and should be expressed
+  through the config
+    - `dataflow_core.py` does not impose any constraints on the type of data
+      that can be exchanged
+    - In practice (e.g., all concrete classes for nodes in `dataflow.py`), we
+      assume that `pd.DataFrame`s are propagated
     - The DAG `node`s are wrappers around pandas dataframes
         - E.g., if a node receives a column multi-index dataframe (e.g., with
           multiple instruments and multiple features per instruments), the node
-          knows how to melt and pivot columns
+          (should, assuming a well-defined DAG and config) knows how to melt and
+          pivot columns
 
 ## Keeping `config` and `dag_builder` in sync
 - `config` asserts if a `dag_builder` tries to access a hierarchical parameter
-  that doesn't exist and reports a meaningful error of what is the problem
+  that doesn't exist and reports a meaningful error of what the problem is
 - `config` tracks what parameters are accessed by `dag_builder` function
     - a method `sanity_check` is called after the DAG is completely built
       and reports a warning for all the parameters that were not used
-    - This is mostly for sanity check, so we don't assert
+    - This is mostly for a sanity check and debugging, so we don't assert
 
 # DAG behavior
 
 ## Invariants
-- Nodes of the DAG exchange dataframes
+- Nodes of the DAG propagate dataframes
     - Dataframes can be column multi-index to represent higher dimensionality
       datasets (e.g., multiple instruments, multiple features for each
       instrument)
@@ -80,12 +88,21 @@
 
 - We assume that dataframes are aligned in terms of time scale
     - I.e., the DAG has nodes that explicitly merge / align dataframes
-    - DAG nodes don't try to solve the problem but rather they 
-    - When data sources have different time resolution, typically we either do
-      outer merges leaving nans or with forward fills
+    - When data sources have different time resolutions, typically we perform 
+      outer merges either leaving nans or filling with forward fills
 
 ## Nodes
 - We wrap pandas functions (e.g., from `signal_processing.py`) in Nodes
+- `ColumnTransformer` is a very flexible `Node` class that can wrap a wide
+  variety of functions
+    - The function to use is passed to the `ColumnTransformer` constructor in
+      the DAG builder
+    - Arguments to forward to the function are passed through
+      `transformer_kwargs`
+    - Currently `ColumnTransformer` does not allow index-modifying changes (we
+      may relax this constraint but continue to enforce it by default)
+- `DataframeMethodRunner` can run any `pd.DataFrame` method supported and
+  forwards kwargs
 
 # Problems
 
@@ -99,24 +116,25 @@
 - Pros of multiple graphs:
     - Easier to parallelize
     - Easier to manage memory
-    - Simpler to configure (IMO), e.g., templatize config
+    - Simpler to configure (maybe), e.g., templatize config
     - One connected component (instead of a number depending upon the number of tickers)
 
 ## How to handle multiple features for a single instrument
 - E.g., close and volume for a single futures instrument
-- In this case we can use a dataframe with two columns `close_price` and `volume`
+- In this case we can use a dataframe with two columns `close_price` and
+  `volume`
     - Maybe the solution is to keep columns in the same dataframe either if they
       are processed in the same way (i.e., vectorized) or if the computing node
       needs to have to have both features available (like sklearn model)
-    - If close_price and volume are "independent" should go in different branches
-      of the graph using a "Y" split
+    - If close_price and volume are "independent", they should go in different
+      branches of the graph using a "Y" split
 
 ## How to handle multiple instruments?
 - E.g., close price for multiple futures
 
 - We pass a dataframe with one column per instrument
 - All the transformations are then performed on a column-basis
-- We assume that the timeseries are aligned explicitly through 
+- We assume that the timeseries are aligned explicitly
 
 ## How to handle multiple features with multiple instruments
 - E.g., close price, high price, volume for multiple energy futures instrument
@@ -124,7 +142,7 @@
   dimension is the instrument, and the second dimension is the feature
 
 ## Irregular DAGs
-- E.g., if we have 10 instruments that needs to use different models, we could
+- E.g., if we have 10 instruments that need to use different models, we could
   build a DAG, instantiating 10 different pipelines
 - In general we try to use vectorization any time that is possible
     - E.g., if the computation is the same, instantiate a single DAG working on

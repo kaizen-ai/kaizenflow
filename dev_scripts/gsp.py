@@ -10,6 +10,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -29,7 +30,7 @@ def _print(msg):
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     #
     _print("# Saving local changes...")
     tag, was_stashed = git.git_stash_push(
@@ -55,13 +56,7 @@ def _parser():
     parser.add_argument(
         "-m", default=None, dest="message", help="Add message to commit"
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

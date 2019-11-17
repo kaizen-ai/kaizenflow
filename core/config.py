@@ -7,13 +7,11 @@ import core.config as cfg
 import collections
 import copy
 import logging
-
-# #############################################################################
-# Config
-# #############################################################################
 import os
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import helpers.dbg as dbg
+import helpers.introspection as intr
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
@@ -21,30 +19,66 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Add mechanism to check if a value was assigned but not used.
 class Config:
-    def __init__(self, array=None):
+    """
+    A hierarchical ordered dictionary storing configuration informations.
+    """
+
+    def __init__(
+        self,
+        array: Union[
+            List[Tuple[str, Union[List[int], str]]],
+            List[Tuple[str, Union[int, str]]],
+            None,
+        ] = None,
+    ) -> None:
         """
         :param array: array of (key, value), where value can be a python
-        type or a Config in case of nested config.
+            type or a Config in case of nested config.
         """
-        self._config = collections.OrderedDict()
+        # pylint: disable=unsubscriptable-object
+        self._config: collections.OrderedDict[
+            str, Any
+        ] = collections.OrderedDict()
         if array is not None:
             for k, v in array:
                 self._config[k] = v
 
-    def __setitem__(self, key, val):
+    def __setitem__(self, key: str, val: Any) -> None:
         """
         Set / update `key` to `val`.
         """
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         self._config[key] = val
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[str, Iterable[str]]) -> Any:
         """
         Get value for `key` or assert, if it doesn't exist.
+
+        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`,
+        then the hierarchy is navigated until the corresponding element is found
+        or we assert if the element doesn't exist.
         """
+        if intr.is_iterable(key):
+            head_key, tail_key = key[0], key[1:]  # type: ignore
+            _LOG.debug(
+                "key=%s -> head_key=%s tail_key=%s", key, head_key, tail_key
+            )
+            if not tail_key:
+                # Tuple of a single element, then return the value.
+                # Note that the following call is not equivalent to
+                # self._config[head_key].
+                ret = self.__getitem__(head_key)
+            else:
+                # Recurse.
+                dbg.dassert_isinstance(head_key, str, "Keys can only be string")
+                dbg.dassert_in(head_key, self._config.keys())
+                ret = self._config[head_key].__getitem__(tail_key)
+            return ret
+        _LOG.debug("key=%s", key)
         dbg.dassert_isinstance(key, str, "Keys can only be string")
-        dbg.dassert_in(key, self._config)
-        return self._config[key]
+        dbg.dassert_in(key, self._config.keys())
+        ret = self._config[key]  # type: ignore
+        return ret
 
     def __str__(self) -> str:
         """
@@ -57,15 +91,24 @@ class Config:
                 txt.append("%s:\n%s" % (k, pri.space(txt_tmp)))
             else:
                 txt.append("%s: %s" % (k, v))
-        txt = "\n".join(txt)
-        return txt
+        ret = "\n".join(txt)
+        return ret
 
-    def add_subconfig(self, key):
-        dbg.dassert_not_in(key, self._config)
-        self._config[key] = Config()
-        return self._config[key]
+    def __repr__(self) -> str:
+        """
+        Return as unambiguous representation the same as str().
 
-    def update(self, dict_: dict):
+        This is used by Jupyter notebook when printing.
+        """
+        return str(self)
+
+    def add_subconfig(self, key: str) -> "Config":
+        dbg.dassert_not_in(key, self._config.keys(), "Key already present")
+        config = Config()
+        self._config[key] = config
+        return config
+
+    def update(self, dict_: dict) -> None:
         """
         Equivalent to `dict.update()`
         """
@@ -73,17 +116,18 @@ class Config:
 
     def get(self, key, val):
         """
-        Equivalent to `dict.get()`
+        Implement the same functionality as `__getitem__` but returning `val`
+        if the value corresponding to key doesn't exist.
         """
-        # TODO(gp): For some reason this doesn't work. It's probably something
-        # trivial.
-        # self._config.get(key, val)
-        res = self._config[key] if key in self._config else val
-        return res
+        try:
+            ret = self.__getitem__(key)
+        except AssertionError:
+            ret = val
+        return ret
 
-    def pop(self, key):
+    def pop(self, key: str):
         """
-        Equivalent to `dict.pop()`
+        Equivalent to `dict.pop()`.
         """
         return self._config.pop(key)
 
@@ -94,19 +138,21 @@ class Config:
         return copy.deepcopy(self)
 
     @classmethod
-    def from_python(cls, code):
+    def from_python(cls, code: str) -> "Config":
         """
         Create an object from the code returned by `to_python()`.
         """
+        dbg.dassert_isinstance(code, str)
         val = eval(code)
         dbg.dassert_isinstance(val, Config)
-        return val
+        return val  # type: ignore
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """
         Convert to a ordered dict of order dicts, removing the class.
         """
-        dict_ = collections.OrderedDict()
+        # pylint: disable=unsubscriptable-object
+        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
             if isinstance(v, Config):
                 dict_[k] = v.to_dict()
@@ -114,7 +160,7 @@ class Config:
                 dict_[k] = v
         return dict_
 
-    def to_python(self, check=True):
+    def to_python(self, check: bool = True) -> str:
         config_as_str = str(self.to_dict())
         # We don't need 'cfg.' since we are inside the config module.
         config_as_str = config_as_str.replace("OrderedDict", "Config")
@@ -172,7 +218,7 @@ class Config:
     # TODO(gp): Use this everywhere.
     def get_exception(self, key):
         """
-        Convenience function to get an exception when a key is not present.
+        Raise an exception when a key is not present.
         """
         return ValueError(
             "Invalid %s='%s' in config=\n%s"

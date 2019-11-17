@@ -105,7 +105,7 @@
         pri.config_notebook()
 
         # Configure logger.
-        dbg.init_logger(verb=logging.INFO)
+        dbg.init_logger(verbosity=logging.INFO)
         _LOG = logging.getLogger(__name__)
 
         # Packages

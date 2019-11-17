@@ -13,6 +13,7 @@ from joblib import Parallel, delayed
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.printing as printing
 import helpers.system_interaction as si
 
@@ -50,9 +51,7 @@ def build_configs(dst_dir, dry_run):
     for f in futures:
         config["descr"] = f
         config_tmp = copy.deepcopy(config)
-        file_name = (
-            "s3://kibot/All_Futures_Contracts_1min/%s.csv.gz" % f
-        )
+        file_name = "s3://kibot/All_Futures_Contracts_1min/%s.csv.gz" % f
         config_tmp["file_name"] = file_name
         config_tmp["sim_tag"] = f
         configs.append(config_tmp)
@@ -110,7 +109,7 @@ def _run_notebook(i, notebook_file, config, dst_dir):
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     dst_dir = os.path.abspath(args.dst_dir)
     io_.create_dir(dst_dir, incremental=not args.no_incremental)
@@ -178,13 +177,7 @@ def _parse():
         action="store_true",
         help="Run a short sim to sanity check the flow",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

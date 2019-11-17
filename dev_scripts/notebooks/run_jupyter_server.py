@@ -11,6 +11,7 @@ import argparse
 import logging
 
 import helpers.dbg as dbg
+import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
 
@@ -99,19 +100,13 @@ def _parse():
         default=None,
         help="Override the " "default port to use",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     # Get the default port.
     credentials = usc.get_credentials()
     jupyter_port = credentials["jupyter_port"]

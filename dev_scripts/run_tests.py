@@ -15,6 +15,7 @@ import logging
 import sys
 
 import helpers.dbg as dbg
+import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -64,20 +65,14 @@ def _parse():
     )
     #
     parser.add_argument("--dry_run", action="store_true")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 
 # TODO(gp): Refactor this function in smaller pieces.
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     test = args.test
     log_level = logging.getLevelName(args.log_level)
@@ -172,7 +167,6 @@ def _main(parser):
         else:
             # Parallel mode.
             if args.num_cpus == -1:
-                # pylint: disable=import-outside-toplevel
                 import joblib
 
                 n_jobs = joblib.cpu_count()

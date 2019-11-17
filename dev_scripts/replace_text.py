@@ -22,6 +22,7 @@ import re
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -239,13 +240,7 @@ def _parse():
         default=None,
         help="Directories to process",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

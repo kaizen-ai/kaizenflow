@@ -10,13 +10,21 @@ fi;
 ls $DIR_NAME
 
 if [[ 0 == 1 ]]; then
+  # Sometimes the vim extension gives problems. This procedure typically solves
+  # the problem.
   # Note on installation:
   #     https://github.com/lambdalisue/jupyter-vim-binding/wiki/Installation
-  mkdir -p $DIR_NAME/nbextensions/vim_binding
+  VIM_DIR=$DIR_NAME/nbextensions/vim_binding
+  if [[ -d $VIM_DIR ]]; then
+      rm -rf $VIM_DIR
+  fi;
+  mkdir -p $VIM_DIR
+  cd $VIM_DIR
   # vim bindings.
   git clone https://github.com/lambdalisue/jupyter-vim-binding vim_binding
-  # Activate the extension
+  # Activate the extension.
   jupyter nbextension enable vim_binding/vim_binding
+  exit -1
 fi;
 
 extensions="

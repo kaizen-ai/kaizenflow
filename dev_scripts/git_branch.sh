@@ -9,8 +9,8 @@ source helpers.sh
 # Print information about branch.
 
 # TODO(gp): Add a --format and print date / author of last commit, merged / not merged.
-cmd='git branch -av'
-execute $cmd
+#cmd='git branch -av'
+#execute $cmd
 
 # Print information about branch author.
 

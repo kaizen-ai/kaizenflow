@@ -18,6 +18,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.tunnels as tnls
 
@@ -44,16 +45,10 @@ def _main():
         help=_help,
     )
     parser.add_argument("--user", type=str, action="store")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     #
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Check that we are in the P1 repo since to open the tunnel we need some
     # env vars set by setenv.sh. This is also preventing Test_ssh_tunnel to be
     # run by Jenkins.

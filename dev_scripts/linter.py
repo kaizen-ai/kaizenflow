@@ -61,6 +61,7 @@ import sys
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -285,6 +286,7 @@ def _get_action_func(action):
         "flake8": _flake8,
         "ipynb_format": _ipynb_format,
         "isort": _isort,
+        "mypy": _mypy,
         "pydocstyle": _pydocstyle,
         "pylint": _pylint,
         "pyment": _pyment,
@@ -515,8 +517,11 @@ def _flake8(file_name, pedantic, check_if_possible):
     opts = "--exit-zero --doctests --max-line-length=82 -j 4"
     ignore = [
         # - "W503 line break before binary operator"
-        #     - Disabled because in contrast with black formatting
+        #     - Disabled because in contrast with black formatting.
         "W503",
+        # - W504 line break after binary operator
+        #     - Disabled because in contrast with black formatting.
+        "W504",
         # - E203 whitespace before ':'
         #     - Disabled because in contrast with black formatting
         "E203",
@@ -552,11 +557,11 @@ def _flake8(file_name, pedantic, check_if_possible):
     _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
     if is_jupytext_code:
         output_tmp = []
-        for l in output:
+        for line in output:
             # F821 undefined name 'display' [flake8]
-            if "F821" in l and "undefined name 'display'" in l:
+            if "F821" in line and "undefined name 'display'" in line:
                 continue
-            output_tmp.append(l)
+            output_tmp.append(line)
         output = output_tmp
     return output
 
@@ -609,8 +614,6 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
                 "D104",
                 # D107: Missing docstring in __init__
                 "D107",
-                # D401: First line should be in imperative mood
-                "D401",
             ]
         )
     opts = ""
@@ -690,6 +693,8 @@ def _pylint(file_name, pedantic, check_if_possible):
         "C0330",
         # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
         "C0412",
+        # [C0415(import-outside-toplevel), ] Import outside toplevel
+        "C0415",
         # [R0903(too-few-public-methods), ] Too few public methods (/2)
         "R0903",
         # [R0912(too-many-branches), ] Too many branches (/12)
@@ -747,7 +752,6 @@ def _pylint(file_name, pedantic, check_if_possible):
                 "W0621",
             ]
         )
-
     if not pedantic:
         ignore.extend(
             [
@@ -773,17 +777,59 @@ def _pylint(file_name, pedantic, check_if_possible):
     cmd = executable + " %s %s" % (opts, file_name)
     output = _tee(cmd, executable, abort_on_error=False)
     # Remove some errors.
-    if is_jupytext_code:
-        output_tmp = []
-        for l in output:
+    output_tmp = []
+    for line in output:
+        if is_jupytext_code:
             # [E0602(undefined-variable), ] Undefined variable 'display'
-            if "E0602" in l and "Undefined variable 'display'" in l:
+            if "E0602" in line and "Undefined variable 'display'" in line:
                 continue
-            output_tmp.append(l)
-        output = output_tmp
-    #
-    output.insert(0, "* file_name=%s" % file_name)
+        if line.startswith("Your code has been rated"):
+            # Your code has been rated at 10.00/10 (previous run: ...
+            line = file_name + ": " + line
+        output_tmp.append(line)
+    output = output_tmp
+    # Remove lines.
     output = [l for l in output if ("-" * 20) not in l]
+    # if output:
+    #    output.insert(0, "* file_name=%s" % file_name)
+    return output
+
+
+def _mypy(file_name, pedantic, check_if_possible):
+    _ = pedantic
+    executable = "mypy"
+    if check_if_possible:
+        return _check_exec(executable)
+    #
+    dbg.dassert(file_name)
+    # Applicable to only python library files.
+    if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
+        _LOG.debug("Skipping file_name='%s'", file_name)
+        return []
+    cmd = executable + " %s" % file_name
+    _system(
+        cmd,
+        # mypy returns -1 if there are errors.
+        abort_on_error=False,
+    )
+    output = _tee(cmd, executable, abort_on_error=False)
+    # Remove some errors.
+    output_tmp = []
+    for line in output:
+        if (
+            line.startswith("Success:")
+            or
+            # Found 2 errors in 1 file (checked 1 source file)
+            line.startswith("Found ")
+            or
+            # note: See https://mypy.readthedocs.io
+            "note: See https" in line
+        ):
+            continue
+        output_tmp.append(line)
+    output = output_tmp
+    # if output:
+    #    output.insert(0, "* file_name=%s" % file_name)
     return output
 
 
@@ -973,7 +1019,6 @@ def _run_linter(actions, args, file_names):
         _LOG.info(
             "Using %s threads", num_threads if num_threads > 0 else "all CPUs"
         )
-        # pylint: disable=import-outside-toplevel
         from joblib import Parallel, delayed
 
         output_tmp = Parallel(n_jobs=num_threads, verbose=50)(
@@ -1017,6 +1062,7 @@ _VALID_ACTIONS_META = [
     # ("pyment", "w",
     #   "Create, update or convert docstring."),
     ("pylint", "w", "Check that module(s) satisfy a coding standard."),
+    ("mypy", "r", "Static code analyzer using the hint types."),
     ("sync_jupytext", "w", "Create / sync jupytext files."),
     ("test_jupytext", "r", "Test jupytext files."),
     # Superseded by "sync_jupytext".
@@ -1050,6 +1096,9 @@ def _main(args):
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Run linter.
     output = _run_linter(actions, args, file_names)
+    dbg.dassert_isinstance(output, list)
+    # Sort the errors.
+    output = sorted(output)
     # Print linter output.
     print(pri.frame(args.linter_log, char1="/").rstrip("\n"))
     print("\n".join(output) + "\n")
@@ -1179,13 +1228,7 @@ def _parse():
         default="./linter_warnings.txt",
         help="File storing the warnings",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     args = parser.parse_args()
     rc = _main(args)
     sys.exit(rc)

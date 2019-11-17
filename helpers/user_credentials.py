@@ -160,8 +160,8 @@ def get_credentials():
             conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
-        service = ("Jupyter", _get_p1_dev_server_ip(), jupyter_port, jupyter_port)
-        tunnel_info.append(service)
+        # service = ("Jupyter", _get_p1_dev_server_ip(), jupyter_port, jupyter_port)
+        # tunnel_info.append(service)
     elif user_name == "julia":
         # Julia.
         git_user_name = "Julia"
@@ -195,6 +195,15 @@ def get_credentials():
             # Laptop.
             conda_sh_path = "/home/stas/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/stas/anaconda3/envs"
+    elif user_name == "daniil":
+        # Daniil.
+        git_user_name = "mongolianjesus"
+        git_user_email = "daniil@particle.one"
+        jupyter_port = 9699
+        if server_name == "daniil":
+            # Laptop.
+            conda_sh_path = "/home/daniil/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/daniil/anaconda3/envs"
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.
@@ -266,7 +275,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.user:
         si.set_user_name(args.user)
     usc = get_credentials()

@@ -11,7 +11,9 @@ import pprint
 import random
 import re
 import unittest
+from typing import Any, Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 import helpers.dbg as dbg
@@ -35,7 +37,7 @@ def set_update_tests(val):
     _UPDATE_TESTS = val
 
 
-def get_update_tests():
+def get_update_tests() -> bool:
     return _UPDATE_TESTS
 
 
@@ -52,7 +54,7 @@ def set_incremental_tests(val):
     _INCREMENTAL_TESTS = val
 
 
-def get_incremental_tests():
+def get_incremental_tests() -> bool:
     return _INCREMENTAL_TESTS
 
 
@@ -72,7 +74,6 @@ def get_random_df(num_cols, seed=None, **kwargs):
     """
     # Sometimes pandas takes several seconds to import, so we don't import
     # unless necessary.
-    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     if seed:
@@ -85,7 +86,6 @@ def get_random_df(num_cols, seed=None, **kwargs):
 def get_df_signature(df, num_rows=3):
     # Sometimes pandas takes several seconds to import, so we don't import
     # unless necessary.
-    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     dbg.dassert_isinstance(df, pd.DataFrame)
@@ -97,6 +97,23 @@ def get_df_signature(df, num_rows=3):
         txt.append("df.head=\n%s" % df.head(num_rows))
         txt.append("df.tail=\n%s" % df.tail(num_rows))
     txt = "\n".join(txt)
+    return txt
+
+
+def filter_text(regex: str, txt: str) -> str:
+    """
+    Remove lines in `txt` that match the regex `regex`.
+    """
+    _LOG.debug("Filtering with '%s'", regex)
+    txt_out = []
+    for line in txt.split("\n"):
+        if re.search(regex, line):
+            _LOG.debug("Skipping line='%s'", line)
+            continue
+        txt_out.append(line)
+    txt = "\n".join(txt_out)
+    # We can only remove lines.
+    dbg.dassert_lte(len(txt_out), len(txt))
     return txt
 
 
@@ -133,7 +150,13 @@ def _remove_spaces(obj):
     return string
 
 
-def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False):
+def _assert_equal(
+    actual: str,
+    expected: str,
+    full_test_name: str,
+    test_dir: str,
+    fuzzy_match: bool = False,
+) -> None:
     """
     Implement a better version of self.assertEqual() that reports mismatching
     strings with sdiff and save them to files for further analysis with
@@ -143,7 +166,7 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
       `_remove_spaces`)
     """
 
-    def _to_string(obj):
+    def _to_string(obj: str) -> str:
         if isinstance(obj, dict):
             ret = pprint.pformat(obj)
         else:
@@ -198,13 +221,15 @@ def _assert_equal(actual, expected, full_test_name, test_dir, fuzzy_match=False)
         io_.to_file(diff_script, vimdiff_cmd)
         cmd = "chmod +x " + diff_script
         si.system(cmd)
-        msg = (
-            "Diff with:",
-            "> " + vimdiff_cmd,
-            "or running:",
-            "> " + diff_script,
-        )
-        msg = "\n".join(msg)
+        msg = []
+        msg.append("Diff with:")
+        msg.append("> " + vimdiff_cmd)
+        msg.append("or running:")
+        msg.append("> " + diff_script)
+        # TODO(gp): Understand why mypy reports:
+        #   Incompatible types in assignment (expression has type "str",
+        #   variable has type "List[str]")
+        msg = "\n".join(msg)  # type: ignore
         _LOG.error(msg)
         # Print stack trace.
         raise RuntimeError(msg)
@@ -216,17 +241,21 @@ class TestCase(unittest.TestCase):
     as txt.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         random.seed(20000101)
         np.random.seed(20000101)
+        # Disable matplotlib plotting by overwriting the `show` function.
+        plt.show = lambda: 0
         # Name of the dir with artifacts for this test.
-        self._scratch_dir = None
+        self._scratch_dir: Optional[str] = None
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", prnt.frame(func_name))
 
-    def tearDown(self):
-        pass
+    def tearDown(self) -> None:
+        # Force matplotlib to close plots to decouple tests.
+        plt.close()
+        plt.clf()
 
     def create_io_dirs(self):
         dir_name = self.get_input_dir()
@@ -241,7 +270,6 @@ class TestCase(unittest.TestCase):
         Return the path of the directory storing input data for this test class.
 
         :return: dir name
-        :rtype: str
         """
         dir_name = (
             self._get_current_path(
@@ -251,12 +279,11 @@ class TestCase(unittest.TestCase):
         )
         return dir_name
 
-    def get_output_dir(self):
+    def get_output_dir(self) -> str:
         """
         Return the path of the directory storing output data for this test class.
 
         :return: dir name
-        :rtype: str
         """
         dir_name = self._get_current_path() + "/output"
         return dir_name
@@ -269,7 +296,6 @@ class TestCase(unittest.TestCase):
         incremental behavior is enabled or not.
 
         :return: dir name
-        :rtype: str
         """
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
@@ -278,7 +304,7 @@ class TestCase(unittest.TestCase):
             self._scratch_dir = dir_name
         return self._scratch_dir
 
-    def assert_equal(self, actual, expected):
+    def assert_equal(self, actual: str, expected: str) -> None:
         dbg.dassert_in(type(actual), (bytes, str))
         dbg.dassert_in(type(expected), (bytes, str))
         #
@@ -289,14 +315,13 @@ class TestCase(unittest.TestCase):
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
-    def check_string(self, actual, fuzzy_match=False):
+    def check_string(self, actual: str, fuzzy_match: bool = False) -> None:
         """
         Check the actual outcome of a test against the expected outcomes
         contained in the file and/or updates the golden reference file with the
         actual outcome.
 
         :param: actual
-        :type: str or unicode
 
         Raises if there is an error.
         """
@@ -340,8 +365,12 @@ class TestCase(unittest.TestCase):
                 # the golden outcome.
                 expected = io_.from_file(file_name, split=False)
                 test_name = self._get_test_name()
+                # The problem is that from_file can return a List[str] split =
+                # True, so mypy gets confused:
+                #   mypy: Argument 2 to "_assert_equal" has incompatible type
+                #   "Union[str, List[str]]"; expected "str"
                 _assert_equal(
-                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
+                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match  # type: ignore
                 )
             else:
                 # No golden outcome available: save the result in a tmp file.
@@ -353,14 +382,18 @@ class TestCase(unittest.TestCase):
                 )
                 raise RuntimeError(msg)
 
-    def _get_test_name(self):
+    def _get_test_name(self) -> str:
         """
         :return: full test name as class.method.
         :rtype: str
         """
         return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
 
-    def _get_current_path(self, test_class_name=None, test_method_name=None):
+    def _get_current_path(
+        self,
+        test_class_name: Optional[Any] = None,
+        test_method_name: Optional[Any] = None,
+    ) -> str:
         dir_name = os.path.dirname(inspect.getfile(self.__class__))
         if test_class_name is None:
             test_class_name = self.__class__.__name__
@@ -368,3 +401,32 @@ class TestCase(unittest.TestCase):
             test_method_name = self._testMethodName
         dir_name = dir_name + "/%s.%s" % (test_class_name, test_method_name)
         return dir_name
+
+
+# #############################################################################
+# Notebook testing.
+# #############################################################################
+
+
+def run_notebook(file_name: str, scratch_dir: str) -> None:
+    """
+    Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
+    storing the output.
+
+    Assert if the notebook doesn't complete successfully.
+    """
+    file_name = os.path.abspath(file_name)
+    dbg.dassert_exists(file_name)
+    dbg.dassert_exists(scratch_dir)
+    # Build command line.
+    cmd = []
+    cmd.append("cd %s && " % scratch_dir)
+    cmd.append("jupyter nbconvert %s" % file_name)
+    cmd.append("--execute")
+    cmd.append("--to html")
+    cmd.append("--ExecutePreprocessor.kernel_name=python")
+    # No time-out.
+    cmd.append("--ExecutePreprocessor.timeout=-1")
+    # Execute.
+    cmd_as_str = " ".join(cmd)
+    si.system(cmd_as_str, abort_on_error=True)

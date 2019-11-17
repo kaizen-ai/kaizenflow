@@ -21,6 +21,7 @@ import sys
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -126,7 +127,7 @@ def _get_files(args):
 
 
 def _main(args):
-    dbg.init_logger2(args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     # Get the files.
     file_names = _get_files(args)
     # Select the ipynb files.
@@ -230,13 +231,7 @@ def _parse():
         action="store_true",
         help="Just report if a notebook is changed or not",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     args = parser.parse_args()
     _main(args)
 

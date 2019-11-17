@@ -103,8 +103,9 @@
     Make comments self-consistent
     Add more docstrings, annotations
     ```
-- These emails have `review_requested@noreply.github.com` in "to" field
 
+### How to filter
+- These emails have `review_requested@noreply.github.com` in "to" field
 - These emails have the words: "You can view, comment on, or merge this pull
   request online at:" in the body of the email
 
@@ -130,6 +131,25 @@
     Reply to this email directly, view it on GitHub, or unsubscribe.
     ```
 
+- Another email looks like:
+    ```
+    To: GP Saggese <notifications@github.com>
+    Suject: [ParticleDev/commodity_research] BUG: jupytext sync doesn't work anymore (#572)
+    To: ParticleDev/commodity_research <commodity_research@noreply.github.com>
+    Cc:
+        Giacinto Paolo Saggese <saggese@gmail.com>,
+        Your activity <your_activity@noreply.github.com>
+
+    > jupytext --sync --to py:percent research/PartTask218_Large_price_movement_analysis_for_security.py
+    [jupytext] Reading research/PartTask218_Large_price_movement_analysis_for_security.py
+    [jupytext] Warning: 'research/PartTask218_Large_price_movement_analysis_for_security.py' is not a paired notebook
+
+    —
+    You are receiving this because you are subscribed to this thread.
+    Reply to this email directly, view it on GitHub, or unsubscribe.
+    ```
+
+### How to filter
 - These emails have different email addresses in the "to" field depending on the
   event that caused them:
     - `subscribed@noreply.github.com`: general GH bug activity (e.g., when the
@@ -165,13 +185,14 @@
       PartTask302 added reader in DE
     ```
 
+### How to filter
 - These emails come from `notifications@github.com`
-
-- These emails can be recognized by the fact that have the words "Changed paths:"
-  in the email body
+- These emails can be recognized by the fact that have the words
+    "Changed paths:" in the email body
 
 ## Gdocs
 
+### How to filter
 - These emails have `comments-noreply@docs.google.com` or `(Google Docs)` in the
   "subject" field
 
@@ -185,3 +206,11 @@
     To:	git@particle.one
     Subject:	Build failed in Jenkins: p1.master.build_clean_env.p1_develop #27
     ```
+
+### How to filter
+- These emails have `infra@particle.one` in the `From:` field
+
+## TODO emails
+
+### How to filter
+- These emails have `TODO` in the subject

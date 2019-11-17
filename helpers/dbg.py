@@ -3,6 +3,8 @@ import logging
 import os
 import pprint
 import sys
+from logging import LogRecord
+from typing import Any, Iterable, Optional, Union
 
 _LOG = logging.getLogger(__name__)
 
@@ -13,12 +15,12 @@ _LOG = logging.getLogger(__name__)
 # Copied from printing.py to avoid cyclical dependencies.
 
 
-def _line(chars="#", num_cols=80):
+def _line(chars: str = "#", num_cols: int = 80) -> str:
     line_ = chars * num_cols + "\n"
     return line_
 
 
-def _frame(x, chars="#", num_cols=80):
+def _frame(x: str, chars: str = "#", num_cols: int = 80) -> str:
     """
     Return a string with a frame of num_cols chars around the object x.
 
@@ -33,7 +35,7 @@ def _frame(x, chars="#", num_cols=80):
     return ret
 
 
-def dfatal(message, assertion_type=None):
+def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
     """
     Print an error message and exits.
     """
@@ -59,7 +61,7 @@ def dfatal(message, assertion_type=None):
 #   `if not (...):`, even this might annoy the linter or look weird
 
 
-def _to_msg(msg, *args):
+def _to_msg(msg: Optional[str], *args: str) -> str:
     """
     Format the error message with the params.
     """
@@ -80,50 +82,55 @@ def _to_msg(msg, *args):
     return res
 
 
-def _dfatal(cond, msg, *args):
-    """
-    Package the error to raise.
-    """
-    txt = "* Failed assertion *\n"
-    if isinstance(cond, list):
-        txt += "\n".join(cond)
+def _dfatal(
+    txt: Union[str, Iterable[str]], msg: Optional[str], *args: str
+) -> None:
+    dfatal_txt = "* Failed assertion *\n"
+    if isinstance(txt, list):
+        dfatal_txt += "\n".join(txt)
     else:
-        txt += cond
+        dfatal_txt += str(txt)
     msg = _to_msg(msg, *args)
     if msg:
-        if not txt.endswith("\n"):
-            txt += "\n"
-        txt += msg
-    dfatal(txt)
+        if not dfatal_txt.endswith("\n"):
+            dfatal_txt += "\n"
+        dfatal_txt += msg
+    dfatal(dfatal_txt)
 
 
-def dassert(cond, msg=None, *args):
+def dassert(cond: Any, msg: Optional[str] = None, *args: str) -> None:
     if not cond:
         txt = "cond=%s" % cond
         _dfatal(txt, msg, *args)
 
 
-def dassert_eq(val1, val2, msg=None, *args):
+def dassert_eq(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     if not val1 == val2:
         txt = "'%s'\n==\n'%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_ne(val1, val2, msg=None, *args):
+def dassert_ne(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 != val2):
         txt = "'%s'\n!=\n'%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_lt(val1, val2, msg=None, *args):
+def dassert_lt(val1: Any, val2: Any, msg=None, *args):
     # pylint: disable=superfluous-parens
     if not (val1 < val2):
         txt = "'%s' < '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_lte(val1, val2, msg=None, *args):
+def dassert_lte(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 <= val2):
         txt = "'%s' <= '%s'" % (val1, val2)
@@ -143,48 +150,61 @@ def dassert_lgt(
         dassert_lt(x, upper_bound)
 
 
-def dassert_in(value, valid_values, msg=None, *args):
+def dassert_in(
+    value: Any, valid_values: Any, msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (value in valid_values):
         txt = "'%s' in '%s'" % (value, valid_values)
         _dfatal(txt, msg, *args)
 
 
-def dassert_not_in(value, valid_values, msg=None, *args):
+def dassert_not_in(
+    value: Any, valid_values: Iterable[Any], msg: Optional[str] = None, *args: str
+) -> None:
     if value in valid_values:
         txt = "'%s' not in '%s'" % (value, valid_values)
         _dfatal(txt, msg, *args)
 
 
-def dassert_is(val1, val2, msg=None, *args):
+def dassert_is(
+    val1: Optional[str],
+    val2: Optional[Any],
+    msg: Optional[str] = None,
+    *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 is val2):
         txt = "'%s' is '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_is_not(val1, val2, msg=None, *args):
+def dassert_is_not(
+    val1: Any, val2: Optional[Any], msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 is not val2):
         txt = "'%s' is not '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_type_is(val1, val2, msg=None, *args):
+def dassert_type_is(val1: Any, val2: Any, msg=None, *args):
     # pylint: disable=superfluous-parens,unidiomatic-typecheck
     if not (type(val1) is val2):
         txt = "type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_type_in(val1, val2, msg=None, *args):
+def dassert_type_in(val1: Any, val2: Any, msg=None, *args):
     # pylint: disable=superfluous-parens,unidiomatic-typecheck
     if not (type(val1) in val2):
         txt = "type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_isinstance(val1, val2, msg=None, *args):
+def dassert_isinstance(
+    val1: Any, val2: type, msg: Optional[str] = None, *args: str
+) -> None:
     if not isinstance(val1, val2):
         txt = "instance of '%s' is '%s' instead of '%s'" % (
             val1,
@@ -194,14 +214,16 @@ def dassert_isinstance(val1, val2, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_imply(val1, val2, msg=None, *args):
+def dassert_imply(val1: Any, val2: Any, msg=None, *args):
     # pylint: disable=superfluous-parens
     if not (not val1 or val2):
         txt = "'%s' implies '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_set_eq(val1, val2, msg=None, *args):
+def dassert_set_eq(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     val1 = set(val1)
     val2 = set(val2)
     # pylint: disable=superfluous-parens
@@ -218,7 +240,9 @@ def dassert_set_eq(val1, val2, msg=None, *args):
 
 
 # TODO(gp): -> dassert_issubset
-def dassert_is_subset(val1, val2, msg=None, *args):
+def dassert_is_subset(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     """
     Check that val1 is a subset of val2, raise otherwise.
     """
@@ -233,7 +257,9 @@ def dassert_is_subset(val1, val2, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_not_intersection(val1, val2, msg=None, *args):
+def dassert_not_intersection(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     """
     Check that val1 has no intersection val2, raise otherwise.
     """
@@ -248,7 +274,9 @@ def dassert_not_intersection(val1, val2, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_no_duplicates(val1, msg=None, *args):
+def dassert_no_duplicates(
+    val1: Any, msg: Optional[str] = None, *args: str
+) -> None:
     # pylint: disable=superfluous-parens
     if not (len(set(val1)) == len(val1)):
         # Count the occurrences of each element of the seq.
@@ -262,7 +290,9 @@ def dassert_no_duplicates(val1, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_eq_all(val1, val2, msg=None, *args):
+def dassert_eq_all(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+) -> None:
     val1 = list(val1)
     val2 = list(val2)
     is_equal = val1 == val2
@@ -278,7 +308,7 @@ def dassert_eq_all(val1, val2, msg=None, *args):
 
 
 # TODO(*): -> _file_exists
-def dassert_exists(file_name, msg=None, *args):
+def dassert_exists(file_name: str, msg: Optional[str] = None, *args: str) -> None:
     file_name = os.path.abspath(file_name)
     if not os.path.exists(file_name):
         txt = []
@@ -286,7 +316,7 @@ def dassert_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_dir_exists(dir_name, msg=None, *args):
+def dassert_dir_exists(dir_name: str, msg: Optional[str] = None, *args):
     """
     Assert unless `dir_name` exists and it's a directory.
     """
@@ -298,9 +328,9 @@ def dassert_dir_exists(dir_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_not_exists(file_name, msg=None, *args):
+def dassert_not_exists(file_name: str, msg: Optional[str] = None, *args: str):
     """
-    Ensures that a file or a dir `file_name` doesn't exist, otherwise raises.
+    Ensure that a file or a dir `file_name` doesn't exist, otherwise raises.
     """
     file_name = os.path.abspath(file_name)
     # pylint: disable=superfluous-parens,unneeded-not
@@ -310,7 +340,7 @@ def dassert_not_exists(file_name, msg=None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_file_extension(file_name, exp_exts):
+def dassert_file_extension(file_name: str, exp_exts):
     # Handle single extension case.
     if isinstance(exp_exts, str):
         exp_exts = [exp_exts]
@@ -323,22 +353,27 @@ def dassert_file_extension(file_name, exp_exts):
     )
 
 
-def dassert_monotonic_index(obj, msg=None, *args):
+def dassert_monotonic_index(obj, msg: Optional[str] = None, *args: str):
     # For some reason importing pandas is slow and we don't want to pay this
     # start up cost unless we have to.
-    # pylint: disable=import-outside-toplevel
     import pandas as pd
 
     if isinstance(obj, pd.Index):
         index = obj
     else:
         index = obj.index
-    dassert(index.is_monotonic_increasing, msg=msg, *args)
-    dassert(index.is_unique, msg=msg, *args)
+    # TODO(gp): Understand why mypy reports:
+    #   error: "dassert" gets multiple values for keyword argument "msg"
+    dassert(index.is_monotonic_increasing, msg=msg, *args)  # type: ignore
+    dassert(index.is_unique, msg=msg, *args)  # type: ignore
 
 
 def dassert_array_has_same_type_element(
-    obj1, obj2, only_first_elem, msg=None, *args
+    obj1: Any,
+    obj2: Any,
+    only_first_elem: bool,
+    msg: Optional[str] = None,
+    *args: str
 ):
     """
     Check that two objects iterables like arrays (e.g., pd.Index) have
@@ -424,7 +459,7 @@ class _ColoredFormatter(logging.Formatter):
     def __init__(self, log_format, date_format):
         logging.Formatter.__init__(self, log_format, date_format)
 
-    def format(self, record):
+    def format(self, record: LogRecord) -> str:
         colored_record = copy.copy(record)
         levelname = colored_record.levelname
         # Use white as default.
@@ -440,7 +475,6 @@ class _ColoredFormatter(logging.Formatter):
 
 # Copied from `helpers/system_interaction.py` to avoid circular dependencies.
 def get_user_name():
-    # pylint: disable=import-outside-toplevel
     import getpass
 
     res = getpass.getuser()
@@ -493,7 +527,7 @@ def _get_logging_format(force_print_format, force_verbose_format):
 # TODO(gp): maybe replace "force_verbose_format" and "force_print_format" with
 #  a "mode" in ("auto", "verbose", "print")
 def init_logger(
-    verb=logging.INFO,
+    verbosity=logging.INFO,
     use_exec_path=False,
     log_filename=None,
     force_verbose_format=False,
@@ -507,7 +541,7 @@ def init_logger(
         - logging.DEBUG = 10
         - logging.INFO = 20
 
-    :param verb: verbosity to use
+    :param verbosity: verbosity to use
     :param use_exec_path: use the name of the executable
     :param log_filename: log to that file
     :param force_verbose_format: use the verbose format for the logging in any
@@ -515,13 +549,13 @@ def init_logger(
     :param force_print_format: use the print format for the logging in any case
     """
     sys.stdout.write("\033[0m")
-    if isinstance(verb, str):
+    if isinstance(verbosity, str):
         # pylint: disable=protected-access
-        verb = logging._checkLevel(verb)
+        verbosity = logging._checkLevel(verbosity)
     # From https://stackoverflow.com/questions/14058453
     root_logger = logging.getLogger()
     # Set verbosity for all loggers.
-    root_logger.setLevel(verb)
+    root_logger.setLevel(verbosity)
     # if False:
     #     eff_level = root_logger.getEffectiveLevel()
     #     print(
@@ -529,16 +563,16 @@ def init_logger(
     #         % (eff_level, logging.getLevelName(eff_level))
     #     )
     # if False:
-    #     # dassert_eq(root_logger.getEffectiveLevel(), verb)
+    #     # dassert_eq(root_logger.getEffectiveLevel(), verbosity)
     #     for handler in root_logger.handlers:
-    #         handler.setLevel(verb)
+    #         handler.setLevel(verbosity)
     # Exit to avoid to replicate the same output multiple times.
     if root_logger.handlers:
         print("WARNING: Logger already initialized: skipping")
         return
     #
     ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(verb)
+    ch.setLevel(verbosity)
     # Decide whether to use verbose or print format.
     date_fmt, log_format = _get_logging_format(
         force_print_format, force_verbose_format
@@ -554,7 +588,6 @@ def init_logger(
     if use_exec_path and log_filename is None:
         dassert_is(log_filename, None, msg="Can't specify conflicting filenames")
         # Use the name of the executable.
-        # pylint: disable=import-outside-toplevel
         import inspect
 
         frame = inspect.stack()[1]
@@ -583,27 +616,27 @@ def init_logger(
     # test_logger()
 
 
-def set_logger_verb(verb, module_name=None):
+def set_logger_verbosity(verbosity, module_name=None):
     """
-    Used to change the verbosity of the logging after the initialization.
+    Change the verbosity of the logging after the initialization.
 
     Passing a module_name (e.g., matplotlib) one can change the logging of
     that specific module.
 
-    E.g., set_logger_verb(logging.WARNING, "matplotlib")
+    E.g., set_logger_verbosity(logging.WARNING, "matplotlib")
     """
     logger = logging.getLogger(module_name)
     if module_name is None and not logger.handlers:
         assert 0, "ERROR: Logger not initialized"
-    logger.setLevel(verb)
+    logger.setLevel(verbosity)
     eff_level = logger.getEffectiveLevel()
     print(
         "effective level= %s (%s)" % (eff_level, logging.getLevelName(eff_level))
     )
-    dassert_eq(logger.getEffectiveLevel(), verb)
+    dassert_eq(logger.getEffectiveLevel(), verbosity)
 
 
-def get_logger_verb():
+def get_logger_verbosity():
     root_logger = logging.getLogger()
     if not root_logger.handlers:
         assert 0, "ERROR: Logger not initialized"
@@ -637,7 +670,7 @@ def get_matching_loggers(module_names):
     return sel_loggers
 
 
-def shutup_chatty_modules(verb=logging.CRITICAL):
+def shutup_chatty_modules(verbosity=logging.CRITICAL):
     """
     Reduce the verbosity for external modules that are very chatty.
     """
@@ -653,23 +686,10 @@ def shutup_chatty_modules(verb=logging.CRITICAL):
     loggers = get_matching_loggers(module_names)
     print("Shutting up modules: (%d) %s" % (len(loggers), loggers))
     for logger in loggers:
-        logger.setLevel(verb)
+        logger.setLevel(verbosity)
 
 
-# TODO(gp): Remove this.
-def init_logger2(verb=logging.INFO):
-    # From https://stackoverflow.com/questions/14058453
-    root = logging.getLogger()
-    root.setLevel(verb)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(verb)
-    log_format = "%(asctime)-15s %(funcName)-20s: %(levelname)-5s %(message)s"
-    formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %I:%M:%S %p")
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
-
-
-def test_logger():
+def test_logger() -> None:
     print("# Testing logger ...")
     _log = logging.getLogger(__name__)
     print("effective level=", _log.getEffectiveLevel())
