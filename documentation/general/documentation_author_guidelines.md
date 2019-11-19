@@ -34,7 +34,12 @@
     - One approach is to always start from scratch
 
 # Useful reference
-- [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+- [Markdown
+  cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+
+- [Google guide to
+  Markdown](https://github.com/google/styleguide/blob/gh-pages/docguide/style.md)
+    - TODO(gp): Make sure it's compatible with our linter
 
 # Style and cosmetic lints
 
