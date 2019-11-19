@@ -80,23 +80,33 @@
 
 ## References
 
+### Coding
+
 - [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)
 
+- Code convention from [PEP8](https://www.python.org/dev/peps/pep-0008)
+
+### Documentation
+
+- Docstring convention from [PEP257](https://www.python.org/dev/peps/pep-0257)
+
 - Commenting style
-    - `http://www.sphinx-doc.org/en/master/`
-    - `https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html`
+    - [Sphinx](http://www.sphinx-doc.org/en/master)
+    - [Sphinx tutorial](https://thomas-cokelaer.info/tutorials/sphinx/index.html)
 
-- Code convention PEP8
-    - `https://www.python.org/dev/peps/pep-0008/`
+- [Google documentation best
+  practices](https://github.com/google/styleguide/blob/gh-pages/docguide/best_practices.md)
 
-- Documentation best practices
-    - `https://github.com/google/styleguide/blob/gh-pages/docguide/best_practices.md`
+### Design
 
-- Philosophical stuff
-    - `https://github.com/google/styleguide/blob/gh-pages/docguide/philosophy.md`
+- TODO(gp): Move to documentation/general/design_philosophy.md
 
-- Unix rules (although a bit cryptic sometimes)
-    - `https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules`
+- [Google philosophical
+  stuff](https://github.com/google/styleguide/blob/gh-pages/docguide/philosophy.md)
+
+- [Unix
+  rules](https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules)
+  (although a bit cryptic sometimes)
 
 # Naming conventions
 
@@ -332,7 +342,7 @@
         - stacktrace
         - you can use the tag "BUG: ..."
 
-## Referring to an object in code comments 
+## Referring to an object in code comments
 
 - We prefer to refer to objects in the code using Markdown like `this` (this is a
   convention used in the documentation system Sphinx)
@@ -423,7 +433,7 @@
 
 ## Always use logging instead of prints
 
-- Always use logging and never `print()` to report debug, info, warning 
+- Always use logging and never `print()` to report debug, info, warning
 
 ## Our logging idiom
 
@@ -521,6 +531,41 @@ _LOG.warning(...)
     - send the rest to warnings.log
     - at the end of the run, reports "there are warnings in warnings.log"
 
+## Don't mix real changes with linter changes
+
+- The linter is in change of reformatting the code according to our conventions
+  and reporting potential problems
+
+1) We don't commit changes that modify the code together with linter
+   reformatting, unless the linting is applied to the changes we just made
+    - The reason for not mixing real and linter changes is that for a PR or to
+      just read the code it is difficult to understand what really changed vs
+      what was just a cosmetic modification
+
+2) If you are worried the linter might change your code in a way you don't
+  like, e.g.,
+    - screwing up some formatting you care about for some reason, or
+    - suggesting changes that you are worried might introduce bugs
+  you can commit your code and then do a "lint commit" with a message
+  "PartTaskXYZ: Lint"
+- In this way you have a backup state that you can rollback to, if you want
+
+3) If you run the linter and see that the linter is reformatting / modifying
+  pieces of code you din't change, it means that our team mate forgot to lint their
+  code
+    - `git blame` can figure out the culprit
+    - You can send him / her a ping to remind her to lint, so you don't have to
+      clean after him / her
+
+    - In this case, the suggested approach is:
+        - commit your change to a branch / stash
+        - run the linter by itself on the files that need to be cleaned, without
+          any change
+        - run the unit tests to make sure nothing is breaking
+        - you can fix lints or just do formatting: it's up to you
+        - you can make this change directly on `master` or do a PR if you want to
+          be extra sure: your call
+
 # Assertions
 
 ## Use positional args when asserting
@@ -571,11 +616,12 @@ _LOG.warning(...)
 - We map submodules using `PYTHONPATH` so that the imports are independent from
   the position of the submodule
 
-- In this way code can be moved across repos without changing the imports
+- In this way, the submodule code can be moved in the repos without changing the
+  imports
 
 ## Don't use evil `import *`
 
-- Do not use in notebooks or code this evil import
+- Do not use in notebooks or code the evil `import *`
     - **Bad**
         ```python
         from edgar.utils import *
@@ -584,7 +630,7 @@ _LOG.warning(...)
         ```python
         import edgar.utils as edu
         ```
-- The `from ... import *`
+- The `from ... import *`:
     - pollutes the namespace with the symbols and spreads over everywhere, making
       painful to clean up
     - obscures where each function is coming from, removing the context that
@@ -608,6 +654,13 @@ _LOG.warning(...)
 
 ## Avoid `from ... import ...`
 
+- The rule is:
+    ```python
+    import library as short_name
+    import library.sublibrary as short_name
+    ```
+- This rule applies to imports of third party libraries and our library
+
 - Importing many different functions, like:
     - **Bad**
     ```python
@@ -618,6 +671,15 @@ _LOG.warning(...)
         get_rules_coverage, text_contains_only_canonical_titles, \
         compute_stats, NON_MEANING_PATTERNS_BEFORE, patterns
     ```
+
+    - **Good**
+    ```python
+    import edgar.officer_titles as edg_ot
+    ...
+    ... edg_ot.read_documents()
+    ```
+
+- The problem with the `from ... import ...` is that it:
     - creates lots of maintenance effort
         - e.g., anytime you want a new function you need to update the import
           statement
@@ -627,7 +689,21 @@ _LOG.warning(...)
         - e.g.,` read_documents()` is not clear: what documents?
         - `np.read_documents()` at least give information of which packages
           is it coming from
-          
+
+## Exceptions to the import style
+
+- We try to minimize the exceptions to this rule to avoid to keep this rule
+  simple, rather than discussing about 
+
+- The current agreed upon exceptions are:
+
+    1) For `typing` it is ok to do:
+        ```python
+        from typing import Iterable, List
+        ```
+       in order to avoid `typing` everywhere, since we want to use type hints as
+       much as possible
+
 ## Examples of imports
 
 - Example 1
@@ -648,7 +724,7 @@ _LOG.warning(...)
         ```python
         import edgar.shared.headers_extractor as he
         ```
-      
+
 - Example 3
     - **Bad**
         ```python
@@ -658,7 +734,7 @@ _LOG.warning(...)
         ```python
         import helpers.dbg as dbg
         ```
-      
+
 - Example 4
     - **Bad**
         ```python
@@ -669,17 +745,18 @@ _LOG.warning(...)
         import helpers.misc as hm
         ```
 
-## Exceptions to the import style
+- Example 5
 
-- For `typing` it is ok to do:
-    ```python
-    from typing import Iterable, List
-    ```
+import html
+import operator as oper
+import nltk
+import textblob as tb
+and then uses like:
 
-- Other exceptions are:
-    ```python
-    from tqdm.autonotebook import tqdm
-    ```
+... nltk.tokenize.TweetTokenizer ...
+... oper.itemgetter ...
+... html.unescape ...
+
 
 ## Always import with a full path from the root of the repo / submodule
 
@@ -704,7 +781,8 @@ _LOG.warning(...)
     import helpers.printing as prnt
     """
     ```
-- Typically we use 4 letters trying to make the import unique
+- Typically we use 4 or 5 letters trying to make the import unique (underscores
+  are fine):
     - **Bad**
         ```python
         # Import as:
@@ -715,7 +793,7 @@ _LOG.warning(...)
         ```python
         # Import as:
 
-        import nlp.utils as nlut
+        import nlp.utils as nlp_ut
         ```
 - The goal is to have always the same imports so it's easy to move code around,
   without collisions
@@ -858,7 +936,7 @@ _LOG.warning(...)
         - One convention is to call `obj` the variable whose type is not known
           until run-time
 - In this way we take full advantage of duck typing to achieve something similar
-  to C++ function overloading (actually even more expressive) 
+  to C++ function overloading (actually even more expressive)
 - Try to return the same type of the input, if possible
     - E.g., the function called on a `pd.Series` returns a `pd.Series`
 

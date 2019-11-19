@@ -11,6 +11,9 @@
 
 # Kill all the ssh tunnels on the machine, for a known service or not.
 > ssh_tunnels.py kill
+
+> ssh -i {ssh_key_path} -f -nNT -L {local_port}:localhost:{remote_port} {user_name}@{server}
+> ssh -f -nNT -L 10003:localhost:10003 saggese@$P1_DEV_SERVER
 """
 
 import argparse
@@ -18,7 +21,6 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.tunnels as tnls
 
