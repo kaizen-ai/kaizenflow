@@ -54,7 +54,7 @@ def bootstrap(rel_path_to_amp_helpers):
     try:
         import helpers.dbg as dbg_test  # isort:skip # noqa: E402,F401
 
-        print("* Boostrap successful *")
+        print("* Bootstrap successful *")
     except ImportError as e:
         print("* Bootstrap failed *")
         _report_env()
