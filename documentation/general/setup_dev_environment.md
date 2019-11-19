@@ -44,9 +44,13 @@
 - Add your pub key to the server so that you can login without typing in a
   password
 
-## (optional) Install python3
+## Use python3
 
-- Check on your computer how to install
+- Confirm that python3 is referenced upon running `python -V`, e.g.,
+   ```bash
+   > python -V
+   Python 3.7.3
+   ``` 
 
 ## (optional) Install anaconda
 
@@ -55,9 +59,9 @@
 - For a laptop you need to install it yourself
 - You need *anaconda3*
 
-## (optional) Configure anaconda
+## Configure anaconda
 
-- If you installed anaconda, you need to configure anaconda for your shell
+- Configure anaconda for your shell using
     ```bash
     > conda init bash
     ```
