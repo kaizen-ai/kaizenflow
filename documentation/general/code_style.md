@@ -776,7 +776,7 @@ and then uses like:
   (before any code) describing how it should be imported
     ```python
     """
-    # Import as:
+    Import as:
 
     import helpers.printing as prnt
     """
