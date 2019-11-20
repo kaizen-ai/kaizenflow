@@ -71,59 +71,62 @@
 
 ## General format of a notebook
 - Typically we use as first cells the following ones:
-    0) description
-        ```python
-        ## Description
-        - This notebook was used for prototyping / debugging code that was moved
-          in the file `abc.py`
-        ```
 
-    1) import the needed libraries: it's better to put all the imports in one
-        cell:
-        ```python
-        ## Imports
+### Description
+    ```python
+    ## Description
+    - This notebook was used for prototyping / debugging code that was moved
+      in the file `abc.py`
+    ```
 
-        %load_ext autoreload
-        %autoreload 2
-        import logging
-        import os
+### Imports
+- Import the needed libraries: it's better to put all the imports in one cell, so
+  you can easily re-import everything in one shot
+    ```python
+    ## Imports
 
-        import matplotlib.pyplot as plt
-        import pandas as pd
+    %load_ext autoreload
+    %autoreload 2
+    import logging
+    import os
 
-        import core.explore as exp
-        import core.signal_processing as sigp
-        ...
-        ```
+    import matplotlib.pyplot as plt
+    import pandas as pd
 
-    2) configuration
-        ```python
-        # Print system signature.
-        print(env.get_system_signature())
+    import core.explore as exp
+    import core.signal_processing as sigp
+    ...
+    ```
 
-        # Configure the notebook style.
-        pri.config_notebook()
+### Configuration
+- There are some utilities that you can use to get some common settings
+    ```python
+    # Print system signature.
+    print(env.get_system_signature()[0])
 
-        # Configure logger.
-        dbg.init_logger(verbosity=logging.INFO)
-        _LOG = logging.getLogger(__name__)
+    # Configure the notebook style.
+    pri.config_notebook()
 
-        # Packages
-                 python: 3.7.3
-                 joblib: 0.14.0
-                  numpy: 1.17.3
-                 pandas: 0.25.2
-                pyarrow: 0.15.0
-                  scipy: 1.3.1
-                seaborn: 0.9.0
-                sklearn: 0.21.3
-            statsmodels: 0.10.1
-        # Last commits:
-          * 3c11dd7 Julia    PartTask461: Add correlation and autocorrelation analysis         (  22 hours ago) Thu Oct 31 14:31:14 2019  (HEAD -> PartTask461_PRICE_Familiarize_with_target_commodities, origin/PartTask461_PRICE_Familiarize_with_target_commodities)
-          * 99417bc Julia    PartTask418: Address a TODO in _normalize_1_min()                 (    2 days ago) Wed Oct 30 07:48:34 2019
-          * 6ad45a8 saggese  More docs and lint                                                (    3 days ago) Tue Oct 29 21:31:55 2019
-        WARNING: Running in Jupyter
-        ```
+    # Configure logger.
+    dbg.init_logger(verbosity=logging.INFO)
+    _LOG = logging.getLogger(__name__)
+
+    # Packages
+             python: 3.7.3
+             joblib: 0.14.0
+              numpy: 1.17.3
+             pandas: 0.25.2
+            pyarrow: 0.15.0
+              scipy: 1.3.1
+            seaborn: 0.9.0
+            sklearn: 0.21.3
+        statsmodels: 0.10.1
+    # Last commits:
+      * 3c11dd7 Julia    PartTask461: Add correlation and autocorrelation analysis         (  22 hours ago) Thu Oct 31 14:31:14 2019  (HEAD -> PartTask461_PRICE_Familiarize_with_target_commodities, origin/PartTask461_PRICE_Familiarize_with_target_commodities)
+      * 99417bc Julia    PartTask418: Address a TODO in _normalize_1_min()                 (    2 days ago) Wed Oct 30 07:48:34 2019
+      * 6ad45a8 saggese  More docs and lint                                                (    3 days ago) Tue Oct 29 21:31:55 2019
+    WARNING: Running in Jupyter
+    ```
 
 ## Make the notebook flow clear
 
