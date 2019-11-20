@@ -1,15 +1,15 @@
 # Onboarding process for a new employee.
 
-We want to make this process almost automatic. Here we put some notes that can 
-help us go smooth through this process.
+We want to make this process as automatic as possible.
 
-1. ToDo list
+1. Checklist
 
-    Put this ToDo list in issue. It will help you to track all steps.
+    Put this checklist in a new issue for the new employee.
+    It will help us track all steps.
     
-    - [ ] GP: Add  New employee to the repos:
+    - [ ] GP: Add new employee to the repos:
         - [ ] https://github.com/alphamatic/amp/invitations
-    - [ ] Sergey: Add New employee to the repos:
+    - [ ] Sergey: Add new employee to the repos:
         - [ ] https://github.com/orgs/ParticleDev/teams/commodity_research/members
         - [ ] https://github.com/orgs/ParticleDev/teams/infra
     - [ ] Sergey: Provide equipment
@@ -20,9 +20,9 @@ help us go smooth through this process.
     - [ ] Sergey: Add to weekly Tech sync up
     - [ ] Sergey: Provide VPN Access
     - [ ] Sergey: Create account on research server
-    - [ ] New employee: Setup accounts
-      - [ ] Add name in github
-      - [ ] Add Name in Telegram
+    - [ ] New employee: set up accounts
+      - [ ] Add name in GitHub
+      - [ ] Add name in Telegram
       - [ ] Same photo in all accounts
     - [ ] New employee: Provide ssh pub.key to Sergey
     - [ ] New employee: Add local key to github account
@@ -35,15 +35,17 @@ help us go smooth through this process.
       - [ ] https://github.com/alphamatic/amp/blob/master/documentation/general/code_style.md
       - [ ] https://github.com/alphamatic/amp/blob/master/documentation/general/notebooks.md
       - [ ] https://github.com/alphamatic/amp/blob/master/documentation/general/code_review.md
-    - [ ] New employee: Setup dev environment
+    - [ ] New employee: Set up dev environment
     - [ ] Sergey: Add to Jenkins
-    - [ ] New employee: Syncup with the teammates (DS/INFRA)
+    - [ ] New employee: Sync up with the teammates (DS/INFRA)
 
 2. During the process we want to:
-  - First of all is to give tools for interaction with the team. 
-  During the process a new guy will ask questions and he should be able to do 
-  this through the common tools. Email, Telegramm, Issues.
-  - Force a new guy to interact through the issues that is why we asking him to 
-  create his firs issue about his experience with the process. He should put
-  his notes in this issue while he moving during this process. We use his 
-  experience to improve our workflow.
+  - Provide tools for interacting with the team.
+  During the process the new guy will ask questions and he should be able to do
+  this using the tools: Email, Telegramm, Issues.
+  - We force anew hire to operate through the tools
+      - That is why we asking him to create his first issue about his experience
+        with the process.
+      - He should put his notes in this issue while he moving during this
+        process.
+      - We use his experience to improve our workflow.
