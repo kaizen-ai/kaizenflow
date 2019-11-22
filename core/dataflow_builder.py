@@ -20,9 +20,7 @@ class DagBuilder(abc.ABC):
       - the construction of a dag
     """
 
-    def __init__(self,
-                 nid_prefix: Optional[str] = None
-                 ) -> None:
+    def __init__(self, nid_prefix: Optional[str] = None) -> None:
         """
 
         :param nid_prefix: a namespace ending with "/" for graph node naming.
@@ -34,8 +32,10 @@ class DagBuilder(abc.ABC):
         self._nid_prefix = nid_prefix or ""
         # Make sure the nid_prefix ends with "/" (unless it is "").
         if self._nid_prefix and not self._nid_prefix.endswith("/"):
-            _LOG.warning("Appended '/' to nid_prefix. To avoid this warning, "
-                         "only pass nid prefixes ending in '/'.")
+            _LOG.warning(
+                "Appended '/' to nid_prefix. To avoid this warning, "
+                "only pass nid prefixes ending in '/'."
+            )
             self._nid_prefix += "/"
 
     @property
@@ -53,7 +53,9 @@ class DagBuilder(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_dag(self, config: cfg.Config, dag: Optional[dtf.DAG] = None) -> dtf.DAG:
+    def get_dag(
+        self, config: cfg.Config, dag: Optional[dtf.DAG] = None
+    ) -> dtf.DAG:
         """
         Build DAG given `config`.
 
