@@ -169,7 +169,6 @@ class _TimeSeriesStudy:
         ts_df["groupby"] = groupby
         ts_df.boxplot(by="groupby", column=ts.name)
         plt.suptitle("")
-        plt.show()
 
     def _check_data_index(self):
         dbg.dassert_isinstance(self._time_series.index, pd.DatetimeIndex)
