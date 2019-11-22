@@ -1,10 +1,11 @@
+# TODO(Paul): Consider creating a `dataflow` directory now that we have more
+#     than two dataflow files.
 import abc
 import logging
-from typing import Optional, Tuple
+from typing import Optional
 
 import core.config as cfg
 import core.dataflow as dtf
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,10 +42,6 @@ class DagBuilder(abc.ABC):
     def nid_prefix(self) -> str:
         return self._nid_prefix
 
-    def _get_nid(self, stage_name: str) -> str:
-        nid = self._nid_prefix + stage_name
-        return nid
-
     @abc.abstractmethod
     def get_config_template(self) -> cfg.Config:
         """
@@ -64,8 +61,8 @@ class DagBuilder(abc.ABC):
         TODO(Paul): Consider supporting deep copies for `dtf.DAG`.
 
         :param config: configures DAG. It is up to the client to guarantee
-            compatibility. The result of `self.get_config` should always be
-            compatible.
+            compatibility. The result of `self.get_config_template` should
+            always be compatible following template completion.
         :param dag: may or may not have nodes. If the DAG already has nodes,
             it is up to the client to ensure that there are no nid (node id)
             collisions, which can be ensured through the use of `nid_prefix`.
@@ -74,3 +71,7 @@ class DagBuilder(abc.ABC):
         :return: `dag` with all builder operations applied
         """
         pass
+
+    def _get_nid(self, stage_name: str) -> str:
+        nid = self._nid_prefix + stage_name
+        return nid
