@@ -204,9 +204,6 @@ class TimeSeriesDailyStudy(_TimeSeriesStudy):
         self._methods = _get_methods(self, access="public")
         self._disable_methods = disable_methods
 
-    def execute(self):
-        self.execute()
-
 
 class TimeSeriesMinuteStudy(_TimeSeriesStudy):
     def __init__(
@@ -227,11 +224,6 @@ class TimeSeriesMinuteStudy(_TimeSeriesStudy):
     def boxplot_minutely_hour(self):
         _LOG.debug(intr.get_function_name())
         self._boxplot(self._time_series, self._time_series.index.hour)
-        plt.title(
-            f"{self._ts_name} during different hours {self._title_suffix}"
-        )
+        plt.title(f"{self._ts_name} during different hours {self._title_suffix}")
         plt.xlabel("hour")
         plt.show()
-
-    def execute(self):
-        self.execute()
