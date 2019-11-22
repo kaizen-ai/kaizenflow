@@ -13,10 +13,20 @@
     - Can specify if a block is present or not in a DAG
     - Should only include DAG node configuration parameters, and not information
       about DAG connectivity, which is specified in the DAG builder
+- Template configs:
+    - Are incomplete configs, with some "mandatory" parameters unspecified but
+      identified, e.g., with "_DUMMY_"
+    - Have reasonable defaults for specified parameters
+        - This facilitates config extension (e.g., if we add additional
+          parameters / flexibility in the future, then we should not have to
+          regenerate old configs)
+    - Leave dummy parameters for frequently-varying fields, such as `ticker`
+    - Should be completable and be completed before use
+    - Should be associated with a DAG builder
 
 ## Config builders
 - Configs are built through functions that can complete a "template" config with
-  some parameters passed from command line
+  some parameters passed from the command line
 - E.g.,
     ```python
     def get_kibot_returns_config(symbol: str) -> cfg.Config:
@@ -25,6 +35,9 @@
         """
         ...
     ```
+- One config builder per config to be built (no reuse of builders)
+    - For this reason we put `nid_prefix` in the Builder constructor
+    - `nid_prefix` acts as a namespace to avoid `nid` collisions
 
 ## DAG builder methods
 - DAG builder methods accept a config and return a DAG
@@ -50,8 +63,12 @@
   (e.g., a unique sink node) of an existing DAG. Thus builders allow one to
   build a complex DAG by adding in multiple steps subgraphs of nodes.
 
-- The DAG and config builder functions are typically paired, e.g., a function to
-  create a config with all and only the params needed by a `dag_builder`
+- The DAG and config builder functions should be paired through a concrete
+  `DagBuilder` class.
+
+- DAG builders give meaningful `nid` names to their nodes. Collisions in graphs
+  build from multiple builders are avoided by the user through the judicious
+  use of namespace-like nid prefixes.
 
 ## DAG and Nodes
 - The DAG structure does not know about what data is exchanged between nodes.
@@ -155,4 +172,42 @@
   function multiple times (e.g., a DAG that is built with a loop)
 - In this case it's not clear if it would be better to prefix the names of each
   node with a tag to make them unique or use hierarchical DAG
-- It seems simpler to use prefix for the tags
+- It seems simpler to use prefix for the tags, which is supported
+
+## How to know what is configurable
+- By design, dataflow can loosely wrap python functions
+    - Any argument of the python function could be a configuration parameter
+    - `ColumnTransformer` is an example of an abstract node that wraps
+      python functions that operate on columns independently
+    - Introspection to determine what is configurable would be best
+    - Manually specifying function parameters in config may be a reasonable
+      approach for now
+        - This could be coupled with moving some responsibility to the `Config`
+          class, e.g., specifying "mandatory" parameters along with methods to
+          indicate which parameters are "dummies"
+        - Introspection on config should be easy (but may be hard in full
+          generality on DAG building code)
+    - Having the builder completely bail out is another possible approach
+- Dataflow provides mechanisms for conceptually organizing config and mapping
+  config to configurable functions. This ability is more important than making
+  it easy to expose all possible configuration parameters.
+
+## DAG extension vs copying
+- Currently DAG builders are chained by progressively extending an existing DAG
+- Another approach is to chain builders by constructing a new DAG from smaller
+  component DAGs
+    - One the one hand, this
+        - may provide cleaner abstractions
+        - is functional
+    - On the other hand, this approach may require some customization of deep
+      copies (to be determined)
+        - If we have clean configs and builders for two DAGs to be merged
+          / unioned, then we could simply rebuild by chaining
+        - If one of the DAGs was built through, e.g., notebook experimentation,
+          then a graph-introspective deep copy approach is probably needed
+            - If we perform deep copies, do we want to create new
+              "uninitialized" nodes, or also copy state?
+            - The answer may depend upon the use case, e.g., notebooks vs
+              production
+        - Extending DAGs node by node is in fact how they are built under the
+          hood
