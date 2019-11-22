@@ -5,7 +5,7 @@ import core.timeseries_study as tss
 """
 
 import logging
-from typing import Optional
+from typing import Iterable, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -14,6 +14,19 @@ import helpers.dbg as dbg
 import helpers.introspection as intr
 
 _LOG = logging.getLogger(__name__)
+
+
+def _get_methods(obj, access="all"):
+    methods = [method for method in dir(obj) if callable(getattr(obj, method))]
+    if access == "all":
+        pass
+    elif access == "private":
+        methods = [method for method in methods if method.startswith("_")]
+    elif access == "public":
+        methods = [method for method in methods if not method.startswith("_")]
+    else:
+        raise ValueError("Invalid access='%s'" % access)
+    return methods
 
 
 # TODO(gp): -> TimeSeriesAnalyzer?
@@ -34,6 +47,7 @@ class _TimeSeriesStudy:
         freq_name: str,
         data_name: Optional[str] = None,
         sharey: Optional[bool] = False,
+        disable_methods: Optional[Iterable[str]] = None,
     ):
         """
         :param time_series: pd.Series for which the study needs to be
@@ -50,6 +64,18 @@ class _TimeSeriesStudy:
         self._data_name = data_name
         self._freq_name = freq_name
         self._sharey = sharey
+        self._methods = _get_methods(self, access="public")
+        self._disable_methods = disable_methods
+
+    def execute(self):
+        if self._disable_methods is not None:
+            disable_methods = list(self._disable_methods)
+            disable_methods.append("execute")
+        else:
+            disable_methods = ["execute"]
+        for method in self._methods:
+            if method not in disable_methods:
+                getattr(self, method)()
 
     def plot_time_series(self):
         """
@@ -146,12 +172,8 @@ class _TimeSeriesStudy:
         plt.show()
 
     def _check_data_index(self):
-        dbg.dassert_isinstance(
-            self._time_series.index, pd.DatetimeIndex
-        )
-        dbg.dassert_monotonic_index(
-            self._time_series.index
-        )
+        dbg.dassert_isinstance(self._time_series.index, pd.DatetimeIndex)
+        dbg.dassert_monotonic_index(self._time_series.index)
 
     @property
     def _title_suffix(self):
@@ -172,18 +194,18 @@ class TimeSeriesDailyStudy(_TimeSeriesStudy):
         time_series: pd.Series,
         freq_name: Optional[str] = None,
         data_name: Optional[str] = None,
+        disable_methods: Optional[Iterable[str]] = None,
     ):
         if not freq_name:
             freq_name = "daily"
         super(TimeSeriesDailyStudy, self).__init__(
             time_series=time_series, freq_name=freq_name, data_name=data_name
         )
+        self._methods = _get_methods(self, access="public")
+        self._disable_methods = disable_methods
 
     def execute(self):
-        self.plot_time_series()
-        self.plot_by_year()
-        self.boxplot_day_of_month()
-        self.boxplot_day_of_week()
+        self.execute()
 
 
 class TimeSeriesMinuteStudy(_TimeSeriesStudy):
@@ -192,24 +214,24 @@ class TimeSeriesMinuteStudy(_TimeSeriesStudy):
         time_series: pd.Series,
         freq_name: Optional[str] = None,
         data_name: Optional[str] = None,
+        disable_methods: Optional[Iterable[str]] = None,
     ):
         if not freq_name:
             freq_name = "minutely"
         super(TimeSeriesMinuteStudy, self).__init__(
             time_series=time_series, freq_name=freq_name, data_name=data_name
         )
+        self._methods = _get_methods(self, access="public")
+        self._disable_methods = disable_methods
 
     def boxplot_minutely_hour(self):
         _LOG.debug(intr.get_function_name())
         self._boxplot(self._time_series, self._time_series.index.hour)
         plt.title(
-            f"{self._ts_name} during different hours" f"{self._title_suffix}"
+            f"{self._ts_name} during different hours {self._title_suffix}"
         )
         plt.xlabel("hour")
         plt.show()
 
     def execute(self):
-        self.plot_time_series()
-        self.plot_by_year()
-        self.boxplot_day_of_week()
-        self.boxplot_minutely_hour()
+        self.execute()
