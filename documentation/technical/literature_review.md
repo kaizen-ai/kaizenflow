@@ -35,7 +35,8 @@
 - Review author / date:
 - Score:
 - Summary:
-- Critique:
+- Praises:
+- Critiques:
 - Next steps:
 ```
 
@@ -87,3 +88,4 @@
     - Events (IPO, earnings)
 - Next steps:
     - Read all the bibliography and reproduce some of the results
+- TODO: Update this to new template
