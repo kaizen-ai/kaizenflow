@@ -109,7 +109,43 @@
       outer merges either leaving nans or filling with forward fills
 
 ## Nodes
-- We wrap pandas functions (e.g., from `signal_processing.py`) in Nodes
+- We strive to write functions (e.g., from `signal_processing.py`) that:
+    - can be wrapped in `Node`s
+    - operate on `pd.Series` and can be easily applied to `pd.DataFrame` columns
+      when needed using `apply_to_df` decorator, or operate on `pd.DataFrame`
+      directly
+    - return information about the performed operation, so that we can store this
+      information in the `Node` info
+    - e.g., a skeleton of the function (e.g., `process_outliers`)
+        ```python
+        def ...(
+            srs: pd.Series,
+            ...
+            stats: Optional[dict] = None,
+        ) -> pd.Series:
+            """
+            :param srs: pd.Series to process
+            ...
+            :param stats: empty dict-like object that this function will populate with
+                statistics about the performed operation
+
+            :return: transformed series with ...
+                The operation is not in place.
+            """
+            # Check parameters.
+            dbg.dassert_isinstance(srs, pd.Series)
+            srs = srs.copy()
+            ...
+            # Compute stats.
+            if stats is not None:
+                dbg.dassert_isinstance(stats, dict)
+                # Dictionary should be empty.
+                dbg.dassert(not stats)
+                stats["series_name"] = srs.name
+                stats["num_elems_before"] = len(srs)
+                ...
+            return srs
+        ```
 - `ColumnTransformer` is a very flexible `Node` class that can wrap a wide
   variety of functions
     - The function to use is passed to the `ColumnTransformer` constructor in
@@ -196,7 +232,7 @@
 - Currently DAG builders are chained by progressively extending an existing DAG
 - Another approach is to chain builders by constructing a new DAG from smaller
   component DAGs
-    - One the one hand, this
+    - On the one hand, this
         - may provide cleaner abstractions
         - is functional
     - On the other hand, this approach may require some customization of deep
