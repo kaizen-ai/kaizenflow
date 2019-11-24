@@ -94,21 +94,21 @@ def _remove_empty_lines(output):
 
 def _filter_target_files(file_names):
     """
-    Keep only the files that
-    - have extension .py or .ipynb
+    Keep only the files that:
+    - have extension .py, .ipynb, .txt or .md.
     - are not Jupyter checkpoints
     - are not in tmp dirs
     """
     file_names_out = []
     for file_name in file_names:
         _, file_ext = os.path.splitext(file_name)
-        # TODO(gp): We can probably consider only the .py files after jupytext
-        #  is part of the main flow.
-        # is_valid = file_ext in (".py", ".ipynb")
-        is_valid = file_ext in (".py",)
+        # We skip .ipynb since jupytext is part of the main flow.
+        is_valid = file_ext in (".py", ".txt", ".md")
         is_valid &= ".ipynb_checkpoints/" not in file_name
         # Skip files in directory starting with "tmp.".
         is_valid &= "/tmp." not in file_name
+        # Skip files starting with "tmp.".
+        is_valid &= not file_name.startswith("tmp.")
         if is_valid:
             file_names_out.append(file_name)
     return file_names_out
@@ -191,11 +191,11 @@ def _get_files(args):
     file_names = []
     if args.files:
         _LOG.debug("Specified files")
-        # Files are specified.
+        # User has specified files.
         file_names = args.files
     else:
         if args.previous_git_commit_files is not None:
-            _LOG.debug("Looking for previous git committed files")
+            _LOG.debug("Looking for files committed in previous Git commit")
             # Get all the git in user previous commit.
             n_commits = args.previous_git_commit_files
             _LOG.info("Using %s previous commits", n_commits)
@@ -218,7 +218,8 @@ def _get_files(args):
     # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
     _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
-    dbg.dassert_lte(1, len(file_names))
+    dbg.dassert_lte(1, len(file_names),
+                    "No files that can be linted are specified")
     # Remove files.
     if args.skip_py:
         file_names = [f for f in file_names if not is_py_file(f)]
@@ -257,6 +258,10 @@ def _get_files(args):
 # - it allows to have clear control over options
 
 
+import functools
+
+
+@functools.lru_cache(maxsize=None)
 def _check_exec(tool):
     """
     :return: True if the executables "tool" can be executed.
@@ -303,6 +308,7 @@ def _remove_not_possible_actions(actions):
     """
     Check whether each action in "actions" can be executed and return a list of
     the actions that can be executed.
+
     :return: list of strings representing actions
     """
     actions_tmp = []
@@ -400,11 +406,13 @@ def _python_compile(file_name, pedantic, check_if_possible):
     if check_if_possible:
         return True
     #
-    output = []
+    # Applicable only to python files.
     dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
-        return output
+        return []
+    #
+    output = []
     try:
         py_compile.compile(file_name, doraise=True)
         # pylint: disable=broad-except
@@ -421,12 +429,12 @@ def _autoflake(file_name, pedantic, check_if_possible):
     executable = "autoflake"
     if check_if_possible:
         return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
     # Applicable to only python file.
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
+    #
     opts = "-i --remove-all-unused-imports --remove-unused-variables"
     cmd = executable + " %s %s" % (opts, file_name)
     return _tee(cmd, executable, abort_on_error=False)
@@ -440,12 +448,12 @@ def _yapf(file_name, pedantic, check_if_possible):
     executable = "yapf"
     if check_if_possible:
         return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
     # Applicable to only python file.
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
+    #
     opts = "-i --style='google'"
     cmd = executable + " %s %s" % (opts, file_name)
     return _tee(cmd, executable, abort_on_error=False)
@@ -459,12 +467,12 @@ def _black(file_name, pedantic, check_if_possible):
     executable = "black"
     if check_if_possible:
         return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
     # Applicable to only python file.
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
+    #
     opts = "--line-length 82"
     cmd = executable + " %s %s" % (opts, file_name)
     output = _tee(cmd, executable, abort_on_error=False)
@@ -486,12 +494,12 @@ def _isort(file_name, pedantic, check_if_possible):
     executable = "isort"
     if check_if_possible:
         return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
     # Applicable to only python file.
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
+    #
     cmd = executable + " %s" % file_name
     return _tee(cmd, executable, abort_on_error=False)
 
@@ -508,9 +516,8 @@ def _flake8(file_name, pedantic, check_if_possible):
     executable = "flake8"
     if check_if_possible:
         return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
     # Applicable to only python file.
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -573,8 +580,8 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
     if check_if_possible:
         return _check_exec(executable)
     #
-    dbg.dassert(file_name)
     # Applicable to only python file.
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -660,9 +667,8 @@ def _pyment(file_name, pedantic, check_if_possible):
     executable = "pyment"
     if check_if_possible:
         return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
     # Applicable to only python file.
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -675,9 +681,8 @@ def _pylint(file_name, pedantic, check_if_possible):
     executable = "pylint"
     if check_if_possible:
         return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
     # Applicable to only python file.
+    dbg.dassert(file_name)
     if not is_py_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
@@ -801,12 +806,12 @@ def _mypy(file_name, pedantic, check_if_possible):
     executable = "mypy"
     if check_if_possible:
         return _check_exec(executable)
-    #
+    # Applicable to only python files, that are not paired with notebooks.
     dbg.dassert(file_name)
-    # Applicable to only python library files.
     if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
+    #
     cmd = executable + " %s" % file_name
     _system(
         cmd,
@@ -841,18 +846,16 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
     executable = "%s/ipynb_format.py" % curr_path
     if check_if_possible:
         return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
     # Applicable to only ipynb file.
+    dbg.dassert(file_name)
     if not is_ipynb_file(file_name):
         _LOG.debug("Skipping file_name='%s'", file_name)
         return []
+    #
     cmd = executable + " %s" % file_name
     _system(cmd)
     output = []
     return output
-
-
 
 
 # TODO(gp): Move in a more general file.
@@ -904,6 +907,7 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # TODO(gp): Use the usual idiom of these functions.
     if is_py_file(file_name) and is_paired_jupytext_file(file_name):
         cmd = executable + " -f %s --action sync" % file_name
         output = _tee(cmd, executable, abort_on_error=True)
@@ -920,6 +924,7 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
         return _check_exec(executable)
     #
     dbg.dassert(file_name)
+    # TODO(gp): Use the usual idiom of these functions.
     if is_py_file(file_name) and is_paired_jupytext_file(file_name):
         cmd = executable + " -f %s --action test" % file_name
         output = _tee(cmd, executable, abort_on_error=True)
@@ -935,25 +940,67 @@ def _lint_markdown(file_name, pedantic, check_if_possible):
     executable = "prettier"
     if check_if_possible:
         return _check_exec(executable)
-    #
+    # Applicable only to txt and md files.
     dbg.dassert(file_name)
-    #
-    ext = os.path.splitext(file_name)
-    if ext not in ("txt", "md"):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        output = []
+    ext = os.path.splitext(file_name)[1]
+    output = []
+    if ext not in (".txt", ".md"):
+        _LOG.debug("Skipping file_name='%s' because ext='%s'", file_name, ext)
         return output
+    #
     # Pre-process text.
+    #
+    txt = io_.from_file(file_name, split=True)
+    txt_new = []
+    for line in txt:
+        line = re.sub("^\* ", "- STAR", line)
+        txt_new.append(line)
+    # Write.
+    txt_new = "\n".join(txt_new)
+    io_.to_file(file_name, txt_new)
+    #
     # Lint.
+    #
     cmd_opts = []
     cmd_opts.append("--parser markdown")
     cmd_opts.append("--prose-wrap always")
     cmd_opts.append("--write")
     cmd_opts.append("--tab-width 4")
     cmd_opts = " ".join(cmd_opts)
-    cmd = " ".join(["prettier", cmd_opts, file_name])
-    output = _tee(cmd, executable, abort_on_error=True)
+    cmd = " ".join([executable, cmd_opts, file_name])
+    output_tmp = _tee(cmd, executable, abort_on_error=True)
+    output.extend(output_tmp)
+    #
     # Post-process text.
+    #
+    txt = io_.from_file(file_name, split=True)
+    txt_new = []
+    for i, line in enumerate(txt):
+        # Check whether there is TOC otherwise add it.
+        if i == 0 and line != "<!--ts-->":
+            output.append("No tags for table of content in md file: adding it")
+            line = "<!--ts-->\n<!--te-->"
+        line = re.sub("^\-   STAR", "*   ", line)
+        # Remove some artifacts when copying from gdoc.
+        line = re.sub("’", "'", line)
+        line = re.sub("“", '"', line)
+        line = re.sub("”", '"', line)
+        line = re.sub("…", "...", line)
+        # -   You say you'll do something
+        #line = re.sub("^(\s*)-   ", r"\1- ", line)
+        #line = re.sub("^(\s*)\*   ", r"\1* ", line)
+        txt_new.append(line)
+    # Write.
+    txt_new = "\n".join(txt_new)
+    io_.to_file(file_name, txt_new)
+    #
+    # Refresh table of content.
+    #
+    amp_path = git.get_amp_abs_path()
+    cmd = [os.path.join(amp_path, "scripts/gh-md-toc"),
+           "--insert %s" % file_name]
+    cmd = " ".join(cmd)
+    _system(cmd, abort_on_error=False)
     return output
 
 
@@ -961,6 +1008,13 @@ def _lint_markdown(file_name, pedantic, check_if_possible):
 
 
 def _lint(file_name, actions, pedantic, debug):
+    """
+    Execute all the actions on a filename.
+
+    Note that this is the unit of parallelization, i.e., we run all the
+    actions on a single file to ensure that the actions are executed in the
+    proper order.
+    """
     output = []
     _LOG.info("\n%s", pri.frame(file_name, char1="="))
     for action in actions:
@@ -975,8 +1029,7 @@ def _lint(file_name, actions, pedantic, debug):
             dst_file_name = file_name
         func = _get_action_func(action)
         # We want to run the stages, and not check.
-        check_if_possible = False
-        output_tmp = func(dst_file_name, pedantic, check_if_possible)
+        output_tmp = func(dst_file_name, pedantic, check_if_possible=False)
         # Annotate with executable [tag].
         output_tmp = _annotate_output(output_tmp, action)
         dbg.dassert_isinstance(
@@ -1008,7 +1061,7 @@ def _select_actions(args):
         if action in actions:
             actions_tmp.append(action)
     actions = actions_tmp
-    # Check which tools are available.
+    # Find the tools that are available.
     actions = _remove_not_possible_actions(actions)
     actions_as_str = _actions_to_string(actions)
     _LOG.info("# Action selected:\n%s", pri.space(actions_as_str))
@@ -1016,11 +1069,6 @@ def _select_actions(args):
 
 
 def _run_linter(actions, args, file_names):
-    # We process the py files first and then the ipynb.
-    py_file_names = sorted([f for f in file_names if f.endswith(".py")])
-    ipynb_file_names = sorted([f for f in file_names if f.endswith(".ipynb")])
-    file_names = py_file_names + ipynb_file_names
-    #
     num_steps = len(file_names) * len(actions)
     _LOG.info(
         "Num of files=%d, num of actions=%d -> num of steps=%d",
