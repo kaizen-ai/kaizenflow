@@ -274,6 +274,11 @@
     - Since we prefer to rely upon automatic checks, we have decided to use
       the imperative style
 
+## Comments
+
+- Comments follow the same style of docstrings, e.g., imperative style with
+  period `.` at the end
+
 ## Use type hints
 
 - We expect new code to use type hints whenever possible
@@ -785,13 +790,13 @@ and then uses like:
   are fine):
     - **Bad**
         ```python
-        # Import as:
+        Import as:
 
         import nlp.utils as util
         ```
     - **Good**
         ```python
-        # Import as:
+        Import as:
 
         import nlp.utils as nlp_ut
         ```

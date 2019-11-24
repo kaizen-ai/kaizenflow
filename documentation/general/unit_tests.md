@@ -37,7 +37,7 @@
 
 ## Using `run_tests.py`
 
-- `dev_scripts/run_tests.py` is a wrapper around `pytest` to implement some
+- `dev_scripts/testing/run_tests.py` is a wrapper around `pytest` to implement some
   typical workflows
 
 ### Run fast tests
