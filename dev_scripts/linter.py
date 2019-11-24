@@ -218,8 +218,9 @@ def _get_files(args):
     # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
     _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
-    dbg.dassert_lte(1, len(file_names),
-                    "No files that can be linted are specified")
+    dbg.dassert_lte(
+        1, len(file_names), "No files that can be linted are specified"
+    )
     # Remove files.
     if args.skip_py:
         file_names = [f for f in file_names if not is_py_file(f)]
@@ -258,10 +259,6 @@ def _get_files(args):
 # - it allows to have clear control over options
 
 
-import functools
-
-
-@functools.lru_cache(maxsize=None)
 def _check_exec(tool):
     """
     :return: True if the executables "tool" can be executed.
@@ -838,7 +835,9 @@ def _mypy(file_name, pedantic, check_if_possible):
     #    output.insert(0, "* file_name=%s" % file_name)
     return output
 
+
 # ##############################################################################
+
 
 def _ipynb_format(file_name, pedantic, check_if_possible):
     _ = pedantic
@@ -933,7 +932,9 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
         output = []
     return output
 
+
 # ##############################################################################
+
 
 def _lint_markdown(file_name, pedantic, check_if_possible):
     _ = pedantic
@@ -953,7 +954,7 @@ def _lint_markdown(file_name, pedantic, check_if_possible):
     txt = io_.from_file(file_name, split=True)
     txt_new = []
     for line in txt:
-        line = re.sub("^\* ", "- STAR", line)
+        line = re.sub(r"^\* ", "- STAR", line)
         txt_new.append(line)
     # Write.
     txt_new = "\n".join(txt_new)
@@ -980,15 +981,15 @@ def _lint_markdown(file_name, pedantic, check_if_possible):
         if i == 0 and line != "<!--ts-->":
             output.append("No tags for table of content in md file: adding it")
             line = "<!--ts-->\n<!--te-->"
-        line = re.sub("^\-   STAR", "*   ", line)
+        line = re.sub(r"^\-   STAR", "*   ", line)
         # Remove some artifacts when copying from gdoc.
         line = re.sub("’", "'", line)
         line = re.sub("“", '"', line)
         line = re.sub("”", '"', line)
         line = re.sub("…", "...", line)
         # -   You say you'll do something
-        #line = re.sub("^(\s*)-   ", r"\1- ", line)
-        #line = re.sub("^(\s*)\*   ", r"\1* ", line)
+        # line = re.sub("^(\s*)-   ", r"\1- ", line)
+        # line = re.sub("^(\s*)\*   ", r"\1* ", line)
         txt_new.append(line)
     # Write.
     txt_new = "\n".join(txt_new)
@@ -997,8 +998,9 @@ def _lint_markdown(file_name, pedantic, check_if_possible):
     # Refresh table of content.
     #
     amp_path = git.get_amp_abs_path()
-    cmd = [os.path.join(amp_path, "scripts/gh-md-toc"),
-           "--insert %s" % file_name]
+    cmd = []
+    cmd.append(os.path.join(amp_path, "scripts/gh-md-toc"))
+    cmd.append("--insert %s" % file_name]
     cmd = " ".join(cmd)
     _system(cmd, abort_on_error=False)
     return output

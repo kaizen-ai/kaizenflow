@@ -115,7 +115,7 @@ def _main(parser):
             _LOG.debug("  -> skip")
             continue
         # Process question.
-        #num_tab_spaces = 4
+        # num_tab_spaces = 4
         num_tab_spaces = 2
         space = " " * (num_tab_spaces - 1)
         if (
