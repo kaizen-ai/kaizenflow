@@ -286,6 +286,7 @@ def _get_action_func(action):
         "flake8": _flake8,
         "ipynb_format": _ipynb_format,
         "isort": _isort,
+        "lint_markdown": _lint_markdown,
         "mypy": _mypy,
         "pydocstyle": _pydocstyle,
         "pylint": _pylint,
@@ -832,6 +833,7 @@ def _mypy(file_name, pedantic, check_if_possible):
     #    output.insert(0, "* file_name=%s" % file_name)
     return output
 
+# ##############################################################################
 
 def _ipynb_format(file_name, pedantic, check_if_possible):
     _ = pedantic
@@ -851,7 +853,6 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
     return output
 
 
-# ##############################################################################
 
 
 # TODO(gp): Move in a more general file.
@@ -925,6 +926,34 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
     else:
         _LOG.debug("Skipping file_name='%s'", file_name)
         output = []
+    return output
+
+# ##############################################################################
+
+def _lint_markdown(file_name, pedantic, check_if_possible):
+    _ = pedantic
+    executable = "prettier"
+    if check_if_possible:
+        return _check_exec(executable)
+    #
+    dbg.dassert(file_name)
+    #
+    ext = os.path.splitext(file_name)
+    if ext not in ("txt", "md"):
+        _LOG.debug("Skipping file_name='%s'", file_name)
+        output = []
+        return output
+    # Pre-process text.
+    # Lint.
+    cmd_opts = []
+    cmd_opts.append("--parser markdown")
+    cmd_opts.append("--prose-wrap always")
+    cmd_opts.append("--write")
+    cmd_opts.append("--tab-width 4")
+    cmd_opts = " ".join(cmd_opts)
+    cmd = " ".join(["prettier", cmd_opts, file_name])
+    output = _tee(cmd, executable, abort_on_error=True)
+    # Post-process text.
     return output
 
 
@@ -1068,6 +1097,7 @@ _VALID_ACTIONS_META = [
     # Superseded by "sync_jupytext".
     # ("ipynb_format", "w",
     #   "Format jupyter code using yapf."),
+    ("lint_markdown", "w", "Lint txt/md markdown files"),
 ]
 
 _ALL_ACTIONS = list(zip(*_VALID_ACTIONS_META))[0]

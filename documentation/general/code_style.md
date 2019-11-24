@@ -332,7 +332,7 @@
     - E.g., do not comment things that are obvious, e.g.,
     ```python
     # Print results.
-    log.info("Results are %s", ...)
+    _LOG.info("Results are %s", ...)
     ```
 
 ## If you find a bug or obsolete docstring/TODO in the code

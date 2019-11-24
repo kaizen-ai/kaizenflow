@@ -27,7 +27,7 @@
 
 # Organizing email flow
 
-- We receive tons of emails and the inflow is going to keep increasing
+- We receive tons of emails, and the inflow is going to keep increasing
     - At a large company you can get 10k emails per day (no kidding)
 
 - The goal is to read *all* the emails and always be on top of it
@@ -73,7 +73,7 @@
         - The emails are organized as they arrive
         - Folders are on the server side, so my client can simply sync
     - Cons
-        - Gmail interface for filtering emails is horrible
+        - The Gmail interface for filtering emails is horrible
 
 - The web interface is `https://mail.google.com/mail/u/0/#settings/filters`
 
