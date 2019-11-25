@@ -73,15 +73,17 @@
 - Typically we use as first cells the following ones:
 
 ### Description
-    ```python
+
+- Add a description of the notebook for the reader
+    ```
     ## Description
     - This notebook was used for prototyping / debugging code that was moved
       in the file `abc.py`
     ```
 
 ### Imports
-- Import the needed libraries: it's better to put all the imports in one cell, so
-  you can easily re-import everything in one shot
+
+- Import the needed libraries: it's better to put all the imports in one cell:
     ```python
     ## Imports
 
@@ -99,7 +101,8 @@
     ```
 
 ### Configuration
-- There are some utilities that you can use to get some common settings
+- You can configure the notebooks with some utils, logging, and report info on
+  how the notebook was executed (e.g., Git commit, libs, etc.):
     ```python
     # Print system signature.
     print(env.get_system_signature()[0])
@@ -110,7 +113,10 @@
     # Configure logger.
     dbg.init_logger(verbosity=logging.INFO)
     _LOG = logging.getLogger(__name__)
+    ```
 
+- The output of the cell looks like:
+    ```
     # Packages
              python: 3.7.3
              joblib: 0.14.0

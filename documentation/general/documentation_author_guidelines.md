@@ -114,7 +114,7 @@
 - Type somewhere where you can use several free choices:
     - [Grammarly](www.grammarly.com),
     - [LanguageTool](https://www.languagetool.org)
-    - or other proof reading
+    - or other proofreading
   and copy-paste
 - This is super-useful to improve your English since you see the error and the
   correction
@@ -168,5 +168,5 @@
     - [ ] Paul
     - [ ] Liza
     - [ ] Julia
-    - [ ] Daniil
     - [ ] GP
+    - [ ] Daniil
