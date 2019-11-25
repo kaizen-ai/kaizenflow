@@ -5,7 +5,7 @@ import core.timeseries_study as tss
 """
 
 import logging
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -16,37 +16,8 @@ import helpers.introspection as intr
 _LOG = logging.getLogger(__name__)
 
 
-class _Pipeline:
-    """
-    A class representing a sequence of functions that can be optionally
-    disabled by the caller of `execute`.
-    """
-
-    def __init__(self, disable_methods: Optional[Iterable[str]] = None):
-        # Extract the public methods of this class.
-        self._methods = intr.get_methods(self, access="public")
-        # Store the methods to disable.
-        self._disable_methods = self._disable_methods_tolist(disable_methods)
-
-    def execute(self):
-        for method in self._methods:
-            if method not in self._disable_methods:
-                getattr(self, method)()
-            else:
-                _LOG.debug("Skipping %s as per user request", method)
-
-    @staticmethod
-    def _disable_methods_tolist(
-        disable_methods: Optional[Iterable[str]],
-    ) -> List[str]:
-        disable_methods = disable_methods or []
-        disable_methods = list(disable_methods)
-        disable_methods.append("execute")
-        return disable_methods
-
-
 # TODO(gp): -> TimeSeriesAnalyzer?
-class _TimeSeriesStudy(_Pipeline):
+class _TimeSeriesStudy:
     """
     Perform basic study of time series, such as:
         - analysis at different time frequencies by resampling
@@ -63,32 +34,39 @@ class _TimeSeriesStudy(_Pipeline):
         freq_name: str,
         data_name: Optional[str] = None,
         sharey: Optional[bool] = False,
-        disable_methods: Optional[Iterable[str]] = None,
+        disabled_methods: Optional[Iterable[str]] = None,
     ):
         """
         :param time_series: pd.Series for which the study needs to be
             conducted
-        :param freq_name: the name of the data frequency to add to plot
-            titles (for example, 'daily')
-        :param data_name: the name of the data to add to plot titles
-            (for example, symbol)
-        :param sharey: a parameter passed into plt.subplots in
-            `plot_by_year` method
-        :param disable_methods: methods that need to be skipped
+        :param freq_name: the name of the data frequency to add to plot titles
+            e.g., 'daily'
+        :param data_name: the name of the data to add to plot titles, e.g.,
+            `symbol`
+        :param sharey: a parameter passed into plt.subplots in `plot_by_year`
+            method
+        :param disabled_methods: methods that need to be skipped
         """
         dbg.dassert_isinstance(time_series, pd.Series)
+        dbg.dassert_isinstance(time_series.index, pd.DatetimeIndex)
+        dbg.dassert_monotonic_index(time_series.index)
         self._time_series = time_series
         self._ts_name = time_series.name
         self._data_name = data_name
         self._freq_name = freq_name
         self._sharey = sharey
-        super().__init__(disable_methods)
+        self._disabled_methods = disabled_methods or []
 
     def plot_time_series(self):
         """
         Plot timeseries on its original time scale.
         """
-        _LOG.debug(intr.get_function_name())
+        func_name = intr.get_function_name()
+        _LOG.debug(func_name)
+        if func_name in self._disabled_methods:
+            _LOG.debug("Skipping '%s' as per user request", func_name)
+            return
+        #
         self._time_series.plot()
         plt.title(
             f"{self._freq_name.capitalize()} {self._ts_name}"
@@ -106,7 +84,10 @@ class _TimeSeriesStudy(_Pipeline):
         """
         Resample yearly and then plot each year on a different plot.
         """
-        _LOG.debug(intr.get_function_name())
+        func_name = intr.get_function_name()
+        if self._need_to_skip(func_name):
+            return
+        #
         # Split by year.
         yearly_resample = self._time_series.resample("y")
         # Create as many subplots as years.
@@ -142,7 +123,10 @@ class _TimeSeriesStudy(_Pipeline):
         """
         Plot the mean value of the timeseries for each day.
         """
-        _LOG.debug(intr.get_function_name())
+        func_name = intr.get_function_name()
+        if self._need_to_skip(func_name):
+            return
+        #
         self._boxplot(self._time_series, self._time_series.index.day)
         plt.xlabel("day of month")
         plt.title(
@@ -158,7 +142,10 @@ class _TimeSeriesStudy(_Pipeline):
         """
         Plot the mean value of the timeseries for year.
         """
-        _LOG.debug(intr.get_function_name())
+        func_name = intr.get_function_name()
+        if self._need_to_skip(func_name):
+            return
+        #
         self._boxplot(self._time_series, self._time_series.index.dayofweek)
         plt.xlabel("day of week")
         plt.title(
@@ -170,6 +157,12 @@ class _TimeSeriesStudy(_Pipeline):
         # plots that makes matplotlib assert.
         plt.close()
 
+    def execute(self):
+        self.plot_time_series()
+        self.plot_by_year()
+        self.boxplot_day_of_month()
+        self.boxplot_day_of_week()
+
     @staticmethod
     def _boxplot(ts, groupby):
         ts_df = pd.DataFrame(ts)
@@ -177,9 +170,12 @@ class _TimeSeriesStudy(_Pipeline):
         ts_df.boxplot(by="groupby", column=ts.name)
         plt.suptitle("")
 
-    def _check_data_index(self):
-        dbg.dassert_isinstance(self._time_series.index, pd.DatetimeIndex)
-        dbg.dassert_monotonic_index(self._time_series.index)
+    def _need_to_skip(self, func_name):
+        _LOG.debug(func_name)
+        if func_name in self._disabled_methods:
+            _LOG.debug("Skipping '%s' as per user request", func_name)
+            return True
+        return False
 
     @property
     def _title_suffix(self):
@@ -190,38 +186,32 @@ class _TimeSeriesStudy(_Pipeline):
         return ret
 
 
-# TODO(gp): Not sure this is needed if we generalize the super class to work
-#  at different frequency. We can have a check that makes sure we always
-#  downsample (e.g., we don't plot at minutely timescale if the frequency of the
-#  timeseries is hourly).
 class TimeSeriesDailyStudy(_TimeSeriesStudy):
     def __init__(
         self,
         time_series: pd.Series,
-        freq_name: Optional[str] = None,
         data_name: Optional[str] = None,
-        disable_methods: Optional[Iterable[str]] = None,
+        sharey: Optional[bool] = False,
+        disabled_methods: Optional[Iterable[str]] = None,
     ):
-        if not freq_name:
-            freq_name = "daily"
-        super().__init__(time_series, freq_name, data_name, disable_methods)
+        freq_name = "daily"
+        super().__init__(
+            time_series, freq_name, data_name, sharey, disabled_methods
+        )
 
 
 class TimeSeriesMinuteStudy(_TimeSeriesStudy):
-    def __init__(
-        self,
-        time_series: pd.Series,
-        freq_name: Optional[str] = None,
-        data_name: Optional[str] = None,
-        disable_methods: Optional[Iterable[str]] = None,
-    ):
-        if not freq_name:
-            freq_name = "minutely"
-        super().__init__(time_series, freq_name, data_name, disable_methods)
 
     def boxplot_minutely_hour(self):
-        _LOG.debug(intr.get_function_name())
+        func_name = intr.get_function_name()
+        if self._need_to_skip(func_name):
+            return
+        #
         self._boxplot(self._time_series, self._time_series.index.hour)
         plt.title(f"{self._ts_name} during different hours {self._title_suffix}")
         plt.xlabel("hour")
         plt.show()
+
+    def execute(self):
+        super().execute()
+        self.boxplot_minutely_hour()
