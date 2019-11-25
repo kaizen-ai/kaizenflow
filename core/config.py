@@ -11,6 +11,7 @@ import os
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import helpers.dbg as dbg
+import helpers.dict as dct
 import helpers.introspection as intr
 import helpers.printing as pri
 
@@ -43,6 +44,8 @@ class Config:
             for k, v in array:
                 self._config[k] = v
 
+    # TODO(GPP): Support setting using path-like hierarchical references to
+    # keys (as supported by `__getitem__`).
     def __setitem__(self, key: str, val: Any) -> None:
         """
         Set / update `key` to `val`.
@@ -113,6 +116,13 @@ class Config:
         Equivalent to `dict.update()`
         """
         self._config.update(dict_)
+
+    def update_nested(self, config_update: "Config") -> "Config":
+        """
+        Update config leaf values with `config_update`.
+        """
+        return dct.update_nested(self._config, config_update.to_dict())
+
 
     def get(self, key, val):
         """
@@ -189,6 +199,8 @@ class Config:
             _LOG.error(msg)
             raise ValueError(msg)
 
+    # TODO: Standardize/allow to be configurable what to return if a value is
+    #     missing.
     # TODO(gp): return a string
     def print_config(self, keys):
         """
