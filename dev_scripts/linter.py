@@ -30,26 +30,6 @@ E.g.,
 > linter.py -d . --action sync_jupytext
 """
 
-# TODO(gp): Add mccabe score.
-# TODO(gp): Do not overwrite file when there is no change.
-# TODO(gp): Add autopep8 if useful?
-# TODO(gp): Add vulture, snake_food
-# TODO(gp): Python files should end with py
-# TODO(gp): Find out python files also checking the shebang instead of just .py
-# TODO(gp): Save tarball, dir or patch of changes
-# TODO(gp): Ensure all file names are correct (e.g., no space, nice TaskXYZ, no
-# `-` but `_`...)
-# TODO(gp): Make sure that there are no conflict markers.
-# TODO(gp): Report number of errors vs warnings.
-# TODO(gp): Test directory should be called "test" and not "tests"
-# TODO(gp): Discourage checking in master
-# TODO(gp): All and only executable python files (i.e., with main) should have
-#  #!/usr/bin/env python
-# TODO(gp): Add https://github.com/PyCQA/flake8-bugbear
-# TODO(gp): Improve the output by saving the output for each filename and action
-#  and getting a comment about which file each portion of the output is about
-# TODO(gp): Check for weird encoding PartTask347
-
 import argparse
 import itertools
 import logging
@@ -349,6 +329,9 @@ def _test_actions():
 
 
 # ##############################################################################
+
+# TODO(gp): We should use a Strategy pattern, having a base class and a class
+#  for each action.
 
 # Each action accepts:
 # :param file_name: name of the file to process
