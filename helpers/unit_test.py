@@ -120,10 +120,13 @@ def filter_text(regex: str, txt: str) -> str:
 def purify_from_client(txt: str) -> str:
     """
     Remove from a string all the information specific of a git client:
-        - replace the git path with `$GIT_ROOT`
     """
+    # Replace the git path with `$GIT_ROOT`.
     super_module_path = git.get_client_root(super_module=True)
     txt = txt.replace(super_module_path, "$GIT_ROOT")
+    # Replace the user name with `$USER_NAME`.
+    user_name = si.get_user_name()
+    txt = txt.replace(user_name, "$USER_NAME")
     # TODO(gp): Remove conda_sh_path.
     return txt
 
