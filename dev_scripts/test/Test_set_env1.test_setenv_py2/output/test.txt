@@ -1,4 +1,4 @@
-* Boostrap successful *
+* Bootstrap successful *
 [0m
 echo '################################################################################'
 echo Info

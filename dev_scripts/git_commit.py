@@ -12,6 +12,7 @@ import sys
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -223,19 +224,13 @@ def _parse():
     parser.add_argument("--test", action="store_true")
     parser.add_argument("--not_abort_on_error", action="store_true")
     parser.add_argument("--force_commit", action="store_true")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     actions = _select_phases(args)
     # TODO(gp): Make sure that index is empty.
     # Check commit message

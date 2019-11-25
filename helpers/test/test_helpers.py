@@ -108,12 +108,14 @@ class Test_git1(ut.TestCase):
                 + ut.to_string("repo_sym_name_tmpA")
             )
 
-    @pytest.mark.skipif('si.get_user_name() == "jenkins"')
     def test_get_amp_abs_path1(self):
         amp_dir = git.get_amp_abs_path()
         # Check.
         self.assertTrue(os.path.exists(amp_dir))
-        self.assert_equal(os.path.basename(amp_dir), "amp")
+        if si.get_user_name() != "jenkins":
+            # Jenkins checks out amp repo in directories with different names,
+            # e.g., amp.dev.build_clean_env.run_slow_coverage_tests.
+            self.assert_equal(os.path.basename(amp_dir), "amp")
 
 
 # #############################################################################

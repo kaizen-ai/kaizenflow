@@ -12,6 +12,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -33,7 +34,7 @@ def _print(msg):
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     #
     git_ll = "git log --date=local --oneline --graph --date-order --decorate"
     _print("# Checking what are the differences with master...")
@@ -63,13 +64,7 @@ def _parser():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

@@ -49,7 +49,7 @@ def _main(parser):
     # TODO(gp): We might want to force to print also the name of script to
     #  help debugging in_get_logging_format(force_print_format,
     #  force_verbose_format):
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     txt = []
     #
     # - Report system info.

@@ -1,7 +1,9 @@
+import collections
 import io
 import json
 import logging
 import os
+import pprint
 from typing import Any, Callable, Dict, Tuple
 
 import matplotlib.pyplot as plt
@@ -96,6 +98,21 @@ class Test_config1(ut.TestCase):
         config["zscore"]["com"] = 28
         return config
 
+    def test_get2(self):
+        """
+        Test Config.get() with missing key.
+        """
+        config = self._get_nested_config1()
+        _LOG.debug("config=%s", config)
+        with self.assertRaises(AssertionError):
+            _ = config["read_data2"]
+        with self.assertRaises(AssertionError):
+            _ = config["read_data"]["file_name2"]
+        with self.assertRaises(AssertionError):
+            _ = config["read_data2"]["file_name2"]
+        elem = config["read_data"]["file_name"]
+        self.assertEqual(elem, "foo_bar.txt")
+
     def test_config4(self) -> None:
         """
         Test print nested config.
@@ -146,6 +163,56 @@ class Test_config1(ut.TestCase):
         #
         self.assertEqual(str(config1), str(config2))
 
+    def test_hierarchical_getitem1(self):
+        """
+        Test accessing the config with hierarchical access.
+        """
+        config = self._get_nested_config1()
+        _LOG.debug("config=%s", config)
+        elem1 = config[("read_data", "file_name")]
+        elem2 = config["read_data"]["file_name"]
+        self.assertEqual(str(elem1), str(elem2))
+
+    def test_hierarchical_getitem2(self):
+        """
+        Test accessing the config with hierarchical access with correct and
+        incorrect paths.
+        """
+        config = self._get_nested_config1()
+        _LOG.debug("config=%s", config)
+        with self.assertRaises(AssertionError):
+            _ = config["read_data2"]
+        with self.assertRaises(AssertionError):
+            _ = config[("read_data2", "file_name")]
+        with self.assertRaises(AssertionError):
+            _ = config[("read_data2")]
+        with self.assertRaises(AssertionError):
+            _ = config[["read_data2"]]
+        #
+        elem = config[("read_data", "file_name")]
+        self.assertEqual(elem, "foo_bar.txt")
+
+    def test_hierarchical_get1(self):
+        """
+        Show that hierarchical access is equivalent to chained access.
+        """
+        config = self._get_nested_config1()
+        elem1 = config.get(("read_data", "file_name"), None)
+        elem2 = config["read_data"]["file_name"]
+        self.assertEqual(str(elem1), str(elem2))
+
+    def test_hierarchical_get2(self):
+        """
+        Test `get()` with hierarchical access.
+        """
+        config = self._get_nested_config1()
+        elem = config.get(("read_data2", "file_name"), "hello_world1")
+        self.assertEqual(elem, "hello_world1")
+        elem = config.get(("read_data2", "file_name2"), "hello_world2")
+        self.assertEqual(elem, "hello_world2")
+        elem = config.get(("read_data", "file_name2"), "hello_world3")
+        self.assertEqual(elem, "hello_world3")
+
 
 # #############################################################################
 # dataflow_core.py
@@ -153,9 +220,8 @@ class Test_config1(ut.TestCase):
 
 
 class _Dataflow_helper(ut.TestCase):
-    def _remove_stage_names(
-        self, node_link_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    @staticmethod
+    def _remove_stage_names(node_link_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Remove stages names from node_link_data dictionary.
 
@@ -845,6 +911,7 @@ class TestPcaFactorComputer2(ut.TestCase):
 # #############################################################################
 
 
+# TODO(*): -> Test_signal_processing_rolling_zcore1()
 class TestSignalProcessingRollingZScore1(ut.TestCase):
     def test_default_values1(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
@@ -855,6 +922,84 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
+
+
+class Test_signal_processing_process_outliers1(ut.TestCase):
+    def _helper(self, srs, mode, lower_quantile, num_df_rows=10, **kwargs):
+        stats = collections.OrderedDict()
+        srs_out = sigp.process_outliers(
+            srs, mode, lower_quantile, stats=stats, **kwargs
+        )
+        txt = []
+        txt.append("# stats")
+        txt.append(pprint.pformat(stats))
+        txt.append("# srs_out")
+        txt.append(str(srs_out.head(num_df_rows)))
+        self.check_string("\n".join(txt))
+
+    @staticmethod
+    def _get_data1():
+        np.random.seed(100)
+        n = 100000
+        data = np.random.normal(loc=0.0, scale=1.0, size=n)
+        return pd.Series(data)
+
+    def test_winsorize1(self):
+        srs = self._get_data1()
+        mode = "winsorize"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    def test_set_to_nan1(self):
+        srs = self._get_data1()
+        mode = "set_to_nan"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    def test_set_to_zero1(self):
+        srs = self._get_data1()
+        mode = "set_to_zero"
+        lower_quantile = 0.01
+        # Check.
+        self._helper(srs, mode, lower_quantile)
+
+    @staticmethod
+    def _get_data2():
+        return pd.Series(range(1, 10))
+
+    def test_winsorize2(self):
+        srs = self._get_data2()
+        mode = "winsorize"
+        lower_quantile = 0.2
+        # Check.
+        self._helper(srs, mode, lower_quantile, num_df_rows=len(srs))
+
+    def test_set_to_nan2(self):
+        srs = self._get_data2()
+        mode = "set_to_nan"
+        lower_quantile = 0.2
+        # Check.
+        self._helper(srs, mode, lower_quantile, num_df_rows=len(srs))
+
+    def test_set_to_zero2(self):
+        srs = self._get_data2()
+        mode = "set_to_zero"
+        lower_quantile = 0.2
+        upper_quantile = 0.5
+        # Check.
+        self._helper(
+            srs,
+            mode,
+            lower_quantile,
+            num_df_rows=len(srs),
+            upper_quantile=upper_quantile,
+        )
+
+
+# TODO(*): We should convert core/notebooks/gallery_signal_processing.ipynb
+#  into unit tests to get some coverage for the functions.
 
 
 @pytest.mark.slow

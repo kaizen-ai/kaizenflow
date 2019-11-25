@@ -1,0 +1,19 @@
+[read_data:
+  symbol: CL
+resample:
+  rule: 5T, read_data:
+  symbol: CL
+resample:
+  rule: 7T, read_data:
+  symbol: CL
+resample:
+  rule: 10T, read_data:
+  symbol: QM
+resample:
+  rule: 5T, read_data:
+  symbol: QM
+resample:
+  rule: 7T, read_data:
+  symbol: QM
+resample:
+  rule: 10T]

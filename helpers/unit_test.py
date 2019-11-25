@@ -100,6 +100,23 @@ def get_df_signature(df, num_rows=3):
     return txt
 
 
+def filter_text(regex: str, txt: str) -> str:
+    """
+    Remove lines in `txt` that match the regex `regex`.
+    """
+    _LOG.debug("Filtering with '%s'", regex)
+    txt_out = []
+    for line in txt.split("\n"):
+        if re.search(regex, line):
+            _LOG.debug("Skipping line='%s'", line)
+            continue
+        txt_out.append(line)
+    txt = "\n".join(txt_out)
+    # We can only remove lines.
+    dbg.dassert_lte(len(txt_out), len(txt))
+    return txt
+
+
 def purify_from_client(txt: str) -> str:
     """
     Remove from a string all the information specific of a git client:
@@ -231,7 +248,7 @@ class TestCase(unittest.TestCase):
         random.seed(20000101)
         np.random.seed(20000101)
         # Disable matplotlib plotting by overwriting the `show` function.
-        plt.show = lambda : 0
+        plt.show = lambda: 0
         # Name of the dir with artifacts for this test.
         self._scratch_dir: Optional[str] = None
         # Print banner to signal starting of a new test.

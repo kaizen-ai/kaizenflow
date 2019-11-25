@@ -82,7 +82,7 @@ def _parse():
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     action = args.positional[0]
     if action == "reset_cache":
         reset_disk_cache()

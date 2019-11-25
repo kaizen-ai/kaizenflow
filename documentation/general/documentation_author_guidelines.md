@@ -34,7 +34,12 @@
     - One approach is to always start from scratch
 
 # Useful reference
-- [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+- [Markdown
+  cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+
+- [Google guide to
+  Markdown](https://github.com/google/styleguide/blob/gh-pages/docguide/style.md)
+    - TODO(gp): Make sure it's compatible with our linter
 
 # Style and cosmetic lints
 
@@ -109,7 +114,7 @@
 - Type somewhere where you can use several free choices:
     - [Grammarly](www.grammarly.com),
     - [LanguageTool](https://www.languagetool.org)
-    - or other proof reading
+    - or other proofreading
   and copy-paste
 - This is super-useful to improve your English since you see the error and the
   correction
@@ -164,3 +169,4 @@
     - [ ] Liza
     - [ ] Julia
     - [ ] GP
+    - [ ] Daniil

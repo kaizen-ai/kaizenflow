@@ -22,22 +22,41 @@
 
 # Running unit tests
 
-## Using the `run_tests.py` wrapper
+- Before any PR (and ideally after every commit) we want to run all the unit
+  tests to make sure we didn't introduce no new bugs
+- We use `pytest` and `unittest` as testing framework
+
+- We have different test sets:
+    - `fast`: tests that are quick to execute (typically < 5 secs per test class)
+    - `slow`: tests that we don't want to run all the times because they are:
+        - slow
+        - related to pieces of code that don't change often
+        - external APIs we don't want to hit completely
+
+- `fast` tests are a subset of `slow` tests
+
+## Using `run_tests.py`
+
+- `dev_scripts/testing/run_tests.py` is a wrapper around `pytest` to implement some
+  typical workflows
 
 ### Run fast tests
+- Run only fast tests:
     ```bash
     > run_tests.py
     > run_tests.py --test fast
     ```
 
 ### Run slow tests
+- Run all tests:
     ```bash
     > run_tests.py --test slow
     ```
 
 ### Run parallel tests
-- You can use the switch `--num_cpus -1` to use all the available CPUs
+- You can use the switch `--num_cpus -1` to use all the available CPUs:
     ```bash
+    > run_tests.py --test fast --num_cpus -1
     > run_tests.py --test slow --num_cpus -1
     ```
 

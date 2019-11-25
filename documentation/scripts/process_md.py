@@ -33,6 +33,8 @@ import os
 import re
 import sys
 
+import helpers.parser as prsr
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -180,13 +182,7 @@ def _parse():
     parser.add_argument("-i", "--in_file_name", required=True)
     parser.add_argument("-o", "--out_file_name", required=False, default=None)
     parser.add_argument("-l", "--max_lev", default=5)
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 

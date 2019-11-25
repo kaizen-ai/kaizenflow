@@ -7,6 +7,7 @@ import os
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging
@@ -75,7 +76,7 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
 
 
 def _main(args):
-    dbg.init_logger2(args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     # Find list of files.
     if not args.file:
         # Find files in conflict.
@@ -104,13 +105,7 @@ def _parse():
         help="Compare to the base / ancestor version instead of the theirs /"
         " remote version",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     args = parser.parse_args()
     _main(args)
 

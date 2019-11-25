@@ -5,18 +5,25 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
-#     display_name: Python [conda env:.conda-develop] *
+#     display_name: Python [conda env:.conda-p1_develop] *
 #     language: python
-#     name: conda-env-.conda-develop-py
+#     name: conda-env-.conda-p1_develop-py
 # ---
+
+# %% [markdown]
+# ## Import
 
 # %%
 # %load_ext autoreload
 # %autoreload 2
 # %matplotlib inline
 
+import collections
+import pprint
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -127,4 +134,58 @@ for i in np.arange(0.5, 4.5, 0.5):
         impulse, tau=40, min_periods=20, min_depth=1, max_depth=2, p_moment=i
     ).plot()
 
+# %% [markdown]
+# # Outliers handling
+
 # %%
+np.random.seed(100)
+n = 100000
+data = np.random.normal(loc=0.0, scale=1.0, size=n)
+print(data[:5])
+
+srs = pd.Series(data)
+srs.plot(kind="hist")
+
+
+# %%
+def _analyze(srs):
+    print(np.isnan(srs).sum())
+    srs.plot(kind="hist")
+    plt.show()
+    pprint.pprint(stats)
+
+
+# %%
+mode = "winsorize"
+lower_quantile = 0.01
+stats = collections.OrderedDict()
+srs_out = sigp.process_outliers(srs, mode, lower_quantile, stats=stats)
+#
+_analyze(srs_out)
+
+# %%
+mode = "winsorize"
+lower_quantile = 0.01
+upper_quantile = 0.90
+stats = collections.OrderedDict()
+srs_out = sigp.process_outliers(
+    srs, mode, lower_quantile, upper_quantile=upper_quantile, stats=stats
+)
+#
+_analyze(srs_out)
+
+# %%
+mode = "set_to_nan"
+lower_quantile = 0.01
+stats = collections.OrderedDict()
+srs_out = sigp.process_outliers(srs, mode, lower_quantile, stats=stats)
+#
+_analyze(srs_out)
+
+# %%
+mode = "set_to_zero"
+lower_quantile = 0.10
+stats = collections.OrderedDict()
+srs_out = sigp.process_outliers(srs, mode, lower_quantile, stats=stats)
+#
+_analyze(srs_out)

@@ -29,8 +29,8 @@ import helpers.system_interaction as si
 print_.config_notebook()
 
 # TODO(gp): Changing level during the notebook execution doesn't work. Fix it.
-# dbg.init_logger(verb=logging.DEBUG)
-dbg.init_logger(verb=logging.INFO)
+# dbg.init_logger(verbosity=logging.DEBUG)
+dbg.init_logger(verbosity=logging.INFO)
 
 # %% [markdown]
 # ## Describe-instances

@@ -25,7 +25,7 @@ source_scripts
 prepare_to_build_env "base"
 
 # From dev_scripts/create_conda.sh
-OPTS="--env_name $CONDA_ENV $CREATE_CONDA_OPTS -v $VERB"
+OPTS="--env_name $CONDA_ENV $CREATE_CONDA_OPTS -v $VERBOSITY"
 create_conda $AMP $OPTS
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -39,5 +39,5 @@ setenv "$AMP/dev_scripts/setenv_amp.sh" $CONDA_ENV
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # Run tests.
-OPTS="--test fast --coverage -v $VERB"
+OPTS="--test fast --coverage -v $VERBOSITY"
 run_tests $AMP $OPTS
