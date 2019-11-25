@@ -983,7 +983,7 @@ def _lint_markdown(file_name, pedantic, check_if_possible):
     amp_path = git.get_amp_abs_path()
     cmd = []
     cmd.append(os.path.join(amp_path, "scripts/gh-md-toc"))
-    cmd.append("--insert %s" % file_name]
+    cmd.append("--insert %s" % file_name)
     cmd = " ".join(cmd)
     _system(cmd, abort_on_error=False)
     return output
