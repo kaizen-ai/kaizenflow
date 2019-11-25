@@ -26,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): This is kind of useless since the cleaning of the path is done at
-# run-time now.
+#  run-time now.
 def _remove_redundant_paths(paths):
     # Set of unique paths.
     found_paths = set()
@@ -43,8 +43,9 @@ def _remove_redundant_paths(paths):
 
 def _export_env_var(val_name, vals):
     """
-    Create snippet of bash script equivalent to the following:
+    Create a snippet of bash script equivalent to the following:
 
+    # Update variable.
     PYTHONPATH=$CURR_DIR:$PYTHONPATH
     # Remove redundant paths.
     PYTHONPATH="$(echo $PYTHONPATH | perl -e
@@ -53,23 +54,30 @@ def _export_env_var(val_name, vals):
     echo $PYTHONPATH | $EXEC_PATH/print_paths.sh
     """
     txt = []
+    # Update variable.
+    txt.append("# Update variable.")
     vals = _remove_redundant_paths(vals)
     txt.append("%s=" % val_name + ":".join(vals))
     txt_tmp = "%s=" % val_name
     txt_tmp += "$(echo $%s" % val_name
     # TODO(gp): Improve this script. It doesn't seem to work for the empty
-    # paths and with repeated paths.
+    #  paths and with repeated paths.
     txt_tmp += (
         " | perl -e "
         + """'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))'"""
     )
     txt_tmp += ")"
     txt.append(txt_tmp)
-    txt.append("export %s=$%s" % (val_name, val_name))
+    #
+    txt.append("# Print variable.")
+    txt.append("echo %s=$%s" % (val_name, val_name))
     txt.append(
         "echo $%s" % val_name
         + """ | perl -e 'print "  "; print join("\\n  ", split(/:/, scalar <>))'"""
     )
+    #
+    txt.append("# Export variable.")
+    txt.append("export %s" % val_name)
     return txt
 
 
