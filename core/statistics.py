@@ -4,8 +4,8 @@ Import as:
 import core.statistics as stats
 """
 
-import logging
 import functools
+import logging
 import math
 from typing import Iterable, List, Optional, Tuple
 
