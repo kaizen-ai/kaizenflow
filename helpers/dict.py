@@ -6,7 +6,7 @@ import helpers.dict as dct
 
 import collections
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 _LOG = logging.getLogger(__name__)
 
