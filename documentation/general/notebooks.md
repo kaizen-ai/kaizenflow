@@ -73,7 +73,6 @@
 - Typically we use as first cells the following ones:
 
 ### Description
-<<<<<<< HEAD
 
 - Add a description of the notebook for the reader
     ```
@@ -96,46 +95,17 @@
     import matplotlib.pyplot as plt
     import pandas as pd
 
-=======
-    ```python
-    ## Description
-    - This notebook was used for prototyping / debugging code that was moved
-      in the file `abc.py`
-    ```
-
-### Imports
-- Import the needed libraries: it's better to put all the imports in one cell, so
-  you can easily re-import everything in one shot
-    ```python
-    ## Imports
-
-    %load_ext autoreload
-    %autoreload 2
-    import logging
-    import os
-
-    import matplotlib.pyplot as plt
-    import pandas as pd
-
->>>>>>> master
     import core.explore as exp
     import core.signal_processing as sigp
     ...
     ```
 
 ### Configuration
-<<<<<<< HEAD
 - You can configure the notebooks with some utils, logging, and report info on
-  how the notebook was executed (e.g., Git commit, libs, etc.)
-    ```python
-    # Print system signature.
-    print(env.get_system_signature())
-=======
-- There are some utilities that you can use to get some common settings
+  how the notebook was executed (e.g., Git commit, libs, etc.):
     ```python
     # Print system signature.
     print(env.get_system_signature()[0])
->>>>>>> master
 
     # Configure the notebook style.
     pri.config_notebook()
@@ -143,14 +113,10 @@
     # Configure logger.
     dbg.init_logger(verbosity=logging.INFO)
     _LOG = logging.getLogger(__name__)
-<<<<<<< HEAD
     ```
 
 - The output of the cell looks like:
     ```
-=======
-
->>>>>>> master
     # Packages
              python: 3.7.3
              joblib: 0.14.0

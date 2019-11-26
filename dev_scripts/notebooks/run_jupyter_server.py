@@ -6,7 +6,7 @@ Start a jupyter server.
 # Start a jupyter server killing the existing one:
 > run_jupyter_server.py force_start
 
-This is equivalent to:
+# This is equivalent to:
 > jupyter notebook '--ip=*' --browser chrome . --port 10001
 """
 
