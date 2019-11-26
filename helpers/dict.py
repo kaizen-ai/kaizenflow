@@ -5,6 +5,26 @@ from typing import Any, Dict, Tuple
 _LOG = logging.getLogger(__name__)
 
 
+def get_nested_dict_iterator(
+        nested: Dict[Any, Any], path=None
+) -> Dict[Tuple[Any], Any]:
+    """
+    Return nested dictionary iterator.
+
+    :param nested: nested dictionary
+    :param path: path to top of tree
+    :return: path to leaf node, value
+    """
+    if path is None:
+        path = []
+    for key, value in nested.items():
+        local_path = path + [key]
+        if isinstance(value, collections.abc.Mapping):
+            yield from get_nested_dict_iterator(value, local_path)
+        else:
+            yield local_path, value
+
+
 def update_nested(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
     """
     Update a possibly nested dictionary with leaf values of another.
@@ -25,23 +45,3 @@ def update_nested(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any
         else:
             dict1[k] = v
     return dict1
-
-
-def get_nested_dict_iterator(
-    nested: Dict[Any, Any], path=None
-) -> Dict[Tuple[Any], Any]:
-    """
-    Return nested dictionary iterator.
-
-    :param nested: nested dictionary
-    :param path: path to top of tree
-    :return: path to leaf node, value
-    """
-    if path is None:
-        path = []
-    for key, value in nested.items():
-        local_path = path + [key]
-        if isinstance(value, collections.abc.Mapping):
-            yield from get_nested_dict_iterator(value, local_path)
-        else:
-            yield local_path, value
