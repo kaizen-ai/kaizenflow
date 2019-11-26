@@ -12,6 +12,7 @@ import pandas as pd
 import core.finance as fin
 import core.statistics as stat
 import helpers.dbg as dbg
+import helpers.dict as dct
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow_core import DAG, Node
@@ -642,25 +643,7 @@ def process_result_bundle(result_bundle):
     return info
 
 
-# TODO(Paul): Move these to `helpers/iterator.py` and add tests.
-def get_nested_dict_iterator(nested, path=None):
-    """
-    Return nested dictionary iterator.
-
-    :param nested: nested dictionary
-    :param path: path to top of tree
-    :return: path to leaf node, value
-    """
-    if path is None:
-        path = []
-    for key, value in nested.items():
-        local_path = path + [key]
-        if isinstance(value, collections.abc.Mapping):
-            yield from get_nested_dict_iterator(value, local_path)
-        else:
-            yield local_path, value
-
-
+# TODO(Paul): Move these to `helpers/dict.py` and add tests.
 def extract_leaf_values(nested, key):
     """
     Extract leaf values with key matching `key`.
@@ -670,7 +653,7 @@ def extract_leaf_values(nested, key):
     :return: dict with key = path as tuple, value = leaf value
     """
     d = {}
-    for item in get_nested_dict_iterator(nested):
+    for item in dct.get_nested_dict_iterator(nested):
         if item[0][-1] == key:
             d[tuple(item[0])] = item[1]
     return d
@@ -678,7 +661,7 @@ def extract_leaf_values(nested, key):
 
 def flatten_nested_dict(nested):
     d = {}
-    for item in get_nested_dict_iterator(nested):
+    for item in dct.get_nested_dict_iterator(nested):
         d[".".join(item[0])] = item[1]
     return d
 

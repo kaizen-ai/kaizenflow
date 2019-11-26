@@ -11,6 +11,7 @@ import os
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import helpers.dbg as dbg
+import helpers.dict as dct
 import helpers.introspection as intr
 import helpers.printing as pri
 
@@ -43,10 +44,29 @@ class Config:
             for k, v in array:
                 self._config[k] = v
 
-    def __setitem__(self, key: str, val: Any) -> None:
+    def __setitem__(self, key: Union[str, Iterable[str]], val: Any) -> None:
         """
         Set / update `key` to `val`.
+
+        If `key` is an iterable of keys, then the key hierarchy is navigated /
+        created and the leaf value added / updated with `val`.
         """
+        if intr.is_iterable(key):
+            head_key, tail_key = key[0], key[1:]  # type: ignore
+            _LOG.debug(
+                "key=%s -> head_key=%s tail_key=%s", key, head_key, tail_key
+            )
+            if not tail_key:
+                # Tuple of a single element, then set the value.
+                # Note that the following call is not equivalent to
+                # self._config[head_key].
+                self.__setitem__(head_key, val)
+            else:
+                # Recurse.
+                dbg.dassert_isinstance(head_key, str, "Keys can only be string")
+                self._config.get(head_key, Config()).__setitem__(tail_key, val)
+            return
+        _LOG.debug("key=%s", key)
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         self._config[key] = val
 
@@ -108,11 +128,21 @@ class Config:
         self._config[key] = config
         return config
 
-    def update(self, dict_: dict) -> None:
+    def update(self, config: "Config") -> None:
         """
-        Equivalent to `dict.update()`
+        Update `self` with `config`.
+
+        Some features of the update:
+        - Updates leaf values in self from values in `config`
+        - Recursively creates paths to leaf values if needed
+        - `config` values overwrite any existing values
         """
-        self._config.update(dict_)
+        tmp = self.copy()
+        nested_dict = config.to_dict()
+        for item in dct.get_nested_dict_iterator(nested_dict):
+            path, val = item[0], item[1]
+            tmp.__setitem__(path, val)
+        return tmp
 
     def get(self, key, val):
         """
@@ -189,6 +219,8 @@ class Config:
             _LOG.error(msg)
             raise ValueError(msg)
 
+    # TODO(*): Standardize/allow to be configurable what to return if a value is
+    #     missing.
     # TODO(gp): return a string
     def print_config(self, keys):
         """
