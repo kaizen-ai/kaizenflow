@@ -565,6 +565,12 @@ class SkLearnModel(FitPredictNode):
 def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index]:
     """
     Warm up source nodes and extract dataframe indices.
+
+    :param mode: Determines how source indices extracted from dataframes
+        - `default`: return index as-is
+        - `dropna`: drop NaNs (any) and then return index
+        - `ffill_dropna`: forward fill NaNs, drop leading NaNs, then return
+                          index
     """
     mode = mode or "default"
     # Warm up source nodes to get dataframes from which we can generate splits.
@@ -574,14 +580,13 @@ def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index
     # Collect source dataframe indices.
     source_idxs = {}
     for nid in source_nids:
+        df = dag.get_node(nid).get_df()
         if mode == "default":
-            source_idxs[nid] = dag.get_node(nid).get_df().index
+            source_idxs[nid] = df.index
         elif mode == "dropna":
-            source_idxs[nid] = dag.get_node(nid).get_df().dropna().index
-        elif mode == "ffill":
-            source_idxs[nid] = dag.get_node(nid).get_df().fillna(method="ffill").index
+            source_idxs[nid] = df.dropna().index
         elif mode == "ffill_dropna":
-            source_idxs[nid] = dag.get_node(nid).get_df().fillna(method="ffill").dropna().index
+            source_idxs[nid] = df.fillna(method="ffill").dropna().index
         else:
             raise ValueError("Unsupported mode `%s`", mode)
     return source_idxs
@@ -592,7 +597,8 @@ def cross_validate(dag, split_func, split_func_kwargs, idx_mode=None):
     """
     Generate splits, run train/test, collect info.
 
-    :return: DAG info for each split, keyed by split.
+    :param idx_mode: same meaning as mode in `_get_source_idxs`
+    :return: DAG info for each split, keyed by split
     """
     # Get dataframe indices of source nodes.
     source_idxs = _get_source_idxs(dag, mode=idx_mode)
