@@ -30,3 +30,25 @@ def get_nested_dict_iterator(
             yield from get_nested_dict_iterator(value, local_path)
         else:
             yield local_path, value
+
+
+def extract_leaf_values(nested, key):
+    """
+    Extract leaf values with key matching `key`.
+
+    :param nested: nested dictionary
+    :param key: leaf key value to match
+    :return: dict with key = path as tuple, value = leaf value
+    """
+    d = {}
+    for item in get_nested_dict_iterator(nested):
+        if item[0][-1] == key:
+            d[tuple(item[0])] = item[1]
+    return d
+
+
+def flatten_nested_dict(nested):
+    d = {}
+    for item in get_nested_dict_iterator(nested):
+        d[".".join(item[0])] = item[1]
+    return d
