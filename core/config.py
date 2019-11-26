@@ -44,11 +44,12 @@ class Config:
             for k, v in array:
                 self._config[k] = v
 
-    # TODO(GPP): Support setting using path-like hierarchical references to
-    # keys (as supported by `__getitem__`).
     def __setitem__(self, key: Union[str, Iterable[str]], val: Any) -> None:
         """
         Set / update `key` to `val`.
+
+        If `key` is an iterable of keys, then the key hierarchy is navigated /
+        created and the leaf value added / updated with `val`.
         """
         if intr.is_iterable(key):
             head_key, tail_key = key[0], key[1:]  # type: ignore
