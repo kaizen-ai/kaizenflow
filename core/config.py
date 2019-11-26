@@ -46,10 +46,26 @@ class Config:
 
     # TODO(GPP): Support setting using path-like hierarchical references to
     # keys (as supported by `__getitem__`).
-    def __setitem__(self, key: str, val: Any) -> None:
+    def __setitem__(self, key: Union[str, Iterable[str]], val: Any) -> None:
         """
         Set / update `key` to `val`.
         """
+        if intr.is_iterable(key):
+            head_key, tail_key = key[0], key[1:]  # type: ignore
+            _LOG.debug(
+                "key=%s -> head_key=%s tail_key=%s", key, head_key, tail_key
+            )
+            if not tail_key:
+                # Tuple of a single element, then set the value.
+                # Note that the following call is not equivalent to
+                # self._config[head_key].
+                self.__setitem__(head_key, val)
+            else:
+                # Recurse.
+                dbg.dassert_isinstance(head_key, str, "Keys can only be string")
+                self._config.get(head_key, Config()).__setitem__(tail_key, val)
+            return
+        _LOG.debug("key=%s", key)
         dbg.dassert_isinstance(key, str, "Keys can only be string")
         self._config[key] = val
 
@@ -117,12 +133,16 @@ class Config:
         """
         self._config.update(dict_)
 
-    def update_nested(self, config_update: "Config") -> "Config":
-        """
-        Update config leaf values with `config_update`.
-        """
-        return dct.update_nested(self._config, config_update.to_dict())
-
+    def merge(self, config: "Config"):
+        tmp = self.copy()
+        nested_dict = config.to_dict()
+        for item in dct.get_nested_dict_iterator(nested_dict):
+            path, val = item[0], item[1]
+            # If `config` creates new paths, add those to self.
+            # for i in range(len(path)):
+            #     tmp.get(path[:i], Config())
+            tmp.__setitem__(path, val)
+        return tmp
 
     def get(self, key, val):
         """
