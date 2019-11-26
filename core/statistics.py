@@ -131,13 +131,14 @@ def get_expanding_window_splits(
     return splits
 
 
-def truncate_index(idx: pd.Index, min_datetime, max_datetime) -> pd.Index:
+def truncate_index(idx: pd.Index, min_idx, max_idx) -> pd.Index:
     """
-    Return subset of idx with values >= min_datetime and < max_datetime.
+    Return subset of idx with values >= min_idx and < max_idx.
     """
     dbg.dassert_monotonic_index(idx)
-    min_mask = idx >= min_datetime
-    max_mask = idx < max_datetime
+    # TODO(*): PartTask667: Consider using bisection to avoid linear scans.
+    min_mask = idx >= min_idx
+    max_mask = idx < max_idx
     mask = min_mask & max_mask
     dbg.dassert_lte(1, mask.sum())
     return idx[mask]
@@ -147,15 +148,18 @@ def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
     """
     Combine multiple indices into a single index for cross-validation splits.
 
+    This is computed as the union of all the indices within the largest common
+    interval.
+
     TODO(Paul): Consider supporting multiple behaviors with `mode`.
     """
     for idx in idxs:
         dbg.dassert_monotonic_index(idx)
     # Find the maximum start/end datetime overlap of all source indices.
     max_min = max([idx.min() for idx in idxs])
-    _LOG.info("Latest start datetime of indices=%s", max_min)
+    _LOG.debug("Latest start datetime of indices=%s", max_min)
     min_max = min([idx.max() for idx in idxs])
-    _LOG.info("Earliest end datetime of indices=%s", min_max)
+    _LOG.debug("Earliest end datetime of indices=%s", min_max)
     truncated_idxs = [truncate_index(idx, max_min, min_max) for idx in idxs]
     # Take the union of truncated indices. Though all indices fall within the
     # datetime range [max_min, min_max), they do not necessarily have the same
