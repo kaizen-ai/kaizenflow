@@ -15,7 +15,7 @@ import networkx as nx
 import pandas as pd
 
 import core.finance as fin
-import core.statistics as stat
+import core.statistics as stats
 import helpers.dbg as dbg
 import helpers.dict as dct
 
@@ -588,7 +588,7 @@ def cross_validate(dag, split_func, split_func_kwargs):
     composite_idx = stats.combine_indices(source_idxs.values())
     # Generate cross-validation splits from
     splits = split_func(composite_idx, **split_func_kwargs)
-    _LOG.debug(stat.convert_splits_to_string(splits))
+    _LOG.debug(stats.convert_splits_to_string(splits))
     #
     result_bundle = collections.OrderedDict()
     # TODO(Paul): rename train/test to fit/predict.
