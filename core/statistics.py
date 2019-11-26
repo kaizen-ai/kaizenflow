@@ -217,7 +217,7 @@ def ttest_1samp(
 
 def multipletests(srs: pd.Series, method: Optional[str] = None) -> pd.Series:
     """
-    Thin wrapper around statsmodel's multipletests.
+    Wrap statsmodel's multipletests.
 
     Returns results in a series indexed like srs.
 
@@ -241,7 +241,7 @@ def multi_ttest(
     method: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Combines ttest and multitest pvalue adjustment.
+    Combine ttest and multitest pvalue adjustment.
     """
     ttest = ttest_1samp(df, popmean=popmean, nan_policy=nan_policy)
     ttest[ADJ_PVAL_COL] = multipletests(ttest[PVAL_COL], method=method)

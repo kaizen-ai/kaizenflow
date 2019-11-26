@@ -530,7 +530,7 @@ class SkLearnModel(FitPredictNode):
     @staticmethod
     def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
         """
-        Returns a list given its input.
+        Return a list given its input.
 
         - If the input is a list, the output is the same list.
         - If the input is a function that returns a list, then the output of
