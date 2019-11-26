@@ -643,7 +643,7 @@ def process_result_bundle(result_bundle):
     return info
 
 
-# TODO(Paul): Move these to `helpers/iterator.py` and add tests.
+# TODO(Paul): Move these to `helpers/dict.py` and add tests.
 def extract_leaf_values(nested, key):
     """
     Extract leaf values with key matching `key`.
