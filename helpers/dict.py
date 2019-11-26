@@ -2,8 +2,6 @@ import collections
 import logging
 from typing import Any, Dict, Tuple
 
-import helpers.dbg as dbg
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -29,7 +27,9 @@ def update_nested(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any
     return dict1
 
 
-def get_nested_dict_iterator(nested: Dict[Any, Any], path=None) -> Dict[Tuple[Any], Any]:
+def get_nested_dict_iterator(
+    nested: Dict[Any, Any], path=None
+) -> Dict[Tuple[Any], Any]:
     """
     Return nested dictionary iterator.
 
