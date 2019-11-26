@@ -1,6 +1,13 @@
+"""
+Import as:
+
+import core.statistics as stats
+"""
+
+import functools
 import logging
 import math
-from typing import List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 import pandas as pd
 import scipy as sp
@@ -124,6 +131,39 @@ def get_expanding_window_splits(
     return splits
 
 
+def truncate_index(idx: pd.Index, min_datetime, max_datetime) -> pd.Index:
+    """
+    Return subset of idx with values >= min_datetime and < max_datetime.
+    """
+    dbg.dassert_monotonic_index(idx)
+    min_mask = idx >= min_datetime
+    max_mask = idx < max_datetime
+    mask = min_mask & max_mask
+    dbg.dassert_lte(1, mask.sum())
+    return idx[mask]
+
+
+def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
+    """
+    Combine multiple indices into a single index for cross-validation splits.
+
+    TODO(Paul): Consider supporting multiple behaviors with `mode`.
+    """
+    for idx in idxs:
+        dbg.dassert_monotonic_index(idx)
+    # Find the maximum start/end datetime overlap of all source indices.
+    max_min = max([idx.min() for idx in idxs])
+    _LOG.info("Latest start datetime of indices=%s", max_min)
+    min_max = min([idx.max() for idx in idxs])
+    _LOG.info("Earliest end datetime of indices=%s", min_max)
+    truncated_idxs = [truncate_index(idx, max_min, min_max) for idx in idxs]
+    # Take the union of truncated indices. Though all indices fall within the
+    # datetime range [max_min, min_max), they do not necessarily have the same
+    # resolution or all values.
+    composite_idx = functools.reduce(lambda x, y: x.union(y), truncated_idxs)
+    return composite_idx
+
+
 def convert_splits_to_string(splits):
     txt = "n_splits=%s\n" % len(splits)
     for train_idxs, test_idxs in splits:
@@ -177,7 +217,7 @@ def ttest_1samp(
 
 def multipletests(srs: pd.Series, method: Optional[str] = None) -> pd.Series:
     """
-    Thin wrapper around statsmodel's multipletests.
+    Wrap statsmodel's multipletests.
 
     Returns results in a series indexed like srs.
 
@@ -201,7 +241,7 @@ def multi_ttest(
     method: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Combines ttest and multitest pvalue adjustment.
+    Combine ttest and multitest pvalue adjustment.
     """
     ttest = ttest_1samp(df, popmean=popmean, nan_policy=nan_policy)
     ttest[ADJ_PVAL_COL] = multipletests(ttest[PVAL_COL], method=method)

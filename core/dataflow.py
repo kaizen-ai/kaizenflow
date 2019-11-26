@@ -1,7 +1,12 @@
+"""
+Import as:
+
+import core.dataflow as dtf
+"""
+
 import abc
 import collections
 import copy
-import functools
 import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -10,7 +15,7 @@ import networkx as nx
 import pandas as pd
 
 import core.finance as fin
-import core.statistics as stat
+import core.statistics as stats
 import helpers.dbg as dbg
 import helpers.dict as dct
 
@@ -525,7 +530,7 @@ class SkLearnModel(FitPredictNode):
     @staticmethod
     def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
         """
-        Returns a list given its input.
+        Return a list given its input.
 
         - If the input is a list, the output is the same list.
         - If the input is a function that returns a list, then the output of
@@ -578,17 +583,12 @@ def cross_validate(dag, split_func, split_func_kwargs):
 
     :return: DAG info for each split, keyed by split.
     """
+    # Get dataframe indices of source nodes.
     source_idxs = _get_source_idxs(dag)
-    # TODO(Paul): `union` may be a good choice if we make some assumptions
-    # on the source indices, e.g., that they cover the same time period.
-    # If additional assumptions are not made, then the splits that result
-    # may have various undesirable characteristics.
-    # An alternative approach is to take the start and end dates of the
-    # intersection of all indices, use those dates to restrict each index,
-    # and then take the union of the restriction.
-    idx_union = functools.reduce(lambda x, y: x.union(y), source_idxs.values())
-    splits = split_func(idx_union, **split_func_kwargs)
-    _LOG.debug(stat.convert_splits_to_string(splits))
+    composite_idx = stats.combine_indices(source_idxs.values())
+    # Generate cross-validation splits from
+    splits = split_func(composite_idx, **split_func_kwargs)
+    _LOG.debug(stats.convert_splits_to_string(splits))
     #
     result_bundle = collections.OrderedDict()
     # TODO(Paul): rename train/test to fit/predict.
