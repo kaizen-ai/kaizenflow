@@ -32,6 +32,7 @@ import re
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
 
@@ -150,23 +151,18 @@ def _parse():
         "-r",
         "--repo_github_name",
         action="store",
-        default=None,
+        # TODO(gp): This is a workaround for PartTask551.
+        default="ParticleDev/commodity_research",
         help="Refer to one of the repos using full git name",
     )
     parser.add_argument("positional", nargs="+", help="Github issue number")
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level)
+    dbg.init_logger(verbosity=args.log_level)
     # Print url.
     git_repo_name = git.get_repo_symbolic_name(super_module=True)
     print("current_repo='%s'\n" % git_repo_name)

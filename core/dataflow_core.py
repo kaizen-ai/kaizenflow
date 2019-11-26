@@ -6,6 +6,7 @@ from typing import Any, List, Optional, Tuple, Union
 import networkx as nx
 
 import helpers.dbg as dbg
+import helpers.list as lst
 
 _LOG = logging.getLogger(__name__)
 
@@ -118,18 +119,6 @@ class Node(NodeInterface):
         if method not in self._output_vals:
             self._output_vals[method] = {}
         self._output_vals[method][name] = value
-
-
-def assert_single_element_and_return(l: List[str]) -> str:
-    """
-    Asserts that list `l` has a single element and returns it.
-
-    :param l: list
-    :return: returns the unique element of the list
-    """
-    dbg.dassert_isinstance(l, list)
-    dbg.dassert_eq(len(l), 1, "List has %d elements!", len(l))
-    return l[0]
 
 
 # #############################################################################
@@ -274,7 +263,7 @@ class DAG:
             dbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         else:
             parent_nid = parent
-            parent_out = assert_single_element_and_return(
+            parent_out = lst.assert_single_element_and_return(
                 self.get_node(parent_nid).output_names
             )
         # Automatically infer input name when the child has only one input.
@@ -284,7 +273,7 @@ class DAG:
             dbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         else:
             child_nid = child
-            child_in = assert_single_element_and_return(
+            child_in = lst.assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
         # Ensure that `child_in` is not already hooked up to an output.

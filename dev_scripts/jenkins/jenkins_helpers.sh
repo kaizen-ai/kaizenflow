@@ -3,7 +3,7 @@
 # amp.
 # """
 
-VERB="DEBUG"
+VERBOSITY="DEBUG"
 
 
 function prepare_to_build_env() {
@@ -89,7 +89,7 @@ function run_tests() {
         return 1
     fi;
     #
-    RUN_TESTS_PY="$AMP/dev_scripts/run_tests.py"
+    RUN_TESTS_PY="$AMP/dev_scripts/testing/run_tests.py"
     OPTS=" $OPTS --jenkins"
     CMD="$RUN_TESTS_PY $OPTS"
     execute $CMD

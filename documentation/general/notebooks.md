@@ -71,59 +71,68 @@
 
 ## General format of a notebook
 - Typically we use as first cells the following ones:
-    0) description
-        ```python
-        ## Description
-        - This notebook was used for prototyping / debugging code that was moved
-          in the file `abc.py`
-        ```
 
-    1) import the needed libraries: it's better to put all the imports in one
-        cell:
-        ```python
-        ## Imports
+### Description
 
-        %load_ext autoreload
-        %autoreload 2
-        import logging
-        import os
+- Add a description of the notebook for the reader
+    ```
+    ## Description
+    - This notebook was used for prototyping / debugging code that was moved
+      in the file `abc.py`
+    ```
 
-        import matplotlib.pyplot as plt
-        import pandas as pd
+### Imports
 
-        import core.explore as exp
-        import core.signal_processing as sigp
-        ...
-        ```
+- Import the needed libraries: it's better to put all the imports in one cell:
+    ```python
+    ## Imports
 
-    2) configuration
-        ```python
-        # Print system signature.
-        print(env.get_system_signature())
+    %load_ext autoreload
+    %autoreload 2
+    import logging
+    import os
 
-        # Configure the notebook style.
-        pri.config_notebook()
+    import matplotlib.pyplot as plt
+    import pandas as pd
 
-        # Configure logger.
-        dbg.init_logger(verb=logging.INFO)
-        _LOG = logging.getLogger(__name__)
+    import core.explore as exp
+    import core.signal_processing as sigp
+    ...
+    ```
 
-        # Packages
-                 python: 3.7.3
-                 joblib: 0.14.0
-                  numpy: 1.17.3
-                 pandas: 0.25.2
-                pyarrow: 0.15.0
-                  scipy: 1.3.1
-                seaborn: 0.9.0
-                sklearn: 0.21.3
-            statsmodels: 0.10.1
-        # Last commits:
-          * 3c11dd7 Julia    PartTask461: Add correlation and autocorrelation analysis         (  22 hours ago) Thu Oct 31 14:31:14 2019  (HEAD -> PartTask461_PRICE_Familiarize_with_target_commodities, origin/PartTask461_PRICE_Familiarize_with_target_commodities)
-          * 99417bc Julia    PartTask418: Address a TODO in _normalize_1_min()                 (    2 days ago) Wed Oct 30 07:48:34 2019
-          * 6ad45a8 saggese  More docs and lint                                                (    3 days ago) Tue Oct 29 21:31:55 2019
-        WARNING: Running in Jupyter
-        ```
+### Configuration
+- You can configure the notebooks with some utils, logging, and report info on
+  how the notebook was executed (e.g., Git commit, libs, etc.):
+    ```python
+    # Print system signature.
+    print(env.get_system_signature()[0])
+
+    # Configure the notebook style.
+    pri.config_notebook()
+
+    # Configure logger.
+    dbg.init_logger(verbosity=logging.INFO)
+    _LOG = logging.getLogger(__name__)
+    ```
+
+- The output of the cell looks like:
+    ```
+    # Packages
+             python: 3.7.3
+             joblib: 0.14.0
+              numpy: 1.17.3
+             pandas: 0.25.2
+            pyarrow: 0.15.0
+              scipy: 1.3.1
+            seaborn: 0.9.0
+            sklearn: 0.21.3
+        statsmodels: 0.10.1
+    # Last commits:
+      * 3c11dd7 Julia    PartTask461: Add correlation and autocorrelation analysis         (  22 hours ago) Thu Oct 31 14:31:14 2019  (HEAD -> PartTask461_PRICE_Familiarize_with_target_commodities, origin/PartTask461_PRICE_Familiarize_with_target_commodities)
+      * 99417bc Julia    PartTask418: Address a TODO in _normalize_1_min()                 (    2 days ago) Wed Oct 30 07:48:34 2019
+      * 6ad45a8 saggese  More docs and lint                                                (    3 days ago) Tue Oct 29 21:31:55 2019
+    WARNING: Running in Jupyter
+    ```
 
 ## Make the notebook flow clear
 

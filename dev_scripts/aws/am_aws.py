@@ -8,6 +8,7 @@ import logging
 import os
 
 import helpers.dbg as dbg
+import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ def _gest_inst_status():
 def _main(parser):
     args = parser.parse_args()
     inst_id = _get_instance_id()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.action == "start":
         status = _gest_inst_status()
         _LOG.info("Current instance status: %s", status)
@@ -91,13 +92,7 @@ def _parse():
         required=True,
         help="Select action to execute",
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     #
     _main(parser)
 

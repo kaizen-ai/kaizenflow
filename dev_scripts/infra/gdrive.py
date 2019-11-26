@@ -48,6 +48,7 @@ import sys
 import helpers.datetime_ as datetime_
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -77,8 +78,8 @@ def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
         "--drive-export-formats docx,xlsx,pptx,svg",
         # "--drive-shared-with-me",
     ]
-    verb = dbg.get_logger_verb()
-    if verb <= logging.DEBUG:
+    verbosity = dbg.get_logger_verbosity()
+    if verbosity <= logging.DEBUG:
         cmd.append("-vv")
     #
     cmd = " ".join(cmd)
@@ -103,8 +104,8 @@ def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
         "--drive-allow-import-name-change",
         # "--drive-shared-with-me"
     ]
-    verb = dbg.get_logger_verb()
-    if verb <= logging.DEBUG:
+    verbosity = dbg.get_logger_verbosity()
+    if verbosity <= logging.DEBUG:
         cmd.append("-vv")
     #
     cmd = " ".join(cmd)
@@ -139,19 +140,13 @@ def _parse():
     parser.add_argument(
         "--dst_dir", action="store", default=None, help="Destination dir"
     )
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     log_dir = "./tmp.gdrive.log"
     log_dir = os.path.abspath(log_dir)

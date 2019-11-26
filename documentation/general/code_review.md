@@ -103,7 +103,7 @@
 	```
   with
 	```python
-    _LOG.warning("Hello %s", name")
+    _LOG.warning("Hello %s", name)
 	```
   you are expected to do this replacement everywhere
     1) in the current review

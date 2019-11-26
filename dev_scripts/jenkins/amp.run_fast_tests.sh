@@ -28,5 +28,5 @@ setenv "$AMP/dev_scripts/setenv_amp.sh" $CONDA_ENV
 # Run tests.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-OPTS="--test fast -v $VERB"
+OPTS="--test fast -v $VERBOSITY"
 run_tests $AMP $OPTS

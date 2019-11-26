@@ -1,0 +1,24 @@
+# stats
+OrderedDict([('series_name', None),
+             ('num_elems_before', 9),
+             ('num_nans_before', 0),
+             ('num_infs_before', 0),
+             ('quantiles', (0.2, 0.8)),
+             ('mode', 'winsorize'),
+             ('bounds', array([2.6, 7.4])),
+             ('num_elems_removed', 4),
+             ('num_elems_after', 5),
+             ('percentage_removed', 44.44444444444444),
+             ('num_nans_after', 0),
+             ('num_infs_after', 0)])
+# srs_out
+0    2.6
+1    2.6
+2    3.0
+3    4.0
+4    5.0
+5    6.0
+6    7.0
+7    7.4
+8    7.4
+dtype: float64

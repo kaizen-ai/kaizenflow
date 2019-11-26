@@ -4,10 +4,23 @@
 import helpers.introspection as intr
 """
 
+import collections.abc as abc
 import inspect
 import sys
+from typing import Any, List
 
 import helpers.dbg as dbg
+
+
+def is_iterable(obj):
+    """
+    Return whether obj can be iterated upon or not.
+
+    Note that a string is iterable in python, but typically we refer to iterables
+    as lists, tuples, so we exclude it.
+    """
+    # From https://stackoverflow.com/questions/1952464
+    return not isinstance(obj, str) and isinstance(obj, abc.Iterable)
 
 
 def get_function_name(count=0):
@@ -61,3 +74,24 @@ def get_size(obj, seen=None):
             if hasattr(obj, s)
         )
     return size
+
+
+def get_methods(obj: Any, access: str = "all") -> List[str]:
+    """
+    Return list of names corresponding to class methods of an object
+    `obj`.
+
+    :param obj: class or class object
+    :param access: allows to select private, public or all methods of
+        the object.
+    """
+    methods = [method for method in dir(obj) if callable(getattr(obj, method))]
+    if access == "all":
+        pass
+    elif access == "private":
+        methods = [method for method in methods if method.startswith("_")]
+    elif access == "public":
+        methods = [method for method in methods if not method.startswith("_")]
+    else:
+        raise ValueError("Invalid access='%s'" % access)
+    return methods

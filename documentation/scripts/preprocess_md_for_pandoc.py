@@ -28,6 +28,7 @@ import re
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
@@ -38,19 +39,13 @@ def _parse():
     )
     parser.add_argument("--input", action="store", type=str, required=True)
     parser.add_argument("--output", action="store", type=str, default=None)
-    parser.add_argument(
-        "-v",
-        dest="log_level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level",
-    )
+    prsr.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser):
     args = parser.parse_args()
-    dbg.init_logger(verb=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Slurp file.
     lines = io_.from_file(args.input)
     lines = [l.rstrip("\n") for l in lines]
@@ -120,10 +115,13 @@ def _main(parser):
             _LOG.debug("  -> skip")
             continue
         # Process question.
+        # num_tab_spaces = 4
+        num_tab_spaces = 2
+        space = " " * (num_tab_spaces - 1)
         if (
-            line.startswith("* ")
-            or line.startswith("** ")
-            or line.startswith("*:")
+            line.startswith("*" + space)
+            or line.startswith("**" + space)
+            or line.startswith("*:" + space)
         ):
             # Bold.
             meta = "**"
@@ -133,17 +131,15 @@ def _main(parser):
             # meta = "__"
             # Italic.
             # meta = "_"
-            if line.startswith("* "):
-                to_replace = "* "
-                line = line.replace(to_replace, "- " + meta) + meta[::-1]
-            elif line.startswith("** "):
-                to_replace = "** "
-                line = line.replace(to_replace, "- " + meta) + meta[::-1]
-            elif line.startswith("*: "):
+            if line.startswith("*" + space):
+                to_replace = "*" + space
+            elif line.startswith("**" + space):
+                to_replace = "**" + space
+            elif line.startswith("*:" + space):
                 to_replace = "*: "
-                line = line.replace(to_replace, "- " + meta) + meta[::-1]
             else:
                 raise RuntimeError("line=%s" % line)
+            line = line.replace(to_replace, "- " + meta) + meta[::-1]
             out.append(line)
             continue
         # Handle empty lines in the questions and answers.

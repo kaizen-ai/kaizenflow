@@ -123,14 +123,14 @@ def get_repo_symbolic_name(super_module: bool) -> str:
 
 def _get_repo_map():
     _REPO_MAP = {"alphamatic/amp": "Amp"}
-    # TODO(gp): Extend this somehow.
-    ## Get info from the including repo, if possible.
-    # try:
-    #    import repo_config as repc
-    #
-    #    _REPO_MAP.update(repc.REPO_MAP)
-    # except ImportError:
-    #    _LOG.debug("No including repo")
+    # TODO(gp): The proper fix is #PartTask551.
+    # Get info from the including repo, if possible.
+    try:
+        import repo_config as repc  # type: ignore
+
+        _REPO_MAP.update(repc.REPO_MAP)
+    except ImportError:
+       _LOG.debug("No including repo")
     dbg.dassert_no_duplicates(_REPO_MAP.keys())
     dbg.dassert_no_duplicates(_REPO_MAP.values())
     return _REPO_MAP.copy()
@@ -196,7 +196,10 @@ def get_amp_abs_path() -> str:
     amp_dir = os.path.abspath(amp_dir)
     # Sanity check.
     dbg.dassert_dir_exists(amp_dir)
-    dbg.dassert_eq(os.path.basename(amp_dir), "amp")
+    if si.get_user_name() != "jenkins":
+        # Jenkins checks out amp repo in directories with different names,
+        # e.g., amp.dev.build_clean_env.run_slow_coverage_tests.
+        dbg.dassert_eq(os.path.basename(amp_dir), "amp")
     return amp_dir
 
 
