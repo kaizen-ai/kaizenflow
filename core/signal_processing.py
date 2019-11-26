@@ -854,7 +854,13 @@ def process_outlier_df(
         cols[col] = srs
         if stats is not None:
             stats[col] = maybe_stats
-    return pd.DataFrame.from_dict(cols)
+    ret = pd.DataFrame.from_dict(cols)
+    # Check that the columns are the same. We don't use dassert_eq because of
+    # #665.
+    dbg.dassert(all(df.columns == ret.columns),
+            msg="Columns are different:\ndf.columns=%s\nret.columns=%s",
+            str(df.columns), str(ret.columns))
+    return ret
 
 
 # #############################################################################
