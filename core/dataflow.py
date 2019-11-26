@@ -562,10 +562,12 @@ class SkLearnModel(FitPredictNode):
 # #############################################################################
 
 
-def _get_source_idxs(dag: DAG) -> Dict[str, pd.Index]:
+def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index]:
     """
     Warm up source nodes and extract dataframe indices.
     """
+    if mode is None:
+        mode = "default"
     # Warm up source nodes to get dataframes from which we can generate splits.
     source_nids = dag.get_sources()
     for nid in source_nids:
@@ -573,19 +575,26 @@ def _get_source_idxs(dag: DAG) -> Dict[str, pd.Index]:
     # Collect source dataframe indices.
     source_idxs = {}
     for nid in source_nids:
-        source_idxs[nid] = dag.get_node(nid).get_df().index
+        if mode == "default":
+            source_idxs[nid] = dag.get_node(nid).get_df().index
+        elif mode == "dropna":
+            source_idxs[nid] = dag.get_node(nid).get_df().dropna().index
+        elif mode == "ffill":
+            source_idxs[nid] = dag.get_node(nid).get_df().fillna(method="ffill").index
+        elif mode == "ffill_dropna":
+            source_idxs[nid] = dag.get_node(nid).get_df().fillna(method="ffill").dropna().index
     return source_idxs
 
 
 # TODO(Paul): Formalize what this returns and what can be done with it.
-def cross_validate(dag, split_func, split_func_kwargs):
+def cross_validate(dag, split_func, split_func_kwargs, idx_mode=None):
     """
     Generate splits, run train/test, collect info.
 
     :return: DAG info for each split, keyed by split.
     """
     # Get dataframe indices of source nodes.
-    source_idxs = _get_source_idxs(dag)
+    source_idxs = _get_source_idxs(dag, mode=idx_mode)
     composite_idx = stats.combine_indices(source_idxs.values())
     # Generate cross-validation splits from
     splits = split_func(composite_idx, **split_func_kwargs)
@@ -598,10 +607,12 @@ def cross_validate(dag, split_func, split_func_kwargs):
         for nid, idx in source_idxs.items():
             node_info = collections.OrderedDict()
             node_train_idxs = idx.intersection(train_idxs)
+            dbg.dassert_lte(1, node_train_idxs.size)
             node_info["fit_idxs"] = node_train_idxs
             dag.get_node(nid).set_fit_idxs(node_train_idxs)
             #
             node_test_idxs = idx.intersection(test_idxs)
+            dbg.dassert_lte(1, node_test_idxs.size)
             node_info["predict_idxs"] = node_test_idxs
             dag.get_node(nid).set_predict_idxs(node_test_idxs)
             #
