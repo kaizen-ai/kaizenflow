@@ -128,13 +128,15 @@ class Config:
         self._config[key] = config
         return config
 
-    def update(self, dict_: dict) -> None:
+    def update(self, config: "Config") -> None:
         """
-        Equivalent to `dict.update()`
-        """
-        self._config.update(dict_)
+        Update `self` with `config`.
 
-    def merge(self, config: "Config"):
+        Some features of the update:
+        - Updates leaf values in self from values in `config`
+        - Recursively creates paths to leaf values if needed
+        - `config` values overwrite any existing values
+        """
         tmp = self.copy()
         nested_dict = config.to_dict()
         for item in dct.get_nested_dict_iterator(nested_dict):
