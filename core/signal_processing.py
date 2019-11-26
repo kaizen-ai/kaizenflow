@@ -857,9 +857,12 @@ def process_outlier_df(
     ret = pd.DataFrame.from_dict(cols)
     # Check that the columns are the same. We don't use dassert_eq because of
     # #665.
-    dbg.dassert(all(df.columns == ret.columns),
-            msg="Columns are different:\ndf.columns=%s\nret.columns=%s",
-            str(df.columns), str(ret.columns))
+    dbg.dassert(
+        all(df.columns == ret.columns),
+        "Columns are different:\ndf.columns=%s\nret.columns=%s",
+        str(df.columns),
+        str(ret.columns),
+    )
     return ret
 
 
