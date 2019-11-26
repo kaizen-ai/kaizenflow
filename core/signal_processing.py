@@ -180,7 +180,7 @@ def plot_scaleogram(
     A nice reference and utility for plotting can be found at
     https://github.com/alsauve/scaleogram.
 
-    See also
+    Also see:
     https://github.com/PyWavelets/pywt/blob/master/demo/wp_scalogram.py.
 
     :param signal: signal to transform
@@ -510,7 +510,7 @@ def rolling_var(
         signal, tau, min_periods, min_depth, max_depth
     )
     return rolling_moment(
-        signal - signal_ma, tau, min_periods, min_depth, max_depth
+        signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
     )
 
 
@@ -823,6 +823,38 @@ def process_outliers(
         stats["num_nans_after"] = np.isnan(srs).sum()
         stats["num_infs_after"] = np.isinf(srs).sum()
     return srs
+
+
+def process_outlier_df(
+    df: pd.DataFrame,
+    mode: str,
+    lower_quantile: float,
+    upper_quantile: Optional[float] = None,
+    stats: Optional[dict] = None,
+) -> pd.DataFrame:
+    """
+    Extend `process_outliers` to dataframes.
+
+    TODO(*): Revisit this with a decorator approach:
+    https://github.com/ParticleDev/commodity_research/issues/568
+    """
+    if stats is not None:
+        dbg.dassert_isinstance(stats, dict)
+        # Dictionary should be empty.
+        dbg.dassert(not stats)
+    cols = {}
+    for col in df.columns:
+        if stats is not None:
+            maybe_stats = {}
+        else:
+            maybe_stats = None
+        srs = process_outliers(
+            df[col], mode, lower_quantile, upper_quantile, maybe_stats
+        )
+        cols[col] = srs
+        if stats is not None:
+            stats[col] = maybe_stats
+    return pd.DataFrame.from_dict(cols)
 
 
 # #############################################################################
