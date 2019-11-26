@@ -566,8 +566,7 @@ def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index
     """
     Warm up source nodes and extract dataframe indices.
     """
-    if mode is None:
-        mode = "default"
+    mode = mode or "default"
     # Warm up source nodes to get dataframes from which we can generate splits.
     source_nids = dag.get_sources()
     for nid in source_nids:
