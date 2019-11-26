@@ -141,9 +141,6 @@ class Config:
         nested_dict = config.to_dict()
         for item in dct.get_nested_dict_iterator(nested_dict):
             path, val = item[0], item[1]
-            # If `config` creates new paths, add those to self.
-            # for i in range(len(path)):
-            #     tmp.get(path[:i], Config())
             tmp.__setitem__(path, val)
         return tmp
 
@@ -222,7 +219,7 @@ class Config:
             _LOG.error(msg)
             raise ValueError(msg)
 
-    # TODO: Standardize/allow to be configurable what to return if a value is
+    # TODO(*): Standardize/allow to be configurable what to return if a value is
     #     missing.
     # TODO(gp): return a string
     def print_config(self, keys):
