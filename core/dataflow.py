@@ -583,6 +583,8 @@ def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index
             source_idxs[nid] = dag.get_node(nid).get_df().fillna(method="ffill").index
         elif mode == "ffill_dropna":
             source_idxs[nid] = dag.get_node(nid).get_df().fillna(method="ffill").dropna().index
+        else:
+            raise ValueError("Unsupported mode `%s`", mode)
     return source_idxs
 
 
