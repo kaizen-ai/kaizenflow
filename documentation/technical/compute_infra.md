@@ -12,6 +12,7 @@
 # Set up research instance
 
 ## Vendor info
+
 - We prefer to use Amazon AWS Services
 - Account owner: Ilya Nikolskiy
 - Email: ilya@particle.one

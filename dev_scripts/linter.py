@@ -166,7 +166,7 @@ def _tee(cmd, executable, abort_on_error):
 # #############################################################################
 
 
-def _get_files(args):
+def _get_files(args) -> Iterable[str]:
     """
     Return the list of files to process given the command line arguments.
     """
@@ -196,6 +196,16 @@ def _get_files(args):
         if not file_names or args.current_git_files:
             # Get all the git modified files.
             file_names = git.get_modified_files()
+    # Remove files
+    return file_names
+
+
+def _get_files_to_lint(args, file_names: Iterable[str]) -> Iterable[str]:
+    """
+    Get all the files that need to be linted.
+
+    Typically files to lint are python and notebooks.
+    """
     _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
     # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
@@ -416,6 +426,9 @@ def _custom_python_checks(file_name, pedantic, check_if_possible):
     # Process file.
     txt_new = []
     for line in txt:
+        m = re.search("^\s*from\s+(\S+)\s+import\s+(\S+)", line)
+        if m:
+            #
         pass
     # Write file back.
     txt = "\n".join(txt)
@@ -608,6 +621,10 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         "D400",
         # D402: First line should not be the function's "signature"
         "D402",
+        # D407: Missing dashed underline after section
+        "D407",
+        # D413: Missing dashed underline after section
+        "D413",
         # D415: First line should end with a period, question mark, or
         # exclamation point
         "D415",
@@ -865,6 +882,35 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
 
 
 # TODO(gp): Move in a more general file.
+def _is_under_dir(file_name, dir_name):
+    """
+    Return whether a file is under a test directory.
+    """
+    subdir_names = file_name.split("/")
+    return dir_name in subdir_names
+
+
+def is_under_tests_dir(file_name):
+    """
+    Return whether a file is under a test directory.
+    """
+    return
+    return "tests" in subdir_names
+
+
+def is_test_input_output_file(file_name):
+    """
+    Return whether a file
+
+    :param file_name:
+    :return:
+    """
+    ret = is_under_tests_dir(file_name)
+    ret &= file_name.endswith(".txt")
+
+
+
+
 def is_py_file(file_name):
     """
     Return whether a file is a python file.
@@ -1118,6 +1164,66 @@ def _run_linter(actions, args, file_names):
     output = _remove_empty_lines(output)
     return output
 
+# ##############################################################################
+
+class _FileChecker:
+
+    def __init__(self, file_name):
+        dbg.dassert_exists(file_name)
+        self._file_name = file_name
+
+    def check(self):
+        output = []
+        for func in [
+            self._check_size,
+            self._check_notebook_dir,
+            self._check_test_file_dir,
+        ]:
+            msg = func(self._file_name)
+            if msg:
+                _LOG.warning(msg)
+                output.append(msg)
+        return output
+
+    @staticmethod
+    def _check_size(file_name):
+        """
+        Check size of a file.
+        """
+        msg = ""
+        max_size_in_bytes = 512 * 1024
+        size_in_bytes = os.path.getsize(file_name)
+        if size_in_bytes > max_size_in_bytes:
+            msg = "%s: file size is too large %s > %s" % (file_name,
+                                                          size_in_bytes, max_size_in_bytes)
+        return msg
+
+    @staticmethod
+    def _check_notebook_dir(file_name):
+        """
+        # Check if that notebooks are under `notebooks` dir.
+        """
+        msg = ""
+        if is_ipynb_file(file_name):
+            subdir_names = file_name.split("/")
+            if "notebooks" not in subdir_names:
+                msg = "%s: each notebook should be under a 'notebooks' directory " \
+                      "to not confuse pytest" % file_name
+        return msg
+
+    @staticmethod
+    def _check_test_file_dir(file_name):
+        """
+        Check if test files are under `tests` dir.
+        """
+        msg = ""
+        if os.path.basename(file_name).startswith("test_"):
+            subdir_names = file_name.split("/")
+            if "tests" not in subdir_names:
+                msg = "%s: test files should be under 'tests' directory to be " \
+                      "discovered by pytest" % file_name
+        return msg
+
 
 # #############################################################################
 # Main.
@@ -1164,11 +1270,23 @@ def _main(args):
     dbg.init_logger(args.log_level)
     #
     if args.test_actions:
+        _LOG.warning("Testing actions...")
         _test_actions()
         _LOG.warning("Exiting as requested")
         sys.exit(0)
+    output = []
+    # Get all the files to process.
+    all_file_names = _get_files(args)
+    _LOG.info("Found %s files to process", len(all_file_names))
+    # Check the files.
+    if not args.collect_only:
+        for file_name in all_file_names:
+            output_tmp = _FileChecker(file_name).check()
+            dbg.dassert_isinstance(output_tmp, list)
+            output.append(output_tmp)
+    assert 0
     # Select files.
-    file_names = _get_files(args)
+    file_names = _get_files_to_lint(args, all_file_names)
     _LOG.info(
         "# Processing %d files:\n%s",
         len(file_names),
@@ -1182,8 +1300,9 @@ def _main(args):
     io_.create_dir(_TMP_DIR, incremental=False)
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Run linter.
-    output = _run_linter(actions, args, file_names)
-    dbg.dassert_isinstance(output, list)
+    output_tmp = _run_linter(actions, args, file_names)
+    dbg.dassert_isinstance(output_tmp, list)
+    output.extend(output_tmp)
     # Sort the errors.
     output = sorted(output)
     # Print linter output.
