@@ -6,5 +6,5 @@
 
 source helpers.sh
 
-cmd="ack $ACK_OPTS --type=python '$@'"
+cmd="ack $ACK_OPTS --type=python '$@' | grep -v ipynb_checkpoints"
 execute $cmd
