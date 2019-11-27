@@ -1,4 +1,9 @@
 """
+Import as:
+
+import core.explore as expl
+
+
 Utility functions for Jupyter notebook to:
 - format data
 - transform pandas data structures
