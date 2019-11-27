@@ -315,10 +315,29 @@ def squash(
 
 
 def _com_to_tau(com: float) -> float:
+    """
+    Transform center-of-mass (com) into tau parameter.
+
+    This is the function inverse of `_tau_to_com`.
+    """
     return 1.0 / np.log(1 + 1.0 / com)
 
 
 def _tau_to_com(tau: float) -> float:
+    """
+    Transform tau parameter into center-of-mass (com).
+
+    We use the tau parameter for kernels (as in Dacorogna, et al), but for the
+    ema operator want to take advantage of pandas' implementation, which uses
+    different parameterizations. We adopt `com` because
+        - It is almost equal to `tau`
+        - We have used it historically
+
+    :param tau: parameter used in (continuous) ema and ema-derived kernels. For
+        typical ranges it is approximately but not exactly equal to the
+        center-of-mass (com) associated with an ema kernel.
+    :return: com
+    """
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
