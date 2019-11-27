@@ -1,7 +1,12 @@
+"""
+Import as:
+
+import core.dataflow as dtf
+"""
+
 import abc
 import collections
 import copy
-import functools
 import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -10,9 +15,8 @@ import networkx as nx
 import pandas as pd
 
 import core.finance as fin
-import core.statistics as stat
+import core.statistics as stats
 import helpers.dbg as dbg
-import helpers.dict as dct
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow_core import DAG, Node
@@ -25,11 +29,13 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def draw(graph):
-    pos = nx.kamada_kawai_layout(graph)
-    flipped_pos = {node: (-x, y) for (node, (x, y)) in pos.items()}
+def draw(graph, flip_across_vertical=False, seed=1):
+    kpos = nx.kamada_kawai_layout(graph)
+    if flip_across_vertical:
+        kpos = {node: (-x, y) for (node, (x, y)) in kpos.items()}
+    pos = nx.spring_layout(graph, pos=kpos, seed=seed)
     nx.draw_networkx(
-        graph, pos=flipped_pos, node_size=3000, arrowsize=30, width=1.5
+        graph, pos=pos, node_size=3000, arrowsize=30, width=1.5
     )
 
 
@@ -525,7 +531,7 @@ class SkLearnModel(FitPredictNode):
     @staticmethod
     def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
         """
-        Returns a list given its input.
+        Return a list given its input.
 
         - If the input is a list, the output is the same list.
         - If the input is a function that returns a list, then the output of
@@ -556,10 +562,17 @@ class SkLearnModel(FitPredictNode):
 # #############################################################################
 
 
-def _get_source_idxs(dag: DAG) -> Dict[str, pd.Index]:
+def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index]:
     """
     Warm up source nodes and extract dataframe indices.
+
+    :param mode: Determines how source indices extracted from dataframes
+        - `default`: return index as-is
+        - `dropna`: drop NaNs (any) and then return index
+        - `ffill_dropna`: forward fill NaNs, drop leading NaNs, then return
+                          index
     """
+    mode = mode or "default"
     # Warm up source nodes to get dataframes from which we can generate splits.
     source_nids = dag.get_sources()
     for nid in source_nids:
@@ -567,28 +580,32 @@ def _get_source_idxs(dag: DAG) -> Dict[str, pd.Index]:
     # Collect source dataframe indices.
     source_idxs = {}
     for nid in source_nids:
-        source_idxs[nid] = dag.get_node(nid).get_df().index
+        df = dag.get_node(nid).get_df()
+        if mode == "default":
+            source_idxs[nid] = df.index
+        elif mode == "dropna":
+            source_idxs[nid] = df.dropna().index
+        elif mode == "ffill_dropna":
+            source_idxs[nid] = df.fillna(method="ffill").dropna().index
+        else:
+            raise ValueError("Unsupported mode `%s`", mode)
     return source_idxs
 
 
 # TODO(Paul): Formalize what this returns and what can be done with it.
-def cross_validate(dag, split_func, split_func_kwargs):
+def cross_validate(dag, split_func, split_func_kwargs, idx_mode=None):
     """
     Generate splits, run train/test, collect info.
 
-    :return: DAG info for each split, keyed by split.
+    :param idx_mode: same meaning as mode in `_get_source_idxs`
+    :return: DAG info for each split, keyed by split
     """
-    source_idxs = _get_source_idxs(dag)
-    # TODO(Paul): `union` may be a good choice if we make some assumptions
-    # on the source indices, e.g., that they cover the same time period.
-    # If additional assumptions are not made, then the splits that result
-    # may have various undesirable characteristics.
-    # An alternative approach is to take the start and end dates of the
-    # intersection of all indices, use those dates to restrict each index,
-    # and then take the union of the restriction.
-    idx_union = functools.reduce(lambda x, y: x.union(y), source_idxs.values())
-    splits = split_func(idx_union, **split_func_kwargs)
-    _LOG.debug(stat.convert_splits_to_string(splits))
+    # Get dataframe indices of source nodes.
+    source_idxs = _get_source_idxs(dag, mode=idx_mode)
+    composite_idx = stats.combine_indices(source_idxs.values())
+    # Generate cross-validation splits from
+    splits = split_func(composite_idx, **split_func_kwargs)
+    _LOG.debug(stats.convert_splits_to_string(splits))
     #
     result_bundle = collections.OrderedDict()
     # TODO(Paul): rename train/test to fit/predict.
@@ -597,10 +614,12 @@ def cross_validate(dag, split_func, split_func_kwargs):
         for nid, idx in source_idxs.items():
             node_info = collections.OrderedDict()
             node_train_idxs = idx.intersection(train_idxs)
+            dbg.dassert_lte(1, node_train_idxs.size)
             node_info["fit_idxs"] = node_train_idxs
             dag.get_node(nid).set_fit_idxs(node_train_idxs)
             #
             node_test_idxs = idx.intersection(test_idxs)
+            dbg.dassert_lte(1, node_test_idxs.size)
             node_info["predict_idxs"] = node_test_idxs
             dag.get_node(nid).set_predict_idxs(node_test_idxs)
             #
@@ -641,29 +660,6 @@ def process_result_bundle(result_bundle):
     info["pnl_rets"] = copy.copy(pnl_rets)
     info["sr"] = copy.copy(sr)
     return info
-
-
-# TODO(Paul): Move these to `helpers/dict.py` and add tests.
-def extract_leaf_values(nested, key):
-    """
-    Extract leaf values with key matching `key`.
-
-    :param nested: nested dictionary
-    :param key: leaf key value to match
-    :return: dict with key = path as tuple, value = leaf value
-    """
-    d = {}
-    for item in dct.get_nested_dict_iterator(nested):
-        if item[0][-1] == key:
-            d[tuple(item[0])] = item[1]
-    return d
-
-
-def flatten_nested_dict(nested):
-    d = {}
-    for item in dct.get_nested_dict_iterator(nested):
-        d[".".join(item[0])] = item[1]
-    return d
 
 
 def get_df_info_as_string(df):

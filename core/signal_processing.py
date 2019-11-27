@@ -180,7 +180,7 @@ def plot_scaleogram(
     A nice reference and utility for plotting can be found at
     https://github.com/alsauve/scaleogram.
 
-    See also
+    Also see:
     https://github.com/PyWavelets/pywt/blob/master/demo/wp_scalogram.py.
 
     :param signal: signal to transform
@@ -315,10 +315,29 @@ def squash(
 
 
 def _com_to_tau(com: float) -> float:
+    """
+    Transform center-of-mass (com) into tau parameter.
+
+    This is the function inverse of `_tau_to_com`.
+    """
     return 1.0 / np.log(1 + 1.0 / com)
 
 
 def _tau_to_com(tau: float) -> float:
+    """
+    Transform tau parameter into center-of-mass (com).
+
+    We use the tau parameter for kernels (as in Dacorogna, et al), but for the
+    ema operator want to take advantage of pandas' implementation, which uses
+    different parameterizations. We adopt `com` because
+        - It is almost equal to `tau`
+        - We have used it historically
+
+    :param tau: parameter used in (continuous) ema and ema-derived kernels. For
+        typical ranges it is approximately but not exactly equal to the
+        center-of-mass (com) associated with an ema kernel.
+    :return: com
+    """
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
@@ -510,7 +529,7 @@ def rolling_var(
         signal, tau, min_periods, min_depth, max_depth
     )
     return rolling_moment(
-        signal - signal_ma, tau, min_periods, min_depth, max_depth
+        signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
     )
 
 
@@ -823,6 +842,47 @@ def process_outliers(
         stats["num_nans_after"] = np.isnan(srs).sum()
         stats["num_infs_after"] = np.isinf(srs).sum()
     return srs
+
+
+def process_outlier_df(
+    df: pd.DataFrame,
+    mode: str,
+    lower_quantile: float,
+    upper_quantile: Optional[float] = None,
+    stats: Optional[dict] = None,
+) -> pd.DataFrame:
+    """
+    Extend `process_outliers` to dataframes.
+
+    TODO(*): Revisit this with a decorator approach:
+    https://github.com/ParticleDev/commodity_research/issues/568
+    """
+    if stats is not None:
+        dbg.dassert_isinstance(stats, dict)
+        # Dictionary should be empty.
+        dbg.dassert(not stats)
+    cols = {}
+    for col in df.columns:
+        if stats is not None:
+            maybe_stats = {}
+        else:
+            maybe_stats = None
+        srs = process_outliers(
+            df[col], mode, lower_quantile, upper_quantile, maybe_stats
+        )
+        cols[col] = srs
+        if stats is not None:
+            stats[col] = maybe_stats
+    ret = pd.DataFrame.from_dict(cols)
+    # Check that the columns are the same. We don't use dassert_eq because of
+    # #665.
+    dbg.dassert(
+        all(df.columns == ret.columns),
+        "Columns are different:\ndf.columns=%s\nret.columns=%s",
+        str(df.columns),
+        str(ret.columns),
+    )
+    return ret
 
 
 # #############################################################################
