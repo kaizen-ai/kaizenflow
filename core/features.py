@@ -14,20 +14,6 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Add also the inverse.
-def reindex_to_integers(df):
-    """
-    Create a new index using integers and move the datetime to a column (e.g.,
-    because sklearn wants indices to be integers).
-    The operation is performed in-place.
-    """
-    dbg.dassert_eq(df.index.name, "datetime")
-    df.insert(0, "datetime", df.index)
-    df.index = range(df.shape[0])
-    df.index.name = "ids"
-    return df
-
-
 def get_lagged_feature_names(y_var, delay_lag, num_lags):
     dbg.dassert(
         y_var.endswith("_0"),
