@@ -654,7 +654,7 @@ def plot_correlation_matrix(df, mode, annot=False, figsize=None, title=None):
     return corr_df
 
 
-def plot_dendogram(df, figsize=None):
+def plot_dendrogram(df, figsize=None):
     # Look at:
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
