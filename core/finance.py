@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -186,6 +186,62 @@ def compute_ret_0(
     if isinstance(ret_0, pd.Series):
         ret_0.name = RET_0_COL
     return ret_0
+
+
+def compute_ret_0_from_multiple_prices(
+        prices: Dict[str, pd.DataFrame], col_name: str, mode: str
+) -> pd.DataFrame:
+    dbg.dassert_isinstance(prices, dict)
+    rets = []
+    for s, price_df in prices.items():
+        _LOG.debug("Processing s=%s", s)
+        rets_tmp = compute_ret_0(price_df[col_name], mode)
+        rets_tmp = pd.DataFrame(rets_tmp)
+        rets_tmp.columns = ["%s_ret_0" % s]
+        rets.append(rets_tmp)
+    rets = pd.concat(rets, sort=True, axis=1)
+    return rets
+
+
+# TODO(*): Refactor this so that we
+# - have a core function that calculates returns by subtracting one
+#   series from the other, with all of the `mode` options
+# - have `compute_ret_0` wrap this core function, calling it with the
+#   original series and a shifted series
+# - have compute_first_causal_lag wrap the core function, calling it
+#   after shifting each series
+def compute_first_causal_lag(
+    lhs: pd.Series, rhs: pd.Series, mode: str
+) -> pd.Series:
+    """
+    Given the semantic of some price data sets (e.g., Kibot) the first
+    "causal" return we can use to trade ret_0 is the
+    TODO(gp): finish this
+
+    :param lhs: series from which the `rhs` is
+        subtracted
+    :param rhs: series is subtracted from the
+        `minuend_series`
+    :param mode: `pct_change`, `log_rets` or `diff`
+    :return: returns series
+    """
+    # TODO(GPP): Consider using fin.compute_ret_0 and then shifting.
+    if mode == "pct_change":
+        rets = lhs.shift(1) - rhs.shift(1)
+        rets /= rhs.shift(1)
+    elif mode == "log_rets":
+        rets = lhs.shift(1) - rhs.shift(1)
+        rets = np.log(1 + rets)
+    elif mode == "diff":
+        rets = lhs.shift(1) - rhs.shift(1)
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    rets.name = "ret_1_star"
+    return rets
+
+
+# TODO(GPPJ): Add a decorator for handling multi-variate prices as in
+#  https://github.com/ParticleDev/commodity_research/issues/568
 
 
 def convert_log_rets_to_pct_rets(
