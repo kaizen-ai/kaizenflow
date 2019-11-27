@@ -5,6 +5,15 @@
     3) enforce the type checks at run-time, through automatic assertions (not
        implemented yet)
 
+## Convention
+- Return `-> None` if your function doesn't return
+    - Pros
+        - `mypy` checks functions only when there is at least an annotation:
+          so using `-> None` enables `mypy` to do type checking
+        - It remind us that we need to use type hints
+    - Cons
+        - `None` is the default value and so it might seem redundant
+
 ## What to annotate with type hints
 - We expect all new library code (i.e., that is not in a notebook) to have type
   annotations
