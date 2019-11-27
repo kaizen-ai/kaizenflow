@@ -204,6 +204,7 @@ def report_zero_nan_inf_stats(
     stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(pri.round_digits)
     #
     display_df(stats_df, as_txt=as_txt)
+    return stats_df
 
 
 # //////////////////////////////////////////////////////////////////////////////
