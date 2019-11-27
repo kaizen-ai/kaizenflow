@@ -262,7 +262,7 @@ def get_size_as_str(file_name):
         if size_in_bytes < (1024 ** 2):
             size_in_kb = size_in_bytes / 1024.0
             res = "%.1f KB" % size_in_kb
-        if size_in_bytes < (1024 ** 3):
+        elif size_in_bytes < (1024 ** 3):
             size_in_mb = size_in_bytes / (1024.0 ** 2)
             res = "%.1f MB" % size_in_mb
         else:
