@@ -139,6 +139,9 @@
 
 - Think hard about how to call functions, files, variables, classes
 
+- Don't be afraid to use long names if needed, e.g., `process_text_with_full_pipeline_twitter_v1`
+    - Clarity is more important than number of bytes used
+
 ## Horrible names
 
 - `raw_df` is a terrible name
@@ -1015,9 +1018,13 @@ and then uses like:
 ## Capitalized words
 
 - In documentation and comments we capitalize abbreviations (e.g., `YAML`, `CSV`)
-- In the code we use camel case, when appropriate
-    - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
-    - E.g., `csv_file_name` as a variable name
+- In the code:
+    - we try to leave abbreviations capitalized when it doesn't conflict with
+      other rules
+        - E.g., `convert_to_CSV`, but `csv_file_name` as a variable name that is
+          not global
+    - other times we use camel case, when appropriate
+        - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
 
 ## Regex
 
