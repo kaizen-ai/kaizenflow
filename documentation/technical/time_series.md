@@ -68,6 +68,9 @@ the data and to minimize any mistakes due to misinterpretations.
        interval to exit, then to realize `ret_0` at time `t`, a decision to
        enter must be made by time `t - 2`
 1. We aim to predict forward returns, e.g., `ret_-j` for `j > 0`
-    1. In the ideal setting, we can come close to achieving `ret_-1`
+    1. In the ideal setting for "instantaneous" prices, we can come close to
+       achieving `ret_-1` 
     1. Achieving `ret_-2` is subject to fewer constraints (one time step to
        enter a position, one time step to exit)
+    1. If prices represent aggregated prices (e.g., twap or vwap), then in the
+       ideal setting `ret_-2` is the earliest realizable return
