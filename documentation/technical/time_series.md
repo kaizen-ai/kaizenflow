@@ -12,7 +12,6 @@ with respect to, e.g.,
 We want to adopt clear and uniform internal conventions to help us reason about
 the data and to minimize any mistakes due to misinterpretations.
 
-
 ## Guiding principles and conventions
 
 1. The primary time associated with a value should be the "knowledge time"
