@@ -839,33 +839,28 @@ def process_outliers(srs: pd.Series, mode: str, lower_quantile: float, upper_qua
     return srs
 
 
-def process_outlier_df(
-    df: pd.DataFrame,
-    mode: str,
-    lower_quantile: float,
-    upper_quantile: Optional[float] = None,
-    stats: Optional[dict] = None,
-) -> pd.DataFrame:
+def process_outlier_df(df: pd.DataFrame, mode: str, lower_quantile: float, upper_quantile: Optional[float] = None,
+                       info: Optional[dict] = None) -> pd.DataFrame:
     """
     Extend `process_outliers` to dataframes.
 
     TODO(*): Revisit this with a decorator approach:
     https://github.com/ParticleDev/commodity_research/issues/568
     """
-    if stats is not None:
-        dbg.dassert_isinstance(stats, dict)
+    if info is not None:
+        dbg.dassert_isinstance(info, dict)
         # Dictionary should be empty.
-        dbg.dassert(not stats)
+        dbg.dassert(not info)
     cols = {}
     for col in df.columns:
-        if stats is not None:
+        if info is not None:
             maybe_stats = {}
         else:
             maybe_stats = None
         srs = process_outliers(df[col], mode, lower_quantile, upper_quantile, maybe_stats)
         cols[col] = srs
-        if stats is not None:
-            stats[col] = maybe_stats
+        if info is not None:
+            info[col] = maybe_stats
     ret = pd.DataFrame.from_dict(cols)
     # Check that the columns are the same. We don't use dassert_eq because of
     # #665.
