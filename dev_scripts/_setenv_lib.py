@@ -214,8 +214,7 @@ def config_conda(conda_env, user_credentials, txt):
 
 
 def get_dev_scripts_subdirs():
-    return (".", "aws", "git", "infra", "install", "notebooks",
-            "testing")
+    return (".", "aws", "git", "infra", "install", "notebooks", "testing")
 
 
 def config_path(dirs, txt):
