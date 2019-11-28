@@ -756,8 +756,13 @@ def rolling_zcorr(
 # #############################################################################
 
 
-def process_outliers(srs: pd.Series, mode: str, lower_quantile: float, upper_quantile: Optional[float] = None,
-                     info: Optional[dict] = None) -> pd.Series:
+def process_outliers(
+    srs: pd.Series,
+    mode: str,
+    lower_quantile: float,
+    upper_quantile: Optional[float] = None,
+    info: Optional[dict] = None,
+) -> pd.Series:
     """
     Process outliers in different ways given lower / upper quantiles.
 
@@ -829,18 +834,23 @@ def process_outliers(srs: pd.Series, mode: str, lower_quantile: float, upper_qua
         num_removed = np.sum(l_mask) + np.sum(u_mask)
         info["num_elems_removed"] = num_removed
         info["num_elems_after"] = (
-                info["num_elems_before"] - info["num_elems_removed"]
+            info["num_elems_before"] - info["num_elems_removed"]
         )
         info["percentage_removed"] = (
-                100.0 * info["num_elems_removed"] / info["num_elems_before"]
+            100.0 * info["num_elems_removed"] / info["num_elems_before"]
         )
         info["num_nans_after"] = np.isnan(srs).sum()
         info["num_infs_after"] = np.isinf(srs).sum()
     return srs
 
 
-def process_outlier_df(df: pd.DataFrame, mode: str, lower_quantile: float, upper_quantile: Optional[float] = None,
-                       info: Optional[dict] = None) -> pd.DataFrame:
+def process_outlier_df(
+    df: pd.DataFrame,
+    mode: str,
+    lower_quantile: float,
+    upper_quantile: Optional[float] = None,
+    info: Optional[dict] = None,
+) -> pd.DataFrame:
     """
     Extend `process_outliers` to dataframes.
 
@@ -857,7 +867,9 @@ def process_outlier_df(df: pd.DataFrame, mode: str, lower_quantile: float, upper
             maybe_stats = {}
         else:
             maybe_stats = None
-        srs = process_outliers(df[col], mode, lower_quantile, upper_quantile, maybe_stats)
+        srs = process_outliers(
+            df[col], mode, lower_quantile, upper_quantile, maybe_stats
+        )
         cols[col] = srs
         if info is not None:
             info[col] = maybe_stats

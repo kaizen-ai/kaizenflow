@@ -35,9 +35,7 @@ def draw(graph, flip_across_vertical=False, seed=1):
     if flip_across_vertical:
         kpos = {node: (-x, y) for (node, (x, y)) in kpos.items()}
     pos = nx.spring_layout(graph, pos=kpos, seed=seed)
-    nx.draw_networkx(
-        graph, pos=pos, node_size=3000, arrowsize=30, width=1.5
-    )
+    nx.draw_networkx(graph, pos=pos, node_size=3000, arrowsize=30, width=1.5)
 
 
 def extract_info(dag, methods):
@@ -337,7 +335,9 @@ class ColumnTransformer(Transformer):
         func_sig = inspect.signature(self._transformer_func)
         # Perform the column transformation operations.
         if "info" in func_sig.parameters:
-            df = self._transformer_func(df, info=func_info, **self._transformer_kwargs)
+            df = self._transformer_func(
+                df, info=func_info, **self._transformer_kwargs
+            )
             info["func_info"] = func_info
         else:
             df = self._transformer_func(df, **self._transformer_kwargs)
