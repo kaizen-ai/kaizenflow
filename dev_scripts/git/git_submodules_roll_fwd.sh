@@ -32,14 +32,14 @@ git clean -fd
 echo "+ Pull amp"
 cd amp
 
-cmd="dev_scripts/git_hash_head.sh"
+cmd="dev_scripts/git/git_hash_head.sh"
 execute $cmd
 
 git checkout $branch
 git pull
 git clean -fd
 
-cmd="dev_scripts/git_hash_head.sh"
+cmd="dev_scripts/git/git_hash_head.sh"
 execute $cmd
 
 cd ..

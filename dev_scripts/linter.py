@@ -37,6 +37,7 @@ import os
 import py_compile
 import re
 import sys
+from typing import Iterable, List
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -170,7 +171,7 @@ def _get_files(args) -> Iterable[str]:
     """
     Return the list of files to process given the command line arguments.
     """
-    file_names = []
+    file_names: List[str] = []
     if args.files:
         _LOG.debug("Specified files")
         # User has specified files.
@@ -196,12 +197,12 @@ def _get_files(args) -> Iterable[str]:
         if not file_names or args.current_git_files:
             # Get all the git modified files.
             file_names = git.get_modified_files()
-    # Remove files, e.g., the files used in unit tests.
+    # Remove text files used in unit tests.
     file_names = [f for f in file_names if not is_test_input_output_file(f)]
     return file_names
 
 
-def _get_files_to_lint(args, file_names: Iterable[str]) -> Iterable[str]:
+def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
     """
     Get all the files that need to be linted.
 
@@ -351,6 +352,13 @@ def _test_actions():
 # :param pendantic: True if it needs to be run in angry mode
 # :param check_if_possible: check if the action can be executed on filename
 # :return: list of strings representing the output
+
+def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
+    txt = "\n".join(txt)
+    txt_new = "\n".join(txt_new)
+    if txt != txt_new:
+        io_.to_file(file_name, txt_new)
+
 
 def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
     txt = "\n".join(txt)
@@ -748,9 +756,9 @@ def _pylint(file_name, pedantic, check_if_possible):
         # - TODO(gp): Not clear what is the problem.
         "W1113",
     ]
-    is_test_code = is_under_test_dir(file_name)
-    _LOG.debug("is_test_code=%s", is_test_code)
-    if is_test_code:
+    is_test_code_tmp = is_under_test_dir(file_name)
+    _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
+    if is_test_code_tmp:
         # TODO(gp): For files inside "test", disable:
         ignore.extend(
             [
