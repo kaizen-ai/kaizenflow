@@ -85,8 +85,7 @@ def _main(parser):
     #
     dirs = [
         "%s/dev_scripts/%s" % (amp_path, d)
-        for d in (".", "aws", "git", "infra", "install", "notebooks",
-            "testing")
+        for d in selib.get_dev_scripts_subdirs()
     ]
     selib.config_path(dirs, txt)
     #

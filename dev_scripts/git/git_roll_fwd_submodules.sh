@@ -6,7 +6,9 @@
 
 # TODO(gp): Ensure that all submodules are clean.
 
-source amp/dev_scripts/helpers.sh
+AMP_DIR="amp"
+
+source $AMP_DIR/dev_scripts/helpers.sh
 
 echo "# amp pointer in p1 is at:"
 cmd="git ls-tree master | grep amp"
