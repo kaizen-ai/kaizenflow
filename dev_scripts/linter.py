@@ -196,7 +196,8 @@ def _get_files(args) -> Iterable[str]:
         if not file_names or args.current_git_files:
             # Get all the git modified files.
             file_names = git.get_modified_files()
-    # Remove files
+    # Remove files, e.g., the files used in unit tests.
+    file_names = [f for f in file_names if not is_test_input_output_file(f)]
     return file_names
 
 
@@ -747,7 +748,7 @@ def _pylint(file_name, pedantic, check_if_possible):
         # - TODO(gp): Not clear what is the problem.
         "W1113",
     ]
-    is_test_code = "test" in file_name.split("/")
+    is_test_code = is_under_test_dir(file_name)
     _LOG.debug("is_test_code=%s", is_test_code)
     if is_test_code:
         # TODO(gp): For files inside "test", disable:
@@ -884,31 +885,33 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
 # TODO(gp): Move in a more general file.
 def _is_under_dir(file_name, dir_name):
     """
-    Return whether a file is under a test directory.
+    Return whether a file is under the given directory.
     """
     subdir_names = file_name.split("/")
     return dir_name in subdir_names
 
 
-def is_under_tests_dir(file_name):
+def is_under_test_dir(file_name):
     """
-    Return whether a file is under a test directory.
+    Return whether a file is under a test directory (which is called "test").
     """
-    return
-    return "tests" in subdir_names
+    return _is_under_dir(file_name, "test")
 
 
 def is_test_input_output_file(file_name):
     """
-    Return whether a file
-
-    :param file_name:
-    :return:
+    Return whether a file is used as input or output in a unit test.
     """
-    ret = is_under_tests_dir(file_name)
+    ret = is_under_test_dir(file_name)
     ret &= file_name.endswith(".txt")
+    return ret
 
 
+def is_test_code(file_name):
+    ret = is_under_test_dir(file_name)
+    ret &= os.path.basename(file_name).startswith("test_")
+    ret &= file_name.endswith(".py")
+    return ret
 
 
 def is_py_file(file_name):
@@ -1195,7 +1198,8 @@ class _FileChecker:
         size_in_bytes = os.path.getsize(file_name)
         if size_in_bytes > max_size_in_bytes:
             msg = "%s: file size is too large %s > %s" % (file_name,
-                                                          size_in_bytes, max_size_in_bytes)
+                                                          size_in_bytes,
+                                                          max_size_in_bytes)
         return msg
 
     @staticmethod
@@ -1214,16 +1218,38 @@ class _FileChecker:
     @staticmethod
     def _check_test_file_dir(file_name):
         """
-        Check if test files are under `tests` dir.
+        Check if test files are under `test` dir.
         """
         msg = ""
+        # TODO(gp): A little annoying that we use "notebooks" and "test".
         if os.path.basename(file_name).startswith("test_"):
-            subdir_names = file_name.split("/")
-            if "tests" not in subdir_names:
-                msg = "%s: test files should be under 'tests' directory to be " \
+            if not is_under_test_dir(file_name):
+                msg = "%s: test files should be under 'test' directory to be " \
                       "discovered by pytest" % file_name
         return msg
 
+    @staticmethod
+    def _check_shebang(file_name):
+        msg = ""
+        is_executable = os.access(file_name, os.X_OK)
+        txt = io_.from_file(file_name, split=True)
+        has_shebang = txt[0] != "#!/usr/bin/env python"
+        if ((is_executable and not has_shebang) or
+            (not is_executable and has_shebang)):
+            msg = "%s: an executable needs to be have a shebang " \
+                  "'#!/usr/bin/env python'" % file_name
+        return msg
+
+    @staticmethod
+    def _check_from_import(file_name):
+        msg = []
+        if is_py_file(file_name):
+            txt = io_.from_file(file_name, split=True)
+            for i, line in enumerate(txt):
+                m = re.search("\s*from\s(\S+)\s*import.*", line)
+                if m and m.group(1) != "typing":
+                    msg = "%s:%s: use 'import foo.bar as fba'" % (file_name, i)
+        return msg
 
 # #############################################################################
 # Main.
