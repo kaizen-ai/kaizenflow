@@ -7,6 +7,7 @@ import core.dataflow as dtf
 import abc
 import collections
 import copy
+import inspect
 import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -331,8 +332,15 @@ class ColumnTransformer(Transformer):
         df = df.copy()
         if self._cols is not None:
             df = df[self._cols]
+        info = collections.OrderedDict()
+        func_info = collections.OrderedDict()
+        func_sig = inspect.signature(self._transformer_func)
         # Perform the column transformation operations.
-        df = self._transformer_func(df, **self._transformer_kwargs)
+        if "info" in func_sig.parameters:
+            df = self._transformer_func(df, info=func_info, **self._transformer_kwargs)
+            info["func_info"] = func_info
+        else:
+            df = self._transformer_func(df, **self._transformer_kwargs)
         # TODO(Paul): Consider supporting the option of relaxing or
         # foregoing this check.
         dbg.dassert(
@@ -370,7 +378,6 @@ class ColumnTransformer(Transformer):
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         #
-        info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
