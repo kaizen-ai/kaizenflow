@@ -215,6 +215,10 @@ def config_conda(conda_env, user_credentials, txt):
     _execute(cmd, txt)
 
 
+def get_dev_scripts_subdirs():
+    return (".", "aws", "git", "infra", "install", "notebooks", "testing")
+
+
 def config_path(dirs, txt):
     """
     Prepend to PATH the directories `dirs` rooted in `path`.

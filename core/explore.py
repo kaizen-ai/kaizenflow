@@ -3,7 +3,6 @@ Import as:
 
 import core.explore as expl
 
-
 Utility functions for Jupyter notebook to:
 - format data
 - transform pandas data structures
@@ -51,6 +50,8 @@ def find_duplicates(vals):
     return res
 
 
+# TODO(gp): Move this to helpers/pandas_helpers.py
+
 def cast_to_df(obj):
     if isinstance(obj, pd.Series):
         df = pd.DataFrame(obj)
@@ -68,6 +69,32 @@ def cast_to_series(obj):
         srs = obj
     dbg.dassert_isinstance(srs, pd.Series)
     return srs
+
+
+# TODO(gp): Need to be tested.
+def adapt_to_series(f):
+    """
+    Decorator allowing a function working on data frames to work on series.
+    """
+
+    def wrapper(obj, *args, **kwargs):
+        # Convert a pd.Series to a pd.DataFrame.
+        was_series = False
+        if isinstance(pd.Series):
+            obj = pd.DataFrame(obj)
+            was_series = True
+        dbg.dassert_isinstance(obj, pd.DataFrame)
+        # Apply the function.
+        res = f(obj, *args, **kwargs)
+        # Transform the output, if needed.
+        if was_series:
+            if isinstance(res, tuple):
+                res_obj, res_tmp = res[0], res[1:]
+                res_obj_srs = cast_to_series(res_obj)
+                res = tuple([res_obj].extend(res_tmp))
+            else:
+                res = cast_to_series(res)
+        return res
 
 
 # #############################################################################
@@ -1092,7 +1119,7 @@ def _preprocess_regression(
     predicted_var_delay: int,
     predictor_vars: str,
     predictor_vars_delay: int,
-) -> Tuple[pd.DataFrame, List[str], List[str]]:
+) -> Optional[Tuple[pd.DataFrame, List[str], List[str]]]:
     """
     Preprocess data in dataframe form in order to perform a regression.
     """
@@ -1100,7 +1127,7 @@ def _preprocess_regression(
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_lte(1, df.shape[0])
     if isinstance(predictor_vars, str):
-        predictor_vars = [predictor_vars]
+        predictor_vars = [predictor_vars]  # type: ignore
     dbg.dassert_type_is(predictor_vars, list)
     # dbg.dassert_type_is(predicted_var, str)
     dbg.dassert_not_in(predicted_var, predictor_vars)
@@ -1245,9 +1272,10 @@ def ols_regress(
     return regr_res
 
 
+# TODO(gp): Redundant with cast_to_series()?
 def to_series(obj: Any) -> pd.Series:
     if isinstance(obj, np.ndarray):
-        dbg.dassert(obj.shape, 1)
+        dbg.dassert_eq(obj.shape, 1)
         srs = pd.Series(obj)
     else:
         srs = obj
