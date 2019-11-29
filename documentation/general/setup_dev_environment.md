@@ -159,7 +159,7 @@
       > amp/dev_scripts/install/create_conda.py \
             --env_name $CONDA_ENV \
             --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \
-            --req_file dev_scripts/install/requirements/p1_develop.yaml \
+            --req_file dev_scripts_p1/install/requirements/p1_develop.yaml \
             --delete_env_if_exists
       ```
 
