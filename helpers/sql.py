@@ -97,7 +97,7 @@ def get_table_names(connection):
         WHERE table_type = 'BASE TABLE'
         AND table_schema = 'public'
     """
-    cursor = connection.get_cursor()
+    cursor = connection.cursor()
     cursor.execute(query)
     tables = [x[0] for x in cursor.fetchall()]
     return tables
@@ -130,6 +130,19 @@ def get_indexes(connection):
     tmp["columns"] = tmp["Statement"].apply(lambda w: w.split("(")[1][:-1])
 
     return tmp
+
+
+def get_columns(connection, table_name):
+    query = (
+        """SELECT column_name
+            FROM information_schema.columns
+            WHERE TABLE_NAME = '%s' """
+        % table_name
+    )
+    cursor = connection.get_cursor()
+    cursor.execute(query)
+    columns = [x[0] for x in cursor.fetchall()]
+    return columns
 
 
 def execute_query(
