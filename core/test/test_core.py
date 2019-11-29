@@ -503,6 +503,20 @@ class Test_explore1(ut.TestCase):
             df["x"], df["y"], intercept=True, print_model_stats=False
         )
 
+    def test_rolling_pca_over_time1(self) -> None:
+        np.random.seed(42)
+        df = pd.DataFrame(np.random.randn(100, 5))
+        df.index = pd.date_range("2017-01-01", periods=100)
+        corr_df, eigval_df, eigvec_df = exp.rolling_pca_over_time(
+            df, 0.5, "fill_with_zero"
+        )
+        txt = (
+            "corr_df=\n%s\n" % corr_df
+            + "eigval_df=\n%s\n" % eigval_df
+            + "eigvec_df=\n%s\n" % eigvec_df
+        )
+        self.check_string(txt)
+
 
 # #############################################################################
 # pandas_helpers.py

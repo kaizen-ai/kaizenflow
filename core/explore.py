@@ -3,6 +3,7 @@ Import as:
 
 import core.explore as expl
 
+
 Utility functions for Jupyter notebook to:
 - format data
 - transform pandas data structures
@@ -50,8 +51,6 @@ def find_duplicates(vals):
     return res
 
 
-# TODO(gp): Move this to helpers/pandas_helpers.py
-
 def cast_to_df(obj):
     if isinstance(obj, pd.Series):
         df = pd.DataFrame(obj)
@@ -69,32 +68,6 @@ def cast_to_series(obj):
         srs = obj
     dbg.dassert_isinstance(srs, pd.Series)
     return srs
-
-
-# TODO(gp): Need to be tested.
-def adapt_to_series(f):
-    """
-    Decorator allowing a function working on data frames to work on series.
-    """
-
-    def wrapper(obj, *args, **kwargs):
-        # Convert a pd.Series to a pd.DataFrame.
-        was_series = False
-        if isinstance(pd.Series):
-            obj = pd.DataFrame(obj)
-            was_series = True
-        dbg.dassert_isinstance(obj, pd.DataFrame)
-        # Apply the function.
-        res = f(obj, *args, **kwargs)
-        # Transform the output, if needed.
-        if was_series:
-            if isinstance(res, tuple):
-                res_obj, res_tmp = res[0], res[1:]
-                res_obj_srs = cast_to_series(res_obj)
-                res = tuple([res_obj].extend(res_tmp))
-            else:
-                res = cast_to_series(res)
-        return res
 
 
 # #############################################################################
@@ -897,6 +870,38 @@ def plot_corr_over_time(corr_df, mode, annot=False, num_cols=4):
         axes[i].set_title(timestamps[i])
 
 
+def _get_eigvals_eigvecs(corr_df, dt, sort_eigvals):
+    dbg.dassert_isinstance(dt, datetime.date)
+    corr_tmp = corr_df.loc[dt].copy()
+    # Compute rolling eigenvalues and eigenvectors.
+    # TODO(gp): Count and report inf and nans as warning.
+    corr_tmp.replace([np.inf, -np.inf], np.nan, inplace=True)
+    corr_tmp.fillna(0.0, inplace=True)
+    eigval, eigvec = np.linalg.eig(corr_tmp)
+    # Sort eigenvalues, if needed.
+    if not (sorted(eigval) == eigval).all():
+        _LOG.debug("eigvals not sorted: %s", eigval)
+        if sort_eigvals:
+            _LOG.debug(
+                "Before sorting:\neigval=\n%s\neigvec=\n%s", eigval, eigvec
+            )
+            _LOG.debug("eigvals: %s", eigval)
+            idx = eigval.argsort()[::-1]
+            eigval = eigval[idx]
+            eigvec = eigvec[:, idx]
+            _LOG.debug("After sorting:\neigval=\n%s\neigvec=\n%s", eigval, eigvec)
+    #
+    if (eigval == 0).all():
+        eigvec = np.nan * eigvec
+    eigvec_df_tmp = pd.DataFrame(eigvec, index=corr_tmp.columns)
+    # Add another index.
+    eigvec_df_tmp.index.name = ""
+    eigvec_df_tmp.reset_index(inplace=True)
+    eigvec_df_tmp.insert(0, "datetime", dt)
+    eigvec_df_tmp.set_index(["datetime", ""], inplace=True)
+    return eigval, eigvec_df_tmp
+
+
 def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
     """
     Compute rolling PCAs over time.
@@ -913,39 +918,9 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
     eigvec_df = []
     timestamps = corr_df.index.get_level_values(0).unique()
     for dt in tqdm.tqdm(timestamps):
-        dbg.dassert_isinstance(dt, datetime.date)
-        corr_tmp = corr_df.loc[dt].copy()
-        # Compute rolling eigenvalues and eigenvectors.
-        # TODO(gp): Count and report inf and nans as warning.
-        corr_tmp.replace([np.inf, -np.inf], np.nan, inplace=True)
-        corr_tmp.fillna(0.0, inplace=True)
-        eigval, eigvec = np.linalg.eig(corr_tmp)
-        # Sort eigenvalues, if needed.
-        if not (sorted(eigval) == eigval).all():
-            _LOG.debug("eigvals not sorted: %s", eigval)
-            if sort_eigvals:
-                _LOG.debug(
-                    "Before sorting:\neigval=\n%s\neigvec=\n%s", eigval, eigvec
-                )
-                _LOG.debug("eigvals: %s", eigval)
-                idx = eigval.argsort()[::-1]
-                eigval = eigval[idx]
-                eigvec = eigvec[:, idx]
-                _LOG.debug(
-                    "After sorting:\neigval=\n%s\neigvec=\n%s", eigval, eigvec
-                )
-        #
-        eigval_df.append(eigval)
-        #
-        if (eigval == 0).all():
-            eigvec = np.nan * eigvec
-        eigvec_df_tmp = pd.DataFrame(eigvec, index=corr_tmp.columns)
-        # Add another index.
-        eigvec_df_tmp.index.name = ""
-        eigvec_df_tmp.reset_index(inplace=True)
-        eigvec_df_tmp.insert(0, "datetime", dt)
-        eigvec_df_tmp.set_index(["datetime", ""], inplace=True)
-        eigvec_df.append(eigvec_df_tmp)
+        eigval_dt, eigvec_dt = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
+        eigval_df.append(eigval_dt)
+        eigvec_df.append(eigvec_dt)
     # Package results.
     eigval_df = pd.DataFrame(eigval_df, index=timestamps)
     dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
@@ -1119,7 +1094,7 @@ def _preprocess_regression(
     predicted_var_delay: int,
     predictor_vars: str,
     predictor_vars_delay: int,
-) -> Optional[Tuple[pd.DataFrame, List[str], List[str]]]:
+) -> Tuple[pd.DataFrame, List[str], List[str]]:
     """
     Preprocess data in dataframe form in order to perform a regression.
     """
@@ -1127,7 +1102,7 @@ def _preprocess_regression(
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_lte(1, df.shape[0])
     if isinstance(predictor_vars, str):
-        predictor_vars = [predictor_vars]  # type: ignore
+        predictor_vars = [predictor_vars]
     dbg.dassert_type_is(predictor_vars, list)
     # dbg.dassert_type_is(predicted_var, str)
     dbg.dassert_not_in(predicted_var, predictor_vars)
@@ -1272,10 +1247,9 @@ def ols_regress(
     return regr_res
 
 
-# TODO(gp): Redundant with cast_to_series()?
 def to_series(obj: Any) -> pd.Series:
     if isinstance(obj, np.ndarray):
-        dbg.dassert_eq(obj.shape, 1)
+        dbg.dassert(obj.shape, 1)
         srs = pd.Series(obj)
     else:
         srs = obj
