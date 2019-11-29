@@ -394,7 +394,7 @@ def _wrap(signal: pd.Series, num_cols) -> pd.DataFrame:
     return wrapped
 
 
-def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any]=None):
+def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
     """
     Undo `_wrap`.
 
@@ -408,9 +408,7 @@ def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any]=None):
         data = values[:-pad_size]
     else:
         data = values
-    unwrapped = pd.Series(data=data,
-                          index=idx,
-                          name=name)
+    unwrapped = pd.Series(data=data, index=idx, name=name)
     return unwrapped
 
 
@@ -713,10 +711,7 @@ def rolling_zscore(
 
 
 def rolling_skip_zscore(
-    signal: pd.DataFrame,
-    tau: float,
-    skip_size: int,
-    **kwargs
+    signal: pd.DataFrame, tau: float, skip_size: int, **kwargs
 ) -> pd.DataFrame:
     """
 
