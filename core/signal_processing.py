@@ -309,6 +309,71 @@ def squash(
     return scale * np.tanh(signal / scale)
 
 
+def get_symmetric_equisized_bins(
+    signal: pd.Series, bin_size: float, zero_in_bin_interior: bool = False
+) -> np.array:
+    """
+    Get bins of equal size, symmetric about zero, adapted to `signal`.
+
+    :param bin_size: width of bin
+    :param zero_in_bin_interior: Determines whether `0` is a bin edge or not.
+        If in interior, it is placed in the center of the bin.
+    :return: array of bin boundaries
+    """
+    # Remove +/- inf for the purpose of calculating max/min.
+    finite_signal = signal.replace([-np.inf, np.inf], np.nan).dropna()
+    # Determine minimum and maximum bin boundaries based on values of `signal`.
+    # Make them symmetric for simplicity.
+    left = np.floor(finite_signal.min() / bin_size).astype(int) - 1
+    right = np.ceil(finite_signal.max() / bin_size).astype(int) + 1
+    bin_boundary = bin_size * np.maximum(np.abs(left), np.abs(right))
+    if zero_in_bin_interior:
+        right_start = bin_size / 2
+    else:
+        right_start = 0
+    right_bins = np.arange(right_start, bin_boundary, bin_size)
+    # Reflect `right_bins` to get `left_bins`.
+    if zero_in_bin_interior:
+        left_bins = -np.flip(right_bins)
+    else:
+        left_bins = -np.flip(right_bins[1:])
+    # Combine `left_bins` and `right_bin` into one bin.
+    return np.append(left_bins, right_bins)
+
+
+def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Series:
+    """
+    Digitize (i.e., discretize) `signal` into `bins`.
+
+    - In the output, bins are referenced with integers and are such that `0`
+      always belongs to bin `0`
+    - The bin-referencing convention is optimized for studying signals centered
+      at zero (e.g., returns, z-scored features, etc.)
+    - For bins of equal size, the bin-referencing convention makes it easy to
+      map back from the digitized signal to numerical ranges given
+        - the bin number
+        - the bin size
+
+    :param bins: array-like bin boundaries. Must include max and min `signal`
+        values.
+    :param right: same as in `np.digitize`
+    :return: digitized signal
+    """
+    # From https://docs.scipy.org/doc/numpy/reference/generated/numpy.digitize.html
+    # (v 1.17):
+    # > If values in x are beyond the bounds of bins, 0 or len(bins) is
+    # > returned as appropriate.
+    digitized = np.digitize(signal, bins, right)
+    # Center so that `0` belongs to bin "0"
+    bin_containing_zero = np.digitize([0], bins, right)
+    digitized -= bin_containing_zero
+    # Convert to pd.Series, since `np.digitize` only returns an np.array.
+    digitized_srs = pd.Series(
+        data=digitized, index=signal.index, name=signal.name
+    )
+    return digitized_srs
+
+
 # #############################################################################
 # EMAs and derived kernels
 # #############################################################################
