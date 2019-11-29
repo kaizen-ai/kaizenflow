@@ -7,6 +7,10 @@
 
 source helpers.sh
 
+if [[ -f .gitmodules ]]; then
+  echo "===================== supermodule ====================="
+fi;
+
 execute "git status --short $*"
 
 if [[ -f .gitmodules ]]; then
