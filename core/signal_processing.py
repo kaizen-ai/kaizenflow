@@ -309,8 +309,9 @@ def squash(
     return scale * np.tanh(signal / scale)
 
 
-def get_symmetric_equisized_bins(signal: pd.Series, bin_size: float,
-                                 zero_in_bin_interior: bool=False) -> np.array:
+def get_symmetric_equisized_bins(
+    signal: pd.Series, bin_size: float, zero_in_bin_interior: bool = False
+) -> np.array:
     """
     Get bins of equal size, symmetric about zero, adapted to `signal`.
 
@@ -340,7 +341,7 @@ def get_symmetric_equisized_bins(signal: pd.Series, bin_size: float,
     return np.append(left_bins, right_bins)
 
 
-def digitize(signal: pd.Series, bins: np.array, right: bool=False) -> pd.Series:
+def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Series:
     """
     Digitize (i.e., discretize) `signal` into `bins`.
 
@@ -354,7 +355,9 @@ def digitize(signal: pd.Series, bins: np.array, right: bool=False) -> pd.Series:
     bin_with_zero = np.digitize([0], bins, right)
     digitized -= bin_with_zero
     # Convert to pd.Series, since `np.digitize` only returns an np.array.
-    digitized_srs = pd.Series(data=digitized, index=signal.index, name=signal.name)
+    digitized_srs = pd.Series(
+        data=digitized, index=signal.index, name=signal.name
+    )
     return digitized_srs
 
 
