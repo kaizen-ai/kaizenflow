@@ -305,19 +305,31 @@
         > git pull
         ```
 
-3. Ask Git if the branch is merged - One approach is to ask Git if all the
-changes in master are also in the branch
-`` bash > git branch `PartTask354_INFRA_Populate_S3_bucket` --no-merged PartTask354_INFRA_Populate_S3_bucket `` -
-Note that Git is very strict here, e.g., `PartTask354_INFRA_Populate_S3_bucket`
-is not completely merged since I've moved code "manually" (not only through
-`git cherry-pick`, `git merge`) - One approach is to just merge
-`PartTask354_INFRA_Populate_S3_bucket` into master and run `git branch` again
+3. Ask Git if the branch is merged
 
-4. Manually check if there is any textual difference - Another approach is to
-check what the differences are between the branch and `origin/master`
-`bash > git log master..HEAD 6465b0c saggese, 25 seconds ago : Merge branch 'master' into PartTask354_INFRA_Populate_S3_bucket (HEAD -> PartTask354_INFRA_Populate_S3_bucket, origin/PartTask354_INFRA_Populate_S3_bucket) > git log HEAD..master` -
-Here we see that there are no textual differences - So we can either merge the
-branch into `master` or just kill directly
+    - One approach is to ask Git if all the changes in master are also in the
+      branch
+        ```bash
+        > git branch `PartTask354_INFRA_Populate_S3_bucket` --no-merged
+          PartTask354_INFRA_Populate_S3_bucket
+        ```
+    - Note that Git is very strict here, e.g.,
+      `PartTask354_INFRA_Populate_S3_bucket` is not completely merged since I've
+      moved code "manually" (not only through `git cherry-pick`, `git merge`)
+    - One approach is to just merge `PartTask354_INFRA_Populate_S3_bucket` into
+      master and run `git branch` again
+
+4. Manually check if there is any textual difference
+
+    - Another approach is to check what the differences are between the branch
+      and `origin/master`
+        ```bash
+        > git log master..HEAD
+        6465b0c saggese, 25 seconds ago : Merge branch 'master' into PartTask354_INFRA_Populate_S3_bucket  (HEAD -> PartTask354_INFRA_Populate_S3_bucket, origin/PartTask354_INFRA_Populate_S3_bucket)
+        > git log HEAD..master
+        ```
+    - Here we see that there are no textual differences
+    - So we can either merge the branch into `master` or just kill directly
 
 5. Kill-kill-kill!
     - To delete both the local and remote branch you can do
@@ -643,7 +655,6 @@ version, and stage #3 is the version you are merging from.
 ## To check if p1 and amp are in sync
 
 -   Run the script:
-
     ```bash
     > dev_scripts/git/git_submodules_are_updated.sh
     ```
@@ -651,7 +662,6 @@ version, and stage #3 is the version you are merging from.
 ## Roll forward git submodules pointers:
 
 -   Run the script:
-
     ```bash
     > dev_scripts/git/git_submodules_roll_fwd.sh
     ```
@@ -666,7 +676,6 @@ version, and stage #3 is the version you are merging from.
 
 -   This is useful when merging `master` in a different branch and we don't want
     to checkout master just to pull
-
     ```bash
     > git fetch origin master:master
     ```
