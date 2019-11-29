@@ -2,9 +2,9 @@
 
 # """
 # This file needs to be sourced:
-#   > source setenv.sh
+#   > source setenv_amp.sh
 # instead of executed:
-#   > ./setenv.sh
+#   > ./setenv_amp.sh
 # in order to set the env vars in the calling shell.
 #
 # Parameters passed to this script are propagated to _setenv.py
@@ -13,7 +13,7 @@
 # > vimdiff ./dev_scripts/setenv_p1.sh amp/dev_scripts/setenv_amp.sh
 # """
 
-# Name of the current script, e.g,. `./dev_scripts/setenv.sh`
+# Name of the current script, e.g,. `./dev_scripts/setenv_amp.sh`
 EXEC_NAME="${BASH_SOURCE[0]}"
 echo "Running '$EXEC_NAME' ..."
 # Dir to the executable, e.g., `./dev_scripts`
@@ -48,5 +48,5 @@ if [[ $rc != 0 ]]; then
   return $rc
 fi;
 
-# Create and execute the setenv.sh script to configure the env.
+# Create and execute the setenv_amp.sh script to configure the env.
 execute_setenv "_setenv_amp" $ENV_NAME
