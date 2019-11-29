@@ -1,4 +1,5 @@
 import logging
+from typing import List, Tuple
 
 import pandas as pd
 import psycopg2 as pg
@@ -8,7 +9,14 @@ import helpers.timer as timer
 _log = logging.getLogger(__name__)
 
 
-def get_connection(dbname, host, user, port, password, autocommit=True):
+def get_connection(
+    dbname: str,
+    host: str,
+    user: str,
+    port: int,
+    password: str,
+    autocommit: bool = True,
+) -> Tuple[connection, cursor]:
     connection = pg.connect(
         dbname=dbname, host=host, user=user, port=port, password=password
     )
@@ -18,7 +26,7 @@ def get_connection(dbname, host, user, port, password, autocommit=True):
     return connection, cursor
 
 
-def get_engine_version(connection):
+def get_engine_version(connection: pg.connection) -> str:
     """
     Report information on the SQL engine.
 
@@ -33,7 +41,7 @@ def get_engine_version(connection):
     return info
 
 
-def get_db_names(connection):
+def get_db_names(connection: pg.connection) -> List[str]:
     """
     Return the names of the available DBs.
 
@@ -48,7 +56,9 @@ def get_db_names(connection):
     return dbs
 
 
-def get_table_size(connection, only_public=True, summary=True):
+def get_table_size(
+    connection: pg.connection, only_public: bool = True, summary: bool = True
+) -> pd.DataFrame:
     """
     Report the size of each table.
 
@@ -85,7 +95,7 @@ def get_table_size(connection, only_public=True, summary=True):
     return df
 
 
-def get_table_names(connection):
+def get_table_names(connection: pg.connection) -> List[str]:
     """
     Report the name of the tables.
 
