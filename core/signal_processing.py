@@ -309,6 +309,40 @@ def squash(
     return scale * np.tanh(signal / scale)
 
 
+def get_symmetric_equisized_bins(signal: pd.Series, bin_size: float,
+                                 zero_in_bin_interior: bool=False) -> np.array:
+    """
+    Get bins of equal size, symmetric about zero, adapted to `signal`.
+
+    :param signal:
+    :param bin_size:
+    :param zero_in_bin_interior: Determines whether `0` is a bin edge or not.
+        If in interior, it is placed in the center of the bin.
+    :return:
+    """
+    left = np.floor(signal.min() / bin_size).astype(int) - 1
+    right = np.ceil(signal.max() / bin_size).astype(int) + 1
+    lim = bin_size * np.maximum(np.abs(left), np.abs(right))
+    right_start = 0
+    if zero_in_bin_interior:
+        right_start += bin_size / 2
+    right_bins = np.arange(right_start, lim, bin_size)
+    if zero_in_bin_interior:
+        left_bins = -np.flip(right_bins)
+    else:
+        left_bins = -np.flip(right_bins[1:])
+    return np.append(left_bins, right_bins)
+
+
+def digitize(signal, bins, right=False):
+    digitized = np.digitize(signal, bins, right)
+    # Center so that `0` belongs to bin "0"
+    bin_with_zero = np.digitize([0], bins, right)
+    digitized -= bin_with_zero
+    digitized_srs = pd.Series(data=digitized, index=signal.index, name=signal.name)
+    return digitized_srs
+
+
 # #############################################################################
 # EMAs and derived kernels
 # #############################################################################
