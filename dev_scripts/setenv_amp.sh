@@ -10,7 +10,7 @@
 # Parameters passed to this script are propagated to _setenv.py
 #
 # Keep this script in sync with:
-# > vimdiff ./dev_scripts/setenv_p1.sh amp/dev_scripts/setenv_amp.sh
+# > vimdiff ./dev_scripts_p1/setenv_p1.sh amp/dev_scripts/setenv_amp.sh
 # """
 
 # Name of the current script, e.g,. `./dev_scripts/setenv_amp.sh`

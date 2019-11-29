@@ -9,7 +9,7 @@ libraries.
 > create_conda.py --env_name amp_develop --req_file dev_scripts/install/requirements/amp_develop.yaml --delete_env_if_exists
 
 # Install the `p1_develop` default environment:
-> create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/amp_develop.yaml --req_file dev_scripts/install/requirements/p1_develop.yaml --delete_env_if_exists
+> create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/amp_develop.yaml --req_file dev_scripts_p1/install/requirements/p1_develop.yaml --delete_env_if_exists
 
 # Quick install to test the script:
 > create_conda.py --test_install -v DEBUG
