@@ -614,6 +614,21 @@ and stage #3 is the version you are merging from.
     > git branch -d my-feature
     ```
 
-# TODO(gp):
-- How to sync both git repos?
-- How to move forward the amp / infra markers?
+# Submodules
+
+## To clean all the repos
+```bash
+> git submodule foreach git clean -fd
+```
+
+## Pull a branch without checkout
+```bash
+> git fetch origin master:master
+```
+
+## To force reading everything
+```bash
+> git submodule update --init --recursive
+
+> git submodule foreach git pull --autostash
+```
