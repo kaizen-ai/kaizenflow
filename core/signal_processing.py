@@ -359,10 +359,14 @@ def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Serie
     :param right: same as in `np.digitize`
     :return: digitized signal
     """
+    # From https://docs.scipy.org/doc/numpy/reference/generated/numpy.digitize.html
+    # (v 1.17):
+    # > If values in x are beyond the bounds of bins, 0 or len(bins) is
+    # > returned as appropriate.
     digitized = np.digitize(signal, bins, right)
     # Center so that `0` belongs to bin "0"
-    bin_with_zero = np.digitize([0], bins, right)
-    digitized -= bin_with_zero
+    bin_containing_zero = np.digitize([0], bins, right)
+    digitized -= bin_containing_zero
     # Convert to pd.Series, since `np.digitize` only returns an np.array.
     digitized_srs = pd.Series(
         data=digitized, index=signal.index, name=signal.name
