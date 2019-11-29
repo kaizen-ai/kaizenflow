@@ -182,8 +182,8 @@
 ## Does pip install works?
 
 -   It does work, e.g.,
-    ```yaml
 
+    ```yaml
     ---
     - pip
     - pip:
@@ -193,6 +193,7 @@
           # and for wheels
           - http://www.lfd.uci.edu/~gohlke/pythonlibs/bofhrmxk/opencv_python-3.1.0-cp35-none-win_amd64.whl
     ```
+
 -   In our case:
     ```yaml
     name: amp_develop

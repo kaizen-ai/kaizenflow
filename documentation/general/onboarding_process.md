@@ -3,7 +3,7 @@
 
 # Onboarding process for a new employee.
 
-- We want to make this process as automatic as possible.
+-   We want to make this process as automatic as possible.
 
 1. Checklist
 

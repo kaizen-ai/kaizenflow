@@ -364,8 +364,8 @@
 
 ### Dividend multipliers
 
--   If a $0.08 cash dividend is distributed on Feb 19 (ex-date) and the Feb 18
-    closing price is $24.96
+-   If a \$0.08 cash dividend is distributed on Feb 19 (ex-date) and the Feb 18
+    closing price is \$24.96
     -   Then the pre-dividend data is multiplied by (1 - 0.08 / 24.96) = 0.9968
 
 ### Adjustment
@@ -378,8 +378,9 @@
 
 -   E.g., if there is a 2:1 split, each share becomes 2 shares
 
-    -   a stockholder holding 100 shares, each at
-        \$10, after the split holds 200 shares each at \$5
+    -   a stockholder holding 100 shares, each at \$10, after the split holds
+        200 shares each at \$5
+
     ```
     Date            Unadjusted      Adjusted
     2019/01/04      $10             $10

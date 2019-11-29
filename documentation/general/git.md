@@ -47,15 +47,15 @@
 
 2.  Checkout `master` and `pull`
 
-    - You want to branch from the latest version of master to avoid a merge:
+    -   You want to branch from the latest version of master to avoid a merge:
         ```bash
         # Checkout the `master` branch.
         > git checkout master
         # Make sure your local `master` is in sync with the remote.
         > git pull --rebase
         ```
-    - Alternatively, and especially if you have local changes to move to a new
-      branch, run
+    -   Alternatively, and especially if you have local changes to move to a new
+        branch, run
         ```bash
         > git checkout master
         > gup.py
@@ -64,8 +64,8 @@
 
 3.  Name a branch after its corresponding issue
 
-    - The canonical name for a new feature branch is obtained by running
-      `ghi_show.py`:
+    -   The canonical name for a new feature branch is obtained by running
+        `ghi_show.py`:
 
         ```bash
         > ghi_show.py 274 --only_github
@@ -78,24 +78,24 @@
         LemTask274_PRICE_Download_equity_data
         ```
 
-    - The name is `LemTask274_PRICE_Download_equity_data`
-    - To use multiple branches for a given task, append a numeral to the name,
-      e.g., `LemTask274_PRICE_Download_equity_data_02`
+    -   The name is `LemTask274_PRICE_Download_equity_data`
+    -   To use multiple branches for a given task, append a numeral to the name,
+        e.g., `LemTask274_PRICE_Download_equity_data_02`
 
 4.  Create and checkout the branch
 
-    - Create and checkout a branch
+    -   Create and checkout a branch
         ```bash
         > git branch my_feature
         > git checkout my_feature
         ```
-    - Alternatively, you can create and checkout in one command with:
+    -   Alternatively, you can create and checkout in one command with:
         ```bash
         > git checkout -b my_feature
         ```
-    - From this point on, you commit only in the branch and changes to master
-      will not affect your branch
-    - If the branch already exists, check out the branch by executing
+    -   From this point on, you commit only in the branch and changes to master
+        will not affect your branch
+    -   If the branch already exists, check out the branch by executing
         ```bash
         > git checkout my_feature
         ```
@@ -117,25 +117,26 @@
 
 6.  Push your feature branch changes upstream
 
-    - When you commit, commits are local (not seen on GitHub)
+    -   When you commit, commits are local (not seen on GitHub)
 
-    - When you want your code to be pushed to the server (e.g., to back up or to
-      share the changes with someone else), you need to push the branch upstream
+    -   When you want your code to be pushed to the server (e.g., to back up or
+        to share the changes with someone else), you need to push the branch
+        upstream
         ```bash
         > git push -u origin my_feature
         ...
         30194fc..820b296  my-feature -> my-feature
         Branch 'my-feature' set up to track remote branch 'my-feature' from 'origin'.
         ```
-    - Note that `-u` tells git to set the upstream of this branch to origin
+    -   Note that `-u` tells git to set the upstream of this branch to origin
 
-    - This operation is needed only the first time you create the branch and not
-      for each `git push`
+    -   This operation is needed only the first time you create the branch and
+        not for each `git push`
 
 7.  Merge `master` into your feature branch regularly
 
-    - Merge `master` into your feature branch **at least once a day**, if the
-      branch stays around that long:
+    -   Merge `master` into your feature branch **at least once a day**, if the
+        branch stays around that long:
         ```bash
         // Get the .git from the server
         > git fetch
@@ -146,8 +147,8 @@
         > git checkout my_feature
         > git merge master
         ```
-    - A simpler flow which should be equivalent
-        - TODO(gp): Verify that
+    -   A simpler flow which should be equivalent
+        -   TODO(gp): Verify that
         ```bash
         // Get the .git from the server
         > git fetch
@@ -159,20 +160,20 @@
 8.  Repeat Steps 4-7 as needed
 
 9.  Request a review of your work by making a pull request (PR)
-    - Verify that your work is ready for a review by going through this
-      checklist:
-        - [ ] The PR is self-contained
-        - [ ] The latest `master` has been merged into the feature branch
-        - [ ] All files in the PR have been linted with `linter.py`
-        - [ ] All tests pass
-    - If your work is ready for review, make a pull request
-        - Use the GitHub UI (for now; we may replace with a script) Go to the
-          branch on the web interface and push "Compare & pull request"
-        - Make sure that GP and Paul are assigned as reviewers, as well as
-          anyone else who may be interested
-        - Make sure that GP and Paul are assigned as assignees
-    - Follow up on all comments and mark as resolved any requested changes that
-      you resolve
+    -   Verify that your work is ready for a review by going through this
+        checklist:
+        -   [ ] The PR is self-contained
+        -   [ ] The latest `master` has been merged into the feature branch
+        -   [ ] All files in the PR have been linted with `linter.py`
+        -   [ ] All tests pass
+    -   If your work is ready for review, make a pull request
+        -   Use the GitHub UI (for now; we may replace with a script) Go to the
+            branch on the web interface and push "Compare & pull request"
+        -   Make sure that GP and Paul are assigned as reviewers, as well as
+            anyone else who may be interested
+        -   Make sure that GP and Paul are assigned as assignees
+    -   Follow up on all comments and mark as resolved any requested changes
+        that you resolve
 
 # Best Practices
 
@@ -291,6 +292,7 @@
     ```
 
 2. Merge `master` into the target branch
+
     - Pull and merge
         ```bash
         > git checkout PartTask354_INFRA_Populate_S3_bucket
@@ -302,11 +304,8 @@
         > git commit
         > git pull
         ```
-    ```
 
-    ```
-
-3a. Ask Git if the branch is merged - One approach is to ask Git if all the
+3. Ask Git if the branch is merged - One approach is to ask Git if all the
 changes in master are also in the branch
 `` bash > git branch `PartTask354_INFRA_Populate_S3_bucket` --no-merged PartTask354_INFRA_Populate_S3_bucket `` -
 Note that Git is very strict here, e.g., `PartTask354_INFRA_Populate_S3_bucket`
@@ -314,13 +313,13 @@ is not completely merged since I've moved code "manually" (not only through
 `git cherry-pick`, `git merge`) - One approach is to just merge
 `PartTask354_INFRA_Populate_S3_bucket` into master and run `git branch` again
 
-3b. Manually check if there is any textual difference - Another approach is to
+4. Manually check if there is any textual difference - Another approach is to
 check what the differences are between the branch and `origin/master`
 `bash > git log master..HEAD 6465b0c saggese, 25 seconds ago : Merge branch 'master' into PartTask354_INFRA_Populate_S3_bucket (HEAD -> PartTask354_INFRA_Populate_S3_bucket, origin/PartTask354_INFRA_Populate_S3_bucket) > git log HEAD..master` -
 Here we see that there are no textual differences - So we can either merge the
 branch into `master` or just kill directly
 
-4. Kill-kill-kill!
+5. Kill-kill-kill!
     - To delete both the local and remote branch you can do
         ```bash
         > git branch -d PartTask354_INFRA_Populate_S3_bucket

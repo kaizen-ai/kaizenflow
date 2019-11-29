@@ -81,15 +81,18 @@
     > pip install pyannotate
     ```
 -   To enable collecting type hints run
+
     ```bash
     > export PYANNOTATE=True
     ```
 
-- Run `pytest`, e.g., on a subset of unit tests:
+-   Run `pytest`, e.g., on a subset of unit tests:
+
     ```bash
     > pytest --pyannotate helpers/
     ```
-    - A file `type_info.json` is generated
+
+    -   A file `type_info.json` is generated
 
 -   Annotate the code with the inferred types:
     ```bash

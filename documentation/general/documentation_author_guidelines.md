@@ -97,12 +97,14 @@
 
 -   GitHub / pandoc seems to render incorrectly a code block unless it's
     indented over the previous line
+
     -   **Bad**
+
         ```bash
         > git push
         ```
 
-    - **Good**
+    -   **Good**
         ```bash
         > git push
         ```
@@ -149,6 +151,7 @@
 -   Add the tags at the beginning of the markdown file
 -   Note that in the text below we interspersed spaces to avoid the TOC
     processor to add a table of content also here:
+
     ```markdown
     < ! - - t s - - >
 
