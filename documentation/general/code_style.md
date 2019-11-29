@@ -842,7 +842,7 @@ and then uses like:
 - The official reference for a script is `dev_scripts/script_skeleton.py`
 - You can copy this file and change it
 
-- A simple example is: `dev_scripts/gup.py`
+- A simple example is: `dev_scripts/git/gup.py`
 - A complex example is: `dev_scripts/linter.py`
 
 ## Some useful patterns

@@ -94,7 +94,7 @@
 - To check out another copy of the codebase (e.g., see possible workflows below)
   do:
     ```bash
-    > more dev_scripts/git_checkout.sh
+    > more dev_scripts_p1/git_checkout.sh
     #!/bin/bash -xe
     DST_DIR="commodity_research"
     git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
@@ -123,7 +123,7 @@
 - This is needed to install all the packages that are required for development
     ```bash
     > cd commodity_research
-    > ./dev_scripts/create_conda.p1_develop.sh
+    > ./dev_scripts_p1/create_conda.p1_develop.sh
     ```
 
 ## Check conda environment
@@ -142,7 +142,7 @@
 - Every time you cd in a shell:
 - You need to run:
     ```bash
-    source dev_scripts/setenv_p1.sh
+    source dev_scripts_p1/setenv_p1.sh
     ```
     
 ## Delete / recreate environment
@@ -154,7 +154,7 @@
 - This is the typical approach
 
 - There are some pre-packaged command lines to create the standard environments,
-  e.g., `./dev_scripts/create_conda.p1_develop.sh`
+  e.g., `./dev_scripts_p1/create_conda.p1_develop.sh`
       ```bash
       > amp/dev_scripts/install/create_conda.py \
             --env_name $CONDA_ENV \
@@ -282,4 +282,4 @@
     - one shell cd-ed in `commodity_research*`
     - one shell running jupyter
     - one shell cd-ed `commodity_research*/amp`
-    - See details `//Amp/dev_scripts/tmux.sh`
+    - See details `//amp/dev_scripts/tmux.sh`
