@@ -314,31 +314,46 @@ def get_symmetric_equisized_bins(signal: pd.Series, bin_size: float,
     """
     Get bins of equal size, symmetric about zero, adapted to `signal`.
 
-    :param signal:
-    :param bin_size:
+    :param bin_size: width of bin
     :param zero_in_bin_interior: Determines whether `0` is a bin edge or not.
         If in interior, it is placed in the center of the bin.
-    :return:
+    :return: array of bin boundaries
     """
-    left = np.floor(signal.min() / bin_size).astype(int) - 1
-    right = np.ceil(signal.max() / bin_size).astype(int) + 1
-    lim = bin_size * np.maximum(np.abs(left), np.abs(right))
-    right_start = 0
+    # Remove +/- inf for the purpose of calculating max/min.
+    finite_signal = signal.replace([-np.inf, np.inf], np.nan).dropna()
+    # Determine minimum and maximum bin boundaries based on values of `signal`.
+    # Make them symmetric for simplicity.
+    left = np.floor(finite_signal.min() / bin_size).astype(int) - 1
+    right = np.ceil(finite_signal.max() / bin_size).astype(int) + 1
+    bin_boundary = bin_size * np.maximum(np.abs(left), np.abs(right))
     if zero_in_bin_interior:
-        right_start += bin_size / 2
-    right_bins = np.arange(right_start, lim, bin_size)
+        right_start = bin_size / 2
+    else:
+        right_start = 0
+    right_bins = np.arange(right_start, bin_boundary, bin_size)
+    # Reflect `right_bins` to get `left_bins`.
     if zero_in_bin_interior:
         left_bins = -np.flip(right_bins)
     else:
         left_bins = -np.flip(right_bins[1:])
+    # Combine `left_bins` and `right_bin` into one bin.
     return np.append(left_bins, right_bins)
 
 
-def digitize(signal, bins, right=False):
+def digitize(signal: pd.Series, bins: np.array, right: bool=False) -> pd.Series:
+    """
+    Digitize (i.e., discretize) `signal` into `bins`.
+
+    :param bins: array-like bin boundaries. Must include max and min `signal`
+        values.
+    :param right: same as in `np.digitize`
+    :return: digitized signal
+    """
     digitized = np.digitize(signal, bins, right)
     # Center so that `0` belongs to bin "0"
     bin_with_zero = np.digitize([0], bins, right)
     digitized -= bin_with_zero
+    # Convert to pd.Series, since `np.digitize` only returns an np.array.
     digitized_srs = pd.Series(data=digitized, index=signal.index, name=signal.name)
     return digitized_srs
 
