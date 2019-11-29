@@ -6,7 +6,7 @@ import core.signal_processing as sigp
 
 import functools
 import logging
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -372,6 +372,42 @@ def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Serie
         data=digitized, index=signal.index, name=signal.name
     )
     return digitized_srs
+
+
+def _wrap(signal: pd.Series, num_cols) -> pd.DataFrame:
+    """
+    Convert a 1-d series into a 2-d dataframe left-to-right top-to-bottom.
+
+    :param num_cols: number of columns to use for wrapping
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    dbg.dassert_lte(1, num_cols)
+    values = signal.values
+    _LOG.debug("num values=%f", values.size)
+    num_rows = np.ceil(values.size / num_cols).astype(int)
+    _LOG.debug("num_rows=%f", num_rows)
+    pad_size = num_rows * num_cols - values.size
+    _LOG.debug("pad_size=%f", pad_size)
+    padding = np.full(pad_size, np.nan)
+    padded_values = np.append(values, padding)
+    wrapped = pd.DataFrame(padded_values.reshape(num_rows, num_cols))
+    return wrapped
+
+
+def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any]=None):
+    """
+    Undo `_wrap`.
+
+    :param idx: index of series provided to `_wrap` call
+    """
+    _LOG.debug("df.shape=%s", df.shape)
+    values = df.values.flatten()
+    pad_size = values.size - idx.size
+    _LOG.debug("pad_size=%f", pad_size)
+    unwrapped = pd.Series(data=values[:-pad_size],
+                          index=idx,
+                          name=name)
+    return unwrapped
 
 
 # #############################################################################
