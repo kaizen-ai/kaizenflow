@@ -404,7 +404,11 @@ def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any]=None):
     values = df.values.flatten()
     pad_size = values.size - idx.size
     _LOG.debug("pad_size=%f", pad_size)
-    unwrapped = pd.Series(data=values[:-pad_size],
+    if pad_size > 0:
+        data = values[:-pad_size]
+    else:
+        data = values
+    unwrapped = pd.Series(data=data,
                           index=idx,
                           name=name)
     return unwrapped
@@ -706,6 +710,29 @@ def rolling_zscore(
         )
         ret = signal / signal_std.shift(delay)
     return ret
+
+
+def rolling_skip_zscore(
+    signal: pd.DataFrame,
+    tau: float,
+    skip_size: int,
+    **kwargs
+) -> pd.DataFrame:
+    """
+
+    :param signal:
+    :param skip_size:
+    :param kwargs:
+    :return:
+    """
+    cols = {}
+    for col in signal.columns:
+        wrapped = _wrap(signal[col], skip_size)
+        z_wrapped = rolling_zscore(wrapped, tau, **kwargs)
+        z_scored = _unwrap(z_wrapped, signal.index, col)
+        cols[col] = z_scored
+    df = pd.DataFrame.from_dict(cols)
+    return df
 
 
 def rolling_skew(
