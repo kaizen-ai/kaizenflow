@@ -761,7 +761,7 @@ def process_outliers(
     mode: str,
     lower_quantile: float,
     upper_quantile: Optional[float] = None,
-    stats: Optional[dict] = None,
+    info: Optional[dict] = None,
 ) -> pd.Series:
     """
     Process outliers in different ways given lower / upper quantiles.
@@ -776,7 +776,7 @@ def process_outliers(
         with respect to 0.5 is taken. E.g., an upper quantile equal to 0.7 is
         taken for a lower_quantile = 0.3
     :param mode: it can be "winsorize", "set_to_nan", "set_to_zero"
-    :param stats: empty dict-like object that this function will populate with
+    :param info: empty dict-like object that this function will populate with
         statistics about the performed operation
 
     :return: transformed series with the same number of elements as the input
@@ -799,16 +799,16 @@ def process_outliers(
         mode,
     )
     # Compute stats.
-    if stats is not None:
-        dbg.dassert_isinstance(stats, dict)
+    if info is not None:
+        dbg.dassert_isinstance(info, dict)
         # Dictionary should be empty.
-        dbg.dassert(not stats)
-        stats["series_name"] = srs.name
-        stats["num_elems_before"] = len(srs)
-        stats["num_nans_before"] = np.isnan(srs).sum()
-        stats["num_infs_before"] = np.isinf(srs).sum()
-        stats["quantiles"] = (lower_quantile, upper_quantile)
-        stats["mode"] = mode
+        dbg.dassert(not info)
+        info["series_name"] = srs.name
+        info["num_elems_before"] = len(srs)
+        info["num_nans_before"] = np.isnan(srs).sum()
+        info["num_infs_before"] = np.isinf(srs).sum()
+        info["quantiles"] = (lower_quantile, upper_quantile)
+        info["mode"] = mode
     #
     srs = srs.copy()
     # Here we implement the functions instead of using library functions (e.g,
@@ -829,18 +829,18 @@ def process_outliers(
         else:
             dbg.dfatal("Invalid mode='%s'" % mode)
     # Append more the stats.
-    if stats is not None:
-        stats["bounds"] = bounds
+    if info is not None:
+        info["bounds"] = bounds
         num_removed = np.sum(l_mask) + np.sum(u_mask)
-        stats["num_elems_removed"] = num_removed
-        stats["num_elems_after"] = (
-            stats["num_elems_before"] - stats["num_elems_removed"]
+        info["num_elems_removed"] = num_removed
+        info["num_elems_after"] = (
+            info["num_elems_before"] - info["num_elems_removed"]
         )
-        stats["percentage_removed"] = (
-            100.0 * stats["num_elems_removed"] / stats["num_elems_before"]
+        info["percentage_removed"] = (
+            100.0 * info["num_elems_removed"] / info["num_elems_before"]
         )
-        stats["num_nans_after"] = np.isnan(srs).sum()
-        stats["num_infs_after"] = np.isinf(srs).sum()
+        info["num_nans_after"] = np.isnan(srs).sum()
+        info["num_infs_after"] = np.isinf(srs).sum()
     return srs
 
 
@@ -849,7 +849,7 @@ def process_outlier_df(
     mode: str,
     lower_quantile: float,
     upper_quantile: Optional[float] = None,
-    stats: Optional[dict] = None,
+    info: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
     Extend `process_outliers` to dataframes.
@@ -857,13 +857,13 @@ def process_outlier_df(
     TODO(*): Revisit this with a decorator approach:
     https://github.com/ParticleDev/commodity_research/issues/568
     """
-    if stats is not None:
-        dbg.dassert_isinstance(stats, dict)
+    if info is not None:
+        dbg.dassert_isinstance(info, dict)
         # Dictionary should be empty.
-        dbg.dassert(not stats)
+        dbg.dassert(not info)
     cols = {}
     for col in df.columns:
-        if stats is not None:
+        if info is not None:
             maybe_stats = {}
         else:
             maybe_stats = None
@@ -871,8 +871,8 @@ def process_outlier_df(
             df[col], mode, lower_quantile, upper_quantile, maybe_stats
         )
         cols[col] = srs
-        if stats is not None:
-            stats[col] = maybe_stats
+        if info is not None:
+            info[col] = maybe_stats
     ret = pd.DataFrame.from_dict(cols)
     # Check that the columns are the same. We don't use dassert_eq because of
     # #665.

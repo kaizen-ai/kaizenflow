@@ -926,13 +926,13 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
 
 class Test_signal_processing_process_outliers1(ut.TestCase):
     def _helper(self, srs, mode, lower_quantile, num_df_rows=10, **kwargs):
-        stats = collections.OrderedDict()
+        info = collections.OrderedDict()
         srs_out = sigp.process_outliers(
-            srs, mode, lower_quantile, stats=stats, **kwargs
+            srs, mode, lower_quantile, info=info, **kwargs
         )
         txt = []
-        txt.append("# stats")
-        txt.append(pprint.pformat(stats))
+        txt.append("# info")
+        txt.append(pprint.pformat(info))
         txt.append("# srs_out")
         txt.append(str(srs_out.head(num_df_rows)))
         self.check_string("\n".join(txt))

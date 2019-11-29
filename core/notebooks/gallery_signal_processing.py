@@ -159,7 +159,7 @@ def _analyze(srs):
 mode = "winsorize"
 lower_quantile = 0.01
 stats = collections.OrderedDict()
-srs_out = sigp.process_outliers(srs, mode, lower_quantile, stats=stats)
+srs_out = sigp.process_outliers(srs, mode, lower_quantile, info=stats)
 #
 _analyze(srs_out)
 
@@ -169,7 +169,7 @@ lower_quantile = 0.01
 upper_quantile = 0.90
 stats = collections.OrderedDict()
 srs_out = sigp.process_outliers(
-    srs, mode, lower_quantile, upper_quantile=upper_quantile, stats=stats
+    srs, mode, lower_quantile, upper_quantile=upper_quantile, info=stats
 )
 #
 _analyze(srs_out)
@@ -178,7 +178,7 @@ _analyze(srs_out)
 mode = "set_to_nan"
 lower_quantile = 0.01
 stats = collections.OrderedDict()
-srs_out = sigp.process_outliers(srs, mode, lower_quantile, stats=stats)
+srs_out = sigp.process_outliers(srs, mode, lower_quantile, info=stats)
 #
 _analyze(srs_out)
 
@@ -186,6 +186,6 @@ _analyze(srs_out)
 mode = "set_to_zero"
 lower_quantile = 0.10
 stats = collections.OrderedDict()
-srs_out = sigp.process_outliers(srs, mode, lower_quantile, stats=stats)
+srs_out = sigp.process_outliers(srs, mode, lower_quantile, info=stats)
 #
 _analyze(srs_out)

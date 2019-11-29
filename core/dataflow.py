@@ -7,6 +7,7 @@ import core.dataflow as dtf
 import abc
 import collections
 import copy
+import inspect
 import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -34,9 +35,7 @@ def draw(graph, flip_across_vertical=False, seed=1):
     if flip_across_vertical:
         kpos = {node: (-x, y) for (node, (x, y)) in kpos.items()}
     pos = nx.spring_layout(graph, pos=kpos, seed=seed)
-    nx.draw_networkx(
-        graph, pos=pos, node_size=3000, arrowsize=30, width=1.5
-    )
+    nx.draw_networkx(graph, pos=pos, node_size=3000, arrowsize=30, width=1.5)
 
 
 def extract_info(dag, methods):
@@ -295,7 +294,11 @@ class ColumnTransformer(Transformer):
         Perform non-index modifying changes of columns.
 
         :param nid: unique node id
-        :param transformer_func: df -> df
+        :param transformer_func: df -> df. The keyword `info` (if present) is
+            assumed to have a specific semantic meaning. If present,
+                - An empty dict is passed in to this `info`
+                - The resulting (populated) dict is included in the node's
+                  `_info`
         :param transformer_kwargs: transformer_func kwargs
         :param cols: columns to transform; `None` defaults to all available.
         :param col_rename_func: function for naming transformed columns, e.g.,
@@ -331,8 +334,22 @@ class ColumnTransformer(Transformer):
         df = df.copy()
         if self._cols is not None:
             df = df[self._cols]
+        # Initialize container to store info (e.g., auxiliary stats) in the
+        # node.
+        info = collections.OrderedDict()
         # Perform the column transformation operations.
-        df = self._transformer_func(df, **self._transformer_kwargs)
+        # Introspect to see whether `_transformer_func` contains an `info`
+        # parameter. If so, inject an empty dict to be populated when
+        # `_transformer_func` is executed.
+        func_sig = inspect.signature(self._transformer_func)
+        if "info" in func_sig.parameters:
+            func_info = collections.OrderedDict()
+            df = self._transformer_func(
+                df, info=func_info, **self._transformer_kwargs
+            )
+            info["func_info"] = func_info
+        else:
+            df = self._transformer_func(df, **self._transformer_kwargs)
         # TODO(Paul): Consider supporting the option of relaxing or
         # foregoing this check.
         dbg.dassert(
@@ -370,7 +387,6 @@ class ColumnTransformer(Transformer):
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         #
-        info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
