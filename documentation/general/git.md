@@ -260,7 +260,7 @@
 
 ## Deleting a branch
 
-- You can run the script `dev_scripts/git_branch.sh` to get all the branches
+- You can run the script `dev_scripts/git/git_branch.sh` to get all the branches
   together with some information, e.g., last commit and creator
 
 - E.g., let's assume we believe that `PartTask354_INFRA_Populate_S3_bucket` is

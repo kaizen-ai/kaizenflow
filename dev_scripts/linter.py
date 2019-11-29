@@ -37,6 +37,7 @@ import os
 import py_compile
 import re
 import sys
+from typing import Iterable, List
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -49,6 +50,7 @@ _LOG = logging.getLogger(__name__)
 
 # Use the current dir and not the dir of the executable.
 _TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
+
 
 # #############################################################################
 # Utils.
@@ -164,11 +166,11 @@ def _tee(cmd, executable, abort_on_error):
 # #############################################################################
 
 
-def _get_files(args):
+def _get_files(args) -> Iterable[str]:
     """
     Return the list of files to process given the command line arguments.
     """
-    file_names = []
+    file_names: List[str] = []
     if args.files:
         _LOG.debug("Specified files")
         # User has specified files.
@@ -194,6 +196,17 @@ def _get_files(args):
         if not file_names or args.current_git_files:
             # Get all the git modified files.
             file_names = git.get_modified_files()
+    # Remove text files used in unit tests.
+    file_names = [f for f in file_names if not is_test_input_output_file(f)]
+    return file_names
+
+
+def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
+    """
+    Get all the files that need to be linted.
+
+    Typically files to lint are python and notebooks.
+    """
     _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
     # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
@@ -340,6 +353,13 @@ def _test_actions():
 # :return: list of strings representing the output
 
 
+def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
+    txt = "\n".join(txt)
+    txt_new = "\n".join(txt_new)
+    if txt != txt_new:
+        io_.to_file(file_name, txt_new)
+
+
 def _basic_hygiene(file_name, pedantic, check_if_possible):
     _ = pedantic
     if check_if_possible:
@@ -363,18 +383,13 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
         # dos2unix.
         line = line.replace("\r\n", "\n")
         # TODO(gp): Remove empty lines in functions.
-        #
         txt_new.append(line.rstrip("\n"))
     # Remove whitespaces at the end of file.
     while txt_new and (txt_new[-1] == "\n"):
         # While the last item in the list is blank, removes last element.
         txt_new.pop(-1)
     # Write.
-    txt = "\n".join(txt)
-    txt_new = "\n".join(txt_new)
-    if txt != txt_new:
-        io_.to_file(file_name, txt_new)
-    #
+    _write_file_back(file_name, txt, txt_new)
     return output
 
 
@@ -481,7 +496,8 @@ def _isort(file_name, pedantic, check_if_possible):
         return []
     #
     cmd = executable + " %s" % file_name
-    return _tee(cmd, executable, abort_on_error=False)
+    output = _tee(cmd, executable, abort_on_error=False)
+    return output
 
 
 def _flake8(file_name, pedantic, check_if_possible):
@@ -583,6 +599,10 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         "D400",
         # D402: First line should not be the function's "signature"
         "D402",
+        # D407: Missing dashed underline after section
+        "D407",
+        # D413: Missing dashed underline after section
+        "D413",
         # D415: First line should end with a period, question mark, or
         # exclamation point
         "D415",
@@ -638,7 +658,6 @@ def _pydocstyle(file_name, pedantic, check_if_possible):
         if cnt % 2 == 1:
             line = "".join(lines)
             output.append(line)
-    #
     return output
 
 
@@ -706,9 +725,9 @@ def _pylint(file_name, pedantic, check_if_possible):
         # - TODO(gp): Not clear what is the problem.
         "W1113",
     ]
-    is_test_code = "test" in file_name.split("/")
-    _LOG.debug("is_test_code=%s", is_test_code)
-    if is_test_code:
+    is_test_code_tmp = is_under_test_dir(file_name)
+    _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
+    if is_test_code_tmp:
         # TODO(gp): For files inside "test", disable:
         ignore.extend(
             [
@@ -841,6 +860,37 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
 
 
 # TODO(gp): Move in a more general file.
+def _is_under_dir(file_name, dir_name):
+    """
+    Return whether a file is under the given directory.
+    """
+    subdir_names = file_name.split("/")
+    return dir_name in subdir_names
+
+
+def is_under_test_dir(file_name):
+    """
+    Return whether a file is under a test directory (which is called "test").
+    """
+    return _is_under_dir(file_name, "test")
+
+
+def is_test_input_output_file(file_name):
+    """
+    Return whether a file is used as input or output in a unit test.
+    """
+    ret = is_under_test_dir(file_name)
+    ret &= file_name.endswith(".txt")
+    return ret
+
+
+def is_test_code(file_name):
+    ret = is_under_test_dir(file_name)
+    ret &= os.path.basename(file_name).startswith("test_")
+    ret &= file_name.endswith(".py")
+    return ret
+
+
 def is_py_file(file_name):
     """
     Return whether a file is a python file.
@@ -1140,11 +1190,16 @@ def _main(args):
     dbg.init_logger(args.log_level)
     #
     if args.test_actions:
+        _LOG.warning("Testing actions...")
         _test_actions()
         _LOG.warning("Exiting as requested")
         sys.exit(0)
+    output = []
+    # Get all the files to process.
+    all_file_names = _get_files(args)
+    _LOG.info("Found %s files to process", len(all_file_names))
     # Select files.
-    file_names = _get_files(args)
+    file_names = _get_files_to_lint(args, all_file_names)
     _LOG.info(
         "# Processing %d files:\n%s",
         len(file_names),
@@ -1158,8 +1213,9 @@ def _main(args):
     io_.create_dir(_TMP_DIR, incremental=False)
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Run linter.
-    output = _run_linter(actions, args, file_names)
-    dbg.dassert_isinstance(output, list)
+    output_tmp = _run_linter(actions, args, file_names)
+    dbg.dassert_isinstance(output_tmp, list)
+    output.extend(output_tmp)
     # Sort the errors.
     output = sorted(output)
     # Print linter output.

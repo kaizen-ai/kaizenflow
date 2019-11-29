@@ -18,7 +18,7 @@ def bootstrap(rel_path_to_amp_helpers):
     Tweak PYTHONPATH to pick up amp libraries while we are configuring amp,
     breaking the circular dependency.
 
-    Same code for dev_scripts/_setenv_*.py and dev_scripts/install/create_conda.py
+    Same code for dev_scripts*/_setenv_*.py and dev_scripts/install/create_conda.py
 
     # TODO(gp): It is not easy to share it as an import. Maybe we can just read
     # it from a file an eval it.

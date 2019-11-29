@@ -911,6 +911,26 @@ class TestPcaFactorComputer2(ut.TestCase):
 # #############################################################################
 
 
+class Test_signal_processing_get_symmetric_equisized_bins(ut.TestCase):
+    def test_zero_in_bin_interior_false(self) -> None:
+        input = pd.Series([-1, 3])
+        expected = np.array([-3, -2, -1,  0,  1,  2,  3])
+        actual = sigp.get_symmetric_equisized_bins(input, 1)
+        assert np.array_equal(expected, actual)
+
+    def test_zero_in_bin_interior_true(self) -> None:
+        input = pd.Series([-1, 3])
+        expected = np.array([-3.5, -2.5, -1.5, -0.5,  0.5,  1.5,  2.5,  3.5])
+        actual = sigp.get_symmetric_equisized_bins(input, 1, True)
+        assert np.array_equal(expected, actual)
+
+    def test_infs(self) -> None:
+        input = pd.Series([-1, np.inf, -np.inf, 3])
+        expected = np.array([-4, -2, 0, 2, 4])
+        actual = sigp.get_symmetric_equisized_bins(input, 2)
+        assert np.array_equal(expected, actual)
+
+
 # TODO(*): -> Test_signal_processing_rolling_zcore1()
 class TestSignalProcessingRollingZScore1(ut.TestCase):
     def test_default_values1(self) -> None:
@@ -926,13 +946,13 @@ class TestSignalProcessingRollingZScore1(ut.TestCase):
 
 class Test_signal_processing_process_outliers1(ut.TestCase):
     def _helper(self, srs, mode, lower_quantile, num_df_rows=10, **kwargs):
-        stats = collections.OrderedDict()
+        info = collections.OrderedDict()
         srs_out = sigp.process_outliers(
-            srs, mode, lower_quantile, stats=stats, **kwargs
+            srs, mode, lower_quantile, info=info, **kwargs
         )
         txt = []
-        txt.append("# stats")
-        txt.append(pprint.pformat(stats))
+        txt.append("# info")
+        txt.append(pprint.pformat(info))
         txt.append("# srs_out")
         txt.append(str(srs_out.head(num_df_rows)))
         self.check_string("\n".join(txt))

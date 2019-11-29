@@ -69,7 +69,7 @@ class Test_env1(ut.TestCase):
 #  annotations from pyannotate.
 
 
-class Test_set_env1(ut.TestCase):
+class Test_set_env_amp(ut.TestCase):
     def test_setenv_py1(self) -> None:
         """
         Find _setenv_amp.py executable and run it.
