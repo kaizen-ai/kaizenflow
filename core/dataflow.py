@@ -294,7 +294,11 @@ class ColumnTransformer(Transformer):
         Perform non-index modifying changes of columns.
 
         :param nid: unique node id
-        :param transformer_func: df -> df
+        :param transformer_func: df -> df. The keyword `info` (if present) is
+            assumed to have a specific semantic meaning. If present,
+                - An empty dict is passed in to this `info`
+                - The resulting (populated) dict is included in the node's
+                  `_info`
         :param transformer_kwargs: transformer_func kwargs
         :param cols: columns to transform; `None` defaults to all available.
         :param col_rename_func: function for naming transformed columns, e.g.,
@@ -330,11 +334,16 @@ class ColumnTransformer(Transformer):
         df = df.copy()
         if self._cols is not None:
             df = df[self._cols]
+        # Initialize container to store info (e.g., auxiliary stats) in the
+        # node.
         info = collections.OrderedDict()
-        func_info = collections.OrderedDict()
-        func_sig = inspect.signature(self._transformer_func)
         # Perform the column transformation operations.
+        # Introspect to see whether `_transformer_func` contains an `info`
+        # parameter. If so, inject an empty dict to be populated when
+        # `_transformer_func` is executed.
+        func_sig = inspect.signature(self._transformer_func)
         if "info" in func_sig.parameters:
+            func_info = collections.OrderedDict()
             df = self._transformer_func(
                 df, info=func_info, **self._transformer_kwargs
             )
