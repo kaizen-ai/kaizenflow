@@ -108,7 +108,9 @@
   rules](https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules)
   (although a bit cryptic sometimes)
 
-# Naming conventions
+# Naming
+
+## Conventions
 
 - Name executable files (scripts) and library functions using verbs (e.g.,
   `download.py`, `download_data()`)
@@ -126,26 +128,41 @@
         ...
     ```
 
+## Some suggested spelling
+- Capitalize the abbreviations, e.g.,
+    - `CSV`
+    - `DB` since it’s an abbreviation of Database
+- We spell
+    - "Python"
+    - "Git" (as program), "git" (as the command)
+- We distinguish "research" (not "default", "base") vs "production"
+- We use different names for indicating the same concept, e.g., `dir`, `path`, `folder`
+    - Let's use `dir`
+
 ## Finding the best names
 
 - Naming things properly is one of the most difficult task of a programmer / data
   scientist
-    - The name needs to be short and memorable
+    - The name needs to be (possibly) short and memorable
+        - Don't be afraid to use long names, if needed, e.g.,
+          `process_text_with_full_pipeline_twitter_v1`
+        - Clarity is more important than number of bytes used
     - The name should capture what the object represents, without reference to
       things that can change or to details that are not important
+    - The name should refer to what objects do (i.e., mechanisms), rather than
+      how we use them (i.e., policies)
     - The name needs to be non-controversial: people need to be able to map the
       name in their mental model
     - The name needs to sound good in English
 
 - Think hard about how to call functions, files, variables, classes
 
-- Don't be afraid to use long names if needed, e.g., `process_text_with_full_pipeline_twitter_v1`
-    - Clarity is more important than number of bytes used
-
 ## Horrible names
 
 - `raw_df` is a terrible name
-    - "raw" with respect to what? Cooked? Read-After-Write race condition?
+    - "raw" with respect to what?
+    - Cooked?
+    - Read-After-Write race condition?
 
 - `person_dict` is bad
     - What if we switch from a dictionary to an object?
@@ -182,6 +199,7 @@
     ```
 
 - This is not only aesthetic reason but a bit related to a weak form of DRY
+
 
 # Using third-party libraries
 
@@ -1160,3 +1178,47 @@ and then uses like:
 - Often the life cycle of a piece of code is to start as research and then be
   promoted to higher level libraries to be used in multiple research, after its
   quality reaches production quality
+
+# Document what notebooks are for
+
+Can we add to each notebook a description of what it does (prototyping, analysis, tutorial)
+
+# Keep related code close
+
+- Try to keep related code as close as possible to their counterparty to
+  highlight logical blocks
+- Add comments to explain the logical blocks composing complex actions
+
+- E.g., consider this code:
+    ```python
+    func_info = collections.OrderedDict()
+    func_sig = inspect.signature(self._transformer_func)
+    # Perform the column transformation operations.
+    if "info" in func_sig.parameters:
+        df = self._transformer_func(
+            df, info=func_info, **self._transformer_kwargs
+        )
+        info["func_info"] = func_info
+    else:
+        df = self._transformer_func(df, **self._transformer_kwargs)
+    ```
+    - Observations:
+        - `func_info` is used only in one branch of the `if-then-else`, so it should be
+          only in that branch
+        - Since `func_sig` is just a temporary alias for making the code easier to follow
+          (good!), we want to keep it close to where it's used
+
+    ```python
+    # Perform the column transformation operations.
+    func_sig = inspect.signature(self._transformer_func)
+    if "info" in func_sig.parameters:
+        # If info is available in the function signature, then pass it
+        # to the transformer.
+        func_info = collections.OrderedDict()
+        df = self._transformer_func(
+            df, info=func_info, **self._transformer_kwargs
+        )
+        info["func_info"] = func_info
+    else:
+        df = self._transformer_func(df, **self._transformer_kwargs)
+    ```

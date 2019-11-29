@@ -614,6 +614,40 @@ and stage #3 is the version you are merging from.
     > git branch -d my-feature
     ```
 
-# TODO(gp):
-- How to sync both git repos?
-- How to move forward the amp / infra markers?
+# Submodules
+
+## To check if p1 and amp are in sync
+- Run the script:
+```bash
+> dev_scripts/git/git_submodules_are_updated.sh
+```
+
+## Roll forward git submodules pointers:
+- Run the script:
+```bash
+> dev_scripts/git/git_submodules_roll_fwd.sh
+```
+
+## To clean all the repos
+```bash
+> git submodule foreach git clean -fd
+```
+
+## Pull a branch without checkout
+- This is useful when merging `master` in a different branch and we don't want to
+  checkout master just to pull
+```bash
+> git fetch origin master:master
+```
+
+## To force updating all the submodules
+- Run the script
+    ```bash
+    > dev_scripts/git/git_submodules_pull.sh
+    ```
+  or
+    ```bash
+    > git submodule update --init --recursive
+
+    > git submodule foreach git pull --autostash
+    ```
