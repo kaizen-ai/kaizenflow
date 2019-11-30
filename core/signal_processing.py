@@ -412,11 +412,11 @@ def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
     return unwrapped
 
 
-def rolling_skip_func(
+def skip_apply_func(
         signal: pd.DataFrame, skip_size: int, func: Callable[..., pd.DataFrame], **kwargs
 ) -> pd.DataFrame:
     """
-    Apply `func` column-wise to wrapped-columns and then unwrap.
+    Apply `func` to each col of `signal` after a wrap, then unwrap and merge.
 
     :param skip_size: num_cols used for wrapping each col of `signal`
     :param kwargs: forwarded to `func`
