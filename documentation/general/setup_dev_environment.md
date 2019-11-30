@@ -1,98 +1,98 @@
 <!--ts-->
-   * [Set up a new machine](#set-up-a-new-machine)
-      * [Definitions](#definitions)
-      * [Connect to the server](#connect-to-the-server)
-      * [(optional) Install python3](#optional-install-python3)
-      * [(optional) Install anaconda](#optional-install-anaconda)
-      * [(optional) Configure anaconda](#optional-configure-anaconda)
-   * [Create a Git client](#create-a-git-client)
-      * [Check out the git code](#check-out-the-git-code)
-      * [Configure git submodules](#configure-git-submodules)
-      * [Configure user credentials](#configure-user-credentials)
-      * [Create conda environment](#create-conda-environment)
-      * [Check conda environment](#check-conda-environment)
-      * [Configure conda environment](#configure-conda-environment)
-      * [Delete / recreate environment](#delete--recreate-environment)
-         * [Overwrite a conda environment with create_conda.py](#overwrite-a-conda-environment-with-create_condapy)
-         * [Manually delete a conda environment](#manually-delete-a-conda-environment)
-         * [To delete the entire conda installation (advanced users)](#to-delete-the-entire-conda-installation-advanced-users)
-      * [Update anaconda](#update-anaconda)
-   * [Be patient](#be-patient)
-   * [Workflow examples](#workflow-examples)
-      * [Working with multiple clients](#working-with-multiple-clients)
-      * [A simple set-up](#a-simple-set-up)
-      * [GP's set-up](#gps-set-up)
 
-
+-   [Set up a new machine](#set-up-a-new-machine)
+    -   [Definitions](#definitions)
+    -   [Connect to the server](#connect-to-the-server)
+    -   [(optional) Install python3](#optional-install-python3)
+    -   [(optional) Install anaconda](#optional-install-anaconda)
+    -   [(optional) Configure anaconda](#optional-configure-anaconda)
+-   [Create a Git client](#create-a-git-client)
+    -   [Check out the git code](#check-out-the-git-code)
+    -   [Configure git submodules](#configure-git-submodules)
+    -   [Configure user credentials](#configure-user-credentials)
+    -   [Create conda environment](#create-conda-environment)
+    -   [Check conda environment](#check-conda-environment)
+    -   [Configure conda environment](#configure-conda-environment)
+    -   [Delete / recreate environment](#delete--recreate-environment)
+        -   [Overwrite a conda environment with create_conda.py](#overwrite-a-conda-environment-with-create_condapy)
+        -   [Manually delete a conda environment](#manually-delete-a-conda-environment)
+        -   [To delete the entire conda installation (advanced users)](#to-delete-the-entire-conda-installation-advanced-users)
+    -   [Update anaconda](#update-anaconda)
+-   [Be patient](#be-patient)
+-   [Workflow examples](#workflow-examples)
+    -   [Working with multiple clients](#working-with-multiple-clients)
+    -   [A simple set-up](#a-simple-set-up)
+    -   [GP's set-up](#gps-set-up)
 
 <!--te-->
 
 # Set up a new machine
 
-- You need to set up any machine you use (e.g., laptop and AWS) in order to
-  develop
+-   You need to set up any machine you use (e.g., laptop and AWS) in order to
+    develop
 
 ## Definitions
 
-- We refer to Git repos in the following way:
-    - `ParticleDev/commodity_research` as `//Part`
-    - `alphamatic/amp` as `//Amp`
+-   We refer to Git repos in the following way:
+    -   `ParticleDev/commodity_research` as `//Part`
+    -   `alphamatic/amp` as `//Amp`
 
 ## Connect to the server
 
-- E.g., `ssh 3.16.128.114`
-- Add your pub key to the server so that you can login without typing in a
-  password
+-   E.g., `ssh 3.16.128.114`
+-   Add your pub key to the server so that you can login without typing in a
+    password
 
 ## Use python3
 
-- Confirm that python3 is referenced upon running `python -V`, e.g.,
-   ```bash
-   > python -V
-   Python 3.7.3
-   ``` 
+-   Confirm that python3 is referenced upon running `python -V`, e.g.,
+    ```bash
+    > python -V
+    Python 3.7.3
+    ```
 
 ## (optional) Install anaconda
 
-- For the AWS machine there is already a central conda, and so there is no need
-  for users to install
-- For a laptop you need to install it yourself
-- You need *anaconda3*
+-   For the AWS machine there is already a central conda, and so there is no
+    need for users to install
+-   For a laptop you need to install it yourself
+-   You need _anaconda3_
 
 ## Configure anaconda
 
-- Configure anaconda for your shell using
+-   Configure anaconda for your shell using
     ```bash
     > conda init bash
     ```
-- Anaconda3 adds a snippet of code in your `.bashrc`
+-   Anaconda3 adds a snippet of code in your `.bashrc`
 
 # Create a Git client
 
 ## Check out the git code
 
-- You can check out the code multiple times in different directories, if you want
-  to have multiple clients
+-   You can check out the code multiple times in different directories, if you
+    want to have multiple clients
 
-- To check out the code for the first time, do:
+-   To check out the code for the first time, do:
+
     ```bash
     > DST_DIR="commodity_research"
     > git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
     ```
-    - If you encounter the error
-        ```bash
-        git@github.com: Permission denied (publickey).
-        fatal: Could not read from remote repository.
 
-        Please make sure you have the correct access rights
-        and the repository exists.
-        ```
-    then make sure that your SSH key in `/.ssh/id_rsa.pub` is on your GitHub
-    account. Follow the instructions
-    [here](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account)
+    -   If you encounter the error ```bash git@github.com: Permission denied
+        (publickey). fatal: Could not read from remote repository.
 
-- To check out another copy of the codebase (e.g., see possible workflows below)
-  do:
+            Please make sure you have the correct access rights
+            and the repository exists.
+            ```
+
+        then make sure that your SSH key in `/.ssh/id_rsa.pub` is on your GitHub
+        account. Follow the instructions
+        [here](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account)
+
+-   To check out another copy of the codebase (e.g., see possible workflows
+    below) do:
     ```bash
     > more dev_scripts_p1/git_checkout.sh
     #!/bin/bash -xe
@@ -102,25 +102,26 @@
 
 ## Configure git submodules
 
-- This is needed to have each submodule use the `master` branch
+-   This is needed to have each submodule use the `master` branch
+
     ```bash
     > cd commodity_research
     > (cd amp; git checkout master)
     > (cd infra; git checkout master)
     ```
 
-- Make sure you have both submodule repos `infra` and `amp`
+-   Make sure you have both submodule repos `infra` and `amp`
 
 ## Configure user credentials
 
-- Update the user credential files in `amp/helpers/user_credentials.py`
-    - Commit this so all your clients are configured
-- Typically you can just copy-paste a portion of the configuration of another
-  user
+-   Update the user credential files in `amp/helpers/user_credentials.py`
+    -   Commit this so all your clients are configured
+-   Typically you can just copy-paste a portion of the configuration of another
+    user
 
 ## Create conda environment
 
-- This is needed to install all the packages that are required for development
+-   This is needed to install all the packages that are required for development
     ```bash
     > cd commodity_research
     > ./dev_scripts_p1/create_conda.p1_develop.sh
@@ -128,7 +129,7 @@
 
 ## Check conda environment
 
-- Check that your conda environment is working
+-   Check that your conda environment is working
     ```bash
     > conda info --envs
     # conda environments:
@@ -139,43 +140,37 @@
 
 ## Configure conda environment
 
-- Every time you cd in a shell:
-- You need to run:
+-   Every time you cd in a shell:
+-   You need to run:
     ```bash
     source dev_scripts_p1/setenv_p1.sh
     ```
-    
+
 ## Delete / recreate environment
 
 ### Overwrite a conda environment with `create_conda.py`
 
-- You can use the option `--delete_env_if_exists` to overwrite a conda env,
-  creating it from scratch
-- This is the typical approach
+-   You can use the option `--delete_env_if_exists` to overwrite a conda env,
+    creating it from scratch
+-   This is the typical approach
 
-- There are some pre-packaged command lines to create the standard environments,
-  e.g., `./dev_scripts_p1/create_conda.p1_develop.sh`
-      ```bash
-      > amp/dev_scripts/install/create_conda.py \
-            --env_name $CONDA_ENV \
-            --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \
-            --req_file dev_scripts_p1/install/requirements/p1_develop.yaml \
-            --delete_env_if_exists
-      ```
+-   There are some pre-packaged command lines to create the standard
+    environments, e.g., `./dev_scripts_p1/create_conda.p1_develop.sh`
+    `bash > amp/dev_scripts/install/create_conda.py \ --env_name $CONDA_ENV \ --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \ --req_file dev_scripts_p1/install/requirements/p1_develop.yaml \ --delete_env_if_exists`
 
-- The `create_conda.py` help as some useful examples of command lines, see the
-  help:
+-   The `create_conda.py` help as some useful examples of command lines, see the
+    help:
     ```bash
     > create_conda.py -h
     ```
 
 ### Manually delete a conda environment
 
-- You can delete a conda environment by simply deleting the corresponding
-  directory
-- The conda command tries to be smart removing the packages and leaving the dir,
-  but IMO it doesn't always work
-- You look at the environments with:
+-   You can delete a conda environment by simply deleting the corresponding
+    directory
+-   The conda command tries to be smart removing the packages and leaving the
+    dir, but IMO it doesn't always work
+-   You look at the environments with:
     ```bash
     > conda info --envs
     # conda environments:
@@ -184,47 +179,48 @@
     develop               *  /Users/<USER>/.conda/envs/develop
     ...
     ```
-- Then you can delete with:
+-   Then you can delete with:
     ```bash
     > rm -rf /Users/<USER>/.conda/envs/develop
     ```
-- It's a good idea to move it so you can resume it if something goes wrong:
+-   It's a good idea to move it so you can resume it if something goes wrong:
     ```bash
     > mv /Users/<USER>/.conda/envs/develop > /Users/<USER>/.conda/envs/develop.OLD
     ```
-    - Note that `develop.OLD` might not work anymore since all the links are
-      broken by the move
+    -   Note that `develop.OLD` might not work anymore since all the links are
+        broken by the move
 
 ### To delete the entire conda installation (advanced users)
 
-- This is a dangerous operation, since it deletes the executable `conda`
-    - You want to do this only when your environment is screwed up: a more expert
-      team member can help you diagnose it
-- If you want to delete your conda installation, find the base env
+-   This is a dangerous operation, since it deletes the executable `conda`
+    -   You want to do this only when your environment is screwed up: a more
+        expert team member can help you diagnose it
+-   If you want to delete your conda installation, find the base env
     ```bash
     > conda info --envs
     base                     /anaconda3
     ...
     ```
-- Run `rm -rf /anaconda3`
-- A good idea is to move it so you can resume the state
+-   Run `rm -rf /anaconda3`
+-   A good idea is to move it so you can resume the state
 
 ## Update anaconda
 
-- To update anaconda (i.e., the framework that manages conda packages and `conda`
-  executable)
-  ```bash
-  > conda activate base
-  # Remove index cache, lock files, tarballs, unused cache packages, and source
-  # cache.
-  > conda clean --all
-  > conda update conda
-  > conda update anaconda
-  > conda -V
-  conda 4.7.12
-  ```
+-   To update anaconda (i.e., the framework that manages conda packages and
+    `conda` executable)
 
-- You can try to activate one environment
+    ```bash
+    > conda activate base
+    # Remove index cache, lock files, tarballs, unused cache packages, and source
+    # cache.
+    > conda clean --all
+    > conda update conda
+    > conda update anaconda
+    > conda -V
+    conda 4.7.12
+    ```
+
+-   You can try to activate one environment
     ```bash
     > conda activate amp_develop
     > which python
@@ -233,53 +229,55 @@
 
 # Be patient
 
-- The `create_conda.py` flow is designed to make our projects portable across:
-    - platforms (e.g., macOS, Linux)
-    - different installation of OSes (e.g., GP's laptop vs Paul's laptop) with
-      all the peculiar ways we install and manage servers and laptops
-    - different versions of conda
-    - different versions of python 3.x
-    - different versions of python packages
+-   The `create_conda.py` flow is designed to make our projects portable across:
 
-- There is no easy way to make sure that `create_conda.py` works for everybody
-    - We can only make sure that Jenkins builds the environment correctly in its
-      set-up by following the process described above
-    - Try to follow the steps one by one, using a clean shell, cutting and
-      pasting commands
-    - If you hit a problem, be patient, ping GP / Paul, and we will extend the
-      script to handle the quirks of your set-up
+    -   platforms (e.g., macOS, Linux)
+    -   different installation of OSes (e.g., GP's laptop vs Paul's laptop) with
+        all the peculiar ways we install and manage servers and laptops
+    -   different versions of conda
+    -   different versions of python 3.x
+    -   different versions of python packages
+
+-   There is no easy way to make sure that `create_conda.py` works for everybody
+    -   We can only make sure that Jenkins builds the environment correctly in
+        its set-up by following the process described above
+    -   Try to follow the steps one by one, using a clean shell, cutting and
+        pasting commands
+    -   If you hit a problem, be patient, ping GP / Paul, and we will extend the
+        script to handle the quirks of your set-up
 
 # Workflow examples
 
 ## Working with multiple clients
 
-- Different people have different set-ups that reflect their workflows
+-   Different people have different set-ups that reflect their workflows
 
 ## A simple set-up
 
-- Always work from the Git repo `//Part`, typically `commodity_research`
-- You might need to `cd` back and forth between the two repos `//Part` and
-  `//Amp`
+-   Always work from the Git repo `//Part`, typically `commodity_research`
+-   You might need to `cd` back and forth between the two repos `//Part` and
+    `//Amp`
 
 ## GP's set-up
 
-- My set-up is a bit on the complicated side:
-    - I like to have multiple clients (a residual behavior from subversion that
-      doesn't allow to switch clients as quickly as Git)
-    - One client is always at `master`
-    - One client for checking out branches to do reviews
-    - One client for development
+-   My set-up is a bit on the complicated side:
 
-- Two Git clients `commodity_research1` and `commodity_research2`
-    - one for development
-    - one for review CLs
-- One terminal window per Git client
-    - (So I can switch easily between Git clients)
-- One Pycharm project for each Git client
-    - To edit the code
-- One tmux session in each terminal with:
-    - (So I can switch easily between dirs of the project)
-    - one shell cd-ed in `commodity_research*`
-    - one shell running jupyter
-    - one shell cd-ed `commodity_research*/amp`
-    - See details `//amp/dev_scripts/tmux.sh`
+    -   I like to have multiple clients (a residual behavior from subversion
+        that doesn't allow to switch clients as quickly as Git)
+    -   One client is always at `master`
+    -   One client for checking out branches to do reviews
+    -   One client for development
+
+-   Two Git clients `commodity_research1` and `commodity_research2`
+    -   one for development
+    -   one for review CLs
+-   One terminal window per Git client
+    -   (So I can switch easily between Git clients)
+-   One Pycharm project for each Git client
+    -   To edit the code
+-   One tmux session in each terminal with:
+    -   (So I can switch easily between dirs of the project)
+    -   one shell cd-ed in `commodity_research*`
+    -   one shell running jupyter
+    -   one shell cd-ed `commodity_research*/amp`
+    -   See details `//amp/dev_scripts/tmux.sh`
