@@ -12,6 +12,7 @@ import helpers.git as git
 import helpers.io_ as io_
 import helpers.system_interaction as si
 import helpers.unit_test as ut
+from typing import Tuple
 
 _LOG = logging.getLogger(__name__)
 
@@ -271,7 +272,7 @@ import dev_scripts.linter as lntr
 class Test_linter_py1(ut.TestCase):
 
     @staticmethod
-    def _get_horrible_python_code1():
+    def _get_horrible_python_code1() -> str:
         txt = r"""
 import python
 
@@ -282,14 +283,14 @@ if __name__ == "main":
         """
         return txt
 
-    def _write_input_file(self, txt):
+    def _write_input_file(self, txt: str) -> Tuple[str, str]:
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "input.py")
         file_name = os.path.abspath(file_name)
         io_.to_file(file_name, txt)
         return dir_name, file_name
 
-    def _run_linter(self, file_name, linter_log, as_system_call):
+    def _run_linter(self, file_name: str, linter_log: str, as_system_call: bool) -> str:
         if as_system_call:
             cmd = []
             cmd.append(f"linter.py -f {file_name} --linter_log {linter_log}")
@@ -316,7 +317,7 @@ if __name__ == "main":
         output = "\n".join(output)
         return output
 
-    def _helper(self, txt, as_system_call):
+    def _helper(self, txt: str, as_system_call: bool) -> str:
         # Create file to lint.
         dir_name, file_name = self._write_input_file(txt)
         # Run.
@@ -344,13 +345,13 @@ if __name__ == "main":
 
     # ##########################################################################
 
-    def _helper_check_shebang(self, file_name, txt, is_executable):
+    def _helper_check_shebang(self, file_name: str, txt: str, is_executable: bool) -> None:
         txt = txt.split("\n")
         msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
                                                       is_executable)
         self.check_string(msg)
 
-    def test_check_shebang1(self):
+    def test_check_shebang1(self) -> None:
         """
         Executable with wrong shebang: error.
         """
@@ -362,7 +363,7 @@ world
         is_executable = True
         self._helper_check_shebang(file_name, txt, is_executable)
 
-    def test_check_shebang2(self):
+    def test_check_shebang2(self) -> None:
         """
         Executable with the correct shebang: correct.
         """
@@ -374,7 +375,7 @@ world
         is_executable = True
         self._helper_check_shebang(file_name, txt, is_executable)
 
-    def test_check_shebang3(self):
+    def test_check_shebang3(self) -> None:
         """
         Non executable with a shebang: error.
         """
@@ -386,7 +387,7 @@ world
         is_executable = False
         self._helper_check_shebang(file_name, txt, is_executable)
 
-    def test_check_shebang4(self):
+    def test_check_shebang4(self) -> None:
         """
         Library without a shebang: correct.
         """
@@ -401,12 +402,12 @@ import _setenv_lib as selib
 
     # #########################
 
-    def _helper_was_baptized(self, file_name, txt):
+    def _helper_was_baptized(self, file_name: str, txt: str) -> None:
         txt = txt.split("\n")
         msg = lntr._CustomPythonChecks._was_baptized(file_name, txt)
         self.check_string(msg)
 
-    def test_was_baptized1(self):
+    def test_was_baptized1(self) -> None:
         file_name = "lib.py"
         txt = '''"""
 Import as:
@@ -415,7 +416,7 @@ import _setenv_lib as selib
 '''
         self._helper_was_baptized(file_name, txt)
 
-    def test_was_baptized2(self):
+    def test_was_baptized2(self) -> None:
         file_name = "lib.py"
         txt = '''"""
 Import as:
@@ -426,23 +427,23 @@ import _setenv_lib as selib
 
     # #########################
 
-    def _helper_check_text(self, file_name, txt):
+    def _helper_check_text(self, file_name: str, txt: str) -> None:
         txt = txt.split("\n")
         output = lntr._CustomPythonChecks._check_text(file_name, txt)
         msg = "\n".join(output)
         self.check_string(msg)
 
-    def test_check_text1(self):
+    def test_check_text1(self) -> None:
         file_name = "lib.py"
         txt = "from pandas import DataFrame"
         self._helper_check_text(file_name, txt)
 
-    def test_check_text2(self):
+    def test_check_text2(self) -> None:
         file_name = "lib.py"
         txt = "from typing import List"
         self._helper_check_text(file_name, txt)
 
-    def test_check_text3(self):
+    def test_check_text3(self) -> None:
         file_name = "lib.py"
         txt = "import pandas as very_long_name"
         self._helper_check_text(file_name, txt)

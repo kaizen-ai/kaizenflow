@@ -45,6 +45,10 @@ import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
+from typing import Any
+from typing import Callable
+from typing import Optional
+from typing import Union
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,7 +63,7 @@ from typing import Iterable
 
 
 # TODO(gp): This could become the default behavior of system().
-def _system(cmd, abort_on_error=True):
+def _system(cmd: str, abort_on_error: bool = True) -> int:
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
     rc = si.system(
         cmd,
@@ -70,12 +74,12 @@ def _system(cmd, abort_on_error=True):
     return rc
 
 
-def _remove_empty_lines(output):
+def _remove_empty_lines(output: List[str]) -> List[str]:
     output = [l for l in output if l.strip("\n") != ""]
     return output
 
 
-def _dassert_list_of_strings(output, *args):
+def _dassert_list_of_strings(output: List[str], *args: Any) -> None:
     dbg.dassert_isinstance(output, list, *args)
     for line in output:
         dbg.dassert_isinstance(line, str, *args)
@@ -120,7 +124,7 @@ def _clean_file(file_name, write_back):
     return file_in, file_out
 
 
-def _annotate_output(output, executable):
+def _annotate_output(output: List, executable: str) -> List:
     """
     Annotate a list containing the output of a cmd line with the name of the
     executable used.
@@ -134,7 +138,7 @@ def _annotate_output(output, executable):
     return output
 
 
-def _tee(cmd, executable, abort_on_error):
+def _tee(cmd: str, executable: str, abort_on_error: bool) -> List[str]:
     """
     Execute command "cmd", capturing its output and removing empty lines.
     :return: list of strings
@@ -156,7 +160,7 @@ def _tee(cmd, executable, abort_on_error):
 # #############################################################################
 
 
-def _filter_target_files(file_names):
+def _filter_target_files(file_names: List[str]) -> List[str]:
     """
     Keep only the files that:
     - have extension .py, .ipynb, .txt or .md.
@@ -267,7 +271,7 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
 
 
 # TODO(gp): Move to system_interactions.
-def _check_exec(tool):
+def _check_exec(tool: str) -> bool:
     """
     :return: True if the executables "tool" can be executed.
     """
@@ -279,7 +283,7 @@ _THIS_MODULE = sys.modules[__name__]
 
 
 # TODO(gp): Merge this into _VALID_ACTIONS_META.
-def _get_action_func(action):
+def _get_action_func(action: str) -> Callable:
     """
     Return the function corresponding to the passed string.
     """
@@ -311,7 +315,7 @@ def _get_action_func(action):
     return map_[action]
 
 
-def _remove_not_possible_actions(actions):
+def _remove_not_possible_actions(actions: List[str]) -> List[str]:
     """
     Check whether each action in "actions" can be executed and return a list of
     the actions that can be executed.
@@ -329,7 +333,7 @@ def _remove_not_possible_actions(actions):
     return actions_tmp
 
 
-def _actions_to_string(actions):
+def _actions_to_string(actions: List[str]) -> str:
     space = max([len(a) for a in actions]) + 2
     format_ = "%" + str(space) + "s: %s"
     actions_as_str = [
@@ -381,7 +385,7 @@ def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str])
         io_.to_file(file_name, txt_new)
 
 
-def _check_file_property(file_name, pedantic, check_if_possible):
+def _check_file_property(file_name: Optional[Any], pedantic: Optional[Any], check_if_possible: bool) -> bool:
     _ = pedantic
     if check_if_possible:
         # We don't need any special executable, so we can always run this action.
@@ -389,7 +393,7 @@ def _check_file_property(file_name, pedantic, check_if_possible):
     dbg.dfatal("We should never get here")
 
 
-def _basic_hygiene(file_name, pedantic, check_if_possible):
+def _basic_hygiene(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     _ = pedantic
     if check_if_possible:
         # We don't need any special executable, so we can always run this action.
@@ -422,7 +426,7 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
     return output
 
 
-def _compile_python(file_name, pedantic, check_if_possible):
+def _compile_python(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     """
     Check that the code is valid python.
     """
@@ -481,7 +485,7 @@ class _CustomPythonChecks:
         return output
 
     @staticmethod
-    def _check_shebang(file_name, txt, is_executable):
+    def _check_shebang(file_name: str, txt: List[str], is_executable: bool) -> str:
         msg = ""
         shebang = "#!/usr/bin/env python"
         has_shebang = txt[0] == shebang
@@ -539,7 +543,7 @@ class _CustomPythonChecks:
         return msg
 
     @staticmethod
-    def _check_text(file_name, txt):
+    def _check_text(file_name: str, txt: List[str]) -> List[str]:
         output = []
         #dbg.dassert_isinstance(txt, list)
         _dassert_list_of_strings(txt)
@@ -576,7 +580,7 @@ class _CustomPythonChecks:
         return output
 
 
-def _autoflake(file_name, pedantic, check_if_possible):
+def _autoflake(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     """
     Remove unused imports and variables.
     """
@@ -614,7 +618,7 @@ def _yapf(file_name, pedantic, check_if_possible):
     return _tee(cmd, executable, abort_on_error=False)
 
 
-def _black(file_name, pedantic, check_if_possible):
+def _black(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     """
     Apply black code formatter.
     """
@@ -641,7 +645,7 @@ def _black(file_name, pedantic, check_if_possible):
     return output
 
 
-def _isort(file_name, pedantic, check_if_possible):
+def _isort(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     """
     Sort imports using isort.
     """
@@ -660,7 +664,7 @@ def _isort(file_name, pedantic, check_if_possible):
     return output
 
 
-def _flake8(file_name, pedantic, check_if_possible):
+def _flake8(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List[str], bool]:
     """
     Look for formatting and semantic issues in code and docstrings.
     It relies on:
@@ -730,7 +734,7 @@ def _flake8(file_name, pedantic, check_if_possible):
     return output
 
 
-def _pydocstyle(file_name, pedantic, check_if_possible):
+def _pydocstyle(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     _ = pedantic
     executable = "pydocstyle"
     if check_if_possible:
@@ -836,7 +840,7 @@ def _pyment(file_name, pedantic, check_if_possible):
     return _tee(cmd, executable, abort_on_error=False)
 
 
-def _pylint(file_name, pedantic, check_if_possible):
+def _pylint(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List[str], bool]:
     executable = "pylint"
     if check_if_possible:
         return _check_exec(executable)
@@ -960,7 +964,7 @@ def _pylint(file_name, pedantic, check_if_possible):
     return output
 
 
-def _mypy(file_name, pedantic, check_if_possible):
+def _mypy(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List[str], bool]:
     _ = pedantic
     executable = "mypy"
     if check_if_possible:
@@ -1020,7 +1024,7 @@ def _ipynb_format(file_name, pedantic, check_if_possible):
 
 
 # TODO(gp): Move in a more general file.
-def _is_under_dir(file_name, dir_name):
+def _is_under_dir(file_name: str, dir_name: str) -> bool:
     """
     Return whether a file is under the given directory.
     """
@@ -1028,14 +1032,14 @@ def _is_under_dir(file_name, dir_name):
     return dir_name in subdir_names
 
 
-def is_under_test_dir(file_name):
+def is_under_test_dir(file_name: str) -> bool:
     """
     Return whether a file is under a test directory (which is called "test").
     """
     return _is_under_dir(file_name, "test")
 
 
-def is_test_input_output_file(file_name):
+def is_test_input_output_file(file_name: str) -> bool:
     """
     Return whether a file is used as input or output in a unit test.
     """
@@ -1051,21 +1055,21 @@ def is_test_code(file_name):
     return ret
 
 
-def is_py_file(file_name):
+def is_py_file(file_name: str) -> bool:
     """
     Return whether a file is a python file.
     """
     return file_name.endswith(".py")
 
 
-def is_ipynb_file(file_name):
+def is_ipynb_file(file_name: str) -> bool:
     """
     Return whether a file is a jupyter notebook file.
     """
     return file_name.endswith(".ipynb")
 
 
-def from_python_to_ipynb_file(file_name):
+def from_python_to_ipynb_file(file_name: str) -> str:
     dbg.dassert(is_py_file(file_name))
     ret = file_name.replace(".py", ".ipynb")
     return ret
@@ -1077,7 +1081,7 @@ def from_ipynb_to_python_file(file_name):
     return ret
 
 
-def is_paired_jupytext_file(file_name):
+def is_paired_jupytext_file(file_name: str) -> bool:
     """
     Return whether a file is a paired jupytext file.
     """
@@ -1092,7 +1096,7 @@ def is_paired_jupytext_file(file_name):
     return is_paired
 
 
-def _sync_jupytext(file_name, pedantic, check_if_possible):
+def _sync_jupytext(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     _ = pedantic
     executable = "process_jupytext.py"
     if check_if_possible:
@@ -1109,7 +1113,7 @@ def _sync_jupytext(file_name, pedantic, check_if_possible):
     return output
 
 
-def _test_jupytext(file_name, pedantic, check_if_possible):
+def _test_jupytext(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     _ = pedantic
     executable = "process_jupytext.py"
     if check_if_possible:
@@ -1129,7 +1133,7 @@ def _test_jupytext(file_name, pedantic, check_if_possible):
 # ##############################################################################
 
 
-def _lint_markdown(file_name, pedantic, check_if_possible):
+def _lint_markdown(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
     _ = pedantic
     executable = "prettier"
     if check_if_possible:
@@ -1202,7 +1206,7 @@ def _lint_markdown(file_name, pedantic, check_if_possible):
 # #############################################################################
 
 
-def _lint(file_name, actions, pedantic, debug):
+def _lint(file_name: str, actions: List[str], pedantic: bool, debug: bool) -> List[str]:
     """
     Execute all the actions on a filename.
 
@@ -1236,7 +1240,7 @@ def _lint(file_name, actions, pedantic, debug):
     return output
 
 
-def _select_actions(args):
+def _select_actions(args: argparse.Namespace) -> List[str]:
     # Select actions.
     actions = args.action
     if isinstance(actions, str) and " " in actions:
@@ -1261,7 +1265,7 @@ def _select_actions(args):
     return actions
 
 
-def _run_linter(actions, args, file_names):
+def _run_linter(actions: List[str], args: argparse.Namespace, file_names: List[str]) -> List[str]:
     num_steps = len(file_names) * len(actions)
     _LOG.info(
         "Num of files=%d, num of actions=%d -> num of steps=%d",
@@ -1314,11 +1318,11 @@ class _FilePropertyChecker:
     - check that test files are under `test` dir
     """
 
-    def __init__(self, file_name):
+    def __init__(self, file_name: str) -> None:
         dbg.dassert_exists(file_name)
         self._file_name = file_name
 
-    def check(self):
+    def check(self) -> List:
         output = []
         for func in [
             self._check_size,
@@ -1332,7 +1336,7 @@ class _FilePropertyChecker:
         return output
 
     @staticmethod
-    def _check_size(file_name):
+    def _check_size(file_name: str) -> str:
         """
         Check size of a file.
         """
@@ -1346,7 +1350,7 @@ class _FilePropertyChecker:
         return msg
 
     @staticmethod
-    def _check_notebook_dir(file_name):
+    def _check_notebook_dir(file_name: str) -> str:
         """
         # Check if that notebooks are under `notebooks` dir.
         """
@@ -1359,7 +1363,7 @@ class _FilePropertyChecker:
         return msg
 
     @staticmethod
-    def _check_test_file_dir(file_name):
+    def _check_test_file_dir(file_name: str) -> str:
         """
         Check if test files are under `test` dir.
         """
@@ -1404,7 +1408,7 @@ _VALID_ACTIONS_META = [
 _ALL_ACTIONS = list(zip(*_VALID_ACTIONS_META))[0]
 
 
-def _main(args):
+def _main(args: argparse.Namespace) -> int:
     dbg.init_logger(args.log_level)
     #
     if args.test_actions:
@@ -1478,7 +1482,7 @@ def _main(args):
     return num_lints
 
 
-def _parser():
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
