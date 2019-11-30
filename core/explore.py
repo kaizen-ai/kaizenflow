@@ -870,7 +870,9 @@ def plot_corr_over_time(corr_df, mode, annot=False, num_cols=4):
         axes[i].set_title(timestamps[i])
 
 
-def _get_eigvals_eigvecs(df: pd.DataFrame, dt: datetime.date, sort_eigvals:bool) -> Tuple[np.array, np.array]:
+def _get_eigvals_eigvecs(
+    df: pd.DataFrame, dt: datetime.date, sort_eigvals: bool
+) -> Tuple[np.array, np.array]:
     dbg.dassert_isinstance(dt, datetime.date)
     df_tmp = df.loc[dt].copy()
     # Compute rolling eigenvalues and eigenvectors.
@@ -896,7 +898,9 @@ def _get_eigvals_eigvecs(df: pd.DataFrame, dt: datetime.date, sort_eigvals:bool)
     return eigval, eigvec
 
 
-def rolling_pca_over_time(df: pd.DataFrame, com: float, nan_mode: str, sort_eigvals: bool = True) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def rolling_pca_over_time(
+    df: pd.DataFrame, com: float, nan_mode: str, sort_eigvals: bool = True
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Compute rolling PCAs over time.
     :param sort_eigvals: sort the eigenvalues in descending orders
