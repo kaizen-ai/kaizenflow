@@ -413,7 +413,10 @@ def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
 
 
 def skip_apply_func(
-        signal: pd.DataFrame, skip_size: int, func: Callable[..., pd.DataFrame], **kwargs
+    signal: pd.DataFrame,
+    skip_size: int,
+    func: Callable[..., pd.DataFrame],
+    **kwargs
 ) -> pd.DataFrame:
     """
     Apply `func` to each col of `signal` after a wrap, then unwrap and merge.
