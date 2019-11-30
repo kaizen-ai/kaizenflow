@@ -277,37 +277,18 @@ def _check_exec(tool: str) -> bool:
 _THIS_MODULE = sys.modules[__name__]
 
 
-# TODO(gp): Merge this into _VALID_ACTIONS_META.
-def _get_action_func(action: str) -> Callable:
+def _get_action_class(action: str) -> Callable:
     """
     Return the function corresponding to the passed string.
     """
-    # Dynamic dispatch doesn't work with joblib since this module is injected
-    # in another module.
-    # func_name = "_" + action
-    # dbg.dassert(
-    #        hasattr(_THIS_MODULE, func_name),
-    #        msg="Invalid function '%s' in '%s'" % (func_name, _THIS_MODULE))
-    # return getattr(_THIS_MODULE, func_name)
-    map_ = {
-        "autoflake": _autoflake,
-        "basic_hygiene": _basic_hygiene,
-        "black": _black,
-        "check_file_property": _check_file_property,
-        "flake8": _flake8,
-        "ipynb_format": _ipynb_format,
-        "isort": _isort,
-        "lint_markdown": _lint_markdown,
-        "mypy": _mypy,
-        "pydocstyle": _pydocstyle,
-        "pylint": _pylint,
-        "pyment": _pyment,
-        "compile_python": _compile_python,
-        "sync_jupytext": _sync_jupytext,
-        "test_jupytext": _test_jupytext,
-        "yapf": _yapf,
-    }
-    return map_[action]
+    res = None
+    for action_meta in _VALID_ACTIONS_META:
+        name, rw, comment, class_ = action_meta
+        if name == action:
+            dbg.dassert_is(res, None)
+            res = class_
+    dbg.dassert_is_not(res, None)
+    return res
 
 
 def _remove_not_possible_actions(actions: List[str]) -> List[str]:
@@ -319,8 +300,8 @@ def _remove_not_possible_actions(actions: List[str]) -> List[str]:
     """
     actions_tmp = []
     for action in actions:
-        func = _get_action_func(action)
-        is_possible = func(file_name=None, pedantic=None, check_if_possible=True)
+        class_ = _get_action_class(action)
+        is_possible = class_.check_if_possible()
         if not is_possible:
             _LOG.warning("Can't execute action '%s': skipping", action)
         else:
@@ -343,8 +324,8 @@ def _test_actions():
     num_not_poss = 0
     possible_actions = []
     for action in _ALL_ACTIONS:
-        func = _get_action_func(action)
-        is_possible = func(file_name=None, pedantic=False, check_if_possible=True)
+        class_ = _get_action_class(action)
+        is_possible = class_.check_if_possible()
         _LOG.debug("%s -> %s", action, is_possible)
         if is_possible:
             possible_actions.append(action)
@@ -381,94 +362,117 @@ def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str])
         io_.to_file(file_name, txt_new)
 
 
-def _check_file_property(
-    file_name: Optional[Any], pedantic: Optional[Any], check_if_possible: bool
-) -> bool:
-    _ = pedantic
-    if check_if_possible:
+import abc
+
+
+class _Action(abc.ABC):
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    @abc.abstractmethod
+    def check_if_possible() -> bool:
+        pass
+
+    def execute(self, file_name: str, pedantic: bool) -> List[str]:
+        dbg.dassert(file_name)
+        dbg.dassert_exists(file_name)
+        output = _Action._execute(file_name, pedantic)
+        _dassert_list_of_strings(output)
+        return output
+
+    @abc.abstractmethod
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        pass
+
+
+class _CheckFileProperty(_Action):
+
+    def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
         return True
-    dbg.dfatal("We should never get here")
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        dbg.dfatal("We should never get here")
 
 
-def _basic_hygiene(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
-    _ = pedantic
-    if check_if_possible:
+class _BasicHygiene(_Action):
+
+    def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
         return True
-    output = []
-    # Read file.
-    dbg.dassert(file_name)
-    txt = io_.from_file(file_name, split=True)
-    # Process file.
-    txt_new = []
-    for line in txt:
-        if "\t" in line:
-            msg = "Found tabs in %s: please use 4 spaces as per PEP8" % file_name
-            _LOG.warning(msg)
-            output.append(msg)
-        # Convert tabs.
-        line = line.replace("\t", " " * 4)
-        # Remove trailing spaces.
-        line = line.rstrip()
-        # dos2unix.
-        line = line.replace("\r\n", "\n")
-        # TODO(gp): Remove empty lines in functions.
-        txt_new.append(line.rstrip("\n"))
-    # Remove whitespaces at the end of file.
-    while txt_new and (txt_new[-1] == "\n"):
-        # While the last item in the list is blank, removes last element.
-        txt_new.pop(-1)
-    # Write.
-    _write_file_back(file_name, txt, txt_new)
-    return output
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        output = []
+        # Read file.
+        txt = io_.from_file(file_name, split=True)
+        # Process file.
+        txt_new = []
+        for line in txt:
+            if "\t" in line:
+                msg = "Found tabs in %s: please use 4 spaces as per PEP8" % file_name
+                _LOG.warning(msg)
+                output.append(msg)
+            # Convert tabs.
+            line = line.replace("\t", " " * 4)
+            # Remove trailing spaces.
+            line = line.rstrip()
+            # dos2unix.
+            line = line.replace("\r\n", "\n")
+            # TODO(gp): Remove empty lines in functions.
+            txt_new.append(line.rstrip("\n"))
+        # Remove whitespaces at the end of file.
+        while txt_new and (txt_new[-1] == "\n"):
+            # While the last item in the list is blank, removes last element.
+            txt_new.pop(-1)
+        # Write.
+        _write_file_back(file_name, txt, txt_new)
+        return output
 
 
-def _compile_python(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
+class _CompilePython(_Action):
     """
     Check that the code is valid python.
     """
-    _ = pedantic
-    if check_if_possible:
+
+    def check_if_possible(self) -> bool:
+        # We don't need any special executable, so we can always run this action.
         return True
-    #
-    # Applicable only to python files.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    #
-    output = []
-    try:
-        py_compile.compile(file_name, doraise=True)
-        # pylint: disable=broad-except
-    except Exception as e:
-        output.append(str(e))
-    return output
 
-
-class _CustomPythonChecks:
-    def __call__(self, file_name, pedantic, check_if_possible):
-        """
-        Check that imports follow our style:
-            import foo.bar as bar
-        """
+    def _execute(self, file_name, pedantic: bool) -> List[str]:
         _ = pedantic
-        if check_if_possible:
-            # We don't need any special executable, so we can always run this action.
-            return True
-        output = []
         # Applicable only to python files.
         dbg.dassert(file_name)
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping self._file_name='%s'", file_name)
+            return []
+        #
+        output = []
+        try:
+            py_compile.compile(file_name, doraise=True)
+            # pylint: disable=broad-except
+        except Exception as e:
+            output.append(str(e))
+        return output
+
+
+class _CustomPythonChecks(_Action):
+
+    def check_if_possible(self) -> bool:
+        # We don't need any special executable, so we can always run this action.
+        return True
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        output = []
+        # Applicable only to python files.
         if not is_py_file and not is_paired_jupytext_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return output
         # Read file.
-        dbg.dassert(file_name)
         txt = io_.from_file(file_name, split=True)
         # Check shebang.
         is_executable = os.access(file_name, os.X_OK)
@@ -481,8 +485,6 @@ class _CustomPythonChecks:
             output.append(msg)
         # Process file.
         output = self._check_text(file_name, txt, is_executable)
-        # dbg.dassert_isinstance(output, list)
-        _dassert_list_of_strings(output)
         return output
 
     @staticmethod
@@ -589,100 +591,109 @@ class _CustomPythonChecks:
         _write_file_back(file_name, txt, txt_new)
         return output
 
-
-def _autoflake(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
+class _Autoflake(_Action):
     """
     Remove unused imports and variables.
     """
-    _ = pedantic
-    executable = "autoflake"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only python file.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    #
-    opts = "-i --remove-all-unused-imports --remove-unused-variables"
-    cmd = executable + " %s %s" % (opts, file_name)
-    return _tee(cmd, executable, abort_on_error=False)
+
+    def __init__(self):
+        self._executable = "autoflake"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        # Applicable to only python file.
+        dbg.dassert(file_name)
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        #
+        opts = "-i --remove-all-unused-imports --remove-unused-variables"
+        cmd = self._executable + " %s %s" % (opts, file_name)
+        output = _tee(cmd, self._executable, abort_on_error=False)
+        return output
 
 
-def _yapf(file_name, pedantic, check_if_possible):
+class _Yapf(_Action):
     """
     Apply yapf code formatter.
     """
-    _ = pedantic
-    executable = "yapf"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only python file.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    #
-    opts = "-i --style='google'"
-    cmd = executable + " %s %s" % (opts, file_name)
-    return _tee(cmd, executable, abort_on_error=False)
+
+    def __init__(self):
+        self._executable = "yapf"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        # Applicable to only python file.
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        #
+        opts = "-i --style='google'"
+        cmd = self._executable + " %s %s" % (opts, file_name)
+        output = _tee(cmd, self._executable, abort_on_error=False)
+        return output
 
 
-def _black(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
+class _Black(_Action):
     """
     Apply black code formatter.
     """
-    _ = pedantic
-    executable = "black"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only python file.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    #
-    opts = "--line-length 82"
-    cmd = executable + " %s %s" % (opts, file_name)
-    output = _tee(cmd, executable, abort_on_error=False)
-    # Remove the lines:
-    # - reformatted core/test/test_core.py
-    # - 1 file reformatted.
-    # - All done!
-    # - 1 file left unchanged.
-    to_remove = ["All done!", "file left unchanged", "reformatted"]
-    output = [l for l in output if all(w not in l for w in to_remove)]
-    return output
 
+    def __init__(self):
+        self._executable = "black"
 
-def _isort(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        # Applicable to only python file.
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        #
+        opts = "--line-length 82"
+        cmd = self._executable + " %s %s" % (opts, file_name)
+        output = _tee(cmd, self._executable, abort_on_error=False)
+        # Remove the lines:
+        # - reformatted core/test/test_core.py
+        # - 1 file reformatted.
+        # - All done!
+        # - 1 file left unchanged.
+        to_remove = ["All done!", "file left unchanged", "reformatted"]
+        output = [l for l in output if all(w not in l for w in to_remove)]
+        return output
+
+class _Isort(_Action):
     """
     Sort imports using isort.
     """
-    _ = pedantic
-    executable = "isort"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only python file.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    #
-    cmd = executable + " %s" % file_name
-    output = _tee(cmd, executable, abort_on_error=False)
-    return output
+
+    def __init__(self):
+        self._executable = "isort"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        # Applicable to only python file.
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        #
+        cmd = self._executable + " %s" % file_name
+        output = _tee(cmd, self._executable, abort_on_error=False)
+        return output
 
 
-def _flake8(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List[str], bool]:
+class _Flake8(_Action):
     """
     Look for formatting and semantic issues in code and docstrings.
     It relies on:
@@ -690,361 +701,378 @@ def _flake8(
         - pycodestyle
         - pyflakes
     """
-    _ = pedantic
-    executable = "flake8"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only python file.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    # TODO(gp): Does -j 4 help?
-    opts = "--exit-zero --doctests --max-line-length=82 -j 4"
-    ignore = [
-        # - "W503 line break before binary operator"
-        #     - Disabled because in contrast with black formatting.
-        "W503",
-        # - W504 line break after binary operator
-        #     - Disabled because in contrast with black formatting.
-        "W504",
-        # - E203 whitespace before ':'
-        #     - Disabled because in contrast with black formatting
-        "E203",
-        # - E266 too many leading '#' for block comment
-        #     - We have disabled this since it is a false positive for jupytext
-        #       files.
-        "E266,"
-        # - E501 line too long (> 82 characters)
-        #     - We have disabled this since it triggers also for docstrings at
-        #       the beginning of the line. We let pylint pick the lines too
-        #       long, since it seems to be smarter.
-        "E501",
-        # - E731 do not assign a lambda expression, use a def
-        "E731",
-        # - E265 block comment should start with '# '
-        "E265",
-    ]
-    is_jupytext_code = is_paired_jupytext_file(file_name)
-    _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
-    if is_jupytext_code:
-        ignore.extend(
-            [
-                # E501 line too long.
-                "E501"
-            ]
-        )
-    opts += " --ignore=" + ",".join(ignore)
-    cmd = executable + " %s %s" % (opts, file_name)
-    #
-    output = _tee(cmd, executable, abort_on_error=True)
-    # Remove some errors.
-    is_jupytext_code = is_paired_jupytext_file(file_name)
-    _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
-    if is_jupytext_code:
+
+    def __init__(self):
+        self._executable = "flake8"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        # Applicable to only python file.
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        # TODO(gp): Does -j 4 help?
+        opts = "--exit-zero --doctests --max-line-length=82 -j 4"
+        ignore = [
+            # - "W503 line break before binary operator"
+            #     - Disabled because in contrast with black formatting.
+            "W503",
+            # - W504 line break after binary operator
+            #     - Disabled because in contrast with black formatting.
+            "W504",
+            # - E203 whitespace before ':'
+            #     - Disabled because in contrast with black formatting
+            "E203",
+            # - E266 too many leading '#' for block comment
+            #     - We have disabled this since it is a false positive for jupytext
+            #       files.
+            "E266,"
+            # - E501 line too long (> 82 characters)
+            #     - We have disabled this since it triggers also for docstrings at
+            #       the beginning of the line. We let pylint pick the lines too
+            #       long, since it seems to be smarter.
+            "E501",
+            # - E731 do not assign a lambda expression, use a def
+            "E731",
+            # - E265 block comment should start with '# '
+            "E265",
+        ]
+        is_jupytext_code = is_paired_jupytext_file(file_name)
+        _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+        if is_jupytext_code:
+            ignore.extend(
+                [
+                    # E501 line too long.
+                    "E501"
+                ]
+            )
+        opts += " --ignore=" + ",".join(ignore)
+        cmd = self._executable + " %s %s" % (opts, file_name)
+        #
+        output = _tee(cmd, self._executable, abort_on_error=True)
+        # Remove some errors.
+        is_jupytext_code = is_paired_jupytext_file(file_name)
+        _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+        if is_jupytext_code:
+            output_tmp = []
+            for line in output:
+                # F821 undefined name 'display' [flake8]
+                if "F821" in line and "undefined name 'display'" in line:
+                    continue
+                output_tmp.append(line)
+            output = output_tmp
+        return output
+
+class _Pydocstyle(_Action):
+
+    def __init__(self):
+        self._executable = "pydocstyle"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        # Applicable to only python file.
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        # http://www.pydocstyle.org/en/2.1.1/error_codes.html
+        ignore = [
+            # D105: Missing docstring in magic method
+            "D105",
+            # D200: One-line docstring should fit on one line with quotes
+            "D200",
+            # D202: No blank lines allowed after function docstring
+            "D202",
+            # D212: Multi-line docstring summary should start at the first line
+            "D212",
+            # D203: 1 blank line required before class docstring (found 0)
+            "D203",
+            # D205: 1 blank line required between summary line and description
+            "D205",
+            # D400: First line should end with a period (not ':')
+            "D400",
+            # D402: First line should not be the function's "signature"
+            "D402",
+            # D407: Missing dashed underline after section
+            "D407",
+            # D413: Missing dashed underline after section
+            "D413",
+            # D415: First line should end with a period, question mark, or
+            # exclamation point
+            "D415",
+        ]
+        if not pedantic:
+            ignore.extend(
+                [
+                    # D100: Missing docstring in public module
+                    "D100",
+                    # D101: Missing docstring in public class
+                    "D101",
+                    # D102: Missing docstring in public method
+                    "D102",
+                    # D103: Missing docstring in public function
+                    "D103",
+                    # D104: Missing docstring in public package
+                    "D104",
+                    # D107: Missing docstring in __init__
+                    "D107",
+                ]
+            )
+        opts = ""
+        if ignore:
+            opts += "--ignore " + ",".join(ignore)
+        # yapf: disable
+        cmd = self._executable + " %s %s" % (opts, file_name)
+        # yapf: enable
+        # We don't abort on error on pydocstyle, since it returns error if there is
+        # any violation.
+        _, file_lines = si.system_to_string(cmd, abort_on_error=False)
+        # Process lint_log transforming:
+        #   linter_v2.py:1 at module level:
+        #       D400: First line should end with a period (not ':')
+        # into:
+        #   linter_v2.py:1: at module level: D400: First line should end with a
+        #   period (not ':')
+        #
+        output = []
+        #
+        file_lines = file_lines.split("\n")
+        lines = ["", ""]
+        for cnt, line in enumerate(file_lines):
+            line = line.rstrip("\n")
+            # _log.debug("line=%s", line)
+            if cnt % 2 == 0:
+                regex = r"(\s(at|in)\s)"
+                subst = r":\1"
+                line = re.sub(regex, subst, line)
+            else:
+                line = line.lstrip()
+            # _log.debug("-> line=%s", line)
+            lines[cnt % 2] = line
+            if cnt % 2 == 1:
+                line = "".join(lines)
+                output.append(line)
+        return output
+
+
+class _Pyment(_Action):
+
+    def __init__(self):
+        self._executable = "pyment"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        # Applicable to only python file.
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        opts = "-w --first-line False -o reST"
+        cmd = self._executable + " %s %s" % (opts, file_name)
+        output = _tee(cmd, self._executable, abort_on_error=False)
+        return output
+
+
+class _Pylint(_Action):
+
+    def __init__(self):
+        self._executable = "pylint"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        # Applicable to only python file.
+        if not is_py_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        opts = ""
+        # We ignore these errors as too picky.
+        ignore = [
+            # [C0302(too-many-lines), ] Too many lines in module (/1000)
+            "C0302",
+            # [C0304(missing-final-newline), ] Final newline missing
+            "C0304",
+            # [C0330(bad-continuation), ] Wrong hanging indentation before block
+            #   (add 4 spaces).
+            # - Black and pylint don't agree on the formatting.
+            "C0330",
+            # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
+            "C0412",
+            # [C0415(import-outside-toplevel), ] Import outside toplevel
+            "C0415",
+            # [R0903(too-few-public-methods), ] Too few public methods (/2)
+            "R0903",
+            # [R0912(too-many-branches), ] Too many branches (/12)
+            "R0912",
+            # R0913(too-many-arguments), ] Too many arguments (/5)
+            "R0913",
+            # [R0914(too-many-locals), ] Too many local variables (/15)
+            "R0914",
+            # [R0915(too-many-statements), ] Too many statements (/50)
+            "R0915",
+            # [W0123(eval-used), ] Use of eval
+            "W0123",
+            # [W0125(using-constant-test), ] Using a conditional statement with a
+            #   constant value
+            "W0125",
+            # [W0511(fixme), ]
+            "W0511",
+            # [W0603(global-statement), ] Using the global statement
+            # - We assume that we are mature enough to use `global` properly.
+            "W0603",
+            # [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
+            #   positional arguments list in the definition of
+            # - TODO(gp): Not clear what is the problem.
+            "W1113",
+        ]
+        is_test_code_tmp = is_under_test_dir(file_name)
+        _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
+        if is_test_code_tmp:
+            # TODO(gp): For files inside "test", disable:
+            ignore.extend(
+                [
+                    # [C0103(invalid-name), ] Class name "Test_dassert_eq1"
+                    #   doesn't conform to PascalCase naming style
+                    "C0103",
+                    # [R0201(no-self-use), ] Method could be a function
+                    "R0201",
+                    # [W0212(protected-access), ] Access to a protected member
+                    #   _get_default_tempdir of a client class
+                    "W0212",
+                ]
+            )
+        is_jupytext_code = is_paired_jupytext_file(file_name)
+        _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+        if is_jupytext_code:
+            ignore.extend(
+                [
+                    # [W0104(pointless-statement), ] Statement seems to have no effect
+                    # This is disabled since we use just variable names to print.
+                    "W0104",
+                    # [W0106(expression-not-assigned), ] Expression # ... is
+                    # assigned to nothing
+                    "W0106",
+                    # [W0621(redefined-outer-name), ] Redefining name ... from outer
+                    # scope
+                    "W0621",
+                ]
+            )
+        if not pedantic:
+            ignore.extend(
+                [
+                    # [C0103(invalid-name), ] Constant name "..." doesn't conform to
+                    #   UPPER_CASE naming style
+                    "C0103",
+                    # [C0111(missing - docstring), ] Missing module docstring
+                    "C0111",
+                    # [C0301(line-too-long), ] Line too long (1065/100)
+                    "C0301",
+                ]
+            )
+        if ignore:
+            opts += "--disable " + ",".join(ignore)
+        # Allow short variables, as long as camel-case.
+        opts += ' --variable-rgx="[a-z0-9_]{1,30}$"'
+        opts += ' --argument-rgx="[a-z0-9_]{1,30}$"'
+        # TODO(gp): Not sure this is needed anymore.
+        opts += " --ignored-modules=pandas"
+        opts += " --output-format=parseable"
+        # TODO(gp): Does -j 4 help?
+        opts += " -j 4"
+        cmd = self._executable + " %s %s" % (opts, file_name)
+        output = _tee(cmd, self._executable, abort_on_error=False)
+        # Remove some errors.
         output_tmp = []
         for line in output:
-            # F821 undefined name 'display' [flake8]
-            if "F821" in line and "undefined name 'display'" in line:
+            if is_jupytext_code:
+                # [E0602(undefined-variable), ] Undefined variable 'display'
+                if "E0602" in line and "Undefined variable 'display'" in line:
+                    continue
+            if line.startswith("Your code has been rated"):
+                # Your code has been rated at 10.00/10 (previous run: ...
+                line = file_name + ": " + line
+            output_tmp.append(line)
+        output = output_tmp
+        # Remove lines.
+        output = [l for l in output if ("-" * 20) not in l]
+        # if output:
+        #    output.insert(0, "* file_name=%s" % file_name)
+        return output
+
+
+class _Mypy(_Action):
+
+    def __init__(self):
+        self._executable = "mypy"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        # Applicable to only python files, that are not paired with notebooks.
+        dbg.dassert(file_name)
+        if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return []
+        #
+        cmd = self._executable + " %s" % file_name
+        _system(
+            cmd,
+            # mypy returns -1 if there are errors.
+            abort_on_error=False,
+        )
+        output = _tee(cmd, self._executable, abort_on_error=False)
+        # Remove some errors.
+        output_tmp = []
+        for line in output:
+            if (
+                line.startswith("Success:")
+                or
+                # Found 2 errors in 1 file (checked 1 source file)
+                line.startswith("Found ")
+                or
+                # note: See https://mypy.readthedocs.io
+                "note: See https" in line
+            ):
                 continue
             output_tmp.append(line)
         output = output_tmp
-    return output
-
-
-def _pydocstyle(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
-    _ = pedantic
-    executable = "pydocstyle"
-    if check_if_possible:
-        return _check_exec(executable)
-    #
-    # Applicable to only python file.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    # http://www.pydocstyle.org/en/2.1.1/error_codes.html
-    ignore = [
-        # D105: Missing docstring in magic method
-        "D105",
-        # D200: One-line docstring should fit on one line with quotes
-        "D200",
-        # D202: No blank lines allowed after function docstring
-        "D202",
-        # D212: Multi-line docstring summary should start at the first line
-        "D212",
-        # D203: 1 blank line required before class docstring (found 0)
-        "D203",
-        # D205: 1 blank line required between summary line and description
-        "D205",
-        # D400: First line should end with a period (not ':')
-        "D400",
-        # D402: First line should not be the function's "signature"
-        "D402",
-        # D407: Missing dashed underline after section
-        "D407",
-        # D413: Missing dashed underline after section
-        "D413",
-        # D415: First line should end with a period, question mark, or
-        # exclamation point
-        "D415",
-    ]
-    if not pedantic:
-        ignore.extend(
-            [
-                # D100: Missing docstring in public module
-                "D100",
-                # D101: Missing docstring in public class
-                "D101",
-                # D102: Missing docstring in public method
-                "D102",
-                # D103: Missing docstring in public function
-                "D103",
-                # D104: Missing docstring in public package
-                "D104",
-                # D107: Missing docstring in __init__
-                "D107",
-            ]
-        )
-    opts = ""
-    if ignore:
-        opts += "--ignore " + ",".join(ignore)
-    # yapf: disable
-    cmd = executable + " %s %s" % (opts, file_name)
-    # yapf: enable
-    # We don't abort on error on pydocstyle, since it returns error if there is
-    # any violation.
-    _, file_lines = si.system_to_string(cmd, abort_on_error=False)
-    # Process lint_log transforming:
-    #   linter_v2.py:1 at module level:
-    #       D400: First line should end with a period (not ':')
-    # into:
-    #   linter_v2.py:1: at module level: D400: First line should end with a
-    #   period (not ':')
-    #
-    output = []
-    #
-    file_lines = file_lines.split("\n")
-    lines = ["", ""]
-    for cnt, line in enumerate(file_lines):
-        line = line.rstrip("\n")
-        # _log.debug("line=%s", line)
-        if cnt % 2 == 0:
-            regex = r"(\s(at|in)\s)"
-            subst = r":\1"
-            line = re.sub(regex, subst, line)
-        else:
-            line = line.lstrip()
-        # _log.debug("-> line=%s", line)
-        lines[cnt % 2] = line
-        if cnt % 2 == 1:
-            line = "".join(lines)
-            output.append(line)
-    return output
-
-
-def _pyment(file_name, pedantic, check_if_possible):
-    _ = pedantic
-    executable = "pyment"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only python file.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    opts = "-w --first-line False -o reST"
-    cmd = executable + " %s %s" % (opts, file_name)
-    return _tee(cmd, executable, abort_on_error=False)
-
-
-def _pylint(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List[str], bool]:
-    executable = "pylint"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only python file.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    opts = ""
-    # We ignore these errors as too picky.
-    ignore = [
-        # [C0302(too-many-lines), ] Too many lines in module (/1000)
-        "C0302",
-        # [C0304(missing-final-newline), ] Final newline missing
-        "C0304",
-        # [C0330(bad-continuation), ] Wrong hanging indentation before block
-        #   (add 4 spaces).
-        # - Black and pylint don't agree on the formatting.
-        "C0330",
-        # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
-        "C0412",
-        # [C0415(import-outside-toplevel), ] Import outside toplevel
-        "C0415",
-        # [R0903(too-few-public-methods), ] Too few public methods (/2)
-        "R0903",
-        # [R0912(too-many-branches), ] Too many branches (/12)
-        "R0912",
-        # R0913(too-many-arguments), ] Too many arguments (/5)
-        "R0913",
-        # [R0914(too-many-locals), ] Too many local variables (/15)
-        "R0914",
-        # [R0915(too-many-statements), ] Too many statements (/50)
-        "R0915",
-        # [W0123(eval-used), ] Use of eval
-        "W0123",
-        # [W0125(using-constant-test), ] Using a conditional statement with a
-        #   constant value
-        "W0125",
-        # [W0511(fixme), ]
-        "W0511",
-        # [W0603(global-statement), ] Using the global statement
-        # - We assume that we are mature enough to use `global` properly.
-        "W0603",
-        # [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
-        #   positional arguments list in the definition of
-        # - TODO(gp): Not clear what is the problem.
-        "W1113",
-    ]
-    is_test_code_tmp = is_under_test_dir(file_name)
-    _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
-    if is_test_code_tmp:
-        # TODO(gp): For files inside "test", disable:
-        ignore.extend(
-            [
-                # [C0103(invalid-name), ] Class name "Test_dassert_eq1"
-                #   doesn't conform to PascalCase naming style
-                "C0103",
-                # [R0201(no-self-use), ] Method could be a function
-                "R0201",
-                # [W0212(protected-access), ] Access to a protected member
-                #   _get_default_tempdir of a client class
-                "W0212",
-            ]
-        )
-    is_jupytext_code = is_paired_jupytext_file(file_name)
-    _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
-    if is_jupytext_code:
-        ignore.extend(
-            [
-                # [W0104(pointless-statement), ] Statement seems to have no effect
-                # This is disabled since we use just variable names to print.
-                "W0104",
-                # [W0106(expression-not-assigned), ] Expression # ... is
-                # assigned to nothing
-                "W0106",
-                # [W0621(redefined-outer-name), ] Redefining name ... from outer
-                # scope
-                "W0621",
-            ]
-        )
-    if not pedantic:
-        ignore.extend(
-            [
-                # [C0103(invalid-name), ] Constant name "..." doesn't conform to
-                #   UPPER_CASE naming style
-                "C0103",
-                # [C0111(missing - docstring), ] Missing module docstring
-                "C0111",
-                # [C0301(line-too-long), ] Line too long (1065/100)
-                "C0301",
-            ]
-        )
-    if ignore:
-        opts += "--disable " + ",".join(ignore)
-    # Allow short variables, as long as camel-case.
-    opts += ' --variable-rgx="[a-z0-9_]{1,30}$"'
-    opts += ' --argument-rgx="[a-z0-9_]{1,30}$"'
-    # TODO(gp): Not sure this is needed anymore.
-    opts += " --ignored-modules=pandas"
-    opts += " --output-format=parseable"
-    # TODO(gp): Does -j 4 help?
-    opts += " -j 4"
-    cmd = executable + " %s %s" % (opts, file_name)
-    output = _tee(cmd, executable, abort_on_error=False)
-    # Remove some errors.
-    output_tmp = []
-    for line in output:
-        if is_jupytext_code:
-            # [E0602(undefined-variable), ] Undefined variable 'display'
-            if "E0602" in line and "Undefined variable 'display'" in line:
-                continue
-        if line.startswith("Your code has been rated"):
-            # Your code has been rated at 10.00/10 (previous run: ...
-            line = file_name + ": " + line
-        output_tmp.append(line)
-    output = output_tmp
-    # Remove lines.
-    output = [l for l in output if ("-" * 20) not in l]
-    # if output:
-    #    output.insert(0, "* file_name=%s" % file_name)
-    return output
-
-
-def _mypy(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List[str], bool]:
-    _ = pedantic
-    executable = "mypy"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only python files, that are not paired with notebooks.
-    dbg.dassert(file_name)
-    if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    #
-    cmd = executable + " %s" % file_name
-    _system(
-        cmd,
-        # mypy returns -1 if there are errors.
-        abort_on_error=False,
-    )
-    output = _tee(cmd, executable, abort_on_error=False)
-    # Remove some errors.
-    output_tmp = []
-    for line in output:
-        if (
-            line.startswith("Success:")
-            or
-            # Found 2 errors in 1 file (checked 1 source file)
-            line.startswith("Found ")
-            or
-            # note: See https://mypy.readthedocs.io
-            "note: See https" in line
-        ):
-            continue
-        output_tmp.append(line)
-    output = output_tmp
-    # if output:
-    #    output.insert(0, "* file_name=%s" % file_name)
-    return output
+        # if output:
+        #    output.insert(0, "* file_name=%s" % file_name)
+        return output
 
 
 # ##############################################################################
 
 
-def _ipynb_format(file_name, pedantic, check_if_possible):
-    _ = pedantic
-    curr_path = os.path.dirname(os.path.realpath(sys.argv[0]))
-    executable = "%s/ipynb_format.py" % curr_path
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable to only ipynb file.
-    dbg.dassert(file_name)
-    if not is_ipynb_file(file_name):
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        return []
-    #
-    cmd = executable + " %s" % file_name
-    _system(cmd)
-    output = []
-    return output
+class _IpynbFormat(_Action):
+
+    def __init__(self):
+        curr_path = os.path.dirname(os.path.realpath(sys.argv[0]))
+        self._executable = "%s/ipynb_format.py" % curr_path
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        output = []
+        # Applicable to only ipynb file.
+        dbg.dassert(file_name)
+        if not is_ipynb_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return output
+        #
+        cmd = self._executable + " %s" % file_name
+        _system(cmd)
+        return output
 
 
 # TODO(gp): Move in a more general file.
@@ -1120,117 +1148,113 @@ def is_paired_jupytext_file(file_name: str) -> bool:
     return is_paired
 
 
-def _sync_jupytext(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
-    _ = pedantic
-    executable = "process_jupytext.py"
-    if check_if_possible:
-        return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
-    # TODO(gp): Use the usual idiom of these functions.
-    if is_py_file(file_name) and is_paired_jupytext_file(file_name):
-        cmd = executable + " -f %s --action sync" % file_name
-        output = _tee(cmd, executable, abort_on_error=True)
-    else:
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        output = []
-    return output
+class _ProcessJupytext(_Action):
+
+    def __init__(self):
+        self._executable = "process_jupytext.py"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        _ = pedantic
+        # TODO(gp): Use the usual idiom of these functions.
+        if is_py_file(file_name) and is_paired_jupytext_file(file_name):
+            cmd_opts = "-f %s --action %s" % (file_name, self._jupytext_action)
+            cmd = self._executable + " " + cmd_opts
+            output = _tee(cmd, self._executable, abort_on_error=True)
+        else:
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            output = []
+        return output
 
 
-def _test_jupytext(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
-    _ = pedantic
-    executable = "process_jupytext.py"
-    if check_if_possible:
-        return _check_exec(executable)
-    #
-    dbg.dassert(file_name)
-    # TODO(gp): Use the usual idiom of these functions.
-    if is_py_file(file_name) and is_paired_jupytext_file(file_name):
-        cmd = executable + " -f %s --action test" % file_name
-        output = _tee(cmd, executable, abort_on_error=True)
-    else:
-        _LOG.debug("Skipping file_name='%s'", file_name)
-        output = []
-    return output
+class _SyncJupytext(_ProcessJupytext):
+
+    def __init__(self):
+        super().__init__()
+        self._jupytext_action = "sync"
+
+class _TestJupytext(_ProcessJupytext):
+    def __init__(self):
+        super().__init__()
+        self._jupytext_action = "test"
 
 
 # ##############################################################################
 
+class _LintMarkdown(_Action):
 
-def _lint_markdown(
-    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
-) -> Union[List, bool]:
-    _ = pedantic
-    executable = "prettier"
-    if check_if_possible:
-        return _check_exec(executable)
-    # Applicable only to txt and md files.
-    dbg.dassert(file_name)
-    ext = os.path.splitext(file_name)[1]
-    output = []
-    if ext not in (".txt", ".md"):
-        _LOG.debug("Skipping file_name='%s' because ext='%s'", file_name, ext)
+    def __init__(self):
+        self._executable = "prettier"
+
+    def check_if_possible(self) -> bool:
+        return _check_exec(self._executable)
+
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+        # Applicable only to txt and md files.
+        dbg.dassert(file_name)
+        ext = os.path.splitext(file_name)[1]
+        output = []
+        if ext not in (".txt", ".md"):
+            _LOG.debug("Skipping file_name='%s' because ext='%s'", file_name, ext)
+            return output
+        #
+        # Pre-process text.
+        #
+        txt = io_.from_file(file_name, split=True)
+        txt_new = []
+        for line in txt:
+            line = re.sub(r"^\* ", "- STAR", line)
+            txt_new.append(line)
+        # Write.
+        txt_new = "\n".join(txt_new)
+        io_.to_file(file_name, txt_new)
+        #
+        # Lint.
+        #
+        cmd_opts = []
+        cmd_opts.append("--parser markdown")
+        cmd_opts.append("--prose-wrap always")
+        cmd_opts.append("--write")
+        cmd_opts.append("--tab-width 4")
+        cmd_opts = " ".join(cmd_opts)
+        cmd = " ".join([self._executable, cmd_opts, file_name])
+        output_tmp = _tee(cmd, self._executable, abort_on_error=True)
+        output.extend(output_tmp)
+        #
+        # Post-process text.
+        #
+        txt = io_.from_file(file_name, split=True)
+        txt_new = []
+        for i, line in enumerate(txt):
+            # Check whether there is TOC otherwise add it.
+            if i == 0 and line != "<!--ts-->":
+                output.append("No tags for table of content in md file: adding it")
+                line = "<!--ts-->\n<!--te-->"
+            line = re.sub(r"^\-   STAR", "*   ", line)
+            # Remove some artifacts when copying from gdoc.
+            line = re.sub("’", "'", line)
+            line = re.sub("“", '"', line)
+            line = re.sub("”", '"', line)
+            line = re.sub("…", "...", line)
+            # -   You say you'll do something
+            # line = re.sub("^(\s*)-   ", r"\1- ", line)
+            # line = re.sub("^(\s*)\*   ", r"\1* ", line)
+            txt_new.append(line)
+        # Write.
+        txt_new = "\n".join(txt_new)
+        io_.to_file(file_name, txt_new)
+        #
+        # Refresh table of content.
+        #
+        amp_path = git.get_amp_abs_path()
+        cmd = []
+        cmd.append(os.path.join(amp_path, "scripts/gh-md-toc"))
+        cmd.append("--insert %s" % file_name)
+        cmd = " ".join(cmd)
+        _system(cmd, abort_on_error=False)
         return output
-    #
-    # Pre-process text.
-    #
-    txt = io_.from_file(file_name, split=True)
-    txt_new = []
-    for line in txt:
-        line = re.sub(r"^\* ", "- STAR", line)
-        txt_new.append(line)
-    # Write.
-    txt_new = "\n".join(txt_new)
-    io_.to_file(file_name, txt_new)
-    #
-    # Lint.
-    #
-    cmd_opts = []
-    cmd_opts.append("--parser markdown")
-    cmd_opts.append("--prose-wrap always")
-    cmd_opts.append("--write")
-    cmd_opts.append("--tab-width 4")
-    cmd_opts = " ".join(cmd_opts)
-    cmd = " ".join([executable, cmd_opts, file_name])
-    output_tmp = _tee(cmd, executable, abort_on_error=True)
-    output.extend(output_tmp)
-    #
-    # Post-process text.
-    #
-    txt = io_.from_file(file_name, split=True)
-    txt_new = []
-    for i, line in enumerate(txt):
-        # Check whether there is TOC otherwise add it.
-        if i == 0 and line != "<!--ts-->":
-            output.append("No tags for table of content in md file: adding it")
-            line = "<!--ts-->\n<!--te-->"
-        line = re.sub(r"^\-   STAR", "*   ", line)
-        # Remove some artifacts when copying from gdoc.
-        line = re.sub("’", "'", line)
-        line = re.sub("“", '"', line)
-        line = re.sub("”", '"', line)
-        line = re.sub("…", "...", line)
-        # -   You say you'll do something
-        # line = re.sub("^(\s*)-   ", r"\1- ", line)
-        # line = re.sub("^(\s*)\*   ", r"\1* ", line)
-        txt_new.append(line)
-    # Write.
-    txt_new = "\n".join(txt_new)
-    io_.to_file(file_name, txt_new)
-    #
-    # Refresh table of content.
-    #
-    amp_path = git.get_amp_abs_path()
-    cmd = []
-    cmd.append(os.path.join(amp_path, "scripts/gh-md-toc"))
-    cmd.append("--insert %s" % file_name)
-    cmd = " ".join(cmd)
-    _system(cmd, abort_on_error=False)
-    return output
 
 
 # #############################################################################
@@ -1258,9 +1282,9 @@ def _lint(
             os.system(cmd)
         else:
             dst_file_name = file_name
-        func = _get_action_func(action)
+        class_ = _get_action_class(action)
         # We want to run the stages, and not check.
-        output_tmp = func(dst_file_name, pedantic, check_if_possible=False)
+        output_tmp = class_.execute(dst_file_name, pedantic)
         # Annotate with executable [tag].
         output_tmp = _annotate_output(output_tmp, action)
         _dassert_list_of_strings(
@@ -1423,26 +1447,28 @@ class _FilePropertyChecker:
 # Actions and if they read / write files.
 # The order of this list implies the order in which they are executed.
 _VALID_ACTIONS_META = [
-    ("check_file_property", "r", "Check that generic files are valid"),
-    ("basic_hygiene", "w", "Clean up (e.g., tabs, trailing spaces)."),
-    ("compile_python", "r", "Check that python code is valid"),
-    ("autoflake", "w", "Removes unused imports and variables."),
-    ("isort", "w", "Sort Python import definitions alphabetically."),
+    ("check_file_property", "r", "Check that generic files are valid",
+     _CheckFileProperty),
+    ("basic_hygiene", "w", "Clean up (e.g., tabs, trailing spaces)",
+     _BasicHygiene),
+    ("compile_python", "r", "Check that python code is valid", _CompilePython),
+    ("autoflake", "w", "Removes unused imports and variables", _Autoflake),
+    ("isort", "w", "Sort Python import definitions alphabetically", _Isort),
     # Superseded by black.
-    # ("yapf", "w", "Formatter for Python code."),
-    ("black", "w", "The uncompromising code formatter."),
-    ("flake8", "r", "Tool For Style Guide Enforcement."),
-    ("pydocstyle", "r", "Docstring style checker."),
+    # ("yapf", "w", "Formatter for Python code", _Yapf),
+    ("black", "w", "The uncompromising code formatter", _Black),
+    ("flake8", "r", "Tool For Style Guide Enforcement", _Flake8),
+    ("pydocstyle", "r", "Docstring style checker", _Pydocstyle),
     # TODO(gp): Fix this.
     # Not installable through conda.
-    # ("pyment", "w", "Create, update or convert docstring."),
-    ("pylint", "w", "Check that module(s) satisfy a coding standard."),
-    ("mypy", "r", "Static code analyzer using the hint types."),
-    ("sync_jupytext", "w", "Create / sync jupytext files."),
-    ("test_jupytext", "r", "Test jupytext files."),
+    # ("pyment", "w", "Create, update or convert docstring", _Pyment),
+    ("pylint", "w", "Check that module(s) satisfy a coding standard", _Pylint),
+    ("mypy", "r", "Static code analyzer using the hint types", _Mypy),
+    ("sync_jupytext", "w", "Create / sync jupytext files", _SyncJupytext),
+    ("test_jupytext", "r", "Test jupytext files", _TestJupytext),
     # Superseded by "sync_jupytext".
-    # ("ipynb_format", "w", "Format jupyter code using yapf."),
-    ("lint_markdown", "w", "Lint txt/md markdown files"),
+    # ("ipynb_format", "w", "Format jupyter code using yapf", _IpynbFormat),
+    ("lint_markdown", "w", "Lint txt/md markdown files", _LintMarkdown),
 ]
 
 _ALL_ACTIONS = list(zip(*_VALID_ACTIONS_META))[0]

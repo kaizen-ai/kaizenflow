@@ -334,8 +334,6 @@ class TestCase(unittest.TestCase):
         contained in the file and/or updates the golden reference file with the
         actual outcome.
 
-        :param: actual
-
         Raises if there is an error.
         """
         dbg.dassert_in(type(actual), (bytes, str))
@@ -401,7 +399,6 @@ class TestCase(unittest.TestCase):
     def _get_test_name(self) -> str:
         """
         :return: full test name as class.method.
-        :rtype: str
         """
         return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
 
