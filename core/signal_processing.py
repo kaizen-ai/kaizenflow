@@ -6,7 +6,7 @@ import core.signal_processing as sigp
 
 import functools
 import logging
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -412,6 +412,25 @@ def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
     return unwrapped
 
 
+def rolling_skip_func(
+        signal: pd.DataFrame, skip_size: int, func: Callable[..., pd.DataFrame], **kwargs
+) -> pd.DataFrame:
+    """
+    Apply `func` column-wise to wrapped-columns and then unwrap.
+
+    :param skip_size: num_cols used for wrapping each col of `signal`
+    :param kwargs: forwarded to `func`
+    """
+    cols = {}
+    for col in signal.columns:
+        wrapped = _wrap(signal[col], skip_size)
+        z_wrapped = func(wrapped, **kwargs)
+        z_scored = _unwrap(z_wrapped, signal.index, col)
+        cols[col] = z_scored
+    df = pd.DataFrame.from_dict(cols)
+    return df
+
+
 # #############################################################################
 # EMAs and derived kernels
 # #############################################################################
@@ -708,26 +727,6 @@ def rolling_zscore(
         )
         ret = signal / signal_std.shift(delay)
     return ret
-
-
-def rolling_skip_zscore(
-    signal: pd.DataFrame, tau: float, skip_size: int, **kwargs
-) -> pd.DataFrame:
-    """
-
-    :param signal:
-    :param skip_size:
-    :param kwargs:
-    :return:
-    """
-    cols = {}
-    for col in signal.columns:
-        wrapped = _wrap(signal[col], skip_size)
-        z_wrapped = rolling_zscore(wrapped, tau, **kwargs)
-        z_scored = _unwrap(z_wrapped, signal.index, col)
-        cols[col] = z_scored
-    df = pd.DataFrame.from_dict(cols)
-    return df
 
 
 def rolling_skew(
