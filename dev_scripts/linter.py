@@ -37,7 +37,7 @@ import os
 import py_compile
 import re
 import sys
-from typing import Iterable, List
+from typing import Any, Callable, Iterable, List, Optional, Union
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -45,17 +45,12 @@ import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
-from typing import Any
-from typing import Callable
-from typing import Optional
-from typing import Union
 
 _LOG = logging.getLogger(__name__)
 
 # Use the current dir and not the dir of the executable.
 _TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
 
-from typing import Iterable
 
 # #############################################################################
 # Utils.
@@ -130,10 +125,10 @@ def _annotate_output(output: List, executable: str) -> List:
     executable used.
     :return: list of strings
     """
-    #dbg.dassert_isinstance(output, list)
+    # dbg.dassert_isinstance(output, list)
     _dassert_list_of_strings(output)
     output = [t + " [%s]" % executable for t in output]
-    #dbg.dassert_isinstance(output, list)
+    # dbg.dassert_isinstance(output, list)
     _dassert_list_of_strings(output)
     return output
 
@@ -150,7 +145,7 @@ def _tee(cmd: str, executable: str, abort_on_error: bool) -> List[str]:
     output = output.split("\n")
     output = _remove_empty_lines(output)
     _LOG.debug("output2='\n%s'", "\n".join(output))
-    #dbg.dassert_isinstance(output, list)
+    # dbg.dassert_isinstance(output, list)
     _dassert_list_of_strings(output)
     return output
 
@@ -217,7 +212,7 @@ def _get_files(args) -> Iterable[str]:
     # Remove text files used in unit tests.
     file_names = [f for f in file_names if not is_test_input_output_file(f)]
     # Make all paths absolute.
-    #file_names = [os.path.abspath(f) for f in file_names]
+    # file_names = [os.path.abspath(f) for f in file_names]
     # Check files exist.
     for f in file_names:
         dbg.dassert_exists(f)
@@ -337,7 +332,7 @@ def _actions_to_string(actions: List[str]) -> str:
     space = max([len(a) for a in actions]) + 2
     format_ = "%" + str(space) + "s: %s"
     actions_as_str = [
-         format_ % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
+        format_ % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
     ]
     return "\n".join(actions_as_str)
 
@@ -375,17 +370,20 @@ def _test_actions():
 # :param check_if_possible: check if the action can be executed on filename
 # :return: list of strings representing the output
 
+
 def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
     _dassert_list_of_strings(txt)
     txt = "\n".join(txt)
-    #dbg.dassert_isinstance(txt_new, list)
+    # dbg.dassert_isinstance(txt_new, list)
     _dassert_list_of_strings(txt_new)
     txt_new = "\n".join(txt_new)
     if txt != txt_new:
         io_.to_file(file_name, txt_new)
 
 
-def _check_file_property(file_name: Optional[Any], pedantic: Optional[Any], check_if_possible: bool) -> bool:
+def _check_file_property(
+    file_name: Optional[Any], pedantic: Optional[Any], check_if_possible: bool
+) -> bool:
     _ = pedantic
     if check_if_possible:
         # We don't need any special executable, so we can always run this action.
@@ -393,7 +391,9 @@ def _check_file_property(file_name: Optional[Any], pedantic: Optional[Any], chec
     dbg.dfatal("We should never get here")
 
 
-def _basic_hygiene(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _basic_hygiene(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     _ = pedantic
     if check_if_possible:
         # We don't need any special executable, so we can always run this action.
@@ -426,7 +426,9 @@ def _basic_hygiene(file_name: Optional[str], pedantic: Optional[bool], check_if_
     return output
 
 
-def _compile_python(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _compile_python(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     """
     Check that the code is valid python.
     """
@@ -450,7 +452,6 @@ def _compile_python(file_name: Optional[str], pedantic: Optional[bool], check_if
 
 
 class _CustomPythonChecks:
-
     def __call__(self, file_name, pedantic, check_if_possible):
         """
         Check that imports follow our style:
@@ -480,19 +481,24 @@ class _CustomPythonChecks:
             output.append(msg)
         # Process file.
         output = self._check_text(file_name, txt, is_executable)
-        #dbg.dassert_isinstance(output, list)
+        # dbg.dassert_isinstance(output, list)
         _dassert_list_of_strings(output)
         return output
 
     @staticmethod
-    def _check_shebang(file_name: str, txt: List[str], is_executable: bool) -> str:
+    def _check_shebang(
+        file_name: str, txt: List[str], is_executable: bool
+    ) -> str:
         msg = ""
         shebang = "#!/usr/bin/env python"
         has_shebang = txt[0] == shebang
-        if ((is_executable and not has_shebang) or
-                (not is_executable and has_shebang)):
+        if (is_executable and not has_shebang) or (
+            not is_executable and has_shebang
+        ):
             msg = "%s:1: any executable needs to start with a shebang '%s'" % (
-                file_name, shebang)
+                file_name,
+                shebang,
+            )
         return msg
 
     @staticmethod
@@ -511,18 +517,19 @@ class _CustomPythonChecks:
         if len(txt) > 3:
             match = True
             match &= txt[0] == '"""'
-            match &= txt[1] == 'Import as:'
-            match &= txt[2] == ''
-            match &= txt[3].startswith('import ')
+            match &= txt[1] == "Import as:"
+            match &= txt[2] == ""
+            match &= txt[3].startswith("import ")
         else:
             match = False
         if not match:
             msg.append(
-                "%s:1: every library needs to describe how to be imported:" %
-                file_name)
+                "%s:1: every library needs to describe how to be imported:"
+                % file_name
+            )
             msg.append('"""')
-            msg.append('Import as:')
-            msg.append('\nimport foo.bar as fba')
+            msg.append("Import as:")
+            msg.append("\nimport foo.bar as fba")
             msg.append('"""')
         else:
             # Check that the import is in the right format, like:
@@ -533,19 +540,23 @@ class _CustomPythonChecks:
                 max_len = 5
                 shortcut = m.group(1)
                 if len(shortcut) > max_len:
-                    msg.append("%s:%s: the import shortcut '%s' is longer than "
-                               "%s characters" % (file_name, import_line, shortcut,
-                                               max_len))
+                    msg.append(
+                        "%s:%s: the import shortcut '%s' is longer than "
+                        "%s characters"
+                        % (file_name, import_line, shortcut, max_len)
+                    )
             else:
-                msg.append("%s:%s: the import is not in the right format "
-                           "'import foo.bar as fba'" % (file_name, import_line))
+                msg.append(
+                    "%s:%s: the import is not in the right format "
+                    "'import foo.bar as fba'" % (file_name, import_line)
+                )
         msg = "\n".join(msg)
         return msg
 
     @staticmethod
     def _check_text(file_name: str, txt: List[str]) -> List[str]:
         output = []
-        #dbg.dassert_isinstance(txt, list)
+        # dbg.dassert_isinstance(txt, list)
         _dassert_list_of_strings(txt)
         txt_new = []
         for i, line in enumerate(txt):
@@ -554,14 +565,13 @@ class _CustomPythonChecks:
             m = re.search("\s*from\s(\S+)\s*import.*", line)
             if m:
                 if m.group(1) != "typing":
-                    msg = "%s:%s: use 'import foo.bar as fba'" % (file_name,
-                                                                  i + 1)
+                    msg = "%s:%s: use 'import foo.bar as fba'" % (
+                        file_name,
+                        i + 1,
+                    )
                     output.append(msg)
             # Look for conflicts markers.
-            if any(line.startswith(c) for c in [
-                    "<<<<<<<",
-                    "=======",
-                    ">>>>>>>"]):
+            if any(line.startswith(c) for c in ["<<<<<<<", "=======", ">>>>>>>"]):
                 msg = "%s:%s: there are conflict markers" % (file_name, i + 1)
                 output.append(msg)
             # Format separating lines.
@@ -580,7 +590,9 @@ class _CustomPythonChecks:
         return output
 
 
-def _autoflake(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _autoflake(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     """
     Remove unused imports and variables.
     """
@@ -618,7 +630,9 @@ def _yapf(file_name, pedantic, check_if_possible):
     return _tee(cmd, executable, abort_on_error=False)
 
 
-def _black(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _black(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     """
     Apply black code formatter.
     """
@@ -645,7 +659,9 @@ def _black(file_name: Optional[str], pedantic: Optional[bool], check_if_possible
     return output
 
 
-def _isort(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _isort(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     """
     Sort imports using isort.
     """
@@ -664,7 +680,9 @@ def _isort(file_name: Optional[str], pedantic: Optional[bool], check_if_possible
     return output
 
 
-def _flake8(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List[str], bool]:
+def _flake8(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List[str], bool]:
     """
     Look for formatting and semantic issues in code and docstrings.
     It relies on:
@@ -734,7 +752,9 @@ def _flake8(file_name: Optional[str], pedantic: Optional[bool], check_if_possibl
     return output
 
 
-def _pydocstyle(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _pydocstyle(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     _ = pedantic
     executable = "pydocstyle"
     if check_if_possible:
@@ -840,7 +860,9 @@ def _pyment(file_name, pedantic, check_if_possible):
     return _tee(cmd, executable, abort_on_error=False)
 
 
-def _pylint(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List[str], bool]:
+def _pylint(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List[str], bool]:
     executable = "pylint"
     if check_if_possible:
         return _check_exec(executable)
@@ -964,7 +986,9 @@ def _pylint(file_name: Optional[str], pedantic: Optional[bool], check_if_possibl
     return output
 
 
-def _mypy(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List[str], bool]:
+def _mypy(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List[str], bool]:
     _ = pedantic
     executable = "mypy"
     if check_if_possible:
@@ -1096,7 +1120,9 @@ def is_paired_jupytext_file(file_name: str) -> bool:
     return is_paired
 
 
-def _sync_jupytext(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _sync_jupytext(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     _ = pedantic
     executable = "process_jupytext.py"
     if check_if_possible:
@@ -1113,7 +1139,9 @@ def _sync_jupytext(file_name: Optional[str], pedantic: Optional[bool], check_if_
     return output
 
 
-def _test_jupytext(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _test_jupytext(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     _ = pedantic
     executable = "process_jupytext.py"
     if check_if_possible:
@@ -1133,7 +1161,9 @@ def _test_jupytext(file_name: Optional[str], pedantic: Optional[bool], check_if_
 # ##############################################################################
 
 
-def _lint_markdown(file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool) -> Union[List, bool]:
+def _lint_markdown(
+    file_name: Optional[str], pedantic: Optional[bool], check_if_possible: bool
+) -> Union[List, bool]:
     _ = pedantic
     executable = "prettier"
     if check_if_possible:
@@ -1206,7 +1236,9 @@ def _lint_markdown(file_name: Optional[str], pedantic: Optional[bool], check_if_
 # #############################################################################
 
 
-def _lint(file_name: str, actions: List[str], pedantic: bool, debug: bool) -> List[str]:
+def _lint(
+    file_name: str, actions: List[str], pedantic: bool, debug: bool
+) -> List[str]:
     """
     Execute all the actions on a filename.
 
@@ -1265,7 +1297,9 @@ def _select_actions(args: argparse.Namespace) -> List[str]:
     return actions
 
 
-def _run_linter(actions: List[str], args: argparse.Namespace, file_names: List[str]) -> List[str]:
+def _run_linter(
+    actions: List[str], args: argparse.Namespace, file_names: List[str]
+) -> List[str]:
     num_steps = len(file_names) * len(actions)
     _LOG.info(
         "Num of files=%d, num of actions=%d -> num of steps=%d",
@@ -1344,9 +1378,11 @@ class _FilePropertyChecker:
         max_size_in_bytes = 512 * 1024
         size_in_bytes = os.path.getsize(file_name)
         if size_in_bytes > max_size_in_bytes:
-            msg = "%s: file size is too large %s > %s" % (file_name,
-                                                          size_in_bytes,
-                                                          max_size_in_bytes)
+            msg = "%s: file size is too large %s > %s" % (
+                file_name,
+                size_in_bytes,
+                max_size_in_bytes,
+            )
         return msg
 
     @staticmethod
@@ -1358,8 +1394,10 @@ class _FilePropertyChecker:
         if is_ipynb_file(file_name):
             subdir_names = file_name.split("/")
             if "notebooks" not in subdir_names:
-                msg = "%s: each notebook should be under a 'notebooks' directory " \
-                      "to not confuse pytest" % file_name
+                msg = (
+                    "%s: each notebook should be under a 'notebooks' directory "
+                    "to not confuse pytest" % file_name
+                )
         return msg
 
     @staticmethod
@@ -1371,8 +1409,10 @@ class _FilePropertyChecker:
         # TODO(gp): A little annoying that we use "notebooks" and "test".
         if os.path.basename(file_name).startswith("test_"):
             if not is_under_test_dir(file_name):
-                msg = "%s: test files should be under 'test' directory to be " \
-                      "discovered by pytest" % file_name
+                msg = (
+                    "%s: test files should be under 'test' directory to be "
+                    "discovered by pytest" % file_name
+                )
         return msg
 
 
@@ -1386,8 +1426,8 @@ _VALID_ACTIONS_META = [
     ("check_file_property", "r", "Check that generic files are valid"),
     ("basic_hygiene", "w", "Clean up (e.g., tabs, trailing spaces)."),
     ("compile_python", "r", "Check that python code is valid"),
-    ( "autoflake", "w", "Removes unused imports and variables."),
-    ( "isort", "w", "Sort Python import definitions alphabetically."),
+    ("autoflake", "w", "Removes unused imports and variables."),
+    ("isort", "w", "Sort Python import definitions alphabetically."),
     # Superseded by black.
     # ("yapf", "w", "Formatter for Python code."),
     ("black", "w", "The uncompromising code formatter."),
@@ -1440,14 +1480,14 @@ def _main(args: argparse.Namespace) -> int:
     if "check_file_property" in actions:
         for file_name in all_file_names:
             output_tmp = _FilePropertyChecker(file_name).check()
-            #dbg.dassert_isinstance(output_tmp, list)
+            # dbg.dassert_isinstance(output_tmp, list)
             _dassert_list_of_strings(output_tmp)
             output.extend(output_tmp)
     actions = [a for a in actions if a != "check_file_property"]
     _LOG.debug("actions=%s", actions)
     # Run linter.
     output_tmp = _run_linter(actions, args, file_names)
-    #dbg.dassert_isinstance(output_tmp, list)
+    # dbg.dassert_isinstance(output_tmp, list)
     _dassert_list_of_strings(output_tmp)
     output.extend(output_tmp)
     # Sort the errors.

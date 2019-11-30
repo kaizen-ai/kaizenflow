@@ -73,8 +73,8 @@ def _get_services_info():
         # service name, server public IP, local port, remote port.
         ("MongoDb", si.get_env_var("P1_OLD_DEV_SERVER"), 27017, 27017),
         ("Jenkins", si.get_env_var("P1_JENKINS_SERVER"), 8080, 8080),
-        #("Reviewboard", si.get_env_var("P1_REVIEWBOARD_SERVER"), 8000, 8000),
-        #("Doc server", si.get_env_var("P1_REVIEWBOARD_SERVER"), 8001, 80),
+        # ("Reviewboard", si.get_env_var("P1_REVIEWBOARD_SERVER"), 8000, 8000),
+        # ("Doc server", si.get_env_var("P1_REVIEWBOARD_SERVER"), 8001, 80),
         # Netdata to Jenkins and Dev server.
         # ("Dev system performance", DEV_SERVER, 19999),
         # ("Jenkins system performance", DEV_SERVER, 19999),

@@ -1,9 +1,10 @@
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 
 import pytest
 
+import dev_scripts.linter as lntr
 import dev_scripts.url as url
 import helpers.conda as hco
 import helpers.dbg as dbg
@@ -12,7 +13,6 @@ import helpers.git as git
 import helpers.io_ as io_
 import helpers.system_interaction as si
 import helpers.unit_test as ut
-from typing import Tuple
 
 _LOG = logging.getLogger(__name__)
 
@@ -267,10 +267,8 @@ dependencies:
 # linter.py
 # #############################################################################
 
-import dev_scripts.linter as lntr
 
 class Test_linter_py1(ut.TestCase):
-
     @staticmethod
     def _get_horrible_python_code1() -> str:
         txt = r"""
@@ -290,7 +288,9 @@ if __name__ == "main":
         io_.to_file(file_name, txt)
         return dir_name, file_name
 
-    def _run_linter(self, file_name: str, linter_log: str, as_system_call: bool) -> str:
+    def _run_linter(
+        self, file_name: str, linter_log: str, as_system_call: bool
+    ) -> str:
         if as_system_call:
             cmd = []
             cmd.append(f"linter.py -f {file_name} --linter_log {linter_log}")
@@ -300,8 +300,9 @@ if __name__ == "main":
             si.system(cmd, abort_on_error=False)
         else:
             parser = lntr._parser()
-            args = parser.parse_args(["-f", file_name, "--linter_log",
-                                      linter_log])
+            args = parser.parse_args(
+                ["-f", file_name, "--linter_log", linter_log]
+            )
             lntr._main(args)
         # Read log.
         _LOG.debug("linter_log=%s", linter_log)
@@ -345,10 +346,13 @@ if __name__ == "main":
 
     # ##########################################################################
 
-    def _helper_check_shebang(self, file_name: str, txt: str, is_executable: bool) -> None:
+    def _helper_check_shebang(
+        self, file_name: str, txt: str, is_executable: bool
+    ) -> None:
         txt = txt.split("\n")
-        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
-                                                      is_executable)
+        msg = lntr._CustomPythonChecks._check_shebang(
+            file_name, txt, is_executable
+        )
         self.check_string(msg)
 
     def test_check_shebang1(self) -> None:
