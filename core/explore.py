@@ -25,7 +25,7 @@ import scipy
 import seaborn as sns
 import statsmodels
 import statsmodels.api
-import tqdm
+from tqdm.autonotebook import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -331,7 +331,7 @@ def print_column_variability(
     """
     print(("# df.columns=%s" % pri.list_to_str(df.columns)))
     res = []
-    for c in tqdm.tqdm(df.columns):
+    for c in tqdm(df.columns):
         vals = df[c].unique()
         min_val = min(vals)
         max_val = max(vals)
@@ -870,14 +870,14 @@ def plot_corr_over_time(corr_df, mode, annot=False, num_cols=4):
         axes[i].set_title(timestamps[i])
 
 
-def _get_eigvals_eigvecs(corr_df, dt, sort_eigvals):
+def _get_eigvals_eigvecs(df: pd.DataFrame, dt: datetime.date, sort_eigvals:bool) -> Tuple[np.array, np.array]:
     dbg.dassert_isinstance(dt, datetime.date)
-    corr_tmp = corr_df.loc[dt].copy()
+    df_tmp = df.loc[dt].copy()
     # Compute rolling eigenvalues and eigenvectors.
     # TODO(gp): Count and report inf and nans as warning.
-    corr_tmp.replace([np.inf, -np.inf], np.nan, inplace=True)
-    corr_tmp.fillna(0.0, inplace=True)
-    eigval, eigvec = np.linalg.eig(corr_tmp)
+    df_tmp.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df_tmp.fillna(0.0, inplace=True)
+    eigval, eigvec = np.linalg.eig(df_tmp)
     # Sort eigenvalues, if needed.
     if not (sorted(eigval) == eigval).all():
         _LOG.debug("eigvals not sorted: %s", eigval)
@@ -893,16 +893,10 @@ def _get_eigvals_eigvecs(corr_df, dt, sort_eigvals):
     #
     if (eigval == 0).all():
         eigvec = np.nan * eigvec
-    eigvec_df_tmp = pd.DataFrame(eigvec, index=corr_tmp.columns)
-    # Add another index.
-    eigvec_df_tmp.index.name = ""
-    eigvec_df_tmp.reset_index(inplace=True)
-    eigvec_df_tmp.insert(0, "datetime", dt)
-    eigvec_df_tmp.set_index(["datetime", ""], inplace=True)
-    return eigval, eigvec_df_tmp
+    return eigval, eigvec
 
 
-def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
+def rolling_pca_over_time(df: pd.DataFrame, com: float, nan_mode: str, sort_eigvals: bool = True) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Compute rolling PCAs over time.
     :param sort_eigvals: sort the eigenvalues in descending orders
@@ -914,22 +908,24 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
     # Compute rolling correlation.
     corr_df = rolling_corr_over_time(df, com, nan_mode)
     # Compute eigvalues and eigenvectors.
-    eigval_df = []
-    eigvec_df = []
     timestamps = corr_df.index.get_level_values(0).unique()
-    for dt in tqdm.tqdm(timestamps):
-        eigval_dt, eigvec_dt = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
-        eigval_df.append(eigval_dt)
-        eigvec_df.append(eigvec_dt)
+    eigval = np.zeros((timestamps.shape[0], df.shape[1]))
+    eigvec = np.zeros((timestamps.shape[0], df.shape[1], df.shape[1]))
+    for i, dt in tqdm(enumerate(timestamps), total=timestamps.shape[0]):
+        eigval[i], eigvec[i] = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
     # Package results.
-    eigval_df = pd.DataFrame(eigval_df, index=timestamps)
+    eigval_df = pd.DataFrame(eigval, index=timestamps)
     dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
     dbg.dassert_monotonic_index(eigval_df)
     # Normalize by sum.
     # TODO(gp): Move this up.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
     #
-    eigvec_df = pd.concat(eigvec_df, axis=0)
+    eigvec = eigvec.reshape((-1, eigvec.shape[-1]))
+    idx = pd.MultiIndex.from_product(
+        [timestamps, df.columns], names=["datetime", None]
+    )
+    eigvec_df = pd.DataFrame(eigvec, index=idx, columns=range(df.shape[1]))
     dbg.dassert_eq(
         len(eigvec_df.index.get_level_values(0).unique()), len(timestamps)
     )
