@@ -38,7 +38,7 @@ import os
 import py_compile
 import re
 import sys
-from typing import Any, Callable, Iterable, List
+from typing import Any, List
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -275,11 +275,13 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
 
 def _write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None:
     _dassert_list_of_strings(txt)
-    txt = "\n".join(txt)
+    txt_as_str = "\n".join(txt)
+    #
     _dassert_list_of_strings(txt_new)
-    txt_new = "\n".join(txt_new)
-    if txt != txt_new:
-        io_.to_file(file_name, txt_new)
+    txt_new_as_str = "\n".join(txt_new)
+    #
+    if txt_as_str != txt_new_as_str:
+        io_.to_file(file_name, txt_new_as_str)
 
 
 class _Action(abc.ABC):
@@ -310,6 +312,7 @@ class _CheckFileProperty(_Action):
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
         dbg.dfatal("We should never get here")
+        return []
 
 
 class _BasicHygiene(_Action):
@@ -419,7 +422,7 @@ class _CustomPythonChecks(_Action):
         return msg
 
     @staticmethod
-    def _was_baptized(file_name, txt: Iterable[str]) -> str:
+    def _was_baptized(file_name, txt: List[str]) -> str:
         """
         Check if code contains a declaration of how to be imported.
         """
@@ -467,8 +470,8 @@ class _CustomPythonChecks(_Action):
                     "%s:%s: the import is not in the right format "
                     "'import foo.bar as fba'" % (file_name, import_line)
                 )
-        msg = "\n".join(msg)
-        return msg
+        msg_as_str = "\n".join(msg)
+        return msg_as_str
 
     @staticmethod
     def _check_text(file_name: str, txt: List[str]) -> List[str]:
@@ -752,7 +755,7 @@ class _Pydocstyle(_Action):
         # yapf: enable
         # We don't abort on error on pydocstyle, since it returns error if there is
         # any violation.
-        _, file_lines = si.system_to_string(cmd, abort_on_error=False)
+        _, file_lines_as_str = si.system_to_string(cmd, abort_on_error=False)
         # Process lint_log transforming:
         #   linter_v2.py:1 at module level:
         #       D400: First line should end with a period (not ':')
@@ -762,7 +765,7 @@ class _Pydocstyle(_Action):
         #
         output: List[str] = []
         #
-        file_lines = file_lines.split("\n")
+        file_lines = file_lines_as_str.split("\n")
         lines = ["", ""]
         for cnt, line in enumerate(file_lines):
             line = line.rstrip("\n")
@@ -1203,7 +1206,7 @@ def _get_action_class(action: str) -> _Action:
             dbg.dassert_is(res, None)
             res = class_
     dbg.dassert_is_not(res, None)
-    return res
+    return res  # type: ignore
 
 
 def _remove_not_possible_actions(actions: List[str]) -> List[str]:
@@ -1270,6 +1273,7 @@ def _select_actions(args: argparse.Namespace) -> List[str]:
     actions = [action for action in _ALL_ACTIONS if action in actions]
     # Find the tools that are available.
     actions = _remove_not_possible_actions(actions)
+    #
     actions_as_str = _actions_to_string(actions)
     _LOG.info("# Action selected:\n%s", pri.space(actions_as_str))
     return actions
