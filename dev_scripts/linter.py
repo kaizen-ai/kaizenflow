@@ -75,28 +75,6 @@ def _remove_empty_lines(output):
     return output
 
 
-def _filter_target_files(file_names):
-    """
-    Keep only the files that:
-    - have extension .py, .ipynb, .txt or .md.
-    - are not Jupyter checkpoints
-    - are not in tmp dirs
-    """
-    file_names_out = []
-    for file_name in file_names:
-        _, file_ext = os.path.splitext(file_name)
-        # We skip .ipynb since jupytext is part of the main flow.
-        is_valid = file_ext in (".py", ".txt", ".md")
-        is_valid &= ".ipynb_checkpoints/" not in file_name
-        # Skip files in directory starting with "tmp.".
-        is_valid &= "/tmp." not in file_name
-        # Skip files starting with "tmp.".
-        is_valid &= not file_name.startswith("tmp.")
-        if is_valid:
-            file_names_out.append(file_name)
-    return file_names_out
-
-
 # TODO(gp): Horrible: to remove / rewrite.
 def _clean_file(file_name, write_back):
     """
@@ -105,6 +83,7 @@ def _clean_file(file_name, write_back):
     """
     # Read file.
     file_in = []
+    # TODO(gp): Use io_.from_file
     with open(file_name, "r") as f:
         for line in f:
             file_in.append(line)
@@ -123,6 +102,7 @@ def _clean_file(file_name, write_back):
         file_out.pop(-1)
     # Write the new the output to file.
     if write_back:
+        # TODO(gp): Use _write_back.
         file_in = "".join(file_in)
         file_out = "".join(file_out)
         if file_in != file_out:
@@ -167,6 +147,30 @@ def _tee(cmd, executable, abort_on_error):
 # #############################################################################
 
 
+def _filter_target_files(file_names):
+    """
+    Keep only the files that:
+    - have extension .py, .ipynb, .txt or .md.
+    - are not Jupyter checkpoints
+    - are not in tmp dirs
+    """
+    file_names_out = []
+    for file_name in file_names:
+        _, file_ext = os.path.splitext(file_name)
+        # We skip .ipynb since jupytext is part of the main flow.
+        is_valid = file_ext in (".py", ".txt", ".md")
+        is_valid &= ".ipynb_checkpoints/" not in file_name
+        # Skip tmp names since we need to run on unit tests.
+        if False:
+            # Skip files in directory starting with "tmp.".
+            is_valid &= "/tmp." not in file_name
+            # Skip files starting with "tmp.".
+            is_valid &= not file_name.startswith("tmp.")
+        if is_valid:
+            file_names_out.append(file_name)
+    return file_names_out
+
+
 def _get_files(args) -> Iterable[str]:
     """
     Return the list of files to process given the command line arguments.
@@ -199,6 +203,11 @@ def _get_files(args) -> Iterable[str]:
             file_names = git.get_modified_files()
     # Remove text files used in unit tests.
     file_names = [f for f in file_names if not is_test_input_output_file(f)]
+    # Make all paths absolute.
+    #file_names = [os.path.abspath(f) for f in file_names]
+    # Check files exist.
+    for f in file_names:
+        dbg.dassert_exists(f)
     return file_names
 
 
@@ -212,9 +221,6 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
     # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
     _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
-    dbg.dassert_lte(
-        1, len(file_names), "No files that can be linted are specified"
-    )
     # Remove files.
     if args.skip_py:
         file_names = [f for f in file_names if not is_py_file(f)]
@@ -235,10 +241,8 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
         file_names = [f for f in file_names if is_paired_jupytext_file(f)]
     #
     _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
-    if not file_names:
-        msg = "No files were selected"
-        _LOG.error(msg)
-        raise ValueError(msg)
+    if len(file_names) < 1:
+        _LOG.warning("No files that can be linted are specified")
     return file_names
 
 
@@ -253,6 +257,7 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
 # - it allows to have clear control over options
 
 
+# TODO(gp): Move to system_interactions.
 def _check_exec(tool):
     """
     :return: True if the executables "tool" can be executed.
@@ -264,6 +269,7 @@ def _check_exec(tool):
 _THIS_MODULE = sys.modules[__name__]
 
 
+# TODO(gp): Merge this into _VALID_ACTIONS_META.
 def _get_action_func(action):
     """
     Return the function corresponding to the passed string.
@@ -279,6 +285,7 @@ def _get_action_func(action):
         "autoflake": _autoflake,
         "basic_hygiene": _basic_hygiene,
         "black": _black,
+        "check_file_property": _check_file_property,
         "flake8": _flake8,
         "ipynb_format": _ipynb_format,
         "isort": _isort,
@@ -287,7 +294,7 @@ def _get_action_func(action):
         "pydocstyle": _pydocstyle,
         "pylint": _pylint,
         "pyment": _pyment,
-        "python_compile": _python_compile,
+        "compile_python": _compile_python,
         "sync_jupytext": _sync_jupytext,
         "test_jupytext": _test_jupytext,
         "yapf": _yapf,
@@ -314,8 +321,10 @@ def _remove_not_possible_actions(actions):
 
 
 def _actions_to_string(actions):
+    space = max([len(a) for a in actions]) + 2
+    format_ = "%" + str(space) + "s: %s"
     actions_as_str = [
-        "%16s: %s" % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
+         format_ % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
     ]
     return "\n".join(actions_as_str)
 
@@ -354,17 +363,20 @@ def _test_actions():
 # :return: list of strings representing the output
 
 def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
+    dbg.dassert_isinstance(txt, list)
     txt = "\n".join(txt)
+    dbg.dassert_isinstance(txt_new, list)
     txt_new = "\n".join(txt_new)
     if txt != txt_new:
         io_.to_file(file_name, txt_new)
 
 
-def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
-    txt = "\n".join(txt)
-    txt_new = "\n".join(txt_new)
-    if txt != txt_new:
-        io_.to_file(file_name, txt_new)
+def _check_file_property(file_name, pedantic, check_if_possible):
+    _ = pedantic
+    if check_if_possible:
+        # We don't need any special executable, so we can always run this action.
+        return True
+    dbg.dfatal("We should never get here")
 
 
 def _basic_hygiene(file_name, pedantic, check_if_possible):
@@ -400,7 +412,7 @@ def _basic_hygiene(file_name, pedantic, check_if_possible):
     return output
 
 
-def _python_compile(file_name, pedantic, check_if_possible):
+def _compile_python(file_name, pedantic, check_if_possible):
     """
     Check that the code is valid python.
     """
@@ -423,28 +435,116 @@ def _python_compile(file_name, pedantic, check_if_possible):
     return output
 
 
-def _custom_python_checks(file_name, pedantic, check_if_possible):
-    _ = pedantic
-    if check_if_possible:
-        # We don't need any special executable, so we can always run this action.
-        return True
-    output = []
-    # Read file.
-    dbg.dassert(file_name)
-    txt = io_.from_file(file_name, split=True)
-    # Process file.
-    txt_new = []
-    for line in txt:
-        m = re.search("^\s*from\s+(\S+)\s+import\s+(\S+)", line)
+class _CustomPythonChecks:
+
+    def __call__(self, file_name, pedantic, check_if_possible):
+        """
+        Check that imports follow our style:
+            import foo.bar as bar
+        """
+        _ = pedantic
+        if check_if_possible:
+            # We don't need any special executable, so we can always run this action.
+            return True
+        output = []
+        # Applicable only to python files.
+        dbg.dassert(file_name)
+        if not is_py_file and not is_paired_jupytext_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return output
+        # Read file.
+        dbg.dassert(file_name)
+        txt = io_.from_file(file_name, split=True)
+        # Check shebang.
+        is_executable = os.access(file_name, os.X_OK)
+        msg = self._check_shebang(file_name, is_executable)
+        if msg:
+            output.append(msg)
+        # Check that the module was baptized.
+        msg = self._was_baptized(file_name, txt)
+        if msg:
+            output.append(msg)
+        # Process file.
+        output = self._check_text(file_name, txt, is_executable)
+        dbg.dassert_isinstance(output, list)
+        return output
+
+    @staticmethod
+    def _check_shebang(file_name, txt, is_executable):
+        msg = ""
+        shebang = "#!/usr/bin/env python"
+        has_shebang = txt[0] == shebang
+        if ((is_executable and not has_shebang) or
+                (not is_executable and has_shebang)):
+            msg = "%s:1: any executable needs to start with a shebang '%s'" % (
+                file_name, shebang)
+        return msg
+
+    @staticmethod
+    def _was_baptized(file_name, txt):
+        msg = []
+        # Check that the header of the file is in the format:
+        #   """
+        #   Import as:
+        #
+        #   import _setenv_lib as selib
+        #   ...
+        match = True
+        match &= txt[0] == '"""'
+        match &= txt[1] == 'Import as:'
+        match &= txt[2] == ''
+        match &= txt[3].startswith('import ')
+        if not match:
+            msg.append(
+                "%s:1: any library needs to describe how to be imported:" %
+                file_name)
+            msg.append('"""')
+            msg.append('Import as:')
+            msg.append('\nimport foo.bar as fba')
+        # Check that the import is in the right format, like:
+        #   import _setenv_lib as selib
+        m = re.match("import \S+ as (\S+)")
         if m:
+            max_len = 5
+            shortcut = m.group(1)
+            if len(shortcut) > max_len:
+                msg.append("%s:3: the import shortcut '%s' is longer than %s "
+                           "characters" % (file_name, shortcut, max_len))
+        else:
+            msg.append("%s:3: the import is not in the right format "
+                       "'import foo.bar as fba'" % file_name)
+        msg = "\n".join(msg)
+        return msg
+
+    @staticmethod
+    def _check_text(file_name, txt, is_executable):
+        output = []
+        dbg.dassert_isinstance(txt, list)
+        txt_new = []
+        for i, line in enumerate(txt):
+            # Check imports.
+            m = re.search("\s*from\s(\S+)\s*import.*", line)
+            if m:
+                if m.group(1) != "typing":
+                    msg = "%s:%s: use 'import foo.bar as fba'" % (file_name, i)
+                    output.append(msg)
+            # Look for conflicts markers.
+            if any(line.startswith(c) for c in [
+                    "<<<<<<<",
+                    "=======",
+                    ">>>>>>>"]):
+                msg = "%s:%s: there are conflict markers" % (file_name, i)
+                output.append(msg)
+            # Format separating lines.
+            for char in "# = - < >".split():
+                m = re.search("(\S*#)\S*" + char * 10, line)
+                if m:
+                    txt = m.group(1) + " " + char * (80 - len(m.group(1)))
             #
-        pass
-    # Write file back.
-    txt = "\n".join(txt)
-    txt_new = "\n".join(txt_new)
-    if txt != txt_new:
-        io_.to_file(file_name, txt_new)
-    return output
+            txt_new.append(txt)
+        # Write file back.
+        _write_file_back(file_name, txt, txt_new)
+        return output
 
 
 def _autoflake(file_name, pedantic, check_if_possible):
@@ -1108,14 +1208,12 @@ def _lint(file_name, actions, pedantic, debug):
 
 
 def _select_actions(args):
-    # Select phases.
+    # Select actions.
     actions = args.action
     if isinstance(actions, str) and " " in actions:
         actions = actions.split(" ")
     if not actions or args.all:
         actions = _ALL_ACTIONS[:]
-    if args.quick:
-        actions = [a for a in _ALL_ACTIONS if a != "pylint"]
     # Validate actions.
     actions = set(actions)
     for action in actions:
@@ -1175,9 +1273,17 @@ def _run_linter(actions, args, file_names):
     output = _remove_empty_lines(output)
     return output
 
+
 # ##############################################################################
 
-class _FileChecker:
+
+class _FilePropertyChecker:
+    """
+    Perform various checks based on property of a file:
+    - check that file size doesn't exceed a certain threshould
+    - check that notebook files are under a `notebooks` dir
+    - check that test files are under `test` dir
+    """
 
     def __init__(self, file_name):
         dbg.dassert_exists(file_name)
@@ -1236,28 +1342,6 @@ class _FileChecker:
                       "discovered by pytest" % file_name
         return msg
 
-    @staticmethod
-    def _check_shebang(file_name):
-        msg = ""
-        is_executable = os.access(file_name, os.X_OK)
-        txt = io_.from_file(file_name, split=True)
-        has_shebang = txt[0] != "#!/usr/bin/env python"
-        if ((is_executable and not has_shebang) or
-            (not is_executable and has_shebang)):
-            msg = "%s: an executable needs to be have a shebang " \
-                  "'#!/usr/bin/env python'" % file_name
-        return msg
-
-    @staticmethod
-    def _check_from_import(file_name):
-        msg = []
-        if is_py_file(file_name):
-            txt = io_.from_file(file_name, split=True)
-            for i, line in enumerate(txt):
-                m = re.search("\s*from\s(\S+)\s*import.*", line)
-                if m and m.group(1) != "typing":
-                    msg = "%s:%s: use 'import foo.bar as fba'" % (file_name, i)
-        return msg
 
 # #############################################################################
 # Main.
@@ -1266,34 +1350,25 @@ class _FileChecker:
 # Actions and if they read / write files.
 # The order of this list implies the order in which they are executed.
 _VALID_ACTIONS_META = [
+    ("check_file_property", "r", "Check that generic files are valid"),
     ("basic_hygiene", "w", "Clean up (e.g., tabs, trailing spaces)."),
-    ("python_compile", "r", "Check that python code is valid"),
-    (
-        "autoflake",
-        "w",
-        "Removes unused imports and unused variables as reported by pyflakes.",
-    ),
-    (
-        "isort",
-        "w",
-        "Sort Python import definitions alphabetically within logical sections.",
-    ),
+    ("compile_python", "r", "Check that python code is valid"),
+    ( "autoflake", "w", "Removes unused imports and variables."),
+    ( "isort", "w", "Sort Python import definitions alphabetically."),
     # Superseded by black.
-    # ("yapf", "w",
-    #    "Formatter for Python code."),
+    # ("yapf", "w", "Formatter for Python code."),
     ("black", "w", "The uncompromising code formatter."),
     ("flake8", "r", "Tool For Style Guide Enforcement."),
     ("pydocstyle", "r", "Docstring style checker."),
+    # TODO(gp): Fix this.
     # Not installable through conda.
-    # ("pyment", "w",
-    #   "Create, update or convert docstring."),
+    # ("pyment", "w", "Create, update or convert docstring."),
     ("pylint", "w", "Check that module(s) satisfy a coding standard."),
     ("mypy", "r", "Static code analyzer using the hint types."),
     ("sync_jupytext", "w", "Create / sync jupytext files."),
     ("test_jupytext", "r", "Test jupytext files."),
     # Superseded by "sync_jupytext".
-    # ("ipynb_format", "w",
-    #   "Format jupyter code using yapf."),
+    # ("ipynb_format", "w", "Format jupyter code using yapf."),
     ("lint_markdown", "w", "Lint txt/md markdown files"),
 ]
 
@@ -1312,27 +1387,30 @@ def _main(args):
     # Get all the files to process.
     all_file_names = _get_files(args)
     _LOG.info("Found %s files to process", len(all_file_names))
-    # Check the files.
-    if not args.collect_only:
-        for file_name in all_file_names:
-            output_tmp = _FileChecker(file_name).check()
-            dbg.dassert_isinstance(output_tmp, list)
-            output.append(output_tmp)
-    assert 0
     # Select files.
     file_names = _get_files_to_lint(args, all_file_names)
     _LOG.info(
-        "# Processing %d files:\n%s",
+        "# Found %d files to lint:\n%s",
         len(file_names),
         pri.space("\n".join(file_names)),
     )
     if args.collect_only:
         _LOG.warning("Exiting as requested")
         sys.exit(0)
+    # Select actions.
     actions = _select_actions(args)
+    _LOG.debug("actions=%s", actions)
     # Create tmp dir.
     io_.create_dir(_TMP_DIR, incremental=False)
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
+    # Check the files.
+    if "check_file_property" in actions:
+        for file_name in all_file_names:
+            output_tmp = _FilePropertyChecker(file_name).check()
+            dbg.dassert_isinstance(output_tmp, list)
+            output.extend(output_tmp)
+    actions = [a for a in actions if a != "check_file_property"]
+    _LOG.debug("actions=%s", actions)
     # Run linter.
     output_tmp = _run_linter(actions, args, file_names)
     dbg.dassert_isinstance(output_tmp, list)
@@ -1343,10 +1421,10 @@ def _main(args):
     print(pri.frame(args.linter_log, char1="/").rstrip("\n"))
     print("\n".join(output) + "\n")
     print(pri.line(char="/").rstrip("\n"))
-    # Write file.
+    # Write the file.
     output = "\n".join(output)
     io_.to_file(args.linter_log, output)
-    # Compute the number of lints.
+    # Count number of lints.
     num_lints = 0
     for line in output.split("\n"):
         # dev_scripts/linter.py:493: ... [pydocstyle]
@@ -1446,9 +1524,6 @@ def _parse():
     )
     # Select actions.
     parser.add_argument("--action", action="append", help="Run a specific check")
-    parser.add_argument(
-        "--quick", action="store_true", help="Run all quick phases"
-    )
     parser.add_argument(
         "--all", action="store_true", help="Run all recommended phases"
     )

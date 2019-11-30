@@ -97,7 +97,6 @@ class Test_set_env_amp(ut.TestCase):
         dbg.dassert_exists(executable)
         # Run _setup.py and get its output.
         _, txt = si.system_to_string(executable)
-        txt = ut.purify_from_client(txt)
         # There is a difference between running the same test from different
         # repos, so we remove this line.
         # echo 'curr_path=$GIT_ROOT/amp' |     echo 'curr_path=$GIT_ROOT'
@@ -267,6 +266,7 @@ dependencies:
 # linter.py
 # #############################################################################
 
+import dev_scripts.linter as lntr
 
 class Test_linter_py1(ut.TestCase):
 
@@ -289,43 +289,143 @@ if __name__ == "main":
         io_.to_file(file_name, txt)
         return dir_name, file_name
 
-    def _run_linter(self, dir_name, file_name, as_system):
-        linter_log = "./linter.log"
-        # We run in the target dir so we have only relative paths, and we can
-        # do a check of the output.
-        base_name = os.path.basename(file_name)
-        if as_system:
-            cmd = (
-                f"cd {dir_name} && linter.py -f {base_name} --linter_log "
-                f"{linter_log}"
-            )
+    def _run_linter(self, file_name, linter_log, as_system_call):
+        if as_system_call:
+            cmd = []
+            cmd.append(f"linter.py -f {file_name} --linter_log {linter_log}")
+            cmd = " ".join(cmd)
+            # We need to ignore the errors reported by the script, since it
+            # represents how many lints were found.
             si.system(cmd, abort_on_error=False)
         else:
-            prev_dir = os.getcwd()
-            try:
-                os.chdir(os.path.expanduser(dir_name))
-                args = {}
-                args["f"] = base_name
-                args["linter_log"] = linter_log
-            finally:
-                os.chdir(prev_dir)
-
-
-    def test_linter1(self) -> None:
-        txt = self._get_horrible_python_code1()
-        dir_name, file_name = self._write_input_file(txt)
-        #
-
+            args = {}
+            args["f"] = file_name
+            args["linter_log"] = linter_log
+            lntr._main(args)
         # Read log.
-        linter_log = os.path.abspath(os.path.join(dir_name, linter_log))
+        _LOG.debug("linter_log=%s", linter_log)
         txt = io_.from_file(linter_log, split=False)
+        # Process log.
         output = []
         for l in txt.split("\n"):
             # Remove the line:
             #   cmd line='.../linter.py -f input.py --linter_log ./linter.log'
             if "cmd line=" in l:
                 continue
+            # We run in the target dir so we have only relative paths, and we can
+            # do a check of the output.
+            # TODO(gp):
             output.append(l)
         output = "\n".join(output)
+        return output
+
+    def _helper(self, txt, as_system_call):
+        # Create file to lint.
+        dir_name, file_name = self._write_input_file(txt)
+        # Run.
+        dir_name = self.get_scratch_space()
+        linter_log = "linter.log"
+        linter_log = os.path.abspath(os.path.join(dir_name, linter_log))
+        output = self._run_linter(file_name, linter_log, as_system_call)
+        return output
+
+    def test_linter1(self) -> None:
+        txt = self._get_horrible_python_code1()
+        # Run.
+        as_system_call = True
+        output = self._helper(txt, as_system_call)
         # Check.
         self.check_string(output)
+
+    def test_linter2(self) -> None:
+        txt = self._get_horrible_python_code1()
+        # Run.
+        as_system_call = False
+        output = self._helper(txt, as_system_call)
+        # Check.
+        self.check_string(output)
+
+    # ##########################################################################
+
+    def test_check_shebang1(self):
+        """
+        Executable with wrong shebang: error.
+        """
+        file_name = "exec.py"
+        txt = """#!/bin/bash
+hello
+world
+"""
+        txt = txt.split("\n")
+        is_executable = True
+        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
+                                                    is_executable)
+        self.check_string(msg)
+
+    def test_check_shebang2(self):
+        """
+        Executable with the correct shebang: correct.
+        """
+        file_name = "exec.py"
+        txt = """#!/usr/bin/env python
+hello
+world
+"""
+        txt = txt.split("\n")
+        is_executable = True
+        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
+                                                      is_executable)
+        self.check_string(msg)
+
+    def test_check_shebang3(self):
+        """
+        Non executable with a shebang: error.
+        """
+        file_name = "exec.py"
+        txt = """#!/usr/bin/env python
+hello
+world
+"""
+        txt = txt.split("\n")
+        is_executable = False
+        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
+                                                      is_executable)
+        self.check_string(msg)
+
+    def test_check_shebang4(self):
+        """
+        Library without a shebang: correct.
+        """
+        file_name = "lib.py"
+        txt = '''"""
+Import as:
+
+import _setenv_lib as selib
+'''
+        txt = txt.split("\n")
+        is_executable = False
+        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
+                                                      is_executable)
+        self.check_string(msg)
+
+    def test_was_baptized1(self):
+        file_name = "lib.py"
+        txt = '''"""
+Import as:
+
+import _setenv_lib as selib
+'''
+        txt = txt.split("\n")
+        msg = lntr._CustomPythonChecks._was_baptized(file_name, txt)
+        self.check_string(msg)
+
+    def test_was_baptized2(self):
+        file_name = "lib.py"
+        txt = '''"""
+Import as:
+
+import _setenv_lib as selib
+'''
+        txt = txt.split("\n")
+        msg = lntr._CustomPythonChecks._was_baptized(file_name, txt)
+        self.check_string(msg)

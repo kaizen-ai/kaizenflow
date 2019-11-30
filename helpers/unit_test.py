@@ -117,13 +117,16 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
-def purify_from_client(txt: str) -> str:
+def purify_txt(txt: str) -> str:
     """
-    Remove from a string all the information specific of a git client:
+    Remove from a string all the information specific of a git client.
     """
     # Replace the git path with `$GIT_ROOT`.
     super_module_path = git.get_client_root(super_module=True)
     txt = txt.replace(super_module_path, "$GIT_ROOT")
+    # Replace the current path with `$PWD`
+    pwd = os.getcwd()
+    txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
     user_name = si.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
@@ -259,6 +262,13 @@ class TestCase(unittest.TestCase):
         # Force matplotlib to close plots to decouple tests.
         plt.close()
         plt.clf()
+        # Delete the scratch dir, if needed.
+        if self._scratch_dir and os.path.exists(self._scratch_dir):
+            if get_incremental_tests():
+                _LOG.warning("Skipping deleting %s", self._scratch_dir)
+            else:
+                _LOG.debug("Deleting %s", self._scratch_dir)
+                io_.delete_dir(self._scratch_dir)
 
     def create_io_dirs(self):
         dir_name = self.get_input_dir()
@@ -337,6 +347,9 @@ class TestCase(unittest.TestCase):
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
         _LOG.debug("file_name=%s", file_name)
+        #
+        actual = purify_txt(actual)
+        #
         if get_update_tests():
             # Update the test result.
             outcome_updated = False
