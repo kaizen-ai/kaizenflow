@@ -1013,7 +1013,7 @@ def _lint_markdown(file_name, pedantic, check_if_possible):
         # Check whether there is TOC otherwise add it.
         if i == 0 and line != "<!--ts-->":
             output.append("No tags for table of content in md file: adding it")
-            line = "<!--ts-->\n<!--te-->"
+            txt_new.append("<!--ts-->\n<!--te-->")
         line = re.sub(r"^\-   STAR", "*   ", line)
         # Remove some artifacts when copying from gdoc.
         line = re.sub("’", "'", line)
