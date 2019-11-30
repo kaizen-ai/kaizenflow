@@ -75,6 +75,12 @@ def _remove_empty_lines(output):
     return output
 
 
+def _dassert_list_of_strings(output, *args):
+    dbg.dassert_isinstance(output, list, *args)
+    for line in output:
+        dbg.dassert_isinstance(line, str, *args)
+
+
 # TODO(gp): Horrible: to remove / rewrite.
 def _clean_file(file_name, write_back):
     """
@@ -120,9 +126,11 @@ def _annotate_output(output, executable):
     executable used.
     :return: list of strings
     """
-    dbg.dassert_isinstance(output, list)
+    #dbg.dassert_isinstance(output, list)
+    _dassert_list_of_strings(output)
     output = [t + " [%s]" % executable for t in output]
-    dbg.dassert_isinstance(output, list)
+    #dbg.dassert_isinstance(output, list)
+    _dassert_list_of_strings(output)
     return output
 
 
@@ -138,7 +146,8 @@ def _tee(cmd, executable, abort_on_error):
     output = output.split("\n")
     output = _remove_empty_lines(output)
     _LOG.debug("output2='\n%s'", "\n".join(output))
-    dbg.dassert_isinstance(output, list)
+    #dbg.dassert_isinstance(output, list)
+    _dassert_list_of_strings(output)
     return output
 
 
@@ -363,9 +372,10 @@ def _test_actions():
 # :return: list of strings representing the output
 
 def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
-    dbg.dassert_isinstance(txt, list)
+    _dassert_list_of_strings(txt)
     txt = "\n".join(txt)
-    dbg.dassert_isinstance(txt_new, list)
+    #dbg.dassert_isinstance(txt_new, list)
+    _dassert_list_of_strings(txt_new)
     txt_new = "\n".join(txt_new)
     if txt != txt_new:
         io_.to_file(file_name, txt_new)
@@ -466,7 +476,8 @@ class _CustomPythonChecks:
             output.append(msg)
         # Process file.
         output = self._check_text(file_name, txt, is_executable)
-        dbg.dassert_isinstance(output, list)
+        #dbg.dassert_isinstance(output, list)
+        _dassert_list_of_strings(output)
         return output
 
     @staticmethod
@@ -481,7 +492,10 @@ class _CustomPythonChecks:
         return msg
 
     @staticmethod
-    def _was_baptized(file_name, txt):
+    def _was_baptized(file_name, txt: Iterable[str]) -> str:
+        """
+        Check if code contains a declaration of how to be imported.
+        """
         msg = []
         # Check that the header of the file is in the format:
         #   """
@@ -489,59 +503,74 @@ class _CustomPythonChecks:
         #
         #   import _setenv_lib as selib
         #   ...
-        match = True
-        match &= txt[0] == '"""'
-        match &= txt[1] == 'Import as:'
-        match &= txt[2] == ''
-        match &= txt[3].startswith('import ')
+        _dassert_list_of_strings(txt)
+        if len(txt) > 3:
+            match = True
+            match &= txt[0] == '"""'
+            match &= txt[1] == 'Import as:'
+            match &= txt[2] == ''
+            match &= txt[3].startswith('import ')
+        else:
+            match = False
         if not match:
             msg.append(
-                "%s:1: any library needs to describe how to be imported:" %
+                "%s:1: every library needs to describe how to be imported:" %
                 file_name)
             msg.append('"""')
             msg.append('Import as:')
             msg.append('\nimport foo.bar as fba')
-        # Check that the import is in the right format, like:
-        #   import _setenv_lib as selib
-        m = re.match("import \S+ as (\S+)")
-        if m:
-            max_len = 5
-            shortcut = m.group(1)
-            if len(shortcut) > max_len:
-                msg.append("%s:3: the import shortcut '%s' is longer than %s "
-                           "characters" % (file_name, shortcut, max_len))
+            msg.append('"""')
         else:
-            msg.append("%s:3: the import is not in the right format "
-                       "'import foo.bar as fba'" % file_name)
+            # Check that the import is in the right format, like:
+            #   import _setenv_lib as selib
+            import_line = 3
+            m = re.match("import \S+ as (\S+)", txt[import_line])
+            if m:
+                max_len = 5
+                shortcut = m.group(1)
+                if len(shortcut) > max_len:
+                    msg.append("%s:%s: the import shortcut '%s' is longer than "
+                               "%s characters" % (file_name, import_line, shortcut,
+                                               max_len))
+            else:
+                msg.append("%s:%s: the import is not in the right format "
+                           "'import foo.bar as fba'" % (file_name, import_line))
         msg = "\n".join(msg)
         return msg
 
     @staticmethod
-    def _check_text(file_name, txt, is_executable):
+    def _check_text(file_name, txt):
         output = []
-        dbg.dassert_isinstance(txt, list)
+        #dbg.dassert_isinstance(txt, list)
+        _dassert_list_of_strings(txt)
         txt_new = []
         for i, line in enumerate(txt):
+            _LOG.debug("%s: %s", i, line)
             # Check imports.
             m = re.search("\s*from\s(\S+)\s*import.*", line)
             if m:
                 if m.group(1) != "typing":
-                    msg = "%s:%s: use 'import foo.bar as fba'" % (file_name, i)
+                    msg = "%s:%s: use 'import foo.bar as fba'" % (file_name,
+                                                                  i + 1)
                     output.append(msg)
             # Look for conflicts markers.
             if any(line.startswith(c) for c in [
                     "<<<<<<<",
                     "=======",
                     ">>>>>>>"]):
-                msg = "%s:%s: there are conflict markers" % (file_name, i)
+                msg = "%s:%s: there are conflict markers" % (file_name, i + 1)
                 output.append(msg)
             # Format separating lines.
             for char in "# = - < >".split():
                 m = re.search("(\S*#)\S*" + char * 10, line)
                 if m:
-                    txt = m.group(1) + " " + char * (80 - len(m.group(1)))
+                    line = m.group(1) + " " + char * (80 - len(m.group(1)))
             #
-            txt_new.append(txt)
+            _LOG.debug("    -> %s", line)
+            txt_new.append(line)
+            _dassert_list_of_strings(txt_new)
+            #
+            _dassert_list_of_strings(output)
         # Write file back.
         _write_file_back(file_name, txt, txt_new)
         return output
@@ -1198,8 +1227,8 @@ def _lint(file_name, actions, pedantic, debug):
         output_tmp = func(dst_file_name, pedantic, check_if_possible=False)
         # Annotate with executable [tag].
         output_tmp = _annotate_output(output_tmp, action)
-        dbg.dassert_isinstance(
-            output_tmp, list, msg="action=%s file_name=%s" % (action, file_name)
+        _dassert_list_of_strings(
+            output_tmp, "action=%s file_name=%s", action, file_name
         )
         output.extend(output_tmp)
         if output_tmp:
@@ -1407,13 +1436,15 @@ def _main(args):
     if "check_file_property" in actions:
         for file_name in all_file_names:
             output_tmp = _FilePropertyChecker(file_name).check()
-            dbg.dassert_isinstance(output_tmp, list)
+            #dbg.dassert_isinstance(output_tmp, list)
+            _dassert_list_of_strings(output_tmp)
             output.extend(output_tmp)
     actions = [a for a in actions if a != "check_file_property"]
     _LOG.debug("actions=%s", actions)
     # Run linter.
     output_tmp = _run_linter(actions, args, file_names)
-    dbg.dassert_isinstance(output_tmp, list)
+    #dbg.dassert_isinstance(output_tmp, list)
+    _dassert_list_of_strings(output_tmp)
     output.extend(output_tmp)
     # Sort the errors.
     output = sorted(output)
@@ -1447,7 +1478,7 @@ def _main(args):
     return num_lints
 
 
-def _parse():
+def _parser():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -1544,10 +1575,11 @@ def _parse():
         help="File storing the warnings",
     )
     prsr.add_verbosity_arg(parser)
-    args = parser.parse_args()
-    rc = _main(args)
-    sys.exit(rc)
+    return parser
 
 
 if __name__ == "__main__":
-    _parse()
+    parser = _parser()
+    args = parser.parse_args()
+    rc = _main(args)
+    sys.exit(rc)

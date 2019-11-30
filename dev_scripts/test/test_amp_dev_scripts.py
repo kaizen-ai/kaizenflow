@@ -298,9 +298,9 @@ if __name__ == "main":
             # represents how many lints were found.
             si.system(cmd, abort_on_error=False)
         else:
-            args = {}
-            args["f"] = file_name
-            args["linter_log"] = linter_log
+            parser = lntr._parser()
+            args = parser.parse_args(["-f", file_name, "--linter_log",
+                                      linter_log])
             lntr._main(args)
         # Read log.
         _LOG.debug("linter_log=%s", linter_log)
@@ -312,9 +312,6 @@ if __name__ == "main":
             #   cmd line='.../linter.py -f input.py --linter_log ./linter.log'
             if "cmd line=" in l:
                 continue
-            # We run in the target dir so we have only relative paths, and we can
-            # do a check of the output.
-            # TODO(gp):
             output.append(l)
         output = "\n".join(output)
         return output
@@ -347,6 +344,12 @@ if __name__ == "main":
 
     # ##########################################################################
 
+    def _helper_check_shebang(self, file_name, txt, is_executable):
+        txt = txt.split("\n")
+        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
+                                                      is_executable)
+        self.check_string(msg)
+
     def test_check_shebang1(self):
         """
         Executable with wrong shebang: error.
@@ -356,11 +359,8 @@ if __name__ == "main":
 hello
 world
 """
-        txt = txt.split("\n")
         is_executable = True
-        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
-                                                    is_executable)
-        self.check_string(msg)
+        self._helper_check_shebang(file_name, txt, is_executable)
 
     def test_check_shebang2(self):
         """
@@ -371,11 +371,8 @@ world
 hello
 world
 """
-        txt = txt.split("\n")
         is_executable = True
-        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
-                                                      is_executable)
-        self.check_string(msg)
+        self._helper_check_shebang(file_name, txt, is_executable)
 
     def test_check_shebang3(self):
         """
@@ -386,11 +383,8 @@ world
 hello
 world
 """
-        txt = txt.split("\n")
         is_executable = False
-        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
-                                                      is_executable)
-        self.check_string(msg)
+        self._helper_check_shebang(file_name, txt, is_executable)
 
     def test_check_shebang4(self):
         """
@@ -402,10 +396,14 @@ Import as:
 
 import _setenv_lib as selib
 '''
-        txt = txt.split("\n")
         is_executable = False
-        msg = lntr._CustomPythonChecks._check_shebang(file_name, txt,
-                                                      is_executable)
+        self._helper_check_shebang(file_name, txt, is_executable)
+
+    # #########################
+
+    def _helper_was_baptized(self, file_name, txt):
+        txt = txt.split("\n")
+        msg = lntr._CustomPythonChecks._was_baptized(file_name, txt)
         self.check_string(msg)
 
     def test_was_baptized1(self):
@@ -415,9 +413,7 @@ Import as:
 
 import _setenv_lib as selib
 '''
-        txt = txt.split("\n")
-        msg = lntr._CustomPythonChecks._was_baptized(file_name, txt)
-        self.check_string(msg)
+        self._helper_was_baptized(file_name, txt)
 
     def test_was_baptized2(self):
         file_name = "lib.py"
@@ -426,6 +422,27 @@ Import as:
 
 import _setenv_lib as selib
 '''
+        self._helper_was_baptized(file_name, txt)
+
+    # #########################
+
+    def _helper_check_text(self, file_name, txt):
         txt = txt.split("\n")
-        msg = lntr._CustomPythonChecks._was_baptized(file_name, txt)
+        output = lntr._CustomPythonChecks._check_text(file_name, txt)
+        msg = "\n".join(output)
         self.check_string(msg)
+
+    def test_check_text1(self):
+        file_name = "lib.py"
+        txt = "from pandas import DataFrame"
+        self._helper_check_text(file_name, txt)
+
+    def test_check_text2(self):
+        file_name = "lib.py"
+        txt = "from typing import List"
+        self._helper_check_text(file_name, txt)
+
+    def test_check_text3(self):
+        file_name = "lib.py"
+        txt = "import pandas as very_long_name"
+        self._helper_check_text(file_name, txt)

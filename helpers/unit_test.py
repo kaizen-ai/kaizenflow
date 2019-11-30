@@ -117,7 +117,7 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
-def purify_txt(txt: str) -> str:
+def purify_txt_from_client(txt: str) -> str:
     """
     Remove from a string all the information specific of a git client.
     """
@@ -347,8 +347,8 @@ class TestCase(unittest.TestCase):
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
         _LOG.debug("file_name=%s", file_name)
-        #
-        actual = purify_txt(actual)
+        # Remove reference from the current purify.
+        actual = purify_txt_from_client(actual)
         #
         if get_update_tests():
             # Update the test result.
@@ -392,7 +392,7 @@ class TestCase(unittest.TestCase):
                 # No golden outcome available: save the result in a tmp file.
                 tmp_file_name = file_name + ".tmp"
                 io_.to_file(tmp_file_name, actual)
-                msg = "Can't find golden in %s: saved actual outcome in %s" % (
+                msg = "Can't find golden in %s\nSaved actual outcome in %s" % (
                     file_name,
                     tmp_file_name,
                 )
