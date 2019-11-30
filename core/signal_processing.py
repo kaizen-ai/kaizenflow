@@ -384,19 +384,26 @@ def _wrap(signal: pd.Series, num_cols) -> pd.DataFrame:
     dbg.dassert_lte(1, num_cols)
     values = signal.values
     _LOG.debug("num values=%f", values.size)
+    # Calculate number of rows that wrapped pd.DataFrame should have.
     num_rows = np.ceil(values.size / num_cols).astype(int)
     _LOG.debug("num_rows=%f", num_rows)
+    # Add padding, since numpy's `reshape` requires element counts to match
+    # exactly.
     pad_size = num_rows * num_cols - values.size
     _LOG.debug("pad_size=%f", pad_size)
     padding = np.full(pad_size, np.nan)
     padded_values = np.append(values, padding)
-    wrapped = pd.DataFrame(padded_values.reshape(num_rows, num_cols))
-    return wrapped
+    #
+    wrapped = padded_values.reshape(num_rows, num_cols)
+    return pd.DataFrame(wrapped)
 
 
 def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
     """
     Undo `_wrap`.
+
+    We allow `index.size` to be less than nrows * ncols of `df`, in which case
+    values are truncated from the end of the unwrapped dataframe.
 
     :param idx: index of series provided to `_wrap` call
     """
