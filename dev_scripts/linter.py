@@ -30,6 +30,7 @@ E.g.,
 > linter.py -d . --action sync_jupytext
 """
 
+import abc
 import argparse
 import itertools
 import logging
@@ -37,7 +38,7 @@ import os
 import py_compile
 import re
 import sys
-from typing import Any, Callable, Iterable, List, Optional, Union
+from typing import Any, Callable, Iterable, List
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -87,13 +88,13 @@ def _clean_file(file_name, write_back):
     :param write_back: if True the file is overwritten in place.
     """
     # Read file.
-    file_in = []
+    file_in: List[str] = []
     # TODO(gp): Use io_.from_file
     with open(file_name, "r") as f:
         for line in f:
             file_in.append(line)
     #
-    file_out = []
+    file_out: List[str] = []
     for line in file_in:
         # A line can be deleted if it has only spaces and \n.
         if not any(char not in (" ", "\n") for char in line):
@@ -125,10 +126,8 @@ def _annotate_output(output: List, executable: str) -> List:
     executable used.
     :return: list of strings
     """
-    # dbg.dassert_isinstance(output, list)
     _dassert_list_of_strings(output)
     output = [t + " [%s]" % executable for t in output]
-    # dbg.dassert_isinstance(output, list)
     _dassert_list_of_strings(output)
     return output
 
@@ -141,13 +140,21 @@ def _tee(cmd: str, executable: str, abort_on_error: bool) -> List[str]:
     _LOG.debug("cmd=%s executable=%s", cmd, executable)
     _, output = si.system_to_string(cmd, abort_on_error=abort_on_error)
     dbg.dassert_isinstance(output, str)
-    _LOG.debug("output1='\n%s'", output)
-    output = output.split("\n")
-    output = _remove_empty_lines(output)
-    _LOG.debug("output2='\n%s'", "\n".join(output))
-    # dbg.dassert_isinstance(output, list)
-    _dassert_list_of_strings(output)
-    return output
+    _LOG.debug("output1=\n'%s'", output)
+    #
+    output2 = _remove_empty_lines(output.split("\n"))
+    _LOG.debug("output2=\n'%s'", "\n".join(output2))
+    _dassert_list_of_strings(output2)
+    return output2
+
+
+# TODO(gp): Move to system_interactions.
+def _check_exec(tool: str) -> bool:
+    """
+    :return: True if the executables "tool" can be executed.
+    """
+    rc = _system("which %s" % tool, abort_on_error=False)
+    return rc == 0
 
 
 # #############################################################################
@@ -162,7 +169,7 @@ def _filter_target_files(file_names: List[str]) -> List[str]:
     - are not Jupyter checkpoints
     - are not in tmp dirs
     """
-    file_names_out = []
+    file_names_out: List[str] = []
     for file_name in file_names:
         _, file_ext = os.path.splitext(file_name)
         # We skip .ipynb since jupytext is part of the main flow.
@@ -179,7 +186,7 @@ def _filter_target_files(file_names: List[str]) -> List[str]:
     return file_names_out
 
 
-def _get_files(args) -> Iterable[str]:
+def _get_files(args) -> List[str]:
     """
     Return the list of files to process given the command line arguments.
     """
@@ -254,92 +261,6 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
     return file_names
 
 
-# #############################################################################
-# Actions.
-# #############################################################################
-
-# We use the command line instead of API because:
-# - some tools don't have a public API
-# - this make easier to reproduce / test commands using the command lines and
-#   then incorporate in the code
-# - it allows to have clear control over options
-
-
-# TODO(gp): Move to system_interactions.
-def _check_exec(tool: str) -> bool:
-    """
-    :return: True if the executables "tool" can be executed.
-    """
-    rc = _system("which %s" % tool, abort_on_error=False)
-    return rc == 0
-
-
-_THIS_MODULE = sys.modules[__name__]
-
-
-def _get_action_class(action: str) -> Callable:
-    """
-    Return the function corresponding to the passed string.
-    """
-    res = None
-    for action_meta in _VALID_ACTIONS_META:
-        name, rw, comment, class_ = action_meta
-        if name == action:
-            dbg.dassert_is(res, None)
-            res = class_
-    dbg.dassert_is_not(res, None)
-    return res
-
-
-def _remove_not_possible_actions(actions: List[str]) -> List[str]:
-    """
-    Check whether each action in "actions" can be executed and return a list of
-    the actions that can be executed.
-
-    :return: list of strings representing actions
-    """
-    actions_tmp = []
-    for action in actions:
-        class_ = _get_action_class(action)
-        is_possible = class_.check_if_possible()
-        if not is_possible:
-            _LOG.warning("Can't execute action '%s': skipping", action)
-        else:
-            actions_tmp.append(action)
-    return actions_tmp
-
-
-def _actions_to_string(actions: List[str]) -> str:
-    space = max([len(a) for a in actions]) + 2
-    format_ = "%" + str(space) + "s: %s"
-    actions_as_str = [
-        format_ % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
-    ]
-    return "\n".join(actions_as_str)
-
-
-def _test_actions():
-    _LOG.info("Testing actions")
-    # Check all the actions.
-    num_not_poss = 0
-    possible_actions = []
-    for action in _ALL_ACTIONS:
-        class_ = _get_action_class(action)
-        is_possible = class_.check_if_possible()
-        _LOG.debug("%s -> %s", action, is_possible)
-        if is_possible:
-            possible_actions.append(action)
-        else:
-            num_not_poss += 1
-    # Report results.
-    actions_as_str = _actions_to_string(possible_actions)
-    _LOG.info("Possible actions:\n%s", pri.space(actions_as_str))
-    if num_not_poss > 0:
-        _LOG.warning("There are %s actions that are not possible", num_not_poss)
-    else:
-        _LOG.info("All actions are possible")
-
-
 # ##############################################################################
 
 # TODO(gp): We should use a Strategy pattern, having a base class and a class
@@ -352,33 +273,27 @@ def _test_actions():
 # :return: list of strings representing the output
 
 
-def _write_file_back(file_name: str, txt: Iterable[str], txt_new: Iterable[str]):
+def _write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None:
     _dassert_list_of_strings(txt)
     txt = "\n".join(txt)
-    # dbg.dassert_isinstance(txt_new, list)
     _dassert_list_of_strings(txt_new)
     txt_new = "\n".join(txt_new)
     if txt != txt_new:
         io_.to_file(file_name, txt_new)
 
 
-import abc
-
-
 class _Action(abc.ABC):
+    def __init__(self, executable=None):
+        self._executable = executable
 
-    def __init__(self):
-        pass
-
-    @staticmethod
     @abc.abstractmethod
-    def check_if_possible() -> bool:
+    def check_if_possible(self) -> bool:
         pass
 
     def execute(self, file_name: str, pedantic: bool) -> List[str]:
         dbg.dassert(file_name)
         dbg.dassert_exists(file_name)
-        output = _Action._execute(file_name, pedantic)
+        output = self._execute(file_name, pedantic)
         _dassert_list_of_strings(output)
         return output
 
@@ -388,7 +303,6 @@ class _Action(abc.ABC):
 
 
 class _CheckFileProperty(_Action):
-
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
         return True
@@ -399,21 +313,23 @@ class _CheckFileProperty(_Action):
 
 
 class _BasicHygiene(_Action):
-
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
         return True
 
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
-        output = []
+        output: List[str] = []
         # Read file.
         txt = io_.from_file(file_name, split=True)
         # Process file.
-        txt_new = []
+        txt_new: List[str] = []
         for line in txt:
             if "\t" in line:
-                msg = "Found tabs in %s: please use 4 spaces as per PEP8" % file_name
+                msg = (
+                    "Found tabs in %s: please use 4 spaces as per PEP8"
+                    % file_name
+                )
                 _LOG.warning(msg)
                 output.append(msg)
             # Convert tabs.
@@ -450,7 +366,7 @@ class _CompilePython(_Action):
             _LOG.debug("Skipping self._file_name='%s'", file_name)
             return []
         #
-        output = []
+        output: List[str] = []
         try:
             py_compile.compile(file_name, doraise=True)
             # pylint: disable=broad-except
@@ -460,14 +376,13 @@ class _CompilePython(_Action):
 
 
 class _CustomPythonChecks(_Action):
-
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
         return True
 
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
-        output = []
+        output: List[str] = []
         # Applicable only to python files.
         if not is_py_file and not is_paired_jupytext_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
@@ -476,7 +391,7 @@ class _CustomPythonChecks(_Action):
         txt = io_.from_file(file_name, split=True)
         # Check shebang.
         is_executable = os.access(file_name, os.X_OK)
-        msg = self._check_shebang(file_name, is_executable)
+        msg = self._check_shebang(file_name, txt, is_executable)
         if msg:
             output.append(msg)
         # Check that the module was baptized.
@@ -484,7 +399,7 @@ class _CustomPythonChecks(_Action):
         if msg:
             output.append(msg)
         # Process file.
-        output = self._check_text(file_name, txt, is_executable)
+        output = self._check_text(file_name, txt)
         return output
 
     @staticmethod
@@ -508,7 +423,7 @@ class _CustomPythonChecks(_Action):
         """
         Check if code contains a declaration of how to be imported.
         """
-        msg = []
+        msg: List[str] = []
         # Check that the header of the file is in the format:
         #   """
         #   Import as:
@@ -537,7 +452,7 @@ class _CustomPythonChecks(_Action):
             # Check that the import is in the right format, like:
             #   import _setenv_lib as selib
             import_line = 3
-            m = re.match("import \S+ as (\S+)", txt[import_line])
+            m = re.match(r"import \S+ as (\S+)", txt[import_line])
             if m:
                 max_len = 5
                 shortcut = m.group(1)
@@ -557,14 +472,13 @@ class _CustomPythonChecks(_Action):
 
     @staticmethod
     def _check_text(file_name: str, txt: List[str]) -> List[str]:
-        output = []
-        # dbg.dassert_isinstance(txt, list)
+        output: List[str] = []
         _dassert_list_of_strings(txt)
-        txt_new = []
+        txt_new: List[str] = []
         for i, line in enumerate(txt):
             _LOG.debug("%s: %s", i, line)
             # Check imports.
-            m = re.search("\s*from\s(\S+)\s*import.*", line)
+            m = re.search(r"\s*from\s(\S+)\s*import.*", line)
             if m:
                 if m.group(1) != "typing":
                     msg = "%s:%s: use 'import foo.bar as fba'" % (
@@ -578,7 +492,7 @@ class _CustomPythonChecks(_Action):
                 output.append(msg)
             # Format separating lines.
             for char in "# = - < >".split():
-                m = re.search("(\S*#)\S*" + char * 10, line)
+                m = re.search(r"(\S*#)\S*" + char * 10, line)
                 if m:
                     line = m.group(1) + " " + char * (80 - len(m.group(1)))
             #
@@ -591,13 +505,15 @@ class _CustomPythonChecks(_Action):
         _write_file_back(file_name, txt, txt_new)
         return output
 
+
 class _Autoflake(_Action):
     """
     Remove unused imports and variables.
     """
 
     def __init__(self):
-        self._executable = "autoflake"
+        executable = "autoflake"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -622,7 +538,8 @@ class _Yapf(_Action):
     """
 
     def __init__(self):
-        self._executable = "yapf"
+        executable = "yapf"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -646,7 +563,8 @@ class _Black(_Action):
     """
 
     def __init__(self):
-        self._executable = "black"
+        executable = "black"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -670,13 +588,15 @@ class _Black(_Action):
         output = [l for l in output if all(w not in l for w in to_remove)]
         return output
 
+
 class _Isort(_Action):
     """
     Sort imports using isort.
     """
 
     def __init__(self):
-        self._executable = "isort"
+        executable = "isort"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -703,7 +623,8 @@ class _Flake8(_Action):
     """
 
     def __init__(self):
-        self._executable = "flake8"
+        executable = "flake8"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -757,7 +678,7 @@ class _Flake8(_Action):
         is_jupytext_code = is_paired_jupytext_file(file_name)
         _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
         if is_jupytext_code:
-            output_tmp = []
+            output_tmp: List[str] = []
             for line in output:
                 # F821 undefined name 'display' [flake8]
                 if "F821" in line and "undefined name 'display'" in line:
@@ -766,10 +687,11 @@ class _Flake8(_Action):
             output = output_tmp
         return output
 
-class _Pydocstyle(_Action):
 
+class _Pydocstyle(_Action):
     def __init__(self):
-        self._executable = "pydocstyle"
+        executable = "pydocstyle"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -838,7 +760,7 @@ class _Pydocstyle(_Action):
         #   linter_v2.py:1: at module level: D400: First line should end with a
         #   period (not ':')
         #
-        output = []
+        output: List[str] = []
         #
         file_lines = file_lines.split("\n")
         lines = ["", ""]
@@ -860,9 +782,9 @@ class _Pydocstyle(_Action):
 
 
 class _Pyment(_Action):
-
     def __init__(self):
-        self._executable = "pyment"
+        executable = "pyment"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -880,9 +802,9 @@ class _Pyment(_Action):
 
 
 class _Pylint(_Action):
-
     def __init__(self):
-        self._executable = "pylint"
+        executable = "pylint"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -989,7 +911,7 @@ class _Pylint(_Action):
         cmd = self._executable + " %s %s" % (opts, file_name)
         output = _tee(cmd, self._executable, abort_on_error=False)
         # Remove some errors.
-        output_tmp = []
+        output_tmp: List[str] = []
         for line in output:
             if is_jupytext_code:
                 # [E0602(undefined-variable), ] Undefined variable 'display'
@@ -1008,9 +930,9 @@ class _Pylint(_Action):
 
 
 class _Mypy(_Action):
-
     def __init__(self):
-        self._executable = "mypy"
+        executable = "mypy"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -1031,7 +953,7 @@ class _Mypy(_Action):
         )
         output = _tee(cmd, self._executable, abort_on_error=False)
         # Remove some errors.
-        output_tmp = []
+        output_tmp: List[str] = []
         for line in output:
             if (
                 line.startswith("Success:")
@@ -1054,18 +976,17 @@ class _Mypy(_Action):
 
 
 class _IpynbFormat(_Action):
-
     def __init__(self):
         curr_path = os.path.dirname(os.path.realpath(sys.argv[0]))
-        self._executable = "%s/ipynb_format.py" % curr_path
+        executable = "%s/ipynb_format.py" % curr_path
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
-        output = []
+        output: List[str] = []
         # Applicable to only ipynb file.
-        dbg.dassert(file_name)
         if not is_ipynb_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return output
@@ -1149,15 +1070,17 @@ def is_paired_jupytext_file(file_name: str) -> bool:
 
 
 class _ProcessJupytext(_Action):
-
-    def __init__(self):
-        self._executable = "process_jupytext.py"
+    def __init__(self, jupytext_action):
+        executable = "process_jupytext.py"
+        super().__init__(executable)
+        self._jupytext_action = jupytext_action
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
+        output: List[str] = []
         # TODO(gp): Use the usual idiom of these functions.
         if is_py_file(file_name) and is_paired_jupytext_file(file_name):
             cmd_opts = "-f %s --action %s" % (file_name, self._jupytext_action)
@@ -1165,28 +1088,26 @@ class _ProcessJupytext(_Action):
             output = _tee(cmd, self._executable, abort_on_error=True)
         else:
             _LOG.debug("Skipping file_name='%s'", file_name)
-            output = []
         return output
 
 
 class _SyncJupytext(_ProcessJupytext):
-
     def __init__(self):
-        super().__init__()
-        self._jupytext_action = "sync"
+        super().__init__("sync")
+
 
 class _TestJupytext(_ProcessJupytext):
     def __init__(self):
-        super().__init__()
-        self._jupytext_action = "test"
+        super().__init__("test")
 
 
 # ##############################################################################
 
-class _LintMarkdown(_Action):
 
+class _LintMarkdown(_Action):
     def __init__(self):
-        self._executable = "prettier"
+        executable = "prettier"
+        super().__init__(executable)
 
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
@@ -1195,7 +1116,7 @@ class _LintMarkdown(_Action):
         # Applicable only to txt and md files.
         dbg.dassert(file_name)
         ext = os.path.splitext(file_name)[1]
-        output = []
+        output: List[str] = []
         if ext not in (".txt", ".md"):
             _LOG.debug("Skipping file_name='%s' because ext='%s'", file_name, ext)
             return output
@@ -1203,34 +1124,36 @@ class _LintMarkdown(_Action):
         # Pre-process text.
         #
         txt = io_.from_file(file_name, split=True)
-        txt_new = []
+        txt_new: List[str] = []
         for line in txt:
             line = re.sub(r"^\* ", "- STAR", line)
             txt_new.append(line)
         # Write.
-        txt_new = "\n".join(txt_new)
-        io_.to_file(file_name, txt_new)
+        txt_new_as_str = "\n".join(txt_new)
+        io_.to_file(file_name, txt_new_as_str)
         #
         # Lint.
         #
-        cmd_opts = []
+        cmd_opts: List[str] = []
         cmd_opts.append("--parser markdown")
         cmd_opts.append("--prose-wrap always")
         cmd_opts.append("--write")
         cmd_opts.append("--tab-width 4")
-        cmd_opts = " ".join(cmd_opts)
-        cmd = " ".join([self._executable, cmd_opts, file_name])
-        output_tmp = _tee(cmd, self._executable, abort_on_error=True)
+        cmd_opts_as_str = " ".join(cmd_opts)
+        cmd_as_str = " ".join([self._executable, cmd_opts_as_str, file_name])
+        output_tmp = _tee(cmd_as_str, self._executable, abort_on_error=True)
         output.extend(output_tmp)
         #
         # Post-process text.
         #
         txt = io_.from_file(file_name, split=True)
-        txt_new = []
+        txt_new: List[str] = []  # type: ignore
         for i, line in enumerate(txt):
             # Check whether there is TOC otherwise add it.
             if i == 0 and line != "<!--ts-->":
-                output.append("No tags for table of content in md file: adding it")
+                output.append(
+                    "No tags for table of content in md file: adding it"
+                )
                 line = "<!--ts-->\n<!--te-->"
             line = re.sub(r"^\-   STAR", "*   ", line)
             # Remove some artifacts when copying from gdoc.
@@ -1243,18 +1166,113 @@ class _LintMarkdown(_Action):
             # line = re.sub("^(\s*)\*   ", r"\1* ", line)
             txt_new.append(line)
         # Write.
-        txt_new = "\n".join(txt_new)
-        io_.to_file(file_name, txt_new)
+        txt_new_as_str = "\n".join(txt_new)  # type: ignore
+        io_.to_file(file_name, txt_new_as_str)
         #
         # Refresh table of content.
         #
         amp_path = git.get_amp_abs_path()
-        cmd = []
+        cmd: List[str] = []  # type: ignore
         cmd.append(os.path.join(amp_path, "scripts/gh-md-toc"))
         cmd.append("--insert %s" % file_name)
-        cmd = " ".join(cmd)
-        _system(cmd, abort_on_error=False)
+        cmd_as_str = " ".join(cmd)
+        _system(cmd_as_str, abort_on_error=False)
         return output
+
+
+# #############################################################################
+# Actions.
+# #############################################################################
+
+# We use the command line instead of API because:
+# - some tools don't have a public API
+# - this make easier to reproduce / test commands using the command lines and
+#   then incorporate in the code
+# - it allows to have clear control over options
+
+
+def _get_action_class(action: str) -> _Action:
+    """
+    Return the function corresponding to the passed string.
+    """
+    res = None
+    for action_meta in _VALID_ACTIONS_META:
+        name, rw, comment, class_ = action_meta
+        _ = rw, comment
+        if name == action:
+            dbg.dassert_is(res, None)
+            res = class_
+    dbg.dassert_is_not(res, None)
+    return res
+
+
+def _remove_not_possible_actions(actions: List[str]) -> List[str]:
+    """
+    Check whether each action in "actions" can be executed and return a list of
+    the actions that can be executed.
+
+    :return: list of strings representing actions
+    """
+    actions_tmp: List[str] = []
+    for action in actions:
+        class_ = _get_action_class(action)
+        is_possible = class_().check_if_possible()
+        if not is_possible:
+            _LOG.warning("Can't execute action '%s': skipping", action)
+        else:
+            actions_tmp.append(action)
+    return actions_tmp
+
+
+def _actions_to_string(actions: List[str]) -> str:
+    space = max([len(a) for a in _ALL_ACTIONS]) + 2
+    format_ = "%" + str(space) + "s: %s"
+    actions_as_str = [
+        format_ % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
+    ]
+    return "\n".join(actions_as_str)
+
+
+def _test_actions():
+    _LOG.info("Testing actions")
+    # Check all the actions.
+    num_not_poss = 0
+    possible_actions: List[str] = []
+    for action in _ALL_ACTIONS:
+        class_ = _get_action_class(action)
+        is_possible = class_().check_if_possible()
+        _LOG.debug("%s -> %s", action, is_possible)
+        if is_possible:
+            possible_actions.append(action)
+        else:
+            num_not_poss += 1
+    # Report results.
+    actions_as_str = _actions_to_string(possible_actions)
+    _LOG.info("Possible actions:\n%s", pri.space(actions_as_str))
+    if num_not_poss > 0:
+        _LOG.warning("There are %s actions that are not possible", num_not_poss)
+    else:
+        _LOG.info("All actions are possible")
+
+
+def _select_actions(args: argparse.Namespace) -> List[str]:
+    # Select actions.
+    actions = args.action
+    if isinstance(actions, str) and " " in actions:
+        actions = actions.split(" ")
+    if not actions or args.all:
+        actions = _ALL_ACTIONS[:]
+    # Validate actions.
+    for action in set(actions):
+        if action not in _ALL_ACTIONS:
+            raise ValueError("Invalid action '%s'" % action)
+    # Reorder actions according to _ALL_ACTIONS.
+    actions = [action for action in _ALL_ACTIONS if action in actions]
+    # Find the tools that are available.
+    actions = _remove_not_possible_actions(actions)
+    actions_as_str = _actions_to_string(actions)
+    _LOG.info("# Action selected:\n%s", pri.space(actions_as_str))
+    return actions
 
 
 # #############################################################################
@@ -1270,7 +1288,7 @@ def _lint(
     actions on a single file to ensure that the actions are executed in the
     proper order.
     """
-    output = []
+    output: List[str] = []
     _LOG.info("\n%s", pri.frame(file_name, char1="="))
     for action in actions:
         _LOG.debug("\n%s", pri.frame(action, char1="-"))
@@ -1284,7 +1302,7 @@ def _lint(
             dst_file_name = file_name
         class_ = _get_action_class(action)
         # We want to run the stages, and not check.
-        output_tmp = class_.execute(dst_file_name, pedantic)
+        output_tmp = class_().execute(dst_file_name, pedantic)
         # Annotate with executable [tag].
         output_tmp = _annotate_output(output_tmp, action)
         _dassert_list_of_strings(
@@ -1294,31 +1312,6 @@ def _lint(
         if output_tmp:
             _LOG.info("\n%s", "\n".join(output_tmp))
     return output
-
-
-def _select_actions(args: argparse.Namespace) -> List[str]:
-    # Select actions.
-    actions = args.action
-    if isinstance(actions, str) and " " in actions:
-        actions = actions.split(" ")
-    if not actions or args.all:
-        actions = _ALL_ACTIONS[:]
-    # Validate actions.
-    actions = set(actions)
-    for action in actions:
-        if action not in _ALL_ACTIONS:
-            raise ValueError("Invalid action '%s'" % action)
-    # Reorder actions according to _ALL_ACTIONS.
-    actions_tmp = []
-    for action in _ALL_ACTIONS:
-        if action in actions:
-            actions_tmp.append(action)
-    actions = actions_tmp
-    # Find the tools that are available.
-    actions = _remove_not_possible_actions(actions)
-    actions_as_str = _actions_to_string(actions)
-    _LOG.info("# Action selected:\n%s", pri.space(actions_as_str))
-    return actions
 
 
 def _run_linter(
@@ -1341,7 +1334,7 @@ def _run_linter(
             "Using num_threads='%s' since there is a single file", num_threads
         )
     if num_threads == "serial":
-        output = []
+        output: List[str] = []
         for file_name in file_names:
             output_tmp = _lint(file_name, actions, pedantic, args.debug)
             output.extend(output_tmp)
@@ -1381,7 +1374,7 @@ class _FilePropertyChecker:
         self._file_name = file_name
 
     def check(self) -> List:
-        output = []
+        output: List[str] = []
         for func in [
             self._check_size,
             self._check_notebook_dir,
@@ -1447,10 +1440,18 @@ class _FilePropertyChecker:
 # Actions and if they read / write files.
 # The order of this list implies the order in which they are executed.
 _VALID_ACTIONS_META = [
-    ("check_file_property", "r", "Check that generic files are valid",
-     _CheckFileProperty),
-    ("basic_hygiene", "w", "Clean up (e.g., tabs, trailing spaces)",
-     _BasicHygiene),
+    (
+        "check_file_property",
+        "r",
+        "Check that generic files are valid",
+        _CheckFileProperty,
+    ),
+    (
+        "basic_hygiene",
+        "w",
+        "Clean up (e.g., tabs, trailing spaces)",
+        _BasicHygiene,
+    ),
     ("compile_python", "r", "Check that python code is valid", _CompilePython),
     ("autoflake", "w", "Removes unused imports and variables", _Autoflake),
     ("isort", "w", "Sort Python import definitions alphabetically", _Isort),
@@ -1482,7 +1483,7 @@ def _main(args: argparse.Namespace) -> int:
         _test_actions()
         _LOG.warning("Exiting as requested")
         sys.exit(0)
-    output = []
+    output: List[str] = []
     # Get all the files to process.
     all_file_names = _get_files(args)
     _LOG.info("Found %s files to process", len(all_file_names))
@@ -1506,14 +1507,12 @@ def _main(args: argparse.Namespace) -> int:
     if "check_file_property" in actions:
         for file_name in all_file_names:
             output_tmp = _FilePropertyChecker(file_name).check()
-            # dbg.dassert_isinstance(output_tmp, list)
             _dassert_list_of_strings(output_tmp)
             output.extend(output_tmp)
     actions = [a for a in actions if a != "check_file_property"]
     _LOG.debug("actions=%s", actions)
     # Run linter.
     output_tmp = _run_linter(actions, args, file_names)
-    # dbg.dassert_isinstance(output_tmp, list)
     _dassert_list_of_strings(output_tmp)
     output.extend(output_tmp)
     # Sort the errors.
@@ -1523,11 +1522,11 @@ def _main(args: argparse.Namespace) -> int:
     print("\n".join(output) + "\n")
     print(pri.line(char="/").rstrip("\n"))
     # Write the file.
-    output = "\n".join(output)
-    io_.to_file(args.linter_log, output)
+    output_as_str = "\n".join(output)
+    io_.to_file(args.linter_log, output_as_str)
     # Count number of lints.
     num_lints = 0
-    for line in output.split("\n"):
+    for line in output:
         # dev_scripts/linter.py:493: ... [pydocstyle]
         if re.search(r"\S+:\d+.*\[\S+\]", line):
             num_lints += 1
@@ -1649,7 +1648,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
-    parser = _parser()
-    args = parser.parse_args()
-    rc = _main(args)
-    sys.exit(rc)
+    parser_ = _parser()
+    args_ = parser_.parse_args()
+    rc_ = _main(args_)
+    sys.exit(rc_)
