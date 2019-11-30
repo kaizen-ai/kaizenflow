@@ -89,26 +89,42 @@
 
     %load_ext autoreload
     %autoreload 2
+
+    # Standard imports.
     import logging
     import os
 
+    #
     import matplotlib.pyplot as plt
     import pandas as pd
 
+    #
+    import helpers.dbg as dbg
+    import helpers.env as env
+    import helpers.printing as prnt
+
+    #
     import core.explore as exp
     import core.signal_processing as sigp
     ...
     ```
 
+
+## Imports
+
 ### Configuration
 - You can configure the notebooks with some utils, logging, and report info on
   how the notebook was executed (e.g., Git commit, libs, etc.):
     ```python
+    import helpers.dbg as dbg
+    import helpers.env as env
+    import helpers.printing as prnt
+
     # Print system signature.
     print(env.get_system_signature()[0])
 
     # Configure the notebook style.
-    pri.config_notebook()
+    prnt.config_notebook()
 
     # Configure logger.
     dbg.init_logger(verbosity=logging.INFO)

@@ -180,8 +180,8 @@ def config_python(dirs, txt):
         dbg.dassert_exists(d)
     python_path = dirs + ["$PYTHONPATH"]
     txt.extend(_export_env_var("PYTHONPATH", python_path))
-    txt.extend("# Assign MYPYPATH to let mypy find the modules.")
-    txt.extend("export MYPYPATH=$PYTHONPATH")
+    txt.append("# Assign MYPYPATH to let mypy find the modules.")
+    txt.append("export MYPYPATH=$PYTHONPATH")
 
 
 def config_conda(conda_env, user_credentials, txt):

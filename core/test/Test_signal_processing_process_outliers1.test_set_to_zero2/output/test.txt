@@ -1,4 +1,4 @@
-# stats
+# info
 OrderedDict([('series_name', None),
              ('num_elems_before', 9),
              ('num_nans_before', 0),
