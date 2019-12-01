@@ -295,7 +295,7 @@ def plot_crosscorrelation(
 
 def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
     r"""
-    Computes frequency-domain-based "forecastability" of signal.
+    Compute frequency-domain-based "forecastability" of signal.
 
     Reference: https://arxiv.org/abs/1205.4591
 
