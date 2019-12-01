@@ -321,7 +321,7 @@ def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
         #     for estimating power spectral density.
         _, psd = sp.signal.periodogram(signal)
     else:
-        raise ValueError("Unsupported mode=`%s`", mode)
+        raise ValueError("Unsupported mode=`%s`" % mode)
     forecastability = 1 - sp.stats.entropy(psd, base=psd.size)
     return forecastability
 
