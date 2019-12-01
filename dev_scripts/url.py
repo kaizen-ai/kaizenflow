@@ -103,7 +103,8 @@ def _get_file_name(url: str) -> str:
     if ret is None:
         if os.path.exists(url):
             ret = url
-    dbg.dassert_is_not(ret, None, "url=%s", url)
+    if ret is None:
+        dbg.dassert_is_not(ret, None, "url=%s", url)
     return ret
 
 
