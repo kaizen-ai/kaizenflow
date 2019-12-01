@@ -294,10 +294,10 @@ if __name__ == "main":
         if as_system_call:
             cmd = []
             cmd.append(f"linter.py -f {file_name} --linter_log {linter_log}")
-            cmd = " ".join(cmd)
+            cmd_as_str = " ".join(cmd)
             # We need to ignore the errors reported by the script, since it
             # represents how many lints were found.
-            si.system(cmd, abort_on_error=False)
+            si.system(cmd_as_str, abort_on_error=False)
         else:
             parser = lntr._parser()
             args = parser.parse_args(
@@ -315,8 +315,8 @@ if __name__ == "main":
             if "cmd line=" in l:
                 continue
             output.append(l)
-        output = "\n".join(output)
-        return output
+        output_as_str = "\n".join(output)
+        return output_as_str
 
     def _helper(self, txt: str, as_system_call: bool) -> str:
         # Create file to lint.
@@ -347,12 +347,11 @@ if __name__ == "main":
     # ##########################################################################
 
     def _helper_check_shebang(
-        self, file_name: str, txt: str, is_executable: bool,
-            exp: str,
+        self, file_name: str, txt: str, is_executable: bool, exp: str,
     ) -> None:
-        txt = txt.split("\n")
+        txt_array = txt.split("\n")
         msg = lntr._CustomPythonChecks._check_shebang(
-            file_name, txt, is_executable
+            file_name, txt_array, is_executable
         )
         self.assert_equal(msg, exp)
 
@@ -412,8 +411,8 @@ import _setenv_lib as selib
     # #########################
 
     def _helper_was_baptized(self, file_name: str, txt: str, exp: str) -> None:
-        txt = txt.split("\n")
-        msg = lntr._CustomPythonChecks._was_baptized(file_name, txt)
+        txt_array = txt.split("\n")
+        msg = lntr._CustomPythonChecks._was_baptized(file_name, txt_array)
         self.assert_equal(msg, exp)
 
     def test_was_baptized1(self) -> None:
@@ -434,10 +433,10 @@ import _setenv_lib as selib
         Invalid.
         """
         file_name = "lib.py"
-        txt = '''
+        txt = """
 Import as:
 
-'''
+"""
         exp = '''lib.py:1: every library needs to describe how to be imported:
 """
 Import as:
@@ -449,9 +448,11 @@ import foo.bar as fba
     # #########################
 
     def _helper_check_text(self, file_name: str, txt: str, exp: str) -> None:
-        txt = txt.split("\n")
-        output, txt_new = lntr._CustomPythonChecks._check_text(file_name, txt)
-        actual : List[str] = []
+        txt_array = txt.split("\n")
+        output, txt_new = lntr._CustomPythonChecks._check_text(
+            file_name, txt_array
+        )
+        actual: List[str] = []
         actual.append("# output")
         actual.extend(output)
         actual.append("# txt_new")
@@ -528,7 +529,9 @@ from typing import List
 # _#_#_#_#_#_#_#_##
 # hello
 # =_=_=_=_=
-""".replace("_", "")
+""".replace(
+            "_", ""
+        )
         exp = """# output
 # txt_new
 

@@ -30,7 +30,6 @@ E.g.,
 > linter.py -d . --action sync_jupytext
 """
 
-import abc
 import argparse
 import itertools
 import logging
@@ -38,7 +37,7 @@ import os
 import py_compile
 import re
 import sys
-from typing import Any, List
+from typing import Any, List, Tuple
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -284,11 +283,14 @@ def _write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None
         io_.to_file(file_name, txt_new_as_str)
 
 
-class _Action(abc.ABC):
+# TODO(gp): joblib asserts when using abstract classes:
+#   AttributeError: '_BasicHygiene' object has no attribute '_executable'
+# class _Action(abc.ABC):
+class _Action:
     def __init__(self, executable=None):
         self._executable = executable
 
-    @abc.abstractmethod
+    # @abc.abstractmethod
     def check_if_possible(self) -> bool:
         pass
 
@@ -299,9 +301,11 @@ class _Action(abc.ABC):
         _dassert_list_of_strings(output)
         return output
 
-    @abc.abstractmethod
+    # @abc.abstractmethod
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         pass
+
+
 # ##############################################################################
 
 
@@ -357,8 +361,8 @@ class _CheckFileProperty(_Action):
             subdir_names = file_name.split("/")
             if "notebooks" not in subdir_names:
                 msg = (
-                        "%s:1: each notebook should be under a 'notebooks' " \
-                        "directory to not confuse pytest" % file_name
+                    "%s:1: each notebook should be under a 'notebooks' "
+                    "directory to not confuse pytest" % file_name
                 )
         return msg
 
@@ -369,12 +373,13 @@ class _CheckFileProperty(_Action):
         """
         msg = ""
         # TODO(gp): A little annoying that we use "notebooks" and "test".
-        if (is_py_file(file_name) and
-            os.path.basename(file_name).startswith("test_")):
+        if is_py_file(file_name) and os.path.basename(file_name).startswith(
+            "test_"
+        ):
             if not is_under_test_dir(file_name):
                 msg = (
-                        "%s:1: test files should be under 'test' directory to " \
-                        "be discovered by pytest" % file_name
+                    "%s:1: test files should be under 'test' directory to "
+                    "be discovered by pytest" % file_name
                 )
         return msg
 
@@ -446,7 +451,7 @@ class _CompilePython(_Action):
 
 class _CustomPythonChecks(_Action):
     # The maximum length of an 'import as'.
-    MAX_LEN_IMPORT  = 5
+    MAX_LEN_IMPORT = 5
 
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
@@ -471,7 +476,8 @@ class _CustomPythonChecks(_Action):
         if msg:
             output.append(msg)
         # Process file.
-        output, txt_new = self._check_text(file_name, txt)
+        output_tmp, txt_new = self._check_text(file_name, txt)
+        output.extend(output_tmp)
         # Write file back.
         _write_file_back(file_name, txt, txt_new)
         return output
@@ -492,26 +498,34 @@ class _CustomPythonChecks(_Action):
             )
         return msg
 
+    @staticmethod
     def _check_import(file_name: str, line_num: int, line: str) -> str:
         msg = ""
         _LOG.debug("* Check 'from * imports'")
         m = re.match(r"\s*from\s+(\S+)\s+import\s+.*", line)
         if m:
             if m.group(1) != "typing":
-                msg = "%s:%s: do not use '%s' use 'import foo.bar " \
-                      "as fba'" % (
+                msg = "%s:%s: do not use '%s' use 'import foo.bar " "as fba'" % (
                     file_name,
                     line_num,
-                    line
+                    line,
                 )
         else:
             m = re.match(r"\s*import\s+\S+\s+as\s+(\S+)", line)
             if m:
                 shortcut = m.group(1)
                 if len(shortcut) > _CustomPythonChecks.MAX_LEN_IMPORT:
-                    msg = "%s:%s: the import shortcut '%s' in '%s' is longer than " \
-                        "%s characters" % (file_name, line_num, shortcut, line,
-                                           _CustomPythonChecks.MAX_LEN_IMPORT)
+                    msg = (
+                        "%s:%s: the import shortcut '%s' in '%s' is longer than "
+                        "%s characters"
+                        % (
+                            file_name,
+                            line_num,
+                            shortcut,
+                            line,
+                            _CustomPythonChecks.MAX_LEN_IMPORT,
+                        )
+                    )
         return msg
 
     @staticmethod
@@ -550,7 +564,7 @@ class _CustomPythonChecks(_Action):
             import_line = 3
             line = txt[import_line]
             _LOG.debug("import line=%s", line)
-            #m = re.match(r"\s*import\s+\S+\s+as\s+(\S+)", txt[import_line])
+            # m = re.match(r"\s*import\s+\S+\s+as\s+(\S+)", txt[import_line])
             # if m:
             #     shortcut = m.group(1)
             #     if len(shortcut) > _CustomPythonChecks.MAX_LEN_IMPORT:
@@ -564,16 +578,18 @@ class _CustomPythonChecks(_Action):
             #         "%s:%s: the import is not in the right format "
             #         "'import foo.bar as fba'" % (file_name, import_line)
             #     )
-            msg_tmp = _CustomPythonChecks._check_import(file_name,
-                                                             import_line,
-                                                             line)
+            msg_tmp = _CustomPythonChecks._check_import(
+                file_name, import_line, line
+            )
             if msg_tmp:
                 msg.append(msg_tmp)
         msg_as_str = "\n".join(msg)
         return msg_as_str
 
     @staticmethod
-    def _check_text(file_name: str, txt: List[str]) -> List[str]:
+    def _check_text(
+        file_name: str, txt: List[str]
+    ) -> Tuple[List[str], List[str]]:
         _dassert_list_of_strings(txt)
         output: List[str] = []
         txt_new: List[str] = []
@@ -588,8 +604,7 @@ class _CustomPythonChecks(_Action):
             #         "%s characters"
             #         % (file_name, import_line, shortcut, max_len)
             #     )
-            msg = _CustomPythonChecks._check_import(file_name, i + 1,
-                                                           line)
+            msg = _CustomPythonChecks._check_import(file_name, i + 1, line)
             if msg:
                 output.append(msg)
             # Look for conflicts markers.
@@ -601,7 +616,7 @@ class _CustomPythonChecks(_Action):
             _LOG.debug("* Format separating lines")
             min_num_chars = 5
             for char in "# = - < >".split():
-                regex = r"(\s*\#)\s*" + (('\\' + char) * min_num_chars)
+                regex = r"(\s*\#)\s*" + (("\\" + char) * min_num_chars)
                 _LOG.debug("regex=%s", regex)
                 m = re.match(regex, line)
                 if m:
@@ -1281,6 +1296,7 @@ class _LintMarkdown(_Action):
         _system(cmd_as_str, abort_on_error=False)
         return output
 
+
 # #############################################################################
 # Actions.
 # #############################################################################
@@ -1303,9 +1319,12 @@ def _get_action_class(action: str) -> _Action:
         if name == action:
             dbg.dassert_is(res, None)
             res = class_
-    dbg.dassert_is_not(res, None)
-    class_ : _Action = res()
-    return class_
+    # Make mypy happy.
+    if res is None:
+        dbg.dassert_is_not(res, None)
+    else:
+        obj = res()
+    return obj
 
 
 def _remove_not_possible_actions(actions: List[str]) -> List[str]:
