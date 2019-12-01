@@ -88,13 +88,14 @@
 
 -   Run `pytest`, e.g., on a subset of unit tests:
 
+- Run pytest, e.g., on a subset of unit tests like `helpers`:
     ```bash
-    > pytest --pyannotate helpers/
+    > pytest helpers
     ```
 
     -   A file `type_info.json` is generated
 
 -   Annotate the code with the inferred types:
     ```bash
-    > pyannotate -w --type-info type_info.json helpers --py3
+    > pyannotate -w --type-info type_info.json . --py3
     ```
