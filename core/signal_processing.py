@@ -289,6 +289,44 @@ def plot_crosscorrelation(
 
 
 # #############################################################################
+# Metrics
+# #############################################################################
+
+
+def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
+    r"""
+    Compute frequency-domain-based "forecastability" of signal.
+
+    Reference: https://arxiv.org/abs/1205.4591
+
+    `signal` is assumed to be second-order stationary.
+
+    Denote the forecastability estimator by \Omega(\cdot).
+    Let x_t, y_t be time series. Properties of \Omega include:
+    a) \Omega(y_t) = 0 iff y_t is white noise
+    b) scale and shift-invariant:
+         \Omega(a y_t + b) = \Omega(y_t) for real a, b, a \neq 0.
+    c) max sub-additivity for uncorrelated processes:
+         \Omega(\alpha x_t + \sqrt{1 - \alpha^2} y_t) \leq
+         \max\{\Omega(x_t), \Omega(y_t)\},
+       if \E(x_t y_s) = 0 for all s, t \in \Z;
+       equality iff alpha \in \{0, 1\}.
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    dbg.dassert_isinstance(mode, str)
+    if mode == "welch":
+        _, psd = sp.signal.welch(signal)
+    elif mode == "periodogram":
+        # TODO(Paul): Maybe log a warning about inconsistency of periodogram
+        #     for estimating power spectral density.
+        _, psd = sp.signal.periodogram(signal)
+    else:
+        raise ValueError("Unsupported mode=`%s`" % mode)
+    forecastability = 1 - sp.stats.entropy(psd, base=psd.size)
+    return forecastability
+
+
+# #############################################################################
 # Signal transformations
 # #############################################################################
 
