@@ -299,15 +299,15 @@ def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
 
     Reference: https://arxiv.org/abs/1205.4591
 
-    `signal` is assumed to be second-order stationary
+    `signal` is assumed to be second-order stationary.
 
     Denote the forecastability estimator by \Omega(\cdot).
-    Let x_t, y_t be time series. Properties f \Omega include:
+    Let x_t, y_t be time series. Properties of \Omega include:
     a) \Omega(y_t) = 0 iff y_t is white noise
     b) scale and shift-invariant:
-         \Omega(a y_t + b) = \Omega(y_t) for real a, b, with a \neq 0.
+         \Omega(a y_t + b) = \Omega(y_t) for real a, b, a \neq 0.
     c) max sub-additivity for uncorrelated processes:
-         \Omega(\alpha x_t + \sqrt(1 - \alpha^2) y_t) \leq
+         \Omega(\alpha x_t + \sqrt{1 - \alpha^2} y_t) \leq
          \max\{\Omega(x_t), \Omega(y_t)\},
        if \E(x_t y_s) = 0 for all s, t \in \Z;
        equality iff alpha \in \{0, 1\}.
