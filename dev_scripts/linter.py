@@ -593,13 +593,13 @@ class _Flake8(_Action):
             #     - Disabled because in contrast with black formatting
             "E203",
             # - E266 too many leading '#' for block comment
-            #     - We have disabled this since it is a false positive for jupytext
-            #       files.
+            #     - We have disabled this since it is a false positive for
+            #       jupytext files.
             "E266,"
             # - E501 line too long (> 82 characters)
-            #     - We have disabled this since it triggers also for docstrings at
-            #       the beginning of the line. We let pylint pick the lines too
-            #       long, since it seems to be smarter.
+            #     - We have disabled this since it triggers also for docstrings
+            #       at the beginning of the line. We let pylint pick the lines
+            #       too long, since it seems to be smarter.
             "E501",
             # - E731 do not assign a lambda expression, use a def
             "E731",
@@ -759,7 +759,7 @@ class _Pylint(_Action):
         if not is_py_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
-        opts = ""
+        opts = []
         # We ignore these errors as too picky.
         ignore = [
             # [C0302(too-many-lines), ] Too many lines in module (/1000)
@@ -844,16 +844,21 @@ class _Pylint(_Action):
                 ]
             )
         if ignore:
-            opts += "--disable " + ",".join(ignore)
+            opts.append("--disable " + ",".join(ignore))
         # Allow short variables, as long as camel-case.
-        opts += ' --variable-rgx="[a-z0-9_]{1,30}$"'
-        opts += ' --argument-rgx="[a-z0-9_]{1,30}$"'
+        opts.append('--variable-rgx="[a-z0-9_]{1,30}$"')
+        opts.append('--argument-rgx="[a-z0-9_]{1,30}$"')
         # TODO(gp): Not sure this is needed anymore.
-        opts += " --ignored-modules=pandas"
-        opts += " --output-format=parseable"
+        opts.append("--ignored-modules=pandas")
+        opts.append("--output-format=parseable")
         # TODO(gp): Does -j 4 help?
-        opts += " -j 4"
-        cmd = self._executable + " %s %s" % (opts, file_name)
+        opts.append("-j 4")
+        # pylint crashed due to lack of memory.
+        # A fix according to https://github.com/PyCQA/pylint/issues/2388 is:
+        opts.append('--init-hook="import sys; sys.setrecursionlimit(2000)"')
+        _dassert_list_of_strings(opts)
+        opts_as_str = " ".join(opts)
+        cmd = " ".join([self._executable, opts_as_str, file_name])
         output = _tee(cmd, self._executable, abort_on_error=False)
         # Remove some errors.
         output_tmp: List[str] = []
@@ -1473,10 +1478,10 @@ def _run_linter(
         _LOG.info(
             "Using %s threads", num_threads if num_threads > 0 else "all CPUs"
         )
-        from joblib import Parallel, delayed
+        import joblib
 
-        output_tmp = Parallel(n_jobs=num_threads, verbose=50)(
-            delayed(_lint)(file_name, actions, pedantic, args.debug)
+        output_tmp = joblib.Parallel(n_jobs=num_threads, verbose=50)(
+            joblib.delayed(_lint)(file_name, actions, pedantic, args.debug)
             for file_name in file_names
         )
         output = list(itertools.chain.from_iterable(output_tmp))
