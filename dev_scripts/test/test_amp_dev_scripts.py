@@ -104,6 +104,7 @@ class Test_set_env_amp(ut.TestCase):
         # repos, so we remove this line.
         # echo 'curr_path=$GIT_ROOT/amp' |     echo 'curr_path=$GIT_ROOT'
         txt = ut.filter_text("curr_path=", txt)
+        txt = ut.filter_text("server_name=", txt)
         self.check_string(txt)
 
     def test_setenv_sh1(self) -> None:

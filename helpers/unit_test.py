@@ -105,6 +105,8 @@ def filter_text(regex: str, txt: str) -> str:
     Remove lines in `txt` that match the regex `regex`.
     """
     _LOG.debug("Filtering with '%s'", regex)
+    if regex is None:
+        return txt
     txt_out = []
     for line in txt.split("\n"):
         if re.search(regex, line):
@@ -145,6 +147,39 @@ def purify_txt_from_client(txt: str) -> str:
     # TODO(gp): Remove conda_sh_path.
     return txt
 
+
+def diff_files(file_name1: str, file_name2: str, tag: Optional[str]=None):
+        # Diff to screen.
+        _, res = si.system_to_string(
+            "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
+            abort_on_error=False,
+            log_level=logging.DEBUG,
+        )
+        if tag is not None:
+            _LOG.error("%s", "\n" + prnt.frame(tag))
+        _LOG.error(res)
+        # Report how to diff.
+        vimdiff_cmd = "vimdiff %s %s" % (
+            os.path.abspath(file_name1),
+            os.path.abspath(file_name2),
+        )
+        # Save a script to diff.
+        diff_script = "./tmp_diff.sh"
+        io_.to_file(diff_script, vimdiff_cmd)
+        cmd = "chmod +x " + diff_script
+        si.system(cmd)
+        msg = []
+        msg.append("Diff with:")
+        msg.append("> " + vimdiff_cmd)
+        msg.append("or running:")
+        msg.append("> " + diff_script)
+        # TODO(gp): Understand why mypy reports:
+        #   Incompatible types in assignment (expression has type "str",
+        #   variable has type "List[str]")
+        msg = "\n".join(msg)  # type: ignore
+        _LOG.error(msg)
+        # Print stack trace.
+        raise RuntimeError(msg)
 
 # ###############################################################################
 
@@ -222,36 +257,39 @@ def _assert_equal(
         _LOG.debug("Expected:\n%s", expected)
         exp_file_name = "%s/tmp.expected.txt" % test_dir
         io_.to_file(exp_file_name, expected)
-        # Diff to screen.
-        _, res = si.system_to_string(
-            "echo; sdiff -l -w 150 %s %s" % (act_file_name, exp_file_name),
-            abort_on_error=False,
-            log_level=logging.DEBUG,
-        )
-        _LOG.error("%s", "\n" + prnt.frame("ACTUAL vs EXPECTED"))
-        _LOG.error(res)
-        # Report how to diff.
-        vimdiff_cmd = "vimdiff %s %s" % (
-            os.path.abspath(act_file_name),
-            os.path.abspath(exp_file_name),
-        )
-        # Save a script to diff.
-        diff_script = "./tmp_diff.sh"
-        io_.to_file(diff_script, vimdiff_cmd)
-        cmd = "chmod +x " + diff_script
-        si.system(cmd)
-        msg = []
-        msg.append("Diff with:")
-        msg.append("> " + vimdiff_cmd)
-        msg.append("or running:")
-        msg.append("> " + diff_script)
-        # TODO(gp): Understand why mypy reports:
-        #   Incompatible types in assignment (expression has type "str",
-        #   variable has type "List[str]")
-        msg = "\n".join(msg)  # type: ignore
-        _LOG.error(msg)
-        # Print stack trace.
-        raise RuntimeError(msg)
+        #
+        tag = "ACTUAL vs EXPECTED"
+        diff_files(act_file_name, exp_file_name, tag)
+        # # Diff to screen.
+        # _, res = si.system_to_string(
+        #     "echo; sdiff -l -w 150 %s %s" % (act_file_name, exp_file_name),
+        #     abort_on_error=False,
+        #     log_level=logging.DEBUG,
+        # )
+        # _LOG.error("%s", "\n" + prnt.frame("ACTUAL vs EXPECTED"))
+        # _LOG.error(res)
+        # # Report how to diff.
+        # vimdiff_cmd = "vimdiff %s %s" % (
+        #     os.path.abspath(act_file_name),
+        #     os.path.abspath(exp_file_name),
+        # )
+        # # Save a script to diff.
+        # diff_script = "./tmp_diff.sh"
+        # io_.to_file(diff_script, vimdiff_cmd)
+        # cmd = "chmod +x " + diff_script
+        # si.system(cmd)
+        # msg = []
+        # msg.append("Diff with:")
+        # msg.append("> " + vimdiff_cmd)
+        # msg.append("or running:")
+        # msg.append("> " + diff_script)
+        # # TODO(gp): Understand why mypy reports:
+        # #   Incompatible types in assignment (expression has type "str",
+        # #   variable has type "List[str]")
+        # msg = "\n".join(msg)  # type: ignore
+        # _LOG.error(msg)
+        # # Print stack trace.
+        # raise RuntimeError(msg)
 
 
 class TestCase(unittest.TestCase):

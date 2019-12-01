@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # """
-# Script to roll fwd the submodules.
+# Roll fwd the submodules.
 # """
 
 # TODO(gp): Convert to Python.

@@ -7,7 +7,6 @@ echo 'cmd_line=$GIT_ROOT/dev_scripts/_setenv_amp.py'
 echo 'exec_name=$GIT_ROOT/dev_scripts/_setenv_amp.py'
 echo 'exec_path=$GIT_ROOT/dev_scripts'
 echo 'user_name=$USER_NAME'
-echo 'server_name=gpmac.lan'
 
 echo '################################################################################'
 echo Config git

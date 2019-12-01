@@ -6,7 +6,7 @@
 - To dry run
 > run_tests.py --dry_run -v DEBUG
 
-- To test coverage
+- To run coverage
 > run_tests.py --test datetime_utils_test.py --coverage -v DEBUG
 """
 
@@ -104,7 +104,7 @@ def _main(parser):
     if args.jenkins:
         cmds = [
             # TODO(gp): For some reason `system("conda")` doesn't work from
-            # this script. Maybe we need to use the hco.conda_system().
+            #  this script. Maybe we need to use the hco.conda_system().
             # "conda list",
             "git log -5",
             "whoami",

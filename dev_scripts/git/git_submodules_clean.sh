@@ -1,11 +1,12 @@
 #!/bin/bash -e
 
 # """
-# Script to clean all the submodules.
+# Clean all the submodules with `git clean -fd`.
 # """
 
-AMP_DIR="amp"
+# TODO(gp): Stash to be safe.
 
+AMP_DIR="amp"
 source $AMP_DIR/dev_scripts/helpers.sh
 
 cmd="git clean -fd"
