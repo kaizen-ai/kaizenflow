@@ -98,6 +98,8 @@ class Test_set_env_amp(ut.TestCase):
         dbg.dassert_exists(executable)
         # Run _setup.py and get its output.
         _, txt = si.system_to_string(executable)
+        # This test is ran from different repos.
+        txt = ut.remove_amp_references(txt)
         # There is a difference between running the same test from different
         # repos, so we remove this line.
         # echo 'curr_path=$GIT_ROOT/amp' |     echo 'curr_path=$GIT_ROOT'
@@ -326,6 +328,8 @@ if __name__ == "main":
         linter_log = "linter.log"
         linter_log = os.path.abspath(os.path.join(dir_name, linter_log))
         output = self._run_linter(file_name, linter_log, as_system_call)
+        # We run the same test from different repos.
+        output = ut.remove_amp_references(output)
         return output
 
     def test_linter1(self) -> None:
