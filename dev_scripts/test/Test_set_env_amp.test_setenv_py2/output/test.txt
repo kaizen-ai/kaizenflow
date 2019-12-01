@@ -3,9 +3,9 @@
 echo '################################################################################'
 echo Info
 echo '################################################################################'
-echo 'cmd_line=$GIT_ROOT/amp/dev_scripts/_setenv_amp.py'
-echo 'exec_name=$GIT_ROOT/amp/dev_scripts/_setenv_amp.py'
-echo 'exec_path=$GIT_ROOT/amp/dev_scripts'
+echo 'cmd_line=$GIT_ROOT/dev_scripts/_setenv_amp.py'
+echo 'exec_name=$GIT_ROOT/dev_scripts/_setenv_amp.py'
+echo 'exec_path=$GIT_ROOT/dev_scripts'
 echo 'user_name=$USER_NAME'
 echo 'server_name=gpmac.lan'
 
@@ -24,7 +24,7 @@ echo '##########################################################################
 export PYTHONDONTWRITEBYTECODE=x
 # Append paths to PYTHONPATH.
 # Update variable.
-PYTHONPATH=$GIT_ROOT/amp:$PYTHONPATH
+PYTHONPATH=$GIT_ROOT/$PYTHONPATH
 PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 # Print variable.
 echo PYTHONPATH=$PYTHONPATH
@@ -55,7 +55,7 @@ echo '##########################################################################
 echo Config path
 echo '################################################################################'
 # Update variable.
-PATH=$GIT_ROOT/amp/dev_scripts:$GIT_ROOT/amp/dev_scripts/aws:$GIT_ROOT/amp/dev_scripts/git:$GIT_ROOT/amp/dev_scripts/infra:$GIT_ROOT/amp/dev_scripts/install:$GIT_ROOT/amp/dev_scripts/notebooks:$GIT_ROOT/amp/dev_scripts/testing:$PATH
+PATH=$GIT_ROOT/dev_scripts:$GIT_ROOT/dev_scripts/aws:$GIT_ROOT/dev_scripts/git:$GIT_ROOT/dev_scripts/infra:$GIT_ROOT/dev_scripts/install:$GIT_ROOT/dev_scripts/notebooks:$GIT_ROOT/dev_scripts/testing:$PATH
 PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 # Print variable.
 echo PATH=$PATH
@@ -66,5 +66,5 @@ export PATH
 echo '################################################################################'
 echo Test packages
 echo '################################################################################'
-echo '> $GIT_ROOT/amp/dev_scripts/install/check_develop_packages.py'
-$GIT_ROOT/amp/dev_scripts/install/check_develop_packages.py
+echo '> $GIT_ROOT/dev_scripts/install/check_develop_packages.py'
+$GIT_ROOT/dev_scripts/install/check_develop_packages.py

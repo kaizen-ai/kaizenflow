@@ -117,13 +117,25 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
+def remove_amp_references(txt: str) -> str:
+    """
+    Remove references to amp.
+    """
+    txt = re.sub("^amp/", "", txt, flags=re.MULTILINE)
+    txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
+    txt = re.sub("amp:", "", txt, flags=re.MULTILINE)
+    return txt
+
+
 def purify_txt_from_client(txt: str) -> str:
     """
     Remove from a string all the information specific of a git client.
     """
-    # Replace the git path with `$GIT_ROOT`.
-    super_module_path = git.get_client_root(super_module=True)
-    txt = txt.replace(super_module_path, "$GIT_ROOT")
+    # We remove references to the Git modules starting from the innermost one.
+    for super_module in [False, True]:
+        # Replace the git path with `$GIT_ROOT`.
+        super_module_path = git.get_client_root(super_module=super_module)
+        txt = txt.replace(super_module_path, "$GIT_ROOT")
     # Replace the current path with `$PWD`
     pwd = os.getcwd()
     txt = txt.replace(pwd, "$PWD")

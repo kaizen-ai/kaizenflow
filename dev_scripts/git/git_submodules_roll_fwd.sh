@@ -4,7 +4,16 @@
 # Script to roll fwd the submodules.
 # """
 
-# TODO(gp): Ensure that all submodules are clean.
+# TODO(gp): Convert to Python.
+# TODO(gp): Enforce that we run this only from a top Git submodule.
+# TODO(gp): Allow to work with different branches.
+
+clean=0
+if [[ $1 == "clean" ]]; then
+    echo "Running 'git clean -fd' as requested"
+    clean=1
+    exit -1
+fi;
 
 AMP_DIR="amp"
 BRANCH="master"
@@ -25,7 +34,9 @@ execute $cmd
 echo "+ Pull p1"
 git checkout $BRANCH
 git pull --autostash
-#git clean -fd
+if [[ $clean == 1 ]]; then
+    git clean -fd
+fi;
 
 # Pull amp
 echo "+ Pull amp"
@@ -36,7 +47,9 @@ execute $cmd
 
 git checkout $BRANCH
 git pull --autostash
-#git clean -fd
+if [[ $clean == 1 ]]; then
+    git clean -fd
+fi;
 
 cmd="dev_scripts/git/git_hash_head.sh"
 execute $cmd
@@ -49,7 +62,9 @@ echo "+ Pull infra"
 cd infra
 git checkout $BRANCH
 git pull --autostash
-#git clean -fd
+if [[ $clean == 1 ]]; then
+    git clean -fd
+fi;
 cd ..
 git add infra
 
@@ -57,6 +72,11 @@ echo "# amp pointer in p1 is at:"
 cmd="git ls-tree master | grep amp"
 execute $cmd
 
-cmd='git commit -am "Move fwd amp and infra" && git push'
+msg='git commit -am "Move fwd amp and infra" && git push'
+SCRIPT_NAME="./tmp_push.sh"
+echo $msg > $SCRIPT_NAME
+chmod +x $SCRIPT_NAME
 echo "Run:"
-echo "> $cmd"
+echo "> $msg"
+echo "or"
+echo "> $SCRIPT_NAME"
