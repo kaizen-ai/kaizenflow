@@ -1271,7 +1271,7 @@ class _LintMarkdown(_Action):
                 output.append(
                     "No tags for table of content in md file: adding it"
                 )
-                line = "<!--ts-->\n<!--te-->"
+                txt_new.append("<!--ts-->\n<!--te-->")
             line = re.sub(r"^\-   STAR", "*   ", line)
             # Remove some artifacts when copying from gdoc.
             line = re.sub(r"’", "'", line)
