@@ -10,15 +10,18 @@ E.g.,
 > linter.py
 
 # Lint current files.
-> linter.py --current_git_files --collect_only
-> linter.py --current_git_files --all
+> linter.py -c --collect_only
+> linter.py -c --all
 
 # Lint previous commit files.
-> linter.py --previous_git_commit_files --collect_only
+> linter.py -p --collect_only
 
 # Lint a certain number of previous commits
-> linter.py --previous_git_commit_files n --collect_only
+> linter.py -p 3 --collect_only
 > linter.py --files event_study/*.py linter_v2.py --yapf --isort -v DEBUG
+
+# Lint the changes in the branch:
+> linter.py -f $(git diff --name-only master...)
 
 # Lint all python files, but not the notebooks.
 > linter.py -d . --only_py --collect
@@ -52,9 +55,9 @@ _LOG = logging.getLogger(__name__)
 _TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
 
 
-# #############################################################################
+# ###############################################################################
 # Utils.
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): This could become the default behavior of system().
@@ -156,9 +159,9 @@ def _check_exec(tool: str) -> bool:
     return rc == 0
 
 
-# #############################################################################
+# ###############################################################################
 # Handle files.
-# #############################################################################
+# ###############################################################################
 
 
 def _filter_target_files(file_names: List[str]) -> List[str]:
@@ -260,7 +263,7 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
     return file_names
 
 
-# ##############################################################################
+# ###############################################################################
 
 # TODO(gp): We should use a Strategy pattern, having a base class and a class
 #  for each action.
@@ -306,7 +309,7 @@ class _Action:
         pass
 
 
-# ##############################################################################
+# ###############################################################################
 
 
 class _CheckFileProperty(_Action):
@@ -384,7 +387,7 @@ class _CheckFileProperty(_Action):
         return msg
 
 
-# ##############################################################################
+# ###############################################################################
 
 
 class _BasicHygiene(_Action):
@@ -909,7 +912,7 @@ class _Mypy(_Action):
         return output
 
 
-# ##############################################################################
+# ###############################################################################
 
 
 class _IpynbFormat(_Action):
@@ -1037,7 +1040,9 @@ class _TestJupytext(_ProcessJupytext):
     def __init__(self):
         super().__init__("test")
 
-# ##############################################################################
+
+# ###############################################################################
+
 
 class _CustomPythonChecks(_Action):
     # The maximum length of an 'import as'.
@@ -1062,9 +1067,10 @@ class _CustomPythonChecks(_Action):
         if msg:
             output.append(msg)
         # Check that the module was baptized.
-        msg = self._was_baptized(file_name, txt)
-        if msg:
-            output.append(msg)
+        if not is_executable:
+            msg = self._was_baptized(file_name, txt)
+            if msg:
+                output.append(msg)
         # Process file.
         output_tmp, txt_new = self._check_text(file_name, txt)
         output.extend(output_tmp)
@@ -1074,13 +1080,13 @@ class _CustomPythonChecks(_Action):
 
     @staticmethod
     def _check_shebang(
-            file_name: str, txt: List[str], is_executable: bool
+        file_name: str, txt: List[str], is_executable: bool
     ) -> str:
         msg = ""
         shebang = "#!/usr/bin/env python"
         has_shebang = txt[0] == shebang
         if (is_executable and not has_shebang) or (
-                not is_executable and has_shebang
+            not is_executable and has_shebang
         ):
             msg = "%s:1: any executable needs to start with a shebang '%s'" % (
                 file_name,
@@ -1098,7 +1104,7 @@ class _CustomPythonChecks(_Action):
                 msg = "%s:%s: do not use '%s' use 'import foo.bar " "as fba'" % (
                     file_name,
                     line_num,
-                    line,
+                    line.rstrip().lstrip(),
                 )
         else:
             m = re.match(r"\s*import\s+\S+\s+as\s+(\S+)", line)
@@ -1106,15 +1112,15 @@ class _CustomPythonChecks(_Action):
                 shortcut = m.group(1)
                 if len(shortcut) > _CustomPythonChecks.MAX_LEN_IMPORT:
                     msg = (
-                            "%s:%s: the import shortcut '%s' in '%s' is longer than "
-                            "%s characters"
-                            % (
-                                file_name,
-                                line_num,
-                                shortcut,
-                                line,
-                                _CustomPythonChecks.MAX_LEN_IMPORT,
-                            )
+                        "%s:%s: the import shortcut '%s' in '%s' is longer than "
+                        "%s characters"
+                        % (
+                            file_name,
+                            line_num,
+                            shortcut,
+                            line.rstrip().lstrip(),
+                            _CustomPythonChecks.MAX_LEN_IMPORT,
+                        )
                     )
         return msg
 
@@ -1178,7 +1184,7 @@ class _CustomPythonChecks(_Action):
 
     @staticmethod
     def _check_text(
-            file_name: str, txt: List[str]
+        file_name: str, txt: List[str]
     ) -> Tuple[List[str], List[str]]:
         _dassert_list_of_strings(txt)
         output: List[str] = []
@@ -1220,8 +1226,7 @@ class _CustomPythonChecks(_Action):
         return output, txt_new
 
 
-
-# ##############################################################################
+# ###############################################################################
 
 
 class _LintMarkdown(_Action):
@@ -1299,9 +1304,9 @@ class _LintMarkdown(_Action):
         return output
 
 
-# #############################################################################
+# ###############################################################################
 # Actions.
-# #############################################################################
+# ###############################################################################
 
 # We use the command line instead of API because:
 # - some tools don't have a public API
@@ -1399,7 +1404,7 @@ def _test_actions():
         _LOG.info("All actions are possible")
 
 
-# #############################################################################
+# ###############################################################################
 
 
 def _lint(
@@ -1482,9 +1487,9 @@ def _run_linter(
     return output
 
 
-# #############################################################################
+# ###############################################################################
 # Main.
-# #############################################################################
+# ###############################################################################
 
 # Actions and if they read / write files.
 # The order of this list implies the order in which they are executed.
@@ -1518,8 +1523,12 @@ _VALID_ACTIONS_META = [
     ("test_jupytext", "r", "Test jupytext files", _TestJupytext),
     # Superseded by "sync_jupytext".
     # ("ipynb_format", "w", "Format jupyter code using yapf", _IpynbFormat),
-    ("custom_python_checks", "w", "Apply some custom python checks",
-     _CustomPythonChecks),
+    (
+        "custom_python_checks",
+        "w",
+        "Apply some custom python checks",
+        _CustomPythonChecks,
+    ),
     ("lint_markdown", "w", "Lint txt/md markdown files", _LintMarkdown),
 ]
 
