@@ -347,13 +347,14 @@ if __name__ == "main":
     # ##########################################################################
 
     def _helper_check_shebang(
-        self, file_name: str, txt: str, is_executable: bool
+        self, file_name: str, txt: str, is_executable: bool,
+            exp: str,
     ) -> None:
         txt = txt.split("\n")
         msg = lntr._CustomPythonChecks._check_shebang(
             file_name, txt, is_executable
         )
-        self.check_string(msg)
+        self.assert_equal(msg, exp)
 
     def test_check_shebang1(self) -> None:
         """
@@ -365,7 +366,8 @@ hello
 world
 """
         is_executable = True
-        self._helper_check_shebang(file_name, txt, is_executable)
+        exp = "exec.py:1: any executable needs to start with a shebang '#!/usr/bin/env python'"
+        self._helper_check_shebang(file_name, txt, is_executable, exp)
 
     def test_check_shebang2(self) -> None:
         """
@@ -377,7 +379,8 @@ hello
 world
 """
         is_executable = True
-        self._helper_check_shebang(file_name, txt, is_executable)
+        exp = ""
+        self._helper_check_shebang(file_name, txt, is_executable, exp)
 
     def test_check_shebang3(self) -> None:
         """
@@ -389,7 +392,8 @@ hello
 world
 """
         is_executable = False
-        self._helper_check_shebang(file_name, txt, is_executable)
+        exp = "exec.py:1: any executable needs to start with a shebang '#!/usr/bin/env python'"
+        self._helper_check_shebang(file_name, txt, is_executable, exp)
 
     def test_check_shebang4(self) -> None:
         """
@@ -402,52 +406,203 @@ Import as:
 import _setenv_lib as selib
 '''
         is_executable = False
-        self._helper_check_shebang(file_name, txt, is_executable)
+        exp = ""
+        self._helper_check_shebang(file_name, txt, is_executable, exp)
 
     # #########################
 
-    def _helper_was_baptized(self, file_name: str, txt: str) -> None:
+    def _helper_was_baptized(self, file_name: str, txt: str, exp: str) -> None:
         txt = txt.split("\n")
         msg = lntr._CustomPythonChecks._was_baptized(file_name, txt)
-        self.check_string(msg)
+        self.assert_equal(msg, exp)
 
     def test_was_baptized1(self) -> None:
+        """
+        Correct import.
+        """
         file_name = "lib.py"
         txt = '''"""
 Import as:
 
 import _setenv_lib as selib
 '''
-        self._helper_was_baptized(file_name, txt)
+        exp = ""
+        self._helper_was_baptized(file_name, txt, exp)
 
     def test_was_baptized2(self) -> None:
+        """
+        Invalid.
+        """
         file_name = "lib.py"
-        txt = '''"""
+        txt = '''
 Import as:
 
-import _setenv_lib as selib
 '''
-        self._helper_was_baptized(file_name, txt)
+        exp = '''lib.py:1: every library needs to describe how to be imported:
+"""
+Import as:
+
+import foo.bar as fba
+"""'''
+        self._helper_was_baptized(file_name, txt, exp)
 
     # #########################
 
-    def _helper_check_text(self, file_name: str, txt: str) -> None:
+    def _helper_check_text(self, file_name: str, txt: str, exp: str) -> None:
         txt = txt.split("\n")
-        output = lntr._CustomPythonChecks._check_text(file_name, txt)
-        msg = "\n".join(output)
-        self.check_string(msg)
+        output, txt_new = lntr._CustomPythonChecks._check_text(file_name, txt)
+        actual : List[str] = []
+        actual.append("# output")
+        actual.extend(output)
+        actual.append("# txt_new")
+        actual.extend(txt_new)
+        actual_as_str = "\n".join(actual)
+        self.assert_equal(actual_as_str, exp)
 
     def test_check_text1(self) -> None:
-        file_name = "lib.py"
-        txt = "from pandas import DataFrame"
-        self._helper_check_text(file_name, txt)
-
-    def test_check_text2(self) -> None:
+        """
+        Valid import.
+        """
         file_name = "lib.py"
         txt = "from typing import List"
-        self._helper_check_text(file_name, txt)
+        exp = """# output
+# txt_new
+from typing import List"""
+        self._helper_check_text(file_name, txt, exp)
+
+    def test_check_text2(self) -> None:
+        """
+        Invalid import.
+        """
+        file_name = "lib.py"
+        txt = "from pandas import DataFrame"
+        exp = """# output
+lib.py:1: do not use 'from pandas import DataFrame' use 'import foo.bar as fba'
+# txt_new
+from pandas import DataFrame"""
+        self._helper_check_text(file_name, txt, exp)
 
     def test_check_text3(self) -> None:
+        """
+        Invalid import.
+        """
         file_name = "lib.py"
-        txt = "import pandas as very_long_name"
-        self._helper_check_text(file_name, txt)
+        txt = "import pandas as a_very_long_name"
+        exp = """# output
+lib.py:1: the import shortcut 'a_very_long_name' in 'import pandas as a_very_long_name' is longer than 5 characters
+# txt_new
+import pandas as a_very_long_name"""
+        self._helper_check_text(file_name, txt, exp)
+
+    def test_check_text4(self) -> None:
+        """
+        Conflict markers.
+        """
+        file_name = "lib.py"
+        txt = """import pandas as pd
+<<<<<<< HEAD
+hello
+=======
+world
+>>>>>>>
+"""
+        exp = """# output
+lib.py:2: there are conflict markers
+lib.py:4: there are conflict markers
+lib.py:6: there are conflict markers
+# txt_new
+import pandas as pd
+<<<<<<< HEAD
+hello
+=======
+world
+>>>>>>>"""
+        self._helper_check_text(file_name, txt, exp)
+
+    def test_check_text5(self) -> None:
+        file_name = "lib.py"
+        # We use some _ to avoid to get a replacement from the linter here.
+        txt = """
+from typing import List
+
+# _#_#_#_#_#_#_#_##
+# hello
+# =_=_=_=_=
+""".replace("_", "")
+        exp = """# output
+# txt_new
+
+from typing import List
+
+# ###############################################################################
+# hello
+# ==============================================================================="""
+        self._helper_check_text(file_name, txt, exp)
+
+    # #########################
+
+    def _helper_check_notebook_dir(self, file_name: str, exp: str) -> None:
+        msg = lntr._CheckFileProperty._check_notebook_dir(file_name)
+        self.assert_equal(msg, exp)
+
+    def test_check_notebook_dir1(self):
+        """
+        The notebook is not under 'notebooks': invalid.
+        """
+        file_name = "hello/world/notebook.ipynb"
+        exp = "hello/world/notebook.ipynb:1: each notebook should be under a 'notebooks' directory to not confuse pytest"
+        self._helper_check_notebook_dir(file_name, exp)
+
+    def test_check_notebook_dir2(self):
+        """
+        The notebook is under 'notebooks': valid.
+        """
+        file_name = "hello/world/notebooks/notebook.ipynb"
+        exp = ""
+        self._helper_check_notebook_dir(file_name, exp)
+
+    def test_check_notebook_dir3(self):
+        """
+        It's not a notebook: valid.
+        """
+        file_name = "hello/world/notebook.py"
+        exp = ""
+        self._helper_check_notebook_dir(file_name, exp)
+
+    # #########################
+
+    def _helper_check_test_file_dir(self, file_name: str, exp: str) -> None:
+        msg = lntr._CheckFileProperty._check_test_file_dir(file_name)
+        self.assert_equal(msg, exp)
+
+    def test_check_test_file_dir1(self):
+        """
+        Test is under `test`: valid.
+        """
+        file_name = "hello/world/test/test_all.py"
+        exp = ""
+        self._helper_check_test_file_dir(file_name, exp)
+
+    def test_check_test_file_dir2(self):
+        """
+        Test is not under `test`: invalid.
+        """
+        file_name = "hello/world/test_all.py"
+        exp = "hello/world/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
+        self._helper_check_test_file_dir(file_name, exp)
+
+    def test_check_test_file_dir3(self):
+        """
+        Test is not under `test`: invalid.
+        """
+        file_name = "hello/world/tests/test_all.py"
+        exp = "hello/world/tests/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
+        self._helper_check_test_file_dir(file_name, exp)
+
+    def test_check_test_file_dir4(self):
+        """
+        It's a notebook: valid.
+        """
+        file_name = "hello/world/tests/test_all.ipynb"
+        exp = ""
+        self._helper_check_test_file_dir(file_name, exp)

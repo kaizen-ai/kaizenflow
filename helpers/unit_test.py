@@ -212,10 +212,11 @@ def _assert_equal(
         io_.to_file(exp_file_name, expected)
         # Diff to screen.
         _, res = si.system_to_string(
-            "echo; sdiff -l -w 150 %s %s" % (exp_file_name, act_file_name),
+            "echo; sdiff -l -w 150 %s %s" % (act_file_name, exp_file_name),
             abort_on_error=False,
             log_level=logging.DEBUG,
         )
+        _LOG.error("\n" + prnt.frame("ACTUAL vs EXPECTED"))
         _LOG.error(res)
         # Report how to diff.
         vimdiff_cmd = "vimdiff %s %s" % (

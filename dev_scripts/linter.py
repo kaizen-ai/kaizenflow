@@ -302,17 +302,84 @@ class _Action(abc.ABC):
     @abc.abstractmethod
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         pass
+# ##############################################################################
 
 
 class _CheckFileProperty(_Action):
+    """
+    Perform various checks based on property of a file:
+    - check that file size doesn't exceed a certain threshould
+    - check that notebook files are under a `notebooks` dir
+    - check that test files are under `test` dir
+    """
+
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
         return True
 
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
-        dbg.dfatal("We should never get here")
-        return []
+        output: List[str] = []
+        for func in [
+            self._check_size,
+            self._check_notebook_dir,
+            self._check_test_file_dir,
+        ]:
+            msg = func(file_name)
+            if msg:
+                _LOG.warning(msg)
+                output.append(msg)
+        return output
+
+    @staticmethod
+    def _check_size(file_name: str) -> str:
+        """
+        Check size of a file.
+        """
+        msg = ""
+        max_size_in_bytes = 512 * 1024
+        size_in_bytes = os.path.getsize(file_name)
+        if size_in_bytes > max_size_in_bytes:
+            msg = "%s:1: file size is too large %s > %s" % (
+                file_name,
+                size_in_bytes,
+                max_size_in_bytes,
+            )
+        return msg
+
+    @staticmethod
+    def _check_notebook_dir(file_name: str) -> str:
+        """
+        # Check if that notebooks are under `notebooks` dir.
+        """
+        msg = ""
+        if is_ipynb_file(file_name):
+            subdir_names = file_name.split("/")
+            if "notebooks" not in subdir_names:
+                msg = (
+                        "%s:1: each notebook should be under a 'notebooks' " \
+                        "directory to not confuse pytest" % file_name
+                )
+        return msg
+
+    @staticmethod
+    def _check_test_file_dir(file_name: str) -> str:
+        """
+        Check if test files are under `test` dir.
+        """
+        msg = ""
+        # TODO(gp): A little annoying that we use "notebooks" and "test".
+        if (is_py_file(file_name) and
+            os.path.basename(file_name).startswith("test_")):
+            if not is_under_test_dir(file_name):
+                msg = (
+                        "%s:1: test files should be under 'test' directory to " \
+                        "be discovered by pytest" % file_name
+                )
+        return msg
+
+
+# ##############################################################################
 
 
 class _BasicHygiene(_Action):
@@ -363,13 +430,12 @@ class _CompilePython(_Action):
 
     def _execute(self, file_name, pedantic: bool) -> List[str]:
         _ = pedantic
+        output: List[str] = []
         # Applicable only to python files.
-        dbg.dassert(file_name)
         if not is_py_file(file_name):
             _LOG.debug("Skipping self._file_name='%s'", file_name)
-            return []
+            return output
         #
-        output: List[str] = []
         try:
             py_compile.compile(file_name, doraise=True)
             # pylint: disable=broad-except
@@ -379,6 +445,9 @@ class _CompilePython(_Action):
 
 
 class _CustomPythonChecks(_Action):
+    # The maximum length of an 'import as'.
+    MAX_LEN_IMPORT  = 5
+
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
         return True
@@ -402,7 +471,9 @@ class _CustomPythonChecks(_Action):
         if msg:
             output.append(msg)
         # Process file.
-        output = self._check_text(file_name, txt)
+        output, txt_new = self._check_text(file_name, txt)
+        # Write file back.
+        _write_file_back(file_name, txt, txt_new)
         return output
 
     @staticmethod
@@ -419,6 +490,28 @@ class _CustomPythonChecks(_Action):
                 file_name,
                 shebang,
             )
+        return msg
+
+    def _check_import(file_name: str, line_num: int, line: str) -> str:
+        msg = ""
+        _LOG.debug("* Check 'from * imports'")
+        m = re.match(r"\s*from\s+(\S+)\s+import\s+.*", line)
+        if m:
+            if m.group(1) != "typing":
+                msg = "%s:%s: do not use '%s' use 'import foo.bar " \
+                      "as fba'" % (
+                    file_name,
+                    line_num,
+                    line
+                )
+        else:
+            m = re.match(r"\s*import\s+\S+\s+as\s+(\S+)", line)
+            if m:
+                shortcut = m.group(1)
+                if len(shortcut) > _CustomPythonChecks.MAX_LEN_IMPORT:
+                    msg = "%s:%s: the import shortcut '%s' in '%s' is longer than " \
+                        "%s characters" % (file_name, line_num, shortcut, line,
+                                           _CustomPythonChecks.MAX_LEN_IMPORT)
         return msg
 
     @staticmethod
@@ -455,47 +548,62 @@ class _CustomPythonChecks(_Action):
             # Check that the import is in the right format, like:
             #   import _setenv_lib as selib
             import_line = 3
-            m = re.match(r"import \S+ as (\S+)", txt[import_line])
-            if m:
-                max_len = 5
-                shortcut = m.group(1)
-                if len(shortcut) > max_len:
-                    msg.append(
-                        "%s:%s: the import shortcut '%s' is longer than "
-                        "%s characters"
-                        % (file_name, import_line, shortcut, max_len)
-                    )
-            else:
-                msg.append(
-                    "%s:%s: the import is not in the right format "
-                    "'import foo.bar as fba'" % (file_name, import_line)
-                )
+            line = txt[import_line]
+            _LOG.debug("import line=%s", line)
+            #m = re.match(r"\s*import\s+\S+\s+as\s+(\S+)", txt[import_line])
+            # if m:
+            #     shortcut = m.group(1)
+            #     if len(shortcut) > _CustomPythonChecks.MAX_LEN_IMPORT:
+            #         msg.append(
+            #             "%s:%s: the import shortcut '%s' is longer than "
+            #             "%s characters"
+            #             % (file_name, import_line, shortcut, max_len)
+            #         )
+            # else:
+            #     msg.append(
+            #         "%s:%s: the import is not in the right format "
+            #         "'import foo.bar as fba'" % (file_name, import_line)
+            #     )
+            msg_tmp = _CustomPythonChecks._check_import(file_name,
+                                                             import_line,
+                                                             line)
+            if msg_tmp:
+                msg.append(msg_tmp)
         msg_as_str = "\n".join(msg)
         return msg_as_str
 
     @staticmethod
     def _check_text(file_name: str, txt: List[str]) -> List[str]:
-        output: List[str] = []
         _dassert_list_of_strings(txt)
+        output: List[str] = []
         txt_new: List[str] = []
         for i, line in enumerate(txt):
-            _LOG.debug("%s: %s", i, line)
+            _LOG.debug("%s: line='%s'", i, line)
             # Check imports.
-            m = re.search(r"\s*from\s(\S+)\s*import.*", line)
-            if m:
-                if m.group(1) != "typing":
-                    msg = "%s:%s: use 'import foo.bar as fba'" % (
-                        file_name,
-                        i + 1,
-                    )
-                    output.append(msg)
+            _LOG.debug("* Check imports")
+            # shortcut = m.group(1)
+            # if len(shortcut) > max_len:
+            #     msg.append(
+            #         "%s:%s: the import shortcut '%s' is longer than "
+            #         "%s characters"
+            #         % (file_name, import_line, shortcut, max_len)
+            #     )
+            msg = _CustomPythonChecks._check_import(file_name, i + 1,
+                                                           line)
+            if msg:
+                output.append(msg)
             # Look for conflicts markers.
+            _LOG.debug("* Look for conflict markers")
             if any(line.startswith(c) for c in ["<<<<<<<", "=======", ">>>>>>>"]):
                 msg = "%s:%s: there are conflict markers" % (file_name, i + 1)
                 output.append(msg)
             # Format separating lines.
+            _LOG.debug("* Format separating lines")
+            min_num_chars = 5
             for char in "# = - < >".split():
-                m = re.search(r"(\S*#)\S*" + char * 10, line)
+                regex = r"(\s*\#)\s*" + (('\\' + char) * min_num_chars)
+                _LOG.debug("regex=%s", regex)
+                m = re.match(regex, line)
                 if m:
                     line = m.group(1) + " " + char * (80 - len(m.group(1)))
             #
@@ -504,9 +612,7 @@ class _CustomPythonChecks(_Action):
             _dassert_list_of_strings(txt_new)
             #
             _dassert_list_of_strings(output)
-        # Write file back.
-        _write_file_back(file_name, txt, txt_new)
-        return output
+        return output, txt_new
 
 
 class _Autoflake(_Action):
@@ -524,7 +630,6 @@ class _Autoflake(_Action):
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
         # Applicable to only python file.
-        dbg.dassert(file_name)
         if not is_py_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
@@ -927,8 +1032,6 @@ class _Pylint(_Action):
         output = output_tmp
         # Remove lines.
         output = [l for l in output if ("-" * 20) not in l]
-        # if output:
-        #    output.insert(0, "* file_name=%s" % file_name)
         return output
 
 
@@ -943,7 +1046,6 @@ class _Mypy(_Action):
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
         # Applicable to only python files, that are not paired with notebooks.
-        dbg.dassert(file_name)
         if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
@@ -970,8 +1072,6 @@ class _Mypy(_Action):
                 continue
             output_tmp.append(line)
         output = output_tmp
-        # if output:
-        #    output.insert(0, "* file_name=%s" % file_name)
         return output
 
 
@@ -1117,7 +1217,6 @@ class _LintMarkdown(_Action):
 
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         # Applicable only to txt and md files.
-        dbg.dassert(file_name)
         ext = os.path.splitext(file_name)[1]
         output: List[str] = []
         if ext not in (".txt", ".md"):
@@ -1160,10 +1259,10 @@ class _LintMarkdown(_Action):
                 line = "<!--ts-->\n<!--te-->"
             line = re.sub(r"^\-   STAR", "*   ", line)
             # Remove some artifacts when copying from gdoc.
-            line = re.sub("’", "'", line)
-            line = re.sub("“", '"', line)
-            line = re.sub("”", '"', line)
-            line = re.sub("…", "...", line)
+            line = re.sub(r"’", "'", line)
+            line = re.sub(r"“", '"', line)
+            line = re.sub(r"”", '"', line)
+            line = re.sub(r"…", "...", line)
             # -   You say you'll do something
             # line = re.sub("^(\s*)-   ", r"\1- ", line)
             # line = re.sub("^(\s*)\*   ", r"\1* ", line)
@@ -1181,7 +1280,6 @@ class _LintMarkdown(_Action):
         cmd_as_str = " ".join(cmd)
         _system(cmd_as_str, abort_on_error=False)
         return output
-
 
 # #############################################################################
 # Actions.
@@ -1206,7 +1304,8 @@ def _get_action_class(action: str) -> _Action:
             dbg.dassert_is(res, None)
             res = class_
     dbg.dassert_is_not(res, None)
-    return res  # type: ignore
+    class_ : _Action = res()
+    return class_
 
 
 def _remove_not_possible_actions(actions: List[str]) -> List[str]:
@@ -1219,7 +1318,7 @@ def _remove_not_possible_actions(actions: List[str]) -> List[str]:
     actions_tmp: List[str] = []
     for action in actions:
         class_ = _get_action_class(action)
-        is_possible = class_().check_if_possible()
+        is_possible = class_.check_if_possible()
         if not is_possible:
             _LOG.warning("Can't execute action '%s': skipping", action)
         else:
@@ -1234,28 +1333,6 @@ def _actions_to_string(actions: List[str]) -> str:
         format_ % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
     ]
     return "\n".join(actions_as_str)
-
-
-def _test_actions():
-    _LOG.info("Testing actions")
-    # Check all the actions.
-    num_not_poss = 0
-    possible_actions: List[str] = []
-    for action in _ALL_ACTIONS:
-        class_ = _get_action_class(action)
-        is_possible = class_().check_if_possible()
-        _LOG.debug("%s -> %s", action, is_possible)
-        if is_possible:
-            possible_actions.append(action)
-        else:
-            num_not_poss += 1
-    # Report results.
-    actions_as_str = _actions_to_string(possible_actions)
-    _LOG.info("Possible actions:\n%s", pri.space(actions_as_str))
-    if num_not_poss > 0:
-        _LOG.warning("There are %s actions that are not possible", num_not_poss)
-    else:
-        _LOG.info("All actions are possible")
 
 
 def _select_actions(args: argparse.Namespace) -> List[str]:
@@ -1277,6 +1354,28 @@ def _select_actions(args: argparse.Namespace) -> List[str]:
     actions_as_str = _actions_to_string(actions)
     _LOG.info("# Action selected:\n%s", pri.space(actions_as_str))
     return actions
+
+
+def _test_actions():
+    _LOG.info("Testing actions")
+    # Check all the actions.
+    num_not_poss = 0
+    possible_actions: List[str] = []
+    for action in _ALL_ACTIONS:
+        class_ = _get_action_class(action)
+        is_possible = class_.check_if_possible()
+        _LOG.debug("%s -> %s", action, is_possible)
+        if is_possible:
+            possible_actions.append(action)
+        else:
+            num_not_poss += 1
+    # Report results.
+    actions_as_str = _actions_to_string(possible_actions)
+    _LOG.info("Possible actions:\n%s", pri.space(actions_as_str))
+    if num_not_poss > 0:
+        _LOG.warning("There are %s actions that are not possible", num_not_poss)
+    else:
+        _LOG.info("All actions are possible")
 
 
 # #############################################################################
@@ -1306,7 +1405,7 @@ def _lint(
             dst_file_name = file_name
         class_ = _get_action_class(action)
         # We want to run the stages, and not check.
-        output_tmp = class_().execute(dst_file_name, pedantic)
+        output_tmp = class_.execute(dst_file_name, pedantic)
         # Annotate with executable [tag].
         output_tmp = _annotate_output(output_tmp, action)
         _dassert_list_of_strings(
@@ -1360,81 +1459,6 @@ def _run_linter(
     # output.insert(1, "datetime='%s'" % datetime.datetime.now())
     output = _remove_empty_lines(output)
     return output
-
-
-# ##############################################################################
-
-
-class _FilePropertyChecker:
-    """
-    Perform various checks based on property of a file:
-    - check that file size doesn't exceed a certain threshould
-    - check that notebook files are under a `notebooks` dir
-    - check that test files are under `test` dir
-    """
-
-    def __init__(self, file_name: str) -> None:
-        dbg.dassert_exists(file_name)
-        self._file_name = file_name
-
-    def check(self) -> List:
-        output: List[str] = []
-        for func in [
-            self._check_size,
-            self._check_notebook_dir,
-            self._check_test_file_dir,
-        ]:
-            msg = func(self._file_name)
-            if msg:
-                _LOG.warning(msg)
-                output.append(msg)
-        return output
-
-    @staticmethod
-    def _check_size(file_name: str) -> str:
-        """
-        Check size of a file.
-        """
-        msg = ""
-        max_size_in_bytes = 512 * 1024
-        size_in_bytes = os.path.getsize(file_name)
-        if size_in_bytes > max_size_in_bytes:
-            msg = "%s: file size is too large %s > %s" % (
-                file_name,
-                size_in_bytes,
-                max_size_in_bytes,
-            )
-        return msg
-
-    @staticmethod
-    def _check_notebook_dir(file_name: str) -> str:
-        """
-        # Check if that notebooks are under `notebooks` dir.
-        """
-        msg = ""
-        if is_ipynb_file(file_name):
-            subdir_names = file_name.split("/")
-            if "notebooks" not in subdir_names:
-                msg = (
-                    "%s: each notebook should be under a 'notebooks' directory "
-                    "to not confuse pytest" % file_name
-                )
-        return msg
-
-    @staticmethod
-    def _check_test_file_dir(file_name: str) -> str:
-        """
-        Check if test files are under `test` dir.
-        """
-        msg = ""
-        # TODO(gp): A little annoying that we use "notebooks" and "test".
-        if os.path.basename(file_name).startswith("test_"):
-            if not is_under_test_dir(file_name):
-                msg = (
-                    "%s: test files should be under 'test' directory to be "
-                    "discovered by pytest" % file_name
-                )
-        return msg
 
 
 # #############################################################################
@@ -1508,12 +1532,15 @@ def _main(args: argparse.Namespace) -> int:
     io_.create_dir(_TMP_DIR, incremental=False)
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Check the files.
-    if "check_file_property" in actions:
+    action = "check_file_property"
+    if action in actions:
         for file_name in all_file_names:
-            output_tmp = _FilePropertyChecker(file_name).check()
+            pedantic = args.pedantic
+            class_ = _get_action_class(action)
+            output_tmp = class_.execute(file_name, pedantic)
             _dassert_list_of_strings(output_tmp)
             output.extend(output_tmp)
-    actions = [a for a in actions if a != "check_file_property"]
+    actions = [a for a in actions if a != action]
     _LOG.debug("actions=%s", actions)
     # Run linter.
     output_tmp = _run_linter(actions, args, file_names)
@@ -1532,7 +1559,7 @@ def _main(args: argparse.Namespace) -> int:
     num_lints = 0
     for line in output:
         # dev_scripts/linter.py:493: ... [pydocstyle]
-        if re.search(r"\S+:\d+.*\[\S+\]", line):
+        if re.match(r"\S+:\d+.*\[\S+\]", line):
             num_lints += 1
     _LOG.info("num_lints=%d", num_lints)
     if num_lints != 0:

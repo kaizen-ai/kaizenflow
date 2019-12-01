@@ -1,1 +1,0 @@
-lib.py:1: use 'import foo.bar as fba'
