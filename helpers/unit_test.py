@@ -216,7 +216,7 @@ def _assert_equal(
             abort_on_error=False,
             log_level=logging.DEBUG,
         )
-        _LOG.error("\n" + prnt.frame("ACTUAL vs EXPECTED"))
+        _LOG.error("%s", "\n" + prnt.frame("ACTUAL vs EXPECTED"))
         _LOG.error(res)
         # Report how to diff.
         vimdiff_cmd = "vimdiff %s %s" % (

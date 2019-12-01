@@ -1,5 +1,11 @@
 ************* Module input [pylint]
 $GIT_ROOT/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
+$GIT_ROOT/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:1: every library needs to describe how to be imported:
+"""
+Import as:
+
+import foo.bar as fba
+""" [custom_python_checks]
 $GIT_ROOT/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
 $GIT_ROOT/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:9: F821 undefined name 're' [flake8]
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
