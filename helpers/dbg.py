@@ -1,9 +1,14 @@
+"""
+Import as:
+
+import helpers.dbg as dbg
+"""
+
 import copy
 import logging
 import os
 import pprint
 import sys
-from logging import LogRecord
 from typing import Any, Iterable, Optional, Union
 
 _LOG = logging.getLogger(__name__)
@@ -61,7 +66,7 @@ def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
 #   `if not (...):`, even this might annoy the linter or look weird
 
 
-def _to_msg(msg: Optional[str], *args: str) -> str:
+def _to_msg(msg: Optional[str], *args: Any) -> str:
     """
     Format the error message with the params.
     """
@@ -83,7 +88,7 @@ def _to_msg(msg: Optional[str], *args: str) -> str:
 
 
 def _dfatal(
-    txt: Union[str, Iterable[str]], msg: Optional[str], *args: str
+    txt: Union[str, Iterable[str]], msg: Optional[str], *args: Any
 ) -> None:
     dfatal_txt = "* Failed assertion *\n"
     if isinstance(txt, list):
@@ -98,14 +103,14 @@ def _dfatal(
     dfatal(dfatal_txt)
 
 
-def dassert(cond: Any, msg: Optional[str] = None, *args: str) -> None:
+def dassert(cond: Any, msg: Optional[str] = None, *args: Any) -> None:
     if not cond:
         txt = "cond=%s" % cond
         _dfatal(txt, msg, *args)
 
 
 def dassert_eq(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     if not val1 == val2:
         txt = "'%s'\n==\n'%s'" % (val1, val2)
@@ -113,7 +118,7 @@ def dassert_eq(
 
 
 def dassert_ne(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 != val2):
@@ -129,7 +134,7 @@ def dassert_lt(val1: Any, val2: Any, msg=None, *args):
 
 
 def dassert_lte(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 <= val2):
@@ -151,7 +156,7 @@ def dassert_lgt(
 
 
 def dassert_in(
-    value: Any, valid_values: Any, msg: Optional[str] = None, *args: str
+    value: Any, valid_values: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (value in valid_values):
@@ -160,7 +165,7 @@ def dassert_in(
 
 
 def dassert_not_in(
-    value: Any, valid_values: Iterable[Any], msg: Optional[str] = None, *args: str
+    value: Any, valid_values: Iterable[Any], msg: Optional[str] = None, *args: Any
 ) -> None:
     if value in valid_values:
         txt = "'%s' not in '%s'" % (value, valid_values)
@@ -171,7 +176,7 @@ def dassert_is(
     val1: Optional[str],
     val2: Optional[Any],
     msg: Optional[str] = None,
-    *args: str
+    *args: Any
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 is val2):
@@ -180,7 +185,7 @@ def dassert_is(
 
 
 def dassert_is_not(
-    val1: Any, val2: Optional[Any], msg: Optional[str] = None, *args: str
+    val1: Any, val2: Optional[Any], msg: Optional[str] = None, *args: Any
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 is not val2):
@@ -203,7 +208,7 @@ def dassert_type_in(val1: Any, val2: Any, msg=None, *args):
 
 
 def dassert_isinstance(
-    val1: Any, val2: type, msg: Optional[str] = None, *args: str
+    val1: Any, val2: type, msg: Optional[str] = None, *args: Any
 ) -> None:
     if not isinstance(val1, val2):
         txt = "instance of '%s' is '%s' instead of '%s'" % (
@@ -222,7 +227,7 @@ def dassert_imply(val1: Any, val2: Any, msg=None, *args):
 
 
 def dassert_set_eq(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     val1 = set(val1)
     val2 = set(val2)
@@ -241,7 +246,7 @@ def dassert_set_eq(
 
 # TODO(gp): -> dassert_issubset
 def dassert_is_subset(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     """
     Check that val1 is a subset of val2, raise otherwise.
@@ -258,7 +263,7 @@ def dassert_is_subset(
 
 
 def dassert_not_intersection(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     """
     Check that val1 has no intersection val2, raise otherwise.
@@ -275,7 +280,7 @@ def dassert_not_intersection(
 
 
 def dassert_no_duplicates(
-    val1: Any, msg: Optional[str] = None, *args: str
+    val1: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (len(set(val1)) == len(val1)):
@@ -291,7 +296,7 @@ def dassert_no_duplicates(
 
 
 def dassert_eq_all(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: str
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     val1 = list(val1)
     val2 = list(val2)
@@ -308,7 +313,7 @@ def dassert_eq_all(
 
 
 # TODO(*): -> _file_exists
-def dassert_exists(file_name: str, msg: Optional[str] = None, *args: str) -> None:
+def dassert_exists(file_name: str, msg: Optional[str] = None, *args: Any) -> None:
     file_name = os.path.abspath(file_name)
     if not os.path.exists(file_name):
         txt = []
@@ -328,7 +333,7 @@ def dassert_dir_exists(dir_name: str, msg: Optional[str] = None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_not_exists(file_name: str, msg: Optional[str] = None, *args: str):
+def dassert_not_exists(file_name: str, msg: Optional[str] = None, *args: Any):
     """
     Ensure that a file or a dir `file_name` doesn't exist, otherwise raises.
     """
@@ -353,7 +358,7 @@ def dassert_file_extension(file_name: str, exp_exts):
     )
 
 
-def dassert_monotonic_index(obj, msg: Optional[str] = None, *args: str):
+def dassert_monotonic_index(obj, msg: Optional[str] = None, *args: Any):
     # For some reason importing pandas is slow and we don't want to pay this
     # start up cost unless we have to.
     import pandas as pd
@@ -373,7 +378,7 @@ def dassert_array_has_same_type_element(
     obj2: Any,
     only_first_elem: bool,
     msg: Optional[str] = None,
-    *args: str
+    *args: Any
 ):
     """
     Check that two objects iterables like arrays (e.g., pd.Index) have
@@ -431,11 +436,11 @@ def is_running_in_ipynb():
 
 
 def reset_logger():
-    from importlib import reload
+    import importlib
 
     print("Resetting logger...")
     logging.shutdown()
-    reload(logging)
+    importlib.reload(logging)
 
 
 class _ColoredFormatter(logging.Formatter):
@@ -459,7 +464,7 @@ class _ColoredFormatter(logging.Formatter):
     def __init__(self, log_format, date_format):
         logging.Formatter.__init__(self, log_format, date_format)
 
-    def format(self, record: LogRecord) -> str:
+    def format(self, record: logging.LogRecord) -> str:
         colored_record = copy.copy(record)
         levelname = colored_record.levelname
         # Use white as default.

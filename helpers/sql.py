@@ -16,7 +16,7 @@ def get_connection(
     port: int,
     password: str,
     autocommit: bool = True,
-) -> Tuple[connection, cursor]:
+) -> Tuple[pg.extensions.connection, pg.extensions.cursor]:
     connection = pg.connect(
         dbname=dbname, host=host, user=user, port=port, password=password
     )
@@ -26,7 +26,7 @@ def get_connection(
     return connection, cursor
 
 
-def get_engine_version(connection: pg.connection) -> str:
+def get_engine_version(connection: pg.extensions.connection) -> str:
     """
     Report information on the SQL engine.
 
@@ -41,7 +41,7 @@ def get_engine_version(connection: pg.connection) -> str:
     return info
 
 
-def get_db_names(connection: pg.connection) -> List[str]:
+def get_db_names(connection: pg.extensions.connection) -> List[str]:
     """
     Return the names of the available DBs.
 
@@ -57,7 +57,9 @@ def get_db_names(connection: pg.connection) -> List[str]:
 
 
 def get_table_size(
-    connection: pg.connection, only_public: bool = True, summary: bool = True
+    connection: pg.extensions.connection,
+    only_public: bool = True,
+    summary: bool = True,
 ) -> pd.DataFrame:
     """
     Report the size of each table.
@@ -95,7 +97,7 @@ def get_table_size(
     return df
 
 
-def get_table_names(connection: pg.connection) -> List[str]:
+def get_table_names(connection: pg.extensions.connection) -> List[str]:
     """
     Report the name of the tables.
 
