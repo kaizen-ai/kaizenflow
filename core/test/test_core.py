@@ -913,22 +913,22 @@ class TestPcaFactorComputer2(ut.TestCase):
 
 class Test_signal_processing_get_symmetric_equisized_bins(ut.TestCase):
     def test_zero_in_bin_interior_false(self) -> None:
-        input = pd.Series([-1, 3])
+        data = pd.Series([-1, 3])
         expected = np.array([-3, -2, -1,  0,  1,  2,  3])
-        actual = sigp.get_symmetric_equisized_bins(input, 1)
-        assert np.array_equal(expected, actual)
+        actual = sigp.get_symmetric_equisized_bins(data, 1)
+        np.testing.assert_array_equal(actual, expected)
 
     def test_zero_in_bin_interior_true(self) -> None:
-        input = pd.Series([-1, 3])
+        data = pd.Series([-1, 3])
         expected = np.array([-3.5, -2.5, -1.5, -0.5,  0.5,  1.5,  2.5,  3.5])
-        actual = sigp.get_symmetric_equisized_bins(input, 1, True)
-        assert np.array_equal(expected, actual)
+        actual = sigp.get_symmetric_equisized_bins(data, 1, True)
+        np.testing.assert_array_equal(actual, expected)
 
     def test_infs(self) -> None:
-        input = pd.Series([-1, np.inf, -np.inf, 3])
+        data = pd.Series([-1, np.inf, -np.inf, 3])
         expected = np.array([-4, -2, 0, 2, 4])
-        actual = sigp.get_symmetric_equisized_bins(input, 2)
-        assert np.array_equal(expected, actual)
+        actual = sigp.get_symmetric_equisized_bins(data, 2)
+        np.testing.assert_array_equal(actual, expected)
 
 
 # TODO(*): -> Test_signal_processing_rolling_zcore1()
