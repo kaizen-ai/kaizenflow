@@ -487,9 +487,9 @@ from typing import List"""
         exp = """# output
 lib.py:1: do not use 'from pandas import DataFrame' use 'import foo.bar as fba'
 # txt_new
-f_r_o_m pandas import DataFrame"""
+f-r-o-m pandas import DataFrame"""
         # To avoid the linter to complain.
-        exp = exp.replace("_", "")
+        exp = exp.replace("-", "")
         self._helper_check_line_by_line(file_name, txt, exp)
 
     def test_check_line_by_line3(self) -> None:
@@ -501,9 +501,9 @@ f_r_o_m pandas import DataFrame"""
         exp = """# output
 lib.py:1: the import shortcut 'a_very_long_name' in 'import pandas as a_very_long_name' is longer than 5 characters
 # txt_new
-i_m_p_o_r_t pandas as a_very_long_name"""
+i-m-p-o-r-t pandas as a_very_long_name"""
         # To avoid the linter to complain.
-        exp = exp.replace("_", "")
+        exp = exp.replace("-", "")
         self._helper_check_line_by_line(file_name, txt, exp)
 
     def test_check_line_by_line4(self) -> None:
@@ -512,26 +512,26 @@ i_m_p_o_r_t pandas as a_very_long_name"""
         """
         file_name = "lib.py"
         txt = """import pandas as pd
-<_<_<_<_<_<_< HEAD
+<-<-<-<-<-<-< HEAD
 hello
-=_=_=_=_=_=_=
+=-=-=-=-=-=-=
 world
->_>_>_>_>_>_>
+>->->->->->->
 """
-        txt = txt.replace("_", "")
+        txt = txt.replace("-", "")
         exp = """# output
 lib.py:2: there are conflict markers
 lib.py:4: there are conflict markers
 lib.py:6: there are conflict markers
 # txt_new
 import pandas as pd
-<_<_<_<_<_<_< HEAD
+<-<-<-<-<-<-< HEAD
 hello
-=_=_=_=_=_=_=
+=-=-=-=-=-=-=
 world
->_>_>_>_>_>_>
+>->->->->->->
 """
-        exp = exp.replace("_", "")
+        exp = exp.replace("-", "")
         self._helper_check_line_by_line(file_name, txt, exp)
 
     def test_check_line_by_line5(self) -> None:

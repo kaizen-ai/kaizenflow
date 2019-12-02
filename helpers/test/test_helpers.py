@@ -133,7 +133,7 @@ class Test_list_1(ut.TestCase):
     def test_find_duplicates2(self):
         list_ = "a b c a d e f f".split()
         list_out = hlist.find_duplicates(list_)
-        self.assertEqual(list_out, "a f".split())
+        self.assertEqual(set(list_out), set("a f".split()))
 
     def test_remove_duplicates1(self):
         list_ = "a b c d".split()
@@ -149,7 +149,7 @@ class Test_list_1(ut.TestCase):
         list_ = "a b c a d e f f".split()
         list_ = list(reversed(list_))
         list_out = hlist.remove_duplicates(list_)
-        self.assertEqual(list_out, "f e d c b a".split())
+        self.assertEqual(list_out, "f e d a c b".split())
 
 
 # ###############################################################################
