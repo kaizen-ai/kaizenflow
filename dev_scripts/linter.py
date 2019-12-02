@@ -1052,6 +1052,7 @@ class _TestJupytext(_ProcessJupytext):
 class _CustomPythonChecks(_Action):
     # The maximum length of an 'import as'.
     MAX_LEN_IMPORT = 5
+    DEBUG = False
 
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
@@ -1060,8 +1061,8 @@ class _CustomPythonChecks(_Action):
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
         output: List[str] = []
-        # Applicable only to python files.
-        if not is_py_file and not is_paired_jupytext_file(file_name):
+        # Applicable only to python files that are not paired with Jupytext.
+        if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return output
         # Read file.
@@ -1102,7 +1103,8 @@ class _CustomPythonChecks(_Action):
     @staticmethod
     def _check_import(file_name: str, line_num: int, line: str) -> str:
         msg = ""
-        _LOG.debug("* Check 'from * imports'")
+        if _CustomPythonChecks.DEBUG:
+            _LOG.debug("* Check 'from * imports'")
         m = re.match(r"\s*from\s+(\S+)\s+import\s+.*", line)
         if m:
             if m.group(1) != "typing":
@@ -1195,9 +1197,11 @@ class _CustomPythonChecks(_Action):
         output: List[str] = []
         txt_new: List[str] = []
         for i, line in enumerate(txt):
-            _LOG.debug("%s: line='%s'", i, line)
+            if _CustomPythonChecks.DEBUG:
+                _LOG.debug("%s: line='%s'", i, line)
             # Check imports.
-            _LOG.debug("* Check imports")
+            if _CustomPythonChecks.DEBUG:
+                _LOG.debug("* Check imports")
             # shortcut = m.group(1)
             # if len(shortcut) > max_len:
             #     msg.append(
@@ -1209,21 +1213,25 @@ class _CustomPythonChecks(_Action):
             if msg:
                 output.append(msg)
             # Look for conflicts markers.
-            _LOG.debug("* Look for conflict markers")
+            if _CustomPythonChecks.DEBUG:
+                _LOG.debug("* Look for conflict markers")
             if any(line.startswith(c) for c in ["<<<<<<<", "=======", ">>>>>>>"]):
                 msg = "%s:%s: there are conflict markers" % (file_name, i + 1)
                 output.append(msg)
             # Format separating lines.
-            _LOG.debug("* Format separating lines")
+            if _CustomPythonChecks.DEBUG:
+                _LOG.debug("* Format separating lines")
             min_num_chars = 5
             for char in "# = - < >".split():
                 regex = r"(\s*\#)\s*" + (("\\" + char) * min_num_chars)
-                _LOG.debug("regex=%s", regex)
+                if _CustomPythonChecks.DEBUG:
+                    _LOG.debug("regex=%s", regex)
                 m = re.match(regex, line)
                 if m:
                     line = m.group(1) + " " + char * (80 - len(m.group(1)))
             #
-            _LOG.debug("    -> %s", line)
+            if _CustomPythonChecks.DEBUG:
+                _LOG.debug("    -> %s", line)
             txt_new.append(line)
             _dassert_list_of_strings(txt_new)
             #
@@ -1302,7 +1310,9 @@ class _LintMarkdown(_Action):
         #
         amp_path = git.get_amp_abs_path()
         cmd: List[str] = []  # type: ignore
-        cmd.append(os.path.join(amp_path, "scripts/gh-md-toc"))
+        gh_md_toc = os.path.join(amp_path, "documentation/scripts/gh-md-toc")
+        dbg.dassert_exists(gh_md_toc)
+        cmd.append(gh_md_toc)
         cmd.append("--insert %s" % file_name)
         cmd_as_str = " ".join(cmd)
         _system(cmd_as_str, abort_on_error=False)
