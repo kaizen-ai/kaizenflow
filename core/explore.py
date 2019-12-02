@@ -24,16 +24,16 @@ import scipy
 import seaborn as sns
 import statsmodels
 import statsmodels.api
-import tqdm
+import tqdm.autonotebook as tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
+# ###############################################################################
 # Helpers.
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): Not sure this is the right place.
@@ -51,6 +51,7 @@ def find_duplicates(vals):
 
 
 # TODO(gp): Move this to helpers/pandas_helpers.py
+
 
 def cast_to_df(obj):
     if isinstance(obj, pd.Series):
@@ -90,16 +91,16 @@ def adapt_to_series(f):
         if was_series:
             if isinstance(res, tuple):
                 res_obj, res_tmp = res[0], res[1:]
-                res_obj_srs = cast_to_series(res_obj)
+                cast_to_series(res_obj)
                 res = tuple([res_obj].extend(res_tmp))
             else:
                 res = cast_to_series(res)
         return res
 
 
-# #############################################################################
+# ###############################################################################
 # Pandas helpers.
-# #############################################################################
+# ###############################################################################
 
 
 def drop_axis_with_all_nans(
@@ -300,9 +301,9 @@ def add_pct(
     return df
 
 
-# #############################################################################
+# ###############################################################################
 # Pandas data structure stats.
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): Explain what this is supposed to do.
@@ -358,7 +359,7 @@ def print_column_variability(
     """
     print(("# df.columns=%s" % pri.list_to_str(df.columns)))
     res = []
-    for c in tqdm.tqdm(df.columns):
+    for c in tqdm(df.columns):
         vals = df[c].unique()
         min_val = min(vals)
         max_val = max(vals)
@@ -415,9 +416,9 @@ def find_common_columns(names, dfs):
     return df
 
 
-# #############################################################################
+# ###############################################################################
 # Filter.
-# #############################################################################
+# ###############################################################################
 
 
 def remove_columns(df, cols, log_level=logging.DEBUG):
@@ -518,9 +519,9 @@ def filter_by_val(
     return res
 
 
-# #############################################################################
+# ###############################################################################
 # Plotting
-# #############################################################################
+# ###############################################################################
 
 # TODO(gp): Use this everywhere. Use None as default value.
 _FIG_SIZE = (20, 5)
@@ -897,7 +898,9 @@ def plot_corr_over_time(corr_df, mode, annot=False, num_cols=4):
         axes[i].set_title(timestamps[i])
 
 
-def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
+def rolling_pca_over_time(
+    df: pd.DataFrame, com: float, nan_mode: str, sort_eigvals: bool = True
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Compute rolling PCAs over time.
     :param sort_eigvals: sort the eigenvalues in descending orders
@@ -912,7 +915,7 @@ def rolling_pca_over_time(df, com, nan_mode, sort_eigvals=True):
     eigval_df = []
     eigvec_df = []
     timestamps = corr_df.index.get_level_values(0).unique()
-    for dt in tqdm.tqdm(timestamps):
+    for dt in tqdm(timestamps):
         dbg.dassert_isinstance(dt, datetime.date)
         corr_tmp = corr_df.loc[dt].copy()
         # Compute rolling eigenvalues and eigenvectors.
@@ -1434,9 +1437,9 @@ def robust_regression(
         plt.ylabel(predicted_var)
 
 
-# #############################################################################
+# ###############################################################################
 # Statistics.
-# #############################################################################
+# ###############################################################################
 
 
 def adf(srs, verbose=False):
@@ -1477,9 +1480,9 @@ def adf(srs, verbose=False):
     return res
 
 
-# #############################################################################
+# ###############################################################################
 # Printing
-# #############################################################################
+# ###############################################################################
 
 
 def display_df(
