@@ -1,5 +1,5 @@
 """
-# Import as:
+Import as:
 
 import helpers.tunnels as tnls
 """
@@ -14,7 +14,7 @@ import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 
 
 def get_tunnel_info():
@@ -113,7 +113,7 @@ def _service_to_string(service):
     return ret
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match):
@@ -176,7 +176,7 @@ def _kill_ssh_tunnel_process(local_port, remote_port):
     si.kill_process(get_pids)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def start_tunnels(user_name):

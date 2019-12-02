@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 """
-* Replace only:
+# Replace only:
 > scripts/replace_latex.py -a replace --file notes/IN_PROGRESS/finance.portfolio_theory.txt
 
-* Replace and check:
+# Replace and check:
 > scripts/replace_latex.py -a pandoc_before -a replace -a pandoc_after --file notes/IN_PROGRESS/finance.portfolio_theory.txt
 """
 
@@ -20,7 +20,7 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _standard_cleanup(in_file, aggressive):
