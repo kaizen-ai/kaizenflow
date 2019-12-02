@@ -27,15 +27,14 @@ def _get_docstring(file_name):
     docstring = []
     found = False
     for line in txt:
-        _LOG.debug("%s: line='%s'", found, line)
+        # _LOG.debug("%s: line='%s'", found, line)
         if any(line.startswith(c) for c in ['"""', '# """', 'r"""']):
-            _LOG.debug("-> Found")
+            # _LOG.debug("-> Found")
             if not found:
                 found = True
                 continue
-            else:
-                # Done.
-                break
+            # Done.
+            break
         if found:
             if line.startswith("# "):
                 line = line.replace("# ", "")
@@ -80,15 +79,21 @@ def _main(parser):
         if docstring:
             num_docstring += 1
     # Compose the catalog.
-    last_dir = None
+    last_dir = curr_dir = None
     md_text = []
-    for file_name, docstring in res.items():
+    # Order by level of directory.
+    ordered_file_names = sorted(res.keys(), key=lambda x: len(x.split("/")))
+    for file_name in ordered_file_names:
+        _LOG.debug(
+            "file_name=%s curr_dir=%s last_dir=%s", file_name, curr_dir, last_dir
+        )
+        docstring = res[file_name]
         file_name = file_name.replace("./", "")
         curr_dir = os.path.dirname(file_name)
         if last_dir is None or last_dir != curr_dir:
             md_text.append("\n# `%s`\n" % curr_dir)
             last_dir = curr_dir
-        md_text.append("\n**`%s`***\n" % file_name)
+        md_text.append("\n`%s`\n" % file_name)
         if docstring:
             md_text.append("```\n%s\n```" % docstring)
     # Save in a file.
