@@ -92,7 +92,7 @@ def adapt_to_series(f):
         if was_series:
             if isinstance(res, tuple):
                 res_obj, res_tmp = res[0], res[1:]
-                cast_to_series(res_obj)
+                res_obj_srs = cast_to_series(res_obj)
                 res = tuple([res_obj].extend(res_tmp))
             else:
                 res = cast_to_series(res)
