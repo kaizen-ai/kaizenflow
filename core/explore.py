@@ -22,18 +22,20 @@ import numpy as np
 import pandas as pd
 import scipy
 import seaborn as sns
+import sklearn
 import statsmodels
 import statsmodels.api
 import tqdm
 
 import helpers.dbg as dbg
+import helpers.list as hlist
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
-# ###############################################################################
+# #############################################################################
 # Helpers.
-# ###############################################################################
+# #############################################################################
 
 
 # TODO(gp): Move this to helpers/pandas_helpers.py
@@ -84,9 +86,9 @@ def adapt_to_series(f):
         return res
 
 
-# ###############################################################################
+# #############################################################################
 # Pandas helpers.
-# ###############################################################################
+# #############################################################################
 
 
 def drop_axis_with_all_nans(
@@ -287,9 +289,9 @@ def add_pct(
     return df
 
 
-# ###############################################################################
+# #############################################################################
 # Pandas data structure stats.
-# ###############################################################################
+# #############################################################################
 
 
 # TODO(gp): Explain what this is supposed to do.
@@ -402,9 +404,9 @@ def find_common_columns(names, dfs):
     return df
 
 
-# ###############################################################################
+# #############################################################################
 # Filter.
-# ###############################################################################
+# #############################################################################
 
 
 def remove_columns(df, cols, log_level=logging.DEBUG):
@@ -505,9 +507,9 @@ def filter_by_val(
     return res
 
 
-# ###############################################################################
+# #############################################################################
 # Plotting
-# ###############################################################################
+# #############################################################################
 
 # TODO(gp): Use this everywhere. Use None as default value.
 _FIG_SIZE = (20, 5)
@@ -792,11 +794,9 @@ def plot_pca_analysis(df, plot_explained_variance=False, num_pcs_to_plot=0):
     - explained variance
     - eigenvectors components
     """
-    from sklearn.decomposition import PCA
-
     # Compute PCA.
     corr = df.corr(method="pearson")
-    pca = PCA()
+    pca = sklearn.decomposition.PCA()
     pca.fit(df.fillna(0.0))
     explained_variance = pd.Series(pca.explained_variance_ratio_)
     # Find indices of assets with no nans in the covariance matrix.
@@ -1079,7 +1079,7 @@ def jointplot(
     **kwargs: Any,
 ) -> None:
     """
-    Wrapper to perform a scatterplot of two columns of a dataframe using
+    Perform a scatterplot of two columns of a dataframe using
     seaborn.jointplot().
 
     :param df: dataframe
@@ -1422,9 +1422,9 @@ def robust_regression(
         plt.ylabel(predicted_var)
 
 
-# ###############################################################################
+# #############################################################################
 # Statistics.
-# ###############################################################################
+# #############################################################################
 
 
 def adf(srs, verbose=False):
@@ -1465,9 +1465,9 @@ def adf(srs, verbose=False):
     return res
 
 
-# ###############################################################################
+# #############################################################################
 # Printing
-# ###############################################################################
+# #############################################################################
 
 
 def display_df(

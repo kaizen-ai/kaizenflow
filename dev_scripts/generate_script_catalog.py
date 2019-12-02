@@ -18,7 +18,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ###############################################################################
+# #############################################################################
 
 
 def _get_docstring(file_name):
@@ -67,8 +67,9 @@ def _main(parser):
     _, output = si.system_to_string(cmd)
     file_names = output.split("\n")
     file_names = sorted(file_names)
-    file_names = [f for f in file_names if not os.path.basename(f).startswith(
-        "tmp")]
+    file_names = [
+        f for f in file_names if not os.path.basename(f).startswith("tmp")
+    ]
     if args.src_file is not None:
         file_names = [args.src_file]
     # file_names = ["dev_scripts/git/gb"]

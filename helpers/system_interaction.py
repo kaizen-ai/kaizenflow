@@ -21,7 +21,7 @@ import helpers.printing as pri
 _LOG = logging.getLogger(__name__)
 
 
-# ##############################################################################
+# #############################################################################
 
 _USER_NAME = None
 
@@ -74,7 +74,7 @@ def get_env_var(env_var_name):
     return os.environ[env_var_name]
 
 
-# ##############################################################################
+# #############################################################################
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-arguments,too-many-locals
 def _system(
@@ -277,7 +277,7 @@ def system_to_string(
     return rc, output
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def get_process_pids(keep_line):
@@ -348,7 +348,7 @@ def kill_process(get_pids, timeout_in_secs=5, polltime_in_secs=0.1):
     _LOG.info("Processes dead")
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def query_yes_no(question, abort_on_no):

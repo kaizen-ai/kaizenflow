@@ -1,5 +1,5 @@
 """
-Import:
+Import as:
 
 import helpers.dbg as dbg
 """
@@ -9,7 +9,6 @@ import logging
 import os
 import pprint
 import sys
-from logging import LogRecord
 from typing import Any, Iterable, Optional, Union
 
 _LOG = logging.getLogger(__name__)
@@ -465,7 +464,7 @@ class _ColoredFormatter(logging.Formatter):
     def __init__(self, log_format, date_format):
         logging.Formatter.__init__(self, log_format, date_format)
 
-    def format(self, record: LogRecord) -> str:
+    def format(self, record: logging.LogRecord) -> str:
         colored_record = copy.copy(record)
         levelname = colored_record.levelname
         # Use white as default.

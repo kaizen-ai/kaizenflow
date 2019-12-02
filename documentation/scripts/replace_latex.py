@@ -20,7 +20,7 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _standard_cleanup(in_file, aggressive):
