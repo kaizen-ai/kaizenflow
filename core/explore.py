@@ -32,9 +32,9 @@ import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
+# ###############################################################################
 # Helpers.
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): Not sure this is the right place.
@@ -52,6 +52,7 @@ def find_duplicates(vals):
 
 
 # TODO(gp): Move this to helpers/pandas_helpers.py
+
 
 def cast_to_df(obj):
     if isinstance(obj, pd.Series):
@@ -74,8 +75,8 @@ def cast_to_series(obj):
 
 # TODO(gp): Need to be tested.
 def adapt_to_series(f):
-    """	
-    Decorator allowing a function working on data frames to work on series.	
+    """
+    Decorator allowing a function working on data frames to work on series.
     """
 
     def wrapper(obj, *args, **kwargs):
@@ -91,16 +92,16 @@ def adapt_to_series(f):
         if was_series:
             if isinstance(res, tuple):
                 res_obj, res_tmp = res[0], res[1:]
-                res_obj_srs = cast_to_series(res_obj)
+                cast_to_series(res_obj)
                 res = tuple([res_obj].extend(res_tmp))
             else:
                 res = cast_to_series(res)
         return res
 
 
-# #############################################################################
+# ###############################################################################
 # Pandas helpers.
-# #############################################################################
+# ###############################################################################
 
 
 def drop_axis_with_all_nans(
@@ -301,9 +302,9 @@ def add_pct(
     return df
 
 
-# #############################################################################
+# ###############################################################################
 # Pandas data structure stats.
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): Explain what this is supposed to do.
@@ -416,9 +417,9 @@ def find_common_columns(names, dfs):
     return df
 
 
-# #############################################################################
+# ###############################################################################
 # Filter.
-# #############################################################################
+# ###############################################################################
 
 
 def remove_columns(df, cols, log_level=logging.DEBUG):
@@ -519,9 +520,9 @@ def filter_by_val(
     return res
 
 
-# #############################################################################
+# ###############################################################################
 # Plotting
-# #############################################################################
+# ###############################################################################
 
 # TODO(gp): Use this everywhere. Use None as default value.
 _FIG_SIZE = (20, 5)
@@ -1130,7 +1131,7 @@ def _preprocess_regression(
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_lte(1, df.shape[0])
     if isinstance(predictor_vars, str):
-        predictor_vars = [predictor_vars]   # type: ignore
+        predictor_vars = [predictor_vars]  # type: ignore
     dbg.dassert_type_is(predictor_vars, list)
     # dbg.dassert_type_is(predicted_var, str)
     dbg.dassert_not_in(predicted_var, predictor_vars)
@@ -1436,9 +1437,9 @@ def robust_regression(
         plt.ylabel(predicted_var)
 
 
-# #############################################################################
+# ###############################################################################
 # Statistics.
-# #############################################################################
+# ###############################################################################
 
 
 def adf(srs, verbose=False):
@@ -1479,9 +1480,9 @@ def adf(srs, verbose=False):
     return res
 
 
-# #############################################################################
+# ###############################################################################
 # Printing
-# #############################################################################
+# ###############################################################################
 
 
 def display_df(

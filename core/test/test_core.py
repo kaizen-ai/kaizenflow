@@ -27,9 +27,9 @@ import helpers.unit_test as ut
 _LOG = logging.getLogger(__name__)
 
 
-# #############################################################################
+# ###############################################################################
 # config.py
-# #############################################################################
+# ###############################################################################
 
 
 class Test_config1(ut.TestCase):
@@ -214,9 +214,9 @@ class Test_config1(ut.TestCase):
         self.assertEqual(elem, "hello_world3")
 
 
-# #############################################################################
+# ###############################################################################
 # dataflow_core.py
-# #############################################################################
+# ###############################################################################
 
 
 class _Dataflow_helper(ut.TestCase):
@@ -487,9 +487,9 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
         self.assertEqual(dag.get_sinks(), ["n1"])
 
 
-# #############################################################################
+# ###############################################################################
 # explore.py
-# #############################################################################
+# ###############################################################################
 
 
 class Test_explore1(ut.TestCase):
@@ -518,9 +518,9 @@ class Test_explore1(ut.TestCase):
         self.check_string(txt)
 
 
-# #############################################################################
+# ###############################################################################
 # pandas_helpers.py
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): -> Test_pandas_helper1
@@ -541,7 +541,7 @@ class TestResampleIndex1(ut.TestCase):
         self.check_string(txt)
 
 
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): -> Test_pandas_helper2
@@ -662,9 +662,9 @@ class TestDfRollingApply(ut.TestCase):
         self.check_string(df_act.to_string())
 
 
-# #############################################################################
+# ###############################################################################
 # residualizer.py
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): -> Test_residualizer1
@@ -747,7 +747,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         eval_func = res.PcaFactorComputer._build_stable_eig_map2
         self._test_stabilize_eigenvec_helper(data_func, eval_func)
 
-    # ##########################################################################
+    # ###########################################################################
 
     def test_linearize_eigval_eigvec(self) -> None:
         # Get data.
@@ -763,7 +763,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         )
         self.check_string(txt)
 
-    # ##########################################################################
+    # ###########################################################################
 
     def _test_sort_eigval_helper(
         self, eigval: np.ndarray, eigvec: np.ndarray, are_eigval_sorted_exp: bool
@@ -810,7 +810,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
 
 
-# #############################################################################
+# ###############################################################################
 
 
 class TestPcaFactorComputer2(ut.TestCase):
@@ -920,21 +920,21 @@ class TestPcaFactorComputer2(ut.TestCase):
         self._check(comp, df_res)
 
 
-# #############################################################################
+# ###############################################################################
 # signal_processing.py
-# #############################################################################
+# ###############################################################################
 
 
 class Test_signal_processing_get_symmetric_equisized_bins(ut.TestCase):
     def test_zero_in_bin_interior_false(self) -> None:
         input = pd.Series([-1, 3])
-        expected = np.array([-3, -2, -1,  0,  1,  2,  3])
+        expected = np.array([-3, -2, -1, 0, 1, 2, 3])
         actual = sigp.get_symmetric_equisized_bins(input, 1)
         assert np.array_equal(expected, actual)
 
     def test_zero_in_bin_interior_true(self) -> None:
         input = pd.Series([-1, 3])
-        expected = np.array([-3.5, -2.5, -1.5, -0.5,  0.5,  1.5,  2.5,  3.5])
+        expected = np.array([-3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5])
         actual = sigp.get_symmetric_equisized_bins(input, 1, True)
         assert np.array_equal(expected, actual)
 
