@@ -14,13 +14,9 @@
 
 
 <!--te-->
-# ``
-
-`tmp_diff.sh`
-
 # `dev_scripts`
 
-`dev_scripts/_setenv_amp.py`
+**_dev_scripts/\_setenv_amp.py_**
 
 ```
 Generate and print a bash script that is used to configure the environment for
@@ -31,19 +27,19 @@ This script:
 - should have no dependency other than basic python library
 ```
 
-`dev_scripts/ack`
+**_dev_scripts/ack_**
 
-`dev_scripts/cie`
+**_dev_scripts/cie_**
 
 ```
 > conda info --envs
 ```
 
-`dev_scripts/cmd_done.py`
+**_dev_scripts/cmd_done.py_**
 
-`dev_scripts/compress_files.sh`
+**_dev_scripts/compress_files.sh_**
 
-`dev_scripts/diff_to_vimdiff.py`
+**_dev_scripts/diff_to_vimdiff.py_**
 
 ```
 Transform the output of `diff -r --brief src_dir dst_dir` into a script using vimdiff.
@@ -56,7 +52,7 @@ Diff dirs:
 > diff_to_vimdiff.py --src_dir /Users/saggese/src/commodity_research2/amp --dst_dir /Users/saggese/src/commodity_research3/amp
 ```
 
-`dev_scripts/ffind.py`
+**_dev_scripts/ffind.py_**
 
 ```
 Find all files / dirs whose name contains Task243, i.e., the regex "*Task243*"
@@ -69,7 +65,7 @@ Look only for files.
 > ffind.py stocktwits --only_files
 ```
 
-`dev_scripts/generate_script_catalog.py`
+**_dev_scripts/generate_script_catalog.py_**
 
 ```
 Generate a markdown file with the docstring for any script in the repo.
@@ -77,13 +73,13 @@ Generate a markdown file with the docstring for any script in the repo.
 > generate_script_catalog.py
 ```
 
-`dev_scripts/ghi`
+**_dev_scripts/ghi_**
 
-`dev_scripts/ghi_my`
+**_dev_scripts/ghi_my_**
 
-`dev_scripts/ghi_review`
+**_dev_scripts/ghi_review_**
 
-`dev_scripts/ghi_show.py`
+**_dev_scripts/ghi_show.py_**
 
 ```
 Simple wrapper around ghi (GitHub Interface) to implement some typical
@@ -108,7 +104,7 @@ Get all the data relative to issue #13 for a different GitHub repo:
 > ghi_show.py 13 --repo Amp
 ```
 
-`dev_scripts/grsync.py`
+**_dev_scripts/grsync.py_**
 
 ```
 - Rsync a git dir against a pycharm deploy dir
@@ -120,37 +116,37 @@ Get all the data relative to issue #13 for a different GitHub repo:
 > grsync.py --src_dir $HOME/src/particle/commodity_research/tr --config P1 --action diff_verb
 ```
 
-`dev_scripts/jack`
+**_dev_scripts/jack_**
 
 ```
 Search in all files.
 ```
 
-`dev_scripts/jackipynb`
+**_dev_scripts/jackipynb_**
 
 ```
 Search in .ipynb files.
 ```
 
-`dev_scripts/jackppy`
+**_dev_scripts/jackppy_**
 
 ```
 Search in .py and .ipynb files.
 ```
 
-`dev_scripts/jackpy`
+**_dev_scripts/jackpy_**
 
 ```
 Search in .py python (not .ipynb) files.
 ```
 
-`dev_scripts/jacktxt`
+**_dev_scripts/jacktxt_**
 
 ```
 Search in txt and md files.
 ```
 
-`dev_scripts/linter.py`
+**_dev_scripts/linter.py_**
 
 ```
 Reformat and lint python and ipynb files.
@@ -186,15 +182,15 @@ Check all jupytext files.
 > linter.py -d . --action sync_jupytext
 ```
 
-`dev_scripts/mkbak`
+**_dev_scripts/mkbak_**
 
-`dev_scripts/path`
+**_dev_scripts/path_**
 
-`dev_scripts/print_paths.sh`
+**_dev_scripts/print_paths.sh_**
 
-`dev_scripts/remove_redundant_paths.sh`
+**_dev_scripts/remove_redundant_paths.sh_**
 
-`dev_scripts/replace_text.py`
+**_dev_scripts/replace_text.py_**
 
 ```
 Replace an instance of text in all py, ipynb, and txt files.
@@ -212,11 +208,11 @@ To revert all files but this one
 > gs -s | grep -v dev_scripts/replace_text.py | grep -v "\?" | awk '{print $2}' | xargs git checkout --
 ```
 
-`dev_scripts/timestamp`
+**_dev_scripts/timestamp_**
 
-`dev_scripts/tmux_amp.sh`
+**_dev_scripts/tmux_amp.sh_**
 
-`dev_scripts/url.py`
+**_dev_scripts/url.py_**
 
 ```
 Convert a url / path into different formats: jupyter url, github, git path.
@@ -232,7 +228,7 @@ jupyter_url=
 http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 ```
 
-`dev_scripts/viack`
+**_dev_scripts/viack_**
 
 ```
 Run a command, capture its output, and call vic on it.
@@ -240,23 +236,23 @@ You need to surround the command with '...'
 > viack 'jackpy "config = cfg.Config.from_env()"'
 ```
 
-`dev_scripts/vic`
+**_dev_scripts/vic_**
 
-`dev_scripts/vigit`
+**_dev_scripts/vigit_**
 
 ```
 Open with vim all the files modified under git.
 ```
 
-`dev_scripts/vigitp`
+**_dev_scripts/vigitp_**
 
 ```
 Open with vim all the files modified in previous commits.
 ```
 
-`dev_scripts/vil`
+**_dev_scripts/vil_**
 
-`dev_scripts/viw`
+**_dev_scripts/viw_**
 
 ```
 Open with vi the result of `which command`.
@@ -264,7 +260,7 @@ Open with vi the result of `which command`.
 
 # `helpers`
 
-`helpers/cache.py`
+**_helpers/cache.py_**
 
 ```
 Import as:
@@ -299,7 +295,7 @@ def read_data(*args, **kwargs):
     return data
 ```
 
-`helpers/user_credentials.py`
+**_helpers/user_credentials.py_**
 
 ```
 Import as:
@@ -312,26 +308,26 @@ Test that all the credentials are properly defined.
 
 # `dev_scripts/aws`
 
-`dev_scripts/aws/am_aws.py`
+**_dev_scripts/aws/am_aws.py_**
 
 ```
 Start / stop / check AWS instance.
 ```
 
-`dev_scripts/aws/get_inst_ip.sh`
+**_dev_scripts/aws/get_inst_ip.sh_**
 
-`dev_scripts/aws/get_inst_status.sh`
+**_dev_scripts/aws/get_inst_status.sh_**
 
 # `dev_scripts/git`
 
-`dev_scripts/git/gb`
+**_dev_scripts/git/gb_**
 
 ```
 Print name of the branch. We don't use any wrapper so that we can use this
 result.
 ```
 
-`dev_scripts/git/gcl`
+**_dev_scripts/git/gcl_**
 
 ```
 Clean the client making a backup
@@ -339,188 +335,188 @@ Clean the client making a backup
 > git clean -fd
 ```
 
-`dev_scripts/git/gco`
+**_dev_scripts/git/gco_**
 
-`dev_scripts/git/gcours`
+**_dev_scripts/git/gcours_**
 
 ```
 Accept our changes in case of a conflict.
 ```
 
-`dev_scripts/git/gctheirs`
+**_dev_scripts/git/gctheirs_**
 
 ```
 Accept their changes in case of a conflict.
 ```
 
-`dev_scripts/git/gd`
+**_dev_scripts/git/gd_**
 
 ```
 > git difftool $*
 ```
 
-`dev_scripts/git/gdc`
+**_dev_scripts/git/gdc_**
 
 ```
 > git difftool --cached $*
 ```
 
-`dev_scripts/git/gdmaster.sh`
+**_dev_scripts/git/gdmaster.sh_**
 
 ```
 Diff current branch with master.
 ```
 
-`dev_scripts/git/gdpy`
+**_dev_scripts/git/gdpy_**
 
 ```
 Git diff all the python files.
 > gd $(git_files.sh)
 ```
 
-`dev_scripts/git/git_backup.sh`
+**_dev_scripts/git/git_backup.sh_**
 
 ```
 Create a tarball of all the files added / modified according to git_files.sh
 ```
 
-`dev_scripts/git/git_branch.sh`
+**_dev_scripts/git/git_branch.sh_**
 
 ```
 Show information about the branches.
 ```
 
-`dev_scripts/git/git_branching_point.sh`
+**_dev_scripts/git/git_branching_point.sh_**
 
 ```
 Found the branching point.
 ```
 
-`dev_scripts/git/git_checkout_branch.sh`
+**_dev_scripts/git/git_checkout_branch.sh_**
 
 ```
 Create a branch, check it out, and push it remotely.
 ```
 
-`dev_scripts/git/git_commit.py`
+**_dev_scripts/git/git_commit.py_**
 
 ```
 - This script is equivalent to git commit -am "..."
 - Perform various checks on the git client.
 ```
 
-`dev_scripts/git/git_conflict_files.sh`
+**_dev_scripts/git/git_conflict_files.sh_**
 
 ```
 Find files with git conflicts.
 ```
 
-`dev_scripts/git/git_create_patch.sh`
+**_dev_scripts/git/git_create_patch.sh_**
 
 ```
 Create a patch file for the entire repo client from the base revision.
 This script accepts a list of files to package, if specified.
 ```
 
-`dev_scripts/git/git_delete_merged_branches.sh`
+**_dev_scripts/git/git_delete_merged_branches.sh_**
 
-`dev_scripts/git/git_diff_notebook.py`
+**_dev_scripts/git/git_diff_notebook.py_**
 
 ```
 Diff a notebook against the HEAD version in git, removing notebook artifacts
 to make the differences easier to spot using vimdiff.
 ```
 
-`dev_scripts/git/git_files.sh`
+**_dev_scripts/git/git_files.sh_**
 
 ```
 Report git cached and modified files.
 ```
 
-`dev_scripts/git/git_graph.sh`
+**_dev_scripts/git/git_graph.sh_**
 
 ```
 Plot a graphical view of the branches, using different level of details
 ```
 
-`dev_scripts/git/git_hash_head.sh`
+**_dev_scripts/git/git_hash_head.sh_**
 
 ```
 Show the commit hash that HEAD is at.
 ```
 
-`dev_scripts/git/git_merge.py`
+**_dev_scripts/git/git_merge.py_**
 
-`dev_scripts/git/git_merge_master.sh`
+**_dev_scripts/git/git_merge_master.sh_**
 
 ```
 Merge master in the current Git client.
 ```
 
-`dev_scripts/git/git_previous_commit_files.sh`
+**_dev_scripts/git/git_previous_commit_files.sh_**
 
 ```
 Retrieve the files checked in by the current user in the n last commits.
 ```
 
-`dev_scripts/git/git_revert.sh`
+**_dev_scripts/git/git_revert.sh_**
 
 ```
 Force a revert of files to HEAD.
 ```
 
-`dev_scripts/git/git_root.sh`
+**_dev_scripts/git/git_root.sh_**
 
 ```
 Report path of the git client, e.g., /Users/saggese/src/lemonade/amp
 ```
 
-`dev_scripts/git/git_show_conflicting_files.sh`
+**_dev_scripts/git/git_show_conflicting_files.sh_**
 
 ```
 Generate the files involved in a merge conflict.
 ```
 
-`dev_scripts/git/git_submodules_are_updated.sh`
+**_dev_scripts/git/git_submodules_are_updated.sh_**
 
 ```
 Print the relevant Git hash pointers to amp.
 ```
 
-`dev_scripts/git/git_submodules_clean.sh`
+**_dev_scripts/git/git_submodules_clean.sh_**
 
 ```
 Clean all the submodules with `git clean -fd`.
 ```
 
-`dev_scripts/git/git_submodules_commit.sh`
+**_dev_scripts/git/git_submodules_commit.sh_**
 
 ```
 Commit in all the repos.
 It assumes that everything has been pulled.
 ```
 
-`dev_scripts/git/git_submodules_pull.sh`
+**_dev_scripts/git/git_submodules_pull.sh_**
 
 ```
 Force a git pull of all the repos.
 ```
 
-`dev_scripts/git/git_submodules_roll_fwd.sh`
+**_dev_scripts/git/git_submodules_roll_fwd.sh_**
 
 ```
 Roll fwd the submodules.
 ```
 
-`dev_scripts/git/git_unstage.sh`
+**_dev_scripts/git/git_unstage.sh_**
 
 ```
 Unstage with `git reset HEAD`
 ```
 
-`dev_scripts/git/git_untracked_files.sh`
+**_dev_scripts/git/git_untracked_files.sh_**
 
-`dev_scripts/git/gll`
+**_dev_scripts/git/gll_**
 
 ```
 List commits in a fancy full-screen format like:
@@ -537,7 +533,7 @@ Show the last 5 commits:
 > gll -5
 ```
 
-`dev_scripts/git/gllmy`
+**_dev_scripts/git/gllmy_**
 
 ```
 Like gll / git ll but only referring to your commits.
@@ -546,58 +542,58 @@ Show my last 5 commits.
 > gllmy -5
 ```
 
-`dev_scripts/git/gp`
+**_dev_scripts/git/gp_**
 
 ```
 Sync client with gup.py and then push local commits.
 ```
 
-`dev_scripts/git/grc`
+**_dev_scripts/git/grc_**
 
 ```
 > git rebase --continue
 ```
 
-`dev_scripts/git/grs`
+**_dev_scripts/git/grs_**
 
 ```
 git rebase --skip
 ```
 
-`dev_scripts/git/gs`
+**_dev_scripts/git/gs_**
 
 ```
 Print the status of the clients and of the submodules with `git status`.
 ```
 
-`dev_scripts/git/gs_to_files.sh`
+**_dev_scripts/git/gs_to_files.sh_**
 
 ```
 Filter output of `git status --short`
 ```
 
-`dev_scripts/git/gsl`
+**_dev_scripts/git/gsl_**
 
 ```
 Print the stash list with:
 > git stash list
 ```
 
-`dev_scripts/git/gsp.py`
+**_dev_scripts/git/gsp.py_**
 
 ```
 Stash the changes in a Git client without changing the client, besides a reset
 of the index.
 ```
 
-`dev_scripts/git/gss`
+**_dev_scripts/git/gss_**
 
 ```
 Print the status of the clients and of the submodules with
 git status --short
 ```
 
-`dev_scripts/git/gup.py`
+**_dev_scripts/git/gup.py_**
 
 ```
 Update a git client by:
@@ -608,7 +604,7 @@ Update a git client by:
 
 # `dev_scripts/infra`
 
-`dev_scripts/infra/gdrive.py`
+**_dev_scripts/infra/gdrive.py_**
 
 ```
 Handle backups / export / import of Google Drive directory.
@@ -629,7 +625,7 @@ Moving data.
 > infra/gdrive.py --action import --src_dir tmp.alphamatic --dst_dir alphamatic_drive:alphamatic
 ```
 
-`dev_scripts/infra/ssh_tunnels.py`
+**_dev_scripts/infra/ssh_tunnels.py_**
 
 ```
 Start all tunnels
@@ -651,11 +647,11 @@ Starting a tunnel is equivalent to:
 
 # `dev_scripts/install`
 
-`dev_scripts/install/check_develop_packages.py`
+**_dev_scripts/install/check_develop_packages.py_**
 
-`dev_scripts/install/create_conda.amp_develop.sh`
+**_dev_scripts/install/create_conda.amp_develop.sh_**
 
-`dev_scripts/install/create_conda.py`
+**_dev_scripts/install/create_conda.py_**
 
 ```
 This script should have *no* dependencies from anything: it should be able to run
@@ -676,13 +672,13 @@ develop env:
 > create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/amp_develop.yaml --delete_env_if_exists
 ```
 
-`dev_scripts/install/install_jupyter_extensions.sh`
+**_dev_scripts/install/install_jupyter_extensions.sh_**
 
-`dev_scripts/install/print_conda_packages.py`
+**_dev_scripts/install/print_conda_packages.py_**
 
-`dev_scripts/install/show_jupyter_extensions.sh`
+**_dev_scripts/install/show_jupyter_extensions.sh_**
 
-`dev_scripts/install/test_bootstrap.sh`
+**_dev_scripts/install/test_bootstrap.sh_**
 
 ```
 Test all the executables that need to bootstrap.
@@ -690,41 +686,41 @@ Test all the executables that need to bootstrap.
 
 # `dev_scripts/jenkins`
 
-`dev_scripts/jenkins/amp.build_clean_env.amp_develop.sh`
+**_dev_scripts/jenkins/amp.build_clean_env.amp_develop.sh_**
 
 ```
 - Build "amp_develop" conda env from scratch.
 ```
 
-`dev_scripts/jenkins/amp.build_clean_env.run_fast_coverage_tests.sh`
+**_dev_scripts/jenkins/amp.build_clean_env.run_fast_coverage_tests.sh_**
 
 ```
 - Build conda env
 - Run the fast tests with coverage
 ```
 
-`dev_scripts/jenkins/amp.build_clean_env.run_fast_tests.sh`
+**_dev_scripts/jenkins/amp.build_clean_env.run_fast_tests.sh_**
 
 ```
 - Build conda env
 - Run the fast tests
 ```
 
-`dev_scripts/jenkins/amp.build_clean_env.run_slow_coverage_tests.sh`
+**_dev_scripts/jenkins/amp.build_clean_env.run_slow_coverage_tests.sh_**
 
 ```
 - Build conda env
 - Run the slow tests with coverage
 ```
 
-`dev_scripts/jenkins/amp.run_fast_tests.sh`
+**_dev_scripts/jenkins/amp.run_fast_tests.sh_**
 
 ```
 - No conda env is built, but we rely on `develop` being already build
 - Run the fast tests
 ```
 
-`dev_scripts/jenkins/amp.run_parallel_fast_tests.sh`
+**_dev_scripts/jenkins/amp.run_parallel_fast_tests.sh_**
 
 ```
 - (No conda env build)
@@ -733,13 +729,13 @@ Test all the executables that need to bootstrap.
   - parallel
 ```
 
-`dev_scripts/jenkins/amp.run_pytest_collect.run_linter.sh`
+**_dev_scripts/jenkins/amp.run_pytest_collect.run_linter.sh_**
 
 ```
 - Run linter on the entire tree.
 ```
 
-`dev_scripts/jenkins/amp.smoke_test.sh`
+**_dev_scripts/jenkins/amp.smoke_test.sh_**
 
 ```
 - Run all the Jenkins builds locally to debug.
@@ -747,19 +743,19 @@ Test all the executables that need to bootstrap.
   > (cd $HOME/src/commodity_research1/amp; dev_scripts/jenkins/amp.smoke_test.sh 2>&1 | tee log.txt)
 ```
 
-`dev_scripts/jenkins/bisect.sh`
+**_dev_scripts/jenkins/bisect.sh_**
 
 # `dev_scripts/notebooks`
 
-`dev_scripts/notebooks/ipynb_format.py`
+**_dev_scripts/notebooks/ipynb_format.py_**
 
-`dev_scripts/notebooks/process_all_jupytext.sh`
+**_dev_scripts/notebooks/process_all_jupytext.sh_**
 
 ```
 Apply process_jupytext.py to all the ipynb files.
 ```
 
-`dev_scripts/notebooks/process_jupytext.py`
+**_dev_scripts/notebooks/process_jupytext.py_**
 
 ```
 Automate some common workflows with jupytext.
@@ -777,7 +773,7 @@ Sync
 > process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb --action sync
 ```
 
-`dev_scripts/notebooks/publish_notebook.py`
+**_dev_scripts/notebooks/publish_notebook.py_**
 
 ```
 Given a notebook specified as:
@@ -794,7 +790,7 @@ Given a notebook specified as:
 > publish_notebook.py --file xyz.ipynb --action open
 ```
 
-`dev_scripts/notebooks/run_jupyter_server.py`
+**_dev_scripts/notebooks/run_jupyter_server.py_**
 
 ```
 Start a jupyter server.
@@ -806,17 +802,17 @@ This is equivalent to:
 > jupyter notebook '--ip=*' --browser chrome . --port 10001
 ```
 
-`dev_scripts/notebooks/run_notebook.py`
+**_dev_scripts/notebooks/run_notebook.py_**
 
 ```
 > run_notebook.py --notebook research/Task11_Model_for_1min_futures_data/Task11_Simple_model_for_1min_futures_data.ipynb --function build_configs --no_incremental --dst_dir tmp.run_notebooks/ --num_threads -1
 ```
 
-`dev_scripts/notebooks/strip_ipython_magic.py`
+**_dev_scripts/notebooks/strip_ipython_magic.py_**
 
-`dev_scripts/notebooks/strip_ipython_magic.sh`
+**_dev_scripts/notebooks/strip_ipython_magic.sh_**
 
-`dev_scripts/notebooks/test_notebook.sh`
+**_dev_scripts/notebooks/test_notebook.sh_**
 
 ```
 Run a notebook end-to-end and save the results into an html file, measuring
@@ -825,9 +821,9 @@ the elapsed time.
 
 # `dev_scripts/testing`
 
-`dev_scripts/testing/count_tests.sh`
+**_dev_scripts/testing/count_tests.sh_**
 
-`dev_scripts/testing/run_tests.py`
+**_dev_scripts/testing/run_tests.py_**
 
 ```
 - To run the tests
@@ -842,7 +838,7 @@ the elapsed time.
 
 # `documentation/scripts`
 
-`documentation/scripts/generate_latex_sty.py`
+**_documentation/scripts/generate_latex_sty.py_**
 
 ```
 
@@ -867,9 +863,9 @@ the elapsed time.
 \newcommand{\WW}{\mat{W}}
 ```
 
-`documentation/scripts/gh-md-toc`
+**_documentation/scripts/gh-md-toc_**
 
-`documentation/scripts/pandoc.py`
+**_documentation/scripts/pandoc.py_**
 
 ```
 Convert a txt file into a PDF / HTML using pandoc.
@@ -886,7 +882,7 @@ Check that can be compiled:
 > pandoc.py --input notes/IN_PROGRESS/math.The_hundred_page_ML_book.Burkov.2019.txt -a pdf --no_cleanup --no_cleanup_before --no_run_latex_again --no_open
 ```
 
-`documentation/scripts/preprocess_md_for_pandoc.py`
+**_documentation/scripts/preprocess_md_for_pandoc.py_**
 
 ```
 Convert a txt file into markdown suitable for pandoc.py
@@ -897,7 +893,7 @@ E.g.,
 - handle comments
 ```
 
-`documentation/scripts/process_md.py`
+**_documentation/scripts/process_md.py_**
 
 ```
 Perform several kind of transformation on a txt file
@@ -921,7 +917,7 @@ Perform several kind of transformation on a txt file
 :%!process_md.py -a increase -i -
 ```
 
-`documentation/scripts/publish_notes.py`
+**_documentation/scripts/publish_notes.py_**
 
 ```
 Publish all notes:
@@ -931,7 +927,7 @@ Publish all the notes from scratch:
 > docs/scripts/publish_notes.py ls rm publish
 ```
 
-`documentation/scripts/replace_latex.py`
+**_documentation/scripts/replace_latex.py_**
 
 ```
 Replace only:
@@ -941,13 +937,13 @@ Replace and check:
 > scripts/replace_latex.py -a pandoc_before -a replace -a pandoc_after --file notes/IN_PROGRESS/finance.portfolio_theory.txt
 ```
 
-`documentation/scripts/replace_latex.sh`
+**_documentation/scripts/replace_latex.sh_**
 
 # `dev_scripts/git/git_hooks`
 
-`dev_scripts/git/git_hooks/commit-msg.py`
+**_dev_scripts/git/git_hooks/commit-msg.py_**
 
-`dev_scripts/git/git_hooks/install_hooks.py`
+**_dev_scripts/git/git_hooks/install_hooks.py_**
 
 ```
 Install and remove git pre-commit hooks.
@@ -962,7 +958,7 @@ Check hook status.
 > install_hooks.py --action status
 ```
 
-`dev_scripts/git/git_hooks/pre-commit.py`
+**_dev_scripts/git/git_hooks/pre-commit.py_**
 
 ```
 This is a git commit-hook which can be used to check if huge files

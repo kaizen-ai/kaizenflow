@@ -62,17 +62,20 @@ def _parse():
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
+    # Get the files.
     cmd = "find %s -perm +111 -type f" % args.src_dir
     _, output = si.system_to_string(cmd)
     file_names = output.split("\n")
     file_names = sorted(file_names)
-    res = {}
+    file_names = [f for f in file_names if not os.path.basename(f).startswith(
+        "tmp")]
     if args.src_file is not None:
         file_names = [args.src_file]
     # file_names = ["dev_scripts/git/gb"]
     # file_names = ["./dev_scripts/_setenv_amp.py"]
     _LOG.info("Files selected: %d", len(file_names))
     num_docstring = 0
+    res = {}
     for file_name in file_names:
         docstring = _get_docstring(file_name)
         res[file_name] = docstring
@@ -93,7 +96,7 @@ def _main(parser):
         if last_dir is None or last_dir != curr_dir:
             md_text.append("\n# `%s`\n" % curr_dir)
             last_dir = curr_dir
-        md_text.append("\n`%s`\n" % file_name)
+        md_text.append("\n***%s***\n" % file_name)
         if docstring:
             md_text.append("```\n%s\n```" % docstring)
     # Save in a file.
