@@ -4,14 +4,14 @@ Import as:
 import helpers.list as hlist
 """
 
-from typing import List
+from typing import Any, List, Set
 
 import helpers.dbg as dbg
 
 
 def assert_single_element_and_return(list_: List[str]) -> str:
     """
-    Asserts that list `l` has a single element and returns it.
+    Assert that list `l` has a single element and return it.
 
     :param list_: list
     :return: returns the unique element of the list
@@ -41,7 +41,7 @@ def remove_duplicates(list_: List) -> List:
     """
     dbg.dassert_isinstance(list_, list)
     list_out = []
-    set_l = set()
+    set_l: Set[Any] = set()
     for v in list_:
         if v not in set_l:
             set_l.add(v)

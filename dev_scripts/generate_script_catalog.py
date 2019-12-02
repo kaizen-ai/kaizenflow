@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 """
-Find all the
+Generate a markdown file with the docstring for any script in the repo.
+
+> generate_script_catalog.py
 """
+
 import argparse
 import logging
 import os
@@ -85,7 +88,7 @@ def _main(parser):
         if last_dir is None or last_dir != curr_dir:
             md_text.append("\n# `%s`\n" % curr_dir)
             last_dir = curr_dir
-        md_text.append("\n## `%s`\n" % file_name)
+        md_text.append("\n**`%s`***\n" % file_name)
         if docstring:
             md_text.append("```\n%s\n```" % docstring)
     # Save in a file.

@@ -1,5 +1,5 @@
 """
-# Import as:
+Import as:
 
 import helpers.unit_test as ut
 """
