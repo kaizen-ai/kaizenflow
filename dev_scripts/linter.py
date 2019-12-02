@@ -48,6 +48,7 @@ import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
+import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 
@@ -223,9 +224,13 @@ def _get_files(args) -> List[str]:
     # Make all paths absolute.
     # file_names = [os.path.abspath(f) for f in file_names]
     # Check files exist.
+    file_names_out = []
     for f in file_names:
-        dbg.dassert_exists(f)
-    return file_names
+        if not os.path.exists(f):
+            _LOG.warning("File '%s' doesn't exist: skipping", f)
+        else:
+            file_names_out.append(f)
+    return file_names_out
 
 
 def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
@@ -265,15 +270,6 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
 
 # ###############################################################################
 
-# TODO(gp): We should use a Strategy pattern, having a base class and a class
-#  for each action.
-
-# Each action accepts:
-# :param file_name: name of the file to process
-# :param pendantic: True if it needs to be run in angry mode
-# :param check_if_possible: check if the action can be executed on filename
-# :return: list of strings representing the output
-
 
 def _write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None:
     _dassert_list_of_strings(txt)
@@ -290,14 +286,28 @@ def _write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None
 #   AttributeError: '_BasicHygiene' object has no attribute '_executable'
 # class _Action(abc.ABC):
 class _Action:
+    """
+    Implemented as a Strategy pattern.
+    """
+
     def __init__(self, executable=None):
         self._executable = executable
 
     # @abc.abstractmethod
     def check_if_possible(self) -> bool:
-        pass
+        """
+        Check if the action can be executed.
+        """
+        raise NotImplementedError
 
     def execute(self, file_name: str, pedantic: bool) -> List[str]:
+        """
+        Execute the action.
+
+        :param file_name: name of the file to process
+        :param pendantic: True if it needs to be run in angry mode
+        :return: list of strings representing the output
+        """
         dbg.dassert(file_name)
         dbg.dassert_exists(file_name)
         output = self._execute(file_name, pedantic)
@@ -306,7 +316,7 @@ class _Action:
 
     # @abc.abstractmethod
     def _execute(self, file_name: str, pedantic: bool) -> List[str]:
-        pass
+        raise NotImplementedError
 
 
 # ###############################################################################
@@ -874,6 +884,11 @@ class _Pylint(_Action):
         output = output_tmp
         # Remove lines.
         output = [l for l in output if ("-" * 20) not in l]
+        # ************* Module dev_scripts.generate_script_catalog
+        output_as_str = ut.filter_text(
+            re.escape("^************* Module "), "\n".join(output)
+        )
+        output = output_as_str.split("\n")
         return output
 
 
@@ -967,6 +982,9 @@ def is_test_input_output_file(file_name: str) -> bool:
 
 
 def is_test_code(file_name):
+    """
+    Return whether a file contains unit test code.
+    """
     ret = is_under_test_dir(file_name)
     ret &= os.path.basename(file_name).startswith("test_")
     ret &= file_name.endswith(".py")
@@ -1067,18 +1085,20 @@ class _CustomPythonChecks(_Action):
             return output
         # Read file.
         txt = io_.from_file(file_name, split=True)
-        # Check shebang.
-        is_executable = os.access(file_name, os.X_OK)
-        msg = self._check_shebang(file_name, txt, is_executable)
-        if msg:
-            output.append(msg)
-        # Check that the module was baptized.
-        if not is_executable:
-            msg = self._was_baptized(file_name, txt)
+        # Only library code should be baptized.
+        if not is_test_code(file_name):
+            # Check shebang.
+            is_executable = os.access(file_name, os.X_OK)
+            msg = self._check_shebang(file_name, txt, is_executable)
             if msg:
                 output.append(msg)
+            # Check that the module was baptized.
+            if not is_executable:
+                msg = self._was_baptized(file_name, txt)
+                if msg:
+                    output.append(msg)
         # Process file.
-        output_tmp, txt_new = self._check_text(file_name, txt)
+        output_tmp, txt_new = self._check_line_by_line(file_name, txt)
         output.extend(output_tmp)
         # Write file back.
         _write_file_back(file_name, txt, txt_new)
@@ -1134,15 +1154,14 @@ class _CustomPythonChecks(_Action):
     @staticmethod
     def _was_baptized(file_name, txt: List[str]) -> str:
         """
-        Check if code contains a declaration of how to be imported.
+        Check if code contains a declaration of how it needs to be imported.
+
+        Import as:
+
+        import _setenv_lib as selib
+        ...
         """
         msg: List[str] = []
-        # Check that the header of the file is in the format:
-        #   """
-        #   Import as:
-        #
-        #   import _setenv_lib as selib
-        #   ...
         _dassert_list_of_strings(txt)
         if len(txt) > 3:
             match = True
@@ -1167,20 +1186,6 @@ class _CustomPythonChecks(_Action):
             import_line = 3
             line = txt[import_line]
             _LOG.debug("import line=%s", line)
-            # m = re.match(r"\s*import\s+\S+\s+as\s+(\S+)", txt[import_line])
-            # if m:
-            #     shortcut = m.group(1)
-            #     if len(shortcut) > _CustomPythonChecks.MAX_LEN_IMPORT:
-            #         msg.append(
-            #             "%s:%s: the import shortcut '%s' is longer than "
-            #             "%s characters"
-            #             % (file_name, import_line, shortcut, max_len)
-            #         )
-            # else:
-            #     msg.append(
-            #         "%s:%s: the import is not in the right format "
-            #         "'import foo.bar as fba'" % (file_name, import_line)
-            #     )
             msg_tmp = _CustomPythonChecks._check_import(
                 file_name, import_line, line
             )
@@ -1190,9 +1195,16 @@ class _CustomPythonChecks(_Action):
         return msg_as_str
 
     @staticmethod
-    def _check_text(
+    def _check_line_by_line(
         file_name: str, txt: List[str]
     ) -> Tuple[List[str], List[str]]:
+        """
+        Apply various checks line by line.
+
+        - Check imports
+        - Look for conflict markers
+        - Format separating lines
+        """
         _dassert_list_of_strings(txt)
         output: List[str] = []
         txt_new: List[str] = []
@@ -1202,13 +1214,6 @@ class _CustomPythonChecks(_Action):
             # Check imports.
             if _CustomPythonChecks.DEBUG:
                 _LOG.debug("* Check imports")
-            # shortcut = m.group(1)
-            # if len(shortcut) > max_len:
-            #     msg.append(
-            #         "%s:%s: the import shortcut '%s' is longer than "
-            #         "%s characters"
-            #         % (file_name, import_line, shortcut, max_len)
-            #     )
             msg = _CustomPythonChecks._check_import(file_name, i + 1, line)
             if msg:
                 output.append(msg)

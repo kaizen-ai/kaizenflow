@@ -3,20 +3,20 @@
 """
 Find all the
 """
-import os
-
 import argparse
 import logging
+import os
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
-
+import helpers.printing as prnt
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# ###############################################################################
+
 
 def _get_docstring(file_name):
     _LOG.debug("file_name=%s", file_name)
@@ -48,12 +48,14 @@ def _parse():
     )
     parser.add_argument("--src_dir", action="store", default=".")
     parser.add_argument("--src_file", action="store", default=None)
-    parser.add_argument("--dst_file", action="store",
-                        default="documentation/general/script_catalog.md")
+    parser.add_argument(
+        "--dst_file",
+        action="store",
+        default="documentation/general/script_catalog.md",
+    )
     prsr.add_verbosity_arg(parser)
     return parser
 
-import helpers.printing as prnt
 
 def _main(parser):
     args = parser.parse_args()
@@ -65,8 +67,8 @@ def _main(parser):
     res = {}
     if args.src_file is not None:
         file_names = [args.src_file]
-    #file_names = ["dev_scripts/git/gb"]
-    #file_names = ["./dev_scripts/_setenv_amp.py"]
+    # file_names = ["dev_scripts/git/gb"]
+    # file_names = ["./dev_scripts/_setenv_amp.py"]
     _LOG.info("Files selected: %d", len(file_names))
     num_docstring = 0
     for file_name in file_names:
@@ -90,8 +92,9 @@ def _main(parser):
     md_text_as_str = "\n".join(md_text)
     io_.to_file(args.dst_file, md_text_as_str)
     _LOG.info("File '%s' saved", args.dst_file)
-    _LOG.info("Number of scripts with docstring: %s", prnt.perc(
-        num_docstring, len(res)))
+    _LOG.info(
+        "Number of scripts with docstring: %s", prnt.perc(num_docstring, len(res))
+    )
     # Format the md.
     _LOG.info("Formatting")
     cmd = "linter.py -f %s" % args.dst_file
