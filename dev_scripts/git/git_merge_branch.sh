@@ -33,9 +33,9 @@ cmd="git_submodules_pull.sh"
 execute $cmd
 
 # Align all the submodules markers.
-cmd="git_roll_fwd_submodules.sh"
+cmd="git_submodules_roll_fwd.sh"
 execute $cmd
-cmd="git_are_submodules_updated.sh"
+cmd="git_submodules_are_updated.sh"
 execute $cmd
 
 # Lint p1.

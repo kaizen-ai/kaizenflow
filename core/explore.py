@@ -36,20 +36,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): Not sure this is the right place.
-def find_duplicates(vals):
-    """
-    Find the elements duplicated in a list.
-    """
-    dbg.dassert_isinstance(vals, list)
-    # Count the occurrences of each element of the seq.
-    # TODO(gp): Consider replacing with pd.Series.value_counts.
-    v_to_num = [(v, vals.count(v)) for v in set(vals)]
-    # Build list of elems with duplicates.
-    res = [v for v, n in v_to_num if n > 1]
-    return res
-
-
 # TODO(gp): Move this to helpers/pandas_helpers.py
 
 def cast_to_df(obj):
@@ -538,7 +524,8 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     :param max_num: max number of columns to plot.
     """
     # Check that there are no repeated columns.
-    dbg.dassert_eq(len(find_duplicates(df.columns.tolist())), 0)
+    # TODO(gp): dassert_no_duplicates
+    dbg.dassert_eq(len(hlist.find_duplicates(df.columns.tolist())), 0)
     # Note that the plot assumes that the first column is at the bottom of the
     # graph.
     # Assign 1.0 to all the non-nan value.
@@ -1526,7 +1513,7 @@ def display_df(
     #
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_eq(
-        find_duplicates(df.columns.tolist()), [], msg="Find duplicated columns"
+        hlist.find_duplicates(df.columns.tolist()), [], msg="Find duplicated columns"
     )
     if tag is not None:
         print(tag)

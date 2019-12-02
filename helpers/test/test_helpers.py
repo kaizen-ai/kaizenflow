@@ -117,6 +117,38 @@ class Test_git1(ut.TestCase):
             # e.g., amp.dev.build_clean_env.run_slow_coverage_tests.
             self.assert_equal(os.path.basename(amp_dir), "amp")
 
+# #############################################################################
+# list.py
+# #############################################################################
+
+import helpers.list as hlist
+
+class Test_list_1(ut.TestCase):
+    def test_find_duplicates1(self):
+        list_ = "a b c d".split()
+        list_out = hlist.find_duplicates(list_)
+        self.assertEqual(list_out, [])
+
+    def test_find_duplicates2(self):
+        list_ = "a b c a d e f f".split()
+        list_out = hlist.find_duplicates(list_)
+        self.assertEqual(list_out, "a f".split())
+
+    def test_remove_duplicates1(self):
+        list_ = "a b c d".split()
+        list_out = hlist.remove_duplicates(list_)
+        self.assertEqual(list_out, "a b c d".split())
+
+    def test_remove_duplicates2(self):
+        list_ = "a b c a d e f f".split()
+        list_out = hlist.remove_duplicates(list_)
+        self.assertEqual(list_out, "a b c d e f".split())
+
+    def test_remove_duplicates3(self):
+        list_ = "a b c a d e f f".split()
+        list_ = list(reversed(list_))
+        list_out = hlist.remove_duplicates(list_)
+        self.assertEqual(list_out, "f e d c b a".split())
 
 # #############################################################################
 # numba.py
