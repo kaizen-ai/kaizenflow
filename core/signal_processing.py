@@ -6,7 +6,7 @@ import core.signal_processing as sigp
 
 import functools
 import logging
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -289,6 +289,44 @@ def plot_crosscorrelation(
 
 
 # #############################################################################
+# Metrics
+# #############################################################################
+
+
+def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
+    r"""
+    Compute frequency-domain-based "forecastability" of signal.
+
+    Reference: https://arxiv.org/abs/1205.4591
+
+    `signal` is assumed to be second-order stationary.
+
+    Denote the forecastability estimator by \Omega(\cdot).
+    Let x_t, y_t be time series. Properties of \Omega include:
+    a) \Omega(y_t) = 0 iff y_t is white noise
+    b) scale and shift-invariant:
+         \Omega(a y_t + b) = \Omega(y_t) for real a, b, a \neq 0.
+    c) max sub-additivity for uncorrelated processes:
+         \Omega(\alpha x_t + \sqrt{1 - \alpha^2} y_t) \leq
+         \max\{\Omega(x_t), \Omega(y_t)\},
+       if \E(x_t y_s) = 0 for all s, t \in \Z;
+       equality iff alpha \in \{0, 1\}.
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    dbg.dassert_isinstance(mode, str)
+    if mode == "welch":
+        _, psd = sp.signal.welch(signal)
+    elif mode == "periodogram":
+        # TODO(Paul): Maybe log a warning about inconsistency of periodogram
+        #     for estimating power spectral density.
+        _, psd = sp.signal.periodogram(signal)
+    else:
+        raise ValueError("Unsupported mode=`%s`" % mode)
+    forecastability = 1 - sp.stats.entropy(psd, base=psd.size)
+    return forecastability
+
+
+# #############################################################################
 # Signal transformations
 # #############################################################################
 
@@ -307,6 +345,138 @@ def squash(
     """
     dbg.dassert_lt(0, scale)
     return scale * np.tanh(signal / scale)
+
+
+def get_symmetric_equisized_bins(
+    signal: pd.Series, bin_size: float, zero_in_bin_interior: bool = False
+) -> np.array:
+    """
+    Get bins of equal size, symmetric about zero, adapted to `signal`.
+
+    :param bin_size: width of bin
+    :param zero_in_bin_interior: Determines whether `0` is a bin edge or not.
+        If in interior, it is placed in the center of the bin.
+    :return: array of bin boundaries
+    """
+    # Remove +/- inf for the purpose of calculating max/min.
+    finite_signal = signal.replace([-np.inf, np.inf], np.nan).dropna()
+    # Determine minimum and maximum bin boundaries based on values of `signal`.
+    # Make them symmetric for simplicity.
+    left = np.floor(finite_signal.min() / bin_size).astype(int) - 1
+    right = np.ceil(finite_signal.max() / bin_size).astype(int) + 1
+    bin_boundary = bin_size * np.maximum(np.abs(left), np.abs(right))
+    if zero_in_bin_interior:
+        right_start = bin_size / 2
+    else:
+        right_start = 0
+    right_bins = np.arange(right_start, bin_boundary, bin_size)
+    # Reflect `right_bins` to get `left_bins`.
+    if zero_in_bin_interior:
+        left_bins = -np.flip(right_bins)
+    else:
+        left_bins = -np.flip(right_bins[1:])
+    # Combine `left_bins` and `right_bin` into one bin.
+    return np.append(left_bins, right_bins)
+
+
+def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Series:
+    """
+    Digitize (i.e., discretize) `signal` into `bins`.
+
+    - In the output, bins are referenced with integers and are such that `0`
+      always belongs to bin `0`
+    - The bin-referencing convention is optimized for studying signals centered
+      at zero (e.g., returns, z-scored features, etc.)
+    - For bins of equal size, the bin-referencing convention makes it easy to
+      map back from the digitized signal to numerical ranges given
+        - the bin number
+        - the bin size
+
+    :param bins: array-like bin boundaries. Must include max and min `signal`
+        values.
+    :param right: same as in `np.digitize`
+    :return: digitized signal
+    """
+    # From https://docs.scipy.org/doc/numpy/reference/generated/numpy.digitize.html
+    # (v 1.17):
+    # > If values in x are beyond the bounds of bins, 0 or len(bins) is
+    # > returned as appropriate.
+    digitized = np.digitize(signal, bins, right)
+    # Center so that `0` belongs to bin "0"
+    bin_containing_zero = np.digitize([0], bins, right)
+    digitized -= bin_containing_zero
+    # Convert to pd.Series, since `np.digitize` only returns an np.array.
+    digitized_srs = pd.Series(
+        data=digitized, index=signal.index, name=signal.name
+    )
+    return digitized_srs
+
+
+def _wrap(signal: pd.Series, num_cols) -> pd.DataFrame:
+    """
+    Convert a 1-d series into a 2-d dataframe left-to-right top-to-bottom.
+
+    :param num_cols: number of columns to use for wrapping
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    dbg.dassert_lte(1, num_cols)
+    values = signal.values
+    _LOG.debug("num values=%f", values.size)
+    # Calculate number of rows that wrapped pd.DataFrame should have.
+    num_rows = np.ceil(values.size / num_cols).astype(int)
+    _LOG.debug("num_rows=%f", num_rows)
+    # Add padding, since numpy's `reshape` requires element counts to match
+    # exactly.
+    pad_size = num_rows * num_cols - values.size
+    _LOG.debug("pad_size=%f", pad_size)
+    padding = np.full(pad_size, np.nan)
+    padded_values = np.append(values, padding)
+    #
+    wrapped = padded_values.reshape(num_rows, num_cols)
+    return pd.DataFrame(wrapped)
+
+
+def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
+    """
+    Undo `_wrap`.
+
+    We allow `index.size` to be less than nrows * ncols of `df`, in which case
+    values are truncated from the end of the unwrapped dataframe.
+
+    :param idx: index of series provided to `_wrap` call
+    """
+    _LOG.debug("df.shape=%s", df.shape)
+    values = df.values.flatten()
+    pad_size = values.size - idx.size
+    _LOG.debug("pad_size=%f", pad_size)
+    if pad_size > 0:
+        data = values[:-pad_size]
+    else:
+        data = values
+    unwrapped = pd.Series(data=data, index=idx, name=name)
+    return unwrapped
+
+
+def skip_apply_func(
+    signal: pd.DataFrame,
+    skip_size: int,
+    func: Callable[..., pd.DataFrame],
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Apply `func` to each col of `signal` after a wrap, then unwrap and merge.
+
+    :param skip_size: num_cols used for wrapping each col of `signal`
+    :param kwargs: forwarded to `func`
+    """
+    cols = {}
+    for col in signal.columns:
+        wrapped = _wrap(signal[col], skip_size)
+        z_wrapped = func(wrapped, **kwargs)
+        z_scored = _unwrap(z_wrapped, signal.index, col)
+        cols[col] = z_scored
+    df = pd.DataFrame.from_dict(cols)
+    return df
 
 
 # #############################################################################

@@ -1,204 +1,227 @@
-import configparser
-import copy
-import getpass
 import logging
-import os
-import pickle
-import socket
+from typing import List, Tuple
 
-from typing import Any, Dict
 import pandas as pd
-
-import helpers.dbg as dbg
-import helpers.timer as timer
 import psycopg2 as pg
+
+import helpers.timer as timer
 
 _log = logging.getLogger(__name__)
 
-# TODO(gp): This code needs to be broken in pieces and moved in different
-# locations.
 
-# #############################################################################
-# UI.
-# #############################################################################
-
-
-def read_config(config_file):
-    print(("Using config_file %s" % config_file))
-    assert os.path.exists(config_file)
-    # Read config.
-    config = configparser.ConfigParser()
-    config.readfp(open(config_file))
-    return config
-
-
-# #############################################################################
-# Sql.
-# #############################################################################
+def get_connection(
+    dbname: str,
+    host: str,
+    user: str,
+    port: int,
+    password: str,
+    autocommit: bool = True,
+) -> Tuple[connection, cursor]:
+    connection = pg.connect(
+        dbname=dbname, host=host, user=user, port=port, password=password
+    )
+    cursor = connection.cursor()
+    if autocommit:
+        connection.autocommit = True
+    return connection, cursor
 
 
-def to_sql_conn_string(host, user, database="postgres", password=None):
-    conn = "host='%s' user='%s' dbname='%s'" % (host, user, database)
-    if password:
-        conn += ' password="%s"' % password
-    return conn
+def get_engine_version(connection: pg.connection) -> str:
+    """
+    Report information on the SQL engine.
+
+    E.g.,
+    PostgreSQL 11.5 on x86_64-pc-linux-gnu
+        compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
+    """
+    query = "SELECT version();"
+    df = pd.read_sql_query(query, connection)
+    # pylint: disable=no-member
+    info = df.iloc[0, 0]
+    return info
 
 
-def sql_execute(conn_string, qq, autocommit=False):
-    with pg.connect(conn_string) as conn:
-        if autocommit:
-            conn.autocommit = True
-        # Catch error and execute query directly to print error.
-        cur = conn.cursor()
-        try:
-            cur.execute(qq)
-        except pg.Error as e:
-            print((e.pgerror))
-            raise pg.Error
+def get_db_names(connection: pg.connection) -> List[str]:
+    """
+    Return the names of the available DBs.
+
+    E.g., ['postgres', 'rdsadmin', 'template0', 'template1']
+
+    """
+    query = "SELECT datname FROM pg_database;"
+    cursor = connection.cursor()
+    cursor.execute(query)
+    dbs = list(zip(*cursor.fetchall()))[0]
+    dbs = sorted(dbs)
+    return dbs
 
 
-def sql_execute_query(conn_string, qq):
-    with pg.connect(conn_string) as conn:
-        try:
-            df = pd.read_sql_query(qq, conn)
-        except:
-            # Catch error and execute query directly to print error.
-            cur = conn.cursor()
-            try:
-                cur.execute(qq)
-            except pg.Error as e:
-                print((e.pgerror))
-                raise pg.Error
+def get_table_size(
+    connection: pg.connection, only_public: bool = True, summary: bool = True
+) -> pd.DataFrame:
+    """
+    Report the size of each table.
+
+    E.g.,
+          table_name  row_estimate    total    index       toast    table
+        0     events           0.0   262 GB  0 bytes  8192 bytes   262 GB
+        1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
+        2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB
+        3   taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB
+    """
+    q = """SELECT *, pg_size_pretty(total_bytes) AS total
+        , pg_size_pretty(index_bytes) AS INDEX
+        , pg_size_pretty(toast_bytes) AS toast
+        , pg_size_pretty(table_bytes) AS TABLE
+      FROM (
+      SELECT *, total_bytes-index_bytes-COALESCE(toast_bytes,0) AS table_bytes FROM (
+          SELECT c.oid,nspname AS table_schema, relname AS TABLE_NAME
+                  , c.reltuples AS row_estimate
+                  , pg_total_relation_size(c.oid) AS total_bytes
+                  , pg_indexes_size(c.oid) AS index_bytes
+                  , pg_total_relation_size(reltoastrelid) AS toast_bytes
+              FROM pg_class c
+              LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE relkind = 'r'
+      ) a
+    ) a
+    ORDER by total_bytes DESC"""
+    df = pd.read_sql_query(q, connection)
+    if only_public:
+        df = df[df["table_schema"] == "public"]
+    if summary:
+        cols = "table_name row_estimate total index toast table".split()
+        df = df[cols]
     return df
 
 
-_SQL_CACHE : Dict[Any, Any] = {}
+def get_table_names(connection: pg.connection) -> List[str]:
+    """
+    Report the name of the tables.
+
+    E.g., tables=['entities', 'events', 'stories', 'taxonomy']
+    """
+    query = """
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_type = 'BASE TABLE'
+        AND table_schema = 'public'
+    """
+    cursor = connection.cursor()
+    cursor.execute(query)
+    tables = [x[0] for x in cursor.fetchall()]
+    return tables
 
 
-def query(
-    conn_string,
-    qq,
-    limit=None,
-    use_timer=False,
-    use_cache=True,
-    profile=False,
-    verbose=True,
+# TODO(gp): Test / fix this.
+def get_indexes(connection):
+    res = []
+    tables = get_table_names(connection)
+    cursor = connection.cursor()
+    for table in tables:
+        query = """select * from pg_indexes where tablename = '{table}' """.format(
+            table=table
+        )
+        cursor.execute(query)
+        z = cursor.fetchall()
+        res.append(pd.DataFrame(z))
+    tmp = pd.concat(res)
+    tmp["index_type"] = tmp[4].apply(
+        lambda w: w.split("USING")[1].lstrip().split(" ")[0]
+    )
+    tmp.columns = [
+        "type: public/private",
+        "table_name",
+        "key_name",
+        "None",
+        "Statement",
+        "index_type",
+    ]
+    tmp["columns"] = tmp["Statement"].apply(lambda w: w.split("(")[1][:-1])
+
+    return tmp
+
+
+def get_columns(connection, table_name):
+    query = (
+        """SELECT column_name
+            FROM information_schema.columns
+            WHERE TABLE_NAME = '%s' """
+        % table_name
+    )
+    cursor = connection.get_cursor()
+    cursor.execute(query)
+    columns = [x[0] for x in cursor.fetchall()]
+    return columns
+
+
+def execute_query(
+    connection, query, limit=None, use_timer=False, profile=False, verbose=True,
 ):
-    global _SQL_CACHE
+    """
+    Execute a query.
+    """
     if limit is not None:
-        qq += " LIMIT %s" % limit
+        query += " LIMIT %s" % limit
     if profile:
-        qq = "EXPLAIN ANALYZE " + qq
+        query = "EXPLAIN ANALYZE " + query
     if verbose:
-        print(("> " + qq))
-    #
+        print(("> " + query))
+    # Compute.
+    if use_timer:
+        idx = timer.dtimer_start(0, "Sql time")
     df = None
-    #
-    key = conn_string, qq
-    if use_cache and (key in _SQL_CACHE):
-        _log.debug("Getting cache value for '%s'", key)
-        df = copy.deepcopy(_SQL_CACHE[key])
-    else:
-        # Compute.
-        if not use_cache and use_timer:
-            idx = timer.dtimer_start(0, "Sql time")
-        with pg.connect(conn_string) as conn:
-            try:
-                df = pd.read_sql_query(qq, conn)
-            except:
-                # Catch error and execute query directly to print error.
-                with pg.connect(conn_string) as conn:
-                    cur = conn.cursor()
-                try:
-                    cur.execute(qq)
-                except pg.Error as e:
-                    print((e.pgerror))
-                    raise pg.Error
-        if use_cache:
-            dbg.dassert_not_in(key, _SQL_CACHE)
-            _SQL_CACHE[key] = df
-            df = copy.deepcopy(_SQL_CACHE[key])
-        if not use_cache and use_timer:
-            timer.dtimer_stop(idx)
+    cursor = connection.cursor()
+    try:
+        df = pd.read_sql_query(query, connection)
+    except:
+        # TODO(gp): Use OperationalError.
+        # Catch error and execute query directly to print error.
+        try:
+            cursor.execute(query)
+        except pg.Error as e:
+            print((e.pgerror))
+            raise pg.Error
+    if use_timer:
+        timer.dtimer_stop(idx)
     if profile:
         print(df)
         return None
     return df
 
 
-def get_sql_dbs(conn_string):
-    _log.debug("conn_string=%s", conn_string)
-    conn = pg.connect(conn_string)
-    string = "SELECT datname FROM pg_database;"
-    cursor = conn.cursor()
-    cursor.execute(string)
-    dbs = list(zip(*cursor.fetchall()))[0]
-    dbs = sorted(dbs)
-    return dbs
-
-
-def get_all_tables(conn_string):
-    _log.debug("conn_string=%s", conn_string)
-    conn = pg.connect(conn_string)
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT relname FROM pg_class WHERE relkind='r' and "
-        "relname !~ '^(pg_|sql_)';"
-    )
-    tables = list(zip(*cursor.fetchall()))[0]
-    tables = sorted(tables)
-    return tables
-
-
-def print_db_table_size(conn_string):
-    cmd = """
-SELECT d.datname AS Name, pg_catalog.pg_get_userbyid(d.datdba) AS Owner,
-CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')
-THEN pg_catalog.pg_size_pretty(pg_catalog.pg_database_size(d.datname))
-ELSE 'No Access'
-END AS SIZE
-FROM pg_catalog.pg_database d
-ORDER BY
-CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')
-THEN pg_catalog.pg_database_size(d.datname)
-ELSE NULL
-END DESC -- nulls first
-LIMIT 20;
-"""
-    df = sql_execute_query(conn_string, cmd)
-    return df
-
-
-def show_table(conn_string, table, limit=5, as_txt=False):
-    qq = "SELECT * FROM %s LIMIT %s " % (table, limit)
-    df = query(conn_string, qq)
+def head_table(connection, table, limit=5, as_txt=False):
+    query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+    df = execute_query(connection, query)
     if as_txt:
         # pd.options.display.max_columns = 1000
         # pd.options.display.width = 130
         print(df)
     else:
-        display(df, as_txt=as_txt)
+        import IPython
+
+        IPython.core.display.display(df)
 
 
-def show_tables(conn_string, tables=None, limit=5, as_txt=False):
+def head_tables(connection, tables=None, limit=5, as_txt=False):
     if tables is None:
-        tables = get_all_tables(conn_string)
+        tables = get_table_names(connection)
     for table in tables:
         print(("\n" + "#" * 80 + "\n" + table + "\n" + "#" * 80))
-        show_table(conn_string, table, limit=limit, as_txt=as_txt)
+        head_table(connection, table, limit=limit, as_txt=as_txt)
 
 
-def find_common_columns(conn_string, tables, as_df=False):
+def find_common_columns(connection, tables, as_df=False):
     limit = 5
     df = []
     for i in range(len(tables)):
         table = tables[i]
-        qq = "SELECT * FROM %s LIMIT %s " % (table, limit)
-        df1 = query(conn_string, qq, verbose=False)
+        query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+        df1 = execute_query(connection, query, verbose=False)
         for j in range(i + 1, len(tables)):
             table = tables[j]
-            qq = "SELECT * FROM %s LIMIT %s " % (table, limit)
-            df2 = query(conn_string, qq, verbose=False)
+            query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+            df2 = execute_query(connection, query, verbose=False)
             common_cols = [c for c in df1 if c in df2]
             if as_df:
                 df.append(
@@ -214,61 +237,9 @@ def find_common_columns(conn_string, tables, as_df=False):
                 print(
                     ("    (%s): %s" % (len(common_cols), " ".join(common_cols)))
                 )
+    obj = None
     if as_df:
-        df = pd.DataFrame(
+        obj = pd.DataFrame(
             df, columns=["table1", "table2", "num_comm_cols", "common_cols"]
         )
-        return df
-
-
-def create_sql_pickle(conn, sql_query, file_name, abort_on_file_exists):
-    file_name = os.path.abspath(file_name)
-    _log.info("file_name='%s'", file_name)
-    if os.path.exists(file_name):
-        if abort_on_file_exists:
-            raise RuntimeError("File %s already exists" % file_name)
-    data = {
-        "sql_query": sql_query,
-        "username": getpass.getuser(),
-        "datetime": pd.Timestamp.utcnow().tz_convert("US/Eastern"),
-        "server": socket.gethostname(),
-        "file_name": file_name,
-    }
-    _log.info("sql_query=%s", sql_query)
-    with timer.TimedScope(0, "sql query"):
-        df = pd.read_sql_query(sql_query, conn)
-    data["df"] = df
-    #
-    f = open(file_name, "w")
-    pickle.dump(data, f)
-    f.close()
-    _log.info("Created file='%s'", file_name)
-    return file_name
-
-
-def read_sql_pickle(file_name):
-    f = open(file_name, "r")
-    data = pickle.load(f)
-    f.close()
-    return data["df"]
-
-
-# #############################################################################
-# TR.
-# #############################################################################
-
-
-def normalize_code(code):
-    # Remove quotes.
-    code = code.rstrip('"').lstrip('"')
-    # Remove \\ (see "NI:ATTACK/01\   instancesOf" in bug #6).
-    if code.endswith("\\"):
-        code2 = code.rstrip("""\\""")
-        _log.warning("Found code '%s': using code '%s'", code, code2)
-        code = code2
-    # TODO(gp): Remove this and increase the max length of the code row.
-    if len(code) > 20:
-        code2 = code[:20]
-        _log.warning("Truncating '%s' to '%s'", code, code2)
-        code = code2
-    return code
+    return obj

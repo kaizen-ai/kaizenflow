@@ -24,7 +24,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
+# ###############################################################################
 
 # Global setter / getter for updating test.
 
@@ -41,7 +41,7 @@ def get_update_tests() -> bool:
     return _UPDATE_TESTS
 
 
-# #############################################################################
+# ###############################################################################
 
 # Global setter / getter for incremental mode.
 
@@ -58,7 +58,7 @@ def get_incremental_tests() -> bool:
     return _INCREMENTAL_TESTS
 
 
-# #############################################################################
+# ###############################################################################
 
 
 def to_string(var):
@@ -105,6 +105,8 @@ def filter_text(regex: str, txt: str) -> str:
     Remove lines in `txt` that match the regex `regex`.
     """
     _LOG.debug("Filtering with '%s'", regex)
+    if regex is None:
+        return txt
     txt_out = []
     for line in txt.split("\n"):
         if re.search(regex, line):
@@ -117,13 +119,28 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
-def purify_from_client(txt: str) -> str:
+def remove_amp_references(txt: str) -> str:
     """
-    Remove from a string all the information specific of a git client:
+    Remove references to amp.
     """
-    # Replace the git path with `$GIT_ROOT`.
-    super_module_path = git.get_client_root(super_module=True)
-    txt = txt.replace(super_module_path, "$GIT_ROOT")
+    txt = re.sub("^amp/", "", txt, flags=re.MULTILINE)
+    txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
+    txt = re.sub("amp:", "", txt, flags=re.MULTILINE)
+    return txt
+
+
+def purify_txt_from_client(txt: str) -> str:
+    """
+    Remove from a string all the information specific of a git client.
+    """
+    # We remove references to the Git modules starting from the innermost one.
+    for super_module in [False, True]:
+        # Replace the git path with `$GIT_ROOT`.
+        super_module_path = git.get_client_root(super_module=super_module)
+        txt = txt.replace(super_module_path, "$GIT_ROOT")
+    # Replace the current path with `$PWD`
+    pwd = os.getcwd()
+    txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
     user_name = si.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
@@ -131,7 +148,40 @@ def purify_from_client(txt: str) -> str:
     return txt
 
 
-# #############################################################################
+def diff_files(file_name1: str, file_name2: str, tag: Optional[str]=None):
+        # Diff to screen.
+        _, res = si.system_to_string(
+            "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
+            abort_on_error=False,
+            log_level=logging.DEBUG,
+        )
+        if tag is not None:
+            _LOG.error("%s", "\n" + prnt.frame(tag))
+        _LOG.error(res)
+        # Report how to diff.
+        vimdiff_cmd = "vimdiff %s %s" % (
+            os.path.abspath(file_name1),
+            os.path.abspath(file_name2),
+        )
+        # Save a script to diff.
+        diff_script = "./tmp_diff.sh"
+        io_.to_file(diff_script, vimdiff_cmd)
+        cmd = "chmod +x " + diff_script
+        si.system(cmd)
+        msg = []
+        msg.append("Diff with:")
+        msg.append("> " + vimdiff_cmd)
+        msg.append("or running:")
+        msg.append("> " + diff_script)
+        # TODO(gp): Understand why mypy reports:
+        #   Incompatible types in assignment (expression has type "str",
+        #   variable has type "List[str]")
+        msg = "\n".join(msg)  # type: ignore
+        _LOG.error(msg)
+        # Print stack trace.
+        raise RuntimeError(msg)
+
+# ###############################################################################
 
 
 # TODO(gp): Make these functions static of TestCase.
@@ -207,35 +257,39 @@ def _assert_equal(
         _LOG.debug("Expected:\n%s", expected)
         exp_file_name = "%s/tmp.expected.txt" % test_dir
         io_.to_file(exp_file_name, expected)
-        # Diff to screen.
-        _, res = si.system_to_string(
-            "echo; sdiff -l -w 150 %s %s" % (exp_file_name, act_file_name),
-            abort_on_error=False,
-            log_level=logging.DEBUG,
-        )
-        _LOG.error(res)
-        # Report how to diff.
-        vimdiff_cmd = "vimdiff %s %s" % (
-            os.path.abspath(act_file_name),
-            os.path.abspath(exp_file_name),
-        )
-        # Save a script to diff.
-        diff_script = "./tmp_diff.sh"
-        io_.to_file(diff_script, vimdiff_cmd)
-        cmd = "chmod +x " + diff_script
-        si.system(cmd)
-        msg = []
-        msg.append("Diff with:")
-        msg.append("> " + vimdiff_cmd)
-        msg.append("or running:")
-        msg.append("> " + diff_script)
-        # TODO(gp): Understand why mypy reports:
-        #   Incompatible types in assignment (expression has type "str",
-        #   variable has type "List[str]")
-        msg = "\n".join(msg)  # type: ignore
-        _LOG.error(msg)
-        # Print stack trace.
-        raise RuntimeError(msg)
+        #
+        tag = "ACTUAL vs EXPECTED"
+        diff_files(act_file_name, exp_file_name, tag)
+        # # Diff to screen.
+        # _, res = si.system_to_string(
+        #     "echo; sdiff -l -w 150 %s %s" % (act_file_name, exp_file_name),
+        #     abort_on_error=False,
+        #     log_level=logging.DEBUG,
+        # )
+        # _LOG.error("%s", "\n" + prnt.frame("ACTUAL vs EXPECTED"))
+        # _LOG.error(res)
+        # # Report how to diff.
+        # vimdiff_cmd = "vimdiff %s %s" % (
+        #     os.path.abspath(act_file_name),
+        #     os.path.abspath(exp_file_name),
+        # )
+        # # Save a script to diff.
+        # diff_script = "./tmp_diff.sh"
+        # io_.to_file(diff_script, vimdiff_cmd)
+        # cmd = "chmod +x " + diff_script
+        # si.system(cmd)
+        # msg = []
+        # msg.append("Diff with:")
+        # msg.append("> " + vimdiff_cmd)
+        # msg.append("or running:")
+        # msg.append("> " + diff_script)
+        # # TODO(gp): Understand why mypy reports:
+        # #   Incompatible types in assignment (expression has type "str",
+        # #   variable has type "List[str]")
+        # msg = "\n".join(msg)  # type: ignore
+        # _LOG.error(msg)
+        # # Print stack trace.
+        # raise RuntimeError(msg)
 
 
 class TestCase(unittest.TestCase):
@@ -259,6 +313,13 @@ class TestCase(unittest.TestCase):
         # Force matplotlib to close plots to decouple tests.
         plt.close()
         plt.clf()
+        # Delete the scratch dir, if needed.
+        if self._scratch_dir and os.path.exists(self._scratch_dir):
+            if get_incremental_tests():
+                _LOG.warning("Skipping deleting %s", self._scratch_dir)
+            else:
+                _LOG.debug("Deleting %s", self._scratch_dir)
+                io_.delete_dir(self._scratch_dir)
 
     def create_io_dirs(self):
         dir_name = self.get_input_dir()
@@ -324,8 +385,6 @@ class TestCase(unittest.TestCase):
         contained in the file and/or updates the golden reference file with the
         actual outcome.
 
-        :param: actual
-
         Raises if there is an error.
         """
         dbg.dassert_in(type(actual), (bytes, str))
@@ -337,6 +396,9 @@ class TestCase(unittest.TestCase):
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
         _LOG.debug("file_name=%s", file_name)
+        # Remove reference from the current purify.
+        actual = purify_txt_from_client(actual)
+        #
         if get_update_tests():
             # Update the test result.
             outcome_updated = False
@@ -379,7 +441,7 @@ class TestCase(unittest.TestCase):
                 # No golden outcome available: save the result in a tmp file.
                 tmp_file_name = file_name + ".tmp"
                 io_.to_file(tmp_file_name, actual)
-                msg = "Can't find golden in %s: saved actual outcome in %s" % (
+                msg = "Can't find golden in %s\nSaved actual outcome in %s" % (
                     file_name,
                     tmp_file_name,
                 )
@@ -388,7 +450,6 @@ class TestCase(unittest.TestCase):
     def _get_test_name(self) -> str:
         """
         :return: full test name as class.method.
-        :rtype: str
         """
         return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
 
@@ -406,9 +467,9 @@ class TestCase(unittest.TestCase):
         return dir_name
 
 
-# #############################################################################
+# ###############################################################################
 # Notebook testing.
-# #############################################################################
+# ###############################################################################
 
 
 def run_notebook(file_name: str, scratch_dir: str) -> None:

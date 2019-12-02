@@ -1,9 +1,10 @@
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 
 import pytest
 
+import dev_scripts.linter as lntr
 import dev_scripts.url as url
 import helpers.conda as hco
 import helpers.dbg as dbg
@@ -69,7 +70,7 @@ class Test_env1(ut.TestCase):
 #  annotations from pyannotate.
 
 
-class Test_set_env1(ut.TestCase):
+class Test_set_env_amp(ut.TestCase):
     def test_setenv_py1(self) -> None:
         """
         Find _setenv_amp.py executable and run it.
@@ -97,11 +98,13 @@ class Test_set_env1(ut.TestCase):
         dbg.dassert_exists(executable)
         # Run _setup.py and get its output.
         _, txt = si.system_to_string(executable)
-        txt = ut.purify_from_client(txt)
+        # This test is ran from different repos.
+        txt = ut.remove_amp_references(txt)
         # There is a difference between running the same test from different
         # repos, so we remove this line.
         # echo 'curr_path=$GIT_ROOT/amp' |     echo 'curr_path=$GIT_ROOT'
         txt = ut.filter_text("curr_path=", txt)
+        txt = ut.filter_text("server_name=", txt)
         self.check_string(txt)
 
     def test_setenv_sh1(self) -> None:
@@ -269,32 +272,45 @@ dependencies:
 
 
 class Test_linter_py1(ut.TestCase):
-    def test_linter1(self) -> None:
-        horrible_python_code = r"""
+    @staticmethod
+    def _get_horrible_python_code1() -> str:
+        txt = r"""
 import python
 
 
 if __name__ == "main":
     txt = "hello"
     m = re.search("\s", txt)
-"""
+        """
+        return txt
+
+    def _write_input_file(self, txt: str) -> Tuple[str, str]:
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "input.py")
         file_name = os.path.abspath(file_name)
-        io_.to_file(file_name, horrible_python_code)
-        #
-        linter_log = "./linter.log"
-        # We run in the target dir so we have only relative paths, and we can
-        # do a check of the output.
-        base_name = os.path.basename(file_name)
-        cmd = (
-            f"cd {dir_name} && linter.py -f {base_name} --linter_log "
-            f"{linter_log}"
-        )
-        si.system(cmd, abort_on_error=False)
+        io_.to_file(file_name, txt)
+        return dir_name, file_name
+
+    def _run_linter(
+        self, file_name: str, linter_log: str, as_system_call: bool
+    ) -> str:
+        if as_system_call:
+            cmd = []
+            cmd.append(f"linter.py -f {file_name} --linter_log {linter_log}")
+            cmd_as_str = " ".join(cmd)
+            # We need to ignore the errors reported by the script, since it
+            # represents how many lints were found.
+            si.system(cmd_as_str, abort_on_error=False)
+        else:
+            parser = lntr._parser()
+            args = parser.parse_args(
+                ["-f", file_name, "--linter_log", linter_log]
+            )
+            lntr._main(args)
         # Read log.
-        linter_log = os.path.abspath(os.path.join(dir_name, linter_log))
+        _LOG.debug("linter_log=%s", linter_log)
         txt = io_.from_file(linter_log, split=False)
+        # Process log.
         output = []
         for l in txt.split("\n"):
             # Remove the line:
@@ -302,6 +318,299 @@ if __name__ == "main":
             if "cmd line=" in l:
                 continue
             output.append(l)
-        output = "\n".join(output)
+        output_as_str = "\n".join(output)
+        return output_as_str
+
+    def _helper(self, txt: str, as_system_call: bool) -> str:
+        # Create file to lint.
+        dir_name, file_name = self._write_input_file(txt)
+        # Run.
+        dir_name = self.get_scratch_space()
+        linter_log = "linter.log"
+        linter_log = os.path.abspath(os.path.join(dir_name, linter_log))
+        output = self._run_linter(file_name, linter_log, as_system_call)
+        # We run the same test from different repos.
+        output = ut.remove_amp_references(output)
+        return output
+
+    def test_linter1(self) -> None:
+        txt = self._get_horrible_python_code1()
+        # Run.
+        as_system_call = True
+        output = self._helper(txt, as_system_call)
         # Check.
         self.check_string(output)
+
+    def test_linter2(self) -> None:
+        txt = self._get_horrible_python_code1()
+        # Run.
+        as_system_call = False
+        output = self._helper(txt, as_system_call)
+        # Check.
+        self.check_string(output)
+
+    # ##########################################################################
+
+    def _helper_check_shebang(
+        self, file_name: str, txt: str, is_executable: bool, exp: str,
+    ) -> None:
+        txt_array = txt.split("\n")
+        msg = lntr._CustomPythonChecks._check_shebang(
+            file_name, txt_array, is_executable
+        )
+        self.assert_equal(msg, exp)
+
+    def test_check_shebang1(self) -> None:
+        """
+        Executable with wrong shebang: error.
+        """
+        file_name = "exec.py"
+        txt = """#!/bin/bash
+hello
+world
+"""
+        is_executable = True
+        exp = "exec.py:1: any executable needs to start with a shebang '#!/usr/bin/env python'"
+        self._helper_check_shebang(file_name, txt, is_executable, exp)
+
+    def test_check_shebang2(self) -> None:
+        """
+        Executable with the correct shebang: correct.
+        """
+        file_name = "exec.py"
+        txt = """#!/usr/bin/env python
+hello
+world
+"""
+        is_executable = True
+        exp = ""
+        self._helper_check_shebang(file_name, txt, is_executable, exp)
+
+    def test_check_shebang3(self) -> None:
+        """
+        Non executable with a shebang: error.
+        """
+        file_name = "exec.py"
+        txt = """#!/usr/bin/env python
+hello
+world
+"""
+        is_executable = False
+        exp = "exec.py:1: any executable needs to start with a shebang '#!/usr/bin/env python'"
+        self._helper_check_shebang(file_name, txt, is_executable, exp)
+
+    def test_check_shebang4(self) -> None:
+        """
+        Library without a shebang: correct.
+        """
+        file_name = "lib.py"
+        txt = '''"""
+Import as:
+
+import _setenv_lib as selib
+'''
+        is_executable = False
+        exp = ""
+        self._helper_check_shebang(file_name, txt, is_executable, exp)
+
+    # #########################
+
+    def _helper_was_baptized(self, file_name: str, txt: str, exp: str) -> None:
+        txt_array = txt.split("\n")
+        msg = lntr._CustomPythonChecks._was_baptized(file_name, txt_array)
+        self.assert_equal(msg, exp)
+
+    def test_was_baptized1(self) -> None:
+        """
+        Correct import.
+        """
+        file_name = "lib.py"
+        txt = '''"""
+Import as:
+
+import _setenv_lib as selib
+'''
+        exp = ""
+        self._helper_was_baptized(file_name, txt, exp)
+
+    def test_was_baptized2(self) -> None:
+        """
+        Invalid.
+        """
+        file_name = "lib.py"
+        txt = """
+Import as:
+
+"""
+        exp = '''lib.py:1: every library needs to describe how to be imported:
+"""
+Import as:
+
+import foo.bar as fba
+"""'''
+        self._helper_was_baptized(file_name, txt, exp)
+
+    # #########################
+
+    def _helper_check_text(self, file_name: str, txt: str, exp: str) -> None:
+        txt_array = txt.split("\n")
+        output, txt_new = lntr._CustomPythonChecks._check_text(
+            file_name, txt_array
+        )
+        actual: List[str] = []
+        actual.append("# output")
+        actual.extend(output)
+        actual.append("# txt_new")
+        actual.extend(txt_new)
+        actual_as_str = "\n".join(actual)
+        self.assert_equal(actual_as_str, exp)
+
+    def test_check_text1(self) -> None:
+        """
+        Valid import.
+        """
+        file_name = "lib.py"
+        txt = "from typing import List"
+        exp = """# output
+# txt_new
+from typing import List"""
+        self._helper_check_text(file_name, txt, exp)
+
+    def test_check_text2(self) -> None:
+        """
+        Invalid import.
+        """
+        file_name = "lib.py"
+        txt = "from pandas import DataFrame"
+        exp = """# output
+lib.py:1: do not use 'from pandas import DataFrame' use 'import foo.bar as fba'
+# txt_new
+from pandas import DataFrame"""
+        self._helper_check_text(file_name, txt, exp)
+
+    def test_check_text3(self) -> None:
+        """
+        Invalid import.
+        """
+        file_name = "lib.py"
+        txt = "import pandas as a_very_long_name"
+        exp = """# output
+lib.py:1: the import shortcut 'a_very_long_name' in 'import pandas as a_very_long_name' is longer than 5 characters
+# txt_new
+import pandas as a_very_long_name"""
+        self._helper_check_text(file_name, txt, exp)
+
+    def test_check_text4(self) -> None:
+        """
+        Conflict markers.
+        """
+        file_name = "lib.py"
+        txt = """import pandas as pd
+<<<<<<< HEAD
+hello
+=======
+world
+>>>>>>>
+"""
+        exp = """# output
+lib.py:2: there are conflict markers
+lib.py:4: there are conflict markers
+lib.py:6: there are conflict markers
+# txt_new
+import pandas as pd
+<<<<<<< HEAD
+hello
+=======
+world
+>>>>>>>"""
+        self._helper_check_text(file_name, txt, exp)
+
+    def test_check_text5(self) -> None:
+        file_name = "lib.py"
+        # We use some _ to avoid to get a replacement from the linter here.
+        txt = """
+from typing import List
+
+# _#_#_#_#_#_#_#_##
+# hello
+# =_=_=_=_=
+""".replace(
+            "_", ""
+        )
+        exp = """# output
+# txt_new
+
+from typing import List
+
+# ###############################################################################
+# hello
+# ==============================================================================="""
+        self._helper_check_text(file_name, txt, exp)
+
+    # #########################
+
+    def _helper_check_notebook_dir(self, file_name: str, exp: str) -> None:
+        msg = lntr._CheckFileProperty._check_notebook_dir(file_name)
+        self.assert_equal(msg, exp)
+
+    def test_check_notebook_dir1(self):
+        """
+        The notebook is not under 'notebooks': invalid.
+        """
+        file_name = "hello/world/notebook.ipynb"
+        exp = "hello/world/notebook.ipynb:1: each notebook should be under a 'notebooks' directory to not confuse pytest"
+        self._helper_check_notebook_dir(file_name, exp)
+
+    def test_check_notebook_dir2(self):
+        """
+        The notebook is under 'notebooks': valid.
+        """
+        file_name = "hello/world/notebooks/notebook.ipynb"
+        exp = ""
+        self._helper_check_notebook_dir(file_name, exp)
+
+    def test_check_notebook_dir3(self):
+        """
+        It's not a notebook: valid.
+        """
+        file_name = "hello/world/notebook.py"
+        exp = ""
+        self._helper_check_notebook_dir(file_name, exp)
+
+    # #########################
+
+    def _helper_check_test_file_dir(self, file_name: str, exp: str) -> None:
+        msg = lntr._CheckFileProperty._check_test_file_dir(file_name)
+        self.assert_equal(msg, exp)
+
+    def test_check_test_file_dir1(self):
+        """
+        Test is under `test`: valid.
+        """
+        file_name = "hello/world/test/test_all.py"
+        exp = ""
+        self._helper_check_test_file_dir(file_name, exp)
+
+    def test_check_test_file_dir2(self):
+        """
+        Test is not under `test`: invalid.
+        """
+        file_name = "hello/world/test_all.py"
+        exp = "hello/world/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
+        self._helper_check_test_file_dir(file_name, exp)
+
+    def test_check_test_file_dir3(self):
+        """
+        Test is not under `test`: invalid.
+        """
+        file_name = "hello/world/tests/test_all.py"
+        exp = "hello/world/tests/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
+        self._helper_check_test_file_dir(file_name, exp)
+
+    def test_check_test_file_dir4(self):
+        """
+        It's a notebook: valid.
+        """
+        file_name = "hello/world/tests/test_all.ipynb"
+        exp = ""
+        self._helper_check_test_file_dir(file_name, exp)
