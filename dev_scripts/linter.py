@@ -1221,7 +1221,7 @@ class _CustomPythonChecks(_Action):
                 _LOG.debug("regex=%s", regex)
                 m = re.match(regex, line)
                 if m:
-                    line = m.group(1) + " " + char * (80 - len(m.group(1)))
+                    line = m.group(1) + " " + char * (78 - len(m.group(1)))
             #
             _LOG.debug("    -> %s", line)
             txt_new.append(line)

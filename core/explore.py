@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 import scipy
 import seaborn as sns
+import sklearn
+import sklearn.decomposition
 import statsmodels
 import statsmodels.api
 import tqdm.autonotebook as tqdm
@@ -31,9 +33,9 @@ import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
-# ###############################################################################
+# #############################################################################
 # Helpers.
-# ###############################################################################
+# #############################################################################
 
 
 # TODO(gp): Not sure this is the right place.
@@ -75,7 +77,7 @@ def cast_to_series(obj):
 # TODO(gp): Need to be tested.
 def adapt_to_series(f):
     """
-    Decorator allowing a function working on data frames to work on series.
+    Decorate a function working on data frames in order to work on series.
     """
 
     def wrapper(obj, *args, **kwargs):
@@ -97,10 +99,12 @@ def adapt_to_series(f):
                 res = cast_to_series(res)
         return res
 
+    return wrapper
 
-# ###############################################################################
+
+# #############################################################################
 # Pandas helpers.
-# ###############################################################################
+# #############################################################################
 
 
 def drop_axis_with_all_nans(
@@ -164,7 +168,7 @@ def drop_axis_with_all_nans(
 
 def drop_na(df, drop_infs=False, report_stats=False, *args, **kwargs):
     """
-    Wrapper around pd.dropna() reporting information about the removed rows.
+    Improve pd.dropna() by reporting information about the removed rows.
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     num_rows_before = df.shape[0]
@@ -301,9 +305,9 @@ def add_pct(
     return df
 
 
-# ###############################################################################
+# #############################################################################
 # Pandas data structure stats.
-# ###############################################################################
+# #############################################################################
 
 
 # TODO(gp): Explain what this is supposed to do.
@@ -359,7 +363,7 @@ def print_column_variability(
     """
     print(("# df.columns=%s" % pri.list_to_str(df.columns)))
     res = []
-    for c in tqdm(df.columns):
+    for c in tqdm.tqdm(df.columns):
         vals = df[c].unique()
         min_val = min(vals)
         max_val = max(vals)
@@ -416,9 +420,9 @@ def find_common_columns(names, dfs):
     return df
 
 
-# ###############################################################################
+# #############################################################################
 # Filter.
-# ###############################################################################
+# #############################################################################
 
 
 def remove_columns(df, cols, log_level=logging.DEBUG):
@@ -519,9 +523,9 @@ def filter_by_val(
     return res
 
 
-# ###############################################################################
+# #############################################################################
 # Plotting
-# ###############################################################################
+# #############################################################################
 
 # TODO(gp): Use this everywhere. Use None as default value.
 _FIG_SIZE = (20, 5)
@@ -805,11 +809,9 @@ def plot_pca_analysis(df, plot_explained_variance=False, num_pcs_to_plot=0):
     - explained variance
     - eigenvectors components
     """
-    from sklearn.decomposition import PCA
-
     # Compute PCA.
     corr = df.corr(method="pearson")
-    pca = PCA()
+    pca = sklearn.decomposition.PCA()
     pca.fit(df.fillna(0.0))
     explained_variance = pd.Series(pca.explained_variance_ratio_)
     # Find indices of assets with no nans in the covariance matrix.
@@ -949,22 +951,22 @@ def rolling_pca_over_time(
     # Compute rolling correlation.
     corr_df = rolling_corr_over_time(df, com, nan_mode)
     # Compute eigvalues and eigenvectors.
-    eigval_df = []
-    eigvec_df = []
+    eigvals = []
+    eigvecs = []
     timestamps = corr_df.index.get_level_values(0).unique()
-    for dt in tqdm(timestamps):
+    for dt in tqdm.tqdm(timestamps):
         eigval, eigvec = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
-        eigval_df.append(eigval)
-        eigvec_df.append(eigvec)
+        eigvals.append(eigval)
+        eigvecs.append(eigvec)
     # Package results.
-    eigval_df = pd.DataFrame(eigval_df, index=timestamps)
+    eigval_df = pd.DataFrame(eigvals, index=timestamps)
     dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
     dbg.dassert_monotonic_index(eigval_df)
     # Normalize by sum.
     # TODO(gp): Move this up.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
     #
-    eigvec_df = pd.concat(eigvec_df, axis=0)
+    eigvec_df = pd.concat(eigvecs, axis=0)
     dbg.dassert_eq(
         len(eigvec_df.index.get_level_values(0).unique()), len(timestamps)
     )
@@ -1101,7 +1103,7 @@ def jointplot(
     **kwargs: Any,
 ) -> None:
     """
-    Wrapper to perform a scatterplot of two columns of a dataframe using
+    Perform a scatterplot of two columns of a dataframe using
     seaborn.jointplot().
 
     :param df: dataframe
@@ -1303,6 +1305,8 @@ def ols_regress_series(
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """
+    Regress two series against each other.
+
     Wrapper around regress() to regress series against each other.
     """
     srs1 = to_series(srs1).copy()
@@ -1395,16 +1399,15 @@ def robust_regression(
     # From http://scikit-learn.org/stable/auto_examples/linear_model/
     #   plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py
     # TODO(gp): Add also TheilSenRegressor and HuberRegressor.
-    from sklearn import linear_model
 
     dbg.dassert_eq(len(predictor_vars), 1)
     y = df[predicted_var]
     X = df[predictor_vars]
     # Fit line using all data.
-    lr = linear_model.LinearRegression()
+    lr = sklearn.linear_model.LinearRegression()
     lr.fit(X, y)
     # Robustly fit linear model with RANSAC algorithm.
-    ransac = linear_model.RANSACRegressor()
+    ransac = sklearn.linear_model.RANSACRegressor()
     ransac.fit(X, y)
     inlier_mask = ransac.inlier_mask_
     outlier_mask = np.logical_not(inlier_mask)
@@ -1444,23 +1447,23 @@ def robust_regression(
         plt.ylabel(predicted_var)
 
 
-# ###############################################################################
+# #############################################################################
 # Statistics.
-# ###############################################################################
+# #############################################################################
 
 
 def adf(srs, verbose=False):
     """
-    Wrapper around statsmodels.adfuller().
+    Implement adfuller test as a wrapper around statsmodels.adfuller().
 
     :param verbose: return all info, instead of just p-value.
     :return: srs
     """
-    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
     srs = cast_to_series(srs)
-    from statsmodels.tsa.stattools import adfuller
+    import statsmodels.tsa.stattools as sts
 
-    adf_stat, pvalue, usedlag, nobs, critical_values, icbest = adfuller(
+    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
+    adf_stat, pvalue, usedlag, nobs, critical_values, icbest = sts.adfuller(
         srs.values
     )
     # E.g.,
@@ -1487,9 +1490,9 @@ def adf(srs, verbose=False):
     return res
 
 
-# ###############################################################################
+# #############################################################################
 # Printing
-# ###############################################################################
+# #############################################################################
 
 
 def display_df(
