@@ -38,20 +38,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): Not sure this is the right place.
-def find_duplicates(vals):
-    """
-    Find the elements duplicated in a list.
-    """
-    dbg.dassert_isinstance(vals, list)
-    # Count the occurrences of each element of the seq.
-    # TODO(gp): Consider replacing with pd.Series.value_counts.
-    v_to_num = [(v, vals.count(v)) for v in set(vals)]
-    # Build list of elems with duplicates.
-    res = [v for v, n in v_to_num if n > 1]
-    return res
-
-
 # TODO(gp): Move this to helpers/pandas_helpers.py
 
 
@@ -102,9 +88,9 @@ def adapt_to_series(f):
     return wrapper
 
 
-# #############################################################################
+# ###############################################################################
 # Pandas helpers.
-# #############################################################################
+# ###############################################################################
 
 
 def drop_axis_with_all_nans(
@@ -168,7 +154,7 @@ def drop_axis_with_all_nans(
 
 def drop_na(df, drop_infs=False, report_stats=False, *args, **kwargs):
     """
-    Improve pd.dropna() by reporting information about the removed rows.
+    Wrapper around pd.dropna() reporting information about the removed rows.
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     num_rows_before = df.shape[0]
@@ -305,9 +291,9 @@ def add_pct(
     return df
 
 
-# #############################################################################
+# ###############################################################################
 # Pandas data structure stats.
-# #############################################################################
+# ###############################################################################
 
 
 # TODO(gp): Explain what this is supposed to do.
@@ -420,9 +406,9 @@ def find_common_columns(names, dfs):
     return df
 
 
-# #############################################################################
+# ###############################################################################
 # Filter.
-# #############################################################################
+# ###############################################################################
 
 
 def remove_columns(df, cols, log_level=logging.DEBUG):
@@ -523,9 +509,9 @@ def filter_by_val(
     return res
 
 
-# #############################################################################
+# ###############################################################################
 # Plotting
-# #############################################################################
+# ###############################################################################
 
 # TODO(gp): Use this everywhere. Use None as default value.
 _FIG_SIZE = (20, 5)
@@ -543,7 +529,8 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     :param max_num: max number of columns to plot.
     """
     # Check that there are no repeated columns.
-    dbg.dassert_eq(len(find_duplicates(df.columns.tolist())), 0)
+    # TODO(gp): dassert_no_duplicates
+    dbg.dassert_eq(len(hlist.find_duplicates(df.columns.tolist())), 0)
     # Note that the plot assumes that the first column is at the bottom of the
     # graph.
     # Assign 1.0 to all the non-nan value.
@@ -925,16 +912,7 @@ def _get_eigvals_eigvecs(
     #
     if (eigval == 0).all():
         eigvec = np.nan * eigvec
-    #
-    if (eigval == 0).all():
-        eigvec = np.nan * eigvec
-    eigvec_df_tmp = pd.DataFrame(eigvec, index=df_tmp.columns)
-    # Add another index.
-    eigvec_df_tmp.index.name = ""
-    eigvec_df_tmp.reset_index(inplace=True)
-    eigvec_df_tmp.insert(0, "datetime", dt)
-    eigvec_df_tmp.set_index(["datetime", ""], inplace=True)
-    return eigval, eigvec_df_tmp
+    return eigval, eigvec
 
 
 def rolling_pca_over_time(
@@ -951,22 +929,24 @@ def rolling_pca_over_time(
     # Compute rolling correlation.
     corr_df = rolling_corr_over_time(df, com, nan_mode)
     # Compute eigvalues and eigenvectors.
-    eigvals = []
-    eigvecs = []
     timestamps = corr_df.index.get_level_values(0).unique()
-    for dt in tqdm.tqdm(timestamps):
-        eigval, eigvec = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
-        eigvals.append(eigval)
-        eigvecs.append(eigvec)
+    eigval = np.zeros((timestamps.shape[0], df.shape[1]))
+    eigvec = np.zeros((timestamps.shape[0], df.shape[1], df.shape[1]))
+    for i, dt in tqdm.tqdm(enumerate(timestamps), total=timestamps.shape[0]):
+        eigval[i], eigvec[i] = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
     # Package results.
-    eigval_df = pd.DataFrame(eigvals, index=timestamps)
+    eigval_df = pd.DataFrame(eigval, index=timestamps)
     dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
     dbg.dassert_monotonic_index(eigval_df)
     # Normalize by sum.
     # TODO(gp): Move this up.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
     #
-    eigvec_df = pd.concat(eigvecs, axis=0)
+    eigvec = eigvec.reshape((-1, eigvec.shape[-1]))
+    idx = pd.MultiIndex.from_product(
+        [timestamps, df.columns], names=["datetime", None]
+    )
+    eigvec_df = pd.DataFrame(eigvec, index=idx, columns=range(df.shape[1]))
     dbg.dassert_eq(
         len(eigvec_df.index.get_level_values(0).unique()), len(timestamps)
     )
@@ -1539,7 +1519,9 @@ def display_df(
     #
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_eq(
-        find_duplicates(df.columns.tolist()), [], msg="Find duplicated columns"
+        hlist.find_duplicates(df.columns.tolist()),
+        [],
+        msg="Find duplicated columns",
     )
     if tag is not None:
         print(tag)

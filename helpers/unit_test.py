@@ -1,5 +1,5 @@
 """
-# Import as:
+Import as:
 
 import helpers.unit_test as ut
 """
@@ -24,7 +24,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ###############################################################################
+# #############################################################################
 
 # Global setter / getter for updating test.
 
@@ -41,7 +41,7 @@ def get_update_tests() -> bool:
     return _UPDATE_TESTS
 
 
-# ###############################################################################
+# #############################################################################
 
 # Global setter / getter for incremental mode.
 
@@ -58,7 +58,7 @@ def get_incremental_tests() -> bool:
     return _INCREMENTAL_TESTS
 
 
-# ###############################################################################
+# #############################################################################
 
 
 def to_string(var):
@@ -100,6 +100,7 @@ def get_df_signature(df, num_rows=3):
     return txt
 
 
+# TODO(gp): Maybe it's more general than this file.
 def filter_text(regex: str, txt: str) -> str:
     """
     Remove lines in `txt` that match the regex `regex`.
@@ -148,40 +149,41 @@ def purify_txt_from_client(txt: str) -> str:
     return txt
 
 
-def diff_files(file_name1: str, file_name2: str, tag: Optional[str]=None):
-        # Diff to screen.
-        _, res = si.system_to_string(
-            "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
-            abort_on_error=False,
-            log_level=logging.DEBUG,
-        )
-        if tag is not None:
-            _LOG.error("%s", "\n" + prnt.frame(tag))
-        _LOG.error(res)
-        # Report how to diff.
-        vimdiff_cmd = "vimdiff %s %s" % (
-            os.path.abspath(file_name1),
-            os.path.abspath(file_name2),
-        )
-        # Save a script to diff.
-        diff_script = "./tmp_diff.sh"
-        io_.to_file(diff_script, vimdiff_cmd)
-        cmd = "chmod +x " + diff_script
-        si.system(cmd)
-        msg = []
-        msg.append("Diff with:")
-        msg.append("> " + vimdiff_cmd)
-        msg.append("or running:")
-        msg.append("> " + diff_script)
-        # TODO(gp): Understand why mypy reports:
-        #   Incompatible types in assignment (expression has type "str",
-        #   variable has type "List[str]")
-        msg = "\n".join(msg)  # type: ignore
-        _LOG.error(msg)
-        # Print stack trace.
-        raise RuntimeError(msg)
+def diff_files(file_name1: str, file_name2: str, tag: Optional[str] = None):
+    # Diff to screen.
+    _, res = si.system_to_string(
+        "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
+        abort_on_error=False,
+        log_level=logging.DEBUG,
+    )
+    if tag is not None:
+        _LOG.error("%s", "\n" + prnt.frame(tag))
+    _LOG.error(res)
+    # Report how to diff.
+    vimdiff_cmd = "vimdiff %s %s" % (
+        os.path.abspath(file_name1),
+        os.path.abspath(file_name2),
+    )
+    # Save a script to diff.
+    diff_script = "./tmp_diff.sh"
+    io_.to_file(diff_script, vimdiff_cmd)
+    cmd = "chmod +x " + diff_script
+    si.system(cmd)
+    msg = []
+    msg.append("Diff with:")
+    msg.append("> " + vimdiff_cmd)
+    msg.append("or running:")
+    msg.append("> " + diff_script)
+    # TODO(gp): Understand why mypy reports:
+    #   Incompatible types in assignment (expression has type "str",
+    #   variable has type "List[str]")
+    msg = "\n".join(msg)  # type: ignore
+    _LOG.error(msg)
+    # Print stack trace.
+    raise RuntimeError(msg)
 
-# ###############################################################################
+
+# #############################################################################
 
 
 # TODO(gp): Make these functions static of TestCase.
@@ -467,9 +469,9 @@ class TestCase(unittest.TestCase):
         return dir_name
 
 
-# ###############################################################################
+# #############################################################################
 # Notebook testing.
-# ###############################################################################
+# #############################################################################
 
 
 def run_notebook(file_name: str, scratch_dir: str) -> None:

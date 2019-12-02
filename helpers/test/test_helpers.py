@@ -5,9 +5,10 @@ import pytest
 
 import helpers.env as env
 import helpers.git as git
+import helpers.list as hlist
 import helpers.printing as prnt
-import helpers.system_interaction as si
 import helpers.s3 as hs3
+import helpers.system_interaction as si
 import helpers.unit_test as ut
 import helpers.user_credentials as usc
 
@@ -116,6 +117,39 @@ class Test_git1(ut.TestCase):
             # Jenkins checks out amp repo in directories with different names,
             # e.g., amp.dev.build_clean_env.run_slow_coverage_tests.
             self.assert_equal(os.path.basename(amp_dir), "amp")
+
+
+# #############################################################################
+# list.py
+# #############################################################################
+
+
+class Test_list_1(ut.TestCase):
+    def test_find_duplicates1(self):
+        list_ = "a b c d".split()
+        list_out = hlist.find_duplicates(list_)
+        self.assertEqual(list_out, [])
+
+    def test_find_duplicates2(self):
+        list_ = "a b c a d e f f".split()
+        list_out = hlist.find_duplicates(list_)
+        self.assertEqual(set(list_out), set("a f".split()))
+
+    def test_remove_duplicates1(self):
+        list_ = "a b c d".split()
+        list_out = hlist.remove_duplicates(list_)
+        self.assertEqual(list_out, "a b c d".split())
+
+    def test_remove_duplicates2(self):
+        list_ = "a b c a d e f f".split()
+        list_out = hlist.remove_duplicates(list_)
+        self.assertEqual(list_out, "a b c d e f".split())
+
+    def test_remove_duplicates3(self):
+        list_ = "a b c a d e f f".split()
+        list_ = list(reversed(list_))
+        list_out = hlist.remove_duplicates(list_)
+        self.assertEqual(list_out, "f e d a c b".split())
 
 
 # #############################################################################

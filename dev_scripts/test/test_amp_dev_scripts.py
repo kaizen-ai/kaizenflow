@@ -349,7 +349,7 @@ if __name__ == "main":
         # Check.
         self.check_string(output)
 
-    # ##########################################################################
+    # #########################################################################
 
     def _helper_check_shebang(
         self, file_name: str, txt: str, is_executable: bool, exp: str,
@@ -413,7 +413,7 @@ import _setenv_lib as selib
         exp = ""
         self._helper_check_shebang(file_name, txt, is_executable, exp)
 
-    # #########################
+    # #########################################################################
 
     def _helper_was_baptized(self, file_name: str, txt: str, exp: str) -> None:
         txt_array = txt.split("\n")
@@ -450,11 +450,13 @@ import foo.bar as fba
 """'''
         self._helper_was_baptized(file_name, txt, exp)
 
-    # #########################
+    # #########################################################################
 
-    def _helper_check_text(self, file_name: str, txt: str, exp: str) -> None:
+    def _helper_check_line_by_line(
+        self, file_name: str, txt: str, exp: str
+    ) -> None:
         txt_array = txt.split("\n")
-        output, txt_new = lntr._CustomPythonChecks._check_text(
+        output, txt_new = lntr._CustomPythonChecks._check_line_by_line(
             file_name, txt_array
         )
         actual: List[str] = []
@@ -465,7 +467,7 @@ import foo.bar as fba
         actual_as_str = "\n".join(actual)
         self.assert_equal(actual_as_str, exp)
 
-    def test_check_text1(self) -> None:
+    def test_check_line_by_line1(self) -> None:
         """
         Valid import.
         """
@@ -474,9 +476,9 @@ import foo.bar as fba
         exp = """# output
 # txt_new
 from typing import List"""
-        self._helper_check_text(file_name, txt, exp)
+        self._helper_check_line_by_line(file_name, txt, exp)
 
-    def test_check_text2(self) -> None:
+    def test_check_line_by_line2(self) -> None:
         """
         Invalid import.
         """
@@ -485,10 +487,12 @@ from typing import List"""
         exp = """# output
 lib.py:1: do not use 'from pandas import DataFrame' use 'import foo.bar as fba'
 # txt_new
-from pandas import DataFrame"""
-        self._helper_check_text(file_name, txt, exp)
+f-r-o-m pandas import DataFrame"""
+        # To avoid the linter to complain.
+        exp = exp.replace("-", "")
+        self._helper_check_line_by_line(file_name, txt, exp)
 
-    def test_check_text3(self) -> None:
+    def test_check_line_by_line3(self) -> None:
         """
         Invalid import.
         """
@@ -497,57 +501,62 @@ from pandas import DataFrame"""
         exp = """# output
 lib.py:1: the import shortcut 'a_very_long_name' in 'import pandas as a_very_long_name' is longer than 5 characters
 # txt_new
-import pandas as a_very_long_name"""
-        self._helper_check_text(file_name, txt, exp)
+i-m-p-o-r-t pandas as a_very_long_name"""
+        # To avoid the linter to complain.
+        exp = exp.replace("-", "")
+        self._helper_check_line_by_line(file_name, txt, exp)
 
-    def test_check_text4(self) -> None:
+    def test_check_line_by_line4(self) -> None:
         """
         Conflict markers.
         """
         file_name = "lib.py"
         txt = """import pandas as pd
-<<<<<<< HEAD
+<-<-<-<-<-<-< HEAD
 hello
-=======
+=-=-=-=-=-=-=
 world
->>>>>>>
+>->->->->->->
 """
+        txt = txt.replace("-", "")
         exp = """# output
 lib.py:2: there are conflict markers
 lib.py:4: there are conflict markers
 lib.py:6: there are conflict markers
 # txt_new
 import pandas as pd
-<<<<<<< HEAD
+<-<-<-<-<-<-< HEAD
 hello
-=======
+=-=-=-=-=-=-=
 world
->>>>>>>"""
-        self._helper_check_text(file_name, txt, exp)
+>->->->->->->
+"""
+        exp = exp.replace("-", "")
+        self._helper_check_line_by_line(file_name, txt, exp)
 
-    def test_check_text5(self) -> None:
+    def test_check_line_by_line5(self) -> None:
         file_name = "lib.py"
-        # We use some _ to avoid to get a replacement from the linter here.
+        # We use some _ to avoid getting a replacement from the linter here.
         txt = """
 from typing import List
 
 # _#_#_#_#_#_#_#_##
 # hello
 # =_=_=_=_=
-""".replace(
-            "_", ""
-        )
+"""
+        txt = txt.replace("_", "")
         exp = """# output
 # txt_new
 
 from typing import List
 
-# ###############################################################################
+# #############################################################################
 # hello
-# ==============================================================================="""
-        self._helper_check_text(file_name, txt, exp)
+# =============================================================================
+"""
+        self._helper_check_line_by_line(file_name, txt, exp)
 
-    # #########################
+    # #########################################################################
 
     def _helper_check_notebook_dir(self, file_name: str, exp: str) -> None:
         msg = lntr._CheckFileProperty._check_notebook_dir(file_name)
@@ -577,7 +586,7 @@ from typing import List
         exp = ""
         self._helper_check_notebook_dir(file_name, exp)
 
-    # #########################
+    # #########################################################################
 
     def _helper_check_test_file_dir(self, file_name: str, exp: str) -> None:
         msg = lntr._CheckFileProperty._check_test_file_dir(file_name)
