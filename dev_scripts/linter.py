@@ -45,6 +45,7 @@ from typing import Any, List, Tuple
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
+import helpers.list as hlist
 import helpers.parser as prsr
 import helpers.printing as pri
 import helpers.system_interaction as si
@@ -1600,6 +1601,7 @@ def _main(args: argparse.Namespace) -> int:
     output.extend(output_tmp)
     # Sort the errors.
     output = sorted(output)
+    output = hlist.remove_duplicates(output)
     # Print linter output.
     print(pri.frame(args.linter_log, char1="/").rstrip("\n"))
     print("\n".join(output) + "\n")
