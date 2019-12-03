@@ -460,7 +460,7 @@ def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
 def skip_apply_func(
     signal: pd.DataFrame,
     skip_size: int,
-    func: Callable[pd.Series, pd.DataFrame],
+    func: Callable[[pd.Series], pd.DataFrame],
     **kwargs
 ) -> pd.DataFrame:
     """
