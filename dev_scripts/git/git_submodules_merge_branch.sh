@@ -44,7 +44,7 @@ cmd="git_submodules_are_updated.sh"
 execute $cmd
 
 # Lint super-module.
-FILES=$(git diff --name-only $FILES)
+FILES=$(git diff --name-only $dst_branch...)
 cmd="linter.py -f $FILES"
 execute $cmd
 
