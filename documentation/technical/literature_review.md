@@ -93,3 +93,35 @@
 -   Next steps:
     -   Read all the bibliography and reproduce some of the results
 -   TODO: Update this to new template
+
+# Time series
+
+## On-Line Learning of Linear Dynamical Systems: Exponential Forgetting in Kalman Filters
+
+-   Paper authors: Mark Kozdoba, Jakub Marecek, Tigran Tchrakian, and Shie
+    Mannor
+-   Review author: Paul, 2019-12-02
+-   Link: https://arxiv.org/abs/1809.05870, https://www.aaai.org/ojs/index.php/AAAI/article/view/4307
+-   Score: 4/5
+-   Summary:
+    -   Interesting insight into how to approximate a non-convex optimization
+        problem with an approximate convex one
+    -   Shows that for observable Linear Dynamical Systems with non-degenerate
+        noise, the dependence of the Kalman filter on the past decays
+        exponentially
+    -   For this class of systems, predictions may be modeled as
+        autoregressions. In practice, not many terms are needed for a "good"
+        approximation.
+    -   The algorithm is on-line
+    -   Comparison to the Kalman filter is formalized with regret bounds
+    -   IBM / Technion research
+-   Praises:
+    -   References standard big works in the time series literature, like
+        West and Harrison (1997) and Hamilton (1994)
+-   Critiques:
+    -   Bounds / constants aren't quantitative
+-   Next steps:
+    -   Look at the code accompanying the paper:
+        https://github.com/jmarecek/OnlineLDS
+    -   Implement and compare to, e.g., z-scoring (a particularly simple case
+        of Kalman filtering)
