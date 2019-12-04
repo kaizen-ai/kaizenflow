@@ -26,7 +26,7 @@ import seaborn as sns
 import sklearn
 import statsmodels
 import statsmodels.api
-import tqdm
+import tqdm.autonotebook as tqdm
 
 import helpers.dbg as dbg
 import helpers.list as hlist
@@ -64,7 +64,7 @@ def cast_to_series(obj):
 # TODO(gp): Need to be tested.
 def adapt_to_series(f):
     """
-    Decorator allowing a function working on data frames to work on series.
+    Decorate a function working on data frames in order to work on series.
     """
 
     def wrapper(obj, *args, **kwargs):
@@ -85,6 +85,8 @@ def adapt_to_series(f):
             else:
                 res = cast_to_series(res)
         return res
+
+    return wrapper
 
 
 # ###############################################################################
@@ -153,7 +155,7 @@ def drop_axis_with_all_nans(
 
 def drop_na(df, drop_infs=False, report_stats=False, *args, **kwargs):
     """
-    Wrapper around pd.dropna() reporting information about the removed rows.
+    Improve pd.dropna() by reporting information about the removed rows.
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     num_rows_before = df.shape[0]
@@ -1283,6 +1285,8 @@ def ols_regress_series(
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """
+    Regress two series against each other.
+
     Wrapper around regress() to regress series against each other.
     """
     srs1 = to_series(srs1).copy()
@@ -1375,16 +1379,15 @@ def robust_regression(
     # From http://scikit-learn.org/stable/auto_examples/linear_model/
     #   plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py
     # TODO(gp): Add also TheilSenRegressor and HuberRegressor.
-    from sklearn import linear_model
 
     dbg.dassert_eq(len(predictor_vars), 1)
     y = df[predicted_var]
     X = df[predictor_vars]
     # Fit line using all data.
-    lr = linear_model.LinearRegression()
+    lr = sklearn.linear_model.LinearRegression()
     lr.fit(X, y)
     # Robustly fit linear model with RANSAC algorithm.
-    ransac = linear_model.RANSACRegressor()
+    ransac = sklearn.linear_model.RANSACRegressor()
     ransac.fit(X, y)
     inlier_mask = ransac.inlier_mask_
     outlier_mask = np.logical_not(inlier_mask)
@@ -1431,16 +1434,16 @@ def robust_regression(
 
 def adf(srs, verbose=False):
     """
-    Wrapper around statsmodels.adfuller().
+    Implement adfuller test as a wrapper around statsmodels.adfuller().
 
     :param verbose: return all info, instead of just p-value.
     :return: srs
     """
-    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
     srs = cast_to_series(srs)
-    from statsmodels.tsa.stattools import adfuller
+    import statsmodels.tsa.stattools as sts
 
-    adf_stat, pvalue, usedlag, nobs, critical_values, icbest = adfuller(
+    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
+    adf_stat, pvalue, usedlag, nobs, critical_values, icbest = sts.adfuller(
         srs.values
     )
     # E.g.,
