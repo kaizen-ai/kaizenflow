@@ -23,12 +23,12 @@ import pandas as pd
 import scipy
 import seaborn as sns
 import sklearn
-import sklearn.decomposition
 import statsmodels
 import statsmodels.api
 import tqdm.autonotebook as tqdm
 
 import helpers.dbg as dbg
+import helpers.list as hlist
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
@@ -79,8 +79,8 @@ def adapt_to_series(f):
         if was_series:
             if isinstance(res, tuple):
                 res_obj, res_tmp = res[0], res[1:]
-                cast_to_series(res_obj)
-                res = tuple([res_obj].extend(res_tmp))
+                res_obj_srs = cast_to_series(res_obj)
+                res = tuple([res_obj_srs].extend(res_tmp))
             else:
                 res = cast_to_series(res)
         return res
@@ -88,9 +88,9 @@ def adapt_to_series(f):
     return wrapper
 
 
-# ###############################################################################
+# #############################################################################
 # Pandas helpers.
-# ###############################################################################
+# #############################################################################
 
 
 def drop_axis_with_all_nans(
@@ -291,9 +291,9 @@ def add_pct(
     return df
 
 
-# ###############################################################################
+# #############################################################################
 # Pandas data structure stats.
-# ###############################################################################
+# #############################################################################
 
 
 # TODO(gp): Explain what this is supposed to do.
@@ -406,9 +406,9 @@ def find_common_columns(names, dfs):
     return df
 
 
-# ###############################################################################
+# #############################################################################
 # Filter.
-# ###############################################################################
+# #############################################################################
 
 
 def remove_columns(df, cols, log_level=logging.DEBUG):
@@ -509,9 +509,9 @@ def filter_by_val(
     return res
 
 
-# ###############################################################################
+# #############################################################################
 # Plotting
-# ###############################################################################
+# #############################################################################
 
 # TODO(gp): Use this everywhere. Use None as default value.
 _FIG_SIZE = (20, 5)
@@ -912,16 +912,7 @@ def _get_eigvals_eigvecs(
     #
     if (eigval == 0).all():
         eigvec = np.nan * eigvec
-    #
-    if (eigval == 0).all():
-        eigvec = np.nan * eigvec
-    eigvec_df_tmp = pd.DataFrame(eigvec, index=df_tmp.columns)
-    # Add another index.
-    eigvec_df_tmp.index.name = ""
-    eigvec_df_tmp.reset_index(inplace=True)
-    eigvec_df_tmp.insert(0, "datetime", dt)
-    eigvec_df_tmp.set_index(["datetime", ""], inplace=True)
-    return eigval, eigvec_df_tmp
+    return eigval, eigvec
 
 
 def rolling_pca_over_time(
@@ -938,22 +929,24 @@ def rolling_pca_over_time(
     # Compute rolling correlation.
     corr_df = rolling_corr_over_time(df, com, nan_mode)
     # Compute eigvalues and eigenvectors.
-    eigval_df = []
-    eigvec_df = []
     timestamps = corr_df.index.get_level_values(0).unique()
-    for dt in tqdm.tqdm(timestamps):
-        eigval, eigvec = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
-        eigval_df.append(eigval)
-        eigvec_df.append(eigvec)
+    eigval = np.zeros((timestamps.shape[0], df.shape[1]))
+    eigvec = np.zeros((timestamps.shape[0], df.shape[1], df.shape[1]))
+    for i, dt in tqdm.tqdm(enumerate(timestamps), total=timestamps.shape[0]):
+        eigval[i], eigvec[i] = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
     # Package results.
-    eigval_df = pd.DataFrame(eigval_df, index=timestamps)
+    eigval_df = pd.DataFrame(eigval, index=timestamps)
     dbg.dassert_eq(eigval_df.shape[0], len(timestamps))
     dbg.dassert_monotonic_index(eigval_df)
     # Normalize by sum.
     # TODO(gp): Move this up.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
     #
-    eigvec_df = pd.concat(eigvec_df, axis=0)
+    eigvec = eigvec.reshape((-1, eigvec.shape[-1]))
+    idx = pd.MultiIndex.from_product(
+        [timestamps, df.columns], names=["datetime", None]
+    )
+    eigvec_df = pd.DataFrame(eigvec, index=idx, columns=range(df.shape[1]))
     dbg.dassert_eq(
         len(eigvec_df.index.get_level_values(0).unique()), len(timestamps)
     )
