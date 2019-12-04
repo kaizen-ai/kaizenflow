@@ -1070,7 +1070,7 @@ class _TestJupytext(_ProcessJupytext):
 
 class _CustomPythonChecks(_Action):
     # The maximum length of an 'import as'.
-    MAX_LEN_IMPORT = 5
+    MAX_LEN_IMPORT = 8
     DEBUG = False
 
     def check_if_possible(self) -> bool:
