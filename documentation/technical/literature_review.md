@@ -101,7 +101,8 @@
 -   Paper authors: Mark Kozdoba, Jakub Marecek, Tigran Tchrakian, and Shie
     Mannor
 -   Review author: Paul, 2019-12-02
--   Link: https://arxiv.org/abs/1809.05870, https://www.aaai.org/ojs/index.php/AAAI/article/view/4307
+-   [arXiv](https://arxiv.org/abs/1809.05870),
+    [AAAI](https://www.aaai.org/ojs/index.php/AAAI/article/view/4307)
 -   Score: 4/5
 -   Summary:
     -   Interesting insight into how to approximate a non-convex optimization
@@ -130,7 +131,7 @@
 
 -   Paper author: Georg M. Goerg
 -   Review author: Paul, 2019-12-03
--   Link: https://storage.googleapis.com/pub-tools-public-publication-data/pdf/b91400f14e27ec9dacf0a389e72fd0e0fa9c2535.pdf
+-   [Link](https://storage.googleapis.com/pub-tools-public-publication-data/pdf/b91400f14e27ec9dacf0a389e72fd0e0fa9c2535.pdf)
 -   Score: 4/5
 -   Summary:
     -   A kernel smoother, but unlike traditional ones, it
@@ -141,9 +142,15 @@
     -   Compatible with deep neural networks (though experiments referenced in
         the paper suggest depth doesn't help, e.g., a wide net with one softmax
         is enough)
+    -   Competitive with SVMs, Random Forests, and DNN
+    -   > Predictive state representations are statistically and computationally
+          efficient for obtaining optimal forecasts of non-linear dynamical
+          systems (Shalizi and Crutchfield, 2001). Examples include time series
+          forecasting via epsilon-machines (Shalizi and Shalizi, 2004)...
 -   Praises:
     -   Combines some clever insights
-    -   References a TensorFlow implementation and other implementations
+    -   References a TensorFlow implementation and suggests that implementing
+        in various frameworks is straightforward
 -   Critiques:
     -   No pointers to actual implementations
     -   Time series applications are referenced in Section 2, but many relevant
