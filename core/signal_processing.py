@@ -412,7 +412,7 @@ def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Serie
     return digitized_srs
 
 
-def _wrap(signal: pd.Series, num_cols) -> pd.DataFrame:
+def _wrap(signal: pd.Series, num_cols: int) -> pd.DataFrame:
     """
     Convert a 1-d series into a 2-d dataframe left-to-right top-to-bottom.
 
@@ -421,14 +421,14 @@ def _wrap(signal: pd.Series, num_cols) -> pd.DataFrame:
     dbg.dassert_isinstance(signal, pd.Series)
     dbg.dassert_lte(1, num_cols)
     values = signal.values
-    _LOG.debug("num values=%f", values.size)
+    _LOG.debug("num values=%d", values.size)
     # Calculate number of rows that wrapped pd.DataFrame should have.
     num_rows = np.ceil(values.size / num_cols).astype(int)
-    _LOG.debug("num_rows=%f", num_rows)
+    _LOG.debug("num_rows=%d", num_rows)
     # Add padding, since numpy's `reshape` requires element counts to match
     # exactly.
     pad_size = num_rows * num_cols - values.size
-    _LOG.debug("pad_size=%f", pad_size)
+    _LOG.debug("pad_size=%d", pad_size)
     padding = np.full(pad_size, np.nan)
     padded_values = np.append(values, padding)
     #
@@ -448,7 +448,7 @@ def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
     _LOG.debug("df.shape=%s", df.shape)
     values = df.values.flatten()
     pad_size = values.size - idx.size
-    _LOG.debug("pad_size=%f", pad_size)
+    _LOG.debug("pad_size=%d", pad_size)
     if pad_size > 0:
         data = values[:-pad_size]
     else:
@@ -460,7 +460,7 @@ def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
 def skip_apply_func(
     signal: pd.DataFrame,
     skip_size: int,
-    func: Callable[..., pd.DataFrame],
+    func: Callable[[pd.Series], pd.DataFrame],
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -472,9 +472,9 @@ def skip_apply_func(
     cols = {}
     for col in signal.columns:
         wrapped = _wrap(signal[col], skip_size)
-        z_wrapped = func(wrapped, **kwargs)
-        z_scored = _unwrap(z_wrapped, signal.index, col)
-        cols[col] = z_scored
+        funced = func(wrapped, **kwargs)
+        unwrapped = _unwrap(funced, signal.index, col)
+        cols[col] = unwrapped
     df = pd.DataFrame.from_dict(cols)
     return df
 

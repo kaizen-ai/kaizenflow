@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
 # """
-# Qualify a branch in amp and then merge it into master.
+# Qualify a branch with multiple Git repos and then merge it into master.
 # """
 
 # TODO(gp): Convert in python.
@@ -30,9 +30,27 @@ execute $cmd
 cmd="git diff --name-only $dst_branch..."
 execute $cmd
 
+cmd="git_submodules_clean.sh"
+execute $cmd
+
+cmd="git_submodules_pull.sh"
+execute $cmd
+
+# Align all the submodules markers.
+cmd="git_submodules_roll_fwd.sh"
+execute $cmd
+
+cmd="git_submodules_are_updated.sh"
+execute $cmd
+
+# Lint super-module.
+FILES=$(git diff --name-only $dst_branch...)
+cmd="linter.py -f $FILES"
+execute $cmd
+
 # Lint amp.
-AMP_FILES=$(git diff --name-only $dst_branch...)
-cmd="linter.py -f $AMP_FILES"
+AMP_FILES=$(cd amp && git diff --name-only $dst_branch...)
+cmd="(cd amp && linter.py -f $AMP_FILES)"
 execute $cmd
 
 # Run tests.
