@@ -125,3 +125,31 @@
         https://github.com/jmarecek/OnlineLDS
     -   Implement and compare to, e.g., z-scoring (a particularly simple case
         of Kalman filtering)
+
+## Predictive State Smoothing (PRESS): Scalable non-parametric regression for high-dimensional data with variable selection
+
+-   Paper author: Georg M. Goerg
+-   Review author: Paul, 2019-12-03
+-   Link: https://storage.googleapis.com/pub-tools-public-publication-data/pdf/b91400f14e27ec9dacf0a389e72fd0e0fa9c2535.pdf
+-   Score: 4/5
+-   Summary:
+    -   A kernel smoother, but unlike traditional ones, it
+        -   allows non-local (with respect to the x-var space) pooling
+        -   is scalable (e.g., computationally efficient)
+    -   PRESS is a generative, probabilistic model
+    -   States are interpretable
+    -   Compatible with deep neural networks (though experiments referenced in
+        the paper suggest depth doesn't help, e.g., a wide net with one softmax
+        is enough)
+-   Praises:
+    -   Combines some clever insights
+    -   References a TensorFlow implementation and other implementations
+-   Critiques:
+    -   No pointers to actual implementations
+    -   Time series applications are referenced in Section 2, but many relevant
+        (to our work) practical ts-specific points are not developed in the
+        paper
+-   Next steps:
+    -   See if someone has already implemented PRESS publicly
+    -   If no implementation is available, scope out how much work a minimal
+        pandas-compatible implementation would require
