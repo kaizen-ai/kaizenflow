@@ -20,6 +20,12 @@ _LOG = logging.getLogger(__name__)
 # to make reference to git again.
 
 
+def _get_first_line(output):
+    output_as_arr = output.split("\n")
+    dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
+    return output_as_arr[0].rstrip().lstrip()
+
+
 # TODO(gp): -> get_user_name(). No stuttering.
 def get_git_name():
     """
@@ -27,10 +33,15 @@ def get_git_name():
     """
     cmd = "git config --get user.name"
     _, output = si.system_to_string(cmd)
-    git_name = output.split("\n")
-    dbg.dassert_eq(len(git_name), 1, "output='%s'", output)
-    git_name = git_name[0]
+    git_name = _get_first_line(output)
     return git_name
+
+
+def get_branch_name():
+    cmd = "git rev-parse --abbrev-ref HEAD"
+    _, output = si.system_to_string(cmd)
+    branch_name = _get_first_line(output)
+    return branch_name
 
 
 # TODO(gp): Add mem caching to some functions below. We assume that one doesn't
