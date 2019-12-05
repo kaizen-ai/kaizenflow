@@ -121,7 +121,7 @@ def _print_gdrive_files(issue_num, repo_github_name):
         #       "gp@particle.one"}
         for f in txt.split("\n"):
             if f.endswith(".gdoc") or f.endswith(".gsheet"):
-                txt_tmp = io_.from_file(f, split=False)
+                txt_tmp = io_.from_file(f)
                 dict_ = json.loads(txt_tmp)
                 print("'%s'" % f)
                 print("  %s" % dict_["url"])
@@ -129,7 +129,7 @@ def _print_gdrive_files(issue_num, repo_github_name):
         _LOG.warning("No env var '%s' so can't look for files there", env_name)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _parse():

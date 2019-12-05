@@ -61,7 +61,7 @@ def _parse_diff_output(input_file, src_dir, dst_dir, args):
     # Read.
     dbg.dassert_exists(input_file)
     _LOG.info("Reading '%s'", input_file)
-    txt = io_.from_file(input_file, split=False)
+    txt = io_.from_file(input_file)
     txt = txt.split("\n")
     # Process.
     out = []
@@ -148,7 +148,7 @@ def _parse_diff_output(input_file, src_dir, dst_dir, args):
         io_.to_file(output_file, out)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _parse():

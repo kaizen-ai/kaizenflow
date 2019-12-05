@@ -130,5 +130,5 @@ def to_json(file_name, obj):
 
 def from_json(file_name):
     dbg.dassert_exists(file_name)
-    obj = json.loads(io_.from_file(file_name, split=False))
+    obj = json.loads(io_.from_file(file_name))
     return obj

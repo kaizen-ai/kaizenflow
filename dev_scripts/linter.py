@@ -410,7 +410,7 @@ class _BasicHygiene(_Action):
         _ = pedantic
         output: List[str] = []
         # Read file.
-        txt = io_.from_file(file_name, split=True)
+        txt = io_.from_file(file_name).split("\n")
         # Process file.
         txt_new: List[str] = []
         for line in txt:
@@ -1085,7 +1085,7 @@ class _CustomPythonChecks(_Action):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return output
         # Read file.
-        txt = io_.from_file(file_name, split=True)
+        txt = io_.from_file(file_name).split("\n")
         # Only library code should be baptized.
         if not is_test_code(file_name):
             # Check shebang.
@@ -1266,7 +1266,7 @@ class _LintMarkdown(_Action):
         #
         # Pre-process text.
         #
-        txt = io_.from_file(file_name, split=True)
+        txt = io_.from_file(file_name).split("\n")
         txt_new: List[str] = []
         for line in txt:
             line = re.sub(r"^\* ", "- STAR", line)
@@ -1289,7 +1289,7 @@ class _LintMarkdown(_Action):
         #
         # Post-process text.
         #
-        txt = io_.from_file(file_name, split=True)
+        txt = io_.from_file(file_name).split("\n")
         txt_new: List[str] = []  # type: ignore
         for i, line in enumerate(txt):
             # Check whether there is TOC otherwise add it.

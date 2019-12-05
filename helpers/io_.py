@@ -11,7 +11,7 @@ import logging
 import os
 import shutil
 import time
-from typing import Any, List, Optional, Union
+from typing import Any, Optional
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -233,10 +233,7 @@ def to_file(file_name, lines, mode="w", force_flush=False):
             os.fsync(f.fileno())
 
 
-# TODO(saggese): Remove the split param.
-def from_file(
-    file_name: str, split: bool = True, encoding: Optional[Any] = None
-) -> Union[str, List[str]]:
+def from_file(file_name: str, encoding: Optional[Any] = None) -> str:
     dbg.dassert_ne(file_name, "")
     dbg.dassert_exists(file_name)
     with open(file_name, "r", encoding=encoding) as f:
@@ -248,11 +245,6 @@ def from_file(
             _LOG.error(msg)
             raise RuntimeError(msg)
         dbg.dassert_isinstance(data, str)
-        if split:
-            # TODO(gp): Understand why mypy reports:
-            # Incompatible types in assignment (expression has type
-            #   "List[str]", variable has type "str")
-            data = data.split("\n")  # type: ignore
     return data
 
 

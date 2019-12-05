@@ -407,7 +407,7 @@ class TestCase(unittest.TestCase):
             file_exists = os.path.exists(file_name)
             if file_exists:
                 # The golden outcome exists.
-                expected = io_.from_file(file_name, split=False)
+                expected = io_.from_file(file_name)
                 if expected != actual:
                     outcome_updated = True
             else:
@@ -430,7 +430,7 @@ class TestCase(unittest.TestCase):
             if os.path.exists(file_name):
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                expected = io_.from_file(file_name, split=False)
+                expected = io_.from_file(file_name)
                 test_name = self._get_test_name()
                 # The problem is that from_file can return a List[str] split =
                 # True, so mypy gets confused:
