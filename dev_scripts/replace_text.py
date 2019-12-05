@@ -86,7 +86,7 @@ def _get_file_names(old_string, dirs, exts):
 
 
 def _look_for(file_name, old_string):
-    txt = io_.from_file(file_name, split=False, encoding=_ENCODING)
+    txt = io_.from_file(file_name, encoding=_ENCODING)
     txt = txt.split("\n")
     res = []
     found = False
@@ -99,7 +99,7 @@ def _look_for(file_name, old_string):
     return found, res
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _replace_with_perl(file_name, old_string, new_string, backup):
@@ -136,7 +136,7 @@ def _replace_with_python(file_name, old_string, new_string, backup):
         cmd = "cp %s %s.bak" % (file_name, file_name)
         si.system(cmd)
     #
-    lines = io_.from_file(file_name, split=True, encoding=_ENCODING)
+    lines = io_.from_file(file_name, encoding=_ENCODING).split("\n")
     lines_out = []
     for line in lines:
         _LOG.debug("line='%s'", line)
@@ -164,7 +164,7 @@ def _replace(file_names_to_process, old_string, new_string, backup, mode):
             raise ValueError("Invalid mode='%s'" % mode)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _custom1(args):
@@ -196,7 +196,7 @@ def _custom1(args):
         exit(0)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _parse():

@@ -309,7 +309,7 @@ if __name__ == "main":
             lntr._main(args)
         # Read log.
         _LOG.debug("linter_log=%s", linter_log)
-        txt = io_.from_file(linter_log, split=False)
+        txt = io_.from_file(linter_log)
         # Process log.
         output = []
         for l in txt.split("\n"):

@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 def _get_docstring(file_name):
     _LOG.debug("file_name=%s", file_name)
-    txt = io_.from_file(file_name, split=False).split("\n")
+    txt = io_.from_file(file_name).split("\n")
     docstring = []
     found = False
     for line in txt:
