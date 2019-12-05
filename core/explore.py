@@ -23,7 +23,7 @@ import pandas as pd
 import scipy
 import seaborn as sns
 import sklearn
-import sklearn.decomposition as decomposition
+import sklearn.decomposition as skl_dec
 import statsmodels
 import statsmodels.api
 import tqdm.autonotebook as tqdm
@@ -799,7 +799,7 @@ def plot_pca_analysis(df, plot_explained_variance=False, num_pcs_to_plot=0):
     """
     # Compute PCA.
     corr = df.corr(method="pearson")
-    pca = decomposition.PCA()
+    pca = skl_dec.PCA()
     pca.fit(df.fillna(0.0))
     explained_variance = pd.Series(pca.explained_variance_ratio_)
     # Find indices of assets with no nans in the covariance matrix.
