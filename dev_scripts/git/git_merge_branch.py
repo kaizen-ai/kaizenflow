@@ -48,8 +48,8 @@ def _qualify_branch(tag: str, dst_branch: str, test_list: str) -> List[str]:
     # - Run tests.
     if True:
         output.append(prnt.frame("%s: unit tests" % tag))
-        cmd = "pytest -k Test_p1_submodules_sanity_check1"
-        #cmd = "run_tests.py --test %s --num_cpus -1" % test_list
+        #cmd = "pytest -k Test_p1_submodules_sanity_check1"
+        cmd = "run_tests.py --test %s --num_cpus -1" % test_list
         output.append("cmd line='%s'" % cmd)
         si.system(cmd, suppress_output=False)
     #
@@ -97,19 +97,42 @@ def _main(parser):
     # If this is master, then raise an error.
     branch_name = git.get_branch_name()
     _LOG.info("Current branch_name: %s", branch_name)
-    msg = "%s -> %s" % (branch_name, args.dst_branch)
+    msg = "Merging: %s -> %s" % (branch_name, args.dst_branch)
     output.append(msg)
     if True:
         dbg.dassert_ne(branch_name, "master", "You can't merge from master")
-    # TODO(gp): Stash and clean.
     # TODO(gp): Make sure the Git client is empty.
-    cmd = "git pull"
-    si.system(cmd)
     # Update the dst branch.
     if True:
         cmd = "git fetch origin %s:%s" % (args.dst_branch, args.dst_branch)
         si.system(cmd)
-    #
+    # Refresh.
+    def _refresh(dst_dir):
+        _LOG.debug("Refreshing dst_dir=%s", dst_dir)
+        cd_cmd = "cd %s && " % dst_dir
+        # Stash and clean.
+        msg = "git_merge_branch"
+        cmd = "git stash save --keep-index '%s' && git stash apply" % msg
+        cmd = cd_cmd + cmd
+        si.system(cmd)
+        # Pull.
+        cmd = "git pull"
+        cmd = cd_cmd + cmd
+        si.system(cmd)
+        # Merge master.
+        cmd = "git merge master --commit --ff-only --no-edit"
+        cmd = cd_cmd + cmd
+        si.system(cmd)
+
+    _refresh(".")
+    if os.path.exists("amp"):
+        _refresh(".")
+    # Qualify amp repo.
+    if os.path.exists("amp"):
+        tag = "amp"
+        output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
+        output.extend(output_tmp)
+
     repo_sym_name = git.get_repo_symbolic_name(super_module=True)
     _LOG.info("repo_sym_name=%s", repo_sym_name)
     # Qualify current repo.
@@ -117,7 +140,7 @@ def _main(parser):
     output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
     output.extend(output_tmp)
     # Qualify amp repo.
-    if False and os.path.exists("amp"):
+    if os.path.exists("amp"):
         tag = "amp"
         output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
         output.extend(output_tmp)
