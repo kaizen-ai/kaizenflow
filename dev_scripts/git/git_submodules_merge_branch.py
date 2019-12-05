@@ -24,28 +24,33 @@ _LOG = logging.getLogger(__name__)
 def _get_changed_files(dst_branch: str) -> List[str]:
     cmd = "git diff --name-only %s..." % dst_branch
     _, output = si.system_to_string(cmd)
-    file_names = output.split("\n")
+    file_names = si.get_non_empty_lines(output)
     return file_names
 
 
 def _qualify_branch(tag: str, dst_branch: str, test_list: str) -> List[str]:
+    print(prnt.frame("Qualifying '%s'" % tag))
     output = []
     # - Linter.
     output.append(prnt.frame("%s: linter log" % tag))
     file_names = _get_changed_files(dst_branch)
-    output.append("Files modified:\n%s", prnt.prepend(file_names))
+    _LOG.debug("file_names=%s", file_names)
+    dbg.dassert_lt(0, len(file_names), "No files different between the "
+                                       "branches")
+    output.append("Files modified:\n%s" % prnt.space("\n".join(file_names)))
     linter_log = "./%s.linter_log.txt" % tag
     linter_log = os.path.abspath(linter_log)
-    cmd = "linter.py -f %s" % " ".join(file_names)
+    cmd = "linter.py -f %s --linter_log %s" % (" ".join(file_names), linter_log)
     si.system(cmd, suppress_output=False)
     # Read output from the linter.
     txt = io_.from_file(linter_log)
     output.append(txt)
     # - Run tests.
-    if False:
-        output.append(prnt.frame("%s: tests" % tag))
-        cmd = "run_tests.py --test %s --num_cpus -1" % test_list
-        output.append("cmd=%s" % cmd)
+    if True:
+        output.append(prnt.frame("%s: unit tests" % tag))
+        cmd = "pytest -k Test_p1_submodules_sanity_check1"
+        #cmd = "run_tests.py --test %s --num_cpus -1" % test_list
+        output.append("cmd line='%s'" % cmd)
         si.system(cmd, suppress_output=False)
     #
     return output
@@ -94,24 +99,33 @@ def _main(parser):
     _LOG.info("Current branch_name: %s", branch_name)
     msg = "%s -> %s" % (branch_name, args.dst_branch)
     output.append(msg)
-    dbg.dassert_ne(branch_name, "master", "You can't merge from master")
+    if True:
+        dbg.dassert_ne(branch_name, "master", "You can't merge from master")
     # TODO(gp): Stash and clean.
     # TODO(gp): Make sure the Git client is empty.
     cmd = "git pull"
     si.system(cmd)
     # Update the dst branch.
-    cmd = "git fetch origin %s:%s" % (args.dst_branch, args.dst_branch)
-    si.system(cmd)
+    if True:
+        cmd = "git fetch origin %s:%s" % (args.dst_branch, args.dst_branch)
+        si.system(cmd)
     #
     repo_sym_name = git.get_repo_symbolic_name(super_module=True)
     _LOG.info("repo_sym_name=%s", repo_sym_name)
     # Qualify current repo.
-    output_tmp = _qualify_branch("curr", args.dst_branch, args.test_list)
+    tag = "curr"
+    output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
     output.extend(output_tmp)
     # Qualify amp repo.
-    if os.path.exists("amp"):
-        output_tmp = _qualify_branch("amp", args.dst_branch, args.test_list)
+    if False and os.path.exists("amp"):
+        tag = "amp"
+        output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
         output.extend(output_tmp)
+    # Report the output.
+    output_as_txt = "\n".join(output)
+    io_.to_file(args.summary_file, output_as_txt)
+    #print(output_as_txt)
+    _LOG.info("Summary file saved into '%s'", args.summary_file)
 
 
 if __name__ == "__main__":

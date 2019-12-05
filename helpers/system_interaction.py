@@ -13,7 +13,7 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -277,6 +277,13 @@ def system_to_string(
     return rc, output
 
 
+def get_non_empty_lines(output: str) -> List[str]:
+    output_as_arr = output.split("\n")
+    output_as_arr = [l.rstrip().lstrip() for l in output_as_arr]
+    output_as_arr = [l for l in output_as_arr if l]
+    return output_as_arr
+
+
 def get_first_line(output: str) -> str:
     """
     Return the first (and only) line from a string.
@@ -284,7 +291,7 @@ def get_first_line(output: str) -> str:
     This is used when calling system_to_string and expecting a single line
     output.
     """
-    output_as_arr = output.split("\n")
+    output_as_arr = get_non_empty_lines(output)
     dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
     return output_as_arr[0].rstrip().lstrip()
 
