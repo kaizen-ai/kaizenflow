@@ -277,6 +277,18 @@ def system_to_string(
     return rc, output
 
 
+def get_first_line(output: str) -> str:
+    """
+    Return the first (and only) line from a string.
+
+    This is used when calling system_to_string and expecting a single line
+    output.
+    """
+    output_as_arr = output.split("\n")
+    dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
+    return output_as_arr[0].rstrip().lstrip()
+
+
 # #############################################################################
 
 

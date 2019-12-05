@@ -7,6 +7,7 @@ import helpers.git as git
 import logging
 import os
 import re
+from typing import List
 
 import helpers.datetime_ as datetime_
 import helpers.dbg as dbg
@@ -17,30 +18,29 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
 
 # TODO(gp): Avoid "stuttering": the module is already called "git", so no need
-# to make reference to git again.
-
-
-def _get_first_line(output):
-    output_as_arr = output.split("\n")
-    dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
-    return output_as_arr[0].rstrip().lstrip()
+#  to make reference to git again.
 
 
 # TODO(gp): -> get_user_name(). No stuttering.
-def get_git_name():
+def get_git_name() -> str:
     """
     Return the git user name.
     """
     cmd = "git config --get user.name"
     _, output = si.system_to_string(cmd)
-    git_name = _get_first_line(output)
+    git_name = si.get_first_line(output)
     return git_name
 
 
-def get_branch_name():
+def get_branch_name() -> str:
+    """
+    Return the name of the Git branch we are in.
+
+    E.g., `master` or `PartTask672_DEV_INFRA_Add_script_to_check_and_merge_PR`
+    """
     cmd = "git rev-parse --abbrev-ref HEAD"
     _, output = si.system_to_string(cmd)
-    branch_name = _get_first_line(output)
+    branch_name = si.get_first_line(output)
     return branch_name
 
 
@@ -141,7 +141,7 @@ def _get_repo_map():
 
         _REPO_MAP.update(repc.REPO_MAP)
     except ImportError:
-       _LOG.debug("No including repo")
+        _LOG.debug("No including repo")
     dbg.dassert_no_duplicates(_REPO_MAP.keys())
     dbg.dassert_no_duplicates(_REPO_MAP.values())
     return _REPO_MAP.copy()
@@ -163,7 +163,7 @@ def get_repo_prefix(repo_github_name):
     return repo_map[repo_github_name]
 
 
-def get_repo_github_name(repo_symbolic_name):
+def get_repo_github_name(repo_symbolic_name: str) -> str:
     # Get the reverse map.
     repo_map = _get_repo_map()
     inv_repo_map = {v: k for (k, v) in repo_map.items()}
@@ -172,7 +172,7 @@ def get_repo_github_name(repo_symbolic_name):
     return inv_repo_map[repo_symbolic_name]
 
 
-def get_path_from_git_root(file_name, super_module):
+def get_path_from_git_root(file_name: str, super_module: bool) -> str:
     """
     Get the git path from the root of the tree.
 
@@ -214,10 +214,10 @@ def get_amp_abs_path() -> str:
     return amp_dir
 
 
-# ##############################################################################
+# #############################################################################
 
 
-def _check_files(files):
+def _check_files(files: List[str]) -> List[str]:
     files_tmp = []
     for f in files:
         if os.path.exists(f):
@@ -274,7 +274,7 @@ def get_previous_committed_files(num_commits=1):
     return files
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def git_log(num_commits=5, my_commits=False):
@@ -298,7 +298,7 @@ def git_log(num_commits=5, my_commits=False):
     return txt
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def git_stash_push(prefix, msg=None, log_level=logging.DEBUG):

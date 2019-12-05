@@ -1,74 +1,83 @@
 #!/usr/bin/env python
 
 """
-Add a description of what the script does and examples of command lines.
-
-Check dev_scripts/linter.py to see an example of a script using this template.
+Run 
 """
 
 import argparse
 import logging
+import os
 from typing import List
 
 import helpers.dbg as dbg
+import helpers.git as git
+import helpers.io_ as io_
 import helpers.parser as prsr
+import helpers.printing as prnt
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 
 
-def _parse():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument("--src_branch", action="store", default=None,
-                        help="Name of the branch to merge. No value means use "
-                             "the branch we are currently in")
-    parser.add_argument("--dst_branch", action="store",
-                        default="master", help="Branch to merge into, typically "
-                                               "master")
-    parser.add_argument("--test_list", action="store", default="slow")
-    parser.add_argument("--merge_if_successful", action="store_true")
-    parser.add_argument("--summary_file", action="store",
-                        default="./summary_file.txt")
-    prsr.add_verbosity_arg(parser)
-    return parser
-
-import helpers.git as git
-import helpers.io_ as io_
-import helpers.printing as prnt
-
-import os
-
-def _get_changed_files(dst_branch : str) -> List[str]:
+def _get_changed_files(dst_branch: str) -> List[str]:
     cmd = "git diff --name-only %s..." % dst_branch
     _, output = si.system_to_string(cmd)
     file_names = output.split("\n")
     return file_names
 
 
-def _qualify_amp(dst_branch : str, test_list : str) -> List[str]:
+def _qualify_branch(tag: str, dst_branch: str, test_list: str) -> List[str]:
     output = []
     # - Linter.
-    output.append(prnt.frame("amp linter log"))
+    output.append(prnt.frame("%s: linter log" % tag))
     file_names = _get_changed_files(dst_branch)
     output.append("Files modified:\n%s", prnt.prepend(file_names))
-    linter_log = "./amp.linter_log.txt"
+    linter_log = "./%s.linter_log.txt" % tag
     linter_log = os.path.abspath(linter_log)
     cmd = "linter.py -f %s" % " ".join(file_names)
     si.system(cmd, suppress_output=False)
     # Read output from the linter.
-    txt = io_.from_file(linter_log, split=False)
+    txt = io_.from_file(linter_log)
     output.append(txt)
     # - Run tests.
-    output.append(prnt.frame("amp tests"))
-    cmd = "run_tests.py --test %s --num_cpus -1" % test_list
-    output.append("cmd=%s" % cmd)
-    si.system(cmd, suppress_output=False)
+    if False:
+        output.append(prnt.frame("%s: tests" % tag))
+        cmd = "run_tests.py --test %s --num_cpus -1" % test_list
+        output.append("cmd=%s" % cmd)
+        si.system(cmd, suppress_output=False)
     #
     return output
+
+
+# #############################################################################
+
+
+def _parse():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--src_branch",
+        action="store",
+        default=None,
+        help="Name of the branch to merge. No value means use "
+        "the branch we are currently in",
+    )
+    parser.add_argument(
+        "--dst_branch",
+        action="store",
+        default="master",
+        help="Branch to merge into, typically " "master",
+    )
+    parser.add_argument("--test_list", action="store", default="slow")
+    parser.add_argument("--merge_if_successful", action="store_true")
+    parser.add_argument(
+        "--summary_file", action="store", default="./summary_file.txt"
+    )
+    prsr.add_verbosity_arg(parser)
+    return parser
 
 
 def _main(parser):
@@ -94,13 +103,14 @@ def _main(parser):
     cmd = "git fetch origin %s:%s" % (args.dst_branch, args.dst_branch)
     si.system(cmd)
     #
-    repo_sym_name = git.get_repo_symbolic_name()
+    repo_sym_name = git.get_repo_symbolic_name(super_module=True)
     _LOG.info("repo_sym_name=%s", repo_sym_name)
-    if repo_sym_name == "amp":
-        output_tmp = _qualify_amp()
-        output.extend(output_tmp)
-    else:
-        output_tmp = _qualify_amp()
+    # Qualify current repo.
+    output_tmp = _qualify_branch("curr", args.dst_branch, args.test_list)
+    output.extend(output_tmp)
+    # Qualify amp repo.
+    if os.path.exists("amp"):
+        output_tmp = _qualify_branch("amp", args.dst_branch, args.test_list)
         output.extend(output_tmp)
 
 
