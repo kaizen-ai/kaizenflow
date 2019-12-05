@@ -28,7 +28,7 @@ def _standard_cleanup(in_file, aggressive):
     # - Try to make the wording as terse as possible
     # - Always use $\cdot$
     dbg.dassert_exists(in_file)
-    txt = io_.from_file(in_file)
+    txt = io_.from_file(in_file).split("\n")
     out = []
     for line in txt:
         for s, d in [
