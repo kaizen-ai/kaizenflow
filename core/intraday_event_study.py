@@ -26,17 +26,19 @@ respect to active trading hours):
 """
 
 import logging
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from typing import Tuple, Union
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
 
-def generate_aligned_response(x_vars: pd.DataFrame, y_vars: Union[pd.Series, pd.DataFrame], num_shifts: int)\
-        -> Tuple[pd.DataFrame, pd.DataFrame]:
+def generate_aligned_response(
+    x_vars: pd.DataFrame, y_vars: Union[pd.Series, pd.DataFrame], num_shifts: int
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Align responses of a y_var with x_vars according to index
 
@@ -85,7 +87,9 @@ def generate_aligned_response(x_vars: pd.DataFrame, y_vars: Union[pd.Series, pd.
     return pre_event_df, post_event_df
 
 
-def tile_x_flatten_y(x_vars: pd.DataFrame, y_var: pd.DataFrame) -> Tuple[np.array, np.array]:
+def tile_x_flatten_y(
+    x_vars: pd.DataFrame, y_var: pd.DataFrame
+) -> Tuple[np.array, np.array]:
     """
     Reshape x_vars, y_var into equal-length series.
 
