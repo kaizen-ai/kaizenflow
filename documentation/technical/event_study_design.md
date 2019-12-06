@@ -1,39 +1,60 @@
 # Event Study Framework
 
-## Different types of event studies
+## Classes of events
+
+We consider the following two classes of events:
+
+-   predictable events
+    -   These are events that we know will happen ahead of time
+    -   E.g., earnings releases, non-farm payroll
+    -   we can build models that predict economic quantities both before and
+        after the event
+-   unpredictable events
+    -   These are events whose timing or occurrence cannot be anticipated, but
+        which can be recognized when the event occurs (e.g., breaking news)
+    -   Predictive models can only react to the event (but we can still use
+        models that cover pre/post-event times to model the effect for the
+        purpose of hypothesis testing)
+    -   In traders' parlance, "one can only trade the drift"
+
+Both event types can be studied in the same framework given a list of
+historical events.
+
+## Classes of event studies
 
 We make a distinction between the following different types of events (with
 respect to active trading hours):
 
 1.  Intraday events
-
-    a)  We focus on events strictly within active trading hours
-    
-    b)  We may further restrict around the open / close, because response
+    1.  We focus on events strictly within active trading hours
+    1.  E.g., a market-moving news breaks at 12:05pm: we want to study the
+        reaction of the market in a window spanning 30 mins before and
+        30 mins after the event, using 5-min resolution
+    1.  We may further restrict around the open / close, because response
         windows of uniform time are easy to work with (e.g., we may be
         interested in the 5-minute responses out to 30 minutes, but want to
         ensure that we have the same number of data points for each 5-min
         bar) 
-        
-2.  At-the-open
-
-    a)  We focus on the effect on the market of information that has
+1.  At-the-open
+    1.  We focus on the effect on the market of information that has
         accumulated outside of active-trading-hours
-        
-    b)  These can be handled together with intraday events provided we treat
+    1.  E.g., we want to study the reaction of the market between the open and
+        10 minutes after the open, conditioned on a certain event having
+        happened prior to the open. We can can set-up an event study between
+        the open and the open + 10 minutes using 1-minute resolution
+    1.  These can be handled together with intraday events provided we treat
         the event time as the market-open
-        
-3.  At-the-close
-
-    a)  Distinguished from vanilla intraday in that the timing of the close
+1.  At-the-close
+    1.  Distinguished from vanilla intraday in that the timing of the close
         may restrict the response windows of interest
-        
-4.  Multi-day
-
-    a)  Of interest if events are sparse on the scale of days; otherwise the
+    1.  E.g., we may want to pin the target responses to specific minutes
+        before the close rather than pin the window size. So we might study
+        the response between the close minus 10 minutes and the close at
+        1-minute increments
+1.  Multi-day
+    1.  Of interest if events are sparse on the scale of days; otherwise the
         proper multi-day setting is a continuous one
-
-    b)  Days without active trading (e.g., weekends) should be excluded from
+    1.  Days without active trading (e.g., weekends) should be excluded from
         the response variable time shifts
 
 ## Inputs
@@ -47,10 +68,20 @@ respect to active trading hours):
     -   For the responses, we may study returns and volatility for a single
         instrument
     -   For predictors, we may include features such as sentiment or event type
--   `data` should have a monotonic datetimes index with a specified `freq`
+    -   A predictor can also be a simple coefficient indicating the magnitude
+        and the sign (e.g., go short) of the position to take when event X
+        happens
+    -   TODO(Paul): Decide whether to have a single dataframe or two (one for
+            predictors and one for the response)
+-   `data` should have a monotonic datetime index with a specified `freq`
+    -   We may relax pinning `freq` to support flexibility
 -   `event_idx` should consist of datetimes with offsets matching those of
     `data`
+    -   E.g., we roll event datetimes forward if needed so that they align
+        with the `data` time grid
 -   We assume that `data` is associated with a single instrument
+-   A "kernel" representing a certain operation to be performed on the
+    sampled economic quantities around the event
 
 ### Why
 
@@ -91,7 +122,7 @@ respect to active trading hours):
         -   returns
         -   volatility
         -   volume
-        -   transformations of these (e.g., log, cumsum)
+        -   transformations of these (e.g., `log`, `cumsum`)
     -   In the case of returns, we also want to study cumulative returns 
     -   The change can be detected by encoding the event as an (Heaviside-like)
         indicator variable
@@ -143,17 +174,23 @@ respect to active trading hours):
     -   We decide how many frequency steps to look before and after each event
     -   We create a dataframe per step, indexed by event time, and tracked
         (e.g., in a dict) according to step shift size
+    -   The goal is to avoid timestamp arithmetic, but rather make time
+        manipulations easy (e.g., by just using `shift()`)
 1.  Reshaping
     -   We reshape the dataframes so that a regression / model may be fit to
         the data
     -   This step adds the linear and event indicator variables appropriately
 1.  Model learning
     -   E.g., OLS or Bayesian
+        -   Use Bayesian or OLS for estimating the event effect
+        -   We use the framework to determine whether the effect is real, and
+            if so, its direction and size
     -   Store info concerning model coefficients, etc.
     -   Generate predictions given the predictors and aggregate according to
         -   pre/post-event
         -   time shift
-    -   Project to PnL using predicted returns vs. actual returns
+    -   Project to PnL using predicted returns vs. actual returns (e.g., use a
+        kernel)
     -   The model should only upon
         -   predictors
         -   presence of event
