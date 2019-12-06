@@ -36,8 +36,28 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
+def generate_pre_and_post_event_split(
+    x_vars: pd.DataFrame, y_vars: Union[pd.Series, pd.DataFrame],
+        num_shifts: int, mode: str
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    TODO: Implement
+
+    :param x_vars:
+    :param y_vars:
+    :param num_shifts:
+    :param mode:
+        `panel`: y_var
+    :return:
+    """
+    pass
+
+
+# TODO(Paul): Really, we don't want to call these x_vars and y_vars. We just
+#     want 1) a series of event times and 2) a DataFrame of data (maybe with
+#     both signals and responses as separate columns).
 def generate_aligned_response(
-    x_vars: pd.DataFrame, y_vars: Union[pd.Series, pd.DataFrame], num_shifts: int
+    x_vars: pd.DataFrame, y_vars: Union[pd.Series, pd.DataFrame], num_shifts: int,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Align responses of a y_var with x_vars according to index
@@ -61,6 +81,8 @@ def generate_aligned_response(
     if isinstance(y_vars, pd.Series):
         y_vars = y_vars.to_frame()
     dbg.dassert_monotonic_index(y_vars)
+    # TODO(Paul): Make sure everything in the big dataframe has a monotonic
+    #     index and a frequency. 
     # TODO(Paul): Maybe assert `y_var` has a `freq` specified.
     # TODO(Paul): Check offsets of x_vars (though this may be slow...)
     pre_event = []
@@ -68,6 +90,7 @@ def generate_aligned_response(
     for i in range(-num_shifts, num_shifts + 1, 1):
         # Times go -num_shifts, ..., -1, 0, 1, ..., num_shifts
         # To get the response at time j, we call .shift(-j) on y_vars
+        # TODO(Paul): Restrict back to col names?
         resp = x_vars.join(y_vars.shift(-i))
         resp.name = i
         # TODO(Paul): Placing the event time in the "post-event" group matches
@@ -93,9 +116,16 @@ def tile_x_flatten_y(
     """
     Reshape x_vars, y_var into equal-length series.
 
+    Values of `x_vars` are repeated in the tiling for each column of `y_var`.
+    WARNING: May be non-casual if cols
+
     :param x_vars: signal at event time
-    :param y_var: a single response variable in an n x k form, with columns
-        indicating time offsets
+    :param y_var: a single response variable in n x k form
+        - `n` (rows) represents number of events
+        - `k` (cols) represents time offsets
+    :return:
+        - `x` tiled `k` times resulting in n x k rows
+        - `y` flattened into an (n x k)-length array
     """
     y = y_var.values.transpose().flatten()
     # Tile x values to match flattened y
