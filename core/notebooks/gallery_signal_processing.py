@@ -108,29 +108,29 @@ impulse.plot()
 
 # %%
 for i in range(1, 6):
-    sigp.ema(impulse, tau=40, min_periods=20, depth=i).plot()
+    sigp.compute_ema(impulse, tau=40, min_periods=20, depth=i).plot()
 
 # %%
 for i in range(1, 6):
-    sigp.smooth_moving_average(
+    sigp.compute_smooth_moving_average(
         impulse, tau=40, min_periods=20, min_depth=1, max_depth=i
     ).plot()
 
 # %%
 for i in range(1, 6):
-    sigp.smooth_moving_average(
+    sigp.compute_smooth_moving_average(
         impulse, tau=40, min_periods=20, min_depth=i, max_depth=5
     ).plot()
 
 # %%
 for i in range(1, 6):
-    sigp.rolling_norm(
+    sigp.compute_rolling_norm(
         impulse, tau=40, min_periods=20, min_depth=1, max_depth=i, p_moment=1
     ).plot()
 
 # %%
 for i in np.arange(0.5, 4.5, 0.5):
-    sigp.rolling_norm(
+    sigp.compute_rolling_norm(
         impulse, tau=40, min_periods=20, min_depth=1, max_depth=2, p_moment=i
     ).plot()
 
