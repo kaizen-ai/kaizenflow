@@ -38,6 +38,8 @@ Comments:
     -   In any case, the main purpose of this model is to detect an event
         effect
     -   If predicting returns, project to PnL using kernel
+
+TODO(Paul): Update function docstrings everywhere
 """
 
 
@@ -50,9 +52,6 @@ import pandas as pd
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
-
-
-EVENT_INDICATOR = "event_indicator"
 
 
 def reindex_event_features(
@@ -181,8 +180,8 @@ def build_local_timeseries(
 
 
 def stack_data(
-    data: Dict[int, Union[pd.Series, pd.DataFrame]],
-) -> Union[pd.Series, pd.DataFrame]:
+    data: Dict[int, pd.DataFrame],
+) -> pd.DataFrame:
     """
     Stack dict of data (to prepare for modeling).
 
@@ -190,6 +189,8 @@ def stack_data(
     :return:
     """
     stacked = pd.concat(data.values(), axis=0, ignore_index=True)
+    _, num_cols = stacked.shape
+    dbg.dassert_lte(2, num_cols, "At least two cols required for learning.")
     return stacked
 
 
