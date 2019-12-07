@@ -40,9 +40,9 @@ def _process_question(line):
     num_tab_spaces = 2
     space = " " * (num_tab_spaces - 1)
     if (
-            line.startswith("*" + space)
-            or line.startswith("**" + space)
-            or line.startswith("*:" + space)
+        line.startswith("*" + space)
+        or line.startswith("**" + space)
+        or line.startswith("*:" + space)
     ):
         # Bold.
         meta = "**"
@@ -67,13 +67,12 @@ def _process_question(line):
 
 
 def _transform(lines: List[str]) -> List[str]:
-    out : List[str] = []
+    out: List[str] = []
     # During a block to skip.
     in_skip_block = False
     # During a code block.
     in_code_block = False
-    for i in range(len(lines)):
-        line = lines[i]
+    for i, line in enumerate(lines):
         _LOG.debug("%s:line=%s", i, line)
         # Handle comment block.
         # TODO: improve the comment handling, handle also \* *\ and %.
@@ -169,7 +168,7 @@ def _transform(lines: List[str]) -> List[str]:
     # Remove all the lines with
     out_tmp = []
     for line in out:
-        if re.search("^\s+$", line):
+        if re.search(r"^\s+$", line):
             line = ""
         out_tmp.append(line)
     out = out_tmp
@@ -192,7 +191,7 @@ def _main(parser):
     # Slurp file.
     lines = io_.from_file(args.input).split("\n")
     lines = [l.rstrip("\n") for l in lines]
-    out : List[str] = []
+    out: List[str] = []
     # Add some directive for pandoc.
     out.extend([r"""\let\emph\textit""", ""])
     out.extend([r"""\let\uline\underline""", ""])

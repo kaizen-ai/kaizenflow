@@ -1,10 +1,10 @@
 import glob
 import logging
 import os
-from typing import List
 
 import pytest
 
+import documentation.scripts.preprocess_md_for_pandoc as doc_prep
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
@@ -104,8 +104,8 @@ def _run_preprocess(in_file: str, out_file: str) -> str:
     cmd.append(exec_path)
     cmd.append("--input %s" % in_file)
     cmd.append("--output %s" % out_file)
-    cmd = " ".join(cmd)
-    si.system(cmd)
+    cmd_as_str = " ".join(cmd)
+    si.system(cmd_as_str)
     # Check.
     act = io_.from_file(out_file)
     return act
@@ -135,17 +135,15 @@ class Test_preprocess1(ut.TestCase):
         self._helper()
 
 
-import documentation.scripts.preprocess_md_for_pandoc as doc_prep
-
-
 class Test_preprocess2(ut.TestCase):
     """
     Check that the output of preprocess_md_for_pandoc.py is the expected one
     calling the library function directly.
     """
 
-    def _helper_process_question(self, txt_in:str , do_continue_exp: bool,
-                                 exp: str):
+    def _helper_process_question(
+        self, txt_in: str, do_continue_exp: bool, exp: str
+    ):
         do_continue, act = doc_prep._process_question(txt_in)
         self.assertEqual(do_continue, do_continue_exp)
         self.assert_equal(act, exp)
@@ -174,18 +172,18 @@ class Test_preprocess2(ut.TestCase):
         exp = txt_in
         self._helper_process_question(txt_in, do_continue_exp, exp)
 
-    # ########
+    # #########################################################################
 
-    def _helper_transform(self, txt_in: List[str], exp: str):
+    def _helper_transform(self, txt_in: str, exp: str):
         act_as_arr = doc_prep._transform(txt_in.split("\n"))
         act = "\n".join(act_as_arr)
         self.assert_equal(act, exp)
 
     def test_transform1(self):
         txt_in = """
-# ##########
+# #############################################################################
 # Python: nested functions
-# ##########
+# #############################################################################
 - Functions can be declared in the body of another function
 - E.g., to hide utility functions in the scope of the function that uses them
     ```python
