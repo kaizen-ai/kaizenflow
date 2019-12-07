@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Run 
+Run
 """
 
 import argparse
@@ -28,28 +28,36 @@ def _get_changed_files(dst_branch: str) -> List[str]:
     return file_names
 
 
-def _qualify_branch(tag: str, dst_branch: str, test_list: str) -> List[str]:
+def _qualify_branch(
+    tag: str, dst_branch: str, test_list: str, quick: bool
+) -> List[str]:
     print(prnt.frame("Qualifying '%s'" % tag))
     output = []
     # - Linter.
     output.append(prnt.frame("%s: linter log" % tag))
     file_names = _get_changed_files(dst_branch)
     _LOG.debug("file_names=%s", file_names)
-    dbg.dassert_lt(0, len(file_names), "No files different between the "
-                                       "branches")
-    output.append("Files modified:\n%s" % prnt.space("\n".join(file_names)))
-    linter_log = "./%s.linter_log.txt" % tag
-    linter_log = os.path.abspath(linter_log)
-    cmd = "linter.py -f %s --linter_log %s" % (" ".join(file_names), linter_log)
-    si.system(cmd, suppress_output=False)
-    # Read output from the linter.
-    txt = io_.from_file(linter_log)
-    output.append(txt)
+    if not file_names:
+        _LOG.warning("No files different in %s", dst_branch)
+    else:
+        output.append("Files modified:\n%s" % prnt.space("\n".join(file_names)))
+        linter_log = "./%s.linter_log.txt" % tag
+        linter_log = os.path.abspath(linter_log)
+        cmd = "linter.py -f %s --linter_log %s" % (
+            " ".join(file_names),
+            linter_log,
+        )
+        si.system(cmd, suppress_output=False)
+        # Read output from the linter.
+        txt = io_.from_file(linter_log)
+        output.append(txt)
     # - Run tests.
     if True:
         output.append(prnt.frame("%s: unit tests" % tag))
-        #cmd = "pytest -k Test_p1_submodules_sanity_check1"
-        cmd = "run_tests.py --test %s --num_cpus -1" % test_list
+        if quick:
+            cmd = "pytest -k Test_p1_submodules_sanity_check1"
+        else:
+            cmd = "run_tests.py --test %s --num_cpus -1" % test_list
         output.append("cmd line='%s'" % cmd)
         si.system(cmd, suppress_output=False)
     #
@@ -77,6 +85,7 @@ def _parse():
         help="Branch to merge into, typically " "master",
     )
     parser.add_argument("--test_list", action="store", default="slow")
+    parser.add_argument("--quick", action="store_true")
     parser.add_argument("--merge_if_successful", action="store_true")
     parser.add_argument(
         "--summary_file", action="store", default="./summary_file.txt"
@@ -124,7 +133,9 @@ def _main(parser):
         cmd = cd_cmd + cmd
         si.system(cmd)
 
+    # Refresh curr repo.
     _refresh(".")
+    # Refresh amp repo, if needed.
     if os.path.exists("amp"):
         _refresh(".")
     # Qualify amp repo.
@@ -132,23 +143,30 @@ def _main(parser):
         tag = "amp"
         output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
         output.extend(output_tmp)
-
+    #
     repo_sym_name = git.get_repo_symbolic_name(super_module=True)
     _LOG.info("repo_sym_name=%s", repo_sym_name)
     # Qualify current repo.
     tag = "curr"
-    output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
+    output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list, args.quick)
     output.extend(output_tmp)
-    # Qualify amp repo.
+    # Qualify amp repo, if needed.
     if os.path.exists("amp"):
         tag = "amp"
-        output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
+        output_tmp = _qualify_branch(
+            tag, args.dst_branch, args.test_list, args.quick
+        )
         output.extend(output_tmp)
+    # Forward amp.
+
     # Report the output.
     output_as_txt = "\n".join(output)
     io_.to_file(args.summary_file, output_as_txt)
-    #print(output_as_txt)
+    # print(output_as_txt)
     _LOG.info("Summary file saved into '%s'", args.summary_file)
+
+    # Merge.
+    # TODO(gp): Add merge step.
 
 
 if __name__ == "__main__":
