@@ -179,9 +179,7 @@ def build_local_timeseries(
     return period_to_data
 
 
-def stack_data(
-    data: Dict[int, pd.DataFrame],
-) -> pd.DataFrame:
+def stack_data(data: Dict[int, pd.DataFrame],) -> pd.DataFrame:
     """
     Stack dict of data (to prepare for modeling).
 
