@@ -1,3 +1,37 @@
+"""
+Import as:
+
+import core.intraday_event_study as esf
+
+TODO(Paul): Rename file to just `event_study.py`
+
+Sketch of flow:
+-   Obtain `idx` of events
+-   Generate `data`
+    -   Contains exactly one response var
+    -   Contains zero or more predictors
+    -   Predictors may include lagged response (e.g., for autoregression)
+-   Ensure compatibility of `idx`, `data.index`
+-   Ensure `data.index` grid is as expected
+-   Determine number of pre/post-event periods to analyze
+-   TODO(Paul): Wrap these in a public function call
+    -   Call `_compute_relative_series`
+    -   Annotate with indicator/auxiliary vars
+    -   Call `_stack_data`
+    -   Run linear modeling step
+        -   For unpredictable events, this model may not be tradable
+        -   In any case, the main purpose of this model is to detect an event
+            effect
+    -   If predicting returns, project to PnL using kernel
+-   TODO(Paul): Refine how to go from event model to continuous model
+    -   One approach is to carry out regression / modeling as above
+    -   The event "indicator" variable will start a 0, hit a spike at each
+        event, and then decay according to some kernel
+    -   E.g., the model could be primarily autocorrelation-based, but with
+        a different behavior following events
+"""
+
+
 import logging
 from typing import Dict, Optional, Union
 
@@ -22,6 +56,8 @@ def _shift_and_select(
 ) -> Union[pd.Series, pd.DataFrame]:
     """
     Shift by `periods` and select `idx`.
+
+    This private helper encapsulates and isolates time-shifting behavior.
 
     :param idx: reference index (e.g., of datetimes of events)
     :param data: tabular data
@@ -72,6 +108,17 @@ def _compute_relative_series(
     """
     Compute series [first_period, last_period] relative to idx.
 
+    This generates a sort of "panel" time series:
+    -   The period indicates the relative time step
+    -   The value at a period is a dataframe with
+        -   An index of "event times" (given by `idx`)
+        -   Columns corresponding to
+            -   Precisely one response variable
+            -   Zero or more predictors
+
+    The effect of this function is to grab uniform time slices of `data`
+    around each event time indicated in `idx`.
+
     :param idx: reference index (e.g., of datetimes of events)
     :param data: tabular data
     :param first_period: first period offset, inclusive
@@ -105,6 +152,7 @@ def _add_indicator(
     data: pd.DataFrame, period: int, name: str = EVENT_INDICATOR
 ) -> pd.DataFrame:
     """
+    TODO(Paul): Think about convolving with a kernel
 
     :param data:
     :param mode:
@@ -125,6 +173,7 @@ def _stack_data(
     data: Dict[int, Union[pd.Series, pd.DataFrame]],
 ) -> Union[pd.Series, pd.DataFrame]:
     """
+    Stack dict of data (to prepare for modeling).
 
     :param data:
     :return:
