@@ -1,3 +1,10 @@
 #!/bin/bash -e
 
-git checkout $1
+# """
+# Checkout a branch and pull.
+# """
+
+source helpers.sh
+
+execute "git checkout $1"
+execute "git pull"
