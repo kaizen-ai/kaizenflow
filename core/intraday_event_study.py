@@ -6,39 +6,47 @@ import core.intraday_event_study as esf
 TODO(Paul): Rename file to just `event_study.py`
 
 Sketch of flow:
--   Obtain `idx` of events
--   Generate `data`
-    -   Contains exactly one response var
-    -   Contains zero or more predictors
-    -   Predictors may include lagged response (e.g., for autoregression)
--   Ensure compatibility of `idx`, `data.index`
--   Ensure `data.index` grid is as expected
--   Determine number of pre/post-event periods to analyze
--   TODO(Paul): Wrap these in a public function call
-    -   Call `_compute_relative_series`
-    -   Call `_add_indicator_to_relative_series`
-    -   Call `_stack_data`
-    -   Run linear modeling step
-        -   For unpredictable events, this model may not be tradable
-        -   In any case, the main purpose of this model is to detect an event
-            effect
+
+events         grid_data -------------------
+  |              |                          |
+  |              |                          |
+resample ----- reindex_event_features       |
+  |              |                          |
+  |              |                          |
+  |            kernel (ema, etc.) -------- merge
+  |                                         |
+  |                                         |
+build_local_timeseries ----------------------
+  |
+  |
+stack_data
+  |
+  |
+linear modeling
+  |
+  ...
+
+
+Comments:
+
+-   `grid_data` contains
+    -   exactly one response var
+    -   zero or more predictors
+    -   predictors may include lagged response vars
+-   Linear modeling step:
+    -   For unpredictable events, this model may not be tradable
+    -   In any case, the main purpose of this model is to detect an event
+        effect
     -   If predicting returns, project to PnL using kernel
--   TODO(Paul): Refine how to go from event model to continuous model
-    -   One approach is to carry out regression / modeling as above
-    -   The event "indicator" variable will start a 0, hit a spike at each
-        event, and then decay according to some kernel
-    -   E.g., the model could be primarily autocorrelation-based, but with
-        a different behavior following events
 """
 
 
 import logging
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-import core.signal_processing as sigp
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -47,21 +55,32 @@ _LOG = logging.getLogger(__name__)
 EVENT_INDICATOR = "event_indicator"
 
 
-def _shift_and_select(
-    idx: pd.Index,
-    data: Union[pd.Series, pd.DataFrame],
-    periods: int,
-    freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
-    mode: Optional[str] = None,
-    info: Optional[dict] = None,
-) -> Union[pd.Series, pd.DataFrame]:
+def reindex_event_features(
+    events: pd.DataFrame,
+    grid_data: pd.DataFrame,
+    **kwargs,
+) -> pd.DataFrame:
+    """
+
+    :param events:
+    :param data_idx:
+    :param kwargs:
+    :return:
+    """
+    reindexed = events.reindex(index=grid_data.index, **kwargs)
+    return reindexed
+
+
+def _shift_and_select(idx: pd.Index, grid_data: pd.DataFrame, periods: int,
+                      freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None, mode: Optional[str] = None,
+                      info: Optional[dict] = None) -> pd.DataFrame:
     """
     Shift by `periods` and select `idx`.
 
     This private helper encapsulates and isolates time-shifting behavior.
 
     :param idx: reference index (e.g., of datetimes of events)
-    :param data: tabular data
+    :param grid_data: tabular data
     :param periods: as in pandas `shift` functions
     :param freq: as in pandas `shift` functions
     :param mode:
@@ -73,17 +92,21 @@ def _shift_and_select(
     mode = mode or "shift_data"
     # Shift.
     if mode == "shift_data":
-        data = data.copy()
-        data = data.shift(periods, freq)
+        grid_data = grid_data.copy()
+        grid_data = grid_data.shift(periods, freq)
     elif mode == "shift_idx":
         idx = idx.copy()
         idx = idx.shift(periods, freq)
     else:
         raise ValueError("Unrecognized mode=`%s`", mode)
     # Select.
-    intersection = idx.intersection(data.index)
+    intersection = idx.intersection(grid_data.index)
     dbg.dassert(not intersection.empty)
-    selected = data.loc[intersection]
+    # TODO(Paul): Make this configurable
+    pct_found = intersection.size / idx.size
+    if pct_found < 0.9:
+        _LOG.warning("pct_found=%f for periods=%d", pct_found, periods)
+    selected = grid_data.loc[intersection]
     # Maybe add info.
     if info is not None:
         dbg.dassert_isinstance(info, dict)
@@ -96,17 +119,12 @@ def _shift_and_select(
     return selected
 
 
-def _compute_relative_series(
-    idx: pd.Index,
-    data: Union[pd.Series, pd.DataFrame],
-    first_period: int,
-    last_period: int,
-    freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
-    shift_mode: Optional[str] = None,
-    info: Optional[dict] = None,
-) -> Dict[int, pd.DataFrame]:
+def build_local_timeseries(events: pd.DataFrame,
+                           grid_data: pd.DataFrame, periods: Iterable[int],
+                           freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
+                           shift_mode: Optional[str] = None, info: Optional[dict] = None) -> Dict[int, pd.DataFrame]:
     """
-    Compute series [first_period, last_period] relative to idx.
+    Compute series over `periods` relative to `events.index`.
 
     This generates a sort of "panel" time series:
     -   The period indicates the relative time step
@@ -119,11 +137,9 @@ def _compute_relative_series(
     The effect of this function is to grab uniform time slices of `data`
     around each event time indicated in `idx`.
 
-    :param idx: reference index (e.g., of datetimes of events)
-    :param data: tabular data
-    :param first_period: first period offset, inclusive
-    :param last_period: last period offset, inclusive
-    :param periods: as in pandas `shift` functions
+    :param events: reference index (e.g., of datetimes of events)
+    :param grid_data: tabular data
+    :param periods: shift periods
     :param freq: as in pandas `shift` functions
     :param shift_mode:
         -   "shift_data" applies `.shift()` to `data`
@@ -132,27 +148,28 @@ def _compute_relative_series(
         -   keyed by period (from [first_period, last_period])
         -   values series / dataframe, obtained from shifts and idx selection
     """
-    dbg.dassert_lte(first_period, last_period)
+    dbg.dassert_monotonic_index(events.index)
+    dbg.dassert_monotonic_index(grid_data.index)
+    if not isinstance(periods, list):
+        periods = list(periods)
+    dbg.dassert(periods)
     period_to_data = {}
-    for period in range(first_period, last_period + 1):
+    for period in periods:
         if info is not None:
             period_info = {}
         else:
             period_info = None
         #
-        data = _shift_and_select(idx, data, period, freq, shift_mode, period_info)
-        if isinstance(data, pd.Series):
-            data = data.to_frame()
+        grid_data = _shift_and_select(events.index, grid_data, period, freq, shift_mode, period_info)
         #
         if info is not None:
             info[period] = period_info
-        period_to_data[period] = data
+        period_to_data[period] = grid_data
     return period_to_data
 
 
 def compute_event_indicator(
-    first_period: int,
-    last_period: int,
+    periods: Iterable[int],
     func: Callable[[pd.Series], pd.Series],
     func_kwargs: Optional[Any] = None,
     mode: Optional[str] = None,
@@ -160,18 +177,21 @@ def compute_event_indicator(
     """
     Transform event impulse time series using func.
 
-    :param first_period:
-    :param last_period:
+    :param periods:
     :param mode:
     :param func:
     :param kwargs:
     :return:
     """
+    if not isinstance(periods, list):
+        periods = list(periods)
+    dbg.dassert(periods)
+    dbg.dassert_in(0, periods)
     mode = mode or "autoscale"
     func_kwargs = func_kwargs or {}
-    dbg.dassert_lte(first_period, 0)
     #
-    impulse = sigp.get_impulse(first_period, last_period + 1, 1)
+    impulse = pd.Series(data=0, index=periods, name=EVENT_INDICATOR)
+    impulse.loc[0] = 1
     indicator = func(impulse, **func_kwargs)
     #
     if mode == "autoscale":
@@ -198,13 +218,12 @@ def _add_indicator_to_relative_series(
     :return:
     """
     col_name = col_name or EVENT_INDICATOR
-    first_period = min(data_slices.keys())
-    last_period = max(data_slices.keys())
+    periods = data_slices.keys()
     event_indicator = compute_event_indicator(
-        first_period, last_period, func=func, func_kwargs=func_kwargs, mode=mode,
+        periods, func=func, func_kwargs=func_kwargs, mode=mode,
     )
     new_slices = {}
-    for period in data_slices.keys():
+    for period in periods:
         val = event_indicator[period]
         data = data_slices[period].copy()
         srs = pd.Series(data=val, index=data.index)
@@ -280,7 +299,7 @@ def tile_x_flatten_y(x_vars, y_var):
     return x, y
 
 
-def regression(x, y):
+def regression(x: pd.DataFrame, y: pd.Series):
     """
     Linear regression of y_var on x_vars.
 
