@@ -69,8 +69,7 @@ def _shift_and_select(
     :param info: optional empty dict-like object to be populated with stats
         about the operation performed
     """
-    if mode is None:
-        mode = "shift_data"
+    mode = mode or "shift_data"
     # Shift.
     if mode == "shift_data":
         data = data.copy()
@@ -92,7 +91,7 @@ def _shift_and_select(
         info["periods"] = periods
         if freq is not None:
             info["freq"] = freq
-        info["mod"] = mode
+        info["mode"] = mode
     return selected
 
 
@@ -110,7 +109,7 @@ def _compute_relative_series(
 
     This generates a sort of "panel" time series:
     -   The period indicates the relative time step
-    -   The value at a period is a dataframe with
+    -   (In an event study) the value at each period is a dataframe with
         -   An index of "event times" (given by `idx`)
         -   Columns corresponding to
             -   Precisely one response variable
@@ -139,9 +138,11 @@ def _compute_relative_series(
             period_info = {}
         else:
             period_info = None
+        #
         data = _shift_and_select(idx, data, period, freq, shift_mode, period_info)
         if isinstance(data, pd.Series):
             data = data.to_frame()
+        #
         if info is not None:
             info[period] = period_info
         period_to_data[period] = data
