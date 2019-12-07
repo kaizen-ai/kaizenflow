@@ -499,7 +499,7 @@ f-r-o-m pandas import DataFrame"""
         file_name = "lib.py"
         txt = "import pandas as a_very_long_name"
         exp = """# output
-lib.py:1: the import shortcut 'a_very_long_name' in 'import pandas as a_very_long_name' is longer than 5 characters
+lib.py:1: the import shortcut 'a_very_long_name' in 'import pandas as a_very_long_name' is longer than 8 characters
 # txt_new
 i-m-p-o-r-t pandas as a_very_long_name"""
         # To avoid the linter to complain.
