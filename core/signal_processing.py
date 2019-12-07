@@ -490,6 +490,7 @@ def _com_to_tau(com: float) -> float:
 
     This is the function inverse of `_tau_to_com`.
     """
+    dbg.dassert_lt(0, com)
     return 1.0 / np.log(1 + 1.0 / com)
 
 
@@ -508,6 +509,7 @@ def _tau_to_com(tau: float) -> float:
         center-of-mass (com) associated with an ema kernel.
     :return: com
     """
+    dbg.dassert_lt(0, tau)
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
@@ -545,6 +547,7 @@ def ema(
     """
     dbg.dassert_isinstance(depth, int)
     dbg.dassert_lte(1, depth)
+    dbg.dassert_lt(0, tau)
     _LOG.debug("Calculating iterated ema of depth %i", depth)
     _LOG.debug("range = %0.2f", depth * tau)
     _LOG.debug("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)
@@ -1191,13 +1194,15 @@ def eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
 # #############################################################################
 
 
-def get_heaviside(a: int, b: int, tick: int) -> pd.Series:
+def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
     """
     Generate Heaviside pd.Series.
     """
+    dbg.dassert_lte(a, zero_val)
+    dbg.dassert_lte(zero_val, b)
     array = np.arange(a, b, tick)
     srs = pd.Series(
-        data=np.heaviside(array, 1), index=array, name="Heaviside"
+        data=np.heaviside(array, zero_val), index=array, name="Heaviside"
     )
     return srs
 
@@ -1206,9 +1211,8 @@ def get_impulse(a: int, b: int, tick: int) -> pd.Series:
     """
     Generate unit impulse pd.Series.
     """
-    dbg.dassert_lt(a, b)
-    heavi = get_heaviside(a, b, tick)
-    impulse = (heavi - heavi.shift(1)).fillna(0)
+    heavi = get_heaviside(a, b, 1, tick)
+    impulse = (heavi - heavi.shift(1)).shift(-1).fillna(0)
     impulse.name = "impulse"
     return impulse
 
