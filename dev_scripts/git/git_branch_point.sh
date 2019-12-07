@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # """
-# Found the branching point.
+# Find the branching point.
 # """
 
 source dev_scripts/helpers.sh

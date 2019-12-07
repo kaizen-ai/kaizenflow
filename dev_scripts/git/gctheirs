@@ -7,7 +7,7 @@
 source helpers.sh
 
 FILES=$*
-echo "Accepting $FILES"
+echo "Accepting their version of $FILES"
 execute "git reset HEAD $FILES"
 execute "git checkout --theirs $FILES"
 execute "git add $FILES"

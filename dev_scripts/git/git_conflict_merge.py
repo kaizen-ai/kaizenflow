@@ -20,7 +20,6 @@ def _git_merge(file_name, tmp_dir_name, vs_base):
     :param file_name:
     :param tmp_dir_name:
     :param vs_base: compare to base instead of theirs.
-
     """
     _LOG.info("\nResolving %s ... ", file_name)
     # Save relevant files with different versions of the same file.

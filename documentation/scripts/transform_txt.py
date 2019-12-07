@@ -7,20 +7,21 @@ Perform one of several transformations on a txt file.
 - If output file is not specified then we assume that the output file is the
   same as the input
 
-1) Create table of context from the current file, with 1 level
-> transform_txt.py -a toc -i % -l 1
+- The possible transformations are:
+    1) Create table of context from the current file, with 1 level
+        > transform_txt.py -a toc -i % -l 1
 
-2) Format the current file with 3 levels
-:!transform_txt.py -a format -i % --max_lev 3
-> transform_txt.py -a format -i notes/ABC.txt --max_lev 3
+    2) Format the current file with 3 levels
+        :!transform_txt.py -a format -i % --max_lev 3
+        > transform_txt.py -a format -i notes/ABC.txt --max_lev 3
 
-- In vim
-:!transform_txt.py -a format -i % --max_lev 3
-:%!transform_txt.py -a format -i - --max_lev 3
+        - In vim
+        :!transform_txt.py -a format -i % --max_lev 3
+        :%!transform_txt.py -a format -i - --max_lev 3
 
-3) Increase level
-:!transform_txt.py -a increase -i %
-:%!transform_txt.py -a increase -i -
+    3) Increase level
+        :!transform_txt.py -a increase -i %
+        :%!transform_txt.py -a increase -i -
 """
 
 # TODO(gp):

@@ -14,7 +14,6 @@
 
 
 <!--te-->
-
 # `dev_scripts`
 
 **_dev_scripts/\_setenv_amp.py_**
@@ -64,14 +63,6 @@ Look for files / dirs with name containing "stocktwits" in "this_dir"
 
 Look only for files.
 > ffind.py stocktwits --only_files
-```
-
-**_dev_scripts/generate_script_catalog.py_**
-
-```
-Generate a markdown file with the docstring for any script in the repo.
-
-> generate_script_catalog.py
 ```
 
 **_dev_scripts/ghi_**
@@ -448,6 +439,12 @@ Show the commit hash that HEAD is at.
 
 **_dev_scripts/git/git_merge.py_**
 
+**_dev_scripts/git/git_merge_branch.sh_**
+
+```
+Qualify a branch in amp and then merge it into master.
+```
+
 **_dev_scripts/git/git_merge_master.sh_**
 
 ```
@@ -495,6 +492,12 @@ Clean all the submodules with `git clean -fd`.
 ```
 Commit in all the repos.
 It assumes that everything has been pulled.
+```
+
+**_dev_scripts/git/git_submodules_merge_branch.sh_**
+
+```
+Qualify a branch with multiple Git repos and then merge it into master.
 ```
 
 **_dev_scripts/git/git_submodules_pull.sh_**
@@ -546,7 +549,7 @@ Show my last 5 commits.
 **_dev_scripts/git/gp_**
 
 ```
-Sync client with gup.py and then push local commits.
+Sync client and then push local commits.
 ```
 
 **_dev_scripts/git/grc_**
@@ -839,6 +842,17 @@ the elapsed time.
 
 # `documentation/scripts`
 
+**_documentation/scripts/convert_txt_to_pandoc.py_**
+
+```
+Convert a txt file into markdown suitable for pandoc.py
+
+E.g.,
+- convert the text in pandoc / latex format
+- handle banners around chapters
+- handle comments
+```
+
 **_documentation/scripts/generate_latex_sty.py_**
 
 ```
@@ -864,7 +878,21 @@ the elapsed time.
 \newcommand{\WW}{\mat{W}}
 ```
 
+**_documentation/scripts/generate_script_catalog.py_**
+
+```
+Generate a markdown file with the docstring for any script in the repo.
+
+> generate_script_catalog.py
+```
+
 **_documentation/scripts/gh-md-toc_**
+
+**_documentation/scripts/lint_txt.py_**
+
+```
+Used in vim to prettify a part of the text.
+```
 
 **_documentation/scripts/pandoc.py_**
 
@@ -881,41 +909,6 @@ Check that can be compiled:
 > pandoc.py -a pdf --no_toc --no_open_pdf --input ...
 
 > pandoc.py --input notes/IN_PROGRESS/math.The_hundred_page_ML_book.Burkov.2019.txt -a pdf --no_cleanup --no_cleanup_before --no_run_latex_again --no_open
-```
-
-**_documentation/scripts/preprocess_md_for_pandoc.py_**
-
-```
-Convert a txt file into markdown suitable for pandoc.py
-
-E.g.,
-- convert the text in some nice pandoc / latex format
-- handle banners around chapters
-- handle comments
-```
-
-**_documentation/scripts/process_md.py_**
-
-```
-Perform several kind of transformation on a txt file
-
-- The input or output can be filename or stdin (represented by '-')
-- If output file is not specified then the same input is assumed
-
-1) Create table of context from the current file, with 1 level
-> process_md.py -a toc -i % -l 1
-
-2) Format the current file with 3 levels
-:!process_md.py -a format -i --max_lev 3
-> process_md.py -a format -i notes/ABC.txt --max_lev 3
-
-- In vim
-:!process_md.py -a format -i % --max_lev 3
-:%!process_md.py -a format -i - --max_lev 3
-
-3) Increase level
-:!process_md.py -a increase -i %
-:%!process_md.py -a increase -i -
 ```
 
 **_documentation/scripts/publish_notes.py_**
@@ -939,6 +932,32 @@ Replace and check:
 ```
 
 **_documentation/scripts/replace_latex.sh_**
+
+**_documentation/scripts/transform_txt.py_**
+
+```
+Perform one of several transformations on a txt file.
+
+- The input or output can be filename or stdin (represented by '-')
+- If output file is not specified then we assume that the output file is the
+  same as the input
+
+- The possible transformations are:
+    1) Create table of context from the current file, with 1 level
+        > transform_txt.py -a toc -i % -l 1
+
+    2) Format the current file with 3 levels
+        :!transform_txt.py -a format -i % --max_lev 3
+        > transform_txt.py -a format -i notes/ABC.txt --max_lev 3
+
+        - In vim
+        :!transform_txt.py -a format -i % --max_lev 3
+        :%!transform_txt.py -a format -i - --max_lev 3
+
+    3) Increase level
+        :!transform_txt.py -a increase -i %
+        :%!transform_txt.py -a increase -i -
+```
 
 # `dev_scripts/git/git_hooks`
 
