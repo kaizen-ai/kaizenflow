@@ -35,15 +35,13 @@ _LOG = logging.getLogger(__name__)
 
 
 def _process_question(line):
+    """
+    Transform `* foo bar` into `- **foo bar**`.
+    """
     do_continue = False
-    # num_tab_spaces = 4
-    num_tab_spaces = 2
-    space = " " * (num_tab_spaces - 1)
-    if (
-        line.startswith("*" + space)
-        or line.startswith("**" + space)
-        or line.startswith("*:" + space)
-    ):
+    regex = r'^(\*|\*\*|\*:)(\s+)(\S.*)\s*$'
+    m = re.search(regex, line)
+    if m:
         # Bold.
         meta = "**"
         # Bold + italic
@@ -52,16 +50,7 @@ def _process_question(line):
         # meta = "__"
         # Italic.
         # meta = "_"
-        if line.startswith("*" + space):
-            to_replace = "*" + space
-        elif line.startswith("**" + space):
-            to_replace = "**" + space
-        elif line.startswith("*:" + space):
-            to_replace = "*: "
-        else:
-            raise RuntimeError("line=%s" % line)
-        line = line.replace(to_replace, "- " + meta) + meta[::-1]
-        #
+        line = "-%s**%s**" % (m.group(2), m.group(3))
         do_continue = True
     return do_continue, line
 
