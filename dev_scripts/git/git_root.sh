@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # """
-# Report path of the git client, e.g., /Users/saggese/src/lemonade/amp
+# Report the path of the git client, e.g., /Users/saggese/src/amp
 # """
 
 git rev-parse --show-toplevel

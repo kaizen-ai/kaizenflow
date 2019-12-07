@@ -412,3 +412,11 @@
 
 -   We don't review changes that go in feature branches unless the author is
     ready for merging back to `master`
+
+## PR
+
+-   better description in the PR
+-   separate refactoring, changes in docstring, type hints
+-   tell if one needs to look at commit one by one
+
+-   better commit message using convention from GH

@@ -4,7 +4,7 @@
 Convert a txt file into markdown suitable for pandoc.py
 
 E.g.,
-- convert the text in some nice pandoc / latex format
+- convert the text in pandoc / latex format
 - handle banners around chapters
 - handle comments
 """
@@ -25,6 +25,7 @@ E.g.,
 import argparse
 import logging
 import re
+from typing import List
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -33,34 +34,34 @@ import helpers.parser as prsr
 _LOG = logging.getLogger(__name__)
 
 
-def _parse():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument("--input", action="store", type=str, required=True)
-    parser.add_argument("--output", action="store", type=str, default=None)
-    prsr.add_verbosity_arg(parser)
-    return parser
+def _process_question(line):
+    """
+    Transform `* foo bar` into `- **foo bar**`.
+    """
+    # Bold.
+    meta = "**"
+    # Bold + italic
+    # meta = "_**"
+    # Underline (not working)
+    # meta = "__"
+    # Italic.
+    # meta = "_"
+    do_continue = False
+    regex = r"^(\*|\*\*|\*:)(\s+)(\S.*)\s*$"
+    m = re.search(regex, line)
+    if m:
+        line = "-%s%s%s%s" % (m.group(2), meta, m.group(3), meta)
+        do_continue = True
+    return do_continue, line
 
 
-def _main(parser):
-    args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Slurp file.
-    lines = io_.from_file(args.input).split("\n")
-    lines = [l.rstrip("\n") for l in lines]
-    out = []
-    # Add some directive for pandoc.
-    out.extend([r"""\let\emph\textit""", ""])
-    out.extend([r"""\let\uline\underline""", ""])
-    out.extend([r"""\let\ul\underline""", ""])
+def _transform(lines: List[str]) -> List[str]:
+    out: List[str] = []
     # During a block to skip.
     in_skip_block = False
     # During a code block.
     in_code_block = False
-    # pylint: disable=consider-using-enumerate
-    for i in range(len(lines)):
-        line = lines[i]
+    for i, line in enumerate(lines):
         _LOG.debug("%s:line=%s", i, line)
         # Handle comment block.
         # TODO: improve the comment handling, handle also \* *\ and %.
@@ -114,32 +115,9 @@ def _main(parser):
         ):
             _LOG.debug("  -> skip")
             continue
-        # Process question.
-        # num_tab_spaces = 4
-        num_tab_spaces = 2
-        space = " " * (num_tab_spaces - 1)
-        if (
-            line.startswith("*" + space)
-            or line.startswith("**" + space)
-            or line.startswith("*:" + space)
-        ):
-            # Bold.
-            meta = "**"
-            # Bold + italic
-            # meta = "_**"
-            # Underline (not working)
-            # meta = "__"
-            # Italic.
-            # meta = "_"
-            if line.startswith("*" + space):
-                to_replace = "*" + space
-            elif line.startswith("**" + space):
-                to_replace = "**" + space
-            elif line.startswith("*:" + space):
-                to_replace = "*: "
-            else:
-                raise RuntimeError("line=%s" % line)
-            line = line.replace(to_replace, "- " + meta) + meta[::-1]
+        #
+        do_continue, line = _process_question(line)
+        if do_continue:
             out.append(line)
             continue
         # Handle empty lines in the questions and answers.
@@ -175,6 +153,41 @@ def _main(parser):
                 or next_line_is_verbatim
             ):
                 out.append("  " + line)
+    # - Clean up.
+    # Remove all the lines with
+    out_tmp = []
+    for line in out:
+        if re.search(r"^\s+$", line):
+            line = ""
+        out_tmp.append(line)
+    out = out_tmp
+    return out
+
+
+def _parse():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("--input", action="store", type=str, required=True)
+    parser.add_argument("--output", action="store", type=str, default=None)
+    prsr.add_verbosity_arg(parser)
+    return parser
+
+
+def _main(parser):
+    args = parser.parse_args()
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Slurp file.
+    lines = io_.from_file(args.input).split("\n")
+    lines = [l.rstrip("\n") for l in lines]
+    out: List[str] = []
+    # Add some directive for pandoc.
+    out.extend([r"""\let\emph\textit""", ""])
+    out.extend([r"""\let\uline\underline""", ""])
+    out.extend([r"""\let\ul\underline""", ""])
+    #
+    out_tmp = _transform(lines)
+    out.extend(out_tmp)
     # Print result.
     txt = "\n".join(out)
     io_.to_file(args.output, txt)

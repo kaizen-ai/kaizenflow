@@ -344,17 +344,13 @@ _LOG.debug(&#39;cmd={cmd1} {cmd2} {cmd3}&#39;)</code></pre>
     **Bad**
     ```
 
-
   dbg.dassert_eq(a, 1, &quot;No info for %s&quot; % method)
-
 
     ```
     **Good**
     ```
 
-
   dbg.dassert_eq(a, 1, &quot;No info for %s&quot;, method)
-
 
     ```</code></pre>
 </body>

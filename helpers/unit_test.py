@@ -109,14 +109,21 @@ def filter_text(regex: str, txt: str) -> str:
     if regex is None:
         return txt
     txt_out = []
-    for line in txt.split("\n"):
+    txt_as_arr = txt.split("\n")
+    for line in txt_as_arr:
         if re.search(regex, line):
             _LOG.debug("Skipping line='%s'", line)
             continue
         txt_out.append(line)
-    txt = "\n".join(txt_out)
     # We can only remove lines.
-    dbg.dassert_lte(len(txt_out), len(txt))
+    dbg.dassert_lte(
+        len(txt_out),
+        len(txt_as_arr),
+        "txt_out=\n'''%s'''\ntxt=\n'''%s'''",
+        "\n".join(txt_out),
+        "\n".join(txt_as_arr),
+    )
+    txt = "\n".join(txt_out)
     return txt
 
 
@@ -378,6 +385,7 @@ class TestCase(unittest.TestCase):
         _LOG.debug("dir_name=%s", dir_name)
         io_.create_dir(dir_name, incremental=True)
         dbg.dassert_exists(dir_name)
+        #
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
@@ -432,12 +440,8 @@ class TestCase(unittest.TestCase):
                 # the golden outcome.
                 expected = io_.from_file(file_name)
                 test_name = self._get_test_name()
-                # The problem is that from_file can return a List[str] split =
-                # True, so mypy gets confused:
-                #   mypy: Argument 2 to "_assert_equal" has incompatible type
-                #   "Union[str, List[str]]"; expected "str"
                 _assert_equal(
-                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match  # type: ignore
+                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
                 )
             else:
                 # No golden outcome available: save the result in a tmp file.

@@ -629,17 +629,13 @@ _LOG.debug('cmd={cmd1} {cmd2} {cmd3}')
     **Bad**
     ```
 
-
   dbg.dassert_eq(a, 1, "No info for %s" % method)
-
 
     ```
     **Good**
     ```
 
-
   dbg.dassert_eq(a, 1, "No info for %s", method)
-
 
     ```
 \end{verbatim}
