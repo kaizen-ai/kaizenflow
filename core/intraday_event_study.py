@@ -16,7 +16,7 @@ Sketch of flow:
 -   Determine number of pre/post-event periods to analyze
 -   TODO(Paul): Wrap these in a public function call
     -   Call `_compute_relative_series`
-    -   Annotate with indicator/auxiliary vars
+    -   Call `_add_indicator_to_relative_series`
     -   Call `_stack_data`
     -   Run linear modeling step
         -   For unpredictable events, this model may not be tradable
@@ -38,6 +38,7 @@ from typing import Dict, Optional, Union
 import numpy as np
 import pandas as pd
 
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -149,25 +150,71 @@ def _compute_relative_series(
     return period_to_data
 
 
-def _add_indicator(
-    data: pd.DataFrame, period: int, name: str = EVENT_INDICATOR
-) -> pd.DataFrame:
+def compute_event_indicator(
+    first_period: int,
+    last_period: int,
+    func: Callable[[pd.Series], pd.Series],
+    func_kwargs: Optional[Any] = None,
+    mode: Optional[str] = None,
+) -> pd.Series:
     """
-    TODO(Paul): Think about convolving with a kernel
+    Transform event impulse time series using func.
 
-    :param data:
+    :param first_period:
+    :param last_period:
     :param mode:
+    :param func:
+    :param kwargs:
     :return:
     """
-    data = data.copy()
-    dbg.dassert_not_in(name, data.columns)
-    if period >= 0:
-        val = 1
+    mode = mode or "autoscale"
+    func_kwargs = func_kwargs or {}
+    dbg.dassert_lte(first_period, 0)
+    #
+    impulse = sigp.get_impulse(first_period, last_period + 1, 1)
+    indicator = func(impulse, **func_kwargs)
+    #
+    if mode == "autoscale":
+        t0_val = indicator[0]
+        dbg.dassert_ne(t0_val, 0)
+        indicator =/ t0_val
+    elif mode == "no_rescale":
+        pass
     else:
-        val = 0
-    srs = pd.Series(data=val, index=data.index, name=name)
-    data.insert(loc=0, column=name, value=srs)
-    return data
+        raise ValueError("Invalid mode=`%s`", mode)
+    return indicator
+
+
+def _add_indicator_to_relative_series(
+    data_slices: Dict[int, pd.DataFrame],
+    func: Callable[[pd.Series], pd.Series],
+    mode: Optional[str] = None,
+    func_kwargs: Optional[Any] = None,
+    col_name: Optional[str] = None
+) -> Dict[int, pd.DataFrame]:
+    """
+
+    :param data_slices:
+    :return:
+    """
+    col_name = col_name or EVENT_INDICATOR
+    first_period = min(data_slices.keys())
+    last_period = max(data_slices.keys())
+    event_indicator = compute_event_indicator(
+        first_period,
+        last_period,
+        func=func,
+        func_kwargs=func_kwargs,
+        mode=mode,
+    )
+    new_slices = {}
+    for period in data_slices.keys():
+        val = event_indicator[period]
+        data = data_slices[period].copy()
+        srs = pd.Series(data=val, index=data.index)
+        data.insert(loc=0, column=col_name, value=srs)
+        new_slices[period] = data
+    return new_slices
 
 
 def _stack_data(

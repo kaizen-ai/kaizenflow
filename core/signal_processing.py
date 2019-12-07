@@ -1191,15 +1191,13 @@ def eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
 # #############################################################################
 
 
-def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
+def get_heaviside(a: int, b: int, tick: int) -> pd.Series:
     """
     Generate Heaviside pd.Series.
     """
-    dbg.dassert_lte(a, zero_val)
-    dbg.dassert_lte(zero_val, b)
     array = np.arange(a, b, tick)
     srs = pd.Series(
-        data=np.heaviside(array, zero_val), index=array, name="Heaviside"
+        data=np.heaviside(array, 1), index=array, name="Heaviside"
     )
     return srs
 
@@ -1208,8 +1206,9 @@ def get_impulse(a: int, b: int, tick: int) -> pd.Series:
     """
     Generate unit impulse pd.Series.
     """
-    heavi = get_heaviside(a, b, 1, tick)
-    impulse = (heavi - heavi.shift(1)).shift(-1).fillna(0)
+    dbg.dassert_lt(a, b)
+    heavi = get_heaviside(a, b, tick)
+    impulse = (heavi - heavi.shift(1)).fillna(0)
     impulse.name = "impulse"
     return impulse
 
