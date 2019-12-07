@@ -25,6 +25,7 @@ E.g.,
 import argparse
 import logging
 import re
+from typing import List
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -33,27 +34,8 @@ import helpers.parser as prsr
 _LOG = logging.getLogger(__name__)
 
 
-def _parse():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument("--input", action="store", type=str, required=True)
-    parser.add_argument("--output", action="store", type=str, default=None)
-    prsr.add_verbosity_arg(parser)
-    return parser
-
-
-def _main(parser):
-    args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Slurp file.
-    lines = io_.from_file(args.input)
-    lines = [l.rstrip("\n") for l in lines]
-    out = []
-    # Add some directive for pandoc.
-    out.extend([r"""\let\emph\textit""", ""])
-    out.extend([r"""\let\uline\underline""", ""])
-    out.extend([r"""\let\ul\underline""", ""])
+def _transform(lines: List[str]) -> List[str]:
+    out : List[str] = []
     # During a block to skip.
     in_skip_block = False
     # During a code block.
@@ -175,6 +157,33 @@ def _main(parser):
                 or next_line_is_verbatim
             ):
                 out.append("  " + line)
+    return out
+
+
+def _parse():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("--input", action="store", type=str, required=True)
+    parser.add_argument("--output", action="store", type=str, default=None)
+    prsr.add_verbosity_arg(parser)
+    return parser
+
+
+def _main(parser):
+    args = parser.parse_args()
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Slurp file.
+    lines = io_.from_file(args.input)
+    lines = [l.rstrip("\n") for l in lines]
+    out : List[str] = []
+    # Add some directive for pandoc.
+    out.extend([r"""\let\emph\textit""", ""])
+    out.extend([r"""\let\uline\underline""", ""])
+    out.extend([r"""\let\ul\underline""", ""])
+    #
+    out_tmp = _transform(lines)
+    out.extend(out_tmp)
     # Print result.
     txt = "\n".join(out)
     io_.to_file(args.output, txt)
