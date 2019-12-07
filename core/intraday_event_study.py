@@ -1,18 +1,25 @@
 import logging
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from typing import Optional, Union
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
 
-def _shift_and_select(idx: pd.Index, data: Union[pd.Series, pd.DataFrame],
-                      periods: int,
-                      freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
-                      mode: Optional[str] = None,
-                      info: Optional[dict] = None) -> Union[pd.Series, pd.DataFrame]:
+EVENT_INDICATOR = "event_indicator"
+
+
+def _shift_and_select(
+    idx: pd.Index,
+    data: Union[pd.Series, pd.DataFrame],
+    periods: int,
+    freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
+    mode: Optional[str] = None,
+    info: Optional[dict] = None,
+) -> Union[pd.Series, pd.DataFrame]:
     """
     Shift by `periods` and select `idx`.
 
@@ -54,13 +61,14 @@ def _shift_and_select(idx: pd.Index, data: Union[pd.Series, pd.DataFrame],
 
 
 def _compute_relative_series(
-        idx: pd.Index,
-        data: Union[pd.Series, pd.DataFrame],
-        first_period: int,
-        last_period: int,
-        freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
-        shift_mode: Optional[str] = None,
-        info: Optional[dict] = None) -> Dict[int, pd.DataFrame]:
+    idx: pd.Index,
+    data: Union[pd.Series, pd.DataFrame],
+    first_period: int,
+    last_period: int,
+    freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
+    shift_mode: Optional[str] = None,
+    info: Optional[dict] = None,
+) -> Dict[int, pd.DataFrame]:
     """
     Compute series [first_period, last_period] relative to idx.
 
@@ -94,9 +102,8 @@ def _compute_relative_series(
 
 
 def _add_indicator(
-    data: pd.DataFrame,
-    period: int,
-    name: str = EVENT_INDICATOR) -> pd.DataFrame:
+    data: pd.DataFrame, period: int, name: str = EVENT_INDICATOR
+) -> pd.DataFrame:
     """
 
     :param data:
