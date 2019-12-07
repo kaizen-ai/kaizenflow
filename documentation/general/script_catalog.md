@@ -312,22 +312,19 @@ Start / stop / check AWS instance.
 
 # `dev_scripts/git`
 
-**_dev_scripts/git/gb_**
-
-```
-Print name of the branch. We don't use any wrapper so that we can use this
-result.
-```
-
 **_dev_scripts/git/gcl_**
 
 ```
-Clean the client making a backup
+Clean the client making a backup:
 > gsp.py
 > git clean -fd
 ```
 
 **_dev_scripts/git/gco_**
+
+```
+> git checkout $1
+```
 
 **_dev_scripts/git/gcours_**
 
@@ -347,23 +344,29 @@ Accept their changes in case of a conflict.
 > git difftool $*
 ```
 
+**_dev_scripts/git/gd_master.sh_**
+
+```
+Diff current branch against master.
+```
+
+**_dev_scripts/git/gd_notebook.py_**
+
+```
+Diff a notebook against the HEAD version in git, removing notebook artifacts
+to make the differences easier to spot using vimdiff.
+```
+
 **_dev_scripts/git/gdc_**
 
 ```
 > git difftool --cached $*
 ```
 
-**_dev_scripts/git/gdmaster.sh_**
-
-```
-Diff current branch with master.
-```
-
 **_dev_scripts/git/gdpy_**
 
 ```
 Git diff all the python files.
-> gd $(git_files.sh)
 ```
 
 **_dev_scripts/git/git_backup.sh_**
@@ -378,16 +381,24 @@ Create a tarball of all the files added / modified according to git_files.sh
 Show information about the branches.
 ```
 
-**_dev_scripts/git/git_branching_point.sh_**
-
-```
-Found the branching point.
-```
-
-**_dev_scripts/git/git_checkout_branch.sh_**
+**_dev_scripts/git/git_branch_checkout.sh_**
 
 ```
 Create a branch, check it out, and push it remotely.
+```
+
+**_dev_scripts/git/git_branch_delete_merged.sh_**
+
+**_dev_scripts/git/git_branch_name.sh_**
+
+```
+Print name of the branch.
+```
+
+**_dev_scripts/git/git_branch_point.sh_**
+
+```
+Find the branching point.
 ```
 
 **_dev_scripts/git/git_commit.py_**
@@ -403,20 +414,19 @@ Create a branch, check it out, and push it remotely.
 Find files with git conflicts.
 ```
 
+**_dev_scripts/git/git_conflict_merge.py_**
+
+**_dev_scripts/git/git_conflict_show.sh_**
+
+```
+Generate the files involved in a merge conflict.
+```
+
 **_dev_scripts/git/git_create_patch.sh_**
 
 ```
 Create a patch file for the entire repo client from the base revision.
 This script accepts a list of files to package, if specified.
-```
-
-**_dev_scripts/git/git_delete_merged_branches.sh_**
-
-**_dev_scripts/git/git_diff_notebook.py_**
-
-```
-Diff a notebook against the HEAD version in git, removing notebook artifacts
-to make the differences easier to spot using vimdiff.
 ```
 
 **_dev_scripts/git/git_files.sh_**
@@ -436,8 +446,6 @@ Plot a graphical view of the branches, using different level of details
 ```
 Show the commit hash that HEAD is at.
 ```
-
-**_dev_scripts/git/git_merge.py_**
 
 **_dev_scripts/git/git_merge_branch.sh_**
 
@@ -466,13 +474,7 @@ Force a revert of files to HEAD.
 **_dev_scripts/git/git_root.sh_**
 
 ```
-Report path of the git client, e.g., /Users/saggese/src/lemonade/amp
-```
-
-**_dev_scripts/git/git_show_conflicting_files.sh_**
-
-```
-Generate the files involved in a merge conflict.
+Report the path of the git client, e.g., /Users/saggese/src/amp
 ```
 
 **_dev_scripts/git/git_submodules_are_updated.sh_**
@@ -510,12 +512,6 @@ Force a git pull of all the repos.
 
 ```
 Roll fwd the submodules.
-```
-
-**_dev_scripts/git/git_unstage.sh_**
-
-```
-Unstage with `git reset HEAD`
 ```
 
 **_dev_scripts/git/git_untracked_files.sh_**
