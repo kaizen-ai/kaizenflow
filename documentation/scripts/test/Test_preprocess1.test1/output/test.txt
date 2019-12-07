@@ -5,7 +5,6 @@
 \let\ul\underline
 
   - Many trees are possible for a set of keys, with different heights
-  
 
 
     ```graphviz
@@ -13,7 +12,6 @@
     ```
 
 
-  
   \begin{tikzpicture}
     \tikzstyle{every node}=[fill=white!60,circle,draw,inner sep=1pt]
     \tikzstyle{level 1}=[sibling distance=20mm, set style={{every node}+=[fill=white!45]}]

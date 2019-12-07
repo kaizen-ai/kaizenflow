@@ -34,13 +34,44 @@ import helpers.parser as prsr
 _LOG = logging.getLogger(__name__)
 
 
+def _process_question(line):
+    do_continue = False
+    # num_tab_spaces = 4
+    num_tab_spaces = 2
+    space = " " * (num_tab_spaces - 1)
+    if (
+            line.startswith("*" + space)
+            or line.startswith("**" + space)
+            or line.startswith("*:" + space)
+    ):
+        # Bold.
+        meta = "**"
+        # Bold + italic
+        # meta = "_**"
+        # Underline (not working)
+        # meta = "__"
+        # Italic.
+        # meta = "_"
+        if line.startswith("*" + space):
+            to_replace = "*" + space
+        elif line.startswith("**" + space):
+            to_replace = "**" + space
+        elif line.startswith("*:" + space):
+            to_replace = "*: "
+        else:
+            raise RuntimeError("line=%s" % line)
+        line = line.replace(to_replace, "- " + meta) + meta[::-1]
+        #
+        do_continue = True
+    return do_continue, line
+
+
 def _transform(lines: List[str]) -> List[str]:
     out : List[str] = []
     # During a block to skip.
     in_skip_block = False
     # During a code block.
     in_code_block = False
-    # pylint: disable=consider-using-enumerate
     for i in range(len(lines)):
         line = lines[i]
         _LOG.debug("%s:line=%s", i, line)
@@ -96,32 +127,9 @@ def _transform(lines: List[str]) -> List[str]:
         ):
             _LOG.debug("  -> skip")
             continue
-        # Process question.
-        # num_tab_spaces = 4
-        num_tab_spaces = 2
-        space = " " * (num_tab_spaces - 1)
-        if (
-            line.startswith("*" + space)
-            or line.startswith("**" + space)
-            or line.startswith("*:" + space)
-        ):
-            # Bold.
-            meta = "**"
-            # Bold + italic
-            # meta = "_**"
-            # Underline (not working)
-            # meta = "__"
-            # Italic.
-            # meta = "_"
-            if line.startswith("*" + space):
-                to_replace = "*" + space
-            elif line.startswith("**" + space):
-                to_replace = "**" + space
-            elif line.startswith("*:" + space):
-                to_replace = "*: "
-            else:
-                raise RuntimeError("line=%s" % line)
-            line = line.replace(to_replace, "- " + meta) + meta[::-1]
+        #
+        do_continue, line = _process_question(line)
+        if do_continue:
             out.append(line)
             continue
         # Handle empty lines in the questions and answers.
@@ -157,6 +165,14 @@ def _transform(lines: List[str]) -> List[str]:
                 or next_line_is_verbatim
             ):
                 out.append("  " + line)
+    # - Clean up.
+    # Remove all the lines with
+    out_tmp = []
+    for line in out:
+        if re.search("^\s+$", line):
+            line = ""
+        out_tmp.append(line)
+    out = out_tmp
     return out
 
 

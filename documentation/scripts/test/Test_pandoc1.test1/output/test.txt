@@ -441,8 +441,8 @@ comments}\label{avoid-distracting-comments}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# Print results.}
-\NormalTok{log.info(}\StringTok{"Results are }\SpecialCharTok{\%s}\StringTok{"}\NormalTok{, ...)}
+\CommentTok{# Print results.}
+\NormalTok{log.info(}\StringTok{"Results are }\SpecialCharTok{%s}\StringTok{"}\NormalTok{, ...)}
 \end{Highlighting}
 \end{Shaded}
   \end{itemize}
@@ -629,17 +629,13 @@ _LOG.debug('cmd={cmd1} {cmd2} {cmd3}')
     **Bad**
     ```
 
-
   dbg.dassert_eq(a, 1, "No info for %s" % method)
-
 
     ```
     **Good**
     ```
 
-
   dbg.dassert_eq(a, 1, "No info for %s", method)
-
 
     ```
 \end{verbatim}

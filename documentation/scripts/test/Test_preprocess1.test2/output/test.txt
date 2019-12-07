@@ -5,9 +5,9 @@
 \let\ul\underline
 
 # 14, Topics in Demand and Supply Analysis (p. 6, 843)
-  
+
 ## Introduction
-  
+
 - **Economics**
   - Economics is the study of:
       - production

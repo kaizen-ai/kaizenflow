@@ -165,6 +165,23 @@ class Test_preprocess2(ut.TestCase):
     ```
 """
         exp = """
+# Python: nested functions
+  - Functions can be declared in the body of another function
+  - E.g., to hide utility functions in the scope of the function that uses them
+
+        ```python
+        def print_integers(values):
+
+            def _is_integer(value):
+                try:
+                    return value == int(value)
+                except:
+                    return False
+
+            for v in values:
+                if _is_integer(v):
+                    print(v)
+        ```
 """
         act_as_arr = doc_prep._transform(txt_in.split("\n"))
         act = "\n".join(act_as_arr)
