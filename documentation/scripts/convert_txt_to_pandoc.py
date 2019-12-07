@@ -4,7 +4,7 @@
 Convert a txt file into markdown suitable for pandoc.py
 
 E.g.,
-- convert the text in some nice pandoc / latex format
+- convert the text in pandoc / latex format
 - handle banners around chapters
 - handle comments
 """

@@ -1,31 +1,32 @@
 #!/usr/bin/env python
 
 """
-Perform several kind of transformation on a txt file
+Perform one of several transformations on a txt file.
 
 - The input or output can be filename or stdin (represented by '-')
-- If output file is not specified then the same input is assumed
+- If output file is not specified then we assume that the output file is the
+  same as the input
 
 1) Create table of context from the current file, with 1 level
-> process_md.py -a toc -i % -l 1
+> transform_txt.py -a toc -i % -l 1
 
 2) Format the current file with 3 levels
-:!process_md.py -a format -i --max_lev 3
-> process_md.py -a format -i notes/ABC.txt --max_lev 3
+:!transform_txt.py -a format -i % --max_lev 3
+> transform_txt.py -a format -i notes/ABC.txt --max_lev 3
 
 - In vim
-:!process_md.py -a format -i % --max_lev 3
-:%!process_md.py -a format -i - --max_lev 3
+:!transform_txt.py -a format -i % --max_lev 3
+:%!transform_txt.py -a format -i - --max_lev 3
 
 3) Increase level
-:!process_md.py -a increase -i %
-:%!process_md.py -a increase -i -
+:!transform_txt.py -a increase -i %
+:%!transform_txt.py -a increase -i -
 """
 
 # TODO(gp):
-#  - Merge remove_md_empty_lines
 #  - Compute index number
 #  - Add unit tests
+#  - Make functions private
 
 import argparse
 import logging
@@ -130,7 +131,6 @@ def format_text(in_file_name, out_file_name, max_lev):
     txt_tmp = []
     for l in txt:
         # Keep comments.
-        #
         found = False
         for i in range(1, max_lev + 1):
             if l.startswith("#" * i + " "):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Used in vim to prettify only a part of the text.
+Used in vim to prettify a part of the text.
 """
 
 import logging
@@ -25,6 +25,9 @@ _LOG = logging.getLogger(__name__)
 def _preprocess(txt: str) -> str:
     txt_new: List[str] = []
     for line in txt.split("\n"):
+        # Skip frames.
+        if re.match(r"#+ [#\/\-\=]{6,}", line):
+            continue
         line = re.sub(r"^\* ", "- STAR", line)
         # Transform:
         # $$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$

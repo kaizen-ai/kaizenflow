@@ -4,8 +4,8 @@ import os
 
 import pytest
 
-import documentation.scripts.preprocess_md_for_pandoc as doc_prep
-import documentation.scripts.stdin_linter as doc_stli
+import documentation.scripts.convert_txt_to_pandoc as dscttp
+import documentation.scripts.lint_txt as dslt
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
@@ -87,16 +87,16 @@ class Test_pandoc1(ut.TestCase):
 
 
 # #############################################################################
-# preprocess_md_for_pandoc.py
+# convert_txt_to_pandoc.py
 # #############################################################################
 
 
 def _run_preprocess(in_file: str, out_file: str) -> str:
     """
-    Execute the end-to-end flow for preprocess_md_for_pandoc.py returning
+    Execute the end-to-end flow for convert_txt_to_pandoc.py returning
     the output as string.
     """
-    exec_path = git.find_file_in_git_tree("preprocess_md_for_pandoc.py")
+    exec_path = git.find_file_in_git_tree("convert_txt_to_pandoc.py")
     dbg.dassert_exists(exec_path)
     #
     dbg.dassert_exists(in_file)
@@ -114,7 +114,7 @@ def _run_preprocess(in_file: str, out_file: str) -> str:
 
 class Test_preprocess1(ut.TestCase):
     """
-    Check that the output of preprocess_md_for_pandoc.py is the expected one
+    Check that the output of convert_txt_to_pandoc.py is the expected one
     using:
     - an end-to-end flow;
     - checked in files.
@@ -138,14 +138,14 @@ class Test_preprocess1(ut.TestCase):
 
 class Test_preprocess2(ut.TestCase):
     """
-    Check that the output of preprocess_md_for_pandoc.py is the expected one
+    Check that the output of convert_txt_to_pandoc.py is the expected one
     calling the library function directly.
     """
 
     def _helper_process_question(
         self, txt_in: str, do_continue_exp: bool, exp: str
     ):
-        do_continue, act = doc_prep._process_question(txt_in)
+        do_continue, act = dscttp._process_question(txt_in)
         self.assertEqual(do_continue, do_continue_exp)
         self.assert_equal(act, exp)
 
@@ -190,7 +190,7 @@ class Test_preprocess2(ut.TestCase):
     # #########################################################################
 
     def _helper_transform(self, txt_in: str, exp: str):
-        act_as_arr = doc_prep._transform(txt_in.split("\n"))
+        act_as_arr = dscttp._transform(txt_in.split("\n"))
         act = "\n".join(act_as_arr)
         self.assert_equal(act, exp)
 
@@ -238,14 +238,14 @@ class Test_preprocess2(ut.TestCase):
 
 
 # #############################################################################
-# stdin_linter.py
+# lint_txt.py
 # #############################################################################
 
 
-class Test_stdlin_linter1(ut.TestCase):
+class Test_lint_txt1(ut.TestCase):
     def test_preprocess1(self):
         txt = r"""$$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$"""
-        act = doc_stli._preprocess(txt)
+        act = dslt._preprocess(txt)
         exp = r"""$$
 E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)
 $$"""
@@ -260,7 +260,7 @@ E_{in}(\vw) = \frac{1}{N} \sum_i \big(
 -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
 \big)
 $$"""
-        act = doc_stli._preprocess(txt)
+        act = dslt._preprocess(txt)
         self.assert_equal(act, exp)
 
     @staticmethod
@@ -317,11 +317,27 @@ $$"""
 - It can be proven that the function $E_{in}(\vw)$ to minimize is convex in
   $\vw$ (sum of exponentials and flipped exponentials is convex and log is
   monotone)"""
-        act = doc_stli._preprocess(txt)
+        act = dslt._preprocess(txt)
+        self.assert_equal(act, exp)
+
+    def test_preprocess4(self):
+        txt = r"""# #########################
+# test
+# ###############"""
+        act = dslt._preprocess(txt)
+        exp = r"""# test"""
+        self.assert_equal(act, exp)
+
+    def test_preprocess5(self):
+        txt = r"""## ////////////////
+# test
+# ////////////////"""
+        act = dslt._preprocess(txt)
+        exp = r"""# test"""
         self.assert_equal(act, exp)
 
     def test_process1(self):
         txt = self._get_text1()
         file_name = os.path.join(self.get_scratch_space(), "test.txt")
-        act = doc_stli._process(txt, file_name)
+        act = dslt._process(txt, file_name)
         self.check_string(act)

@@ -63,11 +63,11 @@ def _cleanup_before(prefix):
     _ = _system(cmd)
 
 
-def _preprocess_md(curr_path, file_, prefix):
+def _convert_txt_to_pandoc(curr_path, file_, prefix):
     _LOG.info("\n%s", prnt.frame("Pre-process markdown", char1="<", char2=">"))
     file1 = file_
     file2 = "%s.no_spaces.txt" % prefix
-    cmd = "%s/preprocess_md_for_pandoc.py --input %s --output %s" % (
+    cmd = "%s/convert_txt_to_pandoc.py --input %s --output %s" % (
         curr_path,
         file1,
         file2,
@@ -292,8 +292,8 @@ def _pandoc(args, cmd_line):
     #
     # Pre-process markdown.
     #
-    if not args.no_preprocess_md:
-        file_ = _preprocess_md(curr_path, file_, prefix)
+    if not args.no_convert_txt_to_pandoc:
+        file_ = _convert_txt_to_pandoc(curr_path, file_, prefix)
     else:
         _LOG.warning("Skipping: pre-process markdown")
     #
@@ -380,7 +380,7 @@ def _parse():
     )
     # Control phases.
     parser.add_argument("--no_cleanup_before", action="store_true", default=False)
-    parser.add_argument("--no_preprocess_md", action="store_true", default=False)
+    parser.add_argument("--no_convert_txt_to_pandoc", action="store_true", default=False)
     parser.add_argument("--no_run_pandoc", action="store_true", default=False)
     parser.add_argument("--no_toc", action="store_true", default=False)
     parser.add_argument(
