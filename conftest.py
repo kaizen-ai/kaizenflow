@@ -1,3 +1,5 @@
+import os
+
 import helpers.dbg as dbg
 import helpers.unit_test as hut
 
@@ -42,8 +44,7 @@ if not hasattr(hut, "conftest_already_parsed"):
             print("\nWARNING: Setting verbosity level")
             dbg.init_logger(config.getoption("--dbg_verbosity"))
 
-    pyannotate = False
-    if pyannotate:
+    if "PYANNOTATE" in os.environ:
         print("\nWARNING: Collecting information about types through pyannotate")
         # From https://github.com/dropbox/pyannotate/blob/master/example/example_conftest.py
         import pytest

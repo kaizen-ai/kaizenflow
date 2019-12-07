@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp):
 # - Mount remote file system and then get info and sha1sum
 
-# ##############################################################################
+# #############################################################################
 
 _TO_EXCLUDE = [
     "*.pyc",
@@ -85,7 +85,7 @@ def _process_rsync_file_list(src_file, dst_file):
     # rsync --itemize-changes -n -avzu --exclude ... /Users/saggese/src/particle/commodity_research/tr
     # rsync --itemize-changes -n -avzu --exclude ... gp@104.248.187.204:/home/gp/src/commodity_research/tr
     # Load.
-    txt = io_.from_file(src_file, split=True)
+    txt = io_.from_file(src_file).split("\n")
     _LOG.debug("Read file '%s'", src_file)
     # Process.
     txt_out = []
@@ -146,7 +146,7 @@ def _get_list_files_cmd(
     return dst_file
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _main():

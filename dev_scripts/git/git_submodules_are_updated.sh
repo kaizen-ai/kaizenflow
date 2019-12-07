@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # """
-# Script to print the relevant Git hash pointers to amp.
+# Print the relevant Git hash pointers to amp.
 # """
 
 # amp pointer in p1.

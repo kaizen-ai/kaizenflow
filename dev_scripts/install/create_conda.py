@@ -58,7 +58,7 @@ _REQUIREMENTS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "requirements"))
 # dev_scripts/install/conda_envs
 _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 
-# ##############################################################################
+# #############################################################################
 
 
 def _set_conda_root_dir():
@@ -149,7 +149,7 @@ def _process_requirements_file(req_file):
     req_file = os.path.abspath(req_file)
     _LOG.debug("req_file=%s", req_file)
     dbg.dassert_exists(req_file)
-    txt_tmp = io_.from_file(req_file, split=True)
+    txt_tmp = io_.from_file(req_file).split("\n")
     # Process.
     for line in txt_tmp:
         # TODO(gp): Can one do conditional builds for different machines?
@@ -222,7 +222,7 @@ def _create_conda_env(args, conda_env_name):
         _LOG.debug("tmp_req_files=%s", tmp_req_files)
         # Report the files so we can see what we are actually installing.
         for f in tmp_req_files:
-            _LOG.debug("tmp_req_file=%s\n%s", f, io_.from_file(f, split=False))
+            _LOG.debug("tmp_req_file=%s\n%s", f, io_.from_file(f))
         # TODO(gp): Merge the yaml files (see #579).
         # We leverage the fact that `conda create` can merge multiple
         # requirements files.
@@ -247,7 +247,7 @@ def _test_conda_env(conda_env_name):
     )
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _parse():

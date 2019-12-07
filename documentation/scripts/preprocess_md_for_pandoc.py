@@ -174,7 +174,7 @@ def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Slurp file.
-    lines = io_.from_file(args.input)
+    lines = io_.from_file(args.input).split("\n")
     lines = [l.rstrip("\n") for l in lines]
     out : List[str] = []
     # Add some directive for pandoc.

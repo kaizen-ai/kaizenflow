@@ -5,11 +5,11 @@
    
    **vendor/** - root for all data connected to a particular vendor
     Example:
-    ```bash
+        twitter/
     twitter/
-    eia/
-    kibot/
-    ```
+        eia/
+        kibot/
+        ```
     The same structure we have in the codebase.
 2. Each vendor directory can contain next folders.
     - **datasets**

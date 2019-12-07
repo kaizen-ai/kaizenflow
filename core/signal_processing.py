@@ -6,7 +6,7 @@ import core.signal_processing as sigp
 
 import functools
 import logging
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -289,6 +289,44 @@ def plot_crosscorrelation(
 
 
 # #############################################################################
+# Metrics
+# #############################################################################
+
+
+def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
+    r"""
+    Compute frequency-domain-based "forecastability" of signal.
+
+    Reference: https://arxiv.org/abs/1205.4591
+
+    `signal` is assumed to be second-order stationary.
+
+    Denote the forecastability estimator by \Omega(\cdot).
+    Let x_t, y_t be time series. Properties of \Omega include:
+    a) \Omega(y_t) = 0 iff y_t is white noise
+    b) scale and shift-invariant:
+         \Omega(a y_t + b) = \Omega(y_t) for real a, b, a \neq 0.
+    c) max sub-additivity for uncorrelated processes:
+         \Omega(\alpha x_t + \sqrt{1 - \alpha^2} y_t) \leq
+         \max\{\Omega(x_t), \Omega(y_t)\},
+       if \E(x_t y_s) = 0 for all s, t \in \Z;
+       equality iff alpha \in \{0, 1\}.
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    dbg.dassert_isinstance(mode, str)
+    if mode == "welch":
+        _, psd = sp.signal.welch(signal)
+    elif mode == "periodogram":
+        # TODO(Paul): Maybe log a warning about inconsistency of periodogram
+        #     for estimating power spectral density.
+        _, psd = sp.signal.periodogram(signal)
+    else:
+        raise ValueError("Unsupported mode=`%s`" % mode)
+    forecastability = 1 - sp.stats.entropy(psd, base=psd.size)
+    return forecastability
+
+
+# #############################################################################
 # Signal transformations
 # #############################################################################
 
@@ -374,6 +412,73 @@ def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Serie
     return digitized_srs
 
 
+def _wrap(signal: pd.Series, num_cols: int) -> pd.DataFrame:
+    """
+    Convert a 1-d series into a 2-d dataframe left-to-right top-to-bottom.
+
+    :param num_cols: number of columns to use for wrapping
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    dbg.dassert_lte(1, num_cols)
+    values = signal.values
+    _LOG.debug("num values=%d", values.size)
+    # Calculate number of rows that wrapped pd.DataFrame should have.
+    num_rows = np.ceil(values.size / num_cols).astype(int)
+    _LOG.debug("num_rows=%d", num_rows)
+    # Add padding, since numpy's `reshape` requires element counts to match
+    # exactly.
+    pad_size = num_rows * num_cols - values.size
+    _LOG.debug("pad_size=%d", pad_size)
+    padding = np.full(pad_size, np.nan)
+    padded_values = np.append(values, padding)
+    #
+    wrapped = padded_values.reshape(num_rows, num_cols)
+    return pd.DataFrame(wrapped)
+
+
+def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
+    """
+    Undo `_wrap`.
+
+    We allow `index.size` to be less than nrows * ncols of `df`, in which case
+    values are truncated from the end of the unwrapped dataframe.
+
+    :param idx: index of series provided to `_wrap` call
+    """
+    _LOG.debug("df.shape=%s", df.shape)
+    values = df.values.flatten()
+    pad_size = values.size - idx.size
+    _LOG.debug("pad_size=%d", pad_size)
+    if pad_size > 0:
+        data = values[:-pad_size]
+    else:
+        data = values
+    unwrapped = pd.Series(data=data, index=idx, name=name)
+    return unwrapped
+
+
+def skip_apply_func(
+    signal: pd.DataFrame,
+    skip_size: int,
+    func: Callable[[pd.Series], pd.DataFrame],
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Apply `func` to each col of `signal` after a wrap, then unwrap and merge.
+
+    :param skip_size: num_cols used for wrapping each col of `signal`
+    :param kwargs: forwarded to `func`
+    """
+    cols = {}
+    for col in signal.columns:
+        wrapped = _wrap(signal[col], skip_size)
+        funced = func(wrapped, **kwargs)
+        unwrapped = _unwrap(funced, signal.index, col)
+        cols[col] = unwrapped
+    df = pd.DataFrame.from_dict(cols)
+    return df
+
+
 # #############################################################################
 # EMAs and derived kernels
 # #############################################################################
@@ -385,6 +490,7 @@ def _com_to_tau(com: float) -> float:
 
     This is the function inverse of `_tau_to_com`.
     """
+    dbg.dassert_lt(0, com)
     return 1.0 / np.log(1 + 1.0 / com)
 
 
@@ -403,6 +509,7 @@ def _tau_to_com(tau: float) -> float:
         center-of-mass (com) associated with an ema kernel.
     :return: com
     """
+    dbg.dassert_lt(0, tau)
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
@@ -440,6 +547,7 @@ def ema(
     """
     dbg.dassert_isinstance(depth, int)
     dbg.dassert_lte(1, depth)
+    dbg.dassert_lt(0, tau)
     _LOG.debug("Calculating iterated ema of depth %i", depth)
     _LOG.debug("range = %0.2f", depth * tau)
     _LOG.debug("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)

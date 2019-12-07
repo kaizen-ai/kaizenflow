@@ -1,5 +1,5 @@
 """
-# Import as:
+Import as:
 
 import helpers.s3 as hs3
 """

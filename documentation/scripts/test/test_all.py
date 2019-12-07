@@ -13,9 +13,9 @@ import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 # pandoc.py
-# ##############################################################################
+# #############################################################################
 
 
 # TODO(gp): Generalize to all users, or at least Jenkins.
@@ -45,7 +45,7 @@ class Test_pandoc1(ut.TestCase):
             out_file = os.path.join(tmp_dir, "tmp.pandoc.html")
         else:
             raise ValueError("Invalid action='%s'" % action)
-        act = io_.from_file(out_file, split=False)
+        act = io_.from_file(out_file)
         return act
 
     def test1(self):
@@ -84,9 +84,9 @@ class Test_pandoc1(ut.TestCase):
             self._helper(file_name, "html")
 
 
-# ##############################################################################
+# #############################################################################
 # preprocess_md_for_pandoc.py
-# ##############################################################################
+# #############################################################################
 
 
 def _run_preprocess(in_file: str, out_file: str) -> str:
@@ -106,7 +106,7 @@ def _run_preprocess(in_file: str, out_file: str) -> str:
     cmd = " ".join(cmd)
     si.system(cmd)
     # Check.
-    act = io_.from_file(out_file, split=False)
+    act = io_.from_file(out_file)
     return act
 
 
