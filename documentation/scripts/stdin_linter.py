@@ -4,30 +4,25 @@
 Used in vim to prettify only a part of the text.
 """
 
-import argparse
 import logging
 import re
 import sys
-
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-
-import helpers.system_interaction as si
-
 from typing import List
-import os
+
+import helpers.io_ as io_
+import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 
 # TODO(gp): Implement
 # us -> you
 # ours -> yours
 # ourselves -> yourself
 
-def _preprocess(txt : str) -> str:
+
+def _preprocess(txt: str) -> str:
     txt_new: List[str] = []
     for line in txt.split("\n"):
         line = re.sub(r"^\* ", "- STAR", line)
@@ -39,23 +34,23 @@ def _preprocess(txt : str) -> str:
         # \big)$$
         #
         # $$
-        if re.search("^\s*\$\$\s*$", line):
+        if re.search(r"^\s*\$\$\s*$", line):
             txt_new.append(line)
             continue
         # $$ ... $$
-        m = re.search("^(\s*)(\$\$)(.+)(\$\$)\s*$", line)
+        m = re.search(r"^(\s*)(\$\$)(.+)(\$\$)\s*$", line)
         if m:
             for i in range(3):
                 txt_new.append(m.group(1) + m.group(2 + i))
             continue
         # ... $$
-        m = re.search("^(\s*)(\$\$)(.+)$", line)
+        m = re.search(r"^(\s*)(\$\$)(.+)$", line)
         if m:
             for i in range(2):
                 txt_new.append(m.group(1) + m.group(2 + i))
             continue
         # $$ ...
-        m = re.search("^(\s*)(.*)(\$\$)$", line)
+        m = re.search(r"^(\s*)(.*)(\$\$)$", line)
         if m:
             for i in range(2):
                 txt_new.append(m.group(1) + m.group(2 + i))
@@ -72,7 +67,7 @@ def _process(txt, file_name):
     txt_new_as_str = _preprocess(txt)
     #
     # - Prettify.
-    # 
+    #
     io_.to_file(file_name, txt_new_as_str)
     if True:
         executable = "prettier"
@@ -94,7 +89,7 @@ def _process(txt, file_name):
     for line in txt:
         line = re.sub(r"^\-   STAR", "*   ", line)
         line = re.sub(r"^\s*\n(\s*\$\$)", r"\\1", line, 0, flags=re.MULTILINE)
-        m = re.match("(\s*-\s+)(\S)(.*)", line)
+        m = re.match(r"(\s*-\s+)(\S)(.*)", line)
         if m:
             line = m.group(1) + m.group(2).upper() + m.group(3)
         txt_new.append(line)
@@ -104,9 +99,9 @@ def _process(txt, file_name):
 
 
 def _main():
-    #dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     txt = "".join(list(sys.stdin))
-    #io_.to_file(file_name, list(sys.stdin))
+    # io_.to_file(file_name, list(sys.stdin))
     file_name = "/tmp/tmp_prettier.txt"
     txt_new_as_str = _process(txt, file_name)
     # Write.

@@ -38,19 +38,19 @@ def _process_question(line):
     """
     Transform `* foo bar` into `- **foo bar**`.
     """
+    # Bold.
+    meta = "**"
+    # Bold + italic
+    # meta = "_**"
+    # Underline (not working)
+    # meta = "__"
+    # Italic.
+    # meta = "_"
     do_continue = False
-    regex = r'^(\*|\*\*|\*:)(\s+)(\S.*)\s*$'
+    regex = r"^(\*|\*\*|\*:)(\s+)(\S.*)\s*$"
     m = re.search(regex, line)
     if m:
-        # Bold.
-        meta = "**"
-        # Bold + italic
-        # meta = "_**"
-        # Underline (not working)
-        # meta = "__"
-        # Italic.
-        # meta = "_"
-        line = "-%s**%s**" % (m.group(2), m.group(3))
+        line = "-%s%s%s%s" % (m.group(2), meta, m.group(3), meta)
         do_continue = True
     return do_continue, line
 

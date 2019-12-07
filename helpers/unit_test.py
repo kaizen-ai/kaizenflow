@@ -109,14 +109,21 @@ def filter_text(regex: str, txt: str) -> str:
     if regex is None:
         return txt
     txt_out = []
-    for line in txt.split("\n"):
+    txt_as_arr = txt.split("\n")
+    for line in txt_as_arr:
         if re.search(regex, line):
             _LOG.debug("Skipping line='%s'", line)
             continue
         txt_out.append(line)
-    txt = "\n".join(txt_out)
     # We can only remove lines.
-    dbg.dassert_lte(len(txt_out), len(txt))
+    dbg.dassert_lte(
+        len(txt_out),
+        len(txt_as_arr),
+        "txt_out=\n'''%s'''\ntxt=\n'''%s'''",
+        "\n".join(txt_out),
+        "\n".join(txt_as_arr),
+    )
+    txt = "\n".join(txt_out)
     return txt
 
 

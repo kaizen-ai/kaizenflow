@@ -187,7 +187,6 @@ class Test_preprocess2(ut.TestCase):
         exp = "-" + " " * len(space) + "**Hope is not a strategy**"
         self._helper_process_question(txt_in, do_continue_exp, exp)
 
-
     # #########################################################################
 
     def _helper_transform(self, txt_in: str, exp: str):
@@ -242,31 +241,31 @@ class Test_preprocess2(ut.TestCase):
 # stdin_linter.py
 # #############################################################################
 
-class Test_stdlin_linter1(ut.TestCase):
 
+class Test_stdlin_linter1(ut.TestCase):
     def test_preprocess1(self):
-        txt = r'''$$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$'''
+        txt = r"""$$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$"""
         act = doc_stli._preprocess(txt)
-        exp = r'''$$
+        exp = r"""$$
 E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)
-$$'''
+$$"""
         self.assert_equal(act, exp)
 
     def test_preprocess2(self):
-        txt = r'''$$E_{in}(\vw) = \frac{1}{N} \sum_i \big(
+        txt = r"""$$E_{in}(\vw) = \frac{1}{N} \sum_i \big(
 -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
-\big)$$'''
-        exp = r'''$$
+\big)$$"""
+        exp = r"""$$
 E_{in}(\vw) = \frac{1}{N} \sum_i \big(
 -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
 \big)
-$$'''
+$$"""
         act = doc_stli._preprocess(txt)
         self.assert_equal(act, exp)
 
     @staticmethod
     def _get_text1():
-        txt = r'''* Gradient descent for logistic regression
+        txt = r"""* Gradient descent for logistic regression
 - The typical implementations of gradient descent (basic or advanced) need two
   inputs:
     - The cost function $E_{in}(\vw)$ (to monitor convergence)
@@ -287,12 +286,12 @@ $$'''
 
 - It can be proven that the function $E_{in}(\vw)$ to minimize is convex in
   $\vw$ (sum of exponentials and flipped exponentials is convex and log is
-  monotone)'''
+  monotone)"""
         return txt
 
     def test_preprocess3(self):
         txt = self._get_text1()
-        exp = r'''- STARGradient descent for logistic regression
+        exp = r"""- STARGradient descent for logistic regression
 - The typical implementations of gradient descent (basic or advanced) need two
   inputs:
     - The cost function $E_{in}(\vw)$ (to monitor convergence)
@@ -317,7 +316,7 @@ $$'''
 
 - It can be proven that the function $E_{in}(\vw)$ to minimize is convex in
   $\vw$ (sum of exponentials and flipped exponentials is convex and log is
-  monotone)'''
+  monotone)"""
         act = doc_stli._preprocess(txt)
         self.assert_equal(act, exp)
 
