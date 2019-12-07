@@ -33,7 +33,7 @@ Sketch of flow:
 
 
 import logging
-from typing import Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -177,7 +177,7 @@ def compute_event_indicator(
     if mode == "autoscale":
         t0_val = indicator[0]
         dbg.dassert_ne(t0_val, 0)
-        indicator =/ t0_val
+        indicator /= t0_val
     elif mode == "no_rescale":
         pass
     else:
@@ -190,7 +190,7 @@ def _add_indicator_to_relative_series(
     func: Callable[[pd.Series], pd.Series],
     mode: Optional[str] = None,
     func_kwargs: Optional[Any] = None,
-    col_name: Optional[str] = None
+    col_name: Optional[str] = None,
 ) -> Dict[int, pd.DataFrame]:
     """
 
@@ -201,11 +201,7 @@ def _add_indicator_to_relative_series(
     first_period = min(data_slices.keys())
     last_period = max(data_slices.keys())
     event_indicator = compute_event_indicator(
-        first_period,
-        last_period,
-        func=func,
-        func_kwargs=func_kwargs,
-        mode=mode,
+        first_period, last_period, func=func, func_kwargs=func_kwargs, mode=mode,
     )
     new_slices = {}
     for period in data_slices.keys():
