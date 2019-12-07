@@ -490,6 +490,7 @@ def _com_to_tau(com: float) -> float:
 
     This is the function inverse of `_tau_to_com`.
     """
+    dbg.dassert_lt(0, com)
     return 1.0 / np.log(1 + 1.0 / com)
 
 
@@ -508,6 +509,7 @@ def _tau_to_com(tau: float) -> float:
         center-of-mass (com) associated with an ema kernel.
     :return: com
     """
+    dbg.dassert_lt(0, tau)
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
@@ -545,6 +547,7 @@ def ema(
     """
     dbg.dassert_isinstance(depth, int)
     dbg.dassert_lte(1, depth)
+    dbg.dassert_lt(0, tau)
     _LOG.debug("Calculating iterated ema of depth %i", depth)
     _LOG.debug("range = %0.2f", depth * tau)
     _LOG.debug("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)
