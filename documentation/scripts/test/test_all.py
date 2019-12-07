@@ -1,6 +1,7 @@
 import glob
 import logging
 import os
+from typing import List
 
 import pytest
 
@@ -143,7 +144,44 @@ class Test_preprocess2(ut.TestCase):
     calling the library function directly.
     """
 
-    def test1(self):
+    def _helper_process_question(self, txt_in:str , do_continue_exp: bool,
+                                 exp: str):
+        do_continue, act = doc_prep._process_question(txt_in)
+        self.assertEqual(do_continue, do_continue_exp)
+        self.assert_equal(act, exp)
+
+    def test_process_question1(self):
+        txt_in = "* Hope is not a strategy"
+        do_continue_exp = True
+        exp = "- **Hope is not a strategy**"
+        self._helper_process_question(txt_in, do_continue_exp, exp)
+
+    def test_process_question2(self):
+        txt_in = "** Hope is not a strategy"
+        do_continue_exp = True
+        exp = "- **Hope is not a strategy**"
+        self._helper_process_question(txt_in, do_continue_exp, exp)
+
+    def test_process_question3(self):
+        txt_in = "*: Hope is not a strategy"
+        do_continue_exp = True
+        exp = "- **Hope is not a strategy**"
+        self._helper_process_question(txt_in, do_continue_exp, exp)
+
+    def test_process_question4(self):
+        txt_in = "- Systems don't run themselves, they need to be run"
+        do_continue_exp = False
+        exp = txt_in
+        self._helper_process_question(txt_in, do_continue_exp, exp)
+
+    # ########
+
+    def _helper_transform(self, txt_in: List[str], exp: str):
+        act_as_arr = doc_prep._transform(txt_in.split("\n"))
+        act = "\n".join(act_as_arr)
+        self.assert_equal(act, exp)
+
+    def test_transform1(self):
         txt_in = """
 # ##########
 # Python: nested functions
@@ -183,6 +221,4 @@ class Test_preprocess2(ut.TestCase):
                     print(v)
         ```
 """
-        act_as_arr = doc_prep._transform(txt_in.split("\n"))
-        act = "\n".join(act_as_arr)
-        self.assert_equal(act, exp)
+        self._helper_transform(txt_in, exp)
