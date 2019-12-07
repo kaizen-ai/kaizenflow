@@ -22,6 +22,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.tunnels as tnls
 
