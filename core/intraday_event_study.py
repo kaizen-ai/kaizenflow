@@ -180,8 +180,7 @@ def build_local_timeseries(
 
 
 def get_local_timeseries_for_column(
-    local_timeseries_data: Dict[int, pd.DataFrame],
-    col: Any
+    local_timeseries_data: Dict[int, pd.DataFrame], col: Any
 ) -> pd.DataFrame:
     """
 
