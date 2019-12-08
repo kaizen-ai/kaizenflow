@@ -44,7 +44,7 @@ TODO(Paul): Update function docstrings everywhere
 
 
 import logging
-from typing import Dict, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -169,14 +169,29 @@ def build_local_timeseries(
         else:
             period_info = None
         #
-        grid_data = _shift_and_select(
+        period_data = _shift_and_select(
             events.index, grid_data, period, freq, shift_mode, period_info
         )
         #
         if info is not None:
             info[period] = period_info
-        period_to_data[period] = grid_data
+        period_to_data[period] = period_data
     return period_to_data
+
+
+def get_local_timeseries_for_column(
+    local_timeseries_data: Dict[int, pd.DataFrame],
+    col: Any
+) -> pd.DataFrame:
+    """
+
+    :param local_timeseries_data:
+    :param col:
+    :return:
+    """
+    column_slice = {k: v[col] for k, v in local_timeseries_data.items()}
+    df = pd.DataFrame.from_dict(column_slice)
+    return df
 
 
 def stack_data(data: Dict[int, pd.DataFrame],) -> pd.DataFrame:
