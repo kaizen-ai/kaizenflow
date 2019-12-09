@@ -23,12 +23,13 @@ _LOG = logging.getLogger(__name__)
 
 
 def _preprocess(txt: str) -> str:
+    _LOG.debug("txt=%s", txt)
     txt_new: List[str] = []
     for line in txt.split("\n"):
         # Skip frames.
         if re.match(r"#+ [#\/\-\=]{6,}", line):
             continue
-        line = re.sub(r"^\* ", "- STAR", line)
+        line = re.sub(r"^\s*\*\s+", "- STAR", line)
         # Transform:
         # $$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$
         #
@@ -60,6 +61,7 @@ def _preprocess(txt: str) -> str:
             continue
         txt_new.append(line)
     txt_new_as_str = "\n".join(txt_new)
+    _LOG.debug("txt_new_as_str=%s", txt_new_as_str)
     return txt_new_as_str
 
 
@@ -87,14 +89,26 @@ def _process(txt, file_name):
     #
     # - Post-process text.
     #
-    txt = io_.from_file(file_name).split("\n")
+    txt_as_str = io_.from_file(file_name)
+    # Remove empty lines before higher level bullets, but not chapters.
+    txt_as_str = re.sub(r"^\s*\n(\s+-\s+.*)$", r"\1", txt_as_str, 0,
+                                                   flags=re.MULTILINE)
+    txt = txt_as_str.split("\n")
     txt_new: List[str] = []
     for line in txt:
-        line = re.sub(r"^\-   STAR", "*   ", line)
-        line = re.sub(r"^\s*\n(\s*\$\$)", r"\\1", line, 0, flags=re.MULTILINE)
+        # Undo the transformation `* -> STAR`.
+        line = re.sub(r"^\-(\s*)STAR", r"*\1", line, 0)
+        # Remove empty lines.
+        line = re.sub(r"^\s*\n(\s*\$\$)", r"\1", line, 0, flags=re.MULTILINE)
+        # Upper case for `- hello`.
         m = re.match(r"(\s*-\s+)(\S)(.*)", line)
         if m:
             line = m.group(1) + m.group(2).upper() + m.group(3)
+        # Upper case for `\d) hello`.
+        m = re.match(r"(\s*\d+[\)\.]\s+)(\S)(.*)", line)
+        if m:
+            line = m.group(1) + m.group(2).upper() + m.group(3)
+        #
         txt_new.append(line)
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
     #
@@ -104,7 +118,6 @@ def _process(txt, file_name):
 def _main():
     # dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     txt = "".join(list(sys.stdin))
-    # io_.to_file(file_name, list(sys.stdin))
     file_name = "/tmp/tmp_prettier.txt"
     txt_new_as_str = _process(txt, file_name)
     # Write.

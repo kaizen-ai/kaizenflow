@@ -10,22 +10,15 @@ E.g.,
 """
 
 # TODO(gp):
-#  -> convert_txt_to_pandoc.py
 #  - Add spaces between lines
-#  - Add spaces when format is not correct, e.g.,
-#        - kkkk
-#        aaaa
 #  - Add index counting the indices
-#  - DONE: Highlight somehow the question
-#      - Indent with extra space the answer, so that Latex adds another level of
-#        indentation
 #  - Convert // comments in code into #
 #  - Fix /* and */
 
 import argparse
 import logging
 import re
-from typing import List
+from typing import List, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -33,19 +26,92 @@ import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
+_NUM_SPACES = 4
 
-def _process_question(line):
+
+def _process_comment_block(line: str, in_skip_block: bool) -> Tuple[bool, bool]:
+    # TODO: improve the comment handling, handle also \* *\ and %.
+    do_continue = False
+    if line.startswith(r"<!--") or re.search(r"\\\*", line):
+        dbg.dassert(not in_skip_block)
+        # Start skipping comments.
+        in_skip_block = True
+    if in_skip_block:
+        if line.startswith(r"-->") or re.search(r"\*\/", line):
+            # End skipping comments.
+            in_skip_block = False
+        # Skip comment.
+        _LOG.debug("  -> skip")
+        do_continue = True
+    return do_continue, in_skip_block
+
+
+def _process_code_block(
+    line: str, in_code_block: bool, i: int, lines: List[str]
+) -> Tuple[bool, bool, List[str]]:
+    out: List[str] = []
+    do_continue = False
+    if re.match(r"^(\s*)```", line):
+        _LOG.debug("  -> code block")
+        in_code_block = not in_code_block
+        # Add empty line.
+        if (
+            in_code_block
+            and (i + 1 < len(lines))
+            and re.match(r"\s*", lines[i + 1])
+        ):
+            out.append("\n")
+        out.append("    " + line)
+        if (
+            not in_code_block
+            and (i + 1 < len(lines))
+            and re.match(r"\s*", lines[i + 1])
+        ):
+            out.append("\n")
+        do_continue = True
+        return do_continue, in_code_block, out
+    if in_code_block:
+        line = line.replace("// ", "# ")
+        out.append("    " + line)
+        # We don't do any of the other post-processing.
+        do_continue = True
+        return do_continue, in_code_block, out
+    return do_continue, in_code_block, out
+
+
+def _process_single_line_comment(line: str) -> bool:
+    """
+    Handle single line comment.
+
+    We need to do it after the // in code blocks have been handled.
+    """
+    do_continue = False
+    if line.startswith(r"%%") or line.startswith(r"//"):
+        _LOG.debug("  -> skip")
+        do_continue = True
+        return do_continue
+    # Skip frame.
+    if (
+        re.match(r"\#+ -----", line)
+        or re.match(r"\#+ \#\#\#\#\#", line)
+        or re.match(r"\#+ =====", line)
+        or re.match(r"\#+ \/\/\/\/\/", line)
+    ):
+        _LOG.debug("  -> skip")
+        do_continue = True
+        return do_continue
+    return do_continue
+
+
+def _process_question(line: str) -> Tuple[bool, str]:
     """
     Transform `* foo bar` into `- **foo bar**`.
     """
     # Bold.
     meta = "**"
-    # Bold + italic
-    # meta = "_**"
-    # Underline (not working)
-    # meta = "__"
-    # Italic.
-    # meta = "_"
+    # Bold + italic: meta = "_**"
+    # Underline (not working): meta = "__"
+    # Italic: meta = "_"
     do_continue = False
     regex = r"^(\*|\*\*|\*:)(\s+)(\S.*)\s*$"
     m = re.search(regex, line)
@@ -57,65 +123,28 @@ def _process_question(line):
 
 def _transform(lines: List[str]) -> List[str]:
     out: List[str] = []
-    # During a block to skip.
+    # True inside a block to skip.
     in_skip_block = False
-    # During a code block.
+    # True inside a code block.
     in_code_block = False
     for i, line in enumerate(lines):
         _LOG.debug("%s:line=%s", i, line)
         # Handle comment block.
-        # TODO: improve the comment handling, handle also \* *\ and %.
-        if line.startswith(r"<!--") or re.search(r"\\\*", line):
-            dbg.dassert(not in_skip_block)
-            # Start skipping comments.
-            in_skip_block = True
-        if in_skip_block:
-            # dbg.dassert(not in_code_block, msg="line=%s\n%s" % (i, "\n".join(lines[i-2: i+3])))
-            if line.startswith(r"-->") or re.search(r"\*\/", line):
-                # End skipping comments.
-                in_skip_block = False
-            # Skip comment.
-            _LOG.debug("  -> skip")
+        do_continue, in_skip_block = _process_comment_block(line, in_skip_block)
+        if do_continue:
             continue
         # Handle code block.
-        if re.match(r"^(\s*)```", line):
-            _LOG.debug("  -> code block")
-            in_code_block = not in_code_block
-            # Add empty line.
-            if (
-                in_code_block
-                and (i + 1 < len(lines))
-                and re.match(r"\s*", lines[i + 1])
-            ):
-                out.append("\n")
-            out.append("    " + line)
-            if (
-                not in_code_block
-                and (i + 1 < len(lines))
-                and re.match(r"\s*", lines[i + 1])
-            ):
-                out.append("\n")
+        do_continue, in_code_block, out_tmp = _process_code_block(
+            line, in_code_block, i, lines
+        )
+        out.extend(out_tmp)
+        if do_continue:
             continue
-        if in_code_block:
-            line = line.replace("// ", "# ")
-            out.append("    " + line)
-            # We don't do any of the other post-processing.
+        # Handle single line comment.
+        do_continue = _process_single_line_comment(line)
+        if do_continue:
             continue
-        # Handle single line comment. We need to do it after the // in code
-        # blocks have been handled.
-        if line.startswith(r"%%") or line.startswith(r"//"):
-            _LOG.debug("  -> skip")
-            continue
-        # Skip frame.
-        if (
-            re.match(r"\#+ -----", line)
-            or re.match(r"\#+ \#\#\#\#\#", line)
-            or re.match(r"\#+ =====", line)
-            or re.match(r"\#+ \/\/\/\/\/", line)
-        ):
-            _LOG.debug("  -> skip")
-            continue
-        #
+        # Process question.
         do_continue, line = _process_question(line)
         if do_continue:
             out.append(line)
@@ -128,7 +157,7 @@ def _transform(lines: List[str]) -> List[str]:
                 out.append(line)
             else:
                 # It's a line in an answer.
-                out.append("  " + line)
+                out.append(" " * _NUM_SPACES + line)
         else:
             # Empty line.
             prev_line_is_verbatim = ((i - 1) > 0) and lines[i - 1].startswith(
@@ -152,9 +181,9 @@ def _transform(lines: List[str]) -> List[str]:
                 or prev_line_is_verbatim
                 or next_line_is_verbatim
             ):
-                out.append("  " + line)
+                out.append(" " * _NUM_SPACES + line)
     # - Clean up.
-    # Remove all the lines with
+    # Remove all the lines with only spaces.
     out_tmp = []
     for line in out:
         if re.search(r"^\s+$", line):
@@ -182,9 +211,9 @@ def _main(parser):
     lines = [l.rstrip("\n") for l in lines]
     out: List[str] = []
     # Add some directive for pandoc.
-    out.extend([r"""\let\emph\textit""", ""])
-    out.extend([r"""\let\uline\underline""", ""])
-    out.extend([r"""\let\ul\underline""", ""])
+    out.append(r"""\let\emph\textit""")
+    out.append(r"""\let\uline\underline""")
+    out.append(r"""\let\ul\underline""")
     #
     out_tmp = _transform(lines)
     out.extend(out_tmp)

@@ -21,6 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Generalize to all users, or at least Jenkins.
+#@pytest.mark.skip
 @pytest.mark.skipif('si.get_user_name() != "saggese"')
 class Test_pandoc1(ut.TestCase):
     def _helper(self, in_file, action):
@@ -61,6 +62,7 @@ class Test_pandoc1(ut.TestCase):
         act = self._helper(file_name, "pdf")
         self.check_string(act)
 
+    # TODO(gp): This seems flakey.
     def test2(self):
         """
         Convert one txt file to HTML and check that the .tex file is as expected.
@@ -217,8 +219,8 @@ class Test_preprocess2(ut.TestCase):
 """
         exp = """
 # Python: nested functions
-  - Functions can be declared in the body of another function
-  - E.g., to hide utility functions in the scope of the function that uses them
+    - Functions can be declared in the body of another function
+    - E.g., to hide utility functions in the scope of the function that uses them
 
         ```python
         def print_integers(values):
@@ -243,13 +245,16 @@ class Test_preprocess2(ut.TestCase):
 
 
 class Test_lint_txt1(ut.TestCase):
+    def _helper_preprocess(self, txt, exp):
+        act = dslt._preprocess(txt)
+        self.assert_equal(act, exp)
+
     def test_preprocess1(self):
         txt = r"""$$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$"""
-        act = dslt._preprocess(txt)
         exp = r"""$$
 E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)
 $$"""
-        self.assert_equal(act, exp)
+        self._helper_preprocess(txt, exp)
 
     def test_preprocess2(self):
         txt = r"""$$E_{in}(\vw) = \frac{1}{N} \sum_i \big(
@@ -260,8 +265,7 @@ E_{in}(\vw) = \frac{1}{N} \sum_i \big(
 -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
 \big)
 $$"""
-        act = dslt._preprocess(txt)
-        self.assert_equal(act, exp)
+        self._helper_preprocess(txt, exp)
 
     @staticmethod
     def _get_text1():
@@ -317,27 +321,40 @@ $$"""
 - It can be proven that the function $E_{in}(\vw)$ to minimize is convex in
   $\vw$ (sum of exponentials and flipped exponentials is convex and log is
   monotone)"""
-        act = dslt._preprocess(txt)
-        self.assert_equal(act, exp)
+        self._helper_preprocess(txt, exp)
 
     def test_preprocess4(self):
         txt = r"""# #########################
 # test
-# ###############"""
-        act = dslt._preprocess(txt)
+# #############################################################################"""
         exp = r"""# test"""
-        self.assert_equal(act, exp)
+        self._helper_preprocess(txt, exp)
 
     def test_preprocess5(self):
         txt = r"""## ////////////////
 # test
 # ////////////////"""
-        act = dslt._preprocess(txt)
         exp = r"""# test"""
-        self.assert_equal(act, exp)
+        self._helper_preprocess(txt, exp)
 
     def test_process1(self):
         txt = self._get_text1()
         file_name = os.path.join(self.get_scratch_space(), "test.txt")
         act = dslt._process(txt, file_name)
         self.check_string(act)
+
+    def test_process2(self):
+        txt = r"""
+*   Good time management
+
+1. choose the right tasks
+    - Avoid non-essential tasks
+"""
+        exp = r"""*   Good time management
+
+1. Choose the right tasks
+    - Avoid non-essential tasks
+"""
+        file_name = os.path.join(self.get_scratch_space(), "test.txt")
+        act = dslt._process(txt, file_name)
+        self.assert_equal(act, exp)
