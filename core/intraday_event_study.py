@@ -19,7 +19,7 @@ resample ----- `reindex_event_features`     |
 `build_local_timeseries` -------------------
   |
   |
-`stack_data`
+drop multiindex
   |
   |
 linear modeling
@@ -73,7 +73,6 @@ def _shift_and_select(
     grid_data: pd.DataFrame,
     periods: int,
     freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
-    mode: Optional[str] = None,
     info: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
@@ -85,30 +84,19 @@ def _shift_and_select(
     :param grid_data: tabular data
     :param periods: as in pandas `shift` functions
     :param freq: as in pandas `shift` functions
-    :param mode:
-        -   "shift_data" applies `.shift()` to `data`
-        -   "shift_idx" applies `.shift()` to `idx`
     :param info: optional empty dict-like object to be populated with stats
         about the operation performed
     """
-    mode = mode or "shift_data"
     # Shift.
-    if mode == "shift_data":
-        grid_data = grid_data.copy()
-        grid_data = grid_data.shift(periods, freq)
-    elif mode == "shift_idx":
-        idx = idx.copy()
-        idx = idx.shift(periods, freq)
-    else:
-        raise ValueError("Unrecognized mode=`%s`", mode)
+    shifted_grid_data = grid_data.shift(periods, freq)
     # Select.
-    intersection = idx.intersection(grid_data.index)
+    intersection = idx.intersection(shifted_grid_data.index)
     dbg.dassert(not intersection.empty)
     # TODO(Paul): Make this configurable
     pct_found = intersection.size / idx.size
     if pct_found < 0.9:
         _LOG.warning("pct_found=%f for periods=%d", pct_found, periods)
-    selected = grid_data.loc[intersection]
+    selected = shifted_grid_data.loc[intersection]
     # Maybe add info.
     if info is not None:
         dbg.dassert_isinstance(info, dict)
@@ -124,86 +112,56 @@ def _shift_and_select(
 def build_local_timeseries(
     events: pd.DataFrame,
     grid_data: pd.DataFrame,
-    periods: Iterable[int],
+    relative_grid_indices: Iterable[int],
     freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
-    shift_mode: Optional[str] = None,
     info: Optional[dict] = None,
-) -> Dict[int, pd.DataFrame]:
+) -> pd.DataFrame:
     """
-    Compute series over `periods` relative to `events.index`.
-
-    This generates a sort of "panel" time series:
-    -   The period indicates the relative time step
-    -   (In an event study) the value at each period is a dataframe with
-        -   An index of "event times" (given by `idx`)
-        -   Columns corresponding to
-            -   Precisely one response variable
-            -   Zero or more predictors
+    Construct relative time series of `grid_data` around each event.
 
     The effect of this function is to grab uniform time slices of `data`
     around each event time indicated in `idx`.
 
     :param events: reference index (e.g., of datetimes of events)
     :param grid_data: tabular data
-    :param periods: shift periods
-    :param freq: as in pandas `shift` functions
-    :param shift_mode:
-        -   "shift_data" applies `.shift()` to `data`
-        -   "shift_idx" applies `.shift()` to `idx`
-    :return: a dict
-        -   keyed by period (from [first_period, last_period])
-        -   values series / dataframe, obtained from shifts and idx selection
+    :param relative_grid_indices: time points on grid relative to event time
+        of "0", e.g., [-2, -1, 0, 1] denotes t_{-2} < t_{-1} < t_0 < t_1,
+        where "t_0" is the event time.
+    :param freq: as in pandas `shift`
+    :return: multiindexed dataframe
+        -   level 0: relative grid indices
+        -   level 1: event time (e.g., "t_0") for each event
+                Note that the event time needs to be adjusted by
+                relative_grid_index grid points in order to obtain the data
+                timestamps
+        -   cols: same as grid_data cols
     """
     dbg.dassert_isinstance(events, pd.DataFrame)
     dbg.dassert_isinstance(grid_data, pd.DataFrame)
     dbg.dassert_monotonic_index(events.index)
     dbg.dassert_monotonic_index(grid_data.index)
-    if not isinstance(periods, list):
-        periods = list(periods)
-    dbg.dassert(periods)
+    if not isinstance(relative_grid_indices, list):
+        relative_grid_indices = list(relative_grid_indices)
+    dbg.dassert(relative_grid_indices)
+    relative_grid_indices.sort()
     #
-    period_to_data = {}
-    for period in periods:
+    relative_data = {}
+    for idx in relative_grid_indices:
         if info is not None:
-            period_info = {}
+            info_for_idx = {}
         else:
-            period_info = None
+            info_for_idx = None
         #
-        period_data = _shift_and_select(
-            events.index, grid_data, period, freq, shift_mode, period_info
+        data_at_idx = _shift_and_select(
+            events.index, grid_data, -idx, freq, info_for_idx
         )
         #
         if info is not None:
-            info[period] = period_info
-        period_to_data[period] = period_data
-    return period_to_data
-
-
-def get_local_timeseries_for_column(
-    local_timeseries_data: Dict[int, pd.DataFrame], col: Any
-) -> pd.DataFrame:
-    """
-
-    :param local_timeseries_data:
-    :param col:
-    :return:
-    """
-    column_slice = {k: v[col] for k, v in local_timeseries_data.items()}
-    df = pd.DataFrame.from_dict(column_slice)
+            info[idx] = info_for_idx
+        relative_data[idx] = data_at_idx
+    df = pd.concat(relative_data)
+    dbg.dassert_monotonic_index(df)
     return df
-
-
-def stack_data(data: Dict[int, pd.DataFrame],) -> pd.DataFrame:
-    """
-    Stack dict of data (to prepare for modeling).
-
-    :param data:
-    :return:
-    """
-    stacked = pd.concat(data.values(), axis=0, ignore_index=True)
-    _, num_cols = stacked.shape
-    dbg.dassert_lte(2, num_cols, "At least two cols required for learning.")
-    return stacked
 
 
 def regression(x: pd.DataFrame, y: pd.Series):
@@ -212,8 +170,7 @@ def regression(x: pd.DataFrame, y: pd.Series):
 
     Constant regression term not included but must be supplied by caller.
 
-    WARNING: Implemented from scratch as an exercise. Better to use a library
-        version.
+    WARNING: Advisable to use sklearn, etc. instead.
 
     Returns beta_hat along with beta_hat_covar and z-scores for the hypothesis
     that a beta_j = 0.
