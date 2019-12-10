@@ -38,6 +38,9 @@ Comments:
     -   In any case, the main purpose of this model is to detect an event
         effect
     -   If predicting returns, project to PnL using kernel
+
+TODO(Paul): Write a function to go back from the multiindex dataframe to data
+    on a uniform grid.
 """
 
 
@@ -52,59 +55,42 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# Event/data alignment
+# #############################################################################
+
+
 def reindex_event_features(
     events: pd.DataFrame, grid_data: pd.DataFrame, **kwargs,
 ) -> pd.DataFrame:
     """
+    Reindex `events` so that it aligns with `grid_data`.
 
-    :param events:
-    :param data_idx:
-    :param kwargs:
-    :return:
+    Suppose `events` contains features to be studied in the event study.
+    Then one may use this function to add such features to `grid_data` so that
+    they may be studied downstream.
+
+    Example usage:
+    ```
+    # Reindex along grid_data.
+    df1 = reindex_event_features(events, grid_data)
+    # Apply kernel. Use `fillna` for correct application of kernel.
+    df2 = sigp.smooth_moving_average(df1.fillna(0), tau=8)
+    # Merge the derived `events` features with `grid_data`.
+    grid_data2 = df2.join(grid_data, how="right")
+    # Use the merged dataset downstream.
+    grid_data = grid_data2
+    ```
+
+    :param kwargs: forwarded to `reindex`
     """
     reindexed = events.reindex(index=grid_data.index, **kwargs)
     return reindexed
 
 
-def _shift_and_select(
-    idx: pd.Index,
-    grid_data: pd.DataFrame,
-    periods: int,
-    freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
-    info: Optional[dict] = None,
-) -> pd.DataFrame:
-    """
-    Shift by `periods` and select `idx`.
-
-    This private helper encapsulates and isolates time-shifting behavior.
-
-    :param idx: reference index (e.g., of datetimes of events)
-    :param grid_data: tabular data
-    :param periods: as in pandas `shift` functions
-    :param freq: as in pandas `shift` functions
-    :param info: optional empty dict-like object to be populated with stats
-        about the operation performed
-    """
-    # Shift.
-    shifted_grid_data = grid_data.shift(periods, freq)
-    # Select.
-    intersection = idx.intersection(shifted_grid_data.index)
-    dbg.dassert(not intersection.empty)
-    # TODO(Paul): Make this configurable
-    pct_found = intersection.size / idx.size
-    if pct_found < 0.9:
-        _LOG.warning("pct_found=%f for periods=%d", pct_found, periods)
-    selected = shifted_grid_data.loc[intersection]
-    # Maybe add info.
-    if info is not None:
-        dbg.dassert_isinstance(info, dict)
-        dbg.dassert(not info)
-        info["indices_with_no_data"] = intersection.difference(idx)
-        info["periods"] = periods
-        if freq is not None:
-            info["freq"] = freq
-        info["mode"] = mode
-    return selected
+# #############################################################################
+# Local time series
+# #############################################################################
 
 
 def build_local_timeseries(
@@ -170,39 +156,97 @@ def build_local_timeseries(
     return df
 
 
-def regression(x: pd.DataFrame, y: pd.Series):
+def _shift_and_select(
+        idx: pd.Index,
+        grid_data: pd.DataFrame,
+        periods: int,
+        freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
+        info: Optional[dict] = None,
+) -> pd.DataFrame:
     """
-    Linear regression of y_var on x_vars.
+    Shift by `periods` and select `idx`.
+
+    This private helper encapsulates and isolates time-shifting behavior.
+
+    :param idx: reference index (e.g., of datetimes of events)
+    :param grid_data: tabular data
+    :param periods: as in pandas `shift` functions
+    :param freq: as in pandas `shift` functions
+    :param info: optional empty dict-like object to be populated with stats
+        about the operation performed
+    """
+    # Shift.
+    shifted_grid_data = grid_data.shift(periods, freq)
+    # Select.
+    intersection = idx.intersection(shifted_grid_data.index)
+    dbg.dassert(not intersection.empty)
+    # TODO(Paul): Make this configurable
+    pct_found = intersection.size / idx.size
+    if pct_found < 0.9:
+        _LOG.warning("pct_found=%f for periods=%d", pct_found, periods)
+    selected = shifted_grid_data.loc[intersection]
+    # Maybe add info.
+    if info is not None:
+        dbg.dassert_isinstance(info, dict)
+        dbg.dassert(not info)
+        info["indices_with_no_data"] = intersection.difference(idx)
+        info["periods"] = periods
+        if freq is not None:
+            info["freq"] = freq
+        info["mode"] = mode
+    return selected
+
+
+# #############################################################################
+# Modeling
+# #############################################################################
+
+
+def regression(x: pd.DataFrame, y: pd.Series, info: Optional[dict] = None):
+    """
+    Linear regression of y_var on x_vars with info.
 
     Constant regression term not included but must be supplied by caller.
-
-    WARNING: Advisable to use sklearn, etc. instead.
 
     Returns beta_hat along with beta_hat_covar and z-scores for the hypothesis
     that a beta_j = 0.
     """
+    # Determine number of non-NaN y-values.
     nan_filter = ~np.isnan(y)
     nobs = np.count_nonzero(nan_filter)
-    _LOG.info("nobs (resp) = %s", nobs)
+    # Filter NaNs.
     x = x[nan_filter]
     y = y[nan_filter]
     y_mean = np.mean(y)
-    _LOG.info("y_mean = %f", y_mean)
+    # Compute total sum of squares.
     tss = (y - y_mean).dot(y - y_mean)
-    _LOG.info("tss = %f", tss)
-    # Linear regression to estimate \beta
+    # Perform linear regression (estimate \beta).
     regress = np.linalg.lstsq(x, y, rcond=None)
     beta_hat = regress[0]
-    _LOG.info("beta = %s", np.array2string(beta_hat))
-    # Estimate delta covariance
+    # Extract residual sum of squares.
     rss = regress[1]
-    _LOG.info("rss = %f", rss)
-    _LOG.info("r^2 = %f", 1 - rss / tss)
+    # Compute r^2.
+    r_sq = 1 - rss / tss
+    # Estimate variance sigma_hat_sq.
     xtx_inv = np.linalg.inv((x.transpose().dot(x)))
     sigma_hat_sq = rss / (nobs - x.shape[1])
-    _LOG.info("sigma_hat_sq = %s", np.array2string(sigma_hat_sq))
+    # Estimate covariance of \beta.
     beta_hat_covar = xtx_inv * sigma_hat_sq
-    _LOG.info("beta_hat_covar = %s", np.array2string(beta_hat_covar))
+    # Z-score \beta coefficients (e.g., for hypothesis testing).
     beta_hat_z_score = beta_hat / np.sqrt(sigma_hat_sq * np.diagonal(xtx_inv))
-    _LOG.info("beta_hat_z_score = %s", np.array2string(beta_hat_z_score))
-    return beta_hat, beta_hat_covar, beta_hat_z_score
+    # Maybe add info.
+    if info is not None:
+        dbg.dassert_isinstance(info, dict)
+        dbg.dassert(not info)
+        info["nobs (resp)=%d"] = nobs
+        info["y_mean=%f"] = y_mean
+        info["tss=%f"] = tss
+        info["beta=%s"] = np.array2string(beta_hat)
+        info["rss=%f"] = rss
+        info["r^2=%f"] = r_sq
+        info["sigma_hat_sq=%s"] = np.array2string(sigma_hat_sq)
+        info["beta_hat_covar=%s"] = np.array2string(beta_hat_covar)
+        info["beta_hat_z_score=%s"] = np.array2string(beta_hat_z_score)
+    # Calculate predicted values
+    y_hat = np.mat_mul(x, beta_hat)
+    return pd.Series(data=y_hat, index=y.index)
