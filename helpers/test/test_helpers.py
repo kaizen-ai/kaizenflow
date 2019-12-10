@@ -121,8 +121,11 @@ class Test_git1(ut.TestCase):
     def test_get_branch_name(self):
         _ = git.get_branch_name()
 
+
+    @pytest.mark.skipif(
+        'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"')
     def test_get_submodule_hash(self):
-        _ = git.get_submodule_hash(".")
+        _ = git.get_submodule_hash("amp")
 
     def test_get_hash_head(self):
         _ = git.get_hash_head(".")

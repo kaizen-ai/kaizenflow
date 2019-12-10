@@ -79,7 +79,7 @@ class Test_system2(ut.TestCase):
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
         #
-        exp = si.system_to_one_line_string()
+        exp = si.system_to_one_line_string("whoami")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
 
