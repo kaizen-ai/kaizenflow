@@ -38,9 +38,6 @@ Comments:
     -   In any case, the main purpose of this model is to detect an event
         effect
     -   If predicting returns, project to PnL using kernel
-
-TODO(Paul): Write a function to go back from the multiindex dataframe to data
-    on a uniform grid.
 """
 
 
@@ -154,6 +151,47 @@ def build_local_timeseries(
     df = pd.concat(relative_data)
     dbg.dassert_monotonic_index(df)
     return df
+
+
+def unwrap_local_timeseries(
+    local_ts: pd.DataFrame,
+    grid_data: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Convert relative times in local_ts back to grid_data and align values.
+
+    One use case is to take predictions generated modeling local time series
+    and project them back onto the linear time axis (e.g., to generate PnL
+    streams).
+
+    :param local_ts: like the return value of `build_local_timeseries`
+    :param grid_data: as in `build_local_timeseries`
+    :return: dataframe with
+        - cols as in local_ts
+        - index like grid_data.index
+    """
+    relative_times = local_ts.index.unique(level=0)
+    df_list = []
+    for time in relative_times:
+        # Grab df at time.
+        local_df = local_ts.loc[time]
+        # Reindex according to grid_data. This is important for getting adjacent
+        # grid point times. NaNs used datetimes outside of local_df.index.
+        reindexed = local_df.reindex(index=grid_data.index)
+        # Undo time shift used to generate the local time series.
+        shifted = reindexed.shift(time)
+        #
+        df_list.append(shifted.dropna(how="all"))
+    # Concatenate the unwrapped local time series.
+    df = pd.concat(df_list)
+    # Handle overlaps by taking mean (respects response variables).
+    # This ensures that the resulting index is unique
+    df_mean = df.groupby(by=lambda x: x).mean()
+    # Reindex according to grid_data.
+    df_reindexed = df_mean.reindex(index=grid_data.index)
+    #
+    dbg.dassert_monotonic_index(df_reindexed)
+    return df_reindexed
 
 
 def _shift_and_select(
