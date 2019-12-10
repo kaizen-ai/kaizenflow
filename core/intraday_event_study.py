@@ -201,6 +201,7 @@ def _shift_and_select(
 # #############################################################################
 
 
+# TODO(Paul): Move to `statistics.py`.
 def regression(x: pd.DataFrame, y: pd.Series, info: Optional[dict] = None):
     """
     Linear regression of y_var on x_vars with info.
