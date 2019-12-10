@@ -223,6 +223,8 @@ def regression(x: pd.DataFrame, y: pd.Series, info: Optional[dict] = None):
     # Perform linear regression (estimate \beta).
     regress = np.linalg.lstsq(x, y, rcond=None)
     beta_hat = regress[0]
+    # Ensure full rank.
+    dbg.dassert_eq(regress[2], x.shape[1])
     # Extract residual sum of squares.
     rss = regress[1]
     # Compute r^2.
@@ -248,5 +250,5 @@ def regression(x: pd.DataFrame, y: pd.Series, info: Optional[dict] = None):
         info["beta_hat_covar=%s"] = np.array2string(beta_hat_covar)
         info["beta_hat_z_score=%s"] = np.array2string(beta_hat_z_score)
     # Calculate predicted values
-    y_hat = np.mat_mul(x, beta_hat)
+    y_hat = np.matmul(x.values, beta_hat)
     return pd.Series(data=y_hat, index=y.index)
