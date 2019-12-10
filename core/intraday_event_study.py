@@ -157,11 +157,11 @@ def build_local_timeseries(
 
 
 def _shift_and_select(
-        idx: pd.Index,
-        grid_data: pd.DataFrame,
-        periods: int,
-        freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
-        info: Optional[dict] = None,
+    idx: pd.Index,
+    grid_data: pd.DataFrame,
+    periods: int,
+    freq: Optional[Union[pd.DateOffset, pd.Timedelta, str]] = None,
+    info: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
     Shift by `periods` and select `idx`.
@@ -193,7 +193,6 @@ def _shift_and_select(
         info["periods"] = periods
         if freq is not None:
             info["freq"] = freq
-        info["mode"] = mode
     return selected
 
 
