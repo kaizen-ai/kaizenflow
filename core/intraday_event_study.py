@@ -38,13 +38,11 @@ Comments:
     -   In any case, the main purpose of this model is to detect an event
         effect
     -   If predicting returns, project to PnL using kernel
-
-TODO(Paul): Update function docstrings everywhere
 """
 
 
 import logging
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -119,11 +117,16 @@ def build_local_timeseries(
     """
     Construct relative time series of `grid_data` around each event.
 
-    The effect of this function is to grab uniform time slices of `data`
-    around each event time indicated in `idx`.
+    The effect of this function is to grab uniform time slices of `grid_data`
+    around each event time indicated in `events.index`.
 
-    :param events: reference index (e.g., of datetimes of events)
+    :param events: reference dataframe of events
+        -   has monotonically increasing DatetimeIndex
+        -   has at least one column (e.g., indicator column)
     :param grid_data: tabular data
+        -   has monotically increasing DatetimeIndex
+        -   datetimes should represent uniform time bars
+        -   has at least one column (e.g., response)
     :param relative_grid_indices: time points on grid relative to event time
         of "0", e.g., [-2, -1, 0, 1] denotes t_{-2} < t_{-1} < t_0 < t_1,
         where "t_0" is the event time.
@@ -136,15 +139,17 @@ def build_local_timeseries(
                 timestamps
         -   cols: same as grid_data cols
     """
+    # Enforce assumptions on inputs.
     dbg.dassert_isinstance(events, pd.DataFrame)
     dbg.dassert_isinstance(grid_data, pd.DataFrame)
     dbg.dassert_monotonic_index(events.index)
     dbg.dassert_monotonic_index(grid_data.index)
+    # Make `relative_grid_indices` a sorted list.
     if not isinstance(relative_grid_indices, list):
         relative_grid_indices = list(relative_grid_indices)
     dbg.dassert(relative_grid_indices)
     relative_grid_indices.sort()
-    #
+    # Gather the data and, if requested, info.
     relative_data = {}
     for idx in relative_grid_indices:
         if info is not None:
@@ -159,6 +164,7 @@ def build_local_timeseries(
         if info is not None:
             info[idx] = info_for_idx
         relative_data[idx] = data_at_idx
+    # Turn the data dictionary into a multiindexed dataframe.
     df = pd.concat(relative_data)
     dbg.dassert_monotonic_index(df)
     return df
