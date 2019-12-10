@@ -154,8 +154,7 @@ def build_local_timeseries(
 
 
 def unwrap_local_timeseries(
-    local_ts: pd.DataFrame,
-    grid_data: pd.DataFrame,
+    local_ts: pd.DataFrame, grid_data: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Convert relative times in local_ts back to grid_data and align values.
