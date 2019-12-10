@@ -118,6 +118,14 @@ class Test_git1(ut.TestCase):
             # e.g., amp.dev.build_clean_env.run_slow_coverage_tests.
             self.assert_equal(os.path.basename(amp_dir), "amp")
 
+    def test_get_branch_name(self):
+        _ = git.get_branch_name()
+
+    def test_get_submodule_hash(self):
+        _ = git.get_submodule_hash(".")
+
+    def test_get_hash_head(self):
+        _ = git.get_hash_head(".")
 
 # #############################################################################
 # list.py

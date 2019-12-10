@@ -78,6 +78,10 @@ class Test_system2(ut.TestCase):
         exp = si.system_to_string("whoami")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
+        #
+        exp = si.system_to_one_line_string()
+        _LOG.debug("exp=%s", exp)
+        self.assertEqual(act, exp)
 
     def test_get_server_name(self):
         act = si.get_server_name()
