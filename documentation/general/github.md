@@ -128,6 +128,8 @@
 
 # Code review with GitHub
 
+- TODO(gp): Move it code_review.md
+
 ## Avoid committing to `master`
 
 -   Exceptions are small commits that are not part of a feature
