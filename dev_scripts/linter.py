@@ -437,6 +437,7 @@ class _BasicHygiene(_Action):
         _write_file_back(file_name, txt, txt_new)
         return output
 
+# #############################################################################
 
 class _CompilePython(_Action):
     """
@@ -462,6 +463,7 @@ class _CompilePython(_Action):
             output.append(str(e))
         return output
 
+# #############################################################################
 
 class _Autoflake(_Action):
     """
@@ -487,6 +489,7 @@ class _Autoflake(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+# #############################################################################
 
 class _Yapf(_Action):
     """
@@ -512,6 +515,7 @@ class _Yapf(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+# #############################################################################
 
 class _Black(_Action):
     """
@@ -544,6 +548,7 @@ class _Black(_Action):
         output = [l for l in output if all(w not in l for w in to_remove)]
         return output
 
+# #############################################################################
 
 class _Isort(_Action):
     """
@@ -568,6 +573,7 @@ class _Isort(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+# #############################################################################
 
 class _Flake8(_Action):
     """
@@ -643,6 +649,7 @@ class _Flake8(_Action):
             output = output_tmp
         return output
 
+# #############################################################################
 
 class _Pydocstyle(_Action):
     def __init__(self):
@@ -706,8 +713,8 @@ class _Pydocstyle(_Action):
         # yapf: disable
         cmd = self._executable + " %s %s" % (opts, file_name)
         # yapf: enable
-        # We don't abort on error on pydocstyle, since it returns error if there is
-        # any violation.
+        # We don't abort on error on pydocstyle, since it returns error if there
+        # is # any violation.
         _, file_lines_as_str = si.system_to_string(cmd, abort_on_error=False)
         # Process lint_log transforming:
         #   linter_v2.py:1 at module level:
@@ -736,6 +743,7 @@ class _Pydocstyle(_Action):
                 output.append(line)
         return output
 
+# #############################################################################
 
 class _Pyment(_Action):
     def __init__(self):
@@ -756,6 +764,7 @@ class _Pyment(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+# #############################################################################
 
 class _Pylint(_Action):
     def __init__(self):
@@ -831,7 +840,7 @@ class _Pylint(_Action):
         if is_jupytext_code:
             ignore.extend(
                 [
-                    # [W0104(pointless-statement), ] Statement seems to have no effect
+                    # [W0104(pointless-statement), ] Statement seems to have noeffect
                     # This is disabled since we use just variable names to print.
                     "W0104",
                     # [W0106(expression-not-assigned), ] Expression # ... is
@@ -885,13 +894,18 @@ class _Pylint(_Action):
         output = output_tmp
         # Remove lines.
         output = [l for l in output if ("-" * 20) not in l]
-        # ************* Module dev_scripts.generate_script_catalog
+        # Remove:
+        #    ************* Module dev_scripts.generate_script_catalog
         output_as_str = ut.filter_text(
             re.escape("^************* Module "), "\n".join(output)
         )
+        # Remove empty lines.
+        output = [l for l in output if l.rstrip().lstrip() != ""]
+        #
         output = output_as_str.split("\n")
         return output
 
+# #############################################################################
 
 class _Mypy(_Action):
     def __init__(self):
@@ -1032,6 +1046,7 @@ def is_paired_jupytext_file(file_name: str) -> bool:
     )
     return is_paired
 
+# #############################################################################
 
 class _ProcessJupytext(_Action):
     def __init__(self, jupytext_action):
@@ -1087,7 +1102,10 @@ class _CustomPythonChecks(_Action):
         # Read file.
         txt = io_.from_file(file_name).split("\n")
         # Only library code should be baptized.
-        if not is_test_code(file_name):
+        should_baptize = True
+        should_baptize &= not os.path.basename("__init__.py")
+        should_baptize &= not is_test_code(file_name)
+        if should_baptize:
             # Check shebang.
             is_executable = os.access(file_name, os.X_OK)
             msg = self._check_shebang(file_name, txt, is_executable)

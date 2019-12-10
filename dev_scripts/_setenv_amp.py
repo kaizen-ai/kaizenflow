@@ -87,6 +87,7 @@ def _main(parser):
         "%s/dev_scripts/%s" % (amp_path, d)
         for d in selib.get_dev_scripts_subdirs()
     ]
+    dirs.append(os.path.join(amp_path, "documentation", "scripts"))
     selib.config_path(dirs, txt)
     #
     # - Test packages.

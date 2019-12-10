@@ -1,69 +1,85 @@
 <!--ts-->
+   * [Style guide references](#style-guide-references)
+      * [References](#references)
+         * [Coding](#coding)
+         * [Documentation](#documentation)
+         * [Design](#design)
+   * [Naming](#naming)
+      * [Conventions](#conventions)
+      * [Some suggested spelling](#some-suggested-spelling)
+      * [Finding the best names](#finding-the-best-names)
+      * [Horrible names](#horrible-names)
+      * [No Hungarian notation please](#no-hungarian-notation-please)
+      * [No code stutter](#no-code-stutter)
+   * [Using third-party libraries](#using-third-party-libraries)
+      * [Problem](#problem)
+      * [Solution](#solution)
+   * [Comments](#comments)
+      * [Docstring conventions](#docstring-conventions)
+      * [reST style](#rest-style)
+      * [Descriptive vs imperative style](#descriptive-vs-imperative-style)
+      * [Comments](#comments-1)
+      * [Use type hints](#use-type-hints)
+      * [Replace empty lines in code with comments](#replace-empty-lines-in-code-with-comments)
+      * [Avoid distracting comments](#avoid-distracting-comments)
+      * [If you find a bug or obsolete docstring/TODO in the code](#if-you-find-a-bug-or-obsolete-docstringtodo-in-the-code)
+      * [Referring to an object in code comments](#referring-to-an-object-in-code-comments)
+      * [Inline comments](#inline-comments)
+   * [Linter](#linter)
+      * [Disabling linter messages](#disabling-linter-messages)
+      * [Prefer non-inlined linter comments](#prefer-non-inlined-linter-comments)
+   * [Logging](#logging)
+      * [Always use logging instead of prints](#always-use-logging-instead-of-prints)
+      * [Our logging idiom](#our-logging-idiom)
+      * [Logging level](#logging-level)
+      * [Use positional args when logging](#use-positional-args-when-logging)
+      * [Exceptions don't allow positional args](#exceptions-dont-allow-positional-args)
+      * [Report warnings](#report-warnings)
+      * [Don't mix real changes with linter changes](#dont-mix-real-changes-with-linter-changes)
+   * [Assertions](#assertions)
+      * [Use positional args when asserting](#use-positional-args-when-asserting)
+      * [Report as much information as possible in an assertion](#report-as-much-information-as-possible-in-an-assertion)
+   * [Imports](#imports)
+      * [Importing code from a Git submodule](#importing-code-from-a-git-submodule)
+      * [Don't use evil import *](#dont-use-evil-import-)
+      * [Cleaning up the evil import *](#cleaning-up-the-evil-import-)
+      * [Avoid from ... import ...](#avoid-from--import-)
+      * [Exceptions to the import style](#exceptions-to-the-import-style)
+      * [Examples of imports](#examples-of-imports)
+      * [Always import with a full path from the root of the repo / submodule](#always-import-with-a-full-path-from-the-root-of-the-repo--submodule)
+      * [Baptizing module import](#baptizing-module-import)
+   * [Python scripts](#python-scripts)
+      * [Use Python and not bash for scripting](#use-python-and-not-bash-for-scripting)
+      * [Skeleton for a script](#skeleton-for-a-script)
+      * [Some useful patterns](#some-useful-patterns)
+      * [Use scripts and not notebooks for long-running jobs](#use-scripts-and-not-notebooks-for-long-running-jobs)
+      * [Python executable characteristics](#python-executable-characteristics)
+      * [Use clear names for the scripts](#use-clear-names-for-the-scripts)
+   * [Functions](#functions)
+      * [Arguments](#arguments)
+      * [Try to make functions work on multiple types](#try-to-make-functions-work-on-multiple-types)
+      * [Avoid hard-wired column name dependencies](#avoid-hard-wired-column-name-dependencies)
+   * [Misc (to reorg)](#misc-to-reorg)
+      * [Write robust code](#write-robust-code)
+      * [Capitalized words](#capitalized-words)
+      * [Regex](#regex)
+      * [Order of functions in a file](#order-of-functions-in-a-file)
+      * [Use layers design pattern](#use-layers-design-pattern)
+   * [Process.](#process)
+   * [###################...](#-1)
+      * [Write complete if-then-else](#write-complete-if-then-else)
+      * [Do not be stingy at typing](#do-not-be-stingy-at-typing)
+      * [Research quality vs production quality](#research-quality-vs-production-quality)
+      * [No ugly hacks](#no-ugly-hacks)
+      * [Life cycle of research code](#life-cycle-of-research-code)
+   * [Document what notebooks are for](#document-what-notebooks-are-for)
+   * [Keep related code close](#keep-related-code-close)
+   * [Single exit point from a function](#single-exit-point-from-a-function)
+      * [Style for default parameter](#style-for-default-parameter)
+      * [Calling functions with default parameters](#calling-functions-with-default-parameters)
+      * [Always separate what changes from what stays the same](#always-separate-what-changes-from-what-stays-the-same)
 
--   [Style guide references](#style-guide-references)
-    -   [References](#references)
--   [Naming conventions](#naming-conventions)
-    -   [Finding the best names](#finding-the-best-names)
-    -   [Horrible names](#horrible-names)
-    -   [No Hungarian notation please](#no-hungarian-notation-please)
-    -   [No code stutter](#no-code-stutter)
--   [Using third-party libraries](#using-third-party-libraries)
-    -   [Problem](#problem)
-    -   [Solution](#solution)
--   [Comments](#comments)
-    -   [Docstring conventions](#docstring-conventions)
-    -   [reST style](#rest-style)
-    -   [Descriptive vs imperative style](#descriptive-vs-imperative-style)
-    -   [Use type hints](#use-type-hints)
-    -   [Replace empty lines in code with comments](#replace-empty-lines-in-code-with-comments)
-    -   [Avoid distracting comments](#avoid-distracting-comments)
-    -   [If you find a bug or obsolete docstring/TODO in the code](#if-you-find-a-bug-or-obsolete-docstringtodo-in-the-code)
-    -   [Referring to an object in code comments](#referring-to-an-object-in-code-comments)
-    -   [Inline comments](#inline-comments)
--   [Linter](#linter)
-    -   [Disabling linter messages](#disabling-linter-messages)
-    -   [Prefer non-inlined linter comments](#prefer-non-inlined-linter-comments)
--   [Logging](#logging)
-    -   [Always use logging instead of prints](#always-use-logging-instead-of-prints)
-    -   [Our logging idiom](#our-logging-idiom)
-    -   [Logging level](#logging-level)
-    -   [Use positional args when logging](#use-positional-args-when-logging)
-    -   [Exceptions don't allow positional args](#exceptions-dont-allow-positional-args)
-    -   [Report warnings](#report-warnings)
--   [Assertions](#assertions)
-    -   [Use positional args when asserting](#use-positional-args-when-asserting)
-    -   [Report as much information as possible in an assertion](#report-as-much-information-as-possible-in-an-assertion)
--   [Imports](#imports)
-    -   [Importing code from a Git submodule](#importing-code-from-a-git-submodule)
-    -   [Don't use evil import \*](#dont-use-evil-import-)
-    -   [Cleaning up the evil import \*](#cleaning-up-the-evil-import-)
-    -   [Avoid from ... import ...](#avoid-from--import-)
-    -   [Examples of imports](#examples-of-imports)
-    -   [Exceptions to the import style](#exceptions-to-the-import-style)
-    -   [Always import with a full path from the root of the repo / submodule](#always-import-with-a-full-path-from-the-root-of-the-repo--submodule)
-    -   [Baptizing module import](#baptizing-module-import)
--   [Python scripts](#python-scripts)
-    -   [Use Python and not bash for scripting](#use-python-and-not-bash-for-scripting)
-    -   [Skeleton for a script](#skeleton-for-a-script)
-    -   [Some useful patterns](#some-useful-patterns)
-    -   [Use scripts and not notebooks for long-running jobs](#use-scripts-and-not-notebooks-for-long-running-jobs)
-    -   [Python executable characteristics](#python-executable-characteristics)
-    -   [Use clear names for the scripts](#use-clear-names-for-the-scripts)
--   [Functions](#functions)
-    -   [Arguments](#arguments)
-    -   [Try to make functions work on multiple types](#try-to-make-functions-work-on-multiple-types)
-    -   [Avoid hard-wired column name dependencies](#avoid-hard-wired-column-name-dependencies)
--   [Misc (to reorg)](#misc-to-reorg)
-    -   [Write robust code](#write-robust-code)
-    -   [Capitalized words](#capitalized-words)
-    -   [Regex](#regex)
-    -   [Order of functions in a file](#order-of-functions-in-a-file)
-    -   [Use layers design pattern](#use-layers-design-pattern)
-    -   [Write complete if-then-else](#write-complete-if-then-else)
-    -   [Do not be stingy at typing](#do-not-be-stingy-at-typing)
-    -   [Research quality vs production quality](#research-quality-vs-production-quality)
-    -   [No ugly hacks](#no-ugly-hacks)
-    -   [Life cycle of research code](#life-cycle-of-research-code)
+
 
 <!--te-->
 
@@ -1299,3 +1315,200 @@ analysis, tutorial)
     else:
         df = self._transformer_func(df, **self._transformer_kwargs)
     ```
+
+# Single exit point from a function
+
+```python
+@staticmethod
+def _get_zero_element(list_: list):
+        if not list*: return None
+    else:
+        return list*[0]
+
+vendors/kibot/utils.py:394: [R1705(no-else-return), ExpiryContractMapper.extract_contract_expiry] Unnecessary "else" after "return" [pylint]
+```
+
+-   Try to have a single exit point from a function, since this guarantees that
+    the return value is always the same
+-   In general returning different data structures from the same function (e.g.,
+    a list in one case and a float in another) is indication of bad design
+    -   There are exceptions like a function that works on different types
+        (e.g., accepts a dataframe or a series and then returns a dataframe or a
+        series, but the input and output is the same)
+    -   Returning different types (e.g., float and string) is also bad
+    -   Returning a type or None is typically ok
+-   Try to return values that are consistent so that the client doesn't have to
+    switch statement, using `isinstance(...)`
+    -   E.g., return a `float` and if the value can't be computed return
+        `np.nan` (instead of `None`) so that the client can use the return value
+        in a uniform way
+
+```python
+@staticmethod
+def _get_zero_element(list_: list):
+    if not list*:
+        ret = None
+    else:
+        ret = list*[0] return ret
+
+def _get_zero_element(list_: list):
+    ret = None if not list* else list*[0] return ret
+```
+
+-   It's ok to have functions like:
+
+```python
+def ...(...):
+    // Handle simple cases.
+    ...
+    if ...:
+        return
+    // lots of code
+    ...
+    return
+```
+
+## Style for default parameter
+
+-   We prefer this style for the optional parameter using complex objects and
+    strings.
+
+-   **Bad**
+
+    ```python
+    def function(..., dir_name : Optional[str] = "/very_long_path", ...):
+    ...
+    ```
+
+-   **Good**
+
+    ```python
+    def function(..., dir_name : Optional[str] = None, ...):
+        if dir_name is None:
+            dir_name = "/very_long_path"
+        # You can also abbreviate the previous code as:
+        # dir_name = dir_name or "/very_long_path"
+    ```
+
+-   Pros of the Good vs Bad style
+
+    -   The interface is cleaner
+    -   Implementation details are hidden (e.g., why should the caller know what
+        is the default path?)
+    -   When you wrap multiple functions, each of them needs to propagate the
+        default parameter violating DRY and adding maintenance burden
+    -   With the proposed approach, all the functions can use None, until the
+        innermost function resolves the parameter to the default parameter
+    -   Mutable parameters can not be passed through (see
+        [here](https://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument)))
+
+-   Cons:
+
+    -   One needs to add `Optional` to the type hint
+
+-   Note that a simple scalar option is still preferred to be in-lined.
+
+## Calling functions with default parameters
+
+-   You have a function
+
+    ```python
+    def func(task_name : str, dataset_dir : str, clobber : bool = clobber):
+        ...
+    ```
+
+-   We prefer to explicitly bind the parameters with a default value using their
+    name
+
+-   **Bad**
+
+    ```python
+    func(task_name=task_name, dataset_dir=dataset_dir, clobber=clobber)
+    ```
+
+-   **Good**
+
+    ```python
+    func(task_name, dataset_dir, clobber=clobber)
+    ```
+
+-   Pros of "Good" vs "Bad" style
+
+    -   If a new parameter with a default value is added to the function `func`
+        before `clobber`, the order of the parameters is changed and:
+        -   the "Good" idiom doesn't need to be changed
+        -   all instances of the "Bad" idiom needs to be updated
+            -   the "Bad" idiom might keep working but with silent failures
+            -   of course `mypy` and `Pycharm` can help
+    -   If one assigns one non-default parameters all the successive ones need
+        to be name-assigned with maintenance burden
+
+-   Cons:
+    -   None
+
+## Always separate what changes from what stays the same
+
+-   In both main code and unit test it's not a good idea to repeat the same code
+
+-   **Bad**
+
+    -   Copy-paste-modify
+
+-   **Good**
+
+    -   Refactor the common part in a functionand then change the parameters
+        used to call the function
+
+-   Example:
+
+    -   What code is clearer to you, VersionA or VersionB?
+    -   Can you spot the difference between the 2 pieces of code?
+
+    -   VersionA
+
+        ```python
+        stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
+        texts = ["a", "an", "the"]
+        stop_words = nlp_ut.get_stopwords(
+            categories=["articles"], stopwords=stopwords
+        )
+        actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
+        expected_result = []
+        self.assertEqual(actual_result, expected_result)
+
+        ...
+        texts = ["do", "does", "is", "am", "are", "be", "been", "'s", "'m", "'re"]
+        stop_words = nlp_ut.get_stopwords(
+            categories=["auxiliary_verbs"], stopwords=stopwords,
+        )
+        actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
+        expected_result = []
+        self.assertEqual(actual_result, expected_result)
+        ```
+
+    -   VersionB
+        ```python
+        def _helper(texts, categories, expected_result):
+            stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
+            stop_words = nlp_ut.get_stopwords(
+                categories=categories, stopwords=stopwords
+            )
+            actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
+            expected_result = []
+            self.assertEqual(actual_result, expected_result)
+        ```
+
+
+        texts = ["a", "an", "the"]
+        categories = ["articles"]
+        expected_result = []
+        _helper(texts, categories, expected_result)
+        ...
+
+        texts = ["do", "does", "is", "am", "are", "be", "been", "'s", "'m", "'re"]
+        categories = ["auxiliary_verbs"]
+        expected_result = []
+        _helper(texts, categories, expected_result)
+        ```
+
+    - Yes, VersionA is **Bad** and VersionB is **Good**

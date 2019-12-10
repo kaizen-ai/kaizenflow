@@ -2,8 +2,10 @@
 echo -e '\033[0;0m\c'
 
 function execute() {
-  echo "+ $*"
-  eval $*
+  cmd=$*
+  echo "+ $cmd"
+  eval $cmd 
+  return $?
 }
 
 function frame() {
@@ -52,6 +54,12 @@ function execute_setenv() {
   echo "SCRIPT_FILE=$SCRIPT_FILE"
   cmd="$EXEC_PATH/$SETENV.py --output_file $SCRIPT_FILE -e $ENV_NAME"
   execute $cmd
+  rc=$?
+  echo "rc=$rc"
+  if [[ $rc != 0 ]]; then
+    frame "'$cmd' failed returning $rc"
+    return $rc
+  fi;
   echo "Creating setenv script '$SCRIPT_FILE' ... done"
 
   # Execute the newly generated script.
