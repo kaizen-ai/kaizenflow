@@ -78,6 +78,25 @@
 
 # Social sentiment
 
+## 2015, Predicting global economic activity with media analytics
+
+-   Paper authors: Peterson et al.
+-   Link: In `Tech/papers`
+-   Review author / date: GP, 2019/12/08
+-   Score: 2/5
+-   Summary:
+    -   Predict PMI indices (which are related to the
+-   Praises:
+    -   Interesting approach for going beyond polarity in sentiment considering
+-   Critiques:
+    -   No seasonal component
+    -   Usual problems with methodology OOS
+-   Next steps:
+    -   Consider the TRMI "indices" (optimism, fear, joy, trust, violence)
+    -   Consider the difference in professional news vs social news sentiment
+        -   What does it mean if there are large statistically significant
+            difference?
+
 ## 2018 - Twitter, Investor Sentiment and Capital Markets, what do we know?
 
 -   Paper authors:
