@@ -258,7 +258,7 @@ def regression(x: pd.DataFrame, y: pd.Series, info: Optional[dict] = None):
     # Ensure full rank.
     dbg.dassert_eq(regress[2], x.shape[1])
     # Extract residual sum of squares.
-    rss = regress[1]
+    rss = np.asscalar(regress[1])
     # Compute r^2.
     r_sq = 1 - rss / tss
     # Estimate variance sigma_hat_sq.
@@ -275,10 +275,10 @@ def regression(x: pd.DataFrame, y: pd.Series, info: Optional[dict] = None):
         info["nobs (resp)=%d"] = nobs
         info["y_mean=%f"] = y_mean
         info["tss=%f"] = tss
-        info["beta=%s"] = np.array2string(beta_hat)
+        info["beta_hat=%s"] = np.array2string(beta_hat)
         info["rss=%f"] = rss
         info["r^2=%f"] = r_sq
-        info["sigma_hat_sq=%s"] = np.array2string(sigma_hat_sq)
+        info["sigma_hat_sq=%s"] = sigma_hat_sq
         info["beta_hat_covar=%s"] = np.array2string(beta_hat_covar)
         info["beta_hat_z_score=%s"] = np.array2string(beta_hat_z_score)
     # Calculate predicted values
