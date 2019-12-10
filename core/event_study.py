@@ -1,9 +1,12 @@
 """
 Import as:
 
-import core.intraday_event_study as esf
+import core.event_study as esf
 
-TODO(Paul): Rename file to just `event_study.py`
+
+See `documentation/technical/event_study_design.md` for design principles and
+notes on intended usage.
+
 
 Sketch of flow:
 
@@ -17,27 +20,17 @@ resample ----- `reindex_event_features`     |
   |                                         |
   |                                         |
 `build_local_timeseries` -------------------
-  |
-  |
-drop multiindex
-  |
-  |
-linear modeling
+  |                                         |
+  |                                         |
+drop multiindex                             |
+  |                                         |
+  |                                         |
+linear modeling                             |
+  |                                         |
+  |                                         |
+`unwrap_local_timeseries` ------------------
   |
   ...
-
-
-Comments:
-
--   `grid_data` contains
-    -   exactly one response var
-    -   zero or more predictors
-    -   predictors may include lagged response vars
--   Linear modeling step:
-    -   For unpredictable events, this model may not be tradable
-    -   In any case, the main purpose of this model is to detect an event
-        effect
-    -   If predicting returns, project to PnL using kernel
 """
 
 
@@ -153,6 +146,8 @@ def build_local_timeseries(
     return df
 
 
+# TODO(Paul): Think about whether we want to add `freq` here or just remove it
+# everywhere.
 def unwrap_local_timeseries(
     local_ts: pd.DataFrame, grid_data: pd.DataFrame,
 ) -> pd.DataFrame:
