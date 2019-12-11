@@ -195,6 +195,15 @@
     -   [https://en.wikipedia.org/wiki/Hungarian_notation]
     -   [https://stackoverflow.com/questions/111933]
 
+-   E.g., instead of `categories_list`, use `categories`, and instead of
+    `stopwords_dict`, use `stopwords`
+
+    -   Variable names should refer to what they mean and not how they are
+        implemented
+    -   What if one decides to store data in a `pd.Series` instead of a `list`?
+        With Hungarian notation, the name of the var needs to be changed
+        everywhere.
+
 -   We are not at Microsoft in the 80s: don't use it
 
 ## No code stutter
