@@ -9,6 +9,8 @@ from typing import Iterable, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+import core.statistics as stat
 
 import helpers.dbg as dbg
 import helpers.introspection as intr
@@ -216,6 +218,59 @@ class TimeSeriesMinuteStudy(_TimeSeriesStudy):
     def execute(self):
         super().execute()
         self.boxplot_minutely_hour()
+
+
+# Stats for time series
+
+# TODO(*): move to gen_utils.py as safe_div_nan?
+def safe_div(a, b):
+    div = a / b if b != 0 else np.nan
+    return div
+
+
+def infer_timedelta(series: pd.Series) -> int:
+    """
+    Compute timedelta for first two points of the time series.
+
+    :return: timedelta as number of days between first 2 data points
+    """
+    if series.shape[0] > 1:
+        timedelta = series.index[0] - series.index[1]
+        timedelta = abs(timedelta.days)
+    else:
+        timedelta = np.nan
+    return timedelta
+
+
+def infer_average_timedelta(series: pd.Series) -> float:
+    """
+    Compute average timedelta based on beginning/end timestamps and sample counts.
+
+    :return: timedelta as average number of days between all data points
+    """
+    timedelta = series.index.min() - series.index.max()
+    return abs(safe_div(timedelta.days, series.shape[0]))
+
+
+def compute_moments(series: pd.Series) -> dict:
+    """
+    Wrap stats.moments function for returning a dict.
+
+    :return: dict of moments
+    """
+    moments = stat.moments(series.dropna().to_frame()).to_dict(
+            orient="records"
+        )[0]
+    return moments
+
+
+def compute_coefficient_of_variation(series):
+    """
+    Compute the coefficient of variation for a given series.
+
+    https://stats.stackexchange.com/questions/158729/normalizing-std-dev
+    """
+    return safe_div(series.std(), series.mean())
 
 
 # Functions for processing dict of time series to generate a df with statistics
