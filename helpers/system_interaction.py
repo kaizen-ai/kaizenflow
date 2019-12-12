@@ -7,13 +7,14 @@ Contain all the code needed to interact with the outside world, e.g., through
 system commands, env vars, ...
 """
 
+import getpass
 import logging
 import os
 import signal
 import subprocess
 import sys
 import time
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -37,8 +38,6 @@ def set_user_name(user_name):
 
 def get_user_name():
     if _USER_NAME is None:
-        import getpass
-
         res = getpass.getuser()
     else:
         res = _USER_NAME
@@ -276,6 +275,35 @@ def system_to_string(
     output = output.rstrip("\n")
     return rc, output
 
+
+def get_non_empty_lines(output: str) -> List[str]:
+    output_as_arr = output.split("\n")
+    output_as_arr = [l.rstrip().lstrip() for l in output_as_arr]
+    output_as_arr = [l for l in output_as_arr if l]
+    return output_as_arr
+
+
+def get_first_line(output: str) -> str:
+    """
+    Return the first (and only) line from a string.
+
+    This is used when calling system_to_string() and expecting a single line
+    output.
+    """
+    output_as_arr = get_non_empty_lines(output)
+    dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
+    return output_as_arr[0].rstrip().lstrip()
+
+
+def system_to_one_line_string(cmd, *args, **kwargs):
+    """
+    Execute a shell command and capture its output (expected to be a single line).
+
+    This is a thin wrapper around system_to_string().
+    """
+    rc, output = system_to_string(cmd, *args, **kwargs)
+    output = get_first_line(output)
+    return rc, output
 
 # #############################################################################
 
