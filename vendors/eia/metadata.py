@@ -65,6 +65,8 @@ def check_if_still_active(
     return (timedeltas.apply(lambda x: x.days) / df[frequency_col])
 
 
+#TODO(Stas): the function adds multiple cols, so is separate for now. Refactor
+# all functions to return a copy of df with new cols to avid that
 def check_if_keyword_in_description(metadata_df: pd.DataFrame, description_col = 'description', keywords=KEYWORDS):
     """
     Add boolean columns showing keyword presence in the description.
@@ -72,4 +74,18 @@ def check_if_keyword_in_description(metadata_df: pd.DataFrame, description_col =
     metadata_df_copy = pd.DataFrame.copy(metadata_df)
     for word in KEYWORDS:
         metadata_df_copy['has_'+word] = metadata_df_copy[description_col].str.lower().str.contains(word)
+    return metadata_df_copy
+
+
+def compute_derived_metadata(process_metadata_functions: Dict[str, Callable],
+                             metadata_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Apply functions from the dict to add new columns to the df.
+
+    The functions in the dict should have only one input parameter - df.
+    Other parameters should be specified in the dict using functools.partial.
+    """
+    metadata_df_copy = pd.DataFrame.copy(metadata_df)
+    for col, function in process_metadata_functions.items():
+        metadata_df_copy[col] = function(metadata_df_copy)
     return metadata_df_copy
