@@ -305,7 +305,7 @@ def compute_series_metadata(
     metadata = {}
     for metric, function in functions.items():
         result = function(series)
-        if result.isinstance(dict):
+        if isinstance(result, dict):
             for k, v in result.items():
                 metadata[k] = v
         else:
