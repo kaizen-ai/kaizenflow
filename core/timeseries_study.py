@@ -277,6 +277,24 @@ def compute_coefficient_of_variation(series):
 # of these series.
 
 
+#TODO(Stas): docstring
+def convert_data_to_series(data):
+    rot = list(map(list, zip(*data)))
+    dates, vals = rot[0], rot[1]
+    if len(dates[0]) == 8:
+        pass
+    elif len(dates[0]) == 6:
+        dates = list(map(lambda x: x[:4] + "-" + x[4:], dates))
+    elif len(dates[0]) == 4:
+        pass
+    else:
+        raise Exception("unknown date length")
+    dates = [pd.to_datetime(s) for s in dates]
+    srs = pd.Series(vals, dates)
+    srs.sort_index(inplace=True)
+    return srs
+
+
 def compute_single_metadata(metadata_functions: Dict[str, Callable],
                             series: pd.Series) -> Dict:
     """
