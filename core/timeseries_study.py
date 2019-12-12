@@ -12,6 +12,7 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.introspection as intr
+from typing import Dict, Callable
 
 _LOG = logging.getLogger(__name__)
 
@@ -215,3 +216,40 @@ class TimeSeriesMinuteStudy(_TimeSeriesStudy):
     def execute(self):
         super().execute()
         self.boxplot_minutely_hour()
+
+
+# Functions for processing dict of time series to generate a df with statistics
+# of these series.
+
+
+def compute_single_metadata(metadata_functions: Dict[str, Callable],
+                            series: pd.Series) -> Dict:
+    """
+    Iterates over the dict of metadata functions and applies them to the series.
+
+    If some function's returns a dict, iterate on it and add an element to
+    the computed_metadata dict
+    :return: dict of metrics
+    """
+    computed_metadata = {}
+    for metric, function in metadata_functions.items():
+        result = function(series)
+        if type(result) == dict:
+            for k, v in result.items():
+                computed_metadata[k] = v
+        else:
+            computed_metadata[metric] = result
+    return computed_metadata
+
+
+def compute_metadata(metadata_functions: Dict[str, Callable],
+                     timeseries_data: Dict[str, pd.Series]) -> Dict:
+    """
+    Apply compute_single_metadata to multple time series from timeseries_data.
+
+    :return: metadata df indexed by series_id with computed metrics as columns
+    """
+    generated_metadata = {
+        series_id: compute_single_metadata(metadata_functions, series) for
+        series_id, series in timeseries_data.items()}
+    return pd.DataFrame.from_dict(generated_metadata, orient='index')
