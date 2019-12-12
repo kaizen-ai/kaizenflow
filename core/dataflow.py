@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import networkx as nx
 import pandas as pd
 
+import core.event_study as esf
 import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -270,6 +271,74 @@ class Merger(FitPredictNode):
         df_out = df_in1.merge(df_in2, **self._merge_kwargs)
         info = collections.OrderedDict()
         info["df_merged_info"] = get_df_info_as_string(df_out)
+        return df_out, info
+
+
+class EventReindexer(FitPredictNode):
+    """
+    Reindexes events according to grid data
+    """
+
+    # TODO(Paul): Support different input/output names.
+    def __init__(self, nid: str, reindex_kwargs: Optional[Any] = None) -> None:
+        """
+
+        :param nid: unique node id
+        """
+        super().__init__(nid, inputs=["df_in1", "df_in2"])
+        self._reindex_kwargs = reindex_kwargs or {}
+
+    # pylint: disable=arguments-differ
+    def fit(self, df_in1, df_in2):
+        df_out, info = self._reindex(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    # pylint: disable=arguments-differ
+    def predict(self, df_in1, df_in2):
+        df_out, info = self._reindex(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def _reindex(self, df_in1, df_in2):
+        # TODO(Paul): Add meaningful info.
+        df_out = df_in1.reindex(index=df_in2.index, **self._reindex_kwargs)
+        info = collections.OrderedDict()
+        info["df_reindex_info"] = get_df_info_as_string(df_out)
+        return df_out, info
+
+
+class LocalTimeSeriesBuilder(FitPredictNode):
+    """
+
+    """
+    def __init__(self, nid: str,
+                 relative_grid_indices: Iterable[int],
+                 ) -> None:
+        """
+
+        :param nid: unique node id
+        """
+        super().__init__(nid, inputs=["df_in1", "df_in2"])
+        self._relative_grid_indices = relative_grid_indices
+
+    # pylint: disable=arguments-differ
+    def fit(self, df_in1, df_in2):
+        df_out, info = self._func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    # pylint: disable=arguments-differ
+    def predict(self, df_in1, df_in2):
+        df_out, info = self._func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def _func(self, df_in1, df_in2):
+        # TODO(Paul): Add meaningful info.
+        info = collections.OrderedDict()
+        df_out = esf.build_local_timeseries(df_in1, df_in2, self._relative_grid_indices)
+        info["df_local_ts_info"] = get_df_info_as_string(df_out)
         return df_out, info
 
 
