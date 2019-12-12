@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import List
+from typing import List, Dict, Callable
 
 
 KEYWORDS = ['exports', 'imports', 'gasoline', 'fuel', 'oil', 'petroleum', 'distillate', 'refinery', 'blending', 'crude', 'ppm', 'motor', 'production', 'gas']
