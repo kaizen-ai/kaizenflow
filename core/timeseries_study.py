@@ -9,9 +9,12 @@ from typing import Iterable, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+import core.statistics as stat
 
 import helpers.dbg as dbg
 import helpers.introspection as intr
+from typing import Dict, Callable
 
 _LOG = logging.getLogger(__name__)
 
@@ -215,3 +218,111 @@ class TimeSeriesMinuteStudy(_TimeSeriesStudy):
     def execute(self):
         super().execute()
         self.boxplot_minutely_hour()
+
+
+# Stats for time series
+
+# TODO(*): move to gen_utils.py as safe_div_nan?
+def safe_div(a, b):
+    div = a / b if b != 0 else np.nan
+    return div
+
+
+def infer_timedelta(series: pd.Series) -> int:
+    """
+    Compute timedelta for first two points of the time series.
+
+    :return: timedelta as number of days between first 2 data points
+    """
+    if series.shape[0] > 1:
+        timedelta = series.index[0] - series.index[1]
+        timedelta = abs(timedelta.days)
+    else:
+        timedelta = np.nan
+    return timedelta
+
+
+def infer_average_timedelta(series: pd.Series) -> float:
+    """
+    Compute average timedelta based on beginning/end timestamps and sample counts.
+
+    :return: timedelta as average number of days between all data points
+    """
+    timedelta = series.index.min() - series.index.max()
+    return abs(safe_div(timedelta.days, series.shape[0]))
+
+
+def compute_moments(series: pd.Series) -> dict:
+    """
+    Wrap stats.moments function for returning a dict.
+
+    :return: dict of moments
+    """
+    moments = stat.moments(series.dropna().to_frame()).to_dict(
+            orient="records"
+        )[0]
+    return moments
+
+
+def compute_coefficient_of_variation(series):
+    """
+    Compute the coefficient of variation for a given series.
+
+    https://stats.stackexchange.com/questions/158729/normalizing-std-dev
+    """
+    return safe_div(series.std(), series.mean())
+
+
+# Functions for processing dict of time series to generate a df with statistics
+# of these series.
+
+
+#TODO(Stas): docstring
+def convert_data_to_series(data):
+    rot = list(map(list, zip(*data)))
+    dates, vals = rot[0], rot[1]
+    if len(dates[0]) == 8:
+        pass
+    elif len(dates[0]) == 6:
+        dates = list(map(lambda x: x[:4] + "-" + x[4:], dates))
+    elif len(dates[0]) == 4:
+        pass
+    else:
+        raise Exception("unknown date length")
+    dates = [pd.to_datetime(s) for s in dates]
+    srs = pd.Series(vals, dates)
+    srs.sort_index(inplace=True)
+    return srs
+
+
+def compute_single_metadata(metadata_functions: Dict[str, Callable],
+                            series: pd.Series) -> Dict:
+    """
+    Iterates over the dict of metadata functions and applies them to the series.
+
+    If some function's returns a dict, iterate on it and add an element to
+    the computed_metadata dict
+    :return: dict of metrics
+    """
+    computed_metadata = {}
+    for metric, function in metadata_functions.items():
+        result = function(series)
+        if type(result) == dict:
+            for k, v in result.items():
+                computed_metadata[k] = v
+        else:
+            computed_metadata[metric] = result
+    return computed_metadata
+
+
+def compute_metadata(metadata_functions: Dict[str, Callable],
+                     timeseries_data: Dict[str, pd.Series]) -> Dict:
+    """
+    Apply compute_single_metadata to multple time series from timeseries_data.
+
+    :return: metadata df indexed by series_id with computed metrics as columns
+    """
+    generated_metadata = {
+        series_id: compute_single_metadata(metadata_functions, series) for
+        series_id, series in timeseries_data.items()}
+    return pd.DataFrame.from_dict(generated_metadata, orient='index')
