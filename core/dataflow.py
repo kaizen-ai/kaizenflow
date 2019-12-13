@@ -31,12 +31,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def draw(graph, flip_across_vertical=False, seed=1):
-    kpos = nx.kamada_kawai_layout(graph)
-    if flip_across_vertical:
-        kpos = {node: (-x, y) for (node, (x, y)) in kpos.items()}
-    pos = nx.spring_layout(graph, pos=kpos, seed=seed)
-    nx.draw_networkx(graph, pos=pos, node_size=3000, arrowsize=30, width=1.5)
+def draw(graph):
+    pos = nx.circular_layout(graph)
+    nx.draw_networkx(graph, pos=pos, node_size=2000, arrowsize=30, width=1.5)
 
 
 def extract_info(dag, methods):
