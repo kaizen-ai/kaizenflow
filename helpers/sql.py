@@ -158,13 +158,15 @@ def get_columns(connection, table_name):
 
 
 def execute_query(
-    connection, query, limit=None, use_timer=False, profile=False, verbose=True,
+    connection, query, limit=None, offset=None, use_timer=False, profile=False, verbose=True,
 ):
     """
     Execute a query.
     """
     if limit is not None:
         query += " LIMIT %s" % limit
+    if offset is not None:
+        query += " OFFSET %s" % offset
     if profile:
         query = "EXPLAIN ANALYZE " + query
     if verbose:
