@@ -53,7 +53,7 @@ class Test_process_outliers1(ut.TestCase):
         mode: str,
         lower_quantile: float,
         num_df_rows: int = 10,
-        **kwargs
+        **kwargs,
     ) -> None:
         info = collections.OrderedDict()
         srs_out = sigp.process_outliers(
@@ -127,9 +127,266 @@ class Test_process_outliers1(ut.TestCase):
         )
 
 
-class Test_smooth_moving_average(ut.TestCase):
+class Test_smooth_derivative1(ut.TestCase):
     def test_usual_case(self) -> None:
-        pass
+        np.random.seed(42)
+        tau = 40
+        min_periods = 20
+        scaling = 2
+        order = 2
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.smooth_derivative(signal, tau, min_periods, scaling, order)
+        self.check_string(actual.to_string())
+
+
+class Test_smooth_moving_average1(ut.TestCase):
+    def test_usual_case(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.smooth_moving_average(
+            signal, tau, min_periods, min_depth, max_depth
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_compute_forecastability1(ut.TestCase):
+    def test_welch(self) -> None:
+        np.random.seed(42)
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.compute_forecastability(signal, mode="welch")
+        self.check_string(str(actual))
+
+    def test_periodogram(self) -> None:
+        np.random.seed(42)
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.compute_forecastability(signal, mode="periodogram")
+        self.check_string(str(actual))
+
+
+class Test_digitize1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        bins = [0, 0.2, 0.4]
+        right = False
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.digitize(signal, bins, right)
+        self.check_string(actual.to_string())
+
+    def test_heaviside1(self) -> None:
+        heaviside = sigp.get_heaviside(-10, 20, 1, 1)
+        bins = [0, 0.2, 0.4]
+        right = False
+        actual = sigp.digitize(heaviside, bins, right)
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_moment1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.rolling_moment(
+            signal, tau, min_periods, min_depth, max_depth, p_moment
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_norm1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.rolling_norm(
+            signal, tau, min_periods, min_depth, max_depth, p_moment
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_var1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.rolling_var(
+            signal, tau, min_periods, min_depth, max_depth, p_moment
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_std1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.rolling_std(
+            signal, tau, min_periods, min_depth, max_depth, p_moment
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_demean1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.rolling_demean(
+            signal, tau, min_periods, min_depth, max_depth
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_skew1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau_z = 40
+        tau_s = 20
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.rolling_skew(
+            signal, tau_z, tau_s, min_periods, min_depth, max_depth, p_moment
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_kurtosis1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau_z = 40
+        tau_s = 20
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.rolling_kurtosis(
+            signal, tau_z, tau_s, min_periods, min_depth, max_depth, p_moment
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_sharpe_ratio1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        actual = sigp.rolling_sharpe_ratio(
+            signal, tau, min_periods, min_depth, max_depth, p_moment
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_corr1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        demean = True
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        df = pd.DataFrame(np.random.randn(n, 2))
+        signal1 = df[0]
+        signal2 = df[1]
+        actual = sigp.rolling_corr(
+            signal1,
+            signal2,
+            tau,
+            demean,
+            min_periods,
+            min_depth,
+            max_depth,
+            p_moment,
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_rolling_zcorr1(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        tau = 40
+        demean = True
+        min_periods = 20
+        min_depth = 1
+        max_depth = 5
+        p_moment = 2
+        n = 1000
+        df = pd.DataFrame(np.random.randn(n, 2))
+        signal1 = df[0]
+        signal2 = df[1]
+        actual = sigp.rolling_zcorr(
+            signal1,
+            signal2,
+            tau,
+            demean,
+            min_periods,
+            min_depth,
+            max_depth,
+            p_moment,
+        )
+        self.check_string(actual.to_string())
+
+
+class Test_ipca(ut.TestCase):
+    def test_usual_case1(self) -> None:
+        np.random.seed(42)
+        num_pc = 3
+        alpha = 0.5
+        n = 100
+        m = 10
+        df = pd.DataFrame(np.random.randn(n, m))
+        lambda_df, unit_eigenvec_dfs = sigp.ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
 
 
 @pytest.mark.slow
