@@ -2,12 +2,11 @@
 
 # """
 # Git diff all the python files.
-# > gd $(git_files.sh)
 # """
 
 source helpers.sh
 
-FILES=$(git_files.sh)
+FILES=$(git_files.sh | grep "\.py$")
 echo "files=$FILES"
 
 execute "gd $FILES"

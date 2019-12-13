@@ -7,6 +7,7 @@ import helpers.git as git
 import logging
 import os
 import re
+from typing import List, Optional
 
 import helpers.datetime_ as datetime_
 import helpers.dbg as dbg
@@ -17,20 +18,32 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
 
 # TODO(gp): Avoid "stuttering": the module is already called "git", so no need
-# to make reference to git again.
+#  to make reference to git again.
+
+
+def _system_to_one_string(cmd):
+    _, output = si.system_to_string(cmd)
+    res = si.get_first_line(output)
+    return res
 
 
 # TODO(gp): -> get_user_name(). No stuttering.
-def get_git_name():
+def get_git_name() -> str:
     """
     Return the git user name.
     """
     cmd = "git config --get user.name"
-    _, output = si.system_to_string(cmd)
-    git_name = output.split("\n")
-    dbg.dassert_eq(len(git_name), 1, "output='%s'", output)
-    git_name = git_name[0]
-    return git_name
+    return _system_to_one_string(cmd)
+
+
+def get_branch_name() -> str:
+    """
+    Return the name of the Git branch we are in.
+
+    E.g., `master` or `PartTask672_DEV_INFRA_Add_script_to_check_and_merge_PR`
+    """
+    cmd = "git rev-parse --abbrev-ref HEAD"
+    return _system_to_one_string(cmd)
 
 
 # TODO(gp): Add mem caching to some functions below. We assume that one doesn't
@@ -88,15 +101,7 @@ def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
     return file_name
 
 
-def get_repo_symbolic_name(super_module: bool) -> str:
-    """
-    Return the name of the remote repo.
-    E.g., "alphamatic/amp", "ParticleDev/commodity_research"
-
-    :param super_module: like get_client_root()
-    """
-    # Get the git remote in the git_module.
-    git_dir = get_client_root(super_module)
+def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     dbg.dassert_exists(git_dir)
     cmd = "cd %s; (git remote -v | grep fetch)" % git_dir
     # TODO(gp): Make it more robust, by checking both fetch and push.
@@ -121,6 +126,19 @@ def get_repo_symbolic_name(super_module: bool) -> str:
     return repo_name
 
 
+def get_repo_symbolic_name(super_module: bool) -> str:
+    """
+    Return the name of the remote repo.
+    E.g., "alphamatic/amp", "ParticleDev/commodity_research"
+
+    :param super_module: like get_client_root()
+    """
+    # Get the git remote in the git_module.
+    git_dir = get_client_root(super_module)
+    repo_name = get_repo_symbolic_name_from_dirname(git_dir)
+    return repo_name
+
+
 def _get_repo_map():
     _REPO_MAP = {"alphamatic/amp": "Amp"}
     # TODO(gp): The proper fix is #PartTask551.
@@ -130,7 +148,7 @@ def _get_repo_map():
 
         _REPO_MAP.update(repc.REPO_MAP)
     except ImportError:
-       _LOG.debug("No including repo")
+        _LOG.debug("No including repo")
     dbg.dassert_no_duplicates(_REPO_MAP.keys())
     dbg.dassert_no_duplicates(_REPO_MAP.values())
     return _REPO_MAP.copy()
@@ -152,7 +170,7 @@ def get_repo_prefix(repo_github_name):
     return repo_map[repo_github_name]
 
 
-def get_repo_github_name(repo_symbolic_name):
+def get_repo_github_name(repo_symbolic_name: str) -> str:
     # Get the reverse map.
     repo_map = _get_repo_map()
     inv_repo_map = {v: k for (k, v) in repo_map.items()}
@@ -161,7 +179,7 @@ def get_repo_github_name(repo_symbolic_name):
     return inv_repo_map[repo_symbolic_name]
 
 
-def get_path_from_git_root(file_name, super_module):
+def get_path_from_git_root(file_name: str, super_module: bool) -> str:
     """
     Get the git path from the root of the tree.
 
@@ -203,10 +221,38 @@ def get_amp_abs_path() -> str:
     return amp_dir
 
 
-# ##############################################################################
+def get_submodule_hash(dir_name: str) -> str:
+    """
+    Report the Git hash that a submodule (e.g., amp) is at from the point of
+    view of a supermodule (e.g., p1).
+
+    > git ls-tree master | grep <dir_name>
+    """
+    dbg.dassert_exists(dir_name)
+    cmd = "git ls-tree master | grep %s" % dir_name
+    _, output = si.system_to_one_line_string(cmd)
+    # 160000 commit 0011776388b4c0582161eb2749b665fc45b87e7e  amp
+    data = output.split(" ")
+    git_hash = data[2]
+    return git_hash
 
 
-def _check_files(files):
+def get_hash_head(dir_name: str) -> str:
+    """
+    Report the hash that a Git repo is synced at.
+
+    > git rev-parse HEAD
+    """
+    dbg.dassert_exists(dir_name)
+    cmd = "git rev-parse HEAD"
+    _, output = si.system_to_one_line_string(cmd)
+    # 4759b3685f903e6c669096e960b248ec31c63b69
+    return output
+
+# #############################################################################
+
+
+def _check_files(files: List[str]) -> List[str]:
     files_tmp = []
     for f in files:
         if os.path.exists(f):
@@ -263,7 +309,7 @@ def get_previous_committed_files(num_commits=1):
     return files
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def git_log(num_commits=5, my_commits=False):
@@ -287,7 +333,7 @@ def git_log(num_commits=5, my_commits=False):
     return txt
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def git_stash_push(prefix, msg=None, log_level=logging.DEBUG):

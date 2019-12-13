@@ -234,23 +234,37 @@ def _get_files(args) -> List[str]:
     return file_names_out
 
 
+def _list_to_str(list_: List[str]) -> str:
+    return "%d (%s)" % (len(list_), " ".join(list_))
+
+
 def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
     """
     Get all the files that need to be linted.
 
     Typically files to lint are python and notebooks.
     """
-    _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
+    _LOG.debug("file_names=%s", _list_to_str(file_names))
     # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
-    _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
+    _LOG.debug("file_names=%s", _list_to_str(file_names))
     # Remove files.
     if args.skip_py:
         file_names = [f for f in file_names if not is_py_file(f)]
     if args.skip_ipynb:
         file_names = [f for f in file_names if not is_ipynb_file(f)]
-    if args.skip_paired_jupytext:
-        file_names = [f for f in file_names if not is_paired_jupytext_file(f)]
+    if args.skip_files:
+        dbg.dassert_isinstance(args.skip_files, list)
+        # TODO(gp): Factor out this code and reuse it in this function.
+        _LOG.warning("Skipping %s files, as per user request", 
+                _list_to_str(args.skip_files))
+        skip_files = args.skip_files
+        skip_files = [os.path.abspath(f) for f in skip_files]
+        skip_files = set(skip_files)
+        file_names_out = [f for f in file_names if f not in skip_files]
+        removed_file_names = list(set(file_names) - set(file_names_out))
+        _LOG.warning("Removing %s files", _list_to_str(removed_file_names))
+        file_names = file_names_out
     # Keep files.
     if args.only_py:
         file_names = [
@@ -437,6 +451,7 @@ class _BasicHygiene(_Action):
         _write_file_back(file_name, txt, txt_new)
         return output
 
+# #############################################################################
 
 class _CompilePython(_Action):
     """
@@ -462,6 +477,7 @@ class _CompilePython(_Action):
             output.append(str(e))
         return output
 
+# #############################################################################
 
 class _Autoflake(_Action):
     """
@@ -487,6 +503,7 @@ class _Autoflake(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+# #############################################################################
 
 class _Yapf(_Action):
     """
@@ -512,6 +529,7 @@ class _Yapf(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+# #############################################################################
 
 class _Black(_Action):
     """
@@ -544,6 +562,7 @@ class _Black(_Action):
         output = [l for l in output if all(w not in l for w in to_remove)]
         return output
 
+# #############################################################################
 
 class _Isort(_Action):
     """
@@ -568,6 +587,7 @@ class _Isort(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+# #############################################################################
 
 class _Flake8(_Action):
     """
@@ -643,6 +663,7 @@ class _Flake8(_Action):
             output = output_tmp
         return output
 
+# #############################################################################
 
 class _Pydocstyle(_Action):
     def __init__(self):
@@ -706,8 +727,8 @@ class _Pydocstyle(_Action):
         # yapf: disable
         cmd = self._executable + " %s %s" % (opts, file_name)
         # yapf: enable
-        # We don't abort on error on pydocstyle, since it returns error if there is
-        # any violation.
+        # We don't abort on error on pydocstyle, since it returns error if there
+        # is # any violation.
         _, file_lines_as_str = si.system_to_string(cmd, abort_on_error=False)
         # Process lint_log transforming:
         #   linter_v2.py:1 at module level:
@@ -736,6 +757,7 @@ class _Pydocstyle(_Action):
                 output.append(line)
         return output
 
+# #############################################################################
 
 class _Pyment(_Action):
     def __init__(self):
@@ -756,6 +778,7 @@ class _Pyment(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+# #############################################################################
 
 class _Pylint(_Action):
     def __init__(self):
@@ -831,7 +854,7 @@ class _Pylint(_Action):
         if is_jupytext_code:
             ignore.extend(
                 [
-                    # [W0104(pointless-statement), ] Statement seems to have no effect
+                    # [W0104(pointless-statement), ] Statement seems to have noeffect
                     # This is disabled since we use just variable names to print.
                     "W0104",
                     # [W0106(expression-not-assigned), ] Expression # ... is
@@ -885,13 +908,18 @@ class _Pylint(_Action):
         output = output_tmp
         # Remove lines.
         output = [l for l in output if ("-" * 20) not in l]
-        # ************* Module dev_scripts.generate_script_catalog
+        # Remove:
+        #    ************* Module dev_scripts.generate_script_catalog
         output_as_str = ut.filter_text(
             re.escape("^************* Module "), "\n".join(output)
         )
+        # Remove empty lines.
+        output = [l for l in output if l.rstrip().lstrip() != ""]
+        #
         output = output_as_str.split("\n")
         return output
 
+# #############################################################################
 
 class _Mypy(_Action):
     def __init__(self):
@@ -1032,6 +1060,7 @@ def is_paired_jupytext_file(file_name: str) -> bool:
     )
     return is_paired
 
+# #############################################################################
 
 class _ProcessJupytext(_Action):
     def __init__(self, jupytext_action):
@@ -1087,7 +1116,10 @@ class _CustomPythonChecks(_Action):
         # Read file.
         txt = io_.from_file(file_name).split("\n")
         # Only library code should be baptized.
-        if not is_test_code(file_name):
+        should_baptize = True
+        should_baptize &= not os.path.basename("__init__.py")
+        should_baptize &= not is_test_code(file_name)
+        if should_baptize:
             # Check shebang.
             is_executable = os.access(file_name, os.X_OK)
             msg = self._check_shebang(file_name, txt, is_executable)
@@ -1660,6 +1692,11 @@ def _parser() -> argparse.ArgumentParser:
         "--dir_name",
         action="store",
         help="Select all files in a dir. 'GIT_ROOT' to select git root",
+    )
+    parser.add_argument(
+        "--skip_files",
+        action="append",
+        help="Force skipping certain files, e.g., together with -d",
     )
     # Select files based on type.
     parser.add_argument(

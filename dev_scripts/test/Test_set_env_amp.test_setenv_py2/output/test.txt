@@ -54,7 +54,7 @@ echo '##########################################################################
 echo Config path
 echo '################################################################################'
 # Update variable.
-PATH=$GIT_ROOT/dev_scripts:$GIT_ROOT/dev_scripts/aws:$GIT_ROOT/dev_scripts/git:$GIT_ROOT/dev_scripts/infra:$GIT_ROOT/dev_scripts/install:$GIT_ROOT/dev_scripts/notebooks:$GIT_ROOT/dev_scripts/testing:$PATH
+PATH=$GIT_ROOT/dev_scripts:$GIT_ROOT/dev_scripts/aws:$GIT_ROOT/dev_scripts/git:$GIT_ROOT/dev_scripts/infra:$GIT_ROOT/dev_scripts/install:$GIT_ROOT/dev_scripts/notebooks:$GIT_ROOT/dev_scripts/testing:$GIT_ROOT/documentation/scripts:$PATH
 PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 # Print variable.
 echo PATH=$PATH

@@ -9,6 +9,7 @@ import logging
 import math
 from typing import Iterable, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import scipy as sp
 import sklearn.model_selection
@@ -47,6 +48,69 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
         index=df.columns,
     )
     return result
+
+
+# TODO(*): move to gen_utils.py as safe_div_nan?
+# TODO(*): Add type hints (probably float and numpy.float).
+def safe_div(a, b):
+    div = a / b if b != 0 else np.nan
+    return div
+
+
+# TODO: The functional approach suggests having these functions operate on the data and to compose `drop_na() / drop_inf()` if needed.
+# For convenience we might want to add a param to all these functions `drop_na=True`, `drop_inf=True` to tweak their behavior.
+
+
+def count_pct_zero(series: pd.Series, zero_threshold: float = 1e-9) -> float:
+    """
+    Count number of zeroes in a given time series.
+
+    :param zero_threshold: floats smaller than this are treated as zeroes.
+    """
+    num_rows = series.shape[0]
+    num_zeros = (series.dropna().abs() < zero_threshold).sum()
+    return 100.0 * safe_div(num_zeros, num_rows)
+
+
+def count_pct_nan(series: pd.Series) -> float:
+    """
+    Count number of nans in a given time series.
+    """
+    num_rows = series.shape[0]
+    num_nans = series.isna().sum()
+    return 100.0 * safe_div(num_nans, num_rows)
+
+
+def count_pct_inf(series: pd.Series) -> float:
+    """
+    Count number of infs in a given time series.
+    """
+    num_rows = series.shape[0]
+    num_infs = series.dropna().apply(np.isinf).sum()
+    return 100.0 * safe_div(num_infs, num_rows)
+
+
+def count_num_samples(series: pd.Series) -> int:
+    """
+    Count number of data points in a given time series.
+    """
+    return series.shape[0]
+
+
+def count_num_unique_values(series: pd.Series) -> int:
+    """
+    Count number of unique values in the series.
+    """
+    return len(series.unique())
+
+
+def count_pct_changes(series: pd.Series) -> float:
+    """
+    Compute percentage of values in the series that changes at the next timestamp.
+    """
+    changes = series.dropna().diff()
+    changes_count = changes[changes != 0].shape[0]
+    return safe_div(changes_count, series.shape[0])
 
 
 # #############################################################################
@@ -224,7 +288,6 @@ def multipletests(srs: pd.Series, method: Optional[str] = None) -> pd.Series:
     Wrap statsmodel's multipletests.
 
     Returns results in a series indexed like srs.
-
     Documentation at
     https://www.statsmodels.org/stable/generated/statsmodels.stats.multitest.multipletests.html
 

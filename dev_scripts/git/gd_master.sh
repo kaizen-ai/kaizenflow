@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # """
-# Diff current branch with master.
+# Diff current branch against master.
 # """
 
 source helpers.sh

@@ -490,6 +490,7 @@ def _calculate_tau_from_com(com: float) -> float:
 
     This is the function inverse of `_calculate_com_from_tau`.
     """
+    dbg.dassert_lt(0, com)
     return 1.0 / np.log(1 + 1.0 / com)
 
 
@@ -508,6 +509,7 @@ def _calculate_com_from_tau(tau: float) -> float:
         center-of-mass (com) associated with an compute_ema kernel.
     :return: com
     """
+    dbg.dassert_lt(0, tau)
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
@@ -545,7 +547,8 @@ def compute_ema(
     """
     dbg.dassert_isinstance(depth, int)
     dbg.dassert_lte(1, depth)
-    _LOG.debug("Calculating iterated compute_ema of depth %i", depth)
+    dbg.dassert_lt(0, tau)
+    _LOG.debug("Calculating iterated ema of depth %i", depth)
     _LOG.debug("range = %0.2f", depth * tau)
     _LOG.debug("<t^2>^{1/2} = %0.2f", np.sqrt(depth * (depth + 1)) * tau)
     _LOG.debug("width = %0.2f", np.sqrt(depth) * tau)
