@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 
 """
-Used in vim to prettify a part of the text.
+Lint md files.
+> lint_txt.py -i foo.md -o bar.md
+
+It can be used in vim to prettify a part of the text using stdin / stdout.
+:%!lint_txt.py
 """
 
+# TODO(gp): -> lint_md.py
+
+import argparse
 import logging
 import re
 import sys
@@ -16,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
-# TODO(gp): Implement
+# TODO(gp): Implement these replacements for `.txt`.
 # us -> you
 # ours -> yours
 # ourselves -> yourself
@@ -24,6 +31,11 @@ _LOG = logging.getLogger(__name__)
 
 def _preprocess(txt: str) -> str:
     _LOG.debug("txt=%s", txt)
+    # Remove some artifacts when copying from gdoc.
+    txt = re.sub(r"’", "'", txt)
+    txt = re.sub(r"“", '"', txt)
+    txt = re.sub(r"”", '"', txt)
+    txt = re.sub(r"…", "...", txt)
     txt_new: List[str] = []
     for line in txt.split("\n"):
         # Skip frames.
@@ -65,37 +77,30 @@ def _preprocess(txt: str) -> str:
     return txt_new_as_str
 
 
-def _process(txt, file_name):
-    #
-    # - Pre-process text.
-    #
-    txt_new_as_str = _preprocess(txt)
-    #
-    # - Prettify.
-    #
-    io_.to_file(file_name, txt_new_as_str)
-    if True:
-        executable = "prettier"
-        cmd_opts: List[str] = []
-        cmd_opts.append("--parser markdown")
-        cmd_opts.append("--prose-wrap always")
-        cmd_opts.append("--write")
-        cmd_opts.append("--tab-width 4")
-        cmd_opts.append("2>&1 >/dev/null")
-        cmd_opts_as_str = " ".join(cmd_opts)
-        cmd_as_str = " ".join([executable, cmd_opts_as_str, file_name])
-        output_tmp = si.system_to_string(cmd_as_str, abort_on_error=True)
-        _LOG.debug("output_tmp=%s", output_tmp)
-    #
-    # - Post-process text.
-    #
-    txt_as_str = io_.from_file(file_name)
+def _prettier(txt: str, file_name: str) -> str:
+    _LOG.debug("txt=%s", txt)
+    io_.to_file(file_name, txt)
+    executable = "prettier"
+    cmd_opts: List[str] = []
+    cmd_opts.append("--parser markdown")
+    cmd_opts.append("--prose-wrap always")
+    cmd_opts.append("--write")
+    cmd_opts.append("--tab-width 4")
+    cmd_opts.append("2>&1 >/dev/null")
+    cmd_opts_as_str = " ".join(cmd_opts)
+    cmd_as_str = " ".join([executable, cmd_opts_as_str, file_name])
+    output_tmp = si.system_to_string(cmd_as_str, abort_on_error=True)
+    _LOG.debug("output_tmp=%s", output_tmp)
+    txt = io_.from_file(file_name)
+    return txt
+
+
+def _postprocess(txt: str) -> str:
+    _LOG.debug("txt=%s", txt)
     # Remove empty lines before higher level bullets, but not chapters.
-    txt_as_str = re.sub(r"^\s*\n(\s+-\s+.*)$", r"\1", txt_as_str, 0,
-                                                   flags=re.MULTILINE)
-    txt = txt_as_str.split("\n")
+    txt = re.sub(r"^\s*\n(\s+-\s+.*)$", r"\1", txt, 0, flags=re.MULTILINE)
     txt_new: List[str] = []
-    for line in txt:
+    for line in txt.split("\n"):
         # Undo the transformation `* -> STAR`.
         line = re.sub(r"^\-(\s*)STAR", r"*\1", line, 0)
         # Remove empty lines.
@@ -111,19 +116,69 @@ def _process(txt, file_name):
         #
         txt_new.append(line)
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
-    #
     return txt_new_as_str
 
 
-def _main():
-    # dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    txt = "".join(list(sys.stdin))
-    file_name = "/tmp/tmp_prettier.txt"
-    txt_new_as_str = _process(txt, file_name)
-    # Write.
-    io_.to_file(file_name, txt_new_as_str)
-    print(txt_new_as_str)
+def _process(txt: str, file_name: str) -> str:
+    # Pre-process text.
+    txt = _preprocess(txt)
+    # Prettify.
+    txt = _prettier(txt, file_name)
+    # Post-process text.
+    txt = _postprocess(txt)
+    return txt
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "-i",
+        "--infile",
+        nargs="?",
+        type=argparse.FileType("r"),
+        default=sys.stdin,
+    )
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        nargs="?",
+        type=argparse.FileType("w"),
+        default=sys.stdout,
+    )
+    parser.add_argument(
+        "--in_place",
+        action="store_true",
+    )
+    prsr.add_verbosity_arg(parser)
+    return parser
+
+
+import tempfile
+import helpers.dbg as dbg
+import helpers.parser as prsr
+
+
+def _main(args):
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Read input.
+    in_file_name = args.infile.name
+    _LOG.debug("in_file_name=%s", in_file_name)
+    txt = args.infile.read()
+    # Process.
+    tmp_file_name = tempfile.NamedTemporaryFile().name
+    #tmp_file_name = "/tmp/tmp_prettier.txt"
+    txt = _process(txt, tmp_file_name)
+    # Write output.
+    if args.in_place:
+        dbg.dassert_ne(in_file_name, "<stdin>")
+        io_.to_file(in_file_name, txt)
+    else:
+        args.outfile.write(txt)
 
 
 if __name__ == "__main__":
-    _main()
+    parser_ = _parser()
+    args_ = parser_.parse_args()
+    _main(args_)
