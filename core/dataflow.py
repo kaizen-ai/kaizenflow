@@ -15,7 +15,6 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import networkx as nx
 import pandas as pd
 
-import core.event_study as esf
 import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -212,6 +211,67 @@ class ReadDataFromDf(DataSource):
 # #############################################################################
 
 
+class LambdaYConnector(FitPredictNode):
+    """
+
+    """
+
+    # TODO(Paul): Support different input/output names.
+    def __init__(self,
+                 nid: str,
+                 connector_func: Callable[..., pd.DataFrame],
+                 connector_kwargs: Optional[Any] = None,
+                 ) -> None:
+        """
+
+        :param nid:
+        :param connector_func:
+        :param connector_kwargs:
+        """
+        super().__init__(nid, inputs=["df_in1", "df_in2"])
+        self._connector_func = connector_func
+        self._connector_kwargs = connector_kwargs or {}
+        self._df_in1_col_names = None
+        self._df_in2_col_names = None
+
+    def df_in1_col_names(self) -> List[str]:
+        return self._get_col_names(self._df_in1_col_names)
+
+    def df_in2_col_names(self) -> List[str]:
+        return self._get_col_names(self._df_in2_col_names)
+
+    def _get_col_names(self, col_names: List[str]) -> List[str]:
+        dbg.dassert_is_not(
+            col_names,
+            None,
+            "No column names. This may indicate "
+            "an invocation prior to graph execution.",
+        )
+        return col_names
+
+    # pylint: disable=arguments-differ
+    def fit(self, df_in1, df_in2):
+        df_out, info = self._apply_func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    # pylint: disable=arguments-differ
+    def predict(self, df_in1, df_in2):
+        df_out, info = self._apply_func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def _apply_func(self, df_in1, df_in2):
+        self._df_in1_col_names = df_in1.columns.tolist()
+        self._df_in2_col_names = df_in2.columns.tolist()
+        # TODO(Paul): Add meaningful info.
+        df_out = self._connector_func(df_in1, df_in2, self._connector_kwargs)
+        info = collections.OrderedDict()
+        info["df_merged_info"] = get_df_info_as_string(df_out)
+        return df_out, info
+
+
+# TODO(Paul): Deprecate and replace with `LambdaYConnector`.
 class Merger(FitPredictNode):
     """
     Performs a merge of two inputs.
@@ -271,126 +331,27 @@ class Merger(FitPredictNode):
         return df_out, info
 
 
-class EventReindexer(FitPredictNode):
-    """
-    Reindexes events according to grid data
-    """
-
-    # TODO(Paul): Support different input/output names.
-    def __init__(self, nid: str, reindex_kwargs: Optional[Any] = None) -> None:
-        """
-
-        :param nid: unique node id
-        """
-        super().__init__(nid, inputs=["df_in1", "df_in2"])
-        self._reindex_kwargs = reindex_kwargs or {}
-
-    # pylint: disable=arguments-differ
-    def fit(self, df_in1, df_in2):
-        df_out, info = self._reindex(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    # pylint: disable=arguments-differ
-    def predict(self, df_in1, df_in2):
-        df_out, info = self._reindex(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def _reindex(self, df_in1, df_in2):
-        # TODO(Paul): Add meaningful info.
-        df_out = df_in1.reindex(index=df_in2.index, **self._reindex_kwargs)
-        info = collections.OrderedDict()
-        info["df_reindex_info"] = get_df_info_as_string(df_out)
-        return df_out, info
-
-
-class LocalTimeSeriesBuilder(FitPredictNode):
-    """
-
-    """
-    def __init__(self, nid: str,
-                 relative_grid_indices: Iterable[int],
-                 ) -> None:
-        """
-
-        :param nid: unique node id
-        """
-        super().__init__(nid, inputs=["df_in1", "df_in2"])
-        self._relative_grid_indices = relative_grid_indices
-
-    # pylint: disable=arguments-differ
-    def fit(self, df_in1, df_in2):
-        df_out, info = self._func(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    # pylint: disable=arguments-differ
-    def predict(self, df_in1, df_in2):
-        df_out, info = self._func(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def _func(self, df_in1, df_in2):
-        # TODO(Paul): Add meaningful info.
-        info = collections.OrderedDict()
-        df_out = esf.build_local_timeseries(df_in1, df_in2, self._relative_grid_indices)
-        info["df_local_ts_info"] = get_df_info_as_string(df_out)
-        return df_out, info
-
-
-class LocalTimeSeriesUnwrapper(FitPredictNode):
-    """
-
-    """
-    def __init__(self, nid: str,
-                 ) -> None:
-        """
-
-        :param nid: unique node id
-        """
-        super().__init__(nid, inputs=["df_in1", "df_in2"])
-
-    # pylint: disable=arguments-differ
-    def fit(self, df_in1, df_in2):
-        df_out, info = self._func(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    # pylint: disable=arguments-differ
-    def predict(self, df_in1, df_in2):
-        df_out, info = self._func(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def _func(self, df_in1, df_in2):
-        # TODO(Paul): Add meaningful info.
-        info = collections.OrderedDict()
-        df_out = esf.unwrap_local_timeseries(df_in1, df_in2, self._relative_grid_indices)
-        info["df_local_ts_info"] = get_df_info_as_string(df_out)
-        return df_out, info
-
-
 # #############################################################################
 # Transformer nodes
 # #############################################################################
 
 
 class ColumnTransformer(Transformer):
+    """
+    Perform non-index modifying changes of columns.
+    """
     def __init__(
-        self,
-        nid: str,
-        transformer_func: Callable[..., pd.DataFrame],
-        # TODO(Paul): Tighten this type annotation.
-        transformer_kwargs: Optional[Any] = None,
-        # TODO(Paul): May need to assume `List` instead.
-        cols: Optional[Iterable[str]] = None,
-        col_rename_func: Optional[Callable[[Any], Any]] = None,
-        col_mode: Optional[str] = None,
+            self,
+            nid: str,
+            transformer_func: Callable[..., pd.DataFrame],
+            # TODO(Paul): Tighten this type annotation.
+            transformer_kwargs: Optional[Any] = None,
+            # TODO(Paul): May need to assume `List` instead.
+            cols: Optional[Iterable[str]] = None,
+            col_rename_func: Optional[Callable[[Any], Any]] = None,
+            col_mode: Optional[str] = None,
     ) -> None:
         """
-        Perform non-index modifying changes of columns.
-
         :param nid: unique node id
         :param transformer_func: df -> df. The keyword `info` (if present) is
             assumed to have a specific semantic meaning. If present,
