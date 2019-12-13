@@ -217,11 +217,12 @@ class LambdaYConnector(FitPredictNode):
     """
 
     # TODO(Paul): Support different input/output names.
-    def __init__(self,
-                 nid: str,
-                 connector_func: Callable[..., pd.DataFrame],
-                 connector_kwargs: Optional[Any] = None,
-                 ) -> None:
+    def __init__(
+        self,
+        nid: str,
+        connector_func: Callable[..., pd.DataFrame],
+        connector_kwargs: Optional[Any] = None,
+    ) -> None:
         """
 
         :param nid:
@@ -340,16 +341,17 @@ class ColumnTransformer(Transformer):
     """
     Perform non-index modifying changes of columns.
     """
+
     def __init__(
-            self,
-            nid: str,
-            transformer_func: Callable[..., pd.DataFrame],
-            # TODO(Paul): Tighten this type annotation.
-            transformer_kwargs: Optional[Any] = None,
-            # TODO(Paul): May need to assume `List` instead.
-            cols: Optional[Iterable[str]] = None,
-            col_rename_func: Optional[Callable[[Any], Any]] = None,
-            col_mode: Optional[str] = None,
+        self,
+        nid: str,
+        transformer_func: Callable[..., pd.DataFrame],
+        # TODO(Paul): Tighten this type annotation.
+        transformer_kwargs: Optional[Any] = None,
+        # TODO(Paul): May need to assume `List` instead.
+        cols: Optional[Iterable[str]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: unique node id
