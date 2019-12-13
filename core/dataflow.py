@@ -342,6 +342,38 @@ class LocalTimeSeriesBuilder(FitPredictNode):
         return df_out, info
 
 
+class LocalTimeSeriesUnwrapper(FitPredictNode):
+    """
+
+    """
+    def __init__(self, nid: str,
+                 ) -> None:
+        """
+
+        :param nid: unique node id
+        """
+        super().__init__(nid, inputs=["df_in1", "df_in2"])
+
+    # pylint: disable=arguments-differ
+    def fit(self, df_in1, df_in2):
+        df_out, info = self._func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    # pylint: disable=arguments-differ
+    def predict(self, df_in1, df_in2):
+        df_out, info = self._func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def _func(self, df_in1, df_in2):
+        # TODO(Paul): Add meaningful info.
+        info = collections.OrderedDict()
+        df_out = esf.unwrap_local_timeseries(df_in1, df_in2, self._relative_grid_indices)
+        info["df_local_ts_info"] = get_df_info_as_string(df_out)
+        return df_out, info
+
+
 # #############################################################################
 # Transformer nodes
 # #############################################################################
