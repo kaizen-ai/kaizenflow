@@ -949,12 +949,12 @@ class Test_signal_processing_get_symmetric_equisized_bins(ut.TestCase):
 class TestSignalProcessingRollingZScore1(ut.TestCase):
     def test_default_values1(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.rolling_zscore(heaviside, tau=40)
+        zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
         self.check_string(zscored.to_string())
 
     def test_default_values2(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.rolling_zscore(heaviside, tau=20)
+        zscored = sigp.compute_rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
 
 
