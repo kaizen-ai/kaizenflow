@@ -5,11 +5,13 @@ import core.timeseries_study as tss
 """
 
 import logging
-from typing import Iterable, Optional
+from typing import Callable, Dict, Iterable, Optional
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
+import core.statistics as stats
 import helpers.dbg as dbg
 import helpers.introspection as intr
 
@@ -201,7 +203,6 @@ class TimeSeriesDailyStudy(_TimeSeriesStudy):
 
 
 class TimeSeriesMinuteStudy(_TimeSeriesStudy):
-
     def boxplot_minutely_hour(self):
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -215,3 +216,112 @@ class TimeSeriesMinuteStudy(_TimeSeriesStudy):
     def execute(self):
         super().execute()
         self.boxplot_minutely_hour()
+
+
+# Stats for time series.
+
+
+# TODO(*): doubts - name is misleading and makes us believe that the function is
+#  1) infering "the true period"
+#  2) returns pd.timedelta and not the number of days
+#  also the function migh be not general enough to be here
+def infer_timedelta(series: pd.Series) -> int:
+    """
+    Compute timedelta for first two points of the time series.
+
+    :return: timedelta as number of days between first 2 data points
+    """
+    if series.shape[0] > 1:
+        timedelta = series.index[0] - series.index[1]
+        timedelta = abs(timedelta.days)
+    else:
+        timedelta = np.nan
+    return timedelta
+
+
+def infer_average_timedelta(series: pd.Series) -> float:
+    """
+    Compute average timedelta based on beginning/end timestamps and sample counts.
+
+    :return: timedelta as average number of days between all data points
+    """
+    timedelta = series.index.max() - series.index.min()
+    return stats.safe_div(timedelta.days, series.shape[0])
+
+
+def compute_moments(series: pd.Series) -> dict:
+    """
+    Wrap stats.moments function for returning a dict.
+
+    :return: dict of moments
+    """
+    moments = stats.moments(series.dropna().to_frame()).to_dict(orient="records")[
+        0
+    ]
+    return moments
+
+
+def compute_coefficient_of_variation(series):
+    """
+    Compute the coefficient of variation for a given series.
+
+    https://stats.stackexchange.com/questions/158729/normalizing-std-dev
+    """
+    return stats.safe_div(series.std(), series.mean())
+
+
+# Functions for processing dict of time series to generate a df with statistics
+# of these series.
+
+
+# TODO(Stas): docstring.
+def convert_data_to_series(data):
+    transposed_data = list(map(list, zip(*data)))
+    dates, vals = transposed_data[0], transposed_data[1]
+    if len(dates[0]) == 8:
+        pass
+    elif len(dates[0]) == 6:
+        dates = list(map(lambda x: x[:4] + "-" + x[4:], dates))
+    elif len(dates[0]) == 4:
+        pass
+    else:
+        raise ValueError("dates[0]='%s' is invalid" % dates[0])
+    dates = [pd.to_datetime(s) for s in dates]
+    srs = pd.Series(vals, dates)
+    srs.sort_index(inplace=True)
+    return srs
+
+
+def compute_series_metadata(
+    functions: Dict[str, Callable], series: pd.Series
+) -> Dict:
+    """
+    Iterate over the dict of metadata functions and applies them to the series.
+
+    If a function returns a dict, iterate on the dict and add each dict element
+    to the result.
+    :return: dict of metrics
+    """
+    metadata = {}
+    for metric, function in functions.items():
+        result = function(series)
+        if isinstance(result, dict):
+            for k, v in result.items():
+                metadata[k] = v
+        else:
+            metadata[metric] = result
+    return metadata
+
+
+def compute_metadata(
+    functions: Dict[str, Callable], timeseries_data: Dict[str, pd.Series]
+) -> pd.DataFrame:
+    """
+    Apply compute_series_metadata to all time series from time-series_data.
+
+    :return: metadata df indexed by series_id with computed metrics as columns
+    """
+    metadata = {}
+    for series_id, series in timeseries_data.items():
+        metadata[series_id] = compute_series_metadata(functions, series)
+    return pd.DataFrame.from_dict(metadata, orient="index")

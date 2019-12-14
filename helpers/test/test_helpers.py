@@ -121,7 +121,7 @@ class Test_git1(ut.TestCase):
     def test_get_branch_name(self):
         _ = git.get_branch_name()
 
-
+    @pytest.mark.skipif('si.get_user_name() == "jenkins"', reason="#781")
     @pytest.mark.skipif(
         'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"')
     def test_get_submodule_hash(self):

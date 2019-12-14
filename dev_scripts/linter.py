@@ -234,23 +234,37 @@ def _get_files(args) -> List[str]:
     return file_names_out
 
 
+def _list_to_str(list_: List[str]) -> str:
+    return "%d (%s)" % (len(list_), " ".join(list_))
+
+
 def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
     """
     Get all the files that need to be linted.
 
     Typically files to lint are python and notebooks.
     """
-    _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
+    _LOG.debug("file_names=%s", _list_to_str(file_names))
     # Keep only actual .py and .ipynb files.
     file_names = _filter_target_files(file_names)
-    _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
+    _LOG.debug("file_names=%s", _list_to_str(file_names))
     # Remove files.
     if args.skip_py:
         file_names = [f for f in file_names if not is_py_file(f)]
     if args.skip_ipynb:
         file_names = [f for f in file_names if not is_ipynb_file(f)]
-    if args.skip_paired_jupytext:
-        file_names = [f for f in file_names if not is_paired_jupytext_file(f)]
+    if args.skip_files:
+        dbg.dassert_isinstance(args.skip_files, list)
+        # TODO(gp): Factor out this code and reuse it in this function.
+        _LOG.warning("Skipping %s files, as per user request", 
+                _list_to_str(args.skip_files))
+        skip_files = args.skip_files
+        skip_files = [os.path.abspath(f) for f in skip_files]
+        skip_files = set(skip_files)
+        file_names_out = [f for f in file_names if f not in skip_files]
+        removed_file_names = list(set(file_names) - set(file_names_out))
+        _LOG.warning("Removing %s files", _list_to_str(removed_file_names))
+        file_names = file_names_out
     # Keep files.
     if args.only_py:
         file_names = [
@@ -1678,6 +1692,11 @@ def _parser() -> argparse.ArgumentParser:
         "--dir_name",
         action="store",
         help="Select all files in a dir. 'GIT_ROOT' to select git root",
+    )
+    parser.add_argument(
+        "--skip_files",
+        action="append",
+        help="Force skipping certain files, e.g., together with -d",
     )
     # Select files based on type.
     parser.add_argument(
