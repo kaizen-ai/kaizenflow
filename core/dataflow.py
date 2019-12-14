@@ -213,21 +213,30 @@ class ReadDataFromDf(DataSource):
 
 class LambdaYConnector(FitPredictNode):
     """
-
+    Create an output dataframe from two input dataframes.
     """
 
     # TODO(Paul): Support different input/output names.
     def __init__(
         self,
         nid: str,
-        connector_func: Callable[..., pd.DataFrame],
+        connector_func: Callable[[pd.DataFrame, pd.DataFrame, Dict[str, Any]], pd.DataFrame],
         connector_kwargs: Optional[Any] = None,
     ) -> None:
         """
-
-        :param nid:
-        :param connector_func:
-        :param connector_kwargs:
+        :param nid: unique node id
+        :param connector_func: signature suited for lambda calls like, e.g.,
+            * Merge
+            ```
+            lambda df_in1, df_in2, connector_kwargs:
+                df_in1.merge(df_in2, **connector_kwargs)
+            ```
+            * Reindexing
+            ```
+            lambda df_in1, df_in2, connector_kwargs:
+                df_in1.reindex(index=df_in2.index, **connector_kwargs)
+            ```
+        :param connector_kwargs: kwargs associated with `connector_func`
         """
         super().__init__(nid, inputs=["df_in1", "df_in2"])
         self._connector_func = connector_func
@@ -236,10 +245,37 @@ class LambdaYConnector(FitPredictNode):
         self._df_in2_col_names = None
 
     def df_in1_col_names(self) -> List[str]:
+        """
+        Allow introspection on column names of input dataframe #1.
+        """
         return self._get_col_names(self._df_in1_col_names)
 
     def df_in2_col_names(self) -> List[str]:
+        """
+        Allow introspection on column names of input dataframe #1.
+        """
         return self._get_col_names(self._df_in2_col_names)
+
+    # pylint: disable=arguments-differ
+    def fit(self, df_in1, df_in2):
+        df_out, info = self._apply_connector_func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    # pylint: disable=arguments-differ
+    def predict(self, df_in1, df_in2):
+        df_out, info = self._apply_connector_func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def _apply_connector_func(self, df_in1, df_in2):
+        self._df_in1_col_names = df_in1.columns.tolist()
+        self._df_in2_col_names = df_in2.columns.tolist()
+        # TODO(Paul): Add meaningful info.
+        df_out = self._connector_func(df_in1, df_in2, self._connector_kwargs)
+        info = collections.OrderedDict()
+        info["df_merged_info"] = get_df_info_as_string(df_out)
+        return df_out, info
 
     def _get_col_names(self, col_names: List[str]) -> List[str]:
         dbg.dassert_is_not(
@@ -249,27 +285,6 @@ class LambdaYConnector(FitPredictNode):
             "an invocation prior to graph execution.",
         )
         return col_names
-
-    # pylint: disable=arguments-differ
-    def fit(self, df_in1, df_in2):
-        df_out, info = self._apply_func(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    # pylint: disable=arguments-differ
-    def predict(self, df_in1, df_in2):
-        df_out, info = self._apply_func(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def _apply_func(self, df_in1, df_in2):
-        self._df_in1_col_names = df_in1.columns.tolist()
-        self._df_in2_col_names = df_in2.columns.tolist()
-        # TODO(Paul): Add meaningful info.
-        df_out = self._connector_func(df_in1, df_in2, self._connector_kwargs)
-        info = collections.OrderedDict()
-        info["df_merged_info"] = get_df_info_as_string(df_out)
-        return df_out, info
 
 
 # TODO(Paul): Deprecate and replace with `LambdaYConnector`.
