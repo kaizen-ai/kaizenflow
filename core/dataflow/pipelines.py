@@ -31,6 +31,25 @@ class EventStudyBuilder(DagBuilder):
         :return:
         """
         config = cfg.Config()
+        #
+        config_tmp = config.add_subconfig("resample_events")
+        config_tmp["rule"] = "T"
+        config_tmp["agg_func"] = "mean"
+        #
+        config_tmp = config.add_subconfig("generate_event_signal")
+        config_kwargs = config_tmp.add_subconfig("transformer_kwargs")
+        config_kwargs["tau"] = 8
+        config_kwargs["max_depth"] = 3
+        #
+        config_tmp = config.add_subconfig("build_local_ts")
+        config_kwargs = config_tmp.add_subconfig("connector_kwargs")
+        config_kwargs["relative_grid_indices"] = range(-10, 50)
+        #
+        config_tmp = config.add_subconfig("model")
+        config_tmp["x_vars"] = ["_DUMMY_"]
+        config_tmp["y_vars"] = ["_DUMMY_"]
+        config_kwargs = config_tmp.add_subconfig("model_kwargs")
+        config_kwargs["alpha"] = 0.5
         return config
 
     def get_dag(self, config: cfg.Config, dag: Optional[DAG] = None) -> DAG:
@@ -63,8 +82,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "resample_events"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        # TODO(Paul): Make this part configurable.
-        node = Resample(nid, rule="T", agg_func="mean")
+        node = Resample(nid, **config[stage].to_dict())
         dag.add_node(node)
         dag.connect(nids["events_input_socket"], nid)
         # Drop NaNs from resampled events.
@@ -100,11 +118,11 @@ class EventStudyBuilder(DagBuilder):
         stage = "generate_event_signal"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        # TODO(Paul): Expose parameters. This stage may be pipeline-dependent.
+        # TODO(Paul): Note that this is pipeline-dependent.
         node = ColumnTransformer(
             nid,
             transformer_func=sigp.compute_smooth_moving_average,
-            transformer_kwargs={"tau": 8, "max_depth": 3},
+            **config[stage].to_dict(),
             col_mode="replace_all",
         )
         dag.add_node(node)
@@ -130,11 +148,10 @@ class EventStudyBuilder(DagBuilder):
         stage = "build_local_ts"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        # TODO(Paul): Make the range configurable.
         node = YConnector(
             nid,
             connector_func=esf.build_local_timeseries,
-            connector_kwargs={"relative_grid_indices": range(-10, 50)},
+            **config[stage].to_dict(),
         )
         dag.add_node(node)
         dag.connect(
@@ -147,20 +164,11 @@ class EventStudyBuilder(DagBuilder):
         stage = "model"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        # TODO(Paul): All of these parameters should be configurable.
+        # TODO(Paul): Alert that this model can be changed.
         node = SkLearnModel(
             nid,
             model_func=sklearn.linear_model.Ridge,
-            model_kwargs={"alpha": 0.1},
-            x_vars=[
-                "ind",
-                "demand+",
-                "demand-",
-                "inventory+",
-                "inventory-",
-                "supply+",
-            ],
-            y_vars=["zret_0"],
+            **config[stage].to_dict(),
         )
         dag.add_node(node)
         dag.connect(nids["build_local_ts"], nid)
