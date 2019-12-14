@@ -166,9 +166,7 @@ class EventStudyBuilder(DagBuilder):
         nids[stage] = nid
         # TODO(Paul): Alert that this model can be changed.
         node = SkLearnModel(
-            nid,
-            model_func=sklearn.linear_model.Ridge,
-            **config[stage].to_dict(),
+            nid, model_func=sklearn.linear_model.Ridge, **config[stage].to_dict(),
         )
         dag.add_node(node)
         dag.connect(nids["build_local_ts"], nid)
