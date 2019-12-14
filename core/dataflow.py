@@ -220,7 +220,9 @@ class LambdaYConnector(FitPredictNode):
     def __init__(
         self,
         nid: str,
-        connector_func: Callable[[pd.DataFrame, pd.DataFrame, Dict[str, Any]], pd.DataFrame],
+        connector_func: Callable[
+            [pd.DataFrame, pd.DataFrame, Dict[str, Any]], pd.DataFrame
+        ],
         connector_kwargs: Optional[Any] = None,
     ) -> None:
         """
@@ -680,7 +682,7 @@ def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index
         elif mode == "ffill_dropna":
             source_idxs[nid] = df.fillna(method="ffill").dropna().index
         else:
-            raise ValueError("Unsupported mode `%s`", mode)
+            raise ValueError("Unsupported mode `%s`" % mode)
     return source_idxs
 
 
