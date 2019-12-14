@@ -30,12 +30,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def draw(graph, flip_across_vertical=False, seed=1):
-    kpos = nx.kamada_kawai_layout(graph)
-    if flip_across_vertical:
-        kpos = {node: (-x, y) for (node, (x, y)) in kpos.items()}
-    pos = nx.spring_layout(graph, pos=kpos, seed=seed)
-    nx.draw_networkx(graph, pos=pos, node_size=3000, arrowsize=30, width=1.5)
+def draw(graph):
+    pos = nx.circular_layout(graph)
+    nx.draw_networkx(graph, pos=pos, node_size=2000, arrowsize=30, width=1.5)
 
 
 def extract_info(dag, methods):
@@ -214,6 +211,88 @@ class ReadDataFromDf(DataSource):
 # #############################################################################
 
 
+class YConnector(FitPredictNode):
+    """
+    Create an output dataframe from two input dataframes.
+    """
+
+    # TODO(Paul): Support different input/output names.
+    def __init__(
+        self,
+        nid: str,
+        connector_func: Callable[..., pd.DataFrame],
+        connector_kwargs: Optional[Any] = None,
+    ) -> None:
+        """
+        :param nid: unique node id
+        :param connector_func:
+            * Merge
+            ```
+            connector_func = lambda df_in1, df_in2, **connector_kwargs:
+                df_in1.merge(df_in2, **connector_kwargs)
+            ```
+            * Reindexing
+            ```
+            connector_func = lambda df_in1, df_in2, connector_kwargs:
+                df_in1.reindex(index=df_in2.index, **connector_kwargs)
+            ```
+            * User-defined functions
+            ```
+            # my_func(df_in1, df_in2, **connector_kwargs)
+            connector_func = my_func
+            ```
+        :param connector_kwargs: kwargs associated with `connector_func`
+        """
+        super().__init__(nid, inputs=["df_in1", "df_in2"])
+        self._connector_func = connector_func
+        self._connector_kwargs = connector_kwargs or {}
+        self._df_in1_col_names = None
+        self._df_in2_col_names = None
+
+    def df_in1_col_names(self) -> List[str]:
+        """
+        Allow introspection on column names of input dataframe #1.
+        """
+        return self._get_col_names(self._df_in1_col_names)
+
+    def df_in2_col_names(self) -> List[str]:
+        """
+        Allow introspection on column names of input dataframe #1.
+        """
+        return self._get_col_names(self._df_in2_col_names)
+
+    # pylint: disable=arguments-differ
+    def fit(self, df_in1, df_in2):
+        df_out, info = self._apply_connector_func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    # pylint: disable=arguments-differ
+    def predict(self, df_in1, df_in2):
+        df_out, info = self._apply_connector_func(df_in1, df_in2)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def _apply_connector_func(self, df_in1, df_in2):
+        self._df_in1_col_names = df_in1.columns.tolist()
+        self._df_in2_col_names = df_in2.columns.tolist()
+        # TODO(Paul): Add meaningful info.
+        df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
+        info = collections.OrderedDict()
+        info["df_merged_info"] = get_df_info_as_string(df_out)
+        return df_out, info
+
+    def _get_col_names(self, col_names: List[str]) -> List[str]:
+        dbg.dassert_is_not(
+            col_names,
+            None,
+            "No column names. This may indicate "
+            "an invocation prior to graph execution.",
+        )
+        return col_names
+
+
+# TODO(Paul): Deprecate and replace with `LambdaYConnector`.
 class Merger(FitPredictNode):
     """
     Performs a merge of two inputs.
@@ -279,6 +358,10 @@ class Merger(FitPredictNode):
 
 
 class ColumnTransformer(Transformer):
+    """
+    Perform non-index modifying changes of columns.
+    """
+
     def __init__(
         self,
         nid: str,
@@ -291,8 +374,6 @@ class ColumnTransformer(Transformer):
         col_mode: Optional[str] = None,
     ) -> None:
         """
-        Perform non-index modifying changes of columns.
-
         :param nid: unique node id
         :param transformer_func: df -> df. The keyword `info` (if present) is
             assumed to have a specific semantic meaning. If present,
@@ -604,7 +685,7 @@ def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index
         elif mode == "ffill_dropna":
             source_idxs[nid] = df.fillna(method="ffill").dropna().index
         else:
-            raise ValueError("Unsupported mode `%s`", mode)
+            raise ValueError("Unsupported mode `%s`" % mode)
     return source_idxs
 
 
