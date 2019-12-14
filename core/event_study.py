@@ -212,16 +212,14 @@ def _shift_and_select(
     # Select.
     intersection = idx.intersection(shifted_grid_data.index)
     dbg.dassert(not intersection.empty)
-    # TODO(Paul): Make this configurable
-    pct_found = intersection.size / idx.size
-    if pct_found < 0.9:
-        _LOG.warning("pct_found=%f for periods=%d", pct_found, periods)
     selected = shifted_grid_data.loc[intersection]
     # Maybe add info.
     if info is not None:
         dbg.dassert_isinstance(info, dict)
+        # Ensure `info` is empty.
         dbg.dassert(not info)
         info["indices_with_no_data"] = intersection.difference(idx)
+        info["pct_found"] = intersection.size / idx.size
         info["periods"] = periods
         if freq is not None:
             info["freq"] = freq
