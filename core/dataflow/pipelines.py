@@ -91,7 +91,7 @@ class EventStudyBuilder(DagBuilder):
         nids[stage] = nid
         # TODO(Paul): Might want to expose "how".
         node = DataframeMethodRunner(
-            "events/dropna", method="dropna", method_kwargs={"how": "all"}
+            nid, method="dropna", method_kwargs={"how": "all"}
         )
         dag.add_node(node)
         dag.connect(nids["resample_events"], nid)
@@ -175,7 +175,7 @@ class EventStudyBuilder(DagBuilder):
         nid = self._get_nid(stage)
         nids[stage] = nid
         node = YConnector(
-            "merge_prediction",
+            nid,
             connector_func=lambda x, y, **kwargs: x.merge(y, **kwargs),
             connector_kwargs={"left_index": True, "right_index": True},
         )
