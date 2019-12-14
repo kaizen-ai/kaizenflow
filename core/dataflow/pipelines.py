@@ -54,6 +54,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "resample_events"
         nid = self._get_nid(stage)
         nids[stage] = nid
+        # TODO(Paul): Make this part configurable.
         node = dtf.Resample(nid,
                             rule="T", agg_func="mean")
         dag.add_node(node)
@@ -62,6 +63,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "dropna_from_resampled_events"
         nid = self._get_nid(stage)
         nids[stage] = nid
+        # TODO(Paul): Might want to expose "how".
         node = dtf.DataframeMethodRunner("events/dropna",
                               method="dropna",
                               method_kwargs={"how": "all"})
@@ -91,12 +93,14 @@ class EventStudyBuilder(DagBuilder):
         stage = "generate_event_signal"
         nid = self._get_nid(stage)
         nids[stage] = nid
+        # TODO(Paul): Expose parameters. This stage may be pipeline-dependent.
         node = dtf.ColumnTransformer(nid,
                              transformer_func=sigp.compute_smooth_moving_average,
                              transformer_kwargs={"tau": 8, "max_depth": 3},
                              col_mode="replace_all")
         dag.add_node(node)
         dag.connect(nids["fillna_with_zero"], nid)
+        # TODO(Paul): Add a stage to lag the event data.
         # Merge signal with grid data.
         stage = "merge_event_signal_with_grid"
         nid = self._get_nid(stage)
@@ -113,6 +117,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "build_local_ts"
         nid = self._get_nid(stage)
         nids[stage] = nid
+        # TODO(Paul): Make the range configurable.
         node = dtf.YConnector(nid
                       connector_func=esf.build_local_timeseries,
                       connector_kwargs={"relative_grid_indices": range(-10, 50)})
@@ -125,6 +130,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "model"
         nid = self._get_nid(stage)
         nids[stage] = nid
+        # TODO(Paul): All of these parameters should be configurable.
         node = dtf.SkLearnModel(nid,
             model_func=sklearn.linear_model.Ridge,
             model_kwargs={"alpha": 0.1},
@@ -145,6 +151,7 @@ class EventStudyBuilder(DagBuilder):
                     (nid, "df_in1"))
         dag.connect((nids["model"], "df_out"),
                     (nid, "df_in2"))
+        # TODO(Paul): Add a stage to unwrap causal part of signal only.
         # Unwrap augmented local time series.
         stage = "unwrap_local_ts"
         nid = self._get_nid(stage)
