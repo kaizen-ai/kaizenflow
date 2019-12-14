@@ -20,7 +20,7 @@ import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
-from core.dataflow_core import DAG, Node
+from core.dataflow.core import DAG, Node
 
 _LOG = logging.getLogger(__name__)
 

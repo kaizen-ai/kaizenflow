@@ -5,7 +5,9 @@ import logging
 from typing import Optional
 
 import core.config as cfg
-import core.dataflow as dtf
+# import core.dataflow as dtf
+
+from core.dataflow.core import DAG
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,8 +56,8 @@ class DagBuilder(abc.ABC):
 
     @abc.abstractmethod
     def get_dag(
-        self, config: cfg.Config, dag: Optional[dtf.DAG] = None
-    ) -> dtf.DAG:
+        self, config: cfg.Config, dag: Optional[DAG] = None
+    ) -> DAG:
         """
         Build DAG given `config`.
 
