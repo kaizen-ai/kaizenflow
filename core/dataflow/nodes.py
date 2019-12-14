@@ -1,9 +1,3 @@
-"""
-Import as:
-
-import core.dataflow as dtf
-"""
-
 import abc
 import collections
 import copy
@@ -290,66 +284,6 @@ class YConnector(FitPredictNode):
             "an invocation prior to graph execution.",
         )
         return col_names
-
-
-# TODO(Paul): Deprecate and replace with `LambdaYConnector`.
-class Merger(FitPredictNode):
-    """
-    Performs a merge of two inputs.
-    """
-
-    # TODO(Paul): Support different input/output names.
-    def __init__(self, nid: str, merge_kwargs: Optional[Any] = None) -> None:
-        """
-        Configure dataframe merging policy.
-
-        :param nid: unique node id
-        :param merge_kwargs: arguments to pd.merge
-        """
-        super().__init__(nid, inputs=["df_in1", "df_in2"])
-        self._merge_kwargs = merge_kwargs or {}
-        self._df_in1_col_names = None
-        self._df_in2_col_names = None
-
-    def df_in1_col_names(self) -> List[str]:
-        dbg.dassert_is_not(
-            self._df_in1_col_names,
-            None,
-            "No column names. This may indicate "
-            "an invocation prior to graph execution.",
-        )
-        return self._df_in1_col_names
-
-    def df_in2_col_names(self) -> List[str]:
-        # TODO(Paul): Factor out.
-        dbg.dassert_is_not(
-            self._df_in2_col_names,
-            None,
-            "No column names. This may indicate "
-            "an invocation prior to graph execution.",
-        )
-        return self._df_in2_col_names
-
-    # pylint: disable=arguments-differ
-    def fit(self, df_in1, df_in2):
-        df_out, info = self._merge(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    # pylint: disable=arguments-differ
-    def predict(self, df_in1, df_in2):
-        df_out, info = self._merge(df_in1, df_in2)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def _merge(self, df_in1, df_in2):
-        self._df_in1_col_names = df_in1.columns.tolist()
-        self._df_in2_col_names = df_in2.columns.tolist()
-        # TODO(Paul): Add meaningful info.
-        df_out = df_in1.merge(df_in2, **self._merge_kwargs)
-        info = collections.OrderedDict()
-        info["df_merged_info"] = get_df_info_as_string(df_out)
-        return df_out, info
 
 
 # #############################################################################
