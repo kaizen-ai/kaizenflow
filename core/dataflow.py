@@ -211,7 +211,7 @@ class ReadDataFromDf(DataSource):
 # #############################################################################
 
 
-class LambdaYConnector(FitPredictNode):
+class YConnector(FitPredictNode):
     """
     Create an output dataframe from two input dataframes.
     """
@@ -220,23 +220,26 @@ class LambdaYConnector(FitPredictNode):
     def __init__(
         self,
         nid: str,
-        connector_func: Callable[
-            [pd.DataFrame, pd.DataFrame, Dict[str, Any]], pd.DataFrame
-        ],
+        connector_func: Callable[..., pd.DataFrame],
         connector_kwargs: Optional[Any] = None,
     ) -> None:
         """
         :param nid: unique node id
-        :param connector_func: signature suited for lambda calls like, e.g.,
+        :param connector_func:
             * Merge
             ```
-            lambda df_in1, df_in2, connector_kwargs:
+            connector_func = lambda df_in1, df_in2, **connector_kwargs:
                 df_in1.merge(df_in2, **connector_kwargs)
             ```
             * Reindexing
             ```
-            lambda df_in1, df_in2, connector_kwargs:
+            connector_func = lambda df_in1, df_in2, connector_kwargs:
                 df_in1.reindex(index=df_in2.index, **connector_kwargs)
+            ```
+            * User-defined functions
+            ```
+            # my_func(df_in1, df_in2, **connector_kwargs)
+            connector_func = my_func
             ```
         :param connector_kwargs: kwargs associated with `connector_func`
         """
@@ -274,7 +277,7 @@ class LambdaYConnector(FitPredictNode):
         self._df_in1_col_names = df_in1.columns.tolist()
         self._df_in2_col_names = df_in2.columns.tolist()
         # TODO(Paul): Add meaningful info.
-        df_out = self._connector_func(df_in1, df_in2, self._connector_kwargs)
+        df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
         info = collections.OrderedDict()
         info["df_merged_info"] = get_df_info_as_string(df_out)
         return df_out, info
