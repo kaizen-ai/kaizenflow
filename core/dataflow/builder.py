@@ -1,17 +1,15 @@
-# TODO(Paul): Consider creating a `dataflow` directory now that we have more
-#     than two dataflow files.
 import abc
 import logging
 from typing import Optional
 
 import core.config as cfg
-# import core.dataflow as dtf
-
 from core.dataflow.core import DAG
+
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Paul): Consider moving this to `core.py`.
 class DagBuilder(abc.ABC):
     """
     Abstract class for creating DAGs.
@@ -52,12 +50,9 @@ class DagBuilder(abc.ABC):
         :return: a valid configuration for `self.get_dag`, possibly with some
             "dummy" required paths.
         """
-        pass
 
     @abc.abstractmethod
-    def get_dag(
-        self, config: cfg.Config, dag: Optional[DAG] = None
-    ) -> DAG:
+    def get_dag(self, config: cfg.Config, dag: Optional[DAG] = None) -> DAG:
         """
         Build DAG given `config`.
 
@@ -74,7 +69,6 @@ class DagBuilder(abc.ABC):
             created.
         :return: `dag` with all builder operations applied
         """
-        pass
 
     def _get_nid(self, stage_name: str) -> str:
         nid = self._nid_prefix + stage_name
