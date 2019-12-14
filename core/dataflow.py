@@ -262,18 +262,24 @@ class YConnector(FitPredictNode):
         return self._get_col_names(self._df_in2_col_names)
 
     # pylint: disable=arguments-differ
-    def fit(self, df_in1: pd.DataFrame, df_in2: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def fit(
+        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
+    ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     # pylint: disable=arguments-differ
-    def predict(self, df_in1: pd.DataFrame, df_in2: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def predict(
+        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
+    ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
-    def _apply_connector_func(self, df_in1: pd.DataFrame, df_in2: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def _apply_connector_func(
+        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         self._df_in1_col_names = df_in1.columns.tolist()
         self._df_in2_col_names = df_in2.columns.tolist()
         # TODO(Paul): Add meaningful info.
@@ -282,7 +288,8 @@ class YConnector(FitPredictNode):
         info["df_merged_info"] = get_df_info_as_string(df_out)
         return df_out, info
 
-    def _get_col_names(self, col_names: List[str]) -> List[str]:
+    @staticmethod
+    def _get_col_names(col_names: List[str]) -> List[str]:
         dbg.dassert_is_not(
             col_names,
             None,
