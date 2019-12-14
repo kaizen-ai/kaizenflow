@@ -1,9 +1,20 @@
 import logging
+from typing import Optional
+
+import sklearn
 
 import core.config as cfg
 import core.event_study as esf
 import core.signal_processing as sigp
 from core.dataflow.builder import DagBuilder
+from core.dataflow.core import DAG
+from core.dataflow.nodes import (
+    ColumnTransformer,
+    DataframeMethodRunner,
+    Resample,
+    SkLearnModel,
+    YConnector,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -22,9 +33,7 @@ class EventStudyBuilder(DagBuilder):
         config = cfg.Config()
         return config
 
-    def get_dag(
-        self, config: cfg.Config, dag: Optional[dtf.DAG] = None
-    ) -> dtf.DAG:
+    def get_dag(self, config: cfg.Config, dag: Optional[DAG] = None) -> DAG:
         """
 
         :param config:
@@ -32,13 +41,13 @@ class EventStudyBuilder(DagBuilder):
         :return:
         """
         nids = {}
-        dag = dag or dtf.DAG()
+        dag = dag or DAG()
         _LOG.debug("%s", config)
         # Dummy node for grid data input.
         stage = "grid_data_input_socket"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        node = dtf.ColumnTransformer(
+        node = ColumnTransformer(
             nid, transformer_func=lambda x: x, col_mode="replace_all"
         )
         dag.add_node(node)
@@ -46,7 +55,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "events_input_socket"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        node = dtf.ColumnTransformer(
+        node = ColumnTransformer(
             nid, transformer_func=lambda x: x, col_mode="replace_all"
         )
         dag.add_node(node)
@@ -55,7 +64,7 @@ class EventStudyBuilder(DagBuilder):
         nid = self._get_nid(stage)
         nids[stage] = nid
         # TODO(Paul): Make this part configurable.
-        node = dtf.Resample(nid, rule="T", agg_func="mean")
+        node = Resample(nid, rule="T", agg_func="mean")
         dag.add_node(node)
         dag.connect(nids["events_input_socket"], nid)
         # Drop NaNs from resampled events.
@@ -63,7 +72,7 @@ class EventStudyBuilder(DagBuilder):
         nid = self._get_nid(stage)
         nids[stage] = nid
         # TODO(Paul): Might want to expose "how".
-        node = dtf.DataframeMethodRunner(
+        node = DataframeMethodRunner(
             "events/dropna", method="dropna", method_kwargs={"how": "all"}
         )
         dag.add_node(node)
@@ -72,7 +81,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "reindex_events"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        node = dtf.YConnector(nid, connector_func=esf.reindex_event_features)
+        node = YConnector(nid, connector_func=esf.reindex_event_features)
         dag.add_node(node)
         dag.connect(
             (nids["dropna_from_resampled_events"], "df_out"), (nid, "df_in1")
@@ -82,7 +91,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "fillna_with_zero"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        node = dtf.ColumnTransformer(
+        node = ColumnTransformer(
             nid, transformer_func=lambda x: x.fillna(0), col_mode="replace_all"
         )
         dag.add_node(node)
@@ -92,7 +101,7 @@ class EventStudyBuilder(DagBuilder):
         nid = self._get_nid(stage)
         nids[stage] = nid
         # TODO(Paul): Expose parameters. This stage may be pipeline-dependent.
-        node = dtf.ColumnTransformer(
+        node = ColumnTransformer(
             nid,
             transformer_func=sigp.compute_smooth_moving_average,
             transformer_kwargs={"tau": 8, "max_depth": 3},
@@ -105,7 +114,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "merge_event_signal_with_grid"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        node = dtf.YConnector(
+        node = YConnector(
             nid,
             connector_func=lambda x, y, **kwargs: x.merge(y, **kwargs),
             connector_kwargs={
@@ -122,7 +131,7 @@ class EventStudyBuilder(DagBuilder):
         nid = self._get_nid(stage)
         nids[stage] = nid
         # TODO(Paul): Make the range configurable.
-        node = dtf.YConnector(
+        node = YConnector(
             nid,
             connector_func=esf.build_local_timeseries,
             connector_kwargs={"relative_grid_indices": range(-10, 50)},
@@ -139,7 +148,7 @@ class EventStudyBuilder(DagBuilder):
         nid = self._get_nid(stage)
         nids[stage] = nid
         # TODO(Paul): All of these parameters should be configurable.
-        node = dtf.SkLearnModel(
+        node = SkLearnModel(
             nid,
             model_func=sklearn.linear_model.Ridge,
             model_kwargs={"alpha": 0.1},
@@ -159,7 +168,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "merge_predictions"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        node = dtf.YConnector(
+        node = YConnector(
             "merge_prediction",
             connector_func=lambda x, y, **kwargs: x.merge(y, **kwargs),
             connector_kwargs={"left_index": True, "right_index": True},
@@ -172,7 +181,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "unwrap_local_ts"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        node = dtf.YConnector(nid, connector_func=esf.unwrap_local_timeseries)
+        node = YConnector(nid, connector_func=esf.unwrap_local_timeseries)
         dag.add_node(node)
         dag.connect((nids["merge_predictions"], "df_out"), (nid, "df_in1"))
         dag.connect((nids["grid_data_input_socket"], "df_out"), (nid, "df_in2"))
