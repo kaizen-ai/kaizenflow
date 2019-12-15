@@ -104,12 +104,12 @@ def _process_single_line_comment(line: str) -> bool:
 
 
 def _process_abbreviations(line: str) -> str:
-    """
+    r"""
     Transform
         - `->` into `$\rightarrow`
     """
-    #line = re.sub("([^\s])->(\s)", r"\1$\rightarrow\2", line)
-    line = re.sub("\->", r"$\\rightarrow$", line)
+    # line = re.sub("([^\s])->(\s)", r"\1$\rightarrow\2", line)
+    line = re.sub(r"\->", r"$\\rightarrow$", line)
     return line
 
 

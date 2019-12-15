@@ -315,13 +315,13 @@ Module names can still collide. Some module names are inconveniently long.
 
 #### 2.2.4 Decision
 
-*   Use `import x` for importing packages and modules.
-*   Use `from x import y` where `x` is the package prefix and `y` is the
+*    Use `import x` for importing packages and modules.
+*    Use `from x import y` where `x` is the package prefix and `y` is the
     module name with no prefix.
-*   Use `from x import y as z` if two modules named `y` are to be imported
+*    Use `from x import y as z` if two modules named `y` are to be imported
     or if `y` is an inconveniently long name.
-*   Use `import y as z` only when `z` is a standard abbreviation (e.g., `np`
-    for `numpy`).
+*    Use `import y as z` only when `z` is a standard abbreviation (e.g.,
+    `np` for `numpy`).
 
 For example the module `sound.effects.echo` may be imported as follows:
 
@@ -2871,14 +2871,14 @@ function into smaller and more manageable pieces.
 
 #### 3.19.1 General Rules
 
-*   Familiarize yourself with
+*    Familiarize yourself with
     [PEP-484](https://www.python.org/dev/peps/pep-0484/).
-*   In methods, only annotate `self`, or `cls` if it is necessary for proper
-    type information. e.g.,
+*    In methods, only annotate `self`, or `cls` if it is necessary for
+    proper type information. e.g.,
     `@classmethod def create(cls: Type[T]) -> T: return cls()`
-*   If any other variable or a returned type should not be expressed, use
+*    If any other variable or a returned type should not be expressed, use
     `Any`.
-*   You are not required to annotate all the functions in a module.
+*    You are not required to annotate all the functions in a module.
     -   At least annotate your public APIs.
     -   Use judgment to get to a good balance between safety and clarity on the
         one hand, and flexibility on the other.

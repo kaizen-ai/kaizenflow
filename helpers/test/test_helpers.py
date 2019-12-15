@@ -123,12 +123,14 @@ class Test_git1(ut.TestCase):
 
     @pytest.mark.skipif('si.get_user_name() == "jenkins"', reason="#781")
     @pytest.mark.skipif(
-        'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"')
+        'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"'
+    )
     def test_get_submodule_hash(self):
         _ = git.get_submodule_hash("amp")
 
     def test_get_hash_head(self):
         _ = git.get_hash_head(".")
+
 
 # #############################################################################
 # list.py
@@ -210,16 +212,16 @@ class Test_s3_1(ut.TestCase):
         # We rely on the fact that Kibot data is not changing.
         self.assertEqual(len(file_names), 252)
 
+
 # #############################################################################
 # unit_test.py
 # #############################################################################
 
 
 class Test_unit_test1(ut.TestCase):
-
     @pytest.mark.amp
     def test_purify_txt_from_client1(self):
-        txt = """
+        txt = r"""
 ************* Module input [pylint]
 /Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
 /Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
@@ -229,7 +231,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(und
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
 """
-        exp = """
+        exp = r"""
 ************* Module input [pylint]
 $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
 $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
@@ -241,6 +243,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
 """
         act = ut.purify_txt_from_client(txt)
         self.assert_equal(act, exp)
+
 
 # #############################################################################
 # user_credentials.py
