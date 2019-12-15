@@ -42,7 +42,7 @@ class EventStudyBuilder(DagBuilder):
         #
         config_tmp = config.add_subconfig("shift")
         config_kwargs = config_tmp.add_subconfig("method_kwargs")
-        config_kwargs["period"] = 1
+        config_kwargs["periods"] = 1
         #
         config_tmp = config.add_subconfig("build_local_ts")
         config_kwargs = config_tmp.add_subconfig("connector_kwargs")
@@ -167,7 +167,7 @@ class EventStudyBuilder(DagBuilder):
             nid, "shift", **config[stage].to_dict()
         )
         dag.add_node(node)
-        dag.connect(nid["generate_event_signal"], nid)
+        dag.connect(nids["generate_event_signal"], nid)
         # Merge signal with grid data.
         # - The output of this node adds columns from processed event features
         #   to the columns in the grid data
@@ -211,7 +211,6 @@ class EventStudyBuilder(DagBuilder):
         stage = "model"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        # TODO(Paul): Alert that this model can be changed.
         node = SkLearnModel(
             nid, model_func=sklearn.linear_model.Ridge, **config[stage].to_dict(),
         )
@@ -232,7 +231,6 @@ class EventStudyBuilder(DagBuilder):
         dag.add_node(node)
         dag.connect((nids["build_local_ts"], "df_out"), (nid, "df_in1"))
         dag.connect((nids["model"], "df_out"), (nid, "df_in2"))
-        # TODO(Paul): Add a stage to unwrap causal part of signal only.
         # Unwrap augmented local time series.
         # - The main purpose of this node is to take model predictions
         #   generated from a model run on local time series and place them
