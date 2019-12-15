@@ -40,7 +40,7 @@ import os
 import py_compile
 import re
 import sys
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Type
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -256,8 +256,10 @@ def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
     if args.skip_files:
         dbg.dassert_isinstance(args.skip_files, list)
         # TODO(gp): Factor out this code and reuse it in this function.
-        _LOG.warning("Skipping %s files, as per user request", 
-                _list_to_str(args.skip_files))
+        _LOG.warning(
+            "Skipping %s files, as per user request",
+            _list_to_str(args.skip_files),
+        )
         skip_files = args.skip_files
         skip_files = [os.path.abspath(f) for f in skip_files]
         skip_files = set(skip_files)
@@ -451,7 +453,9 @@ class _BasicHygiene(_Action):
         _write_file_back(file_name, txt, txt_new)
         return output
 
+
 # #############################################################################
+
 
 class _CompilePython(_Action):
     """
@@ -477,7 +481,9 @@ class _CompilePython(_Action):
             output.append(str(e))
         return output
 
+
 # #############################################################################
+
 
 class _Autoflake(_Action):
     """
@@ -503,7 +509,9 @@ class _Autoflake(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+
 # #############################################################################
+
 
 class _Yapf(_Action):
     """
@@ -529,7 +537,9 @@ class _Yapf(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+
 # #############################################################################
+
 
 class _Black(_Action):
     """
@@ -562,7 +572,9 @@ class _Black(_Action):
         output = [l for l in output if all(w not in l for w in to_remove)]
         return output
 
+
 # #############################################################################
+
 
 class _Isort(_Action):
     """
@@ -587,7 +599,9 @@ class _Isort(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+
 # #############################################################################
+
 
 class _Flake8(_Action):
     """
@@ -663,7 +677,9 @@ class _Flake8(_Action):
             output = output_tmp
         return output
 
+
 # #############################################################################
+
 
 class _Pydocstyle(_Action):
     def __init__(self):
@@ -757,7 +773,9 @@ class _Pydocstyle(_Action):
                 output.append(line)
         return output
 
+
 # #############################################################################
+
 
 class _Pyment(_Action):
     def __init__(self):
@@ -778,7 +796,9 @@ class _Pyment(_Action):
         output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
+
 # #############################################################################
+
 
 class _Pylint(_Action):
     def __init__(self):
@@ -919,7 +939,9 @@ class _Pylint(_Action):
         output = output_as_str.split("\n")
         return output
 
+
 # #############################################################################
+
 
 class _Mypy(_Action):
     def __init__(self):
@@ -1060,7 +1082,9 @@ def is_paired_jupytext_file(file_name: str) -> bool:
     )
     return is_paired
 
+
 # #############################################################################
+
 
 class _ProcessJupytext(_Action):
     def __init__(self, jupytext_action):
@@ -1379,12 +1403,10 @@ def _get_action_class(action: str) -> _Action:
         if name == action:
             dbg.dassert_is(res, None)
             res = class_
-    # Make mypy happy.
-    if res is None:
-        dbg.dassert_is_not(res, None)
-    else:
-        obj = res()
-    return obj
+    dbg.dassert_is_not(res, None)
+    # mypy gets confused since we are return
+    obj = res()  # type: ignore
+    return obj  # type: ignore
 
 
 def _remove_not_possible_actions(actions: List[str]) -> List[str]:
@@ -1416,11 +1438,11 @@ def _actions_to_string(actions: List[str]) -> str:
 
 def _select_actions(args: argparse.Namespace) -> List[str]:
     # Select actions.
-    actions = args.action
-    if isinstance(actions, str) and " " in actions:
-        actions = actions.split(" ")
-    if not actions or args.all:
-        actions = _ALL_ACTIONS[:]
+    if not args.action or args.all:
+        actions = list(_ALL_ACTIONS)[:]
+    else:
+        actions = args.action
+    dbg.dassert_isinstance(actions, list)
     # Validate actions.
     for action in set(actions):
         if action not in _ALL_ACTIONS:
@@ -1546,7 +1568,7 @@ def _run_linter(
 
 # Actions and if they read / write files.
 # The order of this list implies the order in which they are executed.
-_VALID_ACTIONS_META = [
+_VALID_ACTIONS_META: List[Tuple[str, str, str, Type[_Action]]] = [
     (
         "check_file_property",
         "r",

@@ -23,7 +23,7 @@ echo '##########################################################################
 export PYTHONDONTWRITEBYTECODE=x
 # Append paths to PYTHONPATH.
 # Update variable.
-PYTHONPATH=$GIT_ROOT/$PYTHONPATH
+PYTHONPATH=$GIT_ROOT:$PYTHONPATH
 PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 # Print variable.
 echo PYTHONPATH=$PYTHONPATH

@@ -103,6 +103,16 @@ def _process_single_line_comment(line: str) -> bool:
     return do_continue
 
 
+def _process_abbreviations(line: str) -> str:
+    """
+    Transform
+        - `->` into `$\rightarrow`
+    """
+    #line = re.sub("([^\s])->(\s)", r"\1$\rightarrow\2", line)
+    line = re.sub("\->", r"$\\rightarrow$", line)
+    return line
+
+
 def _process_question(line: str) -> Tuple[bool, str]:
     """
     Transform `* foo bar` into `- **foo bar**`.
@@ -129,27 +139,29 @@ def _transform(lines: List[str]) -> List[str]:
     in_code_block = False
     for i, line in enumerate(lines):
         _LOG.debug("%s:line=%s", i, line)
-        # Handle comment block.
+        # Process comment block.
         do_continue, in_skip_block = _process_comment_block(line, in_skip_block)
         if do_continue:
             continue
-        # Handle code block.
+        # Process code block.
         do_continue, in_code_block, out_tmp = _process_code_block(
             line, in_code_block, i, lines
         )
         out.extend(out_tmp)
         if do_continue:
             continue
-        # Handle single line comment.
+        # Process single line comment.
         do_continue = _process_single_line_comment(line)
         if do_continue:
             continue
+        # Process abbreviations.
+        line = _process_abbreviations(line)
         # Process question.
         do_continue, line = _process_question(line)
         if do_continue:
             out.append(line)
             continue
-        # Handle empty lines in the questions and answers.
+        # Process empty lines in the questions and answers.
         is_empty = line.rstrip(" ").lstrip(" ") == ""
         if not is_empty:
             if line.startswith("#"):

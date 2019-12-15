@@ -106,6 +106,15 @@
     > pytest --cache-clear
     ```
 
+
+### Run the tests that last failed
+
+    ```bash
+    > pytest --last-failed
+    ```
+
+- This data is stored in `.pytest_cache/v/cache/lastfailed`
+
 ## Custom pytest options behaviors
 
 ### Enable debug info

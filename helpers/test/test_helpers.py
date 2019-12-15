@@ -210,6 +210,37 @@ class Test_s3_1(ut.TestCase):
         # We rely on the fact that Kibot data is not changing.
         self.assertEqual(len(file_names), 252)
 
+# #############################################################################
+# unit_test.py
+# #############################################################################
+
+
+class Test_unit_test1(ut.TestCase):
+
+    @pytest.mark.amp
+    def test_purify_txt_from_client1(self):
+        txt = """
+************* Module input [pylint]
+/Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
+/Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
+/Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:9: F821 undefined name 're' [flake8]
+cmd line='/Users/saggese/src/amp/dev_scripts/linter.py -f /Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py --linter_log /Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/linter.log'
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
+"""
+        exp = """
+************* Module input [pylint]
+$GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
+$GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
+$GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:9: F821 undefined name 're' [flake8]
+cmd line='$GIT_ROOT/dev_scripts/linter.py -f $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py --linter_log $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/linter.log'
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
+"""
+        act = ut.purify_txt_from_client(txt)
+        self.assert_equal(act, exp)
 
 # #############################################################################
 # user_credentials.py

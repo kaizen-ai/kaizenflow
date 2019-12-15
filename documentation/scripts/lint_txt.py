@@ -14,9 +14,12 @@ import argparse
 import logging
 import re
 import sys
+import tempfile
 from typing import List
 
+import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -24,9 +27,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 # TODO(gp): Implement these replacements for `.txt`.
-# us -> you
-# ours -> yours
-# ourselves -> yourself
+#  us -> you
+#  ours -> yours
+#  ourselves -> yourself
 
 
 def _preprocess(txt: str) -> str:
@@ -115,6 +118,7 @@ def _postprocess(txt: str) -> str:
             line = m.group(1) + m.group(2).upper() + m.group(3)
         #
         txt_new.append(line)
+
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
     return txt_new_as_str
 
@@ -148,16 +152,10 @@ def _parser() -> argparse.ArgumentParser:
         default=sys.stdout,
     )
     parser.add_argument(
-        "--in_place",
-        action="store_true",
+        "--in_place", action="store_true",
     )
     prsr.add_verbosity_arg(parser)
     return parser
-
-
-import tempfile
-import helpers.dbg as dbg
-import helpers.parser as prsr
 
 
 def _main(args):
@@ -168,7 +166,7 @@ def _main(args):
     txt = args.infile.read()
     # Process.
     tmp_file_name = tempfile.NamedTemporaryFile().name
-    #tmp_file_name = "/tmp/tmp_prettier.txt"
+    # tmp_file_name = "/tmp/tmp_prettier.txt"
     txt = _process(txt, tmp_file_name)
     # Write output.
     if args.in_place:
