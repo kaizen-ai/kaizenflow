@@ -163,9 +163,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "shift"
         nid = self._get_nid(stage)
         nids[stage] = nid
-        node = DataframeMethodRunner(
-            nid, "shift", **config[stage].to_dict()
-        )
+        node = DataframeMethodRunner(nid, "shift", **config[stage].to_dict())
         dag.add_node(node)
         dag.connect(nids["generate_event_signal"], nid)
         # Merge signal with grid data.
