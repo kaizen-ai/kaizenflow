@@ -14,7 +14,7 @@ import pytest
 import scipy
 
 import core.config as cfg
-import dataflow as dtf
+import core.dataflow as dtf
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
