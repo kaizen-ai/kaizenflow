@@ -1,21 +1,23 @@
 <!--ts-->
+   * [Running unit tests](#running-unit-tests)
+      * [Using run_tests.py](#using-run_testspy)
+         * [Run fast tests](#run-fast-tests)
+         * [Run slow tests](#run-slow-tests)
+         * [Run parallel tests](#run-parallel-tests)
+      * [Using pytest directly](#using-pytest-directly)
+         * [Usage and Invocations reference](#usage-and-invocations-reference)
+         * [Stop at first failure](#stop-at-first-failure)
+         * [Run a single class](#run-a-single-class)
+         * [Run a single test method](#run-a-single-test-method)
+         * [Remove cache artifacts](#remove-cache-artifacts)
+         * [Run with a clear cache](#run-with-a-clear-cache)
+         * [Run the tests that last failed](#run-the-tests-that-last-failed)
+      * [Custom pytest options behaviors](#custom-pytest-options-behaviors)
+         * [Enable debug info](#enable-debug-info)
+         * [Update golden outcomes](#update-golden-outcomes)
+         * [Incremental test mode (advanced users)](#incremental-test-mode-advanced-users)
 
--   [Running unit tests](#running-unit-tests)
-    -   [Using the run_tests.py wrapper](#using-the-run_testspy-wrapper)
-        -   [Run fast tests](#run-fast-tests)
-        -   [Run slow tests](#run-slow-tests)
-        -   [Run parallel tests](#run-parallel-tests)
-    -   [Using pytest directly](#using-pytest-directly)
-        -   [Usage and Invocations reference](#usage-and-invocations-reference)
-        -   [Stop at first failure](#stop-at-first-failure)
-        -   [Run a single class](#run-a-single-class)
-        -   [Run a single test method](#run-a-single-test-method)
-        -   [Remove cache artifacts](#remove-cache-artifacts)
-        -   [Run with a clear cache](#run-with-a-clear-cache)
-    -   [Custom pytest options behaviors](#custom-pytest-options-behaviors)
-        -   [Enable debug info](#enable-debug-info)
-        -   [Update golden outcomes](#update-golden-outcomes)
-        -   [Incremental test mode (advanced users)](#incremental-test-mode-advanced-users)
+
 
 <!--te-->
 
@@ -105,6 +107,14 @@
     ```bash
     > pytest --cache-clear
     ```
+
+### Run the tests that last failed
+
+    ```bash
+    > pytest --last-failed
+    ```
+
+-   This data is stored in `.pytest_cache/v/cache/lastfailed`
 
 ## Custom pytest options behaviors
 

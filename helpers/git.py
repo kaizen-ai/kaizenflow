@@ -7,9 +7,9 @@ import helpers.git as git
 import logging
 import os
 import re
-from typing import List, Optional
+from typing import Dict, List
 
-import helpers.datetime_ as datetime_
+import helpers.datetime_ as hdt
 import helpers.dbg as dbg
 import helpers.system_interaction as si
 
@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 #  to make reference to git again.
 
 
-def _system_to_one_string(cmd):
+def _system_to_one_string(cmd) -> str:
     _, output = si.system_to_string(cmd)
     res = si.get_first_line(output)
     return res
@@ -139,28 +139,28 @@ def get_repo_symbolic_name(super_module: bool) -> str:
     return repo_name
 
 
-def _get_repo_map():
-    _REPO_MAP = {"alphamatic/amp": "Amp"}
+def _get_repo_map() -> Dict[str, str]:
+    repo_map = {"alphamatic/amp": "Amp"}
     # TODO(gp): The proper fix is #PartTask551.
     # Get info from the including repo, if possible.
     try:
         import repo_config as repc  # type: ignore
 
-        _REPO_MAP.update(repc.REPO_MAP)
+        repo_map.update(repc.REPO_MAP)
     except ImportError:
         _LOG.debug("No including repo")
-    dbg.dassert_no_duplicates(_REPO_MAP.keys())
-    dbg.dassert_no_duplicates(_REPO_MAP.values())
-    return _REPO_MAP.copy()
+    dbg.dassert_no_duplicates(repo_map.keys())
+    dbg.dassert_no_duplicates(repo_map.values())
+    return repo_map.copy()  # type: ignore
 
 
-def get_all_repo_symbolic_names():
+def get_all_repo_symbolic_names() -> List[str]:
     repo_map = _get_repo_map()
-    return repo_map.values()
+    return repo_map.values()  # type: ignore
 
 
 # TODO(gp): Found a better name.
-def get_repo_prefix(repo_github_name):
+def get_repo_prefix(repo_github_name) -> str:
     """
     Return the symbolic name of a git repo.
     E.g., for "alphamatic/amp", the function returns "Amp".
@@ -248,6 +248,7 @@ def get_hash_head(dir_name: str) -> str:
     _, output = si.system_to_one_line_string(cmd)
     # 4759b3685f903e6c669096e960b248ec31c63b69
     return output
+
 
 # #############################################################################
 
@@ -339,7 +340,7 @@ def git_log(num_commits=5, my_commits=False):
 def git_stash_push(prefix, msg=None, log_level=logging.DEBUG):
     user_name = si.get_user_name()
     server_name = si.get_server_name()
-    timestamp = datetime_.get_timestamp()
+    timestamp = hdt.get_timestamp()
     tag = "%s-%s-%s" % (user_name, server_name, timestamp)
     tag = prefix + "." + tag
     _LOG.debug("tag='%s'", tag)

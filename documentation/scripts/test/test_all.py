@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Generalize to all users, or at least Jenkins.
-#@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.skipif('si.get_user_name() != "saggese"')
 class Test_pandoc1(ut.TestCase):
     def _helper(self, in_file, action):
@@ -337,6 +337,8 @@ $$"""
         exp = r"""# test"""
         self._helper_preprocess(txt, exp)
 
+    # #########################################################################
+
     def test_process1(self):
         txt = self._get_text1()
         file_name = os.path.join(self.get_scratch_space(), "test.txt")
@@ -344,17 +346,56 @@ $$"""
         self.check_string(act)
 
     def test_process2(self):
+        """
+        Run the text linter on a txt file.
+        """
         txt = r"""
-*   Good time management
+*  Good time management
 
 1. choose the right tasks
-    - Avoid non-essential tasks
+    -   avoid non-essential tasks
 """
-        exp = r"""*   Good time management
+        exp = r"""* Good time management
 
 1. Choose the right tasks
-    - Avoid non-essential tasks
+   - Avoid non-essential tasks
 """
         file_name = os.path.join(self.get_scratch_space(), "test.txt")
+        act = dslt._process(txt, file_name)
+        self.assert_equal(act, exp)
+
+    def test_process3(self):
+        """
+        Run the text linter on a md file.
+        """
+        txt = r"""
+# Good
+- Good time management
+  1. choose the right tasks
+    - Avoid non-essential tasks
+
+## Bad
+-  Hello
+    - World
+"""
+        exp = r"""<!--ts-->
+   * [Good](#good)
+      * [Bad](#bad)
+
+
+
+<!--te-->
+# Good
+
+- Good time management
+  1. Choose the right tasks
+  - Avoid non-essential tasks
+
+## Bad
+
+- Hello
+  - World
+"""
+        file_name = os.path.join(self.get_scratch_space(), "test.md")
         act = dslt._process(txt, file_name)
         self.assert_equal(act, exp)
