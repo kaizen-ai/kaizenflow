@@ -31,7 +31,6 @@ _LOG = logging.getLogger(__name__)
 #  ours -> yours
 #  ourselves -> yourself
 
-
 def _preprocess(txt: str) -> str:
     _LOG.debug("txt=%s", txt)
     # Remove some artifacts when copying from gdoc.
@@ -80,21 +79,27 @@ def _preprocess(txt: str) -> str:
     return txt_new_as_str
 
 
-def _prettier(txt: str, file_name: str) -> str:
+def _prettier(txt: str) -> str:
     _LOG.debug("txt=%s", txt)
-    io_.to_file(file_name, txt)
+    #
+    tmp_file_name = tempfile.NamedTemporaryFile().name
+    # tmp_file_name = "/tmp/tmp_prettier.txt"
+    io_.to_file(tmp_file_name, txt)
+    #
     executable = "prettier"
     cmd_opts: List[str] = []
     cmd_opts.append("--parser markdown")
     cmd_opts.append("--prose-wrap always")
     cmd_opts.append("--write")
-    cmd_opts.append("--tab-width 4")
+    tab_width = 4
+    cmd_opts.append("--tab-width %s" % tab_width)
     cmd_opts.append("2>&1 >/dev/null")
     cmd_opts_as_str = " ".join(cmd_opts)
-    cmd_as_str = " ".join([executable, cmd_opts_as_str, file_name])
+    cmd_as_str = " ".join([executable, cmd_opts_as_str, tmp_file_name])
     output_tmp = si.system_to_string(cmd_as_str, abort_on_error=True)
     _LOG.debug("output_tmp=%s", output_tmp)
-    txt = io_.from_file(file_name)
+    #
+    txt = io_.from_file(tmp_file_name)
     return txt
 
 
@@ -103,7 +108,7 @@ def _postprocess(txt: str) -> str:
     # Remove empty lines before higher level bullets, but not chapters.
     txt = re.sub(r"^\s*\n(\s+-\s+.*)$", r"\1", txt, 0, flags=re.MULTILINE)
     txt_new: List[str] = []
-    for line in txt.split("\n"):
+    for i, line in enumerate(txt.split("\n")):
         # Undo the transformation `* -> STAR`.
         line = re.sub(r"^\-(\s*)STAR", r"*\1", line, 0)
         # Remove empty lines.
@@ -118,19 +123,53 @@ def _postprocess(txt: str) -> str:
             line = m.group(1) + m.group(2).upper() + m.group(3)
         #
         txt_new.append(line)
-
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
     return txt_new_as_str
 
+import helpers.git as git
+import os
 
-def _process(txt: str, file_name: str) -> str:
+def _refresh_toc(txt: str) -> str:
+    _LOG.debug("txt=%s", txt)
+    # Check whether there is a TOC otherwise add it.
+    txt_as_arr = txt.split("\n")
+    if txt_as_arr[0] != "<!--ts-->":
+        _LOG.warning(
+            "No tags for table of content in md file: adding it"
+        )
+        txt = "<!--ts-->\n<!--te-->\n" + txt
+    # Write file.
+    tmp_file_name = tempfile.NamedTemporaryFile().name
+    io_.to_file(tmp_file_name, txt)
+    # Process TOC.
+    amp_path = git.get_amp_abs_path()
+    cmd: List[str] = []
+    gh_md_toc = os.path.join(amp_path, "documentation/scripts/gh-md-toc")
+    dbg.dassert_exists(gh_md_toc)
+    cmd.append(gh_md_toc)
+    cmd.append("--insert %s" % tmp_file_name)
+    cmd_as_str = " ".join(cmd)
+    si.system(cmd_as_str, abort_on_error=False, suppress_output=True)
+    # Read file.
+    txt = io_.from_file(tmp_file_name)
+    return txt
+
+
+def _process(txt: str, in_file_name: str) -> str:
     # Pre-process text.
     txt = _preprocess(txt)
     # Prettify.
-    txt = _prettier(txt, file_name)
+    txt = _prettier(txt)
     # Post-process text.
     txt = _postprocess(txt)
+    # Refresh table of content.
+    is_md_file = in_file_name.endswith(".md")
+    if is_md_file:
+        txt = _refresh_toc(txt)
     return txt
+
+
+# ##############################################################################
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -163,11 +202,13 @@ def _main(args):
     # Read input.
     in_file_name = args.infile.name
     _LOG.debug("in_file_name=%s", in_file_name)
+    if in_file_name != "<stdin>":
+        dbg.dassert(
+            in_file_name.endswith(".txt") or in_file_name.endswith(".md"),
+            "Invalid extension for file name '%s'", in_file_name)
     txt = args.infile.read()
     # Process.
-    tmp_file_name = tempfile.NamedTemporaryFile().name
-    # tmp_file_name = "/tmp/tmp_prettier.txt"
-    txt = _process(txt, tmp_file_name)
+    txt = _process(txt, in_file_name)
     # Write output.
     if args.in_place:
         dbg.dassert_ne(in_file_name, "<stdin>")

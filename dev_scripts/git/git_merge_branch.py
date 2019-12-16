@@ -119,17 +119,18 @@ def _main(parser):
     def _refresh(dst_dir):
         _LOG.debug("Refreshing dst_dir=%s", dst_dir)
         cd_cmd = "cd %s && " % dst_dir
-        # Stash and clean.
-        msg = "git_merge_branch"
-        cmd = "git stash save --keep-index '%s' && git stash apply" % msg
-        cmd = cd_cmd + cmd
-        si.system(cmd)
+        if False:
+            # Make a backup.
+            msg = "git_merge_branch.py"
+            cmd = "git stash save --keep-index '%s' && git stash apply" % msg
+            cmd = cd_cmd + cmd
+            si.system(cmd)
         # Pull.
         cmd = "git pull"
         cmd = cd_cmd + cmd
         si.system(cmd)
         # Merge master.
-        cmd = "git merge master --commit --ff-only --no-edit"
+        cmd = "git merge master --commit --no-edit"
         cmd = cd_cmd + cmd
         si.system(cmd)
 
@@ -137,7 +138,7 @@ def _main(parser):
     _refresh(".")
     # Refresh amp repo, if needed.
     if os.path.exists("amp"):
-        _refresh(".")
+        _refresh("amp")
     # Qualify amp repo.
     if os.path.exists("amp"):
         tag = "amp"

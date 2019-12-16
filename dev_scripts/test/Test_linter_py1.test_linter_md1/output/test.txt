@@ -1,0 +1,19 @@
+# linter log
+# linter file
+<!--ts-->
+   * [Good](#good)
+      * [Bad](#bad)
+
+
+
+<!--te-->
+# Good
+
+-   Good time management
+    1. Choose the right tasks
+    -   Avoid non-essential tasks
+
+## Bad
+
+-   Hello
+    -   World

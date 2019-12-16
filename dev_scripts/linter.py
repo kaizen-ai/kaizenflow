@@ -62,6 +62,13 @@ _TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
 # #############################################################################
 
 
+NO_PRINT = False
+
+def _print(*args, **kwargs):
+    if not NO_PRINT:
+        print(*args, **kwargs)
+
+
 # TODO(gp): This could become the default behavior of system().
 def _system(cmd: str, abort_on_error: bool = True) -> int:
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
@@ -737,15 +744,19 @@ class _Pydocstyle(_Action):
                     "D107",
                 ]
             )
-        opts = ""
+        cmd_opts = ""
         if ignore:
-            opts += "--ignore " + ",".join(ignore)
-        # yapf: disable
-        cmd = self._executable + " %s %s" % (opts, file_name)
-        # yapf: enable
+            cmd_opts += "--ignore " + ",".join(ignore)
+        #
+        cmd = []
+        cmd.append(self._executable)
+        cmd.append(cmd_opts)
+        cmd.append(file_name)
+        cmd_as_str = " ".join(cmd)
         # We don't abort on error on pydocstyle, since it returns error if there
         # is # any violation.
-        _, file_lines_as_str = si.system_to_string(cmd, abort_on_error=False)
+        _, file_lines_as_str = si.system_to_string(cmd_as_str,
+                                                   abort_on_error=False)
         # Process lint_log transforming:
         #   linter_v2.py:1 at module level:
         #       D400: First line should end with a period (not ':')
@@ -957,14 +968,11 @@ class _Mypy(_Action):
         if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
-        #
+        # TODO(gp): Convert all these idioms into arrays and joins.
         cmd = self._executable + " %s" % file_name
-        _system(
-            cmd,
-            # mypy returns -1 if there are errors.
-            abort_on_error=False,
-        )
-        output = _tee(cmd, self._executable, abort_on_error=False)
+        output = _tee(cmd, self._executable,
+                      # mypy returns -1 if there are errors.
+                      abort_on_error=False)
         # Remove some errors.
         output_tmp: List[str] = []
         for line in output:
@@ -1007,7 +1015,7 @@ class _IpynbFormat(_Action):
         return output
 
 
-# TODO(gp): Move in a more general file.
+# TODO(gp): Move in a more general file: probably system_interaction.
 def _is_under_dir(file_name: str, dir_name: str) -> bool:
     """
     Return whether a file is under the given directory.
@@ -1319,65 +1327,19 @@ class _LintMarkdown(_Action):
         if ext not in (".txt", ".md"):
             _LOG.debug("Skipping file_name='%s' because ext='%s'", file_name, ext)
             return output
+        # Run lint_txt.py.
+        executable = "lint_txt.py"
+        exec_path = git.find_file_in_git_tree(executable)
+        dbg.dassert_exists(exec_path)
         #
-        # Pre-process text.
-        #
-        txt = io_.from_file(file_name).split("\n")
-        txt_new: List[str] = []
-        for line in txt:
-            line = re.sub(r"^\* ", "- STAR", line)
-            txt_new.append(line)
-        # Write.
-        txt_new_as_str = "\n".join(txt_new)
-        io_.to_file(file_name, txt_new_as_str)
-        #
-        # Lint.
-        #
-        cmd_opts: List[str] = []
-        cmd_opts.append("--parser markdown")
-        cmd_opts.append("--prose-wrap always")
-        cmd_opts.append("--write")
-        cmd_opts.append("--tab-width 4")
-        cmd_opts_as_str = " ".join(cmd_opts)
-        cmd_as_str = " ".join([self._executable, cmd_opts_as_str, file_name])
-        output_tmp = _tee(cmd_as_str, self._executable, abort_on_error=True)
-        output.extend(output_tmp)
-        #
-        # Post-process text.
-        #
-        txt = io_.from_file(file_name).split("\n")
-        txt_new: List[str] = []  # type: ignore
-        for i, line in enumerate(txt):
-            # Check whether there is TOC otherwise add it.
-            if i == 0 and line != "<!--ts-->":
-                output.append(
-                    "No tags for table of content in md file: adding it"
-                )
-                txt_new.append("<!--ts-->\n<!--te-->")
-            line = re.sub(r"^\-   STAR", "*   ", line)
-            # Remove some artifacts when copying from gdoc.
-            line = re.sub(r"’", "'", line)
-            line = re.sub(r"“", '"', line)
-            line = re.sub(r"”", '"', line)
-            line = re.sub(r"…", "...", line)
-            # -   You say you'll do something
-            # line = re.sub("^(\s*)-   ", r"\1- ", line)
-            # line = re.sub("^(\s*)\*   ", r"\1* ", line)
-            txt_new.append(line)
-        # Write.
-        txt_new_as_str = "\n".join(txt_new)  # type: ignore
-        io_.to_file(file_name, txt_new_as_str)
-        #
-        # Refresh table of content.
-        #
-        amp_path = git.get_amp_abs_path()
-        cmd: List[str] = []  # type: ignore
-        gh_md_toc = os.path.join(amp_path, "documentation/scripts/gh-md-toc")
-        dbg.dassert_exists(gh_md_toc)
-        cmd.append(gh_md_toc)
-        cmd.append("--insert %s" % file_name)
+        cmd = []
+        cmd.append(exec_path)
+        cmd.append("-i %s" % file_name)
+        cmd.append("--in_place")
         cmd_as_str = " ".join(cmd)
-        _system(cmd_as_str, abort_on_error=False)
+        output = _tee(cmd_as_str, executable, abort_on_error=True)
+        # Remove cruft.
+        output = [l for l in output if "Saving log to file" not in l]
         return output
 
 
@@ -1404,7 +1366,7 @@ def _get_action_class(action: str) -> _Action:
             dbg.dassert_is(res, None)
             res = class_
     dbg.dassert_is_not(res, None)
-    # mypy gets confused since we are return
+    # mypy gets confused since we are returning a class.
     obj = res()  # type: ignore
     return obj  # type: ignore
 
@@ -1496,7 +1458,7 @@ def _lint(
     _LOG.info("\n%s", pri.frame(file_name, char1="="))
     for action in actions:
         _LOG.debug("\n%s", pri.frame(action, char1="-"))
-        print("## %-20s (%s)" % (action, file_name))
+        _print("## %-20s (%s)" % (action, file_name))
         if debug:
             # Make a copy after each action.
             dst_file_name = file_name + "." + action
@@ -1618,6 +1580,9 @@ def _main(args: argparse.Namespace) -> int:
         _test_actions()
         _LOG.warning("Exiting as requested")
         sys.exit(0)
+    if args.no_print:
+        global NO_PRINT
+        NO_PRINT = True
     output: List[str] = []
     # Get all the files to process.
     all_file_names = _get_files(args)
@@ -1657,9 +1622,9 @@ def _main(args: argparse.Namespace) -> int:
     output = sorted(output)
     output = hlist.remove_duplicates(output)
     # Print linter output.
-    print(pri.frame(args.linter_log, char1="/").rstrip("\n"))
-    print("\n".join(output) + "\n")
-    print(pri.line(char="/").rstrip("\n"))
+    _print(pri.frame(args.linter_log, char1="/").rstrip("\n"))
+    _print("\n".join(output) + "\n")
+    _print(pri.line(char="/").rstrip("\n"))
     # Write the file.
     output_as_str = "\n".join(output)
     io_.to_file(args.linter_log, output_as_str)
@@ -1786,6 +1751,10 @@ def _parser() -> argparse.ArgumentParser:
         "--linter_log",
         default="./linter_warnings.txt",
         help="File storing the warnings",
+    )
+    parser.add_argument(
+        "--no_print",
+        action="store_true"
     )
     prsr.add_verbosity_arg(parser)
     return parser

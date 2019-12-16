@@ -16,7 +16,6 @@ def add_bool_arg(parser, name, default=False, help_=None):
     return parser
 
 
-# TODO(gp): Use this everywhere.
 def add_verbosity_arg(parser):
     parser.add_argument(
         "-v",

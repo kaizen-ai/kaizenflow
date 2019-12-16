@@ -344,6 +344,9 @@ $$"""
         self.check_string(act)
 
     def test_process2(self):
+        """
+        Run the text linter on a txt file.
+        """
         txt = r"""
 *   Good time management
 
@@ -356,5 +359,41 @@ $$"""
     - Avoid non-essential tasks
 """
         file_name = os.path.join(self.get_scratch_space(), "test.txt")
+        act = dslt._process(txt, file_name)
+        self.assert_equal(act, exp)
+
+    def test_process3(self):
+        """
+        Run the text linter on a md file.
+        """
+        txt = r"""
+# Good
+- Good time management
+  1. choose the right tasks
+    - Avoid non-essential tasks
+    
+## Bad
+-  Hello
+    - World
+"""
+        exp = r"""<!--ts-->
+   * [Good](#good)
+      * [Bad](#bad)
+
+
+
+<!--te-->
+# Good
+
+-   Good time management
+    1. Choose the right tasks
+    -   Avoid non-essential tasks
+
+## Bad
+
+-   Hello
+    -   World
+"""
+        file_name = os.path.join(self.get_scratch_space(), "test.md")
         act = dslt._process(txt, file_name)
         self.assert_equal(act, exp)
