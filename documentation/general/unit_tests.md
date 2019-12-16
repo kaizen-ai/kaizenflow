@@ -23,54 +23,52 @@
 
 # Running unit tests
 
--   Before any PR (and ideally after every commit) we want to run all the unit
-    tests to make sure we didn't introduce no new bugs
--   We use `pytest` and `unittest` as testing framework
+- Before any PR (and ideally after every commit) we want to run all the unit
+  tests to make sure we didn't introduce no new bugs
+- We use `pytest` and `unittest` as testing framework
 
--   We have different test sets:
+- We have different test sets:
+  - `fast`: tests that are quick to execute (typically < 5 secs per test class)
+  - `slow`: tests that we don't want to run all the times because they are:
+    - Slow
+    - Related to pieces of code that don't change often
+    - External APIs we don't want to hit completely
 
-    -   `fast`: tests that are quick to execute (typically < 5 secs per test
-        class)
-    -   `slow`: tests that we don't want to run all the times because they are:
-        -   slow
-        -   related to pieces of code that don't change often
-        -   external APIs we don't want to hit completely
-
--   `fast` tests are a subset of `slow` tests
+- `fast` tests are a subset of `slow` tests
 
 ## Using `run_tests.py`
 
--   `dev_scripts/testing/run_tests.py` is a wrapper around `pytest` to implement
-    some typical workflows
+- `dev_scripts/testing/run_tests.py` is a wrapper around `pytest` to implement
+  some typical workflows
 
 ### Run fast tests
 
--   Run only fast tests:
-    ```bash
-    > run_tests.py
-    > run_tests.py --test fast
-    ```
+- Run only fast tests:
+  ```bash
+  > run_tests.py
+  > run_tests.py --test fast
+  ```
 
 ### Run slow tests
 
--   Run all tests:
-    ```bash
-    > run_tests.py --test slow
-    ```
+- Run all tests:
+  ```bash
+  > run_tests.py --test slow
+  ```
 
 ### Run parallel tests
 
--   You can use the switch `--num_cpus -1` to use all the available CPUs:
-    ```bash
-    > run_tests.py --test fast --num_cpus -1
-    > run_tests.py --test slow --num_cpus -1
-    ```
+- You can use the switch `--num_cpus -1` to use all the available CPUs:
+  ```bash
+  > run_tests.py --test fast --num_cpus -1
+  > run_tests.py --test slow --num_cpus -1
+  ```
 
 ## Using `pytest` directly
 
 ### Usage and Invocations reference
 
--   See [pytest documentation](http://doc.pytest.org/en/latest/usage.html)
+- See [pytest documentation](http://doc.pytest.org/en/latest/usage.html)
 
 ### Stop at first failure
 
@@ -114,7 +112,7 @@
     > pytest --last-failed
     ```
 
--   This data is stored in `.pytest_cache/v/cache/lastfailed`
+- This data is stored in `.pytest_cache/v/cache/lastfailed`
 
 ## Custom pytest options behaviors
 
@@ -126,18 +124,18 @@
 
 ### Update golden outcomes
 
--   This switch allows to overwrite the golden outcomes that are used as
-    reference in the unit tests to detect failures
-    ```bash
-    > pytest --update_outcomes
-    ```
+- This switch allows to overwrite the golden outcomes that are used as reference
+  in the unit tests to detect failures
+  ```bash
+  > pytest --update_outcomes
+  ```
 
 ### Incremental test mode (advanced users)
 
--   This switch allows to reuse artifacts in the test directory and to skip the
-    clean up phase
--   It is used to re-run tests from the middle when they are very long and one
-    wants to debug them
-    ```bash
-    > pytest --incremental
-    ```
+- This switch allows to reuse artifacts in the test directory and to skip the
+  clean up phase
+- It is used to re-run tests from the middle when they are very long and one
+  wants to debug them
+  ```bash
+  > pytest --incremental
+  ```

@@ -315,13 +315,13 @@ Module names can still collide. Some module names are inconveniently long.
 
 #### 2.2.4 Decision
 
-*    Use `import x` for importing packages and modules.
-*    Use `from x import y` where `x` is the package prefix and `y` is the
-    module name with no prefix.
-*    Use `from x import y as z` if two modules named `y` are to be imported
-    or if `y` is an inconveniently long name.
-*    Use `import y as z` only when `z` is a standard abbreviation (e.g.,
-    `np` for `numpy`).
+- Use `import x` for importing packages and modules.
+- Use `from x import y` where `x` is the package prefix and `y` is the
+  module name with no prefix.
+- Use `from x import y as z` if two modules named `y` are to be imported or
+  if `y` is an inconveniently long name.
+- Use `import y as z` only when `z` is a standard abbreviation (e.g., `np`
+  for `numpy`).
 
 For example the module `sound.effects.echo` may be imported as follows:
 
@@ -452,18 +452,17 @@ library calls.
 
 Exceptions must follow certain conditions:
 
--   Raise exceptions like this: `raise MyError('Error message')` or
-    `raise MyError()`. Do not use the two-argument form
-    (`raise MyError, 'Error message'`).
+- Raise exceptions like this: `raise MyError('Error message')` or
+  `raise MyError()`. Do not use the two-argument form
+  (`raise MyError, 'Error message'`).
 
--   Make use of built-in exception classes when it makes sense. For example,
-    raise a `ValueError` to indicate a programming mistake like a violated
-    precondition (such as if you were passed a negative number but required a
-    positive one). Do not use `assert` statements for validating argument values
-    of a public API. `assert` is used to ensure internal correctness, not to
-    enforce correct usage nor to indicate that some unexpected event occurred.
-    If an exception is desired in the latter cases, use a raise statement. For
-    example:
+- Make use of built-in exception classes when it makes sense. For example, raise
+  a `ValueError` to indicate a programming mistake like a violated precondition
+  (such as if you were passed a negative number but required a positive one). Do
+  not use `assert` statements for validating argument values of a public API.
+  `assert` is used to ensure internal correctness, not to enforce correct usage
+  nor to indicate that some unexpected event occurred. If an exception is
+  desired in the latter cases, use a raise statement. For example:
 
 
     ```python
@@ -509,33 +508,31 @@ Exceptions must follow certain conditions:
         return port
     ```
 
--   Libraries or packages may define their own exceptions. When doing so they
-    must inherit from an existing exception class. Exception names should end in
-    `Error` and should not introduce stutter (`foo.FooError`).
+- Libraries or packages may define their own exceptions. When doing so they must
+  inherit from an existing exception class. Exception names should end in
+  `Error` and should not introduce stutter (`foo.FooError`).
 
--   Never use catch-all `except:` statements, or catch `Exception` or
-    `StandardError`, unless you are
+- Never use catch-all `except:` statements, or catch `Exception` or
+  `StandardError`, unless you are
+  - Re-raising the exception, or
+  - Creating an isolation point in the program where exceptions are not
+    propagated but are recorded and suppressed instead, such as protecting a
+    thread from crashing by guarding its outermost block.
 
-    -   re-raising the exception, or
-    -   creating an isolation point in the program where exceptions are not
-        propagated but are recorded and suppressed instead, such as protecting a
-        thread from crashing by guarding its outermost block.
+  Python is very tolerant in this regard and `except:` will really catch
+  everything including misspelled names, sys.exit() calls, Ctrl+C interrupts,
+  unittest failures and all kinds of other exceptions that you simply don't want
+  to catch.
 
-    Python is very tolerant in this regard and `except:` will really catch
-    everything including misspelled names, sys.exit() calls, Ctrl+C interrupts,
-    unittest failures and all kinds of other exceptions that you simply don't
-    want to catch.
+- Minimize the amount of code in a `try`/`except` block. The larger the body of
+  the `try`, the more likely that an exception will be raised by a line of code
+  that you didn't expect to raise an exception. In those cases, the
+  `try`/`except` block hides a real error.
 
--   Minimize the amount of code in a `try`/`except` block. The larger the body
-    of the `try`, the more likely that an exception will be raised by a line of
-    code that you didn't expect to raise an exception. In those cases, the
-    `try`/`except` block hides a real error.
+- Use the `finally` clause to execute code whether or not an exception is raised
+  in the `try` block. This is often useful for cleanup, i.e., closing a file.
 
--   Use the `finally` clause to execute code whether or not an exception is
-    raised in the `try` block. This is often useful for cleanup, i.e., closing a
-    file.
-
--   When capturing an exception, use `as` rather than a comma. For example:
+- When capturing an exception, use `as` rather than a comma. For example:
 
 
     ```python
@@ -1185,54 +1182,54 @@ May look strange to C/C++ developers.
 Use the "implicit" false if possible, e.g., `if foo:` rather than
 `if foo != []:`. There are a few caveats that you should keep in mind though:
 
--   Always use `if foo is None:` (or `is not None`) to check for a `None`
-    value-e.g., when testing whether a variable or argument that defaults to
-    `None` was set to some other value. The other value might be a value that's
-    false in a boolean context!
+- Always use `if foo is None:` (or `is not None`) to check for a `None`
+  value-e.g., when testing whether a variable or argument that defaults to
+  `None` was set to some other value. The other value might be a value that's
+  false in a boolean context!
 
--   Never compare a boolean variable to `False` using `==`. Use `if not x:`
-    instead. If you need to distinguish `False` from `None` then chain the
-    expressions, such as `if not x and x is not None:`.
+- Never compare a boolean variable to `False` using `==`. Use `if not x:`
+  instead. If you need to distinguish `False` from `None` then chain the
+  expressions, such as `if not x and x is not None:`.
 
--   For sequences (strings, lists, tuples), use the fact that empty sequences
-    are false, so `if seq:` and `if not seq:` are preferable to `if len(seq):`
-    and `if not len(seq):` respectively.
+- For sequences (strings, lists, tuples), use the fact that empty sequences are
+  false, so `if seq:` and `if not seq:` are preferable to `if len(seq):` and
+  `if not len(seq):` respectively.
 
--   When handling integers, implicit false may involve more risk than benefit
-    (i.e., accidentally handling `None` as 0). You may compare a value which is
-    known to be an integer (and is not the result of `len()`) against the
-    integer 0.
+- When handling integers, implicit false may involve more risk than benefit
+  (i.e., accidentally handling `None` as 0). You may compare a value which is
+  known to be an integer (and is not the result of `len()`) against the
+  integer 0.
 
-    ```python
-    Yes: if not users:
-             print('no users')
+  ```python
+  Yes: if not users:
+           print('no users')
 
-         if foo == 0:
-             self.handle_zero()
+       if foo == 0:
+           self.handle_zero()
 
-         if i % 10 == 0:
-             self.handle_multiple_of_ten()
+       if i % 10 == 0:
+           self.handle_multiple_of_ten()
 
-         def f(x=None):
-             if x is None:
-                 x = []
-    ```
+       def f(x=None):
+           if x is None:
+               x = []
+  ```
 
-    ```python
-    No:  if len(users) == 0:
-             print('no users')
+  ```python
+  No:  if len(users) == 0:
+           print('no users')
 
-         if foo is not None and not foo:
-             self.handle_zero()
+       if foo is not None and not foo:
+           self.handle_zero()
 
-         if not i % 10:
-             self.handle_multiple_of_ten()
+       if not i % 10:
+           self.handle_multiple_of_ten()
 
-         def f(x=None):
-             x = x or []
-    ```
+       def f(x=None):
+           x = x or []
+  ```
 
--   Note that `'0'` (i.e., `0` as string) evaluates to true.
+- Note that `'0'` (i.e., `0` as string) evaluates to true.
 
 <a id="s2.15-deprecated-language-features"></a>
 <a id="215-deprecated-language-features"></a>
@@ -1688,11 +1685,11 @@ Maximum line length is _80 characters_.
 
 Explicit exceptions to the 80 character limit:
 
--   Long import statements.
--   URLs, pathnames, or long flags in comments.
--   Long string module level constants not containing whitespace that would be
-    inconvenient to split across lines such as URLs or pathnames.
--   Pylint disable comments. (e.g.: `# pylint: disable=invalid-name`)
+- Long import statements.
+- URLs, pathnames, or long flags in comments.
+- Long string module level constants not containing whitespace that would be
+  inconvenient to split across lines such as URLs or pathnames.
+- Pylint disable comments. (e.g.: `# pylint: disable=invalid-name`)
 
 Do not use backslash line continuation except for `with` statements requiring
 three or more context managers.
@@ -2096,9 +2093,9 @@ In this section, "function" means a method, function, or generator.
 
 A function must have a docstring, unless it meets all of the following criteria:
 
--   not externally visible
--   very short
--   obvious
+- Not externally visible
+- Very short
+- Obvious
 
 A docstring should give enough information to write a call to the function
 without reading the function's code. The docstring should be descriptive-style
@@ -2436,26 +2433,25 @@ Explicitly close files and sockets when done with them.
 Leaving files, sockets or other file-like objects open unnecessarily has many
 downsides:
 
--   They may consume limited system resources, such as file descriptors. Code
-    that deals with many such objects may exhaust those resources unnecessarily
-    if they're not returned to the system promptly after use.
--   Holding files open may prevent other actions such as moving or deleting
-    them.
--   Files and sockets that are shared throughout a program may inadvertently be
-    read from or written to after logically being closed. If they are actually
-    closed, attempts to read or write from them will throw exceptions, making
-    the problem known sooner.
+- They may consume limited system resources, such as file descriptors. Code that
+  deals with many such objects may exhaust those resources unnecessarily if
+  they're not returned to the system promptly after use.
+- Holding files open may prevent other actions such as moving or deleting them.
+- Files and sockets that are shared throughout a program may inadvertently be
+  read from or written to after logically being closed. If they are actually
+  closed, attempts to read or write from them will throw exceptions, making the
+  problem known sooner.
 
 Furthermore, while files and sockets are automatically closed when the file
 object is destructed, tying the lifetime of the file object to the state of the
 file is poor practice:
 
--   There are no guarantees as to when the runtime will actually run the file's
-    destructor. Different Python implementations use different memory management
-    techniques, such as delayed Garbage Collection, which may increase the
-    object's lifetime arbitrarily and indefinitely.
--   Unexpected references to the file, e.g. in globals or exception tracebacks,
-    may keep it around longer than intended.
+- There are no guarantees as to when the runtime will actually run the file's
+  destructor. Different Python implementations use different memory management
+  techniques, such as delayed Garbage Collection, which may increase the
+  object's lifetime arbitrarily and indefinitely.
+- Unexpected references to the file, e.g. in globals or exception tracebacks,
+  may keep it around longer than intended.
 
 The preferred way to manage files is using the
 ["with" statement](http://docs.python.org/reference/compound_stmts.html#the-with-statement):
@@ -2674,10 +2670,10 @@ Always use a `.py` filename extension. Never use dashes.
 
 #### 3.16.1 Names to Avoid
 
--   single character names except for counters or iterators. You may use "e" as
-    an exception identifier in try/except statements.
--   dashes (`-`) in any package/module name
--   `__double_leading_and_trailing_underscore__` names (reserved by Python)
+- Single character names except for counters or iterators. You may use "e" as an
+  exception identifier in try/except statements.
+- Dashes (`-`) in any package/module name
+- `__double_leading_and_trailing_underscore__` names (reserved by Python)
 
 <a id="s3.16.2-naming-conventions"></a> <a id="3162-naming-convention"></a>
 
@@ -2685,30 +2681,28 @@ Always use a `.py` filename extension. Never use dashes.
 
 #### 3.16.2 Naming Conventions
 
--   "Internal" means internal to a module, or protected or private within a
-    class.
+- "Internal" means internal to a module, or protected or private within a class.
 
--   Prepending a single underscore (`_`) has some support for protecting module
-    variables and functions (not included with `from module import *`). While
-    prepending a double underscore (`__` aka "dunder") to an instance variable
-    or method effectively makes the variable or method private to its class
-    (using name mangling) we discourage its use as it impacts readability and
-    testability and isn't _really_ private.
+- Prepending a single underscore (`_`) has some support for protecting module
+  variables and functions (not included with `from module import *`). While
+  prepending a double underscore (`__` aka "dunder") to an instance variable or
+  method effectively makes the variable or method private to its class (using
+  name mangling) we discourage its use as it impacts readability and testability
+  and isn't _really_ private.
 
--   Place related classes and top-level functions together in a module. Unlike
-    Java, there is no need to limit yourself to one class per module.
+- Place related classes and top-level functions together in a module. Unlike
+  Java, there is no need to limit yourself to one class per module.
 
--   Use CapWords for class names, but lower_with_under.py for module names.
-    Although there are some old modules named CapWords.py, this is now
-    discouraged because it's confusing when the module happens to be named after
-    a class. ("wait -- did I write `import StringIO` or
-    `from StringIO import StringIO`?")
+- Use CapWords for class names, but lower_with_under.py for module names.
+  Although there are some old modules named CapWords.py, this is now discouraged
+  because it's confusing when the module happens to be named after a class.
+  ("wait -- did I write `import StringIO` or `from StringIO import StringIO`?")
 
--   Underscores may appear in _unittest_ method names starting with `test` to
-    separate logical components of the name, even if those components use
-    CapWords. One possible pattern is `test<MethodUnderTest>_<state>`; for
-    example `testPop_EmptyStack` is okay. There is no One Correct Way to name
-    test methods.
+- Underscores may appear in _unittest_ method names starting with `test` to
+  separate logical components of the name, even if those components use
+  CapWords. One possible pattern is `test<MethodUnderTest>_<state>`; for example
+  `testPop_EmptyStack` is okay. There is no One Correct Way to name test
+  methods.
 
 <a id="s3.16.3-file-naming"></a> <a id="3163-file-naming"></a>
 
@@ -2871,23 +2865,23 @@ function into smaller and more manageable pieces.
 
 #### 3.19.1 General Rules
 
-*    Familiarize yourself with
-    [PEP-484](https://www.python.org/dev/peps/pep-0484/).
-*    In methods, only annotate `self`, or `cls` if it is necessary for
-    proper type information. e.g.,
-    `@classmethod def create(cls: Type[T]) -> T: return cls()`
-*    If any other variable or a returned type should not be expressed, use
-    `Any`.
-*    You are not required to annotate all the functions in a module.
-    -   At least annotate your public APIs.
-    -   Use judgment to get to a good balance between safety and clarity on the
-        one hand, and flexibility on the other.
-    -   Annotate code that is prone to type-related errors (previous bugs or
-        complexity).
-    -   Annotate code that is hard to understand.
-    -   Annotate code as it becomes stable from a types perspective. In many
-        cases, you can annotate all the functions in mature code without losing
-        too much flexibility.
+- Familiarize yourself with
+  [PEP-484](https://www.python.org/dev/peps/pep-0484/).
+- In methods, only annotate `self`, or `cls` if it is necessary for proper
+  type information. e.g.,
+  `@classmethod def create(cls: Type[T]) -> T: return cls()`
+- If any other variable or a returned type should not be expressed, use
+  `Any`.
+- You are not required to annotate all the functions in a module.
+  - At least annotate your public APIs.
+  - Use judgment to get to a good balance between safety and clarity on the one
+    hand, and flexibility on the other.
+  - Annotate code that is prone to type-related errors (previous bugs or
+    complexity).
+  - Annotate code that is hard to understand.
+  - Annotate code as it becomes stable from a types perspective. In many cases,
+    you can annotate all the functions in mature code without losing too much
+    flexibility.
 
 <a id="s3.19.2-line-breaking"></a> <a id="3192-line-breaking"></a>
 
@@ -3272,15 +3266,15 @@ imports should be preferred.
 Imports that are needed only for type annotations can be placed within an
 `if TYPE_CHECKING:` block.
 
--   Conditionally imported types need to be referenced as strings, to be forward
-    compatible with Python 3.6 where the annotation expressions are actually
-    evaluated.
--   Only entities that are used solely for typing should be defined here; this
-    includes aliases. Otherwise it will be a runtime error, as the module will
-    not be imported at runtime.
--   The block should be right after all the normal imports.
--   There should be no empty lines in the typing imports list.
--   Sort this list as if it were a regular imports list.
+- Conditionally imported types need to be referenced as strings, to be forward
+  compatible with Python 3.6 where the annotation expressions are actually
+  evaluated.
+- Only entities that are used solely for typing should be defined here; this
+  includes aliases. Otherwise it will be a runtime error, as the module will not
+  be imported at runtime.
+- The block should be right after all the normal imports.
+- There should be no empty lines in the typing imports list.
+- Sort this list as if it were a regular imports list.
 
 ```python
 import typing

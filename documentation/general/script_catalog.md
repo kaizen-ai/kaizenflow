@@ -14,6 +14,7 @@
 
 
 <!--te-->
+
 # `dev_scripts`
 
 **_dev_scripts/\_setenv_amp.py_**
@@ -521,11 +522,11 @@ Roll fwd the submodules.
 ```
 List commits in a fancy full-screen format like:
 #
-   * 299ad8e saggese   Improve scripts for tunnelling and handling notebooks             (   4 hours ago) Sat Sep 14 11:28:29 2019  (HEAD -> master, origin/master, origin/HEAD)
-   * f08f8a0 saggese   Fix bug in ssh_tunnel.py and lint                                 (   5 hours ago) Sat Sep 14 10:30:41 2019
-   * 296e6ad saggese   Consolidate all the user info in helpers/user_credentials. Clean up (   6 hours ago) Sat Sep 14 10:17:03 2019
-   * 39b779d saggese   Add script to start jupyter server using the right port (to tunnel through if remote) (   6 hours ago) Sat Sep 14 10:16:49 2019
-   * 3df71ff paul      Lint
+* 299ad8e saggese   Improve scripts for tunnelling and handling notebooks             (   4 hours ago) Sat Sep 14 11:28:29 2019  (HEAD -> master, origin/master, origin/HEAD)
+* f08f8a0 saggese   Fix bug in ssh_tunnel.py and lint                                 (   5 hours ago) Sat Sep 14 10:30:41 2019
+* 296e6ad saggese   Consolidate all the user info in helpers/user_credentials. Clean up (   6 hours ago) Sat Sep 14 10:17:03 2019
+* 39b779d saggese   Add script to start jupyter server using the right port (to tunnel through if remote) (   6 hours ago) Sat Sep 14 10:16:49 2019
+* 3df71ff paul      Lint
 #
 One can pass other options, e.g., -n
 #
@@ -945,7 +946,6 @@ Perform one of several transformations on a txt file.
     2) Format the current file with 3 levels
         :!transform_txt.py -a format -i % --max_lev 3
         > transform_txt.py -a format -i notes/ABC.txt --max_lev 3
-
         - In vim
         :!transform_txt.py -a format -i % --max_lev 3
         :%!transform_txt.py -a format -i - --max_lev 3

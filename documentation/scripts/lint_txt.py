@@ -125,8 +125,8 @@ def _postprocess(txt: str, in_file_name: str) -> str:
             if in_triple_tick_block:
                 tag = m.group(1)
                 if not tag:
-                    _LOG.warning(
-                        "%s:%s: Missing syntax tag in ```", in_file_name, i + 1
+                    print(
+                        "%s:%s: Missing syntax tag in ```" % (in_file_name, i + 1)
                     )
         if not in_triple_tick_block:
             # Upper case for `- hello`.
@@ -139,7 +139,8 @@ def _postprocess(txt: str, in_file_name: str) -> str:
                 line = m.group(1) + m.group(2).upper() + m.group(3)
         #
         txt_new.append(line)
-    dbg.dassert(not in_triple_tick_block, "A ``` block was not ending")
+    if in_triple_tick_block:
+        print("%s:%s: A ``` block was not ending" % (in_file_name, 1))
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
     return txt_new_as_str
 
