@@ -24,11 +24,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def draw(graph):
-    pos = nx.circular_layout(graph)
-    nx.draw_networkx(graph, pos=pos, node_size=2000, arrowsize=30, width=1.5)
-
-
 def extract_info(dag, methods):
     """
     Extract node info from each DAG node.
