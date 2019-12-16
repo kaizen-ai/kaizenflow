@@ -1063,7 +1063,7 @@ def process_outlier_df(
 # #############################################################################
 
 
-def derive_ipca_step(
+def compute_ipca_step(
     u: pd.Series, v: pd.Series, alpha: float
 ) -> Tuple[pd.Series, pd.Series]:
     """
@@ -1085,7 +1085,7 @@ def derive_ipca_step(
     return u_next, v_next
 
 
-def derive_ipca(
+def compute_ipca(
     df: pd.DataFrame, num_pc: int, alpha: float
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """
@@ -1139,7 +1139,7 @@ def derive_ipca(
                 unit_eigenvecs.append([v / norm])
             else:
                 # Main update step for eigenvector i.
-                u, v = derive_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
+                u, v = compute_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
                 # Bookkeeping.
                 u.name = n
                 v.name = n

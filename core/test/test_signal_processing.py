@@ -372,7 +372,7 @@ class Test_compute_rolling_zcorr1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_derive_ipca(ut.TestCase):
+class Test_compute_ipca(ut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         num_pc = 3
@@ -380,7 +380,7 @@ class Test_derive_ipca(ut.TestCase):
         n = 100
         m = 10
         df = pd.DataFrame(np.random.randn(n, m))
-        lambda_df, unit_eigenvec_dfs = sigp.derive_ipca(df, num_pc, alpha)
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
         )
