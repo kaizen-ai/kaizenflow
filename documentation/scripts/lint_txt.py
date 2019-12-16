@@ -91,7 +91,7 @@ def _prettier(txt: str) -> str:
     cmd_opts.append("--parser markdown")
     cmd_opts.append("--prose-wrap always")
     cmd_opts.append("--write")
-    tab_width = 4
+    tab_width = 2
     cmd_opts.append("--tab-width %s" % tab_width)
     cmd_opts.append("2>&1 >/dev/null")
     cmd_opts_as_str = " ".join(cmd_opts)

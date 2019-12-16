@@ -9,11 +9,11 @@
 <!--te-->
 # Good
 
--   Good time management
-    1. Choose the right tasks
-    -   Avoid non-essential tasks
+- Good time management
+  1. Choose the right tasks
+  - Avoid non-essential tasks
 
 ## Bad
 
--   Hello
-    -   World
+- Hello
+  - World

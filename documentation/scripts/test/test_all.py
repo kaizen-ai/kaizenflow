@@ -337,6 +337,8 @@ $$"""
         exp = r"""# test"""
         self._helper_preprocess(txt, exp)
 
+    # ##########################################################################
+
     def test_process1(self):
         txt = self._get_text1()
         file_name = os.path.join(self.get_scratch_space(), "test.txt")
@@ -348,15 +350,15 @@ $$"""
         Run the text linter on a txt file.
         """
         txt = r"""
-*   Good time management
+*  Good time management
 
 1. choose the right tasks
-    - Avoid non-essential tasks
+    -   avoid non-essential tasks
 """
-        exp = r"""*   Good time management
+        exp = r"""* Good time management
 
 1. Choose the right tasks
-    - Avoid non-essential tasks
+   - Avoid non-essential tasks
 """
         file_name = os.path.join(self.get_scratch_space(), "test.txt")
         act = dslt._process(txt, file_name)
@@ -385,14 +387,14 @@ $$"""
 <!--te-->
 # Good
 
--   Good time management
-    1. Choose the right tasks
-    -   Avoid non-essential tasks
+- Good time management
+  1. Choose the right tasks
+  - Avoid non-essential tasks
 
 ## Bad
 
--   Hello
-    -   World
+- Hello
+  - World
 """
         file_name = os.path.join(self.get_scratch_space(), "test.md")
         act = dslt._process(txt, file_name)
