@@ -34,15 +34,15 @@ class Test_get_symmetric_equisized_bins(ut.TestCase):
         np.testing.assert_array_equal(actual, expected)
 
 
-class Test_rolling_zscore1(ut.TestCase):
+class Test_compute_rolling_zscore1(ut.TestCase):
     def test_default_values1(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.rolling_zscore(heaviside, tau=40)
+        zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
         self.check_string(zscored.to_string())
 
     def test_default_values2(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.rolling_zscore(heaviside, tau=20)
+        zscored = sigp.compute_rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
 
 
@@ -127,7 +127,7 @@ class Test_process_outliers1(ut.TestCase):
         )
 
 
-class Test_smooth_derivative1(ut.TestCase):
+class Test_compute_smooth_derivative1(ut.TestCase):
     def test_usual_case(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -136,11 +136,11 @@ class Test_smooth_derivative1(ut.TestCase):
         order = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.smooth_derivative(signal, tau, min_periods, scaling, order)
+        actual = sigp.compute_smooth_derivative(signal, tau, min_periods, scaling, order)
         self.check_string(actual.to_string())
 
 
-class Test_smooth_moving_average1(ut.TestCase):
+class Test_compute_smooth_moving_average1(ut.TestCase):
     def test_usual_case(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -149,7 +149,7 @@ class Test_smooth_moving_average1(ut.TestCase):
         max_depth = 5
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.smooth_moving_average(
+        actual = sigp.compute_smooth_moving_average(
             signal, tau, min_periods, min_depth, max_depth
         )
         self.check_string(actual.to_string())
@@ -189,7 +189,7 @@ class Test_digitize1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_rolling_moment1(ut.TestCase):
+class Test_compute_rolling_moment1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -199,13 +199,13 @@ class Test_rolling_moment1(ut.TestCase):
         p_moment = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.rolling_moment(
+        actual = sigp.compute_rolling_moment(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
         self.check_string(actual.to_string())
 
 
-class Test_rolling_norm1(ut.TestCase):
+class Test_compute_rolling_norm1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -215,13 +215,13 @@ class Test_rolling_norm1(ut.TestCase):
         p_moment = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.rolling_norm(
+        actual = sigp.compute_rolling_norm(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
         self.check_string(actual.to_string())
 
 
-class Test_rolling_var1(ut.TestCase):
+class Test_compute_rolling_var1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -231,13 +231,13 @@ class Test_rolling_var1(ut.TestCase):
         p_moment = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.rolling_var(
+        actual = sigp.compute_rolling_var(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
         self.check_string(actual.to_string())
 
 
-class Test_rolling_std1(ut.TestCase):
+class Test_compute_rolling_std1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -247,13 +247,13 @@ class Test_rolling_std1(ut.TestCase):
         p_moment = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.rolling_std(
+        actual = sigp.compute_rolling_std(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
         self.check_string(actual.to_string())
 
 
-class Test_rolling_demean1(ut.TestCase):
+class Test_compute_rolling_demean1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -262,13 +262,13 @@ class Test_rolling_demean1(ut.TestCase):
         max_depth = 5
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.rolling_demean(
+        actual = sigp.compute_rolling_demean(
             signal, tau, min_periods, min_depth, max_depth
         )
         self.check_string(actual.to_string())
 
 
-class Test_rolling_skew1(ut.TestCase):
+class Test_compute_rolling_skew1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau_z = 40
@@ -279,13 +279,13 @@ class Test_rolling_skew1(ut.TestCase):
         p_moment = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.rolling_skew(
+        actual = sigp.compute_rolling_skew(
             signal, tau_z, tau_s, min_periods, min_depth, max_depth, p_moment
         )
         self.check_string(actual.to_string())
 
 
-class Test_rolling_kurtosis1(ut.TestCase):
+class Test_compute_rolling_kurtosis1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau_z = 40
@@ -296,13 +296,13 @@ class Test_rolling_kurtosis1(ut.TestCase):
         p_moment = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.rolling_kurtosis(
+        actual = sigp.compute_rolling_kurtosis(
             signal, tau_z, tau_s, min_periods, min_depth, max_depth, p_moment
         )
         self.check_string(actual.to_string())
 
 
-class Test_rolling_sharpe_ratio1(ut.TestCase):
+class Test_compute_rolling_sharpe_ratio1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -312,13 +312,13 @@ class Test_rolling_sharpe_ratio1(ut.TestCase):
         p_moment = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.rolling_sharpe_ratio(
+        actual = sigp.compute_rolling_sharpe_ratio(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
         self.check_string(actual.to_string())
 
 
-class Test_rolling_corr1(ut.TestCase):
+class Test_compute_rolling_corr1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -331,7 +331,7 @@ class Test_rolling_corr1(ut.TestCase):
         df = pd.DataFrame(np.random.randn(n, 2))
         signal1 = df[0]
         signal2 = df[1]
-        actual = sigp.rolling_corr(
+        actual = sigp.compute_rolling_corr(
             signal1,
             signal2,
             tau,
@@ -344,7 +344,7 @@ class Test_rolling_corr1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_rolling_zcorr1(ut.TestCase):
+class Test_compute_rolling_zcorr1(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -357,7 +357,7 @@ class Test_rolling_zcorr1(ut.TestCase):
         df = pd.DataFrame(np.random.randn(n, 2))
         signal1 = df[0]
         signal2 = df[1]
-        actual = sigp.rolling_zcorr(
+        actual = sigp.compute_rolling_zcorr(
             signal1,
             signal2,
             tau,
@@ -370,7 +370,7 @@ class Test_rolling_zcorr1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_ipca(ut.TestCase):
+class Test_derive_ipca(ut.TestCase):
     def test_usual_case1(self) -> None:
         np.random.seed(42)
         num_pc = 3
@@ -378,7 +378,7 @@ class Test_ipca(ut.TestCase):
         n = 100
         m = 10
         df = pd.DataFrame(np.random.randn(n, m))
-        lambda_df, unit_eigenvec_dfs = sigp.ipca(df, num_pc, alpha)
+        lambda_df, unit_eigenvec_dfs = sigp.derive_ipca(df, num_pc, alpha)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
         )

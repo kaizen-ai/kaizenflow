@@ -189,7 +189,7 @@ def compute_ret_0(
 
 
 def compute_ret_0_from_multiple_prices(
-        prices: Dict[str, pd.DataFrame], col_name: str, mode: str
+    prices: Dict[str, pd.DataFrame], col_name: str, mode: str
 ) -> pd.DataFrame:
     dbg.dassert_isinstance(prices, dict)
     rets = []
@@ -298,7 +298,7 @@ def compute_sr(rets):
     NOTE: The current implementation of this resamples to daily but does not
     filter out non-trading days. This will tend to deflate the SR.
 
-    See also rolling_sharpe_ratio in signal_processing.py
+    See also compute_rolling_sharpe_ratio in signal_processing.py
 
     We can also use tools in bayesian.py for a more comprehensive assessment.
     """

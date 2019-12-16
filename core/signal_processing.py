@@ -120,7 +120,7 @@ def plot_wavelet_levels(
     plt.show()
 
 
-def low_pass_filter(
+def filter_low_pass(
     signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, threshold: float
 ) -> pd.Series:
     """
@@ -152,11 +152,11 @@ def plot_low_pass(
     signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, threshold: float
 ) -> None:
     """
-    Overlay signal with result of low_pass_filter().
+    Overlay signal with result of filter_low_pass().
     """
     _, ax = plt.subplots(figsize=(12, 8))
     ax.plot(signal, color="b", alpha=0.5, label="original signal")
-    rec = low_pass_filter(signal, wavelet_name, threshold)
+    rec = filter_low_pass(signal, wavelet_name, threshold)
     ax.plot(rec, "k", label="DWT smoothing}", linewidth=2)
     ax.legend()
     ax.set_title("Removing High Frequency Noise with DWT", fontsize=18)
@@ -484,36 +484,36 @@ def skip_apply_func(
 # #############################################################################
 
 
-def _com_to_tau(com: float) -> float:
+def _calculate_tau_from_com(com: float) -> float:
     """
     Transform center-of-mass (com) into tau parameter.
 
-    This is the function inverse of `_tau_to_com`.
+    This is the function inverse of `_calculate_com_from_tau`.
     """
     dbg.dassert_lt(0, com)
     return 1.0 / np.log(1 + 1.0 / com)
 
 
-def _tau_to_com(tau: float) -> float:
+def _calculate_com_from_tau(tau: float) -> float:
     """
     Transform tau parameter into center-of-mass (com).
 
     We use the tau parameter for kernels (as in Dacorogna, et al), but for the
-    ema operator want to take advantage of pandas' implementation, which uses
+    compute_ema operator want to take advantage of pandas' implementation, which uses
     different parameterizations. We adopt `com` because
         - It is almost equal to `tau`
         - We have used it historically
 
-    :param tau: parameter used in (continuous) ema and ema-derived kernels. For
+    :param tau: parameter used in (continuous) compute_ema and compute_ema-derived kernels. For
         typical ranges it is approximately but not exactly equal to the
-        center-of-mass (com) associated with an ema kernel.
+        center-of-mass (com) associated with an compute_ema kernel.
     :return: com
     """
     dbg.dassert_lt(0, tau)
     return 1.0 / (np.exp(1.0 / tau) - 1)
 
 
-def ema(
+def compute_ema(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int,
@@ -526,20 +526,20 @@ def ema(
 
     Greater depth tempers impulse response, introducing a phase lag.
 
-    Dacorogna use the convention $\text{ema}(t) = \exp(-t / \tau) / \tau$.
+    Dacorogna use the convention $\text{compute_ema}(t) = \exp(-t / \tau) / \tau$.
 
-    If $s_n = \lambda x_n + (1 - \lambda) s_{n - 1}$, where $s_n$ is the ema
+    If $s_n = \lambda x_n + (1 - \lambda) s_{n - 1}$, where $s_n$ is the compute_ema
     output, then $1 - \lambda = \exp(-1 / \tau)$. Now
     $\lambda = 1 / (1 + \text{com})$, and rearranging gives
     $\log(1 + 1 / \text{com}) = 1 / \tau$. Expanding in a Taylor series
     leads to $\tau \approx \text{com}$.
 
-    The kernel for an ema of depth $n$ is
+    The kernel for an compute_ema of depth $n$ is
     $(1 / (n - 1)!) (t / \tau)^{n - 1} \exp^{-t / \tau} / \tau$.
 
     Arbitrary kernels can be approximated by a combination of iterated emas.
 
-    For an iterated ema with given tau and depth n, we have
+    For an iterated compute_ema with given tau and depth n, we have
       - range = n \tau
       - <t^2> = n(n + 1) \tau^2
       - width = \sqrt{n} \tau
@@ -554,7 +554,7 @@ def ema(
     _LOG.debug("width = %0.2f", np.sqrt(depth) * tau)
     _LOG.debug("aspect ratio = %0.2f", np.sqrt(1 + 1.0 / depth))
     _LOG.debug("tau = %0.2f", tau)
-    com = _tau_to_com(tau)
+    com = _calculate_com_from_tau(tau)
     _LOG.debug("com = %0.2f", com)
     signal_hat = signal.copy()
     for i in range(0, depth):
@@ -564,7 +564,7 @@ def ema(
     return signal_hat
 
 
-def smooth_derivative(
+def compute_smooth_derivative(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int,
@@ -585,8 +585,8 @@ def smooth_derivative(
     The `scaling` parameter refers to the exponential weighting of inverse
     tau.
 
-    The `order` parameter refers to the number of times the smooth_derivative operator
-    is applied to the original signal.
+    The `order` parameter refers to the number of times the
+    compute_smooth_derivative operator is applied to the original signal.
     """
     dbg.dassert_isinstance(order, int)
     dbg.dassert_lte(0, order)
@@ -602,9 +602,9 @@ def smooth_derivative(
     def order_one(
         signal: Union[pd.DataFrame, pd.Series]
     ) -> Union[pd.DataFrame, pd.Series]:
-        s1 = ema(signal, tau1, min_periods, 1)
-        s2 = ema(signal, tau1, min_periods, 2)
-        s3 = -2.0 * ema(signal, tau2, min_periods, 4)
+        s1 = compute_ema(signal, tau1, min_periods, 1)
+        s2 = compute_ema(signal, tau1, min_periods, 2)
+        s3 = -2.0 * compute_ema(signal, tau2, min_periods, 4)
         differential = gamma * (s1 + s2 + s3)
         if scaling == 0:
             return differential
@@ -616,7 +616,7 @@ def smooth_derivative(
     return signal_diff
 
 
-def smooth_moving_average(
+def compute_smooth_moving_average(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
@@ -624,16 +624,16 @@ def smooth_moving_average(
     max_depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-    Implement moving average operator defined in terms of iterated ema's.
+    Implement moving average operator defined in terms of iterated compute_ema's.
     Choosing min_depth > 1 results in a lagged operator.
-    Choosing min_depth = max_depth = 1 reduces to a single ema.
+    Choosing min_depth = max_depth = 1 reduces to a single compute_ema.
 
     Abrupt impulse response that tapers off smoothly like a sigmoid
     (hence smoother than an equally-weighted moving average).
 
     For min_depth = 1 and large max_depth, the series is approximately
     constant for t << 2 * range_. In particular, when max_depth >= 5,
-    the kernels are more rectangular than ema-like.
+    the kernels are more rectangular than compute_ema-like.
     """
     dbg.dassert_isinstance(min_depth, int)
     dbg.dassert_isinstance(max_depth, int)
@@ -641,7 +641,7 @@ def smooth_moving_average(
     dbg.dassert_lte(min_depth, max_depth)
     range_ = tau * (min_depth + max_depth) / 2.0
     _LOG.debug("Range = %0.2f", range_)
-    ema_eval = functools.partial(ema, signal, tau, min_periods)
+    ema_eval = functools.partial(compute_ema, signal, tau, min_periods)
     denom = float(max_depth - min_depth + 1)
     # Not the most efficient implementation, but follows 3.56 of Dacorogna
     # directly.
@@ -653,7 +653,7 @@ def smooth_moving_average(
 # #############################################################################
 
 
-def rolling_moment(
+def compute_rolling_moment(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
@@ -661,12 +661,12 @@ def rolling_moment(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    return smooth_moving_average(
+    return compute_smooth_moving_average(
         np.abs(signal) ** p_moment, tau, min_periods, min_depth, max_depth
     )
 
 
-def rolling_norm(
+def compute_rolling_norm(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
@@ -677,15 +677,15 @@ def rolling_norm(
     """
     Implement smooth moving average norm (when p_moment >= 1).
 
-    Moving average corresponds to ema when min_depth = max_depth = 1.
+    Moving average corresponds to compute_ema when min_depth = max_depth = 1.
     """
-    signal_p = rolling_moment(
+    signal_p = compute_rolling_moment(
         signal, tau, min_periods, min_depth, max_depth, p_moment
     )
     return signal_p ** (1.0 / p_moment)
 
 
-def rolling_var(
+def compute_rolling_var(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
@@ -696,17 +696,17 @@ def rolling_var(
     """
     Implement smooth moving average central moment.
 
-    Moving average corresponds to ema when min_depth = max_depth = 1.
+    Moving average corresponds to compute_ema when min_depth = max_depth = 1.
     """
-    signal_ma = smooth_moving_average(
+    signal_ma = compute_smooth_moving_average(
         signal, tau, min_periods, min_depth, max_depth
     )
-    return rolling_moment(
+    return compute_rolling_moment(
         signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
     )
 
 
-def rolling_std(
+def compute_rolling_std(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
@@ -717,15 +717,15 @@ def rolling_std(
     """
     Implement normalized smooth moving average central moment.
 
-    Moving average corresponds to ema when min_depth = max_depth = 1.
+    Moving average corresponds to compute_ema when min_depth = max_depth = 1.
     """
-    signal_tmp = rolling_var(
+    signal_tmp = compute_rolling_var(
         signal, tau, min_periods, min_depth, max_depth, p_moment
     )
     return signal_tmp ** (1.0 / p_moment)
 
 
-def rolling_demean(
+def compute_rolling_demean(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
@@ -733,15 +733,15 @@ def rolling_demean(
     max_depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-    Demean signal on a rolling basis with smooth_moving_average.
+    Demean signal on a rolling basis with compute_smooth_moving_average.
     """
-    signal_ma = smooth_moving_average(
+    signal_ma = compute_smooth_moving_average(
         signal, tau, min_periods, min_depth, max_depth
     )
     return signal - signal_ma
 
 
-def rolling_zscore(
+def compute_rolling_zscore(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
@@ -752,35 +752,35 @@ def rolling_zscore(
     delay: int = 0,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-    Z-score using smooth_moving_average and rolling_std.
+    Z-score using compute_smooth_moving_average and compute_rolling_std.
 
     If delay > 0, then pay special attention to 0 and NaN handling to avoid
     extreme values.
 
-    Moving average corresponds to ema when min_depth = max_depth = 1.
+    Moving average corresponds to compute_ema when min_depth = max_depth = 1.
 
     TODO(Paul): determine whether signal == signal.shift(0) always.
     """
     if demean:
-        # Equivalent to invoking rolling_demean and rolling_std, but this way
+        # Equivalent to invoking compute_rolling_demean and compute_rolling_std, but this way
         # we avoid calculating signal_ma twice.
-        signal_ma = smooth_moving_average(
+        signal_ma = compute_smooth_moving_average(
             signal, tau, min_periods, min_depth, max_depth
         )
-        signal_std = rolling_norm(
+        signal_std = compute_rolling_norm(
             signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
         )
         ret = (signal - signal_ma.shift(delay)) / signal_std.shift(delay)
 
     else:
-        signal_std = rolling_norm(
+        signal_std = compute_rolling_norm(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
         ret = signal / signal_std.shift(delay)
     return ret
 
 
-def rolling_skew(
+def compute_rolling_skew(
     signal: Union[pd.DataFrame, pd.Series],
     tau_z: float,
     tau_s: float,
@@ -792,16 +792,16 @@ def rolling_skew(
     """
     Smooth moving average skew of z-scored signal.
     """
-    z_signal = rolling_zscore(
+    z_signal = compute_rolling_zscore(
         signal, tau_z, min_periods, min_depth, max_depth, p_moment
     )
-    skew = smooth_moving_average(
+    skew = compute_smooth_moving_average(
         z_signal ** 3, tau_s, min_periods, min_depth, max_depth
     )
     return skew
 
 
-def rolling_kurtosis(
+def compute_rolling_kurtosis(
     signal: Union[pd.DataFrame, pd.Series],
     tau_z: float,
     tau_s: float,
@@ -813,10 +813,10 @@ def rolling_kurtosis(
     """
     Smooth moving average kurtosis of z-scored signal.
     """
-    z_signal = rolling_zscore(
+    z_signal = compute_rolling_zscore(
         signal, tau_z, min_periods, min_depth, max_depth, p_moment
     )
-    kurt = smooth_moving_average(
+    kurt = compute_smooth_moving_average(
         z_signal ** 4, tau_s, min_periods, min_depth, max_depth
     )
     return kurt
@@ -827,7 +827,7 @@ def rolling_kurtosis(
 # #############################################################################
 
 
-def rolling_sharpe_ratio(
+def compute_rolling_sharpe_ratio(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int = 0,
@@ -836,12 +836,12 @@ def rolling_sharpe_ratio(
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-    Sharpe ratio using smooth_moving_average and rolling_std.
+    Sharpe ratio using compute_smooth_moving_average and compute_rolling_std.
     """
-    signal_ma = smooth_moving_average(
+    signal_ma = compute_smooth_moving_average(
         signal, tau, min_periods, min_depth, max_depth
     )
-    signal_std = rolling_norm(
+    signal_std = compute_rolling_norm(
         signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
     )
     # TODO(Paul): Annualize appropriately.
@@ -853,7 +853,7 @@ def rolling_sharpe_ratio(
 # #############################################################################
 
 
-def rolling_corr(
+def compute_rolling_corr(
     srs1: Union[pd.DataFrame, pd.Series],
     srs2: Union[pd.DataFrame, pd.Series],
     tau: float,
@@ -868,29 +868,29 @@ def rolling_corr(
 
     """
     if demean:
-        srs1_adj = srs1 - smooth_moving_average(
+        srs1_adj = srs1 - compute_smooth_moving_average(
             srs1, tau, min_periods, min_depth, max_depth
         )
-        srs2_adj = srs2 - smooth_moving_average(
+        srs2_adj = srs2 - compute_smooth_moving_average(
             srs2, tau, min_periods, min_depth, max_depth
         )
     else:
         srs1_adj = srs1
         srs2_adj = srs2
 
-    smooth_prod = smooth_moving_average(
+    smooth_prod = compute_smooth_moving_average(
         srs1_adj.multiply(srs2_adj), tau, min_periods, min_depth, max_depth
     )
-    srs1_std = rolling_norm(
+    srs1_std = compute_rolling_norm(
         srs1_adj, tau, min_periods, min_depth, max_depth, p_moment
     )
-    srs2_std = rolling_norm(
+    srs2_std = compute_rolling_norm(
         srs2_adj, tau, min_periods, min_depth, max_depth, p_moment
     )
     return smooth_prod / (srs1_std * srs2_std)
 
 
-def rolling_zcorr(
+def compute_rolling_zcorr(
     srs1: Union[pd.DataFrame, pd.Series],
     srs2: Union[pd.DataFrame, pd.Series],
     tau: float,
@@ -906,20 +906,20 @@ def rolling_zcorr(
     Not guaranteed to lie in [-1, 1], but bilinear in the z-scored variables.
     """
     if demean:
-        z_srs1 = rolling_zscore(
+        z_srs1 = compute_rolling_zscore(
             srs1, tau, min_periods, min_depth, max_depth, p_moment
         )
-        z_srs2 = rolling_zscore(
+        z_srs2 = compute_rolling_zscore(
             srs2, tau, min_periods, min_depth, max_depth, p_moment
         )
     else:
-        z_srs1 = srs1 / rolling_norm(
+        z_srs1 = srs1 / compute_rolling_norm(
             srs1, tau, min_periods, min_depth, max_depth, p_moment
         )
-        z_srs2 = srs2 / rolling_norm(
+        z_srs2 = srs2 / compute_rolling_norm(
             srs2, tau, min_periods, min_depth, max_depth, p_moment
         )
-    return smooth_moving_average(
+    return compute_smooth_moving_average(
         z_srs1.multiply(z_srs2), tau, min_periods, min_depth, max_depth
     )
 
@@ -1063,7 +1063,7 @@ def process_outlier_df(
 # #############################################################################
 
 
-def ipca_step(
+def derive_ipca_step(
     u: pd.Series, v: pd.Series, alpha: float
 ) -> Tuple[pd.Series, pd.Series]:
     """
@@ -1074,7 +1074,7 @@ def ipca_step(
 
     :param u: residualized observation for step n, component i
     :param v: unnormalized eigenvector estimate for step n - 1, component i
-    :param alpha: ema-type weight (choose in [0, 1] and typically < 0.5)
+    :param alpha: compute_ema-type weight (choose in [0, 1] and typically < 0.5)
 
     :return: (u_next, v_next), where
       * u_next is residualized observation for step n, component i + 1
@@ -1085,7 +1085,7 @@ def ipca_step(
     return u_next, v_next
 
 
-def ipca(
+def derive_ipca(
     df: pd.DataFrame, num_pc: int, alpha: float
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """
@@ -1139,7 +1139,7 @@ def ipca(
                 unit_eigenvecs.append([v / norm])
             else:
                 # Main update step for eigenvector i.
-                u, v = ipca_step(ul[-1], vsl[i - 1][-1], alpha)
+                u, v = derive_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
                 # Bookkeeping.
                 u.name = n
                 v.name = n
@@ -1160,7 +1160,7 @@ def ipca(
     return lambda_df, unit_eigenvec_dfs
 
 
-def unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
+def compute_unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
     """
     Accept a df of unit eigenvectors (rows) and returns a series with angular
     distance from index i to index i + 1.
@@ -1176,13 +1176,13 @@ def unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
     return srs
 
 
-def eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
+def compute_eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
     """
     Take a list of eigenvectors and returns a df of angular distances.
     """
     ang_chg = []
     for i, vec in enumerate(eigenvecs):
-        srs = unit_vector_angular_distance(vec)
+        srs = compute_unit_vector_angular_distance(vec)
         srs.name = i
         ang_chg.append(srs)
     df = pd.concat(ang_chg, axis=1)

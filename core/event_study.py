@@ -63,11 +63,11 @@ def reindex_event_features(
     Example usage:
     ```
     # Reindex along grid_data.
-    df1 = reindex_event_features(events, grid_data)
+    aligned_events = reindex_event_features(events, grid_data)
     # Apply kernel. Use `fillna` for correct application of kernel.
-    df2 = sigp.smooth_moving_average(df1.fillna(0), tau=8)
+    event_signal = sigp.smooth_moving_average(aligned_events.fillna(0), tau=8)
     # Merge the derived `events` features with `grid_data`.
-    grid_data2 = df2.join(grid_data, how="right")
+    grid_data2 = event_signal.join(grid_data, how="right")
     # Use the merged dataset downstream.
     grid_data = grid_data2
     ```
@@ -100,7 +100,7 @@ def build_local_timeseries(
         -   has monotonically increasing DatetimeIndex
         -   has at least one column (e.g., indicator column)
     :param grid_data: tabular data
-        -   has monotically increasing DatetimeIndex
+        -   has monotonically increasing DatetimeIndex
         -   datetimes should represent uniform time bars
         -   has at least one column (e.g., response)
     :param relative_grid_indices: time points on grid relative to event time
@@ -132,7 +132,7 @@ def build_local_timeseries(
             info_for_idx = {}
         else:
             info_for_idx = None
-        #
+        # Switch sign of `idx` since a pandas period of `n` selectes t_{-n}.
         data_at_idx = _shift_and_select(
             events.index, grid_data, -idx, freq, info_for_idx
         )
@@ -212,16 +212,14 @@ def _shift_and_select(
     # Select.
     intersection = idx.intersection(shifted_grid_data.index)
     dbg.dassert(not intersection.empty)
-    # TODO(Paul): Make this configurable
-    pct_found = intersection.size / idx.size
-    if pct_found < 0.9:
-        _LOG.warning("pct_found=%f for periods=%d", pct_found, periods)
     selected = shifted_grid_data.loc[intersection]
     # Maybe add info.
     if info is not None:
         dbg.dassert_isinstance(info, dict)
+        # Ensure `info` is empty.
         dbg.dassert(not info)
         info["indices_with_no_data"] = intersection.difference(idx)
+        info["pct_found"] = intersection.size / idx.size
         info["periods"] = periods
         if freq is not None:
             info["freq"] = freq
