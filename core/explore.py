@@ -535,7 +535,7 @@ def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
     # Note that the plot assumes that the first column is at the bottom of the
     # graph.
     # Assign 1.0 to all the non-nan value.
-    df = df.applymap(lambda x: np.nan if np.isnan(x) else 1.0)
+    df = df.where(df.isnull(), 1)
     # Sort.
     if sort:
         cnt = df.sum().sort_values(ascending=not ascending)
