@@ -114,6 +114,7 @@ def _run_preprocess(in_file: str, out_file: str) -> str:
     return act
 
 
+# TODO(gp): -> Test_convert_txt_to_pandoc*
 class Test_preprocess1(ut.TestCase):
     """
     Check that the output of convert_txt_to_pandoc.py is the expected one
@@ -398,4 +399,33 @@ $$"""
 """
         file_name = os.path.join(self.get_scratch_space(), "test.md")
         act = dslt._process(txt, file_name)
+        self.assert_equal(act, exp)
+
+    def test_process4(self):
+        """
+        Check that no replacement happens inside a ``` block.
+        """
+        txt = r"""<!--ts-->
+<!--te-->
+- Good
+- Hello
+```test
+- hello
+    - world
+1) oh no!
+```
+"""
+        exp = r"""<!--ts-->
+<!--te-->
+- Good
+- Hello
+```test
+- hello
+    - world
+1) oh no!
+```
+"""
+        file_name = os.path.join(self.get_scratch_space(), "test.md")
+        act = dslt._process(txt, file_name)
+        act = ut.remove_empty_lines(act)
         self.assert_equal(act, exp)

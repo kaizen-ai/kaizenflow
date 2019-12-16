@@ -82,11 +82,14 @@ def _system(cmd: str, abort_on_error: bool = True) -> int:
     return rc
 
 
+# TODO(gp): Move this to a more general file, if needed or reuse
+# `ut.remove_empty_lines`.
 def _remove_empty_lines(output: List[str]) -> List[str]:
     output = [l for l in output if l.strip("\n") != ""]
     return output
 
 
+# TODO(gp): Move this to helpers.dbg, if general enough.
 def _dassert_list_of_strings(output: List[str], *args: Any) -> None:
     dbg.dassert_isinstance(output, list, *args)
     for line in output:

@@ -106,26 +106,40 @@ def _prettier(txt: str) -> str:
     return txt
 
 
-def _postprocess(txt: str) -> str:
+def _postprocess(txt: str, in_file_name: str) -> str:
     _LOG.debug("txt=%s", txt)
     # Remove empty lines before higher level bullets, but not chapters.
     txt = re.sub(r"^\s*\n(\s+-\s+.*)$", r"\1", txt, 0, flags=re.MULTILINE)
+    # True if one is in inside a ``` .... ``` block.
+    in_triple_tick_block: bool = False
     txt_new: List[str] = []
-    for line in txt.split("\n"):
+    for i, line in enumerate(txt.split("\n")):
         # Undo the transformation `* -> STAR`.
         line = re.sub(r"^\-(\s*)STAR", r"*\1", line, 0)
         # Remove empty lines.
         line = re.sub(r"^\s*\n(\s*\$\$)", r"\1", line, 0, flags=re.MULTILINE)
-        # Upper case for `- hello`.
-        m = re.match(r"(\s*-\s+)(\S)(.*)", line)
+        # Handle ``` block.
+        m = re.match(r"^\s*```(.*)\s*$", line)
         if m:
-            line = m.group(1) + m.group(2).upper() + m.group(3)
-        # Upper case for `\d) hello`.
-        m = re.match(r"(\s*\d+[\)\.]\s+)(\S)(.*)", line)
-        if m:
-            line = m.group(1) + m.group(2).upper() + m.group(3)
+            in_triple_tick_block = not in_triple_tick_block
+            if in_triple_tick_block:
+                tag = m.group(1)
+                if not tag:
+                    _LOG.warning(
+                        "%s:%s: Missing syntax tag in ```", in_file_name, i + 1
+                    )
+        if not in_triple_tick_block:
+            # Upper case for `- hello`.
+            m = re.match(r"(\s*-\s+)(\S)(.*)", line)
+            if m:
+                line = m.group(1) + m.group(2).upper() + m.group(3)
+            # Upper case for `\d) hello`.
+            m = re.match(r"(\s*\d+[\)\.]\s+)(\S)(.*)", line)
+            if m:
+                line = m.group(1) + m.group(2).upper() + m.group(3)
         #
         txt_new.append(line)
+    dbg.dassert(not in_triple_tick_block, "A ``` block was not ending")
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
     return txt_new_as_str
 
@@ -160,7 +174,7 @@ def _process(txt: str, in_file_name: str) -> str:
     # Prettify.
     txt = _prettier(txt)
     # Post-process text.
-    txt = _postprocess(txt)
+    txt = _postprocess(txt, in_file_name)
     # Refresh table of content.
     is_md_file = in_file_name.endswith(".md")
     if is_md_file:
