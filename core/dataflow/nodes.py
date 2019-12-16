@@ -6,7 +6,6 @@ import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-import networkx as nx
 import pandas as pd
 
 import core.finance as fin
@@ -22,11 +21,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 # DAG visiting
 # #############################################################################
-
-
-def draw(graph):
-    pos = nx.circular_layout(graph)
-    nx.draw_networkx(graph, pos=pos, node_size=2000, arrowsize=30, width=1.5)
 
 
 def extract_info(dag, methods):
