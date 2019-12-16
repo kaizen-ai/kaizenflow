@@ -105,7 +105,7 @@ def _get_file_name(url: str) -> str:
             ret = url
     if ret is None:
         dbg.dassert_is_not(ret, None, "url=%s", url)
-    return ret
+    return ret  # type: ignore
 
 
 def _print(tag, val, verbose):

@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Generalize to all users, or at least Jenkins.
-#@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.skipif('si.get_user_name() != "saggese"')
 class Test_pandoc1(ut.TestCase):
     def _helper(self, in_file, action):
@@ -337,7 +337,7 @@ $$"""
         exp = r"""# test"""
         self._helper_preprocess(txt, exp)
 
-    # ##########################################################################
+    # #########################################################################
 
     def test_process1(self):
         txt = self._get_text1()
@@ -373,7 +373,7 @@ $$"""
 - Good time management
   1. choose the right tasks
     - Avoid non-essential tasks
-    
+
 ## Bad
 -  Hello
     - World

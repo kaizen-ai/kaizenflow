@@ -269,9 +269,9 @@ dependencies:
 # #############################################################################
 
 
+# pylint: disable=too-many-public-methods
 @pytest.mark.amp
 class Test_linter_py1(ut.TestCase):
-
     def _write_input_file(self, txt: str, file_name: str) -> Tuple[str, str]:
         dir_name = self.get_scratch_space()
         dbg.dassert_is_not(file_name, None)
@@ -290,17 +290,24 @@ class Test_linter_py1(ut.TestCase):
             # We need to ignore the errors reported by the script, since it
             # represents how many lints were found.
             suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-            si.system(cmd_as_str, abort_on_error=False,
-                      suppress_output=suppress_output)
+            si.system(
+                cmd_as_str, abort_on_error=False, suppress_output=suppress_output
+            )
         else:
             logger_verbosity = dbg.get_logger_verbosity()
             parser = lntr._parser()
             args = parser.parse_args(
-                ["-f", file_name, "--linter_log", linter_log,
-                 # TODO(gp): Avoid to call the logger.
-                 "-v", "ERROR",
-                 # No output from the print.
-                 "--no_print"]
+                [
+                    "-f",
+                    file_name,
+                    "--linter_log",
+                    linter_log,
+                    # TODO(gp): Avoid to call the logger.
+                    "-v",
+                    "ERROR",
+                    # No output from the print.
+                    "--no_print",
+                ]
             )
             lntr._main(args)
             dbg.init_logger(logger_verbosity)
@@ -336,7 +343,7 @@ class Test_linter_py1(ut.TestCase):
         output = self._run_linter(file_name, linter_log, as_system_call)
         return output
 
-    # ##########################################################################
+    # #########################################################################
 
     @staticmethod
     def _get_horrible_python_code1() -> str:
@@ -591,7 +598,7 @@ from typing import List
 
 # _#_#_#_#_#_#_#_##
 # hello
-# =_=_=_=_=
+# =_=_=_=_=_=
 """
         txt = txt.replace("_", "")
         exp = """# output
@@ -602,6 +609,31 @@ from typing import List
 # #############################################################################
 # hello
 # =============================================================================
+"""
+        self._helper_check_line_by_line(file_name, txt, exp)
+
+    def test_check_line_by_line6(self) -> None:
+        """
+        Check that it doesn't replace if the bar is not until the end of the line.
+        """
+        file_name = "lib.py"
+        # We use some _ to avoid getting a replacement from the linter here.
+        txt = """
+from typing import List
+
+# _#_#_#_#_#_#_#_##
+# hello
+# =_=_=_=_=_='''
+"""
+        txt = txt.replace("_", "")
+        exp = """# output
+# txt_new
+
+from typing import List
+
+# #############################################################################
+# hello
+# ======'''
 """
         self._helper_check_line_by_line(file_name, txt, exp)
 

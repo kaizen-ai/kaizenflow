@@ -31,6 +31,13 @@ def _get_changed_files(dst_branch: str) -> List[str]:
 def _qualify_branch(
     tag: str, dst_branch: str, test_list: str, quick: bool
 ) -> List[str]:
+    """
+    Qualify a branch stored in directory, running linter and unit tests.
+
+    :param dst_branch: directory containing the branch
+    :para, test_list: test list to run (e.g., fast, slow)
+    :param quick: run a single test instead of the entire regression test
+    """
     print(prnt.frame("Qualifying '%s'" % tag))
     output = []
     # - Linter.
@@ -115,7 +122,7 @@ def _main(parser):
     if True:
         cmd = "git fetch origin %s:%s" % (args.dst_branch, args.dst_branch)
         si.system(cmd)
-    # Refresh.
+
     def _refresh(dst_dir):
         _LOG.debug("Refreshing dst_dir=%s", dst_dir)
         cd_cmd = "cd %s && " % dst_dir
@@ -142,7 +149,8 @@ def _main(parser):
     # Qualify amp repo.
     if os.path.exists("amp"):
         tag = "amp"
-        output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
+        output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list,
+                args.quick)
         output.extend(output_tmp)
     #
     repo_sym_name = git.get_repo_symbolic_name(super_module=True)

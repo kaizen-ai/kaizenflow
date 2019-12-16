@@ -12,12 +12,14 @@ It can be used in vim to prettify a part of the text using stdin / stdout.
 
 import argparse
 import logging
+import os
 import re
 import sys
 import tempfile
 from typing import List
 
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.system_interaction as si
@@ -31,6 +33,7 @@ _LOG = logging.getLogger(__name__)
 #  ours -> yours
 #  ourselves -> yourself
 
+
 def _preprocess(txt: str) -> str:
     _LOG.debug("txt=%s", txt)
     # Remove some artifacts when copying from gdoc.
@@ -41,7 +44,7 @@ def _preprocess(txt: str) -> str:
     txt_new: List[str] = []
     for line in txt.split("\n"):
         # Skip frames.
-        if re.match(r"#+ [#\/\-\=]{6,}", line):
+        if re.match(r"#+ [#\/\-\=]{6,}$", line):
             continue
         line = re.sub(r"^\s*\*\s+", "- STAR", line)
         # Transform:
@@ -108,7 +111,7 @@ def _postprocess(txt: str) -> str:
     # Remove empty lines before higher level bullets, but not chapters.
     txt = re.sub(r"^\s*\n(\s+-\s+.*)$", r"\1", txt, 0, flags=re.MULTILINE)
     txt_new: List[str] = []
-    for i, line in enumerate(txt.split("\n")):
+    for line in txt.split("\n"):
         # Undo the transformation `* -> STAR`.
         line = re.sub(r"^\-(\s*)STAR", r"*\1", line, 0)
         # Remove empty lines.
@@ -126,17 +129,13 @@ def _postprocess(txt: str) -> str:
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
     return txt_new_as_str
 
-import helpers.git as git
-import os
 
 def _refresh_toc(txt: str) -> str:
     _LOG.debug("txt=%s", txt)
     # Check whether there is a TOC otherwise add it.
     txt_as_arr = txt.split("\n")
     if txt_as_arr[0] != "<!--ts-->":
-        _LOG.warning(
-            "No tags for table of content in md file: adding it"
-        )
+        _LOG.warning("No tags for table of content in md file: adding it")
         txt = "<!--ts-->\n<!--te-->\n" + txt
     # Write file.
     tmp_file_name = tempfile.NamedTemporaryFile().name
@@ -169,7 +168,7 @@ def _process(txt: str, in_file_name: str) -> str:
     return txt
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -205,7 +204,9 @@ def _main(args):
     if in_file_name != "<stdin>":
         dbg.dassert(
             in_file_name.endswith(".txt") or in_file_name.endswith(".md"),
-            "Invalid extension for file name '%s'", in_file_name)
+            "Invalid extension for file name '%s'",
+            in_file_name,
+        )
     txt = args.infile.read()
     # Process.
     txt = _process(txt, in_file_name)

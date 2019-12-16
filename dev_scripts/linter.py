@@ -64,6 +64,7 @@ _TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
 
 NO_PRINT = False
 
+
 def _print(*args, **kwargs):
     if not NO_PRINT:
         print(*args, **kwargs)
@@ -755,8 +756,9 @@ class _Pydocstyle(_Action):
         cmd_as_str = " ".join(cmd)
         # We don't abort on error on pydocstyle, since it returns error if there
         # is # any violation.
-        _, file_lines_as_str = si.system_to_string(cmd_as_str,
-                                                   abort_on_error=False)
+        _, file_lines_as_str = si.system_to_string(
+            cmd_as_str, abort_on_error=False
+        )
         # Process lint_log transforming:
         #   linter_v2.py:1 at module level:
         #       D400: First line should end with a period (not ':')
@@ -970,9 +972,12 @@ class _Mypy(_Action):
             return []
         # TODO(gp): Convert all these idioms into arrays and joins.
         cmd = self._executable + " %s" % file_name
-        output = _tee(cmd, self._executable,
-                      # mypy returns -1 if there are errors.
-                      abort_on_error=False)
+        output = _tee(
+            cmd,
+            self._executable,
+            # mypy returns -1 if there are errors.
+            abort_on_error=False,
+        )
         # Remove some errors.
         output_tmp: List[str] = []
         for line in output:
@@ -1291,14 +1296,14 @@ class _CustomPythonChecks(_Action):
             # Format separating lines.
             if _CustomPythonChecks.DEBUG:
                 _LOG.debug("* Format separating lines")
-            min_num_chars = 5
-            for char in "# = - < >".split():
-                regex = r"(\s*\#)\s*" + (("\\" + char) * min_num_chars)
-                if _CustomPythonChecks.DEBUG:
-                    _LOG.debug("regex=%s", regex)
-                m = re.match(regex, line)
-                if m:
-                    line = m.group(1) + " " + char * (78 - len(m.group(1)))
+            min_num_chars = 6
+            regex = r"(\s*\#)\s*([\#\=\-\<\>]){%d,}\s*$" % min_num_chars
+            if _CustomPythonChecks.DEBUG:
+                _LOG.debug("regex=%s", regex)
+            m = re.match(regex, line)
+            if m:
+                char = m.group(2)
+                line = m.group(1) + " " + char * (78 - len(m.group(1)))
             #
             if _CustomPythonChecks.DEBUG:
                 _LOG.debug("    -> %s", line)
@@ -1752,10 +1757,7 @@ def _parser() -> argparse.ArgumentParser:
         default="./linter_warnings.txt",
         help="File storing the warnings",
     )
-    parser.add_argument(
-        "--no_print",
-        action="store_true"
-    )
+    parser.add_argument("--no_print", action="store_true")
     prsr.add_verbosity_arg(parser)
     return parser
 
