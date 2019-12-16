@@ -128,7 +128,7 @@ class Test_process_outliers1(ut.TestCase):
 
 
 class Test_compute_smooth_derivative1(ut.TestCase):
-    def test_usual_case(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         min_periods = 20
@@ -136,12 +136,14 @@ class Test_compute_smooth_derivative1(ut.TestCase):
         order = 2
         n = 1000
         signal = pd.Series(np.random.randn(n))
-        actual = sigp.compute_smooth_derivative(signal, tau, min_periods, scaling, order)
+        actual = sigp.compute_smooth_derivative(
+            signal, tau, min_periods, scaling, order
+        )
         self.check_string(actual.to_string())
 
 
 class Test_compute_smooth_moving_average1(ut.TestCase):
-    def test_usual_case(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         min_periods = 20
@@ -172,7 +174,7 @@ class Test_compute_forecastability1(ut.TestCase):
 
 
 class Test_digitize1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         bins = [0, 0.2, 0.4]
         right = False
@@ -190,7 +192,7 @@ class Test_digitize1(ut.TestCase):
 
 
 class Test_compute_rolling_moment1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         min_periods = 20
@@ -206,7 +208,7 @@ class Test_compute_rolling_moment1(ut.TestCase):
 
 
 class Test_compute_rolling_norm1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         min_periods = 20
@@ -222,7 +224,7 @@ class Test_compute_rolling_norm1(ut.TestCase):
 
 
 class Test_compute_rolling_var1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         min_periods = 20
@@ -238,7 +240,7 @@ class Test_compute_rolling_var1(ut.TestCase):
 
 
 class Test_compute_rolling_std1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         min_periods = 20
@@ -254,7 +256,7 @@ class Test_compute_rolling_std1(ut.TestCase):
 
 
 class Test_compute_rolling_demean1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         min_periods = 20
@@ -269,7 +271,7 @@ class Test_compute_rolling_demean1(ut.TestCase):
 
 
 class Test_compute_rolling_skew1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau_z = 40
         tau_s = 20
@@ -286,7 +288,7 @@ class Test_compute_rolling_skew1(ut.TestCase):
 
 
 class Test_compute_rolling_kurtosis1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau_z = 40
         tau_s = 20
@@ -303,7 +305,7 @@ class Test_compute_rolling_kurtosis1(ut.TestCase):
 
 
 class Test_compute_rolling_sharpe_ratio1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         min_periods = 20
@@ -319,7 +321,7 @@ class Test_compute_rolling_sharpe_ratio1(ut.TestCase):
 
 
 class Test_compute_rolling_corr1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         demean = True
@@ -345,7 +347,7 @@ class Test_compute_rolling_corr1(ut.TestCase):
 
 
 class Test_compute_rolling_zcorr1(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         tau = 40
         demean = True
@@ -371,7 +373,7 @@ class Test_compute_rolling_zcorr1(ut.TestCase):
 
 
 class Test_derive_ipca(ut.TestCase):
-    def test_usual_case1(self) -> None:
+    def test1(self) -> None:
         np.random.seed(42)
         num_pc = 3
         alpha = 0.5
