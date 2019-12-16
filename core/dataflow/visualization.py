@@ -1,6 +1,4 @@
 import networkx as nx
-import pygraphviz as pgv
-
 from IPython.display import Image
 
 
