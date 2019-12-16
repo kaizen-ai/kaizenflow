@@ -879,7 +879,7 @@ def compute_rolling_corr(
         srs2_adj = srs2
 
     smooth_prod = compute_smooth_moving_average(
-        srs1_adj.multiply(srs2_adj), tau, min_periods, max_depth
+        srs1_adj.multiply(srs2_adj), tau, min_periods, min_depth, max_depth
     )
     srs1_std = compute_rolling_norm(
         srs1_adj, tau, min_periods, min_depth, max_depth, p_moment
@@ -920,7 +920,7 @@ def compute_rolling_zcorr(
             srs2, tau, min_periods, min_depth, max_depth, p_moment
         )
     return compute_smooth_moving_average(
-        z_srs1.multiply(z_srs2), tau, min_depth, max_depth
+        z_srs1.multiply(z_srs2), tau, min_periods, min_depth, max_depth
     )
 
 
