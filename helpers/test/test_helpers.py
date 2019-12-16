@@ -217,20 +217,22 @@ class Test_s3_1(ut.TestCase):
 # unit_test.py
 # #############################################################################
 
-
 class Test_unit_test1(ut.TestCase):
     @pytest.mark.amp
     def test_purify_txt_from_client1(self):
+        super_module_path = git.get_client_root(super_module=True)
+        # TODO(gp): We should remove the current path.
         txt = r"""
 ************* Module input [pylint]
-/Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
-/Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
-/Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:9: F821 undefined name 're' [flake8]
-cmd line='/Users/saggese/src/amp/dev_scripts/linter.py -f /Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py --linter_log /Users/saggese/src/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/linter.log'
+$SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
+$SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
+$SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:9: F821 undefined name 're' [flake8]
+cmd line='$SUPER_MODULE/dev_scripts/linter.py -f $SUPER_MODULE/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py --linter_log $SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/linter.log'
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
 """
+        txt = txt.replace("$SUPER_MODULE", super_module_path)
         exp = r"""
 ************* Module input [pylint]
 $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
