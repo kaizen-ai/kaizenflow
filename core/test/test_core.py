@@ -14,7 +14,7 @@ import pytest
 import scipy
 
 import core.config as cfg
-import core.dataflow_core as dtfc
+import core.dataflow as dtf
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
@@ -245,8 +245,8 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         """
         Creates a node and adds it to a DAG.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1")
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1")
         dag.add_node(n1)
         self._check(dag.dag)
 
@@ -254,14 +254,14 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         """
         Demonstrates "strict" and "loose" behavior on repeated add_node().
         """
-        dag_strict = dtfc.DAG(mode="strict")
-        m1 = dtfc.Node("m1")
+        dag_strict = dtf.DAG(mode="strict")
+        m1 = dtf.Node("m1")
         dag_strict.add_node(m1)
         with self.assertRaises(AssertionError):
             dag_strict.add_node(m1)
         #
-        dag_loose = dtfc.DAG(mode="loose")
-        n1 = dtfc.Node("n1")
+        dag_loose = dtf.DAG(mode="loose")
+        n1 = dtf.Node("n1")
         dag_loose.add_node(n1)
         dag_loose.add_node(n1)
         self._check(dag_loose.dag)
@@ -270,17 +270,17 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         """
         Demonstrates "strict" and "loose" behavior on repeated add_node().
         """
-        dag_strict = dtfc.DAG(mode="strict")
-        m1 = dtfc.Node("m1")
+        dag_strict = dtf.DAG(mode="strict")
+        m1 = dtf.Node("m1")
         dag_strict.add_node(m1)
-        m1_prime = dtfc.Node("m1")
+        m1_prime = dtf.Node("m1")
         with self.assertRaises(AssertionError):
             dag_strict.add_node(m1_prime)
         #
-        dag_loose = dtfc.DAG(mode="loose")
-        n1 = dtfc.Node("n1")
+        dag_loose = dtf.DAG(mode="loose")
+        n1 = dtf.Node("n1")
         dag_loose.add_node(n1)
-        n1_prime = dtfc.Node("n1")
+        n1_prime = dtf.Node("n1")
         dag_loose.add_node(n1_prime)
         self._check(dag_loose.dag)
 
@@ -288,22 +288,22 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         """
         Adds multiple nodes to a DAG.
         """
-        dag = dtfc.DAG()
+        dag = dtf.DAG()
         for name in ["n1", "n2", "n3", "n4"]:
-            dag.add_node(dtfc.Node(name, inputs=["in1"], outputs=["out1"]))
+            dag.add_node(dtf.Node(name, inputs=["in1"], outputs=["out1"]))
         self._check(dag.dag)
 
     def test_add_nodes5(self) -> None:
         """
         Re-adding a node clears node, successors, and edges in `loose` mode.
         """
-        dag = dtfc.DAG(mode="loose")
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG(mode="loose")
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        n2 = dtf.Node("n2", inputs=["in1"], outputs=["out1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
-        n3 = dtfc.Node("n3", inputs=["in1"])
+        n3 = dtf.Node("n3", inputs=["in1"])
         dag.add_node(n3)
         dag.connect("n2", "n3")
         dag.add_node(n1)
@@ -315,10 +315,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Simplest case of connecting two nodes.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect(("n1", "out1"), ("n2", "in1"))
         self._check(dag.dag)
@@ -327,10 +327,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Simplest case, but inferred input/output names.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
         self._check(dag.dag)
@@ -339,10 +339,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Ensures input/output names are valid.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         with self.assertRaises(AssertionError):
             dag.connect(("n2", "out1"), ("n1", "in1"))
@@ -351,10 +351,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Forbids creating cycles in DAG.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", inputs=["in1"], outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        n2 = dtf.Node("n2", inputs=["in1"], outputs=["out1"])
         dag.add_node(n2)
         dag.connect(("n1", "out1"), ("n2", "in1"))
         with self.assertRaises(AssertionError):
@@ -364,10 +364,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Forbids creating cycles in DAG (inferred input/output names).
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", inputs=["in1"], outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        n2 = dtf.Node("n2", inputs=["in1"], outputs=["out1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
         with self.assertRaises(AssertionError):
@@ -377,16 +377,16 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         A nontrivial, multi-input/output example.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1", "out2"])
+        n2 = dtf.Node("n2", inputs=["in1"], outputs=["out1", "out2"])
         dag.add_node(n2)
-        n3 = dtfc.Node("n3", inputs=["in1"], outputs=["out1"])
+        n3 = dtf.Node("n3", inputs=["in1"], outputs=["out1"])
         dag.add_node(n3)
-        n4 = dtfc.Node("n4", inputs=["in1"], outputs=["out1"])
+        n4 = dtf.Node("n4", inputs=["in1"], outputs=["out1"])
         dag.add_node(n4)
-        n5 = dtfc.Node("n5", inputs=["in1", "in2"], outputs=["out1"])
+        n5 = dtf.Node("n5", inputs=["in1", "in2"], outputs=["out1"])
         dag.add_node(n5)
         dag.connect("n1", ("n2", "in1"))
         dag.connect(("n2", "out1"), "n3")
@@ -399,8 +399,8 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Forbids connecting a node that doesn't belong to the DAG.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
         with self.assertRaises(AssertionError):
             dag.connect("n2", "n1")
@@ -409,10 +409,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Ensures at most one output connects to any input.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1", "out2"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1", "out2"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect(("n1", "out1"), "n2")
         with self.assertRaises(AssertionError):
@@ -422,10 +422,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Allows multi-attribute edges if each input has at most one source.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1", "in2"])
+        n2 = dtf.Node("n2", inputs=["in1", "in2"])
         dag.add_node(n2)
         dag.connect("n1", ("n2", "in1"))
         dag.connect("n1", ("n2", "in2"))
@@ -435,10 +435,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Demonstrates adding edges is not idempotent.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
         with self.assertRaises(AssertionError):
@@ -447,29 +447,29 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
 
 class Test_dataflow_core_DAG3(_Dataflow_helper):
     def test_sources_sinks1(self) -> None:
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
         self.assertEqual(dag.get_sources(), ["n1"])
         self.assertEqual(dag.get_sinks(), ["n2"])
 
     def test_sources_sinks2(self) -> None:
-        dag = dtfc.DAG()
-        src1 = dtfc.Node("src1", outputs=["out1"])
+        dag = dtf.DAG()
+        src1 = dtf.Node("src1", outputs=["out1"])
         dag.add_node(src1)
-        src2 = dtfc.Node("src2", outputs=["out1"])
+        src2 = dtf.Node("src2", outputs=["out1"])
         dag.add_node(src2)
-        m1 = dtfc.Node("m1", inputs=["in1", "in2"], outputs=["out1"])
+        m1 = dtf.Node("m1", inputs=["in1", "in2"], outputs=["out1"])
         dag.add_node(m1)
         dag.connect("src1", ("m1", "in1"))
         dag.connect("src2", ("m1", "in2"))
-        snk1 = dtfc.Node("snk1", inputs=["in1"])
+        snk1 = dtf.Node("snk1", inputs=["in1"])
         dag.add_node(snk1)
         dag.connect("m1", "snk1")
-        snk2 = dtfc.Node("snk2", inputs=["in1"])
+        snk2 = dtf.Node("snk2", inputs=["in1"])
         dag.add_node(snk2)
         dag.connect("m1", "snk2")
         sources = dag.get_sources()
@@ -480,8 +480,8 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
         self.assertListEqual(sinks, ["snk1", "snk2"])
 
     def test_sources_sinks3(self) -> None:
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1")
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1")
         dag.add_node(n1)
         self.assertEqual(dag.get_sources(), ["n1"])
         self.assertEqual(dag.get_sinks(), ["n1"])
@@ -949,12 +949,12 @@ class Test_signal_processing_get_symmetric_equisized_bins(ut.TestCase):
 class TestSignalProcessingRollingZScore1(ut.TestCase):
     def test_default_values1(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.rolling_zscore(heaviside, tau=40)
+        zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
         self.check_string(zscored.to_string())
 
     def test_default_values2(self) -> None:
         heaviside = sigp.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.rolling_zscore(heaviside, tau=20)
+        zscored = sigp.compute_rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
 
 

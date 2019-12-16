@@ -58,7 +58,7 @@ dependencies:
   # ############################################################################
   # Latex
   # ############################################################################
-  - graphviz
+  - graphviz                # Also for dataflow graph visualization.
   - pandoc
   - pandocfilters
   # ############################################################################
@@ -87,6 +87,7 @@ dependencies:
   - joblib
   - jq                      # To process json.
   - mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
+  - pygraphviz              # For dataflow graph visualization.
   - pymongo
   - quandl
   - ruby
