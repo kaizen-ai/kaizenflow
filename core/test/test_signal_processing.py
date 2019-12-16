@@ -163,14 +163,16 @@ class Test_compute_forecastability1(ut.TestCase):
         n = 1000
         signal = pd.Series(np.random.randn(n))
         actual = sigp.compute_forecastability(signal, mode="welch")
-        self.check_string(str(actual))
+        expected = 0.014599675035670168
+        np.testing.assert_almost_equal(actual, expected)
 
     def test_periodogram(self) -> None:
         np.random.seed(42)
         n = 1000
         signal = pd.Series(np.random.randn(n))
         actual = sigp.compute_forecastability(signal, mode="periodogram")
-        self.check_string(str(actual))
+        expected = 0.06319779777321788
+        np.testing.assert_almost_equal(actual, expected)
 
 
 class Test_digitize1(ut.TestCase):
