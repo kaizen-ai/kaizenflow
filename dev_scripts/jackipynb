@@ -6,5 +6,7 @@
 
 source helpers.sh
 
-cmd="find . \( -name '*.ipynb' \) -print0 | xargs -0 ack $ACK_OPTS '$@'"
+parse_jack_cmd_opts "$@"
+
+cmd="find $dir \( -name '*.ipynb' \) -print0 | xargs -0 ack $ACK_OPTS '$regex' $dir"
 execute $cmd

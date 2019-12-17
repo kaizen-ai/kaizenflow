@@ -109,7 +109,12 @@ def _process_abbreviations(line: str) -> str:
         - `->` into `$\rightarrow`
     """
     # line = re.sub("([^\s])->(\s)", r"\1$\rightarrow\2", line)
-    line = re.sub(r"\->", r"$\\rightarrow$", line)
+    for x, y in [
+            (r"=>", r"\implies"),
+            (r"->", r"\rightarrow"),
+            (r"-^", r"\uparrow"),
+            (r"-v", r"\downarrow")]:
+        line = re.sub(r"(\s)%s(\s)" % re.escape(x), r"\1$%s$\2" % re.escape(y), line)
     return line
 
 
