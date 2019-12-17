@@ -237,13 +237,13 @@ class YConnector(FitPredictNode):
         self._df_in1_col_names = None
         self._df_in2_col_names = None
 
-    def df_in1_col_names(self) -> List[str]:
+    def get_df_in1_col_names(self) -> List[str]:
         """
         Allow introspection on column names of input dataframe #1.
         """
         return self._get_col_names(self._df_in1_col_names)
 
-    def df_in2_col_names(self) -> List[str]:
+    def get_df_in2_col_names(self) -> List[str]:
         """
         Allow introspection on column names of input dataframe #2.
         """
