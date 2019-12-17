@@ -52,6 +52,9 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 
 # TODO(*): move to gen_utils.py as safe_div_nan?
 # TODO(*): Add type hints (probably float and numpy.float).
+# TODO(*: Do we really need this? All cases here apply when a `series` is
+#     empty. It would be clearer to log a warning and return when the series
+#     is empty and otherwise carry out usual division.
 def safe_div(a, b):
     div = a / b if b != 0 else np.nan
     return div
@@ -61,6 +64,8 @@ def safe_div(a, b):
 # For convenience we might want to add a param to all these functions `drop_na=True`, `drop_inf=True` to tweak their behavior.
 
 
+# TODO(*): Rename these. "count" shouldn't be used when the result is a
+#     percentage.
 def count_pct_zero(series: pd.Series, zero_threshold: float = 1e-9) -> float:
     """
     Count number of zeroes in a given time series.
