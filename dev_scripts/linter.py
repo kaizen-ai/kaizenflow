@@ -47,7 +47,7 @@ import helpers.git as git
 import helpers.io_ as io_
 import helpers.list as hlist
 import helpers.parser as prsr
-import helpers.printing as pri
+import helpers.printing as prnt
 import helpers.system_interaction as si
 import helpers.unit_test as ut
 
@@ -82,14 +82,11 @@ def _system(cmd: str, abort_on_error: bool = True) -> int:
     return rc
 
 
-# TODO(gp): Move this to a more general file, if needed or reuse
-# `ut.remove_empty_lines`.
 def _remove_empty_lines(output: List[str]) -> List[str]:
     output = [l for l in output if l.strip("\n") != ""]
     return output
 
 
-# TODO(gp): Move this to helpers.dbg, if general enough.
 def _dassert_list_of_strings(output: List[str], *args: Any) -> None:
     dbg.dassert_isinstance(output, list, *args)
     for line in output:
@@ -1362,6 +1359,59 @@ class _LintMarkdown(_Action):
 # - it allows to have clear control over options
 
 
+# Actions and if they read / write files.
+# The order of this list implies the order in which they are executed.
+_VALID_ACTIONS_META: List[Tuple[str, str, str, Type[_Action]]] = [
+    (
+        "check_file_property",
+        "r",
+        "Check that generic files are valid",
+        _CheckFileProperty,
+    ),
+    (
+        "basic_hygiene",
+        "w",
+        "Clean up (e.g., tabs, trailing spaces)",
+        _BasicHygiene,
+    ),
+    ("compile_python", "r", "Check that python code is valid", _CompilePython),
+    ("autoflake", "w", "Removes unused imports and variables", _Autoflake),
+    ("isort", "w", "Sort Python import definitions alphabetically", _Isort),
+    # Superseded by black.
+    # ("yapf", "w", "Formatter for Python code", _Yapf),
+    ("black", "w", "The uncompromising code formatter", _Black),
+    ("flake8", "r", "Tool For Style Guide Enforcement", _Flake8),
+    ("pydocstyle", "r", "Docstring style checker", _Pydocstyle),
+    # TODO(gp): Fix this.
+    # Not installable through conda.
+    # ("pyment", "w", "Create, update or convert docstring", _Pyment),
+    ("pylint", "w", "Check that module(s) satisfy a coding standard", _Pylint),
+    ("mypy", "r", "Static code analyzer using the hint types", _Mypy),
+    ("sync_jupytext", "w", "Create / sync jupytext files", _SyncJupytext),
+    ("test_jupytext", "r", "Test jupytext files", _TestJupytext),
+    # Superseded by "sync_jupytext".
+    # ("ipynb_format", "w", "Format jupyter code using yapf", _IpynbFormat),
+    (
+        "custom_python_checks",
+        "w",
+        "Apply some custom python checks",
+        _CustomPythonChecks,
+    ),
+    ("lint_markdown", "w", "Lint txt/md markdown files", _LintMarkdown),
+]
+
+
+# joblib and caching with lru_cache don't get along, so we cache explicitly.
+_VALID_ACTIONS = None
+
+
+def _get_valid_actions() -> List[str]:
+    global _VALID_ACTIONS
+    if _VALID_ACTIONS is None:
+        _VALID_ACTIONS = list(zip(*_VALID_ACTIONS_META))[0]
+    return _VALID_ACTIONS  # type: ignore
+
+
 def _get_action_class(action: str) -> _Action:
     """
     Return the function corresponding to the passed string.
@@ -1398,32 +1448,24 @@ def _remove_not_possible_actions(actions: List[str]) -> List[str]:
 
 
 def _actions_to_string(actions: List[str]) -> str:
-    space = max([len(a) for a in _ALL_ACTIONS]) + 2
+    space = max([len(a) for a in _get_valid_actions()]) + 2
     format_ = "%" + str(space) + "s: %s"
     actions_as_str = [
-        format_ % (a, "Yes" if a in actions else "-") for a in _ALL_ACTIONS
+        format_ % (a, "Yes" if a in actions else "-")
+        for a in _get_valid_actions()
     ]
     return "\n".join(actions_as_str)
 
 
 def _select_actions(args: argparse.Namespace) -> List[str]:
-    # Select actions.
-    if not args.action or args.all:
-        actions = list(_ALL_ACTIONS)[:]
-    else:
-        actions = args.action
-    dbg.dassert_isinstance(actions, list)
-    # Validate actions.
-    for action in set(actions):
-        if action not in _ALL_ACTIONS:
-            raise ValueError("Invalid action '%s'" % action)
-    # Reorder actions according to _ALL_ACTIONS.
-    actions = [action for action in _ALL_ACTIONS if action in actions]
+    actions = prsr.select_actions(args, _get_valid_actions())
     # Find the tools that are available.
     actions = _remove_not_possible_actions(actions)
     #
     actions_as_str = _actions_to_string(actions)
-    _LOG.info("# Action selected:\n%s", pri.space(actions_as_str))
+    _LOG.info(
+        "\n%s", prnt.frame("# Action selected:\n%s" % prnt.space(actions_as_str))
+    )
     return actions
 
 
@@ -1432,7 +1474,7 @@ def _test_actions():
     # Check all the actions.
     num_not_poss = 0
     possible_actions: List[str] = []
-    for action in _ALL_ACTIONS:
+    for action in _get_valid_actions():
         class_ = _get_action_class(action)
         is_possible = class_.check_if_possible()
         _LOG.debug("%s -> %s", action, is_possible)
@@ -1442,7 +1484,7 @@ def _test_actions():
             num_not_poss += 1
     # Report results.
     actions_as_str = _actions_to_string(possible_actions)
-    _LOG.info("Possible actions:\n%s", pri.space(actions_as_str))
+    _LOG.info("Possible actions:\n%s", prnt.space(actions_as_str))
     if num_not_poss > 0:
         _LOG.warning("There are %s actions that are not possible", num_not_poss)
     else:
@@ -1463,9 +1505,9 @@ def _lint(
     proper order.
     """
     output: List[str] = []
-    _LOG.info("\n%s", pri.frame(file_name, char1="="))
+    _LOG.info("\n%s", prnt.frame(file_name, char1="="))
     for action in actions:
-        _LOG.debug("\n%s", pri.frame(action, char1="-"))
+        _LOG.debug("\n%s", prnt.frame(action, char1="-"))
         _print("## %-20s (%s)" % (action, file_name))
         if debug:
             # Make a copy after each action.
@@ -1536,49 +1578,6 @@ def _run_linter(
 # Main.
 # #############################################################################
 
-# Actions and if they read / write files.
-# The order of this list implies the order in which they are executed.
-_VALID_ACTIONS_META: List[Tuple[str, str, str, Type[_Action]]] = [
-    (
-        "check_file_property",
-        "r",
-        "Check that generic files are valid",
-        _CheckFileProperty,
-    ),
-    (
-        "basic_hygiene",
-        "w",
-        "Clean up (e.g., tabs, trailing spaces)",
-        _BasicHygiene,
-    ),
-    ("compile_python", "r", "Check that python code is valid", _CompilePython),
-    ("autoflake", "w", "Removes unused imports and variables", _Autoflake),
-    ("isort", "w", "Sort Python import definitions alphabetically", _Isort),
-    # Superseded by black.
-    # ("yapf", "w", "Formatter for Python code", _Yapf),
-    ("black", "w", "The uncompromising code formatter", _Black),
-    ("flake8", "r", "Tool For Style Guide Enforcement", _Flake8),
-    ("pydocstyle", "r", "Docstring style checker", _Pydocstyle),
-    # TODO(gp): Fix this.
-    # Not installable through conda.
-    # ("pyment", "w", "Create, update or convert docstring", _Pyment),
-    ("pylint", "w", "Check that module(s) satisfy a coding standard", _Pylint),
-    ("mypy", "r", "Static code analyzer using the hint types", _Mypy),
-    ("sync_jupytext", "w", "Create / sync jupytext files", _SyncJupytext),
-    ("test_jupytext", "r", "Test jupytext files", _TestJupytext),
-    # Superseded by "sync_jupytext".
-    # ("ipynb_format", "w", "Format jupyter code using yapf", _IpynbFormat),
-    (
-        "custom_python_checks",
-        "w",
-        "Apply some custom python checks",
-        _CustomPythonChecks,
-    ),
-    ("lint_markdown", "w", "Lint txt/md markdown files", _LintMarkdown),
-]
-
-_ALL_ACTIONS = list(zip(*_VALID_ACTIONS_META))[0]
-
 
 def _main(args: argparse.Namespace) -> int:
     dbg.init_logger(args.log_level)
@@ -1594,13 +1593,13 @@ def _main(args: argparse.Namespace) -> int:
     output: List[str] = []
     # Get all the files to process.
     all_file_names = _get_files(args)
-    _LOG.info("Found %s files to process", len(all_file_names))
+    _LOG.info("# Found %s files to process", len(all_file_names))
     # Select files.
     file_names = _get_files_to_lint(args, all_file_names)
     _LOG.info(
-        "# Found %d files to lint:\n%s",
-        len(file_names),
-        pri.space("\n".join(file_names)),
+        "\n%s\n%s",
+        prnt.frame("# Found %d files to lint:" % len(file_names)),
+        prnt.space("\n".join(file_names)),
     )
     if args.collect_only:
         _LOG.warning("Exiting as requested")
@@ -1630,9 +1629,9 @@ def _main(args: argparse.Namespace) -> int:
     output = sorted(output)
     output = hlist.remove_duplicates(output)
     # Print linter output.
-    _print(pri.frame(args.linter_log, char1="/").rstrip("\n"))
+    _print(prnt.frame(args.linter_log, char1="/").rstrip("\n"))
     _print("\n".join(output) + "\n")
-    _print(pri.line(char="/").rstrip("\n"))
+    _print(prnt.line(char="/").rstrip("\n"))
     # Write the file.
     output_as_str = "\n".join(output)
     io_.to_file(args.linter_log, output_as_str)
@@ -1740,10 +1739,12 @@ def _parser() -> argparse.ArgumentParser:
         "--test_actions", action="store_true", help="Print the possible actions"
     )
     # Select actions.
+    # TODO(gp): use prsr.add_action_arg
     parser.add_argument("--action", action="append", help="Run a specific check")
     parser.add_argument(
         "--all", action="store_true", help="Run all recommended phases"
     )
+    #
     parser.add_argument(
         "--pedantic", action="store_true", help="Run some purely cosmetic lints"
     )

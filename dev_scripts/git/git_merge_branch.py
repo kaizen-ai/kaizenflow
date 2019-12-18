@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 """
-Run
+Run all the tests needed to qualify a branch for PR.
+
+Qualify a branch and commit.
 """
 
 import argparse
@@ -19,6 +21,26 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
+
+
+def _refresh(dst_dir):
+    _LOG.debug("Refreshing dst_dir=%s", dst_dir)
+    cd_cmd = "cd %s && " % dst_dir
+    if False:
+        # Make a backup.
+        msg = "git_merge_branch.py"
+        # TODO(gp): git reset to get all the state in the
+        cmd = "git stash save --keep-index '%s' && git stash apply" % msg
+        cmd = cd_cmd + cmd
+        si.system(cmd)
+    # Pull.
+    cmd = "git pull"
+    cmd = cd_cmd + cmd
+    si.system(cmd)
+    # Merge master.
+    cmd = "git merge master --commit --no-edit"
+    cmd = cd_cmd + cmd
+    si.system(cmd)
 
 
 def _get_changed_files(dst_branch: str) -> List[str]:
@@ -64,6 +86,7 @@ def _qualify_branch(
         if quick:
             cmd = "pytest -k Test_p1_submodules_sanity_check1"
         else:
+            # TODO(gp): Delete cache.
             cmd = "run_tests.py --test %s --num_cpus -1" % test_list
         output.append("cmd line='%s'" % cmd)
         si.system(cmd, suppress_output=False)
@@ -123,24 +146,6 @@ def _main(parser):
         cmd = "git fetch origin %s:%s" % (args.dst_branch, args.dst_branch)
         si.system(cmd)
 
-    def _refresh(dst_dir):
-        _LOG.debug("Refreshing dst_dir=%s", dst_dir)
-        cd_cmd = "cd %s && " % dst_dir
-        if False:
-            # Make a backup.
-            msg = "git_merge_branch.py"
-            cmd = "git stash save --keep-index '%s' && git stash apply" % msg
-            cmd = cd_cmd + cmd
-            si.system(cmd)
-        # Pull.
-        cmd = "git pull"
-        cmd = cd_cmd + cmd
-        si.system(cmd)
-        # Merge master.
-        cmd = "git merge master --commit --no-edit"
-        cmd = cd_cmd + cmd
-        si.system(cmd)
-
     # Refresh curr repo.
     _refresh(".")
     # Refresh amp repo, if needed.
@@ -149,8 +154,9 @@ def _main(parser):
     # Qualify amp repo.
     if os.path.exists("amp"):
         tag = "amp"
-        output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list,
-                args.quick)
+        output_tmp = _qualify_branch(
+            tag, args.dst_branch, args.test_list, args.quick
+        )
         output.extend(output_tmp)
     #
     repo_sym_name = git.get_repo_symbolic_name(super_module=True)
