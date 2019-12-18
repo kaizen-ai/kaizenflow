@@ -144,9 +144,19 @@
   - The algorithm is on-line
   - Comparison to the Kalman filter is formalized with regret bounds
   - IBM / Technion research
+  - The setting is one where we are learning the best fixed but unknown
+    autoregression coefficients (rather than one where we are interested in
+    truly dynamic updates)
+    - The learning rate decays like $1 / \sqrt{t}$, and so under some mild
+      constraints on the time series being modeled, the autoregression
+      coefficients converge
+    - The linear dynamical system setup considered is one where the state
+      transition matrix and the observation direction are time-independent
 - Praises:
   - References standard big works in the time series literature, like West and
     Harrison (1997) and Hamilton (1994)
+  - Introduces a relatively simple online technique that competes well with the
+    more complex Kalman filter
 - Critiques:
   - Bounds / constants aren't quantitative
 - Next steps:
@@ -154,6 +164,13 @@
     https://github.com/jmarecek/OnlineLDS
   - Implement and compare to, e.g., z-scoring (a particularly simple case of
     Kalman filtering)
+  - If we have a long history, it may be better to perform a single
+    autoregression over the whole history
+    - This suggests 
+  - What if we keep the learning rate fixed over time?
+    - This would effectively allow for "drifting" dynamics
+    - The proofs of the results of the paper would no longer apply
+    - It isn't obvious how the learning rate ought to be chosen 
 
 ## Predictive State Smoothing (PRESS): Scalable non-parametric regression for high-dimensional data with variable selection
 
