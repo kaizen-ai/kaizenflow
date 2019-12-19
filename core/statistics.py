@@ -64,19 +64,6 @@ def drop_na_inf_if_needed(
         series = series.dropna()
     return series
 
-# TODO(*: Do we really need this? All cases here apply when a `series` is
-#     empty. It would be clearer to log a warning and return when the series
-#     is empty and otherwise carry out usual division.
-
-# TODO(*): move to gen_utils.py as safe_div_nan?
-def safe_div(a: float, b: float) -> np.float:
-    """
-    divide a by b and return np.nan if divided by 0
-    """
-    div = a / b if b != 0 else np.nan
-    return div
-
-
 
 def compute_pct_zero(
     series: pd.Series,
@@ -89,30 +76,62 @@ def compute_pct_zero(
 
     :param zero_threshold: floats smaller than this are treated as zeroes.
     """
-    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
-    num_rows = series.shape[0]
-    num_zeros = (series.dropna().abs() < zero_threshold).sum()
-    return 100.0 * safe_div(num_zeros, num_rows)
+    if series.empty:
+        _LOG.warning("Series is empty")
+        pct_zeros = np.nan
+    else:
+        series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
+        num_rows = series.shape[0]
+        num_zeros = (series.dropna().abs() < zero_threshold).sum()
+        pct_zeros = 100.0 * num_zeros / num_rows
+    return pct_zeros
 
 
 def compute_pct_nan(series: pd.Series, drop_inf: bool = True) -> float:
     """
     Count number of nans in a given time series.
     """
-    series = drop_na_inf_if_needed(series, drop_na=False, drop_inf=drop_inf)
-    num_rows = series.shape[0]
-    num_nans = series.isna().sum()
-    return 100.0 * safe_div(num_nans, num_rows)
+    if series.empty:
+        _LOG.warning("Series is empty")
+        pct_nan = np.nan
+    else:
+        series = drop_na_inf_if_needed(series, drop_na=False, drop_inf=drop_inf)
+        num_rows = series.shape[0]
+        num_nans = series.isna().sum()
+        pct_nan = 100.0 * num_nans / num_rows
+    return pct_nan
 
 
 def compute_pct_inf(series: pd.Series, drop_na: bool = True) -> float:
     """
     Count number of infs in a given time series.
     """
-    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=False)
-    num_rows = series.shape[0]
-    num_infs = series.dropna().apply(np.isinf).sum()
-    return 100.0 * safe_div(num_infs, num_rows)
+    if series.empty:
+        _LOG.warning("Series is empty")
+        pct_inf = np.nan
+    else:
+        series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=False)
+        num_rows = series.shape[0]
+        num_infs = series.dropna().apply(np.isinf).sum()
+        pct_inf = 100.0 * num_infs / num_rows
+    return pct_inf
+
+
+def compute_pct_changes(
+    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+) -> float:
+    """
+    Compute percentage of values in the series that changes at the next timestamp.
+    """
+    if series.empty:
+        _LOG.warning("Series is empty")
+        pct_changes = np.nan
+    else:
+        series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
+        changes = series.dropna().diff()
+        changes_count = changes[changes != 0].shape[0]
+        pct_changes = changes_count / series.shape[0] * 100
+    return pct_changes
 
 
 def count_num_samples(
@@ -133,18 +152,6 @@ def count_num_unique_values(
     """
     series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
     return len(series.unique())
-
-
-def compute_pct_changes(
-    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
-) -> float:
-    """
-    Compute percentage of values in the series that changes at the next timestamp.
-    """
-    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
-    changes = series.dropna().diff()
-    changes_count = changes[changes != 0].shape[0]
-    return safe_div(changes_count, series.shape[0])*100
 
 
 # #############################################################################
