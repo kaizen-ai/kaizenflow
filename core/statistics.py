@@ -60,10 +60,11 @@ def safe_div(a: float, b: float) -> np.float:
 #  behaviour of function with drop_na = False.
 
 
-def drop_na_inf_if_needed(series: pd.Series, drop_na: bool=True,
-                          drop_inf: bool=True) -> pd.Series:
+def drop_na_inf_if_needed(
+    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+) -> pd.Series:
     """
-    Removes nans and infs from series if corresponding param is True
+    Remove nans and infs from series if corresponding param is True.
     """
     if drop_inf:
         series = series.replace([np.inf, -np.inf], np.nan).dropna()
@@ -72,9 +73,12 @@ def drop_na_inf_if_needed(series: pd.Series, drop_na: bool=True,
     return series
 
 
-def count_pct_zero(series: pd.Series, zero_threshold: float = 1e-9,
-                   drop_na: bool = True,
-                   drop_inf: bool = True) -> float:
+def count_pct_zero(
+    series: pd.Series,
+    zero_threshold: float = 1e-9,
+    drop_na: bool = True,
+    drop_inf: bool = True,
+) -> float:
     """
     Count number of zeroes in a given time series.
 
@@ -106,8 +110,9 @@ def count_pct_inf(series: pd.Series, drop_na: bool = True) -> float:
     return 100.0 * safe_div(num_infs, num_rows)
 
 
-def count_num_samples(series: pd.Series, drop_na: bool=True,
-                          drop_inf: bool=True) -> int:
+def count_num_samples(
+    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+) -> int:
     """
     Count number of data points in a given time series.
     """
@@ -115,8 +120,9 @@ def count_num_samples(series: pd.Series, drop_na: bool=True,
     return series.shape[0]
 
 
-def count_num_unique_values(series: pd.Series, drop_na: bool=True,
-                          drop_inf: bool=True) -> int:
+def count_num_unique_values(
+    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+) -> int:
     """
     Count number of unique values in the series.
     """
@@ -124,8 +130,9 @@ def count_num_unique_values(series: pd.Series, drop_na: bool=True,
     return len(series.unique())
 
 
-def count_pct_changes(series: pd.Series, drop_na: bool=True,
-                          drop_inf: bool=True) -> float:
+def count_pct_changes(
+    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+) -> float:
     """
     Compute percentage of values in the series that changes at the next timestamp.
     """
