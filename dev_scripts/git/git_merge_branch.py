@@ -96,55 +96,48 @@ def _qualify_branch(
 
 # #############################################################################
 
-
-def _parse():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--src_branch",
-        action="store",
-        default=None,
-        help="Name of the branch to merge. No value means use "
-        "the branch we are currently in",
-    )
-    parser.add_argument(
-        "--dst_branch",
-        action="store",
-        default="master",
-        help="Branch to merge into, typically " "master",
-    )
-    parser.add_argument("--test_list", action="store", default="slow")
-    parser.add_argument("--quick", action="store_true")
-    parser.add_argument("--merge_if_successful", action="store_true")
-    parser.add_argument(
-        "--summary_file", action="store", default="./summary_file.txt"
-    )
-    prsr.add_verbosity_arg(parser)
-    return parser
+_VALID_ACTIONS = [
+    "git_fetch_dst_branch",
+]
 
 
 def _main(parser):
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
+    actions = prsr.select_actions(args, _VALID_ACTIONS)
+    #
+    target_dirs = ["."]
+    dir_name = "amp"
+    if os.path.exists(dir_name):
+        target_dirs.append(dir_name)
+    #
     output = []
-    # Update the src branch.
-    if args.src_branch is not None:
-        cmd = "git checkout %s" % args.src_branch
-        si.system(cmd)
-    # If this is master, then raise an error.
-    branch_name = git.get_branch_name()
-    _LOG.info("Current branch_name: %s", branch_name)
-    msg = "Merging: %s -> %s" % (branch_name, args.dst_branch)
-    output.append(msg)
-    if True:
-        dbg.dassert_ne(branch_name, "master", "You can't merge from master")
+    # # Update the src branch.
+    # if args.src_branch is not None:
+    #     cmd = "git checkout %s" % args.src_branch
+    #     si.system(cmd)
+    # # If this is master, then raise an error.
+    # if True:
+    #     dbg.dassert_ne(branch_name, "master", "You can't merge from master")
+    #
     # TODO(gp): Make sure the Git client is empty.
+    #
+
     # Update the dst branch.
-    if True:
-        cmd = "git fetch origin %s:%s" % (args.dst_branch, args.dst_branch)
-        si.system(cmd)
+    for dir_ in target_dirs:
+        branch_name = git.get_branch_name(dir_)
+        msg = "%s: merging: %s -> %s" % (dir_, branch_name, args.dst_branch)
+        _LOG.info(msg)
+        output.append(msg)
+        #
+        action = "git_getch_dst_branch"
+        if action in actions:
+            _LOG.debug("\n%s", prnt.frame("action=%s" % action))
+            dst_branch = args.dst_branch
+            cmd = "git fetch origin %s:%s" % (dst_branch, dst_branch)
+            si.system(cmd)
+    assert 0
 
     # Refresh curr repo.
     _refresh(".")
@@ -182,6 +175,34 @@ def _main(parser):
 
     # Merge.
     # TODO(gp): Add merge step.
+
+
+def _parse():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    # parser.add_argument(
+    #     "--src_branch",
+    #     action="store",
+    #     default=None,
+    #     help="Name of the branch to merge. No value means use "
+    #          "the branch we are currently in",
+    # )
+    parser.add_argument(
+        "--dst_branch",
+        action="store",
+        default="master",
+        help="Branch to merge into, typically " "master",
+    )
+    prsr.add_action_arg(parser, _VALID_ACTIONS)
+    parser.add_argument("--test_list", action="store", default="slow")
+    parser.add_argument("--quick", action="store_true")
+    parser.add_argument("--merge_if_successful", action="store_true")
+    parser.add_argument(
+        "--summary_file", action="store", default="./summary_file.txt"
+    )
+    prsr.add_verbosity_arg(parser)
+    return parser
 
 
 if __name__ == "__main__":

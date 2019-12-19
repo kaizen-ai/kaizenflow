@@ -64,13 +64,8 @@ def select_actions(
     for action in set(actions):
         if action not in valid_actions:
             raise ValueError("Invalid action '%s'" % action)
-    # Reorder actions according to _ALL_ACTIONS.
+    # Reorder actions according to 'valid_actions'.
     actions = [action for action in valid_actions if action in actions]
-    # # Find the tools that are available.
-    # actions = _remove_not_possible_actions(actions)
-    # #
-    # actions_as_str = _actions_to_string(actions)
-    # _LOG.info("# Action selected:\n%s", pri.space(actions_as_str))
     return actions
 
 

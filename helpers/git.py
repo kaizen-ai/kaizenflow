@@ -36,13 +36,14 @@ def get_git_name() -> str:
     return _system_to_one_string(cmd)
 
 
-def get_branch_name() -> str:
+def get_branch_name(git_dir=".") -> str:
     """
     Return the name of the Git branch we are in.
 
     E.g., `master` or `PartTask672_DEV_INFRA_Add_script_to_check_and_merge_PR`
     """
-    cmd = "git rev-parse --abbrev-ref HEAD"
+    dbg.dassert_exists(git_dir)
+    cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % git_dir
     return _system_to_one_string(cmd)
 
 
