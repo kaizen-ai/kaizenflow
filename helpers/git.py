@@ -260,17 +260,18 @@ def _check_files(files: List[str]) -> List[str]:
         if os.path.exists(f):
             files_tmp.append(f)
         else:
-            _LOG.warning("'%s' doesn't exist", f)
+            _LOG.debug("File '%s' doesn't exist: skipping", f)
     return files_tmp
 
 
 def _get_files(
     dir_name: str, cmd: str, remove_files_non_present: bool
 ) -> List[str]:
-    cd_cmd = "cd %s &&" % dir_name
+    cd_cmd = "cd %s && " % dir_name
     _, output = si.system_to_string(cd_cmd + cmd)
     #
     files = output.split()
+    files = [os.path.join(dir_name, f) for f in files]
     if remove_files_non_present:
         files = _check_files(files)
     return files
@@ -288,6 +289,7 @@ def get_modified_files(
     :param dir_name: directory with Git client
     :param remove_files_non_present: remove the files that are not
         currently present in the client
+    :return: list of files
     """
     # If the client status is:
     #   > git status -s
@@ -307,6 +309,7 @@ def get_modified_files(
     return files
 
 
+# TODO(gp): -> ...previously...
 def get_previous_committed_files(
     dir_name: str = ".",
     num_commits: int = 1,
@@ -320,6 +323,7 @@ def get_previous_committed_files(
     :param dir_name: directory with Git client
     :param remove_files_non_present: remove the files that are not
         currently present in the client
+    :return: list of files
     """
     cmd = []
     cmd.append('git show --pretty="" --name-only')
@@ -339,8 +343,10 @@ def get_modified_files_in_branch(
     Equivalent to `git diff --name-only master...`
 
     :param dir_name: directory with Git client
+    :param dst_branch: branch to compare to, e.g., master
     :param remove_files_non_present: remove the files that are not
         currently present in the client
+    :return: list of files
     """
     cmd = "git diff --name-only %s..." % dst_branch
     files = _get_files(dir_name, cmd, remove_files_non_present)

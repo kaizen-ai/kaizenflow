@@ -63,14 +63,17 @@ def _process_repo(
     if to_execute:
         cmd = "git merge master --commit --no-edit"
         si.system(cd_cmd + cmd)
-    # - Linter.
+    #
     action = "linter"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
         output.append(prnt.frame("%s: linter log" % dir_))
         # Get the files that were modified in this branch.
         file_names = git.get_modified_files_in_branch(dir_, dst_branch)
-        msg = "Files modified:\n%s" % prnt.space("\n".join(file_names))
+        msg = "Files modified: %d\n%s" % (
+            len(file_names),
+            prnt.space("\n".join(file_names)),
+        )
         _LOG.debug(msg)
         output.append(msg)
         if not file_names:
@@ -78,15 +81,12 @@ def _process_repo(
         else:
             linter_log = "./%s.linter_log.txt" % dir_
             linter_log = os.path.abspath(linter_log)
-            cmd = "linter.py -f %s --linter_log %s" % (
-                " ".join(file_names),
-                linter_log,
-            )
+            cmd = "linter.py -b --linter_log %s" % linter_log
             si.system(cd_cmd + cmd, suppress_output=False)
             # Read output from the linter.
             txt = io_.from_file(linter_log)
             output.append(txt)
-    # - Run tests.
+    #
     action = "run_tests"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
@@ -117,6 +117,7 @@ def _main(parser):
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     output = []
+    output.append("cmd=%s" % dbg.get_command_line())
     # Print actions.
     actions = prsr.select_actions(args, _VALID_ACTIONS)
     output.append("actions=%s" % actions)
@@ -143,7 +144,6 @@ def _main(parser):
     # Report the output.
     output_as_txt = "\n".join(output)
     io_.to_file(args.summary_file, output_as_txt)
-    # print(output_as_txt)
     _LOG.info("Summary file saved into '%s'", args.summary_file)
     # Merge.
     # TODO(gp): Add merge step.

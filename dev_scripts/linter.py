@@ -209,12 +209,19 @@ def _get_files(args) -> List[str]:
         # User has specified files.
         file_names = args.files
     else:
-        if args.previous_git_commit_files is not None:
+        if args.current_git_files:
+            # Get all the git modified files.
+            file_names = git.get_modified_files()
+        elif args.previous_git_committed_files is not None:
             _LOG.debug("Looking for files committed in previous Git commit")
             # Get all the git in user previous commit.
-            n_commits = args.previous_git_commit_files
+            n_commits = args.previous_git_committed_files
             _LOG.info("Using %s previous commits", n_commits)
             file_names = git.get_previous_committed_files(n_commits)
+        elif args.modified_files_in_branch:
+            dir_name = "."
+            dst_branch = "master"
+            file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
         elif args.dir_name:
             if args.dir_name == "$GIT_ROOT":
                 dir_name = git.get_client_root(super_module=True)
@@ -226,9 +233,6 @@ def _get_files(args) -> List[str]:
             cmd = "find %s -name '*' -type f" % dir_name
             _, output = si.system_to_string(cmd)
             file_names = output.split("\n")
-        if not file_names or args.current_git_files:
-            # Get all the git modified files.
-            file_names = git.get_modified_files()
     # Remove text files used in unit tests.
     file_names = [f for f in file_names if not is_test_input_output_file(f)]
     # Make all paths absolute.
@@ -1350,6 +1354,23 @@ class _LintMarkdown(_Action):
 
 
 # #############################################################################
+
+
+def _check_file_property(actions, all_file_names, pedantic):
+    output: List[str] = []
+    action = "check_file_property"
+    if action in actions:
+        for file_name in all_file_names:
+            class_ = _get_action_class(action)
+            output_tmp = class_.execute(file_name, pedantic)
+            _dassert_list_of_strings(output_tmp)
+            output.extend(output_tmp)
+    actions = [a for a in actions if a != action]
+    _LOG.debug("actions=%s", actions)
+    return output, actions
+
+
+# #############################################################################
 # Actions.
 # #############################################################################
 
@@ -1544,11 +1565,10 @@ def _run_linter(
         _LOG.warning(
             "Using num_threads='%s' since there is a single file", num_threads
         )
+    output: List[str] = []
     if num_threads == "serial":
-        output: List[str] = []
         for file_name in file_names:
             output_tmp = _lint(file_name, actions, pedantic, args.debug)
-            output.extend(output_tmp)
     else:
         num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
@@ -1561,12 +1581,20 @@ def _run_linter(
             joblib.delayed(_lint)(file_name, actions, pedantic, args.debug)
             for file_name in file_names
         )
-        output = list(itertools.chain.from_iterable(output_tmp))
-    output.insert(0, "cmd line='%s'" % dbg.get_command_line())
-    # TODO(gp): datetime_.get_timestamp().
-    # output.insert(1, "datetime='%s'" % datetime.datetime.now())
+        output_tmp = list(itertools.chain.from_iterable(output_tmp))
+    output.extend(output_tmp)
     output = _remove_empty_lines(output)
     return output
+
+
+def _count_lints(lints: List[str]) -> int:
+    num_lints = 0
+    for line in lints:
+        # dev_scripts/linter.py:493: ... [pydocstyle]
+        if re.match(r"\S+:\d+.*\[\S+\]", line):
+            num_lints += 1
+    _LOG.info("num_lints=%d", num_lints)
+    return num_lints
 
 
 # #############################################################################
@@ -1585,10 +1613,9 @@ def _main(args: argparse.Namespace) -> int:
     if args.no_print:
         global NO_PRINT
         NO_PRINT = True
-    output: List[str] = []
     # Get all the files to process.
     all_file_names = _get_files(args)
-    _LOG.info("# Found %s files to process", len(all_file_names))
+    _LOG.info("# Found %d files to process", len(all_file_names))
     # Select files.
     file_names = _get_files_to_lint(args, all_file_names)
     _LOG.info(
@@ -1601,28 +1628,35 @@ def _main(args: argparse.Namespace) -> int:
         sys.exit(0)
     # Select actions.
     actions = _select_actions(args)
+    all_actions = actions[:]
     _LOG.debug("actions=%s", actions)
     # Create tmp dir.
     io_.create_dir(_TMP_DIR, incremental=False)
     _LOG.info("tmp_dir='%s'", _TMP_DIR)
     # Check the files.
-    action = "check_file_property"
-    if action in actions:
-        for file_name in all_file_names:
-            pedantic = args.pedantic
-            class_ = _get_action_class(action)
-            output_tmp = class_.execute(file_name, pedantic)
-            _dassert_list_of_strings(output_tmp)
-            output.extend(output_tmp)
-    actions = [a for a in actions if a != action]
-    _LOG.debug("actions=%s", actions)
+    lints: List[str] = []
+    lints_tmp, actions = _check_file_property(
+        actions, all_file_names, args.pedantic
+    )
+    lints.extend(lints_tmp)
     # Run linter.
-    output_tmp = _run_linter(actions, args, file_names)
-    _dassert_list_of_strings(output_tmp)
-    output.extend(output_tmp)
+    lints_tmp = _run_linter(actions, args, file_names)
+    _dassert_list_of_strings(lints_tmp)
+    lints.extend(lints_tmp)
     # Sort the errors.
-    output = sorted(output)
-    output = hlist.remove_duplicates(output)
+    lints = sorted(lints)
+    lints = hlist.remove_duplicates(lints)
+    # Count number of lints.
+    num_lints = _count_lints(lints)
+    #
+    output: List[str] = []
+    output.append("cmd line='%s'" % dbg.get_command_line())
+    # TODO(gp): datetime_.get_timestamp().
+    # output.insert(1, "datetime='%s'" % datetime.datetime.now())
+    output.append("actions=%d %s" % (len(all_actions), all_actions))
+    output.append("file_names=%d %s" % (len(file_names), file_names))
+    output.extend(lints)
+    output.append("num_lints=%d" % num_lints)
     # Print linter output.
     _print(prnt.frame(args.linter_log, char1="/").rstrip("\n"))
     _print("\n".join(output) + "\n")
@@ -1630,13 +1664,7 @@ def _main(args: argparse.Namespace) -> int:
     # Write the file.
     output_as_str = "\n".join(output)
     io_.to_file(args.linter_log, output_as_str)
-    # Count number of lints.
-    num_lints = 0
-    for line in output:
-        # dev_scripts/linter.py:493: ... [pydocstyle]
-        if re.match(r"\S+:\d+.*\[\S+\]", line):
-            num_lints += 1
-    _LOG.info("num_lints=%d", num_lints)
+    #
     if num_lints != 0:
         _LOG.info(
             "You can quickfix the issues with\n> vim -c 'cfile %s'",
@@ -1665,16 +1693,22 @@ def _parser() -> argparse.ArgumentParser:
         "-c",
         "--current_git_files",
         action="store_true",
-        help="Select all files modified in the current git client",
+        help="Select files modified in the current git client",
     )
     parser.add_argument(
         "-p",
-        "--previous_git_commit_files",
+        "--previous_git_committed_files",
         nargs="?",
         type=int,
         const=1,
         default=None,
-        help="Select all files modified in previous 'n' user git commit",
+        help="Select files modified in previous 'n' user git commit",
+    )
+    parser.add_argument(
+        "-b",
+        "--modified_files_in_branch",
+        action="store_true",
+        help="Select files modified in current branch with respect to master",
     )
     parser.add_argument(
         "-d",
