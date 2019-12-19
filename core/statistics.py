@@ -51,7 +51,6 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # TODO(*): move to gen_utils.py as safe_div_nan?
-# TODO(*): Add type hints (probably float and numpy.float).
 def safe_div(a: float, b: float) -> np.float:
     div = a / b if b != 0 else np.nan
     return div
