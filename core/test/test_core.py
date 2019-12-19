@@ -1,35 +1,29 @@
-import collections
 import io
 import json
 import logging
-import os
-import pprint
 from typing import Any, Callable, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
-import pytest
 import scipy
 
 import core.config as cfg
-import core.dataflow_core as dtfc
+import core.dataflow as dtf
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
-import core.signal_processing as sigp
 import helpers.dbg as dbg
-import helpers.git as git
 import helpers.printing as pri
 import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 
 
-# ###############################################################################
+# #############################################################################
 # config.py
-# ###############################################################################
+# #############################################################################
 
 
 class Test_config1(ut.TestCase):
@@ -214,9 +208,9 @@ class Test_config1(ut.TestCase):
         self.assertEqual(elem, "hello_world3")
 
 
-# ###############################################################################
+# #############################################################################
 # dataflow_core.py
-# ###############################################################################
+# #############################################################################
 
 
 class _Dataflow_helper(ut.TestCase):
@@ -245,8 +239,8 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         """
         Creates a node and adds it to a DAG.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1")
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1")
         dag.add_node(n1)
         self._check(dag.dag)
 
@@ -254,14 +248,14 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         """
         Demonstrates "strict" and "loose" behavior on repeated add_node().
         """
-        dag_strict = dtfc.DAG(mode="strict")
-        m1 = dtfc.Node("m1")
+        dag_strict = dtf.DAG(mode="strict")
+        m1 = dtf.Node("m1")
         dag_strict.add_node(m1)
         with self.assertRaises(AssertionError):
             dag_strict.add_node(m1)
         #
-        dag_loose = dtfc.DAG(mode="loose")
-        n1 = dtfc.Node("n1")
+        dag_loose = dtf.DAG(mode="loose")
+        n1 = dtf.Node("n1")
         dag_loose.add_node(n1)
         dag_loose.add_node(n1)
         self._check(dag_loose.dag)
@@ -270,17 +264,17 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         """
         Demonstrates "strict" and "loose" behavior on repeated add_node().
         """
-        dag_strict = dtfc.DAG(mode="strict")
-        m1 = dtfc.Node("m1")
+        dag_strict = dtf.DAG(mode="strict")
+        m1 = dtf.Node("m1")
         dag_strict.add_node(m1)
-        m1_prime = dtfc.Node("m1")
+        m1_prime = dtf.Node("m1")
         with self.assertRaises(AssertionError):
             dag_strict.add_node(m1_prime)
         #
-        dag_loose = dtfc.DAG(mode="loose")
-        n1 = dtfc.Node("n1")
+        dag_loose = dtf.DAG(mode="loose")
+        n1 = dtf.Node("n1")
         dag_loose.add_node(n1)
-        n1_prime = dtfc.Node("n1")
+        n1_prime = dtf.Node("n1")
         dag_loose.add_node(n1_prime)
         self._check(dag_loose.dag)
 
@@ -288,22 +282,22 @@ class Test_dataflow_core_DAG1(_Dataflow_helper):
         """
         Adds multiple nodes to a DAG.
         """
-        dag = dtfc.DAG()
+        dag = dtf.DAG()
         for name in ["n1", "n2", "n3", "n4"]:
-            dag.add_node(dtfc.Node(name, inputs=["in1"], outputs=["out1"]))
+            dag.add_node(dtf.Node(name, inputs=["in1"], outputs=["out1"]))
         self._check(dag.dag)
 
     def test_add_nodes5(self) -> None:
         """
         Re-adding a node clears node, successors, and edges in `loose` mode.
         """
-        dag = dtfc.DAG(mode="loose")
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG(mode="loose")
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        n2 = dtf.Node("n2", inputs=["in1"], outputs=["out1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
-        n3 = dtfc.Node("n3", inputs=["in1"])
+        n3 = dtf.Node("n3", inputs=["in1"])
         dag.add_node(n3)
         dag.connect("n2", "n3")
         dag.add_node(n1)
@@ -315,10 +309,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Simplest case of connecting two nodes.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect(("n1", "out1"), ("n2", "in1"))
         self._check(dag.dag)
@@ -327,10 +321,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Simplest case, but inferred input/output names.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
         self._check(dag.dag)
@@ -339,10 +333,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Ensures input/output names are valid.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         with self.assertRaises(AssertionError):
             dag.connect(("n2", "out1"), ("n1", "in1"))
@@ -351,10 +345,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Forbids creating cycles in DAG.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", inputs=["in1"], outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        n2 = dtf.Node("n2", inputs=["in1"], outputs=["out1"])
         dag.add_node(n2)
         dag.connect(("n1", "out1"), ("n2", "in1"))
         with self.assertRaises(AssertionError):
@@ -364,10 +358,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Forbids creating cycles in DAG (inferred input/output names).
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", inputs=["in1"], outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1"])
+        n2 = dtf.Node("n2", inputs=["in1"], outputs=["out1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
         with self.assertRaises(AssertionError):
@@ -377,16 +371,16 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         A nontrivial, multi-input/output example.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"], outputs=["out1", "out2"])
+        n2 = dtf.Node("n2", inputs=["in1"], outputs=["out1", "out2"])
         dag.add_node(n2)
-        n3 = dtfc.Node("n3", inputs=["in1"], outputs=["out1"])
+        n3 = dtf.Node("n3", inputs=["in1"], outputs=["out1"])
         dag.add_node(n3)
-        n4 = dtfc.Node("n4", inputs=["in1"], outputs=["out1"])
+        n4 = dtf.Node("n4", inputs=["in1"], outputs=["out1"])
         dag.add_node(n4)
-        n5 = dtfc.Node("n5", inputs=["in1", "in2"], outputs=["out1"])
+        n5 = dtf.Node("n5", inputs=["in1", "in2"], outputs=["out1"])
         dag.add_node(n5)
         dag.connect("n1", ("n2", "in1"))
         dag.connect(("n2", "out1"), "n3")
@@ -399,8 +393,8 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Forbids connecting a node that doesn't belong to the DAG.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
         with self.assertRaises(AssertionError):
             dag.connect("n2", "n1")
@@ -409,10 +403,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Ensures at most one output connects to any input.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1", "out2"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1", "out2"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect(("n1", "out1"), "n2")
         with self.assertRaises(AssertionError):
@@ -422,10 +416,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Allows multi-attribute edges if each input has at most one source.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1", "in2"])
+        n2 = dtf.Node("n2", inputs=["in1", "in2"])
         dag.add_node(n2)
         dag.connect("n1", ("n2", "in1"))
         dag.connect("n1", ("n2", "in2"))
@@ -435,10 +429,10 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
         """
         Demonstrates adding edges is not idempotent.
         """
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
         with self.assertRaises(AssertionError):
@@ -447,29 +441,29 @@ class Test_dataflow_core_DAG2(_Dataflow_helper):
 
 class Test_dataflow_core_DAG3(_Dataflow_helper):
     def test_sources_sinks1(self) -> None:
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1", outputs=["out1"])
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1", outputs=["out1"])
         dag.add_node(n1)
-        n2 = dtfc.Node("n2", inputs=["in1"])
+        n2 = dtf.Node("n2", inputs=["in1"])
         dag.add_node(n2)
         dag.connect("n1", "n2")
         self.assertEqual(dag.get_sources(), ["n1"])
         self.assertEqual(dag.get_sinks(), ["n2"])
 
     def test_sources_sinks2(self) -> None:
-        dag = dtfc.DAG()
-        src1 = dtfc.Node("src1", outputs=["out1"])
+        dag = dtf.DAG()
+        src1 = dtf.Node("src1", outputs=["out1"])
         dag.add_node(src1)
-        src2 = dtfc.Node("src2", outputs=["out1"])
+        src2 = dtf.Node("src2", outputs=["out1"])
         dag.add_node(src2)
-        m1 = dtfc.Node("m1", inputs=["in1", "in2"], outputs=["out1"])
+        m1 = dtf.Node("m1", inputs=["in1", "in2"], outputs=["out1"])
         dag.add_node(m1)
         dag.connect("src1", ("m1", "in1"))
         dag.connect("src2", ("m1", "in2"))
-        snk1 = dtfc.Node("snk1", inputs=["in1"])
+        snk1 = dtf.Node("snk1", inputs=["in1"])
         dag.add_node(snk1)
         dag.connect("m1", "snk1")
-        snk2 = dtfc.Node("snk2", inputs=["in1"])
+        snk2 = dtf.Node("snk2", inputs=["in1"])
         dag.add_node(snk2)
         dag.connect("m1", "snk2")
         sources = dag.get_sources()
@@ -480,16 +474,16 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
         self.assertListEqual(sinks, ["snk1", "snk2"])
 
     def test_sources_sinks3(self) -> None:
-        dag = dtfc.DAG()
-        n1 = dtfc.Node("n1")
+        dag = dtf.DAG()
+        n1 = dtf.Node("n1")
         dag.add_node(n1)
         self.assertEqual(dag.get_sources(), ["n1"])
         self.assertEqual(dag.get_sinks(), ["n1"])
 
 
-# ###############################################################################
+# #############################################################################
 # explore.py
-# ###############################################################################
+# #############################################################################
 
 
 class Test_explore1(ut.TestCase):
@@ -518,9 +512,9 @@ class Test_explore1(ut.TestCase):
         self.check_string(txt)
 
 
-# ###############################################################################
+# #############################################################################
 # pandas_helpers.py
-# ###############################################################################
+# #############################################################################
 
 
 # TODO(gp): -> Test_pandas_helper1
@@ -541,7 +535,7 @@ class TestResampleIndex1(ut.TestCase):
         self.check_string(txt)
 
 
-# ###############################################################################
+# #############################################################################
 
 
 # TODO(gp): -> Test_pandas_helper2
@@ -662,9 +656,9 @@ class TestDfRollingApply(ut.TestCase):
         self.check_string(df_act.to_string())
 
 
-# ###############################################################################
+# #############################################################################
 # residualizer.py
-# ###############################################################################
+# #############################################################################
 
 
 # TODO(gp): -> Test_residualizer1
@@ -747,7 +741,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         eval_func = res.PcaFactorComputer._build_stable_eig_map2
         self._test_stabilize_eigenvec_helper(data_func, eval_func)
 
-    # ###########################################################################
+    # #########################################################################
 
     def test_linearize_eigval_eigvec(self) -> None:
         # Get data.
@@ -763,7 +757,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         )
         self.check_string(txt)
 
-    # ###########################################################################
+    # #########################################################################
 
     def _test_sort_eigval_helper(
         self, eigval: np.ndarray, eigvec: np.ndarray, are_eigval_sorted_exp: bool
@@ -810,7 +804,7 @@ class TestPcaFactorComputer1(ut.TestCase):
         self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
 
 
-# ###############################################################################
+# #############################################################################
 
 
 class TestPcaFactorComputer2(ut.TestCase):
@@ -918,130 +912,3 @@ class TestPcaFactorComputer2(ut.TestCase):
             num_samples, report_stats, stabilize_eig, window
         )
         self._check(comp, df_res)
-
-
-# ###############################################################################
-# signal_processing.py
-# ###############################################################################
-
-
-class Test_signal_processing_get_symmetric_equisized_bins(ut.TestCase):
-    def test_zero_in_bin_interior_false(self) -> None:
-        input = pd.Series([-1, 3])
-        expected = np.array([-3, -2, -1, 0, 1, 2, 3])
-        actual = sigp.get_symmetric_equisized_bins(input, 1)
-        np.testing.assert_array_equal(actual, expected)
-
-    def test_zero_in_bin_interior_true(self) -> None:
-        input = pd.Series([-1, 3])
-        expected = np.array([-3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5])
-        actual = sigp.get_symmetric_equisized_bins(input, 1, True)
-        np.testing.assert_array_equal(actual, expected)
-
-    def test_infs(self) -> None:
-        data = pd.Series([-1, np.inf, -np.inf, 3])
-        expected = np.array([-4, -2, 0, 2, 4])
-        actual = sigp.get_symmetric_equisized_bins(data, 2)
-        np.testing.assert_array_equal(actual, expected)
-
-
-# TODO(*): -> Test_signal_processing_rolling_zcore1()
-class TestSignalProcessingRollingZScore1(ut.TestCase):
-    def test_default_values1(self) -> None:
-        heaviside = sigp.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.rolling_zscore(heaviside, tau=40)
-        self.check_string(zscored.to_string())
-
-    def test_default_values2(self) -> None:
-        heaviside = sigp.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.rolling_zscore(heaviside, tau=20)
-        self.check_string(zscored.to_string())
-
-
-class Test_signal_processing_process_outliers1(ut.TestCase):
-    def _helper(self, srs, mode, lower_quantile, num_df_rows=10, **kwargs):
-        info = collections.OrderedDict()
-        srs_out = sigp.process_outliers(
-            srs, mode, lower_quantile, info=info, **kwargs
-        )
-        txt = []
-        txt.append("# info")
-        txt.append(pprint.pformat(info))
-        txt.append("# srs_out")
-        txt.append(str(srs_out.head(num_df_rows)))
-        self.check_string("\n".join(txt))
-
-    @staticmethod
-    def _get_data1():
-        np.random.seed(100)
-        n = 100000
-        data = np.random.normal(loc=0.0, scale=1.0, size=n)
-        return pd.Series(data)
-
-    def test_winsorize1(self):
-        srs = self._get_data1()
-        mode = "winsorize"
-        lower_quantile = 0.01
-        # Check.
-        self._helper(srs, mode, lower_quantile)
-
-    def test_set_to_nan1(self):
-        srs = self._get_data1()
-        mode = "set_to_nan"
-        lower_quantile = 0.01
-        # Check.
-        self._helper(srs, mode, lower_quantile)
-
-    def test_set_to_zero1(self):
-        srs = self._get_data1()
-        mode = "set_to_zero"
-        lower_quantile = 0.01
-        # Check.
-        self._helper(srs, mode, lower_quantile)
-
-    @staticmethod
-    def _get_data2():
-        return pd.Series(range(1, 10))
-
-    def test_winsorize2(self):
-        srs = self._get_data2()
-        mode = "winsorize"
-        lower_quantile = 0.2
-        # Check.
-        self._helper(srs, mode, lower_quantile, num_df_rows=len(srs))
-
-    def test_set_to_nan2(self):
-        srs = self._get_data2()
-        mode = "set_to_nan"
-        lower_quantile = 0.2
-        # Check.
-        self._helper(srs, mode, lower_quantile, num_df_rows=len(srs))
-
-    def test_set_to_zero2(self):
-        srs = self._get_data2()
-        mode = "set_to_zero"
-        lower_quantile = 0.2
-        upper_quantile = 0.5
-        # Check.
-        self._helper(
-            srs,
-            mode,
-            lower_quantile,
-            num_df_rows=len(srs),
-            upper_quantile=upper_quantile,
-        )
-
-
-# TODO(*): We should convert core/notebooks/gallery_signal_processing.ipynb
-#  into unit tests to get some coverage for the functions.
-
-
-@pytest.mark.slow
-class Test_gallery_signal_processing1(ut.TestCase):
-    def test_notebook1(self) -> None:
-        file_name = os.path.join(
-            git.get_amp_abs_path(),
-            "core/notebooks/gallery_signal_processing.ipynb",
-        )
-        scratch_dir = self.get_scratch_space()
-        ut.run_notebook(file_name, scratch_dir)

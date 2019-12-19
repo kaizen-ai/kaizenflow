@@ -1,3 +1,4 @@
+# linter log
 ************* Module input [pylint]
 $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
 $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
@@ -5,3 +6,7 @@ $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3:9
 dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
 dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
 dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
+# linter file
+if __name__ == "main":
+    txt = "hello"
+    m = re.search("\s", txt)

@@ -11,7 +11,7 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -127,13 +127,26 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
+def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
+    arr = [l for l in arr if l.rstrip().lstrip()]
+    return arr
+
+
+# TODO(gp): It would be nice to have a decorator to go from / to array of
+#  strings.
+def remove_empty_lines(txt: str) -> str:
+    arr = remove_empty_lines_from_string_list(txt.split("\n"))
+    txt = "\n".join(arr)
+    return txt
+
+
 def remove_amp_references(txt: str) -> str:
     """
     Remove references to amp.
     """
     txt = re.sub("^amp/", "", txt, flags=re.MULTILINE)
     txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
-    txt = re.sub("amp:", "", txt, flags=re.MULTILINE)
+    txt = re.sub("/amp:", ":", txt, flags=re.MULTILINE)
     return txt
 
 
@@ -152,6 +165,8 @@ def purify_txt_from_client(txt: str) -> str:
     # Replace the user name with `$USER_NAME`.
     user_name = si.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
+    # Remove amp reference, if any.
+    txt = remove_amp_references(txt)
     # TODO(gp): Remove conda_sh_path.
     return txt
 
@@ -181,13 +196,9 @@ def diff_files(file_name1: str, file_name2: str, tag: Optional[str] = None):
     msg.append("> " + vimdiff_cmd)
     msg.append("or running:")
     msg.append("> " + diff_script)
-    # TODO(gp): Understand why mypy reports:
-    #   Incompatible types in assignment (expression has type "str",
-    #   variable has type "List[str]")
-    msg = "\n".join(msg)  # type: ignore
-    _LOG.error(msg)
-    # Print stack trace.
-    raise RuntimeError(msg)
+    msg_as_str = "\n".join(msg)
+    _LOG.error(msg_as_str)
+    raise RuntimeError(msg_as_str)
 
 
 # #############################################################################
@@ -269,36 +280,6 @@ def _assert_equal(
         #
         tag = "ACTUAL vs EXPECTED"
         diff_files(act_file_name, exp_file_name, tag)
-        # # Diff to screen.
-        # _, res = si.system_to_string(
-        #     "echo; sdiff -l -w 150 %s %s" % (act_file_name, exp_file_name),
-        #     abort_on_error=False,
-        #     log_level=logging.DEBUG,
-        # )
-        # _LOG.error("%s", "\n" + prnt.frame("ACTUAL vs EXPECTED"))
-        # _LOG.error(res)
-        # # Report how to diff.
-        # vimdiff_cmd = "vimdiff %s %s" % (
-        #     os.path.abspath(act_file_name),
-        #     os.path.abspath(exp_file_name),
-        # )
-        # # Save a script to diff.
-        # diff_script = "./tmp_diff.sh"
-        # io_.to_file(diff_script, vimdiff_cmd)
-        # cmd = "chmod +x " + diff_script
-        # si.system(cmd)
-        # msg = []
-        # msg.append("Diff with:")
-        # msg.append("> " + vimdiff_cmd)
-        # msg.append("or running:")
-        # msg.append("> " + diff_script)
-        # # TODO(gp): Understand why mypy reports:
-        # #   Incompatible types in assignment (expression has type "str",
-        # #   variable has type "List[str]")
-        # msg = "\n".join(msg)  # type: ignore
-        # _LOG.error(msg)
-        # # Print stack trace.
-        # raise RuntimeError(msg)
 
 
 class TestCase(unittest.TestCase):
@@ -323,6 +304,9 @@ class TestCase(unittest.TestCase):
         plt.close()
         plt.clf()
         # Delete the scratch dir, if needed.
+        # TODO(gp): We would like to keep this if the test failed.
+        #  I can't find an easy way to detect this situation.
+        #  For now just re-run with --incremental.
         if self._scratch_dir and os.path.exists(self._scratch_dir):
             if get_incremental_tests():
                 _LOG.warning("Skipping deleting %s", self._scratch_dir)

@@ -35,5 +35,7 @@ CMD="pytest --collect-only -qq -rs"
 execute $CMD
 
 # Run (ignoring the rc).
-CMD="linter.py -d . --jenkins --num_threads serial"
+# Because of #713.
+OPTS="--skip_files core/notebooks/gallery_timeseries_study.py"
+CMD="linter.py -d . $OPTS --jenkins --num_threads serial"
 execute $CMD

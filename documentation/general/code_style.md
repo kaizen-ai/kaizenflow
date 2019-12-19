@@ -85,371 +85,357 @@
 
 # Style guide references
 
--   We care about consistency rather than arguing about which approach is better
-    -   E.g., see "tab vs space" flame-war from the 90s
--   Unless explicitly noted we prefer to follow the style guide below
+- We care about consistency rather than arguing about which approach is better
+  - E.g., see "tab vs space" flame-war from the 90s
+- Unless explicitly noted we prefer to follow the style guide below
 
--   As a rule of thumb we default to the Google style guidelines, unless the
-    Python community (in the form of [PEPs](https://www.python.org/dev/peps/) or
-    the tools we rely upon favor another style
+- As a rule of thumb we default to the Google style guidelines, unless the
+  Python community (in the form of [PEPs](https://www.python.org/dev/peps/) or
+  the tools we rely upon favor another style
 
 ## References
 
 ### Coding
 
--   [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)
+- [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)
 
--   Code convention from [PEP8](https://www.python.org/dev/peps/pep-0008)
+- Code convention from [PEP8](https://www.python.org/dev/peps/pep-0008)
 
 ### Documentation
 
--   Docstring convention from [PEP257](https://www.python.org/dev/peps/pep-0257)
+- Docstring convention from [PEP257](https://www.python.org/dev/peps/pep-0257)
 
--   Commenting style
+- Commenting style
+  - [Sphinx](http://www.sphinx-doc.org/en/master)
+  - [Sphinx tutorial](https://thomas-cokelaer.info/tutorials/sphinx/index.html)
 
-    -   [Sphinx](http://www.sphinx-doc.org/en/master)
-    -   [Sphinx tutorial](https://thomas-cokelaer.info/tutorials/sphinx/index.html)
-
--   [Google documentation best practices](https://github.com/google/styleguide/blob/gh-pages/docguide/best_practices.md)
+- [Google documentation best practices](https://github.com/google/styleguide/blob/gh-pages/docguide/best_practices.md)
 
 ### Design
 
--   TODO(gp): Move to documentation/general/design_philosophy.md
+- TODO(gp): Move to documentation/general/design_philosophy.md
 
--   [Google philosophical stuff](https://github.com/google/styleguide/blob/gh-pages/docguide/philosophy.md)
+- [Google philosophical stuff](https://github.com/google/styleguide/blob/gh-pages/docguide/philosophy.md)
 
--   [Unix rules](https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules)
-    (although a bit cryptic sometimes)
+- [Unix rules](https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules)
+  (although a bit cryptic sometimes)
 
 # Naming
 
 ## Conventions
 
--   Name executable files (scripts) and library functions using verbs (e.g.,
-    `download.py`, `download_data()`)
+- Name executable files (scripts) and library functions using verbs (e.g.,
+  `download.py`, `download_data()`)
 
--   Name classes and (non-executable) files using nouns (e.g., `Downloader()`,
-    `downloader.py`)
+- Name classes and (non-executable) files using nouns (e.g., `Downloader()`,
+  `downloader.py`)
 
--   For decorators we don't use a verb as we do for normal functions, but rather
-    an adjective or a past tense verb, e.g.,
-    ```python
-    def timed(f):
-        """
-        Decorator adding a timer around function `f`.
-        """
-        ...
-    ```
+- For decorators we don't use a verb as we do for normal functions, but rather
+  an adjective or a past tense verb, e.g.,
+  ```python
+  def timed(f):
+      """
+      Decorator adding a timer around function `f`.
+      """
+      ...
+  ```
 
 ## Some suggested spelling
 
--   Capitalize the abbreviations, e.g.,
-    -   `CSV`
-    -   `DB` since it's an abbreviation of Database
--   We spell
-    -   "Python"
-    -   "Git" (as program), "git" (as the command)
--   We distinguish "research" (not "default", "base") vs "production"
--   We use different names for indicating the same concept, e.g., `dir`, `path`,
-    `folder`
-    -   Let's use `dir`
+- Capitalize the abbreviations, e.g.,
+  - `CSV`
+  - `DB` since it's an abbreviation of Database
+- We spell
+  - "Python"
+  - "Git" (as program), "git" (as the command)
+- We distinguish "research" (not "default", "base") vs "production"
+- We use different names for indicating the same concept, e.g., `dir`, `path`,
+  `folder`
+  - Let's use `dir`
 
 ## Finding the best names
 
--   Naming things properly is one of the most difficult task of a programmer /
-    data scientist
+- Naming things properly is one of the most difficult task of a programmer /
+  data scientist
+  - The name needs to be (possibly) short and memorable
+    - Don't be afraid to use long names, if needed, e.g.,
+      `process_text_with_full_pipeline_twitter_v1`
+    - Clarity is more important than number of bytes used
+  - The name should capture what the object represents, without reference to
+    things that can change or to details that are not important
+  - The name should refer to what objects do (i.e., mechanisms), rather than how
+    we use them (i.e., policies)
+  - The name needs to be non-controversial: people need to be able to map the
+    name in their mental model
+  - The name needs to sound good in English
 
-    -   The name needs to be (possibly) short and memorable
-        -   Don't be afraid to use long names, if needed, e.g.,
-            `process_text_with_full_pipeline_twitter_v1`
-        -   Clarity is more important than number of bytes used
-    -   The name should capture what the object represents, without reference to
-        things that can change or to details that are not important
-    -   The name should refer to what objects do (i.e., mechanisms), rather than
-        how we use them (i.e., policies)
-    -   The name needs to be non-controversial: people need to be able to map
-        the name in their mental model
-    -   The name needs to sound good in English
-
--   Think hard about how to call functions, files, variables, classes
+- Think hard about how to call functions, files, variables, classes
 
 ## Horrible names
 
--   `raw_df` is a terrible name
+- `raw_df` is a terrible name
+  - "raw" with respect to what?
+  - Cooked?
+  - Read-After-Write race condition?
 
-    -   "raw" with respect to what?
-    -   Cooked?
-    -   Read-After-Write race condition?
-
--   `person_dict` is bad
-    -   What if we switch from a dictionary to an object?
-        -   Then we need to change the name everywhere!
-    -   The name should capture what the data structure represents and not how
-        it is implemented
+- `person_dict` is bad
+  - What if we switch from a dictionary to an object?
+    - Then we need to change the name everywhere!
+  - The name should capture what the data structure represents and not how it is
+    implemented
 
 ## No Hungarian notation please
 
--   The concept is to use names including information about the type, e.g.,
-    `vUsing adjHungarian nnotation vmakes nreading ncode adjdifficult`
+- The concept is to use names including information about the type, e.g.,
+  `vUsing adjHungarian nnotation vmakes nreading ncode adjdifficult`
+  - [https://en.wikipedia.org/wiki/Hungarian_notation]
+  - [https://stackoverflow.com/questions/111933]
 
-    -   [https://en.wikipedia.org/wiki/Hungarian_notation]
-    -   [https://stackoverflow.com/questions/111933]
+- E.g., instead of `categories_list`, use `categories`, and instead of
+  `stopwords_dict`, use `stopwords`
+  - Variable names should refer to what they mean and not how they are
+    implemented
+  - What if one decides to store data in a `pd.Series` instead of a `list`? With
+    Hungarian notation, the name of the var needs to be changed everywhere.
 
--   E.g., instead of `categories_list`, use `categories`, and instead of
-    `stopwords_dict`, use `stopwords`
-
-    -   Variable names should refer to what they mean and not how they are
-        implemented
-    -   What if one decides to store data in a `pd.Series` instead of a `list`?
-        With Hungarian notation, the name of the var needs to be changed
-        everywhere.
-
--   We are not at Microsoft in the 80s: don't use it
+- We are not at Microsoft in the 80s: don't use it
 
 ## No code stutter
 
--   An example of code stutter is in a module `git` a function called
-    `get_git_root_path()` and then client code does
-
-    -   **Bad**
-
-        ```python
-        import helpers.git as git
-
-        ... git.get_git_root_path()
-        ```
-
--   You see that the module is already specifying we are talking about Git
-
--   **Good**
+- An example of code stutter is in a module `git` a function called
+  `get_git_root_path()` and then client code does
+  - **Bad**
 
     ```python
     import helpers.git as git
 
-    ... git.get_root_path()
+    ... git.get_git_root_path()
     ```
 
--   This is not only aesthetic reason but a bit related to a weak form of DRY
+- You see that the module is already specifying we are talking about Git
+
+- **Good**
+
+  ```python
+  import helpers.git as git
+
+  ... git.get_root_path()
+  ```
+
+- This is not only aesthetic reason but a bit related to a weak form of DRY
 
 # Using third-party libraries
 
 ## Problem
 
--   On one side, you are free (even encouraged) to install and experiment with
-    any 3-rd party library that can be useful
+- On one side, you are free (even encouraged) to install and experiment with any
+  3-rd party library that can be useful
+  - Anything goes for research, as long as it's clearly marked as such
+  - E.g., the notebook should have in the description an indication that is an
+    experiment with a library
 
-    -   Anything goes for research, as long as it's clearly marked as such
-    -   E.g., the notebook should have in the description an indication that is
-        an experiment with a library
-
--   On the other side we don't want to add dependencies in `master` from
-    packages that we experiment with but are not adopted
-    -   Otherwise the conda recipe becomes bloated and slow
+- On the other side we don't want to add dependencies in `master` from packages
+  that we experiment with but are not adopted
+  - Otherwise the conda recipe becomes bloated and slow
 
 ## Solution
 
--   Install the package in whatever way you want (`conda`, `pip`, install from
-    source) on top of your `p1_develop` conda environment
+- Install the package in whatever way you want (`conda`, `pip`, install from
+  source) on top of your `p1_develop` conda environment
+  - If you don't know how to install, file a bug for Sergey and we can help
 
-    -   If you don't know how to install, file a bug for Sergey and we can help
+- You should document how you install the package so that anyone who runs the
+  notebook can install the package on top of `p1_develop` in the same way
 
--   You should document how you install the package so that anyone who runs the
-    notebook can install the package on top of `p1_develop` in the same way
+- Once the code is reviewed and promoted to a lib / unit tested, the conda
+  recipe is updated as part of the PR
+  - The team needs to update their `p1_develop` package to pick up the
+    dependencies
 
--   Once the code is reviewed and promoted to a lib / unit tested, the conda
-    recipe is updated as part of the PR
-
-    -   The team needs to update their `p1_develop` package to pick up the
-        dependencies
-
--   This applies to both code and notebooks
+- This applies to both code and notebooks
 
 # Comments
 
 ## Docstring conventions
 
--   Code needs to be properly commented
+- Code needs to be properly commented
 
--   We follow python standard
-    [PEP 257](https://www.python.org/dev/peps/pep-0257/) for commenting
+- We follow python standard [PEP 257](https://www.python.org/dev/peps/pep-0257/)
+  for commenting
+  - PEP 257 standardizes what comments should express and how they should do it
+    (e.g., use triple quotes for commenting a function), but does not specify
+    what markup syntax should be used to describe comments
 
-    -   PEP 257 standardizes what comments should express and how they should do
-        it (e.g., use triple quotes for commenting a function), but does not
-        specify what markup syntax should be used to describe comments
-
--   Different conventions have been developed for documenting interfaces
-    -   reST
-    -   Google (which is cross-language, e.g., C++, python, ...)
-    -   epytext
-    -   numpydoc
+- Different conventions have been developed for documenting interfaces
+  - ReST
+  - Google (which is cross-language, e.g., C++, python, ...)
+  - Epytext
+  - Numpydoc
 
 ## reST style
 
--   reST (aka re-Structured Text) style is:
+- ReST (aka re-Structured Text) style is:
+  - The most widely supported in the python community
+  - Supported by all doc generation tools (e.g., epydoc, sphinx)
+  - Default in pycharm
+  - Default in pyment
+  - Supported by pydocstyle (which does not support Google style as explained
+    [here](https://github.com/PyCQA/pydocstyle/issues/275))
 
-    -   the most widely supported in the python community
-    -   supported by all doc generation tools (e.g., epydoc, sphinx)
-    -   default in pycharm
-    -   default in pyment
-    -   supported by pydocstyle (which does not support Google style as
-        explained [here](https://github.com/PyCQA/pydocstyle/issues/275))
+- An example of a function comment is:
 
--   An example of a function comment is:
+  ```python
+  """
+  This is a reST style.
 
-    ```python
-    """
-    This is a reST style.
+  :param param1: this is a first param
+  :type param1: str
+  :param param2: this is a second param
+  :type param2: int
+  :returns: this is a description of what is returned
+  :rtype: bool
+  :raises keyError: raises an exception
+  """
+  ```
+  - We pick lowercase after `:param XYZ: ...` unless the first word is a proper
+    noun or type
+  - Type hinting makes the `:type ...` redundant and you should use only type
+    hinting
 
-    :param param1: this is a first param
-    :type param1: str
-    :param param2: this is a second param
-    :type param2: int
-    :returns: this is a description of what is returned
-    :rtype: bool
-    :raises keyError: raises an exception
-    """
-    ```
-
-    -   We pick lowercase after `:param XYZ: ...` unless the first word is a
-        proper noun or type
-    -   Type hinting makes the `:type ...` redundant and you should use only
-        type hinting
-
--   More examples of and discussions on python docstrings are
-    [here](https://stackoverflow.com/questions/3898572)
+- More examples of and discussions on python docstrings are
+  [here](https://stackoverflow.com/questions/3898572)
 
 ## Descriptive vs imperative style
 
--   GPSG suggests using descriptive comments, e.g., "This function does this and
-    that", instead of an imperative style "Do this and that"
+- GPSG suggests using descriptive comments, e.g., "This function does this and
+  that", instead of an imperative style "Do this and that"
 
--   [PEP 257](https://www.python.org/dev/peps/pep-0257/)
-    ```
-    The docstring is a phrase ending in a period. It prescribes the function or
-    method's effect as a command ("Do this", "Return that"), not as a description;
-    e.g. don't write "Returns the pathname ...".
-    ```
-    -   pylint and other python QA tools favor an imperative style
-    -   Since we prefer to rely upon automatic checks, we have decided to use
-        the imperative style
+- [PEP 257](https://www.python.org/dev/peps/pep-0257/)
+  ```
+  The docstring is a phrase ending in a period. It prescribes the function or
+  method's effect as a command ("Do this", "Return that"), not as a description;
+  e.g. don't write "Returns the pathname ...".
+  ```
+  - Pylint and other python QA tools favor an imperative style
+  - Since we prefer to rely upon automatic checks, we have decided to use the
+    imperative style
 
 ## Comments
 
--   Comments follow the same style of docstrings, e.g., imperative style with
-    period `.` at the end
+- Comments follow the same style of docstrings, e.g., imperative style with
+  period `.` at the end
 
 ## Use type hints
 
--   We expect new code to use type hints whenever possible
-    -   See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
-    -   [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
--   At some point we will start adding type hints to old code
+- We expect new code to use type hints whenever possible
+  - See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
+  - [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
+- At some point we will start adding type hints to old code
 
--   We plan to start using static analyzers (e.g., `mypy`) to check for bugs
-    from type mistakes and to enforce type hints at run-time, whenever possible
+- We plan to start using static analyzers (e.g., `mypy`) to check for bugs from
+  type mistakes and to enforce type hints at run-time, whenever possible
 
 ## Replace empty lines in code with comments
 
--   If you feel that you need an empty line in the code, it probably means that
-    a specific chunk of code is a logical piece of code performing a cohesive
-    function.
+- If you feel that you need an empty line in the code, it probably means that a
+  specific chunk of code is a logical piece of code performing a cohesive
+  function.
 
-    ```python
-    ...
-    end_y = end_dt.year
-    # Generate list of file paths for ParquetDataset.
-    paths = list()
-    ...
-    ```
+  ```python
+  ...
+  end_y = end_dt.year
+  # Generate list of file paths for ParquetDataset.
+  paths = list()
+  ...
+  ```
 
--   Instead of putting an empty line, you should put a comment describing at
-    high level what the code does.
+- Instead of putting an empty line, you should put a comment describing at high
+  level what the code does.
 
-    ```python
-    ...
-    end_y = end_dt.year
-    # Generate list of file paths for ParquetDataset.
-    paths = list()
-    ...
-    ```
+  ```python
+  ...
+  end_y = end_dt.year
+  # Generate list of file paths for ParquetDataset.
+  paths = list()
+  ...
+  ```
 
--   If you don't want to add just use an empty comment.
+- If you don't want to add just use an empty comment.
 
-    ```python
-    ...
-    end_y = end_dt.year
-    #
-    paths = list()
-    ...
-    ```
+  ```python
+  ...
+  end_y = end_dt.year
+  #
+  paths = list()
+  ...
+  ```
 
--   The problem with empty lines is that they are visually confusing since one
-    empty line is used also to separate functions. For this reason we suggest
-    using an empty comment.
+- The problem with empty lines is that they are visually confusing since one
+  empty line is used also to separate functions. For this reason we suggest
+  using an empty comment.
 
 ## Avoid distracting comments
 
--   Use comments to explain the high level logic / goal of a piece of code and
-    not the details
-    -   E.g., do not comment things that are obvious, e.g.,
-    ```python
-    # Print results.
-    _LOG.info("Results are %s", ...)
-    ```
+- Use comments to explain the high level logic / goal of a piece of code and not
+  the details
+  - E.g., do not comment things that are obvious, e.g.,
+  ```python
+  # Print results.
+  _LOG.info("Results are %s", ...)
+  ```
 
 ## If you find a bug or obsolete docstring/TODO in the code
 
--   The process is:
-    -   do a `git blame` to find who wrote the code
-    -   if it's an easy bug, you can fix it and ask for a review from the author
-    -   you can comment on a PR (if there is one)
-    -   you can file a bug on Github with
-        -   clear info on the problem
-        -   how to reproduce it, ideally a unit test
-        -   stacktrace
-        -   you can use the tag "BUG: ..."
+- The process is:
+  - Do a `git blame` to find who wrote the code
+  - If it's an easy bug, you can fix it and ask for a review from the author
+  - You can comment on a PR (if there is one)
+  - You can file a bug on Github with
+    - Clear info on the problem
+    - How to reproduce it, ideally a unit test
+    - Stacktrace
+    - You can use the tag "BUG: ..."
 
 ## Referring to an object in code comments
 
--   We prefer to refer to objects in the code using Markdown like `this` (this
-    is a convention used in the documentation system Sphinx)
+- We prefer to refer to objects in the code using Markdown like `this` (this is
+  a convention used in the documentation system Sphinx)
 
-    ```python
-    """
-    Decorator adding a timer around function `f`.
-    """
-    ```
+  ```python
+  """
+  Decorator adding a timer around function `f`.
+  """
+  ```
 
--   This is useful for distinguishing the object code from the real-life object
--   E.g.,
-    ```python
-    # The df `df_tmp` is used for ...
-    ```
+- This is useful for distinguishing the object code from the real-life object
+- E.g.,
+  ```python
+  # The df `df_tmp` is used for ...
+  ```
 
 ## Inline comments
 
--   In general we prefer to avoid writing comments on the same line as code
-    since they require extra maintenance (e.g., when the line becomes too long)
-    -   **Bad**
-        ```python
-        print("hello world")      # Introduce yourself.
-        ```
-    -   **Good**
-        ```python
-        # Introduce yourself.
-        print("hello world")
-        ```
+- In general we prefer to avoid writing comments on the same line as code since
+  they require extra maintenance (e.g., when the line becomes too long)
+  - **Bad**
+    ```python
+    print("hello world")      # Introduce yourself.
+    ```
+  - **Good**
+    ```python
+    # Introduce yourself.
+    print("hello world")
+    ```
 
 # Linter
 
 ## Disabling linter messages
 
--   When the linter reports a problem
-    -   We assume that linter messages are correct, until the linter is proven
-        wrong
-    -   We try to understand what the rationale for the linter's complaints
-    -   We then change the code to follow the linter's suggestion and remove the
-        lint
+- When the linter reports a problem
+  - We assume that linter messages are correct, until the linter is proven wrong
+  - We try to understand what the rationale for the linter's complaints
+  - We then change the code to follow the linter's suggestion and remove the
+    lint
 
 1. If you think a message is too pedantic, please file a bug with the example
    and as a team we will consider whether to exclude that message from our list
@@ -457,386 +443,368 @@
 
 2. If you think the message is a false positive, then try to change the code to
    make the linter happy
-
-    - E.g., if the code depends on some run-time behavior that the linter can't
-      infer, then you should question whether that behavior is really needed
-    - A human reader would probably be as confused as the linter is
+   - E.g., if the code depends on some run-time behavior that the linter can't
+     infer, then you should question whether that behavior is really needed
+   - A human reader would probably be as confused as the linter is
 
 3. If you really believe that you should override the linter in this particular
    case, then use something like:
-    ```python
-    # pylint: disable=some-message,another-one
-    ```
-    - You then need to explain in a comment why you are overriding the linter.
+   ```python
+   # pylint: disable=some-message,another-one
+   ```
+   - You then need to explain in a comment why you are overriding the linter.
 
--   Don't use linter code numbers, but the symbolic name whenever possible:
-    -   **Bad**
-    ```python
-     # pylint: disable=W0611
-    import config.logging_settings
-    ```
-    -   **Good**
-    ```python
-    # pylint: disable=unused-import
-    # This is needed when evaluating code at run-time that depends from
-    # this import.
-    import config.logging_settings
-    ```
+- Don't use linter code numbers, but the symbolic name whenever possible:
+  - **Bad**
+  ```python
+   # pylint: disable=W0611
+  import config.logging_settings
+  ```
+  - **Good**
+  ```python
+  # pylint: disable=unused-import
+  # This is needed when evaluating code at run-time that depends from
+  # this import.
+  import config.logging_settings
+  ```
 
 ## Prefer non-inlined linter comments
 
--   Although we don't like inlined comments sometimes there is no other choice
-    than an inlined comment to get the linter to understand which line we are
-    referring too:
-    -   **Bad but ok if needed**
-    ```python
-    # pylint: disable=unused-import
-    import config.logging_settings
-    ```
-    -   **Good**
-    ```python
-    import config.logging_settings  # pylint: disable=unused-import
-    ```
+- Although we don't like inlined comments sometimes there is no other choice
+  than an inlined comment to get the linter to understand which line we are
+  referring too:
+  - **Bad but ok if needed**
+  ```python
+  # pylint: disable=unused-import
+  import config.logging_settings
+  ```
+  - **Good**
+  ```python
+  import config.logging_settings  # pylint: disable=unused-import
+  ```
 
 # Logging
 
 ## Always use logging instead of prints
 
--   Always use logging and never `print()` to report debug, info, warning
+- Always use logging and never `print()` to report debug, info, warning
 
 ## Our logging idiom
 
--   In order to use our logging framework (e.g., `-v` from command lines, and
-    much more) use:
+- In order to use our logging framework (e.g., `-v` from command lines, and much
+  more) use:
 
-    ```python
-    import helpers.dbg as dbg
+  ```python
+  import helpers.dbg as dbg
 
-    _LOG = logging.getLogger(__name__)
+  _LOG = logging.getLogger(__name__)
 
-    dbg.init_logger(verbosity=logging.DEBUG)
+  dbg.init_logger(verbosity=logging.DEBUG)
 
-    _LOG.debug("I am a debug function about %s", a)
-    ```
+  _LOG.debug("I am a debug function about %s", a)
+  ```
 
--   In this way one can decide how much debug info is needed (see Unix rule of
-    silence)
-    -   E.g., when there is a bug one can run with `-v DEBUG` and see what's
-        happening right before the bug
+- In this way one can decide how much debug info is needed (see Unix rule of
+  silence)
+  - E.g., when there is a bug one can run with `-v DEBUG` and see what's
+    happening right before the bug
 
 ## Logging level
 
--   Use `_LOG.warning` for messages to the final user related to something
-    unexpected where the code is making a decision that might be controversial
+- Use `_LOG.warning` for messages to the final user related to something
+  unexpected where the code is making a decision that might be controversial
+  - E.g., processing a dir that is supposed to contain only `.csv` files the
+    code finds a non-`.csv` file and decides to skip it, instead of breaking
 
-    -   E.g., processing a dir that is supposed to contain only `.csv` files the
-        code finds a non-`.csv` file and decides to skip it, instead of breaking
+- Use `_LOG.info` to communicate to the final user, e.g.,
+  - When the script is started
+  - Where the script is saving its results
+  - A progress bar indicating the amount of work completed
 
--   Use `_LOG.info` to communicate to the final user, e.g.,
+- Use `_LOG.debug` to communicate information related to the internal behavior
+  of code
+  - Do not pollute the output with information a regular user does not care
+    about
 
-    -   when the script is started
-    -   where the script is saving its results
-    -   a progress bar indicating the amount of work completed
-
--   Use `_LOG.debug` to communicate information related to the internal behavior
-    of code
-
-    -   Do not pollute the output with information a regular user does not care
-        about
-
--   Make sure the script prints when the work is terminated, e.g., "DONE" or
-    "Results written to ..."
-    -   This is useful to indicate that the script did not die in the middle:
-        sometimes this happens silently and it is reported only from the OS
-        return code
+- Make sure the script prints when the work is terminated, e.g., "DONE" or
+  "Results written to ..."
+  - This is useful to indicate that the script did not die in the middle:
+    sometimes this happens silently and it is reported only from the OS return
+    code
 
 ## Use positional args when logging
 
--   **Bad**
-    ```python
-    _LOG.debug('cmd=%s %s %s' % (cmd1, cmd2, cmd3))
-    _LOG.debug('cmd=%s %s %s'.format(cmd1, cmd2, cmd3))
-    _LOG.debug('cmd={cmd1} {cmd2} {cmd3}')
-    ```
--   **Good**
+- **Bad**
+  ```python
+  _LOG.debug('cmd=%s %s %s' % (cmd1, cmd2, cmd3))
+  _LOG.debug('cmd=%s %s %s'.format(cmd1, cmd2, cmd3))
+  _LOG.debug('cmd={cmd1} {cmd2} {cmd3}')
+  ```
+- **Good**
 
-    ```python
-     _LOG.debug('cmd=%s %s %s', cmd1, cmd2, cmd3)
-    ```
+  ```python
+   _LOG.debug('cmd=%s %s %s', cmd1, cmd2, cmd3)
+  ```
 
--   The two statements are equivalent from the functional point of view
--   The reason is that in the second case the string is not built unless the
-    logging is actually performed, which limits time overhead from logging
+- The two statements are equivalent from the functional point of view
+- The reason is that in the second case the string is not built unless the
+  logging is actually performed, which limits time overhead from logging
 
 ## Exceptions don't allow positional args
 
--   For some reason people tend to believe that using the logging / dassert
-    approach of positional param to exceptions
-    -   **Bad** (use positional args)
-        ```python
-        raise ValueError("Invalid server_name='%s'", server_name)
-        ```
-    -   **Good** (use string interpolation)
-        ```python
-        raise ValueError("Invalid server_name='%s'" % server_name)
-        ```
-    -   **Best** (use string format)
-        ```python
-        raise ValueError(f"Invalid server_name='{server_name}'")
-        ```
--   The constructor of an exception accepts a string
+- For some reason people tend to believe that using the logging / dassert
+  approach of positional param to exceptions
+  - **Bad** (use positional args)
+    ```python
+    raise ValueError("Invalid server_name='%s'", server_name)
+    ```
+  - **Good** (use string interpolation)
+    ```python
+    raise ValueError("Invalid server_name='%s'" % server_name)
+    ```
+  - **Best** (use string format)
+    ```python
+    raise ValueError(f"Invalid server_name='{server_name}'")
+    ```
+- The constructor of an exception accepts a string
 
--   Using the string f-format is best since
-    -   it's more readable
-    -   there is little time overhead since if you get to the exception probably
-        the code is going to terminate, and it's not in a hot loop
+- Using the string f-format is best since
+  - It's more readable
+  - There is little time overhead since if you get to the exception probably the
+    code is going to terminate, and it's not in a hot loop
 
 ## Report warnings
 
--   If there is a something that is suspicious but you don't feel like it's
-    worthwhile to assert, report a warning with:
+- If there is a something that is suspicious but you don't feel like it's
+  worthwhile to assert, report a warning with:
 
-```
-_LOG.warning(...)
-```
+  ```python
+  _LOG.warning(...)
+  ```
 
--   If you know that if there is a warning then there are going to be many many
-    warnings
-    -   print the first warning
-    -   send the rest to warnings.log
-    -   at the end of the run, reports "there are warnings in warnings.log"
+- If you know that if there is a warning then there are going to be many many
+  warnings
+  - Print the first warning
+  - Send the rest to warnings.log
+  - At the end of the run, reports "there are warnings in warnings.log"
 
 ## Don't mix real changes with linter changes
 
--   The linter is in change of reformatting the code according to our
-    conventions and reporting potential problems
+- The linter is in change of reformatting the code according to our conventions
+  and reporting potential problems
 
 1. We don't commit changes that modify the code together with linter
    reformatting, unless the linting is applied to the changes we just made
-
-    - The reason for not mixing real and linter changes is that for a PR or to
-      just read the code it is difficult to understand what really changed vs
-      what was just a cosmetic modification
+   - The reason for not mixing real and linter changes is that for a PR or to
+     just read the code it is difficult to understand what really changed vs
+     what was just a cosmetic modification
 
 2. If you are worried the linter might change your code in a way you don't like,
    e.g.,
-    - screwing up some formatting you care about for some reason, or
-    - suggesting changes that you are worried might introduce bugs you can
-      commit your code and then do a "lint commit" with a message "PartTaskXYZ:
-      Lint"
+   - Screwing up some formatting you care about for some reason, or
+   - Suggesting changes that you are worried might introduce bugs you can commit
+     your code and then do a "lint commit" with a message "PartTaskXYZ: Lint"
 
--   In this way you have a backup state that you can rollback to, if you want
+- In this way you have a backup state that you can rollback to, if you want
 
 3. If you run the linter and see that the linter is reformatting / modifying
    pieces of code you din't change, it means that our team mate forgot to lint
    their code
-
-    - `git blame` can figure out the culprit
-    - You can send him / her a ping to remind her to lint, so you don't have to
-      clean after him / her
-
-    - In this case, the suggested approach is:
-        - commit your change to a branch / stash
-        - run the linter by itself on the files that need to be cleaned, without
-          any change
-        - run the unit tests to make sure nothing is breaking
-        - you can fix lints or just do formatting: it's up to you
-        - you can make this change directly on `master` or do a PR if you want
-          to be extra sure: your call
+   - `git blame` can figure out the culprit
+   - You can send him / her a ping to remind her to lint, so you don't have to
+     clean after him / her
+   - In this case, the suggested approach is:
+     - Commit your change to a branch / stash
+     - Run the linter by itself on the files that need to be cleaned, without
+       any change
+     - Run the unit tests to make sure nothing is breaking
+     - You can fix lints or just do formatting: it's up to you
+     - You can make this change directly on `master` or do a PR if you want to
+       be extra sure: your call
 
 # Assertions
 
 ## Use positional args when asserting
 
--   `dassert_*` is modeled after logging so for the same reasons one should use
-    positional args **Bad**
-    ```python
-    dbg.dassert_eq(a, 1, "No info for %s" % method)
-    ```
-    **Good**
-    ```python
-    dbg.dassert_eq(a, 1, "No info for %s", method)
-    ```
+- `dassert_*` is modeled after logging so for the same reasons one should use
+  positional args **Bad**
+  ```python
+  dbg.dassert_eq(a, 1, "No info for %s" % method)
+  ```
+  **Good**
+  ```python
+  dbg.dassert_eq(a, 1, "No info for %s", method)
+  ```
 
 ## Report as much information as possible in an assertion
 
--   When using a `dassert_*` you want to give to the user as much information as
-    possible to fix the problem
-    -   E.g., if you get an assertion after 8 hours of computation you don't
-        want to have to add some logging and run for 8 hours to just know what
-        happened
--   A `dassert_*` typically prints as much info as possible, but it can't report
-    information that is not visible to it:
-    -   **Bad**
-        ```python
-        dbg.dassert(string.startswith('hello'))
-        ```
-        -   You don't know what is value of `string` is
-    -   **Good**
-        ```python
-        dbg.dassert(string.startswith('hello'), "string='%s'", string)
-        ```
-        -   Note that often is useful to add `'` because sometimes there are
-            pesky spaces that make the value unclear or to make the error as
-            readable as possible
+- When using a `dassert_*` you want to give to the user as much information as
+  possible to fix the problem
+  - E.g., if you get an assertion after 8 hours of computation you don't want to
+    have to add some logging and run for 8 hours to just know what happened
+- A `dassert_*` typically prints as much info as possible, but it can't report
+  information that is not visible to it:
+  - **Bad**
+    ```python
+    dbg.dassert(string.startswith('hello'))
+    ```
+    - You don't know what is value of `string` is
+  - **Good**
+    ```python
+    dbg.dassert(string.startswith('hello'), "string='%s'", string)
+    ```
+    - Note that often is useful to add `'` because sometimes there are pesky
+      spaces that make the value unclear or to make the error as readable as
+      possible
 
 # Imports
 
 ## Importing code from a Git submodule
 
--   If you are in `p1` and you need to import something from `amp`:
+- If you are in `p1` and you need to import something from `amp`:
+  - **Bad**
+    ```python
+    import amp.helpers.dbg as dbg
+    ```
+  - **Good**
+    ```python
+    import helpers.dbg as dbg
+    ```
 
-    -   **Bad**
-        ```python
-        import amp.helpers.dbg as dbg
-        ```
-    -   **Good**
-        ```python
-        import helpers.dbg as dbg
-        ```
+- We map submodules using `PYTHONPATH` so that the imports are independent from
+  the position of the submodule
 
--   We map submodules using `PYTHONPATH` so that the imports are independent
-    from the position of the submodule
-
--   In this way, the submodule code can be moved in the repos without changing
-    the imports
+- In this way, the submodule code can be moved in the repos without changing the
+  imports
 
 ## Don't use evil `import *`
 
--   Do not use in notebooks or code the evil `import *`
-    -   **Bad**
-        ```python
-        from edgar.utils import *
-        ```
-    -   **Good**
-        ```python
-        import edgar.utils as edu
-        ```
--   The `from ... import *`:
-    -   pollutes the namespace with the symbols and spreads over everywhere,
-        making painful to clean up
-    -   obscures where each function is coming from, removing the context that
-        comes from the namespace
-    -   is evil in many other ways (see
-        [StackOverflow](https://stackoverflow.com/questions/2386714/why-is-import-bad))
+- Do not use in notebooks or code the evil `import *`
+  - **Bad**
+    ```python
+    from edgar.utils import *
+    ```
+  - **Good**
+    ```python
+    import edgar.utils as edu
+    ```
+- The `from ... import *`:
+  - Pollutes the namespace with the symbols and spreads over everywhere, making
+    painful to clean up
+  - Obscures where each function is coming from, removing the context that comes
+    from the namespace
+  - Is evil in many other ways (see
+    [StackOverflow](https://stackoverflow.com/questions/2386714/why-is-import-bad))
 
 ## Cleaning up the evil `import *`
 
--   To clean up the mess you can:
+- To clean up the mess you can:
+  - For notebooks
+    - Find & replace (e.g., using jupytext and pycharm)
+    - Change the import and run one cell at the time
+  - For code
+    - Change the import and use linter on file to find all the problematic spots
 
-    -   for notebooks
-        -   find & replace (e.g., using jupytext and pycharm)
-        -   change the import and run one cell at the time
-    -   for code
-        -   change the import and use linter on file to find all the problematic
-            spots
-
--   One of the few spots where the evil import \* is ok is in the `__init__.py`
-    to tweak the path of symbols exported by a library
-    -   This is an advanced topic and you should rarely use it
+- One of the few spots where the evil import \* is ok is in the `__init__.py` to
+  tweak the path of symbols exported by a library
+  - This is an advanced topic and you should rarely use it
 
 ## Avoid `from ... import ...`
 
--   The rule is:
-    ```python
-    import library as short_name
-    import library.sublibrary as short_name
-    ```
--   This rule applies to imports of third party libraries and our library
+- The rule is:
+  ```python
+  import library as short_name
+  import library.sublibrary as short_name
+  ```
+- This rule applies to imports of third party libraries and our library
 
--   Importing many different functions, like:
+- Importing many different functions, like:
+  - **Bad**
 
-    -   **Bad**
+  ```python
+  from edgar.officer_titles import read_documents, read_test_set, \
+      get_titles, split_titles, get_titles_overview, \
+      word_pattern, symbol_pattern, exact_title, \
+      apply_patterns_to_texts, extract_canonical_names, \
+      get_rules_coverage, text_contains_only_canonical_titles, \
+      compute_stats, NON_MEANING_PATTERNS_BEFORE, patterns
+  ```
+  - **Good**
 
-    ```python
-    from edgar.officer_titles import read_documents, read_test_set, \
-        get_titles, split_titles, get_titles_overview, \
-        word_pattern, symbol_pattern, exact_title, \
-        apply_patterns_to_texts, extract_canonical_names, \
-        get_rules_coverage, text_contains_only_canonical_titles, \
-        compute_stats, NON_MEANING_PATTERNS_BEFORE, patterns
-    ```
+  ```python
+  import edgar.officer_titles as edg_ot
+  ...
+  ... edg_ot.read_documents()
+  ```
 
-    -   **Good**
-
-    ```python
-    import edgar.officer_titles as edg_ot
-    ...
-    ... edg_ot.read_documents()
-    ```
-
--   The problem with the `from ... import ...` is that it:
-    -   creates lots of maintenance effort
-        -   e.g., anytime you want a new function you need to update the import
-            statement
-    -   creates potential collisions of the same name
-        -   e.g., lots of modules have a `read_data()` function
-    -   importing directly in the namespace loses information about the module
-        -   e.g.,`read_documents()` is not clear: what documents?
-        -   `np.read_documents()` at least give information of which packages is
-            it coming from
+- The problem with the `from ... import ...` is that it:
+  - Creates lots of maintenance effort
+    - E.g., anytime you want a new function you need to update the import
+      statement
+  - Creates potential collisions of the same name
+    - E.g., lots of modules have a `read_data()` function
+  - Importing directly in the namespace loses information about the module
+    - E.g.,`read_documents()` is not clear: what documents?
+    - `np.read_documents()` at least give information of which packages is it
+      coming from
 
 ## Exceptions to the import style
 
--   We try to minimize the exceptions to this rule to avoid to keep this rule
-    simple, rather than discussing about
+- We try to minimize the exceptions to this rule to avoid to keep this rule
+  simple, rather than discussing about
 
--   The current agreed upon exceptions are:
+- The current agreed upon exceptions are:
 
-    1. For `typing` it is ok to do:
-        ```python
-        from typing import Iterable, List
-        ```
-        in order to avoid `typing` everywhere, since we want to use type hints
-        as much as possible
+  1. For `typing` it is ok to do:
+     ```python
+     from typing import Iterable, List
+     ```
+     in order to avoid `typing` everywhere, since we want to use type hints as
+     much as possible
 
 ## Examples of imports
 
--   Example 1
+- Example 1
+  - **Bad**
+    ```python
+    from edgar.shared import edgar_api as api
+    ```
+  - **Good**
+    ```python
+    import edgar.shared.edgar_api as edg_api
+    ```
 
-    -   **Bad**
-        ```python
-        from edgar.shared import edgar_api as api
-        ```
-    -   **Good**
-        ```python
-        import edgar.shared.edgar_api as edg_api
-        ```
+- Example 2
+  - **Bad**
+    ```python
+    from edgar.shared import headers_extractor as he
+    ```
+  - **Good**
+    ```python
+    import edgar.shared.headers_extractor as he
+    ```
 
--   Example 2
+- Example 3
+  - **Bad**
+    ```python
+    from helpers import dbg
+    ```
+  - **Good**
+    ```python
+    import helpers.dbg as dbg
+    ```
 
-    -   **Bad**
-        ```python
-        from edgar.shared import headers_extractor as he
-        ```
-    -   **Good**
-        ```python
-        import edgar.shared.headers_extractor as he
-        ```
+- Example 4
+  - **Bad**
+    ```python
+    from helpers.misc import check_or_create_dir, get_timestamp
+    ```
+  - **Good**
+    ```python
+    import helpers.misc as hm
+    ```
 
--   Example 3
-
-    -   **Bad**
-        ```python
-        from helpers import dbg
-        ```
-    -   **Good**
-        ```python
-        import helpers.dbg as dbg
-        ```
-
--   Example 4
-
-    -   **Bad**
-        ```python
-        from helpers.misc import check_or_create_dir, get_timestamp
-        ```
-    -   **Good**
-        ```python
-        import helpers.misc as hm
-        ```
-
--   Example 5
+- Example 5
 
 import html import operator as oper import nltk import textblob as tb and then
 uses like:
@@ -846,436 +814,412 @@ uses like:
 
 ## Always import with a full path from the root of the repo / submodule
 
--   **Bad**
-    ```python
-    import timestamp
-    ```
--   **Good**
-    ```
-    import compustat.timestamp
-    ```
--   In this way your code can run without depending upon your current dir
+- **Bad**
+  ```python
+  import timestamp
+  ```
+- **Good**
+  ```python
+  import compustat.timestamp
+  ```
+- In this way your code can run without depending upon your current dir
 
 ## Baptizing module import
 
--   Each module that can be imported should have a docstring at the very
-    beginning (before any code) describing how it should be imported
+- Each module that can be imported should have a docstring at the very beginning
+  (before any code) describing how it should be imported
+
+  ```python
+  """
+  Import as:
+
+  import helpers.printing as prnt
+  """
+  ```
+
+- Typically we use 4 or 5 letters trying to make the import unique (underscores
+  are fine):
+  - **Bad**
 
     ```python
-    """
     Import as:
 
-    import helpers.printing as prnt
-    """
+    import nlp.utils as util
+    ```
+  - **Good**
+
+    ```python
+    Import as:
+
+    import nlp.utils as nlp_ut
     ```
 
--   Typically we use 4 or 5 letters trying to make the import unique
-    (underscores are fine):
-
-    -   **Bad**
-
-        ```python
-        Import as:
-
-        import nlp.utils as util
-        ```
-
-    -   **Good**
-
-        ```python
-        Import as:
-
-        import nlp.utils as nlp_ut
-        ```
-
--   The goal is to have always the same imports so it's easy to move code
-    around, without collisions
+- The goal is to have always the same imports so it's easy to move code around,
+  without collisions
 
 # Python scripts
 
 ## Use Python and not bash for scripting
 
--   We prefer to always use python, instead of bash scripts with very few
-    exceptions
+- We prefer to always use python, instead of bash scripts with very few
+  exceptions
+  - E.g., scripts that need to modify the environment by setting env vars, like
+    `setenv.sh`
 
-    -   E.g., scripts that need to modify the environment by setting env vars,
-        like `setenv.sh`
+- The problem with bash scripts is that it's very easy to put together a
+  sequence of commands to automate a workflow
+- Quickly things always become more complicated than what you thought, e.g.,
+  - You might want to interrupt if one command in the script fails
+  - You want to use command line options
+  - You want to use logging to see what's going on inside the script
+  - You want to do a loop with a regex check inside
+- Thus you need to use the more complex features of bash scripting and bash
+  scripting is absolutely horrible, much worse than perl (e.g., just think of
+  `if [ ... ]` vs `if [[ ... ]]`)
 
--   The problem with bash scripts is that it's very easy to put together a
-    sequence of commands to automate a workflow
--   Quickly things always become more complicated than what you thought, e.g.,
-    -   you might want to interrupt if one command in the script fails
-    -   you want to use command line options
-    -   you want to use logging to see what's going on inside the script
-    -   you want to do a loop with a regex check inside
--   Thus you need to use the more complex features of bash scripting and bash
-    scripting is absolutely horrible, much worse than perl (e.g., just think of
-    `if [ ... ]` vs `if [[ ... ]]`)
-
--   Our approach is to make simple to create scripts in python that are
-    equivalent to sequencing shell commands, so that can evolve in complex
-    scripts
+- Our approach is to make simple to create scripts in python that are equivalent
+  to sequencing shell commands, so that can evolve in complex scripts
 
 ## Skeleton for a script
 
--   The ingredients are:
+- The ingredients are:
+  - `dev_scripts/script_skeleton.py`: a template to write simple scripts you can
+    copy and modify it
+  - `helpers/system_interaction.py`: a set of utilities that make simple to run
+    shell commands (e.g., capturing their output, breaking on error or not,
+    tee-ing to file, logging, ...)
+  - `helpers` has lots of useful libraries
 
-    -   `dev_scripts/script_skeleton.py`: a template to write simple scripts you
-        can copy and modify it
-    -   `helpers/system_interaction.py`: a set of utilities that make simple to
-        run shell commands (e.g., capturing their output, breaking on error or
-        not, tee-ing to file, logging, ...)
-    -   `helpers` has lots of useful libraries
+- The official reference for a script is `dev_scripts/script_skeleton.py`
+- You can copy this file and change it
 
--   The official reference for a script is `dev_scripts/script_skeleton.py`
--   You can copy this file and change it
-
--   A simple example is: `dev_scripts/git/gup.py`
--   A complex example is: `dev_scripts/linter.py`
+- A simple example is: `dev_scripts/git/gup.py`
+- A complex example is: `dev_scripts/linter.py`
 
 ## Some useful patterns
 
--   Some useful patterns / idioms that are supported by the framework are:
-    -   incremental mode: you skip an action if its outcome is already present
-        (e.g., skipping creating a dir, if it already exists and it contains all
-        the results)
-    -   non-incremental mode: clean and execute everything from scratch
-    -   dry-run mode: the commands are written to screen instead of being
-        executed
+- Some useful patterns / idioms that are supported by the framework are:
+  - Incremental mode: you skip an action if its outcome is already present
+    (e.g., skipping creating a dir, if it already exists and it contains all the
+    results)
+  - Non-incremental mode: clean and execute everything from scratch
+  - Dry-run mode: the commands are written to screen instead of being executed
 
 ## Use scripts and not notebooks for long-running jobs
 
--   We prefer to use scripts to execute code that might take long time (e.g.,
-    hours) to run, instead of notebooks
+- We prefer to use scripts to execute code that might take long time (e.g.,
+  hours) to run, instead of notebooks
 
--   Pros of script
+- Pros of script
+  - All the parameters are completely specified by a command line
+  - Reproducible and re-runnable
 
-    -   All the parameters are completely specified by a command line
-    -   Reproducible and re-runnable
+- Cons of notebooks
+  - Tend to crash / hang for long jobs
+  - Not easy to understand if the notebook is doing progress
+  - Not easy to get debug output
 
--   Cons of notebooks
-
-    -   Tend to crash / hang for long jobs
-    -   Not easy to understand if the notebook is doing progress
-    -   Not easy to get debug output
-
--   Notebooks are designed for interactive computing / debugging and not batch
-    jobs
-    -   You can experiment with notebooks, move the code into a library, and
-        wrap it in a script
+- Notebooks are designed for interactive computing / debugging and not batch
+  jobs
+  - You can experiment with notebooks, move the code into a library, and wrap it
+    in a script
 
 ## Python executable characteristics
 
--   All python scripts that are meant to be executed directly should:
+- All python scripts that are meant to be executed directly should:
 
-    1. be marked as executable files with:
-        ```bash
-        > chmod +x foo_bar.py
-        ```
-    2. have the python code should start with the standard Unix shebang
-       notation:
-        ```python
-        #!/usr/bin/env python
-        ```
+  1. Be marked as executable files with:
+     ```bash
+     > chmod +x foo_bar.py
+     ```
+  2. Have the python code should start with the standard Unix shebang notation:
+     ```python
+     #!/usr/bin/env python
+     ```
+  - This line tells the shell to use the `python` defined in the conda
+    environment
 
-    -   This line tells the shell to use the `python` defined in the conda
-        environment
+  3. Have a:
+     ```python
+     if __name__ == "__main__":
+         ...
+     ```
+  4. Ideally use `argparse` to have a minimum of customization
 
-    3. have a:
-        ```python
-        if __name__ == "__main__":
-            ...
-        ```
-    4. ideally use `argparse` to have a minimum of customization
-
--   In this way you can execute directly without prepending with python
+- In this way you can execute directly without prepending with python
 
 ## Use clear names for the scripts
 
--   In general scripts (like functions) should have a name like "action_verb".
+- In general scripts (like functions) should have a name like "action_verb".
+  - **Bad**
+    - Example of bad names are`timestamp_extractor.py` and
+      `timestamp_extractor_v2.py`
+      - Which timestamp data set are we talking about?
+      - What type of timestamps are we extracting?
+      - What is the difference about these two scripts?
 
-    -   **Bad**
-        -   Example of bad names are`timestamp_extractor.py` and
-            `timestamp_extractor_v2.py`
-            -   Which timestamp data set are we talking about?
-            -   What type of timestamps are we extracting?
-            -   What is the difference about these two scripts?
+- We need to give names to scripts that help people understand what they do and
+  the context in which they operate
+- We can add a reference to the task that originated the work (to give more
+  context)
 
--   We need to give names to scripts that help people understand what they do
-    and the context in which they operate
--   We can add a reference to the task that originated the work (to give more
-    context)
+- E.g., for a script generating a dataset there should be an (umbrella) bug for
+  this dataset, that we refer in the bug name,
+  e.g.,`TaskXYZ_edgar_timestamp_dataset_extractor.py`
 
--   E.g., for a script generating a dataset there should be an (umbrella) bug
-    for this dataset, that we refer in the bug name,
-    e.g.,`TaskXYZ_edgar_timestamp_dataset_extractor.py`
-
--   Also where the script is located should give some clue of what is related to
+- Also where the script is located should give some clue of what is related to
 
 # Functions
 
 ## Arguments
 
--   Avoid using `bool` arguments
-    -   While a simple `True`/`False` switch may suffice for today's needs, very
-        often more flexibility is eventually needed
-    -   If more flexibility is needed for a `bool` argument, you are faced with
-        the choice of
-        -   Adding another parameter (then parameter combinations grow
-            exponentially and may not all make sense)
-        -   Changing the parameter type to something else
-        -   Either way, you have to change the function interface
-    -   To maintain flexibility from the start, opt for a `str` parameter
-        "mode", which is allowed to take a small well-defined set of values.
-    -   If an implicit default is desirable, consider making the default value
-        of the parameter `None`. This is only a good route if the default
-        operation is non-controversial / intuitively obvious.
+- Avoid using `bool` arguments
+  - While a simple `True`/`False` switch may suffice for today's needs, very
+    often more flexibility is eventually needed
+  - If more flexibility is needed for a `bool` argument, you are faced with the
+    choice of
+    - Adding another parameter (then parameter combinations grow exponentially
+      and may not all make sense)
+    - Changing the parameter type to something else
+    - Either way, you have to change the function interface
+  - To maintain flexibility from the start, opt for a `str` parameter "mode",
+    which is allowed to take a small well-defined set of values.
+  - If an implicit default is desirable, consider making the default value of
+    the parameter `None`. This is only a good route if the default operation is
+    non-controversial / intuitively obvious.
 
 ## Try to make functions work on multiple types
 
--   We encourage implementing functions that can work on multiple related types:
-    -   **Bad**: implement `demean_series()`, `demean_dataframe()`
-    -   **Good**: implement a function `demean(obj)` that can work `pd.Series`
-        and `pd.DataFrame`
-        -   One convention is to call `obj` the variable whose type is not known
-            until run-time
--   In this way we take full advantage of duck typing to achieve something
-    similar to C++ function overloading (actually even more expressive)
--   Try to return the same type of the input, if possible
-    -   E.g., the function called on a `pd.Series` returns a `pd.Series`
+- We encourage implementing functions that can work on multiple related types:
+  - **Bad**: implement `demean_series()`, `demean_dataframe()`
+  - **Good**: implement a function `demean(obj)` that can work `pd.Series` and
+    `pd.DataFrame`
+    - One convention is to call `obj` the variable whose type is not known until
+      run-time
+- In this way we take full advantage of duck typing to achieve something similar
+  to C++ function overloading (actually even more expressive)
+- Try to return the same type of the input, if possible
+  - E.g., the function called on a `pd.Series` returns a `pd.Series`
 
 ## Avoid hard-wired column name dependencies
 
--   When working with dataframes, we often want need handle certain columns
-    differently, or perform an operation on a strict subset of columns
--   In these cases, it is tempting to assume that the special columns will have
-    specific names, e.g., "datetime"
--   The problem is that column names are
-    -   rarely obvious (e.g., compare "datetime" vs "timestamp" vs "Datetime")
-    -   tied to specific use cases
-        -   the function you are writing may be written for a specific use case
-            today, but what if it is more general
-        -   if someone wants to reuse your function in a different setting where
-            different column names make sense, why should they have to conform
-            to your specific use case's needs?
-    -   may overwrite existing column names
-        -   for example, you may decided to call a column "output", but what if
-            the dataframe already has a column with that name?
--   To get around this, allow the caller to communicate to the function the
-    names of any special columns
--   Make sure that you require column names only if they are actually used by
-    the function
--   If you must use hard-write column names internally or for some application,
-    define the column name in the library file, like
-    ```
-    DATETIME_COL = "datetime"
-    ```
-    -   Users of the library can now access the column name through imports
-    -   This prevents hidden column name dependencies from spreading like a
-        virus throughout the codebase
+- When working with dataframes, we often want need handle certain columns
+  differently, or perform an operation on a strict subset of columns
+- In these cases, it is tempting to assume that the special columns will have
+  specific names, e.g., "datetime"
+- The problem is that column names are
+  - Rarely obvious (e.g., compare "datetime" vs "timestamp" vs "Datetime")
+  - Tied to specific use cases
+    - The function you are writing may be written for a specific use case today,
+      but what if it is more general
+    - If someone wants to reuse your function in a different setting where
+      different column names make sense, why should they have to conform to your
+      specific use case's needs?
+  - May overwrite existing column names
+    - For example, you may decided to call a column "output", but what if the
+      dataframe already has a column with that name?
+- To get around this, allow the caller to communicate to the function the names
+  of any special columns
+- Make sure that you require column names only if they are actually used by the
+  function
+- If you must use hard-write column names internally or for some application,
+  define the column name in the library file, like
+  ```python
+  DATETIME_COL = "datetime"
+  ```
+  - Users of the library can now access the column name through imports
+  - This prevents hidden column name dependencies from spreading like a virus
+    throughout the codebase
 
 # Misc (to reorg)
 
--   TODO(\*): Start moving these functions in the right place once we have more
-    a better document structure
+- TODO(\*): Start moving these functions in the right place once we have more a
+  better document structure
 
 ## Write robust code
 
--   Write code where there is minimal coupling between different different parts
+- Write code where there is minimal coupling between different different parts
+  - This is a corollary of DRY, since not following DRY implies coupling
 
-    -   This is a corollary of DRY, since not following DRY implies coupling
+- Consider the following code:
+  ```python
+  if server_name == "ip-172-31-16-23":
+      out = 1
+  if server_name == "ip-172-32-15-23":
+      out = 2
+  ```
+- This code is brittle since if you change the first part to:
 
--   Consider the following code:
-    ```python
-    if server_name == "ip-172-31-16-23":
-        out = 1
-    if server_name == "ip-172-32-15-23":
-        out = 2
-    ```
--   This code is brittle since if you change the first part to:
+  ```python
+  if server_name.startswith("ip-172"):
+      out = 1
+  if server_name == "ip-172-32-15-23":
+      out = 2
+  ```
 
-    ```python
-    if server_name.startswith("ip-172"):
-        out = 1
-    if server_name == "ip-172-32-15-23":
-        out = 2
-    ```
+  executing the code with `server_name = "ip-172-32-15-23"` will give `out=2`
 
-    executing the code with `server_name = "ip-172-32-15-23"` will give `out=2`
-
--   The proper approach is to enumerate all the cases like:
-    ```python
-    if server_name == "ip-172-31-16-23":
-        out = 1
-    elif server_name == "ip-172-32-15-23":
-        out = 2
-    ...
-    else:
-        raise ValueError("Invalid server_name='%s'" % server_name)
-    ```
+- The proper approach is to enumerate all the cases like:
+  ```python
+  if server_name == "ip-172-31-16-23":
+      out = 1
+  elif server_name == "ip-172-32-15-23":
+      out = 2
+  ...
+  else:
+      raise ValueError("Invalid server_name='%s'" % server_name)
+  ```
 
 ## Capitalized words
 
--   In documentation and comments we capitalize abbreviations (e.g., `YAML`,
-    `CSV`)
--   In the code:
-    -   we try to leave abbreviations capitalized when it doesn't conflict with
-        other rules
-        -   E.g., `convert_to_CSV`, but `csv_file_name` as a variable name that
-            is not global
-    -   other times we use camel case, when appropriate
-        -   E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to
-            read
+- In documentation and comments we capitalize abbreviations (e.g., `YAML`,
+  `CSV`)
+- In the code:
+  - We try to leave abbreviations capitalized when it doesn't conflict with
+    other rules
+    - E.g., `convert_to_CSV`, but `csv_file_name` as a variable name that is not
+      global
+  - Other times we use camel case, when appropriate
+    - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
 
 ## Regex
 
--   The rule of thumb is to compile a regex expression, e.g.,
-    ```python
-    backslash_regexp = re.compile(r"\\")
-    ```
-    only if it's called more than once, otherwise the overhead of compilation
-    and creating another var is not justified
+- The rule of thumb is to compile a regex expression, e.g.,
+  ```python
+  backslash_regexp = re.compile(r"\\")
+  ```
+  only if it's called more than once, otherwise the overhead of compilation and
+  creating another var is not justified
 
 ## Order of functions in a file
 
--   We try to organize code in a file to represent the logical flow of the code
-    execution, e.g.,
+- We try to organize code in a file to represent the logical flow of the code
+  execution, e.g.,
+  - At the beginning of the file: functions / classes for reading data
+  - Then: functions / classes to process the data
+  - Finally at the end of the file: functions / classes to save the data
 
-    -   at the beginning of the file: functions / classes for reading data
-    -   then: functions / classes to process the data
-    -   finally at the end of the file: functions / classes to save the data
-
--   Try to put private helper functions close to the functions that are using
-    them
-    -   This rule of thumb is a bit at odds with clearly separating public and
-        private section in classes
-        -   A possible justification is that classes typically contain less code
-            than a file and tend to be used through their API
-        -   A file contains larger amount of loosely coupled code and so we want
-            to keep implementation and API close together
+- Try to put private helper functions close to the functions that are using them
+  - This rule of thumb is a bit at odds with clearly separating public and
+    private section in classes
+    - A possible justification is that classes typically contain less code than
+      a file and tend to be used through their API
+    - A file contains larger amount of loosely coupled code and so we want to
+      keep implementation and API close together
 
 ## Use layers design pattern
 
--   A "layer" design pattern (see Unix architecture) is a piece of code that
-    talks / has dependency only to one outermost layer and one innermost layer
+- A "layer" design pattern (see Unix architecture) is a piece of code that talks
+  / has dependency only to one outermost layer and one innermost layer
 
--   You can use this approach in your files representing data processing
-    pipelines
+- You can use this approach in your files representing data processing pipelines
 
--   You can split code in sections using 80 characters # comments, e.g.,
+- You can split code in sections using 80 characters # comments, e.g.,
 
-    ```python
-    # ###################...
-    # Read.
-    # ###################...
+  ```python
+  # ###################...
+  # Read.
+  # ###################...
+
+  ...
+
+  # ###################...
+  # Process.
+  # ###################...
+  ```
+
 
     ...
 
     # ###################...
     # Process.
     # ###################...
-    ```
 
-
-    ...
-
-    # ###################...
-    # Process.
-    # ###################...
-
--   This often suggests to split the code in classes to represent namespaces of
-    related functions
+- This often suggests to split the code in classes to represent namespaces of
+  related functions
 
 ## Write complete `if-then-else`
 
--   Consider this good piece of code
+- Consider this good piece of code
 
-    ```python
-    dbg.dassert_in(
-        frequency,
-        ["D", "T"]
-        "Only daily ('D') and minutely ('T') frequencies are supported.",
-    )
-    if frequency == "T":
-        ...
-    elif frequency == "D":
-        ...
-    else:
-        raise ValueError("The %s frequency is not supported" % frequency)
-    ```
+  ```python
+  dbg.dassert_in(
+      frequency,
+      ["D", "T"]
+      "Only daily ('D') and minutely ('T') frequencies are supported.",
+  )
+  if frequency == "T":
+      ...
+  elif frequency == "D":
+      ...
+  else:
+      raise ValueError("The %s frequency is not supported" % frequency)
+  ```
 
--   This code is robust and correct
+- This code is robust and correct
 
--   Still the `if-then-else` is enough and the assertion is not needed
+- Still the `if-then-else` is enough and the assertion is not needed
+  - DRY here wins: you don't want to have to keep two pieces of code in sync
 
-    -   DRY here wins: you don't want to have to keep two pieces of code in sync
-
--   It makes sense to check early only when you want to fail before doing more
-    work
-    -   E.g., sanity checking the parameters of a long running function, so that
-        it doesn't run for 1 hr and then crash because the name of the file is
-        incorrect
+- It makes sense to check early only when you want to fail before doing more
+  work
+  - E.g., sanity checking the parameters of a long running function, so that it
+    doesn't run for 1 hr and then crash because the name of the file is
+    incorrect
 
 ## Do not be stingy at typing
 
--   Why calling an object `TimeSeriesMinStudy` instead of
-    `TimeSeriesMinuteStudy`?
+- Why calling an object `TimeSeriesMinStudy` instead of `TimeSeriesMinuteStudy`?
+  - Saving 3 letters is not worth
+  - The reader might interpret `Min` as `Minimal` (or `Miniature`, `Minnie`,
+    `Minotaur`)
 
-    -   Saving 3 letters is not worth
-    -   The reader might interpret `Min` as `Minimal` (or `Miniature`, `Minnie`,
-        `Minotaur`)
-
--   If you don't like to type, we suggest you get a better keyboard, e.g.,
-    [this](https://kinesis-ergo.com/shop/advantage2/)
+- If you don't like to type, we suggest you get a better keyboard, e.g.,
+  [this](https://kinesis-ergo.com/shop/advantage2/)
 
 ## Research quality vs production quality
 
--   Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`)
-    and production (e.g., `//p1/db`, `vendors`) needs to meet high quality
-    standards, e.g.,
+- Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`)
+  and production (e.g., `//p1/db`, `vendors`) needs to meet high quality
+  standards, e.g.,
+  - Well commented
+  - Following our style guide
+  - Thoroughly reviewed
+  - Good design
+  - Comprehensive unit tests
 
-    -   well commented
-    -   following our style guide
-    -   thoroughly reviewed
-    -   good design
-    -   comprehensive unit tests
+- Research code in notebook and python can follow slightly looser standards,
+  e.g.,
+  - Sprinkled with some TODOs
+  - Not perfectly general
 
--   Research code in notebook and python can follow slightly looser standards,
-    e.g.,
+- The reason is that:
+  - Research code is still evolving and we want to keep the structure flexible
+  - We don't want to invest the time in making it perfect if the research
+    doesn't pan out
 
-    -   sprinkled with some TODOs
-    -   not perfectly general
+- Note that research code still needs to be:
+  - Understandable / usable by not authors
+  - Well commented
+  - Follow the style guide
+  - Somehow unit tested
 
--   The reason is that:
-
-    -   research code is still evolving and we want to keep the structure
-        flexible
-    -   we don't want to invest the time in making it perfect if the research
-        doesn't pan out
-
--   Note that research code still needs to be:
-
-    -   understandable / usable by not authors
-    -   well commented
-    -   follow the style guide
-    -   somehow unit tested
-
--   We should be able to raise the quality of a piece of research code to
-    production quality when that research goes into production
+- We should be able to raise the quality of a piece of research code to
+  production quality when that research goes into production
 
 ## No ugly hacks
 
--   We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be
-    undone (much more than the effort to do it right in the first place)
-    -   Especially an ugly design hack, e.g., a Singleton, or some unnecessary
-        dependency between distant pieces of code
-    -   Ugly hacks spreads everywhere in the code base
+- We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be
+  undone (much more than the effort to do it right in the first place)
+  - Especially an ugly design hack, e.g., a Singleton, or some unnecessary
+    dependency between distant pieces of code
+  - Ugly hacks spreads everywhere in the code base
 
 ## Life cycle of research code
 
--   Often the life cycle of a piece of code is to start as research and then be
-    promoted to higher level libraries to be used in multiple research, after
-    its quality reaches production quality
+- Often the life cycle of a piece of code is to start as research and then be
+  promoted to higher level libraries to be used in multiple research, after its
+  quality reaches production quality
 
 # Document what notebooks are for
 
@@ -1284,46 +1228,44 @@ analysis, tutorial)
 
 # Keep related code close
 
--   Try to keep related code as close as possible to their counterparty to
-    highlight logical blocks
--   Add comments to explain the logical blocks composing complex actions
+- Try to keep related code as close as possible to their counterparty to
+  highlight logical blocks
+- Add comments to explain the logical blocks composing complex actions
 
--   E.g., consider this code:
+- E.g., consider this code:
 
-    ```python
-    func_info = collections.OrderedDict()
-    func_sig = inspect.signature(self._transformer_func)
-    # Perform the column transformation operations.
-    if "info" in func_sig.parameters:
-        df = self._transformer_func(
-            df, info=func_info, **self._transformer_kwargs
-        )
-        info["func_info"] = func_info
-    else:
-        df = self._transformer_func(df, **self._transformer_kwargs)
-    ```
+  ```python
+  func_info = collections.OrderedDict()
+  func_sig = inspect.signature(self._transformer_func)
+  # Perform the column transformation operations.
+  if "info" in func_sig.parameters:
+      df = self._transformer_func(
+          df, info=func_info, **self._transformer_kwargs
+      )
+      info["func_info"] = func_info
+  else:
+      df = self._transformer_func(df, **self._transformer_kwargs)
+  ```
+  - Observations:
+    - `func_info` is used only in one branch of the `if-then-else`, so it should
+      be only in that branch
+    - Since `func_sig` is just a temporary alias for making the code easier to
+      follow (good!), we want to keep it close to where it's used
 
-    -   Observations:
-        -   `func_info` is used only in one branch of the `if-then-else`, so it
-            should be only in that branch
-        -   Since `func_sig` is just a temporary alias for making the code
-            easier to follow (good!), we want to keep it close to where it's
-            used
-
-    ```python
-    # Perform the column transformation operations.
-    func_sig = inspect.signature(self._transformer_func)
-    if "info" in func_sig.parameters:
-        # If info is available in the function signature, then pass it
-        # to the transformer.
-        func_info = collections.OrderedDict()
-        df = self._transformer_func(
-            df, info=func_info, **self._transformer_kwargs
-        )
-        info["func_info"] = func_info
-    else:
-        df = self._transformer_func(df, **self._transformer_kwargs)
-    ```
+  ```python
+  # Perform the column transformation operations.
+  func_sig = inspect.signature(self._transformer_func)
+  if "info" in func_sig.parameters:
+      # If info is available in the function signature, then pass it
+      # to the transformer.
+      func_info = collections.OrderedDict()
+      df = self._transformer_func(
+          df, info=func_info, **self._transformer_kwargs
+      )
+      info["func_info"] = func_info
+  else:
+      df = self._transformer_func(df, **self._transformer_kwargs)
+  ```
 
 # Single exit point from a function
 
@@ -1337,20 +1279,20 @@ def _get_zero_element(list_: list):
 vendors/kibot/utils.py:394: [R1705(no-else-return), ExpiryContractMapper.extract_contract_expiry] Unnecessary "else" after "return" [pylint]
 ```
 
--   Try to have a single exit point from a function, since this guarantees that
-    the return value is always the same
--   In general returning different data structures from the same function (e.g.,
-    a list in one case and a float in another) is indication of bad design
-    -   There are exceptions like a function that works on different types
-        (e.g., accepts a dataframe or a series and then returns a dataframe or a
-        series, but the input and output is the same)
-    -   Returning different types (e.g., float and string) is also bad
-    -   Returning a type or None is typically ok
--   Try to return values that are consistent so that the client doesn't have to
-    switch statement, using `isinstance(...)`
-    -   E.g., return a `float` and if the value can't be computed return
-        `np.nan` (instead of `None`) so that the client can use the return value
-        in a uniform way
+- Try to have a single exit point from a function, since this guarantees that
+  the return value is always the same
+- In general returning different data structures from the same function (e.g., a
+  list in one case and a float in another) is indication of bad design
+  - There are exceptions like a function that works on different types (e.g.,
+    accepts a dataframe or a series and then returns a dataframe or a series,
+    but the input and output is the same)
+  - Returning different types (e.g., float and string) is also bad
+  - Returning a type or None is typically ok
+- Try to return values that are consistent so that the client doesn't have to
+  switch statement, using `isinstance(...)`
+  - E.g., return a `float` and if the value can't be computed return `np.nan`
+    (instead of `None`) so that the client can use the return value in a uniform
+    way
 
 ```python
 @staticmethod
@@ -1364,7 +1306,7 @@ def _get_zero_element(list_: list):
     ret = None if not list* else list*[0] return ret
 ```
 
--   It's ok to have functions like:
+- It's ok to have functions like:
 
 ```python
 def ...(...):
@@ -1379,145 +1321,135 @@ def ...(...):
 
 ## Style for default parameter
 
--   We prefer this style for the optional parameter using complex objects and
-    strings.
+- We prefer this style for the optional parameter using complex objects and
+  strings.
 
--   **Bad**
+- **Bad**
 
-    ```python
-    def function(..., dir_name : Optional[str] = "/very_long_path", ...):
-    ...
-    ```
+  ```python
+  def function(..., dir_name : Optional[str] = "/very_long_path", ...):
+  ...
+  ```
 
--   **Good**
+- **Good**
 
-    ```python
-    def function(..., dir_name : Optional[str] = None, ...):
-        if dir_name is None:
-            dir_name = "/very_long_path"
-        # You can also abbreviate the previous code as:
-        # dir_name = dir_name or "/very_long_path"
-    ```
+  ```python
+  def function(..., dir_name : Optional[str] = None, ...):
+      if dir_name is None:
+          dir_name = "/very_long_path"
+      # You can also abbreviate the previous code as:
+      # dir_name = dir_name or "/very_long_path"
+  ```
 
--   Pros of the Good vs Bad style
+- Pros of the Good vs Bad style
+  - The interface is cleaner
+  - Implementation details are hidden (e.g., why should the caller know what is
+    the default path?)
+  - When you wrap multiple functions, each of them needs to propagate the
+    default parameter violating DRY and adding maintenance burden
+  - With the proposed approach, all the functions can use None, until the
+    innermost function resolves the parameter to the default parameter
+  - Mutable parameters can not be passed through (see
+    [here](https://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument)))
 
-    -   The interface is cleaner
-    -   Implementation details are hidden (e.g., why should the caller know what
-        is the default path?)
-    -   When you wrap multiple functions, each of them needs to propagate the
-        default parameter violating DRY and adding maintenance burden
-    -   With the proposed approach, all the functions can use None, until the
-        innermost function resolves the parameter to the default parameter
-    -   Mutable parameters can not be passed through (see
-        [here](https://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument)))
+- Cons:
+  - One needs to add `Optional` to the type hint
 
--   Cons:
-
-    -   One needs to add `Optional` to the type hint
-
--   Note that a simple scalar option is still preferred to be in-lined.
+- Note that a simple scalar option is still preferred to be in-lined.
 
 ## Calling functions with default parameters
 
--   You have a function
+- You have a function
 
-    ```python
-    def func(task_name : str, dataset_dir : str, clobber : bool = clobber):
-        ...
-    ```
+  ```python
+  def func(task_name : str, dataset_dir : str, clobber : bool = clobber):
+      ...
+  ```
 
--   We prefer to explicitly bind the parameters with a default value using their
-    name
+- We prefer to explicitly bind the parameters with a default value using their
+  name
 
--   **Bad**
+- **Bad**
 
-    ```python
-    func(task_name=task_name, dataset_dir=dataset_dir, clobber=clobber)
-    ```
+  ```python
+  func(task_name=task_name, dataset_dir=dataset_dir, clobber=clobber)
+  ```
 
--   **Good**
+- **Good**
 
-    ```python
-    func(task_name, dataset_dir, clobber=clobber)
-    ```
+  ```python
+  func(task_name, dataset_dir, clobber=clobber)
+  ```
 
--   Pros of "Good" vs "Bad" style
+- Pros of "Good" vs "Bad" style
+  - If a new parameter with a default value is added to the function `func`
+    before `clobber`, the order of the parameters is changed and:
+    - The "Good" idiom doesn't need to be changed
+    - All instances of the "Bad" idiom needs to be updated
+      - The "Bad" idiom might keep working but with silent failures
+      - Of course `mypy` and `Pycharm` can help
+  - If one assigns one non-default parameters all the successive ones need to be
+    name-assigned with maintenance burden
 
-    -   If a new parameter with a default value is added to the function `func`
-        before `clobber`, the order of the parameters is changed and:
-        -   the "Good" idiom doesn't need to be changed
-        -   all instances of the "Bad" idiom needs to be updated
-            -   the "Bad" idiom might keep working but with silent failures
-            -   of course `mypy` and `Pycharm` can help
-    -   If one assigns one non-default parameters all the successive ones need
-        to be name-assigned with maintenance burden
-
--   Cons:
-    -   None
+- Cons:
+  - None
 
 ## Always separate what changes from what stays the same
 
--   In both main code and unit test it's not a good idea to repeat the same code
+- In both main code and unit test it's not a good idea to repeat the same code
 
--   **Bad**
+- **Bad**
+  - Copy-paste-modify
 
-    -   Copy-paste-modify
+- **Good**
+  - Refactor the common part in a functionand then change the parameters used to
+    call the function
 
--   **Good**
+- Example:
+  - What code is clearer to you, VersionA or VersionB?
+  - Can you spot the difference between the 2 pieces of code?
+  - VersionA
 
-    -   Refactor the common part in a functionand then change the parameters
-        used to call the function
+    ```python
+    stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
+    texts = ["a", "an", "the"]
+    stop_words = nlp_ut.get_stopwords(
+        categories=["articles"], stopwords=stopwords
+    )
+    actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
+    expected_result = []
+    self.assertEqual(actual_result, expected_result)
 
--   Example:
+    ...
+    texts = ["do", "does", "is", "am", "are", "be", "been", "'s", "'m", "'re"]
+    stop_words = nlp_ut.get_stopwords(
+        categories=["auxiliary_verbs"], stopwords=stopwords,
+    )
+    actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
+    expected_result = []
+    self.assertEqual(actual_result, expected_result)
+    ```
+  - VersionB
 
-    -   What code is clearer to you, VersionA or VersionB?
-    -   Can you spot the difference between the 2 pieces of code?
-
-    -   VersionA
-
-        ```python
+    ```python
+    def _helper(texts, categories, expected_result):
         stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
-        texts = ["a", "an", "the"]
         stop_words = nlp_ut.get_stopwords(
-            categories=["articles"], stopwords=stopwords
+            categories=categories, stopwords=stopwords
         )
         actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
         expected_result = []
         self.assertEqual(actual_result, expected_result)
 
-        ...
-        texts = ["do", "does", "is", "am", "are", "be", "been", "'s", "'m", "'re"]
-        stop_words = nlp_ut.get_stopwords(
-            categories=["auxiliary_verbs"], stopwords=stopwords,
-        )
-        actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
-        expected_result = []
-        self.assertEqual(actual_result, expected_result)
-        ```
+    texts = ["a", "an", "the"]
+    categories = ["articles"]
+    expected_result = []
+    _helper(texts, categories, expected_result)
+    ...
 
-    -   VersionB
-        ```python
-        def _helper(texts, categories, expected_result):
-            stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
-            stop_words = nlp_ut.get_stopwords(
-                categories=categories, stopwords=stopwords
-            )
-            actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
-            expected_result = []
-            self.assertEqual(actual_result, expected_result)
-        ```
-
-
-        texts = ["a", "an", "the"]
-        categories = ["articles"]
-        expected_result = []
-        _helper(texts, categories, expected_result)
-        ...
-
-        texts = ["do", "does", "is", "am", "are", "be", "been", "'s", "'m", "'re"]
-        categories = ["auxiliary_verbs"]
-        expected_result = []
-        _helper(texts, categories, expected_result)
-        ```
-
+    texts = ["do", "does", "is", "am", "are", "be", "been", "'s", "'m", "'re"]
+    categories = ["auxiliary_verbs"]
+    expected_result = []
+    _helper(texts, categories, expected_result)
+    ```
     - Yes, VersionA is **Bad** and VersionB is **Good**

@@ -6,11 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>tmp.pandoc.no_spaces.txt</title>
   <style>
-    code{white-space: pre-wrap;}
-    span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
-    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
   </style>
   <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
@@ -19,18 +18,15 @@
 <body>
 <nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#style-guide-references"><span class="toc-section-number">1</span> Style guide references</a>
-<ul>
+<li><a href="#style-guide-references"><span class="toc-section-number">1</span> Style guide references</a><ul>
 <li><a href="#reference"><span class="toc-section-number">1.1</span> Reference</a></li>
 </ul></li>
-<li><a href="#comments"><span class="toc-section-number">2</span> Comments</a>
-<ul>
+<li><a href="#comments"><span class="toc-section-number">2</span> Comments</a><ul>
 <li><a href="#docstring-conventions"><span class="toc-section-number">2.1</span> Docstring conventions</a></li>
 <li><a href="#rest-style"><span class="toc-section-number">2.2</span> reST style</a></li>
 <li><a href="#descriptive-vs-imperative-style"><span class="toc-section-number">2.3</span> Descriptive vs imperative style</a></li>
 </ul></li>
-<li><a href="#logging"><span class="toc-section-number">3</span> Logging</a>
-<ul>
+<li><a href="#logging"><span class="toc-section-number">3</span> Logging</a><ul>
 <li><a href="#always-use-logging-instead-of-prints"><span class="toc-section-number">3.1</span> Always use logging instead of prints</a></li>
 <li><a href="#our-logging-idiom"><span class="toc-section-number">3.2</span> Our logging idiom</a></li>
 <li><a href="#logging-level"><span class="toc-section-number">3.3</span> Logging level</a></li>
@@ -38,13 +34,14 @@
 </ul></li>
 </ul>
 </nav>
-<h1 data-number="1" id="style-guide-references"><span class="header-section-number">1</span> Style guide references</h1>
+
+<h1 id="style-guide-references"><span class="header-section-number">1</span> Style guide references</h1>
 <pre><code>- We care about at consistency rather than arguing about which approach is better
   - E.g., see &quot;tab vs space&quot; flame-war from the 90s
 - Unless explicitly noted we prefer to follow the style guide below
 - As a rule of thumb we default to Google style unless Python community (in the
   form of PEP) or tools we rely favor another style</code></pre>
-<h2 data-number="1.1" id="reference"><span class="header-section-number">1.1</span> Reference</h2>
+<h2 id="reference"><span class="header-section-number">1.1</span> Reference</h2>
 <pre><code>- Google Python Style Guide (GPSG)
   - `https://google.github.io/styleguide/pyguide.html`
 - Commenting style
@@ -58,8 +55,8 @@
     - `https://github.com/google/styleguide/blob/gh-pages/docguide/philosophy.md`
 - Unix rules (although a bit cryptic sometimes)
     - `https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules`</code></pre>
-<h1 data-number="2" id="comments"><span class="header-section-number">2</span> Comments</h1>
-<h2 data-number="2.1" id="docstring-conventions"><span class="header-section-number">2.1</span> Docstring conventions</h2>
+<h1 id="comments"><span class="header-section-number">2</span> Comments</h1>
+<h2 id="docstring-conventions"><span class="header-section-number">2.1</span> Docstring conventions</h2>
 <pre><code>- Code needs to be properly commented
 - We follow python standard [PEP257](https://www.python.org/dev/peps/pep-0257/)
   for commenting
@@ -71,7 +68,7 @@
     - Google (which is cross-language, e.g., C++, python, …)
     - epytext
     - numpydoc</code></pre>
-<h2 data-number="2.2" id="rest-style"><span class="header-section-number">2.2</span> reST style</h2>
+<h2 id="rest-style"><span class="header-section-number">2.2</span> reST style</h2>
 <pre><code>- reST (aka re-Structured Text) style is:
     - the most widely supported in the python commpunity
     - supported by all doc generation tools (e.g., epydoc, sphinx)
@@ -94,7 +91,7 @@ This is a reST style.
 :raises keyError: raises an exception
 &quot;&quot;&quot;
 ```</code></pre>
-<h2 data-number="2.3" id="descriptive-vs-imperative-style"><span class="header-section-number">2.3</span> Descriptive vs imperative style</h2>
+<h2 id="descriptive-vs-imperative-style"><span class="header-section-number">2.3</span> Descriptive vs imperative style</h2>
 <pre><code>- GPSG suggests to use descriptive style of comments, e.g., &quot;This function does
   this and that&quot;, instead than imperative style &quot;Do this and that&quot;
 - [PEP-257](https://www.python.org/dev/peps/pep-0257/)
@@ -108,7 +105,7 @@ This is a reST style.
     - pylint and other python QA tools favor an imperative style
     - Since we prefer to rely on automatic checks, we decided to use an imperative
       style of comments</code></pre>
-<h3 data-number="2.3.1" id="alternate-parameter-description-and-type"><span class="header-section-number">2.3.1</span> Alternate parameter description and type</h3>
+<h3 id="alternate-parameter-description-and-type"><span class="header-section-number">2.3.1</span> Alternate parameter description and type</h3>
 <pre><code>- We prefer to alternate param description and its type so the docstring below,
   although good, does not follow our convention
     *Bad**
@@ -144,7 +141,7 @@ This is a reST style.
 - We pick lowercase after `:param XYZ: ...` unless the first word is a proper
   noun or type
 - Examples are [here](https://stackoverflow.com/questions/3898572)</code></pre>
-<h3 data-number="2.3.2" id="avoid-empty-lines-in-code"><span class="header-section-number">2.3.2</span> Avoid empty lines in code</h3>
+<h3 id="avoid-empty-lines-in-code"><span class="header-section-number">2.3.2</span> Avoid empty lines in code</h3>
 <pre><code>- If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
   function.
@@ -181,7 +178,7 @@ This is a reST style.
 - The problem with empty lines is that they are visually confusing since one
   empty line is used also to separate functions. For this reason we suggest to
   use an empty comment.</code></pre>
-<h3 data-number="2.3.3" id="avoid-distracting-comments"><span class="header-section-number">2.3.3</span> Avoid distracting comments</h3>
+<h3 id="avoid-distracting-comments"><span class="header-section-number">2.3.3</span> Avoid distracting comments</h3>
 <pre><code>- Use comments to explain the high level logic / goal of a piece of code and not
   the details
     - E.g., do not comment things that are obvious, e.g.,
@@ -190,7 +187,7 @@ This is a reST style.
     # Print results.
     log.info(&quot;Results are %s&quot;, ...)
     ```</code></pre>
-<h3 data-number="2.3.4" id="if-you-find-a-bug-obsolete-docstring-in-the-code"><span class="header-section-number">2.3.4</span> If you find a bug, obsolete docstring in the code</h3>
+<h3 id="if-you-find-a-bug-obsolete-docstring-in-the-code"><span class="header-section-number">2.3.4</span> If you find a bug, obsolete docstring in the code</h3>
 <pre><code>- The process is:
     - do a `git blame` to find who wrote the code
     - if it&#39;s an easy bug, you can fix it and ask for a review to the author
@@ -200,10 +197,10 @@ This is a reST style.
         - how to reproduce it, ideally a unit test
         - stacktrace
         - you can use the tag “BUG: ...&quot;</code></pre>
-<h1 data-number="3" id="logging"><span class="header-section-number">3</span> Logging</h1>
-<h2 data-number="3.1" id="always-use-logging-instead-of-prints"><span class="header-section-number">3.1</span> Always use logging instead of prints</h2>
+<h1 id="logging"><span class="header-section-number">3</span> Logging</h1>
+<h2 id="always-use-logging-instead-of-prints"><span class="header-section-number">3.1</span> Always use logging instead of prints</h2>
 <pre><code>- Always use logging and never `print()` to report debug, info, warning </code></pre>
-<h2 data-number="3.2" id="our-logging-idiom"><span class="header-section-number">3.2</span> Our logging idiom</h2>
+<h2 id="our-logging-idiom"><span class="header-section-number">3.2</span> Our logging idiom</h2>
 <pre><code>```python
 import helpers.dbg as dbg
 
@@ -219,7 +216,7 @@ _LOG.debug(&quot;I am a debug function about %s&quot;, a)
   silence)
     - E.g., when there is a bug one can run with `-v DEBUG` and see what&#39;s
       happening right before the bug</code></pre>
-<h2 data-number="3.3" id="logging-level"><span class="header-section-number">3.3</span> Logging level</h2>
+<h2 id="logging-level"><span class="header-section-number">3.3</span> Logging level</h2>
 <pre><code>- Use `_LOG.info` when you want to communicate to the final user, e.g.,
     - when the script is started
     - where the script is saving its results
@@ -233,7 +230,7 @@ _LOG.debug(&quot;I am a debug function about %s&quot;, a)
     - This is useful to indicate that the script did not die in the middle:
       sometimes this happens silently and it is reported only from the OS return
       code</code></pre>
-<h2 data-number="3.4" id="use-positional-args-when-logging"><span class="header-section-number">3.4</span> Use positional args when logging</h2>
+<h2 id="use-positional-args-when-logging"><span class="header-section-number">3.4</span> Use positional args when logging</h2>
 <pre><code>- Instead of doing this:
     **Bad**
 

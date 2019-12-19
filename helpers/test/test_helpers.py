@@ -121,14 +121,16 @@ class Test_git1(ut.TestCase):
     def test_get_branch_name(self):
         _ = git.get_branch_name()
 
-
+    @pytest.mark.skipif('si.get_user_name() == "jenkins"', reason="#781")
     @pytest.mark.skipif(
-        'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"')
+        'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"'
+    )
     def test_get_submodule_hash(self):
         _ = git.get_submodule_hash("amp")
 
     def test_get_hash_head(self):
         _ = git.get_hash_head(".")
+
 
 # #############################################################################
 # list.py
@@ -209,6 +211,40 @@ class Test_s3_1(ut.TestCase):
         file_names = hs3.ls(file_path)
         # We rely on the fact that Kibot data is not changing.
         self.assertEqual(len(file_names), 252)
+
+
+# #############################################################################
+# unit_test.py
+# #############################################################################
+
+class Test_unit_test1(ut.TestCase):
+    @pytest.mark.amp
+    def test_purify_txt_from_client1(self):
+        super_module_path = git.get_client_root(super_module=True)
+        # TODO(gp): We should remove the current path.
+        txt = r"""
+************* Module input [pylint]
+$SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
+$SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
+$SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:9: F821 undefined name 're' [flake8]
+cmd line='$SUPER_MODULE/dev_scripts/linter.py -f $SUPER_MODULE/amp/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py --linter_log $SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/linter.log'
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
+"""
+        txt = txt.replace("$SUPER_MODULE", super_module_path)
+        exp = r"""
+************* Module input [pylint]
+$GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
+$GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
+$GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3:9: F821 undefined name 're' [flake8]
+cmd line='$GIT_ROOT/dev_scripts/linter.py -f $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py --linter_log $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/linter.log'
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
+dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
+"""
+        act = ut.purify_txt_from_client(txt)
+        self.assert_equal(act, exp)
 
 
 # #############################################################################

@@ -30,7 +30,7 @@ def build_configs(dst_dir, dry_run):
     config["output_dir"] = dst_dir
     config["sim_tag"] = None
     #
-    config["zscore_style"] = "rolling_std"
+    config["zscore_style"] = "compute_rolling_std"
     config["zscore_com"] = 28
     config["filter_ath"] = True
     config["target_y_var"] = "zret_0"

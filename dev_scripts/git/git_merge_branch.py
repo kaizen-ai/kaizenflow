@@ -31,6 +31,13 @@ def _get_changed_files(dst_branch: str) -> List[str]:
 def _qualify_branch(
     tag: str, dst_branch: str, test_list: str, quick: bool
 ) -> List[str]:
+    """
+    Qualify a branch stored in directory, running linter and unit tests.
+
+    :param dst_branch: directory containing the branch
+    :para, test_list: test list to run (e.g., fast, slow)
+    :param quick: run a single test instead of the entire regression test
+    """
     print(prnt.frame("Qualifying '%s'" % tag))
     output = []
     # - Linter.
@@ -115,21 +122,22 @@ def _main(parser):
     if True:
         cmd = "git fetch origin %s:%s" % (args.dst_branch, args.dst_branch)
         si.system(cmd)
-    # Refresh.
+
     def _refresh(dst_dir):
         _LOG.debug("Refreshing dst_dir=%s", dst_dir)
         cd_cmd = "cd %s && " % dst_dir
-        # Stash and clean.
-        msg = "git_merge_branch"
-        cmd = "git stash save --keep-index '%s' && git stash apply" % msg
-        cmd = cd_cmd + cmd
-        si.system(cmd)
+        if False:
+            # Make a backup.
+            msg = "git_merge_branch.py"
+            cmd = "git stash save --keep-index '%s' && git stash apply" % msg
+            cmd = cd_cmd + cmd
+            si.system(cmd)
         # Pull.
         cmd = "git pull"
         cmd = cd_cmd + cmd
         si.system(cmd)
         # Merge master.
-        cmd = "git merge master --commit --ff-only --no-edit"
+        cmd = "git merge master --commit --no-edit"
         cmd = cd_cmd + cmd
         si.system(cmd)
 
@@ -137,11 +145,12 @@ def _main(parser):
     _refresh(".")
     # Refresh amp repo, if needed.
     if os.path.exists("amp"):
-        _refresh(".")
+        _refresh("amp")
     # Qualify amp repo.
     if os.path.exists("amp"):
         tag = "amp"
-        output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list)
+        output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list,
+                args.quick)
         output.extend(output_tmp)
     #
     repo_sym_name = git.get_repo_symbolic_name(super_module=True)

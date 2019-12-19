@@ -64,6 +64,9 @@ def drop_na_inf_if_needed(
         series = series.dropna()
     return series
 
+# TODO(*: Do we really need this? All cases here apply when a `series` is
+#     empty. It would be clearer to log a warning and return when the series
+#     is empty and otherwise carry out usual division.
 
 # TODO(*): move to gen_utils.py as safe_div_nan?
 def safe_div(a: float, b: float) -> np.float:
@@ -72,6 +75,7 @@ def safe_div(a: float, b: float) -> np.float:
     """
     div = a / b if b != 0 else np.nan
     return div
+
 
 
 def compute_pct_zero(

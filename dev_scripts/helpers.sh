@@ -1,27 +1,61 @@
 # Make output white.
 echo -e '\033[0;0m\c'
 
-function execute() {
+ACK_OPTS="--smart-case --nogroup --nocolor"
+
+GIT_LOG_OPTS='%Creset%Cgreen%h %C(reset)%C(cyan)%<(8)%aN%Creset %Creset%C(bold white) %<(55)%s %C(bold black)(%>(14)%ar) %C(red)%ad %C(yellow)%<(10)%d%C(reset)'
+
+execute() {
   cmd=$*
   echo "+ $cmd"
-  eval $cmd 
+  eval $cmd
   return $?
 }
 
-function frame() {
+frame() {
   echo "####################################################################"
   echo "$*"
   echo "####################################################################"
 }
 
-ACK_OPTS="--smart-case --nogroup --nocolor"
 
-GIT_LOG_OPTS='%Creset%Cgreen%h %C(reset)%C(cyan)%<(8)%aN%Creset %Creset%C(bold white) %<(55)%s %C(bold black)(%>(14)%ar) %C(red)%ad %C(yellow)%<(10)%d%C(reset)'
+parse_jack_cmd_opts() {
+  # Initialize variables.
+  regex=""
+  dir="."
 
+  while getopts "hr:d:" opt; do
+      case "$opt" in
+      h)
+          echo "Usage: -r 'regex to look for' [-d dir_name]"
+          exit 0
+          ;;
+      r)  regex=$OPTARG
+          ;;
+      d)  dir=$OPTARG
+          ;;
+      esac
+  done
+  shift $((OPTIND-1))
+  [ "${1:-}" = "--" ] && shift
+
+  echo "regex='$regex'"
+  echo "dir='$dir'"
+
+  if [[ -z $regex ]]; then
+      echo "Error: you need to specify -r for something to grep"
+      exit -1
+  fi;
+
+  if [[ ! -z $@ ]]; then
+      echo "Error: too many params '$@'"
+      exit -1
+  fi;
+}
 
 # ##############################################################################
 
-function get_python_version() {
+get_python_version() {
   python - <<END
 import sys
 pyv = sys.version_info[:]
@@ -35,7 +69,7 @@ END
 }
 
 
-function execute_setenv() {
+execute_setenv() {
   if [[ -z $1 ]]; then
     echo "ERROR($EXEC_NAME): Need to specify a parameter representing setenv"
     return 1

@@ -295,7 +295,7 @@ def get_first_line(output: str) -> str:
     return output_as_arr[0].rstrip().lstrip()
 
 
-def system_to_one_line_string(cmd, *args, **kwargs):
+def system_to_one_line_string(cmd, *args, **kwargs) -> Tuple[int, str]:
     """
     Execute a shell command and capture its output (expected to be a single line).
 
@@ -305,10 +305,11 @@ def system_to_one_line_string(cmd, *args, **kwargs):
     output = get_first_line(output)
     return rc, output
 
+
 # #############################################################################
 
 
-def get_process_pids(keep_line):
+def get_process_pids(keep_line) -> Tuple[List[int], List[str]]:
     """
     Find all the processes corresponding to `ps ax` filtered line by line with
     `keep_line()`.
@@ -318,8 +319,8 @@ def get_process_pids(keep_line):
     cmd = "ps ax"
     rc, txt = system_to_string(cmd, abort_on_error=False)
     _LOG.debug("txt=\n%s", txt)
-    pids = []
-    txt_out = []
+    pids: List[int] = []
+    txt_out: List[str] = []
     if rc == 0:
         for line in txt.split("\n"):
             _LOG.debug("line=%s", line)

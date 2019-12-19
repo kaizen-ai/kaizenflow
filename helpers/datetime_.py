@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.datetime_ as hdt
+"""
+
 import datetime
 
 import helpers.dbg as dbg

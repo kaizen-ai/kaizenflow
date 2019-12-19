@@ -15,7 +15,6 @@ fi;
 DIR_NAME1="$HOME_DIR/src/amp"
 
 SETENV="./dev_scripts/setenv_amp.sh"
-SETENV="./dev_scripts_amp/setenv_amp.sh"
 
 TMUX_NAME="dev"
 

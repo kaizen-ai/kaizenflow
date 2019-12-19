@@ -240,11 +240,13 @@ def from_file(file_name: str, encoding: Optional[Any] = None) -> str:
         try:
             data = f.read()
         except UnicodeDecodeError as e:
-            msg = "error=%s" % e
-            msg = "\nfile_name='%s'" % file_name
-            _LOG.error(msg)
-            raise RuntimeError(msg)
-        dbg.dassert_isinstance(data, str)
+            msg = []
+            msg.append("error=%s" % e)
+            msg.append("file_name='%s'" % file_name)
+            msg_as_str = "\n".join(msg)
+            _LOG.error(msg_as_str)
+            raise RuntimeError(msg_as_str)
+    dbg.dassert_isinstance(data, str)
     return data
 
 
