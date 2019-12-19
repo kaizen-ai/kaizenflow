@@ -1447,25 +1447,16 @@ def _remove_not_possible_actions(actions: List[str]) -> List[str]:
     return actions_tmp
 
 
-def _actions_to_string(actions: List[str]) -> str:
-    space = max([len(a) for a in _get_valid_actions()]) + 2
-    format_ = "%" + str(space) + "s: %s"
-    actions_as_str = [
-        format_ % (a, "Yes" if a in actions else "-")
-        for a in _get_valid_actions()
-    ]
-    return "\n".join(actions_as_str)
-
-
 def _select_actions(args: argparse.Namespace) -> List[str]:
     actions = prsr.select_actions(args, _get_valid_actions())
     # Find the tools that are available.
     actions = _remove_not_possible_actions(actions)
     #
-    actions_as_str = _actions_to_string(actions)
-    _LOG.info(
-        "\n%s", prnt.frame("# Action selected:\n%s" % prnt.space(actions_as_str))
+    add_frame = True
+    actions_as_str = prsr.actions_to_string(
+        actions, _get_valid_actions(), add_frame
     )
+    _LOG.info("\n%s", actions_as_str)
     return actions
 
 
@@ -1483,8 +1474,11 @@ def _test_actions():
         else:
             num_not_poss += 1
     # Report results.
-    actions_as_str = _actions_to_string(possible_actions)
-    _LOG.info("Possible actions:\n%s", prnt.space(actions_as_str))
+    add_frame = True
+    actions_as_str = prsr.actions_to_string(
+        possible_actions, _get_valid_actions(), add_frame
+    )
+    _LOG.info("\n%s", actions_as_str)
     if num_not_poss > 0:
         _LOG.warning("There are %s actions that are not possible", num_not_poss)
     else:

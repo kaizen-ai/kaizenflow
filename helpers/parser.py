@@ -5,9 +5,13 @@ import helpers.parser as prsr
 """
 
 import argparse
+import logging
 from typing import List, Optional
 
 import helpers.dbg as dbg
+import helpers.printing as prnt
+
+_LOG = logging.getLogger(__name__)
 
 
 def add_bool_arg(
@@ -27,7 +31,6 @@ def add_bool_arg(
 
 
 def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-
     parser.add_argument(
         "-v",
         dest="log_level",
@@ -41,13 +44,19 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 # #############################################################################
 
 
-def _actions_to_string(actions: List[str], valid_actions: List[str]) -> str:
+def actions_to_string(
+    actions: List[str], valid_actions: List[str], add_frame: bool
+) -> str:
     space = max([len(a) for a in valid_actions]) + 2
     format_ = "%" + str(space) + "s: %s"
-    actions_as_str = [
+    actions = [
         format_ % (a, "Yes" if a in actions else "-") for a in valid_actions
     ]
-    return "\n".join(actions_as_str)
+    actions_as_str = "\n".join(actions)
+    if add_frame:
+        ret = prnt.frame("# Action selected:") + "\n"
+        ret += prnt.space(actions_as_str)
+    return ret
 
 
 def select_actions(
@@ -60,6 +69,7 @@ def select_actions(
         actions = args.action
     actions = actions[:]
     dbg.dassert_isinstance(actions, list)
+    dbg.dassert_no_duplicates(actions)
     # Validate actions.
     for action in set(actions):
         if action not in valid_actions:
@@ -67,6 +77,16 @@ def select_actions(
     # Reorder actions according to 'valid_actions'.
     actions = [action for action in valid_actions if action in actions]
     return actions
+
+
+def mark_action(action: str, actions: List[str]):
+    to_execute = action in actions
+    if to_execute:
+        _LOG.debug("\n%s", prnt.frame("action=%s" % action))
+        actions = [a for a in actions if a != action]
+    else:
+        _LOG.warning("Skip action='%s'", action)
+    return to_execute, actions
 
 
 def add_action_arg(
