@@ -21,6 +21,7 @@ E.g.,
 > linter.py --files event_study/*.py linter_v2.py --yapf --isort -v DEBUG
 
 # Lint the changes in the branch:
+> linter.py -b
 > linter.py -f $(git diff --name-only master...)
 
 # Lint all python files, but not the notebooks.

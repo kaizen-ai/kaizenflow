@@ -23,18 +23,13 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _get_changed_files(dst_branch: str) -> List[str]:
-    cmd = "git diff --name-only %s..." % dst_branch
-    _, output = si.system_to_string(cmd)
-    file_names = si.get_non_empty_lines(output)
-    return file_names
-
-
 def _process_repo(
-    actions: List[str], dir_: str, dst_branch: str,
+    actions: List[str],
+    dir_: str,
+    dst_branch: str,
     test_list: str,
     quick: bool,
-    output: List[str]
+    output: List[str],
 ) -> Tuple[List[str], List[str]]:
     """
     Qualify a branch stored in directory, running linter and unit tests.
@@ -74,7 +69,7 @@ def _process_repo(
     if to_execute:
         output.append(prnt.frame("%s: linter log" % dir_))
         # Get the files that were modified in this branch.
-        file_names = _get_changed_files(dst_branch)
+        file_names = git.get_modified_files_in_branch(dir_, dst_branch)
         msg = "Files modified:\n%s" % prnt.space("\n".join(file_names))
         _LOG.debug(msg)
         output.append(msg)
@@ -140,8 +135,7 @@ def _main(parser):
     for dir_ in target_dirs:
         actions_tmp = actions[:]
         output, actions_tmp = _process_repo(
-            actions_tmp, dir_, args.dst_branch, args.test_list, args.quick,
-            output
+            actions_tmp, dir_, args.dst_branch, args.test_list, args.quick, output
         )
     # Forward amp.
     if actions_tmp:

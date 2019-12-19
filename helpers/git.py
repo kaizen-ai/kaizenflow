@@ -264,12 +264,30 @@ def _check_files(files: List[str]) -> List[str]:
     return files_tmp
 
 
-def get_modified_files():
-    """
-    Return the list of files that are added and modified. In other words the
-    files that will be committed with a `git commit -am ...`.
+def _get_files(
+    dir_name: str, cmd: str, remove_files_non_present: bool
+) -> List[str]:
+    cd_cmd = "cd %s &&" % dir_name
+    _, output = si.system_to_string(cd_cmd + cmd)
+    #
+    files = output.split()
+    if remove_files_non_present:
+        files = _check_files(files)
+    return files
 
-    Equivalent to dev_scripts/git_files.sh
+
+def get_modified_files(
+    dir_name: str = ".", remove_files_non_present: bool = True
+) -> List[str]:
+    """
+    Return the files that are added and modified in the Git client.
+
+    In other words the files that will be committed with a `git commit -am ...`.
+    Equivalent to `dev_scripts/git_files.sh`
+
+    :param dir_name: directory with Git client
+    :param remove_files_non_present: remove the files that are not
+        currently present in the client
     """
     # If the client status is:
     #   > git status -s
@@ -285,29 +303,47 @@ def get_modified_files():
     #   dev_scripts/infra/ssh_tunnels.py
     #   helpers/git.py
     cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
-    _, files = si.system_to_string(cmd)
-    files = files.split()
-    files = _check_files(files)
+    files = _get_files(dir_name, cmd, remove_files_non_present)
     return files
 
 
-def get_previous_committed_files(num_commits=1):
+def get_previous_committed_files(
+    dir_name: str = ".",
+    num_commits: int = 1,
+    remove_files_non_present: bool = True,
+) -> List[str]:
     """
-    Return the list of files changed by the current git user in the last
-    `num_commits` commits.
+    Return files changed in the Git client in the last `num_commits` commits.
 
-    Equivalent to dev_scripts/git_previous_commit_files.sh
+    Equivalent to `dev_scripts/git_previous_commit_files.sh`
+
+    :param dir_name: directory with Git client
+    :param remove_files_non_present: remove the files that are not
+        currently present in the client
     """
     cmd = []
     cmd.append('git show --pretty="" --name-only')
     cmd.append("$(git log --author $(git config user.name) -%d" % num_commits)
     cmd.append(r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
-    cmd = " ".join(cmd)
-    _, files = si.system_to_string(cmd)
-    #
-    files = files.split()
-    files = sorted(list(set(files)))
-    files = _check_files(files)
+    cmd_as_str = " ".join(cmd)
+    files = _get_files(dir_name, cmd_as_str, remove_files_non_present)
+    return files
+
+
+def get_modified_files_in_branch(
+    dir_name: str, dst_branch: str, remove_files_non_present: bool = True
+) -> List[str]:
+    """
+    Return files modified in the current branch with respect to `dst_branch`.
+
+    Equivalent to `git diff --name-only master...`
+
+    :param dir_name: directory with Git client
+    :param remove_files_non_present: remove the files that are not
+        currently present in the client
+    """
+    cmd = "git diff --name-only %s..." % dst_branch
+    files = _get_files(dir_name, cmd, remove_files_non_present)
     return files
 
 
