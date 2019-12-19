@@ -520,7 +520,7 @@ def _get_logging_format(force_print_format, force_verbose_format):
         # executables from executables.
         if get_user_name() == "jenkins":
             exec_name = os.path.basename(get_exec_name())
-            print("WARNING: Running as jenkins: exec_name='%s'" % exec_name)
+            #print("WARNING: Running as jenkins: exec_name='%s'" % exec_name)
             log_format = exec_name + "::" + log_format
     else:
         # Make logging look like a normal print().

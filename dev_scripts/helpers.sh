@@ -30,20 +30,19 @@ parse_jack_cmd_opts() {
           echo "Usage: -r 'regex to look for' [-d dir_name]"
           exit 0
           ;;
-      r)  regex=$OPTARG
+      r)  shift
+          regex=$OPTARG
           ;;
-      d)  dir=$OPTARG
+      d)  shift
+          dir=$OPTARG
           ;;
       esac
   done
   shift $((OPTIND-1))
   [ "${1:-}" = "--" ] && shift
 
-  echo "regex='$regex'"
-  echo "dir='$dir'"
-
   if [[ -z $regex ]]; then
-      echo "Error: you need to specify -r for something to grep"
+      echo "Error: you need to use -r to specify what to grep for"
       exit -1
   fi;
 
@@ -51,6 +50,9 @@ parse_jack_cmd_opts() {
       echo "Error: too many params '$@'"
       exit -1
   fi;
+
+  echo "regex='$regex'"
+  echo "dir='$dir'"
 }
 
 # ##############################################################################

@@ -8,5 +8,5 @@ source helpers.sh
 
 parse_jack_cmd_opts "$@"
 
-cmd="ack $ACK_OPTS --type=python '$@' | grep -v ipynb_checkpoints"
+cmd="ack $ACK_OPTS --type=python '$regex' $dir | grep -v ipynb_checkpoints"
 execute $cmd
