@@ -52,6 +52,9 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 
 # TODO(*): move to gen_utils.py as safe_div_nan?
 def safe_div(a: float, b: float) -> np.float:
+    """
+    divide a by b and return np.nan if divided by 0
+    """
     div = a / b if b != 0 else np.nan
     return div
 
@@ -73,7 +76,7 @@ def drop_na_inf_if_needed(
     return series
 
 
-def count_pct_zero(
+def compute_pct_zero(
     series: pd.Series,
     zero_threshold: float = 1e-9,
     drop_na: bool = True,
@@ -90,7 +93,7 @@ def count_pct_zero(
     return 100.0 * safe_div(num_zeros, num_rows)
 
 
-def count_pct_nan(series: pd.Series, drop_inf: bool = True) -> float:
+def compute_pct_nan(series: pd.Series, drop_inf: bool = True) -> float:
     """
     Count number of nans in a given time series.
     """
@@ -100,7 +103,7 @@ def count_pct_nan(series: pd.Series, drop_inf: bool = True) -> float:
     return 100.0 * safe_div(num_nans, num_rows)
 
 
-def count_pct_inf(series: pd.Series, drop_na: bool = True) -> float:
+def compute_pct_inf(series: pd.Series, drop_na: bool = True) -> float:
     """
     Count number of infs in a given time series.
     """
@@ -130,7 +133,7 @@ def count_num_unique_values(
     return len(series.unique())
 
 
-def count_pct_changes(
+def compute_pct_changes(
     series: pd.Series, drop_na: bool = True, drop_inf: bool = True
 ) -> float:
     """
@@ -139,7 +142,7 @@ def count_pct_changes(
     series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
     changes = series.dropna().diff()
     changes_count = changes[changes != 0].shape[0]
-    return safe_div(changes_count, series.shape[0])
+    return safe_div(changes_count, series.shape[0])*100
 
 
 # #############################################################################
