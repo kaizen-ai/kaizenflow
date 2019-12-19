@@ -50,19 +50,8 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-# TODO(*): move to gen_utils.py as safe_div_nan?
-def safe_div(a: float, b: float) -> np.float:
-    """
-    divide a by b and return np.nan if divided by 0
-    """
-    div = a / b if b != 0 else np.nan
-    return div
-
-
 # TODO: Some functions could result in error with drop_na = False. Test
 #  behaviour of function with drop_na = False.
-
-
 def drop_na_inf_if_needed(
     series: pd.Series, drop_na: bool = True, drop_inf: bool = True
 ) -> pd.Series:
@@ -74,6 +63,15 @@ def drop_na_inf_if_needed(
     if drop_na:
         series = series.dropna()
     return series
+
+
+# TODO(*): move to gen_utils.py as safe_div_nan?
+def safe_div(a: float, b: float) -> np.float:
+    """
+    divide a by b and return np.nan if divided by 0
+    """
+    div = a / b if b != 0 else np.nan
+    return div
 
 
 def compute_pct_zero(
