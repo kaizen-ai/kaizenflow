@@ -81,8 +81,8 @@ def select_actions(
 
 def mark_action(action: str, actions: List[str]):
     to_execute = action in actions
+    _LOG.debug("\n%s", prnt.frame("action=%s" % action))
     if to_execute:
-        _LOG.debug("\n%s", prnt.frame("action=%s" % action))
         actions = [a for a in actions if a != action]
     else:
         _LOG.warning("Skip action='%s'", action)

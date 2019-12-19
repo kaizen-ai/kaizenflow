@@ -23,40 +23,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _update_branch(
-    actions: List[str], dst_branch: str, target_dirs: List[str], output: List[str]
-) -> Tuple[List[str], List[str]]:
-    """
-    Bring the repos in sync with master.
-    """
-    for dir_ in target_dirs:
-        dbg.dassert_exists(dir_)
-        # TODO(gp): Make sure that the client is clean.
-        branch_name = git.get_branch_name(dir_)
-        msg = "dir=%s: merging: %s -> %s" % (dir_, branch_name, dst_branch)
-        _LOG.info(msg)
-        output.append(msg)
-        #
-        action = "git_fetch_dst_branch"
-        to_execute, actions = prsr.mark_action(action, actions)
-        if to_execute:
-            cmd = "git fetch origin %s:%s" % (dst_branch, dst_branch)
-            si.system(cmd)
-        #
-        action = "git_pull"
-        to_execute, actions = prsr.mark_action(action, actions)
-        if to_execute:
-            cmd = "cd %s && git pull" % dir_
-            si.system(cmd)
-        #
-        action = "git_merge_master"
-        to_execute, actions = prsr.mark_action(action, actions)
-        if to_execute:
-            cmd = "cd %s && git merge master --commit --no-edit" % dir_
-            si.system(cmd)
-    return output, actions
-
-
 def _get_changed_files(dst_branch: str) -> List[str]:
     cmd = "git diff --name-only %s..." % dst_branch
     _, output = si.system_to_string(cmd)
@@ -64,13 +30,11 @@ def _get_changed_files(dst_branch: str) -> List[str]:
     return file_names
 
 
-def _qualify_branch(
-    actions: List[str],
-    dst_branch: str,
-    target_dirs: List[str],
+def _process_repo(
+    actions: List[str], dir_: str, dst_branch: str,
     test_list: str,
     quick: bool,
-    output: List[str],
+    output: List[str]
 ) -> Tuple[List[str], List[str]]:
     """
     Qualify a branch stored in directory, running linter and unit tests.
@@ -79,44 +43,66 @@ def _qualify_branch(
     :param test_list: test list to run (e.g., fast, slow)
     :param quick: run a single test instead of the entire regression test
     """
-    for dir_ in target_dirs:
-        dbg.dassert_exists(dir_)
-        # - Linter.
-        action = "linter"
-        to_execute, actions = prsr.mark_action(action, actions)
-        if to_execute:
-            output.append(prnt.frame("%s: linter log" % dir_))
-            # Get the files that were modified in this branch.
-            file_names = _get_changed_files(dst_branch)
-            msg = "Files modified:\n%s" % prnt.space("\n".join(file_names))
-            _LOG.debug(msg)
-            output.append(msg)
-            if not file_names:
-                _LOG.warning("No files different in %s", dst_branch)
-            else:
-                linter_log = "./%s.linter_log.txt" % dir_
-                linter_log = os.path.abspath(linter_log)
-                cmd = "linter.py -f %s --linter_log %s" % (
-                    " ".join(file_names),
-                    linter_log,
-                )
-                si.system(cmd, suppress_output=False)
-                # Read output from the linter.
-                txt = io_.from_file(linter_log)
-                output.append(txt)
-        # - Run tests.
-        action = "run_tests"
-        to_execute, actions = prsr.mark_action(action, actions)
-        if to_execute:
-            output.append(prnt.frame("%s: unit tests" % dir_))
-            if quick:
-                cmd = "pytest -k Test_p1_submodules_sanity_check1"
-            else:
-                # TODO(gp): Delete cache.
-                cmd = "run_tests.py --test %s --num_cpus -1" % test_list
-            output.append("cmd line='%s'" % cmd)
-            si.system(cmd, suppress_output=False)
+    dbg.dassert_exists(dir_)
+    _LOG.debug("\n%s", prnt.frame("Processing: %s" % dir_, char1=">"))
+    # TODO(gp): Make sure that the client is clean.
+    cd_cmd = "cd %s && " % dir_
     #
+    action = "git_fetch_dst_branch"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
+        branch_name = git.get_branch_name(dir_)
+        _LOG.debug("branch_name='%s'", branch_name)
+        if branch_name != "master":
+            cmd = "git fetch origin %s:%s" % (dst_branch, dst_branch)
+            si.system(cd_cmd + cmd)
+    #
+    action = "git_pull"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
+        cmd = "git pull --autostash"
+        si.system(cd_cmd + cmd)
+    #
+    action = "git_merge_master"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
+        cmd = "git merge master --commit --no-edit"
+        si.system(cd_cmd + cmd)
+    # - Linter.
+    action = "linter"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
+        output.append(prnt.frame("%s: linter log" % dir_))
+        # Get the files that were modified in this branch.
+        file_names = _get_changed_files(dst_branch)
+        msg = "Files modified:\n%s" % prnt.space("\n".join(file_names))
+        _LOG.debug(msg)
+        output.append(msg)
+        if not file_names:
+            _LOG.warning("No files different in %s", dst_branch)
+        else:
+            linter_log = "./%s.linter_log.txt" % dir_
+            linter_log = os.path.abspath(linter_log)
+            cmd = "linter.py -f %s --linter_log %s" % (
+                " ".join(file_names),
+                linter_log,
+            )
+            si.system(cd_cmd + cmd, suppress_output=False)
+            # Read output from the linter.
+            txt = io_.from_file(linter_log)
+            output.append(txt)
+    # - Run tests.
+    action = "run_tests"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
+        output.append(prnt.frame("%s: unit tests" % dir_))
+        if quick:
+            cmd = "pytest -k Test_p1_submodules_sanity_check1"
+        else:
+            # TODO(gp): Delete cache.
+            cmd = "run_tests.py --test %s --num_cpus -1" % test_list
+        output.append("cmd line='%s'" % cmd)
+        si.system(cd_cmd + cmd, suppress_output=False)
     return output, actions
 
 
@@ -150,44 +136,16 @@ def _main(parser):
     msg = "target_dirs=%s" % target_dirs
     _LOG.info(msg)
     output.append(msg)
-    # TODO(gp): Make sure the Git client is empty.
-    # Update the dst branch.
-    output, actions = _update_branch(
-        actions, args.dst_branch, target_dirs, output
-    )
-    output, actions = _qualify_branch(
-        actions, args.dst_branch, target_dirs, args.test_list, args.quick, output
-    )
-    # assert 0
-    # # Refresh curr repo.
-    # _refresh(".")
-    # # Refresh amp repo, if needed.
-    # if os.path.exists("amp"):
-    #     _refresh("amp")
-    # # Qualify amp repo.
-    # if os.path.exists("amp"):
-    #     tag = "amp"
-    #     output_tmp = _qualify_branch(
-    #         tag, args.dst_branch, args.test_list, args.quick
-    #     )
-    #     output.extend(output_tmp)
-    # #
-    # repo_sym_name = git.get_repo_symbolic_name(super_module=True)
-    # _LOG.info("repo_sym_name=%s", repo_sym_name)
-    # # Qualify current repo.
-    # tag = "curr"
-    # output_tmp = _qualify_branch(tag, args.dst_branch, args.test_list, args.quick)
-    # output.extend(output_tmp)
-    # # Qualify amp repo, if needed.
-    # if os.path.exists("amp"):
-    #     tag = "amp"
-    #     output_tmp = _qualify_branch(
-    #         tag, args.dst_branch, args.test_list, args.quick
-    #     )
-    #     output.extend(output_tmp)
+    #
+    for dir_ in target_dirs:
+        actions_tmp = actions[:]
+        output, actions_tmp = _process_repo(
+            actions_tmp, dir_, args.dst_branch, args.test_list, args.quick,
+            output
+        )
     # Forward amp.
-    if actions:
-        _LOG.warning("actions=%s were not processed", str(actions))
+    if actions_tmp:
+        _LOG.warning("actions=%s were not processed", str(actions_tmp))
     # Report the output.
     output_as_txt = "\n".join(output)
     io_.to_file(args.summary_file, output_as_txt)
