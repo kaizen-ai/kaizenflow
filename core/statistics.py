@@ -57,78 +57,81 @@ def safe_div(a: float, b: float) -> np.float:
     return div
 
 
-# TODO: The functional approach suggests having these functions operate on the data and to compose `drop_na() / drop_inf()` if needed.
-#  For convenience we might want to add a param to all these functions `drop_na=True`, `drop_inf=True` to tweak their behavior.
 # TODO: Some functions could result in error with drop_na = False. Test
-#  behaviour of function with drop_na = False
+#  behaviour of function with drop_na = False.
+
+
+def drop_na_inf_if_needed(series: pd.Series, drop_na: bool=True,
+                          drop_inf: bool=True) -> pd.Series:
+    """
+    Removes nans and infs from series if corresponding param is True
+    """
+    if drop_inf:
+        series = series.replace([np.inf, -np.inf], np.nan).dropna()
+    if drop_na:
+        series = series.dropna()
+    return series
+
 
 def count_pct_zero(series: pd.Series, zero_threshold: float = 1e-9,
-                   drop_na: bool=True) -> float:
+                   drop_na: bool = True,
+                   drop_inf: bool = True) -> float:
     """
     Count number of zeroes in a given time series.
 
     :param zero_threshold: floats smaller than this are treated as zeroes.
     """
+    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
     num_rows = series.shape[0]
-    if drop_na:
-        num_zeros = (series.dropna().abs() < zero_threshold).sum()
-    else:
-        num_zeros = (series.abs() < zero_threshold).sum()
+    num_zeros = (series.dropna().abs() < zero_threshold).sum()
     return 100.0 * safe_div(num_zeros, num_rows)
 
 
-def count_pct_nan(series: pd.Series) -> float:
+def count_pct_nan(series: pd.Series, drop_inf: bool = True) -> float:
     """
     Count number of nans in a given time series.
     """
+    series = drop_na_inf_if_needed(series, drop_na=False, drop_inf=drop_inf)
     num_rows = series.shape[0]
     num_nans = series.isna().sum()
     return 100.0 * safe_div(num_nans, num_rows)
 
 
-def count_pct_inf(series: pd.Series, drop_na: bool=True) -> float:
+def count_pct_inf(series: pd.Series, drop_na: bool = True) -> float:
     """
     Count number of infs in a given time series.
     """
-    if drop_na:
-        num_rows = series.dropna().shape[0]
-        num_infs = series.dropna().apply(np.isinf).sum()
-    else:
-        num_rows = series.shape[0]
-        num_infs = series.apply(np.isinf).sum()
+    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=False)
+    num_rows = series.shape[0]
+    num_infs = series.dropna().apply(np.isinf).sum()
     return 100.0 * safe_div(num_infs, num_rows)
 
 
-def count_num_samples(series: pd.Series, drop_na: bool=True) -> int:
+def count_num_samples(series: pd.Series, drop_na: bool=True,
+                          drop_inf: bool=True) -> int:
     """
     Count number of data points in a given time series.
     """
-    if drop_na:
-        count = series.dropna().shape[0]
-    else:
-        count = series.shape[0]
-    return count
+    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
+    return series.shape[0]
 
 
-def count_num_unique_values(series: pd.Series, drop_na: bool=True) -> int:
+def count_num_unique_values(series: pd.Series, drop_na: bool=True,
+                          drop_inf: bool=True) -> int:
     """
     Count number of unique values in the series.
     """
-    if drop_na:
-        count = len(series.dropna().unique())
-    else:
-        count = len(series.unique())
-    return count
+    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
+    return len(series.unique())
 
 
-def count_pct_changes(series: pd.Series, drop_na: bool=True) -> float:
+def count_pct_changes(series: pd.Series, drop_na: bool=True,
+                          drop_inf: bool=True) -> float:
     """
     Compute percentage of values in the series that changes at the next timestamp.
     """
-    if drop_na:
-        changes = series.dropna().diff()
-    else:
-        changes = series.diff()
+    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
+    changes = series.dropna().diff()
     changes_count = changes[changes != 0].shape[0]
     return safe_div(changes_count, series.shape[0])
 
