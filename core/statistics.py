@@ -51,7 +51,7 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # TODO: Some functions could result in error with drop_na = False. Test
-#  behaviour of function with drop_na = False.
+#  behaviour of function with dro p_na = False.
 def replace_inf_with_na(
     series: pd.Series
 ) -> pd.Series:
@@ -117,21 +117,20 @@ def compute_pct_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     Count number of infs in a given time series.
 
-    :param mode: keep_orig - keep series without any change
-        keep_finite - drop nans and infs
+    :param mode: keep_orig - keep series (denominator) without any change
+        drop_na - drop nans before counting series rows for the denominator
     """
     if series.empty:
         _LOG.warning("Series is empty")
         pct_inf = np.nan
     else:
-        if mode == 'keep_finite':
-            series = replace_inf_with_na(series).dropna()
+        if mode == 'drop_na':
+            num_rows = series.dropna().shape[0]
         elif mode == 'keep_orig':
-            pass
+            num_rows = series.shape[0]
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
-        num_rows = series.shape[0]
-        num_infs = series.dropna().apply(np.isinf).sum()
+        num_infs = series.apply(np.isinf).sum()
         pct_inf = 100.0 * num_infs / num_rows
     return pct_inf
 
