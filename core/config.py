@@ -64,7 +64,8 @@ class Config:
             else:
                 # Recurse.
                 dbg.dassert_isinstance(head_key, str, "Keys can only be string")
-                self._config.get(head_key, Config()).__setitem__(tail_key, val)
+                subconfig = self.get(head_key, None) or self.add_subconfig(head_key)
+                subconfig.__setitem__(tail_key, val)
             return
         _LOG.debug("key=%s", key)
         dbg.dassert_isinstance(key, str, "Keys can only be string")
@@ -137,12 +138,9 @@ class Config:
         - Recursively creates paths to leaf values if needed
         - `config` values overwrite any existing values
         """
-        tmp = self.copy()
         nested_dict = config.to_dict()
-        for item in dct.get_nested_dict_iterator(nested_dict):
-            path, val = item[0], item[1]
-            tmp.__setitem__(path, val)
-        return tmp
+        for path, val in dct.get_nested_dict_iterator(nested_dict):
+            self.__setitem__(path, val)
 
     def get(self, key, val):
         """

@@ -207,6 +207,65 @@ class Test_config1(ut.TestCase):
         elem = config.get(("read_data", "file_name2"), "hello_world3")
         self.assertEqual(elem, "hello_world3")
 
+    def test_hierarchical_update1(self):
+        config1 = cfg.Config()
+        #
+        config_tmp = config1.add_subconfig("read_data")
+        config_tmp["file_name"] = "foo_bar.txt"
+        config_tmp["nrows"] = 999
+        #
+        config1["single_val"] = "hello"
+        #
+        config_tmp = config1.add_subconfig("zscore")
+        config_tmp["style"] = "gaz"
+        config_tmp["com"] = 28
+        #
+        config2 = cfg.Config()
+        #
+        config_tmp = config2.add_subconfig("write_data")
+        config_tmp["file_name"] = "baz.txt"
+        config_tmp["nrows"] = 999
+        #
+        config2["single_val2"] = "goodbye"
+        #
+        config_tmp = config2.add_subconfig("zscore2")
+        config_tmp["style"] = "gaz"
+        config_tmp["com"] = 28
+        #
+        config1.update(config2)
+        self.check_string(str(config1))
+
+    def test_hierarchical_update2(self):
+        config1 = cfg.Config()
+        #
+        config_tmp = config1.add_subconfig("read_data")
+        config_tmp["file_name"] = "foo_bar.txt"
+        config_tmp["nrows"] = 999
+        #
+        config1["single_val"] = "hello"
+        #
+        config_tmp = config1.add_subconfig("zscore")
+        config_tmp["style"] = "gaz"
+        config_tmp["com"] = 28
+        #
+        config2 = cfg.Config()
+        #
+        config_tmp = config2.add_subconfig("read_data")
+        config_tmp["file_name"] = "baz.txt"
+        config_tmp["nrows"] = 999
+        #
+        config2["single_val"] = "goodbye"
+        #
+        config_tmp = config2.add_subconfig("zscore")
+        config_tmp["style"] = "super"
+        #
+        config_tmp = config2.add_subconfig("extra_zscore")
+        config_tmp["style"] = "universal"
+        config_tmp["tau"] = 32
+        #
+        config1.update(config2)
+        self.check_string(str(config1))
+
 
 # #############################################################################
 # dataflow_core.py
