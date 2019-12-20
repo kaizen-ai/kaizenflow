@@ -52,65 +52,84 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 
 # TODO: Some functions could result in error with drop_na = False. Test
 #  behaviour of function with drop_na = False.
-def drop_na_inf_if_needed(
-    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+def replace_inf_with_na(
+    series: pd.Series
 ) -> pd.Series:
     """
-    Remove nans and infs from series if corresponding param is True.
+    Replace nans with infs in the given series.
     """
-    if drop_inf:
-        series = series.replace([np.inf, -np.inf], np.nan).dropna()
-    if drop_na:
-        series = series.dropna()
+    series = series.replace([np.inf, -np.inf], np.nan)
     return series
 
 
 def compute_pct_zero(
     series: pd.Series,
     zero_threshold: float = 1e-9,
-    drop_na: bool = True,
-    drop_inf: bool = True,
+    mode: str = 'keep_orig',
 ) -> float:
     """
     Count number of zeroes in a given time series.
 
     :param zero_threshold: floats smaller than this are treated as zeroes.
+    :param mode: keep_orig - keep series without any change
+        keep_finite - drop nans and infs
     """
     if series.empty:
         _LOG.warning("Series is empty")
         pct_zeros = np.nan
     else:
-        series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
+        if mode == 'keep_finite':
+            series = replace_inf_with_na(series).dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
         num_rows = series.shape[0]
         num_zeros = (series.dropna().abs() < zero_threshold).sum()
         pct_zeros = 100.0 * num_zeros / num_rows
     return pct_zeros
 
 
-def compute_pct_nan(series: pd.Series, drop_inf: bool = True) -> float:
+def compute_pct_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     Count number of nans in a given time series.
+
+    :param mode: keep_orig - keep series without any change
+        keep_finite - drop nans and infs
     """
     if series.empty:
         _LOG.warning("Series is empty")
         pct_nan = np.nan
     else:
-        series = drop_na_inf_if_needed(series, drop_na=False, drop_inf=drop_inf)
+        if mode == 'keep_finite':
+            series = replace_inf_with_na(series)
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
         num_rows = series.shape[0]
         num_nans = series.isna().sum()
         pct_nan = 100.0 * num_nans / num_rows
     return pct_nan
 
 
-def compute_pct_inf(series: pd.Series, drop_na: bool = True) -> float:
+def compute_pct_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     Count number of infs in a given time series.
+
+    :param mode: keep_orig - keep series without any change
+        keep_finite - drop nans and infs
     """
     if series.empty:
         _LOG.warning("Series is empty")
         pct_inf = np.nan
     else:
-        series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=False)
+        if mode == 'keep_finite':
+            series = replace_inf_with_na(series).dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
         num_rows = series.shape[0]
         num_infs = series.dropna().apply(np.isinf).sum()
         pct_inf = 100.0 * num_infs / num_rows
@@ -118,16 +137,24 @@ def compute_pct_inf(series: pd.Series, drop_na: bool = True) -> float:
 
 
 def compute_pct_changes(
-    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+    series: pd.Series, mode: str = 'keep_orig'
 ) -> float:
     """
     Compute percentage of values in the series that changes at the next timestamp.
+
+    :param mode: keep_orig - keep series without any change
+        keep_finite - drop nans and infs
     """
     if series.empty:
         _LOG.warning("Series is empty")
         pct_changes = np.nan
     else:
-        series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
+        if mode == 'keep_finite':
+            series = replace_inf_with_na(series).dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
         changes = series.dropna().diff()
         changes_count = changes[changes != 0].shape[0]
         pct_changes = changes_count / series.shape[0] * 100
@@ -135,23 +162,49 @@ def compute_pct_changes(
 
 
 def count_num_samples(
-    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+    series: pd.Series, mode: str = 'keep_orig'
 ) -> int:
     """
     Count number of data points in a given time series.
+
+    :param mode: keep_orig - keep series without any change
+        keep_finite - drop nans and infs
     """
-    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
-    return series.shape[0]
+    if series.empty:
+        _LOG.warning("Series is empty")
+        num_samples = np.nan
+    else:
+        if mode == 'keep_finite':
+            series = replace_inf_with_na(series).dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
+        num_samples = series.shape[0]
+    return num_samples
 
 
 def count_num_unique_values(
-    series: pd.Series, drop_na: bool = True, drop_inf: bool = True
+    series: pd.Series, mode: str = 'keep_orig'
 ) -> int:
     """
     Count number of unique values in the series.
+
+    :param mode: keep_orig - keep series without any change
+        keep_finite - drop nans and infs
     """
-    series = drop_na_inf_if_needed(series, drop_na=drop_na, drop_inf=drop_inf)
-    return len(series.unique())
+    if series.empty:
+        _LOG.warning("Series is empty")
+        num_unique_values = np.nan
+    else:
+        if mode == 'keep_finite':
+            series = replace_inf_with_na(series).dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
+        num_unique_values = len(series.unique())
+    return num_unique_values
 
 
 # #############################################################################
