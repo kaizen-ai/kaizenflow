@@ -1,0 +1,10 @@
+read_data:
+  file_name: baz.txt
+  nrows: 999
+single_val: goodbye
+zscore:
+  style: super
+  com: 28
+extra_zscore:
+  style: universal
+  tau: 32
