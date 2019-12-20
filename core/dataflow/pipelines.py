@@ -8,13 +8,8 @@ import core.event_study as esf
 import core.signal_processing as sigp
 from core.dataflow.builder import DagBuilder
 from core.dataflow.core import DAG
-from core.dataflow.nodes import (
-    ColumnTransformer,
-    DataframeMethodRunner,
-    Resample,
-    SkLearnModel,
-    YConnector,
-)
+from core.dataflow.nodes import (ColumnTransformer, DataframeMethodRunner,
+                                 Resample, SkLearnModel, YConnector)
 
 _LOG = logging.getLogger(__name__)
 
