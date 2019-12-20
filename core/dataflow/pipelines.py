@@ -123,7 +123,9 @@ class EventStudyBuilder(DagBuilder):
         #   directly feed into this node (there may be some corner cases of
         #   interest)
         stage = "reindex_events"
-        node = YConnector(self._get_nid(stage), connector_func=esf.reindex_event_features)
+        node = YConnector(
+            self._get_nid(stage), connector_func=esf.reindex_event_features
+        )
         dag.add_node(node)
         dag.connect(
             (self._get_nid("dropna_from_resampled_events"), "df_out"),
