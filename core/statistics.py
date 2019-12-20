@@ -94,20 +94,19 @@ def compute_pct_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     Count number of nans in a given time series.
 
-    :param mode: keep_orig - keep series without any change
-        keep_finite - drop nans and infs
+    :param mode: keep_orig - keep series (denominator) without any change
+        drop_inf - don't count inf rows for the denominator
     """
     if series.empty:
         _LOG.warning("Series is empty")
         pct_nan = np.nan
     else:
-        if mode == 'keep_finite':
-            series = replace_inf_with_na(series)
+        if mode == 'drop_inf':
+            num_rows = series.apply(np.isinf).value_counts()[False]
         elif mode == 'keep_orig':
-            pass
+            num_rows = series.shape[0]
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
-        num_rows = series.shape[0]
         num_nans = series.isna().sum()
         pct_nan = 100.0 * num_nans / num_rows
     return pct_nan
@@ -135,7 +134,7 @@ def compute_pct_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
     return pct_inf
 
 
-def compute_pct_changes(
+def compute_pct_constant(
     series: pd.Series, mode: str = 'keep_orig'
 ) -> float:
     """
@@ -156,7 +155,7 @@ def compute_pct_changes(
             raise ValueError("Unsupported mode=`%s`" % mode)
         changes = series.dropna().diff()
         changes_count = changes[changes != 0].shape[0]
-        pct_changes = changes_count / series.shape[0] * 100
+        pct_changes = 100 - 100 * changes_count / series.shape[0]
     return pct_changes
 
 
