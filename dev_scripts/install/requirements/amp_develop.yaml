@@ -96,6 +96,7 @@ dependencies:
   # ############################################################################
   - pip
   - pip:
+    - gluonts
     #- ta                   # Technical analysis package.
     - trading-calendars
     #- pyannotate           # Enable this to automatically infer types.
