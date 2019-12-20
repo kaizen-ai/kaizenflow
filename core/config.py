@@ -64,7 +64,9 @@ class Config:
             else:
                 # Recurse.
                 dbg.dassert_isinstance(head_key, str, "Keys can only be string")
-                subconfig = self.get(head_key, None) or self.add_subconfig(head_key)
+                subconfig = self.get(head_key, None) or self.add_subconfig(
+                    head_key
+                )
                 subconfig.__setitem__(tail_key, val)
             return
         _LOG.debug("key=%s", key)
