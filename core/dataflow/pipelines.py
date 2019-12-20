@@ -24,8 +24,7 @@ class EventStudyBuilder(DagBuilder):
     Configurable pipeline for running event studies.
     """
 
-    @staticmethod
-    def get_config_template() -> cfg.Config:
+    def get_config_template(self) -> cfg.Config:
         """
         Return a reference configuration for the event study pipeline.
         """
@@ -117,14 +116,14 @@ class EventStudyBuilder(DagBuilder):
             self._get_nid(stage), method="dropna", method_kwargs={"how": "all"}
         )
         dag.add_node(node)
-        dag.connect(self._get_nid("resample_events"), self_get_nid(stage))
+        dag.connect(self._get_nid("resample_events"), self._get_nid(stage))
         # Reindex events according to grid data.
         # - Effectively a restriction
         # - TODO(Paul): Decide whether we instead want "resample_events" to
         #   directly feed into this node (there may be some corner cases of
         #   interest)
         stage = "reindex_events"
-        node = YConnector(nid, connector_func=esf.reindex_event_features)
+        node = YConnector(self._get_nid(stage), connector_func=esf.reindex_event_features)
         dag.add_node(node)
         dag.connect(
             (self._get_nid("dropna_from_resampled_events"), "df_out"),
@@ -154,7 +153,7 @@ class EventStudyBuilder(DagBuilder):
         node = ColumnTransformer(
             self._get_nid(stage),
             transformer_func=sigp.compute_smooth_moving_average,
-            **config[stage].to_dict(),
+            **config[self._get_nid(stage)].to_dict(),
             col_mode="replace_all",
         )
         dag.add_node(node)
@@ -197,7 +196,7 @@ class EventStudyBuilder(DagBuilder):
         node = YConnector(
             self._get_nid(stage),
             connector_func=esf.build_local_timeseries,
-            **config[stage].to_dict(),
+            **config[self._get_nid(stage)].to_dict(),
         )
         dag.add_node(node)
         dag.connect(
