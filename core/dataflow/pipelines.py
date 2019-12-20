@@ -24,31 +24,35 @@ class EventStudyBuilder(DagBuilder):
     Configurable pipeline for running event studies.
     """
 
-    @staticmethod
-    def get_config_template() -> cfg.Config:
+    def get_config_template(self) -> cfg.Config:
         """
         Return a reference configuration for the event study pipeline.
         """
         config = cfg.Config()
         #
-        config_tmp = config.add_subconfig("resample_events")
+        stage = "resample_events"
+        config_tmp = config.add_subconfig(self._get_nid(stage))
         config_tmp["rule"] = "T"
         config_tmp["agg_func"] = "mean"
         #
-        config_tmp = config.add_subconfig("generate_event_signal")
+        stage = "generate_event_signal"
+        config_tmp = config.add_subconfig(self._get_nid(stage))
         config_kwargs = config_tmp.add_subconfig("transformer_kwargs")
         config_kwargs["tau"] = 8
         config_kwargs["max_depth"] = 3
         #
-        config_tmp = config.add_subconfig("shift")
+        stage = "shift"
+        config_tmp = config.add_subconfig(self._get_nid(stage))
         config_kwargs = config_tmp.add_subconfig("method_kwargs")
         config_kwargs["periods"] = 1
         #
-        config_tmp = config.add_subconfig("build_local_ts")
+        stage = "build_local_ts"
+        config_tmp = config.add_subconfig(self._get_nid(stage))
         config_kwargs = config_tmp.add_subconfig("connector_kwargs")
         config_kwargs["relative_grid_indices"] = range(-10, 50)
         #
-        config_tmp = config.add_subconfig("model")
+        stage = "model"
+        config_tmp = config.add_subconfig(self._get_nid(stage))
         config_tmp["x_vars"] = ["_DUMMY_"]
         config_tmp["y_vars"] = ["_DUMMY_"]
         config_kwargs = config_tmp.add_subconfig("model_kwargs")
@@ -66,7 +70,6 @@ class EventStudyBuilder(DagBuilder):
         :param dag: May or may not already contain nodes. If `None`, then
             returns a new DAG.
         """
-        nids = {}
         dag = dag or DAG()
         _LOG.debug("%s", config)
         # Dummy node for grid data input.
@@ -75,10 +78,10 @@ class EventStudyBuilder(DagBuilder):
         # - It is a no-op node but added so that the grid data connectivity can
         #   be encapsulated
         stage = "grid_data_input_socket"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         node = ColumnTransformer(
-            nid, transformer_func=lambda x: x, col_mode="replace_all"
+            self._get_nid(stage),
+            transformer_func=lambda x: x,
+            col_mode="replace_all",
         )
         dag.add_node(node)
         # Dummy node for events data.
@@ -87,20 +90,20 @@ class EventStudyBuilder(DagBuilder):
         # - It is a no-op node but added so that the event study connectivity
         #   can be encapsulated
         stage = "events_input_socket"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         node = ColumnTransformer(
-            nid, transformer_func=lambda x: x, col_mode="replace_all"
+            self._get_nid(stage),
+            transformer_func=lambda x: x,
+            col_mode="replace_all",
         )
         dag.add_node(node)
         # Resample events data to uniform grid specified by config.
         # TODO(Paul): Add a check to ensure alignment with grid data.
         stage = "resample_events"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
-        node = Resample(nid, **config[stage].to_dict())
+        node = Resample(
+            self._get_nid(stage), **config[self._get_nid(stage)].to_dict()
+        )
         dag.add_node(node)
-        dag.connect(nids["events_input_socket"], nid)
+        dag.connect(self._get_nid("events_input_socket"), self._get_nid(stage))
         # Drop NaNs from resampled events.
         # - This node is used because resampling places events on a uniform
         #   time grid, and most of these times will not actually represent
@@ -108,72 +111,72 @@ class EventStudyBuilder(DagBuilder):
         # - The output of this node represents the `normalized` event times
         #   and features
         stage = "dropna_from_resampled_events"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         # TODO(Paul): Might want to expose "how".
         node = DataframeMethodRunner(
-            nid, method="dropna", method_kwargs={"how": "all"}
+            self._get_nid(stage), method="dropna", method_kwargs={"how": "all"}
         )
         dag.add_node(node)
-        dag.connect(nids["resample_events"], nid)
+        dag.connect(self._get_nid("resample_events"), self._get_nid(stage))
         # Reindex events according to grid data.
         # - Effectively a restriction
         # - TODO(Paul): Decide whether we instead want "resample_events" to
         #   directly feed into this node (there may be some corner cases of
         #   interest)
         stage = "reindex_events"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
-        node = YConnector(nid, connector_func=esf.reindex_event_features)
+        node = YConnector(
+            self._get_nid(stage), connector_func=esf.reindex_event_features
+        )
         dag.add_node(node)
         dag.connect(
-            (nids["dropna_from_resampled_events"], "df_out"), (nid, "df_in1")
+            (self._get_nid("dropna_from_resampled_events"), "df_out"),
+            (self._get_nid(stage), "df_in1"),
         )
-        dag.connect((nids["grid_data_input_socket"], "df_out"), (nid, "df_in2"))
+        dag.connect(
+            (self._get_nid("grid_data_input_socket"), "df_out"),
+            (self._get_nid(stage), "df_in2"),
+        )
         # Fill NaNs with zero (before signal processing).
         # - This node is used because we assume that event data is sparse
         #   compared to the grid data, and because of how NaNs are handled by
         #   `sigp` functions
         stage = "fillna_with_zero"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         node = ColumnTransformer(
-            nid, transformer_func=lambda x: x.fillna(0), col_mode="replace_all"
+            self._get_nid(stage),
+            transformer_func=lambda x: x.fillna(0),
+            col_mode="replace_all",
         )
         dag.add_node(node)
-        dag.connect(nids["reindex_events"], nid)
+        dag.connect(self._get_nid("reindex_events"), self._get_nid(stage))
         # Generate event signal.
         # - There is opportunity here for problem-specific customization
         # - Here we use a smooth moving average (which can be made equivalent
         #   to an EMA or made more rectangular-like if desired)
         stage = "generate_event_signal"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         node = ColumnTransformer(
-            nid,
+            self._get_nid(stage),
             transformer_func=sigp.compute_smooth_moving_average,
-            **config[stage].to_dict(),
+            **config[self._get_nid(stage)].to_dict(),
             col_mode="replace_all",
         )
         dag.add_node(node)
-        dag.connect(nids["fillna_with_zero"], nid)
+        dag.connect(self._get_nid("fillna_with_zero"), self._get_nid(stage))
         # Shift event signal (lag it).
         # - Use a positive integer to introduce a lag (e.g., to reflect
         #   ability to trade)
         stage = "shift"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
-        node = DataframeMethodRunner(nid, "shift", **config[stage].to_dict())
+        node = DataframeMethodRunner(
+            self._get_nid(stage),
+            "shift",
+            **config[self._get_nid(stage)].to_dict(),
+        )
         dag.add_node(node)
-        dag.connect(nids["generate_event_signal"], nid)
+        dag.connect(self._get_nid("generate_event_signal"), self._get_nid(stage))
         # Merge signal with grid data.
         # - The output of this node adds columns from processed event features
         #   to the columns in the grid data
         stage = "merge_event_signal_with_grid"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         node = YConnector(
-            nid,
+            self._get_nid(stage),
             connector_func=lambda x, y, **kwargs: x.merge(y, **kwargs),
             connector_kwargs={
                 "how": "right",
@@ -182,24 +185,29 @@ class EventStudyBuilder(DagBuilder):
             },
         )
         dag.add_node(node)
-        dag.connect((nids["shift"], "df_out"), (nid, "df_in1"))
-        dag.connect((nids["grid_data_input_socket"], "df_out"), (nid, "df_in2"))
+        dag.connect(
+            (self._get_nid("shift"), "df_out"), (self._get_nid(stage), "df_in1")
+        )
+        dag.connect(
+            (self._get_nid("grid_data_input_socket"), "df_out"),
+            (self._get_nid(stage), "df_in2"),
+        )
         # Build local time series.
         # - The output of this node is of interest in exploratory work
         stage = "build_local_ts"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         node = YConnector(
-            nid,
+            self._get_nid(stage),
             connector_func=esf.build_local_timeseries,
-            **config[stage].to_dict(),
+            **config[self._get_nid(stage)].to_dict(),
         )
         dag.add_node(node)
         dag.connect(
-            (nids["dropna_from_resampled_events"], "df_out"), (nid, "df_in1")
+            (self._get_nid("dropna_from_resampled_events"), "df_out"),
+            (self._get_nid(stage), "df_in1"),
         )
         dag.connect(
-            (nids["merge_event_signal_with_grid"], "df_out"), (nid, "df_in2")
+            (self._get_nid("merge_event_signal_with_grid"), "df_out"),
+            (self._get_nid(stage), "df_in2"),
         )
         # Model.
         # - One may want to use different models in different situations
@@ -207,37 +215,46 @@ class EventStudyBuilder(DagBuilder):
         # - A linear model is useful for performing a Bayesian analysis of any
         #   supposed event effect
         stage = "model"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         node = SkLearnModel(
-            nid, model_func=sklearn.linear_model.Ridge, **config[stage].to_dict(),
+            self._get_nid(stage),
+            model_func=sklearn.linear_model.Ridge,
+            **config[self._get_nid(stage)].to_dict(),
         )
         dag.add_node(node)
-        dag.connect(nids["build_local_ts"], nid)
+        dag.connect(self._get_nid("build_local_ts"), self._get_nid(stage))
         # Merge predictions into grid.
         # - The output of this node is the grid data with all event-related
         #   data added as well, e.g., processed event features and model
         #   predictions
         stage = "merge_predictions"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
         node = YConnector(
-            nid,
+            self._get_nid(stage),
             connector_func=lambda x, y, **kwargs: x.merge(y, **kwargs),
             connector_kwargs={"left_index": True, "right_index": True},
         )
         dag.add_node(node)
-        dag.connect((nids["build_local_ts"], "df_out"), (nid, "df_in1"))
-        dag.connect((nids["model"], "df_out"), (nid, "df_in2"))
+        dag.connect(
+            (self._get_nid("build_local_ts"), "df_out"),
+            (self._get_nid(stage), "df_in1"),
+        )
+        dag.connect(
+            (self._get_nid("model"), "df_out"), (self._get_nid(stage), "df_in2")
+        )
         # Unwrap augmented local time series.
         # - The main purpose of this node is to take model predictions
         #   generated from a model run on local time series and place them
         #   back in chronological order
         stage = "unwrap_local_ts"
-        nid = self._get_nid(stage)
-        nids[stage] = nid
-        node = YConnector(nid, connector_func=esf.unwrap_local_timeseries)
+        node = YConnector(
+            self._get_nid(stage), connector_func=esf.unwrap_local_timeseries
+        )
         dag.add_node(node)
-        dag.connect((nids["merge_predictions"], "df_out"), (nid, "df_in1"))
-        dag.connect((nids["grid_data_input_socket"], "df_out"), (nid, "df_in2"))
+        dag.connect(
+            (self._get_nid("merge_predictions"), "df_out"),
+            (self._get_nid(stage), "df_in1"),
+        )
+        dag.connect(
+            (self._get_nid("grid_data_input_socket"), "df_out"),
+            (self._get_nid(stage), "df_in2"),
+        )
         return dag
