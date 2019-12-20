@@ -62,8 +62,8 @@ def replace_inf_with_na(
     return series
 
 
-def compute_pct_zero(
-    series: pd             .Series,
+def compute_frac_zero(
+    series: pd.Series,
     zero_threshold: float = 1e-9,
     mode: str = 'keep_orig',
 ) -> float:
@@ -76,7 +76,7 @@ def compute_pct_zero(
     """
     if series.empty:
         _LOG.warning("Series is empty")
-        pct_zeros = np.nan
+        frac_zeros = np.nan
     else:
         if mode == 'drop_na_inf':
             series = replace_inf_with_na(series).dropna()
@@ -86,11 +86,11 @@ def compute_pct_zero(
             raise ValueError("Unsupported mode=`%s`" % mode)
         num_rows = series.shape[0]
         num_zeros = (series.dropna().abs() < zero_threshold).sum()
-        pct_zeros = 100.0 * num_zeros / num_rows
-    return pct_zeros
+        frac_zeros = num_zeros / num_rows
+    return frac_zeros
 
 
-def compute_pct_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
+def compute_frac_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     Count number of nans in a given time series.
 
@@ -99,7 +99,7 @@ def compute_pct_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     if series.empty:
         _LOG.warning("Series is empty")
-        pct_nan = np.nan
+        frac_nan = np.nan
     else:
         if mode == 'drop_inf':
             num_rows = series.apply(np.isinf).value_counts()[False]
@@ -108,11 +108,11 @@ def compute_pct_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
         num_nans = series.isna().sum()
-        pct_nan = 100.0 * num_nans / num_rows
-    return pct_nan
+        frac_nan = num_nans / num_rows
+    return frac_nan
 
 
-def compute_pct_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
+def compute_frac_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     Count number of infs in a given time series.
 
@@ -121,7 +121,7 @@ def compute_pct_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     if series.empty:
         _LOG.warning("Series is empty")
-        pct_inf = np.nan
+        frac_inf = np.nan
     else:
         if mode == 'drop_na':
             num_rows = series.dropna().shape[0]
@@ -130,11 +130,11 @@ def compute_pct_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
         num_infs = series.apply(np.isinf).sum()
-        pct_inf = 100.0 * num_infs / num_rows
-    return pct_inf
+        frac_inf = num_infs / num_rows
+    return frac_inf
 
 
-def compute_pct_constant(
+def compute_frac_constant(
     series: pd.Series, mode: str = 'keep_orig'
 ) -> float:
     """
@@ -145,7 +145,7 @@ def compute_pct_constant(
     """
     if series.empty:
         _LOG.warning("Series is empty")
-        pct_changes = np.nan
+        frac_changes = np.nan
     else:
         if mode == 'drop_na_inf':
             series = replace_inf_with_na(series).dropna()
@@ -155,8 +155,8 @@ def compute_pct_constant(
             raise ValueError("Unsupported mode=`%s`" % mode)
         changes = series.dropna().diff()
         changes_count = changes[changes != 0].shape[0]
-        pct_changes = 100 - 100 * changes_count / series.shape[0]
-    return pct_changes
+        frac_changes = 1 - changes_count / series.shape[0]
+    return frac_changes
 
 
 def count_num_finite_samples(
