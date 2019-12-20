@@ -63,7 +63,7 @@ def replace_inf_with_na(
 
 
 def compute_pct_zero(
-    series: pd.Series,
+    series: pd             .Series,
     zero_threshold: float = 1e-9,
     mode: str = 'keep_orig',
 ) -> float:
@@ -72,13 +72,13 @@ def compute_pct_zero(
 
     :param zero_threshold: floats smaller than this are treated as zeroes.
     :param mode: keep_orig - keep series without any change
-        keep_finite - drop nans and infs
+        drop_na_inf - drop nans and infs
     """
     if series.empty:
         _LOG.warning("Series is empty")
         pct_zeros = np.nan
     else:
-        if mode == 'keep_finite':
+        if mode == 'drop_na_inf':
             series = replace_inf_with_na(series).dropna()
         elif mode == 'keep_orig':
             pass
@@ -141,13 +141,13 @@ def compute_pct_constant(
     Compute percentage of values in the series that changes at the next timestamp.
 
     :param mode: keep_orig - keep series without any change
-        keep_finite - drop nans and infs
+        drop_na_inf - drop nans and infs
     """
     if series.empty:
         _LOG.warning("Series is empty")
         pct_changes = np.nan
     else:
-        if mode == 'keep_finite':
+        if mode == 'drop_na_inf':
             series = replace_inf_with_na(series).dropna()
         elif mode == 'keep_orig':
             pass
@@ -159,23 +159,23 @@ def compute_pct_constant(
     return pct_changes
 
 
-def count_num_samples(
-    series: pd.Series, mode: str = 'keep_orig'
+def count_num_finite_samples(
+    series: pd.Series, mode: str = 'drop_inf'
 ) -> int:
     """
     Count number of data points in a given time series.
 
-    :param mode: keep_orig - keep series without any change
-        keep_finite - drop nans and infs
+    :param mode: drop_inf - drop infs
+        drop_na_inf - drop nans and infs
     """
     if series.empty:
         _LOG.warning("Series is empty")
         num_samples = np.nan
     else:
-        if mode == 'keep_finite':
+        if mode == 'drop_na_inf':
             series = replace_inf_with_na(series).dropna()
-        elif mode == 'keep_orig':
-            pass
+        elif mode == 'drop_inf':
+            series = replace_inf_with_na(series)
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
         num_samples = series.shape[0]
