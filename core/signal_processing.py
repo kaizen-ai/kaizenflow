@@ -939,6 +939,9 @@ def process_outliers(
     """
     Process outliers in different ways given lower / upper quantiles.
 
+    WARNING: This function is NOT causal!
+    TODO(*): https://github.com/ParticleDev/commodity_research/issues/546#issuecomment-568134765
+
     :param srs: pd.Series to process
     :param lower_quantile: lower quantile (in range [0, 1]) of the values to keep
         The interval of data kept without any changes is [lower, upper]. In other
