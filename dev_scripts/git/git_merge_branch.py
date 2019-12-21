@@ -25,9 +25,10 @@ _LOG = logging.getLogger(__name__)
 
 def _process_repo(
     actions: List[str],
-    dir_: str,
+    dir_name: str,
     dst_branch: str,
     test_list: str,
+    abort_on_error: bool,
     quick: bool,
     output: List[str],
 ) -> Tuple[List[str], List[str]]:
@@ -38,15 +39,15 @@ def _process_repo(
     :param test_list: test list to run (e.g., fast, slow)
     :param quick: run a single test instead of the entire regression test
     """
-    dbg.dassert_exists(dir_)
-    _LOG.debug("\n%s", prnt.frame("Processing: %s" % dir_, char1=">"))
+    dbg.dassert_exists(dir_name)
+    _LOG.debug("\n%s", prnt.frame("Processing: %s" % dir_name, char1=">"))
     # TODO(gp): Make sure that the client is clean.
-    cd_cmd = "cd %s && " % dir_
+    cd_cmd = "cd %s && " % dir_name
     #
     action = "git_fetch_dst_branch"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
-        branch_name = git.get_branch_name(dir_)
+        branch_name = git.get_branch_name(dir_name)
         _LOG.debug("branch_name='%s'", branch_name)
         if branch_name != "master":
             cmd = "git fetch origin %s:%s" % (dst_branch, dst_branch)
@@ -67,9 +68,9 @@ def _process_repo(
     action = "linter"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
-        output.append(prnt.frame("%s: linter log" % dir_))
+        output.append(prnt.frame("%s: linter log" % dir_name))
         # Get the files that were modified in this branch.
-        file_names = git.get_modified_files_in_branch(dir_, dst_branch)
+        file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
         msg = "Files modified: %d\n%s" % (
             len(file_names),
             prnt.space("\n".join(file_names)),
@@ -79,7 +80,9 @@ def _process_repo(
         if not file_names:
             _LOG.warning("No files different in %s", dst_branch)
         else:
-            linter_log = "./%s.linter_log.txt" % dir_
+            linter_log = "linter_log.txt"
+            if dir_name != ".":
+                linter_log = "%s.%s" % (dir_name, linter_log)
             linter_log = os.path.abspath(linter_log)
             cmd = "linter.py -b --linter_log %s" % linter_log
             si.system(cd_cmd + cmd, suppress_output=False)
@@ -90,14 +93,22 @@ def _process_repo(
     action = "run_tests"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
-        output.append(prnt.frame("%s: unit tests" % dir_))
+        output.append(prnt.frame("%s: unit tests" % dir_name))
         if quick:
-            cmd = "pytest -k Test_p1_submodules_sanity_check1"
+            _LOG.warning("Running a quick unit test")
+            cmd = "pytest -k Test_dassert1"
         else:
             # TODO(gp): Delete cache.
             cmd = "run_tests.py --test %s --num_cpus -1" % test_list
         output.append("cmd line='%s'" % cmd)
-        si.system(cd_cmd + cmd, suppress_output=False)
+        rc = si.system(
+            cd_cmd + cmd, suppress_output=False, abort_on_error=abort_on_error
+        )
+        output.append("rc=%", rc)
+        if not abort_on_error and rc != 0:
+            output.append(
+                "WARNING: unit tests failed: skipping as per user request"
+            )
     return output, actions
 
 
@@ -133,18 +144,31 @@ def _main(parser):
     _LOG.info(msg)
     output.append(msg)
     #
-    for dir_ in target_dirs:
+    for dir_name in target_dirs:
         actions_tmp = actions[:]
+        abort_on_error = not args.continue_on_error
         output, actions_tmp = _process_repo(
-            actions_tmp, dir_, args.dst_branch, args.test_list, args.quick, output
+            actions_tmp,
+            dir_name,
+            args.dst_branch,
+            args.test_list,
+            abort_on_error,
+            args.quick,
+            output,
         )
     # Forward amp.
     if actions_tmp:
         _LOG.warning("actions=%s were not processed", str(actions_tmp))
     # Report the output.
+    _LOG.info("Summary file saved into '%s'", args.summary_file)
     output_as_txt = "\n".join(output)
     io_.to_file(args.summary_file, output_as_txt)
-    _LOG.info("Summary file saved into '%s'", args.summary_file)
+    # Print output.
+    txt = io_.from_file(args.summary_file)
+    print(prnt.frame(args.linter_log, char1="/").rstrip("\n"))
+    print(txt + "\n")
+    print(prnt.line(char="/").rstrip("\n"))
+    print("--> Please attach this to your PR <--")
     # Merge.
     # TODO(gp): Add merge step.
 
@@ -162,10 +186,18 @@ def _parse():
     prsr.add_action_arg(parser, _VALID_ACTIONS)
     parser.add_argument("--test_list", action="store", default="slow")
     parser.add_argument("--quick", action="store_true")
-    parser.add_argument("--merge_if_successful", action="store_true")
     parser.add_argument(
-        "--summary_file", action="store", default="./summary_file.txt"
+        "--continue_on_error",
+        action="store_true",
+        help="Do not abort on the first error",
     )
+    parser.add_argument(
+        "--summary_file",
+        action="store",
+        default="./pr_summary.txt",
+        help="File with the summary of the merge",
+    )
+    parser.add_argument("--merge_if_successful", action="store_true")
     prsr.add_verbosity_arg(parser)
     return parser
 

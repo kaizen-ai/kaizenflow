@@ -1657,16 +1657,17 @@ def _main(args: argparse.Namespace) -> int:
     output.append("file_names=%d %s" % (len(file_names), file_names))
     output.extend(lints)
     output.append("num_lints=%d" % num_lints)
-    # Print linter output.
-    _print(prnt.frame(args.linter_log, char1="/").rstrip("\n"))
-    _print("\n".join(output) + "\n")
-    _print(prnt.line(char="/").rstrip("\n"))
     # Write the file.
     output_as_str = "\n".join(output)
     io_.to_file(args.linter_log, output_as_str)
+    # Print linter output.
+    txt = io_.from_file(args.linter_log)
+    _print(prnt.frame(args.linter_log, char1="/").rstrip("\n"))
+    _print(txt + "\n")
+    _print(prnt.line(char="/").rstrip("\n"))
     #
     if num_lints != 0:
-        _LOG.info(
+        _LOG.warning(
             "You can quickfix the issues with\n> vim -c 'cfile %s'",
             args.linter_log,
         )
