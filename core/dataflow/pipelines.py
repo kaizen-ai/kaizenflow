@@ -258,3 +258,102 @@ class EventStudyBuilder(DagBuilder):
             (self._get_nid(stage), "df_in2"),
         )
         return dag
+
+
+class ContinuousSignalModelBuilder(DagBuilder):
+    """
+    Configurable pipeline for predicting market data using a continuous signal.
+
+    Market data may also include x-vars and be processed.
+    """
+
+    def get_dag(self, config: cfg.Config, dag: Optional[DAG] = None) -> DAG:
+        """
+        Pipeline interface and setup:
+        - Input signal should feed into "signal_input_socket"
+        - Market data should feed into "market_data_input_socket"
+        - Pipeline output available at node "output_socket"
+        - A modeling node should be added to the DAG, with input taken from
+          "model_input_socket" and output going to "model_output_socket"
+
+        It is assumed that the input signal and market data have already been
+        preprocessed, e.g., put on the same time scales, filtered, etc.
+        """
+        dag = dag or DAG()
+        _LOG.debug("%s", config)
+        stage = "signal_input_socket"
+        node = ColumnTransformer(
+            self._get_nid(stage),
+            transformer_func=lambda x: x,
+            col_mode="replace_all",
+        )
+        dag.add_node(node)
+        stage = "market_data_input_socket"
+        node = ColumnTransformer(
+            self._get_nid(stage),
+            transformer_func=lambda x: x,
+            col_mode="replace_all",
+        )
+        dag.add_node(node)
+        stage = "merge_signal_with_market_data"
+        node = YConnector(
+            self._get_nid(stage),
+            connector_func=lambda x, y, **kwargs: x.merge(y, **kwargs),
+            connector_kwargs={
+                "how": "right",
+                "left_index": True,
+                "right_index": True,
+            },
+        )
+        dag.add_node(node)
+        dag.connect(
+            (self._get_nid("signal_input_socket"), "df_out"),
+            (self._get_nid(stage), "df_in1"),
+        )
+        dag.connect(
+            (self._get_nid("market_data_input_socket"), "df_out"),
+            (self._get_nid(stage), "df_in2"),
+        )
+        # Leave sockets for hooking up a model.
+        stage = "model_input_socket"
+        node = ColumnTransformer(
+            self._get_nid(stage),
+            transformer_func=lambda x: x,
+            col_mode="replace_all",
+        )
+        dag.add_node(node)
+        dag.connect(self._get_nid("merge_signal_with_market_data"), self._get_nid(stage))
+        stage = "model_output_socket"
+        node = ColumnTransformer(
+            self._get_nid(stage),
+            transformer_func=lambda x: x,
+            col_mode="replace_all",
+        )
+        dag.add_node(node)
+        # Merge predictions of model with xvars, yvars.
+        stage = "merge_predictions"
+        node = YConnector(
+            self._get_nid(stage),
+            connector_func=lambda x, y, **kwargs: x.merge(y, **kwargs),
+            connector_kwargs={"left_index": True, "right_index": True},
+        )
+        dag.add_node(node)
+        dag.connect(
+            (self._get_nid("merge_signal_with_market_data"), "df_out"),
+            (self._get_nid(stage), "df_in1"),
+        )
+        dag.connect(
+            (self._get_nid("model_output_socket"), "df_out"),
+            (self._get_nid(stage), "df_in2"),
+        )
+        stage = "output_socket"
+        node = ColumnTransformer(
+            self._get_nid(stage),
+            transformer_func=lambda x: x,
+            col_mode="replace_all",
+        )
+        dag.add_node(node)
+        dag.connect(self._get_nid("merge_predictions"),
+                    self._get_nid("output_socket"),
+        )
+        return dag
