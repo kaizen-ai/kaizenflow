@@ -329,7 +329,9 @@ class ContinuousSignalModelBuilder(DagBuilder):
             col_mode="replace_all",
         )
         dag.add_node(node)
-        dag.connect(self._get_nid("merge_signal_with_market_data"), self._get_nid(stage))
+        dag.connect(
+            self._get_nid("merge_signal_with_market_data"), self._get_nid(stage)
+        )
         stage = "model_output_socket"
         node = ColumnTransformer(
             self._get_nid(stage),
@@ -360,7 +362,7 @@ class ContinuousSignalModelBuilder(DagBuilder):
             col_mode="replace_all",
         )
         dag.add_node(node)
-        dag.connect(self._get_nid("merge_predictions"),
-                    self._get_nid("output_socket"),
+        dag.connect(
+            self._get_nid("merge_predictions"), self._get_nid("output_socket"),
         )
         return dag
