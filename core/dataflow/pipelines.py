@@ -267,6 +267,13 @@ class ContinuousSignalModelBuilder(DagBuilder):
     Market data may also include x-vars and be processed.
     """
 
+    def get_config_template(self) -> cfg.Config:
+        """
+        Return a reference configuration.
+        """
+        config = cfg.Config()
+        return config
+
     def get_dag(self, config: cfg.Config, dag: Optional[DAG] = None) -> DAG:
         """
         Pipeline interface and setup:
