@@ -321,6 +321,24 @@ class ContinuousSignalModelBuilder(DagBuilder):
             (self._get_nid("market_data_input_socket"), "df_out"),
             (self._get_nid(stage), "df_in2"),
         )
+        # Fill NaNs.
+        stage = "fillna"
+        node = ColumnTransformer(
+            self._get_nid(stage),
+            transformer_func=lambda x: x.fillna(method="ffill"),
+            col_mode="replace_all",
+        )
+        dag.add_node(node)
+        dag.connect(self._get_nid("merge_signal_with_market_data"),
+                    self._get_nid(stage))
+        # Drop NaNs.
+        stage = "dropna"
+        node = DataframeMethodRunner(
+            self._get_nid(stage), method="dropna", method_kwargs={"how": "any"}
+        )
+        dag.add_node(node)
+        dag.connect(self._get_nid("fillna"),
+                    self._get_nid(stage))
         # Leave sockets for hooking up a model.
         stage = "model_input_socket"
         node = ColumnTransformer(
@@ -330,7 +348,7 @@ class ContinuousSignalModelBuilder(DagBuilder):
         )
         dag.add_node(node)
         dag.connect(
-            self._get_nid("merge_signal_with_market_data"), self._get_nid(stage)
+            self._get_nid("dropna"), self._get_nid(stage)
         )
         stage = "model_output_socket"
         node = ColumnTransformer(
@@ -348,7 +366,7 @@ class ContinuousSignalModelBuilder(DagBuilder):
         )
         dag.add_node(node)
         dag.connect(
-            (self._get_nid("merge_signal_with_market_data"), "df_out"),
+            (self._get_nid("model_input_socket"), "df_out"),
             (self._get_nid(stage), "df_in1"),
         )
         dag.connect(
