@@ -87,7 +87,7 @@ def compute_frac_zero(
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
         num_rows = series.shape[0]
-        num_zeros = (series.dropna().abs() < zero_threshold).sum()
+        num_zeros = (series.abs() < zero_threshold).sum()
         frac_zeros = num_zeros / num_rows
     return frac_zeros
 
