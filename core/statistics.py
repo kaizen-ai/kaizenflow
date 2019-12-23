@@ -96,7 +96,8 @@ def compute_frac_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     Count fraction of nans in a given time series.
 
-    :param mode: keep_orig - keep series (denominator) without any change
+    :param mode: keep_orig - keep series without any change, so the denominator
+        of the fraction is computed in the normal way.
         drop_inf - don't count inf rows for the denominator
     """
     if series.empty:
