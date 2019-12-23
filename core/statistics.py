@@ -104,13 +104,13 @@ def compute_frac_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
         frac_nan = np.nan
     else:
         if mode == 'drop_inf':
-            num_rows = series.apply(np.isinf).value_counts()[False]
+            series = series[~np.isinf(series)]
         elif mode == 'keep_orig':
-            num_rows = series.shape[0]
+            pass
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
         num_nans = series.isna().sum()
-        frac_nan = num_nans / num_rows
+        frac_nan = num_nans / series.shape[0]
     return frac_nan
 
 
@@ -126,13 +126,13 @@ def compute_frac_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
         frac_inf = np.nan
     else:
         if mode == 'drop_na':
-            num_rows = series.dropna().shape[0]
+            series = series.dropna()
         elif mode == 'keep_orig':
-            num_rows = series.shape[0]
+            pass
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
         num_infs = series.apply(np.isinf).sum()
-        frac_inf = num_infs / num_rows
+        frac_inf = num_infs / series.shape[0]
     return frac_inf
 
 
