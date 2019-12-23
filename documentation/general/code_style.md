@@ -588,40 +588,6 @@
   - Send the rest to warnings.log
   - At the end of the run, reports "there are warnings in warnings.log"
 
-## Don't mix real changes with linter changes
-
-- The linter is in change of reformatting the code according to our conventions
-  and reporting potential problems
-
-1. We don't commit changes that modify the code together with linter
-   reformatting, unless the linting is applied to the changes we just made
-   - The reason for not mixing real and linter changes is that for a PR or to
-     just read the code it is difficult to understand what really changed vs
-     what was just a cosmetic modification
-
-2. If you are worried the linter might change your code in a way you don't like,
-   e.g.,
-   - Screwing up some formatting you care about for some reason, or
-   - Suggesting changes that you are worried might introduce bugs you can commit
-     your code and then do a "lint commit" with a message "PartTaskXYZ: Lint"
-
-- In this way you have a backup state that you can rollback to, if you want
-
-3. If you run the linter and see that the linter is reformatting / modifying
-   pieces of code you din't change, it means that our team mate forgot to lint
-   their code
-   - `git blame` can figure out the culprit
-   - You can send him / her a ping to remind her to lint, so you don't have to
-     clean after him / her
-   - In this case, the suggested approach is:
-     - Commit your change to a branch / stash
-     - Run the linter by itself on the files that need to be cleaned, without
-       any change
-     - Run the unit tests to make sure nothing is breaking
-     - You can fix lints or just do formatting: it's up to you
-     - You can make this change directly on `master` or do a PR if you want to
-       be extra sure: your call
-
 # Assertions
 
 ## Use positional args when asserting
@@ -971,22 +937,21 @@ uses like:
 
 # Functions
 
-## Arguments
+## Avoid using non-exclusive `bool` arguments
 
-- Avoid using `bool` arguments
-  - While a simple `True`/`False` switch may suffice for today's needs, very
-    often more flexibility is eventually needed
-  - If more flexibility is needed for a `bool` argument, you are faced with the
-    choice of
-    - Adding another parameter (then parameter combinations grow exponentially
-      and may not all make sense)
-    - Changing the parameter type to something else
-    - Either way, you have to change the function interface
-  - To maintain flexibility from the start, opt for a `str` parameter "mode",
-    which is allowed to take a small well-defined set of values.
-  - If an implicit default is desirable, consider making the default value of
-    the parameter `None`. This is only a good route if the default operation is
-    non-controversial / intuitively obvious.
+- While a simple `True`/`False` switch may suffice for today's needs, very often
+  more flexibility is eventually needed
+- If more flexibility is needed for a `bool` argument, you are faced with the
+  choice of
+- Adding another parameter (then parameter combinations grow exponentially and
+  may not all make sense)
+- Changing the parameter type to something else
+- Either way, you have to change the function interface
+- To maintain flexibility from the start, opt for a `str` parameter "mode", which
+  is allowed to take a small well-defined set of values.
+- If an implicit default is desirable, consider making the default value of the
+  parameter `None`. This is only a good route if the default operation is
+  non-controversial / intuitively obvious.
 
 ## Try to make functions work on multiple types
 
@@ -1031,243 +996,7 @@ uses like:
   - This prevents hidden column name dependencies from spreading like a virus
     throughout the codebase
 
-# Misc (to reorg)
-
-- TODO(\*): Start moving these functions in the right place once we have more a
-  better document structure
-
-## Write robust code
-
-- Write code where there is minimal coupling between different different parts
-  - This is a corollary of DRY, since not following DRY implies coupling
-
-- Consider the following code:
-  ```python
-  if server_name == "ip-172-31-16-23":
-      out = 1
-  if server_name == "ip-172-32-15-23":
-      out = 2
-  ```
-- This code is brittle since if you change the first part to:
-
-  ```python
-  if server_name.startswith("ip-172"):
-      out = 1
-  if server_name == "ip-172-32-15-23":
-      out = 2
-  ```
-
-  executing the code with `server_name = "ip-172-32-15-23"` will give `out=2`
-
-- The proper approach is to enumerate all the cases like:
-  ```python
-  if server_name == "ip-172-31-16-23":
-      out = 1
-  elif server_name == "ip-172-32-15-23":
-      out = 2
-  ...
-  else:
-      raise ValueError("Invalid server_name='%s'" % server_name)
-  ```
-
-## Capitalized words
-
-- In documentation and comments we capitalize abbreviations (e.g., `YAML`,
-  `CSV`)
-- In the code:
-  - We try to leave abbreviations capitalized when it doesn't conflict with
-    other rules
-    - E.g., `convert_to_CSV`, but `csv_file_name` as a variable name that is not
-      global
-  - Other times we use camel case, when appropriate
-    - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
-
-## Regex
-
-- The rule of thumb is to compile a regex expression, e.g.,
-  ```python
-  backslash_regexp = re.compile(r"\\")
-  ```
-  only if it's called more than once, otherwise the overhead of compilation and
-  creating another var is not justified
-
-## Order of functions in a file
-
-- We try to organize code in a file to represent the logical flow of the code
-  execution, e.g.,
-  - At the beginning of the file: functions / classes for reading data
-  - Then: functions / classes to process the data
-  - Finally at the end of the file: functions / classes to save the data
-
-- Try to put private helper functions close to the functions that are using them
-  - This rule of thumb is a bit at odds with clearly separating public and
-    private section in classes
-    - A possible justification is that classes typically contain less code than
-      a file and tend to be used through their API
-    - A file contains larger amount of loosely coupled code and so we want to
-      keep implementation and API close together
-
-## Use layers design pattern
-
-- A "layer" design pattern (see Unix architecture) is a piece of code that talks
-  / has dependency only to one outermost layer and one innermost layer
-
-- You can use this approach in your files representing data processing pipelines
-
-- You can split code in sections using 80 characters # comments, e.g.,
-
-  ```python
-  # ###################...
-  # Read.
-  # ###################...
-
-  ...
-
-  # ###################...
-  # Process.
-  # ###################...
-  ```
-
-
-    ...
-
-    # ###################...
-    # Process.
-    # ###################...
-
-- This often suggests to split the code in classes to represent namespaces of
-  related functions
-
-## Write complete `if-then-else`
-
-- Consider this good piece of code
-
-  ```python
-  dbg.dassert_in(
-      frequency,
-      ["D", "T"]
-      "Only daily ('D') and minutely ('T') frequencies are supported.",
-  )
-  if frequency == "T":
-      ...
-  elif frequency == "D":
-      ...
-  else:
-      raise ValueError("The %s frequency is not supported" % frequency)
-  ```
-
-- This code is robust and correct
-
-- Still the `if-then-else` is enough and the assertion is not needed
-  - DRY here wins: you don't want to have to keep two pieces of code in sync
-
-- It makes sense to check early only when you want to fail before doing more
-  work
-  - E.g., sanity checking the parameters of a long running function, so that it
-    doesn't run for 1 hr and then crash because the name of the file is
-    incorrect
-
-## Do not be stingy at typing
-
-- Why calling an object `TimeSeriesMinStudy` instead of `TimeSeriesMinuteStudy`?
-  - Saving 3 letters is not worth
-  - The reader might interpret `Min` as `Minimal` (or `Miniature`, `Minnie`,
-    `Minotaur`)
-
-- If you don't like to type, we suggest you get a better keyboard, e.g.,
-  [this](https://kinesis-ergo.com/shop/advantage2/)
-
-## Research quality vs production quality
-
-- Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`)
-  and production (e.g., `//p1/db`, `vendors`) needs to meet high quality
-  standards, e.g.,
-  - Well commented
-  - Following our style guide
-  - Thoroughly reviewed
-  - Good design
-  - Comprehensive unit tests
-
-- Research code in notebook and python can follow slightly looser standards,
-  e.g.,
-  - Sprinkled with some TODOs
-  - Not perfectly general
-
-- The reason is that:
-  - Research code is still evolving and we want to keep the structure flexible
-  - We don't want to invest the time in making it perfect if the research
-    doesn't pan out
-
-- Note that research code still needs to be:
-  - Understandable / usable by not authors
-  - Well commented
-  - Follow the style guide
-  - Somehow unit tested
-
-- We should be able to raise the quality of a piece of research code to
-  production quality when that research goes into production
-
-## No ugly hacks
-
-- We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be
-  undone (much more than the effort to do it right in the first place)
-  - Especially an ugly design hack, e.g., a Singleton, or some unnecessary
-    dependency between distant pieces of code
-  - Ugly hacks spreads everywhere in the code base
-
-## Life cycle of research code
-
-- Often the life cycle of a piece of code is to start as research and then be
-  promoted to higher level libraries to be used in multiple research, after its
-  quality reaches production quality
-
-# Document what notebooks are for
-
-Can we add to each notebook a description of what it does (prototyping,
-analysis, tutorial)
-
-# Keep related code close
-
-- Try to keep related code as close as possible to their counterparty to
-  highlight logical blocks
-- Add comments to explain the logical blocks composing complex actions
-
-- E.g., consider this code:
-
-  ```python
-  func_info = collections.OrderedDict()
-  func_sig = inspect.signature(self._transformer_func)
-  # Perform the column transformation operations.
-  if "info" in func_sig.parameters:
-      df = self._transformer_func(
-          df, info=func_info, **self._transformer_kwargs
-      )
-      info["func_info"] = func_info
-  else:
-      df = self._transformer_func(df, **self._transformer_kwargs)
-  ```
-  - Observations:
-    - `func_info` is used only in one branch of the `if-then-else`, so it should
-      be only in that branch
-    - Since `func_sig` is just a temporary alias for making the code easier to
-      follow (good!), we want to keep it close to where it's used
-
-  ```python
-  # Perform the column transformation operations.
-  func_sig = inspect.signature(self._transformer_func)
-  if "info" in func_sig.parameters:
-      # If info is available in the function signature, then pass it
-      # to the transformer.
-      func_info = collections.OrderedDict()
-      df = self._transformer_func(
-          df, info=func_info, **self._transformer_kwargs
-      )
-      info["func_info"] = func_info
-  else:
-      df = self._transformer_func(df, **self._transformer_kwargs)
-  ```
-
-# Single exit point from a function
+## Single exit point from a function
 
 ```python
 @staticmethod
@@ -1394,6 +1123,231 @@ def ...(...):
 - Cons:
   - None
 
+# Misc (to reorg)
+
+- TODO(\*): Start moving these functions in the right place once we have more a
+  better document structure
+
+## Write robust code
+
+- Write code where there is minimal coupling between different different parts
+  - This is a corollary of DRY, since not following DRY implies coupling
+
+- Consider the following code:
+  ```python
+  if server_name == "ip-172-31-16-23":
+      out = 1
+  if server_name == "ip-172-32-15-23":
+      out = 2
+  ```
+- This code is brittle since if you change the first part to:
+
+  ```python
+  if server_name.startswith("ip-172"):
+      out = 1
+  if server_name == "ip-172-32-15-23":
+      out = 2
+  ```
+
+  executing the code with `server_name = "ip-172-32-15-23"` will give `out=2`
+
+- The proper approach is to enumerate all the cases like:
+  ```python
+  if server_name == "ip-172-31-16-23":
+      out = 1
+  elif server_name == "ip-172-32-15-23":
+      out = 2
+  ...
+  else:
+      raise ValueError("Invalid server_name='%s'" % server_name)
+  ```
+
+## Capitalized words
+
+- In documentation and comments we capitalize abbreviations (e.g., `YAML`,
+  `CSV`)
+- In the code:
+  - We try to leave abbreviations capitalized when it doesn't conflict with
+    other rules
+    - E.g., `convert_to_CSV`, but `csv_file_name` as a variable name that is not
+      global
+  - Other times we use camel case, when appropriate
+    - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
+
+## Regex
+
+- The rule of thumb is to compile a regex expression, e.g.,
+  ```python
+  backslash_regexp = re.compile(r"\\")
+  ```
+  only if it's called more than once, otherwise the overhead of compilation and
+  creating another var is not justified
+
+## Order of functions in a file
+
+- We try to organize code in a file to represent the logical flow of the code
+  execution, e.g.,
+  - At the beginning of the file: functions / classes for reading data
+  - Then: functions / classes to process the data
+  - Finally at the end of the file: functions / classes to save the data
+
+- Try to put private helper functions close to the functions that are using them
+  - This rule of thumb is a bit at odds with clearly separating public and
+    private section in classes
+    - A possible justification is that classes typically contain less code than
+      a file and tend to be used through their API
+    - A file contains larger amount of loosely coupled code and so we want to
+      keep implementation and API close together
+
+## Use layers design pattern
+
+- A "layer" design pattern (see Unix architecture) is a piece of code that talks
+  / has dependency only to one outermost layer and one innermost layer
+
+- You can use this approach in your files representing data processing pipelines
+
+- You can split code in sections using 80 characters # comments, e.g.,
+
+  ```python
+  # ###################...
+  # Read.
+  # ###################...
+
+  ...
+
+  # ###################...
+  # Process.
+  # ###################...
+  ```
+
+- This often suggests to split the code in classes to represent namespaces of
+  related functions
+
+## Write complete `if-then-else`
+
+- Consider this good piece of code
+
+  ```python
+  dbg.dassert_in(
+      frequency,
+      ["D", "T"]
+      "Only daily ('D') and minutely ('T') frequencies are supported.",
+  )
+  if frequency == "T":
+      ...
+  elif frequency == "D":
+      ...
+  else:
+      raise ValueError("The %s frequency is not supported" % frequency)
+  ```
+
+- This code is robust and correct
+
+- Still the `if-then-else` is enough and the assertion is not needed
+  - DRY here wins: you don't want to have to keep two pieces of code in sync
+
+- It makes sense to check early only when you want to fail before doing more
+  work
+  - E.g., sanity checking the parameters of a long running function, so that it
+    doesn't run for 1 hr and then crash because the name of the file is
+    incorrect
+
+## Do not be stingy at typing
+
+- Why calling an object `TimeSeriesMinStudy` instead of `TimeSeriesMinuteStudy`?
+  - Saving 3 letters is not worth
+  - The reader might interpret `Min` as `Minimal` (or `Miniature`, `Minnie`,
+    `Minotaur`)
+
+- If you don't like to type, we suggest you get a better keyboard, e.g.,
+  [this](https://kinesis-ergo.com/shop/advantage2/)
+
+## Research quality vs production quality
+
+- Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`)
+  and production (e.g., `//p1/db`, `vendors`) needs to meet high quality
+  standards, e.g.,
+  - Well commented
+  - Following our style guide
+  - Thoroughly reviewed
+  - Good design
+  - Comprehensive unit tests
+
+- Research code in notebook and python can follow slightly looser standards,
+  e.g.,
+  - Sprinkled with some TODOs
+  - Not perfectly general
+
+- The reason is that:
+  - Research code is still evolving and we want to keep the structure flexible
+  - We don't want to invest the time in making it perfect if the research
+    doesn't pan out
+
+- Note that research code still needs to be:
+  - Understandable / usable by not authors
+  - Well commented
+  - Follow the style guide
+  - Somehow unit tested
+
+- We should be able to raise the quality of a piece of research code to
+  production quality when that research goes into production
+
+## Life cycle of research code
+
+- Often the life cycle of a piece of code is to start as research and then be
+  promoted to higher level libraries to be used in multiple research, after its
+  quality reaches production quality
+
+## No ugly hacks
+
+- We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be
+  undone (much more than the effort to do it right in the first place)
+  - Especially an ugly design hack, e.g., a Singleton, or some unnecessary
+    dependency between distant pieces of code
+  - Ugly hacks spreads everywhere in the code base
+
+## Keep related code close
+
+- Try to keep related code as close as possible to their counterparty to
+  highlight logical blocks
+- Add comments to explain the logical blocks composing complex actions
+
+- E.g., consider this code:
+
+  ```python
+  func_info = collections.OrderedDict()
+  func_sig = inspect.signature(self._transformer_func)
+  # Perform the column transformation operations.
+  if "info" in func_sig.parameters:
+      df = self._transformer_func(
+          df, info=func_info, **self._transformer_kwargs
+      )
+      info["func_info"] = func_info
+  else:
+      df = self._transformer_func(df, **self._transformer_kwargs)
+  ```
+
+- Observations:
+  - `func_info` is used only in one branch of the `if-then-else`, so it should
+    be only in that branch
+  - Since `func_sig` is just a temporary alias for making the code easier to
+    follow (good!), we want to keep it close to where it's used
+
+  ```python
+  # Perform the column transformation operations.
+  func_sig = inspect.signature(self._transformer_func)
+  if "info" in func_sig.parameters:
+      # If info is available in the function signature, then pass it
+      # to the transformer.
+      func_info = collections.OrderedDict()
+      df = self._transformer_func(
+          df, info=func_info, **self._transformer_kwargs
+      )
+      info["func_info"] = func_info
+  else:
+      df = self._transformer_func(df, **self._transformer_kwargs)
+  ```
+
 ## Always separate what changes from what stays the same
 
 - In both main code and unit test it's not a good idea to repeat the same code
@@ -1453,3 +1407,37 @@ def ...(...):
     _helper(texts, categories, expected_result)
     ```
     - Yes, VersionA is **Bad** and VersionB is **Good**
+
+## Don't mix real changes with linter changes
+
+- The linter is in change of reformatting the code according to our conventions
+  and reporting potential problems
+
+1. We don't commit changes that modify the code together with linter
+   reformatting, unless the linting is applied to the changes we just made
+   - The reason for not mixing real and linter changes is that for a PR or to
+     just read the code it is difficult to understand what really changed vs
+     what was just a cosmetic modification
+
+2. If you are worried the linter might change your code in a way you don't like,
+   e.g.,
+   - Screwing up some formatting you care about for some reason, or
+   - Suggesting changes that you are worried might introduce bugs you can commit
+     your code and then do a "lint commit" with a message "PartTaskXYZ: Lint"
+
+- In this way you have a backup state that you can rollback to, if you want
+
+3. If you run the linter and see that the linter is reformatting / modifying
+   pieces of code you din't change, it means that our team mate forgot to lint
+   their code
+   - `git blame` can figure out the culprit
+   - You can send him / her a ping to remind her to lint, so you don't have to
+     clean after him / her
+   - In this case, the suggested approach is:
+     - Commit your change to a branch / stash
+     - Run the linter by itself on the files that need to be cleaned, without
+       any change
+     - Run the unit tests to make sure nothing is breaking
+     - You can fix lints or just do formatting: it's up to you
+     - You can make this change directly on `master` or do a PR if you want to
+       be extra sure: your call
