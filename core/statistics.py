@@ -165,7 +165,7 @@ def count_num_finite_samples(
     series: pd.Series, mode: str = 'drop_inf'
 ) -> int:
     """
-    Count number of data points in a given time series.
+    Count number of finite data points in a given time series.
 
     :param mode: drop_inf - drop infs
         drop_na_inf - drop nans and infs
