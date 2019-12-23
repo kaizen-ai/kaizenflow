@@ -50,13 +50,15 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-# TODO: Some functions could result in error with drop_na = False. Test
+# TODO(Stas): Some functions could result in error with drop_na = False. Test
 #  behaviour of function with dro p_na = False.
 def replace_inf_with_na(
     series: pd.Series
 ) -> pd.Series:
     """
-    Replace nans with infs in the given series.
+    Replace infs with nans in the given series.
+
+    The operation is not performed in place, but return a copy of the series.
     """
     series = series.replace([np.inf, -np.inf], np.nan)
     return series
@@ -68,7 +70,7 @@ def compute_frac_zero(
     mode: str = 'keep_orig',
 ) -> float:
     """
-    Count number of zeroes in a given time series.
+    Count fraction of zeroes in a given time series.
 
     :param zero_threshold: floats smaller than this are treated as zeroes.
     :param mode: keep_orig - keep series without any change
@@ -92,7 +94,7 @@ def compute_frac_zero(
 
 def compute_frac_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
-    Count number of nans in a given time series.
+    Count fraction of nans in a given time series.
 
     :param mode: keep_orig - keep series (denominator) without any change
         drop_inf - don't count inf rows for the denominator
@@ -114,7 +116,7 @@ def compute_frac_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
 
 def compute_frac_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
-    Count number of infs in a given time series.
+    Count fraction of infs in a given time series.
 
     :param mode: keep_orig - keep series (denominator) without any change
         drop_na - drop nans before counting series rows for the denominator
@@ -138,7 +140,7 @@ def compute_frac_constant(
     series: pd.Series, mode: str = 'keep_orig'
 ) -> float:
     """
-    Compute percentage of values in the series that changes at the next timestamp.
+    Compute fraction of values in the series that changes at the next timestamp.
 
     :param mode: keep_orig - keep series without any change
         drop_na_inf - drop nans and infs
@@ -154,8 +156,8 @@ def compute_frac_constant(
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
         changes = series.dropna().diff()
-        changes_count = changes[changes != 0].shape[0]
-        frac_changes = 1 - changes_count / series.shape[0]
+        num_changes = changes[changes != 0].shape[0]
+        frac_changes = 1 - num_changes / series.shape[0]
     return frac_changes
 
 
@@ -189,13 +191,13 @@ def count_num_unique_values(
     Count number of unique values in the series.
 
     :param mode: keep_orig - keep series without any change
-        keep_finite - drop nans and infs
+        drop_na_inf - drop nans and infs
     """
     if series.empty:
         _LOG.warning("Series is empty")
         num_unique_values = np.nan
     else:
-        if mode == 'keep_finite':
+        if mode == 'drop_na_inf':
             series = replace_inf_with_na(series).dropna()
         elif mode == 'keep_orig':
             pass
