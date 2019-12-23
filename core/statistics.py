@@ -52,7 +52,7 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 
 # TODO(Stas): Some functions could result in error with drop_na = False. Test
 #  behaviour of function with dro p_na = False.
-def replace_inf_with_na(
+def replace_infs_with_nans(
     series: pd.Series
 ) -> pd.Series:
     """
@@ -81,7 +81,7 @@ def compute_frac_zero(
         frac_zeros = np.nan
     else:
         if mode == 'drop_na_inf':
-            series = replace_inf_with_na(series).dropna()
+            series = replace_infs_with_nans(series).dropna()
         elif mode == 'keep_orig':
             pass
         else:
@@ -150,7 +150,7 @@ def compute_frac_constant(
         frac_changes = np.nan
     else:
         if mode == 'drop_na_inf':
-            series = replace_inf_with_na(series).dropna()
+            series = replace_infs_with_nans(series).dropna()
         elif mode == 'keep_orig':
             pass
         else:
@@ -175,9 +175,9 @@ def count_num_finite_samples(
         num_samples = np.nan
     else:
         if mode == 'drop_na_inf':
-            series = replace_inf_with_na(series).dropna()
+            series = replace_infs_with_nans(series).dropna()
         elif mode == 'drop_inf':
-            series = replace_inf_with_na(series)
+            series = replace_infs_with_nans(series)
         else:
             raise ValueError("Unsupported mode=`%s`" % mode)
         num_samples = series.shape[0]
@@ -198,7 +198,7 @@ def count_num_unique_values(
         num_unique_values = np.nan
     else:
         if mode == 'drop_na_inf':
-            series = replace_inf_with_na(series).dropna()
+            series = replace_infs_with_nans(series).dropna()
         elif mode == 'keep_orig':
             pass
         else:
