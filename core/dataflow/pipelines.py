@@ -276,12 +276,17 @@ class ContinuousSignalModelBuilder(DagBuilder):
 
     def get_dag(self, config: cfg.Config, dag: Optional[DAG] = None) -> DAG:
         """
-        Pipeline interface and setup:
-        - Input signal should feed into "signal_input_socket"
-        - Market data should feed into "market_data_input_socket"
-        - Pipeline output available at node "output_socket"
-        - A modeling node should be added to the DAG, with input taken from
-          "model_input_socket" and output going to "model_output_socket"
+        Pipeline interface nodes:
+        - "signal_input_socket"
+            - continuous input signal should feed into this node
+        - "market_data_input_socket"
+            - market data should feed into this node
+        - "model_input_socket"
+            - modeling node should receive data from this node
+        - "model_output_socket"
+            - modeling node should send output data to this node
+        - "output_socket"
+            - pipeline output available from this node
 
         It is assumed that the input signal and market data have already been
         preprocessed, e.g., put on the same time scales, filtered, etc.
