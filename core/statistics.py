@@ -37,7 +37,7 @@ ADJ_PVAL_COL = "adj_pvals"
 # Consider exposing `nan_policy`.
 def moments(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Calculates, mean, standard deviation, skew, and kurtosis.
+    Calculate, mean, standard deviation, skew, and kurtosis.
     """
     mean = df.mean()
     std = df.std()
@@ -86,8 +86,8 @@ def compute_frac_zero(
 
 
 def compute_frac_nan(
-    data: Union[pd.Series, pd.DataFrame],
-    axis: Optional[float] = 0) -> Union[float, pd.Series]:
+    data: Union[pd.Series, pd.DataFrame], axis: Optional[float] = 0
+) -> Union[float, pd.Series]:
     """
     Calculate fraction of nans in `data`.
 
@@ -99,8 +99,8 @@ def compute_frac_nan(
 
 
 def compute_frac_inf(
-    data: Union[pd.Series, pd.DataFrame],
-    axis: Optional[float] = 0) -> Union[float, pd.Series]:
+    data: Union[pd.Series, pd.DataFrame], axis: Optional[float] = 0
+) -> Union[float, pd.Series]:
     """
     Count fraction of infs in a given time series.
 
@@ -113,8 +113,7 @@ def compute_frac_inf(
 
 # TODO(Paul): Consider exposing `rtol`, `atol`.
 def compute_frac_constant(
-    data: Union[pd.Series, pd.DataFrame],
-    axis: float = 0,
+    data: Union[pd.Series, pd.DataFrame], axis: float = 0,
 ) -> Union[float, pd.Series]:
     """
     Compute fraction of values in the series that changes at the next timestamp.
@@ -127,9 +126,7 @@ def compute_frac_constant(
     return 1 - diff_frac
 
 
-def count_num_finite_samples(
-        data: pd.Series,
-) -> float:
+def count_num_finite_samples(data: pd.Series,) -> float:
     """
     Count number of finite data points in a given time series.
 
@@ -140,9 +137,7 @@ def count_num_finite_samples(
     return data.count()
 
 
-def count_num_unique_values(
-    data: pd.Series
-) -> int:
+def count_num_unique_values(data: pd.Series) -> int:
     """
     Count number of unique values in the series.
 
@@ -152,9 +147,11 @@ def count_num_unique_values(
     return count_num_finite_samples(srs)
 
 
-def _compute_denominator_and_package(reduction: Union[float, np.ndarray],
-                                     data: Union[pd.Series, pd.DataFrame],
-                                     axis: Optional[float] = None):
+def _compute_denominator_and_package(
+    reduction: Union[float, np.ndarray],
+    data: Union[pd.Series, pd.DataFrame],
+    axis: Optional[float] = None,
+):
     """
     Normalize and package `reduction` according to `axis` and `data` metadata.
 
