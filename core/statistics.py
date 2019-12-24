@@ -111,7 +111,7 @@ def compute_frac_inf(
 
 # TODO(Paul): Consider exposing `rtol`, `atol`.
 def compute_frac_constant(
-    data: Union[pd.Series, pd.DataFrame], axis: float = 0,
+    data: Union[pd.Series, pd.DataFrame]
 ) -> Union[float, pd.Series]:
     """
     Compute fraction of values in the series that changes at the next timestamp.
@@ -119,14 +119,14 @@ def compute_frac_constant(
     :param data: numeric series or dataframe
     :param axis: numpy axis for summation
     """
-    diffs = np.diff(data.values, axis=axis)[1:]
-    diff_frac = compute_frac_zero(diffs, axis=axis)
-    return diff_frac
+    diffs = data.diff().iloc[1:]
+    constant_frac = compute_frac_zero(diffs, axis=0)
+    return constant_frac
 
 
 # TODO(Paul): Refactor to work with dataframes as well. Consider how to handle
 #     `axis`, which the pd.Series version of `copy()` does not take.
-def count_num_finite_samples(data: pd.Series,) -> float:
+def count_num_finite_samples(data: pd.Series) -> float:
     """
     Count number of finite data points in a given time series.
 
