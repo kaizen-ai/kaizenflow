@@ -1007,7 +1007,23 @@ class TestComputeFracZero1(ut.TestCase):
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test2(self) -> None:
-        data = [0.4, 0.0, 0.2, 0.4, 0.4, 0.2, 0.4, 0.0, 0.6, 0.4, 0.6, 0.2, 0.0, 0.0, 0.2]
+        data = [
+            0.4,
+            0.0,
+            0.2,
+            0.4,
+            0.4,
+            0.2,
+            0.4,
+            0.0,
+            0.6,
+            0.4,
+            0.6,
+            0.2,
+            0.0,
+            0.0,
+            0.2,
+        ]
         index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
         expected = pd.Series(data=data, index=index)
         actual = stats.compute_frac_zero(self._get_df(1), axis=1)
