@@ -50,51 +50,43 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-# TODO(Stas): Some functions could result in error with drop_na = False. Test
-#  behaviour of function with dro p_na = False.
+# TODO(Paul): Refactor so that these work with dataframes as well. The
+# underlying numpy implementations extend to multidimensional arrays.
 def replace_infs_with_nans(
-    series: pd.Series
+    srs: pd.Series
 ) -> pd.Series:
     """
-    Replace infs with nans in the given series.
-
-    The operation is not performed in place, but return a copy of the series.
+    Replace infs with nans in a copy of `srs`.
     """
-    series = series.replace([np.inf, -np.inf], np.nan)
-    return series
+    return srs.replace([np.inf, -np.inf], np.nan)
 
 
 def compute_frac_zero(
-    series: pd.Series,
-    zero_threshold: float = 1e-9,
-    mode: str = 'keep_orig',
+    srs: pd.Series,
+    rtol: float = 0.0,
+    atol: float = 0.0,
 ) -> float:
     """
-    Count fraction of zeroes in a given time series.
+    Calculate fraction of zeros in `srs`.
 
-    :param zero_threshold: floats smaller than this are treated as zeroes.
-    :param mode: keep_orig - keep series without any change
-        drop_na_inf - drop nans and infs
+    The size of `srs` is used as the denominator.
+
+    :param rtol: absolute tolerance, as in `np.isclose`
+    :param atol: relative tolerance, as in `np.isclose`
     """
     if series.empty:
         _LOG.warning("Series is empty")
-        frac_zeros = np.nan
-    else:
-        if mode == 'drop_na_inf':
-            series = replace_infs_with_nans(series).dropna()
-        elif mode == 'keep_orig':
-            pass
-        else:
-            raise ValueError("Unsupported mode=`%s`" % mode)
-        num_rows = series.shape[0]
-        num_zeros = (series.abs() < zero_threshold).sum()
-        frac_zeros = num_zeros / num_rows
-    return frac_zeros
+        return np.nan
+    zeros = np.zeros(srs.size)
+    num_zeros = np.isclose(srs.values, zeros, rtol, atol).sum()
+    return num_zeros / srs.size
 
 
-def compute_frac_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
+def compute_frac_nan(srs: pd.Series) -> float:
     """
-    Count fraction of nans in a given time series.
+    Calculate fraction of nans in `srs`.
+
+    The size of `srs` is used as the denominator.
 
     :param mode: keep_orig - keep series without any change, so the denominator
         of the fraction is computed in the normal way.
@@ -102,20 +94,12 @@ def compute_frac_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     if series.empty:
         _LOG.warning("Series is empty")
-        frac_nan = np.nan
-    else:
-        if mode == 'drop_inf':
-            series = series[~np.isinf(series)]
-        elif mode == 'keep_orig':
-            pass
-        else:
-            raise ValueError("Unsupported mode=`%s`" % mode)
-        num_nans = series.isna().sum()
-        frac_nan = num_nans / series.shape[0]
-    return frac_nan
+        return np.nan
+    num_nans = srs.isna().sum()
+    return num_nans / srs.size
 
 
-def compute_frac_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
+def compute_frac_inf(srs: pd.Series) -> float:
     """
     Count fraction of infs in a given time series.
 
@@ -124,17 +108,9 @@ def compute_frac_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
     if series.empty:
         _LOG.warning("Series is empty")
-        frac_inf = np.nan
-    else:
-        if mode == 'drop_na':
-            series = series.dropna()
-        elif mode == 'keep_orig':
-            pass
-        else:
-            raise ValueError("Unsupported mode=`%s`" % mode)
-        num_infs = series.apply(np.isinf).sum()
-        frac_inf = num_infs / series.shape[0]
-    return frac_inf
+        return np.nan
+    num_infs = np.isinf(srs.values).sum()
+    return num_infs / srs.size
 
 
 def compute_frac_constant(
@@ -148,7 +124,7 @@ def compute_frac_constant(
     """
     if series.empty:
         _LOG.warning("Series is empty")
-        frac_changes = np.nan
+        return np.nan
     else:
         if mode == 'drop_na_inf':
             series = replace_infs_with_nans(series).dropna()
