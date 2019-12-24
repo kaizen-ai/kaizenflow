@@ -7,7 +7,7 @@ import core.statistics as stats
 import functools
 import logging
 import math
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -53,135 +53,148 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
 # TODO(Paul): Refactor so that these work with dataframes as well. The
 # underlying numpy implementations extend to multidimensional arrays.
 def replace_infs_with_nans(
-    srs: pd.Series
-) -> pd.Series:
+    data: Union[pd.Series, pd.DataFrame],
+) -> Union[pd.Series, pd.DataFrame]:
     """
-    Replace infs with nans in a copy of `srs`.
+    Replace infs with nans in a copy of `data`.
     """
-    return srs.replace([np.inf, -np.inf], np.nan)
+    return data.replace([np.inf, -np.inf], np.nan)
 
 
 def compute_frac_zero(
-    srs: pd.Series,
+    data: Union[pd.Series, pd.DataFrame],
     rtol: float = 0.0,
     atol: float = 0.0,
-) -> float:
+    axis: Optional[float] = 0,
+) -> Union[float, pd.Series]:
     """
-    Calculate fraction of zeros in `srs`.
+    Calculate fraction of zeros in a numerical series or dataframe.
 
-    The size of `srs` is used as the denominator.
-
+    :param data: numeric series or dataframe
     :param rtol: absolute tolerance, as in `np.isclose`
     :param atol: relative tolerance, as in `np.isclose`
+    :param axis: numpy axis for summation
     """
-    if series.empty:
-        _LOG.warning("Series is empty")
-        return np.nan
-    zeros = np.zeros(srs.size)
-    num_zeros = np.isclose(srs.values, zeros, rtol, atol).sum()
-    return num_zeros / srs.size
+    # Create an ndarray of zeros of the same shape.
+    zeros = np.zeros(data.shape)
+    # Compare values of `df` to `zeros`.
+    # NOTE: np.isclose documentation states the `isclose()` is not always
+    #     symmetric in its arguments.
+    is_close_to_zero = np.isclose(data.values, zeros, rtol=rtol, atol=atol)
+    num_zeros = is_close_to_zero.sum(axis=axis)
+    return _compute_denominator_and_package(num_zeros, data, axis)
 
 
-def compute_frac_nan(srs: pd.Series) -> float:
+def compute_frac_nan(
+    data: Union[pd.Series, pd.DataFrame],
+    axis: Optional[float] = 0) -> Union[float, pd.Series]:
     """
-    Calculate fraction of nans in `srs`.
+    Calculate fraction of nans in `data`.
 
-    The size of `srs` is used as the denominator.
-
-    :param mode: keep_orig - keep series without any change, so the denominator
-        of the fraction is computed in the normal way.
-        drop_inf - don't count inf rows for the denominator
+    :param data: numeric series or dataframe
+    :param axis: numpy axis for summation
     """
-    if series.empty:
-        _LOG.warning("Series is empty")
-        return np.nan
-    num_nans = srs.isna().sum()
-    return num_nans / srs.size
+    num_nans = data.isna().values.sum(axis=axis)
+    return _compute_denominator_and_package(num_nans, data, axis)
 
 
-def compute_frac_inf(srs: pd.Series) -> float:
+def compute_frac_inf(
+    data: Union[pd.Series, pd.DataFrame],
+    axis: Optional[float] = 0) -> Union[float, pd.Series]:
     """
     Count fraction of infs in a given time series.
 
-    :param mode: keep_orig - keep series (denominator) without any change
-        drop_na - drop nans before counting series rows for the denominator
+    :param data: numeric series or dataframe
+    :param axis: numpy axis for summation
     """
-    if series.empty:
-        _LOG.warning("Series is empty")
-        return np.nan
-    num_infs = np.isinf(srs.values).sum()
-    return num_infs / srs.size
+    num_infs = np.isinf(data.values).sum(axis=axis)
+    return _compute_denominator_and_package(num_infs, data, axis)
 
 
+# TODO(Paul): Consider exposing `rtol`, `atol`.
 def compute_frac_constant(
-    series: pd.Series, mode: str = 'keep_orig'
-) -> float:
+    data: Union[pd.Series, pd.DataFrame],
+    axis: float = 0,
+) -> Union[float, pd.Series]:
     """
     Compute fraction of values in the series that changes at the next timestamp.
 
-    :param mode: keep_orig - keep series without any change
-        drop_na_inf - drop nans and infs
+    :param data: numeric series or dataframe
+    :param axis: numpy axis for summation
     """
-    if series.empty:
-        _LOG.warning("Series is empty")
-        return np.nan
-    else:
-        if mode == 'drop_na_inf':
-            series = replace_infs_with_nans(series).dropna()
-        elif mode == 'keep_orig':
-            pass
-        else:
-            raise ValueError("Unsupported mode=`%s`" % mode)
-        changes = series.dropna().diff()
-        num_changes = changes[changes != 0].shape[0]
-        frac_changes = 1 - num_changes / series.shape[0]
-    return frac_changes
+    diffs = np.diff(data.values, axis=axis)[1:]
+    diff_frac = compute_frac_zero(diffs, axis=axis)
+    return 1 - diff_frac
 
 
 def count_num_finite_samples(
-    series: pd.Series, mode: str = 'drop_inf'
-) -> int:
+        data: pd.Series,
+) -> float:
     """
     Count number of finite data points in a given time series.
 
-    :param mode: drop_inf - drop infs
-        drop_na_inf - drop nans and infs
+    :param data: numeric series or dataframe
     """
-    if series.empty:
-        _LOG.warning("Series is empty")
-        num_samples = np.nan
-    else:
-        if mode == 'drop_na_inf':
-            series = replace_infs_with_nans(series).dropna()
-        elif mode == 'drop_inf':
-            series = replace_infs_with_nans(series)
-        else:
-            raise ValueError("Unsupported mode=`%s`" % mode)
-        num_samples = series.shape[0]
-    return num_samples
+    data = data.copy()
+    data = replace_infs_with_nans(data)
+    return data.count()
 
 
 def count_num_unique_values(
-    series: pd.Series, mode: str = 'keep_orig'
+    data: pd.Series
 ) -> int:
     """
     Count number of unique values in the series.
 
-    :param mode: keep_orig - keep series without any change
-        drop_na_inf - drop nans and infs
+    data: Union[pd.Series, pd.DataFrame],
     """
-    if series.empty:
-        _LOG.warning("Series is empty")
-        num_unique_values = np.nan
+    srs = pd.Series(data=data.unique())
+    return count_num_finite_samples(srs)
+
+
+def _compute_denominator_and_package(reduction: Union[float, np.ndarray],
+                                     data: Union[pd.Series, pd.DataFrame],
+                                     axis: Optional[float] = None):
+    """
+    Normalize and package `reduction` according to `axis` and `data` metadata.
+
+    :param reduction: contains a reduction of `data` along `axis`
+    :param data: numeric series or dataframe
+    :param axis: indicates row or column or else `None` for ignoring 2d
+        structure
+    """
+    if isinstance(data, pd.Series):
+        df = data.to_frame()
     else:
-        if mode == 'drop_na_inf':
-            series = replace_infs_with_nans(series).dropna()
-        elif mode == 'keep_orig':
-            pass
+        df = data
+    nrows, ncols = df.shape
+    # Ensure that there is data available.
+    # TODO(Paul): Consider adding a check on the column data type.
+    if nrows == 0 or ncols == 0:
+        _LOG.warning("No data available!")
+        return np.nan
+    # Determine the correct denominator based on `axis`.
+    if axis is None:
+        denom = nrows * ncols
+    elif axis == 0:
+        denom = nrows
+    elif axis == 1:
+        denom = ncols
+    else:
+        raise ValueError("axis=%i", axis)
+    normalized = reduction / denom
+    # Return float or pd.Series as appropriate based on dimensions and axis.
+    if isinstance(normalized, float):
+        dbg.dassert(not axis)
+        return normalized
+    else:
+        dbg.dassert_isinstance(normalized, np.ndarray)
+        if axis == 0:
+            return pd.Series(data=normalized, index=df.columns)
+        elif axis == 1:
+            return pd.Series(data=normalized, index=df.index)
         else:
-            raise ValueError("Unsupported mode=`%s`" % mode)
-        num_unique_values = len(series.unique())
-    return num_unique_values
+            raise ValueError("axis=`%s` but expected to be `0` or `1`!", axis)
 
 
 # #############################################################################
