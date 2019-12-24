@@ -121,7 +121,7 @@ def compute_frac_constant(
     """
     diffs = np.diff(data.values, axis=axis)[1:]
     diff_frac = compute_frac_zero(diffs, axis=axis)
-    return 1 - diff_frac
+    return diff_frac
 
 
 # TODO(Paul): Refactor to work with dataframes as well. Consider how to handle
