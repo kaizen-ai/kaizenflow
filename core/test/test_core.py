@@ -1045,3 +1045,71 @@ class TestComputeFracZero1(ut.TestCase):
         expected = 0.466667
         actual = stats.compute_frac_zero(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+
+class TestComputeFracNan1(ut.TestCase):
+    @staticmethod
+    def _get_df(seed):
+        nrows = 15
+        ncols = 5
+        num_nans = 15
+        num_infs = 5
+        num_zeros = 20
+        #
+        np.random.seed(seed=seed)
+        mat = np.random.randn(nrows, ncols)
+        mat.ravel()[np.random.choice(mat.size, num_nans, replace=False)] = np.nan
+        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = np.inf
+        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = -np.inf
+        mat.ravel()[np.random.choice(mat.size, num_zeros, replace=False)] = 0
+        #
+        index = pd.date_range(start="01-04-2018", periods=nrows, freq="30T")
+        df = pd.DataFrame(data=mat, index=index)
+        return df
+
+    def test1(self) -> None:
+        data = [0.066667, 0.066667, 0.266667, 0.2, 0.066667]
+        index = [0, 1, 2, 3, 4]
+        expected = pd.Series(data=data, index=index)
+        actual = stats.compute_frac_nan(self._get_df(1))
+        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+
+    def test2(self) -> None:
+        data = [
+            0.0,
+            0.0,
+            0.2,
+            0.2,
+            0.0,
+            0.0,
+            0.4,
+            0.2,
+            0.0,
+            0.0,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+        ]
+        index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
+        expected = pd.Series(data=data, index=index)
+        actual = stats.compute_frac_nan(self._get_df(1), axis=1)
+        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+
+    def test3(self) -> None:
+        expected = 0.133333
+        actual = stats.compute_frac_nan(self._get_df(1), axis=None)
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+    def test4(self) -> None:
+        series = self._get_df(1)[0]
+        expected = 0.066667
+        actual = stats.compute_frac_nan(series)
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+    def test5(self) -> None:
+        series = self._get_df(1)[0]
+        expected = 0.066667
+        actual = stats.compute_frac_nan(series, axis=0)
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
