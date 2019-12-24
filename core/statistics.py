@@ -50,8 +50,6 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-# TODO(Paul): Refactor so that these work with dataframes as well. The
-# underlying numpy implementations extend to multidimensional arrays.
 def replace_infs_with_nans(
     data: Union[pd.Series, pd.DataFrame],
 ) -> Union[pd.Series, pd.DataFrame]:
@@ -126,6 +124,8 @@ def compute_frac_constant(
     return 1 - diff_frac
 
 
+# TODO(Paul): Refactor to work with dataframes as well. Consider how to handle
+#     `axis`, which the pd.Series version of `copy()` does not take.
 def count_num_finite_samples(data: pd.Series,) -> float:
     """
     Count number of finite data points in a given time series.
@@ -137,6 +137,7 @@ def count_num_finite_samples(data: pd.Series,) -> float:
     return data.count()
 
 
+# TODO(Paul): Extend to dataframes.
 def count_num_unique_values(data: pd.Series) -> int:
     """
     Count number of unique values in the series.
@@ -154,6 +155,12 @@ def _compute_denominator_and_package(
 ):
     """
     Normalize and package `reduction` according to `axis` and `data` metadata.
+
+    This is a helper function used for several `compute_frac_*` functions:
+    - It determines the denominator to use in normalization (for the `frac`
+      part)
+    - It packages the output so that it has index/column information as
+      appropriate
 
     :param reduction: contains a reduction of `data` along `axis`
     :param data: numeric series or dataframe
