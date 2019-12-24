@@ -100,7 +100,7 @@ def compute_frac_inf(
     data: Union[pd.Series, pd.DataFrame], axis: Optional[Union[int, None]] = 0
 ) -> Union[float, pd.Series]:
     """
-    Count fraction of infs in a given time series.
+    Count fraction of infs in a numerical series or dataframe.
 
     :param data: numeric series or dataframe
     :param axis: numpy axis for summation
@@ -141,8 +141,6 @@ def count_num_finite_samples(data: pd.Series) -> float:
 def count_num_unique_values(data: pd.Series) -> int:
     """
     Count number of unique values in the series.
-
-    data: Union[pd.Series, pd.DataFrame],
     """
     srs = pd.Series(data=data.unique())
     return count_num_finite_samples(srs)
