@@ -61,7 +61,6 @@ def replace_infs_with_nans(
 
 def compute_frac_zero(
     data: Union[pd.Series, pd.DataFrame],
-    rtol: float = 0.0,
     atol: float = 0.0,
     axis: Optional[Union[int, None]] = 0,
 ) -> Union[float, pd.Series]:
@@ -69,16 +68,13 @@ def compute_frac_zero(
     Calculate fraction of zeros in a numerical series or dataframe.
 
     :param data: numeric series or dataframe
-    :param rtol: absolute tolerance, as in `np.isclose`
     :param atol: relative tolerance, as in `np.isclose`
     :param axis: numpy axis for summation
     """
     # Create an ndarray of zeros of the same shape.
     zeros = np.zeros(data.shape)
     # Compare values of `df` to `zeros`.
-    # NOTE: np.isclose documentation states the `isclose()` is not always
-    #     symmetric in its arguments.
-    is_close_to_zero = np.isclose(data.values, zeros, rtol=rtol, atol=atol)
+    is_close_to_zero = np.isclose(data.values, zeros, atol=atol)
     num_zeros = is_close_to_zero.sum(axis=axis)
     return _compute_denominator_and_package(num_zeros, data, axis)
 
