@@ -50,72 +50,162 @@ def moments(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-# TODO(*): move to gen_utils.py as safe_div_nan?
-# TODO(*): Add type hints (probably float and numpy.float).
-# TODO(*: Do we really need this? All cases here apply when a `series` is
-#     empty. It would be clearer to log a warning and return when the series
-#     is empty and otherwise carry out usual division.
-def safe_div(a, b):
-    div = a / b if b != 0 else np.nan
-    return div
-
-
-# TODO: The functional approach suggests having these functions operate on the data and to compose `drop_na() / drop_inf()` if needed.
-# For convenience we might want to add a param to all these functions `drop_na=True`, `drop_inf=True` to tweak their behavior.
-
-
-# TODO(*): Rename these. "count" shouldn't be used when the result is a
-#     percentage.
-def count_pct_zero(series: pd.Series, zero_threshold: float = 1e-9) -> float:
+# TODO(Stas): Some functions could result in error with drop_na = False. Test
+#  behaviour of function with dro p_na = False.
+def replace_infs_with_nans(
+    series: pd.Series
+) -> pd.Series:
     """
-    Count number of zeroes in a given time series.
+    Replace infs with nans in the given series.
+
+    The operation is not performed in place, but return a copy of the series.
+    """
+    series = series.replace([np.inf, -np.inf], np.nan)
+    return series
+
+
+def compute_frac_zero(
+    series: pd.Series,
+    zero_threshold: float = 1e-9,
+    mode: str = 'keep_orig',
+) -> float:
+    """
+    Count fraction of zeroes in a given time series.
 
     :param zero_threshold: floats smaller than this are treated as zeroes.
+    :param mode: keep_orig - keep series without any change
+        drop_na_inf - drop nans and infs
     """
-    num_rows = series.shape[0]
-    num_zeros = (series.dropna().abs() < zero_threshold).sum()
-    return 100.0 * safe_div(num_zeros, num_rows)
+    if series.empty:
+        _LOG.warning("Series is empty")
+        frac_zeros = np.nan
+    else:
+        if mode == 'drop_na_inf':
+            series = replace_infs_with_nans(series).dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
+        num_rows = series.shape[0]
+        num_zeros = (series.abs() < zero_threshold).sum()
+        frac_zeros = num_zeros / num_rows
+    return frac_zeros
 
 
-def count_pct_nan(series: pd.Series) -> float:
+def compute_frac_nan(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
-    Count number of nans in a given time series.
+    Count fraction of nans in a given time series.
+
+    :param mode: keep_orig - keep series without any change, so the denominator
+        of the fraction is computed in the normal way.
+        drop_inf - don't count inf rows for the denominator
     """
-    num_rows = series.shape[0]
-    num_nans = series.isna().sum()
-    return 100.0 * safe_div(num_nans, num_rows)
+    if series.empty:
+        _LOG.warning("Series is empty")
+        frac_nan = np.nan
+    else:
+        if mode == 'drop_inf':
+            series = series[~np.isinf(series)]
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
+        num_nans = series.isna().sum()
+        frac_nan = num_nans / series.shape[0]
+    return frac_nan
 
 
-def count_pct_inf(series: pd.Series) -> float:
+def compute_frac_inf(series: pd.Series, mode: str = 'keep_orig') -> float:
     """
-    Count number of infs in a given time series.
+    Count fraction of infs in a given time series.
+
+    :param mode: keep_orig - keep series (denominator) without any change
+        drop_na - drop nans before counting series rows for the denominator
     """
-    num_rows = series.shape[0]
-    num_infs = series.dropna().apply(np.isinf).sum()
-    return 100.0 * safe_div(num_infs, num_rows)
+    if series.empty:
+        _LOG.warning("Series is empty")
+        frac_inf = np.nan
+    else:
+        if mode == 'drop_na':
+            series = series.dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
+        num_infs = series.apply(np.isinf).sum()
+        frac_inf = num_infs / series.shape[0]
+    return frac_inf
 
 
-def count_num_samples(series: pd.Series) -> int:
+def compute_frac_constant(
+    series: pd.Series, mode: str = 'keep_orig'
+) -> float:
     """
-    Count number of data points in a given time series.
+    Compute fraction of values in the series that changes at the next timestamp.
+
+    :param mode: keep_orig - keep series without any change
+        drop_na_inf - drop nans and infs
     """
-    return series.shape[0]
+    if series.empty:
+        _LOG.warning("Series is empty")
+        frac_changes = np.nan
+    else:
+        if mode == 'drop_na_inf':
+            series = replace_infs_with_nans(series).dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
+        changes = series.dropna().diff()
+        num_changes = changes[changes != 0].shape[0]
+        frac_changes = 1 - num_changes / series.shape[0]
+    return frac_changes
 
 
-def count_num_unique_values(series: pd.Series) -> int:
+def count_num_finite_samples(
+    series: pd.Series, mode: str = 'drop_inf'
+) -> int:
+    """
+    Count number of finite data points in a given time series.
+
+    :param mode: drop_inf - drop infs
+        drop_na_inf - drop nans and infs
+    """
+    if series.empty:
+        _LOG.warning("Series is empty")
+        num_samples = np.nan
+    else:
+        if mode == 'drop_na_inf':
+            series = replace_infs_with_nans(series).dropna()
+        elif mode == 'drop_inf':
+            series = replace_infs_with_nans(series)
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
+        num_samples = series.shape[0]
+    return num_samples
+
+
+def count_num_unique_values(
+    series: pd.Series, mode: str = 'keep_orig'
+) -> int:
     """
     Count number of unique values in the series.
-    """
-    return len(series.unique())
 
-
-def count_pct_changes(series: pd.Series) -> float:
+    :param mode: keep_orig - keep series without any change
+        drop_na_inf - drop nans and infs
     """
-    Compute percentage of values in the series that changes at the next timestamp.
-    """
-    changes = series.dropna().diff()
-    changes_count = changes[changes != 0].shape[0]
-    return safe_div(changes_count, series.shape[0])
+    if series.empty:
+        _LOG.warning("Series is empty")
+        num_unique_values = np.nan
+    else:
+        if mode == 'drop_na_inf':
+            series = replace_infs_with_nans(series).dropna()
+        elif mode == 'keep_orig':
+            pass
+        else:
+            raise ValueError("Unsupported mode=`%s`" % mode)
+        num_unique_values = len(series.unique())
+    return num_unique_values
 
 
 # #############################################################################
