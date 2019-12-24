@@ -1030,6 +1030,7 @@ class TestComputeFracZero1(ut.TestCase):
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test3(self) -> None:
+        # Equals 20 / 75 = num_zeros / num_points.
         expected = 0.266666
         actual = stats.compute_frac_zero(self._get_df(1), axis=None)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
@@ -1058,17 +1059,17 @@ class TestComputeFracNan1(ut.TestCase):
         #
         np.random.seed(seed=seed)
         mat = np.random.randn(nrows, ncols)
-        mat.ravel()[np.random.choice(mat.size, num_nans, replace=False)] = np.nan
         mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = np.inf
         mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = -np.inf
         mat.ravel()[np.random.choice(mat.size, num_zeros, replace=False)] = 0
+        mat.ravel()[np.random.choice(mat.size, num_nans, replace=False)] = np.nan
         #
         index = pd.date_range(start="01-04-2018", periods=nrows, freq="30T")
         df = pd.DataFrame(data=mat, index=index)
         return df
 
     def test1(self) -> None:
-        data = [0.066667, 0.066667, 0.266667, 0.2, 0.066667]
+        data = [0.4, 0.133333, 0.133333, 0.133333, 0.2]
         index = [0, 1, 2, 3, 4]
         expected = pd.Series(data=data, index=index)
         actual = stats.compute_frac_nan(self._get_df(1))
@@ -1076,20 +1077,20 @@ class TestComputeFracNan1(ut.TestCase):
 
     def test2(self) -> None:
         data = [
-            0.0,
+            0.4,
             0.0,
             0.2,
+            0.4,
             0.2,
-            0.0,
+            0.2,
+            0.2,
             0.0,
             0.4,
             0.2,
+            0.6,
             0.0,
             0.0,
-            0.2,
-            0.2,
-            0.2,
-            0.2,
+            0.0,
             0.2,
         ]
         index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
@@ -1098,18 +1099,19 @@ class TestComputeFracNan1(ut.TestCase):
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test3(self) -> None:
-        expected = 0.133333
+        # Equals 15 / 75 = num_nans / num_points.
+        expected = 0.2
         actual = stats.compute_frac_nan(self._get_df(1), axis=None)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test4(self) -> None:
         series = self._get_df(1)[0]
-        expected = 0.066667
+        expected = 0.4
         actual = stats.compute_frac_nan(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test5(self) -> None:
         series = self._get_df(1)[0]
-        expected = 0.066667
+        expected = 0.4
         actual = stats.compute_frac_nan(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
