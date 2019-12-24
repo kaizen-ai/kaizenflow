@@ -62,7 +62,7 @@ def replace_infs_with_nans(
 def compute_frac_zero(
     data: Union[pd.Series, pd.DataFrame],
     atol: float = 0.0,
-    axis: Optional[Union[int, None]] = 0,
+    axis: Optional[int] = 0,
 ) -> Union[float, pd.Series]:
     """
     Calculate fraction of zeros in a numerical series or dataframe.
@@ -80,7 +80,7 @@ def compute_frac_zero(
 
 
 def compute_frac_nan(
-    data: Union[pd.Series, pd.DataFrame], axis: Optional[Union[int, None]] = 0
+    data: Union[pd.Series, pd.DataFrame], axis: Optional[int] = 0
 ) -> Union[float, pd.Series]:
     """
     Calculate fraction of nans in `data`.
@@ -93,7 +93,7 @@ def compute_frac_nan(
 
 
 def compute_frac_inf(
-    data: Union[pd.Series, pd.DataFrame], axis: Optional[Union[int, None]] = 0
+    data: Union[pd.Series, pd.DataFrame], axis: Optional[int] = 0
 ) -> Union[float, pd.Series]:
     """
     Count fraction of infs in a numerical series or dataframe.
