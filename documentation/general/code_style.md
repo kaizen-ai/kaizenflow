@@ -85,8 +85,39 @@
 
 # Style guide references
 
-- We care about consistency rather than arguing about which approach is better
-  - E.g., see "tab vs space" flame-war from the 90s
+## Meta
+
+1. What we call the "rules" is actually just a convention
+2. The rules:
+    - are not about the absolute best way of doing something in all cases
+    - are optimized for the common case
+    - can become cumbersome or weird for some corner cases
+3. We prefer simple rather than optimal rules that can be applied in most of the
+   cases without thinking or going to check the documentation
+4. The rules are striving to achieve consistency and robustness
+    - E.g., see "tab vs space" flame-war from the 90s
+    - We care about consistency rather than arguing about which approach is
+      better in each case
+5. The rules are optimized for the average developer / data scientist and not for
+   power users
+6. The rules try to minimize the maintenance burden
+    - We don’t want a change somewhere to propagate everywhere
+    - We want to minimize the propagation of a change
+8. Some of the rules are evolving based on what we are seeing through the reviews
+
+- Each rule tries to follow a format similar to Google style guide
+    ```
+    - XYZ
+    - Problem
+    - Decision
+        - Good vs Bad
+    - Rationale
+        - Pros of Good vs Bad
+        - Cons of Good vs Bad
+    ```
+
+## Follow Google / Python style guidelines
+
 - Unless explicitly noted we prefer to follow the style guide below
 
 - As a rule of thumb we default to the Google style guidelines, unless the
@@ -1048,61 +1079,122 @@ def ...(...):
     return
 ```
 
+## Order of function parameters
+
+### Problem
+
+- We want to have a standard, simple, and logical order for specifying the
+  arguments of a function
+
+### Decision
+
+- We follow [Google convention](https://google.github.io/styleguide/cppguide.html)
+- The preferred order is:
+    - input parameters
+    - output parameters
+    - inout parameters
+    - default parameters
+
+## Consistency of ordering of function parameters
+
+- Try to
+    - keep related variables close to each other
+    - keep the order of parameters similar across functions that have similar
+      interface
+- Enforcing these rules is based on best effort
+- PyCharm is helpful at changing order of parameter
+- `mypy`, `linter` is helpful at checking consistency of types between function
+  defintion and invocation
+
 ## Style for default parameter
 
-- We prefer this style for the optional parameter using complex objects and
-  strings.
+### Problem
+
+- How to assign default parameters in a function?
+
+### Decision
+
+- We prefer the following style for optional parameter using complex objects and
+  strings
 
 - **Bad**
 
   ```python
-  def function(..., dir_name : Optional[str] = "/very_long_path", ...):
+  def function(
+    ...,
+    dir_name : Optional[str] = "/very_long_path",
+    ...):
   ...
   ```
 
 - **Good**
 
   ```python
-  def function(..., dir_name : Optional[str] = None, ...):
+  def function(
+    ...,
+    dir_name : Optional[str] = None,
+    ...):
       if dir_name is None:
           dir_name = "/very_long_path"
       # You can also abbreviate the previous code as:
       # dir_name = dir_name or "/very_long_path"
   ```
 
-- Pros of the Good vs Bad style
+### Rationale
+
+- Pros of the **Good** vs **Bad** style
+  - When you wrap multiple functions, each function needs to propagate the
+    default parameters, which
+        - violates DRY; and
+        - adds maintenance burden (if you change the innermost default parameter,
+          you need to change all of them!)
+      - With the proposed approach, all the functions use `None`, until the
+        innermost function resolves the parameters to the default values
+
   - The interface is cleaner
   - Implementation details are hidden (e.g., why should the caller know what is
     the default path?)
-  - When you wrap multiple functions, each of them needs to propagate the
-    default parameter violating DRY and adding maintenance burden
-  - With the proposed approach, all the functions can use None, until the
-    innermost function resolves the parameter to the default parameter
+
   - Mutable parameters can not be passed through (see
     [here](https://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument)))
 
 - Cons:
   - One needs to add `Optional` to the type hint
 
-- Note that a simple scalar option is still preferred to be in-lined.
+- Note that we still prefer to inline a simple scalar variable, e.g., `int`,
+  `bool`, or `float`
+    ```python
+    def function(
+        ...,
+        num_count : int = 1,
+        drop_na : bool = True,
+        ...,
+        ):
+    ```
+  unless the function needs to be wrapped by other function (in which case we
+  prefer the `= None` style)
 
 ## Calling functions with default parameters
+
+### Problem
 
 - You have a function
 
   ```python
-  def func(task_name : str, dataset_dir : str, clobber : bool = clobber):
-      ...
+  def func(
+    task_name : str,
+    dataset_dir : str,
+    clobber : bool = clobber):
+    ...
   ```
 
-- We prefer to explicitly bind the parameters with a default value using their
-  name
+- How should it be invoked?
 
-- **Bad**
+### Decision
 
-  ```python
-  func(task_name=task_name, dataset_dir=dataset_dir, clobber=clobber)
-  ```
+- We prefer to
+    - assign directly the positional parameters
+    - bind explicitly the parameters with a default value using their name
 
 - **Good**
 
@@ -1110,18 +1202,92 @@ def ...(...):
   func(task_name, dataset_dir, clobber=clobber)
   ```
 
-- Pros of "Good" vs "Bad" style
+- **Bad**
+
+  ```python
+  func(task_name, dataset_dir, clobber)
+  ```
+
+
+### Rationale
+
+- Pros of **Good** vs **Bad** style
   - If a new parameter with a default value is added to the function `func`
-    before `clobber`, the order of the parameters is changed and:
-    - The "Good" idiom doesn't need to be changed
-    - All instances of the "Bad" idiom needs to be updated
-      - The "Bad" idiom might keep working but with silent failures
-      - Of course `mypy` and `Pycharm` can help
-  - If one assigns one non-default parameters all the successive ones need to be
-    name-assigned with maintenance burden
+    before `clobber`:
+    - The **Good** idiom doesn't need to be changed
+    - All instances of the **Bad** idiom need to be updated
+      - The **Bad** idiom might keep working but with silent failures
+      - Of course `mypy` and `Pycharm` might point this out
+  - The **Good** style highlights which default parameters are being overwritten,
+    by using the name of the parameter
+      - Overwriting a default parameter is an exceptional situation that should
+        be explicitly commented
 
 - Cons:
   - None
+
+## Don't repeat non-default parameters
+
+### Problem
+
+- Given a function with the following interface:
+    ```python
+    def mult_and_sum(multiplier_1, multiplier_2, sum_):
+       return multiplier_1 * multiplier_2 + sum_
+    ```
+  how to invoke it?
+
+### Decision
+
+- We prefer to invoke it as:
+    - **Good**
+        ```python
+        a = 1
+        b = 2
+        c = 3
+        mult_and_sum(a, b, c)
+        ```
+
+    - **Bad**
+        ```python
+        a = 1
+        b = 2
+        c = 3
+        mult_and_sum(multiplier_1=a,
+                     multiplier_2=b,
+                     sum_=c)
+        ```
+
+### Rationale
+
+- Pros of **Good** vs **Bad**
+    - If one assigns one non-default parameters Python requires all the
+      successive parameters to be name-assigned
+        - This cause maintenance burden
+    - The **Bad** approach is in contrast with our rule for the default parameters
+        - We want to highlight which parameters are overriding the default
+    - The **Bad** approach in practice requires all positional parameters to be
+      assigned explicitly causing:
+        - repetition in violation of DRY (e.g., you need to repeat the same
+          parameter everywhere); and
+        - maintainance burden (e.g., if you change the name of a function parameter you
+          need to change all the invocations)
+    - The **Bad** style is a convention used in no language (e.g., C, C++, Java)
+        - All languages allow binding by parameter position
+        - Only some languages allow binding by parameter name
+    - The **Bad** makes the code very wide, creating problems with our 80 columns
+      rule
+
+- Cons of **Good** vs **Bad**
+    - One could argue that the **Bad** form is clearer
+        - IMO the problem is in the names of the variables, which are
+          uninformative, e.g., a better naming achives the same goal of clarity
+            ```python
+            mul1 = 1
+            mul2 = 2
+            sum_ = 3
+            mult_and_sum(mul1, mul2, sum_)
+            ```
 
 # Misc (to reorg)
 
