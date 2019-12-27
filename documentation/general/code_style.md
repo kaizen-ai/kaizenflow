@@ -151,6 +151,71 @@
 - [Unix rules](https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules)
   (although a bit cryptic sometimes)
 
+# High level principles
+
+- In this paragraph we summarize the high-level principles that we follow for
+  designing and implementing code and research 
+- We should be careful in adding principles here
+    - Ideally principles should be non-overlapping and generating all the other
+      lower level principles we follow (like a basis for a vector space)
+
+## DRY
+- Do not Repeat Yourself
+
+## Optimize for reading
+- Make code easy to read even if it is more difficult to write
+- (Good) Code is written 1x and read 100x
+
+## Encapsulate what changes
+- Separate what changes from what stays the same
+
+## Least surprise principle
+- Try to make sure that the reader is not surprised
+
+## Pay the technical debt
+- Any unpaid debt is guaranteed to bite you when you don't expect it
+- Still some debt is inevitable: try to find the right trade-off
+
+## End-to-end first
+- Always focus on implementing things end-to-end, then improve each block
+- Remember the analogy of building the car through the skateboard, the bike, etc.
+    - Compare this approach to building wheels, chassis, with a big-bang
+      integration at the end
+
+## Unit test everything
+- Code that matters needs to be unit tested
+- Code that doesn't matter should not be checked in the repo
+- The logical implication is: all code checked in the repo should be unit tested
+
+## Don't get attached to code
+- It's ok to delete, discard, retire code that is not useful any more
+- Don't take it personally when people suggest changes or simplification
+
+## Always plan before writing code
+- File a GitHub issue
+- Think about what to do and how to do it
+- Ask for help or for a review
+- The best code is the one that we avoid to write through a clever mental kung-fu
+  move
+
+## Think hard about naming
+- Finding a name for a code object, notebook, is extremely difficult but very
+  important to build a mental map
+- Spend the needed time on it
+
+## Look for inconsistencies
+- Stop for a second after you have, before sending it out:
+    - implemented code or a notebook
+    - written documentation
+    - written an email
+    - ...
+- Reset your mind and look at everything with fresh eyes like if it was the first
+  time you saw it
+    - Does everything make sense to someone that sees this for the first time?
+    - Can (and should) it be improved?
+    - Do you see inconsistencies, potential issues?
+- It will take less and less time to become good at this
+
 # Naming
 
 ## Conventions
@@ -171,7 +236,7 @@
       ...
   ```
 
-## Some suggested spelling
+## Some suggested spellings
 
 - Capitalize the abbreviations, e.g.,
   - `CSV`
@@ -199,6 +264,8 @@
   - The name needs to be non-controversial: people need to be able to map the
     name in their mental model
   - The name needs to sound good in English
+    - **Bad**: `AdapterSequential` sounds bad
+    - **Good**: `SequentialAdapter` sounds good
 
 - Think hard about how to call functions, files, variables, classes
 
@@ -1092,19 +1159,19 @@ def ...(...):
 - The preferred order is:
     - input parameters
     - output parameters
-    - inout parameters
+    - in-out parameters
     - default parameters
 
 ## Consistency of ordering of function parameters
 
-- Try to
+- Try to:
     - keep related variables close to each other
     - keep the order of parameters similar across functions that have similar
       interface
 - Enforcing these rules is based on best effort
-- PyCharm is helpful at changing order of parameter
-- `mypy`, `linter` is helpful at checking consistency of types between function
-  defintion and invocation
+- PyCharm is helpful when changing order of parameters
+- Use `mypy`, `linter` to check consistency of types between function definition
+  and invocation
 
 ## Style for default parameter
 
@@ -1114,37 +1181,62 @@ def ...(...):
 
 ### Decision
 
-- We prefer the following style for optional parameter using complex objects and
-  strings
+- It's ok to use a default parameter in the interface as long as it is a Python
+  scalar (which is immutable by definition)
+    - **Good**
+      ```python
+      def function(
+        value: int = 5,
+        dir_name : str = "hello_world"
+      ):
+      ```
 
-- **Bad**
+- You should not use list, maps, objects, but pass `None` and then initialize
+  inside the function
+    - **Bad**
+      ```python
+      def function(
+        # These are actually a bug waiting to happen.
+        obj: Object = Object(),
+        list_: list[int] = [],
+        ):
+      ```
+    - **Good**
+      ```python
+      def function(
+        obj: Optional[Object] = None,
+        list_: Optional[list[int]] = None,
+        ):
+      if obj is None:
+        obj = Object()
+      if list_ is None:
+        list_ = []
+      ```
+- We use a `None` default value when a function needs to be wrapped and the
+  default parameter needs to be propagated
+    - **Good**
+      ```python
+      def function1(
+        ...,
+        dir_name : Optional[str] = None,
+        ):
+          if dir_name is None:
+              dir_name = "/very_long_path"
+          # You can also abbreviate the previous code as:
+          # dir_name = dir_name or "/very_long_path"
 
-  ```python
-  def function(
-    ...,
-    dir_name : Optional[str] = "/very_long_path",
-    ...):
-  ...
-  ```
-
-- **Good**
-
-  ```python
-  def function(
-    ...,
-    dir_name : Optional[str] = None,
-    ...):
-      if dir_name is None:
-          dir_name = "/very_long_path"
-      # You can also abbreviate the previous code as:
-      # dir_name = dir_name or "/very_long_path"
-  ```
+      def function2(
+        ...,
+        dir_name : Optional[str] = None
+        ):
+        function1(..., dir_name=dir_name)
+      ```
 
 ### Rationale
 
 - Pros of the **Good** vs **Bad** style
   - When you wrap multiple functions, each function needs to propagate the
-    default parameters, which
+    default parameters, which:
         - violates DRY; and
         - adds maintenance burden (if you change the innermost default parameter,
           you need to change all of them!)
@@ -1160,19 +1252,6 @@ def ...(...):
 
 - Cons:
   - One needs to add `Optional` to the type hint
-
-- Note that we still prefer to inline a simple scalar variable, e.g., `int`,
-  `bool`, or `float`
-    ```python
-    def function(
-        ...,
-        num_count : int = 1,
-        drop_na : bool = True,
-        ...,
-        ):
-    ```
-  unless the function needs to be wrapped by other function (in which case we
-  prefer the `= None` style)
 
 ## Calling functions with default parameters
 
