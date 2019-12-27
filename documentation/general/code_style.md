@@ -1,12 +1,26 @@
 <!--ts-->
    * [Style guide references](#style-guide-references)
+      * [Meta](#meta)
+      * [Follow Google / Python style guidelines](#follow-google--python-style-guidelines)
       * [References](#references)
          * [Coding](#coding)
          * [Documentation](#documentation)
          * [Design](#design)
+   * [High level principles](#high-level-principles)
+      * [DRY](#dry)
+      * [Optimize for reading](#optimize-for-reading)
+      * [Encapsulate what changes](#encapsulate-what-changes)
+      * [Least surprise principle](#least-surprise-principle)
+      * [Pay the technical debt](#pay-the-technical-debt)
+      * [End-to-end first](#end-to-end-first)
+      * [Unit test everything](#unit-test-everything)
+      * [Don't get attached to code](#dont-get-attached-to-code)
+      * [Always plan before writing code](#always-plan-before-writing-code)
+      * [Think hard about naming](#think-hard-about-naming)
+      * [Look for inconsistencies](#look-for-inconsistencies)
    * [Naming](#naming)
       * [Conventions](#conventions)
-      * [Some suggested spelling](#some-suggested-spelling)
+      * [Some suggested spellings](#some-suggested-spellings)
       * [Finding the best names](#finding-the-best-names)
       * [Horrible names](#horrible-names)
       * [No Hungarian notation please](#no-hungarian-notation-please)
@@ -35,7 +49,6 @@
       * [Use positional args when logging](#use-positional-args-when-logging)
       * [Exceptions don't allow positional args](#exceptions-dont-allow-positional-args)
       * [Report warnings](#report-warnings)
-      * [Don't mix real changes with linter changes](#dont-mix-real-changes-with-linter-changes)
    * [Assertions](#assertions)
       * [Use positional args when asserting](#use-positional-args-when-asserting)
       * [Report as much information as possible in an assertion](#report-as-much-information-as-possible-in-an-assertion)
@@ -56,28 +69,40 @@
       * [Python executable characteristics](#python-executable-characteristics)
       * [Use clear names for the scripts](#use-clear-names-for-the-scripts)
    * [Functions](#functions)
-      * [Arguments](#arguments)
+      * [Avoid using non-exclusive bool arguments](#avoid-using-non-exclusive-bool-arguments)
       * [Try to make functions work on multiple types](#try-to-make-functions-work-on-multiple-types)
       * [Avoid hard-wired column name dependencies](#avoid-hard-wired-column-name-dependencies)
+      * [Single exit point from a function](#single-exit-point-from-a-function)
+      * [Order of function parameters](#order-of-function-parameters)
+         * [Problem](#problem-1)
+         * [Decision](#decision)
+      * [Consistency of ordering of function parameters](#consistency-of-ordering-of-function-parameters)
+      * [Style for default parameter](#style-for-default-parameter)
+         * [Problem](#problem-2)
+         * [Decision](#decision-1)
+         * [Rationale](#rationale)
+      * [Calling functions with default parameters](#calling-functions-with-default-parameters)
+         * [Problem](#problem-3)
+         * [Decision](#decision-2)
+         * [Rationale](#rationale-1)
+      * [Don't repeat non-default parameters](#dont-repeat-non-default-parameters)
+         * [Problem](#problem-4)
+         * [Decision](#decision-3)
+         * [Rationale](#rationale-2)
    * [Misc (to reorg)](#misc-to-reorg)
       * [Write robust code](#write-robust-code)
       * [Capitalized words](#capitalized-words)
       * [Regex](#regex)
       * [Order of functions in a file](#order-of-functions-in-a-file)
       * [Use layers design pattern](#use-layers-design-pattern)
-   * [Process.](#process)
-   * [###################...](#-1)
       * [Write complete if-then-else](#write-complete-if-then-else)
       * [Do not be stingy at typing](#do-not-be-stingy-at-typing)
       * [Research quality vs production quality](#research-quality-vs-production-quality)
-      * [No ugly hacks](#no-ugly-hacks)
       * [Life cycle of research code](#life-cycle-of-research-code)
-   * [Document what notebooks are for](#document-what-notebooks-are-for)
-   * [Keep related code close](#keep-related-code-close)
-   * [Single exit point from a function](#single-exit-point-from-a-function)
-      * [Style for default parameter](#style-for-default-parameter)
-      * [Calling functions with default parameters](#calling-functions-with-default-parameters)
+      * [No ugly hacks](#no-ugly-hacks)
+      * [Keep related code close](#keep-related-code-close)
       * [Always separate what changes from what stays the same](#always-separate-what-changes-from-what-stays-the-same)
+      * [Don't mix real changes with linter changes](#dont-mix-real-changes-with-linter-changes)
 
 
 
@@ -89,32 +114,33 @@
 
 1. What we call the "rules" is actually just a convention
 2. The rules:
-    - are not about the absolute best way of doing something in all cases
-    - are optimized for the common case
-    - can become cumbersome or weird for some corner cases
+   - Are not about the absolute best way of doing something in all cases
+   - Are optimized for the common case
+   - Can become cumbersome or weird for some corner cases
 3. We prefer simple rather than optimal rules that can be applied in most of the
    cases without thinking or going to check the documentation
 4. The rules are striving to achieve consistency and robustness
-    - E.g., see "tab vs space" flame-war from the 90s
-    - We care about consistency rather than arguing about which approach is
-      better in each case
-5. The rules are optimized for the average developer / data scientist and not for
-   power users
+   - E.g., see "tab vs space" flame-war from the 90s
+   - We care about consistency rather than arguing about which approach is
+     better in each case
+5. The rules are optimized for the average developer / data scientist and not
+   for power users
 6. The rules try to minimize the maintenance burden
-    - We don’t want a change somewhere to propagate everywhere
-    - We want to minimize the propagation of a change
-8. Some of the rules are evolving based on what we are seeing through the reviews
+   - We don't want a change somewhere to propagate everywhere
+   - We want to minimize the propagation of a change
+7. Some of the rules are evolving based on what we are seeing through the
+   reviews
 
 - Each rule tries to follow a format similar to Google style guide
-    ```
-    - XYZ
-    - Problem
-    - Decision
-        - Good vs Bad
-    - Rationale
-        - Pros of Good vs Bad
-        - Cons of Good vs Bad
-    ```
+  ```
+  - XYZ
+  - Problem
+  - Decision
+      - Good vs Bad
+  - Rationale
+      - Pros of Good vs Bad
+      - Cons of Good vs Bad
+  ```
 
 ## Follow Google / Python style guidelines
 
@@ -154,66 +180,78 @@
 # High level principles
 
 - In this paragraph we summarize the high-level principles that we follow for
-  designing and implementing code and research 
+  designing and implementing code and research
 - We should be careful in adding principles here
-    - Ideally principles should be non-overlapping and generating all the other
-      lower level principles we follow (like a basis for a vector space)
+  - Ideally principles should be non-overlapping and generating all the other
+    lower level principles we follow (like a basis for a vector space)
 
 ## DRY
+
 - Do not Repeat Yourself
 
 ## Optimize for reading
+
 - Make code easy to read even if it is more difficult to write
 - (Good) Code is written 1x and read 100x
 
 ## Encapsulate what changes
+
 - Separate what changes from what stays the same
 
 ## Least surprise principle
+
 - Try to make sure that the reader is not surprised
 
 ## Pay the technical debt
+
 - Any unpaid debt is guaranteed to bite you when you don't expect it
 - Still some debt is inevitable: try to find the right trade-off
 
 ## End-to-end first
+
 - Always focus on implementing things end-to-end, then improve each block
-- Remember the analogy of building the car through the skateboard, the bike, etc.
-    - Compare this approach to building wheels, chassis, with a big-bang
-      integration at the end
+- Remember the analogy of building the car through the skateboard, the bike,
+  etc.
+  - Compare this approach to building wheels, chassis, with a big-bang
+    integration at the end
 
 ## Unit test everything
+
 - Code that matters needs to be unit tested
 - Code that doesn't matter should not be checked in the repo
 - The logical implication is: all code checked in the repo should be unit tested
 
 ## Don't get attached to code
+
 - It's ok to delete, discard, retire code that is not useful any more
 - Don't take it personally when people suggest changes or simplification
 
 ## Always plan before writing code
+
 - File a GitHub issue
 - Think about what to do and how to do it
 - Ask for help or for a review
-- The best code is the one that we avoid to write through a clever mental kung-fu
-  move
+- The best code is the one that we avoid to write through a clever mental
+  kung-fu move
 
 ## Think hard about naming
+
 - Finding a name for a code object, notebook, is extremely difficult but very
   important to build a mental map
 - Spend the needed time on it
 
 ## Look for inconsistencies
+
 - Stop for a second after you have, before sending it out:
-    - implemented code or a notebook
-    - written documentation
-    - written an email
-    - ...
-- Reset your mind and look at everything with fresh eyes like if it was the first
-  time you saw it
-    - Does everything make sense to someone that sees this for the first time?
-    - Can (and should) it be improved?
-    - Do you see inconsistencies, potential issues?
+  - Implemented code or a notebook
+  - Written documentation
+  - Written an email
+  - ...
+- Reset your mind and look at everything with fresh eyes like if it was the
+  first time you saw it
+  - Does everything make sense to someone that sees this for the first time?
+  - Can (and should) it be improved?
+  - Do you see inconsistencies, potential issues?
 - It will take less and less time to become good at this
 
 # Naming
@@ -1045,8 +1083,8 @@ uses like:
   may not all make sense)
 - Changing the parameter type to something else
 - Either way, you have to change the function interface
-- To maintain flexibility from the start, opt for a `str` parameter "mode", which
-  is allowed to take a small well-defined set of values.
+- To maintain flexibility from the start, opt for a `str` parameter "mode",
+  which is allowed to take a small well-defined set of values.
 - If an implicit default is desirable, consider making the default value of the
   parameter `None`. This is only a good route if the default operation is
   non-controversial / intuitively obvious.
@@ -1155,19 +1193,20 @@ def ...(...):
 
 ### Decision
 
-- We follow [Google convention](https://google.github.io/styleguide/cppguide.html)
+- We follow
+  [Google convention](https://google.github.io/styleguide/cppguide.html)
 - The preferred order is:
-    - input parameters
-    - output parameters
-    - in-out parameters
-    - default parameters
+  - Input parameters
+  - Output parameters
+  - In-out parameters
+  - Default parameters
 
 ## Consistency of ordering of function parameters
 
 - Try to:
-    - keep related variables close to each other
-    - keep the order of parameters similar across functions that have similar
-      interface
+  - Keep related variables close to each other
+  - Keep the order of parameters similar across functions that have similar
+    interface
 - Enforcing these rules is based on best effort
 - PyCharm is helpful when changing order of parameters
 - Use `mypy`, `linter` to check consistency of types between function definition
@@ -1183,70 +1222,66 @@ def ...(...):
 
 - It's ok to use a default parameter in the interface as long as it is a Python
   scalar (which is immutable by definition)
-    - **Good**
-      ```python
-      def function(
-        value: int = 5,
-        dir_name : str = "hello_world"
-      ):
-      ```
+  - **Good**
+    ```python
+    def function(
+      value: int = 5,
+      dir_name : str = "hello_world"
+    ):
+    ```
 
 - You should not use list, maps, objects, but pass `None` and then initialize
   inside the function
-    - **Bad**
-      ```python
-      def function(
-        # These are actually a bug waiting to happen.
-        obj: Object = Object(),
-        list_: list[int] = [],
-        ):
-      ```
-    - **Good**
-      ```python
-      def function(
-        obj: Optional[Object] = None,
-        list_: Optional[list[int]] = None,
-        ):
-      if obj is None:
-        obj = Object()
-      if list_ is None:
-        list_ = []
-      ```
+  - **Bad**
+    ```python
+    def function(
+      # These are actually a bug waiting to happen.
+      obj: Object = Object(),
+      list_: list[int] = [],
+      ):
+    ```
+  - **Good**
+    ```python
+    def function(
+      obj: Optional[Object] = None,
+      list_: Optional[list[int]] = None,
+      ):
+    if obj is None:
+      obj = Object()
+    if list_ is None:
+      list_ = []
+    ```
 - We use a `None` default value when a function needs to be wrapped and the
   default parameter needs to be propagated
-    - **Good**
-      ```python
-      def function1(
-        ...,
-        dir_name : Optional[str] = None,
-        ):
-          if dir_name is None:
-              dir_name = "/very_long_path"
-          # You can also abbreviate the previous code as:
-          # dir_name = dir_name or "/very_long_path"
+  - **Good**
+    ```python
+    def function1(
+      ...,
+      dir_name : Optional[str] = None,
+      ):
+        if dir_name is None:
+            dir_name = "/very_long_path"
+        # You can also abbreviate the previous code as:
+        # dir_name = dir_name or "/very_long_path"
 
-      def function2(
-        ...,
-        dir_name : Optional[str] = None
-        ):
-        function1(..., dir_name=dir_name)
-      ```
+    def function2(
+      ...,
+      dir_name : Optional[str] = None
+      ):
+      function1(..., dir_name=dir_name)
+    ```
 
 ### Rationale
 
 - Pros of the **Good** vs **Bad** style
   - When you wrap multiple functions, each function needs to propagate the
-    default parameters, which:
-        - violates DRY; and
-        - adds maintenance burden (if you change the innermost default parameter,
-          you need to change all of them!)
-      - With the proposed approach, all the functions use `None`, until the
-        innermost function resolves the parameters to the default values
-
+    default parameters, which: - violates DRY; and - adds maintenance burden (if
+    you change the innermost default parameter, you need to change all of them!)
+    - With the proposed approach, all the functions use `None`, until the
+      innermost function resolves the parameters to the default values
   - The interface is cleaner
   - Implementation details are hidden (e.g., why should the caller know what is
     the default path?)
-
   - Mutable parameters can not be passed through (see
     [here](https://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument)))
 
@@ -1272,8 +1307,8 @@ def ...(...):
 ### Decision
 
 - We prefer to
-    - assign directly the positional parameters
-    - bind explicitly the parameters with a default value using their name
+  - Assign directly the positional parameters
+  - Bind explicitly the parameters with a default value using their name
 
 - **Good**
 
@@ -1287,7 +1322,6 @@ def ...(...):
   func(task_name, dataset_dir, clobber)
   ```
 
-
 ### Rationale
 
 - Pros of **Good** vs **Bad** style
@@ -1297,10 +1331,10 @@ def ...(...):
     - All instances of the **Bad** idiom need to be updated
       - The **Bad** idiom might keep working but with silent failures
       - Of course `mypy` and `Pycharm` might point this out
-  - The **Good** style highlights which default parameters are being overwritten,
-    by using the name of the parameter
-      - Overwriting a default parameter is an exceptional situation that should
-        be explicitly commented
+  - The **Good** style highlights which default parameters are being
+    overwritten, by using the name of the parameter
+    - Overwriting a default parameter is an exceptional situation that should be
+      explicitly commented
 
 - Cons:
   - None
@@ -1310,63 +1344,62 @@ def ...(...):
 ### Problem
 
 - Given a function with the following interface:
-    ```python
-    def mult_and_sum(multiplier_1, multiplier_2, sum_):
-       return multiplier_1 * multiplier_2 + sum_
-    ```
+  ```python
+  def mult_and_sum(multiplier_1, multiplier_2, sum_):
+     return multiplier_1 * multiplier_2 + sum_
+  ```
   how to invoke it?
 
 ### Decision
 
 - We prefer to invoke it as:
-    - **Good**
-        ```python
-        a = 1
-        b = 2
-        c = 3
-        mult_and_sum(a, b, c)
-        ```
-
-    - **Bad**
-        ```python
-        a = 1
-        b = 2
-        c = 3
-        mult_and_sum(multiplier_1=a,
-                     multiplier_2=b,
-                     sum_=c)
-        ```
+  - **Good**
+    ```python
+    a = 1
+    b = 2
+    c = 3
+    mult_and_sum(a, b, c)
+    ```
+  - **Bad**
+    ```python
+    a = 1
+    b = 2
+    c = 3
+    mult_and_sum(multiplier_1=a,
+                 multiplier_2=b,
+                 sum_=c)
+    ```
 
 ### Rationale
 
 - Pros of **Good** vs **Bad**
-    - If one assigns one non-default parameters Python requires all the
-      successive parameters to be name-assigned
-        - This cause maintenance burden
-    - The **Bad** approach is in contrast with our rule for the default parameters
-        - We want to highlight which parameters are overriding the default
-    - The **Bad** approach in practice requires all positional parameters to be
-      assigned explicitly causing:
-        - repetition in violation of DRY (e.g., you need to repeat the same
-          parameter everywhere); and
-        - maintainance burden (e.g., if you change the name of a function parameter you
-          need to change all the invocations)
-    - The **Bad** style is a convention used in no language (e.g., C, C++, Java)
-        - All languages allow binding by parameter position
-        - Only some languages allow binding by parameter name
-    - The **Bad** makes the code very wide, creating problems with our 80 columns
-      rule
+  - If one assigns one non-default parameters Python requires all the successive
+    parameters to be name-assigned
+    - This cause maintenance burden
+  - The **Bad** approach is in contrast with our rule for the default parameters
+    - We want to highlight which parameters are overriding the default
+  - The **Bad** approach in practice requires all positional parameters to be
+    assigned explicitly causing:
+    - Repetition in violation of DRY (e.g., you need to repeat the same
+      parameter everywhere); and
+    - Maintainance burden (e.g., if you change the name of a function parameter
+      you need to change all the invocations)
+  - The **Bad** style is a convention used in no language (e.g., C, C++, Java)
+    - All languages allow binding by parameter position
+    - Only some languages allow binding by parameter name
+  - The **Bad** makes the code very wide, creating problems with our 80 columns
+    rule
 
 - Cons of **Good** vs **Bad**
-    - One could argue that the **Bad** form is clearer
-        - IMO the problem is in the names of the variables, which are
-          uninformative, e.g., a better naming achives the same goal of clarity
-            ```python
-            mul1 = 1
-            mul2 = 2
-            sum_ = 3
-            mult_and_sum(mul1, mul2, sum_)
-            ```
+  - One could argue that the **Bad** form is clearer
+    - IMO the problem is in the names of the variables, which are uninformative,
+      e.g., a better naming achives the same goal of clarity
+      ```python
+      mul1 = 1
+      mul2 = 2
+      sum_ = 3
+      mult_and_sum(mul1, mul2, sum_)
+      ```
 
 # Misc (to reorg)
 
