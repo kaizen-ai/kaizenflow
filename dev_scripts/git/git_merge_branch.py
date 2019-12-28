@@ -153,7 +153,7 @@ def _merge_all_branches(actions, dst_branch, target_dirs):
                 cmd_arr.append("git pull")
                 msg = "Merging %s -> %s" % (branch_name, dst_branch)
                 cmd_arr.append(
-                    "git merge %s -m '%s' --no_ff --commit" % (branch_name, msg)
+                    "git merge %s -m '%s' --no-ff --commit" % (branch_name, msg)
                 )
                 cmd = " && ".join(cmd_arr)
                 # si.system(cd_cmd + cmd)
