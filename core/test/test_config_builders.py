@@ -1,6 +1,6 @@
 import core.config as cfg
+import core.config_builders as cfgb
 import helpers.unit_test as ut
-import helpers.config_builders as cfgb
 
 
 class TestBuildMultipleConfigs(ut.TestCase):
