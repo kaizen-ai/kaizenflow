@@ -31,8 +31,7 @@ def _process_repo(
     abort_on_error: bool,
     quick: bool,
     autostash: bool,
-    output: List[str],
-) -> Tuple[List[str], List[str]]:
+) -> Tuple[bool, List[str], List[str]]:
     """
     Qualify a branch stored in `dir_name`, running linter and unit tests.
 
@@ -42,6 +41,8 @@ def _process_repo(
     """
     dbg.dassert_exists(dir_name)
     _LOG.debug("\n%s", prnt.frame("Processing: %s" % dir_name, char1=">"))
+    is_ok = True
+    output: List[str] = []
     # TODO(gp): `git pull` ensures that the Git client is clean. We can have a
     #  better check, if needed.
     cd_cmd = "cd %s && " % dir_name
@@ -121,7 +122,43 @@ def _process_repo(
             output.append(
                 "WARNING: unit tests failed: skipping as per user request"
             )
-    return output, actions
+        # Update the function rc.
+        is_ok &= rc == 0
+    return is_ok, output, actions
+
+
+def _merge_all_branches(actions, dst_branch, target_dirs):
+    action = "merge"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
+        # We need to merge the submodules first.
+        for dir_name in reversed(target_dirs):
+            branch_name = git.get_branch_name(dir_name)
+            if branch_name == dst_branch:
+                _LOG.warning(
+                    "Skipping merging in dir '%s' since it's already " "'%s'",
+                    dir_name,
+                    dst_branch,
+                )
+            else:
+                _LOG.warning(
+                    "Merging '%s' -> '%s' in dir '%s'",
+                    branch_name,
+                    dst_branch,
+                    dir_name,
+                )
+                cd_cmd = "cd %s && " % dir_name
+                cmd_arr = []
+                cmd_arr.append("git checkout master")
+                cmd_arr.append("git pull")
+                msg = "Merging %s -> %s" % (branch_name, dst_branch)
+                cmd_arr.append(
+                    "git merge %s -m '%s' --no_ff --commit" % (branch_name, msg)
+                )
+                cmd = " && ".join(cmd_arr)
+                # si.system(cd_cmd + cmd)
+                print(cd_cmd + cmd)
+    return actions
 
 
 # #############################################################################
@@ -132,6 +169,7 @@ _VALID_ACTIONS = [
     "git_merge_master",
     "linter",
     "run_tests",
+    "merge",
 ]
 
 
@@ -147,7 +185,9 @@ def _main(parser):
     add_frame = True
     actions_as_str = prsr.actions_to_string(actions, _VALID_ACTIONS, add_frame)
     _LOG.info("\n%s", actions_as_str)
-    # Find the target.
+    # Find the target repos.
+    # Note that the repos should be in reversed topological order, i.e., the
+    # first one is the supermodule.
     target_dirs = ["."]
     dir_name = "amp"
     if os.path.exists(dir_name):
@@ -156,10 +196,11 @@ def _main(parser):
     _LOG.info(msg)
     output.append(msg)
     #
+    is_ok = True
     for dir_name in target_dirs:
         actions_tmp = actions[:]
         abort_on_error = not args.continue_on_error
-        output, actions_tmp = _process_repo(
+        is_ok_tmp, output_tmp, actions_tmp = _process_repo(
             actions_tmp,
             dir_name,
             args.dst_branch,
@@ -167,13 +208,13 @@ def _main(parser):
             abort_on_error,
             args.quick,
             args.autostash,
-            output,
         )
-    # Forward amp.
-    # TODO(gp): Implement this.
+        is_ok &= is_ok_tmp
+        output.extend(output_tmp)
+        # Update the actions on the last loop.
+        if dir_name == target_dirs[-1]:
+            actions = actions_tmp
     # Report the output.
-    if actions_tmp:
-        _LOG.warning("actions=%s were not processed", str(actions_tmp))
     _LOG.info("Summary file saved into '%s'", args.summary_file)
     output_as_txt = "\n".join(output)
     io_.to_file(args.summary_file, output_as_txt)
@@ -184,7 +225,17 @@ def _main(parser):
     print(txt + "\n")
     print(prnt.line(char="/").rstrip("\n"))
     # Merge.
-    # TODO(gp): Add merge step.
+    if not is_ok:
+        _LOG.error(
+            "Can't merge since some repo didn't pass the qualification " "process"
+        )
+    else:
+        actions = _merge_all_branches(actions, args.dst_branch, target_dirs)
+    # Forward amp.
+    # TODO(gp): Implement this.
+    # Check that everything was executed.
+    if actions:
+        _LOG.error("actions=%s were not processed", str(actions))
 
 
 def _parse():
