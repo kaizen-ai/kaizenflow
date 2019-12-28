@@ -10,6 +10,7 @@ system commands, env vars, ...
 import getpass
 import logging
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -276,21 +277,6 @@ def system_to_string(
     return rc, output
 
 
-
-def get_non_empty_lines(output: str) -> List[str]:
-    output_as_arr = output.split("\n")
-    output_as_arr = [l.rstrip().lstrip() for l in output_as_arr]
-    output_as_arr = [l for l in output_as_arr if l]
-    return output_as_arr
-
-
-def get_non_empty_lines(output: str) -> List[str]:
-    output_as_arr = output.split("\n")
-    output_as_arr = [l.rstrip().lstrip() for l in output_as_arr]
-    output_as_arr = [l for l in output_as_arr if l]
-    return output_as_arr
-
-
 def get_first_line(output: str) -> str:
     """
     Return the first (and only) line from a string.
@@ -298,7 +284,7 @@ def get_first_line(output: str) -> str:
     This is used when calling system_to_string() and expecting a single line
     output.
     """
-    output_as_arr = get_non_empty_lines(output)
+    output_as_arr = prnt.remove_empty_lines(output)
     dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
     return output_as_arr[0].rstrip().lstrip()
 
@@ -420,9 +406,11 @@ def query_yes_no(question: str, abort_on_no: bool):
             sys.exit(-1)
     return ret
 
+
 # #############################################################################
 
 # TODO(gp): Move it helpers/tools_interaction.py ?
+
 
 def pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str]:
     dbg.dassert_ne(dir_name, "")
@@ -444,7 +432,7 @@ def pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str]
     _, output_tmp = system_to_string(cd_cmd + cmd, abort_on_error=abort_on_error)
     file_names.extend(output_tmp.split())
     # Remove empty lines.
-    file_names = get_non_empty_lines(file_names)
+    file_names = prnt.remove_empty_lines_from_string_list(file_names)
     #
     if tag is not None:
         num_files = len(file_names)
@@ -452,7 +440,6 @@ def pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str]
         _LOG.debug("\n%s", prnt.space("\n".join(file_names)))
     return file_names
 
-import shutil
 
 def pytest_clean_artifacts(dir_name: str, preview: bool = False):
     _LOG.warning("Cleaning pytest artifacts")

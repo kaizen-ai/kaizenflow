@@ -83,11 +83,7 @@ def _system(cmd: str, abort_on_error: bool = True) -> int:
     return rc
 
 
-def _remove_empty_lines(output: List[str]) -> List[str]:
-    output = [l for l in output if l.strip("\n") != ""]
-    return output
-
-
+# TODO(gp): Move to helpers/printing.py
 def _dassert_list_of_strings(output: List[str], *args: Any) -> None:
     dbg.dassert_isinstance(output, list, *args)
     for line in output:
@@ -153,10 +149,11 @@ def _tee(cmd: str, executable: str, abort_on_error: bool) -> List[str]:
     _LOG.debug("cmd=%s executable=%s", cmd, executable)
     _, output = si.system_to_string(cmd, abort_on_error=abort_on_error)
     dbg.dassert_isinstance(output, str)
-    _LOG.debug("output1=\n'%s'", output)
+    output1 = output.split("\n")
+    _LOG.debug("output1= (%d)\n'%s'", len(output1), "\n".join(output1))
     #
-    output2 = _remove_empty_lines(output.split("\n"))
-    _LOG.debug("output2=\n'%s'", "\n".join(output2))
+    output2 = prnt.remove_empty_lines_from_string_list(output1)
+    _LOG.debug("output2= (%d)\n'%s'", len(output2), "\n".join(output2))
     _dassert_list_of_strings(output2)
     return output2
 
@@ -1583,7 +1580,7 @@ def _run_linter(
         )
         output_tmp = list(itertools.chain.from_iterable(output_tmp))
     output.extend(output_tmp)
-    output = _remove_empty_lines(output)
+    output = prnt.remove_empty_lines_from_string_list(output)
     return output
 
 

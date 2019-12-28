@@ -427,5 +427,5 @@ $$"""
 """
         file_name = os.path.join(self.get_scratch_space(), "test.md")
         act = dslt._process(txt, file_name)
-        act = ut.remove_empty_lines(act)
+        act = prnt.remove_empty_lines(act)
         self.assert_equal(act, exp)

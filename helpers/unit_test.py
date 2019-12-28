@@ -11,7 +11,7 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -124,19 +124,6 @@ def filter_text(regex: str, txt: str) -> str:
         "\n".join(txt_as_arr),
     )
     txt = "\n".join(txt_out)
-    return txt
-
-
-def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
-    arr = [l for l in arr if l.rstrip().lstrip()]
-    return arr
-
-
-# TODO(gp): It would be nice to have a decorator to go from / to array of
-#  strings.
-def remove_empty_lines(txt: str) -> str:
-    arr = remove_empty_lines_from_string_list(txt.split("\n"))
-    txt = "\n".join(arr)
     return txt
 
 

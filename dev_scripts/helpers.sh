@@ -1,5 +1,6 @@
+# This creates problems with piping.
 # Make output white.
-echo -e '\033[0;0m\c'
+#echo -e '\033[0;0m\c'
 
 ACK_OPTS="--smart-case --nogroup --nocolor"
 

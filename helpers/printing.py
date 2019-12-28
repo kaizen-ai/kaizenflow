@@ -107,6 +107,26 @@ def prepend(str_: str, prefix: str) -> str:
     return "\n".join(lines)
 
 
+def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
+    """
+    Remove empty lines from a list of strings.
+    """
+    arr = [l for l in arr if l.rstrip().lstrip()]
+    return arr
+
+
+# TODO(gp): It would be nice to have a decorator to go from / to array of
+#  strings.
+def remove_empty_lines(txt: str) -> str:
+    """
+    Remove empty lines from a multi-line string.
+    """
+    arr = txt.split("\n")
+    arr = remove_empty_lines_from_string_list(arr)
+    txt = "\n".join(arr)
+    return txt
+
+
 def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str:
     """
     Create a string with var name -> var value.
