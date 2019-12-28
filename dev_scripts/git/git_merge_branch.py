@@ -34,7 +34,7 @@ def _process_repo(
     output: List[str],
 ) -> Tuple[List[str], List[str]]:
     """
-    Qualify a branch stored in directory, running linter and unit tests.
+    Qualify a branch stored in `dir_name`, running linter and unit tests.
 
     :param dst_branch: directory containing the branch
     :param test_list: test list to run (e.g., fast, slow)
@@ -42,7 +42,8 @@ def _process_repo(
     """
     dbg.dassert_exists(dir_name)
     _LOG.debug("\n%s", prnt.frame("Processing: %s" % dir_name, char1=">"))
-    # TODO(gp): Make sure that the client is clean.
+    # TODO(gp): `git pull` ensures that the Git client is clean. We can have a
+    #  better check, if needed.
     cd_cmd = "cd %s && " % dir_name
     #
     action = "git_fetch_dst_branch"
@@ -115,7 +116,7 @@ def _process_repo(
         rc = si.system(
             cd_cmd + cmd, suppress_output=False, abort_on_error=abort_on_error
         )
-        output.append("rc=%s" % rc)
+        output.append("  rc=%s" % rc)
         if not abort_on_error and rc != 0:
             output.append(
                 "WARNING: unit tests failed: skipping as per user request"
@@ -169,18 +170,19 @@ def _main(parser):
             output,
         )
     # Forward amp.
+    # TODO(gp): Implement this.
+    # Report the output.
     if actions_tmp:
         _LOG.warning("actions=%s were not processed", str(actions_tmp))
-    # Report the output.
     _LOG.info("Summary file saved into '%s'", args.summary_file)
     output_as_txt = "\n".join(output)
     io_.to_file(args.summary_file, output_as_txt)
     # Print output.
     txt = io_.from_file(args.summary_file)
-    print(prnt.frame(args.linter_log, char1="/").rstrip("\n"))
+    msg = "--> Please attach this to your PR <--"
+    print(prnt.frame(msg, char1="-").rstrip("\n"))
     print(txt + "\n")
     print(prnt.line(char="/").rstrip("\n"))
-    print("--> Please attach this to your PR <--")
     # Merge.
     # TODO(gp): Add merge step.
 
