@@ -9,4 +9,4 @@ source helpers.sh
 parse_jack_cmd_opts "$@"
 
 cmd="find $dir \( -name '*.ipynb' \) -print0 | xargs -0 ack $ACK_OPTS '$regex'"
-execute $cmd
+execute_with_verbose $cmd

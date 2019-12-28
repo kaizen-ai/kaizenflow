@@ -12,6 +12,15 @@ execute() {
   return $?
 }
 
+execute_with_verbose() {
+  cmd=$*
+  if [[ $verbose == 1 ]]; then
+      echo "+ $cmd"
+  fi;
+  eval $cmd
+  return $?
+}
+
 frame() {
   echo "####################################################################"
   echo "$*"
@@ -23,36 +32,54 @@ parse_jack_cmd_opts() {
   # Initialize variables.
   regex=""
   dir="."
+  verbose=0
 
-  while getopts "hr:d:" opt; do
+  #echo "Options to parse: '$@'"
+  while getopts ":vhr:d:" opt; do
+      #echo "Parsing opt='$opt'"
       case "$opt" in
-      h)
-          echo "Usage: -r 'regex to look for' [-d dir_name]"
-          exit 0
-          ;;
-      r)  shift
-          regex=$OPTARG
-          ;;
-      d)  shift
-          dir=$OPTARG
-          ;;
+          h)
+              echo "Usage:"
+              echo "  -r 'regex to look for'"
+              echo "  [-d] directory to search in"
+              echo "  [-v] verbose"
+              exit 0
+              ;;
+          v)  verbose=1
+              ;;
+          r)  regex=$OPTARG
+              ;;
+          d)  dir=$OPTARG
+              ;;
+          \? )
+              echo "Error: invalid option '-$OPTARG'"
+              exit -1
+              ;;
+          :)
+              echo "Error: option '-$OPTARG' requires an argument"
+              exit -1
+              ;;
       esac
   done
+  #echo "OPTIND='$OPTIND'"
   shift $((OPTIND-1))
-  [ "${1:-}" = "--" ] && shift
+  #[ "${1:-}" = "--" ] && shift
 
   if [[ -z $regex ]]; then
-      echo "Error: you need to use -r to specify what to grep for"
-      exit -1
+      regex=$1
+      dir='.'
+      shift
   fi;
 
-  if [[ ! -z $@ ]]; then
-      echo "Error: too many params '$@'"
-      exit -1
-  fi;
+  #if [[ ! -z $@ ]]; then
+  #    echo "Error: too many params '$@'"
+  #    exit -1
+  #fi;
 
-  echo "regex='$regex'"
-  echo "dir='$dir'"
+  if [[ $verbose == 1 ]]; then
+      echo "regex='$regex'"
+      echo "dir='$dir'"
+  fi;
 }
 
 # ##############################################################################
