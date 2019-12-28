@@ -21,7 +21,12 @@ import helpers.printing as prnt
 
 def _get_failed_tests(file_name):
     tests = []
+    # If path exists, parse the content.
     if os.path.exists(file_name):
+        # {
+        # "vendors/test/test_vendors.py::Test_gp::test1": true,
+        # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
+        # }
         txt = io_.from_file(file_name)
         vals = json.loads(txt)
         dbg.dassert_isinstance(vals, dict)
@@ -33,8 +38,10 @@ def _main():
     dir_names = [".", "amp"]
     for dir_name in dir_names:
         if os.path.exists(dir_name):
+            # Print the symbolic name of the repo.
             repo_name = git.get_repo_symbolic_name_from_dirname(dir_name)
             print("\n" + prnt.frame(repo_name))
+            # Print the failed tests.
             file_name = os.path.join(dir_name, ".pytest_cache/v/cache/lastfailed")
             tests = _get_failed_tests(file_name)
             print("\n".join(tests))
