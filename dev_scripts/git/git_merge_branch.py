@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 """
-Run all the tests needed to qualify a branch for PR.
+Qualify a branch for being merged to master.
 
-Qualify a branch and commit.
+> git_merge_branch.py
 """
 
 import argparse
@@ -30,6 +30,7 @@ def _process_repo(
     test_list: str,
     abort_on_error: bool,
     quick: bool,
+    autostash: bool,
     output: List[str],
 ) -> Tuple[List[str], List[str]]:
     """
@@ -56,7 +57,10 @@ def _process_repo(
     action = "git_pull"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
-        cmd = "git pull --autostash"
+        cmd = "git pull"
+        if autostash:
+            _LOG.warning("Using `git pull --autostash`")
+            cmd += " --autostash"
         si.system(cd_cmd + cmd)
     #
     action = "git_merge_master"
@@ -85,7 +89,13 @@ def _process_repo(
                 linter_log = "%s.%s" % (dir_name, linter_log)
             linter_log = os.path.abspath(linter_log)
             cmd = "linter.py -b --linter_log %s" % linter_log
-            si.system(cd_cmd + cmd, suppress_output=False)
+            rc = si.system(
+                cd_cmd + cmd, suppress_output=False, abort_on_error=False,
+            )
+            if rc != 0:
+                _LOG.warning(
+                    "There are %d lints. Please take time to fix them", rc
+                )
             # Read output from the linter.
             txt = io_.from_file(linter_log)
             output.append(txt)
@@ -154,6 +164,7 @@ def _main(parser):
             args.test_list,
             abort_on_error,
             args.quick,
+            args.autostash,
             output,
         )
     # Forward amp.
@@ -184,6 +195,9 @@ def _parse():
         help="Branch to merge into, typically " "master",
     )
     prsr.add_action_arg(parser, _VALID_ACTIONS)
+    parser.add_argument(
+        "--autostash", action="store_true", help="Use --autostash in git pull"
+    )
     parser.add_argument("--test_list", action="store", default="slow")
     parser.add_argument("--quick", action="store_true")
     parser.add_argument(
