@@ -21,8 +21,9 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Generalize to all users, or at least Jenkins.
-# @pytest.mark.skip
-@pytest.mark.skipif('si.get_user_name() != "saggese"')
+@pytest.mark.skipif(
+    'not (si.get_user_name() == "saggese" and si.get_os_name() == "Darwin")'
+)
 class Test_pandoc1(ut.TestCase):
     def _helper(self, in_file, action):
         exec_path = git.find_file_in_git_tree("pandoc.py")

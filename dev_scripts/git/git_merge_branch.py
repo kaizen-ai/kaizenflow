@@ -94,9 +94,7 @@ def _process_repo(
             )
             _LOG.info("linter output=\n%s", linter_log)
             if rc != 0:
-                _LOG.warning(
-                    "There are lints. Please take time to fix them"
-                )
+                _LOG.warning("There are lints. Please take time to fix them")
             # Read output from the linter.
             txt = io_.from_file(linter_log)
             output.append(txt)
@@ -117,7 +115,7 @@ def _process_repo(
         rc = si.system(
             cd_cmd + cmd, suppress_output=False, abort_on_error=abort_on_error
         )
-        output.append("rc=%", rc)
+        output.append("rc=%s" % rc)
         if not abort_on_error and rc != 0:
             output.append(
                 "WARNING: unit tests failed: skipping as per user request"
