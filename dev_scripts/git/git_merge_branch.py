@@ -110,7 +110,7 @@ def _process_repo(
             cmd = "pytest -k Test_dassert1"
         else:
             # Delete pytest.
-            si.pytest_clean(".")
+            si.pytest_clean_artifacts(".")
             # Run the tests.
             cmd = "run_tests.py --test %s --num_cpus -1" % test_list
         output.append("cmd line='%s'" % cmd)
