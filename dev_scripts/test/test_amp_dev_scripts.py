@@ -192,6 +192,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         # Clean up the env.
         self._run_create_conda(cmd_opts, cleanup=True)
 
+    @pytest.mark.slow
     def test_create_conda_test_install1(self) -> None:
         """
         Run create_conda with --test_install to exercise the script.

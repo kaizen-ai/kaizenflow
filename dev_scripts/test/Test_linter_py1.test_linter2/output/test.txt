@@ -1,4 +1,6 @@
 # linter log
+actions=14 ['check_file_property', 'basic_hygiene', 'compile_python', 'autoflake', 'isort', 'black', 'flake8', 'pydocstyle', 'pylint', 'mypy', 'sync_jupytext', 'test_jupytext', 'custom_python_checks', 'lint_markdown']
+file_names=1 ['$GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py']
 ************* Module input [pylint]
 $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
 $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3:20: W605 invalid escape sequence '\s' [flake8]
@@ -6,6 +8,7 @@ $GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3:9
 dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3: [E0602(undefined-variable), ] Undefined variable 're' [pylint]
 dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
 dev_scripts/test/Test_linter_py1.test_linter2/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
+num_lints=5
 # linter file
 if __name__ == "main":
     txt = "hello"

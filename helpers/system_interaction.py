@@ -284,7 +284,8 @@ def get_first_line(output: str) -> str:
     This is used when calling system_to_string() and expecting a single line
     output.
     """
-    output_as_arr = prnt.remove_empty_lines(output)
+    output = prnt.remove_empty_lines(output)
+    output_as_arr = output.split("\n")
     dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
     return output_as_arr[0].rstrip().lstrip()
 

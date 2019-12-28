@@ -1,4 +1,7 @@
 # linter log
+actions=14 ['check_file_property', 'basic_hygiene', 'compile_python', 'autoflake', 'isort', 'black', 'flake8', 'pydocstyle', 'pylint', 'mypy', 'sync_jupytext', 'test_jupytext', 'custom_python_checks', 'lint_markdown']
+file_names=1 ['$GIT_ROOT/dev_scripts/test/Test_linter_py1.test_linter_md1/tmp.scratch/hello.md']
+num_lints=1
 # linter file
 <!--ts-->
    * [Good](#good)
