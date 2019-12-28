@@ -92,9 +92,10 @@ def _process_repo(
             rc = si.system(
                 cd_cmd + cmd, suppress_output=False, abort_on_error=False,
             )
+            _LOG.info("linter output=\n%s", linter_log)
             if rc != 0:
                 _LOG.warning(
-                    "There are %d lints. Please take time to fix them", rc
+                    "There are lints. Please take time to fix them"
                 )
             # Read output from the linter.
             txt = io_.from_file(linter_log)
@@ -108,7 +109,9 @@ def _process_repo(
             _LOG.warning("Running a quick unit test")
             cmd = "pytest -k Test_dassert1"
         else:
-            # TODO(gp): Delete cache.
+            # Delete pytest.
+            si.pytest_clean(".")
+            # Run the tests.
             cmd = "run_tests.py --test %s --num_cpus -1" % test_list
         output.append("cmd line='%s'" % cmd)
         rc = si.system(
