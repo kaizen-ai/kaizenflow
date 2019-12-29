@@ -15,9 +15,10 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Any, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.printing as prnt
 
 _LOG = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 _USER_NAME = None
 
 
-def set_user_name(user_name):
+def set_user_name(user_name: str) -> None:
     """
     To impersonate a user. To use only in rare cases.
     """
@@ -37,7 +38,7 @@ def set_user_name(user_name):
     _USER_NAME = user_name
 
 
-def get_user_name():
+def get_user_name() -> str:
     if _USER_NAME is None:
         res = getpass.getuser()
     else:
@@ -45,7 +46,7 @@ def get_user_name():
     return res
 
 
-def get_server_name():
+def get_server_name() -> str:
     res = os.uname()
     # posix.uname_result(
     #   sysname='Darwin',
@@ -59,14 +60,14 @@ def get_server_name():
     return res[1]
 
 
-def get_os_name():
+def get_os_name() -> str:
     res = os.uname()
     # This is not compatible with python2.7
     # return res.sysname
     return res[0]
 
 
-def get_env_var(env_var_name):
+def get_env_var(env_var_name: str) -> str:
     if env_var_name not in os.environ:
         msg = "Can't find '%s': re-run dev_scripts/setenv.sh?" % env_var_name
         _LOG.error(msg)
@@ -285,12 +286,14 @@ def get_first_line(output: str) -> str:
     output.
     """
     output = prnt.remove_empty_lines(output)
-    output_as_arr = output.split("\n")
+    output_as_arr: List[str] = output.split("\n")
     dbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
-    return output_as_arr[0].rstrip().lstrip()
+    output = output_as_arr[0]
+    output = output.rstrip().lstrip()
+    return output
 
 
-def system_to_one_line_string(cmd, *args, **kwargs) -> Tuple[int, str]:
+def system_to_one_line(cmd: str, *args: Any, **kwargs: Any) -> Tuple[int, str]:
     """
     Execute a shell command and capture its output (expected to be a single line).
 
@@ -304,7 +307,9 @@ def system_to_one_line_string(cmd, *args, **kwargs) -> Tuple[int, str]:
 # #############################################################################
 
 
-def get_process_pids(keep_line) -> Tuple[List[int], List[str]]:
+def get_process_pids(
+    keep_line: Callable[[str], bool]
+) -> Tuple[List[int], List[str]]:
     """
     Find all the processes corresponding to `ps ax` filtered line by line with
     `keep_line()`.
@@ -342,7 +347,11 @@ def get_process_pids(keep_line) -> Tuple[List[int], List[str]]:
     return pids, txt_out
 
 
-def kill_process(get_pids, timeout_in_secs=5, polltime_in_secs=0.1):
+def kill_process(
+    get_pids: Callable[[], Tuple[List[int], str]],
+    timeout_in_secs: int = 5,
+    polltime_in_secs: float = 0.1,
+) -> None:
     """
     Kill all the processes returned by the function `get_pids()`.
 
@@ -375,7 +384,7 @@ def kill_process(get_pids, timeout_in_secs=5, polltime_in_secs=0.1):
 # #############################################################################
 
 
-def query_yes_no(question: str, abort_on_no: bool):
+def query_yes_no(question: str, abort_on_no: bool) -> bool:
     """
     Ask a yes/no question via raw_input() and return their answer.
 
@@ -406,6 +415,13 @@ def query_yes_no(question: str, abort_on_no: bool):
             print("You answer no: exiting")
             sys.exit(-1)
     return ret
+
+
+def create_executable_script(file_name: str, content: str) -> None:
+    dbg.dassert_isinstance(content, str)
+    io_.to_file(file_name, content)
+    cmd = "chmod +x " + file_name
+    system(cmd)
 
 
 # #############################################################################
@@ -439,10 +455,10 @@ def pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str]
         num_files = len(file_names)
         _LOG.info("%s: %d", tag, num_files)
         _LOG.debug("\n%s", prnt.space("\n".join(file_names)))
-    return file_names
+    return file_names  # type: ignore
 
 
-def pytest_clean_artifacts(dir_name: str, preview: bool = False):
+def pytest_clean_artifacts(dir_name: str, preview: bool = False) -> None:
     _LOG.warning("Cleaning pytest artifacts")
     dbg.dassert_ne(dir_name, "")
     dbg.dassert_dir_exists(dir_name)

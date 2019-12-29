@@ -7,7 +7,7 @@ import helpers.git as git
 import logging
 import os
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import helpers.datetime_ as hdt
 import helpers.dbg as dbg
@@ -21,22 +21,22 @@ _LOG = logging.getLogger(__name__)
 #  to make reference to git again.
 
 
-def _system_to_one_string(cmd) -> str:
-    _, output = si.system_to_string(cmd)
-    res = si.get_first_line(output)
-    return res
-
-
 # TODO(gp): -> get_user_name(). No stuttering.
 def get_git_name() -> str:
     """
     Return the git user name.
     """
     cmd = "git config --get user.name"
-    return _system_to_one_string(cmd)
+    # TODO(gp): For some reason data is annotated as Any by mypy, instead of
+    # Tuple[int, str] so we need to cast it to the right value.
+    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    _, output = data
+    return output
 
 
-def get_branch_name(git_dir=".") -> str:
+# TODO(gp): Make the param mandatory.
+# TODO(gp): git_dir -> dir_name
+def get_branch_name(git_dir: str = ".") -> str:
     """
     Return the name of the Git branch we are in.
 
@@ -44,21 +44,25 @@ def get_branch_name(git_dir=".") -> str:
     """
     dbg.dassert_exists(git_dir)
     cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % git_dir
-    return _system_to_one_string(cmd)
+    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    _, output = data
+    return output
 
 
 # TODO(gp): Add mem caching to some functions below. We assume that one doesn't
 #  change dir (which is a horrible idea) and thus we can memoize.
-def is_inside_submodule() -> bool:
+# TODO(gp): -> is_submodule
+def is_inside_submodule(git_dir: str = ".") -> bool:
     """
     Return whether we are inside a Git submodule or in a Git supermodule.
     """
-    cmd = (
-        'cd "$(git rev-parse --show-toplevel)/.." && '
-        "(git rev-parse --is-inside-work-tree | grep -q true)"
-    )
-    rc = si.system(cmd, abort_on_error=False)
-    ret = rc == 0
+    cmd = []
+    cmd.append("cd %s" % git_dir)
+    cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
+    cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
+    cmd_as_str = " && ".join(cmd)
+    rc = si.system(cmd_as_str, abort_on_error=False)
+    ret: bool = rc == 0
     return ret
 
 
@@ -68,8 +72,7 @@ def get_client_root(super_module: bool) -> str:
     E.g., "/Users/saggese/src/.../amp"
 
     :param super_module: if True use the root of the Git _super_module,
-        if we are in a submodule.
-        Otherwise use the Git _sub_module root
+        if we are in a submodule. Otherwise use the Git _sub_module root
     """
     if super_module and is_inside_submodule():
         # https://stackoverflow.com/questions/957928
@@ -79,7 +82,7 @@ def get_client_root(super_module: bool) -> str:
     _, out = si.system_to_string(cmd)
     out = out.rstrip("\n")
     dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
-    client_root = os.path.realpath(out)
+    client_root: str = os.path.realpath(out)
     return client_root
 
 
@@ -90,25 +93,26 @@ def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
     """
     root_dir = get_client_root(super_module=super_module)
     cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_in)
-    _, file_name = si.system_to_string(cmd)
+    _, file_name = si.system_to_one_line(cmd)
     _LOG.debug("file_name=%s", file_name)
-    # Make sure that there is a single outcome.
-    dbg.dassert_eq(len(file_name.split("\n")), 1, "file_name=%s", file_name)
     dbg.dassert(
         file_name != "", "Can't find file '%s' in dir '%s'", file_in, root_dir
     )
-    file_name = os.path.abspath(file_name)
+    file_name: str = os.path.abspath(file_name)
     dbg.dassert_exists(file_name)
     return file_name
 
 
 def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
+    """
+    Return the name of the repo like `ParticleDev/ORG_Particle`.
+    """
     dbg.dassert_exists(git_dir)
     cmd = "cd %s; (git remote -v | grep fetch)" % git_dir
     # TODO(gp): Make it more robust, by checking both fetch and push.
     # "origin  git@github.com:alphamatic/amp (fetch)"
     _, output = si.system_to_string(cmd)
-    data = output.split()
+    data: List[str] = output.split()
     _LOG.debug("data=%s", data)
     dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
     # git@github.com:alphamatic/amp
@@ -145,14 +149,14 @@ def _get_repo_map() -> Dict[str, str]:
     # TODO(gp): The proper fix is #PartTask551.
     # Get info from the including repo, if possible.
     try:
-        import repo_config as repc  # type: ignore
+        import repo_config as repc
 
         repo_map.update(repc.REPO_MAP)
     except ImportError:
         _LOG.debug("No including repo")
     dbg.dassert_no_duplicates(repo_map.keys())
     dbg.dassert_no_duplicates(repo_map.values())
-    return repo_map.copy()  # type: ignore
+    return repo_map.copy()
 
 
 def get_all_repo_symbolic_names() -> List[str]:
@@ -161,7 +165,7 @@ def get_all_repo_symbolic_names() -> List[str]:
 
 
 # TODO(gp): Found a better name.
-def get_repo_prefix(repo_github_name) -> str:
+def get_repo_prefix(repo_github_name: str) -> str:
     """
     Return the symbolic name of a git repo.
     E.g., for "alphamatic/amp", the function returns "Amp".
@@ -231,14 +235,17 @@ def get_submodule_hash(dir_name: str) -> str:
     """
     dbg.dassert_exists(dir_name)
     cmd = "git ls-tree master | grep %s" % dir_name
-    _, output = si.system_to_one_line_string(cmd)
+    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    _, output = data
     # 160000 commit 0011776388b4c0582161eb2749b665fc45b87e7e  amp
-    data = output.split(" ")
+    _LOG.debug("output=%s", output)
+    data: List[str] = output.split()
+    _LOG.debug("data=%s", data)
     git_hash = data[2]
     return git_hash
 
 
-def get_hash_head(dir_name: str) -> str:
+def get_head_hash(dir_name: str) -> str:
     """
     Report the hash that a Git repo is synced at.
 
@@ -246,9 +253,38 @@ def get_hash_head(dir_name: str) -> str:
     """
     dbg.dassert_exists(dir_name)
     cmd = "git rev-parse HEAD"
-    _, output = si.system_to_one_line_string(cmd)
+    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    _, output = data
     # 4759b3685f903e6c669096e960b248ec31c63b69
     return output
+
+
+def get_repo_dirs() -> List[str]:
+    """
+    Return the list of the repo repositories, e.g., `[".", "amp", "infra"]`.
+    """
+    dir_names = ["."]
+    dirs = ["amp", "infra"]
+    for dir_name in dirs:
+        if os.path.exists(dir_name):
+            dir_names.append(dir_name)
+    return dir_names
+
+
+def report_submodule_status(dir_names: List[str]) -> str:
+    """
+    Return a string representing the status of the repos in `dir_names`.
+    """
+    txt = []
+    for dir_name in dir_names:
+        txt.append("dir_name='%s'" % dir_name)
+        txt.append("  is_inside_submodule: %s" % is_inside_submodule(dir_name))
+        txt.append("  branch: %s" % get_branch_name(dir_name))
+        txt.append("  head_hash: %s" % get_head_hash(dir_name))
+        if dir_name != ".":
+            txt.append("  subm_hash: %s" % get_submodule_hash(dir_name))
+    txt_as_str = "\n".join(txt)
+    return txt_as_str
 
 
 # #############################################################################
@@ -356,7 +392,7 @@ def get_modified_files_in_branch(
 # #############################################################################
 
 
-def git_log(num_commits=5, my_commits=False):
+def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
     """
     Return the output of a pimped version of git log.
 
@@ -373,14 +409,17 @@ def git_log(num_commits=5, my_commits=False):
     if my_commits:
         cmd.append("--author $(git config user.name)")
     cmd = " ".join(cmd)
-    _, txt = si.system_to_string(cmd)
+    data: Tuple[int, str] = si.system_to_string(cmd)
+    _, txt = data
     return txt
 
 
 # #############################################################################
 
 
-def git_stash_push(prefix, msg=None, log_level=logging.DEBUG):
+def git_stash_push(
+    prefix: str, msg: Optional[str] = None, log_level: int = logging.DEBUG
+) -> Tuple[str, bool]:
     user_name = si.get_user_name()
     server_name = si.get_server_name()
     timestamp = hdt.get_timestamp()
@@ -405,7 +444,7 @@ def git_stash_push(prefix, msg=None, log_level=logging.DEBUG):
     return tag, was_stashed
 
 
-def git_stash_apply(mode, log_level=logging.DEBUG):
+def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     _LOG.debug("# Checking stash head ...")
     cmd = "git stash list | head -3"
     si.system(cmd, suppress_output=False, log_level=log_level)

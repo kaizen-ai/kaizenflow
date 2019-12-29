@@ -6,7 +6,7 @@ import helpers.parser as prsr
 
 import argparse
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.printing as prnt
@@ -16,7 +16,7 @@ _LOG = logging.getLogger(__name__)
 
 def add_bool_arg(
     parser: argparse.ArgumentParser,
-    name,
+    name: str,
     default: bool = False,
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
@@ -56,7 +56,9 @@ def actions_to_string(
     if add_frame:
         ret = prnt.frame("# Action selected:") + "\n"
         ret += prnt.space(actions_as_str)
-    return ret
+    else:
+        ret = actions_as_str
+    return ret  # type: ignore
 
 
 def select_actions(
@@ -79,7 +81,7 @@ def select_actions(
     return actions
 
 
-def mark_action(action: str, actions: List[str]):
+def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
     to_execute = action in actions
     _LOG.debug("\n%s", prnt.frame("action=%s" % action))
     if to_execute:

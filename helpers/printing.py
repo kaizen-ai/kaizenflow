@@ -4,7 +4,7 @@ Import as:
 import helpers.printing as prnt
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, cast
 
 import helpers.dbg as dbg
 
@@ -22,15 +22,15 @@ COLOR_MAP = {
 }
 
 
-def color_highlight(text, color):
+def color_highlight(text: str, color: str) -> str:
     return COLOR_MAP[color] + text + COLOR_MAP["none"]
 
 
-def clear_screen():
+def clear_screen() -> None:
     print((chr(27) + "[2J"))
 
 
-def line(char: str = None, num_chars: int = None) -> str:
+def line(char: Optional[str] = None, num_chars: Optional[int] = None) -> str:
     """
     Return a line with the desired character.
     """
@@ -146,12 +146,18 @@ def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str
 # #############################################################################
 
 
-def thousand_separator(v):
+def thousand_separator(v: float) -> str:
     v = "{0:,}".format(v)
     return v
 
 
-def perc(a, b, invert=False, num_digits=2, use_thousands_separator=False):
+def perc(
+    a: float,
+    b: float,
+    invert: bool = False,
+    num_digits: int = 2,
+    use_thousands_separator: bool = False,
+) -> str:
     """
     Calculate percentage a / b as a string.
 
@@ -180,7 +186,9 @@ def perc(a, b, invert=False, num_digits=2, use_thousands_separator=False):
     return ret
 
 
-def round_digits(v, num_digits=2, use_thousands_separator=False):
+def round_digits(
+    v: float, num_digits: int = 2, use_thousands_separator: bool = False
+) -> str:
     """
     Round digit returning a string representing the formatted number.
 
@@ -196,15 +204,15 @@ def round_digits(v, num_digits=2, use_thousands_separator=False):
     else:
         res = v
     if use_thousands_separator:
-        res = "{0:,}".format(res)
-    res = str(res)
-    return res
+        res = "{0:,}".format(res)  # type: ignore
+    res_as_str = str(res)
+    return res_as_str
 
 
 # #############################################################################
 
 
-def type_to_string(type_as_str):
+def type_to_string(type_as_str: str) -> str:
     """
     Return a short string representing the type of an object, e.g.,
         "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")
@@ -222,28 +230,43 @@ def type_to_string(type_as_str):
     return type_as_str
 
 
-def format_list(v, sep=" ", max_n=None, tag=None):
+def format_list(
+    list_: List[Any],
+    sep: str = " ",
+    max_n: Optional[int] = None,
+    tag: Optional[str] = None,
+) -> str:
     sep = " "
     # sep = ", "
     if max_n is None:
         max_n = 10
-    n = len(v)
+    max_n = cast(int, max_n)
+    dbg.dassert_lte(1, max_n)
+    n = len(list_)
     txt = ""
     if tag is not None:
         txt += "%s: " % tag
     txt += "(%s) " % n
     if n < max_n:
-        txt += sep.join(map(str, v))
+        txt += sep.join(map(str, list_))
     else:
-        txt += sep.join(map(str, v[: max_n / 2]))
+        num_elems = int(max_n / 2)
+        dbg.dassert_lte(1, num_elems)
+        txt += sep.join(map(str, list_[:num_elems]))
         txt += " ... "
         # pylint: disable=invalid-unary-operand-type
-        txt += sep.join(map(str, v[(-max_n) / 2 :]))
+        txt += sep.join(map(str, list_[-num_elems:]))
     return txt
 
 
 # TODO(gp): Use format_list().
-def list_to_str(l, tag="", sort=False, axis=0, to_string=False):
+def list_to_str(
+    l: List,
+    tag: str = "",
+    sort: bool = False,
+    axis: int = 0,
+    to_string: bool = False,
+) -> str:
     """
     Print list / index horizontally or vertically.
     """
@@ -272,9 +295,13 @@ def list_to_str(l, tag="", sort=False, axis=0, to_string=False):
 
 # TODO(gp): -> set_diff_to_str
 def print_set_diff(
-    obj1, obj2, obj1_name="obj1", obj2_name="obj2", add_space=False
-):
-    def _to_string(obj):
+    obj1: Iterable,
+    obj2: Iterable,
+    obj1_name: str = "obj1",
+    obj2_name: str = "obj2",
+    add_space: bool = False,
+) -> None:
+    def _to_string(obj: Iterable) -> str:
         return " ".join(map(str, obj))
 
     print("# %s vs %s" % (obj1_name, obj2_name))
@@ -307,8 +334,12 @@ def print_set_diff(
 
 
 def dataframe_to_str(
-    df, max_columns=10000, max_colwidth=2000, max_rows=500, display_width=10000
-):
+    df: Any,
+    max_columns: int = 10000,
+    max_colwidth: int = 2000,
+    max_rows: int = 500,
+    display_width: int = 10000,
+) -> str:
     import pandas as pd
 
     with pd.option_context(
@@ -333,7 +364,7 @@ def dataframe_to_str(
 # TODO(gp): Move to explore.py
 
 
-def config_notebook(sns_set=True):
+def config_notebook(sns_set: bool = True) -> None:
     import pandas as pd
     import matplotlib.pyplot as plt
     import seaborn as sns

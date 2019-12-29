@@ -12,13 +12,13 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_system1(ut.TestCase):
-    def test1(self):
+    def test1(self) -> None:
         si.system("ls")
 
-    def test2(self):
+    def test2(self) -> None:
         si.system("ls /dev/null", suppress_output=False)
 
-    def test3(self):
+    def test3(self) -> None:
         """
         Output to a file.
         """
@@ -28,7 +28,7 @@ class Test_system1(ut.TestCase):
             si.system("ls", output_file=temp_file_name)
             dbg.dassert_exists(temp_file_name)
 
-    def test4(self):
+    def test4(self) -> None:
         """
         Tee to a file.
         """
@@ -38,23 +38,24 @@ class Test_system1(ut.TestCase):
             si.system("ls", output_file=temp_file_name, tee=True)
             dbg.dassert_exists(temp_file_name)
 
-    def test5(self):
+    def test5(self) -> None:
         """
         Test dry_run.
         """
-        temp_file_name = tempfile._get_default_tempdir()
-        temp_file_name += "/" + next(tempfile._get_candidate_names())
+        temp_file_name = tempfile._get_default_tempdir()  # type: ignore
+        candidate_name = tempfile._get_candidate_names()  # type: ignore
+        temp_file_name += "/" + next(candidate_name)
         _LOG.debug("temp_file_name=%s", temp_file_name)
         si.system("ls", output_file=temp_file_name, dry_run=True)
         dbg.dassert_not_exists(temp_file_name)
 
-    def test6(self):
+    def test6(self) -> None:
         """
         Test abort_on_error=True.
         """
         si.system("ls this_file_doesnt_exist", abort_on_error=False)
 
-    def test7(self):
+    def test7(self) -> None:
         """
         Test abort_on_error=False.
         """
@@ -63,7 +64,7 @@ class Test_system1(ut.TestCase):
         act = str(cm.exception)
         # Different systems return different rc.
         # cmd='(ls this_file_doesnt_exist) 2>&1' failed with rc='2'
-        act = re.sub("rc='(\d+)'", "rc=''", act)
+        act = re.sub(r"rc='(\d+)'", "rc=''", act)
         self.check_string(act)
 
 
@@ -71,7 +72,7 @@ class Test_system1(ut.TestCase):
 
 
 class Test_system2(ut.TestCase):
-    def test_get_user_name(self):
+    def test_get_user_name(self) -> None:
         act = si.get_user_name()
         _LOG.debug("act=%s", act)
         #
@@ -79,11 +80,11 @@ class Test_system2(ut.TestCase):
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
         #
-        exp = si.system_to_one_line_string("whoami")[1]
+        exp = si.system_to_one_line("whoami")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
 
-    def test_get_server_name(self):
+    def test_get_server_name(self) -> None:
         act = si.get_server_name()
         _LOG.debug("act=%s", act)
         #
@@ -91,7 +92,7 @@ class Test_system2(ut.TestCase):
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
 
-    def test_get_os_name(self):
+    def test_get_os_name(self) -> None:
         act = si.get_os_name()
         _LOG.debug("act=%s", act)
         #

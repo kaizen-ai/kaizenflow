@@ -127,7 +127,9 @@ def _process_repo(
     return is_ok, output, actions
 
 
-def _merge_all_branches(actions, dst_branch, target_dirs):
+def _merge_all_branches(
+    actions: List[str], dst_branch: str, target_dirs: List[str]
+) -> List[str]:
     action = "merge"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
@@ -155,10 +157,11 @@ def _merge_all_branches(actions, dst_branch, target_dirs):
                 cmd_arr.append(
                     "git merge %s -m '%s' --no-ff --commit" % (branch_name, msg)
                 )
+                cmd_arr.append("git push")
+                # TODO(gp): Delete branch.
                 cmd = " && ".join(cmd_arr)
-                # si.system(cd_cmd + cmd)
-                print(cd_cmd + cmd)
-    return actions
+                si.system(cd_cmd + cmd)
+    return actions  # type: ignore
 
 
 # #############################################################################
@@ -173,7 +176,7 @@ _VALID_ACTIONS = [
 ]
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
@@ -189,6 +192,7 @@ def _main(parser):
     # Note that the repos should be in reversed topological order, i.e., the
     # first one is the supermodule.
     target_dirs = ["."]
+    # TODO(gp): What to do with infra?
     dir_name = "amp"
     if os.path.exists(dir_name):
         target_dirs.append(dir_name)
@@ -227,7 +231,7 @@ def _main(parser):
     # Merge.
     if not is_ok:
         _LOG.error(
-            "Can't merge since some repo didn't pass the qualification " "process"
+            "Can't merge since some repo didn't pass the qualification process"
         )
     else:
         actions = _merge_all_branches(actions, args.dst_branch, target_dirs)
@@ -238,7 +242,7 @@ def _main(parser):
         _LOG.error("actions=%s were not processed", str(actions))
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
