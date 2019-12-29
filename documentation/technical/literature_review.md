@@ -204,3 +204,26 @@
   - See if someone has already implemented PRESS publicly
   - If no implementation is available, scope out how much work a minimal
     pandas-compatible implementation would require
+
+## High-Dimensional Multivariate Forecasting with Low-Rank Gaussian Copula Processes
+
+- Paper authors: David Salinas, Michael Bohlke-Schneider, Laurent Callot,
+    Roberto Medico, Jan Gasthaus
+- Review author: Paul, 2019-12-28
+- [arXiv](https://arxiv.org/abs/1910.03002)
+- Score: 4/5
+- Summary:
+  - Learns covariance structure and model together
+  - Handles series with time-varying, high-dimensional covariance structure
+  - Simultaneously handles series at different scales (in terms of the range) 
+  - Uses a non-linear, deterministic state space model with transition dynamics
+    parametrized using an LSTM-RNN
+- Praises:
+  - Implemented in GluonTS (https://github.com/awslabs/gluon-ts/pull/497) by
+    one of the coauthors who works on time series forecasting at AWS
+  - Code for the paper at https://github.com/mbohlkeschneider/gluon-ts/tree/mv_release
+  - Good choice of baselines comparisons 
+  - Demonstrates the importance of data transformations
+- Next steps:
+  - Use in cases where we have a large number of time series known to have
+    meaningful correlations
