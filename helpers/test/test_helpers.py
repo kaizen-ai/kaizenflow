@@ -128,8 +128,8 @@ class Test_git1(ut.TestCase):
     def test_get_submodule_hash(self):
         _ = git.get_submodule_hash("amp")
 
-    def test_get_hash_head(self):
-        _ = git.get_hash_head(".")
+    def test_get_head_hash(self):
+        _ = git.get_head_hash(".")
 
 
 # #############################################################################
