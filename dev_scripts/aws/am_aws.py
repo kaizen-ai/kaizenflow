@@ -13,7 +13,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 
 
 def _get_instance_ip():
@@ -49,7 +49,7 @@ def _gest_inst_status():
     return res
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     inst_id = _get_instance_id()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
@@ -81,7 +81,7 @@ def _main(parser):
         dbg.dassert_eq(status, "stopped")
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

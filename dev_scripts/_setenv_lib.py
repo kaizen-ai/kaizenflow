@@ -12,6 +12,7 @@ import argparse
 import logging
 import os
 import sys
+from typing import Any, Dict, List, Tuple
 
 import helpers.dbg as dbg  # isort:skip # noqa: E402
 import helpers.io_ as io_  # isort:skip # noqa: E402
@@ -21,14 +22,14 @@ import helpers.system_interaction as si  # isort:skip # noqa: E402
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 # Helpers for the phases.
-# ##############################################################################
+# #############################################################################
 
 
 # TODO(gp): This is kind of useless since the cleaning of the path is done at
 #  run-time now.
-def _remove_redundant_paths(paths):
+def _remove_redundant_paths(paths: List[str]):
     # Set of unique paths.
     found_paths = set()
     paths_out = []
@@ -42,7 +43,7 @@ def _remove_redundant_paths(paths):
     return paths_out
 
 
-def _export_env_var(val_name, vals):
+def _export_env_var(val_name: str, vals: List[Any]) -> List[str]:
     """
     Create a snippet of bash script equivalent to the following:
 
@@ -101,12 +102,12 @@ def _log_var(var_name, var_val, txt):
     _LOG.debug("%s='%s'", var_name, var_val)
 
 
-# ##############################################################################
+# #############################################################################
 # Various phases.
-# ##############################################################################
+# #############################################################################
 
 
-def report_info(txt):
+def report_info(txt: str) -> Tuple[str, str]:
     """
     Add to the bash script `txt` diagnostic informations.
 
@@ -140,7 +141,9 @@ def report_info(txt):
     return client_root_path, user_name
 
 
-def config_git(user_name, user_credentials, txt):
+def config_git(
+    user_name: str, user_credentials: Dict[str, str], txt: str
+) -> None:
     """
     Add to the bash script in `txt` instructions to:
         - configure git user name and user email
@@ -161,7 +164,7 @@ def config_git(user_name, user_credentials, txt):
         _execute(cmd, txt)
 
 
-def config_python(dirs, txt):
+def config_python(dirs: List[str], txt: str) -> None:
     """
     Add to the bash script `txt` instructions to configure python by:
         - disable python caching
@@ -184,7 +187,9 @@ def config_python(dirs, txt):
     txt.append("export MYPYPATH=$PYTHONPATH")
 
 
-def config_conda(conda_env, user_credentials, txt):
+def config_conda(
+    conda_env: str, user_credentials: Dict[str, str], txt: str
+) -> None:
     """
     Add to the bash script `txt` instructions to activate a conda environment.
     """
@@ -215,11 +220,11 @@ def config_conda(conda_env, user_credentials, txt):
     _execute(cmd, txt)
 
 
-def get_dev_scripts_subdirs():
+def get_dev_scripts_subdirs() -> Tuple:
     return (".", "aws", "git", "infra", "install", "notebooks", "testing")
 
 
-def config_path(dirs, txt):
+def config_path(dirs: List[str], txt: str) -> str:
     """
     Prepend to PATH the directories `dirs` rooted in `path`.
     """
@@ -231,9 +236,10 @@ def config_path(dirs, txt):
         dbg.dassert_exists(d)
     path = dirs + ["$PATH"]
     txt.extend(_export_env_var("PATH", path))
+    return txt
 
 
-def test_packages(amp_path, txt):
+def test_packages(amp_path: str, txt: str) -> None:
     _frame("Test packages", txt)
     script = os.path.join(
         amp_path, "dev_scripts/install/check_develop_packages.py"
@@ -243,7 +249,7 @@ def test_packages(amp_path, txt):
     _execute(script, txt)
 
 
-def save_script(args, txt):
+def save_script(args: argparse.Namespace, txt: str):
     txt = "\n".join(txt)
     if args.output_file:
         io_.to_file(args.output_file, txt)
@@ -252,10 +258,10 @@ def save_script(args, txt):
         print(txt)
 
 
-# ##############################################################################
+# #############################################################################
 
 
-def parse():
+def parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

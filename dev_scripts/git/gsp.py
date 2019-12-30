@@ -16,7 +16,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 
 
 def _system(cmd, *args, **kwargs):
@@ -28,7 +28,7 @@ def _print(msg):
     print("\n" + msg)
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     #
@@ -49,7 +49,7 @@ def _main(parser):
     _system(cmd, suppress_output=False)
 
 
-def _parser():
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

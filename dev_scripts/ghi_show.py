@@ -42,7 +42,7 @@ _COLOR = "green"
 
 
 def _parse_issue_title(txt):
-    m = re.match("#(\d+):\s*(.*)\s*", txt)
+    m = re.match(r"#(\d+):\s*(.*)\s*", txt)
     issue_num = m.group(1)
     issue_num = int(issue_num)
     # Extract the bug subject.
@@ -52,7 +52,7 @@ def _parse_issue_title(txt):
     for char in ": + ( ) /".split():
         title = title.replace(char, "")
     # Replace multiple spaces with one.
-    title = re.sub("\s+", " ", title)
+    title = re.sub(r"\s+", " ", title)
     #
     title = title.replace(" ", "_")
     return issue_num, title
@@ -132,7 +132,7 @@ def _print_gdrive_files(issue_num, repo_github_name):
 # #############################################################################
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -160,7 +160,7 @@ def _parse():
     return parser
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     # Print url.
@@ -173,7 +173,7 @@ def _main(parser):
     #
     repo_github_name = None
     if args.repo_symbolic_name:
-        dbg.dassert_is_not(args.repo_github_name)
+        dbg.dassert_is_not(args.repo_github_name, None)
         repo_github_name = git.get_repo_github_name(args.repo_symbolic_name)
     elif args.repo_github_name:
         repo_github_name = args.repo_github_name

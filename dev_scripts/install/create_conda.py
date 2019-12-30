@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""
+r"""
 This script should have *no* dependencies from anything: it should be able to run
 before setenv.sh, on a new system with nothing installed. It can use //amp
 libraries.
@@ -250,7 +250,7 @@ def _test_conda_env(conda_env_name):
 # #############################################################################
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -282,7 +282,7 @@ def _parse():
     return parser
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #

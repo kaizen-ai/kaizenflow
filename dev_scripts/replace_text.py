@@ -19,6 +19,7 @@ Replace an instance of text in all py, ipynb, and txt files.
 import argparse
 import logging
 import re
+import sys
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -193,13 +194,13 @@ def _custom1(args):
     io_.to_file("./cfile", txt)
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
-        exit(0)
+        sys.exit(0)
 
 
 # #############################################################################
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -265,7 +266,7 @@ def _main(parser):
         #
         if args.preview:
             _LOG.warning("Preview only as required. Results saved in ./cfile")
-            exit(0)
+            sys.exit(0)
         # Replace.
         _replace(
             file_names_to_process, args.old, args.new, args.backup, args.mode

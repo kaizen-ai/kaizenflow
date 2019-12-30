@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 _LOG_LEVEL = "echo"
 
-# ##############################################################################
+# #############################################################################
 
 
 def _system(cmd, *args, **kwargs):
@@ -32,7 +32,7 @@ def _print(msg):
     print("\n" + msg)
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     #
@@ -60,7 +60,7 @@ def _main(parser):
         git.git_stash_apply(mode="pop", log_level=_LOG_LEVEL)
 
 
-def _parser():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -69,4 +69,4 @@ def _parser():
 
 
 if __name__ == "__main__":
-    _main(_parser())
+    _main(_parse())

@@ -9,9 +9,11 @@ This script:
 - should have no dependency other than basic python library
 """
 
+import argparse
 import logging
 import os
 import sys
+from typing import List
 
 # Dir of the current executable.
 _CURR_DIR = os.path.dirname(sys.argv[0])
@@ -38,19 +40,19 @@ import helpers.user_credentials as usc  # isort:skip # noqa: E402
 import _setenv_lib as selib  # isort:skip # noqa: E402 # type: ignore
 
 
-# ##############################################################################
+# #############################################################################
 
 
 _LOG = logging.getLogger(__name__)
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # TODO(gp): We might want to force to print also the name of script to
     #  help debugging in_get_logging_format(force_print_format,
     #  force_verbose_format):
     dbg.init_logger(verbosity=args.log_level)
-    txt = []
+    txt: List[str] = []
     #
     # - Report system info.
     #

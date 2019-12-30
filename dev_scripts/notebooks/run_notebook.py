@@ -9,8 +9,9 @@ import logging
 import os
 
 import tqdm
-from joblib import Parallel, delayed
+import joblib
 
+import core.config as cfg
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
@@ -107,7 +108,7 @@ def _run_notebook(i, notebook_file, config, dst_dir):
     si.system(cmd, output_file=log_file)
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
@@ -133,13 +134,13 @@ def _main(parser):
         num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
-        Parallel(n_jobs=num_threads, verbose=50)(
-            delayed(_run_notebook)(i, notebook_file, config, dst_dir)
+        joblib.Parallel(n_jobs=num_threads, verbose=50)(
+            joblib.delayed(_run_notebook)(i, notebook_file, config, dst_dir)
             for i, config in enumerate(configs)
         )
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

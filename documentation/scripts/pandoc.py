@@ -262,7 +262,7 @@ def _cleanup_after(prefix):
     _ = _system(cmd)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _pandoc(args, cmd_line):
@@ -354,10 +354,10 @@ def _pandoc(args, cmd_line):
     _LOG.info("\n%s", prnt.frame("SUCCESS"))
 
 
-# ##############################################################################
+# #############################################################################
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -380,7 +380,9 @@ def _parse():
     )
     # Control phases.
     parser.add_argument("--no_cleanup_before", action="store_true", default=False)
-    parser.add_argument("--no_convert_txt_to_pandoc", action="store_true", default=False)
+    parser.add_argument(
+        "--no_convert_txt_to_pandoc", action="store_true", default=False
+    )
     parser.add_argument("--no_run_pandoc", action="store_true", default=False)
     parser.add_argument("--no_toc", action="store_true", default=False)
     parser.add_argument(
@@ -400,7 +402,7 @@ def _parse():
     return parser
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     cmd_line = " ".join(map(str, sys.argv))
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)

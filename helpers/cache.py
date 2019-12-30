@@ -32,7 +32,7 @@ def read_data(*args, **kwargs):
     return data
 """
 
-# ##############################################################################
+# #############################################################################
 
 import argparse
 import logging
@@ -68,10 +68,10 @@ def reset_disk_cache():
     get_disk_cache().clear(warn=True)
 
 
-# ##############################################################################
+# #############################################################################
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -80,7 +80,7 @@ def _parse():
     return parser
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     action = args.positional[0]

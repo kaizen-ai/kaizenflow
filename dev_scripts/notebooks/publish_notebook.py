@@ -19,7 +19,7 @@ import argparse
 import logging
 import os
 import sys
-from datetime import datetime
+import datetime
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
@@ -38,7 +38,7 @@ def _add_tag(file_path, tag=None):
     """
     name, extension = os.path.splitext(os.path.basename(file_path))
     if not tag:
-        tag = datetime.now().strftime("_%Y%m%d_%H%M%S")
+        tag = datetime.datetime.now().strftime("_%Y%m%d_%H%M%S")
     return "".join([name, tag, extension])
 
 
@@ -158,10 +158,10 @@ def _get_path(path_or_url):
     return ret
 
 
-# ##############################################################################
+# #############################################################################
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -199,7 +199,7 @@ def _parse():
     return parser
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     src_file_name = _get_path(args.file)

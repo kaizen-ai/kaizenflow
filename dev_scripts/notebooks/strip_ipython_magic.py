@@ -74,7 +74,7 @@ def _main(args):
             strip_magic(file_in, file_out=file_out)
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

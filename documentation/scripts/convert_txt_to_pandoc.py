@@ -110,11 +110,14 @@ def _process_abbreviations(line: str) -> str:
     """
     # line = re.sub("([^\s])->(\s)", r"\1$\rightarrow\2", line)
     for x, y in [
-            (r"=>", r"\implies"),
-            (r"->", r"\rightarrow"),
-            (r"-^", r"\uparrow"),
-            (r"-v", r"\downarrow")]:
-        line = re.sub(r"(\s)%s(\s)" % re.escape(x), r"\1$%s$\2" % re.escape(y), line)
+        (r"=>", r"\implies"),
+        (r"->", r"\rightarrow"),
+        (r"-^", r"\uparrow"),
+        (r"-v", r"\downarrow"),
+    ]:
+        line = re.sub(
+            r"(\s)%s(\s)" % re.escape(x), r"\1$%s$\2" % re.escape(y), line
+        )
     return line
 
 
@@ -210,7 +213,7 @@ def _transform(lines: List[str]) -> List[str]:
     return out
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -220,7 +223,7 @@ def _parse():
     return parser
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Slurp file.

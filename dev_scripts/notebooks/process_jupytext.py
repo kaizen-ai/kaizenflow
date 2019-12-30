@@ -26,7 +26,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 
 _EXECUTABLE = "jupytext"
 
@@ -84,10 +84,10 @@ def _test(file_name, action):
     si.system(cmd)
 
 
-# ##############################################################################
+# #############################################################################
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -110,7 +110,7 @@ def _parse():
     return parser
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     #

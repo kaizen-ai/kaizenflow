@@ -27,7 +27,21 @@ def _print_help(parser):
     sys.exit(-1)
 
 
-def _main(parser):
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "positional",
+        nargs="*",
+        help="First param is regex, optional second param is dirname",
+    )
+    parser.add_argument("--only_files", action="store_true", help="Only files")
+    prsr.add_verbosity_arg(parser)
+    return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     positional = args.positional
@@ -58,14 +72,4 @@ def _main(parser):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "positional",
-        nargs="*",
-        help="First param is regex, optional second param is dirname",
-    )
-    parser.add_argument("--only_files", action="store_true", help="Only files")
-    prsr.add_verbosity_arg(parser)
-    _main(parser)
+    _main(_parse())
