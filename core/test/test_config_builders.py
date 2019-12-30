@@ -4,7 +4,7 @@ import helpers.unit_test as ut
 
 
 class TestBuildMultipleConfigs(ut.TestCase):
-    def test_existing_path(self):
+    def test_existing_path(self) -> None:
         # Create config template.
         config_template = cfg.Config()
         config_tmp = config_template.add_subconfig("read_data")
@@ -22,7 +22,7 @@ class TestBuildMultipleConfigs(ut.TestCase):
         )
         self.check_string(str(actual_result))
 
-    def test_non_existent_path(self):
+    def test_non_existent_path(self) -> None:
         # Create config template.
         config_template = cfg.Config()
         config_tmp = config_template.add_subconfig("read_data")
@@ -40,7 +40,7 @@ class TestBuildMultipleConfigs(ut.TestCase):
                 config_template, params_variants
             )
 
-    def test_not_nan_parameter(self):
+    def test_not_nan_parameter(self) -> None:
         # Create config template.
         config_template = cfg.Config()
         config_tmp = config_template.add_subconfig("read_data")

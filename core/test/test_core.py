@@ -93,7 +93,7 @@ class Test_config1(ut.TestCase):
         config["zscore"]["com"] = 28
         return config
 
-    def test_get2(self):
+    def test_get2(self) -> None:
         """
         Test Config.get() with missing key.
         """
@@ -158,7 +158,7 @@ class Test_config1(ut.TestCase):
         #
         self.assertEqual(str(config1), str(config2))
 
-    def test_hierarchical_getitem1(self):
+    def test_hierarchical_getitem1(self) -> None:
         """
         Test accessing the config with hierarchical access.
         """
@@ -168,7 +168,7 @@ class Test_config1(ut.TestCase):
         elem2 = config["read_data"]["file_name"]
         self.assertEqual(str(elem1), str(elem2))
 
-    def test_hierarchical_getitem2(self):
+    def test_hierarchical_getitem2(self) -> None:
         """
         Test accessing the config with hierarchical access with correct and
         incorrect paths.
@@ -187,7 +187,7 @@ class Test_config1(ut.TestCase):
         elem = config[("read_data", "file_name")]
         self.assertEqual(elem, "foo_bar.txt")
 
-    def test_hierarchical_get1(self):
+    def test_hierarchical_get1(self) -> None:
         """
         Show that hierarchical access is equivalent to chained access.
         """
@@ -196,7 +196,7 @@ class Test_config1(ut.TestCase):
         elem2 = config["read_data"]["file_name"]
         self.assertEqual(str(elem1), str(elem2))
 
-    def test_hierarchical_get2(self):
+    def test_hierarchical_get2(self) -> None:
         """
         Test `get()` with hierarchical access.
         """
@@ -208,7 +208,7 @@ class Test_config1(ut.TestCase):
         elem = config.get(("read_data", "file_name2"), "hello_world3")
         self.assertEqual(elem, "hello_world3")
 
-    def test_hierarchical_update1(self):
+    def test_hierarchical_update1(self) -> None:
         config1 = cfg.Config()
         #
         config_tmp = config1.add_subconfig("read_data")
@@ -236,7 +236,7 @@ class Test_config1(ut.TestCase):
         config1.update(config2)
         self.check_string(str(config1))
 
-    def test_hierarchical_update2(self):
+    def test_hierarchical_update2(self) -> None:
         config1 = cfg.Config()
         #
         config_tmp = config1.add_subconfig("read_data")
@@ -981,7 +981,7 @@ class TestPcaFactorComputer2(ut.TestCase):
 
 class TestComputeFracZero1(ut.TestCase):
     @staticmethod
-    def _get_df(seed):
+    def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
         ncols = 5
         num_nans = 15
@@ -1050,7 +1050,7 @@ class TestComputeFracZero1(ut.TestCase):
 
 class TestComputeFracNan1(ut.TestCase):
     @staticmethod
-    def _get_df(seed):
+    def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
         ncols = 5
         num_nans = 15
@@ -1119,7 +1119,7 @@ class TestComputeFracNan1(ut.TestCase):
 
 class TestComputeFracConstant1(ut.TestCase):
     @staticmethod
-    def _get_df(seed):
+    def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
         ncols = 5
         num_nans = 4

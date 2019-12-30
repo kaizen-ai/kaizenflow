@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
     'not (si.get_user_name() == "saggese" and si.get_os_name() == "Darwin")'
 )
 class Test_pandoc1(ut.TestCase):
-    def _helper(self, in_file, action):
+    def _helper(self, in_file: str, action: str) -> str:
         exec_path = git.find_file_in_git_tree("pandoc.py")
         dbg.dassert_exists(exec_path)
         #
@@ -52,7 +52,7 @@ class Test_pandoc1(ut.TestCase):
         act = io_.from_file(out_file)
         return act
 
-    def test1(self):
+    def test1(self) -> None:
         """
         Convert one txt file to PDF and check that the .tex file is as expected.
         """
@@ -64,7 +64,7 @@ class Test_pandoc1(ut.TestCase):
         self.check_string(act)
 
     # TODO(gp): This seems flakey.
-    def test2(self):
+    def test2(self) -> None:
         """
         Convert one txt file to HTML and check that the .tex file is as expected.
         """
@@ -77,7 +77,7 @@ class Test_pandoc1(ut.TestCase):
         act = self._helper(file_name, "html")
         self.check_string(act)
 
-    def test_all_notes(self):
+    def test_all_notes(self) -> None:
         """
         Convert to pdf all the notes in docs/notes.
         """
@@ -112,7 +112,7 @@ def _run_preprocess(in_file: str, out_file: str) -> str:
     si.system(cmd_as_str)
     # Check.
     act = io_.from_file(out_file)
-    return act
+    return act  # type: ignore
 
 
 # TODO(gp): -> Test_convert_txt_to_pandoc*
@@ -133,10 +133,10 @@ class Test_preprocess1(ut.TestCase):
         # Check.
         self.check_string(act)
 
-    def test1(self):
+    def test1(self) -> None:
         self._helper()
 
-    def test2(self):
+    def test2(self) -> None:
         self._helper()
 
 
@@ -148,43 +148,43 @@ class Test_preprocess2(ut.TestCase):
 
     def _helper_process_question(
         self, txt_in: str, do_continue_exp: bool, exp: str
-    ):
+    ) -> None:
         do_continue, act = dscttp._process_question(txt_in)
         self.assertEqual(do_continue, do_continue_exp)
         self.assert_equal(act, exp)
 
-    def test_process_question1(self):
+    def test_process_question1(self) -> None:
         txt_in = "* Hope is not a strategy"
         do_continue_exp = True
         exp = "- **Hope is not a strategy**"
         self._helper_process_question(txt_in, do_continue_exp, exp)
 
-    def test_process_question2(self):
+    def test_process_question2(self) -> None:
         txt_in = "** Hope is not a strategy"
         do_continue_exp = True
         exp = "- **Hope is not a strategy**"
         self._helper_process_question(txt_in, do_continue_exp, exp)
 
-    def test_process_question3(self):
+    def test_process_question3(self) -> None:
         txt_in = "*: Hope is not a strategy"
         do_continue_exp = True
         exp = "- **Hope is not a strategy**"
         self._helper_process_question(txt_in, do_continue_exp, exp)
 
-    def test_process_question4(self):
+    def test_process_question4(self) -> None:
         txt_in = "- Systems don't run themselves, they need to be run"
         do_continue_exp = False
         exp = txt_in
         self._helper_process_question(txt_in, do_continue_exp, exp)
 
-    def test_process_question5(self):
+    def test_process_question5(self) -> None:
         space = "   "
         txt_in = "*" + space + "Hope is not a strategy"
         do_continue_exp = True
         exp = "-" + space + "**Hope is not a strategy**"
         self._helper_process_question(txt_in, do_continue_exp, exp)
 
-    def test_process_question6(self):
+    def test_process_question6(self) -> None:
         space = "   "
         txt_in = "**" + space + "Hope is not a strategy"
         do_continue_exp = True
@@ -193,12 +193,12 @@ class Test_preprocess2(ut.TestCase):
 
     # #########################################################################
 
-    def _helper_transform(self, txt_in: str, exp: str):
+    def _helper_transform(self, txt_in: str, exp: str) -> None:
         act_as_arr = dscttp._transform(txt_in.split("\n"))
         act = "\n".join(act_as_arr)
         self.assert_equal(act, exp)
 
-    def test_transform1(self):
+    def test_transform1(self) -> None:
         txt_in = """
 # #############################################################################
 # Python: nested functions
@@ -247,18 +247,18 @@ class Test_preprocess2(ut.TestCase):
 
 
 class Test_lint_txt1(ut.TestCase):
-    def _helper_preprocess(self, txt, exp):
+    def _helper_preprocess(self, txt: str, exp: str) -> None:
         act = dslt._preprocess(txt)
         self.assert_equal(act, exp)
 
-    def test_preprocess1(self):
+    def test_preprocess1(self) -> None:
         txt = r"""$$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$"""
         exp = r"""$$
 E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)
 $$"""
         self._helper_preprocess(txt, exp)
 
-    def test_preprocess2(self):
+    def test_preprocess2(self) -> None:
         txt = r"""$$E_{in}(\vw) = \frac{1}{N} \sum_i \big(
 -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
 \big)$$"""
@@ -270,7 +270,7 @@ $$"""
         self._helper_preprocess(txt, exp)
 
     @staticmethod
-    def _get_text1():
+    def _get_text1() -> str:
         txt = r"""* Gradient descent for logistic regression
 - The typical implementations of gradient descent (basic or advanced) need two
   inputs:
@@ -295,7 +295,7 @@ $$"""
   monotone)"""
         return txt
 
-    def test_preprocess3(self):
+    def test_preprocess3(self) -> None:
         txt = self._get_text1()
         exp = r"""- STARGradient descent for logistic regression
 - The typical implementations of gradient descent (basic or advanced) need two
@@ -325,14 +325,14 @@ $$"""
   monotone)"""
         self._helper_preprocess(txt, exp)
 
-    def test_preprocess4(self):
+    def test_preprocess4(self) -> None:
         txt = r"""# #########################
 # test
 # #############################################################################"""
         exp = r"""# test"""
         self._helper_preprocess(txt, exp)
 
-    def test_preprocess5(self):
+    def test_preprocess5(self) -> None:
         txt = r"""## ////////////////
 # test
 # ////////////////"""
@@ -341,13 +341,13 @@ $$"""
 
     # #########################################################################
 
-    def test_process1(self):
+    def test_process1(self) -> None:
         txt = self._get_text1()
         file_name = os.path.join(self.get_scratch_space(), "test.txt")
         act = dslt._process(txt, file_name)
         self.check_string(act)
 
-    def test_process2(self):
+    def test_process2(self) -> None:
         """
         Run the text linter on a txt file.
         """
@@ -366,7 +366,7 @@ $$"""
         act = dslt._process(txt, file_name)
         self.assert_equal(act, exp)
 
-    def test_process3(self):
+    def test_process3(self) -> None:
         """
         Run the text linter on a md file.
         """
@@ -402,7 +402,7 @@ $$"""
         act = dslt._process(txt, file_name)
         self.assert_equal(act, exp)
 
-    def test_process4(self):
+    def test_process4(self) -> None:
         """
         Check that no replacement happens inside a ``` block.
         """

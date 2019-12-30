@@ -17,7 +17,7 @@ _LOG = logging.getLogger(__name__)
 # @pytest.mark.skipif('si.get_user_name() != "jenkins"')
 @pytest.mark.skip
 class Test_ssh_tunnel(ut.TestCase):
-    def test1(self):
+    def test1(self) -> None:
         exec_name = git.find_file_in_git_tree("ssh_tunnels.py")
         _LOG.debug("exec_name=%s", exec_name)
         # We execute all the phases in multiple rounds to make sure things

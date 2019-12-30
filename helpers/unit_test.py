@@ -11,10 +11,11 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, Optional
+from typing import Any, NoReturn, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -32,7 +33,7 @@ _LOG = logging.getLogger(__name__)
 _UPDATE_TESTS = False
 
 
-def set_update_tests(val):
+def set_update_tests(val: bool) -> None:
     global _UPDATE_TESTS
     _UPDATE_TESTS = val
 
@@ -49,7 +50,7 @@ def get_update_tests() -> bool:
 _INCREMENTAL_TESTS = False
 
 
-def set_incremental_tests(val):
+def set_incremental_tests(val: bool) -> None:
     global _INCREMENTAL_TESTS
     _INCREMENTAL_TESTS = val
 
@@ -61,11 +62,13 @@ def get_incremental_tests() -> bool:
 # #############################################################################
 
 
-def to_string(var):
+def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
 
-def get_random_df(num_cols, seed=None, **kwargs):
+def get_random_df(
+    num_cols: int, seed: Optional[int] = None, **kwargs
+) -> pd.DataFrame:
     """
     Compute df with random data with `num_cols` columns and index obtained by
     calling `pd.date_range(**kwargs)`.
@@ -83,7 +86,7 @@ def get_random_df(num_cols, seed=None, **kwargs):
     return df
 
 
-def get_df_signature(df, num_rows=3):
+def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     # Sometimes pandas takes several seconds to import, so we don't import
     # unless necessary.
     import pandas as pd
@@ -158,7 +161,9 @@ def purify_txt_from_client(txt: str) -> str:
     return txt
 
 
-def diff_files(file_name1: str, file_name2: str, tag: Optional[str] = None):
+def diff_files(
+    file_name1: str, file_name2: str, tag: Optional[str] = None
+) -> NoReturn:
     # Diff to screen.
     _, res = si.system_to_string(
         "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
@@ -192,7 +197,7 @@ def diff_files(file_name1: str, file_name2: str, tag: Optional[str] = None):
 
 
 # TODO(gp): Make these functions static of TestCase.
-def _remove_spaces(obj):
+def _remove_spaces(obj: Any) -> str:
     string = str(obj)
     string = string.replace("\\n", "\n").replace("\\t", "\t")
     # Convert multiple empty spaces (but not newlines) into a single one.
@@ -301,7 +306,7 @@ class TestCase(unittest.TestCase):
                 _LOG.debug("Deleting %s", self._scratch_dir)
                 io_.delete_dir(self._scratch_dir)
 
-    def create_io_dirs(self):
+    def create_io_dirs(self) -> None:
         dir_name = self.get_input_dir()
         io_.create_dir(dir_name, incremental=True)
         _LOG.info("Creating dir_name=%s", dir_name)
@@ -309,7 +314,11 @@ class TestCase(unittest.TestCase):
         io_.create_dir(dir_name, incremental=True)
         _LOG.info("Creating dir_name=%s", dir_name)
 
-    def get_input_dir(self, test_class_name=None, test_method_name=None):
+    def get_input_dir(
+        self,
+        test_class_name: Optional[str] = None,
+        test_method_name: Optional[str] = None,
+    ) -> str:
         """
         Return the path of the directory storing input data for this test class.
 

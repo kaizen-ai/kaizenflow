@@ -87,7 +87,7 @@ class Test_set_env_amp(ut.TestCase):
     # Since there are dependency from the user environment, we freeze a
     # particular run of _setenv_amp.py.
     @pytest.mark.skipif('si.get_user_name() != "saggese"')
-    def test_setenv_py2(self):
+    def test_setenv_py2(self) -> None:
         """
         Find _setenv_amp.py executable, run it, and freeze the output.
         """
@@ -128,12 +128,12 @@ class Test_jack1(ut.TestCase):
 
     # TODO(gp): Not clear why it's broken.
     @pytest.mark.skipif('si.get_user_name() == "jenkins"')
-    def test_jack(self):
+    def test_jack(self) -> None:
         cmd = 'jack -r "def dassert"'
         si.system(cmd)
 
     @pytest.mark.skipif('si.get_user_name() == "jenkins"')
-    def test_jackpy(self):
+    def test_jackpy(self) -> None:
         cmd = 'jackpy -r "def dassert"'
         si.system(cmd)
 
@@ -205,7 +205,7 @@ class Test_install_create_conda_py1(ut.TestCase):
         self._helper(env_name, cmd_opts)
 
     @pytest.mark.slow
-    def test_create_conda_yaml1(self):
+    def test_create_conda_yaml1(self) -> None:
         """
         Run create_conda.py with a single YAML file.
         """
@@ -231,7 +231,7 @@ dependencies:
         self._helper(env_name, cmd_opts)
 
     @pytest.mark.slow
-    def test_create_conda_yaml2(self):
+    def test_create_conda_yaml2(self) -> None:
         """
         Run create_conda.py with two YAML files.
         """
@@ -644,7 +644,7 @@ from typing import List
         msg = lntr._CheckFileProperty._check_notebook_dir(file_name)
         self.assert_equal(msg, exp)
 
-    def test_check_notebook_dir1(self):
+    def test_check_notebook_dir1(self) -> None:
         """
         The notebook is not under 'notebooks': invalid.
         """
@@ -652,7 +652,7 @@ from typing import List
         exp = "hello/world/notebook.ipynb:1: each notebook should be under a 'notebooks' directory to not confuse pytest"
         self._helper_check_notebook_dir(file_name, exp)
 
-    def test_check_notebook_dir2(self):
+    def test_check_notebook_dir2(self) -> None:
         """
         The notebook is under 'notebooks': valid.
         """
@@ -660,7 +660,7 @@ from typing import List
         exp = ""
         self._helper_check_notebook_dir(file_name, exp)
 
-    def test_check_notebook_dir3(self):
+    def test_check_notebook_dir3(self) -> None:
         """
         It's not a notebook: valid.
         """
@@ -674,7 +674,7 @@ from typing import List
         msg = lntr._CheckFileProperty._check_test_file_dir(file_name)
         self.assert_equal(msg, exp)
 
-    def test_check_test_file_dir1(self):
+    def test_check_test_file_dir1(self) -> None:
         """
         Test is under `test`: valid.
         """
@@ -682,7 +682,7 @@ from typing import List
         exp = ""
         self._helper_check_test_file_dir(file_name, exp)
 
-    def test_check_test_file_dir2(self):
+    def test_check_test_file_dir2(self) -> None:
         """
         Test is not under `test`: invalid.
         """
@@ -690,7 +690,7 @@ from typing import List
         exp = "hello/world/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
         self._helper_check_test_file_dir(file_name, exp)
 
-    def test_check_test_file_dir3(self):
+    def test_check_test_file_dir3(self) -> None:
         """
         Test is not under `test`: invalid.
         """
@@ -698,7 +698,7 @@ from typing import List
         exp = "hello/world/tests/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
         self._helper_check_test_file_dir(file_name, exp)
 
-    def test_check_test_file_dir4(self):
+    def test_check_test_file_dir4(self) -> None:
         """
         It's a notebook: valid.
         """
