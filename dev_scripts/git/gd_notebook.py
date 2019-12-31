@@ -17,6 +17,7 @@ import argparse
 import logging
 import os
 import sys
+from typing import List
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -28,7 +29,7 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
-def _convert(dir_name, ipynb_file, py_file):
+def _convert(dir_name: str, ipynb_file: str, py_file: str) -> str:
     """
     Convert jupyter notebook into a python file suitable for diff-ing.
     :param dir_name: destination directory
@@ -55,14 +56,15 @@ def _convert(dir_name, ipynb_file, py_file):
     return dst_py_file
 
 
-def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
+def _diff_notebook(
+    dir_name: str, abs_file_name: str, git_client_root: str, brief: bool
+) -> bool:
     """
     Diff notebook against the HEAD git version.
 
     :param dir_name: directory to use as tmp dir
     :param abs_file_name: absolute path of the file
     :param git_client_root: path of git client
-    :return:
     """
     _LOG.debug("dir_name=%s abs_file_name=%s", dir_name, abs_file_name)
     # Make sure the file exists and it's a python notebook.
@@ -89,7 +91,7 @@ def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
     #
     for f in (old_py, new_py):
         dbg.dassert(os.path.exists(f), msg="Can't find %s" % f)
-    is_ipynb_diff = None
+    is_ipynb_diff = True
     if brief:
         cmd = "diff --brief %s %s" % (old_py, new_py)
         # Do not break on error, but return the error code.
@@ -110,7 +112,7 @@ def _diff_notebook(dir_name, abs_file_name, git_client_root, brief):
     return is_ipynb_diff
 
 
-def _get_files(args):
+def _get_files(args: argparse.Namespace) -> List[str]:
     # Get the files.
     file_names = args.files
     if not file_names:
@@ -123,10 +125,38 @@ def _get_files(args):
         msg = "No files were selected"
         _LOG.error(msg)
         sys.exit(-1)
-    return file_names
+    return file_names  # type: ignore
 
 
-def _main(args):
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("-f", "--files", nargs="+", help="Files to process")
+    parser.add_argument(
+        "-c",
+        "--current_git_files",
+        action="store_true",
+        help="Select all files modified in the current git client",
+    )
+    parser.add_argument(
+        "-p",
+        "--previous_git_commit_files",
+        action="store_true",
+        help="Select all files modified in previous user git commit",
+    )
+    parser.add_argument(
+        "-b",
+        "--brief",
+        action="store_true",
+        help="Just report if a notebook is changed or not",
+    )
+    prsr.add_verbosity_arg(parser)
+    return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     # Get the files.
     file_names = _get_files(args)
@@ -208,33 +238,5 @@ def _main(args):
         )
 
 
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument("-f", "--files", nargs="+", help="Files to process")
-    parser.add_argument(
-        "-c",
-        "--current_git_files",
-        action="store_true",
-        help="Select all files modified in the current git client",
-    )
-    parser.add_argument(
-        "-p",
-        "--previous_git_commit_files",
-        action="store_true",
-        help="Select all files modified in previous user git commit",
-    )
-    parser.add_argument(
-        "-b",
-        "--brief",
-        action="store_true",
-        help="Just report if a notebook is changed or not",
-    )
-    prsr.add_verbosity_arg(parser)
-    args = parser.parse_args()
-    _main(args)
-
-
 if __name__ == "__main__":
-    _parse()
+    _main(_parse())

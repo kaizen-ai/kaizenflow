@@ -11,7 +11,7 @@ import logging
 import os
 import shutil
 import time
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def find_files(directory, pattern):
+def find_files(directory: str, pattern: str) -> List[str]:
     """
     Recursive glob.
 
@@ -38,7 +38,7 @@ def find_files(directory, pattern):
     return file_names
 
 
-def find_regex_files(src_dir, regex):
+def find_regex_files(src_dir: str, regex: str) -> List[str]:
     cmd = 'find %s -name "%s"' % (src_dir, regex)
     _, output = si.system_to_string(cmd)
     file_names = [f for f in output.split("\n") if f != ""]
@@ -52,7 +52,7 @@ def find_regex_files(src_dir, regex):
 # #############################################################################
 
 
-def create_soft_link(src, dst):
+def create_soft_link(src: str, dst: str) -> None:
     """
     Create a soft-link to <src> called <dst> (where <src> and <dst> are files
     or directories as in a Linux ln command). This is equivalent to a command
@@ -70,7 +70,7 @@ def create_soft_link(src, dst):
     si.system(cmd)
 
 
-def delete_file(file_name):
+def delete_file(file_name: str) -> None:
     _LOG.debug("Deleting file '%s'", file_name)
     if not os.path.exists(file_name) or file_name == "/dev/null":
         # Nothing to delete.
@@ -88,12 +88,12 @@ def delete_file(file_name):
 
 
 def delete_dir(
-    dir_,
-    change_perms=False,
-    errnum_to_retry_on=16,
-    num_retries=1,
-    num_secs_retry=1,
-):
+    dir_: str,
+    change_perms: bool = False,
+    errnum_to_retry_on: int = 16,
+    num_retries: int = 1,
+    num_secs_retry: int = 1,
+) -> None:
     """
     Delete a directory.
     - change_perms: change permissions to -R rwx before deleting to deal with
@@ -195,7 +195,7 @@ def create_dir(
 
 
 # TODO(gp): Shouldn't be always incremental=False?
-def create_enclosing_dir(file_name, incremental=False):
+def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
     """
     Create the dir enclosing file_name, if needed. <incremental> has the same
     meaning as in create_dir().
@@ -214,7 +214,9 @@ def create_enclosing_dir(file_name, incremental=False):
 
 
 # TODO(saggese): We should have lines first since it is an input param.
-def to_file(file_name, lines, mode="w", force_flush=False):
+def to_file(
+    file_name: str, lines: str, mode: str = "w", force_flush: bool = False
+) -> None:
     """
     Write the content of lines into file_name, creating the enclosing directory
     if needed.
@@ -250,7 +252,7 @@ def from_file(file_name: str, encoding: Optional[Any] = None) -> str:
     return data
 
 
-def get_size_as_str(file_name):
+def get_size_as_str(file_name: str) -> str:
     if os.path.exists(file_name):
         size_in_bytes = os.path.getsize(file_name)
         if size_in_bytes < (1024 ** 2):

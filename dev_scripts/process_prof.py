@@ -18,15 +18,40 @@
 #   > python -m line_profiler line_profile.lprof
 
 import argparse
+import logging
 import os
 import pstats
 
-import utils.debug as dbg
-import utils.jos
-import utils.main
+import helpers.dbg as dbg
+import helpers.system_interaction as si
+
+_LOG = logging.getLogger(__name__)
 
 
-def _main(args):
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="This helper script processes Python profiling output.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--profile_file",
+        action="store",
+        default="prof.bin",
+        help="Path to the .bin file produced by profiling",
+    )
+    parser.add_argument(
+        "--ext", action="store", default="png", help="File format for the graph"
+    )
+    parser.add_argument(
+        "--custom_code",
+        action="store_true",
+        help="Skip the graph and run the custom code",
+    )
+    return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
     prof_file = args.profile_file
     p = pstats.Stats(prof_file).strip_dirs()
     if args.custom_code:
@@ -84,29 +109,11 @@ def _main(args):
             args.ext,
             graph_file,
         )
-        utils.jos.system(dot_cmd, verbosity=0)
-        log.info("Output profile graph: %s", graph_file)
+        si.system(dot_cmd)
+        _LOG.info("Output profile graph: %s", graph_file)
         dbg.dassert(os.path.exists(graph_file), msg="Can't find %s" % graph_file)
         # > eog output.png
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(
-        description="This helper script processes Python profiling output.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    arg_parser.add_argument(
-        "--profile_file",
-        action="store",
-        default="prof.bin",
-        help="Path to the .bin file produced by profiling",
-    )
-    arg_parser.add_argument(
-        "--ext", action="store", default="png", help="File format for the graph"
-    )
-    arg_parser.add_argument(
-        "--custom_code",
-        action="store_true",
-        help="Skip the graph and run the custom code",
-    )
-    utils.main.main(_main, arg_parser)
+    _main(_parse())

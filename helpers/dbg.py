@@ -9,7 +9,7 @@ import logging
 import os
 import pprint
 import sys
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
 _LOG = logging.getLogger(__name__)
 
@@ -126,7 +126,9 @@ def dassert_ne(
         _dfatal(txt, msg, *args)
 
 
-def dassert_lt(val1: Any, val2: Any, msg=None, *args):
+def dassert_lt(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 < val2):
         txt = "'%s' < '%s'" % (val1, val2)
@@ -143,8 +145,12 @@ def dassert_lte(
 
 
 def dassert_lgt(
-    lower_bound, x, upper_bound, lower_bound_closed, upper_bound_closed
-):
+    lower_bound: float,
+    x: float,
+    upper_bound: float,
+    lower_bound_closed: bool,
+    upper_bound_closed: bool,
+) -> None:
     if lower_bound_closed:
         dassert_lte(lower_bound, x)
     else:
@@ -193,14 +199,18 @@ def dassert_is_not(
         _dfatal(txt, msg, *args)
 
 
-def dassert_type_is(val1: Any, val2: Any, msg=None, *args):
+def dassert_type_is(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+) -> None:
     # pylint: disable=superfluous-parens,unidiomatic-typecheck
     if not (type(val1) is val2):
         txt = "type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
 
-def dassert_type_in(val1: Any, val2: Any, msg=None, *args):
+def dassert_type_in(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+) -> None:
     # pylint: disable=superfluous-parens,unidiomatic-typecheck
     if not (type(val1) in val2):
         txt = "type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
@@ -219,7 +229,9 @@ def dassert_isinstance(
         _dfatal(txt, msg, *args)
 
 
-def dassert_imply(val1: Any, val2: Any, msg=None, *args):
+def dassert_imply(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+) -> None:
     # pylint: disable=superfluous-parens
     if not (not val1 or val2):
         txt = "'%s' implies '%s'" % (val1, val2)
@@ -321,7 +333,9 @@ def dassert_exists(file_name: str, msg: Optional[str] = None, *args: Any) -> Non
         _dfatal(txt, msg, *args)
 
 
-def dassert_dir_exists(dir_name: str, msg: Optional[str] = None, *args):
+def dassert_dir_exists(
+    dir_name: str, msg: Optional[str] = None, *args: Any
+) -> None:
     """
     Assert unless `dir_name` exists and it's a directory.
     """
@@ -333,7 +347,9 @@ def dassert_dir_exists(dir_name: str, msg: Optional[str] = None, *args):
         _dfatal(txt, msg, *args)
 
 
-def dassert_not_exists(file_name: str, msg: Optional[str] = None, *args: Any):
+def dassert_not_exists(
+    file_name: str, msg: Optional[str] = None, *args: Any
+) -> None:
     """
     Ensure that a file or a dir `file_name` doesn't exist, otherwise raises.
     """
@@ -345,7 +361,9 @@ def dassert_not_exists(file_name: str, msg: Optional[str] = None, *args: Any):
         _dfatal(txt, msg, *args)
 
 
-def dassert_file_extension(file_name: str, exp_exts):
+def dassert_file_extension(
+    file_name: str, exp_exts: Union[str, List[str]]
+) -> None:
     # Handle single extension case.
     if isinstance(exp_exts, str):
         exp_exts = [exp_exts]
@@ -358,7 +376,9 @@ def dassert_file_extension(file_name: str, exp_exts):
     )
 
 
-def dassert_monotonic_index(obj, msg: Optional[str] = None, *args: Any):
+def dassert_monotonic_index(
+    obj: Any, msg: Optional[str] = None, *args: Any
+) -> None:
     # For some reason importing pandas is slow and we don't want to pay this
     # start up cost unless we have to.
     import pandas as pd
@@ -373,13 +393,25 @@ def dassert_monotonic_index(obj, msg: Optional[str] = None, *args: Any):
     dassert(index.is_unique, msg=msg, *args)  # type: ignore
 
 
+def _get_first_type(obj: Iterable, tag: str) -> Type:
+    obj_types = set(type(v) for v in obj)
+    dassert_eq(
+        len(obj_types),
+        1,
+        "More than one type for elem of " "%s=%s",
+        tag,
+        map(str, obj_types),
+    )
+    return list(obj_types)[0]
+
+
 def dassert_array_has_same_type_element(
     obj1: Any,
     obj2: Any,
     only_first_elem: bool,
     msg: Optional[str] = None,
     *args: Any
-):
+) -> None:
     """
     Check that two objects iterables like arrays (e.g., pd.Index) have
     elements of the same type.
@@ -392,18 +424,6 @@ def dassert_array_has_same_type_element(
         obj1_first_type = type(obj1[0])
         obj2_first_type = type(obj2[0])
     else:
-
-        def _get_first_type(obj, tag):
-            obj_types = set(type(v) for v in obj)
-            dassert_eq(
-                len(obj_types),
-                1,
-                "More than one type for elem of " "%s=%s",
-                tag,
-                map(str, obj_types),
-            )
-            return list(obj_types)[0]
-
         obj1_first_type = _get_first_type(obj1, "obj1")
         obj2_first_type = _get_first_type(obj2, "obj2")
     #
@@ -425,17 +445,16 @@ def dassert_array_has_same_type_element(
 
 
 # From https://stackoverflow.com/questions/15411967
-def is_running_in_ipynb():
+def is_running_in_ipynb() -> bool:
     try:
-        _ = get_ipython().config
-        # res = cfg['IPKernelApp']['parent_appname'] == 'ipython-notebook'
+        _ = get_ipython().config  # type: ignore
         res = True
     except NameError:
         res = False
     return res
 
 
-def reset_logger():
+def reset_logger() -> None:
     import importlib
 
     print("Resetting logger...")
@@ -461,7 +480,7 @@ class _ColoredFormatter(logging.Formatter):
     PREFIX = "\033["
     SUFFIX = "\033[0m"
 
-    def __init__(self, log_format, date_format):
+    def __init__(self, log_format: str, date_format: str):
         logging.Formatter.__init__(self, log_format, date_format)
 
     def format(self, record: logging.LogRecord) -> str:
@@ -479,14 +498,16 @@ class _ColoredFormatter(logging.Formatter):
 
 
 # Copied from `helpers/system_interaction.py` to avoid circular dependencies.
-def get_user_name():
+def get_user_name() -> str:
     import getpass
 
     res = getpass.getuser()
     return res
 
 
-def _get_logging_format(force_print_format, force_verbose_format):
+def _get_logging_format(
+    force_print_format: bool, force_verbose_format: bool
+) -> Tuple[str, str]:
     if is_running_in_ipynb():
         print("WARNING: Running in Jupyter")
     verbose_format = not is_running_in_ipynb()
@@ -520,7 +541,7 @@ def _get_logging_format(force_print_format, force_verbose_format):
         # executables from executables.
         if get_user_name() == "jenkins":
             exec_name = os.path.basename(get_exec_name())
-            #print("WARNING: Running as jenkins: exec_name='%s'" % exec_name)
+            # print("WARNING: Running as jenkins: exec_name='%s'" % exec_name)
             log_format = exec_name + "::" + log_format
     else:
         # Make logging look like a normal print().
@@ -533,12 +554,13 @@ def _get_logging_format(force_print_format, force_verbose_format):
 # TODO(gp): maybe replace "force_verbose_format" and "force_print_format" with
 #  a "mode" in ("auto", "verbose", "print")
 def init_logger(
-    verbosity=logging.INFO,
-    use_exec_path=False,
-    log_filename=None,
-    force_verbose_format=False,
-    force_print_format=False,
-):
+    verbosity: int = logging.INFO,
+    use_exec_path: bool = False,
+    log_filename: Optional[str] = None,
+    force_verbose_format: bool = False,
+    force_print_format: bool = False,
+    force_white: bool = True,
+) -> None:
     """
     - Send both stderr and stdout to logging.
     - Optionally tee the logs also to file.
@@ -550,11 +572,13 @@ def init_logger(
     :param verbosity: verbosity to use
     :param use_exec_path: use the name of the executable
     :param log_filename: log to that file
-    :param force_verbose_format: use the verbose format for the logging in any
-        case, even for notebook
-    :param force_print_format: use the print format for the logging in any case
+    :param force_verbose_format: use the verbose format for the logging
+    :param force_print_format: use the print format for the logging
+    :param force_write: use white color for printing. This can pollute the
+        output of a script when redirected to file with echo characters
     """
-    sys.stdout.write("\033[0m")
+    if force_white:
+        sys.stdout.write("\033[0m")
     if isinstance(verbosity, str):
         # pylint: disable=protected-access
         verbosity = logging._checkLevel(verbosity)
@@ -622,7 +646,9 @@ def init_logger(
     # test_logger()
 
 
-def set_logger_verbosity(verbosity, module_name=None):
+def set_logger_verbosity(
+    verbosity: int, module_name: Optional[str] = None
+) -> None:
     """
     Change the verbosity of the logging after the initialization.
 
@@ -642,14 +668,14 @@ def set_logger_verbosity(verbosity, module_name=None):
     dassert_eq(logger.getEffectiveLevel(), verbosity)
 
 
-def get_logger_verbosity():
+def get_logger_verbosity() -> int:
     root_logger = logging.getLogger()
     if not root_logger.handlers:
         assert 0, "ERROR: Logger not initialized"
     return root_logger.getEffectiveLevel()
 
 
-def get_all_loggers():
+def get_all_loggers() -> List:
     """
     Return list of all registered loggers.
     """
@@ -659,7 +685,7 @@ def get_all_loggers():
     return loggers
 
 
-def get_matching_loggers(module_names):
+def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
     """
     Find loggers that match a name or a name in a set.
     """
@@ -676,7 +702,7 @@ def get_matching_loggers(module_names):
     return sel_loggers
 
 
-def shutup_chatty_modules(verbosity=logging.CRITICAL):
+def shutup_chatty_modules(verbosity: int = logging.CRITICAL) -> None:
     """
     Reduce the verbosity for external modules that are very chatty.
     """
@@ -718,9 +744,9 @@ _CMD_LINE = " ".join(arg for arg in sys.argv)
 _EXEC_NAME = os.path.abspath(sys.argv[0])
 
 
-def get_command_line():
+def get_command_line() -> str:
     return _CMD_LINE
 
 
-def get_exec_name():
+def get_exec_name() -> str:
     return _EXEC_NAME
