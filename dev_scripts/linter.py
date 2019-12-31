@@ -66,7 +66,7 @@ _TMP_DIR = os.path.abspath(os.getcwd() + "/tmp.linter")
 NO_PRINT = False
 
 
-def _print(*args, **kwargs):
+def _print(*args: Any, **kwargs: Any) -> None:
     if not NO_PRINT:
         print(*args, **kwargs)
 
@@ -80,7 +80,7 @@ def _system(cmd: str, abort_on_error: bool = True) -> int:
         suppress_output=suppress_output,
         log_level=logging.DEBUG,
     )
-    return rc
+    return rc  # type: ignore
 
 
 # TODO(gp): Move to helpers/printing.py
@@ -88,45 +88,6 @@ def _dassert_list_of_strings(output: List[str], *args: Any) -> None:
     dbg.dassert_isinstance(output, list, *args)
     for line in output:
         dbg.dassert_isinstance(line, str, *args)
-
-
-# TODO(gp): Horrible: to remove / rewrite.
-def _clean_file(file_name, write_back):
-    """
-    Remove empty spaces, tabs, windows end-of-lines.
-    :param write_back: if True the file is overwritten in place.
-    """
-    # Read file.
-    file_in: List[str] = []
-    # TODO(gp): Use io_.from_file
-    with open(file_name, "r") as f:
-        for line in f:
-            file_in.append(line)
-    #
-    file_out: List[str] = []
-    for line in file_in:
-        # A line can be deleted if it has only spaces and \n.
-        if not any(char not in (" ", "\n") for char in line):
-            line = "\n"
-        # dos2unix.
-        line = line.replace("\r\n", "\n")
-        file_out.append(line)
-    # Remove whitespaces at the end of file.
-    while file_out and (file_out[-1] == "\n"):
-        # While the last item in the list is blank, removes last element.
-        file_out.pop(-1)
-    # Write the new the output to file.
-    if write_back:
-        # TODO(gp): Use _write_back.
-        file_in = "".join(file_in)
-        file_out = "".join(file_out)
-        if file_in != file_out:
-            _LOG.debug("Writing back file '%s'", file_name)
-            with open(file_name, "w") as f:
-                f.write(file_out)
-        else:
-            _LOG.debug("No change in file, so no saving")
-    return file_in, file_out
 
 
 def _annotate_output(output: List, executable: str) -> List:
@@ -155,7 +116,7 @@ def _tee(cmd: str, executable: str, abort_on_error: bool) -> List[str]:
     output2 = prnt.remove_empty_lines_from_string_list(output1)
     _LOG.debug("output2= (%d)\n'%s'", len(output2), "\n".join(output2))
     _dassert_list_of_strings(output2)
-    return output2
+    return output2  # type: ignore
 
 
 # TODO(gp): Move to system_interactions.
@@ -196,7 +157,7 @@ def _filter_target_files(file_names: List[str]) -> List[str]:
     return file_names_out
 
 
-def _get_files(args) -> List[str]:
+def _get_files(args: argparse.Namespace) -> List[str]:
     """
     Return the list of files to process given the command line arguments.
     """
@@ -248,7 +209,9 @@ def _list_to_str(list_: List[str]) -> str:
     return "%d (%s)" % (len(list_), " ".join(list_))
 
 
-def _get_files_to_lint(args, file_names: List[str]) -> List[str]:
+def _get_files_to_lint(
+    args: argparse.Namespace, file_names: List[str]
+) -> List[str]:
     """
     Get all the files that need to be linted.
 
@@ -317,7 +280,7 @@ class _Action:
     Implemented as a Strategy pattern.
     """
 
-    def __init__(self, executable=None):
+    def __init__(self, executable: str = "") -> None:
         self._executable = executable
 
     # @abc.abstractmethod
@@ -476,7 +439,7 @@ class _CompilePython(_Action):
         # We don't need any special executable, so we can always run this action.
         return True
 
-    def _execute(self, file_name, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
         _ = pedantic
         output: List[str] = []
         # Applicable only to python files.
@@ -500,7 +463,7 @@ class _Autoflake(_Action):
     Remove unused imports and variables.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "autoflake"
         super().__init__(executable)
 
@@ -528,7 +491,7 @@ class _Yapf(_Action):
     Apply yapf code formatter.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "yapf"
         super().__init__(executable)
 
@@ -556,7 +519,7 @@ class _Black(_Action):
     Apply black code formatter.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "black"
         super().__init__(executable)
 
@@ -591,7 +554,7 @@ class _Isort(_Action):
     Sort imports using isort.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "isort"
         super().__init__(executable)
 
@@ -622,7 +585,7 @@ class _Flake8(_Action):
         - pyflakes
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "flake8"
         super().__init__(executable)
 
@@ -692,7 +655,7 @@ class _Flake8(_Action):
 
 
 class _Pydocstyle(_Action):
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "pydocstyle"
         super().__init__(executable)
 
@@ -793,7 +756,7 @@ class _Pydocstyle(_Action):
 
 
 class _Pyment(_Action):
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "pyment"
         super().__init__(executable)
 
@@ -816,7 +779,7 @@ class _Pyment(_Action):
 
 
 class _Pylint(_Action):
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "pylint"
         super().__init__(executable)
 
@@ -959,7 +922,7 @@ class _Pylint(_Action):
 
 
 class _Mypy(_Action):
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "mypy"
         super().__init__(executable)
 
@@ -1002,7 +965,7 @@ class _Mypy(_Action):
 
 
 class _IpynbFormat(_Action):
-    def __init__(self):
+    def __init__(self) -> None:
         curr_path = os.path.dirname(os.path.realpath(sys.argv[0]))
         executable = "%s/ipynb_format.py" % curr_path
         super().__init__(executable)
@@ -1047,7 +1010,7 @@ def is_test_input_output_file(file_name: str) -> bool:
     return ret
 
 
-def is_test_code(file_name):
+def is_test_code(file_name: str) -> bool:
     """
     Return whether a file contains unit test code.
     """
@@ -1077,7 +1040,7 @@ def from_python_to_ipynb_file(file_name: str) -> str:
     return ret
 
 
-def from_ipynb_to_python_file(file_name):
+def from_ipynb_to_python_file(file_name: str) -> str:
     dbg.dassert(is_ipynb_file(file_name))
     ret = file_name.replace(".ipynb", ".py")
     return ret
@@ -1102,7 +1065,7 @@ def is_paired_jupytext_file(file_name: str) -> bool:
 
 
 class _ProcessJupytext(_Action):
-    def __init__(self, jupytext_action):
+    def __init__(self, jupytext_action: str) -> None:
         executable = "process_jupytext.py"
         super().__init__(executable)
         self._jupytext_action = jupytext_action
@@ -1124,12 +1087,12 @@ class _ProcessJupytext(_Action):
 
 
 class _SyncJupytext(_ProcessJupytext):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("sync")
 
 
 class _TestJupytext(_ProcessJupytext):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("test")
 
 
@@ -1224,7 +1187,7 @@ class _CustomPythonChecks(_Action):
         return msg
 
     @staticmethod
-    def _was_baptized(file_name, txt: List[str]) -> str:
+    def _was_baptized(file_name: str, txt: List[str]) -> str:
         """
         Check if code contains a declaration of how it needs to be imported.
 
@@ -1320,7 +1283,7 @@ class _CustomPythonChecks(_Action):
 
 
 class _LintMarkdown(_Action):
-    def __init__(self):
+    def __init__(self) -> None:
         executable = "prettier"
         super().__init__(executable)
 
@@ -1353,7 +1316,9 @@ class _LintMarkdown(_Action):
 # #############################################################################
 
 
-def _check_file_property(actions, all_file_names, pedantic):
+def _check_file_property(
+    actions: List[str], all_file_names: List[str], pedantic: bool
+) -> Tuple[List[str], List[str]]:
     output: List[str] = []
     action = "check_file_property"
     if action in actions:
@@ -1445,7 +1410,7 @@ def _get_action_class(action: str) -> _Action:
     dbg.dassert_is_not(res, None)
     # mypy gets confused since we are returning a class.
     obj = res()  # type: ignore
-    return obj  # type: ignore
+    return obj
 
 
 def _remove_not_possible_actions(actions: List[str]) -> List[str]:
@@ -1479,7 +1444,7 @@ def _select_actions(args: argparse.Namespace) -> List[str]:
     return actions
 
 
-def _test_actions():
+def _test_actions() -> None:
     _LOG.info("Testing actions")
     # Check all the actions.
     num_not_poss = 0
@@ -1581,7 +1546,7 @@ def _run_linter(
         output_tmp = list(itertools.chain.from_iterable(output_tmp))
     output.extend(output_tmp)
     output = prnt.remove_empty_lines_from_string_list(output)
-    return output
+    return output  # type: ignore
 
 
 def _count_lints(lints: List[str]) -> int:
@@ -1679,7 +1644,7 @@ def _main(args: argparse.Namespace) -> int:
     return num_lints
 
 
-def _parser() -> argparse.ArgumentParser:
+def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -1766,11 +1731,7 @@ def _parser() -> argparse.ArgumentParser:
         "--test_actions", action="store_true", help="Print the possible actions"
     )
     # Select actions.
-    # TODO(gp): use prsr.add_action_arg
-    parser.add_argument("--action", action="append", help="Run a specific check")
-    parser.add_argument(
-        "--all", action="store_true", help="Run all recommended phases"
-    )
+    prsr.add_action_arg(parser, _get_valid_actions())
     #
     parser.add_argument(
         "--pedantic", action="store_true", help="Run some purely cosmetic lints"
@@ -1794,7 +1755,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
-    parser_ = _parser()
+    parser_ = _parse()
     args_ = parser_.parse_args()
     rc_ = _main(args_)
     sys.exit(rc_)

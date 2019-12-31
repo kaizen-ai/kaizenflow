@@ -24,6 +24,7 @@ import argparse
 import logging
 import os
 import sys
+from typing import Any, List, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -37,19 +38,21 @@ _EXEC_DIR_NAME = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 # #############################################################################
 
-_script = None
+_SCRIPT = None
 
 
-def _system(cmd, log_level=logging.INFO, **kwargs):
-    if _script is not None:
-        _script.append(cmd)
+def _system(cmd: str, log_level: int = logging.INFO, **kwargs: Any) -> int:
+    if _SCRIPT is not None:
+        _SCRIPT.append(cmd)
     rc = si.system(cmd, log_level=log_level, **kwargs)
-    return rc
+    return rc  # type: ignore
 
 
-def _system_to_string(cmd, log_level=logging.INFO, **kwargs):
-    if _script is not None:
-        _script.append(cmd)
+def _system_to_string(
+    cmd: str, log_level: int = logging.INFO, **kwargs: Any
+) -> Tuple[int, str]:
+    if _SCRIPT is not None:
+        _SCRIPT.append(cmd)
     rc, txt = si.system_to_string(cmd, log_level=log_level, **kwargs)
     return rc, txt
 
@@ -57,13 +60,13 @@ def _system_to_string(cmd, log_level=logging.INFO, **kwargs):
 # #############################################################################
 
 
-def _cleanup_before(prefix):
-    _LOG.info("\n%s", prnt.frame("Clean up before", char1="<", char2=">"))
+def _cleanup_before(prefix: str) -> None:
+    _LOG.warning("\n%s", prnt.frame("Clean up before", char1="<", char2=">"))
     cmd = "rm -rf %s*" % prefix
     _ = _system(cmd)
 
 
-def _convert_txt_to_pandoc(curr_path, file_, prefix):
+def _convert_txt_to_pandoc(curr_path: str, file_: str, prefix: str) -> str:
     _LOG.info("\n%s", prnt.frame("Pre-process markdown", char1="<", char2=">"))
     file1 = file_
     file2 = "%s.no_spaces.txt" % prefix
@@ -91,7 +94,30 @@ _COMMON_PANDOC_OPTS = [
 # --filter pandoc-imagine
 
 
-def _run_pandoc_to_pdf(args, curr_path, file_, prefix):
+def _run_latex(cmd: str, file_: str) -> None:
+    data: Tuple[int, str] = _system_to_string(cmd, abort_on_error=False)
+    rc, txt = data
+    log_file = file_ + ".latex1.log"
+    io_.to_file(log_file, txt)
+    if rc != 0:
+        txt_as_arr: List[str] = txt.split("\n")
+        for i, line in enumerate(txt_as_arr):
+            if line.startswith("!"):
+                break
+        # pylint: disable=undefined-loop-variable
+        txt_as_arr = [
+            line for i in range(max(i - 10, 0), min(i + 10, len(txt_as_arr)))
+        ]
+        txt = "\n".join(txt_as_arr)
+        _LOG.error(txt)
+        _LOG.error("Log is in %s", log_file)
+        _LOG.error("\n%s", prnt.frame("cmd is:\n> %s" % cmd))
+        raise RuntimeError("Latex failed")
+
+
+def _run_pandoc_to_pdf(
+    args: argparse.Namespace, curr_path: str, file_: str, prefix: str
+) -> str:
     _LOG.info("\n%s", prnt.frame("Pandoc to pdf", char1="<", char2=">"))
     #
     file1 = file_
@@ -133,27 +159,11 @@ def _run_pandoc_to_pdf(args, curr_path, file_, prefix):
         + " %s" % file_
     )
 
-    def _run_latex():
-        rc, txt = _system_to_string(cmd, abort_on_error=False)
-        log_file = file_ + ".latex1.log"
-        io_.to_file(log_file, txt)
-        if rc != 0:
-            txt = txt.split("\n")
-            for i in range(len(txt)):
-                if txt[i].startswith("!"):
-                    break
-            txt = [txt[i] for i in range(max(i - 10, 0), min(i + 10, len(txt)))]
-            txt = "\n".join(txt)
-            _LOG.error(txt)
-            _LOG.error("Log is in %s", log_file)
-            _LOG.error("\n%s", prnt.frame("cmd is:\n> %s" % cmd))
-            raise RuntimeError("Latex failed")
-
-    _run_latex()
+    _run_latex(cmd, file_)
     # Run latex again.
     _LOG.info("\n%s", prnt.frame("Latex again", char1="<", char2=">"))
     if not args.no_run_latex_again:
-        _run_latex()
+        _run_latex(cmd, file_)
     else:
         _LOG.warning("Skipping: run latex again")
     #
@@ -163,7 +173,9 @@ def _run_pandoc_to_pdf(args, curr_path, file_, prefix):
     return file_out
 
 
-def _run_pandoc_to_html(args, file_in, prefix):
+def _run_pandoc_to_html(
+    args: argparse.Namespace, file_in: str, prefix: str
+) -> str:
     _LOG.info("\n%s", prnt.frame("Pandoc to html", char1="<", char2=">"))
     #
     cmd = []
@@ -186,24 +198,20 @@ def _run_pandoc_to_html(args, file_in, prefix):
     return file_out
 
 
-def _copy_to_output(args, file_in, prefix):
+def _copy_to_output(args: argparse.Namespace, file_in: str, prefix: str) -> str:
     if args.output is not None:
         _LOG.debug("Using file_out from command line")
         file_out = args.output
     else:
         _LOG.debug("Leaving file_out in the tmp dir")
-        file_out = "%s.%s.%s" % (
-            prefix,
-            os.path.basename(args.input),
-            args.action,
-        )
+        file_out = "%s.%s.%s" % (prefix, os.path.basename(args.input), args.type,)
     _LOG.debug("file_out=%s", file_out)
     cmd = r"\cp -af %s %s" % (file_in, file_out)
     _ = _system(cmd)
-    return file_out
+    return file_out  # type: ignore
 
 
-def _copy_to_gdrive(args, file_name, ext):
+def _copy_to_gdrive(args: argparse.Namespace, file_name: str, ext: str) -> None:
     _LOG.info("\n%s", prnt.frame("Copy to gdrive", char1="<", char2=">"))
     dbg.dassert(not ext.startswith("."), "Invalid file_name='%s'", file_name)
     if args.gdrive_dir is not None:
@@ -221,7 +229,7 @@ def _copy_to_gdrive(args, file_name, ext):
     _LOG.debug("Saved file='%s' to gdrive", dst_file)
 
 
-def _open_pdf(file_name):
+def _open_pdf(file_name: str) -> None:
     _LOG.info("\n%s", prnt.frame("Open PDF", char1="<", char2=">"))
     dbg.dassert_exists(file_name)
     dbg.dassert_file_extension(file_name, "pdf")
@@ -246,7 +254,7 @@ EOF
     _ = _system(cmd)
 
 
-def _open_html(file_name):
+def _open_html(file_name: str) -> None:
     _LOG.info("\n%s", prnt.frame("Open HTML", char1="<", char2=">"))
     dbg.dassert_exists(file_name)
     dbg.dassert_file_extension(file_name, "html")
@@ -256,8 +264,8 @@ def _open_html(file_name):
     _ = _system(cmd)
 
 
-def _cleanup_after(prefix):
-    _LOG.info("\n%s", prnt.frame("Clean up", char1="<", char2=">"))
+def _cleanup_after(prefix: str) -> None:
+    _LOG.info("\n%s", prnt.frame("Clean up after", char1="<", char2=">"))
     cmd = "rm -rf %s*" % prefix
     _ = _system(cmd)
 
@@ -265,108 +273,110 @@ def _cleanup_after(prefix):
 # #############################################################################
 
 
-def _pandoc(args, cmd_line):
+def _pandoc(args: argparse.Namespace) -> None:
     #
-    _LOG.info("cmd=%s", cmd_line)
-    _LOG.info("actions=%s", " ".join(args.action))
+    _LOG.info("type=%s", args.type)
+    # Print actions.
+    actions = prsr.select_actions(args, _VALID_ACTIONS)
+    add_frame = True
+    actions_as_str = prsr.actions_to_string(actions, _VALID_ACTIONS, add_frame)
+    _LOG.info("\n%s", actions_as_str)
     #
     curr_path = os.path.abspath(os.path.dirname(sys.argv[0]))
     _LOG.debug("curr_path=%s", curr_path)
     #
     if args.script:
         _LOG.info("Logging the actions into a script")
-        global _script
-        _script = ["#/bin/bash -xe"]
+        global _SCRIPT
+        _SCRIPT = ["#/bin/bash -xe"]
     #
     file_ = args.input
     dbg.dassert_exists(file_)
     prefix = args.tmp_dir + "/tmp.pandoc"
     prefix = os.path.abspath(prefix)
     #
-    # Clean up before.
-    #
-    if not args.no_cleanup_before:
+    action = "cleanup_before"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
         _cleanup_before(prefix)
-    else:
-        _LOG.warning("Skipping: clean up before")
     #
-    # Pre-process markdown.
-    #
-    if not args.no_convert_txt_to_pandoc:
+    action = "convert_txt_to_pandoc"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
         file_ = _convert_txt_to_pandoc(curr_path, file_, prefix)
-    else:
-        _LOG.warning("Skipping: pre-process markdown")
     #
-    # Run pandoc.
-    #
-    if not args.no_run_pandoc:
-        if args.action == "pdf":
+    action = "run_pandoc"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
+        if args.type == "pdf":
             file_out = _run_pandoc_to_pdf(args, curr_path, file_, prefix)
-        elif args.action == "html":
+        elif args.type == "html":
             file_out = _run_pandoc_to_html(args, file_, prefix)
         else:
-            raise ValueError("Invalid action='%s'" % args.action)
-    else:
-        _LOG.warning("Skipping: run pandoc")
-    #
+            raise ValueError("Invalid type='%s'" % args.type)
     file_in = file_out
     file_final = _copy_to_output(args, file_in, prefix)
     #
-    # Copy to gdrive.
-    #
-    if not args.no_gdrive:
-        ext = args.action
+    action = "copy_to_gdrive"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
+        ext = args.type
         _copy_to_gdrive(args, file_final, ext)
-    else:
-        _LOG.warning("Skipping: copy to gdrive")
     #
-    # Open file.
-    #
-    if not args.no_open:
+    action = "open"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
         os_name = si.get_os_name()
         if os_name == "Darwin":
-            if args.action == "pdf":
+            if args.type == "pdf":
                 _open_pdf(file_final)
-            elif args.action == "html":
+            elif args.type == "html":
                 _open_html(file_final)
             else:
-                raise ValueError("Invalid action='%s'" % args.action)
+                raise ValueError("Invalid type='%s'" % args.type)
         else:
             # TODO(gp): Extend this.
             _LOG.warning("Can't open file on %s", os_name)
-    else:
-        _LOG.warning("Skipping: open")
     #
-    # Clean up.
-    #
-    if not args.no_cleanup:
+    action = "cleanup_after"
+    to_execute, actions = prsr.mark_action(action, actions)
+    if to_execute:
         _cleanup_after(prefix)
-    else:
-        _LOG.warning("Skipping: clean up")
-    #
     # Save script, if needed.
-    #
     if args.script:
-        txt = "\n".join(_script)
+        txt = "\n".join(_SCRIPT)
         io_.to_file(args.script, txt)
         _LOG.info("Saved script into '%s'", args.script)
-    #
+    # Check that everything was executed.
+    if actions:
+        _LOG.error("actions=%s were not processed", str(actions))
     _LOG.info("\n%s", prnt.frame("SUCCESS"))
 
 
 # #############################################################################
+
+_VALID_ACTIONS = [
+    "cleanup_before",
+    "convert_txt_to_pandoc",
+    "run_pandoc",
+    "copy_to_gdrive",
+    "open",
+    "cleanup_after",
+]
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument("-i", "--input", action="store", type=str, required=True)
     parser.add_argument(
-        "-a", "--action", required=True, choices=["pdf", "html"], action="store"
-    )
-    parser.add_argument("--input", action="store", type=str, required=True)
-    parser.add_argument(
-        "--output", action="store", type=str, default=None, help="Output file"
+        "-o",
+        "--output",
+        action="store",
+        type=str,
+        default=None,
+        help="Output file",
     )
     parser.add_argument(
         "--tmp_dir",
@@ -376,28 +386,22 @@ def _parse() -> argparse.ArgumentParser:
         help="Directory where to save artifacts",
     )
     parser.add_argument(
+        "-t", "--type", required=True, choices=["pdf", "html"], action="store"
+    )
+    parser.add_argument(
         "--script", action="store", help="Bash script to generate"
     )
-    # Control phases.
-    parser.add_argument("--no_cleanup_before", action="store_true", default=False)
-    parser.add_argument(
-        "--no_convert_txt_to_pandoc", action="store_true", default=False
-    )
-    parser.add_argument("--no_run_pandoc", action="store_true", default=False)
     parser.add_argument("--no_toc", action="store_true", default=False)
     parser.add_argument(
         "--no_run_latex_again", action="store_true", default=False
     )
-    parser.add_argument("--no_gdrive", action="store_true", default=False)
     parser.add_argument(
         "--gdrive_dir",
         action="store",
         default=None,
         help="Directory where to save the output",
     )
-    parser.add_argument("--no_open", action="store_true", default=False)
-    parser.add_argument("--no_cleanup", action="store_true", default=False)
-    #
+    prsr.add_action_arg(parser, _VALID_ACTIONS)
     prsr.add_verbosity_arg(parser)
     return parser
 
@@ -406,7 +410,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     cmd_line = " ".join(map(str, sys.argv))
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    _pandoc(args, cmd_line)
+    _LOG.info("cmd line=%s", cmd_line)
+    _pandoc(args)
 
 
 if __name__ == "__main__":

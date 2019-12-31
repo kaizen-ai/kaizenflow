@@ -26,7 +26,7 @@ import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
-_NUM_SPACES = 4
+_NUM_SPACES = 2
 
 
 def _process_comment_block(line: str, in_skip_block: bool) -> Tuple[bool, bool]:
@@ -87,8 +87,8 @@ def _process_single_line_comment(line: str) -> bool:
     """
     do_continue = False
     if line.startswith(r"%%") or line.startswith(r"//"):
-        _LOG.debug("  -> skip")
         do_continue = True
+        _LOG.debug("  -> do_continue=True")
         return do_continue
     # Skip frame.
     if (
@@ -97,18 +97,19 @@ def _process_single_line_comment(line: str) -> bool:
         or re.match(r"\#+ =====", line)
         or re.match(r"\#+ \/\/\/\/\/", line)
     ):
-        _LOG.debug("  -> skip")
         do_continue = True
+        _LOG.debug("  -> do_continue=True")
         return do_continue
+    # Nothing to do.
     return do_continue
 
 
-def _process_abbreviations(line: str) -> str:
+def _process_abbreviations(in_line: str) -> str:
     r"""
     Transform
         - `->` into `$\rightarrow`
     """
-    # line = re.sub("([^\s])->(\s)", r"\1$\rightarrow\2", line)
+    line = in_line
     for x, y in [
         (r"=>", r"\implies"),
         (r"->", r"\rightarrow"),
@@ -118,6 +119,8 @@ def _process_abbreviations(line: str) -> str:
         line = re.sub(
             r"(\s)%s(\s)" % re.escape(x), r"\1$%s$\2" % re.escape(y), line
         )
+    if line != in_line:
+        _LOG.debug("    -> line=%s", line)
     return line
 
 
@@ -226,6 +229,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    _LOG.info("cmd line=%s", dbg.get_command_line())
     # Slurp file.
     lines = io_.from_file(args.input).split("\n")
     lines = [l.rstrip("\n") for l in lines]

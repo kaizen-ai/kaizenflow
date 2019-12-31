@@ -221,8 +221,8 @@ class Test_preprocess2(ut.TestCase):
 """
         exp = """
 # Python: nested functions
-    - Functions can be declared in the body of another function
-    - E.g., to hide utility functions in the scope of the function that uses them
+  - Functions can be declared in the body of another function
+  - E.g., to hide utility functions in the scope of the function that uses them
 
         ```python
         def print_integers(values):
@@ -341,13 +341,21 @@ $$"""
 
     # #########################################################################
 
-    def test_process1(self) -> None:
-        txt = self._get_text1()
-        file_name = os.path.join(self.get_scratch_space(), "test.txt")
+    def _helper_process(self, txt, exp, file_name):
+        file_name = os.path.join(self.get_scratch_space(), file_name)
         act = dslt._process(txt, file_name)
+        if exp:
+            self.assert_equal(act, exp)
+        return act
+
+    def test_process1(self):
+        txt = self._get_text1()
+        exp = None
+        file_name = "test.txt"
+        act = self._helper_process(txt, exp, file_name)
         self.check_string(act)
 
-    def test_process2(self) -> None:
+    def test_process2(self):
         """
         Run the text linter on a txt file.
         """
@@ -362,11 +370,10 @@ $$"""
 1. Choose the right tasks
    - Avoid non-essential tasks
 """
-        file_name = os.path.join(self.get_scratch_space(), "test.txt")
-        act = dslt._process(txt, file_name)
-        self.assert_equal(act, exp)
+        file_name = "test.txt"
+        self._helper_process(txt, exp, file_name)
 
-    def test_process3(self) -> None:
+    def test_process3(self):
         """
         Run the text linter on a md file.
         """
@@ -398,11 +405,10 @@ $$"""
 - Hello
   - World
 """
-        file_name = os.path.join(self.get_scratch_space(), "test.md")
-        act = dslt._process(txt, file_name)
-        self.assert_equal(act, exp)
+        file_name = "test.md"
+        self._helper_process(txt, exp, file_name)
 
-    def test_process4(self) -> None:
+    def test_process4(self):
         """
         Check that no replacement happens inside a ``` block.
         """
@@ -426,7 +432,81 @@ $$"""
 1) oh no!
 ```
 """
-        file_name = os.path.join(self.get_scratch_space(), "test.md")
-        act = dslt._process(txt, file_name)
+        file_name = "test.md"
+        act = self._helper_process(txt, None, file_name)
         act = prnt.remove_empty_lines(act)
         self.assert_equal(act, exp)
+
+    @staticmethod
+    def _get_text_problematic_for_prettier1():
+        txt = r"""
+* Python formatting
+- Python has several built-in ways of formatting strings
+  1) `%` format operator
+  2) `format` and `str.format`
+
+
+* `%` format operator
+- Text template as a format string
+  - Values to insert are provided as a value or a `tuple`
+"""
+        return txt
+
+    def test_process_prettier_bug1(self):
+        """
+        For some reason prettier replaces - with * when there are 2 empty lines.
+        """
+        txt = self._get_text_problematic_for_prettier1()
+        exp = r"""- Python formatting
+
+* Python has several built-in ways of formatting strings
+  1. `%` format operator
+  2. `format` and `str.format`
+
+- `%` format operator
+
+* Text template as a format string
+  - Values to insert are provided as a value or a `tuple`
+"""
+        act = dslt._prettier(txt)
+        self.assert_equal(act, exp)
+
+    def test_process5(self):
+        """
+        Run the text linter on a txt file.
+        """
+        txt = self._get_text_problematic_for_prettier1()
+        exp = r"""* Python formatting
+- Python has several built-in ways of formatting strings
+
+  1. `%` format operator
+  2. `format` and `str.format`
+
+* `%` format operator
+- Text template as a format string
+  - Values to insert are provided as a value or a `tuple`
+"""
+        file_name = "test.txt"
+        self._helper_process(txt, exp, file_name)
+
+    def test_process6(self):
+        """
+        Run the text linter on a txt file.
+        """
+        txt = r"""
+* `str.format`
+- Python 3 allows to format multiple values, e.g.,
+   ```python
+   key = 'my_var'
+   value = 1.234
+   ```
+"""
+        exp = r"""* `str.format`
+- Python 3 allows to format multiple values, e.g.,
+  ```python
+  key = 'my_var'
+  value = 1.234
+  ```
+"""
+        file_name = "test.txt"
+        self._helper_process(txt, exp, file_name)

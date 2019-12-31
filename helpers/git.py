@@ -4,6 +4,7 @@ Import as:
 import helpers.git as git
 """
 
+import collections
 import logging
 import os
 import re
@@ -105,7 +106,8 @@ def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
 
 def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     """
-    Return the name of the repo like `ParticleDev/ORG_Particle`.
+    Return the name of the repo in `git_dir`.
+    E.g., "alphamatic/amp", "ParticleDev/commodity_research"
     """
     dbg.dassert_exists(git_dir)
     cmd = "cd %s; (git remote -v | grep fetch)" % git_dir
@@ -252,10 +254,24 @@ def get_head_hash(dir_name: str) -> str:
     > git rev-parse HEAD
     """
     dbg.dassert_exists(dir_name)
-    cmd = "git rev-parse HEAD"
+    cmd = f"cd {dir_name} && git rev-parse HEAD"
     data: Tuple[int, str] = si.system_to_one_line(cmd)
     _, output = data
     # 4759b3685f903e6c669096e960b248ec31c63b69
+    return output
+
+
+def get_remote_head_hash(dir_name: str) -> str:
+    """
+    Report the hash that the remote Git repo is at.
+    """
+    dbg.dassert_exists(dir_name)
+    sym_name = get_repo_symbolic_name_from_dirname(dir_name)
+    cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
+    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    _, output = data
+    # > git ls-remote git@github.com:alphamatic/amp HEAD 2>/dev/null
+    # 921676624f6a5f3f36ab507baed1b886227ac2e6        HEAD
     return output
 
 
@@ -271,7 +287,46 @@ def get_repo_dirs() -> List[str]:
     return dir_names
 
 
-def report_submodule_status(dir_names: List[str]) -> str:
+def get_hash(git_hash: str, short_hash: bool, num_digits: int = 8) -> str:
+    dbg.dassert_lte(1, num_digits)
+    if short_hash:
+        ret = git_hash[:num_digits]
+    else:
+        ret = git_hash
+    return ret
+
+
+def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str):
+    """
+    head_hash: a
+    remh_hash: b
+    subm_hash: c
+    """
+    map_ = collections.OrderedDict()
+    map_["head_hash"] = head_hash
+    map_["remh_hash"] = remh_hash
+    if subm_hash:
+        map_["subm_hash"] = subm_hash
+    #
+    inv_map = collections.OrderedDict()
+    for k, v in map_.items():
+        if v not in inv_map:
+            inv_map[v] = [k]
+        else:
+            inv_map[v].append(k)
+    #
+    txt = []
+    for k, v in inv_map.items():
+        # Transform:
+        #   ('a2bfc704', ['head_hash', 'remh_hash'])
+        # into
+        #   'head_hash = remh_hash = a2bfc704'
+        txt.append("%s = %s" % (" = ".join(v), k))
+    txt = "\n".join(txt)
+    return txt
+
+
+def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
     """
     Return a string representing the status of the repos in `dir_names`.
     """
@@ -279,10 +334,24 @@ def report_submodule_status(dir_names: List[str]) -> str:
     for dir_name in dir_names:
         txt.append("dir_name='%s'" % dir_name)
         txt.append("  is_inside_submodule: %s" % is_inside_submodule(dir_name))
-        txt.append("  branch: %s" % get_branch_name(dir_name))
-        txt.append("  head_hash: %s" % get_head_hash(dir_name))
+        #
+        branch_name = get_branch_name(dir_name)
+        if branch_name != "master":
+            branch_name = "!!! %s !!!" % branch_name
+        txt.append("  branch: %s" % branch_name)
+        #
+        head_hash = get_head_hash(dir_name)
+        head_hash = get_hash(head_hash, short_hash)
+        txt.append("  head_hash: %s" % head_hash)
+        #
+        remh_hash = get_remote_head_hash(dir_name)
+        remh_hash = get_hash(remh_hash, short_hash)
+        txt.append("  remh_hash: %s" % remh_hash)
+        #
         if dir_name != ".":
-            txt.append("  subm_hash: %s" % get_submodule_hash(dir_name))
+            subm_hash = get_submodule_hash(dir_name)
+            subm_hash = get_hash(subm_hash, short_hash)
+            txt.append("  subm_hash: %s" % subm_hash)
     txt_as_str = "\n".join(txt)
     return txt_as_str
 

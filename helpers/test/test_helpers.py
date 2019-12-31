@@ -118,18 +118,60 @@ class Test_git1(ut.TestCase):
             # e.g., amp.dev.build_clean_env.run_slow_coverage_tests.
             self.assert_equal(os.path.basename(amp_dir), "amp")
 
-    def test_get_branch_name(self) -> None:
+    def test_get_branch_name1(self) -> None:
         _ = git.get_branch_name()
 
     @pytest.mark.skipif('si.get_user_name() == "jenkins"', reason="#781")
     @pytest.mark.skipif(
         'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"'
     )
-    def test_get_submodule_hash(self) -> None:
-        _ = git.get_submodule_hash("amp")
+    def test_get_submodule_hash1(self) -> None:
+        dir_name = "amp"
+        _ = git.get_submodule_hash(dir_name)
 
-    def test_get_head_hash(self) -> None:
-        _ = git.get_head_hash(".")
+    def test_get_head_hash1(self) -> None:
+        dir_name = "."
+        _ = git.get_head_hash(dir_name)
+
+    def test_get_remote_head_hash1(self) -> None:
+        dir_name = "."
+        _ = git.get_head_hash(dir_name)
+
+    def test_report_submodule_status1(self) -> None:
+        dir_names = ["."]
+        short_hash = True
+        _ = git.report_submodule_status(dir_names, short_hash)
+
+    def _helper_group_hashes(
+        self, head_hash: str, remh_hash: str, subm_hash: str, exp
+    ) -> None:
+        act = git._group_hashes(head_hash, remh_hash, subm_hash)
+        self.assert_equal(act, exp)
+
+    def test_group_hashes1(self) -> None:
+        head_hash = "a2bfc704"
+        remh_hash = "a2bfc704"
+        subm_hash = None
+        exp = "head_hash = remh_hash = a2bfc704"
+        #
+        self._helper_group_hashes(head_hash, remh_hash, subm_hash, exp)
+
+    def test_group_hashes2(self) -> None:
+        head_hash = "22996772"
+        remh_hash = "92167662"
+        subm_hash = "92167662"
+        exp = """head_hash = 22996772
+remh_hash = subm_hash = 92167662"""
+        #
+        self._helper_group_hashes(head_hash, remh_hash, subm_hash, exp)
+
+    def test_group_hashes3(self) -> None:
+        head_hash = "7ea03eb6"
+        remh_hash = "7ea03eb6"
+        subm_hash = "7ea03eb6"
+        exp = "head_hash = remh_hash = subm_hash = 7ea03eb6"
+        #
+        self._helper_group_hashes(head_hash, remh_hash, subm_hash, exp)
 
 
 # #############################################################################
@@ -177,7 +219,7 @@ class Test_numba_1(ut.TestCase):
 
 
 # #############################################################################
-# numba.py
+# printing.py
 # #############################################################################
 
 

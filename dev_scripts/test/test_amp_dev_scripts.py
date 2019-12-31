@@ -296,7 +296,7 @@ class Test_linter_py1(ut.TestCase):
             )
         else:
             logger_verbosity = dbg.get_logger_verbosity()
-            parser = lntr._parser()
+            parser = lntr._parse()
             args = parser.parse_args(
                 [
                     "-f",

@@ -21,7 +21,7 @@ def add_bool_arg(
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add options to a parser like --xyz and --no-xyz (e.g., for --incremental).
+    Add options to a parser like --xyz and --no_xyz (e.g., for --incremental).
     """
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--" + name, dest=name, action="store_true", help=help_)
@@ -64,18 +64,31 @@ def actions_to_string(
 def select_actions(
     args: argparse.Namespace, valid_actions: List[str]
 ) -> List[str]:
+    dbg.dassert(
+        not (args.action and args.all),
+        "You can't specify together --action and --all",
+    )
+    dbg.dassert(
+        not (args.action and args.skip_action),
+        "You can't specify together --action and --skip_action",
+    )
     # Select actions.
     if not args.action or args.all:
         actions = list(valid_actions)
     else:
-        actions = args.action
-    actions = actions[:]
+        actions = args.action[:]
     dbg.dassert_isinstance(actions, list)
     dbg.dassert_no_duplicates(actions)
     # Validate actions.
     for action in set(actions):
         if action not in valid_actions:
             raise ValueError("Invalid action '%s'" % action)
+    # Remove actions, if needed.
+    if args.skip_action:
+        dbg.dassert_isinstance(args.skip_action, list)
+        for skip_action in args.skip_action:
+            dbg.dassert_in(skip_action, actions)
+            actions = [a for a in actions if a != skip_action]
     # Reorder actions according to 'valid_actions'.
     actions = [action for action in valid_actions if action in actions]
     return actions
@@ -97,14 +110,12 @@ def add_action_arg(
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument(
         "--action",
-        dest="action",
         action="append",
         choices=valid_actions,
         help="Actions to execute",
     )
     group.add_argument(
-        "--skip-action",
-        dest="skip_action",
+        "--skip_action",
         action="append",
         choices=valid_actions,
         help="Actions to skip",

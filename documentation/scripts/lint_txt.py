@@ -16,7 +16,7 @@ import os
 import re
 import sys
 import tempfile
-from typing import List
+from typing import List, Optional
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -78,15 +78,22 @@ def _preprocess(txt: str) -> str:
             continue
         txt_new.append(line)
     txt_new_as_str = "\n".join(txt_new)
+    # Replace multiple empty lines with one, to avoid prettier to start using
+    # `*` instead of `-`.
+    txt_new_as_str = re.sub(r"\n\s*\n", "\n\n", txt_new_as_str)
+    #
     _LOG.debug("txt_new_as_str=%s", txt_new_as_str)
     return txt_new_as_str
 
 
 def _prettier(txt: str) -> str:
-    _LOG.debug("txt=%s", txt)
+    _LOG.debug("txt=\n%s", txt)
     #
-    tmp_file_name = tempfile.NamedTemporaryFile().name
-    # tmp_file_name = "/tmp/tmp_prettier.txt"
+    debug = False
+    if not debug:
+        tmp_file_name = tempfile.NamedTemporaryFile().name
+    else:
+        tmp_file_name = "/tmp/tmp_prettier.txt"
     io_.to_file(tmp_file_name, txt)
     #
     executable = "prettier"
@@ -96,18 +103,22 @@ def _prettier(txt: str) -> str:
     cmd_opts.append("--write")
     tab_width = 2
     cmd_opts.append("--tab-width %s" % tab_width)
+    cmd_opts.append(tmp_file_name)
     cmd_opts.append("2>&1 >/dev/null")
     cmd_opts_as_str = " ".join(cmd_opts)
-    cmd_as_str = " ".join([executable, cmd_opts_as_str, tmp_file_name])
-    output_tmp = si.system_to_string(cmd_as_str, abort_on_error=True)
+    cmd_as_str = " ".join([executable, cmd_opts_as_str])
+    _, output_tmp = si.system_to_string(cmd_as_str, abort_on_error=True)
     _LOG.debug("output_tmp=%s", output_tmp)
     #
     txt = io_.from_file(tmp_file_name)
+    _LOG.debug("After prettier txt=\n%s", txt)
     return txt
 
 
 def _postprocess(txt: str, in_file_name: str) -> str:
     _LOG.debug("txt=%s", txt)
+    # Remove empty lines before ```.
+    txt = re.sub(r"^\s*\n(\s*```)$", r"\1", txt, 0, flags=re.MULTILINE)
     # Remove empty lines before higher level bullets, but not chapters.
     txt = re.sub(r"^\s*\n(\s+-\s+.*)$", r"\1", txt, 0, flags=re.MULTILINE)
     # True if one is in inside a ``` .... ``` block.
@@ -169,21 +180,48 @@ def _refresh_toc(txt: str) -> str:
     return txt
 
 
-def _process(txt: str, in_file_name: str) -> str:
+# #############################################################################
+
+
+def _to_execute_action(action, actions):
+    to_execute = actions is None or action in actions
+    if not to_execute:
+        _LOG.debug("Skipping %s", action)
+    return to_execute
+
+
+def _process(
+    txt: str, in_file_name: str, actions: Optional[List[str]] = None
+) -> str:
     # Pre-process text.
-    txt = _preprocess(txt)
+    action = "preprocess"
+    if _to_execute_action(action, actions):
+        txt = _preprocess(txt)
     # Prettify.
-    txt = _prettier(txt)
+    action = "prettier"
+    if _to_execute_action(action, actions):
+        txt = _prettier(txt)
     # Post-process text.
-    txt = _postprocess(txt, in_file_name)
+    action = "postprocess"
+    if _to_execute_action(action, actions):
+        txt = _postprocess(txt, in_file_name)
     # Refresh table of content.
-    is_md_file = in_file_name.endswith(".md")
-    if is_md_file:
-        txt = _refresh_toc(txt)
+    action = "refresh_toc"
+    if _to_execute_action(action, actions):
+        is_md_file = in_file_name.endswith(".md")
+        if is_md_file:
+            txt = _refresh_toc(txt)
     return txt
 
 
 # #############################################################################
+
+_VALID_ACTIONS = [
+    "preprocess",
+    "prettier",
+    "postprocess",
+    "refresh_toc",
+]
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -207,16 +245,20 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--in_place", action="store_true",
     )
+    prsr.add_action_arg(parser, _VALID_ACTIONS)
     prsr.add_verbosity_arg(parser)
     return parser
 
 
-def _main(args):
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Read input.
+def _main(args: argparse.Namespace) -> None:
     in_file_name = args.infile.name
+    from_stdin = in_file_name == "<stdin>"
+    dbg.init_logger(
+        verbosity=args.log_level, use_exec_path=False, force_white=from_stdin
+    )
+    # Read input.
     _LOG.debug("in_file_name=%s", in_file_name)
-    if in_file_name != "<stdin>":
+    if not from_stdin:
         dbg.dassert(
             in_file_name.endswith(".txt") or in_file_name.endswith(".md"),
             "Invalid extension for file name '%s'",
@@ -224,7 +266,7 @@ def _main(args):
         )
     txt = args.infile.read()
     # Process.
-    txt = _process(txt, in_file_name)
+    txt = _process(txt, in_file_name, actions=args.action)
     # Write output.
     if args.in_place:
         dbg.dassert_ne(in_file_name, "<stdin>")
