@@ -6,9 +6,9 @@
 # Goal
 
 - The acronym "ETL" stands for:
-    - Extract
-    - Transform
-    - Load
+  - Extract
+  - Transform
+  - Load
 
 - The goal of the `ETL2` framework is to:
   - Download historical and real-time data from a variety of data sources
@@ -181,6 +181,10 @@
 - We keep the time series data (aka payload) and the KG data separated
 - The KG contains metadata and pointers to the payload for each time series
 
+##
+
+# Implementation details
+
 ## DataSourceAdapters
 
 - `Adapters` are equivalent to `ETL1` "Fillers"
@@ -188,20 +192,21 @@
     they are ported to the new `ETL2` interfaces
 
 - Each `Adapter` understands:
-    - the structure of a website
-    - how to access the data
-    - what to download
-    - how to access a period of time
+  - The structure of a website
+  - How to access the data
+  - What to download
+  - How to access a period of time
 
 - Each `Adapter` extracts the data by:
-    - scraping HTML
-    - taking advantage of the specific data API
-    - taking snapshot of the rendered pages and run OCR on it
+  - Scraping HTML
+  - Taking advantage of the specific data API
+  - Taking snapshot of the rendered pages and run OCR on it
 
-- The output is the raw data stored in the website, e.g., CSV, XLS, PDF file, JPEG
+- The output is the raw data stored in the website, e.g., CSV, XLS, PDF file,
+  JPEG
 - `Adapters` don't do any transformations
-    - They are just retrieving the data in the native format
-    - They are "Extract" phase in ETL
+  - They are just retrieving the data in the native format
+  - They are "Extract" phase in ETL
 
 ## Transformers
 
