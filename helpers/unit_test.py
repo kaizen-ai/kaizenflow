@@ -62,6 +62,22 @@ def get_incremental_tests() -> bool:
 # #############################################################################
 
 
+def in_unit_test_mode() -> bool:
+    """
+    Return True if we are inside a pytest run.
+    This is set by conftest.py.
+    """
+    res = False
+    try:
+        res = CALLED_FROM_TEST
+    except NameError:
+        pass
+    return res
+
+
+# #############################################################################
+
+
 def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
