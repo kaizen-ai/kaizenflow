@@ -146,6 +146,7 @@ def _filter_target_files(file_names: List[str]) -> List[str]:
         # We skip .ipynb since jupytext is part of the main flow.
         is_valid = file_ext in (".py", ".txt", ".md")
         is_valid &= ".ipynb_checkpoints/" not in file_name
+        is_valid &= "dev_scripts/install/conda_envs" not in file_name
         # Skip tmp names since we need to run on unit tests.
         if False:
             # Skip files in directory starting with "tmp.".
@@ -272,6 +273,22 @@ def _write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None
         io_.to_file(file_name, txt_new_as_str)
 
 
+# There are some lints that
+#   a) we disagree with (e.g., too many functions in a class)
+#       - they are ignored all the times
+#   b) are too hard to respect (e.g., each function has a docstring)
+#       - they are ignored unless we want to see them
+#
+# pedantic=2 -> all lints, including a) and b)
+# pedantic=1 -> discard lints from a), include b)
+# pedantic=0 -> discard lints from a) and b)
+
+# - The default is to run with (-> pedantic=0)
+# - Sometimes we want to take a look at the lints that we would like to enforce
+#   (-> pedantic=1)
+# - In rare occasions we want to see all the lints (-> pedantic=2)
+
+
 # TODO(gp): joblib asserts when using abstract classes:
 #   AttributeError: '_BasicHygiene' object has no attribute '_executable'
 # class _Action(abc.ABC):
@@ -290,7 +307,7 @@ class _Action:
         """
         raise NotImplementedError
 
-    def execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def execute(self, file_name: str, pedantic: int) -> List[str]:
         """
         Execute the action.
 
@@ -305,7 +322,7 @@ class _Action:
         return output
 
     # @abc.abstractmethod
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         raise NotImplementedError
 
 
@@ -324,7 +341,7 @@ class _CheckFileProperty(_Action):
         # We don't need any special executable, so we can always run this action.
         return True
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         output: List[str] = []
         for func in [
@@ -395,7 +412,7 @@ class _BasicHygiene(_Action):
         # We don't need any special executable, so we can always run this action.
         return True
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         output: List[str] = []
         # Read file.
@@ -439,7 +456,7 @@ class _CompilePython(_Action):
         # We don't need any special executable, so we can always run this action.
         return True
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         output: List[str] = []
         # Applicable only to python files.
@@ -470,7 +487,7 @@ class _Autoflake(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         # Applicable to only python file.
         if not is_py_file(file_name):
@@ -498,7 +515,7 @@ class _Yapf(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         # Applicable to only python file.
         if not is_py_file(file_name):
@@ -526,7 +543,7 @@ class _Black(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         # Applicable to only python file.
         if not is_py_file(file_name):
@@ -561,7 +578,7 @@ class _Isort(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         # Applicable to only python file.
         if not is_py_file(file_name):
@@ -592,7 +609,7 @@ class _Flake8(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         # Applicable to only python file.
         if not is_py_file(file_name):
@@ -662,38 +679,44 @@ class _Pydocstyle(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         # Applicable to only python file.
         if not is_py_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
+        ignore = []
         # http://www.pydocstyle.org/en/2.1.1/error_codes.html
-        ignore = [
-            # D105: Missing docstring in magic method
-            "D105",
-            # D200: One-line docstring should fit on one line with quotes
-            "D200",
-            # D202: No blank lines allowed after function docstring
-            "D202",
-            # D212: Multi-line docstring summary should start at the first line
-            "D212",
-            # D203: 1 blank line required before class docstring (found 0)
-            "D203",
-            # D205: 1 blank line required between summary line and description
-            "D205",
-            # D400: First line should end with a period (not ':')
-            "D400",
-            # D402: First line should not be the function's "signature"
-            "D402",
-            # D407: Missing dashed underline after section
-            "D407",
-            # D413: Missing dashed underline after section
-            "D413",
-            # D415: First line should end with a period, question mark, or
-            # exclamation point
-            "D415",
-        ]
-        if not pedantic:
+        if not (pedantic >= 2):
+            # TODO(gp): Review all of these.
+            ignore.extend(
+                [
+                    # D105: Missing docstring in magic method
+                    "D105",
+                    # D200: One-line docstring should fit on one line with quotes
+                    "D200",
+                    # D202: No blank lines allowed after function docstring
+                    "D202",
+                    # D212: Multi-line docstring summary should start at the first line
+                    "D212",
+                    # D203: 1 blank line required before class docstring (found 0)
+                    "D203",
+                    # D205: 1 blank line required between summary line and description
+                    "D205",
+                    # D400: First line should end with a period (not ':')
+                    "D400",
+                    # D402: First line should not be the function's "signature"
+                    "D402",
+                    # D407: Missing dashed underline after section
+                    "D407",
+                    # D413: Missing dashed underline after section
+                    "D413",
+                    # D415: First line should end with a period, question mark, or
+                    # exclamation point
+                    "D415",
+                ]
+            )
+        if not (pedantic >= 1):
+            # Disable some lints that are hard to respect.
             ignore.extend(
                 [
                     # D100: Missing docstring in public module
@@ -720,7 +743,7 @@ class _Pydocstyle(_Action):
         cmd.append(file_name)
         cmd_as_str = " ".join(cmd)
         # We don't abort on error on pydocstyle, since it returns error if there
-        # is # any violation.
+        # is any violation.
         _, file_lines_as_str = si.system_to_string(
             cmd_as_str, abort_on_error=False
         )
@@ -763,7 +786,7 @@ class _Pyment(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         # Applicable to only python file.
         if not is_py_file(file_name):
@@ -786,93 +809,106 @@ class _Pylint(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         # Applicable to only python file.
         if not is_py_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
         opts = []
-        # We ignore these errors as too picky.
-        ignore = [
-            # [C0302(too-many-lines), ] Too many lines in module (/1000)
-            "C0302",
-            # [C0304(missing-final-newline), ] Final newline missing
-            "C0304",
-            # [C0330(bad-continuation), ] Wrong hanging indentation before block
-            #   (add 4 spaces).
-            # - Black and pylint don't agree on the formatting.
-            "C0330",
-            # [C0412(ungrouped-imports), ] Imports from package ... are not grouped
-            "C0412",
-            # [C0415(import-outside-toplevel), ] Import outside toplevel
-            "C0415",
-            # [R0903(too-few-public-methods), ] Too few public methods (/2)
-            "R0903",
-            # [R0912(too-many-branches), ] Too many branches (/12)
-            "R0912",
-            # R0913(too-many-arguments), ] Too many arguments (/5)
-            "R0913",
-            # [R0914(too-many-locals), ] Too many local variables (/15)
-            "R0914",
-            # [R0915(too-many-statements), ] Too many statements (/50)
-            "R0915",
-            # [W0123(eval-used), ] Use of eval
-            "W0123",
-            # [W0125(using-constant-test), ] Using a conditional statement with a
-            #   constant value
-            "W0125",
-            # [W0511(fixme), ]
-            "W0511",
-            # [W0603(global-statement), ] Using the global statement
-            # - We assume that we are mature enough to use `global` properly.
-            "W0603",
-            # [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
-            #   positional arguments list in the definition of
-            # - TODO(gp): Not clear what is the problem.
-            "W1113",
-        ]
-        is_test_code_tmp = is_under_test_dir(file_name)
-        _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
-        if is_test_code_tmp:
-            # TODO(gp): For files inside "test", disable:
+        ignore = []
+        if not (pedantic >= 2):
+            # We ignore these errors as too picky.
             ignore.extend(
                 [
-                    # [C0103(invalid-name), ] Class name "Test_dassert_eq1"
-                    #   doesn't conform to PascalCase naming style
-                    "C0103",
-                    # [R0201(no-self-use), ] Method could be a function
-                    "R0201",
-                    # [W0212(protected-access), ] Access to a protected member
-                    #   _get_default_tempdir of a client class
-                    "W0212",
+                    # [C0302(too-many-lines), ] Too many lines in module (/1000)
+                    "C0302",
+                    # TODO(gp): Re-enable?
+                    # [C0304(missing-final-newline), ] Final newline missing
+                    "C0304",
+                    # [C0330(bad-continuation), ] Wrong hanging indentation before
+                    #   block (add 4 spaces).
+                    # - Black and pylint don't agree on the formatting.
+                    "C0330",
+                    # [C0412(ungrouped-imports), ] Imports from package ... are not
+                    #   grouped
+                    # TODO(gp): Re-enable?
+                    "C0412",
+                    # [C0415(import-outside-toplevel), ] Import outside toplevel
+                    # - Sometimes we import inside a function.
+                    "C0415",
+                    # [R0903(too-few-public-methods), ] Too few public methods (/2)
+                    "R0903",
+                    # [R0912(too-many-branches), ] Too many branches (/12)
+                    "R0912",
+                    # R0913(too-many-arguments), ] Too many arguments (/5)
+                    "R0913",
+                    # [R0914(too-many-locals), ] Too many local variables (/15)
+                    "R0914",
+                    # [R0915(too-many-statements), ] Too many statements (/50)
+                    "R0915",
+                    # [W0123(eval-used), ] Use of eval
+                    # - We assume that we are mature enough to use `eval` properly.
+                    "W0123",
+                    # [W0125(using-constant-test), ] Using a conditional statement
+                    #   with a constant value:
+                    # - E.g., we use sometimes `if True:` or `if False:`.
+                    "W0125",
+                    # [W0511(fixme), ]
+                    "W0511",
+                    # [W0603(global-statement), ] Using the global statement
+                    # - We assume that we are mature enough to use `global` properly.
+                    "W0603",
+                    # [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
+                    #   positional arguments list in the definition of
+                    # - TODO(gp): Not clear what is the problem.
+                    "W1113",
                 ]
             )
-        is_jupytext_code = is_paired_jupytext_file(file_name)
-        _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
-        if is_jupytext_code:
+            # Unit test.
+            is_test_code_tmp = is_under_test_dir(file_name)
+            _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
+            if is_test_code_tmp:
+                ignore.extend(
+                    [
+                        # [C0103(invalid-name), ] Class name "Test_dassert_eq1"
+                        #   doesn't conform to PascalCase naming style
+                        "C0103",
+                        # [R0201(no-self-use), ] Method could be a function
+                        "R0201",
+                        # [W0212(protected-access), ] Access to a protected member
+                        #   _get_default_tempdir of a client class
+                        "W0212",
+                    ]
+                )
+            # Jupytext.
+            is_jupytext_code = is_paired_jupytext_file(file_name)
+            _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+            if is_jupytext_code:
+                ignore.extend(
+                    [
+                        # [W0104(pointless-statement), ] Statement seems to
+                        # have noeffect
+                        # - This is disabled since we use just variable names
+                        #   to print.
+                        "W0104",
+                        # [W0106(expression-not-assigned), ] Expression ... is
+                        # assigned to nothing
+                        "W0106",
+                        # [W0621(redefined-outer-name), ] Redefining name ...
+                        # from outer scope
+                        "W0621",
+                    ]
+                )
+        if not (pedantic >= 1):
             ignore.extend(
                 [
-                    # [W0104(pointless-statement), ] Statement seems to have noeffect
-                    # This is disabled since we use just variable names to print.
-                    "W0104",
-                    # [W0106(expression-not-assigned), ] Expression # ... is
-                    # assigned to nothing
-                    "W0106",
-                    # [W0621(redefined-outer-name), ] Redefining name ... from outer
-                    # scope
-                    "W0621",
-                ]
-            )
-        if not pedantic:
-            ignore.extend(
-                [
-                    # [C0103(invalid-name), ] Constant name "..." doesn't conform to
-                    #   UPPER_CASE naming style
+                    # [C0103(invalid-name), ] Constant name "..." doesn't
+                    #   conform to UPPER_CASE naming style
                     "C0103",
                     # [C0111(missing - docstring), ] Missing module docstring
                     "C0111",
-                    # [C0301(line-too-long), ] Line too long (1065/100)
-                    "C0301",
+                    # [C0301(line-too-long), ] Line too long (/100)
+                    # "C0301",
                 ]
             )
         if ignore:
@@ -929,7 +965,7 @@ class _Mypy(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         # Applicable to only python files, that are not paired with notebooks.
         if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
@@ -973,7 +1009,7 @@ class _IpynbFormat(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         output: List[str] = []
         # Applicable to only ipynb file.
         if not is_ipynb_file(file_name):
@@ -1073,7 +1109,7 @@ class _ProcessJupytext(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         output: List[str] = []
         # TODO(gp): Use the usual idiom of these functions.
@@ -1108,7 +1144,7 @@ class _CustomPythonChecks(_Action):
         # We don't need any special executable, so we can always run this action.
         return True
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
         output: List[str] = []
         # Applicable only to python files that are not paired with Jupytext.
@@ -1290,7 +1326,7 @@ class _LintMarkdown(_Action):
     def check_if_possible(self) -> bool:
         return _check_exec(self._executable)
 
-    def _execute(self, file_name: str, pedantic: bool) -> List[str]:
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
         # Applicable only to txt and md files.
         ext = os.path.splitext(file_name)[1]
         output: List[str] = []
@@ -1317,7 +1353,7 @@ class _LintMarkdown(_Action):
 
 
 def _check_file_property(
-    actions: List[str], all_file_names: List[str], pedantic: bool
+    actions: List[str], all_file_names: List[str], pedantic: int
 ) -> Tuple[List[str], List[str]]:
     output: List[str] = []
     action = "check_file_property"
@@ -1473,7 +1509,7 @@ def _test_actions() -> None:
 
 
 def _lint(
-    file_name: str, actions: List[str], pedantic: bool, debug: bool
+    file_name: str, actions: List[str], pedantic: int, debug: bool
 ) -> List[str]:
     """
     Execute all the actions on a filename.
@@ -1734,7 +1770,8 @@ def _parse() -> argparse.ArgumentParser:
     prsr.add_action_arg(parser, _get_valid_actions())
     #
     parser.add_argument(
-        "--pedantic", action="store_true", help="Run some purely cosmetic lints"
+        "--pedantic", action="store", type=int, default=0,
+        help="Pedantic level. 0 = min, 2 = max (all the lints)"
     )
     parser.add_argument(
         "--num_threads",
