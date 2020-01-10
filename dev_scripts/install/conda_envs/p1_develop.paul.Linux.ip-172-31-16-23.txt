@@ -4,7 +4,7 @@ System info
 user name=paul
 server name=ip-172-31-16-23
 os name=Linux
-conda path=/anaconda3/bin/conda
+conda path=/anaconda3/condabin/conda
 conda env root=['/wd/paul/.conda/envs', '/anaconda3/envs']
 pandas: 0.25.3
 numpy: 1.17.3
@@ -13,379 +13,12 @@ arrow-cpp: 0.15.1
 ################################################################################
 Package summary
 ################################################################################
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gxx_linux-64.sh: line 69: export: `=x86_64-conda_cos6-linux-gnu': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gxx_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-c++': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gxx_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-g++': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gxx_linux-64.sh: line 69: export: `=-fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=-fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-all -fno-plt -Og -g -Wall -Wextra -fvar-tracking-assignments -ffunction-sections -pipe -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=x86_64-conda_cos6-linux-gnu': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-cc': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-cpp': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gcc': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gcc-ar': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gcc-nm': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gcc-ranlib': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=-DNDEBUG -D_FORTIFY_SOURCE=2 -O2 -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=-march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/wd/paul/.conda/envs/p1_develop/lib -Wl,-rpath-link,/wd/paul/.conda/envs/p1_develop/lib -L/wd/paul/.conda/envs/p1_develop/lib': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=-D_DEBUG -D_FORTIFY_SOURCE=2 -Og -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=-march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-all -fno-plt -Og -g -Wall -Wextra -fvar-tracking-assignments -ffunction-sections -pipe -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-gcc_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop:/wd/paul/.conda/envs/p1_develop/x86_64-conda_cos6-linux-gnu/sysroot/usr': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/x86_64-conda_cos6-linux-gnu/sysroot': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=x86_64-conda_cos6-linux-gnu': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-addr2line': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-ar': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-as': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-c++filt': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-elfedit': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gprof': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-ld': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-ld.gold': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-nm': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-objcopy': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-objdump': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-ranlib': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-readelf': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-size': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/deactivate.d/deactivate-binutils_linux-64.sh: line 69: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-strings': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=x86_64-conda_cos6-linux-gnu': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-addr2line': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-ar': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-as': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-c++filt': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-elfedit': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gprof': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-ld': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-ld.gold': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-nm': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-objcopy': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-objdump': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-ranlib': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-readelf': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-size': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-strings': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-binutils_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-strip': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=x86_64-conda_cos6-linux-gnu': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-cc': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-cpp': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gcc': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gcc-ar': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gcc-nm': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-gcc-ranlib': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=-DNDEBUG -D_FORTIFY_SOURCE=2 -O2 -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=-march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/wd/paul/.conda/envs/p1_develop/lib -Wl,-rpath-link,/wd/paul/.conda/envs/p1_develop/lib -L/wd/paul/.conda/envs/p1_develop/lib': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=-D_DEBUG -D_FORTIFY_SOURCE=2 -Og -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=-march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-all -fno-plt -Og -g -Wall -Wextra -fvar-tracking-assignments -ffunction-sections -pipe -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop:/wd/paul/.conda/envs/p1_develop/x86_64-conda_cos6-linux-gnu/sysroot/usr': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=_sysconfigdata_x86_64_conda_cos6_linux_gnu': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gcc_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/x86_64-conda_cos6-linux-gnu/sysroot': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gxx_linux-64.sh: line 74: export: `=x86_64-conda_cos6-linux-gnu': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gxx_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-c++': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gxx_linux-64.sh: line 74: export: `=/wd/paul/.conda/envs/p1_develop/bin/x86_64-conda_cos6-linux-gnu-g++': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gxx_linux-64.sh: line 74: export: `=-fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
-Traceback (most recent call last):
-  File "/anaconda3/bin/tr", line 10, in <module>
-    sys.exit(tr())
-TypeError: 'dict' object is not callable
-/wd/paul/.conda/envs/p1_develop/etc/conda/activate.d/activate-gxx_linux-64.sh: line 74: export: `=-fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-all -fno-plt -Og -g -Wall -Wextra -fvar-tracking-assignments -ffunction-sections -pipe -isystem /wd/paul/.conda/envs/p1_develop/include': not a valid identifier
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: linux-64
-_libgcc_mutex=0.1=main
+_libgcc_mutex=0.1=conda_forge
 _mutex_mxnet=0.0.30=openblas
+_openmp_mutex=4.5=0_gnu
 agate=1.6.0=py_3
 agate-dbf=0.2.1=py_0
 agate-excel=0.2.3=py_0
@@ -393,22 +26,22 @@ agate-sql=0.5.4=py_0
 apipkg=1.5=py_0
 appdirs=1.4.3=py_1
 arrow-cpp=0.15.1=py37h982ac2c_5
-arviz=0.5.1=py_1
+arviz=0.6.1=py_0
 astroid=2.3.3=py37_0
 attrs=19.3.0=py_0
 autoflake=1.3=py_0
-awscli=1.16.308=py37_0
-babel=2.7.0=py_0
+awscli=1.16.314=py37_0
+babel=2.8.0=py_0
 backcall=0.1.0=py_0
-beautifulsoup4=4.8.1=py37_0
+beautifulsoup4=4.8.2=py37_0
 binutils_impl_linux-64=2.33.1=he1b5a44_7
-binutils_linux-64=2.33.1=h9595d00_15
+binutils_linux-64=2.33.1=h9595d00_16
 black=19.10b0=py37_0
 blas=2.14=openblas
 bleach=3.1.0=py_0
 boost-cpp=1.70.0=ha2d47e9_1
-boto3=1.10.44=py_0
-botocore=1.13.44=py_0
+boto3=1.10.50=py_0
+botocore=1.13.50=py_0
 bottle=0.12.17=py_0
 brotli=1.0.7=he1b5a44_1000
 bzip2=1.0.8=h516909a_2
@@ -421,7 +54,7 @@ cftime=1.0.4.2=py37hc1659b7_0
 chardet=3.0.4=py37_1003
 click=7.0=py_0
 colorama=0.4.1=py_0
-coverage=4.5.4=py37h516909a_0
+coverage=5.0.2=py37h516909a_0
 cryptography=2.8=py37h72c5cf5_1
 csvkit=1.0.4=py_0
 curl=7.65.3=hf8cf82a_0
@@ -450,8 +83,8 @@ freeglut=3.0.0=hf484d3e_1005
 freetype=2.10.0=he983fc9_1
 fsspec=0.6.2=py_0
 fuzzywuzzy=0.17.0=pypi_0
-gcc_impl_linux-64=7.3.0=habb00fd_2
-gcc_linux-64=7.3.0=h553295d_15
+gcc_impl_linux-64=7.3.0=hd420e75_4
+gcc_linux-64=7.3.0=h553295d_16
 gdbm=1.18=h0a1914f_1
 gettext=0.19.8.1=hc5be6a0_1002
 gflags=2.2.2=he1b5a44_1002
@@ -466,14 +99,14 @@ graphviz=2.38.0=hf68f40c_1011
 grpc-cpp=1.25.0=h213be95_2
 gst-plugins-base=1.14.5=h0935bb2_0
 gstreamer=1.14.5=h36ae1b5_0
-gxx_impl_linux-64=7.3.0=hdf63c60_2
-gxx_linux-64=7.3.0=h553295d_15
+gxx_impl_linux-64=7.3.0=hdf63c60_4
+gxx_linux-64=7.3.0=h553295d_16
 h11=0.8.1=pypi_0
 h5py=2.9.0=pypi_0
 harfbuzz=1.8.8=hffaf4a1_0
 hdf4=4.2.13=hf30be14_1003
 hdf5=1.10.2=hc401514_3
-holidays=0.9.11=pypi_0
+holidays=0.9.12=pypi_0
 httptools=0.0.13=pypi_0
 icu=58.2=hf484d3e_1000
 idna=2.8=py37_1000
@@ -481,14 +114,14 @@ importlib_metadata=1.3.0=py37_0
 inflection=0.3.1=py_1
 intel-openmp=2019.4=243
 ipykernel=5.1.3=py37h5ca1d4c_0
-ipython=7.10.1=py37h5ca1d4c_0
+ipython=7.11.1=py37h5ca1d4c_0
 ipython_genutils=0.2.0=py_1
 ipywidgets=7.5.1=py_0
 isodate=0.6.0=py_1
 isort=4.3.21=py37_0
 jasper=2.0.14=habb8e15_1
 jdcal=1.4.1=py_0
-jedi=0.15.1=py37_0
+jedi=0.15.2=py37_0
 jinja2=2.10.3=py_0
 jmespath=0.9.4=py_0
 joblib=0.14.1=py_0
@@ -496,7 +129,7 @@ jpeg=9c=h14c3975_1001
 jq=1.6=h14c3975_1000
 jsonschema=3.2.0=py37_0
 jupyter=1.0.0=py_2
-jupyter_client=5.3.3=py37_1
+jupyter_client=5.3.4=py37_0
 jupyter_console=6.0.0=py_0
 jupyter_contrib_core=0.3.3=py_2
 jupyter_contrib_nbextensions=0.5.1=py37_0
@@ -504,7 +137,7 @@ jupyter_core=4.6.1=py37_0
 jupyter_highlight_selected_word=0.2.0=py37_1000
 jupyter_latex_envs=1.4.4=py37_1000
 jupyter_nbextensions_configurator=0.4.1=py37_0
-jupytext=1.3.0=0
+jupytext=1.3.2=0
 kenlm=0.0.0=pypi_0
 keras=2.2.4=pypi_0
 keras-applications=1.0.8=pypi_0
@@ -520,10 +153,11 @@ libcurl=7.65.3=hda55be3_0
 libedit=3.1.20170329=hf8c457e_1001
 libevent=2.1.10=h72c5cf5_0
 libffi=3.2.1=he1b5a44_1006
-libgcc-ng=9.2.0=hdf63c60_0
+libgcc-ng=9.2.0=h24d8f2e_2
 libgfortran=3.0.0=1
-libgfortran-ng=7.3.0=hdf63c60_2
+libgfortran-ng=7.3.0=hdf63c60_4
 libglu=9.0.0=hf484d3e_1000
+libgomp=9.2.0=h24d8f2e_2
 libgpuarray=0.7.6=h14c3975_1003
 libiconv=1.15=h516909a_1005
 liblapack=3.8.0=14_openblas
@@ -538,14 +172,14 @@ libpq=11.5=hd9ab2ff_2
 libprotobuf=3.11.0=h8b12597_0
 libsodium=1.0.17=h516909a_0
 libssh2=1.8.2=h22169c7_2
-libstdcxx-ng=9.2.0=hdf63c60_0
-libtiff=4.1.0=hc3755c2_1
+libstdcxx-ng=9.2.0=hdf63c60_2
+libtiff=4.1.0=hc3755c2_3
 libtool=2.4.6=h14c3975_1002
 libuuid=2.32.1=h14c3975_1000
 libxcb=1.13=h14c3975_1002
 libxml2=2.9.9=h13577e0_2
 libxslt=1.1.32=hae48121_1003
-llvmlite=0.30.0=py37h8b12597_1
+llvmlite=0.31.0=py37h8b12597_0
 lru-dict=1.1.6=pypi_0
 lxml=4.4.1=py37h7ec2d77_0
 lz4-c=1.8.3=he1b5a44_1001
@@ -559,12 +193,12 @@ mkl=2019.4=243
 mkl-service=2.3.0=py37h516909a_0
 more-itertools=8.0.2=py_0
 mxnet=1.5.0=hea8a0af_0
-mypy=0.750=py_0
+mypy=0.761=py_0
 mypy_extensions=0.4.3=py37_0
 nb_conda=2.2.1=py37_2
 nb_conda_kernels=2.2.2=py37_0
 nbconvert=5.6.1=py37_0
-nbformat=4.4.0=py_1
+nbformat=5.0.3=py_0
 ncurses=6.1=hf484d3e_1002
 netcdf4=1.4.1=py37ha292673_200
 nettle=3.3=0
@@ -572,23 +206,23 @@ networkx=2.4=py_0
 nltk=3.2.5=pypi_0
 notebook=6.0.1=py37_0
 num2words=0.5.9=py37h69c05ab_0
-numba=0.46.0=py37hb3f55d8_1
+numba=0.47.0=py37hb3f55d8_0
 numpy=1.17.3=py37h95a1406_0
 oniguruma=6.9.3=h516909a_0
 openh264=1.8.0=hdbcaa40_1000
-openpyxl=3.0.1=py_0
+openpyxl=3.0.3=py_0
 openssl=1.1.1d=h516909a_0
 overrides=1.9=pypi_0
-packaging=19.2=py_0
+packaging=20.0=py_0
 pandas=0.25.3=py37hb3f55d8_0
 pandas-datareader=0.8.0=py_0
-pandoc=2.9=0
+pandoc=2.9.1.1=0
 pandocfilters=1.4.2=py_1
 pango=1.40.14=he752989_2
 parquet-cpp=1.5.1=2
 parsedatetime=2.4=py_1
 parso=0.5.2=py_0
-pathspec=0.6.0=py_0
+pathspec=0.7.0=py_0
 patsy=0.5.1=py_0
 pcre=8.43=he1b5a44_0
 perl=5.26.2=h516909a_1006
@@ -603,7 +237,7 @@ psutil=5.6.7=py37h516909a_0
 psycopg2=2.8.4=py37h72c5cf5_0
 pthread-stubs=0.4=h14c3975_1001
 ptyprocess=0.6.0=py_1001
-py=1.8.0=py_0
+py=1.8.1=py_0
 py-mxnet=1.5.0=py37hc738527_0
 pyannotate=1.2.0=pypi_0
 pyarrow=0.15.1=py37h8b68381_1
@@ -611,21 +245,21 @@ pyasn1=0.4.8=py_0
 pycodestyle=2.5.0=py_0
 pycparser=2.19=py37_1
 pydantic=1.3=pypi_0
-pydocstyle=5.0.1=py_0
+pydocstyle=5.0.2=py_0
 pyflakes=2.1.1=py_0
 pygments=2.5.2=py_0
 pygpu=0.7.6=py37hc1659b7_1000
 pygraphviz=1.5=py37h516909a_1001
 pylint=2.4.4=py37_0
 pymc3=3.8=py_0
-pymongo=3.10.0=py37he1b5a44_0
+pymongo=3.10.1=py37he1b5a44_0
 pymorphy2=0.8=pypi_0
 pymorphy2-dicts=2.4.393442.3710985=pypi_0
 pymorphy2-dicts-ru=2.4.404381.4453942=pypi_0
 pyopenssl=19.0.0=pypi_0
-pyparsing=2.4.5=py_0
+pyparsing=2.4.6=py_0
 pyqt=5.9.2=py37hcca6a23_4
-pyrsistent=0.15.6=py37h516909a_0
+pyrsistent=0.15.7=py37h516909a_0
 pysocks=1.7.1=py37_0
 pyspellchecker=0.5.2=pypi_0
 pytelegrambotapi=3.6.6=pypi_0
@@ -633,8 +267,8 @@ pytest=5.3.2=py37_0
 pytest-cov=2.8.1=py_0
 pytest-forked=1.1.2=py_0
 pytest-instafail=0.4.1=py_0
-pytest-xdist=1.30.0=py_0
-python=3.7.3=h357f687_2
+pytest-xdist=1.31.0=py_0
+python=3.7.6=h357f687_2
 python-dateutil=2.8.0=pypi_0
 python-slugify=4.0.0=py_0
 pytimeparse=1.1.8=py_0
@@ -645,9 +279,9 @@ pyzmq=18.1.1=py37h1768529_0
 qt=5.9.7=h52cfd70_2
 qtconsole=4.6.0=py_0
 quandl=3.4.6=py37_0
-re2=2019.12.01=he1b5a44_0
+re2=2020.01.01=he1b5a44_0
 readline=8.0=hf8c457e_0
-regex=2019.12.19=py37h516909a_0
+regex=2020.1.8=py37h516909a_0
 requests=2.22.0=py37_1
 rsa=3.4.2=py_1
 ruby=2.6.5=h305c5c1_0
@@ -658,13 +292,13 @@ scikit-learn=0.21.2=pypi_0
 scipy=1.3.0=pypi_0
 seaborn=0.9.0=py_2
 send2trash=1.5.0=py_0
-setuptools=42.0.2=py37_0
+setuptools=44.0.0=py37_0
 sip=4.19.8=py37hf484d3e_1000
 six=1.13.0=py37_0
-snappy=1.1.7=he1b5a44_1002
+snappy=1.1.7=he1b5a44_1003
 snowballstemmer=2.0.0=py_0
 soupsieve=1.9.4=py37_0
-sqlalchemy=1.3.11=py37h516909a_0
+sqlalchemy=1.3.12=py37h516909a_0
 sqlite=3.30.1=hcee41ef_0
 starlette=0.12.8=pypi_0
 statsmodels=0.10.2=py37hc1659b7_0
@@ -679,8 +313,8 @@ tk=8.6.10=hed695b0_0
 toml=0.10.0=py_0
 toolz=0.10.0=pypi_0
 tornado=6.0.3=py37h516909a_0
-tqdm=4.40.2=py_0
-trading-calendars=1.11.1=pypi_0
+tqdm=4.41.1=py_0
+trading-calendars=1.11.2=pypi_0
 traitlets=4.3.3=py37_0
 typed-ast=1.4.0=py37h516909a_0
 typing_extensions=3.7.4.1=py37_0
@@ -690,7 +324,7 @@ uriparser=0.9.3=he1b5a44_1
 urllib3=1.25.7=py37_0
 uvicorn=0.9.0=pypi_0
 uvloop=0.14.0=pypi_0
-wcwidth=0.1.7=py_1
+wcwidth=0.1.8=py_0
 webencodings=0.5.1=py_1
 websockets=8.1=pypi_0
 wheel=0.33.6=py37_0
