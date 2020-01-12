@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Callable, Tuple
+from typing import Tuple
 
 import pytest
 
@@ -35,10 +35,10 @@ class _Function:
         self.__name__ = "_Function"
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.executed = False
 
-    def __call__(self, x, y):
+    def __call__(self, x: int, y: int) -> int:
         self.executed = True
         return x + y
 
@@ -46,8 +46,8 @@ class _Function:
 class Test_cache1(ut.TestCase):
     def test1(self) -> None:
         """
-        Cache tests need to clean up the cache, so we need to make sure we are
-        using the unit test cache.
+        Cache unit tests need to clean up the cache, so we need to make sure
+        we are using the unit test cache, and not the dev cache.
         """
         disk_cache_name = hcac.get_disk_cache_name()
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
@@ -59,14 +59,31 @@ class Test_cache1(ut.TestCase):
 # executed in parallel we would incur in race conditions for unit tests all
 # resetting / using the same disk cache.
 class Test_cache2(ut.TestCase):
+    def _get_function(self) -> _Function:
+        """
+        Build a function that can be used to verify if it was executed or not.
+        """
+        f = _Function()
+        # Make sure the function starts from a non-executed state.
+        self.assertFalse(f.executed)
+        return f
+
+    def _reset_function(self, f: _Function):
+        """
+        Reset the function before another execution, so we can verify if it was
+        executed or not.
+
+        We should do this every time we run the cached version of the function.
+        """
+        f.reset()
+        self.assertFalse(f.executed)
+
     def test_without_caching1(self) -> None:
         """
-        Test that for a function without caching, if we execute two times, we
-        still get two actual execution of the function.
+        Test that we get two executions of a function, if we execute two times,
+        without caching.
         """
-        # Make sure the function starts from a non-executed state.
-        f = _Function()
-        self.assertFalse(f.executed)
+        f = self._get_function()
         #
         # Execute.
         #
@@ -77,48 +94,61 @@ class Test_cache2(ut.TestCase):
         #
         # Execute again.
         #
-        f.reset()
-        self.assertFalse(f.executed)
+        self._reset_function(f)
         act = f(3, 4)
         self.assertEqual(act, 7)
-        # Check that the function is executed again, i.e., there is no caching.
+        # Check that the function is executed again, since there is no caching.
         self.assertTrue(f.executed)
 
     def _check_cache_state(
-        self, f, cf, val1: int, val2: int, exp_f_state: bool, exp_cf_state: str
+        self,
+        f: _Function,
+        cf: hcac.Cached,
+        val1: int,
+        val2: int,
+        exp_f_state: bool,
+        exp_cf_state: str,
     ) -> None:
+        """
+        Call the (cached function) `cf(val1, val2)` and check whether the
+        intrinsic function was executed and what caches were used.
+        """
+        # We reset the function since we want to verify if it was called or not,
+        # when calling the cached function.
         f.reset()
-        self.assertEqual(f.executed, False)
+        # Call the cached function.
         act = cf(val1, val2)
         exp = val1 + val2
         self.assertEqual(act, exp)
-        # Check.
+        # Check which function was executed and what caches were used.
         _LOG.debug("get_last_cache_accessed=%s", cf.get_last_cache_accessed())
         self.assertEqual(cf.get_last_cache_accessed(), exp_cf_state)
         _LOG.debug("executed=%s", f.executed)
         self.assertEqual(f.executed, exp_f_state)
 
-    def _get_functions(self) -> Tuple[Callable, Callable]:
+    def _get_f_cf_functions(self) -> Tuple[_Function, hcac.Cached]:
+        """
+        Create the intrinsic function `f` and its cached version `cf`.
+        """
         # Make sure that we are using the unit test cache.
         disk_cache_name = hcac.get_disk_cache_name()
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
         _LOG.debug("disk_cache_path=%s", hcac.get_disk_cache_path())
         self.assertIn("unittest", disk_cache_name)
-        #
-        f = _Function()
-        self.assertFalse(f.executed)
-        #
+        # Create the intrinsic function.
+        f = self._get_function()
+        # Create the cached function.
         cf = hcac.Cached(f)
         # Reset everything and check that it's in the expected state.
         hcac.reset_disk_cache()
         cf._reset_cache_tracing()
         return f, cf
 
-    def test_with_caching1(self):
+    def test_with_caching1(self) -> None:
         """
         Test that caching the same value works.
         """
-        f, cf = self._get_functions()
+        f, cf = self._get_f_cf_functions()
         #
         # Execute the first time: verify that it is executed.
         #
@@ -129,39 +159,40 @@ class Test_cache2(ut.TestCase):
         #
         # Execute the second time: verify that it is *NOT* executed.
         #
+        _LOG.debug("\n%s", prnt.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         #
         # Execute the third time: verify that it is *NOT* executed.
         #
+        _LOG.debug("\n%s", prnt.frame("Executing the 3rd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
 
-    def test_with_caching2(self):
+    def test_with_caching2(self) -> None:
         """
         Test that caching mixing different values works.
         """
-        f, cf = self._get_functions()
+        f, cf = self._get_f_cf_functions()
         #
         # Execute the first time: verify that it is executed.
         #
-        f.reset()
-        self.assertEqual(f.executed, False)
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
+        self._reset_function(f)
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        f.reset()
-        self.assertEqual(f.executed, False)
+        self._reset_function(f)
         self._check_cache_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
         # Execute the second time: verify that it is *NOT* executed.
         #
+        _LOG.debug("\n%s", prnt.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
@@ -301,7 +332,7 @@ class Test_git1(ut.TestCase):
         _ = git.report_submodule_status(dir_names, short_hash)
 
     def _helper_group_hashes(
-        self, head_hash: str, remh_hash: str, subm_hash: str, exp
+        self, head_hash: str, remh_hash: str, subm_hash: str, exp: str
     ) -> None:
         act = git._group_hashes(head_hash, remh_hash, subm_hash)
         self.assert_equal(act, exp)
