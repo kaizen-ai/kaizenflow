@@ -2,6 +2,8 @@
 Import as:
 
 import helpers.unit_test as ut
+
+# TODO(gp): use hut instead of ut.
 """
 
 import inspect
@@ -61,18 +63,15 @@ def get_incremental_tests() -> bool:
 
 # #############################################################################
 
+_CONFTEST_IN_PYTEST = False
+
 
 def in_unit_test_mode() -> bool:
     """
     Return True if we are inside a pytest run.
     This is set by conftest.py.
     """
-    res = False
-    try:
-        res = CALLED_FROM_TEST
-    except NameError:
-        pass
-    return res
+    return _CONFTEST_IN_PYTEST
 
 
 # #############################################################################

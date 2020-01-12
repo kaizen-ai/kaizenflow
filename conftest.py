@@ -7,17 +7,18 @@ import helpers.unit_test as hut
 
 # Hack to workaround pytest not happy with multiple redundant conftest.py
 # (bug #34).
+# TODO(gp): -> _CONFTEST_ALREADY_PARSED
 if not hasattr(hut, "conftest_already_parsed"):
 
-    # Store whether we are running from unit tests or not.
+    # Store whether we are running unit test through pytest.
     # From https://docs.pytest.org/en/latest/example/simple.html#detect-if-running-from-within-a-pytest-run
     def pytest_configure(config):
         _ = config
-        hut.CALLED_FROM_TEST = True
+        hut._CONFTEST_IN_PYTEST = True
 
     def pytest_unconfigure(config):
         _ = config
-        del hut.CALLED_FROM_TEST
+        hut._CONFTEST_IN_PYTEST = False
 
     hut.conftest_already_parsed = True  # type: ignore
 
