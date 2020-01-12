@@ -3,36 +3,7 @@
 Import as:
 
 import helpers.cache as hcac
-
-# Use as:
-import functools
-
-import helpers.cache as cache
-
-
-def _read_data(*args, **kwargs):
-    _LOG.info("Reading ...")
-    ...
-    return ...
-
-
-MEMORY = cache.get_disk_cache()
-
-@MEMORY.cache
-def _read_data_from_disk(*args, **kwargs):
-    _LOG.info("Reading from disk cache: %s %s", *args, **kwargs)
-    data = _read_data(*args, **kwargs)
-    return data
-
-
-@functools.lru_cache(maxsize=None)
-def read_data(*args, **kwargs):
-    _LOG.info("Reading from mem cache: %s %s", *args, **kwargs)
-    data = _read_data_from_disk(*args, **kwargs)
-    return data
 """
-
-# #############################################################################
 
 import argparse
 import functools
@@ -49,6 +20,7 @@ import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 
+# #############################################################################
 
 _USE_CACHING: bool = True
 
@@ -61,9 +33,6 @@ def set_caching(val: bool) -> None:
 
 def is_caching_enabled() -> bool:
     return _USE_CACHING
-
-
-# #############################################################################
 
 
 def get_disk_cache_name() -> str:
@@ -81,7 +50,8 @@ def get_disk_cache_path() -> str:
     return file_name
 
 
-_MEMORY = None
+# This is the global disk cache.
+_DISK_CACHE = None
 
 
 def get_disk_cache() -> Any:
@@ -89,11 +59,11 @@ def get_disk_cache() -> Any:
     Return the object storing the disk cache.
     """
     _LOG.debug("get_disk_cache")
-    global _MEMORY
-    if not _MEMORY:
+    global _DISK_CACHE
+    if not _DISK_CACHE:
         file_name = get_disk_cache_path()
-        _MEMORY = joblib.Memory(file_name, verbose=0, compress=1)
-    return _MEMORY
+        _DISK_CACHE = joblib.Memory(file_name, verbose=0, compress=1)
+    return _DISK_CACHE
 
 
 def reset_disk_cache() -> None:
@@ -101,67 +71,7 @@ def reset_disk_cache() -> None:
     get_disk_cache().clear(warn=True)
 
 
-# def cached2(f):
-#    """
-#    Decorator wrapping a function in a disk and memory cache.
-#
-#    If the function value was not cached either in memory or on disk, the
-#    function `f` is executed and the value is stored.
-#
-#    The decorator uses 2 levels of caching:
-#        - disk cache: useful for retrieving the state among different
-#          executions or when one does a "Reset" of a notebook;
-#        - memory cache: useful for multiple execution in notebooks, without
-#          resetting the state.
-#    """
-#    if not is_caching_enabled:
-#        _LOG.debug("Caching is disabled")
-#        return f
-#
-#    memory = get_disk_cache()
-#    _LOG.debug("memory=%s", memory)
-#
-#    @memory.cache
-#    def _read_data_from_disk_cache(*args, **kwargs):
-#        _LOG.debug(
-#            "%s args=%s kwargs=%s: reading from disk",
-#            f.__name__,
-#            str(args),
-#            str(kwargs),
-#        )
-#        obj = f(*args, **kwargs)
-#        return obj
-#
-#    # TODO(gp): We loose the state. We need to put in the ctor.
-#    @functools.lru_cache(maxsize=None)
-#    def _read_data_from_mem_cache(*args, **kwargs):
-#        _LOG.debug(
-#            "%s args=%s kwargs=%s: reading from memory",
-#            f.__name__,
-#            str(args),
-#            str(kwargs),
-#        )
-#        obj = _read_data_from_disk_cache(*args, **kwargs)
-#        return obj
-#
-#    def read_data(*args, **kwargs):
-#        _LOG.debug(
-#            "%s args=%s kwargs=%s: reading from memory: %s",
-#            f.__name__,
-#            str(args),
-#            str(kwargs),
-#            _read_data_from_mem_cache.cache_info()
-#        )
-#        obj = _read_data_from_mem_cache(*args, **kwargs)
-#        return obj
-#
-#    return read_data
-
-
-memory = get_disk_cache()
-
-
-class cached:
+class Cached:
     """
     Decorator wrapping a function in a disk and memory cache.
 
@@ -185,6 +95,9 @@ class cached:
         # `__name__`, `__doc__`, `__dict__`) as the called function.
         functools.update_wrapper(self, func)
         self._func = func
+        if not is_caching_enabled():
+            _LOG.warning("Disabling any caching")
+            use_mem_cache = use_disk_cache = False
         self._use_mem_cache = use_mem_cache
         self._use_disk_cache = use_disk_cache
         self._reset_cache_tracing()
@@ -194,53 +107,10 @@ class cached:
         # functions. On the other side, e.g., if we created these functions in
         # `__call__`, they will be recreated at every invocation, creating a
         # new memory cache at every invocation.
-        # memory = get_disk_cache()
-        # _LOG.debug("memory=%s", memory)
-        #
-        # @memory.cache
-        # def execute_func_from_disk_cache(*args, **kwargs):
-        #     # If we get here, we didn't hit either memory or disk cache.
-        #     self.last_used_disk_cache = False
-        #     _LOG.debug(
-        #         "%s args=%s kwargs=%s: execute the intrinsic function",
-        #         self.func.__name__, args, kwargs,
-        #     )
-        #     obj = self.func(*args, **kwargs)
-        #     return obj
-        #
-        # self.execute_func_from_disk_cache = (
-        #     execute_func_from_disk_cache if use_disk_cache else func)
-        #
-        # @functools.lru_cache(maxsize=None)
-        # def execute_func_from_mem_cache(*args, **kwargs):
-        #     # If we get here, we know that we didn't hit the memory cache,
-        #     # but we don't know about the disk cache.
-        #     self.last_used_mem_cache = False
-        #     _LOG.debug(
-        #         "%s args=%s kwargs=%s: trying to read from disk",
-        #         self.func.__name__, args, kwargs,
-        #     )
-        #     obj = execute_func_from_disk_cache(*args, **kwargs)
-        #     return obj
-        #
-        # self.execute_func_from_disk_cache = (
-        #     execute_func_from_mem_cache if use_disk_cache else func)
-        #
-        # def execute_func(*args, **kwargs):
-        #     # TODO(gp): Call self.reset_cache_tracing() if not too convoluted.
-        #     self.last_used_disk_cache = True
-        #     self.last_used_mem_cache = True
-        #     _LOG.debug(
-        #         "%s args=%s kwargs=%s: trying to read from memory: %s",
-        #         self.func.__name__, args, kwargs,
-        #         execute_func_from_mem_cache.cache_info()
-        #     )
-        #     obj = execute_func_from_mem_cache(*args, **kwargs)
-        #     return obj
-        #
-        # self.execute_func = execute_func
+        # Create the disk cache object, if needed.
+        _ = get_disk_cache()
 
-        @memory.cache
+        @_DISK_CACHE.cache
         def _execute_func_from_disk_cache(*args: Any, **kwargs: Any) -> Any:
             # If we get here, we didn't hit neither memory nor the disk cache.
             dbg.dassert(self._use_disk_cache)
@@ -315,8 +185,7 @@ class cached:
             obj = self._execute_func(*args, **kwargs)
         return obj
 
-    # -> get_last_cache_accessed
-    def get_last_cache(self) -> str:
+    def get_last_cache_accessed(self) -> str:
         if self._last_used_disk_cache and self._last_used_mem_cache:
             # We executed `read_data` -> we hit the mem cache.
             return "mem"

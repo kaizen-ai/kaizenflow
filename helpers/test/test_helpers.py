@@ -1,7 +1,6 @@
 import logging
 import os
-
-from typing import Tuple, Callable
+from typing import Callable, Tuple
 
 import pytest
 
@@ -27,6 +26,9 @@ class _Function:
     """
     Mimic a function through `__call__()` and use state to track if a function
     was executed or not.
+
+    It is used in the unit tests for the caching framework in order to check
+    if a function was actually executed or the cached version was used.
     """
 
     def __init__(self):
@@ -40,26 +42,6 @@ class _Function:
         self.executed = True
         return x + y
 
-#
-#_EXECUTED = False
-#
-#
-#def _reset_executed():
-#    global _EXECUTED
-#    _EXECUTED = False
-#
-#
-#def _get_executed():
-#    return _EXECUTED
-#
-#
-#def _function(x, y):
-#    global _EXECUTED
-#    _EXECUTED = True
-#    return x + y
-
-
-
 
 class Test_cache1(ut.TestCase):
     def test1(self) -> None:
@@ -72,8 +54,11 @@ class Test_cache1(ut.TestCase):
         self.assertIn("unittest", disk_cache_name)
 
 
+# All unit tests for the cache should be in this class since we have a single
+# disk cache. Therefore if we used different classes and the unit tests were
+# executed in parallel we would incur in race conditions for unit tests all
+# resetting / using the same disk cache.
 class Test_cache2(ut.TestCase):
-
     def test_without_caching1(self) -> None:
         """
         Test that for a function without caching, if we execute two times, we
@@ -99,16 +84,17 @@ class Test_cache2(ut.TestCase):
         # Check that the function is executed again, i.e., there is no caching.
         self.assertTrue(f.executed)
 
-    def _check_cache_state(self, f, cf, val1: int, val2: int, exp_f_state: bool,
-                           exp_cf_state: str) -> None:
+    def _check_cache_state(
+        self, f, cf, val1: int, val2: int, exp_f_state: bool, exp_cf_state: str
+    ) -> None:
         f.reset()
         self.assertEqual(f.executed, False)
         act = cf(val1, val2)
         exp = val1 + val2
         self.assertEqual(act, exp)
         # Check.
-        _LOG.debug("get_last_cache=%s", cf.get_last_cache())
-        self.assertEqual(cf.get_last_cache(), exp_cf_state)
+        _LOG.debug("get_last_cache_accessed=%s", cf.get_last_cache_accessed())
+        self.assertEqual(cf.get_last_cache_accessed(), exp_cf_state)
         _LOG.debug("executed=%s", f.executed)
         self.assertEqual(f.executed, exp_f_state)
 
@@ -122,7 +108,7 @@ class Test_cache2(ut.TestCase):
         f = _Function()
         self.assertFalse(f.executed)
         #
-        cf = hcac.cached(f)
+        cf = hcac.Cached(f)
         # Reset everything and check that it's in the expected state.
         hcac.reset_disk_cache()
         cf._reset_cache_tracing()
@@ -137,15 +123,21 @@ class Test_cache2(ut.TestCase):
         # Execute the first time: verify that it is executed.
         #
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
-        self._check_cache_state(f, cf, 3, 4, True, "no_cache")
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
         #
         # Execute the second time: verify that it is *NOT* executed.
         #
-        self._check_cache_state(f, cf, 3, 4, False, "mem")
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
         #
         # Execute the third time: verify that it is *NOT* executed.
         #
-        self._check_cache_state(f, cf, 3, 4, False, "mem")
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
 
     def test_with_caching2(self):
         """
@@ -158,18 +150,27 @@ class Test_cache2(ut.TestCase):
         f.reset()
         self.assertEqual(f.executed, False)
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
-        self._check_cache_state(f, cf, 3, 4, True, "no_cache")
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
         #
         f.reset()
         self.assertEqual(f.executed, False)
-        self._check_cache_state(f, cf, 4, 4, True, "no_cache")
+        self._check_cache_state(
+            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
         #
         # Execute the second time: verify that it is *NOT* executed.
         #
-        self._check_cache_state(f, cf, 3, 4, False, "mem")
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
         #
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
-        self._check_cache_state(f, cf, 4, 4, False, "mem")
+        self._check_cache_state(
+            f, cf, 4, 4, exp_f_state=False, exp_cf_state="mem"
+        )
+
 
 # #############################################################################
 # env.py
