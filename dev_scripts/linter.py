@@ -686,6 +686,7 @@ class _Pydocstyle(_Action):
             return []
         ignore = []
         # http://www.pydocstyle.org/en/2.1.1/error_codes.html
+        # pylint: disable=superfluous-parens
         if not (pedantic >= 2):
             # TODO(gp): Review all of these.
             ignore.extend(
@@ -715,6 +716,7 @@ class _Pydocstyle(_Action):
                     "D415",
                 ]
             )
+        # pylint: disable=superfluous-parens
         if not (pedantic >= 1):
             # Disable some lints that are hard to respect.
             ignore.extend(
@@ -814,8 +816,13 @@ class _Pylint(_Action):
         if not is_py_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
+        is_test_code_tmp = is_under_test_dir(file_name)
+        _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
+        is_jupytext_code = is_paired_jupytext_file(file_name)
+        _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
         opts = []
         ignore = []
+        # pylint: disable=superfluous-parens
         if not (pedantic >= 2):
             # We ignore these errors as too picky.
             ignore.extend(
@@ -838,6 +845,8 @@ class _Pylint(_Action):
                     "C0415",
                     # [R0903(too-few-public-methods), ] Too few public methods (/2)
                     "R0903",
+                    # [R0904(too-many-public-methods), ] Too many public methods (/20)
+                    "R0904",
                     # [R0912(too-many-branches), ] Too many branches (/12)
                     "R0912",
                     # R0913(too-many-arguments), ] Too many arguments (/5)
@@ -853,6 +862,10 @@ class _Pylint(_Action):
                     #   with a constant value:
                     # - E.g., we use sometimes `if True:` or `if False:`.
                     "W0125",
+                    # [W0201(attribute-defined-outside-init)]
+                    # - If the constructor calls a method (e.g., `reset()`) to
+                    #   initialize the state, we have all these errors.
+                    "W0201",
                     # [W0511(fixme), ]
                     "W0511",
                     # [W0603(global-statement), ] Using the global statement
@@ -865,8 +878,6 @@ class _Pylint(_Action):
                 ]
             )
             # Unit test.
-            is_test_code_tmp = is_under_test_dir(file_name)
-            _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
             if is_test_code_tmp:
                 ignore.extend(
                     [
@@ -881,8 +892,6 @@ class _Pylint(_Action):
                     ]
                 )
             # Jupytext.
-            is_jupytext_code = is_paired_jupytext_file(file_name)
-            _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
             if is_jupytext_code:
                 ignore.extend(
                     [
@@ -899,6 +908,7 @@ class _Pylint(_Action):
                         "W0621",
                     ]
                 )
+        # pylint: disable=superfluous-parens
         if not (pedantic >= 1):
             ignore.extend(
                 [
@@ -1770,8 +1780,11 @@ def _parse() -> argparse.ArgumentParser:
     prsr.add_action_arg(parser, _get_valid_actions())
     #
     parser.add_argument(
-        "--pedantic", action="store", type=int, default=0,
-        help="Pedantic level. 0 = min, 2 = max (all the lints)"
+        "--pedantic",
+        action="store",
+        type=int,
+        default=0,
+        help="Pedantic level. 0 = min, 2 = max (all the lints)",
     )
     parser.add_argument(
         "--num_threads",

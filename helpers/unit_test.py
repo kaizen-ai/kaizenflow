@@ -2,6 +2,8 @@
 Import as:
 
 import helpers.unit_test as ut
+
+# TODO(gp): use hut instead of ut.
 """
 
 import inspect
@@ -11,7 +13,7 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, NoReturn, Optional
+from typing import Any, List, NoReturn, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -61,13 +63,26 @@ def get_incremental_tests() -> bool:
 
 # #############################################################################
 
+_CONFTEST_IN_PYTEST = False
+
+
+def in_unit_test_mode() -> bool:
+    """
+    Return True if we are inside a pytest run.
+    This is set by conftest.py.
+    """
+    return _CONFTEST_IN_PYTEST
+
+
+# #############################################################################
+
 
 def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
 
 def get_random_df(
-    num_cols: int, seed: Optional[int] = None, **kwargs
+    num_cols: int, seed: Optional[int] = None, **kwargs: Any
 ) -> pd.DataFrame:
     """
     Compute df with random data with `num_cols` columns and index obtained by
@@ -75,10 +90,6 @@ def get_random_df(
 
     :return: df
     """
-    # Sometimes pandas takes several seconds to import, so we don't import
-    # unless necessary.
-    import pandas as pd
-
     if seed:
         np.random.seed(seed)
     dt = pd.date_range(**kwargs)
@@ -87,12 +98,8 @@ def get_random_df(
 
 
 def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
-    # Sometimes pandas takes several seconds to import, so we don't import
-    # unless necessary.
-    import pandas as pd
-
     dbg.dassert_isinstance(df, pd.DataFrame)
-    txt = []
+    txt: List[str] = []
     txt.append("df.shape=%s" % str(df.shape))
     with pd.option_context(
         "display.max_colwidth", int(1e6), "display.max_columns", None
