@@ -1,40 +1,50 @@
 # Ontology
 
 - There are entities
-  - Some entities have supply, demand, inventory, e.g.,
+  - Entities are represented as vertices (equivalently, nodes) in the graph
+  - Entities can be
+    - concrete things in the world (e.g., the company Exxon)
+    - abstract concepts (e.g., "demand")
+    - anything that is tracked/measured/reported, e.g.,
+      - economic indices (not the values, but the concept of the index)
+      - number of oil wells in the US (again, not the number, but the notion)
+  - Entities may
+    - be related to other entities (expressed via directed edges)
+    - have stand-alone properties
+  - E.g., some entities have supply, demand, inventory, e.g.,
     - "number of residential homes"
     - "interest rates"
+
+
+- The graph structure expresses relationships between entities
+  - Relationships are represented as directed edges
+  - Edges may have properties themselves
+  - Certain relationships only hold under certain assumptions 
+  - There are concepts like change of a number of entities
+    - E.g., one entity can influence a number of entities or the change of number
+      of entities
+  - Relationships have "strength"
+    - We can have some priors on that
+    - We can infer it from the data using our priors
+  - Relationships have "velocity"
+    - How quickly a relationship unfolds
+    - Some relationships may be strong but subject to a time lag (e.g., impact of
+        infrastructure investment, macroeconomic policy, regulatory changes, etc.)
+  - Relationships can be symmetric or not
+    - E.g., the rate at which something changes when positive or negative can be
+      different so there are 2 coefficients
+    - We can have a prior on these two coefficients, like we thing they should be
+      typically the same, and then 
 
 - For some entities what matters is the "level", for others is "change", or
   "acceleration"
 
-- Certain relationships only hold under certain assumptions 
-
-- There are concepts like change of a number of entities
-  - E.g., one entity can influence a number of entities or the change of number
-    of entities
-
-- Relationship have "strength"
-  - We can have some priors on that
-  - We can infer it from the data using our prior
-
-- Relationship have "velocity"
-  - How quickly a relationship unfolds
-  - Not sure strength and velocity are really different, since if something is
-    sensitive to something else, the effect realizes also quickly
-
-- Relationship can be symmetric or not
-  - E.g., the rate at which something changes when positive or negative can be
-    different so there are 2 coefficients
-  - We can have a prior on these two coefficients, like we thing they should be
-    typically the same, and then 
-
 - There are temporal concepts like:
   - prolonged ... causes 
-  - E.g., prolonged weakness in housing starts is often a precursor of economy
-    downturn
+  - E.g., prolonged weakness in housing starts is often a precursor of an
+    economic downturn
 
-- We can iterate on the KG adding more details
+- We can iterate on the KG by adding more details
   - We start saying "-^ house starts => -v bonds price"
   - We can expand this causal relationship in terms of all the components
     - "-^ house starts => -^ inflation => -v interest rates => -v bond yield =>
@@ -42,13 +52,13 @@
 
 # Why does this work?
 
-- Typically one (HFs, academics, banks) fit one variable at the time, without
+- Typically one (HFs, academics, banks) fits one variable at the time, without
   considering conditional independence, underlying common factors, ...
 - Economic variables depend on many different quantities
   - The different quantities are related to each other
   - Building models by additivity is very suboptimal
   - We consider all the dependencies at once, so we add a new variable and refit
-    the entire model, getting a global optima and not a series of local optima
+    the entire model, getting a global optimum and not a series of local optima
 
 - Data triangulation
   - Relationships are very noisy
@@ -56,7 +66,7 @@
     viewpoints
   - The quality of the estimation is much higher
     - It's like a GPS: if you have 2 satellites you can't measure your position,
-      with 3 satellites you have a precise position in 3 dimensions
+      but with 3 satellites you have a precise position in 3 dimensions
 
 - The current ML systems for economic quantities make predictions without
   understanding the world
