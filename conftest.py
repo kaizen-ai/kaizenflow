@@ -12,6 +12,7 @@ import helpers.unit_test as hut
 if not hasattr(hut, "conftest_already_parsed"):
 
     # Store whether we are running unit test through pytest.
+    # pylint: disable=line-too-long
     # From https://docs.pytest.org/en/latest/example/simple.html#detect-if-running-from-within-a-pytest-run
     def pytest_configure(config: Any) -> None:
         _ = config
