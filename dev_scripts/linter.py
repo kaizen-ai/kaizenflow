@@ -838,6 +838,8 @@ class _Pylint(_Action):
                     "C0415",
                     # [R0903(too-few-public-methods), ] Too few public methods (/2)
                     "R0903",
+                    # [R0904(too-many-public-methods), ] Too many public methods (/20)
+                    "R0904",
                     # [R0912(too-many-branches), ] Too many branches (/12)
                     "R0912",
                     # R0913(too-many-arguments), ] Too many arguments (/5)
@@ -853,6 +855,10 @@ class _Pylint(_Action):
                     #   with a constant value:
                     # - E.g., we use sometimes `if True:` or `if False:`.
                     "W0125",
+                    # [W0201(attribute-defined-outside-init)]
+                    # - If the constructor calls a method (e.g., `reset()`) to
+                    #   initialize the state, we have all these errors.
+                    "W0201",
                     # [W0511(fixme), ]
                     "W0511",
                     # [W0603(global-statement), ] Using the global statement

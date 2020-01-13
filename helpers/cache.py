@@ -51,7 +51,7 @@ def get_disk_cache_path() -> str:
 
 
 # This is the global disk cache.
-_DISK_CACHE = None
+_DISK_CACHE: Any = None
 
 
 def get_disk_cache() -> Any:
@@ -186,18 +186,19 @@ class Cached:
     def get_last_cache_accessed(self) -> str:
         if self._last_used_disk_cache and self._last_used_mem_cache:
             # We executed `read_data` -> we hit the mem cache.
-            return "mem"
+            ret = "mem"
         elif self._last_used_disk_cache and not self._last_used_mem_cache:
             # We executed `_read_data_from_mem_cache` -> we hit the disk cache.
-            return "disk"
+            ret = "disk"
         elif not self._last_used_disk_cache and not self._last_used_mem_cache:
             # We executed the function -> we didn't hit any cache.
-            return "no_cache"
+            ret = "no_cache"
         else:
             # We hit the disk cache but not the
             dbg.dassert(not self._last_used_disk_cache)
             dbg.dassert(self._last_used_mem_cache)
-            return "disk"
+            ret = "disk"
+        return ret
 
     def _reset_cache_tracing(self) -> None:
         """

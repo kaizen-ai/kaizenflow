@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, Generator
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
@@ -15,15 +15,17 @@ if not hasattr(hut, "conftest_already_parsed"):
     # From https://docs.pytest.org/en/latest/example/simple.html#detect-if-running-from-within-a-pytest-run
     def pytest_configure(config: Any) -> None:
         _ = config
+        # pylint: disable=protected-access
         hut._CONFTEST_IN_PYTEST = True
 
     def pytest_unconfigure(config: Any) -> None:
         _ = config
+        # pylint: disable=protected-access
         hut._CONFTEST_IN_PYTEST = False
 
-    hut.conftest_already_parsed = True  # type: ignore
+    hut.conftest_already_parsed = True
 
-    def pytest_addoption(parser) -> None:
+    def pytest_addoption(parser: Any) -> None:
         parser.addoption(
             "--update_outcomes",
             action="store_true",
@@ -44,7 +46,7 @@ if not hasattr(hut, "conftest_already_parsed"):
             help="Set the logging level",
         )
 
-    def pytest_collection_modifyitems(config, items) -> None:
+    def pytest_collection_modifyitems(config: Any, items: Any) -> None:
         _ = items
         if config.getoption("--update_outcomes"):
             print("\nWARNING: Updating test outcomes")
@@ -61,7 +63,7 @@ if not hasattr(hut, "conftest_already_parsed"):
         # From https://github.com/dropbox/pyannotate/blob/master/example/example_conftest.py
         import pytest
 
-        def pytest_collection_finish(session) -> None:
+        def pytest_collection_finish(session: Any) -> None:
             """
             Handle the pytest collection finish hook: configure pyannotate.
             Explicitly delay importing `collect_types` until all tests have
@@ -75,15 +77,15 @@ if not hasattr(hut, "conftest_already_parsed"):
             pyannotate_runtime.collect_types.init_types_collection()
 
         @pytest.fixture(autouse=True)
-        def collect_types_fixture() -> None:
-            import pyannotate_runtime  # type: ignore
+        def collect_types_fixture() -> Generator:
+            import pyannotate_runtime
 
             pyannotate_runtime.collect_types.start()
             yield
             pyannotate_runtime.collect_types.stop()
 
-        def pytest_sessionfinish(session, exitstatus) -> None:
-            import pyannotate_runtime  # type: ignore
+        def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
+            import pyannotate_runtime
 
             _ = session, exitstatus
             pyannotate_runtime.collect_types.dump_stats("type_info.json")
