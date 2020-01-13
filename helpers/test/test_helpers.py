@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 import pytest
 
@@ -31,7 +31,7 @@ class _Function:
     if a function was actually executed or the cached version was used.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__name__ = "_Function"
         self.reset()
 
@@ -68,7 +68,7 @@ class Test_cache2(ut.TestCase):
         self.assertFalse(f.executed)
         return f
 
-    def _reset_function(self, f: _Function):
+    def _reset_function(self, f: _Function) -> None:
         """
         Reset the function before another execution, so we can verify if it was
         executed or not.
@@ -187,12 +187,10 @@ class Test_cache2(ut.TestCase):
         # Execute the first time: verify that it is executed.
         #
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
-        # self._reset_function(f)
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        # self._reset_function(f)
         self._check_cache_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -215,17 +213,14 @@ class Test_cache2(ut.TestCase):
         f, cf = self._get_f_cf_functions(
             use_mem_cache=False, use_disk_cache=False
         )
-
         #
         # Execute the first time.
         #
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
-        #self._reset_function(f)
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        #self._reset_function(f)
         self._check_cache_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -252,12 +247,10 @@ class Test_cache2(ut.TestCase):
         # Execute the first time: verify that it is executed.
         #
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
-        #self._reset_function(f)
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        #self._reset_function(f)
         self._check_cache_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -284,12 +277,10 @@ class Test_cache2(ut.TestCase):
         # Execute the first time: verify that it is executed.
         #
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
-        #self._reset_function(f)
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        #self._reset_function(f)
         self._check_cache_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -435,7 +426,7 @@ class Test_git1(ut.TestCase):
         _ = git.report_submodule_status(dir_names, short_hash)
 
     def _helper_group_hashes(
-        self, head_hash: str, remh_hash: str, subm_hash: str, exp: str
+        self, head_hash: str, remh_hash: str, subm_hash: Optional[str], exp: str
     ) -> None:
         act = git._group_hashes(head_hash, remh_hash, subm_hash)
         self.assert_equal(act, exp)
