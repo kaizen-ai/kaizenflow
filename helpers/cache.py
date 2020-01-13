@@ -95,9 +95,6 @@ class Cached:
         # `__name__`, `__doc__`, `__dict__`) as the called function.
         functools.update_wrapper(self, func)
         self._func = func
-        if not is_caching_enabled():
-            _LOG.warning("Disabling any caching")
-            use_mem_cache = use_disk_cache = False
         self._use_mem_cache = use_mem_cache
         self._use_disk_cache = use_disk_cache
         self._reset_cache_tracing()
@@ -113,7 +110,6 @@ class Cached:
         @_DISK_CACHE.cache
         def _execute_func_from_disk_cache(*args: Any, **kwargs: Any) -> Any:
             # If we get here, we didn't hit neither memory nor the disk cache.
-            dbg.dassert(self._use_disk_cache)
             self._last_used_disk_cache = False
             _LOG.debug(
                 "%s(args=%s kwargs=%s): execute the intrinsic function",
@@ -132,7 +128,6 @@ class Cached:
                 self._use_mem_cache,
                 self._use_disk_cache,
             )
-            dbg.dassert(self._use_mem_cache)
             # If we get here, we know that we didn't hit the memory cache,
             # but we don't know about the disk cache.
             if self._use_mem_cache:
@@ -157,7 +152,6 @@ class Cached:
                 self._use_disk_cache,
             )
             if self._use_mem_cache:
-                self._reset_cache_tracing()
                 _LOG.debug(
                     "%s(args=%s kwargs=%s): trying to read from memory: %s",
                     self._func.__name__,
@@ -168,20 +162,24 @@ class Cached:
                 obj = _execute_func_from_mem_cache(*args, **kwargs)
             else:
                 _LOG.debug("Skipping memory cache")
+                self._last_used_mem_cache = False
                 if self._use_disk_cache:
-                    _LOG.debug("Skipping disk cache")
                     obj = _execute_func_from_disk_cache(*args, **kwargs)
                 else:
+                    _LOG.debug("Skipping disk cache")
+                    self._last_used_disk_cache = False
                     obj = self._func(*args, **kwargs)
             return obj
 
         self._execute_func = _execute_func
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        if not is_caching_enabled:
+        if not is_caching_enabled():
             _LOG.debug("Caching is disabled")
+            self._last_used_disk_cache = self._last_used_mem_cache = False
             obj = self._func(*args, **kwargs)
         else:
+            self._reset_cache_tracing()
             obj = self._execute_func(*args, **kwargs)
         return obj
 

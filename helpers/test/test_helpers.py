@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Tuple
+from typing import Any, Tuple
 
 import pytest
 
@@ -113,9 +113,16 @@ class Test_cache2(ut.TestCase):
         Call the (cached function) `cf(val1, val2)` and check whether the
         intrinsic function was executed and what caches were used.
         """
+        _LOG.debug(
+            "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
+            val1,
+            val2,
+            exp_f_state,
+            exp_cf_state,
+        )
         # We reset the function since we want to verify if it was called or not,
         # when calling the cached function.
-        f.reset()
+        self._reset_function(f)
         # Call the cached function.
         act = cf(val1, val2)
         exp = val1 + val2
@@ -126,7 +133,7 @@ class Test_cache2(ut.TestCase):
         _LOG.debug("executed=%s", f.executed)
         self.assertEqual(f.executed, exp_f_state)
 
-    def _get_f_cf_functions(self) -> Tuple[_Function, hcac.Cached]:
+    def _get_f_cf_functions(self, **kwargs: Any) -> Tuple[_Function, hcac.Cached]:
         """
         Create the intrinsic function `f` and its cached version `cf`.
         """
@@ -138,7 +145,7 @@ class Test_cache2(ut.TestCase):
         # Create the intrinsic function.
         f = self._get_function()
         # Create the cached function.
-        cf = hcac.Cached(f)
+        cf = hcac.Cached(f, **kwargs)
         # Reset everything and check that it's in the expected state.
         hcac.reset_disk_cache()
         cf._reset_cache_tracing()
@@ -180,12 +187,12 @@ class Test_cache2(ut.TestCase):
         # Execute the first time: verify that it is executed.
         #
         _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
-        self._reset_function(f)
+        # self._reset_function(f)
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        self._reset_function(f)
+        # self._reset_function(f)
         self._check_cache_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -197,9 +204,105 @@ class Test_cache2(ut.TestCase):
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         #
-        _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
         self._check_cache_state(
             f, cf, 4, 4, exp_f_state=False, exp_cf_state="mem"
+        )
+
+    def test_with_caching3(self) -> None:
+        """
+        Test disabling both mem and disk cache.
+        """
+        f, cf = self._get_f_cf_functions(
+            use_mem_cache=False, use_disk_cache=False
+        )
+
+        #
+        # Execute the first time.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
+        #self._reset_function(f)
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        #self._reset_function(f)
+        self._check_cache_state(
+            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        # Execute the second time.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 2nd time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        self._check_cache_state(
+            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+
+    def test_with_caching4(self) -> None:
+        """
+        Test that caching mixing different values works, when we disable the
+        disk cache.
+        """
+        f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=False)
+
+        #
+        # Execute the first time: verify that it is executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
+        #self._reset_function(f)
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        #self._reset_function(f)
+        self._check_cache_state(
+            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        # Execute the second time: verify that it is *NOT* executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 2nd time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
+        #
+        self._check_cache_state(
+            f, cf, 4, 4, exp_f_state=False, exp_cf_state="mem"
+        )
+
+    def test_with_caching5(self) -> None:
+        """
+        Test that caching mixing different values works, when we disable the
+        memory cache.
+        """
+        f, cf = self._get_f_cf_functions(use_mem_cache=False, use_disk_cache=True)
+
+        #
+        # Execute the first time: verify that it is executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
+        #self._reset_function(f)
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        #self._reset_function(f)
+        self._check_cache_state(
+            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        # Execute the second time: verify that it is *NOT* executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 2nd time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
+        )
+        #
+        self._check_cache_state(
+            f, cf, 4, 4, exp_f_state=False, exp_cf_state="disk"
         )
 
 
