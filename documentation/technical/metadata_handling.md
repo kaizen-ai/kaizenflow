@@ -1,10 +1,10 @@
 # Why is it useful?
 
-- Allow to judge news events and macroeconomic time series based on our
+- Allows judging news events and macroeconomic time series based on our
   understanding of the world
   - The usual approach is to consider events in an isolated fashion
 
-- Allow to build models automatically based on the relationship between
+- Allows building models automatically based on the relationships between
   quantities existing in the real world
 
 # Definitions and principles
@@ -14,11 +14,11 @@
 
 - Time series may be univariate or multivariate
 
-- This is a running documentation of the fields we are interested in capturing
+- This is running documentation of the fields we are interested in capturing
   about the data
-- Paul suggests to keep in the KG static or slowly changing data
-  - I don't disagree with it, but we need to decide where to put the rest of the
-    information we want to capture
+- Paul suggests keeping in the KG static or slowly changing data
+  - GP doesn't disagree with it, but we need to decide where to put the rest of
+    the information we want to capture
 
 ## Everything should be tracked
 
@@ -43,14 +43,14 @@
 - Currently, the result of this activity is in the Monster Spreadsheet
 
 ## 3. Exploratory analysis of data sets
-- We look for data needed by a model; or
+- We look for data needed by a model, or
 - We browse data and come up with modeling ideas
 
 - Currently the result of this activity is in the GitHub tasks / Monster Spreadsheet
 
-## 4. Prioritize data sources downloading
-- We decide which data to download:
-  - Based on business objective (e.g., a source for oil vs one for ags)
+## 4. Prioritize data source downloading
+- We decide what data to download:
+  - Based on business objectives (e.g., a source for oil vs one for ags)
     - Amount of models that can be built out of the data
   - Complexity of downloading
   - Uniqueness
@@ -62,20 +62,20 @@
 ## 5. Data download
 - Download data and put it into a suitable form inside ETL2
 
-- Ideally we would like to have each data source to be available both
+- Ideally we would like to have each data source available both
   historically and in real-time
-  - On the one side only the real-time data can inform us on publication delay,
+  - On the one hand only the real-time data can inform us on publication delay,
     reliability of the downloading process, delay to acquire the data on our
     side, throttling, ...
-  - On the other side we would prefer to the additional work of putting data in
+  - On the other hand we would prefer to postpone the additional work of putting data in
     production (with all the on-going maintenance effort) only when we know this
     data is useful for our models or can be sold
   - We need to strike a balance between these two needs
 
-- Currently we track these activities into GH tasks
+- Currently we track these activities in GH tasks
   - We use the Data Encyclopedia to track data sources available and APIs
 
-## 6. Sanity check of the data
+## 6. Sanity check the data
 - We want to check that the download data is sane, e.g.,
   - Did we miss anything we wanted to download?
   - Does the data look good?
@@ -115,8 +115,8 @@
 - It can be argued that information about the infra should not be mixed with
   research ones
   - The issue is that the process of discovering data sources and on-boarding
-    data sources moves at different speed
-    - E.g., one research (or potentially even a customer!) might want to know
+    data sources moves at different speeds
+    - E.g., one researcher (or potentially even a customer!) might want to know
       - "what are the sources about oil that are available?"
       - "what are the next sources to download?"
       - "do we have only historical data or real-time of a data source?"
@@ -125,6 +125,9 @@
     infra
       - At this point let's just make it simpler to do instead of maintaining
         different data structures
+      - Simplicity needs to be met with discipline in maintaining the data
+        - E.g., if data download status/priorities are not kept up-to-date,
+          then their utility decreases (and can even go below zero!)
 
 ### Successive approximations of data
 
@@ -165,6 +168,7 @@
       way)
 - How much do we believe in this information?
   - Is it a wild guess? Is it an informed guess? Is it what we were told?
+  - How objective can we make this? Do we want to mark "trusted sources"?
 - All metadata should be described in this document
   - The field names
     - should have underscores and not spaces
@@ -184,6 +188,8 @@
 - ID
   - P1 data source internal name
   - E.g., `EIA_001`
+  - Needs to be unique and immutable, not necessarily human readable
+  - E.g., a uuid
 
 - SOURCE
   - Data set source description
@@ -196,7 +202,7 @@
 - SUMMARY
   - Human readable summary
     - What does it contain?
-    - This is a free form description with links to make easier for a human to
+    - This is a free form description with links to make it easier for a human to
       understand what the data set is about
   - E.g., "The U.S. Energy Information Administration (EIA) collects, analyzes,
     and disseminates independent and impartial energy information to promote
@@ -209,23 +215,31 @@
 
 - GITHUB_TASK
   - Is there a GitHub task related to this?
-
-- PRIORITY
-  - Our subjective belief on how important a data source is. This information can
-    help us prioritize data source properly
-  - E..g, P0
+  - There may be multiple tasks
 
 - COST
   - Is it free or is by subscription?
   - What is the annual cost?
 
-- STATUS
-  - Download status
-  - E.g., completed, in progress
-
 - API_ACCESS
   - How to retrieve the data from ETL2?
   - E.g., pointer to code, a
+
+- STATUS
+  - Download status
+  - E.g., completed, in progress
+  - Updating this should be part of the standard ETL2 work
+
+- PRIORITY
+  - Our subjective belief on how important a data source is. This information can
+    help us prioritize data source properly
+  - E.g., P0
+  - Need to define this better, especially since priorities can shift quickly
+    for various reasons
+    - E.g, we may strongly believe a data source is very important, but assign
+      a lower priority for downloading due to the relative amount of effort
+      required
+    - Is this field meaningful for datasets that have already been downloaded?
 
 - NOTES
   - This is a free-form field which also incubates data that can become a field
