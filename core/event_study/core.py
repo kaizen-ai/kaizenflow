@@ -1,9 +1,4 @@
 """
-Import as:
-
-import core.event_study as esf
-
-
 See `documentation/technical/event_study_design.md` for design principles and
 notes on intended usage.
 
