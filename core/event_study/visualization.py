@@ -16,7 +16,7 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
-def plot_event_response_curve(local_ts: pd.DataFrame, response_col: str) -> None:
+def plot_event_response(local_ts: pd.DataFrame, response_col: str) -> None:
     """
     Plot lineplot of event response curve.
 
