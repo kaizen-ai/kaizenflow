@@ -686,8 +686,7 @@ class _Pydocstyle(_Action):
             return []
         ignore = []
         # http://www.pydocstyle.org/en/2.1.1/error_codes.html
-        # pylint: disable=superfluous-parens
-        if not (pedantic >= 2):
+        if pedantic < 2:
             # TODO(gp): Review all of these.
             ignore.extend(
                 [
@@ -716,8 +715,7 @@ class _Pydocstyle(_Action):
                     "D415",
                 ]
             )
-        # pylint: disable=superfluous-parens
-        if not (pedantic >= 1):
+        if pedantic < 1:
             # Disable some lints that are hard to respect.
             ignore.extend(
                 [
@@ -816,14 +814,16 @@ class _Pylint(_Action):
         if not is_py_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
+        #
         is_test_code_tmp = is_under_test_dir(file_name)
         _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
+        #
         is_jupytext_code = is_paired_jupytext_file(file_name)
         _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+        #
         opts = []
         ignore = []
-        # pylint: disable=superfluous-parens
-        if not (pedantic >= 2):
+        if pedantic < 2:
             # We ignore these errors as too picky.
             ignore.extend(
                 [
@@ -908,8 +908,7 @@ class _Pylint(_Action):
                         "W0621",
                     ]
                 )
-        # pylint: disable=superfluous-parens
-        if not (pedantic >= 1):
+        if pedantic < 1:
             ignore.extend(
                 [
                     # [C0103(invalid-name), ] Constant name "..." doesn't
@@ -1107,6 +1106,10 @@ def is_paired_jupytext_file(file_name: str) -> bool:
     return is_paired
 
 
+def is_init_py(file_name: str) -> bool:
+    return os.path.basename(file_name) == "__init__.py"
+
+
 # #############################################################################
 
 
@@ -1206,6 +1209,10 @@ class _CustomPythonChecks(_Action):
         msg = ""
         if _CustomPythonChecks.DEBUG:
             _LOG.debug("* Check 'from * imports'")
+        if is_init_py(file_name):
+            # In __init__.py we can import in weird ways (e.g., the
+            # evil `from ... import *`).
+            return msg
         m = re.match(r"\s*from\s+(\S+)\s+import\s+.*", line)
         if m:
             if m.group(1) != "typing":
