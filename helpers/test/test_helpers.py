@@ -540,7 +540,7 @@ class Test_s3_1(ut.TestCase):
         )
         file_names = hs3.ls(file_path)
         # We rely on the fact that Kibot data is not changing.
-        self.assertEqual(len(file_names), 252)
+        self.assertEqual(len(file_names), 253)
 
 
 # #############################################################################

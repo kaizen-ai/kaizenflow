@@ -77,7 +77,8 @@ def select_actions(
         if default_actions is None:
             default_actions = valid_actions[:]
         dbg.dassert_is_subset(default_actions, valid_actions)
-        actions = default_actions
+        # Convert it into list since through some code paths it can be a tuple.
+        actions = list(default_actions)
     else:
         actions = args.action[:]
     dbg.dassert_isinstance(actions, list)
