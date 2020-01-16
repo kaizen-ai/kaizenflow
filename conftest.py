@@ -8,8 +8,10 @@ import helpers.unit_test as hut
 
 # Hack to workaround pytest not happy with multiple redundant conftest.py
 # (bug #34).
-# TODO(gp): -> _CONFTEST_ALREADY_PARSED
-if not hasattr(hut, "conftest_already_parsed"):
+if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
+
+    # pylint: disable=protected-access
+    hut._CONFTEST_ALREADY_PARSED = True
 
     # Store whether we are running unit test through pytest.
     # pylint: disable=line-too-long
@@ -23,8 +25,6 @@ if not hasattr(hut, "conftest_already_parsed"):
         _ = config
         # pylint: disable=protected-access
         hut._CONFTEST_IN_PYTEST = False
-
-    hut.conftest_already_parsed = True
 
     def pytest_addoption(parser: Any) -> None:
         parser.addoption(
