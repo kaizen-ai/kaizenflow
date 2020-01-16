@@ -277,7 +277,7 @@ def _pandoc(args: argparse.Namespace) -> None:
     #
     _LOG.info("type=%s", args.type)
     # Print actions.
-    actions = prsr.select_actions(args, _VALID_ACTIONS)
+    actions = prsr.select_actions(args, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     add_frame = True
     actions_as_str = prsr.actions_to_string(actions, _VALID_ACTIONS, add_frame)
     _LOG.info("\n%s", actions_as_str)
@@ -365,6 +365,9 @@ _VALID_ACTIONS = [
 ]
 
 
+_DEFAULT_ACTIONS = _VALID_ACTIONS[:]
+
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -401,7 +404,7 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="Directory where to save the output",
     )
-    prsr.add_action_arg(parser, _VALID_ACTIONS)
+    prsr.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     prsr.add_verbosity_arg(parser)
     return parser
 

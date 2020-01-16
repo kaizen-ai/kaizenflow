@@ -49,7 +49,8 @@ class Test_cache1(ut.TestCase):
         Cache unit tests need to clean up the cache, so we need to make sure
         we are using the unit test cache, and not the dev cache.
         """
-        disk_cache_name = hcac.get_disk_cache_name()
+        cache_tag = None
+        disk_cache_name = hcac.get_disk_cache_name(cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
         self.assertIn("unittest", disk_cache_name)
 
@@ -59,6 +60,9 @@ class Test_cache1(ut.TestCase):
 # executed in parallel we would incur in race conditions for unit tests all
 # resetting / using the same disk cache.
 class Test_cache2(ut.TestCase):
+    def _get_cache_tag(self) -> str:
+        return self.__class__.__name__
+
     def _get_function(self) -> _Function:
         """
         Build a function that can be used to verify if it was executed or not.
@@ -138,16 +142,17 @@ class Test_cache2(ut.TestCase):
         Create the intrinsic function `f` and its cached version `cf`.
         """
         # Make sure that we are using the unit test cache.
-        disk_cache_name = hcac.get_disk_cache_name()
+        cache_tag = self._get_cache_tag()
+        disk_cache_name = hcac.get_disk_cache_name(cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
-        _LOG.debug("disk_cache_path=%s", hcac.get_disk_cache_path())
+        _LOG.debug("disk_cache_path=%s", hcac.get_disk_cache_path(cache_tag))
         self.assertIn("unittest", disk_cache_name)
         # Create the intrinsic function.
         f = self._get_function()
         # Create the cached function.
-        cf = hcac.Cached(f, **kwargs)
+        cf = hcac.Cached(f, tag=cache_tag, **kwargs)
         # Reset everything and check that it's in the expected state.
-        hcac.reset_disk_cache()
+        hcac.reset_disk_cache(cache_tag)
         cf._reset_cache_tracing()
         return f, cf
 
@@ -535,7 +540,7 @@ class Test_s3_1(ut.TestCase):
         )
         file_names = hs3.ls(file_path)
         # We rely on the fact that Kibot data is not changing.
-        self.assertEqual(len(file_names), 252)
+        self.assertEqual(len(file_names), 253)
 
 
 # #############################################################################

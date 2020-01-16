@@ -843,6 +843,8 @@ class _Pylint(_Action):
                     # [C0415(import-outside-toplevel), ] Import outside toplevel
                     # - Sometimes we import inside a function.
                     "C0415",
+                    # [R0902(too-many-instance-attributes)] Too many instance attributes (/7)
+                    "R0902",
                     # [R0903(too-few-public-methods), ] Too few public methods (/2)
                     "R0903",
                     # [R0904(too-many-public-methods), ] Too many public methods (/20)
@@ -1449,6 +1451,10 @@ def _get_valid_actions() -> List[str]:
     return _VALID_ACTIONS  # type: ignore
 
 
+def _get_default_actions() -> List[str]:
+    return _get_valid_actions()
+
+
 def _get_action_class(action: str) -> _Action:
     """
     Return the function corresponding to the passed string.
@@ -1485,7 +1491,9 @@ def _remove_not_possible_actions(actions: List[str]) -> List[str]:
 
 
 def _select_actions(args: argparse.Namespace) -> List[str]:
-    actions = prsr.select_actions(args, _get_valid_actions())
+    valid_actions = _get_valid_actions()
+    default_actions = _get_default_actions()
+    actions = prsr.select_actions(args, valid_actions, default_actions)
     # Find the tools that are available.
     actions = _remove_not_possible_actions(actions)
     #
@@ -1784,7 +1792,7 @@ def _parse() -> argparse.ArgumentParser:
         "--test_actions", action="store_true", help="Print the possible actions"
     )
     # Select actions.
-    prsr.add_action_arg(parser, _get_valid_actions())
+    prsr.add_action_arg(parser, _get_valid_actions(), _get_default_actions())
     #
     parser.add_argument(
         "--pedantic",

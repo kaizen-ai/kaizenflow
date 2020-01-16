@@ -177,13 +177,13 @@ def _refresh_toc(txt: str) -> str:
     si.system(cmd_as_str, abort_on_error=False, suppress_output=True)
     # Read file.
     txt = io_.from_file(tmp_file_name)
-    return txt
+    return txt  # type: ignore
 
 
 # #############################################################################
 
 
-def _to_execute_action(action, actions):
+def _to_execute_action(action: str, actions: List[str]) -> bool:
     to_execute = actions is None or action in actions
     if not to_execute:
         _LOG.debug("Skipping %s", action)
@@ -224,6 +224,9 @@ _VALID_ACTIONS = [
 ]
 
 
+_DEFAULT_ACTIONS = _VALID_ACTIONS[:]
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -245,7 +248,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--in_place", action="store_true",
     )
-    prsr.add_action_arg(parser, _VALID_ACTIONS)
+    prsr.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     prsr.add_verbosity_arg(parser)
     return parser
 

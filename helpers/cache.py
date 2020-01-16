@@ -9,7 +9,7 @@ import argparse
 import functools
 import logging
 import os
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import joblib
 
@@ -35,16 +35,19 @@ def is_caching_enabled() -> bool:
     return _USE_CACHING
 
 
-def get_disk_cache_name() -> str:
+def get_disk_cache_name(tag: Optional[str]) -> str:
     if ut.in_unit_test_mode():
         cache_name = "tmp.joblib.unittest.cache"
+        if tag is not None:
+            cache_name += f".{tag}"
     else:
+        dbg.dassert_is(tag, None)
         cache_name = "tmp.joblib.cache"
     return cache_name
 
 
-def get_disk_cache_path() -> str:
-    cache_name = get_disk_cache_name()
+def get_disk_cache_path(tag: Optional[str]) -> str:
+    cache_name = get_disk_cache_name(tag)
     file_name = os.path.join(git.get_client_root(super_module=True), cache_name)
     file_name = os.path.abspath(file_name)
     return file_name
@@ -54,21 +57,28 @@ def get_disk_cache_path() -> str:
 _DISK_CACHE: Any = None
 
 
-def get_disk_cache() -> Any:
+def get_disk_cache(tag: Optional[str]) -> Any:
     """
     Return the object storing the disk cache.
     """
     _LOG.debug("get_disk_cache")
-    global _DISK_CACHE
-    if not _DISK_CACHE:
-        file_name = get_disk_cache_path()
-        _DISK_CACHE = joblib.Memory(file_name, verbose=0, compress=1)
-    return _DISK_CACHE
+    if tag is None:
+        global _DISK_CACHE
+        if not _DISK_CACHE:
+            file_name = get_disk_cache_path(tag)
+            _DISK_CACHE = joblib.Memory(file_name, verbose=0, compress=1)
+        disk_cache = _DISK_CACHE
+    else:
+        # Build a one-off cache.
+        file_name = get_disk_cache_path(tag)
+        disk_cache = joblib.Memory(file_name, verbose=0, compress=1)
+    return disk_cache
 
 
-def reset_disk_cache() -> None:
-    _LOG.warning("Resetting disk cache '%s'", get_disk_cache_path())
-    get_disk_cache().clear(warn=True)
+def reset_disk_cache(tag: Optional[str]) -> None:
+    _LOG.warning("Resetting disk cache '%s'", get_disk_cache_path(tag))
+    disk_cache = get_disk_cache(tag)
+    disk_cache.clear(warn=True)
 
 
 class Cached:
@@ -90,6 +100,7 @@ class Cached:
         func: Callable,
         use_mem_cache: bool = True,
         use_disk_cache: bool = True,
+        tag: Optional[str] = None,
     ):
         # This is used to make the class have the same attributes (e.g.,
         # `__name__`, `__doc__`, `__dict__`) as the called function.
@@ -97,6 +108,7 @@ class Cached:
         self._func = func
         self._use_mem_cache = use_mem_cache
         self._use_disk_cache = use_disk_cache
+        self._tag = tag
         self._reset_cache_tracing()
         # Create decorated functions with different caches and store pointers
         # of these functions. Note that we need to build the functions in the
@@ -105,9 +117,9 @@ class Cached:
         # `__call__`, they will be recreated at every invocation, creating a
         # new memory cache at every invocation.
         # Create the disk cache object, if needed.
-        _ = get_disk_cache()
+        self._disk_cache = get_disk_cache(tag)
 
-        @_DISK_CACHE.cache
+        @self._disk_cache.cache
         def _execute_func_from_disk_cache(*args: Any, **kwargs: Any) -> Any:
             # If we get here, we didn't hit neither memory nor the disk cache.
             self._last_used_disk_cache = False
@@ -233,7 +245,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     action = args.positional[0]
     if action == "reset_cache":
-        reset_disk_cache()
+        tag = None
+        reset_disk_cache(tag)
     else:
         dbg.dfatal("Invalid action='%s'" % action)
 
