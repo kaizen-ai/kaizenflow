@@ -176,6 +176,12 @@ _VALID_ACTIONS = [
 ]
 
 
+_DEFAULT_ACTIONS = [
+    "linter",
+    "run_tests",
+]
+
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
@@ -183,7 +189,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     output = []
     output.append("cmd=%s" % dbg.get_command_line())
     # Print actions.
-    actions = prsr.select_actions(args, _VALID_ACTIONS)
+    actions = prsr.select_actions(args, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     output.append("actions=%s" % actions)
     add_frame = True
     actions_as_str = prsr.actions_to_string(actions, _VALID_ACTIONS, add_frame)
@@ -252,7 +258,7 @@ def _parse() -> argparse.ArgumentParser:
         default="master",
         help="Branch to merge into, typically " "master",
     )
-    prsr.add_action_arg(parser, _VALID_ACTIONS)
+    prsr.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     parser.add_argument(
         "--autostash", action="store_true", help="Use --autostash in git pull"
     )

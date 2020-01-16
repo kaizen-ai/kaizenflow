@@ -62,7 +62,7 @@ def actions_to_string(
 
 
 def select_actions(
-    args: argparse.Namespace, valid_actions: List[str]
+    args: argparse.Namespace, valid_actions: List[str], default_actions: List[str]
 ) -> List[str]:
     dbg.dassert(
         not (args.action and args.all),
@@ -74,7 +74,10 @@ def select_actions(
     )
     # Select actions.
     if not args.action or args.all:
-        actions = list(valid_actions)
+        if default_actions is None:
+            default_actions = valid_actions[:]
+        dbg.dassert_is_subset(default_actions, valid_actions)
+        actions = default_actions
     else:
         actions = args.action[:]
     dbg.dassert_isinstance(actions, list)
@@ -105,7 +108,9 @@ def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
 
 
 def add_action_arg(
-    parser: argparse.ArgumentParser, valid_actions: List[str]
+    parser: argparse.ArgumentParser,
+    valid_actions: List[str],
+    default_actions: List[str],
 ) -> argparse.ArgumentParser:
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument(
@@ -120,5 +125,9 @@ def add_action_arg(
         choices=valid_actions,
         help="Actions to skip",
     )
-    parser.add_argument("--all", action="store_true", help="Run all the actions")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all the actions (%s)" % (" ".join(default_actions)),
+    )
     return parser
