@@ -1,12 +1,8 @@
-"""
-Import as:
-
-import core.event_study.visualization as esvis
-"""
 import logging
 from typing import Any, Optional
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -30,33 +26,42 @@ def plot_event_response(local_ts: pd.DataFrame, response_col: str) -> None:
     _ = plt.xticks(local_ts["grid_index"].unique())
 
 
-def plot_inter_event_time_gaps(
+def plot_interevent_intervals(
     timestamps: pd.Series,
     time_unit: str,
-    lower_quantile: float = 0.01,
     mode: Optional[str] = "set_to_nan",
+    lower_quantile: float = 0.01,
     **kwargs: Any,
 ) -> None:
     """
-    Plot inter-event time gaps.
+    Plot inter-event intervals.
 
     :param timestamps: datetime pd.Series
     :param time_unit: time units in which to plot the data. A parameter
         for timedelta64[]
-    :param lower_quantile: as in sigp.process_outliers
     :param mode: as in sigp.process_outliers
+    :param lower_quantile: as in sigp.process_outliers
     :param kwargs: passed into sigp.process_outliers
     """
-    dbg.dassert_isinstance(
-        timestamps[0], pd.Timestamp, "The data should be datetime"
+    dbg.dassert(not timestamps.empty, "The time series is empty")
+    dbg.dassert_in(
+        timestamps.dtype,
+        [
+            np.dtype("datetime64[ns]"),
+            np.dtype("datetime64[s]"),
+            np.dtype("datetime64[m]"),
+            np.dtype("datetime64[h]"),
+            np.dtype("datetime64[D]"),
+        ],
+        "The data should be datetime",
     )
-    time_gaps = timestamps.diff()
-    time_gaps_wo_outliers = sigp.process_outliers(
-        time_gaps.astype(f"timedelta64[{time_unit}]"),
+    intervals = timestamps.diff()
+    intervals_without_outliers = sigp.process_outliers(
+        intervals.astype(f"timedelta64[{time_unit}]"),
         mode,
         lower_quantile,
         **kwargs,
     ).dropna()
-    sns.distplot(time_gaps_wo_outliers)
+    sns.distplot(intervals_without_outliers)
     plt.xlabel(time_unit)
-    plt.title("Distribution of inter-event time gaps without outliers")
+    plt.title("Distribution of inter-event time intervals without outliers")
