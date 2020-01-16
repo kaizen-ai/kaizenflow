@@ -7,6 +7,7 @@ import pytest
 import helpers.cache as hcac
 import helpers.env as env
 import helpers.git as git
+import helpers.io_ as io_
 import helpers.list as hlist
 import helpers.printing as prnt
 import helpers.s3 as hs3
@@ -60,8 +61,21 @@ class Test_cache1(ut.TestCase):
 # executed in parallel we would incur in race conditions for unit tests all
 # resetting / using the same disk cache.
 class Test_cache2(ut.TestCase):
-    def _get_cache_tag(self) -> str:
-        return self.__class__.__name__
+    def setUp(self) -> None:
+        super().setUp()
+        self.cache_tag = "%s::%s" % (
+            self.__class__.__name__,
+            self._testMethodName,
+        )
+
+    def tearDown(self) -> None:
+        # TODO(gp): Use a context manager to create / destroy a local cache.
+        #  For now we do it explicitly.
+        disk_cache_path = hcac.get_disk_cache_path(self.cache_tag)
+        _LOG.debug("Destroying disk_cache_path=%s", disk_cache_path)
+        io_.delete_dir(disk_cache_path)
+        #
+        super().tearDown()
 
     def _get_function(self) -> _Function:
         """
@@ -142,17 +156,16 @@ class Test_cache2(ut.TestCase):
         Create the intrinsic function `f` and its cached version `cf`.
         """
         # Make sure that we are using the unit test cache.
-        cache_tag = self._get_cache_tag()
-        disk_cache_name = hcac.get_disk_cache_name(cache_tag)
+        disk_cache_name = hcac.get_disk_cache_name(self.cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
-        _LOG.debug("disk_cache_path=%s", hcac.get_disk_cache_path(cache_tag))
+        _LOG.debug("disk_cache_path=%s", hcac.get_disk_cache_path(self.cache_tag))
         self.assertIn("unittest", disk_cache_name)
         # Create the intrinsic function.
         f = self._get_function()
         # Create the cached function.
-        cf = hcac.Cached(f, tag=cache_tag, **kwargs)
+        cf = hcac.Cached(f, tag=self.cache_tag, **kwargs)
         # Reset everything and check that it's in the expected state.
-        hcac.reset_disk_cache(cache_tag)
+        hcac.reset_disk_cache(self.cache_tag)
         cf._reset_cache_tracing()
         return f, cf
 
