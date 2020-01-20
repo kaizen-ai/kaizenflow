@@ -1,0 +1,8 @@
+[{'target': array([-1.624061 ,        nan,        nan, ...,        nan,        nan,
+       -1.0699122], dtype=float32), 'start': Timestamp('2010-02-05 13:05:00', freq='T'), 'feat_dynamic_real': array([[ 0.6550763 , -0.6611851 ],
+       [        nan,         nan],
+       [        nan,         nan],
+       ...,
+       [        nan,         nan],
+       [        nan,         nan],
+       [ 0.1749853 ,  0.22510144]], dtype=float32), 'source': SourceContext(source='list_data', row=1)}]
