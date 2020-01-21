@@ -32,7 +32,7 @@ class _TestAdapter:
 
     @staticmethod
     def _list_tuples_to_str(
-        features_target_pairs: List[Tuple[pd.DataFrame, pd.Series]]
+        features_target_pairs: List[Tuple[pd.DataFrame, pd.DataFrame]]
     ) -> str:
         pairs = []
         for i, (feature, target) in enumerate(features_target_pairs):

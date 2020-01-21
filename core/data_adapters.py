@@ -5,7 +5,7 @@ import core.data_adapters as adpt
 """
 
 import logging
-from typing import Iterable, List, Optional, Tuple
+from typing import Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import gluonts
 import pandas as pd
@@ -24,7 +24,7 @@ def _iter_multiindex(
     frequency: str,
     x_vars: Iterable[str],
     y_vars: Iterable[str],
-):
+) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
     """
     Iterate level 0 of MultiIndex and generate `data_iter` parameter for
     `gluonts.dataset.common.ListDatase`.
@@ -103,3 +103,29 @@ def transform_gluon_pandas(
         features.index.name = index_name
         dfs.append((features, target))
     return dfs
+
+
+def _convert_tuples_list_to_multiindex_df(
+    dfs: List[Tuple[pd.DataFrame, pd.DataFrame]]
+) -> pd.DataFrame:
+    dfs = [pd.concat([features, target], axis=1) for features, target in dfs]
+    return pd.concat(dfs, keys=range(len(dfs)))
+
+
+def transform_gluon_multiindex_pandas(
+    gluon_ts: gluonts.dataset.common.ListDataset,
+    x_vars: Iterable[str],
+    y_vars: Iterable[str],
+    index_name: Optional[str],
+) -> pd.DataFrame:
+    """
+    Transform gluonts `ListDataset` into multiindexed dataframe.
+
+    :param gluon_ts: gluonts `ListDataset`
+    :param x_vars: names of feature columns
+    :param y_vars: names of target columns
+    :param index_name: name of the index
+    :return: multiindexed dataframe
+    """
+    dfs = transform_gluon_pandas(gluon_ts, x_vars, y_vars, index_name)
+    return _convert_tuples_list_to_multiindex_df(dfs)
