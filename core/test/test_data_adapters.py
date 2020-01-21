@@ -1,4 +1,3 @@
-import abc
 import logging
 from typing import List, Tuple
 
@@ -11,28 +10,25 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-class _TestAdapter(abc.ABC):
-    @property
-    def _df(self, n_rows: int = 10, n_cols: int = 3) -> pd.DataFrame:
+class _TestAdapter:
+    def __init__(self, n_rows: int = 100, n_cols: int = 5):
         self._freq = "T"
+        self._n_rows = n_rows
+        self._n_cols = n_cols
+        self._df = self._get_test_df()
+        self._feature_cols = self._df.columns[:-2]
+        self._target_col = self._df.columns[-2:]
+
+    def _get_test_df(self) -> pd.DataFrame:
         np.random.seed(42)
         idx = pd.Series(
-            pd.date_range("2010-01-01", "2011-01-01", freq=self._freq)
-        ).sample(n_rows)
-        df = pd.DataFrame(np.random.randn(n_rows, n_cols), index=idx)
+            pd.date_range("2010-01-01", "2010-01-03", freq=self._freq)
+        ).sample(self._n_rows)
+        df = pd.DataFrame(np.random.randn(self._n_rows, self._n_cols), index=idx)
         df.index.name = "timestamp"
-        df.columns = [f"col_{j}" for j in range(0, n_cols)]
-        self._feature_cols = df.columns[:-1]
-        self._target_col = df.columns[-1]
+        df.columns = [f"col_{j}" for j in range(0, self._n_cols)]
+        df.sort_index(inplace=True)
         return df
-
-    @abc.abstractmethod
-    def test_transform(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    def test_inverse_transform(self) -> None:
-        pass
 
     @staticmethod
     def _list_tuples_to_str(
@@ -46,30 +42,43 @@ class _TestAdapter(abc.ABC):
         return "\n".join(pairs)
 
 
-class TestGluonAdapter(_TestAdapter, hut.TestCase):
+class TestTransformPandasGluon(hut.TestCase):
     def test_transform(self) -> None:
-        ga = adpt.GluonAdapter(
-            self._df, self._target_col, self._feature_cols, self._freq
+        ta = _TestAdapter()
+        gluon_ts = adpt.transform_pandas_gluon(
+            ta._df, ta._freq, ta._feature_cols, ta._target_col
         )
-        gluon_ts = ga.transform()
         self.check_string(str(list(gluon_ts)))
 
-    def test_inverse_transform(self) -> None:
-        ga = adpt.GluonAdapter(
-            self._df, self._target_col, self._feature_cols, self._freq
+
+class TestTransformGluonPandas(hut.TestCase):
+    def test_transform(self) -> None:
+        ta = _TestAdapter()
+        gluon_ts = adpt.transform_pandas_gluon(
+            ta._df, ta._freq, ta._feature_cols, ta._target_col
         )
-        gluon_ts = ga.transform()
-        dfs = ga.inverse_transform(gluon_ts)
-        self.check_string(_TestAdapter._list_tuples_to_str(dfs))
+        dfs = adpt.transform_gluon_pandas(
+            gluon_ts,
+            ta._feature_cols,
+            ta._target_col,
+            index_name=ta._df.index.name,
+        )
+        self.check_string(ta._list_tuples_to_str(dfs))
 
     def test_correctness(self) -> None:
-        ga = adpt.GluonAdapter(
-            self._df, self._target_col, self._feature_cols, self._freq
+        ta = _TestAdapter()
+        gluon_ts = adpt.transform_pandas_gluon(
+            ta._df, ta._freq, ta._feature_cols, ta._target_col
         )
-        gluon_ts = ga.transform()
-        dfs = ga.inverse_transform(gluon_ts)
-        features, target = dfs[0]
-        inversed_df = pd.concat([features, target], axis=1)
+        dfs = adpt.transform_gluon_pandas(
+            gluon_ts,
+            ta._feature_cols,
+            ta._target_col,
+            index_name=ta._df.index.name,
+        )
+        targets = [target for _, target in dfs]
+        features = dfs[0][0]
+        inversed_df = pd.concat([features] + targets, axis=1)
         inversed_df = inversed_df.astype(np.float64)
-        reindexed_df = self._df.sort_index().asfreq(self._freq)
+        reindexed_df = ta._df.asfreq(ta._freq)
         pd.testing.assert_frame_equal(reindexed_df, inversed_df)
