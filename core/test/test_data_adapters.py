@@ -50,6 +50,14 @@ class TestTransformPandasGluon(hut.TestCase):
         )
         self.check_string(str(list(gluon_ts)))
 
+    def test_transform_local_ts(self) -> None:
+        ta = _TestAdapter()
+        local_ts = pd.concat([ta._df, ta._df], keys=[0, 1])
+        gluon_ts = adpt.transform_pandas_gluon(
+            local_ts, ta._frequency, ta._x_vars, ta._y_vars
+        )
+        self.check_string(str(list(gluon_ts)))
+
 
 class TestTransformGluonPandas(hut.TestCase):
     def test_transform(self) -> None:

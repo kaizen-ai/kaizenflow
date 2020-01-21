@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.data_adapters as adpt
+"""
+
 import logging
 from typing import Iterable, List, Optional, Tuple
 
@@ -8,10 +14,34 @@ import helpers.dbg as dbg
 
 # TODO(*): gluon needs these two imports to work properly.
 import gluonts.dataset.common as gdc  # isort:skip # noqa: F401 # pylint: disable=unused-import
-import gluonts.dataset.util as gdu  # isort:skip # noqa: F401 # pylint: disable=unused-import
 
 
 _LOG = logging.getLogger(__name__)
+
+
+def _iter_multiindex(
+    local_ts: pd.DataFrame,
+    frequency: str,
+    x_vars: Iterable[str],
+    y_vars: Iterable[str],
+):
+    """
+    Iterate level 0 of MultiIndex and generate `data_iter` parameter for
+    `gluonts.dataset.common.ListDatase`.
+    """
+    # Insert a level if the dataframe does not have a MultiIndex.
+    if not isinstance(local_ts.index, pd.MultiIndex):
+        local_ts = pd.concat([local_ts], keys=[0])
+    for _, local_ts_grid in local_ts.groupby(level=0):
+        df = local_ts_grid.droplevel(0)
+        dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        dbg.dassert_monotonic_index(df)
+        df = df.asfreq(frequency)
+        yield {
+            gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
+            gluonts.dataset.field_names.FieldName.START: df.index[0],
+            gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[x_vars],
+        }
 
 
 def transform_pandas_gluon(
@@ -30,19 +60,8 @@ def transform_pandas_gluon(
         y_vars = [y_vars]
     dbg.dassert_is_subset(x_vars, df.columns)
     dbg.dassert_is_subset(y_vars, df.columns)
-    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    dbg.dassert_monotonic_index(df)
-    df = df.asfreq(frequency)
     ts = gluonts.dataset.common.ListDataset(
-        [
-            {
-                gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
-                gluonts.dataset.field_names.FieldName.START: df.index[0],
-                gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[
-                    x_vars
-                ],
-            }
-        ],
+        _iter_multiindex(df, frequency, x_vars, y_vars),
         freq=frequency,
         one_dim_target=False,
     )
