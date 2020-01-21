@@ -36,15 +36,15 @@ def transform_pandas_gluon(
     ts = gluonts.dataset.common.ListDataset(
         [
             {
-                gluonts.dataset.field_names.FieldName.TARGET: df[y_var],
+                gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
                 gluonts.dataset.field_names.FieldName.START: df.index[0],
                 gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[
                     x_vars
                 ],
             }
-            for y_var in y_vars
         ],
         freq=frequency,
+        one_dim_target=False,
     )
     return ts
 
@@ -66,18 +66,19 @@ def transform_gluon_pandas(
     """
     if isinstance(y_vars, str):
         y_vars = [y_vars]
-    dbg.dassert_eq(
-        len(y_vars),
-        len(gluon_ts),
-        "The lenghts of `y_vars` and `gluon_ts` should be equal",
-    )
     dfs = []
-    for ts, y_var in zip(iter(gluon_ts), y_vars):
-        target = gluonts.dataset.util.to_pandas(ts)
-        target.name = y_var
+    for ts in iter(gluon_ts):
+        target = pd.DataFrame(ts[gluonts.dataset.field_names.FieldName.TARGET])
+        idx = pd.date_range(
+            ts[gluonts.dataset.field_names.FieldName.START],
+            periods=target.shape[0],
+            freq=ts[gluonts.dataset.field_names.FieldName.START].freq,
+        )
+        target.index = idx
+        target.columns = y_vars
         features = pd.DataFrame(
             ts[gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL],
-            index=target.index,
+            index=idx,
         )
         features.columns = x_vars
         features.index.name = index_name
