@@ -73,7 +73,7 @@ def transform_gluon_pandas(
     x_vars: Iterable[str],
     y_vars: Iterable[str],
     index_name: Optional[str],
-) -> List[Tuple[pd.DataFrame, pd.Series]]:
+) -> List[Tuple[pd.DataFrame, pd.DataFrame]]:
     """
     Transform gluonts `ListDataset` into target and feature pd.DataFrames.
 
