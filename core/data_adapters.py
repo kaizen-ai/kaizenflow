@@ -48,7 +48,9 @@ def transform_pandas_gluon(
     df: pd.DataFrame, frequency: str, x_vars: Iterable[str], y_vars: Iterable[str]
 ) -> gluonts.dataset.common.ListDataset:
     """
-    Transform pd.DataFrame into gluonts `ListDataset`.
+    Transform a dataframe or multiindexed dataframe, e.g., the output of
+    `core.event_study.core.build_local_timeseries` into gluonts
+    `ListDataset`.
 
     :param df: dataframe with feature and target columns
     :param frequency: pandas frequency
