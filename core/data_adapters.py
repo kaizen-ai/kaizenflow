@@ -92,7 +92,7 @@ def transform_from_gluon(
     :param gluon_ts: gluonts `ListDataset`
     :param x_vars: names of feature columns
     :param y_vars: names of target columns
-    :param index_name: name of the index
+    :param index_name: name of the datetime index
     :return: if there is one time series in `gluon_ts`, return singly
         indexed dataframe; else return multiindexed dataframe
     """
