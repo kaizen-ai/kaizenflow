@@ -16,8 +16,8 @@ class _TestAdapter:
         self._n_rows = n_rows
         self._n_cols = n_cols
         self._df = self._get_test_df()
-        self._x_vars = self._df.columns[:-2]
-        self._y_vars = self._df.columns[-2:]
+        self._x_vars = self._df.columns[:-2].tolist()
+        self._y_vars = self._df.columns[-2:].tolist()
 
     def _get_test_df(self) -> pd.DataFrame:
         np.random.seed(42)
@@ -28,6 +28,7 @@ class _TestAdapter:
         df.index.name = "timestamp"
         df.columns = [f"col_{j}" for j in range(0, self._n_cols)]
         df.sort_index(inplace=True)
+        df = df.asfreq(self._frequency)
         return df
 
     @staticmethod
@@ -42,45 +43,48 @@ class _TestAdapter:
         return "\n".join(pairs)
 
 
-class TestTransformPandasGluon(hut.TestCase):
+class TestTransformToGluon(hut.TestCase):
     def test_transform(self) -> None:
         ta = _TestAdapter()
-        gluon_ts = adpt.transform_pandas_gluon(
-            ta._df, ta._frequency, ta._x_vars, ta._y_vars
+        gluon_ts = adpt.transform_to_gluon(
+            ta._df, ta._x_vars, ta._y_vars, ta._frequency
         )
         self.check_string(str(list(gluon_ts)))
 
     def test_transform_local_ts(self) -> None:
         ta = _TestAdapter()
         local_ts = pd.concat([ta._df, ta._df], keys=[0, 1])
-        gluon_ts = adpt.transform_pandas_gluon(
-            local_ts, ta._frequency, ta._x_vars, ta._y_vars
+        gluon_ts = adpt.transform_to_gluon(
+            local_ts, ta._x_vars, ta._y_vars, ta._frequency
         )
         self.check_string(str(list(gluon_ts)))
 
+    def test_transform_series_target(self) -> None:
+        ta = _TestAdapter()
+        y_vars = ta._y_vars[-1:]
+        gluon_ts = adpt.transform_to_gluon(ta._df, ta._x_vars, y_vars,
+            ta._frequency)
+        self.check_string(str(list(gluon_ts)))
 
-class TestTransformGluonPandas(hut.TestCase):
+
+class TestTransformFromGluon(hut.TestCase):
     def test_transform(self) -> None:
         ta = _TestAdapter()
-        gluon_ts = adpt.transform_pandas_gluon(
-            ta._df, ta._frequency, ta._x_vars, ta._y_vars
+        gluon_ts = adpt.transform_to_gluon(
+            ta._df, ta._x_vars, ta._y_vars, ta._frequency
         )
-        dfs = adpt.transform_gluon_pandas(
+        df = adpt.transform_from_gluon(
             gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
         )
-        self.check_string(ta._list_tuples_to_str(dfs))
+        self.check_string(df.to_string())
 
     def test_correctness(self) -> None:
         ta = _TestAdapter()
-        gluon_ts = adpt.transform_pandas_gluon(
-            ta._df, ta._frequency, ta._x_vars, ta._y_vars
+        gluon_ts = adpt.transform_to_gluon(
+            ta._df, ta._x_vars, ta._y_vars, ta._frequency
         )
-        dfs = adpt.transform_gluon_pandas(
+        inverted_df = adpt.transform_from_gluon(
             gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
         )
-        targets = [target for _, target in dfs]
-        features = dfs[0][0]
-        inversed_df = pd.concat([features] + targets, axis=1)
-        inversed_df = inversed_df.astype(np.float64)
-        reindexed_df = ta._df.asfreq(ta._frequency)
-        pd.testing.assert_frame_equal(reindexed_df, inversed_df)
+        inverted_df = inverted_df.astype(np.float64)
+        pd.testing.assert_frame_equal(ta._df, inverted_df)
