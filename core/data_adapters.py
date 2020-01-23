@@ -118,6 +118,7 @@ def transform_from_gluon(
     return _convert_tuples_list_to_df(dfs)
 
 
+# TODO(Julia): Add support of multiple target models.
 def transform_from_gluon_forecasts(
     forecasts: List[gluonts.model.forecast.SampleForecast],
 ) -> pd.Series:
