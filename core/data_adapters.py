@@ -118,7 +118,7 @@ def transform_from_gluon(
     return _convert_tuples_list_to_df(dfs)
 
 
-# TODO(Julia): Add support of multiple target models.
+# TODO(Julia): Add support of multitarget models.
 def transform_from_gluon_forecasts(
     forecasts: List[gluonts.model.forecast.SampleForecast],
 ) -> pd.Series:
@@ -136,10 +136,10 @@ def transform_from_gluon_forecasts(
           - level 2 index contains integer offsets
           - level 3 index contains indices of traces (sample paths)
     """
-    forecast_dfs = [
+    forecast_series = [
         _transform_from_gluon_forecast_entry(forecast) for forecast in forecasts
     ]
-    return pd.concat(forecast_dfs, keys=range(len(forecast_dfs)))
+    return pd.concat(forecast_series, keys=range(len(forecast_series)))
 
 
 def _convert_tuples_list_to_df(
@@ -188,6 +188,9 @@ def _transform_from_gluon_forecast_entry(
     df = pd.DataFrame(forecast_entry.samples, columns=offsets)
     unstacked = df.unstack()
     # Add start date as zero level index.
-    unstacked = pd.concat([unstacked], keys=[forecast_entry.start_date],
-                          names=['start_date', 'offset', 'trace'])
+    unstacked = pd.concat(
+        [unstacked],
+        keys=[forecast_entry.start_date],
+        names=["start_date", "offset", "trace"],
+    )
     return unstacked
