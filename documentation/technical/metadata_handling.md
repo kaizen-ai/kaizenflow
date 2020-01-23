@@ -1,3 +1,39 @@
+<!--ts-->
+   * [Definitions and principles](#definitions-and-principles)
+      * [DataSource](#datasource)
+      * [Data in a DataSource](#data-in-a-datasource)
+      * [Time series](#time-series)
+      * [Raw metadata and payload](#raw-metadata-and-payload)
+      * [P1 metadata and payload](#p1-metadata-and-payload)
+      * [Conventions](#conventions)
+   * [Our flow for on-boarding data](#our-flow-for-on-boarding-data)
+      * [Idea generation](#idea-generation)
+      * [Dataset collection](#dataset-collection)
+      * [Prioritize data source downloading](#prioritize-data-source-downloading)
+      * [Data download](#data-download)
+      * [Transformation of data into P1 representation](#transformation-of-data-into-p1-representation)
+      * [Data sanity check](#data-sanity-check)
+      * [Exposing data to researchers](#exposing-data-to-researchers)
+   * [Internal representations](#internal-representations)
+      * [MonsterDataSource](#monsterdatasource)
+         * [Refs](#refs)
+         * [P1 fields](#p1-fields)
+      * [MonsterMetaData](#monstermetadata)
+         * [Refs](#refs-1)
+         * [P1 fields](#p1-fields-1)
+         * [Price / volume data](#price--volume-data)
+      * [MonsterPayloadData](#monsterpayloaddata)
+         * [Refs](#refs-2)
+      * [KnowledgeGraph](#knowledgegraph)
+   * [Flow of data among representations](#flow-of-data-among-representations)
+   * [Complexities in the design](#complexities-in-the-design)
+         * [How to handle data already in relational form?](#how-to-handle-data-already-in-relational-form)
+         * [Successive approximations of data](#successive-approximations-of-data)
+         * [Access control](#access-control)
+
+
+
+<!--te-->
 # Definitions and principles
 
 ## `DataSource`
@@ -9,12 +45,13 @@
 
 - Each `DataSource` typically contains:
 
-  1. Metadata, i.e., information about the data (e.g., a description of each time
-     series)
+  1. Metadata, i.e., information about the data (e.g., a description of each
+     time series)
   2. Payload data (e.g., time series, point-in-time data, tables, PDFs with
      text)
 
-- Some `DataSource` might not have metadata and instead contain just payload data
+- Some `DataSource` might not have metadata and instead contain just payload
+  data
 - Both metadata and payload data come in "raw form"
   - E.g., the schema for both 1. and 2. is typically different across different
     data sources, irregular, and incomplete
@@ -22,13 +59,15 @@
 
 ## Time series
 
-- The payload data in each `DataSource` typically is composed of many time series
+- The payload data in each `DataSource` typically is composed of many time
+  series
   - Time series may be univariate or multivariate
 
 ## Raw metadata and payload
 
 - We define as "raw" any data (both metadata and payload) in the form as it was
-  made available in the data source at the time when we collected the data, e.g.,
+  made available in the data source at the time when we collected the data,
+  e.g.,
   - Raw metadata in case there was a file with a directory of the data
   - Zipped CSV files containing time series data
 
@@ -61,12 +100,12 @@
       be the best way): why was the data changed?
 - All metadata and payload data should be described in this document
   - The field names should:
-    - have a name as long as needed to be clear, but no longer
-    - be capitalized
-    - use underscores and not spaces
-    - have a type associated to it (e.g., string, float)
-      - TODO(*): Enumerate the valid types
-    - a description
+    - Have a name as long as needed to be clear, but no longer
+    - Be capitalized
+    - Use underscores and not spaces
+    - Have a type associated to it (e.g., string, float)
+      - TODO(\*): Enumerate the valid types
+    - A description
 - We should qualify if something is an estimate (e.g., ~\$1000) or not (e.g.,
   \$725 / month)
 - How much do we believe in this information?
@@ -99,8 +138,8 @@
 
 - We decide which dataset to download based on several competing criteria:
   - Business objective, e.g.,
-    - a source for oil is more interesting than one for ags
-    - the number of models that can be built out of the data
+    - A source for oil is more interesting than one for ags
+    - The number of models that can be built out of the data
   - Complexity of download (e.g., data in PDF vs data in CSV format)
   - Uniqueness
   - Cost
@@ -115,13 +154,13 @@
 - Download the raw data (both metadata and payload) and put it into a suitable
   form inside ETL2
 
-- Ideally, we would like each data source to be available both historically and in
-  real-time
+- Ideally, we would like each data source to be available both historically and
+  in real-time
   - On one side, only the real-time data can inform us about:
-    - publication delay,
-    - reliability of the download process
-    - delay in acquiring the data on our side
-    - throttling, ...
+    - Publication delay,
+    - Reliability of the download process
+    - Delay in acquiring the data on our side
+    - Throttling, ...
   - On the other side, we would prefer to do the additional work of putting data
     in production (with all the ongoing maintenance effort) only when we know
     this data is useful for our models or can be sold
@@ -149,22 +188,22 @@
 
 - Researchers can access the data from ETL2
 
-- Ideally, we would like to share the access mechanisms with customers as much as
-  possible (of course with the proper access control and logging)
+- Ideally, we would like to share the access mechanisms with customers as much
+  as possible (of course with the proper access control and logging)
   - E.g., we could build REST APIs that call into our internal APIs
 
 # Internal representations
 
 - We collect data into 4 data structures with a fixed schema:
-  - `MonsterDataSource`: collects information about all data sources we are aware
-    of
+  - `MonsterDataSource`: collects information about all data sources we are
+    aware of
   - `MonsterMetaData`: collects all the metadata about all the time series we
     store
   - `MonsterPayloadData`: collects all the payload data about time series
   - `KnowledgeGraph`: collects all the relationships between economic entities
     and time series
 
-- TODO(*): Ok to come up with better names, but we might need to have names for
+- TODO(\*): Ok to come up with better names, but we might need to have names for
   these data structures so it's easier to understand what we are referring to
   (e.g., the Monster Spreadsheet)
 
@@ -175,8 +214,8 @@
   - It is represented by a single CSV file
   - It is checked in the repo under `//p1/metadata`
 - There is a notebook that loads the CSV as a pandas data frame
-- There is a library that allows one to query, compute stats, and manipulate this
-  data structure, e.g.,
+- There is a library that allows one to query, compute stats, and manipulate
+  this data structure, e.g.,
   - What data sources are available already?
   - How many data sources are we aware of?
   - How many data sources are available in ETL2?
@@ -192,8 +231,8 @@
     - Review the changes before PR
 
 ### Refs
-- [PartTask578 KG: Data source metadata (formerly known as Monster
-  Spreadsheet)](https://github.com/ParticleDev/commodity_research/issues/578)
+
+- [PartTask578 KG: Data source metadata (formerly known as Monster Spreadsheet)](https://github.com/ParticleDev/commodity_research/issues/578)
 
 ### P1 fields
 
@@ -232,8 +271,8 @@
   - What is the predominant source of the data
     - Survey: data that is collected by 'survey' methodology
     - First-hand: closest source of the data
-    - Aggregation: the source just presents the information which comes from
-      a third party
+    - Aggregation: the source just presents the information which comes from a
+      third party
     - Search engine
 - `DOWNLOAD_STATUS`
   - Represents whether we have:
@@ -327,17 +366,17 @@
 
 ## `MonsterMetaData`
 
-- For each data source in the `MonsterDataSource` there is a dataframe
-  with information about all the data contained in the data source
+- For each data source in the `MonsterDataSource` there is a dataframe with
+  information about all the data contained in the data source
 
-- Each metadata dataframe for a time series contains a unique P1 `ID` that can be
-  used to retrieve the data from ETL2
+- Each metadata dataframe for a time series contains a unique P1 `ID` that can
+  be used to retrieve the data from ETL2
 
 - The KnowledgeGraph contains pointers to metadata of time series
 
 ### Refs
-- [PartTask921 KG: Generate spreadsheet with time series
-  info](https://github.com/ParticleDev/commodity_research/issues/921)
+
+- [PartTask921 KG: Generate spreadsheet with time series info](https://github.com/ParticleDev/commodity_research/issues/921)
 
 ### P1 fields
 
@@ -357,8 +396,8 @@
   - E.g., this is a link that will initiate a download (e.g., in case we want to
     go back to the source and re-download for any reason)
 - `INFO_URL`
-  - Url with information relevant for this specific time series, e.g., description
-    of the fields
+  - Url with information relevant for this specific time series, e.g.,
+    description of the fields
 - `SAMPLING_FREQUENCY`
   - What is the frequency (e.g., daily, weekly, monthly) of the time series
   - This should be computed automatically
@@ -434,8 +473,8 @@
     `pd.Series` indexed by `datetimes` with one or multiple columns
 
 ### Refs
-- [PartTask951: ETL2: Uniform access to ETL2
-  data](https://github.com/ParticleDev/commodity_research/issues/951)
+
+- [PartTask951: ETL2: Uniform access to ETL2 data](https://github.com/ParticleDev/commodity_research/issues/951)
 
 ## `KnowledgeGraph`
 
@@ -462,16 +501,16 @@
 - Transform raw metadata into our internal representation
   - `ETL2` -> `MonsterMetaData`
     - This consists of:
-      - mapping fields from the raw metadata into our P1 internal representation
-      - converting the values into Python types
+      - Mapping fields from the raw metadata into our P1 internal representation
+      - Converting the values into Python types
 
 - Transform raw payload data into our internal representation
   - `ETL2` -> `MonsterPayloadData`
   - Note that if the data is in a suitable format (e.g., CSV form) we might be
     able to convert it on the fly to our internal `pandas` representation
   - If it's in a PDF or other unstructured data format we can:
-    - decide not to process it for now
-    - pre-process the data and save it into a structured format
+    - Decide not to process it for now
+    - Pre-process the data and save it into a structured format
 
 - Update P1 metadata after a download
   - `MonsterPayloadData` -> `MonsterMetaData`, `MonsterDataSource`
@@ -518,11 +557,11 @@
       - "what are the models built in production from a data source?"
   - Thus inevitably we will need to "join multiple tables" from research and
     infra
-      - At this point let's just make it simpler to do instead of maintaining
-        different data structures
-      - Simplicity needs to be met with discipline in maintaining the data
-        - E.g., if data download status/priorities are not kept up-to-date,
-          then their utility decreases (and can even go below zero!)
+    - At this point let's just make it simpler to do instead of maintaining
+      different data structures
+    - Simplicity needs to be met with discipline in maintaining the data
+      - E.g., if data download status/priorities are not kept up-to-date, then
+        their utility decreases (and can even go below zero!)
 
 ### Successive approximations of data
 
