@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import pandas as pd
 
+import core.data_adapters as adpt
 import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -497,12 +498,14 @@ class SkLearnModel(FitPredictNode):
             str(df_in[df_in.isna().any(axis=1)].head().index),
         )
         df = df_in.copy()
-        idx, x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
+        idx, x_vars, x_fit, y_vars, y_fit = adpt.transform_to_sklearn(
+            df, self._x_vars, self._y_vars
+        )
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, y_fit)
         y_hat = self._model.predict(x_fit)
         #
-        x_fit, y_fit, y_hat = self._from_sklearn_format(
+        x_fit, y_fit, y_hat = adpt.transform_from_sklearn(
             idx, x_vars, x_fit, y_vars, y_fit, y_hat
         )
         # TODO(Paul): Summarize model perf or make configurable.
@@ -515,12 +518,14 @@ class SkLearnModel(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         df = df_in.copy()
-        idx, x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
+        idx, x_vars, x_predict, y_vars, y_predict = adpt.transform_to_sklearn(
+            df, self._x_vars, self._y_vars
+        )
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
         y_hat = self._model.predict(x_predict)
-        x_predict, y_predict, y_hat = self._from_sklearn_format(
+        x_predict, y_predict, y_hat = adpt.transform_from_sklearn(
             idx, x_vars, x_predict, y_vars, y_predict, y_hat
         )
         info = collections.OrderedDict()
@@ -540,53 +545,6 @@ class SkLearnModel(FitPredictNode):
             pnl_rets.resample("1B").sum(), time_scaling=252
         )
         return info
-
-    # TODO(Paul): Add type hints.
-    def _to_sklearn_format(self, df):
-        idx = df.index
-        df = df.reset_index()
-        # TODO(Paul): replace with class name
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
-        x_vals = df[x_vars]
-        y_vals = df[y_vars]
-        return idx, x_vars, x_vals, y_vars, y_vals
-
-    # TODO(Paul): Add type hints.
-    @staticmethod
-    def _from_sklearn_format(idx, x_vars, x_vals, y_vars, y_vals, y_hat):
-        x = pd.DataFrame(x_vals.values, index=idx, columns=x_vars)
-        y = pd.DataFrame(y_vals.values, index=idx, columns=y_vars)
-        y_h = pd.DataFrame(y_hat, index=idx, columns=[y + "_hat" for y in y_vars])
-        return x, y, y_h
-
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        Return a list given its input.
-
-        - If the input is a list, the output is the same list.
-        - If the input is a function that returns a list, then the output of
-          the function is returned.
-
-        How this might arise in practice:
-          - A ColumnTransformer returns a number of x variables, with the
-            number dependent upon a hyperparameter expressed in config
-          - The column names of the x variables may be derived from the input
-            dataframe column names, not necessarily known until graph execution
-            (and not at construction)
-          - The ColumnTransformer output columns are merged with its input
-            columns (e.g., x vars and y vars are in the same DataFrame)
-        Post-merge, we need a way to distinguish the x vars and y vars.
-        Allowing a callable here allows us to pass in the ColumnTransformer's
-        method `transformed_col_names` and defer the call until graph
-        execution.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
 
 
 # #############################################################################
