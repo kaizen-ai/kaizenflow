@@ -9,4 +9,4 @@ def draw(graph: nx.Graph):
     Render NetworkX graph.
     """
     agraph = nx.nx_agraph.to_agraph(graph)
-    return Image(agraph.draw(format="jpg", prog="dot"))
+    return Image(agraph.draw(format="png", prog="dot"))

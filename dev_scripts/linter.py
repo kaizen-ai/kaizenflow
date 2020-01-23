@@ -686,7 +686,7 @@ class _Pydocstyle(_Action):
             return []
         ignore = []
         # http://www.pydocstyle.org/en/2.1.1/error_codes.html
-        if not (pedantic >= 2):
+        if pedantic < 2:
             # TODO(gp): Review all of these.
             ignore.extend(
                 [
@@ -715,7 +715,7 @@ class _Pydocstyle(_Action):
                     "D415",
                 ]
             )
-        if not (pedantic >= 1):
+        if pedantic < 1:
             # Disable some lints that are hard to respect.
             ignore.extend(
                 [
@@ -814,9 +814,16 @@ class _Pylint(_Action):
         if not is_py_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
+        #
+        is_test_code_tmp = is_under_test_dir(file_name)
+        _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
+        #
+        is_jupytext_code = is_paired_jupytext_file(file_name)
+        _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
+        #
         opts = []
         ignore = []
-        if not (pedantic >= 2):
+        if pedantic < 2:
             # We ignore these errors as too picky.
             ignore.extend(
                 [
@@ -836,8 +843,12 @@ class _Pylint(_Action):
                     # [C0415(import-outside-toplevel), ] Import outside toplevel
                     # - Sometimes we import inside a function.
                     "C0415",
+                    # [R0902(too-many-instance-attributes)] Too many instance attributes (/7)
+                    "R0902",
                     # [R0903(too-few-public-methods), ] Too few public methods (/2)
                     "R0903",
+                    # [R0904(too-many-public-methods), ] Too many public methods (/20)
+                    "R0904",
                     # [R0912(too-many-branches), ] Too many branches (/12)
                     "R0912",
                     # R0913(too-many-arguments), ] Too many arguments (/5)
@@ -853,6 +864,10 @@ class _Pylint(_Action):
                     #   with a constant value:
                     # - E.g., we use sometimes `if True:` or `if False:`.
                     "W0125",
+                    # [W0201(attribute-defined-outside-init)]
+                    # - If the constructor calls a method (e.g., `reset()`) to
+                    #   initialize the state, we have all these errors.
+                    "W0201",
                     # [W0511(fixme), ]
                     "W0511",
                     # [W0603(global-statement), ] Using the global statement
@@ -865,8 +880,6 @@ class _Pylint(_Action):
                 ]
             )
             # Unit test.
-            is_test_code_tmp = is_under_test_dir(file_name)
-            _LOG.debug("is_test_code_tmp=%s", is_test_code_tmp)
             if is_test_code_tmp:
                 ignore.extend(
                     [
@@ -881,8 +894,6 @@ class _Pylint(_Action):
                     ]
                 )
             # Jupytext.
-            is_jupytext_code = is_paired_jupytext_file(file_name)
-            _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
             if is_jupytext_code:
                 ignore.extend(
                     [
@@ -899,7 +910,7 @@ class _Pylint(_Action):
                         "W0621",
                     ]
                 )
-        if not (pedantic >= 1):
+        if pedantic < 1:
             ignore.extend(
                 [
                     # [C0103(invalid-name), ] Constant name "..." doesn't
@@ -1097,6 +1108,10 @@ def is_paired_jupytext_file(file_name: str) -> bool:
     return is_paired
 
 
+def is_init_py(file_name: str) -> bool:
+    return os.path.basename(file_name) == "__init__.py"
+
+
 # #############################################################################
 
 
@@ -1196,6 +1211,10 @@ class _CustomPythonChecks(_Action):
         msg = ""
         if _CustomPythonChecks.DEBUG:
             _LOG.debug("* Check 'from * imports'")
+        if is_init_py(file_name):
+            # In __init__.py we can import in weird ways (e.g., the
+            # evil `from ... import *`).
+            return msg
         m = re.match(r"\s*from\s+(\S+)\s+import\s+.*", line)
         if m:
             if m.group(1) != "typing":
@@ -1432,6 +1451,10 @@ def _get_valid_actions() -> List[str]:
     return _VALID_ACTIONS  # type: ignore
 
 
+def _get_default_actions() -> List[str]:
+    return _get_valid_actions()
+
+
 def _get_action_class(action: str) -> _Action:
     """
     Return the function corresponding to the passed string.
@@ -1468,7 +1491,9 @@ def _remove_not_possible_actions(actions: List[str]) -> List[str]:
 
 
 def _select_actions(args: argparse.Namespace) -> List[str]:
-    actions = prsr.select_actions(args, _get_valid_actions())
+    valid_actions = _get_valid_actions()
+    default_actions = _get_default_actions()
+    actions = prsr.select_actions(args, valid_actions, default_actions)
     # Find the tools that are available.
     actions = _remove_not_possible_actions(actions)
     #
@@ -1767,11 +1792,14 @@ def _parse() -> argparse.ArgumentParser:
         "--test_actions", action="store_true", help="Print the possible actions"
     )
     # Select actions.
-    prsr.add_action_arg(parser, _get_valid_actions())
+    prsr.add_action_arg(parser, _get_valid_actions(), _get_default_actions())
     #
     parser.add_argument(
-        "--pedantic", action="store", type=int, default=0,
-        help="Pedantic level. 0 = min, 2 = max (all the lints)"
+        "--pedantic",
+        action="store",
+        type=int,
+        default=0,
+        help="Pedantic level. 0 = min, 2 = max (all the lints)",
     )
     parser.add_argument(
         "--num_threads",

@@ -966,7 +966,7 @@ def process_outliers(
     dbg.dassert_lte(lower_quantile, upper_quantile)
     dbg.dassert_lte(upper_quantile, 1.0)
     # Compute bounds.
-    bounds = np.quantile(srs, [lower_quantile, upper_quantile])
+    bounds = np.nanquantile(srs, [lower_quantile, upper_quantile])
     _LOG.debug(
         "Removing outliers in [%s, %s] -> %s with mode=%s",
         lower_quantile,

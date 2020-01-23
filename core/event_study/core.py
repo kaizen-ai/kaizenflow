@@ -1,9 +1,4 @@
 """
-Import as:
-
-import core.event_study as esf
-
-
 See `documentation/technical/event_study_design.md` for design principles and
 notes on intended usage.
 
@@ -132,7 +127,7 @@ def build_local_timeseries(
             info_for_idx = {}
         else:
             info_for_idx = None
-        # Switch sign of `idx` since a pandas period of `n` selectes t_{-n}.
+        # Switch sign of `idx` since a pandas period of `n` selects t_{-n}.
         data_at_idx = _shift_and_select(
             events.index, grid_data, -idx, freq, info_for_idx
         )
