@@ -4,8 +4,8 @@ System info
 user name=julia
 server name=ip-172-31-16-23
 os name=Linux
-conda path=/anaconda3/bin/conda
-conda env root=['/home/julia/.conda/envs', '/anaconda3/envs']
+conda path=/anaconda3/condabin/conda
+conda env root=['/wd/julia/.conda/envs', '/anaconda3/envs']
 pandas: 0.24.2
 numpy: 1.16.4
 scipy: 1.3.0
@@ -16,10 +16,11 @@ Package summary
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: linux-64
+_anaconda_depends=2019.03=py37_0
 _ipyw_jlab_nb_ext_conf=0.1.0=py37_0
 _libgcc_mutex=0.1=main
 alabaster=0.7.12=py37_0
-anaconda=2019.07=py37_0
+anaconda=custom=py37_1
 anaconda-client=1.7.2=py37_0
 anaconda-navigator=1.9.7=py37_0
 anaconda-project=0.8.3=py_0
@@ -44,18 +45,20 @@ bleach=3.1.0=py37_0
 blosc=1.16.3=hd408876_0
 bokeh=1.2.0=py37_0
 boto=2.49.0=py37_0
+boto3=1.9.234=py_0
+botocore=1.12.234=py_0
 bottleneck=1.2.1=py37h035aef0_1
 bzip2=1.0.8=h7b6447c_0
-ca-certificates=2019.5.15=0
+ca-certificates=2019.9.11=hecc5488_0
 cairo=1.14.12=h8948797_3
-certifi=2019.6.16=py37_0
+certifi=2019.9.11=py37_0
 cffi=1.12.3=py37h2e261b9_0
 chardet=3.0.4=py37_1
 click=7.0=py37_0
 cloudpickle=1.2.1=py_0
 clyent=1.2.2=py37_1
 colorama=0.4.1=py37_0
-conda=4.7.10=py37_0
+conda=4.7.12=py37_0
 conda-build=3.18.8=py37_0
 conda-env=2.6.0=1
 conda-package-handling=1.3.11=py37_0
@@ -64,7 +67,9 @@ contextlib2=0.5.5=py37_0
 cryptography=2.7=py37h1ba5d50_0
 curl=7.65.2=hbc83047_0
 cycler=0.10.0=py37_0
+cymem=2.0.2=py37he1b5a44_0
 cython=0.29.12=py37he6710b0_0
+cython-blis=0.4.1=py37h516909a_0
 cytoolz=0.10.0=py37h7b6447c_0
 dask=2.1.0=py_0
 dask-core=2.1.0=py_0
@@ -72,7 +77,10 @@ dbus=1.13.6=h746ee38_0
 decorator=4.4.0=py37_1
 defusedxml=0.6.0=py_0
 distributed=2.1.0=py_0
+docopt=0.6.2=pypi_0
 docutils=0.14=py37_0
+emoji=0.5.3=py_0
+en-core-web-sm=2.2.0=pypi_0
 entrypoints=0.3=py37_0
 et_xmlfile=1.0.1=py37_0
 expat=2.2.6=he6710b0_0
@@ -82,6 +90,7 @@ flask=1.1.1=py_0
 fontconfig=2.13.0=h9420a91_0
 freetype=2.9.1=h8a8886c_1
 fribidi=1.0.5=h7b6447c_0
+fsspec=0.5.2=py_0
 future=0.17.1=py37_0
 get_terminal_size=1.0.0=haa9412d_0
 gevent=1.4.0=py37h7b6447c_0
@@ -115,6 +124,7 @@ jdcal=1.4.1=py_0
 jedi=0.13.3=py37_0
 jeepney=0.4=py37_0
 jinja2=2.10.1=py37_0
+jmespath=0.9.4=py_0
 joblib=0.13.2=py37_0
 jpeg=9b=h024ee3a_2
 json5=0.8.4=py_0
@@ -125,6 +135,7 @@ jupyter_console=6.0.0=py37_0
 jupyter_core=4.5.0=py_0
 jupyterlab=1.0.2=py37hf63ae98_0
 jupyterlab_server=1.0.0=py_0
+jupytext=1.2.4=pypi_0
 keyring=18.0.0=py37_0
 kiwisolver=1.1.0=py37he6710b0_0
 krb5=1.16.1=h173b8e3_7
@@ -166,6 +177,7 @@ mpfr=4.0.1=hdf1c602_3
 mpmath=1.1.0=py37_0
 msgpack-python=0.6.1=py37hfd86e86_1
 multipledispatch=0.6.0=py37_0
+murmurhash=1.0.0=py37hf484d3e_0
 navigator-updater=0.2.1=py37_0
 nbconvert=5.5.0=py_0
 nbformat=4.4.0=py37_0
@@ -174,6 +186,7 @@ networkx=2.3=py_0
 nltk=3.4.4=py37_0
 nose=1.3.7=py37_2
 notebook=6.0.0=py37_0
+num2words=0.5.10=pypi_0
 numba=0.44.1=py37h962f231_0
 numexpr=2.6.9=py37h9e4a6bb_0
 numpy=1.16.4=py37h7e9f1db_0
@@ -181,7 +194,7 @@ numpy-base=1.16.4=py37hde5b4d6_0
 numpydoc=0.9.1=py_0
 olefile=0.46=py37_0
 openpyxl=2.6.2=py_0
-openssl=1.1.1c=h7b6447c_1
+openssl=1.1.1c=h516909a_0
 packaging=19.0=py37_0
 pandas=0.24.2=py37he6710b0_0
 pandoc=2.2.3.2=0
@@ -201,8 +214,10 @@ pillow=6.1.0=py37h34e0f95_0
 pip=19.1.1=py37_0
 pixman=0.38.0=h7b6447c_0
 pkginfo=1.5.0.1=py37_0
+plac=0.9.6=py37_0
 pluggy=0.12.0=py_0
 ply=3.11=py37_0
+preshed=3.0.2=py37he1b5a44_0
 prometheus_client=0.7.1=py_0
 prompt_toolkit=2.0.9=py37_0
 psutil=5.6.3=py37h7b6447c_0
@@ -245,6 +260,8 @@ readline=7.0=h7b6447c_5
 requests=2.22.0=py37_0
 rope=0.14.0=py_0
 ruamel_yaml=0.15.46=py37h14c3975_0
+s3fs=0.3.4=py_0
+s3transfer=0.2.1=py37_0
 scikit-image=0.15.0=py37he6710b0_0
 scikit-learn=0.21.2=py37hd81dba3_0
 scipy=1.3.0=py37h7c811a0_0
@@ -261,6 +278,8 @@ snowballstemmer=1.9.0=py_0
 sortedcollections=1.1.2=py37_0
 sortedcontainers=2.1.0=py37_0
 soupsieve=1.8=py37_0
+spacy=2.2.1=py37hc9558a2_0
+spacy-lookups-data=0.2.0=py_0
 sphinx=2.1.2=py_0
 sphinxcontrib=1.0=py37_1
 sphinxcontrib-applehelp=1.0.1=py_0
@@ -274,11 +293,15 @@ spyder=3.3.6=py37_0
 spyder-kernels=0.5.1=py37_0
 sqlalchemy=1.3.5=py37h7b6447c_0
 sqlite=3.29.0=h7b6447c_0
+srsly=0.2.0=py37he1b5a44_0
 statsmodels=0.10.0=py37hdd07704_0
 sympy=1.4=py37_0
+tbb=2019.8=hfd86e86_0
 tblib=1.4.0=py_0
 terminado=0.8.2=py37_0
 testpath=0.4.2=py37_0
+textblob=0.15.3=py_0
+thinc=7.1.1=py37hc9558a2_0
 tk=8.6.8=hbc83047_0
 toolz=0.10.0=py_0
 tornado=6.0.3=py37h7b6447c_0
@@ -287,6 +310,7 @@ traitlets=4.3.2=py37_0
 unicodecsv=0.14.1=py37_0
 unixodbc=2.3.7=h14c3975_0
 urllib3=1.24.2=py37_0
+wasabi=0.3.0=py_0
 wcwidth=0.1.7=py37_0
 webencodings=0.5.1=py37_1
 werkzeug=0.15.4=py_0
@@ -299,6 +323,7 @@ xlsxwriter=1.1.8=py_0
 xlwt=1.3.0=py37_0
 xz=5.2.4=h14c3975_4
 yaml=0.1.7=had09818_2
+yapf=0.28.0=py_0
 zeromq=4.3.1=he6710b0_3
 zict=1.0.0=py_0
 zipp=0.5.1=py_0
