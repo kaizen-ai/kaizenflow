@@ -6,7 +6,7 @@
       * [Raw metadata and payload](#raw-metadata-and-payload)
       * [P1 metadata and payload](#p1-metadata-and-payload)
       * [Conventions](#conventions)
-   * [Our flow for on-boarding data](#our-flow-for-on-boarding-data)
+   * [Our flow for onboarding data](#our-flow-for-onboarding-data)
       * [Idea generation](#idea-generation)
       * [Dataset collection](#dataset-collection)
       * [Prioritize data source downloading](#prioritize-data-source-downloading)
@@ -34,6 +34,7 @@
 
 
 <!--te-->
+
 # Definitions and principles
 
 ## `DataSource`
@@ -93,7 +94,7 @@
     - E.g., `xyz.org` website, a paper, a book
   - Who added that information and when?
     - He who made the modification to a data structure (e.g., Max) might be
-      different from him who made the change in the db (e.g., Paul committed the
+      different from him who made the change in the DB (e.g., Paul committed the
       change)
     - Git is tracking only the second part
     - Context about the data change should be available (e.g., GitHub task might
@@ -103,7 +104,7 @@
     - Have a name as long as needed to be clear, but no longer
     - Be capitalized
     - Use underscores and not spaces
-    - Have a type associated to it (e.g., string, float)
+    - Have a type associated with it (e.g., string, float)
       - TODO(\*): Enumerate the valid types
     - A description
 - We should qualify if something is an estimate (e.g., ~\$1000) or not (e.g.,
@@ -113,9 +114,9 @@
   - Is it an informed guess?
   - Is it what we were told by somebody on the street?
   - Please report any supporting justification for our belief level (e.g., is it
-    source quality? Our enlightened experience? Something else?)
+    because of the source quality? Our enlightened experience? Something else?)
 
-# Our flow for on-boarding data
+# Our flow for onboarding data
 
 - The process we follow has multiple stages
 
@@ -123,7 +124,7 @@
 
 - We come up with ideas from papers, books, etc. about interesting datasets and
   models
-- Currently this is done informally in GitHub tasks
+- Currently, this is done informally in GitHub tasks
 
 ## Dataset collection
 
@@ -140,12 +141,12 @@
   - Business objective, e.g.,
     - A source for oil is more interesting than one for ags
     - The number of models that can be built out of the data
-  - Complexity of download (e.g., data in PDF vs data in CSV format)
+  - The complexity of download (e.g., data in PDF vs data in CSV format)
   - Uniqueness
   - Cost
   - ...
 
-- Currently we:
+- Currently, we:
   - Track these activities in the Monster Spreadsheet; and
   - File issues against ETL2
 
@@ -210,7 +211,7 @@
 ## `MonsterDataSource`
 
 - The `MonsterDataSource` stores all the data sources we are aware of
-  - In practice it is a machine-readable form of the Monster Spreadsheet
+  - In practice, it is a machine-readable form of the Monster Spreadsheet
   - It is represented by a single CSV file
   - It is checked in the repo under `//p1/metadata`
 - There is a notebook that loads the CSV as a pandas data frame
@@ -226,7 +227,7 @@
   - Typically analysts are in charge of manipulating it
 
 - Probably this will evolve into a full-blown database table at some point
-  - For now we want to keep it as a CSV, so we can:
+  - For now, we want to keep it as a CSV, so we can:
     - Version control
     - Review the changes before PR
 
@@ -249,7 +250,7 @@
   - E.g., For USDA there are several data sets "Agricultural Transportation Open
     Data Platform", "U.S. Agricultural Trade Data"
 - `SUMMARY`
-  - Human readable summary
+  - Human-readable summary
     - What does this dataset contain?
     - This is a free-form description with links to make it easy for a human to
       understand what the data set is about
@@ -258,7 +259,7 @@
     sound policy-making, efficient markets, and public understanding of energy
     and its interaction with the economy and the environment."
 - `SUMMARY_SOURCE`
-  - How did we come to know about?
+  - How did we come to know about it?
   - E.g., it can be a URL, a paper, a book
 - `DATASOURCE_URL`
   - E.g., `www.eia.gov`
@@ -270,7 +271,7 @@
 - `COLLECTION_TYPE`
   - What is the predominant source of the data
     - Survey: data that is collected by 'survey' methodology
-    - First-hand: closest source of the data
+    - First-hand: it is the closest source of the data
     - Aggregation: the source just presents the information which comes from a
       third party
     - Search engine
@@ -287,7 +288,7 @@
   - Subscription
   - Both: source has open data and paid services simultaneously
 - `COST`
-  - Indicative cost, if subscription
+  - Indicative cost, if a subscription
 - `HIGHEST_FREQUENCY`
   - Highest frequency available from an exploratory inspection, e.g.,
     - Annual
@@ -325,11 +326,11 @@
     - Soybean
     - Steel
     - Sugar
-    - Trade: trade data, freight data etc.
+    - Trade: trade data, freight data, etc.
   - We want to have our own internal representation (in terms of "PCA sectors")
     or a stable standard hierarchy to classify commodities
 - `GEO`
-  - Geographical location that this data is mainly about, e.g.,
+  - The geographical location that this data is mainly about, e.g.,
     - Global
     - US
     - China
@@ -366,13 +367,13 @@
 
 ## `MonsterMetaData`
 
-- For each data source in the `MonsterDataSource` there is a dataframe with
+- For each data source in the `MonsterDataSource` there is a data frame with
   information about all the data contained in the data source
 
-- Each metadata dataframe for a time series contains a unique P1 `ID` that can
+- Each metadata data frame for a time series contains a unique P1 `ID` that can
   be used to retrieve the data from ETL2
 
-- The KnowledgeGraph contains pointers to metadata of time series
+- The KnowledgeGraph contains pointers to the metadata of time series
 
 ### Refs
 
@@ -392,7 +393,7 @@
 - `DATA_SOURCE`
   - Pointer to the corresponding entry in `MonsterDataSource`
 - `DATA_URL`
-  - The url where this time series was downloaded from
+  - The URL where this time series was downloaded from
   - E.g., this is a link that will initiate a download (e.g., in case we want to
     go back to the source and re-download for any reason)
 - `INFO_URL`
@@ -419,7 +420,7 @@
 - `UNITS_OF_MEASURE`
   - Unit of measure of each column
 - `COLUMN_DESCRIPTION`
-  - A description of each column in the data in case of dataframe
+  - A description of each column in the data in case of data frame
 - `SUPPLY / DEMAND / INVENTORY`
   - Manual annotation of what we think this data applies to
   - This information might be redundant with the KG, and to be removed
@@ -435,7 +436,7 @@
   - If the data was downloaded as historical data or real-time
   - We can keep multiple copies of the same time series, some downloaded
     historically and other real-time
-  - For production we stitch together historical and real-time to get a single
+  - For production, we stitch together historical and real-time to get a single
     view of the data (like we used to do with Tardis)
 - `DOWNLOAD_TS`
   - When it was downloaded
@@ -531,12 +532,11 @@
 
 - Some data is already in a relational form, e.g.,
   - Information about the data source a time series comes from
-    - We don't want to replicate information about a data source (e.g., its
-      `URL`)
+    - We don't want to replicate information about a data source (e.g., its URL)
   - The source that informed a certain data source or relationship, e.g.,
     - Certain data sources are suggested by a paper, others from a book (e.g.,
       "The secrets of economic indicators"), others are our own theory
-    - We don't want to repeat information about a paper (e.g., its url)
+    - We don't want to repeat information about a paper (e.g., its URL)
       everywhere, but rather we would like to normalize this information
 
 - We want to store information about our internal process, e.g.,
