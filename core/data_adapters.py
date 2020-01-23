@@ -205,7 +205,7 @@ def transform_from_sklearn(
     y_hat: pd.DataFrame,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Transform data from sklearn format to pandas dataframes.
+    Add indices and column names to sklearn outputs.
 
     :param idx: data index
     :param x_vars: names of feature columns
