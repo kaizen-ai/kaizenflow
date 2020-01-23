@@ -9,7 +9,7 @@ from typing import Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import gluonts
 
-# TODO(*): gluon needs these two imports to work properly.
+# TODO(*): gluon needs this import to work properly.
 import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import pandas as pd
 
@@ -118,6 +118,28 @@ def transform_from_gluon(
     return _convert_tuples_list_to_df(dfs)
 
 
+def transform_from_gluon_forecasts(
+    forecasts: List[gluonts.model.forecast.SampleForecast],
+) -> pd.DataFrame:
+    """
+    Transform the output of
+    `gluonts.evaluation.backtest.make_evaluation_predictions` into a
+    dataframe.
+
+    :param forecasts: first value of `the make_evaluation_predictions`
+        output
+    :return: multiindexed dataframe of the
+        `(len(forecasts) * prediction_length, num_samples)` shape:
+          - each level 0 index corresponds to one forecast
+          - level 1 index contains timestamps
+          - columns correspond to samples
+    """
+    forecast_dfs = [
+        _transform_from_gluon_forecast_entry(forecast) for forecast in forecasts
+    ]
+    return pd.concat(forecast_dfs, keys=range(len(forecast_dfs)))
+
+
 def _convert_tuples_list_to_df(
     dfs: List[Tuple[pd.DataFrame, pd.DataFrame]]
 ) -> pd.DataFrame:
@@ -155,3 +177,16 @@ def _create_iter_multiindex(
     for _, local_ts_grid in local_ts.groupby(level=0):
         df = local_ts_grid.droplevel(0)
         yield from _create_iter_single_index(df, x_vars, y_vars)
+
+
+def _transform_from_gluon_forecast_entry(
+    forecast_entry: gluonts.model.forecast.SampleForecast,
+) -> pd.DataFrame:
+    cols = pd.date_range(
+        forecast_entry.start_date,
+        periods=forecast_entry.samples.shape[1],
+        freq=forecast_entry.freq,
+    )
+    df = pd.DataFrame(forecast_entry.samples, columns=cols)
+    df = df.T
+    return df
