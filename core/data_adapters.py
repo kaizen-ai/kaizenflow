@@ -120,7 +120,7 @@ def transform_from_gluon(
 
 def transform_from_gluon_forecasts(
     forecasts: List[gluonts.model.forecast.SampleForecast],
-) -> pd.DataFrame:
+) -> pd.Series:
     """
     Transform the output of
     `gluonts.evaluation.backtest.make_evaluation_predictions` into a
@@ -128,11 +128,12 @@ def transform_from_gluon_forecasts(
 
     :param forecasts: first value of `the make_evaluation_predictions`
         output
-    :return: multiindexed dataframe of the
-        `(len(forecasts) * prediction_length, num_samples)` shape:
-          - each level 0 index corresponds to one forecast
-          - level 1 index contains timestamps
-          - columns correspond to samples
+    :return: multiindexed series of the
+        `(len(forecasts) * prediction_length * num_samples)` shape:
+          - level 0 index corresponds to one forecast
+          - level 1 index contains start date of a time series
+          - level 2 index contains integer offsets
+          - level 3 index contains indices of traces (sample paths)
     """
     forecast_dfs = [
         _transform_from_gluon_forecast_entry(forecast) for forecast in forecasts
@@ -181,12 +182,11 @@ def _create_iter_multiindex(
 
 def _transform_from_gluon_forecast_entry(
     forecast_entry: gluonts.model.forecast.SampleForecast,
-) -> pd.DataFrame:
-    cols = pd.date_range(
-        forecast_entry.start_date,
-        periods=forecast_entry.samples.shape[1],
-        freq=forecast_entry.freq,
-    )
-    df = pd.DataFrame(forecast_entry.samples, columns=cols)
-    df = df.T
-    return df
+) -> pd.Series:
+    offsets = range(forecast_entry.samples.shape[1])
+    df = pd.DataFrame(forecast_entry.samples, columns=offsets)
+    unstacked = df.unstack()
+    # Add start date as zero level index.
+    unstacked = pd.concat([unstacked], keys=[forecast_entry.start_date],
+                          names=['start_date', 'offset', 'trace'])
+    return unstacked
