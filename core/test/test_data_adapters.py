@@ -1,6 +1,10 @@
 import logging
 from typing import List, Tuple
 
+import gluonts
+
+# TODO(*): gluon needs this import to work properly.
+import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
 
@@ -62,8 +66,9 @@ class TestTransformToGluon(hut.TestCase):
     def test_transform_series_target(self) -> None:
         ta = _TestAdapter()
         y_vars = ta._y_vars[-1:]
-        gluon_ts = adpt.transform_to_gluon(ta._df, ta._x_vars, y_vars,
-            ta._frequency)
+        gluon_ts = adpt.transform_to_gluon(
+            ta._df, ta._x_vars, y_vars, ta._frequency
+        )
         self.check_string(str(list(gluon_ts)))
 
 
@@ -88,3 +93,30 @@ class TestTransformFromGluon(hut.TestCase):
         )
         inverted_df = inverted_df.astype(np.float64)
         pd.testing.assert_frame_equal(ta._df, inverted_df)
+
+
+class TestTransformFromGluonForecasts(hut.TestCase):
+    @staticmethod
+    def _get_mock_forecasts(
+        n_traces: int = 3,
+        n_offsets: int = 50,
+        n_forecasts: int = 2,
+        frequency: str = "T",
+    ) -> List[gluonts.model.forecast.SampleForecast]:
+        np.random.seed(42)
+        all_samples = np.random.randn(n_traces, n_offsets, n_forecasts)
+        start_dates = pd.date_range(
+            pd.Timestamp("2010-01-01"), freq="D", periods=n_forecasts
+        )
+        forecasts = [
+            gluonts.model.forecast.SampleForecast(
+                all_samples[:, :, i], start_date, frequency
+            )
+            for i, start_date in enumerate(start_dates)
+        ]
+        return forecasts
+
+    def test_transform1(self) -> None:
+        forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
+        df = adpt.transform_from_gluon_forecasts(forecasts)
+        self.check_string(df.to_string())

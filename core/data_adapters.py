@@ -9,7 +9,7 @@ from typing import Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import gluonts
 
-# TODO(*): gluon needs these two imports to work properly.
+# TODO(*): gluon needs this import to work properly.
 import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import pandas as pd
 
@@ -118,6 +118,37 @@ def transform_from_gluon(
     return _convert_tuples_list_to_df(dfs)
 
 
+# TODO(Julia): Add support of multitarget models.
+def transform_from_gluon_forecasts(
+    forecasts: List[gluonts.model.forecast.SampleForecast],
+) -> pd.Series:
+    """
+    Transform the output of
+    `gluonts.evaluation.backtest.make_evaluation_predictions` into a
+    dataframe.
+
+    The output is multiindexed series of the
+    `(len(forecasts) * prediction_length * num_samples, )` shape:
+          - level 0 index contains integer offsets
+          - level 1 index contains start dates of forecasts
+          - level 2 index contains indices of traces (sample paths)
+    We require start dates of forecasts to be unique, so they serve as
+    unique identifiers for forecasts.
+
+    :param forecasts: first value of the `make_evaluation_predictions`
+        output
+    :return: multiindexed series
+    """
+    start_dates = [forecast.start_date for forecast in forecasts]
+    dbg.dassert_no_duplicates(
+        start_dates, "Forecast start dates should be unique"
+    )
+    forecast_dfs = [
+        _transform_from_gluon_forecast_entry(forecast) for forecast in forecasts
+    ]
+    return pd.concat(forecast_dfs).sort_index(level=0)
+
+
 def _convert_tuples_list_to_df(
     dfs: List[Tuple[pd.DataFrame, pd.DataFrame]]
 ) -> pd.DataFrame:
@@ -155,3 +186,19 @@ def _create_iter_multiindex(
     for _, local_ts_grid in local_ts.groupby(level=0):
         df = local_ts_grid.droplevel(0)
         yield from _create_iter_single_index(df, x_vars, y_vars)
+
+
+def _transform_from_gluon_forecast_entry(
+    forecast_entry: gluonts.model.forecast.SampleForecast,
+) -> pd.Series:
+    df = pd.DataFrame(forecast_entry.samples)
+    unstacked = df.unstack()
+    # Add start date as 0 level index.
+    unstacked = pd.concat(
+        {forecast_entry.start_date: unstacked},
+        names=["start_date", "offset", "trace"],
+    )
+    # This will change the index levels to
+    # `["offset", "start_date", "trace"]`.
+    unstacked.index = unstacked.index.swaplevel(0, 1)
+    return unstacked
