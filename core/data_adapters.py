@@ -135,10 +135,9 @@ def transform_from_gluon_forecasts(
     We require start dates of forecasts to be unique, so they serve as
     unique identifiers for forecasts.
 
-    :param forecasts: first value of `the make_evaluation_predictions`
+    :param forecasts: first value of the `make_evaluation_predictions`
         output
     :return: multiindexed series
-
     """
     start_dates = [forecast.start_date for forecast in forecasts]
     dbg.dassert_no_duplicates(
@@ -199,7 +198,7 @@ def _transform_from_gluon_forecast_entry(
         {forecast_entry.start_date: unstacked},
         names=["start_date", "offset", "trace"],
     )
-    # This would change the index levels to
+    # This will change the index levels to
     # `["offset", "start_date", "trace"]`.
     unstacked.index = unstacked.index.swaplevel(0, 1)
     return unstacked
