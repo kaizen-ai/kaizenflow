@@ -127,19 +127,27 @@ def transform_from_gluon_forecasts(
     `gluonts.evaluation.backtest.make_evaluation_predictions` into a
     dataframe.
 
+    The output is multiindexed series of the
+    `(len(forecasts) * prediction_length * num_samples, )` shape:
+          - level 0 index contains integer offsets
+          - level 1 index contains start dates of forecasts
+          - level 2 index contains indices of traces (sample paths)
+    We require start dates of forecasts to be unique, so they serve as
+    unique identifiers for forecasts.
+
     :param forecasts: first value of `the make_evaluation_predictions`
         output
-    :return: multiindexed series of the
-        `(len(forecasts) * prediction_length * num_samples)` shape:
-          - level 0 index corresponds to one forecast
-          - level 1 index contains start date of a time series
-          - level 2 index contains integer offsets
-          - level 3 index contains indices of traces (sample paths)
+    :return: multiindexed series
+
     """
-    forecast_series = [
+    start_dates = [forecast.start_date for forecast in forecasts]
+    dbg.dassert_no_duplicates(
+        start_dates, "Forecast start dates should be unique"
+    )
+    forecast_dfs = [
         _transform_from_gluon_forecast_entry(forecast) for forecast in forecasts
     ]
-    return pd.concat(forecast_series, keys=range(len(forecast_series)))
+    return pd.concat(forecast_dfs).sort_index(level=0)
 
 
 def _convert_tuples_list_to_df(
@@ -187,10 +195,13 @@ def _transform_from_gluon_forecast_entry(
     offsets = range(forecast_entry.samples.shape[1])
     df = pd.DataFrame(forecast_entry.samples, columns=offsets)
     unstacked = df.unstack()
-    # Add start date as zero level index.
+    # Add start date as 0 level index.
     unstacked = pd.concat(
         [unstacked],
         keys=[forecast_entry.start_date],
         names=["start_date", "offset", "trace"],
     )
+    # This would change the index levels to
+    # `["offset", "start_date", "trace"]`.
+    unstacked.index = unstacked.index.swaplevel(0, 1)
     return unstacked

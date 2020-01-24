@@ -96,16 +96,24 @@ class TestTransformFromGluon(hut.TestCase):
 
 
 class TestTransformFromGluonForecasts(hut.TestCase):
-    def test_transform1(self) -> None:
+    @staticmethod
+    def _get_mock_forecasts(
+        n_traces=3, n_offsets=50, n_forecasts=2, frequency="T"
+    ):
         np.random.seed(42)
-        all_samples = np.random.randn(100, 50, 2)
-        start_date = pd.Timestamp("2010-01-01")
-        frequency = "T"
+        all_samples = np.random.randn(n_traces, n_offsets, n_forecasts)
+        start_dates = pd.date_range(
+            pd.Timestamp("2010-01-01"), freq="D", periods=n_forecasts
+        )
         forecasts = [
             gluonts.model.forecast.SampleForecast(
                 all_samples[:, :, i], start_date, frequency
             )
-            for i in range(all_samples.shape[-1])
+            for i, start_date in enumerate(start_dates)
         ]
+        return forecasts
+
+    def test_transform1(self) -> None:
+        forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
         df = adpt.transform_from_gluon_forecasts(forecasts)
         self.check_string(df.to_string())
