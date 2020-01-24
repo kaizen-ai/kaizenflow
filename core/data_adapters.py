@@ -231,6 +231,9 @@ def transform_to_sklearn(
     :param y_vars: names of target columns
     :return: (x_vals, y_vals)
     """
+    dbg.dassert_not_intersection(
+        x_vars, y_vars, "`x_vars` and `y_vars` should not intersect"
+    )
     dbg.dassert(
         df.notna().values.any(), "The dataframe should not contain `None` values"
     )
@@ -241,15 +244,20 @@ def transform_to_sklearn(
 
 
 def transform_from_sklearn(
-    idx: pd.Index, x_vars: List[str], x_vals: np.array,
+    idx: pd.Index, vars_: List[str], vals: np.array,
 ) -> pd.DataFrame:
     """
     Add index and column names to sklearn output.
 
     :param idx: data index
-    :param x_vars: names of feature columns
-    :param x_vals: features data
+    :param vars_: names of feature columns
+    :param vals: features data
     :return: dataframe with an index an column names
     """
-    x = pd.DataFrame(x_vals, index=idx, columns=x_vars)
+    dbg.dassert_eq(
+        vals.shape,
+        (len(idx), len(vars_)),
+        "The shape of `vals` does not match the length of `idx` and `vars_`",
+    )
+    x = pd.DataFrame(vals, index=idx, columns=vars_)
     return x
