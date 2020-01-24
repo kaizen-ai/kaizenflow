@@ -92,35 +92,25 @@ class TestTransformFromGluon(hut.TestCase):
 
 
 class TestTransformToSklean(hut.TestCase):
-    @staticmethod
-    def _sklearn_input_to_str(sklearn_input) -> str:
-        params = ["idx", "x_vars", "x_vals", "y_vars", "y_vals:\n{}"]
-        format_str = ":\n{}\n".join(params)
-        return format_str.format(*sklearn_input)
-
     def test_transform1(self) -> None:
         ta = _TestAdapter()
         df = ta._df.dropna()
         sklearn_input = adpt.transform_to_sklearn(df, ta._x_vars, ta._y_vars)
-        self.check_string(self._sklearn_input_to_str(sklearn_input))
+        self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
 
 
 class TestTransformFromSklean(hut.TestCase):
     @staticmethod
-    def _get_sklearn_data() -> Tuple[
-        pd.Index, List[str], pd.DataFrame, List[str], pd.DataFrame
-    ]:
+    def _get_sklearn_data() -> Tuple[pd.Index, pd.DataFrame, pd.DataFrame]:
         np.random.seed(42)
         ta = _TestAdapter()
         df = ta._df.dropna()
         idx = df.index
         x_vars = ta._x_vars
         x_vals = df[x_vars]
-        y_vars = ta._y_vars
-        y_vals = df[y_vars]
-        y_hat = pd.DataFrame(np.random.randn(len(idx)))
-        return idx, x_vars, x_vals, y_vars, y_vals, y_hat
+        return idx, x_vars, x_vals
 
     def test_transform1(self) -> None:
         sklearn_data = TestTransformFromSklean._get_sklearn_data()
-        self.check_string("x:\n{}\ny:{}\ny_h:{}".format(*sklearn_data))
+        transformed_df = adpt.transform_from_sklearn(*sklearn_data)
+        self.check_string(transformed_df.to_string())
