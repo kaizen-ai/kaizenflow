@@ -72,11 +72,11 @@ class FitPredictNode(Node, abc.ABC):
         self._info = collections.OrderedDict()
 
     @abc.abstractmethod
-    def fit(self, df_in: pd.DataFrame) -> Any:
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         pass
 
     @abc.abstractmethod
-    def predict(self, df_in: pd.DataFrame) -> Any:
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         pass
 
     def get_info(
@@ -91,7 +91,7 @@ class FitPredictNode(Node, abc.ABC):
         _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
         return None
 
-    def _set_info(self, method: str, values: Any) -> None:
+    def _set_info(self, method: str, values: collections.OrderedDict) -> None:
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
         dbg.dassert_isinstance(values, collections.OrderedDict)
@@ -115,7 +115,7 @@ class DataSource(FitPredictNode, abc.ABC):
         self._fit_idxs = None
         self._predict_idxs = None
 
-    def set_fit_idxs(self, fit_idxs: pd.Index) -> None:
+    def set_fit_idxs(self, fit_idxs: pd.DatetimeIndex) -> None:
         """
         :param fit_idxs: indices of the df to use for fitting
         """
@@ -137,7 +137,7 @@ class DataSource(FitPredictNode, abc.ABC):
         self._set_info("fit", info)
         return {self.output_names[0]: fit_df}
 
-    def set_predict_idxs(self, predict_idxs: pd.Index) -> None:
+    def set_predict_idxs(self, predict_idxs: pd.DatetimeIndex) -> None:
         """
         :param predict_idxs: indices of the df to use for predicting
         """
@@ -173,7 +173,9 @@ class Transformer(FitPredictNode, abc.ABC):
         super().__init__(nid)
 
     @abc.abstractmethod
-    def _transform(self, df: pd.DataFrame) -> Any:
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         """
         :return: df, info
         """
