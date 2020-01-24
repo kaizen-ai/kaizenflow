@@ -578,7 +578,7 @@ class SkLearnModel(FitPredictNode):
         y_vars: List[str],
         y_vals: pd.DataFrame,
         y_hat: pd.DataFrame,
-    ):
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         x = pd.DataFrame(x_vals.values, index=idx, columns=x_vars)
         y = pd.DataFrame(y_vals.values, index=idx, columns=y_vars)
         y_h = pd.DataFrame(y_hat, index=idx, columns=[y + "_hat" for y in y_vars])
@@ -654,7 +654,7 @@ def cross_validate(
     split_func: Callable,
     split_func_kwargs: Dict,
     idx_mode: Optional[str] = None,
-):
+) -> collections.OrderedDict:
     """
     Generate splits, run train/test, collect info.
 
