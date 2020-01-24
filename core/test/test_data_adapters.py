@@ -99,7 +99,7 @@ class TestTransformFromGluonForecasts(hut.TestCase):
     @staticmethod
     def _get_mock_forecasts(
         n_traces=3, n_offsets=50, n_forecasts=2, frequency="T"
-    ):
+    ) -> List[gluonts.model.forecast.SampleForecast]:
         np.random.seed(42)
         all_samples = np.random.randn(n_traces, n_offsets, n_forecasts)
         start_dates = pd.date_range(
