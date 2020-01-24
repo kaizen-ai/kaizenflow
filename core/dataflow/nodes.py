@@ -6,6 +6,7 @@ import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 
 import core.data_adapters as adpt
@@ -24,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def extract_info(dag, methods):
+def extract_info(dag: DAG, methods: List[str]) -> collections.OrderedDict:
     """
     Extract node info from each DAG node.
 
@@ -57,7 +58,12 @@ class FitPredictNode(Node, abc.ABC):
     method's invocation.
     """
 
-    def __init__(self, nid, inputs=None, outputs=None):
+    def __init__(
+        self,
+        nid: str,
+        inputs: Optional[List[str]] = None,
+        outputs: Optional[List[str]] = None,
+    ) -> None:
         if inputs is None:
             inputs = ["df_in"]
         if outputs is None:
@@ -66,14 +72,16 @@ class FitPredictNode(Node, abc.ABC):
         self._info = collections.OrderedDict()
 
     @abc.abstractmethod
-    def fit(self, df_in):
+    def fit(self, df_in: pd.DataFrame) -> Any:
         pass
 
     @abc.abstractmethod
-    def predict(self, df_in):
+    def predict(self, df_in: pd.DataFrame) -> Any:
         pass
 
-    def get_info(self, method):
+    def get_info(
+        self, method: str
+    ) -> Optional[Union[str, collections.OrderedDict]]:
         # TODO(Paul): Add a dassert_getattr function to use here and in core.
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
@@ -83,7 +91,7 @@ class FitPredictNode(Node, abc.ABC):
         _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
         return None
 
-    def _set_info(self, method, values):
+    def _set_info(self, method: str, values: Any) -> None:
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
         dbg.dassert_isinstance(values, collections.OrderedDict)
@@ -96,7 +104,7 @@ class DataSource(FitPredictNode, abc.ABC):
     A source node that can be configured for cross-validation.
     """
 
-    def __init__(self, nid, outputs=None):
+    def __init__(self, nid: str, outputs: Optional[List[str]] = None) -> None:
         if outputs is None:
             outputs = ["df_out"]
         # Do not allow any empty list.
@@ -107,7 +115,7 @@ class DataSource(FitPredictNode, abc.ABC):
         self._fit_idxs = None
         self._predict_idxs = None
 
-    def set_fit_idxs(self, fit_idxs):
+    def set_fit_idxs(self, fit_idxs: pd.Index) -> None:
         """
         :param fit_idxs: indices of the df to use for fitting
         """
@@ -116,7 +124,7 @@ class DataSource(FitPredictNode, abc.ABC):
     # DataSource does not have a `df_in` in either `fit` or `predict` as a
     # typical `FitPredictNode` does.
     # pylint: disable=arguments-differ
-    def fit(self):
+    def fit(self) -> Dict[str, pd.DataFrame]:
         """
         :return: training set as df
         """
@@ -129,14 +137,14 @@ class DataSource(FitPredictNode, abc.ABC):
         self._set_info("fit", info)
         return {self.output_names[0]: fit_df}
 
-    def set_predict_idxs(self, predict_idxs):
+    def set_predict_idxs(self, predict_idxs: pd.Index) -> None:
         """
         :param predict_idxs: indices of the df to use for predicting
         """
         self._predict_idxs = predict_idxs
 
     # pylint: disable=arguments-differ
-    def predict(self):
+    def predict(self) -> Dict[str, pd.DataFrame]:
         """
         :return: test set as df
         """
@@ -149,7 +157,7 @@ class DataSource(FitPredictNode, abc.ABC):
         self._set_info("predict", info)
         return {self.output_names[0]: predict_df}
 
-    def get_df(self):
+    def get_df(self) -> pd.DataFrame:
         dbg.dassert_is_not(self.df, None, "No DataFrame found!")
         return self.df
 
@@ -161,22 +169,22 @@ class Transformer(FitPredictNode, abc.ABC):
 
     # TODO(Paul): Consider giving users the option of renaming the single
     # input and single output (but verify there is only one of each).
-    def __init__(self, nid):
+    def __init__(self, nid: str) -> None:
         super().__init__(nid)
 
     @abc.abstractmethod
-    def _transform(self, df):
+    def _transform(self, df: pd.DataFrame) -> Any:
         """
         :return: df, info
         """
 
-    def fit(self, df_in):
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         # Transform the input df.
         df_out, info = self._transform(df_in)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
-    def predict(self, df_in):
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         # Transform the input df.
         df_out, info = self._transform(df_in)
         self._set_info("predict", info)
@@ -189,7 +197,7 @@ class Transformer(FitPredictNode, abc.ABC):
 
 
 class ReadDataFromDf(DataSource):
-    def __init__(self, nid, df):
+    def __init__(self, nid: str, df: pd.DataFrame) -> None:
         super().__init__(nid)
         dbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
@@ -346,7 +354,9 @@ class ColumnTransformer(Transformer):
         return self._transformed_col_names
 
     # TODO(Paul): Add type hints (or rely on parent class?).
-    def _transform(self, df):
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df_in = df.copy()
         df = df.copy()
         if self._cols is not None:
@@ -411,14 +421,16 @@ class ColumnTransformer(Transformer):
 class DataframeMethodRunner(Transformer):
     def __init__(
         self, nid: str, method: str, method_kwargs: Optional[Any] = None
-    ):
+    ) -> None:
         super().__init__(nid)
         dbg.dassert(method)
         # TODO(Paul): Ensure that this is a valid method.
         self._method = method
         self._method_kwargs = method_kwargs or {}
 
-    def _transform(self, df):
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         df = getattr(df, self._method)(**self._method_kwargs)
         # Not all methods return DataFrames. We want to restrict to those that
@@ -431,7 +443,9 @@ class DataframeMethodRunner(Transformer):
 
 
 class FilterAth(Transformer):
-    def _transform(self, df):
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         df = fin.filter_ath(df)
         #
@@ -446,7 +460,7 @@ class Resample(Transformer):
         nid: str,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
         agg_func: str,
-    ):
+    ) -> None:
         """
         :param nid: node identifier
         :param rule: resampling frequency passed into
@@ -498,14 +512,13 @@ class SkLearnModel(FitPredictNode):
             str(df_in[df_in.isna().any(axis=1)].head().index),
         )
         df = df_in.copy()
-        idx, x_vars, x_fit, y_vars, y_fit = adpt.transform_to_sklearn(
-            df, self._x_vars, self._y_vars
-        )
+        idx = df.index
+        x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, y_fit)
         y_hat = self._model.predict(x_fit)
         #
-        x_fit, y_fit, y_hat = adpt.transform_from_sklearn(
+        x_fit, y_fit, y_hat = self._from_sklearn_format(
             idx, x_vars, x_fit, y_vars, y_fit, y_hat
         )
         # TODO(Paul): Summarize model perf or make configurable.
@@ -518,14 +531,13 @@ class SkLearnModel(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         df = df_in.copy()
-        idx, x_vars, x_predict, y_vars, y_predict = adpt.transform_to_sklearn(
-            df, self._x_vars, self._y_vars
-        )
+        idx = df.index
+        x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
         y_hat = self._model.predict(x_predict)
-        x_predict, y_predict, y_hat = adpt.transform_from_sklearn(
+        x_predict, y_predict, y_hat = self._from_sklearn_format(
             idx, x_vars, x_predict, y_vars, y_predict, y_hat
         )
         info = collections.OrderedDict()
@@ -535,7 +547,9 @@ class SkLearnModel(FitPredictNode):
 
     # TODO(Paul): Add type hints.
     @staticmethod
-    def _model_perf(x, y, y_hat):
+    def _model_perf(
+        x: pd.DataFrame, y: pd.DataFrame, y_hat: pd.DataFrame
+    ) -> collections.OrderedDict:
         _ = x
         info = collections.OrderedDict()
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
@@ -545,6 +559,58 @@ class SkLearnModel(FitPredictNode):
             pnl_rets.resample("1B").sum(), time_scaling=252
         )
         return info
+
+    def _to_sklearn_format(
+        self, df: pd.DataFrame
+    ) -> Tuple[List[str], np.array, List[str], np.array]:
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        x_vals, y_vals = adpt.transform_to_sklearn(df, x_vars, y_vars)
+        return x_vars, x_vals, y_vars, y_vals
+
+    @staticmethod
+    def _from_sklearn_format(
+        idx: pd.Index,
+        x_vars: List[str],
+        x_vals: np.array,
+        y_vars: List[str],
+        y_vals: np.array,
+        y_hat: np.array,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        x = adpt.transform_from_sklearn(idx, x_vars, x_vals)
+        y = adpt.transform_from_sklearn(idx, y_vars, y_vals)
+        y_h = adpt.transform_from_sklearn(
+            idx, [y + "_hat" for y in y_vars], y_hat
+        )
+        return x, y, y_h
+
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        Return a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
 
 
 # #############################################################################
@@ -583,7 +649,12 @@ def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index
 
 
 # TODO(Paul): Formalize what this returns and what can be done with it.
-def cross_validate(dag, split_func, split_func_kwargs, idx_mode=None):
+def cross_validate(
+    dag: DAG,
+    split_func: Callable,
+    split_func_kwargs: Dict,
+    idx_mode: Optional[str] = None,
+) -> collections.OrderedDict:
     """
     Generate splits, run train/test, collect info.
 
@@ -622,7 +693,7 @@ def cross_validate(dag, split_func, split_func_kwargs, idx_mode=None):
     return result_bundle
 
 
-def process_result_bundle(result_bundle):
+def process_result_bundle(result_bundle: Dict) -> collections.OrderedDict:
     info = collections.OrderedDict()
     split_names = []
     model_coeffs = []
@@ -652,7 +723,7 @@ def process_result_bundle(result_bundle):
     return info
 
 
-def get_df_info_as_string(df):
+def get_df_info_as_string(df: pd.DataFrame) -> str:
     buffer = io.StringIO()
     df.info(buf=buffer)
     return buffer.getvalue()
