@@ -5,21 +5,13 @@ import core.data_adapters as adpt
 """
 
 import logging
-from typing import (
-    Callable,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import gluonts
 
-# TODO(*): gluon needs these two imports to work properly.
+# TODO(*): gluon needs this import to work properly.
 import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
+import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
@@ -132,6 +124,37 @@ def transform_from_gluon(
     return _convert_tuples_list_to_df(dfs)
 
 
+# TODO(Julia): Add support of multitarget models.
+def transform_from_gluon_forecasts(
+    forecasts: List[gluonts.model.forecast.SampleForecast],
+) -> pd.Series:
+    """
+    Transform the output of
+    `gluonts.evaluation.backtest.make_evaluation_predictions` into a
+    dataframe.
+
+    The output is multiindexed series of the
+    `(len(forecasts) * prediction_length * num_samples, )` shape:
+          - level 0 index contains integer offsets
+          - level 1 index contains start dates of forecasts
+          - level 2 index contains indices of traces (sample paths)
+    We require start dates of forecasts to be unique, so they serve as
+    unique identifiers for forecasts.
+
+    :param forecasts: first value of the `make_evaluation_predictions`
+        output
+    :return: multiindexed series
+    """
+    start_dates = [forecast.start_date for forecast in forecasts]
+    dbg.dassert_no_duplicates(
+        start_dates, "Forecast start dates should be unique"
+    )
+    forecast_dfs = [
+        _transform_from_gluon_forecast_entry(forecast) for forecast in forecasts
+    ]
+    return pd.concat(forecast_dfs).sort_index(level=0)
+
+
 def _convert_tuples_list_to_df(
     dfs: List[Tuple[pd.DataFrame, pd.DataFrame]]
 ) -> pd.DataFrame:
@@ -171,6 +194,22 @@ def _create_iter_multiindex(
         yield from _create_iter_single_index(df, x_vars, y_vars)
 
 
+def _transform_from_gluon_forecast_entry(
+    forecast_entry: gluonts.model.forecast.SampleForecast,
+) -> pd.Series:
+    df = pd.DataFrame(forecast_entry.samples)
+    unstacked = df.unstack()
+    # Add start date as 0 level index.
+    unstacked = pd.concat(
+        {forecast_entry.start_date: unstacked},
+        names=["start_date", "offset", "trace"],
+    )
+    # This will change the index levels to
+    # `["offset", "start_date", "trace"]`.
+    unstacked.index = unstacked.index.swaplevel(0, 1)
+    return unstacked
+
+
 # #############################################################################
 # SkLearn
 # #############################################################################
@@ -178,72 +217,38 @@ def _create_iter_multiindex(
 
 def transform_to_sklearn(
     df: pd.DataFrame, x_vars: List[str], y_vars: List[str]
-) -> Tuple[pd.Index, List[str], pd.DataFrame, List[str], pd.DataFrame]:
+) -> Tuple[np.array, np.array]:
     """
     Transform pd.DataFrame into sklearn model inputs.
+
+    Sklearn requires separate feature and target inputs, both with range
+    index. To undo the transformation into sklrean format, we need the
+    original index and column names.
 
     :param df: input dataset
     :param x_vars: names of feature columns
     :param y_vars: names of target columns
-    :return: (index, x_vars, x_vals, y_vars, y_vals)
+    :return: (x_vals, y_vals)
     """
-    idx = df.index
+    dbg.dassert(
+        df.notna().values.any(), "The dataframe should not contain `None` values"
+    )
     df = df.reset_index()
-    x_vars = _to_list(x_vars)
-    y_vars = _to_list(y_vars)
-    x_vals = df[x_vars]
-    y_vals = df[y_vars]
-    return idx, x_vars, x_vals, y_vars, y_vals
+    x_vals = df[x_vars].values
+    y_vals = df[y_vars].values
+    return x_vals, y_vals
 
 
 def transform_from_sklearn(
-    idx: pd.Index,
-    x_vars: List[str],
-    x_vals: pd.DataFrame,
-    y_vars: List[str],
-    y_vals: pd.DataFrame,
-    y_hat: pd.DataFrame,
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    idx: pd.Index, x_vars: List[str], x_vals: np.array,
+) -> pd.DataFrame:
     """
-    Add indices and column names to sklearn outputs.
+    Add index and column names to sklearn output.
 
     :param idx: data index
     :param x_vars: names of feature columns
     :param x_vals: features data
-    :param y_vars: names of target columns
-    :param y_vals: targets data
-    :param y_hat: predictions
-    :return: dataframes of features, targets and predictions
+    :return: dataframe with an index an column names
     """
-    x = pd.DataFrame(x_vals.values, index=idx, columns=x_vars)
-    y = pd.DataFrame(y_vals.values, index=idx, columns=y_vars)
-    y_h = pd.DataFrame(y_hat, index=idx, columns=[y + "_hat" for y in y_vars])
-    return x, y, y_h
-
-
-def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-    """
-    Return a list given its input.
-
-    - If the input is a list, the output is the same list.
-    - If the input is a function that returns a list, then the output of
-      the function is returned.
-
-    How this might arise in practice:
-      - A ColumnTransformer returns a number of x variables, with the
-        number dependent upon a hyperparameter expressed in config
-      - The column names of the x variables may be derived from the input
-        dataframe column names, not necessarily known until graph execution
-        (and not at construction)
-      - The ColumnTransformer output columns are merged with its input
-        columns (e.g., x vars and y vars are in the same DataFrame)
-    Post-merge, we need a way to distinguish the x vars and y vars.
-    Allowing a callable here allows us to pass in the ColumnTransformer's
-    method `transformed_col_names` and defer the call until graph
-    execution.
-    """
-    if callable(to_list):
-        to_list = to_list()
-    if isinstance(to_list, list):
-        return to_list
-    raise TypeError("Data type=`%s`" % type(to_list))
+    x = pd.DataFrame(x_vals, index=idx, columns=x_vars)
+    return x

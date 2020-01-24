@@ -1,6 +1,10 @@
 import logging
 from typing import List, Tuple
 
+import gluonts
+
+# TODO(*): gluon needs this import to work properly.
+import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
 
@@ -91,36 +95,53 @@ class TestTransformFromGluon(hut.TestCase):
         pd.testing.assert_frame_equal(ta._df, inverted_df)
 
 
-class TestTransformToSklean(hut.TestCase):
+class TestTransformFromGluonForecasts(hut.TestCase):
     @staticmethod
-    def _sklearn_input_to_str(sklearn_input) -> str:
-        params = ["idx", "x_vars", "x_vals", "y_vars", "y_vals:\n{}"]
-        format_str = ":\n{}\n".join(params)
-        return format_str.format(*sklearn_input)
+    def _get_mock_forecasts(
+        n_traces: int = 3,
+        n_offsets: int = 50,
+        n_forecasts: int = 2,
+        frequency: str = "T",
+    ) -> List[gluonts.model.forecast.SampleForecast]:
+        np.random.seed(42)
+        all_samples = np.random.randn(n_traces, n_offsets, n_forecasts)
+        start_dates = pd.date_range(
+            pd.Timestamp("2010-01-01"), freq="D", periods=n_forecasts
+        )
+        forecasts = [
+            gluonts.model.forecast.SampleForecast(
+                all_samples[:, :, i], start_date, frequency
+            )
+            for i, start_date in enumerate(start_dates)
+        ]
+        return forecasts
 
+    def test_transform1(self) -> None:
+        forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
+        df = adpt.transform_from_gluon_forecasts(forecasts)
+        self.check_string(df.to_string())
+
+
+class TestTransformToSklean(hut.TestCase):
     def test_transform1(self) -> None:
         ta = _TestAdapter()
         df = ta._df.dropna()
         sklearn_input = adpt.transform_to_sklearn(df, ta._x_vars, ta._y_vars)
-        self.check_string(self._sklearn_input_to_str(sklearn_input))
+        self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
 
 
 class TestTransformFromSklean(hut.TestCase):
     @staticmethod
-    def _get_sklearn_data() -> Tuple[
-        pd.Index, List[str], pd.DataFrame, List[str], pd.DataFrame
-    ]:
+    def _get_sklearn_data() -> Tuple[pd.Index, pd.DataFrame, pd.DataFrame]:
         np.random.seed(42)
         ta = _TestAdapter()
         df = ta._df.dropna()
         idx = df.index
         x_vars = ta._x_vars
         x_vals = df[x_vars]
-        y_vars = ta._y_vars
-        y_vals = df[y_vars]
-        y_hat = pd.DataFrame(np.random.randn(len(idx)))
-        return idx, x_vars, x_vals, y_vars, y_vals, y_hat
+        return idx, x_vars, x_vals
 
     def test_transform1(self) -> None:
         sklearn_data = TestTransformFromSklean._get_sklearn_data()
-        self.check_string("x:\n{}\ny:{}\ny_h:{}".format(*sklearn_data))
+        transformed_df = adpt.transform_from_sklearn(*sklearn_data)
+        self.check_string(transformed_df.to_string())
