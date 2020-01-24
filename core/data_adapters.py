@@ -197,8 +197,7 @@ def _transform_from_gluon_forecast_entry(
     unstacked = df.unstack()
     # Add start date as 0 level index.
     unstacked = pd.concat(
-        [unstacked],
-        keys=[forecast_entry.start_date],
+        {forecast_entry.start_date: unstacked},
         names=["start_date", "offset", "trace"],
     )
     # This would change the index levels to
