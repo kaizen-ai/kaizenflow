@@ -226,6 +226,27 @@ def report_zero_nan_inf_stats(
     return stats_df
 
 
+def drop_duplicates(
+    df: pd.DataFrame, subset: Optional[List[str]] = None
+) -> pd.DataFrame:
+    """
+    Wrapper around pd.drop_duplicates() reporting information about theremoved
+    rows.
+
+    :df: Df to drop duplicates from.
+    :subset: Columns subset.
+    :return: Df without duplicates inside given columns subset.
+    """
+    if not subset:
+        subset = df.columns
+    num_rows_before = df.shape[0]
+    df_no_duplicates = df.drop_duplicates(subset=subset)
+    num_rows_after = df_no_duplicates.shape[0]
+    pct_removed = pri.perc(num_rows_before - num_rows_after, num_rows_before)
+    _LOG.info("Removed duplicated rows: %s", pct_removed)
+    return df_no_duplicates
+
+
 # //////////////////////////////////////////////////////////////////////////////
 
 
