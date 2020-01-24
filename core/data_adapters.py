@@ -192,8 +192,7 @@ def _create_iter_multiindex(
 def _transform_from_gluon_forecast_entry(
     forecast_entry: gluonts.model.forecast.SampleForecast,
 ) -> pd.Series:
-    offsets = range(forecast_entry.samples.shape[1])
-    df = pd.DataFrame(forecast_entry.samples, columns=offsets)
+    df = pd.DataFrame(forecast_entry.samples)
     unstacked = df.unstack()
     # Add start date as 0 level index.
     unstacked = pd.concat(
