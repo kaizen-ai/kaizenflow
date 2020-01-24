@@ -11,11 +11,17 @@ import gluonts
 
 # TODO(*): gluon needs this import to work properly.
 import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
+import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# GluonTS
+# #############################################################################
 
 
 def transform_to_gluon(
@@ -202,3 +208,55 @@ def _transform_from_gluon_forecast_entry(
     # `["offset", "start_date", "trace"]`.
     unstacked.index = unstacked.index.swaplevel(0, 1)
     return unstacked
+
+
+# #############################################################################
+# SkLearn
+# #############################################################################
+
+
+def transform_to_sklearn(
+    df: pd.DataFrame, x_vars: List[str], y_vars: List[str]
+) -> Tuple[np.array, np.array]:
+    """
+    Transform pd.DataFrame into sklearn model inputs.
+
+    Sklearn requires separate feature and target inputs, both with range
+    index. To undo the transformation into sklrean format, we need the
+    original index and column names.
+
+    :param df: input dataset
+    :param x_vars: names of feature columns
+    :param y_vars: names of target columns
+    :return: (x_vals, y_vals)
+    """
+    dbg.dassert_not_intersection(
+        x_vars, y_vars, "`x_vars` and `y_vars` should not intersect"
+    )
+    dbg.dassert(
+        df.notna().values.any(), "The dataframe should not contain `None` values"
+    )
+    df = df.reset_index()
+    x_vals = df[x_vars].values
+    y_vals = df[y_vars].values
+    return x_vals, y_vals
+
+
+def transform_from_sklearn(
+    idx: pd.Index, vars_: List[str], vals: np.array,
+) -> pd.DataFrame:
+    """
+    Add index and column names to sklearn output.
+
+    :param idx: data index
+    :param vars_: names of feature columns
+    :param vals: features data
+    :return: dataframe with an index an column names
+    """
+    dbg.dassert_eq(
+        vals.shape,
+        (len(idx), len(vars_)),
+        "The shape of `vals` does not match the length of `idx` and `vars_`",
+    )
+    x = pd.DataFrame(vals, index=idx, columns=vars_)
+    return x
