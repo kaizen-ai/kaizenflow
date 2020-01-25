@@ -1,6 +1,6 @@
 channels:
   - conda-forge
-  - quantopian
+  #- quantopian
 dependencies:
   # ############################################################################
   # python dev
@@ -14,7 +14,7 @@ dependencies:
   - pytest-cov
   - pytest-instafail
   - pytest-xdist
-  - python >= 3.6
+  - python >= 3.7
   - python-dateutil
   - pytz
   - tqdm
@@ -47,7 +47,7 @@ dependencies:
   # Linter
   # ############################################################################
   #- pyment                   # conda install -c akode pyment
-  #- yapf                    # Superseded by black.
+  - yapf                     # Superseded by black, but useful for notebooks.
   - autoflake
   - black
   - flake8
@@ -83,14 +83,13 @@ dependencies:
   #- rclone                  # To back up Google Drive (conda install -c hcc rclone)
   - git                     # To use latest git client.
   - beautifulsoup4
-  - csvkit                  # To process csv.
+  #- csvkit                  # To process csv.
   - joblib
-  - jq                      # To process json.
+  #- jq                      # To process json.
   - mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
-  - quandl
-  - ruby
+  #- ruby
   # ############################################################################
   # Pip
   # ############################################################################
@@ -98,5 +97,5 @@ dependencies:
   - pip:
     - gluonts
     #- ta                   # Technical analysis package.
-    - trading-calendars
+    #- trading-calendars
     #- pyannotate           # Enable this to automatically infer types.
