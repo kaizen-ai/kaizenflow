@@ -6,8 +6,10 @@ import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 
+import core.data_adapters as adpt
 import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -512,7 +514,8 @@ class SkLearnModel(FitPredictNode):
             str(df_in[df_in.isna().any(axis=1)].head().index),
         )
         df = df_in.copy()
-        idx, x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
+        idx = df.index
+        x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, y_fit)
         y_hat = self._model.predict(x_fit)
@@ -530,7 +533,8 @@ class SkLearnModel(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         df = df_in.copy()
-        idx, x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
+        idx = df.index
+        x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
@@ -558,32 +562,28 @@ class SkLearnModel(FitPredictNode):
         )
         return info
 
-    # TODO(Paul): Add type hints.
     def _to_sklearn_format(
         self, df: pd.DataFrame
-    ) -> Tuple[pd.Index, List[str], pd.DataFrame, List[str], pd.DataFrame]:
-        idx = df.index
-        df = df.reset_index()
-        # TODO(Paul): replace with class name
+    ) -> Tuple[List[str], np.array, List[str], np.array]:
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
-        x_vals = df[x_vars]
-        y_vals = df[y_vars]
-        return idx, x_vars, x_vals, y_vars, y_vals
+        x_vals, y_vals = adpt.transform_to_sklearn(df, x_vars, y_vars)
+        return x_vars, x_vals, y_vars, y_vals
 
-    # TODO(Paul): Add type hints.
     @staticmethod
     def _from_sklearn_format(
         idx: pd.Index,
         x_vars: List[str],
-        x_vals: pd.DataFrame,
+        x_vals: np.array,
         y_vars: List[str],
-        y_vals: pd.DataFrame,
-        y_hat: pd.DataFrame,
+        y_vals: np.array,
+        y_hat: np.array,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        x = pd.DataFrame(x_vals.values, index=idx, columns=x_vars)
-        y = pd.DataFrame(y_vals.values, index=idx, columns=y_vars)
-        y_h = pd.DataFrame(y_hat, index=idx, columns=[y + "_hat" for y in y_vars])
+        x = adpt.transform_from_sklearn(idx, x_vars, x_vals)
+        y = adpt.transform_from_sklearn(idx, y_vars, y_vals)
+        y_h = adpt.transform_from_sklearn(
+            idx, [y + "_hat" for y in y_vars], y_hat
+        )
         return x, y, y_h
 
     @staticmethod
