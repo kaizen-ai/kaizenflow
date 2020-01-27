@@ -9,6 +9,7 @@ import logging
 from typing import Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import gluonts
+
 # TODO(*): gluon needs these imports to work properly.
 import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
@@ -112,17 +113,13 @@ def transform_from_gluon(
     if isinstance(y_vars, str):
         y_vars = [y_vars]
     dfs = []
-    # idx = pd.date_range(ts[gluonts.dataset.field_names.FieldName.START],
-    #             periods=target.shape[0],
-    #             freq=ts[gluonts.dataset.field_names.FieldName.START].freq, )
     for ts in iter(gluon_ts):
         start_date = ts[gluonts.dataset.field_names.FieldName.START]
         target = pd.DataFrame(ts[gluonts.dataset.field_names.FieldName.TARGET])
         if len(gluon_ts) == 1:
             idx = pd.date_range(
-                start_date,
-                            periods=target.shape[0],
-                            freq=start_date.freq, )
+                start_date, periods=target.shape[0], freq=start_date.freq,
+            )
         else:
             idx = [start_date] * target.shape[0]
         target.index = idx
@@ -169,8 +166,7 @@ def transform_from_gluon_forecasts(
 
 
 def _convert_tuples_list_to_df(
-    dfs: List[Tuple[pd.DataFrame, pd.DataFrame]],
-    index_name: Optional[str],
+    dfs: List[Tuple[pd.DataFrame, pd.DataFrame]], index_name: Optional[str],
 ) -> pd.DataFrame:
     def _process_features_target(features, target):
         combined = pd.concat([features, target], axis=1)
