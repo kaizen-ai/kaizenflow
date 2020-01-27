@@ -86,10 +86,13 @@ class TestBuildLocalTimeseries(hut.TestCase):
             freq=freq,
             periods=n_periods + 100,
         )
-        grid_data = pd.DataFrame(np.random.randn(len(grid_idx), n_cols), index=grid_idx)
+        grid_data = pd.DataFrame(
+            np.random.randn(len(grid_idx), n_cols), index=grid_idx
+        )
         info: collections.OrderedDict = collections.OrderedDict()
         local_ts = esf.build_local_timeseries(
-            events, grid_data, relative_grid_indices, info=info)
+            events, grid_data, relative_grid_indices, info=info
+        )
         self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{info}")
 
 
