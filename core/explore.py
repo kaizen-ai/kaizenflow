@@ -20,7 +20,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy
 import seaborn as sns
 import sklearn
 import sklearn.decomposition as skl_dec
@@ -28,6 +27,7 @@ import statsmodels
 import statsmodels.api
 import tqdm.autonotebook as tqdm
 
+import core.plotting as plot
 import helpers.dbg as dbg
 import helpers.list as hlist
 import helpers.printing as pri
@@ -531,202 +531,6 @@ def filter_by_val(
     return res
 
 
-# #############################################################################
-# Plotting
-# #############################################################################
-
-# TODO(gp): Use this everywhere. Use None as default value.
-_FIG_SIZE = (20, 5)
-
-# TODO(gp): Maybe move to plotting.py?
-
-
-def plot_non_na_cols(df, sort=False, ascending=True, max_num=None):
-    """
-    Plot a diagram describing the non-nans intervals for the columns of df.
-
-    :param df: usual df indexed with times
-    :param sort: sort the columns by number of non-nans
-    :param ascending:
-    :param max_num: max number of columns to plot.
-    """
-    # Check that there are no repeated columns.
-    # TODO(gp): dassert_no_duplicates
-    dbg.dassert_eq(len(hlist.find_duplicates(df.columns.tolist())), 0)
-    # Note that the plot assumes that the first column is at the bottom of the
-    # graph.
-    # Assign 1.0 to all the non-nan value.
-    df = df.where(df.isnull(), 1)
-    # Sort.
-    if sort:
-        cnt = df.sum().sort_values(ascending=not ascending)
-        df = df.reindex(cnt.index.tolist(), axis=1)
-    _LOG.debug("Columns=%d %s", len(df.columns), ", ".join(df.columns))
-    # Limit the number of elements.
-    if max_num is not None:
-        _LOG.warning(
-            "Plotting only %d columns instead of all %d columns",
-            max_num,
-            df.shape[1],
-        )
-        dbg.dassert_lte(1, max_num)
-        if max_num > df.shape[1]:
-            _LOG.warning(
-                "Too many columns requested: %d > %d", max_num, df.shape[1]
-            )
-        df = df.iloc[:, :max_num]
-    _LOG.debug("Columns=%d %s", len(df.columns), ", ".join(df.columns))
-    _LOG.debug("To plot=\n%s", df.head())
-    # Associate each column to a number between 1 and num_cols + 1.
-    scale = pd.Series({col: idx + 1 for idx, col in enumerate(df.columns)})
-    df *= scale
-    num_cols = df.shape[1]
-    # Heuristics to find the value of ysize.
-    figsize = None
-    ysize = num_cols * 0.3
-    figsize = (20, ysize)
-    ax = df.plot(figsize=figsize, legend=False)
-    # Force all the yticks to be equal to the column names and to be visible.
-    ax.set_yticks(np.arange(num_cols, 0, -1))
-    ax.set_yticklabels(reversed(df.columns.tolist()))
-    return ax
-
-
-def _get_heatmap_mask(corr, mode):
-    if mode == "heatmap_semitriangle":
-        # Generate a mask for the upper triangle.
-        mask = np.zeros_like(corr, dtype=np.bool)
-        mask[np.triu_indices_from(mask)] = True
-    elif mode == "heatmap":
-        mask = None
-    else:
-        raise ValueError("Invalid mode='%s'" % mode)
-    return mask
-
-
-def plot_heatmap(
-    corr_df,
-    mode,
-    annot="auto",
-    figsize=None,
-    title=None,
-    vmin=-1.0,
-    vmax=1.0,
-    ax=None,
-):
-    """
-    Plot a heatmap for a corr / cov df.
-    """
-    # Sanity check.
-    dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
-    dbg.dassert_lte(corr_df.shape[0], 20)
-    if corr_df.shape[0] < 2 or corr_df.shape[1] < 2:
-        _LOG.warning(
-            "Can't plot heatmap for corr_df with shape=%s", str(corr_df.shape)
-        )
-        return
-    if np.all(np.isnan(corr_df)):
-        _LOG.warning(
-            "Can't plot heatmap with only nans:\n%s", corr_df.to_string()
-        )
-        return
-    #
-    if annot == "auto":
-        annot = corr_df.shape[0] < 10
-    # Generate a custom diverging colormap.
-    cmap = _get_heatmap_colormap()
-    if figsize is None:
-        figsize = (8, 6)
-        # figsize = (10, 10)
-    if mode in ("heatmap", "heatmap_semitriangle"):
-        # Set up the matplotlib figure.
-        if ax is None:
-            _, ax = plt.subplots(figsize=figsize)
-        mask = _get_heatmap_mask(corr_df, mode)
-        sns.heatmap(
-            corr_df,
-            cmap=cmap,
-            vmin=vmin,
-            vmax=vmax,
-            # Use correct aspect ratio.
-            square=True,
-            annot=annot,
-            fmt=".2f",
-            linewidths=0.5,
-            cbar_kws={"shrink": 0.5},
-            mask=mask,
-            ax=ax,
-        )
-        ax.set_title(title)
-    elif mode == "clustermap":
-        dbg.dassert_is(ax, None)
-        g = sns.clustermap(
-            corr_df,
-            cmap=cmap,
-            vmin=vmin,
-            vmax=vmax,
-            linewidths=0.5,
-            square=True,
-            annot=annot,
-            figsize=figsize,
-        )
-        g.ax_heatmap.set_title(title)
-    else:
-        raise RuntimeError("Invalid mode='%s'" % mode)
-
-
-# TODO(gp): Add an option to mask out the correlation with low pvalues
-# http://stackoverflow.com/questions/24432101/correlation-coefficients-and-p-values-for-all-pairs-of-rows-of-a-matrix
-def plot_correlation_matrix(df, mode, annot=False, figsize=None, title=None):
-    if df.shape[1] < 2:
-        _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
-        return None
-    # Compute the correlation matrix.
-    corr_df = df.corr()
-    # Plot heatmap.
-    plot_heatmap(
-        corr_df,
-        mode,
-        annot=annot,
-        figsize=figsize,
-        title=title,
-        vmin=-1.0,
-        vmax=1.0,
-    )
-    return corr_df
-
-
-def plot_dendrogram(df, figsize=None):
-    # Look at:
-    # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
-    # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
-    if df.shape[1] < 2:
-        _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
-        return
-    # y = scipy.spatial.distance.pdist(df.values, 'correlation')
-    y = df.corr().values
-    # z = scipy.cluster.hierarchy.linkage(y, 'single')
-    z = scipy.cluster.hierarchy.linkage(y, "average")
-    if figsize is None:
-        figsize = (16, 16)
-    _ = plt.figure(figsize=figsize)
-    scipy.cluster.hierarchy.dendrogram(
-        z,
-        labels=df.columns.tolist(),
-        leaf_rotation=0,
-        color_threshold=0,
-        orientation="right",
-    )
-
-
-def display_corr_df(df):
-    if df is not None:
-        df_tmp = df.applymap(lambda x: "%.2f" % x)
-        display_df(df_tmp)
-    else:
-        _LOG.warning("Can't display correlation df since it is None")
-
-
 # /////////////////////////////////////////////////////////////////////////////
 # PCA
 # /////////////////////////////////////////////////////////////////////////////
@@ -758,14 +562,6 @@ def get_multiple_plots(num_plots, num_cols, y_scale=None, *args, **kwargs):
         **kwargs,
     )
     return fig, ax.flatten()
-
-
-def _get_heatmap_colormap():
-    """
-    Generate a custom diverging colormap useful for heatmaps.
-    """
-    cmap = sns.diverging_palette(220, 10, as_cmap=True)
-    return cmap
 
 
 def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
@@ -885,11 +681,11 @@ def plot_corr_over_time(corr_df, mode, annot=False, num_cols=4):
     )
     # Add color map bar on the side.
     cbar_ax = fig.add_axes([0.91, 0.3, 0.03, 0.4])
-    cmap = _get_heatmap_colormap()
+    cmap = plot.get_heatmap_colormap()
     for i, dt in enumerate(timestamps):
         corr_tmp = corr_df.loc[dt]
         # Generate a mask for the upper triangle.
-        mask = _get_heatmap_mask(corr_tmp, mode)
+        mask = plot.get_heatmap_mask(corr_tmp, mode)
         # Plot.
         sns.heatmap(
             corr_tmp,
@@ -1265,14 +1061,14 @@ def ols_regress(
                 if tsplot:
                     # Plot the data over time.
                     if tsplot_figsize is None:
-                        tsplot_figsize = _FIG_SIZE
+                        tsplot_figsize = plot.FIG_SIZE
                     df[[predicted_var, predictor_vars[0]]].plot(
                         figsize=tsplot_figsize
                     )
                 if jointplot_:
                     # Perform scatter plot.
                     if jointplot_height is None:
-                        jointplot_height = _FIG_SIZE[1]
+                        jointplot_height = plot.FIG_SIZE[1]
                     jointplot(
                         df,
                         predicted_var,
@@ -1424,7 +1220,7 @@ def robust_regression(
     _LOG.info("Estimated coef for RANSAC=%s", ransac.estimator_.coef_)
     if jointplot_:
         if jointplot_figsize is None:
-            jointplot_figsize = _FIG_SIZE
+            jointplot_figsize = plot.FIG_SIZE
         plt.figure(figsize=jointplot_figsize)
         plt.scatter(
             X[inlier_mask],
