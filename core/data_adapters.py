@@ -168,7 +168,9 @@ def transform_from_gluon_forecasts(
 def _convert_tuples_list_to_df(
     dfs: List[Tuple[pd.DataFrame, pd.DataFrame]], index_name: Optional[str],
 ) -> pd.DataFrame:
-    def _process_features_target(features, target):
+    def _process_features_target(
+        features: pd.DataFrame, target: pd.DataFrame
+    ) -> pd.DataFrame:
         combined = pd.concat([features, target], axis=1)
         combined.index = pd.MultiIndex.from_arrays(
             [range(combined.shape[0]), combined.index]
