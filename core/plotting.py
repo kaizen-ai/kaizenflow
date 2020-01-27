@@ -43,7 +43,7 @@ _DATETIME_TYPES = [
 
 
 def plot_non_na_cols(
-    df: pd.DataFrame,
+    df: pd.core.frame.DataFrame,
     sort: bool = False,
     ascending: bool = True,
     max_num: Optional[int] = None,
@@ -118,7 +118,7 @@ def get_heatmap_colormap() -> matplotlib.colors.LinearSegmentedColormap:
 
 
 def plot_heatmap(
-    corr_df: pd.DataFrame,
+    corr_df: pd.core.frame.DataFrame,
     mode: str,
     annot: Union[bool, str] = "auto",
     figsize: Optional[Tuple[int, int]] = None,
@@ -199,12 +199,12 @@ def plot_heatmap(
 # TODO(gp): Add an option to mask out the correlation with low pvalues
 # http://stackoverflow.com/questions/24432101/correlation-coefficients-and-p-values-for-all-pairs-of-rows-of-a-matrix
 def plot_correlation_matrix(
-    df: pd.DataFrame,
+    df: pd.core.frame.DataFrame,
     mode: str,
     annot: Union[bool, str] = False,
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
-) -> pd.DataFrame:
+) -> pd.core.frame.DataFrame:
     """
     Compute correlation matrix and plot its heatmap .
 
@@ -233,7 +233,7 @@ def plot_correlation_matrix(
 
 
 def plot_dendrogram(
-    df: pd.DataFrame, figsize: Optional[Tuple[int, int]] = None
+    df: pd.core.frame.DataFrame, figsize: Optional[Tuple[int, int]] = None
 ) -> None:
     """
     Plot a dendrogram.
@@ -264,7 +264,7 @@ def plot_dendrogram(
     )
 
 
-def display_corr_df(df: pd.DataFrame) -> None:
+def display_corr_df(df: pd.core.frame.DataFrame) -> None:
     """
     Display a correlation df with values with 2 decimal places.
     """
@@ -276,7 +276,7 @@ def display_corr_df(df: pd.DataFrame) -> None:
 
 
 def plot_timeseries(
-    df: pd.DataFrame,
+    df: pd.core.frame.DataFrame,
     datetime_types: Optional[List[str]],
     column: str,
     ts_column: str,
@@ -309,7 +309,7 @@ def plot_timeseries(
 
 
 def plot_timeseries_per_category(
-    df: pd.DataFrame,
+    df: pd.core.frame.DataFrame,
     datetime_types: Optional[List["str"]],
     column: str,
     ts_column: str,
