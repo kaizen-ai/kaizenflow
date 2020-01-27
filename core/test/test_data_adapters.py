@@ -2,11 +2,11 @@ import logging
 from typing import List, Tuple
 
 import gluonts
-
 # TODO(*): gluon needs this import to work properly.
 import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.data_adapters as adpt
 import helpers.unit_test as hut
@@ -35,17 +35,6 @@ class _TestAdapter:
         df = df.asfreq(self._frequency)
         return df
 
-    @staticmethod
-    def _list_tuples_to_str(
-        features_target_pairs: List[Tuple[pd.DataFrame, pd.DataFrame]]
-    ) -> str:
-        pairs = []
-        for i, (feature, target) in enumerate(features_target_pairs):
-            pairs.append(
-                f"{i}\nfeatures:\n{feature.to_string()}\ntarget:\n{target.to_string()}"
-            )
-        return "\n".join(pairs)
-
 
 class TestTransformToGluon(hut.TestCase):
     def test_transform(self) -> None:
@@ -55,9 +44,10 @@ class TestTransformToGluon(hut.TestCase):
         )
         self.check_string(str(list(gluon_ts)))
 
+    @pytest.mark.slow
     def test_transform_local_ts(self) -> None:
         ta = _TestAdapter()
-        local_ts = pd.concat([ta._df, ta._df], keys=[0, 1])
+        local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
         gluon_ts = adpt.transform_to_gluon(
             local_ts, ta._x_vars, ta._y_vars, ta._frequency
         )
@@ -93,6 +83,19 @@ class TestTransformFromGluon(hut.TestCase):
         )
         inverted_df = inverted_df.astype(np.float64)
         pd.testing.assert_frame_equal(ta._df, inverted_df)
+
+    @pytest.mark.slow
+    def test_correctness_local_ts(self) -> None:
+        ta = _TestAdapter()
+        local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
+        gluon_ts = adpt.transform_to_gluon(
+            local_ts, ta._x_vars, ta._y_vars, ta._frequency
+        )
+        inverted_df = adpt.transform_from_gluon(
+            gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
+        )
+        inverted_df = inverted_df.astype(np.float64)
+        pd.testing.assert_frame_equal(local_ts, inverted_df)
 
 
 class TestTransformFromGluonForecasts(hut.TestCase):

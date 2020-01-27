@@ -4,11 +4,11 @@ Import as:
 import core.data_adapters as adpt
 """
 
+import functools
 import logging
 from typing import Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import gluonts
-
 # TODO(*): gluon needs these imports to work properly.
 import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
@@ -71,7 +71,9 @@ def transform_to_gluon(
             )
             _LOG.debug("No frequency consistency check is performed")
     if isinstance(df.index, pd.MultiIndex):
-        iter_func = _create_iter_multiindex
+        iter_func = functools.partial(
+            _create_iter_multiindex, frequency=frequency
+        )
     else:
         iter_func = _create_iter_single_index
     if len(y_vars) == 1:
@@ -96,6 +98,10 @@ def transform_from_gluon(
     """
     Transform gluonts `ListDataset` into a dataframe.
 
+    If `gluon_ts` consists of one time series, return singly indexed
+    dataframe. Else the output is of the same format as the output of
+    `core.event_study.core.build_local_timeseries`.
+
     :param gluon_ts: gluonts `ListDataset`
     :param x_vars: names of feature columns
     :param y_vars: names of target columns
@@ -106,13 +112,19 @@ def transform_from_gluon(
     if isinstance(y_vars, str):
         y_vars = [y_vars]
     dfs = []
+    # idx = pd.date_range(ts[gluonts.dataset.field_names.FieldName.START],
+    #             periods=target.shape[0],
+    #             freq=ts[gluonts.dataset.field_names.FieldName.START].freq, )
     for ts in iter(gluon_ts):
+        start_date = ts[gluonts.dataset.field_names.FieldName.START]
         target = pd.DataFrame(ts[gluonts.dataset.field_names.FieldName.TARGET])
-        idx = pd.date_range(
-            ts[gluonts.dataset.field_names.FieldName.START],
-            periods=target.shape[0],
-            freq=ts[gluonts.dataset.field_names.FieldName.START].freq,
-        )
+        if len(gluon_ts) == 1:
+            idx = pd.date_range(
+                start_date,
+                            periods=target.shape[0],
+                            freq=start_date.freq, )
+        else:
+            idx = [start_date] * target.shape[0]
         target.index = idx
         target.columns = y_vars
         features = pd.DataFrame(
@@ -120,9 +132,9 @@ def transform_from_gluon(
             index=idx,
         )
         features.columns = x_vars
-        features.index.name = index_name
         dfs.append((features, target))
-    return _convert_tuples_list_to_df(dfs)
+    df = _convert_tuples_list_to_df(dfs, index_name)
+    return df
 
 
 # TODO(Julia): Add support of multitarget models.
@@ -157,16 +169,28 @@ def transform_from_gluon_forecasts(
 
 
 def _convert_tuples_list_to_df(
-    dfs: List[Tuple[pd.DataFrame, pd.DataFrame]]
+    dfs: List[Tuple[pd.DataFrame, pd.DataFrame]],
+    index_name: Optional[str],
 ) -> pd.DataFrame:
+    def _process_features_target(features, target):
+        combined = pd.concat([features, target], axis=1)
+        combined.index = pd.MultiIndex.from_arrays(
+            [range(combined.shape[0]), combined.index]
+        )
+        return combined
+
     dfs = dfs.copy()
-    dfs = [pd.concat([features, target], axis=1) for features, target in dfs]
+    dfs = [_process_features_target(features, target) for features, target in dfs]
     # If `ListDataset` contains only one gluon time series, return
     # singly indexed dataframe; else return a multiindexed dataframe.
     if len(dfs) == 1:
         df = dfs[0]
+        df = df.droplevel(0)
+        df.index.name = index_name
     else:
-        df = pd.concat(dfs, keys=range(len(dfs)))
+        df = pd.concat(dfs, sort=False)
+        df.sort_index(level=0, inplace=True)
+        df.index.names = [None, index_name]
     return df
 
 
@@ -174,7 +198,6 @@ def _create_iter_single_index(
     df: pd.DataFrame, x_vars: List[str], y_vars: Union[str, List[str]],
 ) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    dbg.dassert_monotonic_index(df)
     yield {
         gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
         gluonts.dataset.field_names.FieldName.START: df.index[0],
@@ -183,15 +206,24 @@ def _create_iter_single_index(
 
 
 def _create_iter_multiindex(
-    local_ts: pd.DataFrame, x_vars: List[str], y_vars: Union[str, List[str]],
+    local_ts: pd.DataFrame,
+    x_vars: List[str],
+    y_vars: Union[str, List[str]],
+    frequency: str,
 ) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
     """
     Iterate level 0 of MultiIndex and generate `data_iter` parameter for
     `gluonts.dataset.common.ListDataset`.
     """
     dbg.dassert_isinstance(local_ts.index, pd.MultiIndex)
-    for _, local_ts_grid in local_ts.groupby(level=0):
+    dbg.dassert_monotonic_index(local_ts.index.get_level_values(0).unique())
+    for ts, local_ts_grid in local_ts.groupby(level=1):
+        # Get start date of time series based on `t_0` timestamp and the
+        # first grid index.
+        first_grid_idx = local_ts_grid.index.get_level_values(0)[0]
+        start_date = ts + pd.Timedelta(f"{first_grid_idx}{frequency}")
         df = local_ts_grid.droplevel(0)
+        df.index = [start_date] * df.shape[0]
         yield from _create_iter_single_index(df, x_vars, y_vars)
 
 
