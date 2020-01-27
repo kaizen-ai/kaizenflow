@@ -2,11 +2,11 @@ import logging
 from typing import List, Tuple
 
 import gluonts
+
 # TODO(*): gluon needs this import to work properly.
 import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
-import pytest
 
 import core.data_adapters as adpt
 import helpers.unit_test as hut
@@ -26,7 +26,9 @@ class _TestAdapter:
     def _get_test_df(self) -> pd.DataFrame:
         np.random.seed(42)
         idx = pd.Series(
-            pd.date_range("2010-01-01", "2010-01-03", freq=self._frequency)
+            pd.date_range(
+                "2010-01-01 00:00", "2010-01-01 03:00", freq=self._frequency
+            )
         ).sample(self._n_rows)
         df = pd.DataFrame(np.random.randn(self._n_rows, self._n_cols), index=idx)
         df.index.name = "timestamp"
@@ -44,7 +46,6 @@ class TestTransformToGluon(hut.TestCase):
         )
         self.check_string(str(list(gluon_ts)))
 
-    @pytest.mark.slow
     def test_transform_local_ts(self) -> None:
         ta = _TestAdapter()
         local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
@@ -84,7 +85,6 @@ class TestTransformFromGluon(hut.TestCase):
         inverted_df = inverted_df.astype(np.float64)
         pd.testing.assert_frame_equal(ta._df, inverted_df)
 
-    @pytest.mark.slow
     def test_correctness_local_ts(self) -> None:
         ta = _TestAdapter()
         local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
