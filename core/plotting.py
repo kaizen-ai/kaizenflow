@@ -204,7 +204,7 @@ def plot_correlation_matrix(
     annot: Union[bool, str] = False,
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
-) -> pd.DataFrame:
+) -> pd.core.frame.DataFrame:
     """
     Compute correlation matrix and plot its heatmap .
 
