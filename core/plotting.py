@@ -43,7 +43,7 @@ _DATETIME_TYPES = [
 
 
 def plot_non_na_cols(
-    df: pd.DataFrame,
+    df: pd.core.frame.DataFrame,
     sort: bool = False,
     ascending: bool = True,
     max_num: Optional[int] = None,
@@ -118,7 +118,7 @@ def get_heatmap_colormap() -> matplotlib.colors.LinearSegmentedColormap:
 
 
 def plot_heatmap(
-    corr_df: pd.DataFrame,
+    corr_df: pd.core.frame.DataFrame,
     mode: str,
     annot: Union[bool, str] = "auto",
     figsize: Optional[Tuple[int, int]] = None,
@@ -199,7 +199,7 @@ def plot_heatmap(
 # TODO(gp): Add an option to mask out the correlation with low pvalues
 # http://stackoverflow.com/questions/24432101/correlation-coefficients-and-p-values-for-all-pairs-of-rows-of-a-matrix
 def plot_correlation_matrix(
-    df: pd.DataFrame,
+    df: pd.core.frame.DataFrame,
     mode: str,
     annot: Union[bool, str] = False,
     figsize: Optional[Tuple[int, int]] = None,
@@ -233,7 +233,7 @@ def plot_correlation_matrix(
 
 
 def plot_dendrogram(
-    df: pd.DataFrame, figsize: Optional[Tuple[int, int]] = None
+    df: pd.core.frame.DataFrame, figsize: Optional[Tuple[int, int]] = None
 ) -> None:
     """
     Plot a dendrogram.
@@ -264,7 +264,7 @@ def plot_dendrogram(
     )
 
 
-def display_corr_df(df: pd.DataFrame) -> None:
+def display_corr_df(df: pd.core.frame.DataFrame) -> None:
     """
     Display a correlation df with values with 2 decimal places.
     """
@@ -276,7 +276,7 @@ def display_corr_df(df: pd.DataFrame) -> None:
 
 
 def plot_timeseries(
-    df: pd.DataFrame,
+    df: pd.core.frame.DataFrame,
     datetime_types: Optional[List[str]],
     column: str,
     ts_column: str,
@@ -309,7 +309,7 @@ def plot_timeseries(
 
 
 def plot_timeseries_per_category(
-    df: pd.DataFrame,
+    df: pd.core.frame.DataFrame,
     datetime_types: Optional[List["str"]],
     column: str,
     ts_column: str,
@@ -366,3 +366,51 @@ def plot_timeseries_per_category(
             j.set_xticklabels(j.get_xticklabels(), rotation=45)
             j.set_title(category)
         fig.suptitle(f"Distribution by {datetime_type}")
+
+
+def plot_categories_count(
+    df: pd.core.frame.DataFrame,
+    category_column: str,
+    figsize: Optional[Tuple[int, int]] = None,
+    title: Optional[str] = None,
+) -> None:
+    """
+    Plot countplot of a given `category_column`.
+
+    :df: Df to plot.
+    :category_column: Categorial column to subset plots by.
+    :figsize: If nothing specified, basic (20,5) used.
+    :title: Title for the plot.
+    """
+    if not figsize:
+        figsize = FIG_SIZE
+    num_categories = df[category_column].nunique()
+    if num_categories > 10:
+        ylen = math.ceil(num_categories / 26) * 5
+        figsize = (figsize[0], ylen)
+        plt.figure(figsize=figsize)
+        ax = sns.countplot(
+            y=df[category_column], order=df[category_column].value_counts().index
+        )
+        ax.set(xlabel="Number of rows")
+        ax.set(ylabel=category_column.lower())
+        for p in ax.patches:
+            ax.text(
+                p.get_width() + 0.1,
+                p.get_y() + 0.5,
+                str(round((p.get_width()), 2)),
+            )
+    else:
+        plt.figure(figsize=figsize)
+        ax = sns.countplot(
+            x=df[category_column], order=df[category_column].value_counts().index
+        )
+        ax.set(xlabel=category_column.lower())
+        ax.set(ylabel="Number of rows")
+        for p in ax.patches:
+            ax.annotate(p.get_height(), (p.get_x() + 0.35, p.get_height() + 1))
+    if not title:
+        plt.title(f"Distribution by {category_column}")
+    else:
+        plt.title(title)
+    plt.show()
