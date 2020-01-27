@@ -18,6 +18,7 @@
 import core.plotting as plot
 import seaborn as sns
 import pandas as pd
+import random
 
 # %%
 df = pd.read_csv('/data/tmp_ravenpack/RavenPack_Analytics_taxonomy_1.0.csv')
@@ -45,3 +46,19 @@ plot.plot_categories_count(df_commodity, "TOPIC", title = "Topics in the taxonom
 
 # %%
 plot.plot_categories_count(df_commodity, "GROUP", title = "Groups in the taxonomy")
+
+# %%
+predictions = [random.randint(0, 1)  for x in range(0,11)]
+y_test = [random.randint(0, 1)  for x in range(0,11)]
+
+# %%
+predictions
+
+# %%
+y_test
+
+# %%
+plot.plot_confuision_heatmap(y_test, predictions, percentage=False)
+
+# %%
+plot.plot_confuision_heatmap(y_test, predictions, percentage=True)

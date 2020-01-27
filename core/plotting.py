@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 import scipy
 import seaborn as sns
+import sklearn.metrics as skl_metrics
 
 import core.explore as expl
 import helpers.dbg as dbg
@@ -274,6 +275,28 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
         expl.display_df(df_tmp)
     else:
         _LOG.warning("Can't display correlation df since it is None")
+
+
+def plot_confuision_heatmap(
+    y_true: Union[List[Union[float, int]], np.array],
+    y_pred: Union[List[Union[float, int]], np.array],
+    percentage: bool = False,
+) -> None:
+    """
+    Construct and plot a heatmap for a confusion matrix of fact and prediction.
+
+    :y_true: True values.
+    :y_pred: Predictions.
+    :percentage: to represent values from confusion matrix in percentage or not.
+    """
+    confusion = skl_metrics.confusion_matrix(y_true, y_pred)
+    labels = set(list(y_true))
+    df_cm = pd.DataFrame(confusion, index=labels, columns=labels)
+    if percentage:
+        df_out = df_cm.apply(lambda x: x / x.sum(), axis=1)
+    else:
+        df_out = df_cm
+    plot_heatmap(df_out, mode="heatmap")
 
 
 def plot_timeseries(
