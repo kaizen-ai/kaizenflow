@@ -628,18 +628,25 @@ class DeepARGlobalModel(FitPredictNode):
     ) -> None:
         super().__init__(nid)
         self._estimator_kwargs = estimator_kwargs
-        #
+        # Because we do not want to pass non-basic data types through config,
+        # we handle `Trainer()` parameters separately from `estimator_kwargs`.
         self._trainer_kwargs = trainer_kwargs
         self._trainer = Trainer(**self._trainer_kwargs)
         dbg.dassert_not_in("trainer", self._estimator_kwargs)
         #
         self._estimator_func = DeepAREstimator
+        # NOTE: Covariates (x_vars) are not required by DeepAR.
+        # TODO(Paul): Allow this model to accept y_vars only.
+        #   - This could be useful for, e.g., predicting future values of
+        #     what would normally be predictors
         self._x_vars = x_vars
         self._y_vars = y_vars
         self._estimator = None
         self._predictor = None
-        #
+        # We determine `prediction_length` automatically and therefore do not
+        # allow it to be set by the user.
         dbg.dassert_not_in("prediction_length", self._estimator_kwargs)
+        #
         dbg.dassert_in("freq", self._estimator_kwargs)
         self._freq = self._estimator_kwargs["freq"]
 
@@ -648,23 +655,36 @@ class DeepARGlobalModel(FitPredictNode):
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
+        # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, self._freq)
+        # Set the prediction length to the length of the local timeseries - 1.
+        #   - To predict for time t_j at time t_i, t_j > t_i, we need to know
+        #     x_vars up to and including time t_j
+        #   - For this model, multi-step predictions are equivalent to
+        #     iterated single-step predictions
         pred_len = df.index.get_level_values(0).unique().size - 1
+        # Instantiate the (DeepAR) estimator and train the model.
         self._estimator = self._estimator_func(
             prediction_length=pred_len,
             trainer=self._trainer,
             **self._estimator_kwargs,
         )
         self._predictor = self._estimator.train(gluon_train)
-        #
+        # Apply model predictions to the training set (so that we can evaluate
+        # in-sample performance).
         idx0 = df.index[0][0]
         gluon_test = adpt.transform_to_gluon(
             df.loc[idx0:idx0], x_vars, y_vars, self._freq
         )
         fit_predictions = list(self._predictor.predict(gluon_test))
-        #
+        # Transform gluon-ts predictions into a dataflow local timeseries
+        # dataframe.
         y_hat_traces = adpt.transform_from_gluon_forecasts(fit_predictions)
+        # TODO(Paul): Store the traces / dispersion estimates.
+        # Average over all available samples.
         y_hat = y_hat_traces.mean(level=[0, 1])
+        # Map multiindices to align our prediction indices with those used
+        # by the passed-in local timeseries dataframe.
         offsets = df.index.get_level_values(0).unique().to_list()
         aligned_idx = y_hat.index.map(
             lambda x: (
@@ -675,7 +695,7 @@ class DeepARGlobalModel(FitPredictNode):
         y_hat.index = aligned_idx
         y_hat.name = y_vars[0] + "_hat"
         y_hat.index.rename(df.index.names, inplace=True)
-        #
+        # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["gluon_train"] = list(gluon_train)
@@ -691,6 +711,8 @@ class DeepARGlobalModel(FitPredictNode):
     def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
         """
         As in `SkLearnNode` version.
+
+        TODO(Paul): Think about factoring this method out into a parent/mixin.
         """
         if callable(to_list):
             to_list = to_list()
