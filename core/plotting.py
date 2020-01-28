@@ -3,18 +3,13 @@ Import as:
 
 import core.plotting as plot
 
-Utility functions for Jupyter notebook to:
-- plot dara
-
-These functions are used for both interactive data exploration and to implement
-more complex pipelines.
 """
 
 import logging
 import math
 from typing import Any, List, Optional, Tuple, Union
 
-import matplotlib
+import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -28,7 +23,8 @@ import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
-sns.set_palette("bright")
+_PALETTE = "bright"
+sns.set_palette(_PALETTE)
 
 FIG_SIZE = (20, 5)
 
@@ -99,7 +95,7 @@ def plot_non_na_cols(
     return ax
 
 
-def get_heatmap_mask(corr, mode: str) -> np.ndarray:
+def _get_heatmap_mask(corr, mode: str) -> np.ndarray:
     if mode == "heatmap_semitriangle":
         # Generate a mask for the upper triangle.
         mask = np.zeros_like(corr, dtype=np.bool)
@@ -111,10 +107,11 @@ def get_heatmap_mask(corr, mode: str) -> np.ndarray:
     return mask
 
 
-def get_heatmap_colormap() -> matplotlib.colors.LinearSegmentedColormap:
+def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     """
     Generate a custom diverging colormap useful for heatmaps.
     """
+    # cmap = mpl_col.ListedColormap(sns.color_palette(_PALETTE).as_hex())
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
     return cmap
 
@@ -158,14 +155,14 @@ def plot_heatmap(
     if annot == "auto":
         annot = corr_df.shape[0] < 10
     # Generate a custom diverging colormap.
-    cmap = get_heatmap_colormap()
+    cmap = _get_heatmap_colormap()
     if figsize is None:
         figsize = FIG_SIZE
     if mode in ("heatmap", "heatmap_semitriangle"):
         # Set up the matplotlib figure.
         if ax is None:
             _, ax = plt.subplots(figsize=figsize)
-        mask = get_heatmap_mask(corr_df, mode)
+        mask = _get_heatmap_mask(corr_df, mode)
         sns.heatmap(
             corr_df,
             cmap=cmap,
@@ -277,7 +274,48 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
         _LOG.warning("Can't display correlation df since it is None")
 
 
-def plot_confuision_heatmap(
+def plot_corr_over_time(
+    corr_df: pd.core.frame.DataFrame,
+    mode: str,
+    annot: bool = False,
+    num_cols: int = 4,
+) -> None:
+    """
+    Plot correlation over time.
+    """
+    timestamps = corr_df.index.get_level_values(0).unique()
+    dbg.dassert_lte(len(timestamps), 20)
+    # Get the axes.
+    fig, axes = expl.get_multiple_plots(
+        len(timestamps), num_cols=num_cols, y_scale=4, sharex=True, sharey=True
+    )
+    # Add color map bar on the side.
+    cbar_ax = fig.add_axes([0.91, 0.3, 0.03, 0.4])
+    cmap = _get_heatmap_colormap()
+    for i, dt in enumerate(timestamps):
+        corr_tmp = corr_df.loc[dt]
+        # Generate a mask for the upper triangle.
+        mask = _get_heatmap_mask(corr_tmp, mode)
+        # Plot.
+        sns.heatmap(
+            corr_tmp,
+            cmap=cmap,
+            cbar=i == 0,
+            cbar_ax=None if i else cbar_ax,
+            vmin=-1,
+            vmax=1,
+            square=True,
+            annot=annot,
+            fmt=".2f",
+            linewidths=0.5,
+            mask=mask,
+            # cbar_kws={"shrink": .5},
+            ax=axes[i],
+        )
+        axes[i].set_title(timestamps[i])
+
+
+def plot_confusion_heatmap(
     y_true: Union[List[Union[float, int]], np.array],
     y_pred: Union[List[Union[float, int]], np.array],
     percentage: bool = False,
@@ -296,7 +334,9 @@ def plot_confuision_heatmap(
         df_out = df_cm.apply(lambda x: x / x.sum(), axis=1)
     else:
         df_out = df_cm
-    plot_heatmap(df_out, mode="heatmap")
+    vmin = df_out.min().min()
+    vmax = df_out.max().max()
+    plot_heatmap(df_out, mode="heatmap", vmin=vmin, vmax=vmax)
 
 
 def plot_timeseries(
@@ -416,7 +456,7 @@ def plot_categories_count(
         ax = sns.countplot(
             y=df[category_column], order=df[category_column].value_counts().index
         )
-        ax.set(xlabel="Number of rows")
+        ax.set(xlabel=f"Number of {category_column}s")
         ax.set(ylabel=category_column.lower())
         for p in ax.patches:
             ax.text(
@@ -430,7 +470,7 @@ def plot_categories_count(
             x=df[category_column], order=df[category_column].value_counts().index
         )
         ax.set(xlabel=category_column.lower())
-        ax.set(ylabel="Number of rows")
+        ax.set(ylabel=f"Number of {category_column}s")
         for p in ax.patches:
             ax.annotate(p.get_height(), (p.get_x() + 0.35, p.get_height() + 1))
     if not title:

@@ -58,7 +58,7 @@ predictions
 y_test
 
 # %%
-plot.plot_confuision_heatmap(y_test, predictions, percentage=False)
+plot.plot_confusion_heatmap(y_test, predictions, percentage=True)
 
 # %%
-plot.plot_confuision_heatmap(y_test, predictions, percentage=True)
+plot.plot_confusion_heatmap(y_test, predictions, percentage=False)

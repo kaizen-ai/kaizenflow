@@ -669,42 +669,6 @@ def rolling_corr_over_time(df, com, nan_mode):
     return corr_df
 
 
-def plot_corr_over_time(corr_df, mode, annot=False, num_cols=4):
-    """
-    Plot correlation over time.
-    """
-    timestamps = corr_df.index.get_level_values(0).unique()
-    dbg.dassert_lte(len(timestamps), 20)
-    # Get the axes.
-    fig, axes = get_multiple_plots(
-        len(timestamps), num_cols=num_cols, y_scale=4, sharex=True, sharey=True
-    )
-    # Add color map bar on the side.
-    cbar_ax = fig.add_axes([0.91, 0.3, 0.03, 0.4])
-    cmap = plot.get_heatmap_colormap()
-    for i, dt in enumerate(timestamps):
-        corr_tmp = corr_df.loc[dt]
-        # Generate a mask for the upper triangle.
-        mask = plot.get_heatmap_mask(corr_tmp, mode)
-        # Plot.
-        sns.heatmap(
-            corr_tmp,
-            cmap=cmap,
-            cbar=i == 0,
-            cbar_ax=None if i else cbar_ax,
-            vmin=-1,
-            vmax=1,
-            square=True,
-            annot=annot,
-            fmt=".2f",
-            linewidths=0.5,
-            mask=mask,
-            # cbar_kws={"shrink": .5},
-            ax=axes[i],
-        )
-        axes[i].set_title(timestamps[i])
-
-
 def _get_eigvals_eigvecs(
     df: pd.DataFrame, dt: datetime.date, sort_eigvals: bool
 ) -> Tuple[np.array, np.array]:
