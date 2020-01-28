@@ -16,6 +16,9 @@ import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
+from gluonts.model.deepar import DeepAREstimator
+from gluonts.trainer import Trainer
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -607,6 +610,78 @@ class SkLearnModel(FitPredictNode):
         Allowing a callable here allows us to pass in the ColumnTransformer's
         method `transformed_col_names` and defer the call until graph
         execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
+class DeepARGlobalModel(FitPredictNode):
+    def __init__(
+            self,
+            nid: str,
+            trainer_kwargs: Optional[Any] = None,
+            estimator_kwargs: Optional[Any] = None,
+            x_vars=Union[List[str], Callable[[], List[str]]],
+            y_vars=Union[List[str], Callable[[], List[str]]],
+            ) -> None:
+        super().__init__(nid)
+        self._estimator_kwargs = estimator_kwargs
+        #
+        self._trainer_kwargs = trainer_kwargs
+        self._trainer = Trainer(**self._trainer_kwargs)
+        dbg.dassert_not_in("trainer", self._estimator_kwargs)
+        #
+        self._estimator_func = DeepAREstimator
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._estimator = None
+        self._predictor = None
+        #
+        dbg.dassert_not_in("prediction_length", self._estimator_kwargs)
+        dbg.dassert_in("freq", self._estimator_kwargs)
+        self._freq = self._estimator_kwargs["freq"]
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        df = df_in.copy()
+        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, self._freq)
+        pred_len = df.index.get_level_values(0).unique().size - 1
+        self._estimator = self._estimator_func(prediction_length=pred_len,
+                                               trainer=self._trainer,
+                                               **self._estimator_kwargs)
+        self._predictor = self._estimator.train(gluon_train)
+        #
+        idx0 = df.index[0][0]
+        gluon_test = adpt.transform_to_gluon(df.loc[idx0:idx0], x_vars, y_vars, self._freq)
+        fit_predictions = list(self._predictor.predict(gluon_test))
+        #
+        y_hat_traces = adpt.transform_from_gluon_forecasts(
+            fit_predictions
+        )
+        y_hat = y_hat_traces.mean(level=[0, 1])
+        y_hat.name = y_vars[0] + "_hat"
+        #
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["gluon_train"] = list(gluon_train)
+        info["gluon_test"] = list(gluon_test)
+        info["fit_predictions"] = fit_predictions
+        self._set_info("fit", info)
+        return {"df_out": y_hat.to_frame()}
+
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        raise NotImplementedError()
+
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        As in `SkLearnNode` version.
         """
         if callable(to_list):
             to_list = to_list()
