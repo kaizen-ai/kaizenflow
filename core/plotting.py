@@ -23,8 +23,7 @@ import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
-_PALETTE = "bright"
-sns.set_palette(_PALETTE)
+sns.set_palette("bright")
 
 FIG_SIZE = (20, 5)
 
@@ -111,7 +110,6 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     """
     Generate a custom diverging colormap useful for heatmaps.
     """
-    # cmap = mpl_col.ListedColormap(sns.color_palette(_PALETTE).as_hex())
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
     return cmap
 
@@ -318,8 +316,8 @@ def plot_corr_over_time(
 def plot_confusion_heatmap(
     y_true: Union[List[Union[float, int]], np.array],
     y_pred: Union[List[Union[float, int]], np.array],
-    percentage: bool = False,
-) -> None:
+    return_results: bool = False,
+) -> Any:
     """
     Construct and plot a heatmap for a confusion matrix of fact and prediction.
 
@@ -329,14 +327,25 @@ def plot_confusion_heatmap(
     """
     confusion = skl_metrics.confusion_matrix(y_true, y_pred)
     labels = set(list(y_true))
-    df_cm = pd.DataFrame(confusion, index=labels, columns=labels)
-    if percentage:
-        df_out = df_cm.apply(lambda x: x / x.sum(), axis=1)
-    else:
-        df_out = df_cm
-    vmin = df_out.min().min()
-    vmax = df_out.max().max()
-    plot_heatmap(df_out, mode="heatmap", vmin=vmin, vmax=vmax)
+    df_out = pd.DataFrame(confusion, index=labels, columns=labels)
+    df_out_percentage = df_out.apply(lambda x: x / x.sum(), axis=1)
+    fig, (ax, ax2) = plt.subplots(figsize=(FIG_SIZE), ncols=2)
+    plot_heatmap(
+        df_out,
+        mode="heatmap",
+        vmin=df_out.min().min(),
+        vmax=df_out.max().max(),
+        ax=ax,
+    )
+    plot_heatmap(
+        df_out_percentage,
+        mode="heatmap",
+        vmin=df_out_percentage.min().min(),
+        vmax=df_out_percentage.max().max(),
+        ax=ax2,
+    )
+    if return_results:
+        return df_out, df_out_percentage
 
 
 def plot_timeseries(
@@ -437,6 +446,7 @@ def plot_categories_count(
     category_column: str,
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
+    label: Optional[str] = None,
 ) -> None:
     """
     Plot countplot of a given `category_column`.
@@ -448,6 +458,8 @@ def plot_categories_count(
     """
     if not figsize:
         figsize = FIG_SIZE
+    if not label:
+        label = category_column
     num_categories = df[category_column].nunique()
     if num_categories > 10:
         ylen = math.ceil(num_categories / 26) * 5
@@ -456,7 +468,7 @@ def plot_categories_count(
         ax = sns.countplot(
             y=df[category_column], order=df[category_column].value_counts().index
         )
-        ax.set(xlabel=f"Number of {category_column}s")
+        ax.set(xlabel=f"Number of {label}s")
         ax.set(ylabel=category_column.lower())
         for p in ax.patches:
             ax.text(
@@ -470,7 +482,7 @@ def plot_categories_count(
             x=df[category_column], order=df[category_column].value_counts().index
         )
         ax.set(xlabel=category_column.lower())
-        ax.set(ylabel=f"Number of {category_column}s")
+        ax.set(ylabel=f"Number of {label}s")
         for p in ax.patches:
             ax.annotate(p.get_height(), (p.get_x() + 0.35, p.get_height() + 1))
     if not title:
