@@ -664,7 +664,11 @@ class DeepARGlobalModel(FitPredictNode):
             fit_predictions
         )
         y_hat = y_hat_traces.mean(level=[0, 1])
+        offsets = df.index.get_level_values(0).unique().to_list()
+        aligned_idx = y_hat.index.map(lambda x: (offsets[offsets.index(x[0]) + 1], x[1] - pd.Timedelta(f"1{self._freq}")))
+        y_hat.index = aligned_idx
         y_hat.name = y_vars[0] + "_hat"
+        y_hat.index.rename(df.index.names, inplace=True)
         #
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
@@ -673,7 +677,6 @@ class DeepARGlobalModel(FitPredictNode):
         info["fit_predictions"] = fit_predictions
         self._set_info("fit", info)
         return {"df_out": y_hat.to_frame()}
-
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         raise NotImplementedError()
