@@ -8,6 +8,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from gluonts.model.deepar import DeepAREstimator
+from gluonts.trainer import Trainer
 
 import core.data_adapters as adpt
 import core.finance as fin
@@ -16,9 +18,6 @@ import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
-from gluonts.model.deepar import DeepAREstimator
-from gluonts.trainer import Trainer
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -620,13 +619,13 @@ class SkLearnModel(FitPredictNode):
 
 class DeepARGlobalModel(FitPredictNode):
     def __init__(
-            self,
-            nid: str,
-            trainer_kwargs: Optional[Any] = None,
-            estimator_kwargs: Optional[Any] = None,
-            x_vars=Union[List[str], Callable[[], List[str]]],
-            y_vars=Union[List[str], Callable[[], List[str]]],
-            ) -> None:
+        self,
+        nid: str,
+        trainer_kwargs: Optional[Any] = None,
+        estimator_kwargs: Optional[Any] = None,
+        x_vars=Union[List[str], Callable[[], List[str]]],
+        y_vars=Union[List[str], Callable[[], List[str]]],
+    ) -> None:
         super().__init__(nid)
         self._estimator_kwargs = estimator_kwargs
         #
@@ -651,21 +650,28 @@ class DeepARGlobalModel(FitPredictNode):
         df = df_in.copy()
         gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, self._freq)
         pred_len = df.index.get_level_values(0).unique().size - 1
-        self._estimator = self._estimator_func(prediction_length=pred_len,
-                                               trainer=self._trainer,
-                                               **self._estimator_kwargs)
+        self._estimator = self._estimator_func(
+            prediction_length=pred_len,
+            trainer=self._trainer,
+            **self._estimator_kwargs,
+        )
         self._predictor = self._estimator.train(gluon_train)
         #
         idx0 = df.index[0][0]
-        gluon_test = adpt.transform_to_gluon(df.loc[idx0:idx0], x_vars, y_vars, self._freq)
+        gluon_test = adpt.transform_to_gluon(
+            df.loc[idx0:idx0], x_vars, y_vars, self._freq
+        )
         fit_predictions = list(self._predictor.predict(gluon_test))
         #
-        y_hat_traces = adpt.transform_from_gluon_forecasts(
-            fit_predictions
-        )
+        y_hat_traces = adpt.transform_from_gluon_forecasts(fit_predictions)
         y_hat = y_hat_traces.mean(level=[0, 1])
         offsets = df.index.get_level_values(0).unique().to_list()
-        aligned_idx = y_hat.index.map(lambda x: (offsets[offsets.index(x[0]) + 1], x[1] - pd.Timedelta(f"1{self._freq}")))
+        aligned_idx = y_hat.index.map(
+            lambda x: (
+                offsets[offsets.index(x[0]) + 1],
+                x[1] - pd.Timedelta(f"1{self._freq}"),
+            )
+        )
         y_hat.index = aligned_idx
         y_hat.name = y_vars[0] + "_hat"
         y_hat.index.rename(df.index.names, inplace=True)
