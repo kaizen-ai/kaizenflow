@@ -195,14 +195,27 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     src_file_name = _get_path(args.file)
-    # Export to html, add timestamp, archive html.
+    # TODO(greg): make a special function for it, remove hardcoded server name.
+    is_server = si.get_server_name() == "ip-172-31-16-23"
+    # Detect the platform family.
+    platform = sys.platform
+    open_link_cmd = "start"  # MS Windows
+    if platform == "linux":
+        open_link_cmd = "xdg-open"
+    elif platform == "darwin":
+        open_link_cmd = "open"
+    #
     if args.action == "open":
-        html_path = _export_html(src_file_name)
-        # Open with browser locally.
-        # TODO(gp): Check of Mac.
-        cmd = "open %s" % html_path
-        si.system(cmd)
-        sys.exit(0)
+        # Convert the notebook to the HTML format and store in the TMP location.
+        html_file_name = _export_html(src_file_name)
+        #
+        if is_server:
+            # Just print the full file name for the HTML snapshot.
+            print(f"HTML file path is: '{html_file_name}'")
+        else:
+            # Open with a browser locally.
+            si.system(f"{open_link_cmd} {html_file_name}")
+            sys.exit(0)
     elif args.action == "publish":
         user_credentials = usc.get_credentials()
         html_path = user_credentials["notebook_html_path"]
