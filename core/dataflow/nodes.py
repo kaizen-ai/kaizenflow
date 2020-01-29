@@ -6,6 +6,10 @@ import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import gluonts
+
+import gluonts.model.deepar as gmd
+import gluonts.trainer as gt
 import numpy as np
 import pandas as pd
 
@@ -607,6 +611,138 @@ class SkLearnModel(FitPredictNode):
         Allowing a callable here allows us to pass in the ColumnTransformer's
         method `transformed_col_names` and defer the call until graph
         execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
+class DeepARGlobalModel(FitPredictNode):
+    """
+    A dataflow node for a DeepAR model.
+
+    See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
+
+    For additional context and best-practices, see
+    https://github.com/ParticleDev/commodity_research/issues/966
+    """
+    def __init__(
+        self,
+        nid: str,
+        trainer_kwargs: Optional[Any] = None,
+        estimator_kwargs: Optional[Any] = None,
+        x_vars=Union[List[str], Callable[[], List[str]]],
+        y_vars=Union[List[str], Callable[[], List[str]]],
+    ) -> None:
+        """
+        Initialize dataflow node for gluon-ts DeepAR model.
+
+        :param nid: unique node id
+        :param trainer_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.trainer.html#gluonts.trainer.Trainer
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/trainer/_base.py
+        :param estimator_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.model.deepar.html
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/model/deepar/_estimator.py
+        :param x_vars: Covariates. Could be, e.g., features associated with a
+            point-in-time event. Must be known throughout the prediction
+            window at the time the prediction is made.
+        :param y_vars: Used in autoregression
+        """
+        super().__init__(nid)
+        self._estimator_kwargs = estimator_kwargs
+        # To avoid passing a class through config, handle `Trainer()`
+        # parameters separately from `estimator_kwargs`.
+        self._trainer_kwargs = trainer_kwargs
+        self._trainer = gt.Trainer(**self._trainer_kwargs)
+        dbg.dassert_not_in("trainer", self._estimator_kwargs)
+        #
+        self._estimator_func = gmd.DeepAREstimator
+        # NOTE: Covariates (x_vars) are not required by DeepAR.
+        # TODO(Paul): Allow this model to accept y_vars only.
+        #   - This could be useful for, e.g., predicting future values of
+        #     what would normally be predictors
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._estimator = None
+        self._predictor = None
+        # We determine `prediction_length` automatically and therefore do not
+        # allow it to be set by the user.
+        dbg.dassert_not_in("prediction_length", self._estimator_kwargs)
+        #
+        dbg.dassert_in("freq", self._estimator_kwargs)
+        self._freq = self._estimator_kwargs["freq"]
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        df = df_in.copy()
+        # Transform dataflow local timeseries dataframe into gluon-ts format.
+        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, self._freq)
+        # Set the prediction length to the length of the local timeseries - 1.
+        #   - To predict for time t_j at time t_i, t_j > t_i, we need to know
+        #     x_vars up to and including time t_j
+        #   - For this model, multi-step predictions are equivalent to
+        #     iterated single-step predictions
+        pred_len = df.index.get_level_values(0).unique().size - 1
+        # Instantiate the (DeepAR) estimator and train the model.
+        self._estimator = self._estimator_func(
+            prediction_length=pred_len,
+            trainer=self._trainer,
+            **self._estimator_kwargs,
+        )
+        self._predictor = self._estimator.train(gluon_train)
+        # Apply model predictions to the training set (so that we can evaluate
+        # in-sample performance).
+        idx0 = df.index[0][0]
+        gluon_test = adpt.transform_to_gluon(
+            df.loc[idx0:idx0], x_vars, y_vars, self._freq
+        )
+        fit_predictions = list(self._predictor.predict(gluon_test))
+        # Transform gluon-ts predictions into a dataflow local timeseries
+        # dataframe.
+        # TODO(Paul): Gluon has built-in functionality to take the mean of
+        #     traces, and we might consider using it instead.
+        y_hat_traces = adpt.transform_from_gluon_forecasts(fit_predictions)
+        # TODO(Paul): Store the traces / dispersion estimates.
+        # Average over all available samples.
+        y_hat = y_hat_traces.mean(level=[0, 1])
+        # Map multiindices to align our prediction indices with those used
+        # by the passed-in local timeseries dataframe.
+        # TODO(Paul): Do this mapping earlier before removing the traces.
+        offsets = df.index.get_level_values(0).unique().to_list()
+        aligned_idx = y_hat.index.map(
+            lambda x: (
+                offsets[offsets.index(x[0]) + 1],
+                x[1] - pd.Timedelta(f"1{self._freq}"),
+            )
+        )
+        y_hat.index = aligned_idx
+        y_hat.name = y_vars[0] + "_hat"
+        y_hat.index.rename(df.index.names, inplace=True)
+        # Store info.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        # TODO(Paul): Consider storing only the head of each list in `info`
+        #     for debugging purposes.
+        # info["gluon_train"] = list(gluon_train)
+        # info["gluon_test"] = list(gluon_test)
+        # info["fit_predictions"] = fit_predictions
+        self._set_info("fit", info)
+        return {"df_out": y_hat.to_frame()}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        raise NotImplementedError()
+
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        As in `SkLearnNode` version.
+
+        TODO(Paul): Think about factoring this method out into a parent/mixin.
         """
         if callable(to_list):
             to_list = to_list()
