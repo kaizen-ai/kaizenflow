@@ -6,10 +6,12 @@ import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import gluonts
+
+import gluonts.model.deepar as gmd
+import gluonts.trainer as gt
 import numpy as np
 import pandas as pd
-from gluonts.model.deepar import DeepAREstimator
-from gluonts.trainer import Trainer
 
 import core.data_adapters as adpt
 import core.finance as fin
@@ -654,10 +656,10 @@ class DeepARGlobalModel(FitPredictNode):
         # To avoid passing a class through config, handle `Trainer()`
         # parameters separately from `estimator_kwargs`.
         self._trainer_kwargs = trainer_kwargs
-        self._trainer = Trainer(**self._trainer_kwargs)
+        self._trainer = gt.Trainer(**self._trainer_kwargs)
         dbg.dassert_not_in("trainer", self._estimator_kwargs)
         #
-        self._estimator_func = DeepAREstimator
+        self._estimator_func = gmd.DeepAREstimator
         # NOTE: Covariates (x_vars) are not required by DeepAR.
         # TODO(Paul): Allow this model to accept y_vars only.
         #   - This could be useful for, e.g., predicting future values of
