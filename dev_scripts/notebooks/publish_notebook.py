@@ -90,6 +90,22 @@ def _copy_to_folder(path_to_notebook, dst_dir):
     _LOG.debug("Copy '%s' to '%s'", path_to_notebook, dst_dir)
 
 
+def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
+    """
+    Copy file to a directory on the remote server.
+    :param path_to_file: The path to the local file
+        e.g.: /tmp/relevance_and_event_relevance_exploration.html
+    :param dst_dir: The folder in which the file will be copied
+        e.g.: user@server_ip:/http/notebook_publisher
+    """
+    file_name = os.path.basename(path_to_file)
+    dst_f_name = os.path.join(dst_dir, file_name)
+    # File copying.
+    cmd = f"scp {path_to_file} {dst_f_name}"
+    si.system(cmd)
+    _LOG.debug("Copy '%s' to '%s' over SSH", file_name, dst_dir)
+
+
 def _export_to_webpath(path_to_notebook, dst_dir):
     """
     Create a folder if it does not exist. Export ipynb to html, to add a
