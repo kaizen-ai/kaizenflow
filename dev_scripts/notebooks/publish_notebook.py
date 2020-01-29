@@ -166,27 +166,19 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
+        "--branch",
+        action="store",
+        required=False,
+        type=str,
+        help="The branch, from which the notebook file will be checked out.",
+    )
+    parser.add_argument(
         "--file",
         action="store",
         required=True,
         type=str,
-        help="The path to the file ipynb, jupyter url, or github url",
+        help="The path to the file ipynb, jupyter url, or github url.",
     )
-    parser.add_argument(
-        "--web_path",
-        type=str,
-        action="store",
-        help="Save a copy to the specified folder *.ipynb and html with"
-        " timestamps in the name",
-    )
-    parser.add_argument(
-        "--project",
-        action="store",
-        type=str,
-        default=None,
-        help="An optional project that is used as sub-directory",
-    )
-    parser.add_argument("--tag", action="store", type=str)
     #
     parser.add_argument(
         "--action",
