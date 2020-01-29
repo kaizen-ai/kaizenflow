@@ -16,15 +16,18 @@ Given a notebook specified as:
 """
 
 import argparse
+import datetime
 import logging
 import os
 import sys
-import datetime
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
+
+# TODO(greg): consider moving this constant somewhere else.
+_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR = "/http/notebook_publisher"
 
 _LOG = logging.getLogger(__name__)
 
@@ -233,32 +236,33 @@ def _main(parser: argparse.ArgumentParser) -> None:
             si.system(f"{open_link_cmd} {html_file_name}")
             sys.exit(0)
     elif args.action == "publish":
-        user_credentials = usc.get_credentials()
-        html_path = user_credentials["notebook_html_path"]
-        dbg.dassert_is_not(html_path, None)
-        backup_path = user_credentials["notebook_backup_path"]
-        dbg.dassert_is_not(html_path, None)
-        if args.project is not None:
-            html_path = os.path.join(html_path, args.project)
-            backup_path = os.path.join(backup_path, args.project)
-        _LOG.info("html_path=%s", html_path)
-        _LOG.info("backup path=%s", backup_path)
+        # Convert the notebook to the HTML format and move to the PUB location.
+        server_address = usc.get_p1_dev_server_ip()
+        if is_server:
+            pub_path = _DEV_SERVER_NOTEBOOK_PUBLISHER_DIR
+            pub_html_file = _export_to_webpath(src_file_name, pub_path)
+            pub_file_name = os.path.basename(pub_html_file)
+            dbg.dassert_exists(pub_html_file)
+        else:
+            pub_path = f"{server_address}:{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}"
+            tmp_html_file_name = _export_html(src_file_name)
+            pub_file_name = os.path.basename(tmp_html_file_name)
+            _copy_to_remote_folder(tmp_html_file_name, pub_path)
         #
-        _LOG.debug("# Backing up ipynb")
-        _copy_to_folder(src_file_name, backup_path)
-        #
-        _LOG.debug("# Publishing html")
-        html_file_name = _export_to_webpath(src_file_name, html_path)
-        print("HTML file path is: %s" % html_file_name)
-        dbg.dassert_exists(html_file_name)
-        #
-        print("\nTo visualize on Mac run:")
-        cmd = (
-            "dev_scripts/open_remote_html_mac.sh %s\n" % html_file_name
-            + "FILE='%s'; scp 54.172.40.4:$FILE /tmp; open /tmp/$(basename $FILE)"
-            % html_file_name
+        _LOG.debug(
+            "Notebook '%s' was converted to the HTML format and stored at '%s'",
+            src_file_name,
+            pub_path + pub_file_name,
         )
-        print(cmd)
+        print(
+            f"HTML version of the notebook saved as '{pub_file_name}' "
+            f"at the dev server publishing location. "
+            f"You can view it using this command:"
+        )
+        print(
+            f"(ssh -f -nNT -L 8877:localhost:8077 {server_address}; "
+            f"{open_link_cmd} http://localhost:8877/{pub_file_name})"
+        )
 
 
 if __name__ == "__main__":
