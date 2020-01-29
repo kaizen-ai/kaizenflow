@@ -618,6 +618,14 @@ class SkLearnModel(FitPredictNode):
 
 
 class DeepARGlobalModel(FitPredictNode):
+    """
+    A dataflow node for a DeepAR model.
+
+    See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
+
+    For additional context and best-practices, see
+    https://github.com/ParticleDev/commodity_research/issues/966
+    """
     def __init__(
         self,
         nid: str,
@@ -626,10 +634,25 @@ class DeepARGlobalModel(FitPredictNode):
         x_vars=Union[List[str], Callable[[], List[str]]],
         y_vars=Union[List[str], Callable[[], List[str]]],
     ) -> None:
+        """
+        Initialize dataflow node for gluon-ts DeepAR model.
+
+        :param nid: unique node id
+        :param trainer_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.trainer.html#gluonts.trainer.Trainer
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/trainer/_base.py
+        :param estimator_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.model.deepar.html
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/model/deepar/_estimator.py
+        :param x_vars: Covariates. Could be, e.g., features associated with a
+            point-in-time event. Must be known throughout the prediction
+            window at the time the prediction is made.
+        :param y_vars: Used in autoregression
+        """
         super().__init__(nid)
         self._estimator_kwargs = estimator_kwargs
-        # Because we do not want to pass non-basic data types through config,
-        # we handle `Trainer()` parameters separately from `estimator_kwargs`.
+        # To avoid passing a class through config, handle `Trainer()`
+        # parameters separately from `estimator_kwargs`.
         self._trainer_kwargs = trainer_kwargs
         self._trainer = Trainer(**self._trainer_kwargs)
         dbg.dassert_not_in("trainer", self._estimator_kwargs)
@@ -679,12 +702,15 @@ class DeepARGlobalModel(FitPredictNode):
         fit_predictions = list(self._predictor.predict(gluon_test))
         # Transform gluon-ts predictions into a dataflow local timeseries
         # dataframe.
+        # TODO(Paul): Gluon has built-in functionality to take the mean of
+        #     traces, and we might consider using it instead.
         y_hat_traces = adpt.transform_from_gluon_forecasts(fit_predictions)
         # TODO(Paul): Store the traces / dispersion estimates.
         # Average over all available samples.
         y_hat = y_hat_traces.mean(level=[0, 1])
         # Map multiindices to align our prediction indices with those used
         # by the passed-in local timeseries dataframe.
+        # TODO(Paul): Do this mapping earlier before removing the traces.
         offsets = df.index.get_level_values(0).unique().to_list()
         aligned_idx = y_hat.index.map(
             lambda x: (
@@ -698,9 +724,11 @@ class DeepARGlobalModel(FitPredictNode):
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
-        info["gluon_train"] = list(gluon_train)
-        info["gluon_test"] = list(gluon_test)
-        info["fit_predictions"] = fit_predictions
+        # TODO(Paul): Consider storing only the head of each list in `info`
+        #     for debugging purposes.
+        # info["gluon_train"] = list(gluon_train)
+        # info["gluon_test"] = list(gluon_test)
+        # info["fit_predictions"] = fit_predictions
         self._set_info("fit", info)
         return {"df_out": y_hat.to_frame()}
 
