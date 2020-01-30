@@ -199,7 +199,7 @@ def _create_iter_single_index(
     yield {
         gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
         gluonts.dataset.field_names.FieldName.START: df.index[0],
-        gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[x_vars],
+        gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[x_vars].T,
     }
 
 
