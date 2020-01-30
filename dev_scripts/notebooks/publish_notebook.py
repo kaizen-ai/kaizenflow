@@ -74,26 +74,6 @@ def _export_html(path_to_notebook):
     return dst_path
 
 
-def _copy_to_folder(path_to_notebook, dst_dir):
-    """
-    Copy file to another directory
-    :param path_to_notebook: The path to the file of the notebook
-        e.g.: _data/relevance_and_event_relevance_exploration.ipynb
-    :param dst_dir: The folder in which the file will be copied e.g.: _data/
-    :return: None
-    """
-    # file_name = os.path.basename(path_to_notebook)
-    dst_f_name = os.path.join(dst_dir, _add_tag(path_to_notebook))
-    # If there is no such directory, create it.
-    if not os.path.isdir(dst_dir):
-        os.makedirs(dst_dir)
-    # File copying.
-    cmd = "cp {src} {dst}".format(src=path_to_notebook, dst=dst_f_name)
-    si.system(cmd)
-    path_to_notebook = os.path.basename(path_to_notebook)
-    _LOG.debug("Copy '%s' to '%s'", path_to_notebook, dst_dir)
-
-
 def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
     """
     Copy file to a directory on the remote server.
@@ -130,24 +110,6 @@ def _export_to_webpath(path_to_notebook, dst_dir):
     cmd = "mv {src} {dst}".format(src=html_src_path, dst=html_dst_path)
     si.system(cmd)
     return html_dst_path
-
-
-def _show_file_in_folder(folder_path):
-    """
-    Print all files in a folder
-    :param folder_path:
-    :return: None
-    """
-    # Check the correctness of the entered path
-    if not folder_path.endswith("/"):
-        folder_path = folder_path + "/"
-    only_files = [
-        _file
-        for _file in os.listdir(folder_path)
-        if os.path.isfile(os.path.join(folder_path, _file))
-    ]
-    for _one_file in only_files:
-        print(folder_path + _one_file)
 
 
 # TODO(gp): Reuse url.py code.
