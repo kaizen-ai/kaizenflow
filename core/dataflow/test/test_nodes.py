@@ -13,30 +13,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestDeepARGlobalModel(hut.TestCase):
-    def _get_local_ts(self) -> pd.DataFrame:
-        np.random.seed(42)
-        self._n_periods = 10
-        self._grid_len = 3
-        grid_idx = range(self._grid_len)
-        idx = pd.date_range("2010-01-01", periods=self._n_periods, freq="T")
-        idx = pd.MultiIndex.from_product([grid_idx, idx])
-        local_ts = pd.DataFrame(
-            np.random.randn(self._n_periods * self._grid_len, 2), index=idx
-        )
-        self._x_vars = ["EVENT_SENTIMENT_SCORE"]
-        self._y_vars = ["zret_0"]
-        local_ts.columns = self._x_vars + self._y_vars
-        return local_ts
-
     def test_fit1(self) -> None:
         local_ts = self._get_local_ts()
         num_entries = 100
-        config = cfg.Config()
-        config["nid"] = "deepar"
-        config["trainer_kwargs"] = {"epochs": 1}
-        config["estimator_kwargs"] = {"freq": "T"}
-        config["x_vars"] = self._x_vars
-        config["y_vars"] = self._y_vars
+        config = self._get_config()
         deepar = dtf.DeepARGlobalModel(**config.to_dict())
         output = deepar.fit(local_ts)
         info = deepar.get_info("fit")
@@ -58,16 +38,36 @@ class TestDeepARGlobalModel(hut.TestCase):
         local_ts = self._get_local_ts()
         data_node = dtf.ReadDataFromDf("local_ts", local_ts)
         dag.add_node(data_node)
-        deepar = dtf.DeepARGlobalModel(
-            "deepar",
-            trainer_kwargs={"epochs": 1},
-            estimator_kwargs={"freq": "T"},
-            x_vars=self._x_vars,
-            y_vars=self._y_vars,
-        )
+        config = self._get_config()
+        deepar = dtf.DeepARGlobalModel(**config.to_dict())
         dag.add_node(deepar)
         dag.connect("local_ts", "deepar")
         output_df = dag.run_leq_node("deepar", "fit")["df_out"]
         expected_shape = (self._n_periods * (self._grid_len - 1), 1)
         self.assertEqual(output_df.shape, expected_shape)
         self.check_string(output_df.to_string())
+
+    def _get_local_ts(self) -> pd.DataFrame:
+        np.random.seed(42)
+        self._n_periods = 10
+        self._grid_len = 3
+        grid_idx = range(self._grid_len)
+        idx = pd.date_range("2010-01-01", periods=self._n_periods, freq="T")
+        idx = pd.MultiIndex.from_product([grid_idx, idx])
+        local_ts = pd.DataFrame(
+            np.random.randn(self._n_periods * self._grid_len, 2), index=idx
+        )
+        self._x_vars = ["EVENT_SENTIMENT_SCORE"]
+        self._y_vars = ["zret_0"]
+        local_ts.columns = self._x_vars + self._y_vars
+        return local_ts
+
+    def _get_config(self) -> cfg.Config:
+        config = cfg.Config()
+        config["nid"] = "deepar"
+        config["trainer_kwargs"] = {"epochs": 1}
+        config["estimator_kwargs"] = {"freq": "T"}
+        config["x_vars"] = self._x_vars
+        config["y_vars"] = self._y_vars
+        # config["use_feat_dynamic_real"] = True
+        return config
