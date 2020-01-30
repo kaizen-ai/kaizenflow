@@ -248,7 +248,11 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
-    src_file_name = _get_path(args.file)
+    #
+    if args.branch:
+        src_file_name = _get_file_from_git_branch(args.branch, args.file)
+    else:
+        src_file_name = _get_path(args.file)
     # TODO(greg): make a special function for it, remove hardcoded server name.
     is_server = si.get_server_name() == "ip-172-31-16-23"
     # Detect the platform family.
