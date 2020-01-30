@@ -66,8 +66,7 @@ class TestDeepARGlobalModel(hut.TestCase):
         config = cfg.Config()
         config["nid"] = "deepar"
         config["trainer_kwargs"] = {"epochs": 1}
-        config["estimator_kwargs"] = {"freq": "T"}
+        config["estimator_kwargs"] = {"freq": "T", "use_feat_dynamic_real": True}
         config["x_vars"] = self._x_vars
         config["y_vars"] = self._y_vars
-        # config["use_feat_dynamic_real"] = True
         return config
