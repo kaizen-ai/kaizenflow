@@ -20,6 +20,7 @@ import datetime
 import logging
 import os
 import sys
+import tempfile
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
@@ -175,6 +176,40 @@ def _get_path(path_or_url):
             "Incorrect link to git or local jupiter notebook or file path"
         )
     return ret
+
+
+def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
+    """
+    Checkout a file from a git branch and store it in a temporary location.
+    :param git_branch: the branch name
+        e.g. origin/PartTask302_download_eurostat_data
+    :param git_path: the relative path to the file
+        e.g. core/notebooks/gallery_signal_processing.ipynb
+    :return: the path to the file retrieved
+        e.g.: /tmp/gallery_signal_processing.ipynb
+    """
+    _LOG.debug("Create a temporary directory for a git worktree.")
+    tmp_worktree_dir = tempfile.mkdtemp()
+    #
+    _LOG.debug("Add temporary git worktree in '%s'.", tmp_worktree_dir)
+    si.system(f"git worktree add {tmp_worktree_dir}")
+    si.system(f"cd {tmp_worktree_dir}")
+    #
+    _LOG.debug("Check out '%s/%s'.", git_branch, git_path)
+    si.system(f"git checkout {git_branch} -- {git_path}")
+    si.system("cd -")
+    checked_out_file_path = os.path.join(tmp_worktree_dir, git_path)
+    dst_file_path = os.path.join(
+        tempfile.gettempdir(), os.path.basename(checked_out_file_path)
+    )
+    #
+    _LOG.debug("Copy '%s' to '%s'.", checked_out_file_path, dst_file_path)
+    si.system(f"cp {checked_out_file_path} {dst_file_path}")
+    #
+    _LOG.debug("Remove temporary git worktree '%s'.", tmp_worktree_dir)
+    si.system(f"git worktree remove {tmp_worktree_dir}")
+    si.system(f"git branch -d {os.path.basename(tmp_worktree_dir)}")
+    return dst_file_path
 
 
 # #############################################################################
