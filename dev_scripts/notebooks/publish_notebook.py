@@ -78,12 +78,9 @@ _DEV_SERVER_NOTEBOOK_PUBLISHER_DIR = "/http/notebook_publisher"
 _LOG = logging.getLogger(__name__)
 
 
-def _add_tag(file_path, tag=None):
+def _add_tag(file_path: str, tag: str = "") -> str:
     """
-    By default add timestamp in filename
-    :param file_path:
-    :param tag:
-    :return: file na
+    By default, add current timestamp in the filename. Returns new filename.
     """
     name, extension = os.path.splitext(os.path.basename(file_path))
     if not tag:
@@ -91,10 +88,10 @@ def _add_tag(file_path, tag=None):
     return "".join([name, tag, extension])
 
 
-def _export_html(path_to_notebook):
+def _export_html(path_to_notebook: str) -> str:
     """
     Accept ipynb, exports to html, adds a timestamp to the file name, and
-    returns the name of the created file
+    returns the name of the created file.
     :param path_to_notebook: The path to the file of the notebook e.g.:
         _data/relevance_and_event_relevance_exploration.ipynb
     :return: The name of the html file with a timestamp e.g.:
@@ -115,7 +112,7 @@ def _export_html(path_to_notebook):
         )
     )
     si.system(cmd)
-    _LOG.debug("Export %s to html", file_name)
+    _LOG.debug("Export %s to html.", file_name)
     return dst_path
 
 
@@ -132,17 +129,16 @@ def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
     # File copying.
     cmd = f"scp {path_to_file} {dst_f_name}"
     si.system(cmd)
-    _LOG.debug("Copy '%s' to '%s' over SSH", file_name, dst_dir)
+    _LOG.debug("Copy '%s' to '%s' over SSH.", file_name, dst_dir)
 
 
-def _export_to_webpath(path_to_notebook, dst_dir):
+def _export_to_webpath(path_to_notebook: str, dst_dir: str) -> str:
     """
     Create a folder if it does not exist. Export ipynb to html, to add a
-    timestamp, moves to dst_dir
+    timestamp, moves to dst_dir.
     :param path_to_notebook: The path to the file of the notebook
         e.g.: _data/relevance_and_event_relevance_exploration.ipynb
     :param dst_dir: destination folder to move
-    :return: None
     """
     html_src_path = _export_html(path_to_notebook)
     html_name = os.path.basename(html_src_path)
@@ -151,22 +147,21 @@ def _export_to_webpath(path_to_notebook, dst_dir):
     if not os.path.isdir(dst_dir):
         os.makedirs(dst_dir)
     # Move html.
-    _LOG.debug("Export '%s' to '%s'", html_src_path, html_dst_path)
+    _LOG.debug("Export '%s' to '%s'.", html_src_path, html_dst_path)
     cmd = "mv {src} {dst}".format(src=html_src_path, dst=html_dst_path)
     si.system(cmd)
     return html_dst_path
 
 
 # TODO(gp): Reuse url.py code.
-def _get_path(path_or_url):
+def _get_path(path_or_url: str) -> str:
     """
-    Get path from file, local link or github link
+    Get path from file, local link or github link.
     :param path_or_url: url to notebook/github, local path,
         e.g.: https://github.com/...ipynb
     :return: Path to file
         e.g.: UnderstandingAnalysts.ipynb
     """
-    ret = ""
     if "https://github" in path_or_url:
         ret = "/".join(path_or_url.split("/")[7:])
     elif "http://" in path_or_url:
@@ -180,7 +175,7 @@ def _get_path(path_or_url):
         ret = path_or_url
     else:
         raise ValueError(
-            "Incorrect link to git or local jupiter notebook or file path"
+            "Incorrect link to git or local jupiter notebook or file path."
         )
     return ret
 
@@ -224,7 +219,8 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--branch",
