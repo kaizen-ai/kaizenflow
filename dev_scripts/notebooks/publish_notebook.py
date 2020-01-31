@@ -1,18 +1,63 @@
 #!/usr/bin/env python
-
 """
-Given a notebook specified as:
-- a ipynb file, e.g.,
-    data/web_path_two/Minute_distribution_20180802_182656.ipynb
-- a jupyter url, e.g.,
-    https://github.com/...ipynb
-- a github url
+# #############################################################################
+# Open a notebook.
+# #############################################################################
 
-- Backup a notebook and publish notebook on shared space;
-> publish_notebook.py --file xyz.ipynb --action publish
+$ amp/dev_scripts/notebooks/publish_notebook.py \
+--file nlp/notebooks/PartTask768_event_filtering.ipynb \
+--action open
 
-- Open a notebook in Chrome
-> publish_notebook.py --file xyz.ipynb --action open
+On a local computer:
+1. Converts a locally available notebook to the HTML format.
+2. Saves it to a temporary location, adds a timestamp to the name.
+3. Opens it using the system default browser.
+
+On the Dev Server:
+1. Converts a locally available notebook to the HTML format.
+2. Saves it to a temporary location, adds a timestamp to the name.
+3. Returns the full path to the file as a result.
+
+# #############################################################################
+# Publish a notebook.
+# #############################################################################
+
+$ amp/dev_scripts/notebooks/publish_notebook.py \
+--file nlp/notebooks/PartTask768_event_filtering.ipynb \
+--action publish
+
+On a local computer:
+1. Converts a locally available notebook to the HTML format.
+2. Saves it to a temporary location, adds a timestamp to the name.
+3. Copies it to the publishing location on the Dev Server.
+4. Prints a link to the file, and a command to open it using ssh tunneling.
+
+On the Dev Server:
+1. Converts a locally available notebook to the HTML format.
+2. Adds a timestamp to the name.
+3. Copies it to the publishing location on the Dev Server.
+4. Prints a link to the file, and a command to open it using ssh tunneling.
+
+# #############################################################################
+# Open or Publish a notebook from a git branch.
+# #############################################################################
+
+$ amp/dev_scripts/notebooks/publish_notebook.py \
+--file nlp/notebooks/PartTask768_event_filtering.ipynb \
+--branch origin/master
+--action open
+
+or
+
+$ amp/dev_scripts/notebooks/publish_notebook.py \
+--file nlp/notebooks/PartTask768_event_filtering.ipynb \
+--branch origin/master
+--action publish
+
+The same as described above, but before the first step:
+- A new temporary worktree will be added to a temporary directory.
+- The file will be checked out there from the branch given.
+- Then it will follow all the steps mentioned above.
 """
 
 import argparse
