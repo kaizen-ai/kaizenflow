@@ -105,11 +105,15 @@ class EventStudyBuilder(DagBuilder):
         dag.add_node(node)
         dag.connect(self._get_nid("events_input_socket"), self._get_nid(stage))
         # Drop NaNs from resampled events.
-        # - This node is used because resampling places events on a uniform
-        #   time grid, and most of these times will not actually represent
-        #   events
         # - The output of this node represents the `normalized` event times
         #   and features
+        #   - `resample_events` + `dropna_from_resamples_events` effectively
+        #     - Rolls datetimes forward to the next grid point
+        #     - Aggregates features in the case that multiple events occur
+        #       between grid points
+        #   - `dropna` is used because resampling places events on a uniform
+        #     time grid, and most of these times will not actually represent
+        #     events
         stage = "dropna_from_resampled_events"
         # TODO(Paul): Might want to expose "how".
         node = DataframeMethodRunner(
