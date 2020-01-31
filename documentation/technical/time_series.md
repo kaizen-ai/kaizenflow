@@ -70,14 +70,46 @@ the data and to minimize any mistakes due to misinterpretations.
    1. In general, `ret_0` at time `t` is the return realized upon exiting at
       time `t` a position held at time `t - 1`
       1. Note that `ret_0` at time `t` is observable at time `t`
-      1. We use `ret_j` to denote `ret_0.shift(j)`
+      1. We use `ret_j` to denote `ret_0.shift(-j)`
    1. If, e.g., it takes one time interval to enter a position and one time
       interval to exit, then to realize `ret_0` at time `t`, a decision to enter
       must be made by time `t - 2`
-1. We aim to predict forward returns, e.g., `ret_-j` for `j > 0`
+1. We aim to predict forward returns, e.g., `ret_j` for `j > 0`
    1. In the ideal setting for "instantaneous" prices, we can come close to
-      achieving `ret_-1`
-   1. Achieving `ret_-2` is subject to fewer constraints (one time step to enter
+      achieving `ret_1`
+   1. Achieving `ret_2` is subject to fewer constraints (one time step to enter
       a position, one time step to exit)
    1. If prices represent aggregated prices (e.g., twap or vwap), then in the
-      ideal setting `ret_-2` is the earliest realizable return
+      ideal setting `ret_2` is the earliest realizable return
+
+## Aligning predictors and responses
+
+1. Typically, a prediction at time `t_0` of the time `t_0` response value
+   `resp_0` is not actionable. Therefore we actually want to predict forward
+   response values (using the same timing conventions as `rets`; so `resp_n`
+   for the forward response `n` steps ahead).
+1. For convenience, we want to align (e.g., put in the same dataframe row)
+   predictors with the corresponding response value that we are using the
+   predictors to predict. E.g., if we are predicting `ret_2`, then we want to
+   align row-wise the predictor and `ret_2` columns.
+1. We have essentially two equivalent ways of performing the alignment:
+   1. Shift the predictors
+   1. Shift the response
+1. If we shift the response:
+   1. Predictor knowledge times are preserved
+   1. In real-time mode, predictor timestamps correspond to "now" rather than
+      the future
+   1. Multiple forward returns can be used simultaneously (e.g., if we want to
+      predict a forward curve / optimize how many unit steps ahead to predict)
+1. If we shift (lag) the predictor:
+   1. The return semantics are always clear (especially so if we ever restrict
+      returns windows to ATH, etc., violating a uniform-grid assumption)
+   1. Causality is respected in the sense that at any given datetime (row),
+      everything in that row or preceding it is known (however, we know the
+      "future" values of predictors)
+1. A reasonable default would be to
+   1. Enforce a uniform grid on the response variables (e.g., use `freq` for
+      the dataframes)
+   1. Shift and rename the response column to be explicit about what is being
+      predicted and when
+   1. Do not change the predictor timestamps (treat them as knowledge times)
