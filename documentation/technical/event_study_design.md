@@ -133,13 +133,15 @@ respect to active trading hours):
     - We avoid needing to separately test events with different supposed
       directional effects (provided we believe that the predictors in `data`
       contain sufficient information to determine directionality)
-- Requiring that `grid_data` have monotonic datetimes with set time bars - Helps
-  ensure that inference conclusions are valid (our procedures typically assume
-  implicitly that the sampling frequency is uniform and need to be adjusted
-  otherwise) - Simplify and speed up the implementation
+- Requiring that `grid_data` have monotonic datetimes with set time bars
+  - Helps ensure that inference conclusions are valid (our procedures typically
+    assume implicitly that the sampling frequency is uniform and need to be
+    adjusted otherwise)
+  - Simplifies and speeds up the implementation
 - Requiring that `events.index` have offsets matching those of `grid_data.index`
-  ensures alignment - Time-shifting can be expensive, but is very efficient
-  under certain simplifying assumptions
+  ensures alignment
+  - Time-shifting can be expensive, but is very efficient under certain
+    simplifying assumptions
 - Requiring that `grid_data` be single-instrument simplifies bookkeeping
   - This is the most common case for commodities
   - If it becomes important to study cross-sectional or aggregate effects, we
@@ -188,7 +190,7 @@ respect to active trading hours):
     - This could be broken up into one variable per post-event tick
     - We default to a single Heaviside indicator since this seems to cover the
       common case well
-  - Note that the resulting model may not be tradable at all times
+  - Note that the resulting model may not be tradeable at all times
     - E.g., if the events in real life occur unpredictably, then knowledge about
       shifts before the event is not available pre-event
 - The regression constitutes a learning step (so we should test OOS)
