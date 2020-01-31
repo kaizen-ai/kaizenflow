@@ -56,6 +56,10 @@ def get_disk_cache_path(tag: Optional[str]) -> str:
 # This is the global disk cache.
 _DISK_CACHE: Any = None
 
+# Log level for information about the high level behavior of the cachine
+# layer.
+_LOG_LEVEL = logging.INFO
+
 
 def get_disk_cache(tag: Optional[str]) -> Any:
     """
@@ -123,7 +127,8 @@ class Cached:
         def _execute_func_from_disk_cache(*args: Any, **kwargs: Any) -> Any:
             # If we get here, we didn't hit neither memory nor the disk cache.
             self._last_used_disk_cache = False
-            _LOG.debug(
+            _LOG.log(
+                _LOG_LEVEL,
                 "%s(args=%s kwargs=%s): execute the intrinsic function",
                 self._func.__name__,
                 args,
@@ -144,7 +149,8 @@ class Cached:
             # but we don't know about the disk cache.
             if self._use_mem_cache:
                 self._last_used_mem_cache = False
-                _LOG.debug(
+                _LOG.log(
+                    _LOG_LEVEL,
                     "%s(args=%s kwargs=%s): trying to read from disk",
                     self._func.__name__,
                     args,
@@ -152,7 +158,7 @@ class Cached:
                 )
                 obj = _execute_func_from_disk_cache(*args, **kwargs)
             else:
-                _LOG.debug("Skipping disk cache")
+                _LOG.warning("Skipping disk cache")
                 obj = self._func(*args, **kwargs)
             return obj
 
@@ -164,7 +170,8 @@ class Cached:
                 self._use_disk_cache,
             )
             if self._use_mem_cache:
-                _LOG.debug(
+                _LOG.log(
+                    _LOG_LEVEL,
                     "%s(args=%s kwargs=%s): trying to read from memory: %s",
                     self._func.__name__,
                     args,
@@ -173,12 +180,12 @@ class Cached:
                 )
                 obj = _execute_func_from_mem_cache(*args, **kwargs)
             else:
-                _LOG.debug("Skipping memory cache")
+                _LOG.warning("Skipping memory cache")
                 self._last_used_mem_cache = False
                 if self._use_disk_cache:
                     obj = _execute_func_from_disk_cache(*args, **kwargs)
                 else:
-                    _LOG.debug("Skipping disk cache")
+                    _LOG.warning("Skipping disk cache")
                     self._last_used_disk_cache = False
                     obj = self._func(*args, **kwargs)
             return obj
@@ -187,7 +194,7 @@ class Cached:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         if not is_caching_enabled():
-            _LOG.debug("Caching is disabled")
+            _LOG.warning("Caching is disabled")
             self._last_used_disk_cache = self._last_used_mem_cache = False
             obj = self._func(*args, **kwargs)
         else:
