@@ -26,6 +26,37 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+def create_iter_single_index(
+    df: pd.DataFrame, x_vars: List[str], y_vars: Union[str, List[str]],
+) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
+    """
+    Generate `data_iter` parameter for `gluonts.dataset.common.ListDataset`.
+
+    Yield dicts consisting of:
+    - target of shape `(num_targets, ts_length)`:
+      https://github.com/awslabs/gluon-ts/issues/280#issuecomment-528285767
+    - start date
+    - features of shape `(n_features, ts_length)`:
+      https://gluon-ts.mxnet.io/examples/extended_forecasting_tutorial/extended_tutorial.html
+
+    A usage example can be found in `transform_to_gluon` function.
+
+    :param df: time series dataframe. Assuming it is already spaced at
+        the required frequency
+    :param x_vars: names of feature columns
+    :param y_vars: names of target columns
+    :return: iterator of dicts with target, start_date, and features
+    """
+    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    yield {
+        gluonts.dataset.field_names.FieldName.TARGET: df[y_vars].values.T,
+        gluonts.dataset.field_names.FieldName.START: df.index[0],
+        gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[
+            x_vars
+        ].values.T,
+    }
+
+
 def transform_to_gluon(
     df: pd.DataFrame,
     x_vars: List[str],
@@ -76,7 +107,7 @@ def transform_to_gluon(
             _create_iter_multiindex, frequency=frequency
         )
     else:
-        iter_func = _create_iter_single_index
+        iter_func = create_iter_single_index
     if len(y_vars) == 1:
         y_vars = y_vars[0]
         one_dim_target = True
@@ -115,7 +146,10 @@ def transform_from_gluon(
     dfs = []
     for ts in iter(gluon_ts):
         start_date = ts[gluonts.dataset.field_names.FieldName.START]
-        target = pd.DataFrame(ts[gluonts.dataset.field_names.FieldName.TARGET])
+        target_arr = ts[gluonts.dataset.field_names.FieldName.TARGET]
+        # Target and features shapes are described in the
+        # `create_iter_single_index` docstring.
+        target = pd.DataFrame(target_arr.T)
         if len(gluon_ts) == 1:
             idx = pd.date_range(
                 start_date, periods=target.shape[0], freq=start_date.freq,
@@ -124,10 +158,8 @@ def transform_from_gluon(
             idx = [start_date] * target.shape[0]
         target.index = idx
         target.columns = y_vars
-        features = pd.DataFrame(
-            ts[gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL],
-            index=idx,
-        )
+        features_arr = ts[gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL]
+        features = pd.DataFrame(features_arr.T, index=idx,)
         features.columns = x_vars
         dfs.append((features, target))
     df = _convert_tuples_list_to_df(dfs, index_name)
@@ -192,17 +224,6 @@ def _convert_tuples_list_to_df(
     return df
 
 
-def _create_iter_single_index(
-    df: pd.DataFrame, x_vars: List[str], y_vars: Union[str, List[str]],
-) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
-    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    yield {
-        gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
-        gluonts.dataset.field_names.FieldName.START: df.index[0],
-        gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[x_vars],
-    }
-
-
 def _create_iter_multiindex(
     local_ts: pd.DataFrame,
     x_vars: List[str],
@@ -222,7 +243,7 @@ def _create_iter_multiindex(
         start_date = ts + pd.Timedelta(f"{first_grid_idx}{frequency}")
         df = local_ts_grid.droplevel(0)
         df.index = [start_date] * df.shape[0]
-        yield from _create_iter_single_index(df, x_vars, y_vars)
+        yield from create_iter_single_index(df, x_vars, y_vars)
 
 
 def _transform_from_gluon_forecast_entry(
