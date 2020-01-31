@@ -28,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 def transform_to_gluon(
     df: pd.DataFrame,
-    x_vars: List[str],
+    x_vars: Optional[List[str]],
     y_vars: List[str],
     frequency: Optional[str] = None,
 ) -> gluonts.dataset.common.ListDataset:
@@ -46,6 +46,7 @@ def transform_to_gluon(
     :param y_vars: names of target columns
     :return: gluonts `ListDataset`
     """
+    x_vars = x_vars or []
     dbg.dassert_isinstance(x_vars, list)
     dbg.dassert_isinstance(y_vars, list)
     dbg.dassert_is_subset(x_vars, df.columns)
@@ -92,7 +93,7 @@ def transform_to_gluon(
 
 def transform_from_gluon(
     gluon_ts: gluonts.dataset.common.ListDataset,
-    x_vars: Iterable[str],
+    x_vars: Optional[Iterable[str]],
     y_vars: Iterable[str],
     index_name: Optional[str],
 ) -> pd.DataFrame:
@@ -110,6 +111,7 @@ def transform_from_gluon(
     :return: if there is one time series in `gluon_ts`, return singly
         indexed dataframe; else return multiindexed dataframe
     """
+    x_vars = x_vars or []
     if isinstance(y_vars, str):
         y_vars = [y_vars]
     dfs = []
@@ -124,11 +126,14 @@ def transform_from_gluon(
             idx = [start_date] * target.shape[0]
         target.index = idx
         target.columns = y_vars
-        features = pd.DataFrame(
-            ts[gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL],
-            index=idx,
-        )
-        features.columns = x_vars
+        if gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL in ts:
+            features = pd.DataFrame(
+                ts[gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL],
+                index=idx,
+            )
+            features.columns = x_vars
+        else:
+            features = None
         dfs.append((features, target))
     df = _convert_tuples_list_to_df(dfs, index_name)
     return df
@@ -193,22 +198,32 @@ def _convert_tuples_list_to_df(
 
 
 def _create_iter_single_index(
-    df: pd.DataFrame, x_vars: List[str], y_vars: Union[str, List[str]],
-) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
+    df: pd.DataFrame, x_vars: Optional[List[str]], y_vars: Union[str, List[str]],
+) -> Generator[
+    Dict[str, Union[pd.Series, pd.DataFrame, pd.Timestamp]], None, None
+]:
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    yield {
-        gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
-        gluonts.dataset.field_names.FieldName.START: df.index[0],
-        gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[x_vars],
-    }
+    if not x_vars:
+        yield {
+            gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
+            gluonts.dataset.field_names.FieldName.START: df.index[0],
+        }
+    else:
+        yield {
+            gluonts.dataset.field_names.FieldName.TARGET: df[y_vars],
+            gluonts.dataset.field_names.FieldName.START: df.index[0],
+            gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[x_vars],
+        }
 
 
 def _create_iter_multiindex(
     local_ts: pd.DataFrame,
-    x_vars: List[str],
+    x_vars: Optional[List[str]],
     y_vars: Union[str, List[str]],
     frequency: str,
-) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
+) -> Generator[
+    Dict[str, Union[pd.Series, pd.DataFrame, pd.Timestamp]], None, None
+]:
     """
     Iterate level 0 of MultiIndex and generate `data_iter` parameter for
     `gluonts.dataset.common.ListDataset`.
@@ -247,7 +262,7 @@ def _transform_from_gluon_forecast_entry(
 
 
 def transform_to_sklearn(
-    df: pd.DataFrame, x_vars: List[str], y_vars: List[str]
+    df: pd.DataFrame, x_vars: Optional[List[str]], y_vars: List[str]
 ) -> Tuple[np.array, np.array]:
     """
     Transform pd.DataFrame into sklearn model inputs.
@@ -261,6 +276,7 @@ def transform_to_sklearn(
     :param y_vars: names of target columns
     :return: (x_vals, y_vals)
     """
+    x_vars = x_vars or []
     dbg.dassert_not_intersection(
         x_vars, y_vars, "`x_vars` and `y_vars` should not intersect"
     )
