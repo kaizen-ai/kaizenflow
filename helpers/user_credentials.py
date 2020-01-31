@@ -25,10 +25,13 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Add also P1_GDRIVE_PATH and AM_GDRIVE_PATH instead of using an env var.
 
 
-def _get_p1_dev_server_ip():
+def get_p1_dev_server_ip() -> str:
+    """ Get the dev server name from the user environment. """
     env_var_name = "P1_DEV_SERVER"
     if env_var_name not in os.environ:
-        _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh?", env_var_name)
+        _LOG.error(
+            "Can't find '%s': re-run dev_scripts/setenv.sh?", env_var_name
+        )
         raise RuntimeError
     dev_server = os.environ[env_var_name]
     return dev_server
@@ -71,7 +74,7 @@ def get_credentials():
           ```python
             if server_name in ("gpmac.local", "gpmac.lan"):
                 if git_repo_name == "ParticleDev/commodity_research":
-                    service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
+                    service = ("Jupyter1", get_p1_dev_server_ip(), 10003, 10003)
           ```
           when GP runs `ssh_tunnels.py` from his laptop in a
           `ParticleDev/commodity_research` client, a tunnel is open to the dev
@@ -121,7 +124,7 @@ def get_credentials():
             if git_repo_name == "ParticleDev/commodity_research":
                 # Forward port 10003 to the notebook server that is started by
                 # `run_jupyter_server.py` when executed on the dev server.
-                # service = ("Jupyter1", _get_p1_dev_server_ip(), 10003, 10003)
+                # service = ("Jupyter1", get_p1_dev_server_ip(), 10003, 10003)
                 # tunnel_info.append(service)
                 # jupyter_port = 10001
                 pass
@@ -160,7 +163,7 @@ def get_credentials():
             conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "~/.conda/envs"
             jupyter_port = 9111
-        # service = ("Jupyter", _get_p1_dev_server_ip(), jupyter_port, jupyter_port)
+        # service = ("Jupyter", get_p1_dev_server_ip(), jupyter_port, jupyter_port)
         # tunnel_info.append(service)
     elif user_name == "julia":
         # Julia.
