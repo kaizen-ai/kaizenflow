@@ -5,6 +5,7 @@ response is represented using a dataframe with
 - a monotonically increasing datetime index with uniform increments
 - point-in-time data with a left-closed, right-open, right-label convention
 - A snippet appears as follows:
+
 |idx|x_var|ret_0|
 |-|-|-|
 |t_0|x_0|z_0|
@@ -21,6 +22,7 @@ e.g., `z_2` from `x_0` at time `t_0`
 - See `time_series.md` for further discussion
 - To row-align the target that we want to predict with the given predictors, we
   shift the response column backwards, e.g.
+
 |idx|x_var|ret_2|
 |-|-|-|
 |t_0|x_0|z_2|
@@ -29,6 +31,7 @@ e.g., `z_2` from `x_0` at time `t_0`
 |...|...|...|
 
 Note that at, e.g., time `t_2`, only the following entries are known:
+
 |idx|x_var|ret_2|
 |-|-|-|
 |t_0|x_0|z_2|
@@ -47,6 +50,7 @@ Note that at, e.g., time `t_2`, only the following entries are known:
 
 The alternative to shifting the response column backwards is to shift the
 predictor columns forward, e.g.,
+
 |idx|x_var|ret_0|
 |-|-|-|
 |t_0|x_{-2}|z_0|
@@ -93,6 +97,7 @@ For purposes of comparison, we will also sometimes consider the alternative
   determines how many unit time steps into the future the model predicts
 - Suppose we want to predict returns two time steps into the future (`ret_2`),
   and begin with
+
 |idx|x_var|ret_0|
 |-|-|-|
 |t_0|x_0|z_0|
@@ -103,6 +108,7 @@ For purposes of comparison, we will also sometimes consider the alternative
     covariates (x variables) over the future window of length
     `prediction_length`
   - This again motivates predictor/response column alignment, e.g.,
+
 |idx|x_var|ret_2|
 |-|-|-|
 |t_0|x_0|z_2|
@@ -119,6 +125,7 @@ For purposes of comparison, we will also sometimes consider the alternative
     `prediction_length`) 
   - In applying the `predict` step over historical series, we obtain two
     predictions. Combining and rearranging them, we build
+
 |idx|x_var|ret_2|ret_1_hat|ret_2_hat|
 |-|-|-|-|-|
 |t_0|x_0|z_2|z_1_hat|z_2_hat|
