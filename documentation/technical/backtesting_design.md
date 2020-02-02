@@ -1,22 +1,28 @@
 <!--ts-->
-      * [Point-in-time predictors and observed response](#point-in-time-predictors-and-observed-response)
-      * [Alignment of predictors and predicted response](#alignment-of-predictors-and-predicted-response)
-         * [Alternative alignment of predictors and predicted response](#alternative-alignment-of-predictors-and-predicted-response)
-      * [Training models](#training-models)
-         * [The world of sklearn](#the-world-of-sklearn)
-         * [The world of gluonts](#the-world-of-gluonts)
-         * [An aside](#an-aside)
-
-
-
+* [Point-in-time predictors and observed response](#point-in-time-predictors-and-observed-response)
+* [Alignment of predictors and predicted response](#alignment-of-predictors-and-predicted-response)
+   * [Alternative alignment of predictors and predicted response](#alternative-alignment-of-predictors-and-predicted-response)
+* [Training models](#training-models)
+   * [The world of sklearn](#the-world-of-sklearn)
+   * [The world of gluonts](#the-world-of-gluonts)
+   * [An aside](#an-aside)
 <!--te-->
 
 ## Point-in-time predictors and observed response
 
 - In `dataflow`, time series of predictors and a time series of an observed
-  response is represented using a dataframe with
+  response is represented using a dataframe with:
   - A monotonically increasing datetime index with uniform increments
+    - In other words:
+      - time `t_{i-1}` happens before `t_i`
+      - time grid has no gaps, weekends and overnight periods are sampled
+        uniformly like more interesting periods of time
   - Point-in-time data with a left-closed, right-open, right-label convention
+    - E.g., in the dataframe, the label `t_i` represents the value of the
+      variables in the time interval `[t_{i-1}, t_i[`
+    - This convention has the nice property that all and only information
+      available at time < `t_i` is represented in the data frame for rows with
+      index `t_i`, which makes easier to prevent future-peeking
   - A snippet appears as follows:
 
     | idx | x_var | ret_0 |
@@ -31,10 +37,10 @@
 - It is not useful in practice to predict `z_0` from `x_0` at `t_0`, since `z_0`
   is known at time `t_0`
 - Instead, we want to predict forward response values, e.g., `z_2` from `x_0` at
-  time `t_0`
+  time `t_0` and preceding values
 - See `time_series.md` for further discussion
 - To row-align the target that we want to predict with the given predictors, we
-  shift the response column backwards, e.g.
+  shift the response column backwards in time (`z_2` moves to `z_0`), e.g.
 
   | idx | x_var | ret_2 |
   | --- | ----- | ----- |
@@ -47,28 +53,34 @@
 
   | idx | x_var | ret_2 |
   | --- | ----- | ----- |
+  | t_{-2}| x_{-2}  | z_0   |
+  | t_{-1}| x_{-1}  | z_1   |
   | t_0 | x_0   | z_2   |
-  | t_1 | x_1   |       |
-  | t_2 | x_2   |       |
-  | ... | ...   | ...   |
+  | t_1 | x_1   | ?     |
+  | t_2 | x_2   | ?     |
+  | ?   | ?     | ?     |
+
+- Note that `t_0` is arbitrary so we know values at previous times, e.g.,
+  `x_{-2}`, `x_{-1}`
 
 - In this representation, the emphasis is on the time at which predictions are
-  made
+  made:
   - For row with time index `t_j`, the most recent predictor is `x_j`
   - In real-time mode, some (one or more) entries of the response column will be
     unknown, and one (e.g., the last) or more will be the focus of prediction
 
+
 ### Alternative alignment of predictors and predicted response
 
-The alternative to shifting the response column backwards is to shift the
-predictor columns forward, e.g.,
+- The alternative to shifting the response column backwards is to shift the
+  predictor columns forward, e.g.,
 
-| idx | x_var   | ret_0 |
-| --- | ------- | ----- |
-| t_0 | x\_{-2} | z_0   |
-| t_1 | x\_{-1} | z_1   |
-| t_2 | x_0     | z_2   |
-| ... | ...     | ...   |
+    | idx | x_var   | ret_0 |
+    | --- | ------- | ----- |
+    | t_0 | x\_{-2} | z_0   |
+    | t_1 | x\_{-1} | z_1   |
+    | t_2 | x_0     | z_2   |
+    | ... | ...     | ...   |
 
 - In this format, the emphasis is on the time for which (instead of at which)
   predictions are made
@@ -76,11 +88,16 @@ predictor columns forward, e.g.,
     predictor `x_j`, but rather predict the return (ending) at that point
   - In real-time mode, we shift our predictors into future time points for which
     we are carrying out prediction
-
+    
+- This approach always delays quantities in time, and never "anticipates"
+  quantities (i.e., move quantities from future to past)
+- Besides this semantic details, the approaches are equivalent when the time
+  grid is uniform
+    
 ## Training models
 
-- We will focus on the problem formulation where response columns are shifted.
-  For purposes of comparison, we will also sometimes consider the alternative
+- We will focus on the problem formulation where response columns are shifted
+- For purposes of comparison, we will also sometimes consider the alternative
   (equivalent) alignment that instead uses lagged predictors.
 
 ### The world of `sklearn`
@@ -98,9 +115,9 @@ predictor columns forward, e.g.,
     column) as predictors
   - In the predictor-shifted representation, future-peeking is respected (with
     respect to response columns) by only using admissible lags of the response
-    variable as predictors (e.g., if we are predicting `z_2` for time `t_2` (but
-    making the prediction at time `t_0`), then we may use `z_0` as a predictor,
-    but not `z_1`)
+    variable as predictors
+    - E.g., if we are predicting `z_2` for time `t_2` (but making the prediction
+      at time `t_0`), then we may use `z_0` as a predictor, but not `z_1`
 
 ### The world of `gluonts`
 
