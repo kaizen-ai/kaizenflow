@@ -12,11 +12,11 @@
 
 - In `dataflow`, time series of predictors and a time series of an observed
   response is represented using a dataframe with:
-  - A monotonically increasing datetime index with uniform increments
-    - In other words:
-      - time `t_{i-1}` happens before `t_i`
-      - time grid has no gaps, weekends and overnight periods are sampled
-        uniformly like more interesting periods of time
+  - A monotonically increasing datetime index with uniform increments. In other
+    words:
+    - Time `t_{i-1}` happens before `t_i`
+    - Time grid has no gaps, weekends and overnight periods are sampled
+      uniformly like more interesting periods of time
   - Point-in-time data with a left-closed, right-open, right-label convention
     - E.g., in the dataframe, the label `t_i` represents the value of the
       variables in the time interval `[t_{i-1}, t_i[`
@@ -51,14 +51,14 @@
 
 - Note that at, e.g., time `t_2`, only the following entries are known:
 
-  | idx | x_var | ret_2 |
-  | --- | ----- | ----- |
-  | t_{-2}| x_{-2}  | z_0   |
-  | t_{-1}| x_{-1}  | z_1   |
-  | t_0 | x_0   | z_2   |
-  | t_1 | x_1   | ?     |
-  | t_2 | x_2   | ?     |
-  | ?   | ?     | ?     |
+  | idx     | x_var   | ret_2 |
+  | ------- | ------- | ----- |
+  | t\_{-2} | x\_{-2} | z_0   |
+  | t\_{-1} | x\_{-1} | z_1   |
+  | t_0     | x_0     | z_2   |
+  | t_1     | x_1     | ?     |
+  | t_2     | x_2     | ?     |
+  | ?       | ?       | ?     |
 
 - Note that `t_0` is arbitrary so we know values at previous times, e.g.,
   `x_{-2}`, `x_{-1}`
@@ -69,18 +69,17 @@
   - In real-time mode, some (one or more) entries of the response column will be
     unknown, and one (e.g., the last) or more will be the focus of prediction
 
-
 ### Alternative alignment of predictors and predicted response
 
 - The alternative to shifting the response column backwards is to shift the
   predictor columns forward, e.g.,
 
-    | idx | x_var   | ret_0 |
-    | --- | ------- | ----- |
-    | t_0 | x\_{-2} | z_0   |
-    | t_1 | x\_{-1} | z_1   |
-    | t_2 | x_0     | z_2   |
-    | ... | ...     | ...   |
+  | idx | x_var   | ret_0 |
+  | --- | ------- | ----- |
+  | t_0 | x\_{-2} | z_0   |
+  | t_1 | x\_{-1} | z_1   |
+  | t_2 | x_0     | z_2   |
+  | ... | ...     | ...   |
 
 - In this format, the emphasis is on the time for which (instead of at which)
   predictions are made
@@ -88,12 +87,12 @@
     predictor `x_j`, but rather predict the return (ending) at that point
   - In real-time mode, we shift our predictors into future time points for which
     we are carrying out prediction
-    
+
 - This approach always delays quantities in time, and never "anticipates"
   quantities (i.e., move quantities from future to past)
 - Besides this semantic details, the approaches are equivalent when the time
   grid is uniform
-    
+
 ## Training models
 
 - We will focus on the problem formulation where response columns are shifted
@@ -106,6 +105,8 @@
 - If we pass to `sklearn` an `x_var` column and a response column, e.g.,
   `ret_2`, then `sklearn` will only use the `x_var` value `x_j` at time `t_j` to
   predict `z_{j + 2}`
+  - `sklearn` follows the typical supervised learning set-up where predictors
+    and predicted variables are contemporaneous and there is no "time"
   - Many time series models use time series history in predictions
   - In order to build such models in `sklearn`, we explicitly incorporate
     history by appending lagged predictor and/or response columns
@@ -166,7 +167,7 @@
 - A distinction between `gluonts` and `sklearn` in training and prediction is
   that `gluonts` wants to ingest the entire time series up to the present time
   - Though `context_length` (for number of historical values used) may be set
-    explicitly, values in the more distant past may still in fact enter in in
+    explicitly, values in the more distant past may still in fact enter in
     training and prediction
   - If performed in a naive way (e.g., converting a time slice of the input
     dataframe into the `gluonts` `ListDataset` format), there will be a large
