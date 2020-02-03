@@ -26,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def create_iter_single_index(
+def iterate_target_features(
     df: pd.DataFrame, x_vars: List[str], y_vars: Union[str, List[str]],
 ) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
     """
@@ -104,10 +104,10 @@ def transform_to_gluon(
             _LOG.debug("No frequency consistency check is performed")
     if isinstance(df.index, pd.MultiIndex):
         iter_func = functools.partial(
-            _create_iter_multiindex, frequency=frequency
+            _iterate_target_features_multiindex, frequency=frequency
         )
     else:
-        iter_func = create_iter_single_index
+        iter_func = iterate_target_features
     if len(y_vars) == 1:
         y_vars = y_vars[0]
         one_dim_target = True
@@ -149,15 +149,13 @@ def transform_from_gluon(
         target_arr = ts[gluonts.dataset.field_names.FieldName.TARGET]
         # Target and features shapes are described in the
         # `create_iter_single_index` docstring.
-        target = pd.DataFrame(target_arr.T)
         if len(gluon_ts) == 1:
             idx = pd.date_range(
-                start_date, periods=target.shape[0], freq=start_date.freq,
+                start_date, periods=target_arr.shape[1], freq=start_date.freq,
             )
         else:
-            idx = [start_date] * target.shape[0]
-        target.index = idx
-        target.columns = y_vars
+            idx = [start_date] * target_arr.shape[1]
+        target = pd.DataFrame(target_arr.T, index=idx, columns=y_vars)
         features_arr = ts[gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL]
         features = pd.DataFrame(features_arr.T, index=idx,)
         features.columns = x_vars
@@ -224,7 +222,7 @@ def _convert_tuples_list_to_df(
     return df
 
 
-def _create_iter_multiindex(
+def _iterate_target_features_multiindex(
     local_ts: pd.DataFrame,
     x_vars: List[str],
     y_vars: Union[str, List[str]],
@@ -243,7 +241,7 @@ def _create_iter_multiindex(
         start_date = ts + pd.Timedelta(f"{first_grid_idx}{frequency}")
         df = local_ts_grid.droplevel(0)
         df.index = [start_date] * df.shape[0]
-        yield from create_iter_single_index(df, x_vars, y_vars)
+        yield from iterate_target_features(df, x_vars, y_vars)
 
 
 def _transform_from_gluon_forecast_entry(
