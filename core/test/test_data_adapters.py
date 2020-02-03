@@ -38,6 +38,26 @@ class _TestAdapter:
         return df
 
 
+class TestCreateIterSingleIndex(hut.TestCase):
+    def test1(self) -> None:
+        ta = _TestAdapter()
+        data_iter = adpt.create_iter_single_index(ta._df, ta._x_vars, ta._y_vars)
+        self.check_string(str(list(data_iter)))
+
+    def test_shape1(self) -> None:
+        ta = _TestAdapter()
+        data_iter = adpt.create_iter_single_index(ta._df, ta._x_vars, ta._y_vars)
+        for data_dict in data_iter:
+            target = data_dict[gluonts.dataset.field_names.FieldName.TARGET]
+            start = data_dict[gluonts.dataset.field_names.FieldName.START]
+            features = data_dict[
+                gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL
+            ]
+            self.assertEqual(target.shape, (len(ta._y_vars), ta._df.shape[0]))
+            self.assertEqual(features.shape, (len(ta._x_vars), ta._df.shape[0]))
+            self.assertIsInstance(start, pd.Timestamp)
+
+
 class TestTransformToGluon(hut.TestCase):
     def test_transform(self) -> None:
         ta = _TestAdapter()
