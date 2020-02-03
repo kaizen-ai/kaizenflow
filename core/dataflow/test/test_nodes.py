@@ -20,10 +20,12 @@ class TestDeepARGlobalModel(hut.TestCase):
         deepar = dtf.DeepARGlobalModel(**config.to_dict())
         output = deepar.fit(local_ts)
         info = deepar.get_info("fit")
-        str_output = {
-            str(key): val.head(num_entries).to_string()
-            for key, val in output.items()
-        }
+        str_output = "\n".join(
+            [
+                f"{key}:\n{val.head(num_entries).to_string()}"
+                for key, val in output.items()
+            ]
+        )
         output_shape = {str(key): str(val.shape) for key, val in output.items()}
         config_info_output = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -34,10 +36,10 @@ class TestDeepARGlobalModel(hut.TestCase):
         self.check_string(config_info_output)
 
     def test_fit_dag1(self) -> None:
-        dag = dtf.DAG(mode="loose")
+        dag = dtf.DAG(mode="strict")
         local_ts = self._get_local_ts()
-        data_node = dtf.ReadDataFromDf("local_ts", local_ts)
-        dag.add_node(data_node)
+        data_source_node = dtf.ReadDataFromDf("local_ts", local_ts)
+        dag.add_node(data_source_node)
         config = self._get_config()
         deepar = dtf.DeepARGlobalModel(**config.to_dict())
         dag.add_node(deepar)
@@ -48,6 +50,16 @@ class TestDeepARGlobalModel(hut.TestCase):
         self.check_string(output_df.to_string())
 
     def _get_local_ts(self) -> pd.DataFrame:
+        """
+        Generate a dataframe of the following format:
+
+                              EVENT_SENTIMENT_SCORE    zret_0
+        0 2010-01-01 00:00:00               0.496714 -0.138264
+          2010-01-01 00:01:00               0.647689  1.523030
+          2010-01-01 00:02:00              -0.234153 -0.234137
+          2010-01-01 00:03:00               1.579213  0.767435
+          2010-01-01 00:04:00              -0.469474  0.542560
+        """
         np.random.seed(42)
         self._n_periods = 10
         self._grid_len = 3
@@ -66,10 +78,7 @@ class TestDeepARGlobalModel(hut.TestCase):
         config = cfg.Config()
         config["nid"] = "deepar"
         config["trainer_kwargs"] = {"epochs": 1}
-        config["estimator_kwargs"] = {
-            "freq": "T",
-            # "use_feat_dynamic_real": True
-        }
+        config["estimator_kwargs"] = {"freq": "T", "use_feat_dynamic_real": False}
         config["x_vars"] = self._x_vars
         config["y_vars"] = self._y_vars
         return config
