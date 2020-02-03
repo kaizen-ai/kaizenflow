@@ -41,12 +41,12 @@ class _TestAdapter:
 class TestCreateIterSingleIndex(hut.TestCase):
     def test1(self) -> None:
         ta = _TestAdapter()
-        data_iter = adpt.create_iter_single_index(ta._df, ta._x_vars, ta._y_vars)
+        data_iter = adpt.iterate_target_features(ta._df, ta._x_vars, ta._y_vars)
         self.check_string(str(list(data_iter)))
 
     def test_shape1(self) -> None:
         ta = _TestAdapter()
-        data_iter = adpt.create_iter_single_index(ta._df, ta._x_vars, ta._y_vars)
+        data_iter = adpt.iterate_target_features(ta._df, ta._x_vars, ta._y_vars)
         for data_dict in data_iter:
             target = data_dict[gluonts.dataset.field_names.FieldName.TARGET]
             start = data_dict[gluonts.dataset.field_names.FieldName.START]
