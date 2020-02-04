@@ -6,7 +6,13 @@ import helpers.datetime_ as hdt
 
 import datetime
 
+import pandas as pd
+from typing import Union
+
 import helpers.dbg as dbg
+
+
+DATETIME_TYPE = Union[pd.Timestamp, datetime.datetime]
 
 
 def get_timestamp():
@@ -32,3 +38,16 @@ def check_et_timezone(dt):
         tzinfo.zone,
     )
     return True
+
+
+def validate_datetime(timestamp: DATETIME_TYPE) -> pd.Timestamp:
+    """
+    Assert that timestamp is in UTC, convert to pd.Timestamp.
+
+    :param timestamp: datetime object or pd.Timestamp
+    :return: tz-aware pd.Timestamp
+    """
+    dbg.dassert_in(type(timestamp), (pd.Timestamp, datetime.datetime))
+    pd_timestamp = pd.Timestamp(timestamp)
+    dbg.dassert_eq(pd_timestamp.tzinfo.zone, "UTC")
+    return pd_timestamp
