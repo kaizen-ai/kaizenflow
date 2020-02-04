@@ -494,6 +494,137 @@ class Resample(Transformer):
 # #############################################################################
 
 
+class ContinuousSkLearnModel(FitPredictNode):
+    def __init__(
+            self,
+            nid: str,
+            model_func: Callable[..., Any],
+            x_vars: Optional[Union[List[str], Callable[[], List[str]]]],
+            y_vars: Union[List[str], Callable[[], List[str]]],
+            prediction_length: int,
+            model_kwargs: Optional[Any] = None,
+            num_y_lags: int=0,
+    ) -> None:
+        super().__init__(nid)
+        self._model_func = model_func
+        self._model_kwargs = model_kwargs or {}
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._model = None
+        self._prediction_length = prediction_length
+        self._num_y_lags = num_y_lags
+        if self._num_y_lags > 0:
+            return NotImplementedError()
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert(df_in.index.freq)
+        dbg.dassert(
+            df_in[df_in.isna().any(axis=1)].index.empty,
+            "NaNs detected at index `%s`",
+            str(df_in[df_in.isna().any(axis=1)].head().index),
+        )
+        df = df_in.copy()
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        y_vals_fwd_df = df[y_vars].shift(-prediction_length).rename(
+            columns=lambda y: y + "_%i" % prediction_length
+        )
+        y_vars_fwd = [y + "_%i" for y in y_vars]
+        # TODO(Paul): Ensure `y_vars_fwd` not in `y_vars`.
+        df = df.merge(y_vals_fwd_df, left_index=True, right_index=True)
+        df = df.dropna()
+        idx = df.index
+        x_fit = adpt.transform_to_sklearn(df, y_vars_fwd)
+        y_fwd_fit = adpt.transform_to_sklearn(df, y_vars_fwd)
+        self._model = self._model_func(**self._model_kwargs)
+        self._model = self._model.fit(x_fit, y_fwd_fit)
+        y_fwd_hat = self._model.predict(x_fit)
+        #
+        y_fwd_hat = adpt.transform_from_sklearn(
+            idx, y_vars_fwd, y_fwd_hat
+        )
+        # TODO(Paul): Summarize model perf or make configurable.
+        # TODO(Paul): Consider separating model eval from fit/predict.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["insample_perf"] = self._model_perf(y_fwd_fit, y_fwd_hat)
+        self._set_info("fit", info)
+        # TODO(Paul): Consider merging with `y_vars_fwd`.
+        return {"df_out": y_fwd_hat}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return NotImplementedError()
+        # TODO(Paul): Factor out code in common with `fit`.
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert(df_in.index.freq)
+        df = df_in.copy()
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        y_vals_fwd_df = df[y_vars].shift(-prediction_length).rename(
+            columns=lambda y: y + "_%i" % prediction_length
+        )
+        y_vars_fwd = [y + "_%i" for y in y_vars]
+        df = df.merge(y_vals_fwd_df, left_index=True, right_index=True)
+        idx = df.index
+        x_predict = adpt.transform_to_sklearn(df, x_vars)
+        y_fwd_predict = adpt.transform_to_sklearn(df, y_vars_fwd)
+        dbg.dassert_is_not(
+            self._model, None, "Model not found! Check if `fit` has been run."
+        )
+        y_fwd_hat = self._model.predict(x_predict)
+        y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat)
+        info = collections.OrderedDict()
+        info["model_perf"] = self._model_perf(y_fwd_predict, y_fwd_hat)
+        self._set_info("predict", info)
+        return {"df_out": y_hat}
+
+    # TODO(Paul): Add type hints.
+    # TODO(Paul): Consider omitting this (and relying on downstream
+    #     processing to e.g., adjust for number of hypotheses tested).
+    @staticmethod
+    def _model_perf(
+            y: pd.DataFrame, y_hat: pd.DataFrame
+    ) -> collections.OrderedDict:
+        info = collections.OrderedDict()
+        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
+        pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
+        info["pnl_rets"] = pnl_rets
+        info["sr"] = fin.compute_sharpe_ratio(
+            pnl_rets.resample("1B").sum(), time_scaling=252
+        )
+        return info
+
+    # TODO(Paul): Make this a mixin to use with all modeling nodes.
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        Return a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
 class SkLearnModel(FitPredictNode):
     def __init__(
         self,
@@ -571,7 +702,7 @@ class SkLearnModel(FitPredictNode):
     ) -> Tuple[List[str], np.array, List[str], np.array]:
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
-        x_vals, y_vals = adpt.transform_to_sklearn(df, x_vars, y_vars)
+        x_vals, y_vals = adpt.transform_to_sklearn_old(df, x_vars, y_vars)
         return x_vars, x_vals, y_vars, y_vals
 
     @staticmethod
