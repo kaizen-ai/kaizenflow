@@ -14,15 +14,17 @@
   response is represented using a dataframe with:
   - A monotonically increasing datetime index with uniform increments. In other
     words:
-    - Time `t_{i-1}` happens before `t_i`
-    - Time grid has no gaps, weekends and overnight periods are sampled
-      uniformly like more interesting periods of time
+    - Time `t_{i-1}` happens before `t_i`, for all `i`
+    - `t_i - t_{i-1}` is equal to a constant independent of `i`
+    - The time grid has no gaps, e.g., weekends and overnight periods are
+      sampled uniformly in the same way that more interesting periods of time
+      are
   - Point-in-time data with a left-closed, right-open, right-label convention
     - E.g., in the dataframe, the label `t_i` represents the value of the
-      variables in the time interval `[t_{i-1}, t_i[`
+      variables in the time interval `[t_{i-1}, t_i)`
     - This convention has the nice property that all and only information
       available at time < `t_i` is represented in the data frame for rows with
-      index `t_i`, which makes easier to prevent future-peeking
+      index `t_i`, which makes it easier to prevent future-peeking
   - A snippet appears as follows:
 
     | idx | x_var | ret_0 |
@@ -37,10 +39,11 @@
 - It is not useful in practice to predict `z_0` from `x_0` at `t_0`, since `z_0`
   is known at time `t_0`
 - Instead, we want to predict forward response values, e.g., `z_2` from `x_0` at
-  time `t_0` and preceding values
+  time `t_0`
 - See `time_series.md` for further discussion
 - To row-align the target that we want to predict with the given predictors, we
-  shift the response column backwards in time (`z_2` moves to `z_0`), e.g.
+  shift the response column backwards in time (e.g., `z_2` moves to where `z_0`
+  had been), e.g.
 
   | idx | x_var | ret_2 |
   | --- | ----- | ----- |
@@ -49,7 +52,7 @@
   | t_2 | x_2   | z_4   |
   | ... | ...   | ...   |
 
-- Note that at, e.g., time `t_2`, only the following entries are known:
+- Note that, e.g., at time `t_2`, only the following entries are known:
 
   | idx     | x_var   | ret_2 |
   | ------- | ------- | ----- |
@@ -59,9 +62,6 @@
   | t_1     | x_1     | ?     |
   | t_2     | x_2     | ?     |
   | ?       | ?       | ?     |
-
-- Note that `t_0` is arbitrary so we know values at previous times, e.g.,
-  `x_{-2}`, `x_{-1}`
 
 - In this representation, the emphasis is on the time at which predictions are
   made:
@@ -88,9 +88,9 @@
   - In real-time mode, we shift our predictors into future time points for which
     we are carrying out prediction
 
-- This approach always delays quantities in time, and never "anticipates"
-  quantities (i.e., move quantities from future to past)
-- Besides this semantic details, the approaches are equivalent when the time
+- This approach always delays quantities in time and never "anticipates"
+  quantities (i.e., move quantities from the future to the past)
+- Besides these semantic details, the approaches are equivalent when the time
   grid is uniform
 
 ## Training models
@@ -105,7 +105,7 @@
 - If we pass to `sklearn` an `x_var` column and a response column, e.g.,
   `ret_2`, then `sklearn` will only use the `x_var` value `x_j` at time `t_j` to
   predict `z_{j + 2}`
-  - `sklearn` follows the typical supervised learning set-up where predictors
+  - `sklearn` follows the typical supervised learning setup where predictors
     and predicted variables are contemporaneous and there is no "time"
   - Many time series models use time series history in predictions
   - In order to build such models in `sklearn`, we explicitly incorporate
@@ -114,11 +114,12 @@
   - In the response-shifted representation, future-peeking is respected by only
     using point-in-time or lagged columns (e.g., never a forward response
     column) as predictors
-  - In the predictor-shifted representation, future-peeking is respected (with
-    respect to response columns) by only using admissible lags of the response
-    variable as predictors
+  - In the predictor-shifted representation, no future-peeking is respected
+    (with respect to response columns) by only using admissible lags of the
+    response variable as predictors
     - E.g., if we are predicting `z_2` for time `t_2` (but making the prediction
-      at time `t_0`), then we may use `z_0` as a predictor, but not `z_1`
+      at time `t_0`), then we may use `z_0` as a predictor, but not `z_1`, since
+      `z_1` is not yet known at time `t_0`
 
 ### The world of `gluonts`
 
@@ -142,14 +143,14 @@
   | idx | x_var | ret_2 |
   | --- | ----- | ----- |
   | t_0 | x_0   | z_2   |
-  | t_1 | x_1   |       |
-  | t_2 | x_2   |       |
+  | t_1 | x_1   | z_3   |
+  | t_2 | x_2   | z_4   |
   | ... | ...   | ...   |
 
 - So, if we want to predict `z_2` at time `t_0`, then we need to know both
   `x_{-1}` and `x_0` (which we do know when the target is `ret_2`)
-- In `gluonts`, we feed `x_var` and `ret_2` into the model both with the same
-  starting time `t_0` and same frequency increment `freq`, but with
+- In `gluonts`, we feed `x_var` and `ret_2` into the model with the same
+  starting time `t_0` and with the same frequency increment `freq`, but with
   `prediction_length = 2`. The framework itself ensures (e.g., in the case that
   we build an autoregressive model on the response) that there is no
   future-peeking (but note that the `j` in `ret_j` must equal
@@ -168,7 +169,7 @@
   that `gluonts` wants to ingest the entire time series up to the present time
   - Though `context_length` (for number of historical values used) may be set
     explicitly, values in the more distant past may still in fact enter in
-    training and prediction
+    training
   - If performed in a naive way (e.g., converting a time slice of the input
     dataframe into the `gluonts` `ListDataset` format), there will be a large
     amount of conversion work (e.g., for each time step, create and then destroy
