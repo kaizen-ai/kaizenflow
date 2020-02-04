@@ -497,7 +497,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Optional[Union[List[str], Callable[[], List[str]]]],
+        x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         prediction_length: int,
         model_kwargs: Optional[Any] = None,
@@ -512,7 +512,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._prediction_length = prediction_length
         self._num_y_lags = num_y_lags
         if self._num_y_lags > 0:
-            return NotImplementedError()
+            raise NotImplementedError()
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
@@ -527,8 +527,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         y_vars = self._to_list(self._y_vars)
         y_vals_fwd_df = (
             df[y_vars]
-            .shift(-prediction_length)
-            .rename(columns=lambda y: y + "_%i" % prediction_length)
+            .shift(-self._prediction_length)
+            .rename(columns=lambda y: y + "_%i" % self._prediction_length)
         )
         y_vars_fwd = [y + "_%i" for y in y_vars]
         # TODO(Paul): Ensure `y_vars_fwd` not in `y_vars`.
@@ -552,7 +552,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         return {"df_out": y_fwd_hat}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return NotImplementedError()
         # TODO(Paul): Factor out code in common with `fit`.
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         dbg.dassert(df_in.index.freq)
@@ -561,8 +560,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         y_vars = self._to_list(self._y_vars)
         y_vals_fwd_df = (
             df[y_vars]
-            .shift(-prediction_length)
-            .rename(columns=lambda y: y + "_%i" % prediction_length)
+            .shift(-self._prediction_length)
+            .rename(columns=lambda y: y + "_%i" % self._prediction_length)
         )
         y_vars_fwd = [y + "_%i" for y in y_vars]
         df = df.merge(y_vals_fwd_df, left_index=True, right_index=True)
@@ -577,7 +576,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         info = collections.OrderedDict()
         info["model_perf"] = self._model_perf(y_fwd_predict, y_fwd_hat)
         self._set_info("predict", info)
-        return {"df_out": y_hat}
+        return {"df_out": y_fwd_hat}
 
     # TODO(Paul): Add type hints.
     # TODO(Paul): Consider omitting this (and relying on downstream
