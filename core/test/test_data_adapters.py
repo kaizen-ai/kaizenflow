@@ -82,6 +82,12 @@ class TestTransformToGluon(hut.TestCase):
         )
         self.check_string(str(list(gluon_ts)))
 
+    def test_transform_none_x_vars(self) -> None:
+        ta = _TestAdapter()
+        y_vars = ta._y_vars[-1:]
+        gluon_ts = adpt.transform_to_gluon(ta._df, None, y_vars, ta._frequency)
+        self.check_string(str(list(gluon_ts)))
+
 
 class TestTransformFromGluon(hut.TestCase):
     def test_transform(self) -> None:
@@ -91,6 +97,16 @@ class TestTransformFromGluon(hut.TestCase):
         )
         df = adpt.transform_from_gluon(
             gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
+        )
+        self.check_string(df.to_string())
+
+    def test_transform_none_x_vars(self) -> None:
+        ta = _TestAdapter()
+        gluon_ts = adpt.transform_to_gluon(
+            ta._df, None, ta._y_vars, ta._frequency
+        )
+        df = adpt.transform_from_gluon(
+            gluon_ts, None, ta._y_vars, index_name=ta._df.index.name,
         )
         self.check_string(df.to_string())
 
@@ -150,6 +166,12 @@ class TestTransformToSklean(hut.TestCase):
         ta = _TestAdapter()
         df = ta._df.dropna()
         sklearn_input = adpt.transform_to_sklearn(df, ta._x_vars, ta._y_vars)
+        self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
+
+    def test_transform_none_x_vars1(self) -> None:
+        ta = _TestAdapter()
+        df = ta._df.dropna()
+        sklearn_input = adpt.transform_to_sklearn(df, None, ta._y_vars)
         self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
 
 
