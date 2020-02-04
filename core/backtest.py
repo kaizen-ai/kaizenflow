@@ -15,12 +15,27 @@ _LOG = logging.getLogger(__name__)
 def predict(
     predictor: gluonts.model.predictor.Predictor,
     test_df: pd.DataFrame,
-    x_vars: Optional[List[str]],
     y_vars: Union[str, List[str]],
     prediction_length: int,
     frequency: str,
     num_samples: int,
+    x_vars: Optional[List[str]],
 ) -> np.array:
+    """
+    Predict next values using trained predictor.
+
+    :param predictor: trained predictor
+    :param test_df: dataframe with features and targets
+    :param y_vars: target column. Only single target is supported.
+    :param prediction_length: number of steps for which the prediction
+        is made
+    :param frequency: grid frequency
+    :param num_samples: number of traces (sample paths) that are
+        generated
+    :param x_vars: feature columns
+    :return: predictions array of `(num_samples, prediction_length)`
+        shape
+    """
     test_ts = adpt.transform_to_gluon(
         test_df, x_vars, y_vars, frequency=frequency
     )
@@ -28,7 +43,6 @@ def predict(
     pred = list(pred)
     dbg.dassert_eq(len(pred), 1)
     yhat = pred[0].samples
-    # yhat.shape = `(num_samples, prediction_length)`.
     dbg.dassert_eq(yhat.shape, (num_samples, prediction_length))
     return yhat
 
@@ -42,6 +56,28 @@ def generate_predictions(
     num_samples: int,
     x_vars: Optional[List[str]] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Generate forward predictions using trained predictor.
+
+    For each time step, generate `num_samples` predictions for each of
+    `prediction_length` steps, take the mean across samples.
+    The output prediction dataframe is of shape
+    `(df.shape[0], prediction_length)`, each row containing a prediction
+     made using data up to and including data in corresponding `df` row.
+
+    :param predictor: trained predictor
+    :param df: dataframe with features and targets
+    :param y_vars: target column. Only single target is supported.
+    :param prediction_length: number of steps for which the prediction
+        is made
+    :param frequency: grid frequency
+    :param num_samples: number of traces (sample paths) that are
+        generated
+    :param x_vars: feature columns
+    :return: forward predictions and forward target, each of shape
+        `(df.shape[0], prediction_length)`. The columns are
+        `<y_var>_hat_<timestep>`, `<y_var>_<timestep>` respectively.
+    """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
     dbg.dassert(df.index.freq, "The dataframe should have uniform datetime grid")
     dbg.dassert_monotonic_index(df.index)
@@ -58,14 +94,12 @@ def generate_predictions(
         yhat = predict(
             predictor,
             test_df,
-            x_vars,
             y_vars,
             prediction_length,
             frequency,
             num_samples,
+            x_vars,
         )
-        # TODO(Julia): This should not be the silent default behavior for
-        #     num_samples.
         yhat = yhat.mean(axis=0)
         yhat_all[i] = yhat
         y = df.iloc[i : i + prediction_length][y_vars[0]].to_list()
