@@ -30,7 +30,7 @@ class TestGeneratePredictions(hut.TestCase):
 
     @staticmethod
     def _train_model(
-        prediction_length: int = 10,
+        prediction_length: int = 10, use_feat_dynamic_real: bool = False
     ) -> gluonts.model.predictor.Predictor:
         df = TestGeneratePredictions._generate_input_data()
         x_vars = df.columns.tolist()[:-1]
@@ -38,7 +38,10 @@ class TestGeneratePredictions(hut.TestCase):
         train_ts = adpt.transform_to_gluon(df, x_vars, y_vars, "T")
         config = cfg.Config()
         config["trainer_kwargs"] = {"epochs": 1}
-        config["estimator_kwargs"] = {"freq": "T", "use_feat_dynamic_real": False}
+        config["estimator_kwargs"] = {
+            "freq": "T",
+            "use_feat_dynamic_real": use_feat_dynamic_real,
+        }
         trainer = gluonts.trainer.Trainer(**config["trainer_kwargs"])
         estimator = gluonts.model.deepar.DeepAREstimator(
             prediction_length=prediction_length,
@@ -114,6 +117,25 @@ class TestGeneratePredictions(hut.TestCase):
         y_vars = test_df.columns.tolist()[-1:]
         yhat, y = btest.generate_predictions(
             predictor, test_df, y_vars, prediction_length, "T", 4,
+        )
+        str_output = (
+            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+            f"{prnt.frame('y')}\n{y.to_string()}\n"
+        )
+        self.check_string(str_output)
+
+    def test_use_feat_dynamic_real1(self) -> None:
+        prediction_length = 10
+        predictor = TestGeneratePredictions._train_model(
+            prediction_length=prediction_length, use_feat_dynamic_real=True
+        )
+        self.predictor = predictor
+        test_df = TestGeneratePredictions._generate_input_data(random_state=0)
+        x_vars = test_df.columns.tolist()[:-1]
+        y_vars = test_df.columns.tolist()[-1:]
+        yhat, y = btest.generate_predictions(
+            predictor, test_df, y_vars, prediction_length, "T", 4, x_vars,
         )
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}"
