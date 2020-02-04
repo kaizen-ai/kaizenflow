@@ -6,7 +6,7 @@ import core.data_adapters as adpt
 
 import functools
 import logging
-from typing import Dict, Generator, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import gluonts
 
@@ -278,8 +278,29 @@ def _transform_from_gluon_forecast_entry(
 # SkLearn
 # #############################################################################
 
-
 def transform_to_sklearn(
+    df: pd.DataFrame, cols: List[Any]
+) -> np.array:
+    """
+    Transform pd.DataFrame cols into a numpy array and sanity check
+
+    :param df: input dataset
+    :param cols: columns to be included in transformed dataset
+    :return: numpy array of shape (nrows, #`cols`)
+    """
+    dbg.dassert_isinstance(cols, list, "type(cols)=`%s`", type(cols))
+    dbg.dassert(cols, "No columns provided!")
+    dbg.dassert_is_subset(cols, df.columns, "Requested columns not a subset of `df.columns`")
+    data_section = df[cols]
+    dbg.dassert(
+        data_section.notna().values.any(), "The selected columns should not contain `None` values."
+    )
+    vals = data_section.values
+    dbg.dassert_eq(vals.shape, (data_section.index.size, len(cols)), "Input/output dimension mismatch")
+    return vals
+
+
+def transform_to_sklearn_old(
     df: pd.DataFrame, x_vars: Optional[List[str]], y_vars: List[str]
 ) -> Tuple[np.array, np.array]:
     """
@@ -298,12 +319,11 @@ def transform_to_sklearn(
     dbg.dassert_not_intersection(
         x_vars, y_vars, "`x_vars` and `y_vars` should not intersect"
     )
-    dbg.dassert(
-        df.notna().values.any(), "The dataframe should not contain `None` values"
-    )
-    df = df.reset_index()
-    x_vals = df[x_vars].values
-    y_vals = df[y_vars].values
+    if x_vars:
+        x_vals = transform_to_sklearn(df, x_vars)
+    else:
+        x_vals = df[[]].values
+    y_vals = transform_to_sklearn(df, y_vars)
     return x_vals, y_vals
 
 
