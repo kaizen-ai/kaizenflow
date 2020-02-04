@@ -6,8 +6,6 @@ import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-import gluonts
-
 import gluonts.model.deepar as gmd
 import gluonts.trainer as gt
 import numpy as np
@@ -496,14 +494,14 @@ class Resample(Transformer):
 
 class ContinuousSkLearnModel(FitPredictNode):
     def __init__(
-            self,
-            nid: str,
-            model_func: Callable[..., Any],
-            x_vars: Optional[Union[List[str], Callable[[], List[str]]]],
-            y_vars: Union[List[str], Callable[[], List[str]]],
-            prediction_length: int,
-            model_kwargs: Optional[Any] = None,
-            num_y_lags: int=0,
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Optional[Union[List[str], Callable[[], List[str]]]],
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        prediction_length: int,
+        model_kwargs: Optional[Any] = None,
+        num_y_lags: int = 0,
     ) -> None:
         super().__init__(nid)
         self._model_func = model_func
@@ -527,8 +525,10 @@ class ContinuousSkLearnModel(FitPredictNode):
         df = df_in.copy()
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
-        y_vals_fwd_df = df[y_vars].shift(-prediction_length).rename(
-            columns=lambda y: y + "_%i" % prediction_length
+        y_vals_fwd_df = (
+            df[y_vars]
+            .shift(-prediction_length)
+            .rename(columns=lambda y: y + "_%i" % prediction_length)
         )
         y_vars_fwd = [y + "_%i" for y in y_vars]
         # TODO(Paul): Ensure `y_vars_fwd` not in `y_vars`.
@@ -541,9 +541,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._model = self._model.fit(x_fit, y_fwd_fit)
         y_fwd_hat = self._model.predict(x_fit)
         #
-        y_fwd_hat = adpt.transform_from_sklearn(
-            idx, y_vars_fwd, y_fwd_hat
-        )
+        y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat)
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
@@ -561,8 +559,10 @@ class ContinuousSkLearnModel(FitPredictNode):
         df = df_in.copy()
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
-        y_vals_fwd_df = df[y_vars].shift(-prediction_length).rename(
-            columns=lambda y: y + "_%i" % prediction_length
+        y_vals_fwd_df = (
+            df[y_vars]
+            .shift(-prediction_length)
+            .rename(columns=lambda y: y + "_%i" % prediction_length)
         )
         y_vars_fwd = [y + "_%i" for y in y_vars]
         df = df.merge(y_vals_fwd_df, left_index=True, right_index=True)
@@ -584,7 +584,7 @@ class ContinuousSkLearnModel(FitPredictNode):
     #     processing to e.g., adjust for number of hypotheses tested).
     @staticmethod
     def _model_perf(
-            y: pd.DataFrame, y_hat: pd.DataFrame
+        y: pd.DataFrame, y_hat: pd.DataFrame
     ) -> collections.OrderedDict:
         info = collections.OrderedDict()
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
@@ -759,6 +759,7 @@ class DeepARGlobalModel(FitPredictNode):
     For additional context and best-practices, see
     https://github.com/ParticleDev/commodity_research/issues/966
     """
+
     def __init__(
         self,
         nid: str,
