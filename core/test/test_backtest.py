@@ -1,18 +1,18 @@
 import logging
 
 import gluonts
-import gluonts.model.deepar
 
-# TODO(*): gluon needs this import to work properly.
-import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
-import gluonts.model.predictor
-import gluonts.trainer
+# TODO(*): gluon needs these imports to work properly.
+import gluonts.model.deepar as gmd  # isort: skip # noqa: F401 # pylint: disable=unused-import
+import gluonts.model.predictor as gmp  # isort: skip # noqa: F401 # pylint: disable=unused-import
+import gluonts.trainer as gt  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
 
 import core.backtest as btest
 import core.config as cfg
 import core.data_adapters as adpt
+import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 class TestGeneratePredictions(hut.TestCase):
     @staticmethod
     def _generate_input_data(
-        n_periods: int = 100, random_state: int = 42,
+        n_periods: int = 20, random_state: int = 42,
     ) -> pd.DataFrame:
         np.random.seed(random_state)
         idx = pd.date_range("2010-01-01", periods=n_periods, freq="T")
@@ -30,11 +30,11 @@ class TestGeneratePredictions(hut.TestCase):
 
     @staticmethod
     def _train_model(
-        prediction_length: int = 3,
+        prediction_length: int = 10,
     ) -> gluonts.model.predictor.Predictor:
         df = TestGeneratePredictions._generate_input_data()
-        x_vars = df.columns[:-1].tolist()
-        y_vars = df.columns[-1:].tolist()
+        x_vars = df.columns.tolist()[:-1]
+        y_vars = df.columns.tolist()[-1:]
         train_ts = adpt.transform_to_gluon(df, x_vars, y_vars, "T")
         config = cfg.Config()
         config["trainer_kwargs"] = {"epochs": 1}
@@ -43,17 +43,81 @@ class TestGeneratePredictions(hut.TestCase):
         estimator = gluonts.model.deepar.DeepAREstimator(
             prediction_length=prediction_length,
             trainer=trainer,
-            **config["estimator_kwargs"]
+            **config["estimator_kwargs"],
         )
         return estimator.train(train_ts)
 
-    def test1(self):
-        predictor = TestGeneratePredictions._train_model()
-        self.predictor = predictor
-        test_df = TestGeneratePredictions._generate_input_data(random_state=0)
-        x_vars = test_df.columns[:-1].tolist()
-        y_vars = test_df.columns[-1:].tolist()
-        # return btest.generate_predictions(predictor, test_df, x_vars, y_vars, 10, 15, "T", 4)
-        yhat, y = btest.generate_predictions(
-            predictor, test_df, x_vars, y_vars, 10, 15, "T", 4
+    def test1(self) -> None:
+        prediction_length = 10
+        predictor = TestGeneratePredictions._train_model(
+            prediction_length=prediction_length
         )
+        test_df = TestGeneratePredictions._generate_input_data(random_state=0)
+        x_vars = test_df.columns.tolist()[:-1]
+        y_vars = test_df.columns.tolist()[-1:]
+        yhat, y = btest.generate_predictions(
+            predictor, test_df, y_vars, prediction_length, "T", 4, x_vars,
+        )
+        str_output = (
+            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+            f"{prnt.frame('y')}\n{y.to_string()}\n"
+        )
+        self.check_string(str_output)
+
+    def test_single_value1(self) -> None:
+        prediction_length = 10
+        predictor = TestGeneratePredictions._train_model(
+            prediction_length=prediction_length
+        )
+        test_df = TestGeneratePredictions._generate_input_data(
+            n_periods=1, random_state=0
+        )
+        x_vars = test_df.columns.tolist()[:-1]
+        y_vars = test_df.columns.tolist()[-1:]
+        yhat, y = btest.generate_predictions(
+            predictor, test_df, y_vars, prediction_length, "T", 4, x_vars,
+        )
+        str_output = (
+            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+            f"{prnt.frame('y')}\n{y.to_string()}\n"
+        )
+        self.check_string(str_output)
+
+    def test_two_values1(self) -> None:
+        prediction_length = 10
+        predictor = TestGeneratePredictions._train_model(
+            prediction_length=prediction_length
+        )
+        test_df = TestGeneratePredictions._generate_input_data(
+            n_periods=2, random_state=0
+        )
+        x_vars = test_df.columns.tolist()[:-1]
+        y_vars = test_df.columns.tolist()[-1:]
+        yhat, y = btest.generate_predictions(
+            predictor, test_df, y_vars, prediction_length, "T", 4, x_vars,
+        )
+        str_output = (
+            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+            f"{prnt.frame('y')}\n{y.to_string()}\n"
+        )
+        self.check_string(str_output)
+
+    def test_none_x_vars1(self) -> None:
+        prediction_length = 10
+        predictor = TestGeneratePredictions._train_model(
+            prediction_length=prediction_length
+        )
+        test_df = TestGeneratePredictions._generate_input_data(random_state=0)
+        y_vars = test_df.columns.tolist()[-1:]
+        yhat, y = btest.generate_predictions(
+            predictor, test_df, y_vars, prediction_length, "T", 4,
+        )
+        str_output = (
+            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+            f"{prnt.frame('y')}\n{y.to_string()}\n"
+        )
+        self.check_string(str_output)
