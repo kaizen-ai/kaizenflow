@@ -59,7 +59,7 @@ class TestGeneratePredictions(hut.TestCase):
         x_vars = test_df.columns.tolist()[:-1]
         y_vars = test_df.columns.tolist()[-1:]
         yhat, y = btest.generate_predictions(
-            predictor, test_df, y_vars, prediction_length, "T", 4, x_vars,
+            predictor, test_df, y_vars, prediction_length, "T", 4, False, x_vars,
         )
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}"
@@ -79,7 +79,7 @@ class TestGeneratePredictions(hut.TestCase):
         x_vars = test_df.columns.tolist()[:-1]
         y_vars = test_df.columns.tolist()[-1:]
         yhat, y = btest.generate_predictions(
-            predictor, test_df, y_vars, prediction_length, "T", 4, x_vars,
+            predictor, test_df, y_vars, prediction_length, "T", 4, False, x_vars,
         )
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}"
@@ -99,7 +99,7 @@ class TestGeneratePredictions(hut.TestCase):
         x_vars = test_df.columns.tolist()[:-1]
         y_vars = test_df.columns.tolist()[-1:]
         yhat, y = btest.generate_predictions(
-            predictor, test_df, y_vars, prediction_length, "T", 4, x_vars,
+            predictor, test_df, y_vars, prediction_length, "T", 4, False, x_vars,
         )
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}"
@@ -116,7 +116,7 @@ class TestGeneratePredictions(hut.TestCase):
         test_df = TestGeneratePredictions._generate_input_data(random_state=0)
         y_vars = test_df.columns.tolist()[-1:]
         yhat, y = btest.generate_predictions(
-            predictor, test_df, y_vars, prediction_length, "T", 4,
+            predictor, test_df, y_vars, prediction_length, "T", 4, False,
         )
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}"
@@ -130,12 +130,11 @@ class TestGeneratePredictions(hut.TestCase):
         predictor = TestGeneratePredictions._train_model(
             prediction_length=prediction_length, use_feat_dynamic_real=True
         )
-        self.predictor = predictor
         test_df = TestGeneratePredictions._generate_input_data(random_state=0)
         x_vars = test_df.columns.tolist()[:-1]
         y_vars = test_df.columns.tolist()[-1:]
         yhat, y = btest.generate_predictions(
-            predictor, test_df, y_vars, prediction_length, "T", 4, x_vars,
+            predictor, test_df, y_vars, prediction_length, "T", 4, True, x_vars,
         )
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}"
