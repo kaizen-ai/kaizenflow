@@ -496,6 +496,7 @@ class ContinuousSkLearnModel(FitPredictNode):
     """
     Fit and predict an sklearn model.
     """
+
     def __init__(
         self,
         nid: str,
@@ -534,15 +535,16 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._y_vars = y_vars
         self._model = None
         self._steps_ahead = steps_ahead
-        dbg.dassert_lte(0, self._steps_ahead,
-                        "Non-causal prediction attempted! Aborting...")
+        dbg.dassert_lte(
+            0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
+        )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._steps_ahead, df.index.size)
-        idx = df.index[:-self._steps_ahead]
+        idx = df.index[: -self._steps_ahead]
         # Prepare x_vars in sklearn format.
         x_vars = self._to_list(self._x_vars)
         x_fit = adpt.transform_to_sklearn(df.loc[idx], x_vars)
@@ -556,9 +558,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_fit)
         #
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(
-            idx, fwd_y_hat_vars, fwd_y_hat
-        )
+        fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
@@ -567,9 +567,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._set_info("fit", info)
         # Return targets and predictions.
         return {
-            "df_out": fwd_y_df.merge(
-                fwd_y_hat, left_index=True, right_index=True
-            )
+            "df_out": fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
         }
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -587,17 +585,14 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df)
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns.tolist()]
-        fwd_y_hat = adpt.transform_from_sklearn(
-            idx, fwd_y_hat_vars, fwd_y_hat)
+        fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # Generate basic perf stats.
         info = collections.OrderedDict()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
         return {
-            "df_out": fwd_y_df.merge(
-                fwd_y_hat, left_index=True, right_index=True
-            )
+            "df_out": fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
         }
 
     @staticmethod
@@ -615,13 +610,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         """
         y_vars = self._to_list(self._y_vars)
         mapper = lambda y: y + "_%i" % self._steps_ahead
-        fwd_y_vars = [mapper(y) for y in y_vars]
+        [mapper(y) for y in y_vars]
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
-        fwd_y_df = (
-            df[y_vars]
-                .shift(-self._steps_ahead)
-                .rename(columns=mapper)
-        )
+        fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
 
     # TODO(Paul): Add type hints.
