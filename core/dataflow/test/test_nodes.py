@@ -53,7 +53,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
         self.check_string(output_df.to_string())
 
-    def test_fit_dag3(self) -> None:
+    def test_predict_dag1(self) -> None:
         pred_lag = 1
         # Load test data.
         data = self._get_data(pred_lag)
@@ -77,7 +77,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
         self.check_string(output_df.to_string())
 
-    def test_fit_dag4(self) -> None:
+    def test_predict_dag2(self) -> None:
         pred_lag = 2
         # Load test data.
         data = self._get_data(pred_lag)
