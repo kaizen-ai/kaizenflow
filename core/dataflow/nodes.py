@@ -578,7 +578,9 @@ class ContinuousSkLearnModel(FitPredictNode):
             self._model, None, "Model not found! Check if `fit` has been run."
         )
         y_fwd_hat = self._model.predict(x_predict)
-        y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat).rename(columns=lambda y: y + "_hat")
+        y_fwd_hat = adpt.transform_from_sklearn(
+            idx, y_vars_fwd, y_fwd_hat
+        ).rename(columns=lambda y: y + "_hat")
         info = collections.OrderedDict()
         y_vals_fwd_df = (
             df[y_vars]
