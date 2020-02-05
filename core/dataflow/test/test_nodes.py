@@ -1,10 +1,9 @@
 import logging
 import pprint
 
-import sklearn.linear_model as slm
-
 import numpy as np
 import pandas as pd
+import sklearn.linear_model as slm
 
 import core.config as cfg
 import core.dataflow as dtf
@@ -27,9 +26,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
         node = dtf.ContinuousSkLearnModel(
-            "sklearn",
-            model_func=slm.Ridge,
-            **config.to_dict(),
+            "sklearn", model_func=slm.Ridge, **config.to_dict(),
         )
         dag.add_node(node)
         dag.connect("data", "sklearn")
@@ -48,9 +45,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
         node = dtf.ContinuousSkLearnModel(
-            "sklearn",
-            model_func=slm.Ridge,
-            **config.to_dict(),
+            "sklearn", model_func=slm.Ridge, **config.to_dict(),
         )
         dag.add_node(node)
         dag.connect("data", "sklearn")
@@ -73,9 +68,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
         node = dtf.ContinuousSkLearnModel(
-            "sklearn",
-            model_func=slm.Ridge,
-            **config.to_dict(),
+            "sklearn", model_func=slm.Ridge, **config.to_dict(),
         )
         dag.add_node(node)
         dag.connect("data", "sklearn")
@@ -99,9 +92,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
         node = dtf.ContinuousSkLearnModel(
-            "sklearn",
-            model_func=slm.Ridge,
-            **config.to_dict(),
+            "sklearn", model_func=slm.Ridge, **config.to_dict(),
         )
         dag.add_node(node)
         dag.connect("data", "sklearn")
@@ -125,10 +116,10 @@ class TestContinuousSkLearnModel(hut.TestCase):
         """
         num_periods = 50
         total_steps = num_periods + lag + 1
-        rets = sigp.get_gaussian_walk(0, .2, total_steps, seed=10).diff()
-        noise = sigp.get_gaussian_walk(0, .02, total_steps, seed=1).diff()
-        pred = rets.shift(-lag).loc[1: num_periods] + noise.loc[1: num_periods]
-        resp = rets.loc[1: num_periods]
+        rets = sigp.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
+        noise = sigp.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
+        pred = rets.shift(-lag).loc[1:num_periods] + noise.loc[1:num_periods]
+        resp = rets.loc[1:num_periods]
         idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
         df = pd.DataFrame.from_dict({"x": pred, "y": resp}).set_index(idx)
         return df
