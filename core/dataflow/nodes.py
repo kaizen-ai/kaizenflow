@@ -509,11 +509,6 @@ class ContinuousSkLearnModel(FitPredictNode):
     Specify the data and sklearn modeling parameters.
 
     Assumptions:
-      - `x_vars` are indexed by knowledge datetimes
-        - These may contain lags of `y_vars`
-      - `y_vars` are indexed by knowledge datetimes (e.g., `ret_0` for returns)
-      - `df.index` is a `pd.DatetimeIndex` that has a specified `freq`
-      - `steps_ahead` is non-negative
         :param nid: unique node id
         :param model_func: an sklearn model
         :param x_vars: indexed by knowledge datetimes
