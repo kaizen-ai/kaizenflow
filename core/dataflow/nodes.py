@@ -543,7 +543,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         y_fwd_fit = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_fit)
         y_fwd_hat = self._model.predict(x_fit)
         #
-        y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat).rename(columns=lambda y: y + "_hat")
+        y_fwd_hat = adpt.transform_from_sklearn(
+            idx, y_vars_fwd, y_fwd_hat
+        ).rename(columns=lambda y: y + "_hat")
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
@@ -551,7 +553,11 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_perf"] = self._model_perf(y_fwd_fit, y_fwd_hat)
         self._set_info("fit", info)
         # TODO(Paul): Consider merging with `y_vars_fwd`.
-        return {"df_out": y_fwd_fit.merge(y_fwd_hat, left_index=True, right_index=True)}
+        return {
+            "df_out": y_fwd_fit.merge(
+                y_fwd_hat, left_index=True, right_index=True
+            )
+        }
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         # TODO(Paul): Factor out code in common with `fit`.
@@ -565,22 +571,27 @@ class ContinuousSkLearnModel(FitPredictNode):
             .shift(-self._prediction_length)
             .rename(columns=lambda y: y + "_%i" % self._prediction_length)
         )
-        y_vars_fwd = [y + "_%i" for y in y_vars]
-        df = df.merge(y_vals_fwd_df, left_index=True, right_index=True)
+        y_vars_fwd = [y + "_%i" % self._prediction_length for y in y_vars]
         idx = df.index
         x_predict = adpt.transform_to_sklearn(df, x_vars)
-        y_fwd_predict = adpt.transform_to_sklearn(df, y_vars_fwd)
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
         y_fwd_hat = self._model.predict(x_predict)
-        # Used for model perf calculation.
-        y_fwd_predict = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_predict)
-        y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat)
+        y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat).rename(columns=lambda y: y + "_hat")
         info = collections.OrderedDict()
-        info["model_perf"] = self._model_perf(y_fwd_predict, y_fwd_hat)
+        y_vals_fwd_df = (
+            df[y_vars]
+            .shift(-self._prediction_length)
+            .rename(columns=lambda y: y + "_%i" % self._prediction_length)
+        )
+        info["model_perf"] = self._model_perf(y_vals_fwd_df, y_fwd_hat)
         self._set_info("predict", info)
-        return {"df_out": y_fwd_hat}
+        return {
+            "df_out": y_vals_fwd_df.merge(
+                y_fwd_hat, left_index=True, right_index=True
+            )
+        }
 
     # TODO(Paul): Add type hints.
     # TODO(Paul): Consider omitting this (and relying on downstream
