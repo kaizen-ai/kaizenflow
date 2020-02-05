@@ -1,40 +1,86 @@
 #!/usr/bin/env python
+r"""
+# #############################################################################
+# Open a notebook.
+# #############################################################################
 
-"""
-Given a notebook specified as:
-- a ipynb file, e.g.,
-    data/web_path_two/Minute_distribution_20180802_182656.ipynb
-- a jupyter url, e.g.,
-    https://github.com/...ipynb
-- a github url
+> amp/dev_scripts/notebooks/publish_notebook.py \
+    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --action open
 
-- Backup a notebook and publish notebook on shared space;
-> publish_notebook.py --file xyz.ipynb --action publish
+This command opens a local notebook as HTML into the browser, if possible.
 
-- Open a notebook in Chrome
-> publish_notebook.py --file xyz.ipynb --action open
+- Detailed flow:
+    1. Convert a locally available notebook to the HTML format.
+    2. Save the HTML page to a temporary location, adding a timestamp to the
+       name.
+    3. On a local computer: open the HTML page using the system default browser.
+       On the dev server: return the full path to the file as a result.
+
+# #############################################################################
+# Publish a notebook.
+# #############################################################################
+
+> amp/dev_scripts/notebooks/publish_notebook.py \
+    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --action publish
+
+This command publishes a local notebook as HTML on the dev server.
+
+- Detailed flow:
+    - On a local computer:
+    1. Convert a locally available notebook to the HTML format.
+    2. Save the HTML page to a temporary location, adding a timestamp to the
+       name.
+    3. Copy it to the publishing location on the dev server.
+    4. Print the path to the published HTML page and a command to open it using
+       an ssh tunnel.
+
+    - On the dev server:
+    1. Convert a locally available notebook to the HTML format.
+    2. Add a timestamp to the name.
+    3. Copy the HTML page to the publishing location on the dev server.
+    4. Print a link to the file, and a command to open it using ssh tunneling.
+
+# #############################################################################
+# Open or publish a notebook from a git branch.
+# #############################################################################
+
+>  amp/dev_scripts/notebooks/publish_notebook.py \
+    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --branch origin/master
+    --action open
+
+This command allows to open or publish a notebook that is in a branch different
+from the one we already in.
+
+The behavior is the same as described above, but before the first step:
+- A new temporary worktree is added to a temporary directory.
+- The file is checked out there from the given branch.
+Then the above steps are followed.
 """
 
 import argparse
+import datetime
 import logging
 import os
 import sys
-import datetime
+import tempfile
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
 
+# TODO(greg): consider moving this constant somewhere else.
+_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR = "/http/notebook_publisher"
+
 _LOG = logging.getLogger(__name__)
 
 
-def _add_tag(file_path, tag=None):
+def _add_tag(file_path: str, tag: str = "") -> str:
     """
-    By default add timestamp in filename
-    :param file_path:
-    :param tag:
-    :return: file na
+    By default, add current timestamp in the filename. Returns new filename.
     """
     name, extension = os.path.splitext(os.path.basename(file_path))
     if not tag:
@@ -42,10 +88,10 @@ def _add_tag(file_path, tag=None):
     return "".join([name, tag, extension])
 
 
-def _export_html(path_to_notebook):
+def _export_html(path_to_notebook: str) -> str:
     """
     Accept ipynb, exports to html, adds a timestamp to the file name, and
-    returns the name of the created file
+    returns the name of the created file.
     :param path_to_notebook: The path to the file of the notebook e.g.:
         _data/relevance_and_event_relevance_exploration.ipynb
     :return: The name of the html file with a timestamp e.g.:
@@ -66,38 +112,33 @@ def _export_html(path_to_notebook):
         )
     )
     si.system(cmd)
-    _LOG.debug("Export %s to html", file_name)
+    _LOG.debug("Export %s to html.", file_name)
     return dst_path
 
 
-def _copy_to_folder(path_to_notebook, dst_dir):
+def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
     """
-    Copy file to another directory
-    :param path_to_notebook: The path to the file of the notebook
-        e.g.: _data/relevance_and_event_relevance_exploration.ipynb
-    :param dst_dir: The folder in which the file will be copied e.g.: _data/
-    :return: None
+    Copy file to a directory on the remote server.
+    :param path_to_file: The path to the local file
+        e.g.: /tmp/relevance_and_event_relevance_exploration.html
+    :param dst_dir: The folder in which the file will be copied
+        e.g.: user@server_ip:/http/notebook_publisher
     """
-    # file_name = os.path.basename(path_to_notebook)
-    dst_f_name = os.path.join(dst_dir, _add_tag(path_to_notebook))
-    # If there is no such directory, create it.
-    if not os.path.isdir(dst_dir):
-        os.makedirs(dst_dir)
+    file_name = os.path.basename(path_to_file)
+    dst_f_name = os.path.join(dst_dir, file_name)
     # File copying.
-    cmd = "cp {src} {dst}".format(src=path_to_notebook, dst=dst_f_name)
+    cmd = f"scp {path_to_file} {dst_f_name}"
     si.system(cmd)
-    path_to_notebook = os.path.basename(path_to_notebook)
-    _LOG.debug("Copy '%s' to '%s'", path_to_notebook, dst_dir)
+    _LOG.debug("Copy '%s' to '%s' over SSH.", file_name, dst_dir)
 
 
-def _export_to_webpath(path_to_notebook, dst_dir):
+def _export_to_webpath(path_to_notebook: str, dst_dir: str) -> str:
     """
     Create a folder if it does not exist. Export ipynb to html, to add a
-    timestamp, moves to dst_dir
+    timestamp, moves to dst_dir.
     :param path_to_notebook: The path to the file of the notebook
         e.g.: _data/relevance_and_event_relevance_exploration.ipynb
     :param dst_dir: destination folder to move
-    :return: None
     """
     html_src_path = _export_html(path_to_notebook)
     html_name = os.path.basename(html_src_path)
@@ -106,40 +147,21 @@ def _export_to_webpath(path_to_notebook, dst_dir):
     if not os.path.isdir(dst_dir):
         os.makedirs(dst_dir)
     # Move html.
-    _LOG.debug("Export '%s' to '%s'", html_src_path, html_dst_path)
+    _LOG.debug("Export '%s' to '%s'.", html_src_path, html_dst_path)
     cmd = "mv {src} {dst}".format(src=html_src_path, dst=html_dst_path)
     si.system(cmd)
     return html_dst_path
 
 
-def _show_file_in_folder(folder_path):
-    """
-    Print all files in a folder
-    :param folder_path:
-    :return: None
-    """
-    # Check the correctness of the entered path
-    if not folder_path.endswith("/"):
-        folder_path = folder_path + "/"
-    only_files = [
-        _file
-        for _file in os.listdir(folder_path)
-        if os.path.isfile(os.path.join(folder_path, _file))
-    ]
-    for _one_file in only_files:
-        print(folder_path + _one_file)
-
-
 # TODO(gp): Reuse url.py code.
-def _get_path(path_or_url):
+def _get_path(path_or_url: str) -> str:
     """
-    Get path from file, local link or github link
+    Get path from file, local link or github link.
     :param path_or_url: url to notebook/github, local path,
         e.g.: https://github.com/...ipynb
     :return: Path to file
         e.g.: UnderstandingAnalysts.ipynb
     """
-    ret = ""
     if "https://github" in path_or_url:
         ret = "/".join(path_or_url.split("/")[7:])
     elif "http://" in path_or_url:
@@ -153,9 +175,43 @@ def _get_path(path_or_url):
         ret = path_or_url
     else:
         raise ValueError(
-            "Incorrect link to git or local jupiter notebook or file path"
+            "Incorrect link to git or local jupiter notebook or file path."
         )
     return ret
+
+
+def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
+    """
+    Checkout a file from a git branch and store it in a temporary location.
+    :param git_branch: the branch name
+        e.g. origin/PartTask302_download_eurostat_data
+    :param git_path: the relative path to the file
+        e.g. core/notebooks/gallery_signal_processing.ipynb
+    :return: the path to the file retrieved
+        e.g.: /tmp/gallery_signal_processing.ipynb
+    """
+    _LOG.debug("Create a temporary directory for a git worktree.")
+    tmp_worktree_dir = tempfile.mkdtemp()
+    #
+    _LOG.debug("Add temporary git worktree in '%s'.", tmp_worktree_dir)
+    si.system(f"git worktree add {tmp_worktree_dir}")
+    si.system(f"cd {tmp_worktree_dir}")
+    #
+    _LOG.debug("Check out '%s/%s'.", git_branch, git_path)
+    si.system(f"git checkout {git_branch} -- {git_path}")
+    si.system("cd -")
+    checked_out_file_path = os.path.join(tmp_worktree_dir, git_path)
+    dst_file_path = os.path.join(
+        tempfile.gettempdir(), os.path.basename(checked_out_file_path)
+    )
+    #
+    _LOG.debug("Copy '%s' to '%s'.", checked_out_file_path, dst_file_path)
+    si.system(f"cp {checked_out_file_path} {dst_file_path}")
+    #
+    _LOG.debug("Remove temporary git worktree '%s'.", tmp_worktree_dir)
+    si.system(f"git worktree remove {tmp_worktree_dir}")
+    si.system(f"git branch -d {os.path.basename(tmp_worktree_dir)}")
+    return dst_file_path
 
 
 # #############################################################################
@@ -163,30 +219,22 @@ def _get_path(path_or_url):
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--branch",
+        action="store",
+        required=False,
+        type=str,
+        help="The branch, from which the notebook file will be checked out.",
     )
     parser.add_argument(
         "--file",
         action="store",
         required=True,
         type=str,
-        help="The path to the file ipynb, jupyter url, or github url",
+        help="The path to the file ipynb, jupyter url, or github url.",
     )
-    parser.add_argument(
-        "--web_path",
-        type=str,
-        action="store",
-        help="Save a copy to the specified folder *.ipynb and html with"
-        " timestamps in the name",
-    )
-    parser.add_argument(
-        "--project",
-        action="store",
-        type=str,
-        default=None,
-        help="An optional project that is used as sub-directory",
-    )
-    parser.add_argument("--tag", action="store", type=str)
     #
     parser.add_argument(
         "--action",
@@ -202,42 +250,60 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
-    src_file_name = _get_path(args.file)
-    # Export to html, add timestamp, archive html.
+    #
+    if args.branch:
+        src_file_name = _get_file_from_git_branch(args.branch, args.file)
+    else:
+        src_file_name = _get_path(args.file)
+    # TODO(greg): make a special function for it, remove hardcoded server name.
+    is_server = si.get_server_name() == "ip-172-31-16-23"
+    # Detect the platform family.
+    platform = sys.platform
+    open_link_cmd = "start"  # MS Windows
+    if platform == "linux":
+        open_link_cmd = "xdg-open"
+    elif platform == "darwin":
+        open_link_cmd = "open"
+    #
     if args.action == "open":
-        html_path = _export_html(src_file_name)
-        # Open with browser locally.
-        # TODO(gp): Check of Mac.
-        cmd = "open %s" % html_path
-        si.system(cmd)
-        sys.exit(0)
+        # Convert the notebook to the HTML format and store in the TMP location.
+        html_file_name = _export_html(src_file_name)
+        #
+        if is_server:
+            # Just print the full file name for the HTML snapshot.
+            print(f"HTML file path is: '{html_file_name}'")
+        else:
+            # Open with a browser locally.
+            si.system(f"{open_link_cmd} {html_file_name}")
+            sys.exit(0)
     elif args.action == "publish":
-        user_credentials = usc.get_credentials()
-        html_path = user_credentials["notebook_html_path"]
-        dbg.dassert_is_not(html_path, None)
-        backup_path = user_credentials["notebook_backup_path"]
-        dbg.dassert_is_not(html_path, None)
-        if args.project is not None:
-            html_path = os.path.join(html_path, args.project)
-            backup_path = os.path.join(backup_path, args.project)
-        _LOG.info("html_path=%s", html_path)
-        _LOG.info("backup path=%s", backup_path)
+        # Convert the notebook to the HTML format and move to the PUB location.
+        server_address = usc.get_p1_dev_server_ip()
+        if is_server:
+            pub_path = _DEV_SERVER_NOTEBOOK_PUBLISHER_DIR
+            pub_html_file = _export_to_webpath(src_file_name, pub_path)
+            pub_file_name = os.path.basename(pub_html_file)
+            dbg.dassert_exists(pub_html_file)
+        else:
+            pub_path = f"{server_address}:{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}"
+            tmp_html_file_name = _export_html(src_file_name)
+            pub_file_name = os.path.basename(tmp_html_file_name)
+            _copy_to_remote_folder(tmp_html_file_name, pub_path)
         #
-        _LOG.debug("# Backing up ipynb")
-        _copy_to_folder(src_file_name, backup_path)
-        #
-        _LOG.debug("# Publishing html")
-        html_file_name = _export_to_webpath(src_file_name, html_path)
-        print("HTML file path is: %s" % html_file_name)
-        dbg.dassert_exists(html_file_name)
-        #
-        print("\nTo visualize on Mac run:")
-        cmd = (
-            "dev_scripts/open_remote_html_mac.sh %s\n" % html_file_name
-            + "FILE='%s'; scp 54.172.40.4:$FILE /tmp; open /tmp/$(basename $FILE)"
-            % html_file_name
+        _LOG.debug(
+            "Notebook '%s' was converted to the HTML format and stored at '%s'",
+            src_file_name,
+            pub_path + pub_file_name,
         )
-        print(cmd)
+        print(
+            f"HTML version of the notebook saved as '{pub_file_name}' "
+            f"at the dev server publishing location. "
+            f"You can view it using this command:"
+        )
+        print(
+            f"(ssh -f -nNT -L 8877:localhost:8077 {server_address}; "
+            f"{open_link_cmd} http://localhost:8877/{pub_file_name})"
+        )
 
 
 if __name__ == "__main__":
