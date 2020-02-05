@@ -493,6 +493,17 @@ class Resample(Transformer):
 
 
 class ContinuousSkLearnModel(FitPredictNode):
+    """
+    Fit and predict an sklearn model.
+
+    Assumptions:
+      - `x_vars` are indexed by knowledge datetimes
+        - These may contain lags of `y_vars`
+      - `y_vars` are indexed by knowledge datetimes (e.g., `ret_0` for returns)
+      - `df.index` is a `pd.DatetimeIndex` that has a specified `freq`
+      # TODO(Paul): rename "steps_ahead"
+      - `prediction_length`
+    """
     def __init__(
         self,
         nid: str,
@@ -501,7 +512,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         y_vars: Union[List[str], Callable[[], List[str]]],
         prediction_length: int,
         model_kwargs: Optional[Any] = None,
-        num_y_lags: int = 0,
     ) -> None:
         super().__init__(nid)
         self._model_func = model_func
@@ -510,9 +520,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._y_vars = y_vars
         self._model = None
         self._prediction_length = prediction_length
-        self._num_y_lags = num_y_lags
-        if self._num_y_lags > 0:
-            raise NotImplementedError()
+        dbg.dassert_lte(0, self._prediction_length,
+                        "Non-causal prediction attempted! Aborting...")
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
