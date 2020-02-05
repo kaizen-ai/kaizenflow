@@ -17,14 +17,15 @@ _LOG = logging.getLogger(__name__)
 
 class TestContinuousSkLearnModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
+        pred_lag = 1
         # Load test data.
-        data = self._get_data()
+        data = self._get_data(pred_lag)
         data_source_node = dtf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
         dag = dtf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
-        config = self._get_config()
+        config = self._get_config(pred_lag)
         node = dtf.ContinuousSkLearnModel(
             "sklearn",
             model_func=slm.Ridge,
@@ -36,25 +37,46 @@ class TestContinuousSkLearnModel(hut.TestCase):
         output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
         self.check_string(output_df.to_string())
 
-    def _get_config(self) -> cfg.Config:
+    def test_fit_dag2(self) -> None:
+        pred_lag = 2
+        # Load test data.
+        data = self._get_data(pred_lag)
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Load sklearn config and create modeling node.
+        config = self._get_config(pred_lag)
+        config["prediction_length"] = 2
+        node = dtf.ContinuousSkLearnModel(
+            "sklearn",
+            model_func=slm.Ridge,
+            **config.to_dict(),
+        )
+        dag.add_node(node)
+        dag.connect("data", "sklearn")
+        #
+        output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def _get_config(self, prediction_length: int) -> cfg.Config:
         config = cfg.Config()
         config["x_vars"] = ["x"]
         config["y_vars"] = ["y"]
-        config["prediction_length"] = 1
+        config["prediction_length"] = prediction_length
         config_kwargs = config.add_subconfig("model_kwargs")
         config_kwargs["alpha"] = 0.5
         return config
 
-    def _get_data(self) -> None:
+    def _get_data(self, lag: int) -> None:
         """
         Generate "random returns". Use lag + noise as predictor.
         """
         num_periods = 50
-        num_lags = 1
-        total_steps = num_periods + num_lags + 1
+        total_steps = num_periods + lag + 1
         rets = sigp.get_gaussian_walk(0, .2, total_steps, seed=10).diff()
         noise = sigp.get_gaussian_walk(0, .02, total_steps, seed=1).diff()
-        pred = rets.shift(-num_lags).loc[1: num_periods] + noise.loc[1: num_periods]
+        pred = rets.shift(-lag).loc[1: num_periods] + noise.loc[1: num_periods]
         resp = rets.loc[1: num_periods]
         idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
         df = pd.DataFrame.from_dict({"x": pred, "y": resp}).set_index(idx)
