@@ -530,18 +530,20 @@ class ContinuousSkLearnModel(FitPredictNode):
             .shift(-self._prediction_length)
             .rename(columns=lambda y: y + "_%i" % self._prediction_length)
         )
-        y_vars_fwd = [y + "_%i" for y in y_vars]
+        y_vars_fwd = [y + "_%i" % self._prediction_length for y in y_vars]
         # TODO(Paul): Ensure `y_vars_fwd` not in `y_vars`.
         df = df.merge(y_vals_fwd_df, left_index=True, right_index=True)
         df = df.dropna()
         idx = df.index
-        x_fit = adpt.transform_to_sklearn(df, y_vars_fwd)
+        x_fit = adpt.transform_to_sklearn(df, x_vars)
         y_fwd_fit = adpt.transform_to_sklearn(df, y_vars_fwd)
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, y_fwd_fit)
+        # Used for model perf calculation.
+        y_fwd_fit = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_fit)
         y_fwd_hat = self._model.predict(x_fit)
         #
-        y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat)
+        y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat).rename(columns=lambda y: y + "_hat")
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
@@ -572,6 +574,8 @@ class ContinuousSkLearnModel(FitPredictNode):
             self._model, None, "Model not found! Check if `fit` has been run."
         )
         y_fwd_hat = self._model.predict(x_predict)
+        # Used for model perf calculation.
+        y_fwd_predict = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_predict)
         y_fwd_hat = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_hat)
         info = collections.OrderedDict()
         info["model_perf"] = self._model_perf(y_fwd_predict, y_fwd_hat)
