@@ -41,12 +41,16 @@ class _TestAdapter:
 class TestCreateIterSingleIndex(hut.TestCase):
     def test1(self) -> None:
         ta = _TestAdapter()
-        data_iter = adpt.iterate_target_features(ta._df, ta._x_vars, ta._y_vars)
+        data_iter = adpt.iterate_target_features(
+            ta._df, ta._x_vars, ta._y_vars, None
+        )
         self.check_string(str(list(data_iter)))
 
     def test_shape1(self) -> None:
         ta = _TestAdapter()
-        data_iter = adpt.iterate_target_features(ta._df, ta._x_vars, ta._y_vars)
+        data_iter = adpt.iterate_target_features(
+            ta._df, ta._x_vars, ta._y_vars, None
+        )
         for data_dict in data_iter:
             target = data_dict[gluonts.dataset.field_names.FieldName.TARGET]
             start = data_dict[gluonts.dataset.field_names.FieldName.START]
@@ -56,6 +60,13 @@ class TestCreateIterSingleIndex(hut.TestCase):
             self.assertEqual(target.shape, (len(ta._y_vars), ta._df.shape[0]))
             self.assertEqual(features.shape, (len(ta._x_vars), ta._df.shape[0]))
             self.assertIsInstance(start, pd.Timestamp)
+
+    def test_truncate1(self) -> None:
+        ta = _TestAdapter()
+        data_iter = adpt.iterate_target_features(
+            ta._df, ta._x_vars, ta._y_vars, y_truncate=10
+        )
+        self.check_string(str(list(data_iter)))
 
 
 class TestTransformToGluon(hut.TestCase):

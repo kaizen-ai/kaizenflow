@@ -27,7 +27,10 @@ _LOG = logging.getLogger(__name__)
 
 
 def iterate_target_features(
-    df: pd.DataFrame, x_vars: Optional[List[str]], y_vars: Union[str, List[str]],
+    df: pd.DataFrame,
+    x_vars: Optional[List[str]],
+    y_vars: Union[str, List[str]],
+    y_truncate: Optional[int],
 ) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
     """
     Generate `data_iter` parameter for `gluonts.dataset.common.ListDataset`.
@@ -48,14 +51,20 @@ def iterate_target_features(
     :return: iterator of dicts with target, start_date, and features
     """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    y_truncate = y_truncate or 0
+    if y_truncate == 0:
+        y = df[y_vars]
+    else:
+        dbg.dassert_lt(y_truncate, df.shape[0], "Cannot truncate the dataframe")
+        y = df[y_vars].iloc[:-y_truncate]
     if not x_vars:
         yield {
-            gluonts.dataset.field_names.FieldName.TARGET: df[y_vars].values.T,
+            gluonts.dataset.field_names.FieldName.TARGET: y.values.T,
             gluonts.dataset.field_names.FieldName.START: df.index[0],
         }
     else:
         yield {
-            gluonts.dataset.field_names.FieldName.TARGET: df[y_vars].values.T,
+            gluonts.dataset.field_names.FieldName.TARGET: y.values.T,
             gluonts.dataset.field_names.FieldName.START: df.index[0],
             gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL: df[
                 x_vars
@@ -68,6 +77,7 @@ def transform_to_gluon(
     x_vars: Optional[List[str]],
     y_vars: List[str],
     frequency: Optional[str] = None,
+    y_truncate: Optional[int] = None,
 ) -> gluonts.dataset.common.ListDataset:
     """
     Transform a dataframe or multiindexed dataframe, e.g., the output of
@@ -121,7 +131,7 @@ def transform_to_gluon(
     else:
         one_dim_target = False
     ts = gluonts.dataset.common.ListDataset(
-        iter_func(df, x_vars, y_vars),
+        iter_func(df, x_vars, y_vars, y_truncate=y_truncate),
         freq=frequency,
         one_dim_target=one_dim_target,
     )
@@ -239,6 +249,7 @@ def _iterate_target_features_multiindex(
     x_vars: Optional[List[str]],
     y_vars: Union[str, List[str]],
     frequency: str,
+    y_truncate: Optional[int],
 ) -> Generator[
     Dict[str, Union[pd.Series, pd.DataFrame, pd.Timestamp]], None, None
 ]:
@@ -255,7 +266,9 @@ def _iterate_target_features_multiindex(
         start_date = ts + pd.Timedelta(f"{first_grid_idx}{frequency}")
         df = local_ts_grid.droplevel(0)
         df.index = [start_date] * df.shape[0]
-        yield from iterate_target_features(df, x_vars, y_vars)
+        yield from iterate_target_features(
+            df, x_vars, y_vars, y_truncate=y_truncate
+        )
 
 
 def _transform_from_gluon_forecast_entry(
