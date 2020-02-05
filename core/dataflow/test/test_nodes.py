@@ -101,11 +101,11 @@ class TestContinuousSkLearnModel(hut.TestCase):
         output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
         self.check_string(output_df.to_string())
 
-    def _get_config(self, prediction_length: int) -> cfg.Config:
+    def _get_config(self, steps_ahead: int) -> cfg.Config:
         config = cfg.Config()
         config["x_vars"] = ["x"]
         config["y_vars"] = ["y"]
-        config["prediction_length"] = prediction_length
+        config["steps_ahead"] = steps_ahead
         config_kwargs = config.add_subconfig("model_kwargs")
         config_kwargs["alpha"] = 0.5
         return config

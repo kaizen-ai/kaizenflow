@@ -495,14 +495,6 @@ class Resample(Transformer):
 class ContinuousSkLearnModel(FitPredictNode):
     """
     Fit and predict an sklearn model.
-
-    Assumptions:
-      - `x_vars` are indexed by knowledge datetimes
-        - These may contain lags of `y_vars`
-      - `y_vars` are indexed by knowledge datetimes (e.g., `ret_0` for returns)
-      - `df.index` is a `pd.DatetimeIndex` that has a specified `freq`
-      # TODO(Paul): rename "steps_ahead"
-      - `prediction_length`
     """
     def __init__(
         self,
@@ -510,99 +502,135 @@ class ContinuousSkLearnModel(FitPredictNode):
         model_func: Callable[..., Any],
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
-        prediction_length: int,
+        steps_ahead: int,
         model_kwargs: Optional[Any] = None,
     ) -> None:
+        """
+    Specify the data and sklearn modeling parameters.
+
+    Assumptions:
+      - `x_vars` are indexed by knowledge datetimes
+        - These may contain lags of `y_vars`
+      - `y_vars` are indexed by knowledge datetimes (e.g., `ret_0` for returns)
+      - `df.index` is a `pd.DatetimeIndex` that has a specified `freq`
+      - `steps_ahead` is non-negative
+        :param nid: unique node id
+        :param model_func: an sklearn model
+        :param x_vars: indexed by knowledge datetimes
+            - `x_vars` may contain lags of `y_vars`
+        :param y_vars: indexed by knowledge datetimes
+            - e.g., in the case of returns, this would correspond to `ret_0`
+        :param steps_ahead: number of steps ahead for which a prediction is to
+            be generated. E.g.,
+                - if `steps_ahead == 0`, then the predictions are
+                  are contemporaneous with the observed response (and hence
+                  inactionable)
+                - if `steps_ahead == 1`, then the model attempts to predict
+                  `y_vars` for the next time step
+                - The model is only trained to predict the target `steps_ahead`
+                  steps ahead (and not all intermediate steps)
+        :param model_kwargs: parameters to forward to the sklearn model (e.g.,
+            regularization constants)
+        """
         super().__init__(nid)
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
         self._model = None
-        self._prediction_length = prediction_length
-        dbg.dassert_lte(0, self._prediction_length,
+        self._steps_ahead = steps_ahead
+        dbg.dassert_lte(0, self._steps_ahead,
                         "Non-causal prediction attempted! Aborting...")
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
-        dbg.dassert(df_in.index.freq)
-        dbg.dassert(
-            df_in[df_in.isna().any(axis=1)].index.empty,
-            "NaNs detected at index `%s`",
-            str(df_in[df_in.isna().any(axis=1)].head().index),
-        )
+        self._validate_input_df(df_in)
         df = df_in.copy()
+        # Obtain index slice for which forward targets exist.
+        idx = self._get_fit_idx(df)
+        # Prepare x_vars in sklearn format.
         x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
-        y_vals_fwd_df = (
-            df[y_vars]
-            .shift(-self._prediction_length)
-            .rename(columns=lambda y: y + "_%i" % self._prediction_length)
-        )
-        y_vars_fwd = [y + "_%i" % self._prediction_length for y in y_vars]
-        # TODO(Paul): Ensure `y_vars_fwd` not in `y_vars`.
-        df = df.merge(y_vals_fwd_df, left_index=True, right_index=True)
-        df = df.dropna()
-        idx = df.index
-        x_fit = adpt.transform_to_sklearn(df, x_vars)
-        y_fwd_fit = adpt.transform_to_sklearn(df, y_vars_fwd)
+        x_fit = adpt.transform_to_sklearn(df.loc[idx], x_vars)
+        # Prepare forward y_vars in sklearn format.
+        fwd_y_df = self._get_fwd_y_df(df).loc[idx]
+        fwd_y_fit = adpt.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
+        # Define and fit model.
         self._model = self._model_func(**self._model_kwargs)
-        self._model = self._model.fit(x_fit, y_fwd_fit)
-        # Used for model perf calculation.
-        y_fwd_fit = adpt.transform_from_sklearn(idx, y_vars_fwd, y_fwd_fit)
-        y_fwd_hat = self._model.predict(x_fit)
+        self._model = self._model.fit(x_fit, fwd_y_fit)
+        # Generate insample predictions and put in dataflow dataframe format.
+        fwd_y_hat = self._model.predict(x_fit)
         #
-        y_fwd_hat = adpt.transform_from_sklearn(
-            idx, y_vars_fwd, y_fwd_hat
-        ).rename(columns=lambda y: y + "_hat")
+        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat = adpt.transform_from_sklearn(
+            idx, fwd_y_hat_vars, fwd_y_hat
+        )
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
-        info["insample_perf"] = self._model_perf(y_fwd_fit, y_fwd_hat)
+        info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
-        # TODO(Paul): Consider merging with `y_vars_fwd`.
+        # Return targets and predictions.
         return {
-            "df_out": y_fwd_fit.merge(
-                y_fwd_hat, left_index=True, right_index=True
+            "df_out": fwd_y_df.merge(
+                fwd_y_hat, left_index=True, right_index=True
             )
         }
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        # TODO(Paul): Factor out code in common with `fit`.
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
-        dbg.dassert(df_in.index.freq)
+        self._validate_input_df(df_in)
         df = df_in.copy()
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
-        y_vals_fwd_df = (
-            df[y_vars]
-            .shift(-self._prediction_length)
-            .rename(columns=lambda y: y + "_%i" % self._prediction_length)
-        )
-        y_vars_fwd = [y + "_%i" % self._prediction_length for y in y_vars]
         idx = df.index
+        # Transform x_vars to sklearn format.
+        x_vars = self._to_list(self._x_vars)
         x_predict = adpt.transform_to_sklearn(df, x_vars)
+        # Use trained model to generate predictions.
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
-        y_fwd_hat = self._model.predict(x_predict)
-        y_fwd_hat = adpt.transform_from_sklearn(
-            idx, y_vars_fwd, y_fwd_hat
-        ).rename(columns=lambda y: y + "_hat")
+        fwd_y_hat = self._model.predict(x_predict)
+        # Put predictions in dataflow dataframe format.
+        fwd_y_df = self._get_fwd_y_df(df)
+        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns.tolist()]
+        fwd_y_hat = adpt.transform_from_sklearn(
+            idx, fwd_y_hat_vars, fwd_y_hat)
+        # Generate basic perf stats.
         info = collections.OrderedDict()
-        y_vals_fwd_df = (
-            df[y_vars]
-            .shift(-self._prediction_length)
-            .rename(columns=lambda y: y + "_%i" % self._prediction_length)
-        )
-        info["model_perf"] = self._model_perf(y_vals_fwd_df, y_fwd_hat)
+        info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
+        # Return targets and predictions.
         return {
-            "df_out": y_vals_fwd_df.merge(
-                y_fwd_hat, left_index=True, right_index=True
+            "df_out": fwd_y_df.merge(
+                fwd_y_hat, left_index=True, right_index=True
             )
         }
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert(df.index.freq)
+        return None
+
+    def _get_fwd_y_df(self, df):
+        """
+        Return dataframe of `steps_ahead` forward y values.
+        """
+        y_vars = self._to_list(self._y_vars)
+        mapper = lambda y: y + "_%i" % self._steps_ahead
+        fwd_y_vars = [mapper(y) for y in y_vars]
+        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
+        fwd_y_df = (
+            df[y_vars]
+                .shift(-self._steps_ahead)
+                .rename(columns=mapper)
+        )
+        return fwd_y_df
+
+    def _get_fit_idx(self, df):
+        dbg.dassert_lt(self._steps_ahead, df.index.size)
+        return df.index[:-self._steps_ahead]
 
     # TODO(Paul): Add type hints.
     # TODO(Paul): Consider omitting this (and relying on downstream
