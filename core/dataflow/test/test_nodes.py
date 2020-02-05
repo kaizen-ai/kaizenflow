@@ -84,6 +84,32 @@ class TestContinuousSkLearnModel(hut.TestCase):
         output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
         self.check_string(output_df.to_string())
 
+    def test_fit_dag4(self) -> None:
+        pred_lag = 2
+        # Load test data.
+        data = self._get_data(pred_lag)
+        fit_idxs = data.iloc[:30].index
+        predict_idxs = data.iloc[30:].index
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node.set_fit_idxs(fit_idxs)
+        data_source_node.set_predict_idxs(predict_idxs)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Load sklearn config and create modeling node.
+        config = self._get_config(pred_lag)
+        node = dtf.ContinuousSkLearnModel(
+            "sklearn",
+            model_func=slm.Ridge,
+            **config.to_dict(),
+        )
+        dag.add_node(node)
+        dag.connect("data", "sklearn")
+        #
+        dag.run_leq_node("sklearn", "fit")
+        output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
+        self.check_string(output_df.to_string())
+
     def _get_config(self, prediction_length: int) -> cfg.Config:
         config = cfg.Config()
         config["x_vars"] = ["x"]
