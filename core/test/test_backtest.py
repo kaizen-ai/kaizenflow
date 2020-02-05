@@ -30,7 +30,7 @@ class TestGeneratePredictions(hut.TestCase):
 
     @staticmethod
     def _train_model(
-        prediction_length: int = 10, use_feat_dynamic_real: bool = False
+        prediction_length: int = 3, use_feat_dynamic_real: bool = False
     ) -> gluonts.model.predictor.Predictor:
         df = TestGeneratePredictions._generate_input_data()
         x_vars = df.columns.tolist()[:-1]
@@ -51,7 +51,7 @@ class TestGeneratePredictions(hut.TestCase):
         return estimator.train(train_ts)
 
     def test1(self) -> None:
-        prediction_length = 10
+        prediction_length = 3
         predictor = TestGeneratePredictions._train_model(
             prediction_length=prediction_length
         )
@@ -69,7 +69,7 @@ class TestGeneratePredictions(hut.TestCase):
         self.check_string(str_output)
 
     def test_single_value1(self) -> None:
-        prediction_length = 10
+        prediction_length = 3
         predictor = TestGeneratePredictions._train_model(
             prediction_length=prediction_length
         )
@@ -89,7 +89,7 @@ class TestGeneratePredictions(hut.TestCase):
         self.check_string(str_output)
 
     def test_two_values1(self) -> None:
-        prediction_length = 10
+        prediction_length = 3
         predictor = TestGeneratePredictions._train_model(
             prediction_length=prediction_length
         )
@@ -109,7 +109,7 @@ class TestGeneratePredictions(hut.TestCase):
         self.check_string(str_output)
 
     def test_none_x_vars1(self) -> None:
-        prediction_length = 10
+        prediction_length = 3
         predictor = TestGeneratePredictions._train_model(
             prediction_length=prediction_length
         )
@@ -126,7 +126,7 @@ class TestGeneratePredictions(hut.TestCase):
         self.check_string(str_output)
 
     def test_use_feat_dynamic_real1(self) -> None:
-        prediction_length = 10
+        prediction_length = 6
         predictor = TestGeneratePredictions._train_model(
             prediction_length=prediction_length, use_feat_dynamic_real=True
         )
