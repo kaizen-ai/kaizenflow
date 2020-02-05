@@ -1,63 +1,63 @@
 #!/usr/bin/env python
-"""
+r"""
 # #############################################################################
 # Open a notebook.
 # #############################################################################
 
-$ amp/dev_scripts/notebooks/publish_notebook.py \
---file nlp/notebooks/PartTask768_event_filtering.ipynb \
---action open
+> amp/dev_scripts/notebooks/publish_notebook.py \
+    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --action open
 
-On a local computer:
-1. Converts a locally available notebook to the HTML format.
-2. Saves it to a temporary location, adds a timestamp to the name.
-3. Opens it using the system default browser.
+This command opens a local notebook as HTML into the browser, if possible.
 
-On the Dev Server:
-1. Converts a locally available notebook to the HTML format.
-2. Saves it to a temporary location, adds a timestamp to the name.
-3. Returns the full path to the file as a result.
+- Detailed flow:
+    1. Convert a locally available notebook to the HTML format.
+    2. Save the HTML page to a temporary location, adding a timestamp to the
+       name.
+    3. On a local computer: open the HTML page using the system default browser.
+       On the dev server: return the full path to the file as a result.
 
 # #############################################################################
 # Publish a notebook.
 # #############################################################################
 
-$ amp/dev_scripts/notebooks/publish_notebook.py \
---file nlp/notebooks/PartTask768_event_filtering.ipynb \
---action publish
+> amp/dev_scripts/notebooks/publish_notebook.py \
+    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --action publish
 
-On a local computer:
-1. Converts a locally available notebook to the HTML format.
-2. Saves it to a temporary location, adds a timestamp to the name.
-3. Copies it to the publishing location on the Dev Server.
-4. Prints a link to the file, and a command to open it using ssh tunneling.
+This command publishes a local notebook as HTML on the dev server.
 
-On the Dev Server:
-1. Converts a locally available notebook to the HTML format.
-2. Adds a timestamp to the name.
-3. Copies it to the publishing location on the Dev Server.
-4. Prints a link to the file, and a command to open it using ssh tunneling.
+- Detailed flow:
+    - On a local computer:
+    1. Convert a locally available notebook to the HTML format.
+    2. Save the HTML page to a temporary location, adding a timestamp to the
+       name.
+    3. Copy it to the publishing location on the dev server.
+    4. Print the path to the published HTML page and a command to open it using
+       an ssh tunnel.
+
+    - On the dev server:
+    1. Convert a locally available notebook to the HTML format.
+    2. Add a timestamp to the name.
+    3. Copy the HTML page to the publishing location on the dev server.
+    4. Print a link to the file, and a command to open it using ssh tunneling.
 
 # #############################################################################
-# Open or Publish a notebook from a git branch.
+# Open or publish a notebook from a git branch.
 # #############################################################################
 
-$ amp/dev_scripts/notebooks/publish_notebook.py \
---file nlp/notebooks/PartTask768_event_filtering.ipynb \
---branch origin/master
---action open
+>  amp/dev_scripts/notebooks/publish_notebook.py \
+    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --branch origin/master
+    --action open
 
-or
+This command allows to open or publish a notebook that is in a branch different
+from the one we already in.
 
-$ amp/dev_scripts/notebooks/publish_notebook.py \
---file nlp/notebooks/PartTask768_event_filtering.ipynb \
---branch origin/master
---action publish
-
-The same as described above, but before the first step:
-- A new temporary worktree will be added to a temporary directory.
-- The file will be checked out there from the branch given.
-- Then it will follow all the steps mentioned above.
+The behavior is the same as described above, but before the first step:
+- A new temporary worktree is added to a temporary directory.
+- The file is checked out there from the given branch.
+Then the above steps are followed.
 """
 
 import argparse
@@ -219,8 +219,7 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--branch",

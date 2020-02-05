@@ -12,6 +12,7 @@ import argparse
 import logging
 import os
 import pprint
+from typing import Any, Dict
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -26,19 +27,19 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_p1_dev_server_ip() -> str:
-    """ Get the dev server name from the user environment. """
+    """
+    Get the dev server name from the user environment.
+    """
     env_var_name = "P1_DEV_SERVER"
     if env_var_name not in os.environ:
-        _LOG.error(
-            "Can't find '%s': re-run dev_scripts/setenv.sh?", env_var_name
-        )
+        _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh?", env_var_name)
         raise RuntimeError
     dev_server = os.environ[env_var_name]
     return dev_server
 
 
 # pylint: disable=too-many-statements
-def get_credentials():
+def get_credentials() -> Dict[str, Any]:
     """
     Report information about a user set-up as a function of:
         1) user name
@@ -91,15 +92,14 @@ def get_credentials():
     server_name = si.get_server_name()
     git_repo_name = git.get_repo_symbolic_name(super_module=True)
     # Values to assign.
-    git_user_name = None
-    git_user_email = None
-    conda_sh_path = None
-    conda_env_path = None
+    git_user_name = ""
+    git_user_email = ""
+    conda_sh_path = ""
     ssh_key_path = "~/.ssh/id_rsa"
     tunnel_info = []
-    jupyter_port = None
-    notebook_html_path = None
-    notebook_backup_path = None
+    jupyter_port = -1
+    notebook_html_path = ""
+    notebook_backup_path = ""
     #
     conda_env_path = "~/.conda/envs"
     conda_env_path = os.path.expanduser(conda_env_path)
@@ -242,7 +242,8 @@ def get_credentials():
             server_name,
             __file__,
         )
-    conda_sh_path = os.path.abspath(os.path.expanduser(conda_sh_path))
+    conda_sh_path = os.path.expanduser(conda_sh_path)
+    conda_sh_path = os.path.abspath(conda_sh_path)
     dbg.dassert_exists(conda_sh_path)
     #
     conda_env_path = os.path.abspath(os.path.expanduser(conda_env_path))
