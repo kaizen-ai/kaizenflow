@@ -278,9 +278,8 @@ def _transform_from_gluon_forecast_entry(
 # SkLearn
 # #############################################################################
 
-def transform_to_sklearn(
-    df: pd.DataFrame, cols: List[Any]
-) -> np.array:
+
+def transform_to_sklearn(df: pd.DataFrame, cols: List[Any]) -> np.array:
     """
     Transform pd.DataFrame cols into a numpy array and sanity check
 
@@ -290,13 +289,20 @@ def transform_to_sklearn(
     """
     dbg.dassert_isinstance(cols, list, "type(cols)=`%s`", type(cols))
     dbg.dassert(cols, "No columns provided!")
-    dbg.dassert_is_subset(cols, df.columns, "Requested columns not a subset of `df.columns`")
+    dbg.dassert_is_subset(
+        cols, df.columns, "Requested columns not a subset of `df.columns`"
+    )
     data_section = df[cols]
     dbg.dassert(
-        data_section.notna().values.any(), "The selected columns should not contain `None` values."
+        data_section.notna().values.any(),
+        "The selected columns should not contain `None` values.",
     )
     vals = data_section.values
-    dbg.dassert_eq(vals.shape, (data_section.index.size, len(cols)), "Input/output dimension mismatch")
+    dbg.dassert_eq(
+        vals.shape,
+        (data_section.index.size, len(cols)),
+        "Input/output dimension mismatch",
+    )
     return vals
 
 
