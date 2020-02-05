@@ -551,7 +551,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_perf"] = self._model_perf(y_fwd_fit, y_fwd_hat)
         self._set_info("fit", info)
         # TODO(Paul): Consider merging with `y_vars_fwd`.
-        return {"df_out": y_fwd_hat}
+        return {"df_out": y_fwd_fit.merge(y_fwd_hat, left_index=True, right_index=True)}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         # TODO(Paul): Factor out code in common with `fit`.
