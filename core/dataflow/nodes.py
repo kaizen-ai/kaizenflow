@@ -546,7 +546,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._validate_input_df(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
-        idx = self._get_fit_idx(df)
+        dbg.dassert_lt(self._steps_ahead, df.index.size)
+        idx = df.index[:-self._steps_ahead]
         # Prepare x_vars in sklearn format.
         x_vars = self._to_list(self._x_vars)
         x_fit = adpt.transform_to_sklearn(df.loc[idx], x_vars)
@@ -627,10 +628,6 @@ class ContinuousSkLearnModel(FitPredictNode):
                 .rename(columns=mapper)
         )
         return fwd_y_df
-
-    def _get_fit_idx(self, df):
-        dbg.dassert_lt(self._steps_ahead, df.index.size)
-        return df.index[:-self._steps_ahead]
 
     # TODO(Paul): Add type hints.
     # TODO(Paul): Consider omitting this (and relying on downstream
