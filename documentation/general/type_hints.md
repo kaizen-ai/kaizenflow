@@ -4,9 +4,6 @@
       * [Handling the annoying Incompatible types in assignment](#handling-the-annoying-incompatible-types-in-assignment)
       * [Disabling mypy errors](#disabling-mypy-errors)
    * [Inferring types using unit tests](#inferring-types-using-unit-tests)
-
-
-
 <!--te-->
 
 - We use python3 type hints to:
@@ -18,11 +15,11 @@
 ## Convention
 
 - Return `-> None` if your function doesn't return
-  - Pros
+  - Pros:
     - `mypy` checks functions only when there is at least an annotation: so
       using `-> None` enables `mypy` to do type checking
     - It remind us that we need to use type hints
-  - Cons
+  - Cons:
     - `None` is the default value and so it might seem redundant
 
 ## What to annotate with type hints
@@ -35,11 +32,43 @@
 
 - We strive to get no errors / warnings from the linter, including `mypy`
 
+## `reveal_type`
+
+- To find out what type `mypy` infers for an expression anywhere in your program,
+  wrap it in `reveal_type()`
+- `mypy` will print an error message with the type; remove it again before
+  running the code
+- See [here](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#when-you-re-puzzled-or-when-things-are-complicated)
+
+## Library without types
+
+- `mypy` is unhappy when a library doesn't have types
+- Lots of libraries are starting to add type hints now that python 2 has been
+  deprecated
+
+```
+*.py:14: error: No library stub file for module 'sklearn.model_selection' [mypy]
+```
+
+- You can go in `mypy.ini` and add the library (following the alphabetical order)
+  to the list
+
+- Note that you need to ensure that different copies of `mypy.ini` in different
+  subprojects are equal
+
+```bash
+> vimdiff mypy.ini amp/mypy.ini
+
+or
+
+> cp mypy.ini amp/mypy.ini
+```
+
 ## Handling the annoying `Incompatible types in assignment`
 
 - `mypy` assigns a single type to each variable for its entire scope
 
-- The problem is in common idioms like
+- The problem is in common idioms like:
 
   ```python
   output : str = ...
@@ -80,6 +109,10 @@
   # pyannotate is not always installed
   from pyannotate_runtime import collect_types  # type: ignore
   ```
+
+## What to do when you don't know what to do
+
+- You can check [here](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html)
 
 # Inferring types using unit tests
 

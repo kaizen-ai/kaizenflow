@@ -25,14 +25,16 @@
 
 1. The primary time associated with a value should be the "knowledge time"
    - Some time series naturally have multiple times associated with them, e.g.,
-     EIA data is natively labeled according to the survey week, which is not
-     made available until the following week
+     end of collection period, publication time, our knowledge time
+     - E.g., EIA data is natively labeled according to the survey week, which
+       is not made available until the following week
    - Adopting knowledge times by default affords protection against
      future-peeking
    - Unfortunately, knowledge times for historical data may need to be
      estimated. We may also want to impute knowledge times in the event that
      real-time collection fails on our end.
-2. Knowledge times are represented as datetimes
+2. Knowledge times are always represented as datetimes to avoid ambiguity
+   stemming from a date without hour
    - E.g., for daily closing price data with a label such as "2019-01-04", the
      label should be converted to "2019-01-04 16:00:00 ET"
    - Additional information may be required for this conversion (e.g., trading
@@ -53,7 +55,7 @@
 
 ## Prices and returns
 
-- The last price quote in an interval `[a, b)` we call the "closing" price, and
+- We call the "closing" price the last price quote in an interval `[a, b)` , and
   we label it with time `b`. In series/dataframes, we label this price series
   with `close`. An "instantaneous" price at time `b` we also label in this way
   (assuming in practice that it is equivalent to the end-of-interval price of
