@@ -216,6 +216,10 @@ def get_credentials() -> Dict[str, Any]:
             # Laptop.
             conda_sh_path = "/home/greg/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = os.path.expanduser("/home/greg/anaconda3/envs")
+    elif user_name == "max_particle":
+        # MaxParticle.
+        git_user_name = "MaxParticle"
+        git_user_email = "max@particle.one"
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.
