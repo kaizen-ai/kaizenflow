@@ -62,7 +62,7 @@ class TestGeneratePredictions(hut.TestCase):
             predictor, test_df, y_vars, prediction_length, 4, False, x_vars,
         )
         str_output = (
-            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('df')}\n{test_df.to_string()}\n"
             f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
             f"{prnt.frame('y')}\n{y.to_string()}\n"
         )
@@ -82,7 +82,7 @@ class TestGeneratePredictions(hut.TestCase):
             predictor, test_df, y_vars, prediction_length, 4, False, x_vars,
         )
         str_output = (
-            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('df')}\n{test_df.to_string()}\n"
             f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
             f"{prnt.frame('y')}\n{y.to_string()}\n"
         )
@@ -102,7 +102,7 @@ class TestGeneratePredictions(hut.TestCase):
             predictor, test_df, y_vars, prediction_length, 4, False, x_vars,
         )
         str_output = (
-            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('df')}\n{test_df.to_string()}\n"
             f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
             f"{prnt.frame('y')}\n{y.to_string()}\n"
         )
@@ -119,7 +119,7 @@ class TestGeneratePredictions(hut.TestCase):
             predictor, test_df, y_vars, prediction_length, 4, False,
         )
         str_output = (
-            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('df')}\n{test_df.to_string()}\n"
             f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
             f"{prnt.frame('y')}\n{y.to_string()}\n"
         )
@@ -137,7 +137,7 @@ class TestGeneratePredictions(hut.TestCase):
             predictor, test_df, y_vars, prediction_length, 4, True, x_vars,
         )
         str_output = (
-            f"{prnt.frame('df')}\n{test_df.to_string()}"
+            f"{prnt.frame('df')}\n{test_df.to_string()}\n"
             f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
             f"{prnt.frame('y')}\n{y.to_string()}\n"
         )
