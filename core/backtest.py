@@ -60,7 +60,6 @@ def generate_predictions(
     df: pd.DataFrame,
     y_vars: Union[str, List[str]],
     prediction_length: int,
-    frequency: str,
     num_samples: int,
     use_feat_dynamic_real: bool,
     x_vars: Optional[List[str]] = None,
@@ -79,7 +78,6 @@ def generate_predictions(
     :param y_vars: target column. Only single target is supported.
     :param prediction_length: number of steps for which the prediction
         is made
-    :param frequency: grid frequency
     :param num_samples: number of traces (sample paths) that are
         generated
     :param use_feat_dynamic_real: if True, truncate target by prediction
@@ -116,7 +114,7 @@ def generate_predictions(
                 test_df,
                 y_vars,
                 prediction_length,
-                frequency,
+                df.index.freq,
                 num_samples,
                 use_feat_dynamic_real,
                 x_vars,
