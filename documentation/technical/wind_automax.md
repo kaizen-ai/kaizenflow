@@ -55,12 +55,18 @@ the script multiple times. The history of the runs:
 - [WIND: OCR to build mapping commodity -> data #799 (comment #1)](https://github.com/ParticleDev/commodity_research/issues/799#issuecomment-568909587)
 - [WIND: OCR to build mapping commodity -> data #799 (comment #2)](https://github.com/ParticleDev/commodity_research/issues/799#issuecomment-569682734)
 
-The screenshots are in the `Wind_terminal/screenshots_PartTask799_4levels_20191225`
-directory.
+The screenshots are located in the following directories:
+ - `/s3/default00-bucket/wind/datasets/Wind_terminal/screenshots_PartTask799_4levels_20191225`
+ - `/s3/default00-bucket/wind/datasets/Wind_terminal/screenshots_PartTask799_4levels_20191225_20191230_missing_files/`
 
 ### 4. OCR for automax_indicators
 
-- GitHub reference: [WIND: OCR to build mapping commodity -> data #799 (comment)](https://github.com/ParticleDev/commodity_research/issues/799#issuecomment-569095135)
+- GitHub reference: 
+   - [WIND: OCR to build mapping commodity -> data #799 (comment)](https://github.com/ParticleDev/commodity_research/issues/799#issuecomment-569095135)
+   - [WIND: Extract metadata through screenshots #774 (linked comment and down)](https://github.com/ParticleDev/commodity_research/issues/774#issuecomment-580356330)
 - The code: [vendors/wind/extract_tables_from_images.py](https://github.com/ParticleDev/commodity_research/blob/master/vendors/wind/extract_tables_from_images.py)
 
-Recognized tables are in `wind/extracted_tables_PartTask799_4levels_20191225`.
+The resulting .csv that combines data from screenshots in both aforementioned directories is located at:
+ - S3 bucket: `/s3/default00-bucket/wind/datasets/Wind_terminal/WIND_metadata_table.csv`
+ - [Google Drive](https://docs.google.com/spreadsheets/d/1i_H1N4E81oFUB6O1Y8rJ95q4UFEpIIdv_Bhim-4Z4kE/edit#gid=1549615534)
+ 
