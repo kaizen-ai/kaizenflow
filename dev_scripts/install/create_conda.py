@@ -233,6 +233,12 @@ def _create_conda_env(args, conda_env_name):
     hco.conda_system(cmd, suppress_output=False)
 
 
+def _run_pip_install(conda_env_name):
+    # PartTask1005: Moved to pip and pinned for gluonts.
+    cmd = 'conda activate %s && pip install --no-deps "mxnet==1.4.1"' % conda_env_name
+    hco.conda_system(cmd, suppress_output=False)
+
+
 def _test_conda_env(conda_env_name):
     # Test activating.
     _LOG.info("\n%s", prnt.frame("Test activate conda env '%s'" % conda_env_name))
@@ -274,8 +280,10 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--python_version", default=None, type=str, action="store"
     )
+    # TODO(gp): Use the action approach from helpers.parser.
     parser.add_argument("--skip_delete_env", action="store_true")
     parser.add_argument("--skip_install_env", action="store_true")
+    parser.add_argument("--skip_pip_install", action="store_true")
     parser.add_argument("--skip_test_env", action="store_true")
     #
     prsr.add_verbosity_arg(parser)
@@ -303,6 +311,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.warning("Skip create conda env")
     else:
         _create_conda_env(args, conda_env_name)
+    #
+    if args.skip_pip_install:
+        _LOG.warning("Skip pip install")
+    else:
+        _run_pip_install(conda_env_name)
     #
     if args.skip_test_env:
         _LOG.warning("Skip test conda env")

@@ -186,6 +186,7 @@ markupsafe=1.1.1=py37h516909a_0
 matplotlib=3.1.2=py37_1
 matplotlib-base=3.1.2=py37h250f245_1
 mccabe=0.6.1=py_1
+memory-profiler=0.57.0=pypi_0
 mistune=0.8.4=py37h516909a_1000
 mkl=2019.4=243
 mkl-service=2.3.0=py37h516909a_0
