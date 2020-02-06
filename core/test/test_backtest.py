@@ -51,7 +51,7 @@ class TestGeneratePredictions(hut.TestCase):
         # Generate `y` as linear combination of `x_i`.
         weights = np.random.dirichlet(np.ones(n_x_vars), 1).flatten()
         y = np.average(x_vals, axis=1, weights=weights)
-        # Shift `y` (`y = weig(x).shift(shift)`).
+        # Shift `y` (`y = weighted_sum(x).shift(shift)`).
         x = x_vals[shift:]
         y = y[:-shift]
         # Generate a dataframe.
