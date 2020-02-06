@@ -11,6 +11,7 @@ import gluonts.trainer as gt
 import numpy as np
 import pandas as pd
 
+import core.backtest as bcktst
 import core.data_adapters as adpt
 import core.finance as fin
 import core.statistics as stats
@@ -778,6 +779,135 @@ class SkLearnModel(FitPredictNode):
         Allowing a callable here allows us to pass in the ColumnTransformer's
         method `transformed_col_names` and defer the call until graph
         execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
+class ContinuousDeepArModel(FitPredictNode):
+    """
+    A dataflow node for a DeepAR model.
+
+    See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
+
+    For additional context and best-practices, see
+    https://github.com/ParticleDev/commodity_research/issues/966
+    """
+
+    def __init__(
+            self,
+            nid: str,
+            trainer_kwargs: Optional[Any] = None,
+            estimator_kwargs: Optional[Any] = None,
+            x_vars=Union[List[str], Callable[[], List[str]]],
+            y_vars=Union[List[str], Callable[[], List[str]]],
+    ) -> None:
+        """
+        Initialize dataflow node for gluon-ts DeepAR model.
+
+        :param nid: unique node id
+        :param trainer_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.trainer.html#gluonts.trainer.Trainer
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/trainer/_base.py
+        :param estimator_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.model.deepar.html
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/model/deepar/_estimator.py
+        :param x_vars: Covariates. Could be, e.g., features associated with a
+            point-in-time event. Must be known throughout the prediction
+            window at the time the prediction is made.
+        :param y_vars: Used in autoregression
+        """
+        super().__init__(nid)
+        self._estimator_kwargs = estimator_kwargs
+        # To avoid passing a class through config, handle `Trainer()`
+        # parameters separately from `estimator_kwargs`.
+        self._trainer_kwargs = trainer_kwargs
+        self._trainer = gt.Trainer(**self._trainer_kwargs)
+        dbg.dassert_not_in("trainer", self._estimator_kwargs)
+        #
+        self._estimator_func = gmd.DeepAREstimator
+        # NOTE: Covariates (x_vars) are not required by DeepAR.
+        # TODO(Paul): Allow this model to accept y_vars only.
+        #   - This could be useful for, e.g., predicting future values of
+        #     what would normally be predictors
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._estimator = None
+        self._predictor = None
+        #
+        dbg.dassert_in("prediction_length", self._estimator_kwargs)
+        self._prediction_length = self._estimator_kwargs["prediction_length"]
+        dbg.dassert_not_in("freq", self._estimator_kwargs)
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Obtain index slice for which forward targets exist.
+        dbg.dassert_lt(self._prediction_length, df.index.size)
+        idx = df.index[: -self._prediction_length]
+        #
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        # Prepare forward y_vars in sklearn format.
+#        fwd_y_df = self._get_fwd_y_df(df).loc[idx]
+#        fwd_y_var = [fwd_y_df.columns[0]]
+#        fit_df = df.loc[idx].merge(fwd_y_df, left_index=True, right_index=True)
+        # Transform dataflow local timeseries dataframe into gluon-ts format.
+        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, df.index.freq)
+        # Instantiate the (DeepAR) estimator and train the model.
+        self._estimator = self._estimator_func(
+            trainer=self._trainer,
+            freq=df.index.freq.freqstr,
+            **self._estimator_kwargs,
+        )
+        self._predictor = self._estimator.train(gluon_train)
+        #
+        fwd_y_hat, fwd_y = bcktst.generate_predictions\
+            (predictor=self._predictor,
+             df=df,
+             y_vars=y_vars,
+             prediction_length=self._prediction_length,
+             num_samples=10,
+             use_feat_dynamic_real=True,
+             x_vars=x_vars)
+        # Store info.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        self._set_info("fit", info)
+        return {"df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        raise NotImplementedError()
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert(df.index.freq)
+        return None
+
+    def _get_fwd_y_df(self, df):
+        """
+        Return dataframe of `steps_ahead` forward y values.
+        """
+        y_vars = self._to_list(self._y_vars)
+        mapper = lambda y: y + "_%i" % self._prediction_length
+        [mapper(y) for y in y_vars]
+        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
+        fwd_y_df = df[y_vars].shift(-self._prediction_length).rename(columns=mapper)
+        return fwd_y_df
+
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        As in `SkLearnNode` version.
+
+        TODO(Paul): Think about factoring this method out into a parent/mixin.
         """
         if callable(to_list):
             to_list = to_list()

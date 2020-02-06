@@ -125,6 +125,68 @@ class TestContinuousSkLearnModel(hut.TestCase):
         return df
 
 
+class TestContinuousDeepArModel(hut.TestCase):
+    def test_fit_dag1(self) -> None:
+        pred_lag = 1
+        # Load test data.
+        data = self._get_data(pred_lag)
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Load deepar config and create modeling node.
+        config = self._get_config(pred_lag)
+        node = dtf.ContinuousDeepArModel(
+            "deepar", **config.to_dict(),
+        )
+        dag.add_node(node)
+        dag.connect("data", "deepar")
+        #
+        output_df = dag.run_leq_node("deepar", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def test_fit_dag2(self) -> None:
+        pred_lag = 2
+        # Load test data.
+        data = self._get_data(pred_lag)
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Load deepar config and create modeling node.
+        config = self._get_config(pred_lag + 1)
+        node = dtf.ContinuousDeepArModel(
+            "deepar", **config.to_dict(),
+        )
+        dag.add_node(node)
+        dag.connect("data", "deepar")
+        #
+        output_df = dag.run_leq_node("deepar", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def _get_config(self, steps_ahead: int) -> cfg.Config:
+        config = cfg.Config()
+        config["x_vars"] = ["x"]
+        config["y_vars"] = ["y"]
+        config["trainer_kwargs"] = {"epochs": 1}
+        config["estimator_kwargs"] = {"use_feat_dynamic_real": True, "prediction_length": steps_ahead}
+        return config
+
+    def _get_data(self, lag: int) -> None:
+        """
+        Generate "random returns". Use lag + noise as predictor.
+        """
+        num_periods = 50
+        total_steps = num_periods + lag + 1
+        rets = sigp.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
+        noise = sigp.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
+        pred = rets.shift(-lag).loc[1:num_periods] + noise.loc[1:num_periods]
+        resp = rets.loc[1:num_periods]
+        idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
+        df = pd.DataFrame.from_dict({"x": pred, "y": resp}).set_index(idx)
+        return df
+
+
 class TestDeepARGlobalModel(hut.TestCase):
     def test_fit1(self) -> None:
         local_ts = self._get_local_ts()
