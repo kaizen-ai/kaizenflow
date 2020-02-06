@@ -6,8 +6,6 @@ import io
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-import gluonts
-
 import gluonts.model.deepar as gmd
 import gluonts.trainer as gt
 import numpy as np
@@ -494,6 +492,175 @@ class Resample(Transformer):
 # #############################################################################
 
 
+class ContinuousSkLearnModel(FitPredictNode):
+    """
+    Fit and predict an sklearn model.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        steps_ahead: int,
+        model_kwargs: Optional[Any] = None,
+    ) -> None:
+        """
+    Specify the data and sklearn modeling parameters.
+
+    Assumptions:
+        :param nid: unique node id
+        :param model_func: an sklearn model
+        :param x_vars: indexed by knowledge datetimes
+            - `x_vars` may contain lags of `y_vars`
+        :param y_vars: indexed by knowledge datetimes
+            - e.g., in the case of returns, this would correspond to `ret_0`
+        :param steps_ahead: number of steps ahead for which a prediction is to
+            be generated. E.g.,
+                - if `steps_ahead == 0`, then the predictions are
+                  are contemporaneous with the observed response (and hence
+                  inactionable)
+                - if `steps_ahead == 1`, then the model attempts to predict
+                  `y_vars` for the next time step
+                - The model is only trained to predict the target `steps_ahead`
+                  steps ahead (and not all intermediate steps)
+        :param model_kwargs: parameters to forward to the sklearn model (e.g.,
+            regularization constants)
+        """
+        super().__init__(nid)
+        self._model_func = model_func
+        self._model_kwargs = model_kwargs or {}
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._model = None
+        self._steps_ahead = steps_ahead
+        dbg.dassert_lte(
+            0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
+        )
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Obtain index slice for which forward targets exist.
+        dbg.dassert_lt(self._steps_ahead, df.index.size)
+        idx = df.index[: -self._steps_ahead]
+        # Prepare x_vars in sklearn format.
+        x_vars = self._to_list(self._x_vars)
+        x_fit = adpt.transform_to_sklearn(df.loc[idx], x_vars)
+        # Prepare forward y_vars in sklearn format.
+        fwd_y_df = self._get_fwd_y_df(df).loc[idx]
+        fwd_y_fit = adpt.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
+        # Define and fit model.
+        self._model = self._model_func(**self._model_kwargs)
+        self._model = self._model.fit(x_fit, fwd_y_fit)
+        # Generate insample predictions and put in dataflow dataframe format.
+        fwd_y_hat = self._model.predict(x_fit)
+        #
+        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
+        # TODO(Paul): Summarize model perf or make configurable.
+        # TODO(Paul): Consider separating model eval from fit/predict.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
+        self._set_info("fit", info)
+        # Return targets and predictions.
+        return {
+            "df_out": fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
+        }
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        idx = df.index
+        # Transform x_vars to sklearn format.
+        x_vars = self._to_list(self._x_vars)
+        x_predict = adpt.transform_to_sklearn(df, x_vars)
+        # Use trained model to generate predictions.
+        dbg.dassert_is_not(
+            self._model, None, "Model not found! Check if `fit` has been run."
+        )
+        fwd_y_hat = self._model.predict(x_predict)
+        # Put predictions in dataflow dataframe format.
+        fwd_y_df = self._get_fwd_y_df(df)
+        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns.tolist()]
+        fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
+        # Generate basic perf stats.
+        info = collections.OrderedDict()
+        info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
+        self._set_info("predict", info)
+        # Return targets and predictions.
+        return {
+            "df_out": fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
+        }
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert(df.index.freq)
+        return None
+
+    def _get_fwd_y_df(self, df):
+        """
+        Return dataframe of `steps_ahead` forward y values.
+        """
+        y_vars = self._to_list(self._y_vars)
+        mapper = lambda y: y + "_%i" % self._steps_ahead
+        [mapper(y) for y in y_vars]
+        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
+        fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
+        return fwd_y_df
+
+    # TODO(Paul): Add type hints.
+    # TODO(Paul): Consider omitting this (and relying on downstream
+    #     processing to e.g., adjust for number of hypotheses tested).
+    @staticmethod
+    def _model_perf(
+        y: pd.DataFrame, y_hat: pd.DataFrame
+    ) -> collections.OrderedDict:
+        info = collections.OrderedDict()
+        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
+        pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
+        info["pnl_rets"] = pnl_rets
+        info["sr"] = fin.compute_sharpe_ratio(
+            pnl_rets.resample("1B").sum(), time_scaling=252
+        )
+        return info
+
+    # TODO(Paul): Make this a mixin to use with all modeling nodes.
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        Return a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
 class SkLearnModel(FitPredictNode):
     def __init__(
         self,
@@ -571,7 +738,7 @@ class SkLearnModel(FitPredictNode):
     ) -> Tuple[List[str], np.array, List[str], np.array]:
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
-        x_vals, y_vals = adpt.transform_to_sklearn(df, x_vars, y_vars)
+        x_vals, y_vals = adpt.transform_to_sklearn_old(df, x_vars, y_vars)
         return x_vars, x_vals, y_vars, y_vals
 
     @staticmethod
@@ -628,6 +795,7 @@ class DeepARGlobalModel(FitPredictNode):
     For additional context and best-practices, see
     https://github.com/ParticleDev/commodity_research/issues/966
     """
+
     def __init__(
         self,
         nid: str,

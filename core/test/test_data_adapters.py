@@ -165,13 +165,13 @@ class TestTransformToSklean(hut.TestCase):
     def test_transform1(self) -> None:
         ta = _TestAdapter()
         df = ta._df.dropna()
-        sklearn_input = adpt.transform_to_sklearn(df, ta._x_vars, ta._y_vars)
+        sklearn_input = adpt.transform_to_sklearn_old(df, ta._x_vars, ta._y_vars)
         self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
 
     def test_transform_none_x_vars1(self) -> None:
         ta = _TestAdapter()
         df = ta._df.dropna()
-        sklearn_input = adpt.transform_to_sklearn(df, None, ta._y_vars)
+        sklearn_input = adpt.transform_to_sklearn_old(df, None, ta._y_vars)
         self.check_string("x_vals:\n{}\ny_vals:\n{}".format(*sklearn_input))
 
 
