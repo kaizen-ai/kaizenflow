@@ -29,6 +29,9 @@ def get_gluon_dataset(
     """
     Load Gluon dataset, transform it into train and test dataframes.
 
+    The default `m4_hourly` time series look like this:
+    https://gluon-ts.mxnet.io/_images/examples_forecasting_tutorial_9_0.png
+
     :param dataset_name: name of the dataset. Supported names can be
         obtained using `get_gluon_dataset_names`.
     :param train_length: length of the train dataset
