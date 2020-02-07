@@ -21,7 +21,7 @@ def predict(
     prediction_length: int,
     num_samples: int,
     x_vars: Optional[List[str]] = None,
-) -> np.array:
+) -> gluonts.model.forecast.SampleForecast:
     """
     Predict next values using trained predictor.
 
@@ -33,7 +33,8 @@ def predict(
     :param prediction_length: number of steps for which the prediction is made
     :param num_samples: number of traces (sample paths) generated
     :param x_vars: feature columns
-    :return: predictions array of shape `(num_samples, prediction_length)`
+    :return: SampleForecast with `samples` predictions np.array of shape
+        `(num_samples, prediction_length)`
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
@@ -56,9 +57,8 @@ def predict(
     predictions = predictor.predict(data, num_samples=num_samples)
     predictions = hlist.assert_single_element_and_return(list(predictions))
     #
-    y_hat = predictions.samples
-    dbg.dassert_eq(y_hat.shape, (num_samples, prediction_length))
-    return y_hat
+    dbg.dassert_eq(predictions.samples.shape, (num_samples, prediction_length))
+    return predictions
 
 
 def generate_predictions(
@@ -118,10 +118,10 @@ def generate_predictions(
         if use_feat_dynamic_real and i < prediction_length:
             # If there are no covariates to make forward prediction on,
             # return NaN predictions.
-            yhat = np.full(prediction_length, np.nan)
+            y_hat = np.full(prediction_length, np.nan)
         else:
             test_df = df.iloc[: i + 1 + trunc_len]
-            yhat = predict(
+            sample_forecast = predict(
                 predictor=predictor,
                 df=test_df,
                 y_vars=y_vars,
@@ -129,8 +129,9 @@ def generate_predictions(
                 num_samples=num_samples,
                 x_vars=x_vars,
             )
-            yhat = yhat.mean(axis=0)
-        yhat_all[i] = yhat
+            y_hat = sample_forecast.samples.mean(axis=0)
+            y_hat_start_date = sample_forecast.start_date
+        yhat_all[i] = y_hat
         y = df.iloc[i : i + prediction_length][y_vars[0]].to_list()
         n_missing_y = prediction_length - len(y)
         if n_missing_y > 0:

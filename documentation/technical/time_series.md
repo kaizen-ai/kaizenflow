@@ -33,8 +33,8 @@
    - Unfortunately, knowledge times for historical data may need to be
      estimated. We may also want to impute knowledge times in the event that
      real-time collection fails on our end.
-2. Knowledge times are always represented as datetimes to avoid ambiguity
-   stemming from a date without hour
+2. Knowledge times are always represented as datetimes to, e.g., avoid ambiguity
+   stemming from a date without an hour
    - E.g., for daily closing price data with a label such as "2019-01-04", the
      label should be converted to "2019-01-04 16:00:00 ET"
    - Additional information may be required for this conversion (e.g., trading
@@ -55,7 +55,7 @@
 
 ## Prices and returns
 
-- We call the "closing" price the last price quote in an interval `[a, b)` , and
+- We call the "closing" price the last price quote in an interval `[a, b)`, and
   we label it with time `b`. In series/dataframes, we label this price series
   with `close`. An "instantaneous" price at time `b` we also label in this way
   (assuming in practice that it is equivalent to the end-of-interval price of
