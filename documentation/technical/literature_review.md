@@ -205,7 +205,7 @@
   - If no implementation is available, scope out how much work a minimal
     pandas-compatible implementation would require
 
-## High-Dimensional Multivariate Forecasting with Low-Rank Gaussian Copula Processes
+## 2019, High-Dimensional Multivariate Forecasting with Low-Rank Gaussian Copula Processes
 
 - Paper authors: David Salinas, Michael Bohlke-Schneider, Laurent Callot,
     Roberto Medico, Jan Gasthaus
@@ -227,3 +227,48 @@
 - Next steps:
   - Use in cases where we have a large number of time series known to have
     meaningful correlations
+
+## 2014, The topology of macro financial flow using stochastic flow diagrams
+- Paper authors: Calkin, De Prado
+- [Link](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2379319)
+- Review author / date: GP, 2020-01-17
+- Score: 1 / 5
+- Summary:
+- Praises:
+  - PCA on futures sectors
+  - Interesting graphical representation
+    - Width of the arc represents strength of relationship (in terms of $R^2$)
+    - Color (green / red) and intensity represent sign and magnitude
+    - Lags are delays
+    - Geometric topology represents relationships better than tables
+    - Connectivity of a vertex represents importance
+  - Agreed that econometrics as it is, is close to a pseudo-science
+    that more complex techniques are needed than inverting a matrix
+- Critiques:
+  - Various inflammatory remarks and very little content
+- Next steps:
+  - None
+
+# Computer engineering
+
+## 2015, Hidden technical debt in machine learning systems
+
+- Paper authors: Sculler et al.
+- [Link](http://papers.nips.cc/paper/5656-hidden-technical-debt-in-machine-learning-systems.pdf)
+- Review author / date: GP, 2020-01-07
+- Score: 4/5
+- Summary:
+  - Many interesting little observations about ML practices and engineering
+- Praises:
+  - Validates how approach of minimizing technical debt and paying it off the
+    interest, e.g.,
+    - Treat configuration as code, as we do
+    - Design abstraction carefully
+    - Routinely clean up the code
+    - No distinction in quality between research and production
+    - Use a single language for everything
+    - Need for committing to the healthy engineering practices
+- Critiques:
+  - None
+- Next steps:
+  - None

@@ -50,6 +50,15 @@
     - "-^ house starts => -^ inflation => -v interest rates => -v bond yield =>
       -v bond prices"
 
+# Why is it useful?
+
+- Allow to judge news events and macroeconomic time series based on our
+  understanding of the world
+  - The usual approach is to consider events in an isolated fashion
+
+- Allow to build models automatically based on the relationship between
+  quantities existing in the real world
+
 # Why does this work?
 
 - Typically one (HFs, academics, banks) fits one variable at the time, without

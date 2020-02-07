@@ -6,6 +6,7 @@ import helpers.cache as hcac
 """
 
 import argparse
+import copy
 import functools
 import logging
 import os
@@ -93,10 +94,10 @@ class Cached:
     function `f` is executed and the value is stored.
 
     The decorator uses 2 levels of caching:
-        - disk cache: useful for retrieving the state among different
-          executions or when one does a "Reset" of a notebook;
-        - memory cache: useful for multiple execution in notebooks, without
-          resetting the state.
+    - disk cache: useful for retrieving the state among different executions or
+      when one does a "Reset" of a notebook;
+    - memory cache: useful for multiple execution in notebooks, without
+      resetting the state.
     """
 
     def __init__(
@@ -127,8 +128,7 @@ class Cached:
         def _execute_func_from_disk_cache(*args: Any, **kwargs: Any) -> Any:
             # If we get here, we didn't hit neither memory nor the disk cache.
             self._last_used_disk_cache = False
-            _LOG.log(
-                _LOG_LEVEL,
+            _LOG.debug(
                 "%s(args=%s kwargs=%s): execute the intrinsic function",
                 self._func.__name__,
                 args,
@@ -136,6 +136,8 @@ class Cached:
             )
             obj = self._func(*args, **kwargs)
             return obj
+
+        self._execute_func_from_disk_cache = _execute_func_from_disk_cache
 
         @functools.lru_cache(maxsize=None)
         def _execute_func_from_mem_cache(*args: Any, **kwargs: Any) -> Any:
@@ -149,8 +151,7 @@ class Cached:
             # but we don't know about the disk cache.
             if self._use_mem_cache:
                 self._last_used_mem_cache = False
-                _LOG.log(
-                    _LOG_LEVEL,
+                _LOG.debug(
                     "%s(args=%s kwargs=%s): trying to read from disk",
                     self._func.__name__,
                     args,
@@ -162,6 +163,8 @@ class Cached:
                 obj = self._func(*args, **kwargs)
             return obj
 
+        self._execute_func_from_mem_cache = _execute_func_from_mem_cache
+
         def _execute_func(*args: Any, **kwargs: Any) -> Any:
             _LOG.debug(
                 "%s: use_mem_cache=%s use_disk_cache=%s",
@@ -170,8 +173,7 @@ class Cached:
                 self._use_disk_cache,
             )
             if self._use_mem_cache:
-                _LOG.log(
-                    _LOG_LEVEL,
+                _LOG.debug(
                     "%s(args=%s kwargs=%s): trying to read from memory: %s",
                     self._func.__name__,
                     args,
@@ -200,6 +202,10 @@ class Cached:
         else:
             self._reset_cache_tracing()
             obj = self._execute_func(*args, **kwargs)
+            _LOG.log(_LOG_LEVEL, "%s: executed from '%s'", self._func.__name__, self.get_last_cache_accessed())
+            # TODO(gp): We make a copy, but we should do something better
+            # (PartTask1071).
+            obj = copy.deepcopy(obj)
         return obj
 
     def get_last_cache_accessed(self) -> str:
@@ -218,6 +224,14 @@ class Cached:
             dbg.dassert(self._last_used_mem_cache)
             ret = "disk"
         return ret
+
+    def clear_memory_cache(self) -> None:
+        _LOG.warning("%s: clearing memory cache", self._func.__name__)
+        self._execute_func_from_mem_cache.cache_clear()
+
+    def clear_disk_cache(self) -> None:
+        _LOG.warning("%s: clearing disk cache", self._func.__name__)
+        self._execute_func_from_dir_cache.clear()
 
     def _reset_cache_tracing(self) -> None:
         """
