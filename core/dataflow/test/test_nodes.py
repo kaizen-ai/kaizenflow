@@ -3,6 +3,7 @@ import pprint
 
 import numpy as np
 import pandas as pd
+import pytest
 import sklearn.linear_model as slm
 
 import core.config as cfg
@@ -188,6 +189,9 @@ class TestContinuousDeepArModel(hut.TestCase):
 
 
 class TestDeepARGlobalModel(hut.TestCase):
+    @pytest.mark.skip(
+        reason="test showing instability and node may be deprecated anyway"
+    )
     def test_fit1(self) -> None:
         local_ts = self._get_local_ts()
         num_entries = 100
@@ -210,6 +214,9 @@ class TestDeepARGlobalModel(hut.TestCase):
         )
         self.check_string(config_info_output)
 
+    @pytest.mark.skip(
+        reason="test showing instability and node may be deprecated anyway"
+    )
     def test_fit_dag1(self) -> None:
         dag = dtf.DAG(mode="strict")
         local_ts = self._get_local_ts()
