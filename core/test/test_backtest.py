@@ -79,6 +79,7 @@ class TestGeneratePredictions(hut.TestCase):
 
     def test1(self) -> None:
         """
+        Generate y from a shift of an ARIMA series. 
         """
         num_x_vars = 1
         df = TestGeneratePredictions._generate_input_data(
@@ -117,6 +118,9 @@ class TestGeneratePredictions(hut.TestCase):
         self.check_string(str_output)
 
     def test2(self) -> None:
+        """
+        Generate y from a shift of a linear combination of ARIMA series.
+        """
         num_x_vars = 2
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=num_x_vars, base_random_state=42
@@ -155,7 +159,7 @@ class TestGeneratePredictions(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Test autoregressive behavior only (no predictors used).
+        Generate y from a shift of an ARIMA series. Ignore x.
         """
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=1, base_random_state=42
