@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""
+r"""
 Automate some common workflows with jupytext.
 
 > find . -name "*.ipynb" | grep -v ipynb_checkpoints | head -3 | xargs -t -L 1 process_jupytext.py --action sync --file
@@ -18,6 +18,7 @@ Automate some common workflows with jupytext.
 
 import argparse
 import logging
+import re
 
 import dev_scripts.linter as lin
 import helpers.dbg as dbg
@@ -31,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 _EXECUTABLE = "jupytext"
 
 
-def _pair(file_name):
+def _pair(file_name: str) -> None:
     dbg.dassert(
         lin.is_ipynb_file(file_name), "'%s' has no .ipynb extension", file_name
     )
@@ -63,7 +64,7 @@ def _pair(file_name):
     si.system(cmd)
 
 
-def _sync(file_name):
+def _sync(file_name: str) -> None:
     if lin.is_paired_jupytext_file(file_name):
         # cmd = _EXECUTABLE + " --sync --update --to py:percent %s" % file_name
         cmd = _EXECUTABLE + " --sync --to py:percent %s" % file_name
@@ -72,7 +73,7 @@ def _sync(file_name):
         _LOG.warning("The file '%s' is not paired: run --pair", file_name)
 
 
-def _test(file_name, action):
+def _test(file_name: str, action: str) -> None:
     if action == "test":
         opts = "--test"
     elif action == "test_strict":
@@ -81,7 +82,35 @@ def _test(file_name, action):
         raise ValueError("Invalid action='%s'" % action)
     cmd = [_EXECUTABLE, opts, "--stop --to py:percent %s" % file_name]
     cmd = " ".join(cmd)
-    si.system(cmd)
+    _, txt = si.system_to_string(cmd, abort_on_error=False)
+    # Workaround for https://github.com/mwouts/jupytext/issues/414 to avoid to
+    # report an error due to jupytext version mismatch.
+    #
+    # [jupytext] Reading nlp/notebooks/PartTask1081_RP_small_test.py
+    # nlp/notebooks/PartTask1081_RP_small_test.py:
+    # --- expected
+    # +++ actual
+    # @@ -5,7 +5,7 @@
+    #  #       extension: .py
+    #  #       format_name: percent
+    #  #       format_version: '1.3'
+    # -#       jupytext_version: 1.3.3
+    # +#       jupytext_version: 1.3.0
+    #  #   kernelspec:
+    #  #     display_name: Python [conda env:.conda-p1_develop] *
+    #  #     language: python
+    regex = (
+        r"\n\-\#\s+jupytext_version:\s*(\S+).*\n\+\#\s+jupytext_version:\s*(\S+)"
+    )
+    m = re.search(regex, txt, re.MULTILINE)
+    if m:
+        _LOG.warning(
+            "There is a mismatch of jupytext version: '%s' vs '%s'",
+            m.group(1),
+            m.group(2),
+        )
+    else:
+        raise RuntimeError(txt)
 
 
 # #############################################################################
