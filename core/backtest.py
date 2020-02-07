@@ -119,6 +119,7 @@ def generate_predictions(
             # If there are no covariates to make forward prediction on,
             # return NaN predictions.
             y_hat = np.full(prediction_length, np.nan)
+            y_hat_start_date = None
         else:
             test_df = df.iloc[: i + 1 + trunc_len]
             sample_forecast = predict(
@@ -137,6 +138,14 @@ def generate_predictions(
         if n_missing_y > 0:
             y += [np.nan] * n_missing_y
         y_all[i] = y
-    yhat_all = pd.DataFrame(yhat_all, index=df.index, columns=yhat_cols)
-    y_all = pd.DataFrame(y_all, index=df.index, columns=y_cols)
+    # Check that the prediction start dates are the same as the `df`
+    # index. It's enough to check only the last index because the grid
+    # is uniform.
+    pred_idx = df.index + pd.Timedelta(f"1{df.index.freq.freqstr}")
+    dbg.dassert_eq(
+        pred_idx[-1],
+        y_hat_start_date + pd.Timedelta(f"{trunc_len}{df.index.freq.freqstr}"),
+    )
+    yhat_all = pd.DataFrame(yhat_all, index=pred_idx, columns=yhat_cols)
+    y_all = pd.DataFrame(y_all, index=pred_idx, columns=y_cols)
     return yhat_all, y_all
