@@ -177,6 +177,7 @@ class Test_install_create_conda_py1(ut.TestCase):
                 return
             # Remove env.
             cmd.append("--skip_install_env")
+            cmd.append("--skip_pip_install")
             cmd.append("--skip_test_env")
         cmd_tmp = " ".join(cmd)
         si.system(cmd_tmp)
