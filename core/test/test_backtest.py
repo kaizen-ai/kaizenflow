@@ -35,7 +35,7 @@ class TestGeneratePredictions(hut.TestCase):
 
     @staticmethod
     def _generate_input_data(
-        num_x_vars: int = 2,
+        num_x_vars: int,
         n_periods: int = 20,
         base_random_state: int = 0,
         shift: int = 1,
@@ -57,7 +57,6 @@ class TestGeneratePredictions(hut.TestCase):
         :return:
         """
         np.random.seed(base_random_state)
-        num_x_vars = 2
         # Generate `x_vals`.
         x_vals = [
             TestGeneratePredictions._generate_test_series(
@@ -81,8 +80,9 @@ class TestGeneratePredictions(hut.TestCase):
     def test1(self) -> None:
         """
         """
+        num_x_vars=1
         df = TestGeneratePredictions._generate_input_data(
-            num_x_vars=1, base_random_state=42
+            num_x_vars=num_x_vars, base_random_state=42
         )
         x_vars = ["x0"]
         y_vars = ["y"]
@@ -99,7 +99,7 @@ class TestGeneratePredictions(hut.TestCase):
         predictor = estimator.train(train_ts)
         #
         test_df = TestGeneratePredictions._generate_input_data(
-            base_random_state=0
+            num_x_vars=num_x_vars, base_random_state=0
         )
         yhat, y = btest.generate_predictions(
             predictor=predictor,
@@ -109,18 +109,17 @@ class TestGeneratePredictions(hut.TestCase):
             num_samples=4,
             x_vars=x_vars,
         )
+        merged = y.merge(yhat, left_index=True, right_index=True)
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}\n\n"
-            f"{prnt.frame('y')}\n{y.to_string()}\n\n"
-            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+            f"{prnt.frame('y/yhat')}\n{merged.to_string()}"
         )
         self.check_string(str_output)
 
     def test2(self) -> None:
-        """
-            """
+        num_x_vars=2
         df = TestGeneratePredictions._generate_input_data(
-            num_x_vars=2, base_random_state=42
+            num_x_vars=num_x_vars, base_random_state=42
         )
         x_vars = ["x0", "x1"]
         y_vars = ["y"]
@@ -137,7 +136,7 @@ class TestGeneratePredictions(hut.TestCase):
         predictor = estimator.train(train_ts)
         #
         test_df = TestGeneratePredictions._generate_input_data(
-            base_random_state=0
+            num_x_vars=num_x_vars, base_random_state=0
         )
         yhat, y = btest.generate_predictions(
             predictor=predictor,
@@ -147,10 +146,10 @@ class TestGeneratePredictions(hut.TestCase):
             num_samples=4,
             x_vars=x_vars,
         )
+        merged = y.merge(yhat, left_index=True, right_index=True)
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}\n\n"
-            f"{prnt.frame('y')}\n{y.to_string()}\n\n"
-            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+            f"{prnt.frame('y/yhat')}\n{merged.to_string()}"
         )
         self.check_string(str_output)
 
@@ -158,8 +157,9 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Test autoregressive behavior only (no predictors used).
         """
-        df = TestGeneratePredictions._generate_input_data(base_random_state=42)
+        df = TestGeneratePredictions._generate_input_data(num_x_vars=1, base_random_state=42)
         y_vars = ["y"]
+        df = df[["y"]]
         train_ts = adpt.transform_to_gluon(df, None, y_vars, "T")
         #
         trainer = gluonts.trainer.Trainer(epochs=1)
@@ -170,8 +170,9 @@ class TestGeneratePredictions(hut.TestCase):
         predictor = estimator.train(train_ts)
         #
         test_df = TestGeneratePredictions._generate_input_data(
-            base_random_state=0
+            num_x_vars=1, base_random_state=0
         )
+        test_df = test_df[["y"]]
         yhat, y = btest.generate_predictions(
             predictor=predictor,
             df=test_df,
@@ -179,9 +180,9 @@ class TestGeneratePredictions(hut.TestCase):
             prediction_length=prediction_length,
             num_samples=4,
         )
+        merged = y.merge(yhat, left_index=True, right_index=True)
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}\n\n"
-            f"{prnt.frame('y')}\n{y.to_string()}\n\n"
-            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+            f"{prnt.frame('y/yhat')}\n{merged.to_string()}"
         )
         self.check_string(str_output)
