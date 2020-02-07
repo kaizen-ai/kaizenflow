@@ -802,8 +802,9 @@ class ContinuousDeepArModel(FitPredictNode):
             nid: str,
             trainer_kwargs: Optional[Any] = None,
             estimator_kwargs: Optional[Any] = None,
-            x_vars=Union[List[str], Callable[[], List[str]]],
-            y_vars=Union[List[str], Callable[[], List[str]]],
+            x_vars: Union[List[str], Callable[[], List[str]]],
+            y_vars: Union[List[str], Callable[[], List[str]]],
+            num_traces: int,
     ) -> None:
         """
         Initialize dataflow node for gluon-ts DeepAR model.
@@ -835,6 +836,7 @@ class ContinuousDeepArModel(FitPredictNode):
         #     what would normally be predictors
         self._x_vars = x_vars
         self._y_vars = y_vars
+        self._num_traces = num_traces
         self._estimator = None
         self._predictor = None
         #
@@ -847,16 +849,12 @@ class ContinuousDeepArModel(FitPredictNode):
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._prediction_length, df.index.size)
-        idx = df.index[: -self._prediction_length]
+        df = df.loc[: -self._prediction_length]
         #
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
-        # Prepare forward y_vars in sklearn format.
-#        fwd_y_df = self._get_fwd_y_df(df).loc[idx]
-#        fwd_y_var = [fwd_y_df.columns[0]]
-#        fit_df = df.loc[idx].merge(fwd_y_df, left_index=True, right_index=True)
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, df.index.freq)
+        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, df.index.freq.freqstr)
         # Instantiate the (DeepAR) estimator and train the model.
         self._estimator = self._estimator_func(
             trainer=self._trainer,
@@ -870,7 +868,7 @@ class ContinuousDeepArModel(FitPredictNode):
              df=df,
              y_vars=y_vars,
              prediction_length=self._prediction_length,
-             num_samples=10,
+             num_samples=self._num_traces,
              use_feat_dynamic_real=True,
              x_vars=x_vars)
         # Store info.
@@ -880,6 +878,32 @@ class ContinuousDeepArModel(FitPredictNode):
         return {"df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, df.index.freq.freqstr)
+        # Instantiate the (DeepAR) estimator and train the model.
+        self._estimator = self._estimator_func(
+            trainer=self._trainer,
+            freq=df.index.freq.freqstr,
+            **self._estimator_kwargs,
+        )
+        self._predictor = self._estimator.train(gluon_train)
+        #
+        fwd_y_hat, fwd_y = bcktst.generate_predictions \
+            (predictor=self._predictor,
+             df=df,
+             y_vars=y_vars,
+             prediction_length=self._num_traces,
+             num_samples=10,
+             use_feat_dynamic_real=True,
+             x_vars=x_vars)
+        # Store info.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        self._set_info("fit", info)
+        return {"df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)}
         raise NotImplementedError()
 
     @staticmethod
