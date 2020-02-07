@@ -42,7 +42,6 @@ def predict(
     # TODO(Paul): Add an assertion for this.
     if x_vars is None:
         use_feat_dynamic_real = False
-        _LOG.warning("No predictors `x_vars` being used in prediction!")
     else:
         use_feat_dynamic_real = True
     #
@@ -57,7 +56,7 @@ def predict(
     predictions = predictor.predict(data, num_samples=num_samples)
     predictions = hlist.assert_single_element_and_return(list(predictions))
     #
-    y_hat = predictions[0].samples
+    y_hat = predictions.samples
     dbg.dassert_eq(y_hat.shape, (num_samples, prediction_length))
     return y_hat
 
@@ -68,7 +67,6 @@ def generate_predictions(
     y_vars: Union[str, List[str]],
     prediction_length: int,
     num_samples: int,
-    use_feat_dynamic_real: bool,
     x_vars: Optional[List[str]] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
@@ -87,13 +85,12 @@ def generate_predictions(
         is made
     :param num_samples: number of traces (sample paths) that are
         generated
-    :param use_feat_dynamic_real: if True, truncate target by prediction
-        length
     :param x_vars: feature columns
     :return: forward predictions and forward target, each of shape
         `(df.shape[0], prediction_length)`. The columns are
         `<y_var>_hat_<timestep>`, `<y_var>_<timestep>` respectively.
     """
+    dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
     dbg.dassert(df.index.freq, "The dataframe should have uniform datetime grid")
     dbg.dassert_monotonic_index(df.index)
@@ -105,11 +102,19 @@ def generate_predictions(
     yhat_cols = [f"{y_vars[0]}_hat_{i}" for i in range(prediction_length)]
     yhat_all = np.full((df.shape[0], prediction_length), np.nan)
     y_all = np.full((df.shape[0], prediction_length), np.nan)
+    #
+    if x_vars is None:
+        use_feat_dynamic_real = False
+        _LOG.warning("No predictors `x_vars` being used in prediction!")
+    else:
+        use_feat_dynamic_real = True
+    #
+    if not use_feat_dynamic_real:
+        trunc_len = 0
+    else:
+        trunc_len = prediction_length
+    #
     for i in range(df.shape[0]):
-        if not use_feat_dynamic_real:
-            trunc_len = 0
-        else:
-            trunc_len = prediction_length
         if use_feat_dynamic_real and i < prediction_length:
             # If there are no covariates to make forward prediction on,
             # return NaN predictions.
