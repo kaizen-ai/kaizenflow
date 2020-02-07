@@ -133,7 +133,7 @@ def generate_predictions(
             y_hat = sample_forecast.samples.mean(axis=0)
             y_hat_start_date = sample_forecast.start_date
         yhat_all[i] = y_hat
-        y = df.iloc[i : i + prediction_length][y_vars[0]].to_list()
+        y = df.iloc[i + 1: i + 1 + prediction_length][y_vars[0]].to_list()
         n_missing_y = prediction_length - len(y)
         if n_missing_y > 0:
             y += [np.nan] * n_missing_y
@@ -141,10 +141,10 @@ def generate_predictions(
     # Check that the prediction start dates are the same as the `df`
     # index. It's enough to check only the last index because the grid
     # is uniform.
-    pred_idx = df.index + pd.Timedelta(1, df.index.freq.freqstr)
+    pred_idx = df.index
     dbg.dassert_eq(
         pred_idx[-1],
-        y_hat_start_date + pd.Timedelta(trunc_len, df.index.freq.freqstr),
+        y_hat_start_date + pd.Timedelta(trunc_len - 1, df.index.freq.freqstr),
         "Prediction start dates are not aligned with the index",
     )
     yhat_all = pd.DataFrame(yhat_all, index=pred_idx, columns=yhat_cols)
