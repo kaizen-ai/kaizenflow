@@ -145,6 +145,7 @@ def generate_predictions(
     dbg.dassert_eq(
         pred_idx[-1],
         y_hat_start_date + pd.Timedelta(f"{trunc_len}{df.index.freq.freqstr}"),
+        "Prediction start dates are not aligned with the index",
     )
     yhat_all = pd.DataFrame(yhat_all, index=pred_idx, columns=yhat_cols)
     y_all = pd.DataFrame(y_all, index=pred_idx, columns=y_cols)
