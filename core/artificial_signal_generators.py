@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.artificial_signal_generators as sig_gen
+"""
+
 import logging
 from typing import List, Optional, Tuple
 

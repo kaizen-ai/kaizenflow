@@ -9,10 +9,13 @@ import gluonts.model.predictor as gmp  # isort: skip # noqa: F401 # pylint: disa
 import gluonts.trainer as gt  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
+import pytest
 import statsmodels as sm
+
+# TODO(*): statsmodels needs this import to work properly.
 import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
-import core.artificial_signal_generators as gen_signal
+import core.artificial_signal_generators as sig_gen
 import core.backtest as btest
 import core.data_adapters as adpt
 import helpers.printing as prnt
@@ -194,13 +197,14 @@ class TestGeneratePredictions(hut.TestCase):
         )
         self.check_string(str_output)
 
+    @pytest.mark.slow
     def test4(self) -> None:
         """
         Generate y using `m4_hourly` Gluon dataset. No `x_vars`.
         """
         train_length = 500
         test_length = 100
-        train_df, test_df = gen_signal.get_gluon_dataset(
+        train_df, test_df = sig_gen.get_gluon_dataset(
             dataset_name="m4_hourly",
             train_length=train_length,
             test_length=test_length,
