@@ -791,6 +791,18 @@ class ContinuousDeepArModel(FitPredictNode):
     """
     A dataflow node for a DeepAR model.
 
+    This node trains a DeepAR model using only one time series
+    - By using only one time series, we are not taking advantage of the
+      "global" modeling capabilities of gluonts or DeepAR
+    - This may be somewhat mitigated by the fact that the single time series
+      that we provide will typically contain on the order of 10E5 or more time
+      points
+    - In training, DeepAR randomly cuts the time series provided, and so
+      unless there are obvious cut-points we want to take advantage of, it may
+      be best to let DeepAR cut
+    - If certain cut-points are naturally more appropriate in our problem
+      domain, an event study modeling approach may be more suitable
+
     See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
 
     For additional context and best-practices, see
