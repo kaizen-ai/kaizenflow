@@ -190,27 +190,11 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
     :return: the path to the file retrieved
         e.g.: /tmp/gallery_signal_processing.ipynb
     """
-    _LOG.debug("Create a temporary directory for a git worktree.")
-    tmp_worktree_dir = tempfile.mkdtemp()
-    #
-    _LOG.debug("Add temporary git worktree in '%s'.", tmp_worktree_dir)
-    si.system(f"git worktree add {tmp_worktree_dir}")
-    si.system(f"cd {tmp_worktree_dir}")
-    #
-    _LOG.debug("Check out '%s/%s'.", git_branch, git_path)
-    si.system(f"git checkout {git_branch} -- {git_path}")
-    si.system("cd -")
-    checked_out_file_path = os.path.join(tmp_worktree_dir, git_path)
     dst_file_path = os.path.join(
-        tempfile.gettempdir(), os.path.basename(checked_out_file_path)
+        tempfile.gettempdir(), os.path.basename(git_path)
     )
-    #
-    _LOG.debug("Copy '%s' to '%s'.", checked_out_file_path, dst_file_path)
-    si.system(f"cp {checked_out_file_path} {dst_file_path}")
-    #
-    _LOG.debug("Remove temporary git worktree '%s'.", tmp_worktree_dir)
-    si.system(f"git worktree remove {tmp_worktree_dir}")
-    si.system(f"git branch -d {os.path.basename(tmp_worktree_dir)}")
+    _LOG.debug("Check out '%s/%s' to '%s'.", git_branch, git_path, dst_file_path)
+    si.system(f"git show {git_branch}:{git_path} > {dst_file_path}")
     return dst_file_path
 
 
