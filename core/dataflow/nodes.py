@@ -812,11 +812,11 @@ class ContinuousDeepArModel(FitPredictNode):
     def __init__(
             self,
             nid: str,
+            y_vars: Union[List[str], Callable[[], List[str]]],
             trainer_kwargs: Optional[Any] = None,
             estimator_kwargs: Optional[Any] = None,
-            x_vars: Union[List[str], Callable[[], List[str]]],
-            y_vars: Union[List[str], Callable[[], List[str]]],
-            num_traces: int,
+            x_vars: Union[List[str], Callable[[], List[str]]] = None,
+            num_traces: int = 100,
     ) -> None:
         """
         Initialize dataflow node for gluon-ts DeepAR model.
