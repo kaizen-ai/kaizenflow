@@ -98,8 +98,8 @@ def generate_predictions(
         y_vars = [y_vars]
     dbg.dassert_isinstance(y_vars, list)
     dbg.dassert_eq(len(y_vars), 1, "Multitarget case is not supported.")
-    y_cols = [f"{y_vars[0]}_{i}" for i in range(prediction_length)]
-    yhat_cols = [f"{y_vars[0]}_hat_{i}" for i in range(prediction_length)]
+    y_cols = [f"{y_vars[0]}_{i+1}" for i in range(prediction_length)]
+    yhat_cols = [f"{y_vars[0]}_hat_{i+1}" for i in range(prediction_length)]
     yhat_all = np.full((df.shape[0], prediction_length), np.nan)
     y_all = np.full((df.shape[0], prediction_length), np.nan)
     #
@@ -141,10 +141,10 @@ def generate_predictions(
     # Check that the prediction start dates are the same as the `df`
     # index. It's enough to check only the last index because the grid
     # is uniform.
-    pred_idx = df.index + pd.Timedelta(f"1{df.index.freq.freqstr}")
+    pred_idx = df.index + pd.Timedelta(1, df.index.freq.freqstr)
     dbg.dassert_eq(
         pred_idx[-1],
-        y_hat_start_date + pd.Timedelta(f"{trunc_len}{df.index.freq.freqstr}"),
+        y_hat_start_date + pd.Timedelta(trunc_len, df.index.freq.freqstr),
         "Prediction start dates are not aligned with the index",
     )
     yhat_all = pd.DataFrame(yhat_all, index=pred_idx, columns=yhat_cols)
