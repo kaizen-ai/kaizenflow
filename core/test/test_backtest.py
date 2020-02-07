@@ -13,7 +13,6 @@ import statsmodels as sm
 import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
 import core.backtest as btest
-import core.config as cfg
 import core.data_adapters as adpt
 import helpers.printing as prnt
 import helpers.unit_test as hut
@@ -37,7 +36,9 @@ class TestGeneratePredictions(hut.TestCase):
     @staticmethod
     def _generate_input_data(
         num_x_vars: int = 2,
-        n_periods: int = 20, base_random_state: int = 0, shift: int = 1,
+        n_periods: int = 20,
+        base_random_state: int = 0,
+        shift: int = 1,
     ) -> pd.DataFrame:
         """
         Generate dataframe of predictors and response.
@@ -80,18 +81,20 @@ class TestGeneratePredictions(hut.TestCase):
     def test1(self) -> None:
         """
         """
-        df = TestGeneratePredictions._generate_input_data(num_x_vars=1, base_random_state=42)
+        df = TestGeneratePredictions._generate_input_data(
+            num_x_vars=1, base_random_state=42
+        )
         x_vars = ["x0"]
         y_vars = ["y"]
         train_ts = adpt.transform_to_gluon(df, x_vars, y_vars, "T")
         #
         trainer = gluonts.trainer.Trainer(epochs=1)
-        prediction_length=3
+        prediction_length = 3
         estimator = gluonts.model.deepar.DeepAREstimator(
             prediction_length=prediction_length,
             trainer=trainer,
             freq="T",
-            use_feat_dynamic_real=True
+            use_feat_dynamic_real=True,
         )
         predictor = estimator.train(train_ts)
         #
@@ -99,8 +102,11 @@ class TestGeneratePredictions(hut.TestCase):
             base_random_state=0
         )
         yhat, y = btest.generate_predictions(
-            predictor=predictor, df=test_df, y_vars=y_vars,
-            prediction_length=prediction_length, num_samples=4,
+            predictor=predictor,
+            df=test_df,
+            y_vars=y_vars,
+            prediction_length=prediction_length,
+            num_samples=4,
             x_vars=x_vars,
         )
         str_output = (
@@ -111,37 +117,42 @@ class TestGeneratePredictions(hut.TestCase):
         self.check_string(str_output)
 
     def test2(self) -> None:
+        """
             """
-            """
-            df = TestGeneratePredictions._generate_input_data(num_x_vars=2, base_random_state=42)
-            x_vars = ["x0", "x1"]
-            y_vars = ["y"]
-            train_ts = adpt.transform_to_gluon(df, x_vars, y_vars, "T")
-            #
-            trainer = gluonts.trainer.Trainer(epochs=1)
-            prediction_length = 3
-            estimator = gluonts.model.deepar.DeepAREstimator(
-                prediction_length=prediction_length,
-                trainer=trainer,
-                freq="T",
-                use_feat_dynamic_real=True
-            )
-            predictor = estimator.train(train_ts)
-            #
-            test_df = TestGeneratePredictions._generate_input_data(
-                base_random_state=0
-            )
-            yhat, y = btest.generate_predictions(
-                predictor=predictor, df=test_df, y_vars=y_vars,
-                prediction_length=prediction_length, num_samples=4,
-                x_vars=x_vars,
-            )
-            str_output = (
-                f"{prnt.frame('df')}\n{test_df.to_string()}\n\n"
-                f"{prnt.frame('y')}\n{y.to_string()}\n\n"
-                f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
-            )
-            self.check_string(str_output)
+        df = TestGeneratePredictions._generate_input_data(
+            num_x_vars=2, base_random_state=42
+        )
+        x_vars = ["x0", "x1"]
+        y_vars = ["y"]
+        train_ts = adpt.transform_to_gluon(df, x_vars, y_vars, "T")
+        #
+        trainer = gluonts.trainer.Trainer(epochs=1)
+        prediction_length = 3
+        estimator = gluonts.model.deepar.DeepAREstimator(
+            prediction_length=prediction_length,
+            trainer=trainer,
+            freq="T",
+            use_feat_dynamic_real=True,
+        )
+        predictor = estimator.train(train_ts)
+        #
+        test_df = TestGeneratePredictions._generate_input_data(
+            base_random_state=0
+        )
+        yhat, y = btest.generate_predictions(
+            predictor=predictor,
+            df=test_df,
+            y_vars=y_vars,
+            prediction_length=prediction_length,
+            num_samples=4,
+            x_vars=x_vars,
+        )
+        str_output = (
+            f"{prnt.frame('df')}\n{test_df.to_string()}\n\n"
+            f"{prnt.frame('y')}\n{y.to_string()}\n\n"
+            f"{prnt.frame('yhat')}\n{yhat.to_string()}\n"
+        )
+        self.check_string(str_output)
 
     def test3(self) -> None:
         """
@@ -152,11 +163,9 @@ class TestGeneratePredictions(hut.TestCase):
         train_ts = adpt.transform_to_gluon(df, None, y_vars, "T")
         #
         trainer = gluonts.trainer.Trainer(epochs=1)
-        prediction_length=3
+        prediction_length = 3
         estimator = gluonts.model.deepar.DeepAREstimator(
-            prediction_length=prediction_length,
-            trainer=trainer,
-            freq="T",
+            prediction_length=prediction_length, trainer=trainer, freq="T",
         )
         predictor = estimator.train(train_ts)
         #
@@ -164,8 +173,11 @@ class TestGeneratePredictions(hut.TestCase):
             base_random_state=0
         )
         yhat, y = btest.generate_predictions(
-            predictor=predictor, df=test_df, y_vars=y_vars,
-            prediction_length=prediction_length, num_samples=4
+            predictor=predictor,
+            df=test_df,
+            y_vars=y_vars,
+            prediction_length=prediction_length,
+            num_samples=4,
         )
         str_output = (
             f"{prnt.frame('df')}\n{test_df.to_string()}\n\n"
