@@ -9,9 +9,13 @@ import gluonts.model.predictor as gmp  # isort: skip # noqa: F401 # pylint: disa
 import gluonts.trainer as gt  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
+import pytest
 import statsmodels as sm
+
+# TODO(*): statsmodels needs this import to work properly.
 import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
+import core.artificial_signal_generators as sig_gen
 import core.backtest as btest
 import core.data_adapters as adpt
 import helpers.printing as prnt
@@ -79,7 +83,7 @@ class TestGeneratePredictions(hut.TestCase):
 
     def test1(self) -> None:
         """
-        Generate y from a shift of an ARIMA series. 
+        Generate y from a shift of an ARIMA series.
         """
         num_x_vars = 1
         df = TestGeneratePredictions._generate_input_data(
@@ -185,6 +189,48 @@ class TestGeneratePredictions(hut.TestCase):
             y_vars=y_vars,
             prediction_length=prediction_length,
             num_samples=4,
+        )
+        merged = y.merge(yhat, left_index=True, right_index=True)
+        str_output = (
+            f"{prnt.frame('df')}\n{test_df.to_string()}\n\n"
+            f"{prnt.frame('y/yhat')}\n{merged.to_string()}"
+        )
+        self.check_string(str_output)
+
+    @pytest.mark.slow
+    def test4(self) -> None:
+        """
+        Generate y using `m4_hourly` Gluon dataset. No `x_vars`.
+        """
+        train_length = 500
+        test_length = 100
+        train_df, test_df = sig_gen.get_gluon_dataset(
+            dataset_name="m4_hourly",
+            train_length=train_length,
+            test_length=test_length,
+        )
+        x_vars = None
+        y_vars = ["y"]
+        freq = train_df.index.freq.freqstr
+        train_ts = adpt.transform_to_gluon(train_df, x_vars, y_vars, freq)
+        #
+        trainer = gluonts.trainer.Trainer(epochs=1)
+        prediction_length = 5
+        estimator = gluonts.model.deepar.DeepAREstimator(
+            prediction_length=prediction_length,
+            trainer=trainer,
+            freq=freq,
+            use_feat_dynamic_real=False,
+        )
+        predictor = estimator.train(train_ts)
+        #
+        yhat, y = btest.generate_predictions(
+            predictor=predictor,
+            df=test_df,
+            y_vars=y_vars,
+            prediction_length=prediction_length,
+            num_samples=4,
+            x_vars=None,
         )
         merged = y.merge(yhat, left_index=True, right_index=True)
         str_output = (
