@@ -7,6 +7,7 @@ import gluonts
 import gluonts.model.deepar as gmd  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import gluonts.model.predictor as gmp  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import gluonts.trainer as gt  # isort: skip # noqa: F401 # pylint: disable=unused-import
+import mxnet
 import numpy as np
 import pandas as pd
 import pytest
@@ -85,6 +86,7 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Generate y from a shift of an ARIMA series.
         """
+        mxnet.random.seed(0, ctx="all")
         num_x_vars = 1
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=num_x_vars, base_random_state=42
@@ -125,6 +127,7 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Generate y from a shift of a linear combination of ARIMA series.
         """
+        mxnet.random.seed(0, ctx="all")
         num_x_vars = 2
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=num_x_vars, base_random_state=42
@@ -165,6 +168,7 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Generate y from a shift of an ARIMA series. Ignore x.
         """
+        mxnet.random.seed(0, ctx="all")
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=1, base_random_state=42
         )
@@ -202,6 +206,7 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Generate y using `m4_hourly` Gluon dataset. No `x_vars`.
         """
+        mxnet.random.seed(0, ctx="all")
         train_length = 500
         test_length = 100
         train_df, test_df = sig_gen.get_gluon_dataset(
