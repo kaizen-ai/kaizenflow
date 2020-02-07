@@ -118,7 +118,7 @@ def generate_predictions(
         if use_feat_dynamic_real and i < prediction_length:
             # If there are no covariates to make forward prediction on,
             # return NaN predictions.
-            yhat = np.full(prediction_length, np.nan)
+            y_hat = np.full(prediction_length, np.nan)
         else:
             test_df = df.iloc[: i + 1 + trunc_len]
             sample_forecast = predict(
@@ -131,10 +131,6 @@ def generate_predictions(
             )
             y_hat = sample_forecast.samples.mean(axis=0)
             y_hat_start_date = sample_forecast.start_date
-            y_hat_idx = pd.date_range(sample_forecast.start_date,
-                                      periods=prediction_length,
-                                      freq=sample_forecast)
-            y_hat = pd.Series(data=y_hat, index=y_hat_idx)
         yhat_all[i] = y_hat
         y = df.iloc[i : i + prediction_length][y_vars[0]].to_list()
         n_missing_y = prediction_length - len(y)
