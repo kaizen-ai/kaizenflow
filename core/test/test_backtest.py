@@ -1,6 +1,7 @@
 import logging
 from typing import Iterable
 
+import mxnet
 import gluonts
 
 # TODO(*): gluon needs these imports to work properly.
@@ -85,6 +86,7 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Generate y from a shift of an ARIMA series.
         """
+        mxnet.random.seed(0, ctx='all')
         num_x_vars = 1
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=num_x_vars, base_random_state=42
@@ -125,6 +127,7 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Generate y from a shift of a linear combination of ARIMA series.
         """
+        mxnet.random.seed(0, ctx='all')
         num_x_vars = 2
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=num_x_vars, base_random_state=42
@@ -165,6 +168,7 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Generate y from a shift of an ARIMA series. Ignore x.
         """
+        mxnet.random.seed(0, ctx='all')
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=1, base_random_state=42
         )
@@ -202,6 +206,7 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Generate y using `m4_hourly` Gluon dataset. No `x_vars`.
         """
+        mxnet.random.seed(0, ctx='all')
         train_length = 500
         test_length = 100
         train_df, test_df = sig_gen.get_gluon_dataset(
