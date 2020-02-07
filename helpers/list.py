@@ -9,7 +9,7 @@ from typing import Any, List, Set
 import helpers.dbg as dbg
 
 
-def assert_single_element_and_return(list_: List[str]) -> str:
+def assert_single_element_and_return(list_: List[Any]) -> Any:
     """
     Assert that list `l` has a single element and return it.
 
