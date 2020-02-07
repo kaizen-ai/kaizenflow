@@ -80,7 +80,7 @@ class TestGeneratePredictions(hut.TestCase):
     def test1(self) -> None:
         """
         """
-        num_x_vars=1
+        num_x_vars = 1
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=num_x_vars, base_random_state=42
         )
@@ -117,7 +117,7 @@ class TestGeneratePredictions(hut.TestCase):
         self.check_string(str_output)
 
     def test2(self) -> None:
-        num_x_vars=2
+        num_x_vars = 2
         df = TestGeneratePredictions._generate_input_data(
             num_x_vars=num_x_vars, base_random_state=42
         )
@@ -157,7 +157,9 @@ class TestGeneratePredictions(hut.TestCase):
         """
         Test autoregressive behavior only (no predictors used).
         """
-        df = TestGeneratePredictions._generate_input_data(num_x_vars=1, base_random_state=42)
+        df = TestGeneratePredictions._generate_input_data(
+            num_x_vars=1, base_random_state=42
+        )
         y_vars = ["y"]
         df = df[["y"]]
         train_ts = adpt.transform_to_gluon(df, None, y_vars, "T")
