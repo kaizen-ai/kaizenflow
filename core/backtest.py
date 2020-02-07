@@ -9,50 +9,57 @@ import pandas as pd
 
 import core.data_adapters as adpt
 import helpers.dbg as dbg
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
 
 def predict(
     predictor: gluonts.model.predictor.Predictor,
-    test_df: pd.DataFrame,
+    df: pd.DataFrame,
     y_vars: Union[str, List[str]],
     prediction_length: int,
-    frequency: str,
     num_samples: int,
-    use_feat_dynamic_real: bool,
-    x_vars: Optional[List[str]],
+    x_vars: Optional[List[str]] = None,
 ) -> np.array:
     """
     Predict next values using trained predictor.
 
-    :param predictor: trained predictor
-    :param test_df: dataframe with features and targets
+    It is assumed that x_vars and y_vars are both indexed by knowledge times.
+
+    :param predictor: trained gluonts predictor
+    :param df: dataframe with target and optionally features
     :param y_vars: target column. Only single target is supported.
-    :param prediction_length: number of steps for which the prediction
-        is made
-    :param frequency: grid frequency
-    :param num_samples: number of traces (sample paths) that are
-        generated
-    :param use_feat_dynamic_real: if True, truncate target by prediction
-        length
+    :param prediction_length: number of steps for which the prediction is made
+    :param num_samples: number of traces (sample paths) generated
     :param x_vars: feature columns
-    :return: predictions array of `(num_samples, prediction_length)`
-        shape
+    :return: predictions array of shape `(num_samples, prediction_length)`
     """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    dbg.dassert(df.index.freq)
+    # We implicitly assume here that `x_vars` columns are numerical.
+    # TODO(Paul): Add an assertion for this.
+    if x_vars is None:
+        use_feat_dynamic_real = False
+        _LOG.warning("No predictors `x_vars` being used in prediction!")
+    else:
+        use_feat_dynamic_real = True
+    #
     if use_feat_dynamic_real:
         y_truncate = prediction_length
     else:
         y_truncate = None
-    test_ts = adpt.transform_to_gluon(
-        test_df, x_vars, y_vars, frequency=frequency, y_truncate=y_truncate
+    data = adpt.transform_to_gluon(
+        df, x_vars, y_vars, frequency=df.index.freq.freqstr, y_truncate=y_truncate
     )
-    pred = predictor.predict(test_ts, num_samples=num_samples)
-    pred = list(pred)
-    dbg.dassert_eq(len(pred), 1)
-    yhat = pred[0].samples
-    dbg.dassert_eq(yhat.shape, (num_samples, prediction_length))
-    return yhat
+    # Make predictions.
+    predictions = predictor.predict(data, num_samples=num_samples)
+    predictions = hlist.assert_single_element_and_return(list(predictions))
+    #
+    y_hat = predictions[0].samples
+    dbg.dassert_eq(y_hat.shape, (num_samples, prediction_length))
+    return y_hat
 
 
 def generate_predictions(
@@ -110,14 +117,12 @@ def generate_predictions(
         else:
             test_df = df.iloc[: i + 1 + trunc_len]
             yhat = predict(
-                predictor,
-                test_df,
-                y_vars,
-                prediction_length,
-                df.index.freq,
-                num_samples,
-                use_feat_dynamic_real,
-                x_vars,
+                predictor=predictor,
+                df=test_df,
+                y_vars=y_vars,
+                prediction_length=prediction_length,
+                num_samples=num_samples,
+                x_vars=x_vars,
             )
             yhat = yhat.mean(axis=0)
         yhat_all[i] = yhat
