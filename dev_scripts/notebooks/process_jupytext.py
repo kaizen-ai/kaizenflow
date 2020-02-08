@@ -82,35 +82,35 @@ def _test(file_name: str, action: str) -> None:
         raise ValueError("Invalid action='%s'" % action)
     cmd = [_EXECUTABLE, opts, "--stop --to py:percent %s" % file_name]
     cmd = " ".join(cmd)
-    _, txt = si.system_to_string(cmd, abort_on_error=False)
-    # Workaround for https://github.com/mwouts/jupytext/issues/414 to avoid to
-    # report an error due to jupytext version mismatch.
-    #
-    # [jupytext] Reading nlp/notebooks/PartTask1081_RP_small_test.py
-    # nlp/notebooks/PartTask1081_RP_small_test.py:
-    # --- expected
-    # +++ actual
-    # @@ -5,7 +5,7 @@
-    #  #       extension: .py
-    #  #       format_name: percent
-    #  #       format_version: '1.3'
-    # -#       jupytext_version: 1.3.3
-    # +#       jupytext_version: 1.3.0
-    #  #   kernelspec:
-    #  #     display_name: Python [conda env:.conda-p1_develop] *
-    #  #     language: python
-    regex = (
-        r"\n\-\#\s+jupytext_version:\s*(\S+).*\n\+\#\s+jupytext_version:\s*(\S+)"
-    )
-    m = re.search(regex, txt, re.MULTILINE)
-    if m:
-        _LOG.warning(
-            "There is a mismatch of jupytext version: '%s' vs '%s'",
-            m.group(1),
-            m.group(2),
-        )
-    else:
-        raise RuntimeError(txt)
+    rc, txt = si.system_to_string(cmd, abort_on_error=False)
+    if rc != 0:
+        _LOG.debug("rc=%s, txt=\n'%s'", rc, txt)
+        # Workaround for https://github.com/mwouts/jupytext/issues/414 to avoid to
+        # report an error due to jupytext version mismatch.
+        #
+        # [jupytext] Reading nlp/notebooks/PartTask1081_RP_small_test.py
+        # nlp/notebooks/PartTask1081_RP_small_test.py:
+        # --- expected
+        # +++ actual
+        # @@ -5,7 +5,7 @@
+        #  #       extension: .py
+        #  #       format_name: percent
+        #  #       format_version: '1.3'
+        # -#       jupytext_version: 1.3.3
+        # +#       jupytext_version: 1.3.0
+        #  #   kernelspec:
+        #  #     display_name: Python [conda env:.conda-p1_develop] *
+        #  #     language: python
+        regex = r"\n\-\#\s+jupytext_version:\s*(\S+).*\n\+\#\s+jupytext_version:\s*(\S+)"
+        m = re.search(regex, txt, re.MULTILINE)
+        if m:
+            _LOG.warning(
+                "There is a mismatch of jupytext version: '%s' vs '%s': skipping",
+                m.group(1),
+                m.group(2),
+            )
+        else:
+            raise RuntimeError(txt)
 
 
 # #############################################################################
