@@ -144,9 +144,7 @@ class TestContinuousDeepArModel(hut.TestCase):
     def _get_dag(self) -> dtf.DAG:
         mxnet.random.seed(0)
         data, _ = sig_gen.get_gluon_dataset(
-            dataset_name="m4_hourly",
-            train_length=100,
-            test_length=1,
+            dataset_name="m4_hourly", train_length=100, test_length=1,
         )
         fit_idxs = data.iloc[:70].index
         predict_idxs = data.iloc[70:].index
@@ -162,9 +160,7 @@ class TestContinuousDeepArModel(hut.TestCase):
         config["y_vars"] = ["y"]
         config["trainer_kwargs"] = {"epochs": 1}
         config["estimator_kwargs"] = {"prediction_length": 2}
-        node = dtf.ContinuousDeepArModel(
-            "deepar", **config.to_dict(),
-        )
+        node = dtf.ContinuousDeepArModel("deepar", **config.to_dict(),)
         dag.add_node(node)
         dag.connect("data", "deepar")
         return dag

@@ -810,13 +810,13 @@ class ContinuousDeepArModel(FitPredictNode):
     """
 
     def __init__(
-            self,
-            nid: str,
-            y_vars: Union[List[str], Callable[[], List[str]]],
-            trainer_kwargs: Optional[Any] = None,
-            estimator_kwargs: Optional[Any] = None,
-            x_vars: Union[List[str], Callable[[], List[str]]] = None,
-            num_traces: int = 100,
+        self,
+        nid: str,
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        trainer_kwargs: Optional[Any] = None,
+        estimator_kwargs: Optional[Any] = None,
+        x_vars: Union[List[str], Callable[[], List[str]]] = None,
+        num_traces: int = 100,
     ) -> None:
         """
         Initialize dataflow node for gluon-ts DeepAR model.
@@ -870,7 +870,9 @@ class ContinuousDeepArModel(FitPredictNode):
             x_vars = None
         y_vars = self._to_list(self._y_vars)
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, df.index.freq.freqstr)
+        gluon_train = adpt.transform_to_gluon(
+            df, x_vars, y_vars, df.index.freq.freqstr
+        )
         # Instantiate the (DeepAR) estimator and train the model.
         self._estimator = self._estimator_func(
             trainer=self._trainer,
@@ -880,18 +882,20 @@ class ContinuousDeepArModel(FitPredictNode):
         self._predictor = self._estimator.train(gluon_train)
         #
         fwd_y_hat, fwd_y = bcktst.generate_predictions(
-             predictor=self._predictor,
-             df=df,
-             y_vars=y_vars,
-             prediction_length=self._prediction_length,
-             num_samples=self._num_traces,
-             x_vars=x_vars
+            predictor=self._predictor,
+            df=df,
+            y_vars=y_vars,
+            prediction_length=self._prediction_length,
+            num_samples=self._num_traces,
+            x_vars=x_vars,
         )
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("fit", info)
-        return {"df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)}
+        return {
+            "df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        }
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -901,7 +905,9 @@ class ContinuousDeepArModel(FitPredictNode):
         else:
             x_vars = None
         y_vars = self._to_list(self._y_vars)
-        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, df.index.freq.freqstr)
+        gluon_train = adpt.transform_to_gluon(
+            df, x_vars, y_vars, df.index.freq.freqstr
+        )
         # Instantiate the (DeepAR) estimator and train the model.
         self._estimator = self._estimator_func(
             trainer=self._trainer,
@@ -911,18 +917,20 @@ class ContinuousDeepArModel(FitPredictNode):
         self._predictor = self._estimator.train(gluon_train)
         #
         fwd_y_hat, fwd_y = bcktst.generate_predictions(
-             predictor=self._predictor,
-             df=df,
-             y_vars=y_vars,
-             prediction_length=self._prediction_length,
-             num_samples=self._num_traces,
-             x_vars=x_vars
+            predictor=self._predictor,
+            df=df,
+            y_vars=y_vars,
+            prediction_length=self._prediction_length,
+            num_samples=self._num_traces,
+            x_vars=x_vars,
         )
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("fit", info)
-        return {"df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)}
+        return {
+            "df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        }
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
@@ -941,7 +949,9 @@ class ContinuousDeepArModel(FitPredictNode):
         mapper = lambda y: y + "_%i" % self._prediction_length
         [mapper(y) for y in y_vars]
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
-        fwd_y_df = df[y_vars].shift(-self._prediction_length).rename(columns=mapper)
+        fwd_y_df = (
+            df[y_vars].shift(-self._prediction_length).rename(columns=mapper)
+        )
         return fwd_y_df
 
     @staticmethod
