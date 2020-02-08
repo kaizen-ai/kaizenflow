@@ -1,9 +1,9 @@
 import logging
 import pprint
 
+import mxnet
 import numpy as np
 import pandas as pd
-import pytest
 import sklearn.linear_model as slm
 
 import core.artificial_signal_generators as sig_gen
@@ -129,14 +129,30 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
 class TestContinuousDeepArModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
-        train_length = 500
-        test_length = 100
-        fit_data, _ = sig_gen.get_gluon_dataset(
+        dag = self._get_dag()
+        #
+        output_df = dag.run_leq_node("deepar", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def test_predict_dag1(self) -> None:
+        dag = self._get_dag()
+        #
+        dag.run_leq_node("deepar", "fit")
+        output_df = dag.run_leq_node("deepar", "predict")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def _get_dag(self) -> dtf.DAG:
+        mxnet.random.seed(0)
+        data, _ = sig_gen.get_gluon_dataset(
             dataset_name="m4_hourly",
-            train_length=train_length,
-            test_length=test_length,
+            train_length=100,
+            test_length=1,
         )
-        data_source_node = dtf.ReadDataFromDf("data", fit_data)
+        fit_idxs = data.iloc[:70].index
+        predict_idxs = data.iloc[70:].index
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node.set_fit_idxs(fit_idxs)
+        data_source_node.set_predict_idxs(predict_idxs)
         # Create DAG and test data node.
         dag = dtf.DAG(mode="strict")
         dag.add_node(data_source_node)
@@ -151,16 +167,12 @@ class TestContinuousDeepArModel(hut.TestCase):
         )
         dag.add_node(node)
         dag.connect("data", "deepar")
-        #
-        output_df = dag.run_leq_node("deepar", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        return dag
 
 
 class TestDeepARGlobalModel(hut.TestCase):
-    @pytest.mark.skip(
-        reason="test showing instability and node may be deprecated anyway"
-    )
     def test_fit1(self) -> None:
+        mxnet.random.seed(0)
         local_ts = self._get_local_ts()
         num_entries = 100
         config = self._get_config()
@@ -182,10 +194,8 @@ class TestDeepARGlobalModel(hut.TestCase):
         )
         self.check_string(config_info_output)
 
-    @pytest.mark.skip(
-        reason="test showing instability and node may be deprecated anyway"
-    )
     def test_fit_dag1(self) -> None:
+        mxnet.random.seed(0)
         dag = dtf.DAG(mode="strict")
         local_ts = self._get_local_ts()
         data_source_node = dtf.ReadDataFromDf("local_ts", local_ts)

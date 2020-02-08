@@ -914,8 +914,8 @@ class ContinuousDeepArModel(FitPredictNode):
              predictor=self._predictor,
              df=df,
              y_vars=y_vars,
-             prediction_length=self._num_traces,
-             num_samples=10,
+             prediction_length=self._prediction_length,
+             num_samples=self._num_traces,
              x_vars=x_vars
         )
         # Store info.
