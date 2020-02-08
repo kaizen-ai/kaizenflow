@@ -6,23 +6,34 @@ before setenv.sh, on a new system with nothing installed. It can use //amp
 libraries.
 
 # Install the `amp` default environment:
-> create_conda.py --env_name amp_develop --req_file dev_scripts/install/requirements/amp_develop.yaml --delete_env_if_exists
+> create_conda.py \
+        --env_name amp_develop \
+        --req_file dev_scripts/install/requirements/amp_develop.yaml \
+        --delete_env_if_exists
 
 # Install the `p1_develop` default environment:
-> create_conda.py --env_name p1_develop --req_file amp/dev_scripts/install/requirements/amp_develop.yaml --req_file dev_scripts_p1/install/requirements/p1_develop.yaml --delete_env_if_exists
+> create_conda.py \
+        --env_name p1_develop \
+        --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \
+        --req_file dev_scripts_p1/install/requirements/p1_develop.yaml \
+        --delete_env_if_exists
 
 # Quick install to test the script:
 > create_conda.py --test_install -v DEBUG
 
 # Test the `develop` environment with a different name before switching the old
 # develop env:
-> create_conda.py --env_name develop_test --req_file dev_scripts/install/requirements/amp_develop.yaml --delete_env_if_exists
+> create_conda.py \
+        --env_name develop_test \
+        --req_file dev_scripts/install/requirements/amp_develop.yaml \
+        --delete_env_if_exists
 """
 
 import argparse
 import logging
 import os
 import sys
+from typing import Any, List
 
 # Dir of the current create_conda.py.
 _CURR_DIR = os.path.dirname(sys.argv[0])
@@ -61,7 +72,7 @@ _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 # #############################################################################
 
 
-def _set_conda_root_dir():
+def _set_conda_root_dir() -> None:
     conda_env_path = usc.get_credentials()["conda_env_path"]
     hco.set_conda_env_root(conda_env_path)
     #
@@ -72,7 +83,7 @@ def _set_conda_root_dir():
     hco.conda_system(cmd, suppress_output=False)
 
 
-def _delete_conda_env(args, conda_env_name):
+def _delete_conda_env(args: Any, conda_env_name: str) -> None:
     """
     Deactivate current conda environment and delete the old conda env.
     """
@@ -131,7 +142,7 @@ def _delete_conda_env(args, conda_env_name):
         _LOG.warning("Skipping deleting environment")
 
 
-def _process_requirements_file(req_file):
+def _process_requirements_file(req_file: str) -> str:
     """
     Process a requirement file to allow conditional builds.
 
@@ -166,7 +177,7 @@ def _process_requirements_file(req_file):
     return dst_req_file
 
 
-def _process_requirements_files(req_files):
+def _process_requirements_files(req_files: List[str]) -> List[str]:
     """
     Apply _process_requirements_file() to multiple files.
 
@@ -182,16 +193,16 @@ def _process_requirements_files(req_files):
     return out_files
 
 
-def _create_conda_env(args, conda_env_name):
+def _create_conda_env(args: Any, conda_env_name: str) -> None:
     """
     Process requirements file and create conda env.
     """
     _LOG.info("\n%s", prnt.frame("Create new conda env '%s'" % conda_env_name))
     #
     if args.test_install:
-        cmd = f"conda create --yes --name {conda_env_name} -c conda-forge"
+        cmd_txt = f"conda create --yes --name {conda_env_name} -c conda-forge"
     else:
-        cmd = []
+        cmd: List[str] = []
         # Extract extensions.
         extensions = set()
         for req_file in args.req_file:
@@ -229,17 +240,24 @@ def _create_conda_env(args, conda_env_name):
         cmd.append(" ".join(["--file %s" % f for f in tmp_req_files]))
         if args.python_version is not None:
             cmd.append("python=%s" % args.python_version)
-        cmd = " ".join(cmd)
-    hco.conda_system(cmd, suppress_output=False)
+        cmd_txt = " ".join(cmd)
+    hco.conda_system(cmd_txt, suppress_output=False)
 
 
-def _run_pip_install(conda_env_name):
-    # PartTask1005: Moved to pip and pinned for gluonts.
-    cmd = 'conda activate %s && pip install --no-deps "mxnet==1.4.1"' % conda_env_name
-    hco.conda_system(cmd, suppress_output=False)
+def _run_pip_install(args: Any, conda_env_name: str) -> None:
+    if args.test_install:
+        # To work around the break of PartTask1124.
+        pass
+    else:
+        # PartTask1005: Moved to pip and pinned for gluonts.
+        cmd = (
+            'conda activate %s && pip install --no-deps "mxnet==1.4.1"'
+            % conda_env_name
+        )
+        hco.conda_system(cmd, suppress_output=False)
 
 
-def _test_conda_env(conda_env_name):
+def _test_conda_env(conda_env_name: str) -> None:
     # Test activating.
     _LOG.info("\n%s", prnt.frame("Test activate conda env '%s'" % conda_env_name))
     cmd = "conda activate %s && conda info --envs" % conda_env_name
@@ -315,7 +333,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.skip_pip_install:
         _LOG.warning("Skip pip install")
     else:
-        _run_pip_install(conda_env_name)
+        _run_pip_install(args, conda_env_name)
     #
     if args.skip_test_env:
         _LOG.warning("Skip test conda env")

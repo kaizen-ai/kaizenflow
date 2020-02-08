@@ -21,7 +21,7 @@ def predict(
     prediction_length: int,
     num_samples: int,
     x_vars: Optional[List[str]] = None,
-) -> np.array:
+) -> gluonts.model.forecast.SampleForecast:
     """
     Predict next values using trained predictor.
 
@@ -33,7 +33,8 @@ def predict(
     :param prediction_length: number of steps for which the prediction is made
     :param num_samples: number of traces (sample paths) generated
     :param x_vars: feature columns
-    :return: predictions array of shape `(num_samples, prediction_length)`
+    :return: SampleForecast with `samples` predictions np.array of shape
+        `(num_samples, prediction_length)`
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
@@ -56,9 +57,8 @@ def predict(
     predictions = predictor.predict(data, num_samples=num_samples)
     predictions = hlist.assert_single_element_and_return(list(predictions))
     #
-    y_hat = predictions.samples
-    dbg.dassert_eq(y_hat.shape, (num_samples, prediction_length))
-    return y_hat
+    dbg.dassert_eq(predictions.samples.shape, (num_samples, prediction_length))
+    return predictions
 
 
 def generate_predictions(
@@ -98,8 +98,8 @@ def generate_predictions(
         y_vars = [y_vars]
     dbg.dassert_isinstance(y_vars, list)
     dbg.dassert_eq(len(y_vars), 1, "Multitarget case is not supported.")
-    y_cols = [f"{y_vars[0]}_{i}" for i in range(prediction_length)]
-    yhat_cols = [f"{y_vars[0]}_hat_{i}" for i in range(prediction_length)]
+    y_cols = [f"{y_vars[0]}_{i+1}" for i in range(prediction_length)]
+    yhat_cols = [f"{y_vars[0]}_hat_{i+1}" for i in range(prediction_length)]
     yhat_all = np.full((df.shape[0], prediction_length), np.nan)
     y_all = np.full((df.shape[0], prediction_length), np.nan)
     #
@@ -118,10 +118,11 @@ def generate_predictions(
         if use_feat_dynamic_real and i < prediction_length:
             # If there are no covariates to make forward prediction on,
             # return NaN predictions.
-            yhat = np.full(prediction_length, np.nan)
+            y_hat = np.full(prediction_length, np.nan)
+            y_hat_start_date = None
         else:
             test_df = df.iloc[: i + 1 + trunc_len]
-            yhat = predict(
+            sample_forecast = predict(
                 predictor=predictor,
                 df=test_df,
                 y_vars=y_vars,
@@ -129,13 +130,23 @@ def generate_predictions(
                 num_samples=num_samples,
                 x_vars=x_vars,
             )
-            yhat = yhat.mean(axis=0)
-        yhat_all[i] = yhat
-        y = df.iloc[i : i + prediction_length][y_vars[0]].to_list()
+            y_hat = sample_forecast.samples.mean(axis=0)
+            y_hat_start_date = sample_forecast.start_date
+        yhat_all[i] = y_hat
+        y = df.iloc[i + 1: i + 1 + prediction_length][y_vars[0]].to_list()
         n_missing_y = prediction_length - len(y)
         if n_missing_y > 0:
             y += [np.nan] * n_missing_y
         y_all[i] = y
-    yhat_all = pd.DataFrame(yhat_all, index=df.index, columns=yhat_cols)
-    y_all = pd.DataFrame(y_all, index=df.index, columns=y_cols)
+    # Check that the prediction start dates are the same as the `df`
+    # index. It's enough to check only the last index because the grid
+    # is uniform.
+    pred_idx = df.index
+    dbg.dassert_eq(
+        pred_idx[-1],
+        y_hat_start_date + pd.Timedelta(trunc_len - 1, df.index.freq.freqstr),
+        "Prediction start dates are not aligned with the index",
+    )
+    yhat_all = pd.DataFrame(yhat_all, index=pred_idx, columns=yhat_cols)
+    y_all = pd.DataFrame(y_all, index=pred_idx, columns=y_cols)
     return yhat_all, y_all

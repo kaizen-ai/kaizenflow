@@ -48,6 +48,7 @@ def iterate_target_features(
         the required frequency
     :param x_vars: names of feature columns
     :param y_vars: names of target columns
+    :param y_truncate: number of rows by which to truncate target
     :return: iterator of dicts with target, start_date, and features
     """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
@@ -88,9 +89,10 @@ def transform_to_gluon(
     `ListDataset` as one dimensional time series.
 
     :param df: dataframe with feature and target columns
-    :param frequency: pandas frequency
     :param x_vars: names of feature columns
     :param y_vars: names of target columns
+    :param frequency: pandas frequency
+    :param y_truncate: number of rows by which to truncate target
     :return: gluonts `ListDataset`
     """
     x_vars = x_vars or []
@@ -142,7 +144,7 @@ def transform_from_gluon(
     gluon_ts: gluonts.dataset.common.ListDataset,
     x_vars: Optional[Iterable[str]],
     y_vars: Iterable[str],
-    index_name: Optional[str],
+    index_name: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Transform gluonts `ListDataset` into a dataframe.
@@ -158,6 +160,7 @@ def transform_from_gluon(
     :return: if there is one time series in `gluon_ts`, return singly
         indexed dataframe; else return multiindexed dataframe
     """
+    dbg.dassert_isinstance(gluon_ts, gluonts.dataset.common.Dataset)
     x_vars = x_vars or []
     if isinstance(y_vars, str):
         y_vars = [y_vars]
@@ -165,8 +168,10 @@ def transform_from_gluon(
     for ts in iter(gluon_ts):
         start_date = ts[gluonts.dataset.field_names.FieldName.START]
         target_arr = ts[gluonts.dataset.field_names.FieldName.TARGET]
+        if target_arr.ndim == 1:
+            target_arr = target_arr[np.newaxis, :]
         # Target and features shapes are described in the
-        # `create_iter_single_index` docstring.
+        # `iterate_target_features` docstring.
         if len(gluon_ts) == 1:
             idx = pd.date_range(
                 start_date, periods=target_arr.shape[1], freq=start_date.freq,

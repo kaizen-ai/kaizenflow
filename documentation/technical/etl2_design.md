@@ -82,7 +82,7 @@
 
 - It can happen that the data sources rewrites history unbeknownst to us
   - We can catch this problem by sampling the history multiple times
-    - Ideally we should
+    - Ideally we should:
       - Re-download all the data every day
       - Compare it to the previous sampled data
       - Keep the new pieces of data and the updated pieces of data
@@ -93,7 +93,7 @@
   - We store the different versions of the data, since we sample and maintain a
     history of the data
 
-## Timezone
+### Timezone
 
 - We store the timestamps as UTC
   - It can be called `datetime_UTC`, to avoid `tzinfo` for performance reason
@@ -104,7 +104,7 @@
   - The problem with UTC is that there is no daylight saving so it's not just
     the same number of hours to convert into ET
 
-## Who are the users of ETL2?
+### Who are the users of ETL2?
 
 - Both developers and researchers
 
@@ -140,7 +140,7 @@
 
 ### Design process
 
-- They can add some functionality only through the process
+- Developers should add some functionality only through the process:
   - Describe -> Discuss -> Implement
   - Otherwise, everybody will reinvent their own bicycles
 
