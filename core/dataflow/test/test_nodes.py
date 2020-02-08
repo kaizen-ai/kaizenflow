@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 import sklearn.linear_model as slm
 
+import core.artificial_signal_generators as sig_gen
 import core.config as cfg
 import core.dataflow as dtf
 import core.signal_processing as sigp
@@ -128,64 +129,31 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
 class TestContinuousDeepArModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
-        pred_lag = 1
-        # Load test data.
-        data = self._get_data(pred_lag)
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        train_length = 500
+        test_length = 100
+        fit_data, _ = sig_gen.get_gluon_dataset(
+            dataset_name="m4_hourly",
+            train_length=train_length,
+            test_length=test_length,
+        )
+        data_source_node = dtf.ReadDataFromDf("data", fit_data)
         # Create DAG and test data node.
         dag = dtf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load deepar config and create modeling node.
-        config = self._get_config(pred_lag)
-        node = dtf.ContinuousDeepArModel(
-            "deepar", **config.to_dict(),
-        )
-        dag.add_node(node)
-        dag.connect("data", "deepar")
-        #
-        output_df = dag.run_leq_node("deepar", "fit")["df_out"]
-        self.check_string(output_df.to_string())
-
-    def test_fit_dag2(self) -> None:
-        pred_lag = 2
-        # Load test data.
-        data = self._get_data(pred_lag)
-        data_source_node = dtf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Load deepar config and create modeling node.
-        config = self._get_config(pred_lag + 1)
-        node = dtf.ContinuousDeepArModel(
-            "deepar", **config.to_dict(),
-        )
-        dag.add_node(node)
-        dag.connect("data", "deepar")
-        #
-        output_df = dag.run_leq_node("deepar", "fit")["df_out"]
-        self.check_string(output_df.to_string())
-
-    def _get_config(self, steps_ahead: int) -> cfg.Config:
         config = cfg.Config()
-        config["x_vars"] = ["x"]
+        config["x_vars"] = None
         config["y_vars"] = ["y"]
         config["trainer_kwargs"] = {"epochs": 1}
-        config["estimator_kwargs"] = {"use_feat_dynamic_real": True, "prediction_length": steps_ahead}
-        return config
-
-    def _get_data(self, lag: int) -> None:
-        """
-        Generate "random returns". Use lag + noise as predictor.
-        """
-        num_periods = 50
-        total_steps = num_periods + lag + 1
-        rets = sigp.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
-        noise = sigp.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
-        pred = rets.shift(-lag).loc[1:num_periods] + noise.loc[1:num_periods]
-        resp = rets.loc[1:num_periods]
-        idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
-        df = pd.DataFrame.from_dict({"x": pred, "y": resp}).set_index(idx)
-        return df
+        config["estimator_kwargs"] = {"prediction_length": 2}
+        node = dtf.ContinuousDeepArModel(
+            "deepar", **config.to_dict(),
+        )
+        dag.add_node(node)
+        dag.connect("data", "deepar")
+        #
+        output_df = dag.run_leq_node("deepar", "fit")["df_out"]
+        self.check_string(output_df.to_string())
 
 
 class TestDeepARGlobalModel(hut.TestCase):

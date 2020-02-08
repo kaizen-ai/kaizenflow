@@ -854,6 +854,7 @@ class ContinuousDeepArModel(FitPredictNode):
         #
         dbg.dassert_in("prediction_length", self._estimator_kwargs)
         self._prediction_length = self._estimator_kwargs["prediction_length"]
+        # Infer `freq` from `df_in` and so do not allow it to be specified.
         dbg.dassert_not_in("freq", self._estimator_kwargs)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -861,9 +862,12 @@ class ContinuousDeepArModel(FitPredictNode):
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._prediction_length, df.index.size)
-        df = df.loc[: -self._prediction_length]
+        df = df.iloc[: -self._prediction_length]
         #
-        x_vars = self._to_list(self._x_vars)
+        if self._x_vars is not None:
+            x_vars = self._to_list(self._x_vars)
+        else:
+            x_vars = None
         y_vars = self._to_list(self._y_vars)
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, df.index.freq.freqstr)
@@ -875,14 +879,14 @@ class ContinuousDeepArModel(FitPredictNode):
         )
         self._predictor = self._estimator.train(gluon_train)
         #
-        fwd_y_hat, fwd_y = bcktst.generate_predictions\
-            (predictor=self._predictor,
+        fwd_y_hat, fwd_y = bcktst.generate_predictions(
+             predictor=self._predictor,
              df=df,
              y_vars=y_vars,
              prediction_length=self._prediction_length,
              num_samples=self._num_traces,
-             use_feat_dynamic_real=True,
-             x_vars=x_vars)
+             x_vars=x_vars
+        )
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
@@ -892,7 +896,10 @@ class ContinuousDeepArModel(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = df_in.copy()
-        x_vars = self._to_list(self._x_vars)
+        if self._x_vars is not None:
+            x_vars = self._to_list(self._x_vars)
+        else:
+            x_vars = None
         y_vars = self._to_list(self._y_vars)
         gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, df.index.freq.freqstr)
         # Instantiate the (DeepAR) estimator and train the model.
@@ -903,20 +910,19 @@ class ContinuousDeepArModel(FitPredictNode):
         )
         self._predictor = self._estimator.train(gluon_train)
         #
-        fwd_y_hat, fwd_y = bcktst.generate_predictions \
-            (predictor=self._predictor,
+        fwd_y_hat, fwd_y = bcktst.generate_predictions(
+             predictor=self._predictor,
              df=df,
              y_vars=y_vars,
              prediction_length=self._num_traces,
              num_samples=10,
-             use_feat_dynamic_real=True,
-             x_vars=x_vars)
+             x_vars=x_vars
+        )
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("fit", info)
         return {"df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)}
-        raise NotImplementedError()
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
