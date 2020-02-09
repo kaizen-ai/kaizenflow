@@ -856,8 +856,11 @@ class ContinuousDeepArModel(FitPredictNode):
         dbg.dassert_in("prediction_length", self._estimator_kwargs)
         self._prediction_length = self._estimator_kwargs["prediction_length"]
         dbg.dassert_lt(0, self._prediction_length)
-        dbg.dassert_not_in("freq", self._estimator_kwargs,
-                "`freq` to be autoinferred from `df_in`; do not specify")
+        dbg.dassert_not_in(
+            "freq",
+            self._estimator_kwargs,
+            "`freq` to be autoinferred from `df_in`; do not specify",
+        )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
