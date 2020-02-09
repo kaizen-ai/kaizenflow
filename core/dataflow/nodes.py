@@ -822,6 +822,7 @@ class ContinuousDeepArModel(FitPredictNode):
         Initialize dataflow node for gluon-ts DeepAR model.
 
         :param nid: unique node id
+        :param y_vars: Used in autoregression
         :param trainer_kwargs: See
           - https://gluon-ts.mxnet.io/api/gluonts/gluonts.trainer.html#gluonts.trainer.Trainer
           - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/trainer/_base.py
@@ -830,8 +831,9 @@ class ContinuousDeepArModel(FitPredictNode):
           - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/model/deepar/_estimator.py
         :param x_vars: Covariates. Could be, e.g., features associated with a
             point-in-time event. Must be known throughout the prediction
-            window at the time the prediction is made.
-        :param y_vars: Used in autoregression
+            window at the time the prediction is made. May be omitted.
+        :num_traces: Number of sample paths / traces to generate per
+            prediction. The mean of the traces is used as the prediction.
         """
         super().__init__(nid)
         self._estimator_kwargs = estimator_kwargs
@@ -843,7 +845,6 @@ class ContinuousDeepArModel(FitPredictNode):
         #
         self._estimator_func = gmd.DeepAREstimator
         # NOTE: Covariates (x_vars) are not required by DeepAR.
-        # TODO(Paul): Allow this model to accept y_vars only.
         #   - This could be useful for, e.g., predicting future values of
         #     what would normally be predictors
         self._x_vars = x_vars
@@ -854,15 +855,16 @@ class ContinuousDeepArModel(FitPredictNode):
         #
         dbg.dassert_in("prediction_length", self._estimator_kwargs)
         self._prediction_length = self._estimator_kwargs["prediction_length"]
-        # Infer `freq` from `df_in` and so do not allow it to be specified.
-        dbg.dassert_not_in("freq", self._estimator_kwargs)
+        dbg.dassert_lt(0, self._prediction_length)
+        dbg.dassert_not_in("freq", self._estimator_kwargs,
+                "`freq` to be autoinferred from `df_in`; do not specify")
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._prediction_length, df.index.size)
-        df = df.iloc[: -self._prediction_length]
+        df_fit = df.iloc[: -self._prediction_length]
         #
         if self._x_vars is not None:
             x_vars = self._to_list(self._x_vars)
@@ -871,16 +873,17 @@ class ContinuousDeepArModel(FitPredictNode):
         y_vars = self._to_list(self._y_vars)
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_train = adpt.transform_to_gluon(
-            df, x_vars, y_vars, df.index.freq.freqstr
+            df_fit, x_vars, y_vars, df_fit.index.freq.freqstr
         )
         # Instantiate the (DeepAR) estimator and train the model.
         self._estimator = self._estimator_func(
             trainer=self._trainer,
-            freq=df.index.freq.freqstr,
+            freq=df_fit.index.freq.freqstr,
             **self._estimator_kwargs,
         )
         self._predictor = self._estimator.train(gluon_train)
-        #
+        # Predict. Generate predictions over all of `df_in` (not just on the
+        #     restricted slice `df_fit`).
         fwd_y_hat, fwd_y = bcktst.generate_predictions(
             predictor=self._predictor,
             df=df,
