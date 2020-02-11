@@ -130,7 +130,7 @@
 
 - Each sprint begins with a sprint planning attended by the team, ScrumMaster,
   ProductOwner
-  - Typically one needs to hour per number of weeks to plan the sprint
+  - Typically one needs two hours per number of weeks to plan the sprint
   - For a 1-month sprint, 8 hours of meeting
   - For 2-week sprint, 4 hours of meeting
 
