@@ -1032,6 +1032,19 @@ class DeepARGlobalModel(FitPredictNode):
         self._freq = self._estimator_kwargs["freq"]
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        """
+        Fit model to multiple series reflected in multiindexed `df_in`.
+
+
+        `prediction_length` is autoinferred from the max index of `t_j`, e.g.,
+        each `df_in` is assumed to include the index `0` for, e.g.,
+        "event time", and indices are assumed to be consecutive integers. So
+        if there are time points
+
+            t_{-2} < t_{-1} < t_0 < t_1 < t_2
+
+        then `prediction_length = 2`.
+        """
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
@@ -1043,19 +1056,20 @@ class DeepARGlobalModel(FitPredictNode):
         #     x_vars up to and including time t_j
         #   - For this model, multi-step predictions are equivalent to
         #     iterated single-step predictions
-        pred_len = df.index.get_level_values(0).unique().size - 1
+        self._prediction_length = df.index.get_level_values(0).max()
         # Instantiate the (DeepAR) estimator and train the model.
         self._estimator = self._estimator_func(
-            prediction_length=pred_len,
+            prediction_length=self._prediction_length,
             trainer=self._trainer,
             **self._estimator_kwargs,
         )
         self._predictor = self._estimator.train(gluon_train)
         # Apply model predictions to the training set (so that we can evaluate
         # in-sample performance).
-        idx0 = df.index[0][0]
+        #   - Include all data points up to and including zero (the event time)
+        idx_slice = pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
-            df.loc[idx0:idx0], x_vars, y_vars, self._freq
+                df.loc[idx_slice[:0, :], :], x_vars, y_vars, self._freq
         )
         fit_predictions = list(self._predictor.predict(gluon_test))
         # Transform gluon-ts predictions into a dataflow local timeseries
@@ -1069,10 +1083,9 @@ class DeepARGlobalModel(FitPredictNode):
         # Map multiindices to align our prediction indices with those used
         # by the passed-in local timeseries dataframe.
         # TODO(Paul): Do this mapping earlier before removing the traces.
-        offsets = df.index.get_level_values(0).unique().to_list()
         aligned_idx = y_hat.index.map(
             lambda x: (
-                offsets[offsets.index(x[0]) + 1],
+                x[0] + 1,
                 x[1] - pd.Timedelta(f"1{self._freq}"),
             )
         )
