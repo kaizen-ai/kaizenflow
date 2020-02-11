@@ -922,9 +922,9 @@ class _Pylint(_Action):
                     # "C0301",
                 ]
             )
-        if ignore:
+       if ignore:
             opts.append("--disable " + ",".join(ignore))
-        # Allow short variables, as long as camel-case.
+        # Allow short variables, as long as they are camel-case.
         opts.append('--variable-rgx="[a-z0-9_]{1,30}$"')
         opts.append('--argument-rgx="[a-z0-9_]{1,30}$"')
         # TODO(gp): Not sure this is needed anymore.
