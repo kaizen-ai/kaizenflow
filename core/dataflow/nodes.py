@@ -1101,7 +1101,43 @@ class DeepARGlobalModel(FitPredictNode):
         return {"df_out": y_hat.to_frame()}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        raise NotImplementedError()
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        df = df_in.copy()
+        # Transform dataflow local timeseries dataframe into gluon-ts format.
+        idx_slice = pd.IndexSlice
+        gluon_test = adpt.transform_to_gluon(
+            df.loc[idx_slice[:0, :], :], x_vars, y_vars, self._freq
+        )
+        predictions = list(self._predictor.predict(gluon_test))
+        # Transform gluon-ts predictions into a dataflow local timeseries
+        # dataframe.
+        # TODO(Paul): Gluon has built-in functionality to take the mean of
+        #     traces, and we might consider using it instead.
+        y_hat_traces = adpt.transform_from_gluon_forecasts(predictions)
+        # TODO(Paul): Store the traces / dispersion estimates.
+        # Average over all available samples.
+        y_hat = y_hat_traces.mean(level=[0, 1])
+        # Map multiindices to align our prediction indices with those used
+        # by the passed-in local timeseries dataframe.
+        # TODO(Paul): Do this mapping earlier before removing the traces.
+        aligned_idx = y_hat.index.map(
+            lambda x: (x[0] + 1, x[1] - pd.Timedelta(f"1{self._freq}"),)
+        )
+        y_hat.index = aligned_idx
+        y_hat.name = y_vars[0] + "_hat"
+        y_hat.index.rename(df.index.names, inplace=True)
+        # Store info.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        # TODO(Paul): Consider storing only the head of each list in `info`
+        #     for debugging purposes.
+        # info["gluon_train"] = list(gluon_train)
+        # info["gluon_test"] = list(gluon_test)
+        # info["fit_predictions"] = fit_predictions
+        self._set_info("predict", info)
+        return {"df_out": y_hat.to_frame()}
 
     @staticmethod
     def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
