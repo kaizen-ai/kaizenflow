@@ -1069,7 +1069,7 @@ class DeepARGlobalModel(FitPredictNode):
         #   - Include all data points up to and including zero (the event time)
         idx_slice = pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
-                df.loc[idx_slice[:0, :], :], x_vars, y_vars, self._freq
+            df.loc[idx_slice[:0, :], :], x_vars, y_vars, self._freq
         )
         fit_predictions = list(self._predictor.predict(gluon_test))
         # Transform gluon-ts predictions into a dataflow local timeseries
@@ -1084,10 +1084,7 @@ class DeepARGlobalModel(FitPredictNode):
         # by the passed-in local timeseries dataframe.
         # TODO(Paul): Do this mapping earlier before removing the traces.
         aligned_idx = y_hat.index.map(
-            lambda x: (
-                x[0] + 1,
-                x[1] - pd.Timedelta(f"1{self._freq}"),
-            )
+            lambda x: (x[0] + 1, x[1] - pd.Timedelta(f"1{self._freq}"),)
         )
         y_hat.index = aligned_idx
         y_hat.name = y_vars[0] + "_hat"
