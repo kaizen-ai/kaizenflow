@@ -933,7 +933,7 @@ class ContinuousDeepArModel(FitPredictNode):
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
-        self._set_info("fit", info)
+        self._set_info("predict", info)
         return {
             "df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
         }
