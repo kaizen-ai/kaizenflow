@@ -559,7 +559,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_fit)
         #
         fwd_y_hat_vars = [
-            self._insert_to_string(y, "hat") for y in fwd_y_df.columns
+            ContinuousSkLearnModel._insert_to_string(y, "hat") for y in fwd_y_df.columns
         ]
         fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # TODO(Paul): Summarize model perf or make configurable.
@@ -588,7 +588,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df)
         fwd_y_hat_vars = [
-            self._insert_to_string(y, "hat") for y in fwd_y_df.columns.tolist()
+            ContinuousSkLearnModel._insert_to_string(y, "hat") for y in fwd_y_df.columns.tolist()
         ]
         fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # Generate basic perf stats.
