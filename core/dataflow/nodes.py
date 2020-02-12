@@ -558,7 +558,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._model.predict(x_fit)
         #
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [
+            self._insert_to_string(y, "hat") for y in fwd_y_df.columns
+        ]
         fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
@@ -585,7 +587,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_predict)
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df)
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns.tolist()]
+        fwd_y_hat_vars = [
+            self._insert_to_string(y, "hat") for y in fwd_y_df.columns.tolist()
+        ]
         fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # Generate basic perf stats.
         info = collections.OrderedDict()
@@ -625,7 +629,9 @@ class ContinuousSkLearnModel(FitPredictNode):
     ) -> collections.OrderedDict:
         info = collections.OrderedDict()
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
-        pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
+        pnl_rets = y.multiply(
+            y_hat.rename(columns=lambda x: x.replace("_hat", ""))
+        )
         info["pnl_rets"] = pnl_rets
         info["sr"] = fin.compute_sharpe_ratio(
             pnl_rets.resample("1B").sum(), time_scaling=252
@@ -660,6 +666,11 @@ class ContinuousSkLearnModel(FitPredictNode):
         if isinstance(to_list, list):
             return to_list
         raise TypeError("Data type=`%s`" % type(to_list))
+
+    @staticmethod
+    def _insert_to_string(text: str, insertion: str) -> str:
+        split = text.rsplit("_", 1)
+        return "_".join(split[:-1] + [insertion, split[-1]])
 
 
 class SkLearnModel(FitPredictNode):
