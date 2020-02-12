@@ -6,6 +6,7 @@ import gluonts.evaluation.backtest
 import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
+from tqdm.autonotebook import tqdm
 
 import core.data_adapters as adpt
 import helpers.dbg as dbg
@@ -114,7 +115,7 @@ def generate_predictions(
     else:
         trunc_len = prediction_length
     #
-    for i in range(df.shape[0]):
+    for i in tqdm(range(df.shape[0])):
         if use_feat_dynamic_real and i < prediction_length:
             # If there are no covariates to make forward prediction on,
             # return NaN predictions.
@@ -133,7 +134,7 @@ def generate_predictions(
             y_hat = sample_forecast.samples.mean(axis=0)
             y_hat_start_date = sample_forecast.start_date
         yhat_all[i] = y_hat
-        y = df.iloc[i + 1: i + 1 + prediction_length][y_vars[0]].to_list()
+        y = df.iloc[i + 1 : i + 1 + prediction_length][y_vars[0]].to_list()
         n_missing_y = prediction_length - len(y)
         if n_missing_y > 0:
             y += [np.nan] * n_missing_y
