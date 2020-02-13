@@ -1080,7 +1080,7 @@ class DeepARGlobalModel(FitPredictNode):
         #   - Include all data points up to and including zero (the event time)
         idx_slice = pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
-            df.loc[idx_slice[:0, :], :], x_vars, y_vars, self._freq
+            df, x_vars, y_vars, self._freq, self._prediction_length
         )
         fit_predictions = list(self._predictor.predict(gluon_test))
         # Transform gluon-ts predictions into a dataflow local timeseries
@@ -1119,7 +1119,7 @@ class DeepARGlobalModel(FitPredictNode):
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         idx_slice = pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
-            df.loc[idx_slice[:0, :], :], x_vars, y_vars, self._freq
+            df, x_vars, y_vars, self._freq, self._prediction_length,
         )
         predictions = list(self._predictor.predict(gluon_test))
         # Transform gluon-ts predictions into a dataflow local timeseries
