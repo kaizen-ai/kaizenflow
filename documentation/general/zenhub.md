@@ -1,6 +1,6 @@
 <!--ts-->
    * [Abbreviations](#abbreviations)
-      * [Refs](#refs)
+      * [References](#references)
       * [GH](#gh)
       * [ZH](#zh)
    * [Agile concepts](#agile-concepts)
@@ -15,11 +15,11 @@
       * [GH Issues](#gh-issues)
       * [GH milestones](#gh-milestones)
       * [GH list of issues](#gh-list-of-issues)
-   * [ZenHub](#zenhub)
-      * [ZH vs GH](#zh-vs-gh)
+   * [ZenHub concepts](#zenhub-concepts)
+      * [ZH vs. GH](#zh-vs-gh)
       * [Workspaces](#workspaces)
       * [Epics](#epics-1)
-      * [Epics vs GH Issues](#epics-vs-gh-issues)
+      * [Epics vs. GH Issues](#epics-vs-gh-issues)
       * [Roadmaps](#roadmaps)
       * [Sprint planning](#sprint-planning)
       * [Burndown](#burndown)
@@ -27,7 +27,7 @@
       * [Issue cycle and control chart](#issue-cycle-and-control-chart)
       * [Cumulative flow diagram](#cumulative-flow-diagram)
       * [Release reports](#release-reports)
-      * [Milestone vs Epics](#milestone-vs-epics)
+      * [Milestone vs. Epics](#milestone-vs-epics)
    * [Pipelines](#pipelines)
       * [Pipelines](#pipelines-1)
       * [New issues](#new-issues)
@@ -63,7 +63,7 @@
 
 - = iterative approach to software development that emphasizes flexibility,
   interactivity, and transparency
-- It focus on:
+- It focuses on:
   - Frequent release of useable code
   - Continuous testing
   - Acceptance that reality is always changing, and thus requirements
@@ -72,12 +72,12 @@
 
 - Sprints are a fixed length of time during which agreed-upon chunk of work is
   completed and shipped
-- Once a Sprint begins, its scope remain fixed
-  - The opposite is called "scope creep"
+- Once a Sprint begins, its scope remains fixed
+  - The opposite phenomenon is called "scope creep"
 
 ## User story
 
-- = high level descriptions of features from customer's perspective
+- = high-level descriptions of features from the customers' perspective
 
 - A template of a user story is:
   - (Title): "as a <USER>, I want <GOAL> so that <BENEFIT>"
@@ -87,11 +87,11 @@
 
 ## Epics
 
-- = "big" user story of theme of work
+- = "big" user story or theme of work
 - E.g.,
   - Epic: "Management feature"
   - User story: "As a customer, I want to be able to create an account"
-- It corresponds to our "Umbrella Issue"
+- It corresponds to our "Umbrella issue"
 
 ## Product backlog
 
@@ -108,7 +108,7 @@
 
 ## Sprint backlog
 
-- = the work that the team is committed to tackle in a given Milestone
+- = the work that the team is committed to tackling in a given Milestone
   - Estimates
   - Requirements
 
@@ -128,7 +128,7 @@
 
 # ZenHub concepts
 
-## ZH vs GH
+## ZH vs. GH
 
 - GH Issues are used to provide a place talk about bugs and features
 - ZH builds on top of GH Issues, PRs, Milestones to implement project management
@@ -139,7 +139,7 @@
 - Allows you to bundle multiple GitHub repos into a single view
 - Different teams (or team members) can create different pipeline structure for
   the same set of repos
-  - Each team can have their own workflow
+  - Each team can have its workflow
 
 ## Epics
 
@@ -148,7 +148,7 @@
 - Tasks are broken down into small, manageable chunks
 - An Epic is a "big user story"
 
-## Epics vs GH Issues
+## Epics vs. GH Issues
 
 - GH issues have no hierarchy: they are a list
   - Which issues are related, which are blocked, or dependent?
@@ -158,7 +158,7 @@
 ## Roadmaps
 
 - Organize Projects and Epics into a Gantt-style timeline view
-- This shows what is the critical part of the software project
+- Roadmaps show what the critical part of the software project is
 
 ## Sprint planning
 
@@ -182,14 +182,14 @@
 
 ## Cumulative flow diagram
 
-- Track how much work is been done across dates
+- Track how much work has been done across dates
 
 ## Release reports
 
 - Releases are used for tracking long-term and dynamic projects
 - Features span multiple sprints
 
-## Milestone vs Epics
+## Milestone vs. Epics
 
 - Epics are larger initiatives
   - Contain issues related to the same subject
@@ -240,6 +240,6 @@
 
 - Our project "XYZ:" (e.g., RP, ETL2, ...) become Epics
   - We can split projects into multiple Epics if the work theme is complex
-    - E.g., RP can be decompose into multiple Epics, e.g.,
+    - E.g., we can decompose RP Issues into multiple Epics, e.g.,
       - "Approximation of RP ESS"
   - This is also equivalent to our purpose milestones (they become Epics)
