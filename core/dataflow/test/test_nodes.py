@@ -9,7 +9,6 @@ import sklearn.linear_model as slm
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
 import core.dataflow as dtf
-import core.signal_processing as sigp
 import helpers.printing as prnt
 import helpers.unit_test as hut
 
@@ -112,14 +111,14 @@ class TestContinuousSkLearnModel(hut.TestCase):
         config_kwargs["alpha"] = 0.5
         return config
 
-    def _get_data(self, lag: int) -> None:
+    def _get_data(self, lag: int) -> pd.DataFrame:
         """
         Generate "random returns". Use lag + noise as predictor.
         """
         num_periods = 50
         total_steps = num_periods + lag + 1
-        rets = sigp.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
-        noise = sigp.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
+        rets = sig_gen.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
+        noise = sig_gen.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
         pred = rets.shift(-lag).loc[1:num_periods] + noise.loc[1:num_periods]
         resp = rets.loc[1:num_periods]
         idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
