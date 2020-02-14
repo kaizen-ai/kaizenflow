@@ -5,9 +5,10 @@ import core.artificial_signal_generators as sig_gen
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import gluonts
+import gluonts.dataset.artificial as gda
 import gluonts.dataset.artificial.recipe as rcp
 import gluonts.dataset.repository.datasets as gdrd  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import gluonts.dataset.util as gdu  # isort: skip # noqa: F401 # pylint: disable=unused-import
@@ -76,3 +77,27 @@ def add_recipes(
     addition = rcp.Add(names)
     recipe.append((name, addition))
     return recipe
+
+
+def generate_recipe_dataset(
+    recipe: Union[Callable, List[Tuple[str, Callable]]],
+    freq: str,
+    start_date: pd.Timestamp,
+    max_train_length: int,
+    prediction_length: int,
+    num_timeseries: int,
+    trim_length_fun=lambda x, **kwargs: 0,
+) -> gluonts.dataset.common.TrainDatasets:
+    names = [name for name, _ in recipe]
+    dbg.dassert_in("target", names)
+    metadata = gluonts.dataset.common.MetaData(freq=freq)
+    recipe_dataset = gda.RecipeDataset(
+        recipe,
+        metadata,
+        max_train_length,
+        prediction_length,
+        num_timeseries,
+        trim_length_fun=trim_length_fun,
+        data_start=start_date,
+    )
+    return recipe_dataset.generate()
