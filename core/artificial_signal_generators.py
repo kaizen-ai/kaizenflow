@@ -5,12 +5,17 @@ import core.artificial_signal_generators as sig_gen
 """
 
 import logging
-from typing import List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 import gluonts
 import gluonts.dataset.repository.datasets as gdrd  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import gluonts.dataset.util as gdu  # isort: skip # noqa: F401 # pylint: disable=unused-import
+import numpy as np
 import pandas as pd
+import statsmodels as sm
+
+# TODO(*): statsmodels needs this import to work properly.
+import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
 import helpers.dbg as dbg
 
@@ -58,3 +63,64 @@ def get_gluon_dataset(
     train_df = pd.DataFrame(train_df.head(train_length), columns=["y"])
     test_df = pd.DataFrame(test_df.head(test_length), columns=["y"])
     return train_df, test_df
+
+
+def generate_arima_signal_and_response(
+    start_date: str,
+    freq: str,
+    num_periods: int,
+    num_x_vars: int,
+    base_random_state: int = 0,
+    shift: int = 1,
+) -> pd.DataFrame:
+    """
+    Generate dataframe of predictors and response.
+
+    Example data:
+                               x0        x1         y
+    2010-01-01 00:00:00  0.027269  0.010088  0.014319
+    2010-01-01 00:01:00  0.024221 -0.017519  0.034699
+    2010-01-01 00:02:00  0.047438 -0.014653  0.036345
+    2010-01-01 00:03:00  0.025131 -0.028136  0.024469
+    2010-01-01 00:04:00  0.022443 -0.016625  0.025981
+
+    :param start_date: index start date
+    :param freq: index frequency
+    :param num_periods: number of data points
+    :param num_x_vars: number of predictors
+    :param base_random_state: random state of this generator
+    :param shift: shift `y` relatively to `x`
+    :return:
+    """
+    np.random.seed(base_random_state)
+    # Generate `x_vals`.
+    x_vals = [
+        _generate_arima_sample(
+            random_state=base_random_state + i, n_periods=num_periods + shift
+        )
+        for i in range(num_x_vars)
+    ]
+    x_vals = np.vstack(x_vals).T
+    # Generate `y` as linear combination of `x_i`.
+    weights = np.random.dirichlet(np.ones(num_x_vars), 1).flatten()
+    y = np.average(x_vals, axis=1, weights=weights)
+    # Shift `y` (`y = weighted_sum(x).shift(shift)`).
+    x = x_vals[shift:]
+    y = y[:-shift]
+    # Generate a dataframe.
+    x_y = np.hstack([x, y.reshape(-1, 1)])
+    idx = pd.date_range(start_date, periods=num_periods, freq=freq)
+    x_cols = [f"x{i}" for i in range(num_x_vars)]
+    return pd.DataFrame(x_y, index=idx, columns=x_cols + ["y"])
+
+
+def _generate_arima_sample(
+    random_state: int = 42,
+    n_periods: int = 20,
+    ar: Iterable[float] = np.array([0.462, -0.288]),
+    ma: Iterable[float] = np.array([0.01]),
+) -> np.array:
+    np.random.seed(random_state)
+    return sm.tsa.arima_process.arma_generate_sample(
+        ar=ar, ma=ma, nsample=n_periods, burnin=10
+    )
