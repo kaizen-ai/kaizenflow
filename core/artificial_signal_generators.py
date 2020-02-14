@@ -5,11 +5,13 @@ import core.artificial_signal_generators as sig_gen
 """
 
 import logging
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import gluonts
+import gluonts.dataset.artificial.recipe as rcp
 import gluonts.dataset.repository.datasets as gdrd  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import gluonts.dataset.util as gdu  # isort: skip # noqa: F401 # pylint: disable=unused-import
+import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
@@ -58,3 +60,19 @@ def get_gluon_dataset(
     train_df = pd.DataFrame(train_df.head(train_length), columns=["y"])
     test_df = pd.DataFrame(test_df.head(test_length), columns=["y"])
     return train_df, test_df
+
+
+def evaluate_recipe(
+    recipe: List[Tuple[str, rcp.Lifted]], length: int
+) -> Dict[str, np.array]:
+    return rcp.evaluate(recipe, length)
+
+
+def add_recipes(
+    recipe: List[Tuple[str, rcp.Lifted]], name: str = "signal"
+) -> List[Tuple[str, rcp.Lifted]]:
+    recipe = recipe.copy()
+    names = [name for name, _ in recipe]
+    addition = rcp.Add(names)
+    recipe.append((name, addition))
+    return recipe
