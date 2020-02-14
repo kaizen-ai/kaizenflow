@@ -5,7 +5,7 @@ import core.artificial_signal_generators as sig_gen
 """
 
 import logging
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, Union
 
 import gluonts
 import gluonts.dataset.repository.datasets as gdrd  # isort: skip # noqa: F401 # pylint: disable=unused-import
@@ -124,3 +124,52 @@ def _generate_arima_sample(
     return sm.tsa.arima_process.arma_generate_sample(
         ar=ar, ma=ma, nsample=n_periods, burnin=10
     )
+
+
+def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
+    """
+    Generate Heaviside pd.Series.
+    """
+    dbg.dassert_lte(a, zero_val)
+    dbg.dassert_lte(zero_val, b)
+    array = np.arange(a, b, tick)
+    srs = pd.Series(
+        data=np.heaviside(array, zero_val), index=array, name="Heaviside"
+    )
+    return srs
+
+
+def get_impulse(a: int, b: int, tick: int) -> pd.Series:
+    """
+    Generate unit impulse pd.Series.
+    """
+    heavi = get_heaviside(a, b, 1, tick)
+    impulse = (heavi - heavi.shift(1)).shift(-1).fillna(0)
+    impulse.name = "impulse"
+    return impulse
+
+
+def get_binomial_tree(
+    p: Union[float, Iterable[float]],
+    vol: float,
+    size: Union[int, Tuple[int, ...], None],
+    seed: Optional[int] = None,
+) -> pd.Series:
+    # binomial_tree(0.5, 0.1, 252, seed=0).plot()
+    np.random.seed(seed=seed)
+    pos = np.random.binomial(1, p, size)
+    neg = np.full(size, 1) - pos
+    delta = float(vol) * (pos - neg)
+    return pd.Series(np.exp(delta.cumsum()), name="binomial_walk")
+
+
+def get_gaussian_walk(
+    drift: Union[float, Iterable[float]],
+    vol: Union[float, Iterable[float]],
+    size: Union[int, Tuple[int, ...], None],
+    seed: Optional[int] = None,
+) -> pd.Series:
+    # get_gaussian_walk(0, .2, 252, seed=10)
+    np.random.seed(seed=seed)
+    gauss = np.random.normal(drift, vol, size)
+    return pd.Series(np.exp(gauss.cumsum()), name="gaussian_walk")

@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import core.artificial_signal_generators as sig_gen
 import core.signal_processing as sigp
 import helpers.git as git
 import helpers.unit_test as ut
@@ -36,12 +37,12 @@ class Test_get_symmetric_equisized_bins(ut.TestCase):
 
 class Test_compute_rolling_zscore1(ut.TestCase):
     def test_default_values1(self) -> None:
-        heaviside = sigp.get_heaviside(-10, 252, 1, 1)
+        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
         self.check_string(zscored.to_string())
 
     def test_default_values2(self) -> None:
-        heaviside = sigp.get_heaviside(-10, 252, 1, 1)
+        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.compute_rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
 
@@ -186,7 +187,7 @@ class Test_digitize1(ut.TestCase):
         self.check_string(actual.to_string())
 
     def test_heaviside1(self) -> None:
-        heaviside = sigp.get_heaviside(-10, 20, 1, 1)
+        heaviside = sig_gen.get_heaviside(-10, 20, 1, 1)
         bins = [0, 0.2, 0.4]
         right = False
         actual = sigp.digitize(heaviside, bins, right)

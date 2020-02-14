@@ -27,13 +27,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import core.artificial_signal_generators as sig_gen
 import core.signal_processing as sigp
 
 # %% [markdown]
 # # Generate signal
 
 # %%
-prices = sigp.get_gaussian_walk(0, 0.01, 4 * 252, seed=20)
+prices = sig_gen.get_gaussian_walk(0, 0.01, 4 * 252, seed=20)
 
 # %%
 prices.plot()
@@ -101,7 +102,7 @@ sigp.plot_scaleogram(prices, np.arange(1, 1024), "morl")
 # # EMAs
 
 # %%
-impulse = sigp.get_impulse(-252, 3 * 252, tick=1)
+impulse = sig_gen.get_impulse(-252, 3 * 252, tick=1)
 
 # %%
 impulse.plot()
