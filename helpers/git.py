@@ -446,6 +446,7 @@ def get_modified_files_in_branch(
     Return files modified in the current branch with respect to `dst_branch`.
 
     Equivalent to `git diff --name-only master...`
+    You have to remember that there is difference between `master` and `origin/master`.
 
     :param dir_name: directory with Git client
     :param dst_branch: branch to compare to, e.g., master
