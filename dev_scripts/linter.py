@@ -1394,8 +1394,8 @@ def _post_check() -> bool:
     """
     result = True
     changed_files = git.get_modified_files()
-    _LOG.debug("Modified files: %s.", changed_files)
     if changed_files:
+        _LOG.warning("Modified files: %s.", changed_files)
         result = False
     return result
 
@@ -1847,5 +1847,5 @@ if __name__ == "__main__":
     if args_.post_check:
         if not _post_check():
             rc_ = 1
-            _LOG.debug("`--post_check` fails.")
+            _LOG.warning("`--post_check` fails.")
     sys.exit(rc_)
