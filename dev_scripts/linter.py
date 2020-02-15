@@ -1387,6 +1387,18 @@ def _check_file_property(
     return output, actions
 
 
+def _post_check() -> bool:
+    """
+    Check changes in th local repo.
+    If any file in the local repo changed, returns False.
+    """
+    result = True
+    changed_files = git.get_modified_files()
+    if changed_files:
+        result = False
+    return result
+
+
 # #############################################################################
 # Actions.
 # #############################################################################
@@ -1400,6 +1412,9 @@ def _check_file_property(
 
 # Actions and if they read / write files.
 # The order of this list implies the order in which they are executed.
+
+# TODO(GP,Sergey): I think this info should be encapsulated in classes.
+#  There are mapping that we have to maintain. DRY.
 _VALID_ACTIONS_META: List[Tuple[str, str, str, Type[_Action]]] = [
     (
         "check_file_property",
@@ -1815,6 +1830,11 @@ def _parse() -> argparse.ArgumentParser:
         help="File storing the warnings",
     )
     parser.add_argument("--no_print", action="store_true")
+    parser.add_argument(
+        "--post_check",
+        action="store_true",
+        help="Add post check. If any file changed, the script " "returns -1.",
+    )
     prsr.add_verbosity_arg(parser)
     return parser
 
@@ -1823,4 +1843,7 @@ if __name__ == "__main__":
     parser_ = _parse()
     args_ = parser_.parse_args()
     rc_ = _main(args_)
+    if args_.post_check:
+        if not _post_check():
+            rc_ = 1
     sys.exit(rc_)
