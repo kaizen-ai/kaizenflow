@@ -1846,4 +1846,5 @@ if __name__ == "__main__":
     if args_.post_check:
         if not _post_check():
             rc_ = 1
+            _LOG.debug("`--post_check` fails.")
     sys.exit(rc_)
