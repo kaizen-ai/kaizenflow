@@ -179,7 +179,7 @@ def _get_files(args: argparse.Namespace) -> List[str]:
             file_names = git.get_previous_committed_files(n_commits)
         elif args.modified_files_in_branch:
             dir_name = "."
-            dst_branch = "master"
+            dst_branch = "origin/master"
             file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
         elif args.dir_name:
             if args.dir_name == "$GIT_ROOT":
