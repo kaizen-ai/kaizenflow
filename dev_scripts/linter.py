@@ -1394,6 +1394,7 @@ def _post_check() -> bool:
     """
     result = True
     changed_files = git.get_modified_files()
+    _LOG.debug("Modified files: %s.", changed_files)
     if changed_files:
         result = False
     return result
