@@ -1,83 +1,32 @@
-<!--ts-->
-   * [Abbreviations](#abbreviations)
-      * [References](#references)
-      * [GH](#gh)
-      * [ZH](#zh)
-   * [Agile concepts](#agile-concepts)
-      * [Agile development](#agile-development)
-      * [Sprints](#sprints)
-      * [User story](#user-story)
-      * [Epics](#epics)
-      * [Product backlog](#product-backlog)
-      * [Icebox](#icebox)
-      * [Sprint backlog](#sprint-backlog)
-   * [Mapping Agile concept onto GH](#mapping-agile-concept-onto-gh)
-      * [GH Issues](#gh-issues)
-      * [GH milestones](#gh-milestones)
-      * [GH list of issues](#gh-list-of-issues)
-   * [ZenHub concepts](#zenhub-concepts)
-      * [ZH vs. GH](#zh-vs-gh)
-      * [Workspaces](#workspaces)
-      * [Epics](#epics-1)
-      * [Epics vs. GH Issues](#epics-vs-gh-issues)
-      * [Roadmaps](#roadmaps)
-      * [Sprint planning](#sprint-planning)
-      * [Burndown](#burndown)
-      * [Velocity charts](#velocity-charts)
-      * [Issue cycle and control chart](#issue-cycle-and-control-chart)
-      * [Cumulative flow diagram](#cumulative-flow-diagram)
-      * [Release reports](#release-reports)
-      * [Milestone vs. Epics](#milestone-vs-epics)
-   * [Pipelines](#pipelines)
-      * [Pipelines](#pipelines-1)
-      * [New issues](#new-issues)
-      * [Icebox](#icebox-1)
-      * [Backlog](#backlog)
-      * [In progress](#in-progress)
-      * [Review / QA](#review--qa)
-      * [Done](#done)
-      * [Closed](#closed)
-   * [How to transition from our project management to ZH](#how-to-transition-from-our-project-management-to-zh)
+# ZenHub
 
-
-
-<!--te-->
-
-# Abbreviations
-
-## References
-
+* Refs
 - [Help](https://help.zenhub.com/support/home)
 
-## GH
-
+* GH
 - = GitHub
 
-## ZH
-
+* ZH
 - = ZenHub
 
-# Agile concepts
+## Agile concepts
 
-## Agile development
-
+* Agile development
 - = iterative approach to software development that emphasizes flexibility,
   interactivity, and transparency
-- It focuses on:
+- It focus on:
   - Frequent release of useable code
   - Continuous testing
   - Acceptance that reality is always changing, and thus requirements
 
-## Sprints
-
+* Sprints
 - Sprints are a fixed length of time during which agreed-upon chunk of work is
   completed and shipped
-- Once a Sprint begins, its scope remains fixed
-  - The opposite phenomenon is called "scope creep"
+- Once a Sprint begins, its scope remain fixed
+  - The opposite is called "scope creep"
 
-## User story
-
-- = high-level descriptions of features from the customers' perspective
+* User story
+- = high level descriptions of features from customer's perspective
 
 - A template of a user story is:
   - (Title): "as a <USER>, I want <GOAL> so that <BENEFIT>"
@@ -85,112 +34,90 @@
   - Acceptance criteria
   - Definition of "Done"
 
-## Epics
-
-- = "big" user story or theme of work
+* Epics
+- = "big" user story of theme of work
 - E.g.,
   - Epic: "Management feature"
   - User story: "As a customer, I want to be able to create an account"
-- It corresponds to our "Umbrella issue"
+- It corresponds to our "Umbrella Issue"
 
-## Product backlog
-
+* Product backlog
 - Aka "Master Story List"
 - = include all the work, e.g.,
-  - User stories
-  - Half-baked feature ideas
-  - Bug fixes
+  - user stories
+  - half-baked feature ideas
+  - bug fixes
 - The goal is to get stuff out of our head and into GH
 
-## Icebox
-
+* Icebox
 - = items that are low priority in the product backlog
 
-## Sprint backlog
+* Sprint backlog
+- = the work that the team is committed to tackle in a given Milestone
 
-- = the work that the team is committed to tackling in a given Milestone
-  - Estimates
-  - Requirements
+## Mapping Agile concept onto GH
 
-# Mapping Agile concept onto GH
-
-## GH Issues
-
+* GH Issues
 - = user stories
 
-## GH milestones
-
+* GH milestones
 - = Scrum sprints
 
-## GH list of issues
-
+* GH list of issues
 - = product backlog
 
-# ZenHub concepts
+## ZenHub
 
-## ZH vs. GH
-
+* ZH vs GH
 - GH Issues are used to provide a place talk about bugs and features
 - ZH builds on top of GH Issues, PRs, Milestones to implement project management
   layer
 
-## Workspaces
-
+* Workspaces
 - Allows you to bundle multiple GitHub repos into a single view
 - Different teams (or team members) can create different pipeline structure for
   the same set of repos
-  - Each team can have its workflow
+  - Each team can have their own workflow
 
-## Epics
-
-- = theme of work containing several sub-tasks required to complete a larger
-  goal
+* Epics
+- = theme of work containing several sub-tasks required to complete a larger goal
 - Tasks are broken down into small, manageable chunks
 - An Epic is a "big user story"
 
-## Epics vs. GH Issues
-
+* Epics vs GH Issues
 - GH issues have no hierarchy: they are a list
   - Which issues are related, which are blocked, or dependent?
 - Epics add a layer of hierarchy on GH issues
 - Epics are like "themes of work"
 
-## Roadmaps
-
+* Roadmaps
 - Organize Projects and Epics into a Gantt-style timeline view
-- Roadmaps show what the critical part of the software project is
+- This shows what is the critical part of the software project
 
-## Sprint planning
-
+* Sprint planning
 - How much work can we actually tackle?
 - Can we ship in the next two weeks?
 - What issues should be de-scoped?
 
-## Burndown
-
+* Burndown
 - = indicator of how projects are processing
 - Each time an issue is closed the burndown chart is updated
 
-## Velocity charts
-
+* Velocity charts
 - Reporting on how the amount of work completed fluctuates over time (i.e.,
   sprint over sprint)
 
-## Issue cycle and control chart
-
+* Issue cycle and control chart
 - Understand how long Issues take from start to finish
 
-## Cumulative flow diagram
+* Cumulative flow diagram
+- Track how much work is been done across dates
 
-- Track how much work has been done across dates
-
-## Release reports
-
+* Release reports
 - Releases are used for tracking long-term and dynamic projects
 - Features span multiple sprints
 
-## Milestone vs. Epics
-
+* Milestone vs Epics
 - Epics are larger initiatives
   - Contain issues related to the same subject
   - Issues are added and removed
@@ -201,45 +128,72 @@
 
 # Pipelines
 
-## Pipelines
+* Pipelines
+- Implement multiple workflows representing how Issues are selected, implemented,
+  and completed
 
-- Implement multiple workflows representing how Issues are selected,
-  implemented, and completed
-
-## New issues
-
+* New issues
 - = any new GH Issue is here
 
-## Icebox
-
+* Icebox
 - = low priority, un-prioritized Issues
 
-## Backlog
-
+* Backlog
 - Issues that are immediate priorities
 - Issues should be prioritized top to bottom in the pipeline
 
-## In progress
-
+* In progress
 - What the team is currently working on, ordered by priority
 
-## Review / QA
-
+* Review / QA
 - Issues opened for review and testing
 - Code is ready to be deployed pending feedback
 
-## Done
-
+* Done
 - Issues that are tested and ready to be deployed
 
-## Closed
-
+* Closed
 - Closed issues
 
 # How to transition from our project management to ZH
 
 - Our project "XYZ:" (e.g., RP, ETL2, ...) become Epics
   - We can split projects into multiple Epics if the work theme is complex
-    - E.g., we can decompose RP Issues into multiple Epics, e.g.,
-      - "Approximation of RP ESS"
+    - E.g., RP can be decompose into multiple Epics, e.g.,
+        - "Approximation of RP ESS"
   - This is also equivalent to our purpose milestones (they become Epics)
+
+- Remove the project tags (at least moving forward)
+  - A quick tool to clean up the tags from the bugs
+
+- Give priority to the project
+  - E.g., AutoML doc -> Add doc
+
+# Our conventions
+
+## Sprint
+- Sprints are numbered and have a commodity name
+  - E.g., "Sprint1 - Gold", "Sprint2 - Natural gas"
+
+- We create a Sprint for each "Team" (Dev, Tools, NLP, AutoML) with the standard
+  process (prioritization, estimate, ...)
+  - We merge the Sprint for each Team into a single Sprint for the entire DevTeam
+  - We don't want to say "one Team is ahead or behind": we win or lose together
+
+## Workflow
+- Decide a reference Issue to which we assign 2 story points
+  - It should be small, something that can be done in around a single day
+
+- The bugs that are candidates for the next Sprint go in `SprintCandidate`
+  pipeline
+  - TODO(GP, Paul): Is `SprintCandidate` a Pipeline or a Milestone?
+  - Each Issue needs to have a clear goal, a definition of "done", and "small"
+  - Issues are ranked in terms of business value
+
+- Each Team estimates each of their Issues in `SprintCandidate` in terms of story
+  points
+- Then we select for each Team the Sprint in terms of a number of story points
+  that is doable in 2 weeks
+  - Initially we assume 2 story points = 1 day, so for the sprint is 20 points
+    per Team member
+  - We will then refine the estimates using Velocity charts

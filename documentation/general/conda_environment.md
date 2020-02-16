@@ -8,7 +8,7 @@
 
 <!--te-->
 
-## Conda bloat
+# Conda bloat
 
 - "Conda bloat" refers to the situation when there are more packages in the
   conda recipe than what strictly needed to allow us to make progress.
@@ -35,6 +35,8 @@
   - The rule is "Important code should be tested, and if code is not important
     it should not be in the repo at all"
   - Thus a corollary is that all code in the repo should be tested
+
+# Conda environment lifecycle
 
 ## Experimental conda environment
 
@@ -71,3 +73,31 @@
 
 - Typically GP takes care of getting all this fun stuff to work, but you are
   welcome to try locally to minimize surprises.
+
+# Conda maintenance (only for admins)
+
+## Updating conda itself
+
+- To update conda itself you can run:
+```bash
+> conda activate base
+
+> conda --version
+3.7.1
+
+> conda update anaconda
+
+> conda --version
+3.8.0
+```
+
+## Cleaning conda packages
+- One can clean up the entire cache of packages with:
+```bash
+> conda clean --yes --all
+```
+
+- This operation:
+  - affects the conda system for all the users
+  - is just about deleting cached artifacts so it should not have destructive
+    effects
