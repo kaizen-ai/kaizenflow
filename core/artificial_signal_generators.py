@@ -74,7 +74,7 @@ def evaluate_recipe(
     Generate data based on recipe.
 
     For documentation on recipes, see
-    gluonts.dataset.artificial._base.RecipeDataset.
+    https://gluon-ts.mxnet.io/_modules/gluonts/dataset/artificial/_base.html#RecipeDataset.
 
     :param recipe: [(field, function)]
     :param length: length of data to generate
@@ -84,11 +84,11 @@ def evaluate_recipe(
     return rcp.evaluate(recipe, length, **kwargs)
 
 
-def add_recipes(
+def add_recipe_components(
     recipe: List[Tuple[str, Callable]], name: str = "signal"
 ) -> List[Tuple[str, rcp.Lifted]]:
     """
-    Add recipe components.
+    Append the sum of the components to the recipe.
 
     :param recipe: [(field, function)]
     :param name: name of the sum
@@ -108,13 +108,14 @@ def generate_recipe_dataset(
     max_train_length: int,
     prediction_length: int,
     num_timeseries: int,
-    trim_length_fun: Callable = lambda x, **kwargs: 0,
+    trim_length_func: Callable = lambda x, **kwargs: 0,
 ) -> gluonts.dataset.common.TrainDatasets:
     """
     Generate GluonTS TrainDatasets from recipe.
 
     For more information on recipes, see
-    gluonts.dataset.artificial._base.RecipeDataset and
+    https://gluon-ts.mxnet.io/_modules/gluonts/dataset/artificial/_base.html#RecipeDataset
+    and
     https://gluon-ts.mxnet.io/examples/synthetic_data_generation_tutorial/tutorial.html.
 
     For `feat_dynamic_cat` and `feat_dynamic_real` generation pass in
@@ -128,7 +129,7 @@ def generate_recipe_dataset(
     :param max_train_length: maximum length of a training time series
     :param prediction_length: length of prediction range
     :param num_timeseries: number of time series to generate
-    :param trim_length_fun: Callable f(x: int) -> int returning the
+    :param trim_length_func: Callable f(x: int) -> int returning the
         (shortened) training length
     :return: GluonTS TrainDatasets (with `train` and `test` attributes).
     """
@@ -141,7 +142,7 @@ def generate_recipe_dataset(
         max_train_length,
         prediction_length,
         num_timeseries,
-        trim_length_fun=trim_length_fun,
+        trim_length_fun=trim_length_func,
         data_start=start_date,
     )
     return recipe_dataset.generate()
