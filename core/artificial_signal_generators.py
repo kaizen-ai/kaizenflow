@@ -5,9 +5,11 @@ import core.artificial_signal_generators as sig_gen
 """
 
 import logging
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import gluonts
+import gluonts.dataset.artificial as gda
+import gluonts.dataset.artificial.recipe as rcp
 import gluonts.dataset.repository.datasets as gdrd  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import gluonts.dataset.util as gdu  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
@@ -63,6 +65,87 @@ def get_gluon_dataset(
     train_df = pd.DataFrame(train_df.head(train_length), columns=["y"])
     test_df = pd.DataFrame(test_df.head(test_length), columns=["y"])
     return train_df, test_df
+
+
+def evaluate_recipe(
+    recipe: List[Tuple[str, Callable]], length: int, **kwargs: Any
+) -> Dict[str, np.array]:
+    """
+    Generate data based on recipe.
+
+    For documentation on recipes, see
+    https://gluon-ts.mxnet.io/_modules/gluonts/dataset/artificial/_base.html#RecipeDataset.
+
+    :param recipe: [(field, function)]
+    :param length: length of data to generate
+    :param kwargs: kwargs passed into gluonts.dataset.artificial.recipe.evaluate
+    :return: field names mapped to generated data
+    """
+    return rcp.evaluate(recipe, length, **kwargs)
+
+
+def add_recipe_components(
+    recipe: List[Tuple[str, Callable]], name: str = "signal"
+) -> List[Tuple[str, rcp.Lifted]]:
+    """
+    Append the sum of the components to the recipe.
+
+    :param recipe: [(field, function)]
+    :param name: name of the sum
+    :return: recipe with the sum component
+    """
+    recipe = recipe.copy()
+    names = [name for name, _ in recipe]
+    addition = rcp.Add(names)
+    recipe.append((name, addition))
+    return recipe
+
+
+def generate_recipe_dataset(
+    recipe: Union[Callable, List[Tuple[str, Callable]]],
+    freq: str,
+    start_date: pd.Timestamp,
+    max_train_length: int,
+    prediction_length: int,
+    num_timeseries: int,
+    trim_length_func: Callable = lambda x, **kwargs: 0,
+) -> gluonts.dataset.common.TrainDatasets:
+    """
+    Generate GluonTS TrainDatasets from recipe.
+
+    For more information on recipes, see
+    https://gluon-ts.mxnet.io/_modules/gluonts/dataset/artificial/_base.html#RecipeDataset
+    and
+    https://gluon-ts.mxnet.io/examples/synthetic_data_generation_tutorial/tutorial.html.
+
+    For `feat_dynamic_cat` and `feat_dynamic_real` generation pass in
+    `shape=(n_features, 0)`. GluonTS replaces `0` in shape with
+    `max_train_length + prediction_length`.
+
+    :param recipe: GluonTS recipe. Datasets with keys `feat_dynamic_cat`,
+        `feat_dynamic_real` and `target` are passed into `ListDataset`.
+    :param freq: frequency
+    :param start_date: start date of the dataset
+    :param max_train_length: maximum length of a training time series
+    :param prediction_length: length of prediction range
+    :param num_timeseries: number of time series to generate
+    :param trim_length_func: Callable f(x: int) -> int returning the
+        (shortened) training length
+    :return: GluonTS TrainDatasets (with `train` and `test` attributes).
+    """
+    names = [name for name, _ in recipe]
+    dbg.dassert_in("target", names)
+    metadata = gluonts.dataset.common.MetaData(freq=freq)
+    recipe_dataset = gda.RecipeDataset(
+        recipe,
+        metadata,
+        max_train_length,
+        prediction_length,
+        num_timeseries,
+        trim_length_fun=trim_length_func,
+        data_start=start_date,
+    )
+    return recipe_dataset.generate()
 
 
 def generate_arima_signal_and_response(
