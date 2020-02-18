@@ -2,6 +2,8 @@ import logging
 from typing import List, Tuple
 
 import gluonts
+import gluonts.dataset.artificial as gda
+import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
 # TODO(*): gluon needs this import to work properly.
 import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
@@ -9,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 import core.data_adapters as adpt
+import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -143,6 +146,40 @@ class TestTransformFromGluon(hut.TestCase):
         )
         inverted_df = inverted_df.astype(np.float64)
         pd.testing.assert_frame_equal(local_ts, inverted_df)
+
+    def test_transform_artificial_ts(self) -> None:
+        """
+        Artificial time series below has one-dimensional target.
+        """
+        artificial_dataset = gda.ComplexSeasonalTimeSeries(
+            num_series=1,
+            prediction_length=21,
+            freq_str="H",
+            length_low=30,
+            length_high=40,
+            min_val=-10000,
+            max_val=10000,
+            is_integer=False,
+            proportion_missing_values=0,
+            is_noise=True,
+            is_scale=True,
+            percentage_unique_timestamps=1,
+            is_out_of_bounds_date=True,
+        )
+        train_ts = gluonts.dataset.common.ListDataset(
+            artificial_dataset.train, freq=artificial_dataset.metadata.freq
+        )
+        test_ts = gluonts.dataset.common.ListDataset(
+            artificial_dataset.test, freq=artificial_dataset.metadata.freq
+        )
+        train_df = adpt.transform_from_gluon(
+            train_ts, None, ["y"], index_name=None
+        )
+        test_df = adpt.transform_from_gluon(test_ts, None, ["y"], index_name=None)
+        str_res = (
+            f"{prnt.frame('train')}{train_df}\n{prnt.frame('test')}{test_df}"
+        )
+        self.check_string(str_res)
 
 
 class TestTransformFromGluonForecasts(hut.TestCase):
