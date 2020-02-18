@@ -148,6 +148,9 @@ class TestTransformFromGluon(hut.TestCase):
         pd.testing.assert_frame_equal(local_ts, inverted_df)
 
     def test_transform_artificial_ts(self) -> None:
+        """
+        Artificial time series below has one-dimensional target.
+        """
         artificial_dataset = gda.ComplexSeasonalTimeSeries(
             num_series=1,
             prediction_length=21,
