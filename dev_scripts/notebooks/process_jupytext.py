@@ -101,13 +101,14 @@ def _test(file_name: str, action: str) -> None:
         #  #   kernelspec:
         #  #     display_name: Python [conda env:.conda-p1_develop] *
         #  #     language: python
-        regex = r"\n\-\#\s+jupytext_version:\s*(\S+).*\n\+\#\s+jupytext_version:\s*(\S+)"
-        m = re.search(regex, txt, re.MULTILINE)
+        regex = r"jupytext_version: \d.*"
+        m = re.findall(regex, txt, re.MULTILINE)
+        _LOG.debug('Regex search result: %s', m)
         if m:
             _LOG.warning(
                 "There is a mismatch of jupytext version: '%s' vs '%s': skipping",
-                m.group(1),
-                m.group(2),
+                m[0],
+                m[1],
             )
         else:
             raise RuntimeError(txt)
