@@ -88,11 +88,11 @@ As a result of the manipulations described above we have two dataframes:
 | USA: Continuing Claims: SA | Weekly | person | Ol-Jan 1967 | 07-Dec 2019 | 2019/12/20 | Bureau of Labor Statistics | USA | G0002434 | (0_0_1_1) |
 
 In `screenshot_number`:
-- the fist number corresponds to the `commodity` index from the automax output
+- the first number corresponds to the `commodity` index from the automax output
 - the second number corresponds to the `stream`
 - the third number corresponds to the `category`
 - the fourth number corresponds to the screenshot number for this category
-(we scrolled the window and took multiple screenshots)
+    (we scrolled the window and took multiple screenshots)
 
 Therefore, we can merge the tables based on the screenshot number:
 
