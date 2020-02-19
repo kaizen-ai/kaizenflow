@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 import pytest
 
+import amp.dev_scripts.notebooks.process_jupytext as proc_jup  # type: ignore
 import dev_scripts.linter as lntr
 import dev_scripts.url as url
 import helpers.conda as hco
@@ -650,7 +651,9 @@ from typing import List
         The notebook is not under 'notebooks': invalid.
         """
         file_name = "hello/world/notebook.ipynb"
+        # pylint: disable=line-too-long
         exp = "hello/world/notebook.ipynb:1: each notebook should be under a 'notebooks' directory to not confuse pytest"
+        # pylint: enable=line-too-long
         self._helper_check_notebook_dir(file_name, exp)
 
     def test_check_notebook_dir2(self) -> None:
@@ -688,7 +691,9 @@ from typing import List
         Test is not under `test`: invalid.
         """
         file_name = "hello/world/test_all.py"
+        # pylint: disable=line-too-long
         exp = "hello/world/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
+        # pylint: enable=line-too-long
         self._helper_check_test_file_dir(file_name, exp)
 
     def test_check_test_file_dir3(self) -> None:
@@ -696,7 +701,9 @@ from typing import List
         Test is not under `test`: invalid.
         """
         file_name = "hello/world/tests/test_all.py"
+        # pylint: disable=line-too-long
         exp = "hello/world/tests/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
+        # pylint: enable=line-too-long
         self._helper_check_test_file_dir(file_name, exp)
 
     def test_check_test_file_dir4(self) -> None:
@@ -706,3 +713,51 @@ from typing import List
         file_name = "hello/world/tests/test_all.ipynb"
         exp = ""
         self._helper_check_test_file_dir(file_name, exp)
+
+
+@pytest.mark.amp
+class Test_process_jupytext(ut.TestCase):
+    def test1_end_to_end(self) -> None:
+        file_name = "test_notebook.py"
+        file_path = os.path.join(self.get_input_dir(), file_name)
+        cmd = f"process_jupytext.py -f {file_path} --action test 2>&1"
+        _, txt = si.system_to_string(cmd, abort_on_error=False)
+        # There is a date in output, so we remove date using split.
+        # Output example:
+        # pylint: disable=line-too-long
+        # [0m02-19_20:56 [33mWARNING[0m: _is_jupytext_version_different:108 : There is a mismatch of jupytext version: 'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
+        # pylint: enable=line-too-long
+        txt_no_date = txt.split("WARNING")[1].split("[")[1]
+        self.check_string(txt_no_date)
+
+    def test2_is_jupytext_version_different_true(self) -> None:
+        txt = """
+--- expected
++++ actual
+@@ -5,7 +5,7 @@
+ #       extension: .py
+ #       format_name: percent
+ #       format_version: '1.3'
+-#       jupytext_version: 1.3.3
++#       jupytext_version: 1.3.0
+ #   kernelspec:
+ #     display_name: Python [conda env:.conda-p1_develop] *
+ #     language: python
+"""
+        self.assertTrue(proc_jup._is_jupytext_version_different(txt))
+
+    def test3_is_jupytext_version_different_false(self) -> None:
+        txt = """
+--- expected
++++ actual
+@@ -5,7 +5,7 @@
+ #       extension: .py
+-#       format_name: percent
++#       format_name: plus
+ #       format_version: '1.3'
+ #       jupytext_version: 1.3.3
+ #   kernelspec:
+ #     display_name: Python [conda env:.conda-p1_develop] *
+ #     language: python
+"""
+        self.assertFalse(proc_jup._is_jupytext_version_different(txt))
