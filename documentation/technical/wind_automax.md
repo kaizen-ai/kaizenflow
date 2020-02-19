@@ -1,4 +1,4 @@
-<!--ts-->
+****<!--ts-->
 Table of Contents
 =================
 
@@ -61,7 +61,7 @@ The screenshots are located in the following directories:
 
 ### 4. OCR for automax_indicators
 
-- GitHub reference: 
+- GitHub reference:
    - [WIND: OCR to build mapping commodity -> data #799 (comment)](https://github.com/ParticleDev/commodity_research/issues/799#issuecomment-569095135)
    - [WIND: Extract metadata through screenshots #774 (linked comment and down)](https://github.com/ParticleDev/commodity_research/issues/774#issuecomment-580356330)
 - The code: [vendors/wind/extract_tables_from_images.py](https://github.com/ParticleDev/commodity_research/blob/master/vendors/wind/extract_tables_from_images.py)
@@ -69,4 +69,51 @@ The screenshots are located in the following directories:
 The resulting .csv that combines data from screenshots in both aforementioned directories is located at:
  - S3 bucket: `/s3/default00-bucket/wind/datasets/Wind_terminal/WIND_metadata_table.csv`
  - [Google Drive](https://docs.google.com/spreadsheets/d/1i_H1N4E81oFUB6O1Y8rJ95q4UFEpIIdv_Bhim-4Z4kE/edit#gid=1549615534)
- 
+
+### 5. Combining automax and automax indicators results
+
+As a result of the manipulations described above we have two dataframes:
+
+- Automax result, which is a dataframe of the following format:
+
+| commodity           | stream   | category          |
+| ------------------- | -------- | ----------------- |
+| Precious Metal_Gold | Upstream | Macro Environment |
+|                     |          | Gold Reserves     |
+
+ - Automax_indicators result, which has the following format:
+
+| Name | Frequency | Unit | Start Date | End Date | Update | Source | Country | ID  | screenshot_number |
+| ---- | --------- | ---- | ---------- | -------- | ------ | ------ | ------- | --- | ----------------- |
+| USA: Continuing Claims: SA | Weekly | person | Ol-Jan 1967 | 07-Dec 2019 | 2019/12/20 | Bureau of Labor Statistics | USA | G0002434 | (0_0_1_1) |
+
+In `screenshot_number`:
+- the fist number corresponds to the `commodity` index from the automax output
+- the second number corresponds to the `stream`
+- the third number corresponds to the `category`
+- the fourth number corresponds to the screenshot number for this category
+(we scrolled the window and took multiple screenshots)
+
+Therefore, we can merge the tables based on the screenshot number:
+
+|  commodity | stream | category  | scroll_number  | Name | Frequency | Unit | Start Date | End Date | Update | Source | Country | ID | screenshot_number
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+| **Precious Metal_Gold** | **Upstream** | **Macro Environment** | **1** | USA: Continuing Claims: SA | Weekly | person | Ol-Jan 1967 | 07-Dec 2019 | 2019/12/20 | Bureau of Labor Statistics | USA | G0002434 | (0_0_1_1)
+|                         |              |                       |       | USA: Change in Employrnent Level (CEL): Nonfar... | Monthly | 1000 persons | Feb-1939 | Nov-2019 | 2019/12/06 | Bureau of Labor Statistics | USA | G0000070 | (0_0_1_1)
+
+- GitHub task:
+  [Write a simple script to clean up and annotate WIND_metadata_table.csv #1172 (comment)](https://github.com/ParticleDev/commodity_research/issues/1172#issuecomment-587119762)
+- The script used to merge the tables:
+  [vendors/wind/add_metadata_index.py](https://github.com/ParticleDev/commodity_research/blob/master/vendors/wind/add_metadata_index.py)
+- The output table is located at
+  `/s3/default00-bucket/wind/datasets/Wind_terminal/WIND_metadata_table_with_index.csv`
+
+### 6. Cleaning up OCR results
+- GitHub task:
+  [Write a simple script to clean up and annotate WIND_metadata_table.csv #1172](https://github.com/ParticleDev/commodity_research/issues/1172)
+
+Clean-up stages:
+- Clean-up `Frequency` column
+- Remove duplicated rows (rows with different index are considered
+    different, rows with different screenshot number are considered
+    the same)
