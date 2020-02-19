@@ -74,9 +74,9 @@ def _sync(file_name: str) -> None:
         _LOG.warning("The file '%s' is not paired: run --pair", file_name)
 
 
-def _escape_jupytext_version(output_txt: str) -> bool:
+def _is_jupytext_version_different(output_txt: str) -> bool:
     """
-    Return True if the cause of `rc != 0` was jupytext_version.
+    Return True if was a difference in jupytext_version.
 
     Workaround for https://github.com/mwouts/jupytext/issues/414 to avoid
     report an error due to jupytext version mismatch.
@@ -94,20 +94,20 @@ def _escape_jupytext_version(output_txt: str) -> bool:
      #   kernelspec:
      #     display_name: Python [conda env:.conda-p1_develop] *
      #     language: python
-
     """
-    _ret = False
+    ret = False
     regex = r"jupytext_version: \d.*"
     m = re.findall(regex, output_txt, re.MULTILINE)
     _LOG.debug("Regex search result: %s", m)
     if m:
-        _ret = True
-        _LOG.warning(
-            "There is a mismatch of jupytext version: '%s' vs '%s': skipping",
-            m[0],
-            m[1],
-        )
-    return _ret
+        if len(m) == 2:
+            ret = True
+            _LOG.warning(
+                "There is a mismatch of jupytext version: '%s' vs '%s': skipping",
+                m[0],
+                m[1],
+            )
+    return ret
 
 
 def _test(file_name: str, action: str) -> None:
@@ -123,7 +123,7 @@ def _test(file_name: str, action: str) -> None:
     if rc != 0:
         # Here we handle special cases that must be escaped.
         _LOG.debug("rc=%s, txt=\n'%s'", rc, txt)
-        if _escape_jupytext_version(txt):
+        if _is_jupytext_version_different(txt):
             pass
         else:
             raise RuntimeError(txt)

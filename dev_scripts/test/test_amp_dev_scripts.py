@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 import pytest
 
+import amp.dev_scripts.notebooks.process_jupytext as proc_jup  # type: ignore
 import dev_scripts.linter as lntr
 import dev_scripts.url as url
 import helpers.conda as hco
@@ -716,7 +717,7 @@ from typing import List
 
 @pytest.mark.amp
 class Test_process_jupytext(ut.TestCase):
-    def test_end_to_end(self) -> None:
+    def test1_end_to_end(self) -> None:
         file_name = "test_notebook.py"
         file_path = os.path.join(self.get_input_dir(), file_name)
         cmd = f"process_jupytext.py -f {file_path} --action test 2>&1"
@@ -724,7 +725,39 @@ class Test_process_jupytext(ut.TestCase):
         # There is a date in output, so we remove date using split.
         # Output example:
         # pylint: disable=line-too-long
-        # 02-19_16:14 WARNING: _test          :111 : There is a mismatch of jupytext version: 'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
+        # [0m02-19_20:56 [33mWARNING[0m: _is_jupytext_version_different:108 : There is a mismatch of jupytext version: 'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
         # pylint: enable=line-too-long
-        txt_no_date = txt.split("WARNING")[1]
+        txt_no_date = txt.split("WARNING")[1].split("[")[1]
         self.check_string(txt_no_date)
+
+    def test2_is_jupytext_version_different_true(self) -> None:
+        txt = """
+--- expected
++++ actual
+@@ -5,7 +5,7 @@
+ #       extension: .py
+ #       format_name: percent
+ #       format_version: '1.3'
+-#       jupytext_version: 1.3.3
++#       jupytext_version: 1.3.0
+ #   kernelspec:
+ #     display_name: Python [conda env:.conda-p1_develop] *
+ #     language: python
+"""
+        self.assertTrue(proc_jup._is_jupytext_version_different(txt))
+
+    def test3_is_jupytext_version_different_false(self) -> None:
+        txt = """
+--- expected
++++ actual
+@@ -5,7 +5,7 @@
+ #       extension: .py
+-#       format_name: percent
++#       format_name: plus
+ #       format_version: '1.3'
+ #       jupytext_version: 1.3.3
+ #   kernelspec:
+ #     display_name: Python [conda env:.conda-p1_develop] *
+ #     language: python
+"""
+        self.assertFalse(proc_jup._is_jupytext_version_different(txt))
