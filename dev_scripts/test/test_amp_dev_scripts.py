@@ -650,7 +650,9 @@ from typing import List
         The notebook is not under 'notebooks': invalid.
         """
         file_name = "hello/world/notebook.ipynb"
+        # pylint: disable=line-too-long
         exp = "hello/world/notebook.ipynb:1: each notebook should be under a 'notebooks' directory to not confuse pytest"
+        # pylint: enable=line-too-long
         self._helper_check_notebook_dir(file_name, exp)
 
     def test_check_notebook_dir2(self) -> None:
@@ -688,7 +690,9 @@ from typing import List
         Test is not under `test`: invalid.
         """
         file_name = "hello/world/test_all.py"
+        # pylint: disable=line-too-long
         exp = "hello/world/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
+        # pylint: enable=line-too-long
         self._helper_check_test_file_dir(file_name, exp)
 
     def test_check_test_file_dir3(self) -> None:
@@ -696,7 +700,9 @@ from typing import List
         Test is not under `test`: invalid.
         """
         file_name = "hello/world/tests/test_all.py"
+        # pylint: disable=line-too-long
         exp = "hello/world/tests/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
+        # pylint: enable=line-too-long
         self._helper_check_test_file_dir(file_name, exp)
 
     def test_check_test_file_dir4(self) -> None:
@@ -707,14 +713,14 @@ from typing import List
         exp = ""
         self._helper_check_test_file_dir(file_name, exp)
 
+
 @pytest.mark.amp
 class Test_process_jupytext(ut.TestCase):
-
     def test_end_to_end(self) -> None:
         file_name = "test_notebook.py"
         file_path = os.path.join(self.get_input_dir(), file_name)
         cmd = f"process_jupytext.py -f {file_path} --action test 2>&1"
-        rc, txt = si.system_to_string(cmd, abort_on_error=False)
+        _, txt = si.system_to_string(cmd, abort_on_error=False)
         # There is a date in output, so we remove date using split.
         # Output example:
         # pylint: disable=line-too-long
@@ -722,4 +728,3 @@ class Test_process_jupytext(ut.TestCase):
         # pylint: enable=line-too-long
         txt_no_date = txt.split("WARNING")[1]
         self.check_string(txt_no_date)
-
