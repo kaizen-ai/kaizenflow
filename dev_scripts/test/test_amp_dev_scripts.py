@@ -706,3 +706,20 @@ from typing import List
         file_name = "hello/world/tests/test_all.ipynb"
         exp = ""
         self._helper_check_test_file_dir(file_name, exp)
+
+@pytest.mark.amp
+class Test_process_jupytext(ut.TestCase):
+
+    def test_end_to_end(self) -> None:
+        file_name = "test_notebook.py"
+        file_path = os.path.join(self.get_input_dir(), file_name)
+        cmd = f"process_jupytext.py -f {file_path} --action test 2>&1"
+        rc, txt = si.system_to_string(cmd, abort_on_error=False)
+        # There is a date in output, so we remove date using split.
+        # Output example:
+        # pylint: disable=line-too-long
+        # 02-19_16:14 WARNING: _test          :111 : There is a mismatch of jupytext version: 'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
+        # pylint: enable=line-too-long
+        txt_no_date = txt.split("WARNING")[1]
+        self.check_string(txt_no_date)
+

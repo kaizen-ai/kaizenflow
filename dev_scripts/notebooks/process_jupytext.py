@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# pylint: disable=line-too-long
 r"""
 Automate some common workflows with jupytext.
 
@@ -15,6 +15,7 @@ Automate some common workflows with jupytext.
 # Sync
 > process_jupytext.py -f vendors/kibot/data_exploratory_analysis.ipynb --action sync
 """
+# pylint: enable=line-too-long
 
 import argparse
 import logging
@@ -73,6 +74,42 @@ def _sync(file_name: str) -> None:
         _LOG.warning("The file '%s' is not paired: run --pair", file_name)
 
 
+def _escape_jupytext_version(output_txt: str) -> bool:
+    """
+    Return True if the cause of `rc != 0` was jupytext_version.
+
+    Workaround for https://github.com/mwouts/jupytext/issues/414 to avoid
+    report an error due to jupytext version mismatch.
+
+    [jupytext] Reading nlp/notebooks/PartTask1081_RP_small_test.py
+    nlp/notebooks/PartTask1081_RP_small_test.py:
+    --- expected
+    +++ actual
+    @@ -5,7 +5,7 @@
+     #       extension: .py
+     #       format_name: percent
+     #       format_version: '1.3'
+    -#       jupytext_version: 1.3.3
+    +#       jupytext_version: 1.3.0
+     #   kernelspec:
+     #     display_name: Python [conda env:.conda-p1_develop] *
+     #     language: python
+
+    """
+    _ret = False
+    regex = r"jupytext_version: \d.*"
+    m = re.findall(regex, output_txt, re.MULTILINE)
+    _LOG.debug("Regex search result: %s", m)
+    if m:
+        _ret = True
+        _LOG.warning(
+            "There is a mismatch of jupytext version: '%s' vs '%s': skipping",
+            m[0],
+            m[1],
+        )
+    return _ret
+
+
 def _test(file_name: str, action: str) -> None:
     if action == "test":
         opts = "--test"
@@ -84,32 +121,10 @@ def _test(file_name: str, action: str) -> None:
     cmd = " ".join(cmd)
     rc, txt = si.system_to_string(cmd, abort_on_error=False)
     if rc != 0:
+        # Here we handle special cases that must be escaped.
         _LOG.debug("rc=%s, txt=\n'%s'", rc, txt)
-        # Workaround for https://github.com/mwouts/jupytext/issues/414 to avoid to
-        # report an error due to jupytext version mismatch.
-        #
-        # [jupytext] Reading nlp/notebooks/PartTask1081_RP_small_test.py
-        # nlp/notebooks/PartTask1081_RP_small_test.py:
-        # --- expected
-        # +++ actual
-        # @@ -5,7 +5,7 @@
-        #  #       extension: .py
-        #  #       format_name: percent
-        #  #       format_version: '1.3'
-        # -#       jupytext_version: 1.3.3
-        # +#       jupytext_version: 1.3.0
-        #  #   kernelspec:
-        #  #     display_name: Python [conda env:.conda-p1_develop] *
-        #  #     language: python
-        regex = r"jupytext_version: \d.*"
-        m = re.findall(regex, txt, re.MULTILINE)
-        _LOG.debug('Regex search result: %s', m)
-        if m:
-            _LOG.warning(
-                "There is a mismatch of jupytext version: '%s' vs '%s': skipping",
-                m[0],
-                m[1],
-            )
+        if _escape_jupytext_version(txt):
+            pass
         else:
             raise RuntimeError(txt)
 
