@@ -195,3 +195,91 @@
 - The next step is use our `DataFlow` framework to build complex graph
   computations that can easily put in production
 
+# Experiment workflows
+
+## General description
+
+- The pipeline for a particular model is located inside a notebook and a library
+  - The notebook contain s the "skeleton" of all necessary training stages, and
+    the library the implementation of each stage
+  - E.g., the NLP sentiment pipeline is in 
+    `nlp/notebooks/PartTask1102_RP_Pipeline.py` and in `nlp/lstm_utils.py`
+- The specific configuration of the stages are passed using a Config object.
+- Config objects are generated using config builder functions for a particular
+  research task.
+- The experiments are usually run in bulk with different values of different
+  parameters in Configs using the `nlp/run_configs.py` script.
+
+## King of the Hill config
+
+### Definition
+
+- The King of the Hill (KOTH) is a pipeline and a config that described the model
+  with the best performance at a given moment
+- KOTH is the model that is being improved
+  - KOTH pipeline and config are used as a template to be imprpved:
+  - E.g., for the NLP pipeline the config is `get_KOTH_config()` in
+    `nlp/build_configs.py`
+
+## Config builders
+
+- Config builder functions are located in the directory of the project
+  - E.g., for NLP sentiment pipeline in `nlp/build_configs.py`
+- Any config builder functions is passed a KOTH config and a mapping of varying
+  parameters to a list of their values.
+  - KOTH config is used as a template.
+  - A new config is created for each possible combination of varying parameters.
+  - The output is a list of Config objects.
+
+## Running experiments
+
+- A general flow is:
+
+### 1. Feature implementation
+- File a GH Issue with the description of the feature
+- Implement the feature in the library together with unit tests
+  - E.g., `nlp/lstm_utils.py`
+- Modify the KOTH pipeline (e.g., the official notebook) and config to wire the
+  new feature
+  - E.g., `nlp/notebooks/PartTask1102_RP_Pipeline.py`
+- Experiment with the KOTH (as a different notebook derived from the KOTH, or
+  with the KOTH directly) to make sure the feature works as expected inside the
+  official pipeline
+  - You should add / compute statistics and so on to make sure things are working
+    properly
+- Do a PR and check in the code
+
+### 2. Experiment
+- It's better to have one single notebook (derived from the current KOTH) with a
+  switch to change the experiment variable (e.g., a quantile transformation of
+  the y-variable), instead of one notebook for each configuration of the
+  experiment 
+  - Otherwise we are going to have so many notebooks with tons of redundancy
+- Then you run each experiment changing the value of the variable manually and
+  save the result with `publish_notebok.py`
+- Even better you can use the config building mechanism and `run_notebook.py` to
+  run the enter experiment from the comfort of one button
+
+## Sharing results
+
+- Results of each experiment are added to a shared directory on the dev server,
+  named according to the GitHub task:
+  - E.g., `/data/nlp_experiments/TaskXYZ_...`
+- The config builder used to generate configs for the experiments is committed
+  to the repo
+  - E.g. `core.config_builders.get_TaskXYZ_configs`
+- The notebook with analysis of the experiments that points towards the result
+  is committed to the repo
+  - E.g. `nlp/notebooks/TaskXYZ_postprocessing.ipynb`
+- The notebooks are automatically saved as HTML via `publish_notebook.py`
+- Results of the analysis are published in the gdoc.
+
+## Crowning ceremony
+
+- Each research Issue culminates with the proposal of new a KOTH.
+- The new defined stage or an optimal value of a previously defined parameter is
+  added to the template notebook at `nlp/notebooks/PartTask1102_RP_Pipeline.py`.
+- The KOTH config is updated with an option to turn on/off the new stage.
+- The result of the experiment is compared across our benchmarks (e.g. accuracy
+  for all futures).
+- The results are reported in the gdoc and KOTH config function is updated.
