@@ -200,7 +200,7 @@
 ## General description
 
 - The pipeline for a particular model is located inside a notebook and a library
-  - The notebook contain s the "skeleton" of all necessary training stages, and
+  - The notebook contains the "skeleton" of all necessary training stages, and
     the library the implementation of each stage
   - E.g., the NLP sentiment pipeline is in 
     `nlp/notebooks/PartTask1102_RP_Pipeline.py` and in `nlp/lstm_utils.py`
@@ -214,10 +214,10 @@
 
 ### Definition
 
-- The King of the Hill (KOTH) is a pipeline and a config that described the model
+- The King of the Hill (KOTH) is a pipeline and a config that describe the model
   with the best performance at a given moment
 - KOTH is the model that is being improved
-  - KOTH pipeline and config are used as a template to be imprpved:
+  - KOTH pipeline and config are used as a template to be improved:
   - E.g., for the NLP pipeline the config is `get_KOTH_config()` in
     `nlp/build_configs.py`
 
