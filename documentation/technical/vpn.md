@@ -1,7 +1,9 @@
 <!--ts-->
    * Wireguard client
        * [Install Wireguard](#wireguard-install)
-       * [Install Wireguard](#wireguard-install)
+            * [macOS/Windows](#macoswindows)
+            * [Linux/Ubuntu](#linuxubuntu)
+            * [Linux/Debian](#linuxdebian)
        * [Configure Wireguard](#wireguard-configure)
        * [Up/Down VPN](#run-vpn)
        * [Check VPN](#check-vpn)
@@ -13,11 +15,11 @@
 
 ### Wireguard install
 
-##### Install WireGuard macOS/Windows
+##### macOS/Windows
 
 MacOS / Windows - [Download](https://www.wireguard.com/install/) app.
 
-##### Install WireGuard (Linux/Ubuntu)
+##### Linux/Ubuntu
 ``` bash
 sudo add-apt-repository ppa:wireguard/wireguard && \
 sudo apt update && \
@@ -26,7 +28,7 @@ sudo apt install resolvconf -y && \
 sudo modprobe wireguard 
 ```
 
-##### Install WireGuard (Linux/Debian)
+##### Linux/Debian
 ``` bash
 sudo echo "deb http://deb.debian.org/debian/ unstable main" > /etc/apt/sources.list.d/unstable.list && \
 sudo printf 'Package: *\nPin: release a=unstable\nPin-Priority: 90\n' > /etc/apt/preferences.d/limit-unstable && \
