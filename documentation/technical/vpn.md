@@ -4,6 +4,7 @@
        * [Install Wireguard](#wireguard-install)
        * [Configure Wireguard](#wireguard-configure)
        * [Up/Down VPN](#run-vpn)
+       * [Check VPN](#check-vpn)
    * Wireguard Administation
        * [GUI panel](#admin-panel)
        * CLI commands
@@ -12,7 +13,7 @@
 
 ### Wireguard install
 
-##### Install WireGuard (macOS/Windows)
+##### Install WireGuard macOS/Windows
 
 MacOS / Windows - [Download](https://www.wireguard.com/install/) app.
 
@@ -39,10 +40,7 @@ sudo modprobe wireguard
 
 1) Download config (Repo: Commodyti_research, path - infra2/vpn_configs/{username}.conf)
 
-2) macOS/Windows - Set your config, and this is the end. Linux - move your config file to `/etc/wireguard/`
-
-Example: 
-`sudo mv gad26032.conf /etc/wireguard/`
+2) macOS/Windows - Set your config, and this is the end.
 
 ### Up / Down VPN:
 
@@ -50,19 +48,28 @@ Example:
 
 MacOS / Windows - Click to icon end set "Connect".
 
-Linux - `wg-quick up {CONFIG NAME} (Without extension .conf)`
+Linux - `wg-quick up {path_to_config file}`
 
-Example: 
-`sudo wg-quick up gad26032`
+Example(Current root - commodity_research): 
+`sudo wg-quick up infra2/vpn_configs/gad26032.conf`
 
 ##### Down VPN
 
 macOS / Windows - Click to icon end set "Disconnect".
 
-Linux - `wg-quick down {CONFIG NAME} (Without extension .conf)`
+Linux - `wg-quick down {path_to_config file}`
 
-Example: `wg-quick down gad26032`
+Example: `sudo wg-quick down infra2/vpn_configs/gad26032.conf`
 
+##### Check VPN 
+
+For test vpn connection try to ping any of local ip [ip addresses](#ip-addresses)
+
+Example ping research-server: 
+
+```bash
+ping 172.31.16.23
+```
 
 ### Wireguard Administration
 
@@ -82,10 +89,11 @@ Password - 13211321
 
 ### IP addresses 
 
-```
-research-server - 18.190.25.141 (172.31.16.23)
-jenkins-server - 52.15.239.182 (172.31.12.239)
-mongo-research - 3.14.131.12 (172.31.0.76)
-elasticsearch-research - 18.188.198.20 (172.31.6.229)
-WireGuard-server - 3.12.194.203 (172.31.13.54)
-```
+
+| Server name             |    Local IP   |    Public IP      |
+| ----------------------- | ------------- | ----------------  |
+| research-server         | 172.31.16.23  |   18.190.25.141   |
+| jenkins-server          | 172.31.12.239 |   52.15.239.182   |
+| mongo-research          | 172.31.0.76   |   3.14.131.12     |
+| elasticsearch-research  | 172.31.6.229  |   18.188.198.20   |
+| WireGuard-server        | 172.31.13.54  |   3.12.194.203    |
