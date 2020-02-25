@@ -1080,7 +1080,6 @@ class DeepARGlobalModel(FitPredictNode):
         # Apply model predictions to the training set (so that we can evaluate
         # in-sample performance).
         #   - Include all data points up to and including zero (the event time)
-        pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
             df, x_vars, y_vars, self._freq, self._prediction_length
         )
@@ -1119,7 +1118,6 @@ class DeepARGlobalModel(FitPredictNode):
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
             df, x_vars, y_vars, self._freq, self._prediction_length,
         )
