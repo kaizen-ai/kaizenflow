@@ -1,9 +1,11 @@
 import abc
 import collections
 import copy
+import datetime
 import inspect
 import io
 import logging
+import os
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import gluonts.model.deepar as gmd
@@ -21,6 +23,9 @@ import helpers.dbg as dbg
 from core.dataflow.core import DAG, Node
 
 _LOG = logging.getLogger(__name__)
+
+
+_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 # #############################################################################
@@ -206,6 +211,71 @@ class ReadDataFromDf(DataSource):
         super().__init__(nid)
         dbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
+
+
+class ReadDataFromDisk(DataSource):
+    def __init__(
+        self,
+        nid: str,
+        file_path: str,
+        timestamp_col: Optional[str],
+        start_date: Optional[_PANDAS_DATE_TYPE] = None,
+        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Create data source node reading CSV and parquet data from disk.
+
+        :param nid: node identifier
+        :param file_path: path to the file
+        :param timestamp_col: name of the timestamp column. If None, assume
+            that index contains timestamps
+        :param start_date: data start date in timezone of the dataset, included
+        :param end_date: data end date in timezone of the dataset, included
+        :param kwargs: kwargs for the data reading function
+        """
+        super().__init__(nid)
+        self._file_path = file_path
+        self._timestamp_col = timestamp_col
+        self._start_date = start_date
+        self._end_date = end_date
+        self._kwargs = kwargs
+
+    def _read_data(self) -> None:
+        ext = os.path.splitext(self._file_path)[-1]
+        if ext == ".csv":
+            if "index_col" not in self._kwargs:
+                self._kwargs["index_col"] = 0
+            read_data = pd.read_csv
+        elif ext == ".pq":
+            read_data = pd.read_parquet
+        else:
+            raise ValueError("Invalid file extension='%s'" % ext)
+        self.df = read_data(self._file_path, **self._kwargs)
+
+    def _process_data(self) -> None:
+        if self._timestamp_col is not None:
+            self.df.set_index(self._timestamp_col, inplace=True)
+        self.df.index = pd.to_datetime(self.df.index)
+        self.df.sort_index(inplace=True)
+        dbg.dassert_no_duplicates(self.df.index)
+        # fmt: off
+        self.df = self.df.loc[self._start_date:self._end_date]
+        # fmt: on
+        dbg.dassert(not self.df.empty, "Dataframe is empty")
+
+    def _lazy_load(self) -> None:
+        if self.df is not None:
+            return
+        self._read_data()
+        self._process_data()
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        """
+        :return: training set as df
+        """
+        self._lazy_load()
+        return super().fit()
 
 
 # #############################################################################
@@ -559,7 +629,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_fit)
         #
         fwd_y_hat_vars = [
-            ContinuousSkLearnModel._insert_to_string(y, "hat") for y in fwd_y_df.columns
+            ContinuousSkLearnModel._insert_to_string(y, "hat")
+            for y in fwd_y_df.columns
         ]
         fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # TODO(Paul): Summarize model perf or make configurable.
@@ -588,7 +659,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df)
         fwd_y_hat_vars = [
-            ContinuousSkLearnModel._insert_to_string(y, "hat") for y in fwd_y_df.columns.tolist()
+            ContinuousSkLearnModel._insert_to_string(y, "hat")
+            for y in fwd_y_df.columns.tolist()
         ]
         fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # Generate basic perf stats.
@@ -1078,7 +1150,7 @@ class DeepARGlobalModel(FitPredictNode):
         # Apply model predictions to the training set (so that we can evaluate
         # in-sample performance).
         #   - Include all data points up to and including zero (the event time)
-        idx_slice = pd.IndexSlice
+        pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
             df, x_vars, y_vars, self._freq, self._prediction_length
         )
@@ -1117,7 +1189,7 @@ class DeepARGlobalModel(FitPredictNode):
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        idx_slice = pd.IndexSlice
+        pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
             df, x_vars, y_vars, self._freq, self._prediction_length,
         )
