@@ -508,26 +508,26 @@ class ContinuousSkLearnModel(FitPredictNode):
         model_kwargs: Optional[Any] = None,
     ) -> None:
         """
-    Specify the data and sklearn modeling parameters.
+        Specify the data and sklearn modeling parameters.
 
-    Assumptions:
-        :param nid: unique node id
-        :param model_func: an sklearn model
-        :param x_vars: indexed by knowledge datetimes
-            - `x_vars` may contain lags of `y_vars`
-        :param y_vars: indexed by knowledge datetimes
-            - e.g., in the case of returns, this would correspond to `ret_0`
-        :param steps_ahead: number of steps ahead for which a prediction is to
-            be generated. E.g.,
-                - if `steps_ahead == 0`, then the predictions are
-                  are contemporaneous with the observed response (and hence
-                  inactionable)
-                - if `steps_ahead == 1`, then the model attempts to predict
-                  `y_vars` for the next time step
-                - The model is only trained to predict the target `steps_ahead`
-                  steps ahead (and not all intermediate steps)
-        :param model_kwargs: parameters to forward to the sklearn model (e.g.,
-            regularization constants)
+        Assumptions:
+            :param nid: unique node id
+            :param model_func: an sklearn model
+            :param x_vars: indexed by knowledge datetimes
+                - `x_vars` may contain lags of `y_vars`
+            :param y_vars: indexed by knowledge datetimes
+                - e.g., in the case of returns, this would correspond to `ret_0`
+            :param steps_ahead: number of steps ahead for which a prediction is
+                to be generated. E.g.,
+                    - if `steps_ahead == 0`, then the predictions are
+                      are contemporaneous with the observed response (and hence
+                      inactionable)
+                    - if `steps_ahead == 1`, then the model attempts to predict
+                      `y_vars` for the next time step
+                    - The model is only trained to predict the target
+                      `steps_ahead` steps ahead (and not all intermediate steps)
+            :param model_kwargs: parameters to forward to the sklearn model
+                (e.g., regularization constants)
         """
         super().__init__(nid)
         self._model_func = model_func
@@ -559,7 +559,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_fit)
         #
         fwd_y_hat_vars = [
-            ContinuousSkLearnModel._insert_to_string(y, "hat") for y in fwd_y_df.columns
+            ContinuousSkLearnModel._insert_to_string(y, "hat")
+            for y in fwd_y_df.columns
         ]
         fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # TODO(Paul): Summarize model perf or make configurable.
@@ -588,7 +589,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df)
         fwd_y_hat_vars = [
-            ContinuousSkLearnModel._insert_to_string(y, "hat") for y in fwd_y_df.columns.tolist()
+            ContinuousSkLearnModel._insert_to_string(y, "hat")
+            for y in fwd_y_df.columns.tolist()
         ]
         fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
         # Generate basic perf stats.
@@ -609,7 +611,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         dbg.dassert(df.index.freq)
         return None
 
-    def _get_fwd_y_df(self, df):
+    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Return dataframe of `steps_ahead` forward y values.
         """
@@ -677,10 +679,10 @@ class SkLearnModel(FitPredictNode):
     def __init__(
         self,
         nid: str,
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: Union[List[str], Callable[[], List[str]]],
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
-        x_vars=Union[List[str], Callable[[], List[str]]],
-        y_vars=Union[List[str], Callable[[], List[str]]],
     ) -> None:
         super().__init__(nid)
         self._model_func = model_func
@@ -826,7 +828,7 @@ class ContinuousDeepArModel(FitPredictNode):
         y_vars: Union[List[str], Callable[[], List[str]]],
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
-        x_vars: Union[List[str], Callable[[], List[str]]] = None,
+        x_vars: Union[List[str], Callable[[], List[str]], None] = None,
         num_traces: int = 100,
     ) -> None:
         """
@@ -998,10 +1000,10 @@ class DeepARGlobalModel(FitPredictNode):
     def __init__(
         self,
         nid: str,
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: Union[List[str], Callable[[], List[str]]],
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
-        x_vars=Union[List[str], Callable[[], List[str]]],
-        y_vars=Union[List[str], Callable[[], List[str]]],
     ) -> None:
         """
         Initialize dataflow node for gluon-ts DeepAR model.
@@ -1078,7 +1080,7 @@ class DeepARGlobalModel(FitPredictNode):
         # Apply model predictions to the training set (so that we can evaluate
         # in-sample performance).
         #   - Include all data points up to and including zero (the event time)
-        idx_slice = pd.IndexSlice
+        pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
             df, x_vars, y_vars, self._freq, self._prediction_length
         )
@@ -1117,7 +1119,7 @@ class DeepARGlobalModel(FitPredictNode):
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        idx_slice = pd.IndexSlice
+        pd.IndexSlice
         gluon_test = adpt.transform_to_gluon(
             df, x_vars, y_vars, self._freq, self._prediction_length,
         )
