@@ -9,7 +9,7 @@
        * [Check VPN](#check-vpn)
    * Wireguard Administation
        * [GUI panel](#admin-panel)
-       * CLI commands
+       * [CLI commands](#cli-interface)
    * [IP address](#ip-addresses)
 <!--te-->
 
@@ -89,8 +89,29 @@ Login - particle
 Password - 13211321
 ```
 
-### IP addresses 
+##### CLI interface
 
+Create user: 
+```bash
+/home/ubuntu/wireguard_aws/add-client.sh
+```
+
+Remove user:
+```bash
+sudo wg set wg0 peer {peer_ID} remove
+```
+
+Shows the current configuration and device information:
+```bash
+sudo wg show
+```
+
+Shows the current configuration of a given WireGuard interface:
+```bash
+sudo wg showconf wg0
+```
+
+### IP addresses 
 
 | Server name             |    Local IP   |    Public IP      |
 | ----------------------- | ------------- | ----------------  |
