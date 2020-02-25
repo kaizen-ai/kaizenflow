@@ -221,7 +221,7 @@ class DiskDataSource(DataSource):
         timestamp_col: Optional[str],
         start_date: Optional[_PANDAS_DATE_TYPE] = None,
         end_date: Optional[_PANDAS_DATE_TYPE] = None,
-        **kwargs: Any,
+        reader_kwargs: Any = None,
     ) -> None:
         """
         Create data source node reading CSV or parquet data from disk.
@@ -232,26 +232,26 @@ class DiskDataSource(DataSource):
             that index contains timestamps
         :param start_date: data start date in timezone of the dataset, included
         :param end_date: data end date in timezone of the dataset, included
-        :param kwargs: kwargs for the data reading function
+        :param reader_kwargs: kwargs for the data reading function
         """
         super().__init__(nid)
         self._file_path = file_path
         self._timestamp_col = timestamp_col
         self._start_date = start_date
         self._end_date = end_date
-        self._kwargs = kwargs
+        self._reader_kwargs = reader_kwargs or {}
 
     def _read_data(self) -> None:
         ext = os.path.splitext(self._file_path)[-1]
         if ext == ".csv":
-            if "index_col" not in self._kwargs:
-                self._kwargs["index_col"] = 0
+            if "index_col" not in self._reader_kwargs:
+                self._reader_kwargs["index_col"] = 0
             read_data = pd.read_csv
         elif ext == ".pq":
             read_data = pd.read_parquet
         else:
             raise ValueError("Invalid file extension='%s'" % ext)
-        self.df = read_data(self._file_path, **self._kwargs)
+        self.df = read_data(self._file_path, **self._reader_kwargs)
 
     def _process_data(self) -> None:
         if self._timestamp_col is not None:
