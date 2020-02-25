@@ -213,7 +213,7 @@ class ReadDataFromDf(DataSource):
         self.df = df
 
 
-class ReadDataFromDisk(DataSource):
+class DiskDataSource(DataSource):
     def __init__(
         self,
         nid: str,
@@ -224,11 +224,11 @@ class ReadDataFromDisk(DataSource):
         **kwargs: Any,
     ) -> None:
         """
-        Create data source node reading CSV and parquet data from disk.
+        Create data source node reading CSV or parquet data from disk.
 
         :param nid: node identifier
         :param file_path: path to the file
-        :param timestamp_col: name of the timestamp column. If None, assume
+        :param timestamp_col: name of the timestamp column. If `None`, assume
             that index contains timestamps
         :param start_date: data start date in timezone of the dataset, included
         :param end_date: data end date in timezone of the dataset, included

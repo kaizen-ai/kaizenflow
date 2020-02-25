@@ -24,7 +24,7 @@ class TestReadDataFromDisk(hut.TestCase):
         df = TestReadDataFromDisk._generate_df()
         file_path = self._save_df(df, ".csv")
         timestamp_col = None
-        rdfd = dtf.ReadDataFromDisk("read_data", file_path, timestamp_col)
+        rdfd = dtf.DiskDataSource("read_data", file_path, timestamp_col)
         loaded_df = rdfd.fit()["df_out"]
         self.check_string(loaded_df.to_string())
 
@@ -36,7 +36,7 @@ class TestReadDataFromDisk(hut.TestCase):
         df = df.reset_index()
         file_path = self._save_df(df, ".csv")
         timestamp_col = "timestamp"
-        rdfd = dtf.ReadDataFromDisk("read_data", file_path, timestamp_col)
+        rdfd = dtf.DiskDataSource("read_data", file_path, timestamp_col)
         loaded_df = rdfd.fit()["df_out"]
         self.check_string(loaded_df.to_string())
 
@@ -47,7 +47,7 @@ class TestReadDataFromDisk(hut.TestCase):
         df = TestReadDataFromDisk._generate_df()
         file_path = self._save_df(df, ".pq")
         timestamp_col = None
-        rdfd = dtf.ReadDataFromDisk("read_data", file_path, timestamp_col)
+        rdfd = dtf.DiskDataSource("read_data", file_path, timestamp_col)
         loaded_df = rdfd.fit()["df_out"]
         self.check_string(loaded_df.to_string())
 
@@ -59,7 +59,7 @@ class TestReadDataFromDisk(hut.TestCase):
         df = df.reset_index()
         file_path = self._save_df(df, ".pq")
         timestamp_col = "timestamp"
-        rdfd = dtf.ReadDataFromDisk("read_data", file_path, timestamp_col)
+        rdfd = dtf.DiskDataSource("read_data", file_path, timestamp_col)
         loaded_df = rdfd.fit()["df_out"]
         self.check_string(loaded_df.to_string())
 
@@ -71,7 +71,7 @@ class TestReadDataFromDisk(hut.TestCase):
         df = TestReadDataFromDisk._generate_df()
         file_path = self._save_df(df, ".csv")
         timestamp_col = None
-        rdfd = dtf.ReadDataFromDisk(
+        rdfd = dtf.DiskDataSource(
             "read_data",
             file_path,
             timestamp_col,
@@ -89,7 +89,7 @@ class TestReadDataFromDisk(hut.TestCase):
         df = TestReadDataFromDisk._generate_df()
         file_path = self._save_df(df, ".csv")
         timestamp_col = None
-        rdfd = dtf.ReadDataFromDisk(
+        rdfd = dtf.DiskDataSource(
             "read_data", file_path, timestamp_col, start_date="2010-01-02",
         )
         loaded_df = rdfd.fit()["df_out"]
