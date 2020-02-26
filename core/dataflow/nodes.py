@@ -1,9 +1,11 @@
 import abc
 import collections
 import copy
+import datetime
 import inspect
 import io
 import logging
+import os
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import gluonts.model.deepar as gmd
@@ -21,6 +23,9 @@ import helpers.dbg as dbg
 from core.dataflow.core import DAG, Node
 
 _LOG = logging.getLogger(__name__)
+
+
+_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 # #############################################################################
@@ -206,6 +211,68 @@ class ReadDataFromDf(DataSource):
         super().__init__(nid)
         dbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
+
+
+class DiskDataSource(DataSource):
+    def __init__(
+        self,
+        nid: str,
+        file_path: str,
+        timestamp_col: Optional[str] = None,
+        start_date: Optional[_PANDAS_DATE_TYPE] = None,
+        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        reader_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """
+        Create data source node reading CSV or parquet data from disk.
+
+        :param nid: node identifier
+        :param file_path: path to the file
+        :param timestamp_col: name of the timestamp column. If `None`, assume
+            that index contains timestamps
+        :param start_date: data start date in timezone of the dataset, included
+        :param end_date: data end date in timezone of the dataset, included
+        :param reader_kwargs: kwargs for the data reading function
+        """
+        super().__init__(nid)
+        self._file_path = file_path
+        self._timestamp_col = timestamp_col
+        self._start_date = start_date
+        self._end_date = end_date
+        self._reader_kwargs = reader_kwargs or {}
+
+    def _read_data(self) -> None:
+        ext = os.path.splitext(self._file_path)[-1]
+        if ext == ".csv":
+            if "index_col" not in self._reader_kwargs:
+                self._reader_kwargs["index_col"] = 0
+            read_data = pd.read_csv
+        elif ext == ".pq":
+            read_data = pd.read_parquet
+        else:
+            raise ValueError("Invalid file extension='%s'" % ext)
+        self.df = read_data(self._file_path, **self._reader_kwargs)
+
+    def _process_data(self) -> None:
+        if self._timestamp_col is not None:
+            self.df.set_index(self._timestamp_col, inplace=True)
+        self.df.index = pd.to_datetime(self.df.index)
+        dbg.dassert_monotonic_index(self.df)
+        self.df = self.df.loc[self._start_date : self._end_date]
+        dbg.dassert(not self.df.empty, "Dataframe is empty")
+
+    def _lazy_load(self) -> None:
+        if self.df is not None:
+            return
+        self._read_data()
+        self._process_data()
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        """
+        :return: training set as df
+        """
+        self._lazy_load()
+        return super().fit()
 
 
 # #############################################################################
@@ -828,7 +895,7 @@ class ContinuousDeepArModel(FitPredictNode):
         y_vars: Union[List[str], Callable[[], List[str]]],
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
-        x_vars: Union[List[str], Callable[[], List[str]], None] = None,
+        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
         num_traces: int = 100,
     ) -> None:
         """
