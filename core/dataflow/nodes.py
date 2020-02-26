@@ -895,7 +895,7 @@ class ContinuousDeepArModel(FitPredictNode):
         y_vars: Union[List[str], Callable[[], List[str]]],
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
-        x_vars: Union[List[str], Callable[[], List[str]], None] = None,
+        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
         num_traces: int = 100,
     ) -> None:
         """
