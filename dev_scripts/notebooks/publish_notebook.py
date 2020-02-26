@@ -68,6 +68,7 @@ import sys
 import tempfile
 
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
@@ -126,6 +127,7 @@ def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
     """
     file_name = os.path.basename(path_to_file)
     dst_f_name = os.path.join(dst_dir, file_name)
+    io_.create_dir(dst_f_name, incremental=True)
     # File copying.
     cmd = f"scp {path_to_file} {dst_f_name}"
     si.system(cmd)
@@ -144,8 +146,7 @@ def _export_to_webpath(path_to_notebook: str, dst_dir: str) -> str:
     html_name = os.path.basename(html_src_path)
     html_dst_path = os.path.join(dst_dir, html_name)
     # If there is no such directory, create it.
-    if not os.path.isdir(dst_dir):
-        os.makedirs(dst_dir)
+    io_.create_dir(dst_dir, incremental=True)
     # Move html.
     _LOG.debug("Export '%s' to '%s'.", html_src_path, html_dst_path)
     cmd = "mv {src} {dst}".format(src=html_src_path, dst=html_dst_path)
@@ -219,6 +220,12 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="The path to the file ipynb, jupyter url, or github url.",
     )
+    parser.add_argument(
+        "--subdir",
+        action="store",
+        default="",
+        help="The name of the enclosing folder with html file.",
+    )
     #
     parser.add_argument(
         "--action",
@@ -264,12 +271,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Convert the notebook to the HTML format and move to the PUB location.
         server_address = usc.get_p1_dev_server_ip()
         if is_server:
-            pub_path = _DEV_SERVER_NOTEBOOK_PUBLISHER_DIR
+            pub_path = os.path.join(
+                _DEV_SERVER_NOTEBOOK_PUBLISHER_DIR, args.subdir
+            )
             pub_html_file = _export_to_webpath(src_file_name, pub_path)
             pub_file_name = os.path.basename(pub_html_file)
             dbg.dassert_exists(pub_html_file)
         else:
-            pub_path = f"{server_address}:{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}"
+            pub_path = f"{server_address}:{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}/{args.subdir}"
             tmp_html_file_name = _export_html(src_file_name)
             pub_file_name = os.path.basename(tmp_html_file_name)
             _copy_to_remote_folder(tmp_html_file_name, pub_path)
