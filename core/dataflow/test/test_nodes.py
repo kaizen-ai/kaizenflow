@@ -16,12 +16,12 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-class TestReadDataFromDisk(hut.TestCase):
+class TestDiskDataSource(hut.TestCase):
     def test_datetime_index_csv1(self) -> None:
         """
         Test CSV file using timestamps in the index.
         """
-        df = TestReadDataFromDisk._generate_df()
+        df = TestDiskDataSource._generate_df()
         file_path = self._save_df(df, ".csv")
         timestamp_col = None
         rdfd = dtf.DiskDataSource("read_data", file_path, timestamp_col)
@@ -32,7 +32,7 @@ class TestReadDataFromDisk(hut.TestCase):
         """
         Test CSV file using timestamps in a column.
         """
-        df = TestReadDataFromDisk._generate_df()
+        df = TestDiskDataSource._generate_df()
         df = df.reset_index()
         file_path = self._save_df(df, ".csv")
         timestamp_col = "timestamp"
@@ -44,7 +44,7 @@ class TestReadDataFromDisk(hut.TestCase):
         """
         Test Parquet file using timestamps in the index.
         """
-        df = TestReadDataFromDisk._generate_df()
+        df = TestDiskDataSource._generate_df()
         file_path = self._save_df(df, ".pq")
         timestamp_col = None
         rdfd = dtf.DiskDataSource("read_data", file_path, timestamp_col)
@@ -55,7 +55,7 @@ class TestReadDataFromDisk(hut.TestCase):
         """
         Test Parquet file using timestamps in a column.
         """
-        df = TestReadDataFromDisk._generate_df()
+        df = TestDiskDataSource._generate_df()
         df = df.reset_index()
         file_path = self._save_df(df, ".pq")
         timestamp_col = "timestamp"
@@ -68,7 +68,7 @@ class TestReadDataFromDisk(hut.TestCase):
         Test date filtering with both boundaries specified for CSV file using
         timestamps in the index.
         """
-        df = TestReadDataFromDisk._generate_df()
+        df = TestDiskDataSource._generate_df()
         file_path = self._save_df(df, ".csv")
         timestamp_col = None
         rdfd = dtf.DiskDataSource(
@@ -86,7 +86,7 @@ class TestReadDataFromDisk(hut.TestCase):
         Test date filtering with one boundary specified for CSV file using
         timestamps in the index.
         """
-        df = TestReadDataFromDisk._generate_df()
+        df = TestDiskDataSource._generate_df()
         file_path = self._save_df(df, ".csv")
         timestamp_col = None
         rdfd = dtf.DiskDataSource(
@@ -99,7 +99,6 @@ class TestReadDataFromDisk(hut.TestCase):
     def _generate_df(num_periods: int = 10) -> pd.DataFrame:
         idx = pd.date_range("2010-01-01", periods=num_periods, name="timestamp")
         df = pd.DataFrame(range(num_periods), index=idx, columns=["0"])
-        df = df.sample(frac=1, random_state=42)
         return df
 
     def _save_df(self, df: pd.DataFrame, ext: str) -> str:

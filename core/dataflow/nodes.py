@@ -218,7 +218,7 @@ class DiskDataSource(DataSource):
         self,
         nid: str,
         file_path: str,
-        timestamp_col: Optional[str],
+        timestamp_col: Optional[str] = None,
         start_date: Optional[_PANDAS_DATE_TYPE] = None,
         end_date: Optional[_PANDAS_DATE_TYPE] = None,
         reader_kwargs: Any = None,
@@ -257,11 +257,8 @@ class DiskDataSource(DataSource):
         if self._timestamp_col is not None:
             self.df.set_index(self._timestamp_col, inplace=True)
         self.df.index = pd.to_datetime(self.df.index)
-        self.df.sort_index(inplace=True)
-        dbg.dassert_no_duplicates(self.df.index)
-        # fmt: off
-        self.df = self.df.loc[self._start_date:self._end_date]
-        # fmt: on
+        dbg.dassert_monotonic_index(self.df)
+        self.df = self.df.loc[self._start_date : self._end_date]
         dbg.dassert(not self.df.empty, "Dataframe is empty")
 
     def _lazy_load(self) -> None:
