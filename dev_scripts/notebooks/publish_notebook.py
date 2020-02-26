@@ -68,10 +68,10 @@ import sys
 import tempfile
 
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
-import helpers.io_ as io_
 
 # TODO(greg): consider moving this constant somewhere else.
 _DEV_SERVER_NOTEBOOK_PUBLISHER_DIR = "/http/notebook_publisher"
@@ -220,7 +220,12 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="The path to the file ipynb, jupyter url, or github url.",
     )
-    parser.add_argument("--subdir", action="store", default="", help="The name of the enclosing folder with html file.")
+    parser.add_argument(
+        "--subdir",
+        action="store",
+        default="",
+        help="The name of the enclosing folder with html file.",
+    )
     #
     parser.add_argument(
         "--action",
@@ -266,7 +271,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Convert the notebook to the HTML format and move to the PUB location.
         server_address = usc.get_p1_dev_server_ip()
         if is_server:
-            pub_path = os.path.join(_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR, args.subdir)
+            pub_path = os.path.join(
+                _DEV_SERVER_NOTEBOOK_PUBLISHER_DIR, args.subdir
+            )
             pub_html_file = _export_to_webpath(src_file_name, pub_path)
             pub_file_name = os.path.basename(pub_html_file)
             dbg.dassert_exists(pub_html_file)
