@@ -221,7 +221,7 @@ class DiskDataSource(DataSource):
         timestamp_col: Optional[str] = None,
         start_date: Optional[_PANDAS_DATE_TYPE] = None,
         end_date: Optional[_PANDAS_DATE_TYPE] = None,
-        reader_kwargs: Any = None,
+        reader_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Create data source node reading CSV or parquet data from disk.
