@@ -10,6 +10,7 @@ import logging
 import os
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+import core.config_builders as ccfgbld
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.introspection as intr
@@ -239,10 +240,20 @@ class Config:
         Build a config passed through an environment variable, if possible,
         or return None.
         """
-        if "__CONFIG__" in os.environ:
-            config = os.environ["__CONFIG__"]
-            _LOG.info("__CONFIG__=%s", config)
-            config = Config.from_python(config)
+        if all(
+            var in os.environ
+            for var in ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__DST_DIR__"]
+        ):
+            config_builder = os.environ["__CONFIG_BUILDER__"]
+            configs = eval(config_builder)
+            _LOG.info("__CONFIG_BUILDER__=%s", config_builder)
+            result_dir = os.environ["__DST_DIR__"]
+            configs = ccfgbld.add_result_dir(result_dir, configs)
+            _LOG.info("__DST_DIR__=%s", config_builder)
+            config_index = int(os.environ["__CONFIG_IDX__"])
+            _LOG.info("__CONFIG_IDX__=%s", config_index)
+            config = configs[config_index]
+            config = ccfgbld.set_absolute_result_file_path(result_dir, config)
         else:
             config = None
         return config
