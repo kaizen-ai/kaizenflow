@@ -77,7 +77,7 @@ ping 172.31.16.23
 
 ##### Admin panel
 
-For start work wich admin panel:
+To start working with the admin panel:
  
 1) Execute port forwarding:
 
