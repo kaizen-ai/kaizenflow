@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 """
 > run_notebook.py --notebook research/Task11_Model_for_1min_futures_data/Task11_Simple_model_for_1min_futures_data.ipynb --function build_configs --no_incremental --dst_dir tmp.run_notebooks/ --num_threads -1
+
+> run_notebook.py --dst_dir nlp/test_results \
+ --no_incremental \
+ --notebook nlp/notebooks/PartTask1102_RP_Pipeline.ipynb \
+ --function ncfgbld.build_PartTask1088_configs \
+  --num_threads 2
 """
 
 import argparse
@@ -17,11 +23,15 @@ import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.printing as printing
 import helpers.system_interaction as si
-
+import helpers.datetime_ as hdt
+import helpers.pickle_ as hpickle
+import core.config_builders as cfgbld
+import nlp.build_configs as ncfgbuild # noqa: F401 # pylint: disable=unused-import
 _LOG = logging.getLogger(__name__)
 
 
 def build_configs(dst_dir, dry_run):
+    # TODO (*) Where to move this file?
     config = cfg.Config()
     config_tmp = config.add_subconfig("read_data")
     config_tmp["file_name"] = None
@@ -62,23 +72,66 @@ def build_configs(dst_dir, dry_run):
 # #############################################################################
 
 
-def _run_notebook(i, notebook_file, config, dst_dir):
+def _run_notebook(
+    i: int,
+    notebook_file: str,
+    dst_dir: str,
+    config: cfg.Config,
+    config_builder: str,
+) -> None:
+    """
+    Run a notebook for the particular config from a list.
+
+    The `config_builder` is passed inside the notebook to generate a list
+    of all configs to be run as part of a series of experiments, but only the
+    `i`-th config is run inside a particular notebook.
+    :param i: Index of config in a list of configs
+    :param notebook_file: Path to file with experiment template
+    :param dst_dir: Path to directory with results
+    :param config: Config for the experiment
+    :param config_builder: Function used to generate all configs
+    :return:
+    """
     dbg.dassert_exists(notebook_file)
     dbg.dassert_isinstance(config, cfg.Config)
     dbg.dassert_exists(dst_dir)
-    #
-    dst_file = (
-        dst_dir
-        + "/"
-        + os.path.basename(notebook_file).replace(".ipynb", ".%s.ipynb" % i)
+    # Create subdirectorial structure for simulation results.
+    experiment_date = hdt.get_timestamp()
+    result_subdir = "result_%s_%s" % (experiment_date, str(i))
+    html_subdir_name = os.path.join(os.path.basename(dst_dir), result_subdir)
+    config_dir = os.path.join(dst_dir, result_subdir)
+    config = cfgbld.set_absolute_result_file_path(config_dir, config)
+    _LOG.info(config_dir)
+    io_.create_dir(config_dir, incremental=True)
+    # Generate bookeeping files.
+    config_pkl_path = os.path.join(config_dir, "config.pkl")
+    _LOG.info("config_pkl_path=%s", config_pkl_path)
+    hpickle.to_pickle(config, config_pkl_path)
+    config_txt_path = os.path.join(config_dir, "config.txt")
+    _LOG.info("config_txt_path=%s", config_txt_path)
+    io_.to_file(config_txt_path, str(config))
+    builder_txt_path = os.path.join(config_dir, "config_builder.txt")
+    _LOG.info("builder_txt_path=%s", builder_txt_path)
+    io_.to_file(
+        builder_txt_path,
+        "Config builder: %s\nConfig index: %s" % (config_builder, str(i)),
     )
-    dst_file = os.path.abspath(dst_file)
     #
-    log_file = dst_dir + "/run_notebook.%s.log" % i
+    dst_file = os.path.join(
+        config_dir,
+        os.path.basename(notebook_file).replace(".ipynb", ".%s.ipynb" % i),
+    )
+    _LOG.info(dst_file)
+    dst_file = os.path.abspath(dst_file)
+    log_file = os.path.join(config_dir, "run_notebook.%s.log" % i)
     log_file = os.path.abspath(os.path.abspath(log_file))
     # Execute notebook.
     _LOG.info("Executing notebook %s", i)
-    cmd = 'export __CONFIG__="%s"' % config.to_python()
+    # Export config function and its id to the notebook.
+    cmd = (
+        'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__=%s; export __DST_DIR__=%s'
+        % (config_builder, i, config_dir)
+    )
     cmd += (
         "; jupyter nbconvert"
         + " "
@@ -93,17 +146,16 @@ def _run_notebook(i, notebook_file, config, dst_dir):
         " --ExecutePreprocessor.timeout=-1"
     )
     si.system(cmd, output_file=log_file)
-    # Convert to html.
+    # Convert to html and publish.
     _LOG.info("Converting notebook %s", i)
-    html_file = dst_file.replace(".ipynb", ".html")
     log_file = log_file.replace(".log", ".html.log")
     cmd = (
-        "jupyter nbconvert"
-        + " "
+        "python amp/dev_scripts/notebooks/publish_notebook.py"
+        + " --file "
         + dst_file
-        + " --to html"
-        + " --output "
-        + html_file
+        + " --subdir "
+        + html_subdir_name
+        + " --action publish"
     )
     si.system(cmd, output_file=log_file)
 
@@ -115,10 +167,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dst_dir = os.path.abspath(args.dst_dir)
     io_.create_dir(dst_dir, incremental=not args.no_incremental)
     #
-    _LOG.info("Executing function '%s()'", args.function)
-    configs = eval(args.function + "(dst_dir, args.dry_run)")
+    _LOG.info("Executing function '%s(%s)'", args.function, args.function_args)
+    config_builder = f"{args.function}({args.function_args})"
+    configs = eval(config_builder)
     dbg.dassert_isinstance(configs, list)
-    _LOG.info("Found %s configs", len(configs))
+    cfgbld.check_same_configs(configs)
+    configs = cfgbld.add_result_dir(dst_dir, configs)
+    configs = cfgbld.add_config_idx(configs)
+    _LOG.info("Created %s configs", len(configs))
+    if args.dry_run:
+        _LOG.warning(
+            "The following configs will not be executed due to passing --dry_run:"
+        )
+        for i, config in enumerate(configs):
+            print("config_%s:\n %s", i, config)
+        return
     #
     notebook_file = args.notebook
     notebook_file = os.path.abspath(notebook_file)
@@ -151,12 +214,6 @@ def _parse() -> argparse.ArgumentParser:
         help="Directory storing the results",
     )
     parser.add_argument(
-        "--num_threads",
-        action="store",
-        help="Number of threads to use (-1 to use all CPUs)",
-        required=True,
-    )
-    parser.add_argument(
         "--no_incremental",
         action="store_true",
         help="Delete the dir before storing results",
@@ -171,12 +228,25 @@ def _parse() -> argparse.ArgumentParser:
         "--function",
         action="store",
         required=True,
-        help="Function name to execute to generate configs",
+        help="Function name to execute to generate configs. Make sure to include import:"
+             " NLP config builders are imported through `ncfgbld`.",
+    )
+    parser.add_argument(
+        "--function_args",
+        action="store",
+        default="",
+        help="Arguments to pass into function",
     )
     parser.add_argument(
         "--dry_run",
         action="store_true",
         help="Run a short sim to sanity check the flow",
+    )
+    parser.add_argument(
+        "--num_threads",
+        action="store",
+        help="Number of threads to use (-1 to use all CPUs)",
+        required=True,
     )
     prsr.add_verbosity_arg(parser)
     return parser
