@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Any, Dict, Iterable, List, Tuple, Optional, Union
+from typing import Any, Dict, Iterable, List, Tuple, Optional, Union, Callable
 
 import pandas as pd
 import os
@@ -148,6 +148,48 @@ def add_config_idx(configs: List[cfg.Config]) -> List[cfg.Config]:
         config_with_id[("meta", "id")] = i
         configs_idx.append(config_with_id)
     return configs_idx
+
+
+def _generate_template_config(
+    config: cfg.Config, params_variants: Dict[Tuple[str, ...], Iterable[Any]],
+) -> cfg.Config:
+    """
+    Assign `None` to variable parameters in KOTH config.
+
+    A preliminary step required to generate multiple configs.
+    :param config: Config to transform into template
+    :param params_variants: Config paths to variable parameters and their values
+    :return: Template config object
+    """
+    template_config = config.copy()
+    for path in params_variants.keys():
+        template_config[path] = None
+    return template_config
+
+
+def generate_default_config_variants(
+    template_config_builder: Callable,
+    params_variants: Optional[Dict[Tuple[str, ...], Iterable[Any]]] = None,
+) -> List[cfg.Config]:
+    """
+    Build a list of config files for experiments.
+
+    This is the base function to be wrapped into specific config-generating functions.
+    It is assumed that for each research purpose there will be a KOTH-generating
+    function. At the moment, the only such function is `ncfgbld.get_KOTH_config`, which
+    accepts no additional parameters.
+    :param template_config_builder: Function used to generate default config.
+    :param params_variants: Config paths to variable parameters and their values
+    :return: Configs with different parameters.
+    """
+    # reference: dev_scripts.notebooks.run_notebook.build_configs
+    config = template_config_builder()
+    if params_variants is not None:
+        template_config = _generate_template_config(config, params_variants)
+        configs = build_multiple_configs(template_config, params_variants)
+    else:
+        configs = [config]
+    return configs
 
 
 def build_multiple_configs(
