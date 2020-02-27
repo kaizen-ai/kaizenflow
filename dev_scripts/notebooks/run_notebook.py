@@ -25,8 +25,8 @@ import helpers.printing as printing
 import helpers.system_interaction as si
 import helpers.datetime_ as hdt
 import helpers.pickle_ as hpickle
-import core.config_builders as cfgbld
-import nlp.build_configs as ncfgbuild # noqa: F401 # pylint: disable=unused-import
+import core.config_builders as ccfgbld
+import nlp.build_configs as ncfgbld # noqa: F401 # pylint: disable=unused-import
 _LOG = logging.getLogger(__name__)
 
 
@@ -100,7 +100,7 @@ def _run_notebook(
     result_subdir = "result_%s_%s" % (experiment_date, str(i))
     html_subdir_name = os.path.join(os.path.basename(dst_dir), result_subdir)
     config_dir = os.path.join(dst_dir, result_subdir)
-    config = cfgbld.set_absolute_result_file_path(config_dir, config)
+    config = ccfgbld.set_absolute_result_file_path(config_dir, config)
     _LOG.info(config_dir)
     io_.create_dir(config_dir, incremental=True)
     # Generate bookeeping files.
@@ -171,9 +171,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     config_builder = f"{args.function}({args.function_args})"
     configs = eval(config_builder)
     dbg.dassert_isinstance(configs, list)
-    cfgbld.check_same_configs(configs)
-    configs = cfgbld.add_result_dir(dst_dir, configs)
-    configs = cfgbld.add_config_idx(configs)
+    ccfgbld.check_same_configs(configs)
+    configs = ccfgbld.add_result_dir(dst_dir, configs)
+    configs = ccfgbld.add_config_idx(configs)
     _LOG.info("Created %s configs", len(configs))
     if args.dry_run:
         _LOG.warning(
