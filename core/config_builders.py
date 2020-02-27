@@ -1,12 +1,153 @@
 import itertools
 import logging
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Optional, Union
 
 import pandas as pd
+import os
 
 import core.config as cfg
+import helpers.dbg as dbg
+import helpers.dict as dct
 
 _LOG = logging.getLogger(__name__)
+
+
+def check_same_configs(configs: List[cfg.Config]) -> None:
+    """
+    Assert whether the list of configs contains no duplicates.
+    :param configs: List of configs to run experiments on.
+    :return:
+    """
+    configs_as_str = [str(config) for config in configs]
+    dbg.dassert_no_duplicates(
+        configs_as_str, msg="There are duplicate configs in passed list."
+    )
+
+
+def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
+    """
+    Compare configs from list to find the common part.
+
+    :param configs: A list of configs
+    :return: A config with common part of all input configs.
+    """
+    flattened_configs = []
+    for config in configs:
+        flattened_config = config.to_dict()
+        flattened_config = dct.flatten_nested_dict(flattened_config)
+        flattened_configs.append(set(flattened_config.items()))
+    config_intersection = dict(set.intersection(*flattened_configs))
+    common_config = cfg.Config()
+    for k, v in config_intersection.items():
+        common_config[tuple(k.split("."))] = v
+    return common_config
+
+
+def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
+    """
+    Find parameters in configs that are different and provide the varying values.
+
+    :param configs: A list of configs.
+    :return: A dictionary of varying params and lists of their values.
+    """
+    flattened_configs = []
+    redundant_params = ["meta.id", "meta.result_file_name"]
+    for config in configs:
+        flattened_config = config.to_dict()
+        flattened_config = dct.flatten_nested_dict(flattened_config)
+        flattened_configs.append(set(flattened_config.items()))
+    config_varying_params = set.union(*flattened_configs) - set.intersection(
+        *flattened_configs
+    )
+    config_varying_params = dict(config_varying_params).keys()
+    # Remove `meta` params that always vary.
+    config_varying_params = [
+        param for param in config_varying_params if param not in redundant_params
+    ]
+    config_difference = dict()
+    for param in config_varying_params:
+        param_values = []
+        for flattened_config in flattened_configs:
+            try:
+                param_values.append(dict(flattened_config)[param])
+            except KeyError:
+                param_values.append(None)
+        config_difference[param] = param_values
+    return config_difference
+
+
+def get_configs_dataframe(
+    configs: List[cfg.Config],
+    params_subset: Optional[Union[str, List[str]]] = None,
+) -> pd.DataFrame:
+    """
+    Convert the configs into a df with full nested names.
+
+    The column names should correspond to `subconfig.subconfig.parameter` format, e.g.:
+    `build_targets.target_asset`.
+    :param configs: Configs used to run experiments.
+    :param params_subset: Parameters to include as table columns.
+    :return: Table of configs.
+    """
+    config_df = []
+    for config in configs:
+        flattened_config = config.to_dict()
+        flattened_config = dct.flatten_nested_dict(flattened_config)
+        flattened_config = pd.Series(flattened_config)
+        config_df.append(flattened_config)
+    config_df = pd.concat(config_df, axis=1).T
+    # Process the config_df by keeping only a subset of keys.
+    if params_subset is not None:
+        if params_subset == "difference":
+            config_difference = get_config_difference(configs)
+            params_subset = list(config_difference.keys())
+        # Filter config_df for the desired columns.
+        dbg.dassert_is_subset(params_subset, config_df.columns)
+        config_df = config_df[params_subset]
+    return config_df
+
+
+def add_result_dir(dst_dir: str, configs: List[cfg.Config]) -> List[cfg.Config]:
+    """
+    Add a result directory field to all configs in list.
+    :param dst_dir: Location of output directory
+    :param configs: List of configs for experiments
+    :return: List of copied configs with result directories added
+    """
+    configs_with_dir = []
+    for config in configs:
+        config_with_dir = config.copy()
+        config_with_dir[("meta", "result_dir")] = dst_dir
+        configs_with_dir.append(config_with_dir)
+    return configs_with_dir
+
+
+def set_absolute_result_file_path(sim_dir: str, config: cfg.Config) -> cfg.Config:
+    """
+    Add absolute path to the simulation results file.
+    :param sim_dir: Subdirectory with simulation results
+    :param config: Config used for simulation
+    :return: Config with absolute file path to results
+    """
+    config_with_filepath = config.copy()
+    config_with_filepath[("meta", "result_file_name")] = os.path.join(
+        sim_dir, config_with_filepath[("meta", "result_file_name")]
+    )
+    return config_with_filepath
+
+
+def add_config_idx(configs: List[cfg.Config]) -> List[cfg.Config]:
+    """
+    Add the config id as parameter.
+    :param configs: List of configs for experiments
+    :return: List of copied configs with added ids
+    """
+    configs_idx = []
+    for i, config in enumerate(configs):
+        config_with_id = config.copy()
+        config_with_id[("meta", "id")] = i
+        configs_idx.append(config_with_id)
+    return configs_idx
 
 
 def build_multiple_configs(
