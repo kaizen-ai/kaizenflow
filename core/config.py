@@ -10,11 +10,12 @@ import logging
 import os
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+import core.config_builders as ccfgbld
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.introspection as intr
 import helpers.printing as pri
-import core.config_builders as ccfgbld
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -240,8 +241,8 @@ class Config:
         or return None.
         """
         if all(
-                var in os.environ
-                for var in ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__DST_DIR__"]
+            var in os.environ
+            for var in ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__DST_DIR__"]
         ):
             config_builder = os.environ["__CONFIG_BUILDER__"]
             configs = eval(config_builder)

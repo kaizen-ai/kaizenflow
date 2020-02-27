@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """
-> run_notebook.py --notebook research/Task11_Model_for_1min_futures_data/Task11_Simple_model_for_1min_futures_data.ipynb --function build_configs --no_incremental --dst_dir tmp.run_notebooks/ --num_threads -1
-
 > run_notebook.py --dst_dir nlp/test_results \
  --no_incremental \
  --notebook nlp/notebooks/PartTask1102_RP_Pipeline.ipynb \
@@ -13,24 +11,26 @@ import argparse
 import copy
 import logging
 import os
+from typing import List
 
-import tqdm
 import joblib
+import tqdm
 
 import core.config as cfg
+import core.config_builders as ccfgbld
+import helpers.datetime_ as hdt
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
+import helpers.pickle_ as hpickle
 import helpers.printing as printing
 import helpers.system_interaction as si
-import helpers.datetime_ as hdt
-import helpers.pickle_ as hpickle
-import core.config_builders as ccfgbld
-import nlp.build_configs as ncfgbld # noqa: F401 # pylint: disable=unused-import
+import nlp.build_configs as ncfgbld  # noqa: F401 # pylint: disable=unused-import
+
 _LOG = logging.getLogger(__name__)
 
 
-def build_configs(dst_dir, dry_run):
+def build_configs(dst_dir: str, dry_run: bool) -> List[cfg.Config]:
     # TODO (*) Where to move this file?
     config = cfg.Config()
     config_tmp = config.add_subconfig("read_data")
@@ -192,13 +192,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for i, config in tqdm.tqdm(enumerate(configs)):
             _LOG.debug("\n%s", printing.frame("Config %s" % i))
             #
-            _run_notebook(i, notebook_file, config, dst_dir)
+            _run_notebook(i, notebook_file, dst_dir, config, config_builder)
     else:
         num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
         joblib.Parallel(n_jobs=num_threads, verbose=50)(
-            joblib.delayed(_run_notebook)(i, notebook_file, config, dst_dir)
+            joblib.delayed(_run_notebook)(
+                i, notebook_file, dst_dir, config, config_builder
+            )
             for i, config in enumerate(configs)
         )
 
@@ -229,7 +231,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         help="Function name to execute to generate configs. Make sure to include import:"
-             " NLP config builders are imported through `ncfgbld`.",
+        " NLP config builders are imported through `ncfgbld`.",
     )
     parser.add_argument(
         "--function_args",

@@ -1,13 +1,14 @@
 import itertools
 import logging
-from typing import Any, Dict, Iterable, List, Tuple, Optional, Union, Callable
+import os
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import pandas as pd
-import os
 
 import core.config as cfg
 import helpers.dbg as dbg
 import helpers.dict as dct
+import helpers.pickle_ as hpickle
 
 _LOG = logging.getLogger(__name__)
 
@@ -190,6 +191,30 @@ def generate_default_config_variants(
     else:
         configs = [config]
     return configs
+
+
+def load_results(results_dir: str) -> Tuple[List[cfg.Config], List[pd.DataFrame]]:
+    """
+    Load all result pickles and save in order of corresponding configs.
+    :param results_dir: Directory with results of experiments.
+    :return: All result configs and result dataframes.
+    """
+    # TODO (*) Move function to a different lib.
+    result_dfs = []
+    configs = []
+    result_subfolders = os.listdir(results_dir)
+    for subfolder in result_subfolders:
+        config_path = os.path.join(results_dir, subfolder, "config.pkl")
+        config = hpickle.from_pickle(config_path)
+        configs.append(config)
+    # Sort configs by order of simulations.
+    configs = sorted(configs, key=lambda x: x[("meta", "id")])
+    # # Load dataframes with results.
+    for config in configs:
+        config_result = hpickle.from_pickle(config[("meta", "result_file_name")])
+        config_result = config_result["df"]
+        result_dfs.append(config_result)
+    return configs, result_dfs
 
 
 def build_multiple_configs(
