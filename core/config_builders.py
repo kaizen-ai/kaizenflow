@@ -9,6 +9,7 @@ import core.config as cfg
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.pickle_ as hpickle
+# This import is required to run NLP config builders passed through command line.
 import nlp.build_configs as ncfgbld  # noqa: F401 # pylint: disable=unused-import
 _LOG = logging.getLogger(__name__)
 
