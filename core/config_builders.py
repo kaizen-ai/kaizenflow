@@ -9,8 +9,10 @@ import core.config as cfg
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.pickle_ as hpickle
+
 # This import is required to run NLP config builders passed through command line.
 import nlp.build_configs as ncfgbld  # noqa: F401 # pylint: disable=unused-import
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -20,8 +22,8 @@ def get_config_from_env():
     or return None.
     """
     if all(
-            var in os.environ
-            for var in ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__DST_DIR__"]
+        var in os.environ
+        for var in ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__DST_DIR__"]
     ):
         config_builder = os.environ["__CONFIG_BUILDER__"]
         configs = eval(config_builder)
@@ -62,7 +64,9 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
         flattened_config = config.to_dict()
         flattened_config = dct.flatten_nested_dict(flattened_config)
         flattened_configs.append(flattened_config.items())
-    config_intersection = [set(config_items) for config_items in flattened_configs]
+    config_intersection = [
+        set(config_items) for config_items in flattened_configs
+    ]
     config_intersection = set.intersection(*config_intersection)
     template_config = flattened_configs[0]
     common_config = cfg.Config()

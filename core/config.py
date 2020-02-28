@@ -7,7 +7,6 @@ import core.config as cfg
 import collections
 import copy
 import logging
-import os
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import helpers.dbg as dbg
@@ -231,7 +230,6 @@ class Config:
         for k in keys:
             v = self._config.get(k, "na")
             _LOG.info("%s='%s'", k, v)
-
 
     # TODO(gp): Use this everywhere.
     def get_exception(self, key):
