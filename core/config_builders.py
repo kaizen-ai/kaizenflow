@@ -36,8 +36,8 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     for config in configs:
         flattened_config = config.to_dict()
         flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_configs.append(set(flattened_config.items()))
-    config_intersection = dict(set.intersection(*flattened_configs))
+        flattened_configs.append(frozenset(flattened_config.items()))
+    config_intersection = dict(frozenset.intersection(*flattened_configs))
     common_config = cfg.Config()
     for k, v in config_intersection.items():
         common_config[tuple(k.split("."))] = v
