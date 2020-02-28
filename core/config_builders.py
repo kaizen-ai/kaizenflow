@@ -13,6 +13,30 @@ import collections
 _LOG = logging.getLogger(__name__)
 
 
+def get_config_from_env():
+    """
+    Build a config passed through an environment variable, if possible,
+    or return None.
+    """
+    if all(
+            var in os.environ
+            for var in ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__DST_DIR__"]
+    ):
+        config_builder = os.environ["__CONFIG_BUILDER__"]
+        configs = eval(config_builder)
+        _LOG.info("__CONFIG_BUILDER__=%s", config_builder)
+        result_dir = os.environ["__DST_DIR__"]
+        configs = add_result_dir(result_dir, configs)
+        _LOG.info("__DST_DIR__=%s", config_builder)
+        config_index = int(os.environ["__CONFIG_IDX__"])
+        _LOG.info("__CONFIG_IDX__=%s", config_index)
+        config = configs[config_index]
+        config = set_absolute_result_file_path(result_dir, config)
+    else:
+        config = None
+    return config
+
+
 def check_same_configs(configs: List[cfg.Config]) -> None:
     """
     Assert whether the list of configs contains no duplicates.
