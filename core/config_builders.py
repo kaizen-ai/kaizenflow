@@ -13,16 +13,16 @@ import helpers.pickle_ as hpickle
 _LOG = logging.getLogger(__name__)
 
 
-def get_config_from_env():
+def get_config_from_env() -> Union[cfg.Config, None]:
     """
     Build a config passed through an environment variable, if possible,
     or return None.
     """
-    vars = ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__CONFIG_DST_DIR__"]
+    config_vars = ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__CONFIG_DST_DIR__"]
     # Check existence of config vars in env.
-    if any(var in os.environ for var in vars):
+    if any(var in os.environ for var in config_vars):
         _LOG.warning("Found some config vars in environment")
-        if all(var in os.environ for var in vars):
+        if all(var in os.environ for var in config_vars):
             # Build configs.
             config_builder = os.environ["__CONFIG_BUILDER__"]
             _LOG.info("__CONFIG_BUILDER__=%s", config_builder)
@@ -40,7 +40,10 @@ def get_config_from_env():
             # Set file path by index.
             config = set_absolute_result_file_path(result_dir, config)
         else:
-            raise RuntimeError("Some config vars '%s' were defined, but not all", ", ".join(vars))
+            raise RuntimeError(
+                "Some config vars '%s' were defined, but not all",
+                ", ".join(config_vars),
+            )
     else:
         config = None
     return config
@@ -58,6 +61,20 @@ def check_same_configs(configs: List[cfg.Config]) -> None:
     )
 
 
+def _flatten_configs(configs: List[cfg.Config]) -> List[Dict[Any, Any]]:
+    """
+    Convert list of configs to a list of flattened dict items.
+    :param configs: A list of configs
+    :return: List of flattened config dicts.
+    """
+    flattened_configs = []
+    for config in configs:
+        flattened_config = config.to_dict()
+        flattened_config = dct.flatten_nested_dict(flattened_config)
+        flattened_configs.append(flattened_config)
+    return flattened_configs
+
+
 def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     """
     Compare configs from list to find the common part.
@@ -65,17 +82,18 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     :param configs: A list of configs
     :return: A config with common part of all input configs.
     """
-    flattened_configs = []
-    for config in configs:
-        flattened_config = config.to_dict()
-        flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_configs.append(flattened_config.items())
+    # Flatten configs into dict items for comparison.
+    flattened_configs = _flatten_configs(configs)
+    flattened_configs = [config.items() for config in flattened_configs]
+    # Get similar parameters from configs.
     config_intersection = [
         set(config_items) for config_items in flattened_configs
     ]
     config_intersection = set.intersection(*config_intersection)
+    # Select template config to build intersection config.
     template_config = flattened_configs[0]
     common_config = cfg.Config()
+    # Add intersecting configs to template config.
     for k, v in template_config:
         if tuple((k, v)) in config_intersection:
             common_config[tuple(k.split("."))] = v
@@ -89,19 +107,18 @@ def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     :param configs: A list of configs.
     :return: A dictionary of varying params and lists of their values.
     """
-    flattened_configs = []
-    redundant_params = ["meta.id", "meta.result_file_name"]
+    # Flatten configs into dicts.
+    flattened_configs = _flatten_configs(configs)
+    # Convert dicts into sets of items for comparison.
+    flattened_configs = [set(config.items()) for config in flattened_configs]
     # Build a dictionary of common config values.
-    for config in configs:
-        flattened_config = config.to_dict()
-        flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_configs.append(set(flattened_config.items()))
     config_varying_params = set.union(*flattened_configs) - set.intersection(
         *flattened_configs
     )
     # Compute params that vary among different configs.
     config_varying_params = dict(config_varying_params).keys()
     # Remove `meta` params that always vary.
+    redundant_params = ["meta.id", "meta.result_file_name"]
     config_varying_params = [
         param for param in config_varying_params if param not in redundant_params
     ]
@@ -131,12 +148,10 @@ def get_configs_dataframe(
     :param params_subset: Parameters to include as table columns.
     :return: Table of configs.
     """
-    config_df = []
-    for config in configs:
-        flattened_config = config.to_dict()
-        flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_config = pd.Series(flattened_config)
-        config_df.append(flattened_config)
+    # Convert configs to flattened dicts.
+    flattened_configs = _flatten_configs(configs)
+    # Convert dicts to pd.Series and create a df.
+    config_df = map(pd.Series, flattened_configs)
     config_df = pd.concat(config_df, axis=1).T
     # Process the config_df by keeping only a subset of keys.
     if params_subset is not None:
