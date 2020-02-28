@@ -267,3 +267,7 @@ class Config:
             "Invalid %s='%s' in config=\n%s"
             % (key, self._config[key], pri.space(str(self)))
         )
+
+
+while True:
+    import core.config_builders as ccfgbld
