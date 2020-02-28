@@ -10,7 +10,6 @@ import logging
 import os
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-import core.config_builders as ccfgbld
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.introspection as intr
@@ -19,7 +18,6 @@ import helpers.printing as pri
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Add mechanism to check if a value was assigned but not used.
 class Config:
     """
     A hierarchical ordered dictionary storing configuration informations.
