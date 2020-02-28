@@ -269,5 +269,5 @@ class Config:
         )
 
 
-while True:
+if True:
     import core.config_builders as ccfgbld
