@@ -9,7 +9,6 @@ import core.config as cfg
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.pickle_ as hpickle
-import collections
 _LOG = logging.getLogger(__name__)
 
 

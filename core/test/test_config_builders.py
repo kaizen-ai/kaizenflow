@@ -2,6 +2,7 @@ import core.config as cfg
 import core.config_builders as ccfgbld
 import helpers.unit_test as hut
 import pandas as pd
+import helpers.system_interaction as si
 
 
 class ConfigTestHelper:
@@ -30,6 +31,10 @@ class ConfigTestHelper:
         tmp_config = config.add_subconfig("meta")
         tmp_config["result_file_name"] = "results.pkl"
         return config
+    @staticmethod
+    def get_test_configs():
+        configs = [ConfigTestHelper.get_test_config_1(), ConfigTestHelper.get_test_config_2()]
+        return configs
 
 
 class TestBuildMultipleConfigs(hut.TestCase):
@@ -231,3 +236,18 @@ class TestGenerateDefaultConfigVariants(hut.TestCase):
         expected_configs = [str(expected_config_1), str(expected_config_2)]
         actual_configs = [str(config) for config in actual_configs]
         self.assertEqual(expected_configs, actual_configs)
+
+
+class TestGetConfigFromEnv(hut.TestCase):
+    def test_with_env_variables(self):
+        expected_config = ConfigTestHelper.get_test_config_1()
+        config_builder = "core.test.test_config_builders.ConfigTestHelper.get_test_configs"
+        config_idx = "0"
+        config_dir = "test/results"
+        cmd = (
+                'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__=%s; export __DST_DIR__=%s'
+                % (config_builder, config_idx, config_dir)
+        )
+        si.system(cmd)
+        actual_config = ccfgbld.get_config_from_env()
+        self.assertEqual(str(expected_config), str(actual_config))
