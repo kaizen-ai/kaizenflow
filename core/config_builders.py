@@ -9,7 +9,7 @@ import core.config as cfg
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.pickle_ as hpickle
-
+import collections
 _LOG = logging.getLogger(__name__)
 
 
@@ -36,11 +36,14 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     for config in configs:
         flattened_config = config.to_dict()
         flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_configs.append(frozenset(flattened_config.items()))
-    config_intersection = dict(frozenset.intersection(*flattened_configs))
+        flattened_configs.append(flattened_config.items())
+    config_intersection = [set(config_items) for config_items in flattened_configs]
+    config_intersection = set.intersection(*config_intersection)
+    template_config = flattened_configs[0]
     common_config = cfg.Config()
-    for k, v in config_intersection.items():
-        common_config[tuple(k.split("."))] = v
+    for k, v in template_config:
+        if tuple((k, v)) in config_intersection:
+            common_config[tuple(k.split("."))] = v
     return common_config
 
 

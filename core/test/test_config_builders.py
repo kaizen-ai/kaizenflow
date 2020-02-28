@@ -117,7 +117,6 @@ class Test_config_comparisons(hut.TestCase):
         )
         self.assertEqual(str(intersection_config), str(actual_intersection), msg=f"\n***\n{str(intersection_config)}\n\n***\n{str(actual_intersection)}")
 
-
     def test_varying_config_difference(self):
         # Create two different configs.
         config_1 = ConfigTestHelper.get_test_config_1()
@@ -196,5 +195,18 @@ class TestParameterAddition(hut.TestCase):
         actual_configs = [ConfigTestHelper.get_test_config_1(),
                           ConfigTestHelper.get_test_config_1()]
         actual_configs = ccfgbld.add_config_idx(actual_configs)
+        actual_configs = [str(config) for config in actual_configs]
+        self.assertEqual(expected_configs, actual_configs)
+
+
+class TestGenerateDefaultConfigVariants(hut.TestCase):
+    def test_add_var_params(self):
+        params_variants = {("build_targets", "target_asset"): ["Gasoil", "Soy"]}
+        expected_config_1 = ConfigTestHelper.get_test_config_1()
+        expected_config_1[("build_targets", "target_asset")] = "Gasoil"
+        expected_config_2 = ConfigTestHelper.get_test_config_2()
+        expected_config_2[("build_targets", "target_asset")] = "Soy"
+        expected_configs = [str(expected_config_1), str(expected_config_2)]
+        actual_configs = ccfgbld.generate_default_config_variants(ConfigTestHelper.get_test_config_1, params_variants)
         actual_configs = [str(config) for config in actual_configs]
         self.assertEqual(expected_configs, actual_configs)
