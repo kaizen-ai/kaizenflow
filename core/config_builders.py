@@ -46,7 +46,7 @@ def get_config_from_env():
     return config
 
 
-def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
+def check_same_configs(configs: List[cfg.Config]) -> None:
     """
     Assert whether the list of configs contains no duplicates.
     :param configs: List of configs to run experiments on.
@@ -69,11 +69,16 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     for config in configs:
         flattened_config = config.to_dict()
         flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_configs.append(set(flattened_config.items()))
-    config_intersection = dict(set.intersection(*flattened_configs))
+        flattened_configs.append(flattened_config.items())
+    config_intersection = [
+        set(config_items) for config_items in flattened_configs
+    ]
+    config_intersection = set.intersection(*config_intersection)
+    template_config = flattened_configs[0]
     common_config = cfg.Config()
-    for k, v in config_intersection.items():
-        common_config[tuple(k.split("."))] = v
+    for k, v in template_config:
+        if tuple((k, v)) in config_intersection:
+            common_config[tuple(k.split("."))] = v
     return common_config
 
 
@@ -94,7 +99,6 @@ def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     config_varying_params = set.union(*flattened_configs) - set.intersection(
         *flattened_configs
     )
-
     # Compute params that vary among different configs.
     config_varying_params = dict(config_varying_params).keys()
     # Remove `meta` params that always vary.
