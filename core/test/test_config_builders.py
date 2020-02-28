@@ -1,10 +1,12 @@
+import pandas as pd
+import pytest
+
 import core.config as cfg
 import core.config_builders as ccfgbld
-import nlp.build_configs as ncfgbld
-import helpers.unit_test as hut
-import pandas as pd
 import helpers.system_interaction as si
-import pytest
+import helpers.unit_test as hut
+import nlp.build_configs as ncfgbld
+
 
 class ConfigTestHelper:
     @staticmethod
@@ -110,7 +112,9 @@ class TestConfigIntersection(hut.TestCase):
         tmp_config = intersection_config.add_subconfig("build_model")
         tmp_config["activation"] = "sigmoid"
         tmp_config = intersection_config.add_subconfig("build_targets")
-        tmp_config = intersection_config["build_targets"].add_subconfig("preprocessing")
+        tmp_config = intersection_config["build_targets"].add_subconfig(
+            "preprocessing"
+        )
         tmp_config["preprocessor"] = "tokenizer"
         tmp_config = intersection_config.add_subconfig("meta")
         tmp_config["result_file_name"] = "results.pkl"
@@ -128,7 +132,9 @@ class TestConfigDifference(hut.TestCase):
         config_1 = ConfigTestHelper.get_test_config_1()
         config_2 = ConfigTestHelper.get_test_config_2()
         # Define expected variation.
-        expected_difference = {"build_targets.target_asset": ["Crude Oil", "Gold"]}
+        expected_difference = {
+            "build_targets.target_asset": ["Crude Oil", "Gold"]
+        }
         actual_difference = ccfgbld.get_config_difference([config_1, config_2])
         self.assertEqual(expected_difference, actual_difference)
 
@@ -144,16 +150,24 @@ class TestGetConfigDataframe(hut.TestCase):
     Compare manually constructed dfs and dfs created by `ccfgbld.get_configs_dataframe`
     using `pd.DataFrame.equals()`
     """
+
     def test_all_params(self):
         # Get two test configs.
         config_1 = ConfigTestHelper.get_test_config_1()
         config_2 = ConfigTestHelper.get_test_config_2()
 
         # Create expected dataframe and one with function.
-        expected_result = pd.DataFrame({'build_model.activation': ["sigmoid", "sigmoid"],
-                                        'build_targets.target_asset': ['Crude Oil', 'Gold'],
-                                        'build_targets.preprocessing.preprocessor': ['tokenizer', 'tokenizer'],
-                                        "meta.result_file_name": ["results.pkl", "results.pkl"]})
+        expected_result = pd.DataFrame(
+            {
+                "build_model.activation": ["sigmoid", "sigmoid"],
+                "build_targets.target_asset": ["Crude Oil", "Gold"],
+                "build_targets.preprocessing.preprocessor": [
+                    "tokenizer",
+                    "tokenizer",
+                ],
+                "meta.result_file_name": ["results.pkl", "results.pkl"],
+            }
+        )
         actual_result = ccfgbld.get_configs_dataframe([config_1, config_2])
         self.assertTrue(expected_result.equals(actual_result))
 
@@ -162,8 +176,12 @@ class TestGetConfigDataframe(hut.TestCase):
         config_1 = ConfigTestHelper.get_test_config_1()
         config_2 = ConfigTestHelper.get_test_config_2()
         # Create expected dataframe and one with function.
-        expected_result = pd.DataFrame({"build_targets.target_asset": ["Crude Oil", "Gold"]})
-        actual_result = ccfgbld.get_configs_dataframe([config_1, config_2], params_subset="difference")
+        expected_result = pd.DataFrame(
+            {"build_targets.target_asset": ["Crude Oil", "Gold"]}
+        )
+        actual_result = ccfgbld.get_configs_dataframe(
+            [config_1, config_2], params_subset="difference"
+        )
         self.assertTrue(expected_result.equals(actual_result))
 
     def test_custom_params_subset(self):
@@ -172,8 +190,12 @@ class TestGetConfigDataframe(hut.TestCase):
         config_2 = ConfigTestHelper.get_test_config_2()
 
         # Create expected dataframe and one with function.
-        expected_result = pd.DataFrame({"build_model.activation": ["sigmoid", "sigmoid"]})
-        actual_result = ccfgbld.get_configs_dataframe([config_1, config_2], params_subset=["build_model.activation"])
+        expected_result = pd.DataFrame(
+            {"build_model.activation": ["sigmoid", "sigmoid"]}
+        )
+        actual_result = ccfgbld.get_configs_dataframe(
+            [config_1, config_2], params_subset=["build_model.activation"]
+        )
         self.assertTrue(expected_result.equals(actual_result))
 
 
@@ -196,10 +218,14 @@ class TestSetAbsoluteResultFilePath(hut.TestCase):
         sim_dir = "/data/tests/test_results/"
         expected_config = ConfigTestHelper.get_test_config_1()
         # Set result file name manually.
-        expected_config[("meta", "result_file_name")] = "/data/tests/test_results/results.pkl"
+        expected_config[
+            ("meta", "result_file_name")
+        ] = "/data/tests/test_results/results.pkl"
         # Set using function.
         actual_config = ConfigTestHelper.get_test_config_1()
-        actual_config = ccfgbld.set_absolute_result_file_path(sim_dir, actual_config)
+        actual_config = ccfgbld.set_absolute_result_file_path(
+            sim_dir, actual_config
+        )
         self.assertEqual(str(expected_config), str(actual_config))
 
 
@@ -211,8 +237,10 @@ class TestAddConfigIdx(hut.TestCase):
         expected_config_2 = ConfigTestHelper.get_test_config_1()
         expected_config_2[("meta", "id")] = 1
         # Assign id parameters through function.
-        actual_configs = [ConfigTestHelper.get_test_config_1(),
-                          ConfigTestHelper.get_test_config_1()]
+        actual_configs = [
+            ConfigTestHelper.get_test_config_1(),
+            ConfigTestHelper.get_test_config_1(),
+        ]
         actual_configs = ccfgbld.add_config_idx(actual_configs)
         # Convert configs to string for comparison.
         expected_configs = [str(expected_config_1), str(expected_config_2)]
@@ -229,7 +257,9 @@ class TestGenerateDefaultConfigVariants(hut.TestCase):
         expected_config_2 = ConfigTestHelper.get_test_config_1()
         expected_config_2[("build_targets", "target_asset")] = "Soy"
         # Pass test config builder to generating function.
-        actual_configs = ccfgbld.generate_default_config_variants(ConfigTestHelper.get_test_config_1, params_variants)
+        actual_configs = ccfgbld.generate_default_config_variants(
+            ConfigTestHelper.get_test_config_1, params_variants
+        )
         expected_configs = [str(expected_config_1), str(expected_config_2)]
         actual_configs = [str(config) for config in actual_configs]
         self.assertEqual(expected_configs, actual_configs)
@@ -240,8 +270,9 @@ class TestGetConfigFromEnv(hut.TestCase):
         # Test that no config is created.
         actual_config = ccfgbld.get_config_from_env()
         self.assertTrue(actual_config is None)
+
     @pytest.mark.skip
-    #TODO(*) The function fails outside of notebook use. Update the test to reflect that.
+    # TODO(*) The function fails outside of notebook use. Update the test to reflect that.
     def test_with_env_variables(self):
         config_dir = "/data/test/"
         config_builder = "ncfgbld.build_PartTask1088_configs()"
@@ -250,8 +281,8 @@ class TestGetConfigFromEnv(hut.TestCase):
         expected_config[("meta", "result_dir")] = config_dir
         expected_config[("meta", "result_file_name")] = "/data/test/results.pkl"
         cmd = (
-                'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__=%s; export __DST_DIR__=%s'
-                % (config_builder, config_idx, config_dir)
+            'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__=%s; export __DST_DIR__=%s'
+            % (config_builder, config_idx, config_dir)
         )
         si.system(cmd)
         actual_config = ccfgbld.get_config_from_env()
