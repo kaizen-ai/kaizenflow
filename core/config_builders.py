@@ -49,7 +49,7 @@ def get_config_from_env() -> Union[cfg.Config, None]:
     return config
 
 
-def check_same_configs(configs: List[cfg.Config]) -> None:
+def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     """
     Assert whether the list of configs contains no duplicates.
     :param configs: List of configs to run experiments on.
