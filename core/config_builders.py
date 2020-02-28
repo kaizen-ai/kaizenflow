@@ -16,7 +16,7 @@ import nlp.build_configs as ncfgbld  # noqa: F401 # pylint: disable=unused-impor
 _LOG = logging.getLogger(__name__)
 
 
-def get_config_from_env():
+def get_config_from_env() -> cfg.Config:
     """
     Build a config passed through an environment variable, if possible,
     or return None.

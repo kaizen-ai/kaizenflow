@@ -38,9 +38,7 @@ class TestBuildMultipleConfigs(hut.TestCase):
         }
         # Check the results.
         with self.assertRaises(ValueError):
-            actual_result = ccfgbld.build_multiple_configs(
-                config_template, params_variants
-            )
+            _ = ccfgbld.build_multiple_configs(config_template, params_variants)
 
     def test_not_nan_parameter(self) -> None:
         # Create config template.
@@ -56,9 +54,7 @@ class TestBuildMultipleConfigs(hut.TestCase):
         }
         # Check the results.
         with self.assertRaises(ValueError):
-            actual_result = ccfgbld.build_multiple_configs(
-                config_template, params_variants
-            )
+            _ = ccfgbld.build_multiple_configs(config_template, params_variants)
 
 
 def _get_test_config_1() -> cfg.Config:
@@ -78,7 +74,7 @@ def _get_test_config_1() -> cfg.Config:
     return config
 
 
-def _get_test_config_2():
+def _get_test_config_2() -> cfg.Config:
     """
     Build a test config for Gold asset.
     :return: Test config.
@@ -96,7 +92,7 @@ def _get_test_config_2():
 
 
 class TestCheckSameConfigs(hut.TestCase):
-    def test_check_same_configs_error(self):
+    def test_check_same_configs_error(self) -> None:
         """
         Verify that an error is raised when same configs are encountered.
         """
@@ -112,7 +108,7 @@ class TestCheckSameConfigs(hut.TestCase):
 
 
 class TestConfigIntersection(hut.TestCase):
-    def test_different_config_intersection(self):
+    def test_different_config_intersection(self) -> None:
         """
         Verify that intersection of two different configs is what expected.
         """
@@ -136,7 +132,7 @@ class TestConfigIntersection(hut.TestCase):
 
         self.assertEqual(str(intersection_config), str(actual_intersection))
 
-    def test_same_config_intersection(self):
+    def test_same_config_intersection(self) -> None:
         """
         Verify that intersection of two same configs equals those configs.
         """
@@ -151,7 +147,7 @@ class TestConfigIntersection(hut.TestCase):
 
 
 class TestConfigDifference(hut.TestCase):
-    def test_varying_config_difference(self):
+    def test_varying_config_difference(self) -> None:
         """
         Verify that differing parameters of different configs are what expected.
         """
@@ -166,10 +162,10 @@ class TestConfigDifference(hut.TestCase):
         }
         self.assertEqual(expected_difference, actual_difference)
 
-    def test_same_config_difference(self):
+    def test_same_config_difference(self) -> None:
         """
         Verify that the difference of two configs is empty.
-         """
+        """
         # Create test config.
         config = _get_test_config_1()
         # Compute difference between two instances of same config.
@@ -184,7 +180,7 @@ class TestGetConfigDataframe(hut.TestCase):
     using `pd.DataFrame.equals()`
     """
 
-    def test_all_params(self):
+    def test_all_params(self) -> None:
         """
         Compute and verify dataframe with all config parameters.
         """
@@ -207,7 +203,7 @@ class TestGetConfigDataframe(hut.TestCase):
         )
         self.assertTrue(expected_result.equals(actual_result))
 
-    def test_different_params_subset(self):
+    def test_different_params_subset(self) -> None:
         """
         Compute and verify dataframe with all only varying config parameters.
         """
@@ -224,7 +220,7 @@ class TestGetConfigDataframe(hut.TestCase):
         )
         self.assertTrue(expected_result.equals(actual_result))
 
-    def test_custom_params_subset(self):
+    def test_custom_params_subset(self) -> None:
         """
         Compute and verify dataframe with arbitrary config parameters.
         """
@@ -243,7 +239,7 @@ class TestGetConfigDataframe(hut.TestCase):
 
 
 class TestAddResultDir(hut.TestCase):
-    def test_result_dir(self):
+    def test_result_dir(self) -> None:
         """
         Verify that `ccfgbld.add_result_dir` adds correct value to correct param path.
         """
@@ -260,9 +256,10 @@ class TestAddResultDir(hut.TestCase):
 
 
 class TestSetAbsoluteResultFilePath(hut.TestCase):
-    def test_set_absolute_result_file_path(self):
+    def test_set_absolute_result_file_path(self) -> None:
         """
-        Verify that `ccfgbld.set_absolute_result_file_path` adds correct value to correct param path.
+        Verify that `ccfgbld.set_absolute_result_file_path` adds correct value
+        to correct param path.
         """
         # Prepare result dir name.
         sim_dir = "/data/tests/test_results/"
@@ -281,7 +278,7 @@ class TestSetAbsoluteResultFilePath(hut.TestCase):
 
 
 class TestAddConfigIdx(hut.TestCase):
-    def test_add_config_idx(self):
+    def test_add_config_idx(self) -> None:
         """
         Verify that `ccfgbld.add_config_idx` adds correct index to correct param path.
         """
@@ -305,7 +302,7 @@ class TestAddConfigIdx(hut.TestCase):
 
 
 class TestGenerateDefaultConfigVariants(hut.TestCase):
-    def test_add_var_params(self):
+    def test_add_var_params(self) -> None:
         """
         Verify that Cartesian product of configs with varying parameters
         is what expected.
@@ -330,7 +327,7 @@ class TestGenerateDefaultConfigVariants(hut.TestCase):
 
 
 class TestGetConfigFromEnv(hut.TestCase):
-    def test_no_env_variables(self):
+    def test_no_env_variables(self) -> None:
         """
         Verify that if there are no config env variables, no config is created.
         """

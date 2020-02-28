@@ -69,7 +69,7 @@ class Config:
             return
         _LOG.debug("key=%s", key)
         dbg.dassert_isinstance(key, str, "Keys can only be string")
-        self._config[key] = val
+        self._config[key] = val  # type: ignore
 
     def __getitem__(self, key: Union[str, Iterable[str]]) -> Any:
         """
@@ -142,7 +142,7 @@ class Config:
         for path, val in dct.get_nested_dict_iterator(nested_dict):
             self.__setitem__(path, val)
 
-    def get(self, key, val):
+    def get(self, key: str, val: Any) -> Any:
         """
         Implement the same functionality as `__getitem__` but returning `val`
         if the value corresponding to key doesn't exist.
@@ -153,13 +153,13 @@ class Config:
             ret = val
         return ret
 
-    def pop(self, key: str):
+    def pop(self, key: str) -> Any:
         """
         Equivalent to `dict.pop()`.
         """
         return self._config.pop(key)
 
-    def copy(self):
+    def copy(self) -> "Config":
         """
         Create a deep copy of the Config object.
         """
@@ -199,7 +199,7 @@ class Config:
             dbg.dassert_eq(str(self), str(config_tmp))
         return config_as_str
 
-    def check_params(self, keys):
+    def check_params(self, keys: Iterable[str]) -> None:
         """
         Check whether all the `keys` are present in the object, otherwise
         raise.
@@ -220,7 +220,7 @@ class Config:
     # TODO(*): Standardize/allow to be configurable what to return if a value is
     #     missing.
     # TODO(gp): return a string
-    def print_config(self, keys):
+    def print_config(self, keys: Iterable[str]) -> None:
         """
         Return a string representation of a subset of keys, assigning "na" when
         there is no value.
@@ -232,11 +232,11 @@ class Config:
             _LOG.info("%s='%s'", k, v)
 
     # TODO(gp): Use this everywhere.
-    def get_exception(self, key):
+    def get_exception(self, key: str) -> None:
         """
         Raise an exception when a key is not present.
         """
-        return ValueError(
+        raise ValueError(
             "Invalid %s='%s' in config=\n%s"
             % (key, self._config[key], pri.space(str(self)))
         )
