@@ -9,6 +9,7 @@ import core.config as cfg
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.pickle_ as hpickle
+import nlp.build_configs as ncfgbld  # noqa: F401 # pylint: disable=unused-import
 _LOG = logging.getLogger(__name__)
 
 
