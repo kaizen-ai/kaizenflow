@@ -1,9 +1,10 @@
 import core.config as cfg
 import core.config_builders as ccfgbld
+import nlp.build_configs as ncfgbld
 import helpers.unit_test as hut
 import pandas as pd
 import helpers.system_interaction as si
-
+import pytest
 
 class ConfigTestHelper:
     @staticmethod
@@ -31,10 +32,6 @@ class ConfigTestHelper:
         tmp_config = config.add_subconfig("meta")
         tmp_config["result_file_name"] = "results.pkl"
         return config
-    @staticmethod
-    def get_test_configs():
-        configs = [ConfigTestHelper.get_test_config_1(), ConfigTestHelper.get_test_config_2()]
-        return configs
 
 
 class TestBuildMultipleConfigs(hut.TestCase):
@@ -243,3 +240,19 @@ class TestGetConfigFromEnv(hut.TestCase):
         # Test that no config is created.
         actual_config = ccfgbld.get_config_from_env()
         self.assertTrue(actual_config is None)
+    @pytest.mark.skip
+    #TODO(*) The function fails outside of notebook use. Update the test to reflect that.
+    def test_with_env_variables(self):
+        config_dir = "/data/test/"
+        config_builder = "ncfgbld.build_PartTask1088_configs()"
+        config_idx = "0"
+        expected_config = ncfgbld.build_PartTask1088_configs()[0]
+        expected_config[("meta", "result_dir")] = config_dir
+        expected_config[("meta", "result_file_name")] = "/data/test/results.pkl"
+        cmd = (
+                'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__=%s; export __DST_DIR__=%s'
+                % (config_builder, config_idx, config_dir)
+        )
+        si.system(cmd)
+        actual_config = ccfgbld.get_config_from_env()
+        self.assertEqual(str(expected_config), str(actual_config))
