@@ -239,15 +239,7 @@ class TestGenerateDefaultConfigVariants(hut.TestCase):
 
 
 class TestGetConfigFromEnv(hut.TestCase):
-    def test_with_env_variables(self):
-        expected_config = ConfigTestHelper.get_test_config_1()
-        config_builder = "core.test.test_config_builders.ConfigTestHelper.get_test_configs"
-        config_idx = "0"
-        config_dir = "test/results"
-        cmd = (
-                'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__=%s; export __DST_DIR__=%s'
-                % (config_builder, config_idx, config_dir)
-        )
-        si.system(cmd)
+    def test_no_env_variables(self):
+        # Test that no config is created.
         actual_config = ccfgbld.get_config_from_env()
-        self.assertEqual(str(expected_config), str(actual_config))
+        self.assertTrue(actual_config is None)
