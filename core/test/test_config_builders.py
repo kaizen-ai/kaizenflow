@@ -1,6 +1,7 @@
 import core.config as cfg
 import core.config_builders as ccfgbld
 import helpers.unit_test as ut
+import pandas as pd
 
 
 class TestBuildMultipleConfigs(ut.TestCase):
@@ -109,3 +110,68 @@ class Test_config_comparisons(ut.TestCase):
             [config_1, config_2]
         )
         self.assertEqual(str(intersection_config), str(actual_intersection))
+
+    def test_varying_config_difference(self):
+        # Create two different configs.
+        config_1 = Test_config_comparisons.get_test_config_1()
+        config_2 = Test_config_comparisons.get_test_config_2()
+        # Define expected variation.
+        expected_difference = {"build_targets.target_asset": ["Crude Oil", "Gold"]}
+        actual_difference = ccfgbld.get_config_difference([config_1, config_2])
+        self.assertEqual(expected_difference, actual_difference)
+
+    def test_same_config_difference(self):
+        config = Test_config_comparisons.get_test_config_1()
+        actual_difference = ccfgbld.get_config_difference([config, config])
+        # Check that the difference is empty.
+        self.assertFalse(actual_difference)
+
+
+class Test_get_config_dataframe(ut.TestCase):
+    @staticmethod
+    def get_test_config_1():
+        config = cfg.Config()
+        tmp_config = config.add_subconfig("build_model")
+        tmp_config["activation"] = "sigmoid"
+        tmp_config = config.add_subconfig("build_targets")
+        tmp_config["target_asset"] = "Crude Oil"
+        tmp_config = config["build_targets"].add_subconfig("preprocessing")
+        tmp_config["preprocessor"] = "tokenizer"
+        return config
+    @staticmethod
+    def get_test_config_2():
+        config = cfg.Config()
+        tmp_config = config.add_subconfig("build_model")
+        tmp_config["activation"] = "sigmoid"
+        tmp_config = config.add_subconfig("build_targets")
+        tmp_config["target_asset"] = "Gold"
+        tmp_config = config["build_targets"].add_subconfig("preprocessing")
+        tmp_config["preprocessor"] = "tokenizer"
+        return config
+
+    def test_all_params(self):
+        config_1 = Test_get_config_dataframe.get_test_config_1()
+        config_2 = Test_get_config_dataframe.get_test_config_2()
+
+        expected_result = pd.DataFrame({'build_model.activation': ["sigmoid", "sigmoid"],
+                                        'build_targets.target_asset': ['Crude Oil', 'Gold'],
+                                        'build_targets.preprocessing.preprocessor': ['tokenizer', 'tokenizer']})
+        actual_result = ccfgbld.get_configs_dataframe([config_1, config_2])
+        self.assertTrue(expected_result.equals(actual_result))
+
+    def test_different_params_subset(self):
+        config_1 = Test_get_config_dataframe.get_test_config_1()
+        config_2 = Test_get_config_dataframe.get_test_config_2()
+
+        expected_result = pd.DataFrame({"build_targets.target_asset": ["Crude Oil", "Gold"]})
+        actual_result = ccfgbld.get_configs_dataframe([config_1, config_2], params_subset="difference")
+        self.assertTrue(expected_result.equals(actual_result))
+
+    def test_custom_params_subset(self):
+        config_1 = Test_get_config_dataframe.get_test_config_1()
+        config_2 = Test_get_config_dataframe.get_test_config_2()
+
+        expected_result = pd.DataFrame({"build_model.activation": ["sigmoid", "sigmoid"]})
+        actual_result = ccfgbld.get_configs_dataframe([config_1, config_2], params_subset=["build_model.activation"])
+        self.assertTrue(expected_result.equals(actual_result))
+
