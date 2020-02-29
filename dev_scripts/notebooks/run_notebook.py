@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""
+r"""
 > run_notebook.py --dst_dir nlp/test_results \
  --no_incremental \
  --notebook nlp/notebooks/PartTask1102_RP_Pipeline.ipynb \
@@ -171,7 +171,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     config_builder = f"{args.function}({args.function_args})"
     configs = eval(config_builder)
     dbg.dassert_isinstance(configs, list)
-    ccfgbld.check_same_configs(configs)
+    ccfgbld.assert_on_duplicated_configs(configs)
     configs = ccfgbld.add_result_dir(dst_dir, configs)
     configs = ccfgbld.add_config_idx(configs)
     _LOG.info("Created %s configs", len(configs))

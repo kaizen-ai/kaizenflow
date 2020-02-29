@@ -104,7 +104,7 @@ class TestCheckSameConfigs(hut.TestCase):
         ]
         # Make sure fnction raises an error.
         with self.assertRaises(AssertionError):
-            ccfgbld.check_same_configs(configs)
+            ccfgbld.assert_on_duplicated_configs(configs)
 
 
 class TestConfigIntersection(hut.TestCase):

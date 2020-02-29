@@ -10,37 +10,50 @@ import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.pickle_ as hpickle
 
-# This import is required to run NLP config builders passed through command line.
+# This import is required to run NLP config builders passed through command
+# line.
 import nlp.build_configs as ncfgbld  # noqa: F401 # pylint: disable=unused-import
 
 _LOG = logging.getLogger(__name__)
 
 
-def get_config_from_env() -> cfg.Config:
+def get_config_from_env() -> Optional[cfg.Config]:
     """
     Build a config passed through an environment variable, if possible,
     or return None.
     """
-    if all(
-        var in os.environ
-        for var in ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__DST_DIR__"]
-    ):
-        config_builder = os.environ["__CONFIG_BUILDER__"]
-        configs = eval(config_builder)
-        _LOG.info("__CONFIG_BUILDER__=%s", config_builder)
-        result_dir = os.environ["__DST_DIR__"]
-        configs = add_result_dir(result_dir, configs)
-        _LOG.info("__DST_DIR__=%s", config_builder)
-        config_index = int(os.environ["__CONFIG_IDX__"])
-        _LOG.info("__CONFIG_IDX__=%s", config_index)
-        config = configs[config_index]
-        config = set_absolute_result_file_path(result_dir, config)
+    config_vars = ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__CONFIG_DST_DIR__"]
+    # Check the existence of any config var in env.
+    if any(var in os.environ for var in config_vars):
+        _LOG.warning("Found some config vars in environment")
+        if all(var in os.environ for var in config_vars):
+            # Build configs.
+            config_builder = os.environ["__CONFIG_BUILDER__"]
+            _LOG.info("__CONFIG_BUILDER__=%s", config_builder)
+            configs = eval(config_builder)
+            # Add destination directory.
+            result_dir = os.environ["__CONFIG_DST_DIR__"]
+            _LOG.info("__DST_DIR__=%s", result_dir)
+            configs = add_result_dir(result_dir, configs)
+            # Pick config with relevant index.
+            config_idx = int(os.environ["__CONFIG_IDX__"])
+            _LOG.info("__CONFIG_IDX__=%s", config_idx)
+            dbg.dassert_lte(0, config_idx)
+            dbg.dassert_lt(config_idx, len(configs))
+            config = configs[config_idx]
+            # Set file path by index.
+            config = set_absolute_result_file_path(result_dir, config)
+        else:
+            msg = "Some config vars '%s' were defined, but not all" % (
+                ", ".join(config_vars)
+            )
+            raise RuntimeError(msg)
     else:
         config = None
     return config
 
 
-def check_same_configs(configs: List[cfg.Config]) -> None:
+def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     """
     Assert whether the list of configs contains no duplicates.
     :param configs: List of configs to run experiments on.
@@ -52,6 +65,20 @@ def check_same_configs(configs: List[cfg.Config]) -> None:
     )
 
 
+def _flatten_configs(configs: List[cfg.Config]) -> List[Dict[Any, Any]]:
+    """
+    Convert list of configs to a list of flattened dict items.
+    :param configs: A list of configs
+    :return: List of flattened config dicts.
+    """
+    flattened_configs = []
+    for config in configs:
+        flattened_config = config.to_dict()
+        flattened_config = dct.flatten_nested_dict(flattened_config)
+        flattened_configs.append(flattened_config)
+    return flattened_configs
+
+
 def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     """
     Compare configs from list to find the common part.
@@ -59,17 +86,18 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     :param configs: A list of configs
     :return: A config with common part of all input configs.
     """
-    flattened_configs = []
-    for config in configs:
-        flattened_config = config.to_dict()
-        flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_configs.append(flattened_config.items())
+    # Flatten configs into dict items for comparison.
+    flattened_configs = _flatten_configs(configs)
+    flattened_configs = [config.items() for config in flattened_configs]
+    # Get similar parameters from configs.
     config_intersection = [
         set(config_items) for config_items in flattened_configs
     ]
     config_intersection = set.intersection(*config_intersection)
+    # Select template config to build intersection config.
     template_config = flattened_configs[0]
     common_config = cfg.Config()
+    # Add intersecting configs to template config.
     for k, v in template_config:
         if tuple((k, v)) in config_intersection:
             common_config[tuple(k.split("."))] = v
@@ -83,20 +111,22 @@ def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     :param configs: A list of configs.
     :return: A dictionary of varying params and lists of their values.
     """
-    flattened_configs = []
-    redundant_params = ["meta.id", "meta.result_file_name"]
-    for config in configs:
-        flattened_config = config.to_dict()
-        flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_configs.append(set(flattened_config.items()))
-    config_varying_params = set.union(*flattened_configs) - set.intersection(
-        *flattened_configs
-    )
+    # Flatten configs into dicts.
+    flattened_configs = _flatten_configs(configs)
+    # Convert dicts into sets of items for comparison.
+    flattened_configs = [set(config.items()) for config in flattened_configs]
+    # Build a dictionary of common config values.
+    union = set.union(*flattened_configs)
+    intersection = set.intersection(*flattened_configs)
+    config_varying_params = union - intersection
+    # Compute params that vary among different configs.
     config_varying_params = dict(config_varying_params).keys()
     # Remove `meta` params that always vary.
+    redundant_params = ["meta.id", "meta.result_file_name"]
     config_varying_params = [
         param for param in config_varying_params if param not in redundant_params
     ]
+    # Build the difference of configs by considering the parts that vary.
     config_difference = dict()
     for param in config_varying_params:
         param_values = []
@@ -116,18 +146,16 @@ def get_configs_dataframe(
     """
     Convert the configs into a df with full nested names.
 
-    The column names should correspond to `subconfig.subconfig.parameter` format, e.g.:
+    The column names should correspond to `subconfig1.subconfig2.parameter` format, e.g.:
     `build_targets.target_asset`.
     :param configs: Configs used to run experiments.
     :param params_subset: Parameters to include as table columns.
     :return: Table of configs.
     """
-    config_df = []
-    for config in configs:
-        flattened_config = config.to_dict()
-        flattened_config = dct.flatten_nested_dict(flattened_config)
-        flattened_config = pd.Series(flattened_config)
-        config_df.append(flattened_config)
+    # Convert configs to flattened dicts.
+    flattened_configs = _flatten_configs(configs)
+    # Convert dicts to pd.Series and create a df.
+    config_df = map(pd.Series, flattened_configs)
     config_df = pd.concat(config_df, axis=1).T
     # Process the config_df by keeping only a subset of keys.
     if params_subset is not None:
@@ -147,6 +175,7 @@ def add_result_dir(dst_dir: str, configs: List[cfg.Config]) -> List[cfg.Config]:
     :param configs: List of configs for experiments
     :return: List of copied configs with result directories added
     """
+    # TODO(*): To be defensive maybe we should assert if the param already exists.
     configs_with_dir = []
     for config in configs:
         config_with_dir = config.copy()
@@ -157,7 +186,7 @@ def add_result_dir(dst_dir: str, configs: List[cfg.Config]) -> List[cfg.Config]:
 
 def set_absolute_result_file_path(sim_dir: str, config: cfg.Config) -> cfg.Config:
     """
-    Add absolute path to the simulation results file.
+    Set absolute path to the simulation results file.
     :param sim_dir: Subdirectory with simulation results
     :param config: Config used for simulation
     :return: Config with absolute file path to results
@@ -240,7 +269,7 @@ def load_results(results_dir: str) -> Tuple[List[cfg.Config], List[pd.DataFrame]
         configs.append(config)
     # Sort configs by order of simulations.
     configs = sorted(configs, key=lambda x: x[("meta", "id")])
-    # # Load dataframes with results.
+    # Load dataframes with results.
     for config in configs:
         config_result = hpickle.from_pickle(config[("meta", "result_file_name")])
         config_result = config_result["df"]
