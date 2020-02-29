@@ -32,7 +32,7 @@ def get_nested_dict_iterator(
             yield local_path, value
 
 
-def extract_leaf_values(nested, key):
+def extract_leaf_values(nested: Dict[Any, Any], key: Any) -> Dict[Any, Any]:
     """
     Extract leaf values with key matching `key`.
 
@@ -47,7 +47,7 @@ def extract_leaf_values(nested, key):
     return d
 
 
-def flatten_nested_dict(nested):
+def flatten_nested_dict(nested: Dict[Any, Any]) -> Dict[Any, Any]:
     d = {}
     for item in get_nested_dict_iterator(nested):
         d[".".join(item[0])] = item[1]

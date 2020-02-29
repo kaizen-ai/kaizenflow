@@ -10,16 +10,20 @@ import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.pickle_ as hpickle
 
+# This import is required to run NLP config builders passed through command
+# line.
+import nlp.build_configs as ncfgbld  # noqa: F401 # pylint: disable=unused-import
+
 _LOG = logging.getLogger(__name__)
 
 
-def get_config_from_env() -> Union[cfg.Config, None]:
+def get_config_from_env() -> Optional[cfg.Config]:
     """
     Build a config passed through an environment variable, if possible,
     or return None.
     """
     config_vars = ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__CONFIG_DST_DIR__"]
-    # Check existence of config vars in env.
+    # Check the existence of any config var in env.
     if any(var in os.environ for var in config_vars):
         _LOG.warning("Found some config vars in environment")
         if all(var in os.environ for var in config_vars):
@@ -40,10 +44,10 @@ def get_config_from_env() -> Union[cfg.Config, None]:
             # Set file path by index.
             config = set_absolute_result_file_path(result_dir, config)
         else:
-            raise RuntimeError(
-                "Some config vars '%s' were defined, but not all",
-                ", ".join(config_vars),
+            msg = "Some config vars '%s' were defined, but not all" % (
+                ", ".join(config_vars)
             )
+            raise RuntimeError(msg)
     else:
         config = None
     return config
@@ -112,9 +116,9 @@ def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     # Convert dicts into sets of items for comparison.
     flattened_configs = [set(config.items()) for config in flattened_configs]
     # Build a dictionary of common config values.
-    config_varying_params = set.union(*flattened_configs) - set.intersection(
-        *flattened_configs
-    )
+    union = set.union(*flattened_configs)
+    intersection = set.intersection(*flattened_configs)
+    config_varying_params = union - intersection
     # Compute params that vary among different configs.
     config_varying_params = dict(config_varying_params).keys()
     # Remove `meta` params that always vary.
