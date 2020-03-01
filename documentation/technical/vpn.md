@@ -13,105 +13,116 @@
    * [IP address](#ip-addresses)
 <!--te-->
 
-### Wireguard install
+# Install WireGuard
 
-##### macOS/Windows
+## macOS / Windows
 
-MacOS / Windows - [Download](https://www.wireguard.com/install/) app.
+- [Download](https://www.wireguard.com/install/) the application
 
-##### Linux/Ubuntu
-``` bash
-sudo add-apt-repository ppa:wireguard/wireguard && \
-sudo apt update && \
-sudo apt install wireguard -y && \
-sudo apt install resolvconf -y && \
-sudo modprobe wireguard 
-```
+## Ubuntu Linux
 
-##### Linux/Debian
-``` bash
-sudo echo "deb http://deb.debian.org/debian/ unstable main" > /etc/apt/sources.list.d/unstable.list && \
-sudo printf 'Package: *\nPin: release a=unstable\nPin-Priority: 90\n' > /etc/apt/preferences.d/limit-unstable && \
-sudo apt update && \
-sudo apt install wireguard -y && \
-sudo apt install resolvconf -y && \
-sudo modprobe wireguard 
-```
+- Run
+  ``` bash
+  > sudo add-apt-repository ppa:wireguard/wireguard && \
+    sudo apt update && \
+    sudo apt install wireguard -y && \
+    sudo apt install resolvconf -y && \
+    sudo modprobe wireguard 
+  ```
 
-### Wireguard configure
+## Debian Linux
 
-1) Download config (Repo: Commodyti_research, path - infra2/vpn_configs/{username}.conf)
+- Run:
+  ``` bash
+  > sudo echo "deb http://deb.debian.org/debian/ unstable main" > /etc/apt/sources.list.d/unstable.list && \
+    sudo printf 'Package: *\nPin: release a=unstable\nPin-Priority: 90\n' > /etc/apt/preferences.d/limit-unstable && \
+    sudo apt update && \
+    sudo apt install wireguard -y && \
+    sudo apt install resolvconf -y && \
+    sudo modprobe wireguard 
+  ```
 
-2) macOS/Windows - Set your config, and this is the end.
+# Configure WireGuard
 
-### Up / Down VPN:
+- macOS / Windows import the "tunnel" config in WireGuard from the file
+   `//p1/infra2/vpn_configs/{username}.conf` in our `commodity_research repo`
+   repo
 
-##### Run VPN Wireguard
+# Start / stop VPN
 
-MacOS / Windows - Click to icon end set "Connect".
+## Start VPN
 
-Linux - `wg-quick up {path_to_config file}`
+- macOS / Windows
+  - Click to icon and set "Connect" or "Activate" on the GUI
 
-Example(Current root - commodity_research): 
-`sudo wg-quick up infra2/vpn_configs/gad26032.conf`
+- Linux
+  ```bash
+  > sudo wg-quick up {path_to_config file}
 
-##### Down VPN
+  # E.g., from the root of the p1 repo:
+  > sudo wg-quick up infra2/vpn_configs/gad26032.conf
+  ```
 
-macOS / Windows - Click to icon end set "Disconnect".
+## Stop VPN
 
-Linux - `wg-quick down {path_to_config file}`
+- macOS / Windows
+  - Click to icon end set "Disconnect"
 
-Example: `sudo wg-quick down infra2/vpn_configs/gad26032.conf`
+- Linux 
+  ```bash
+  > `wg-quick down {path_to_config file}
+  > sudo wg-quick down infra2/vpn_configs/gad26032.conf
+  ```
 
-##### Check VPN 
+## Check VPN 
 
-For test vpn connection try to ping any of local ip [ip addresses](#ip-addresses)
+- For testing VPN connection try to ping any of local ip [ip addresses](#ip-addresses)
+  - E.g.,
+  ```bash
+  > ping 172.31.16.23
+  ```
 
-Example ping research-server: 
+# WireGuard administration
 
-```bash
-ping 172.31.16.23
-```
+## Admin panel
 
-### Wireguard Administration
-
-##### Admin panel
-
-To start working with the admin panel:
+- To start working with the admin panel:
  
 1) Execute port forwarding:
 
-`ssh -f -nNT -L 3000:localhost:3000 ubuntu@3.12.194.203`
+  `bash
+  > ssh -f -nNT -L 3000:localhost:3000 ubuntu@3.12.194.203
+  ```
 
 2) Open [localhost:3000](http://localhost:3000/) and enter login/password:
-```
-Login - particle
-Password - 13211321
-```
+  ```bash
+  Login - particle
+  Password - 13211321
+  ```
 
-##### CLI interface
+## CLI interface
 
-Create user: 
-```bash
-/home/ubuntu/wireguard_aws/add-client.sh
-```
+- Create user: 
+  ```bash
+  > /home/ubuntu/wireguard_aws/add-client.sh
+  ```
 
-Remove user:
-```bash
-sudo wg set wg0 peer {peer_ID} remove
-```
+- Remove user:
+  ```bash
+  > sudo wg set wg0 peer {peer_ID} remove
+  ```
 
-Shows the current configuration and device information:
-```bash
-sudo wg show
-```
+- Shows the current configuration and device information:
+  ```bash
+  > sudo wg show
+  ```
 
-Shows the current configuration of a given WireGuard interface:
-```bash
-sudo wg showconf wg0
-```
+- Shows the current configuration of a given WireGuard interface:
+  ```bash
+  > sudo wg showconf wg0
+  ```
 
-### IP addresses 
+# IP addresses 
 
 | Server name             |    Local IP   |    Public IP      |
 | ----------------------- | ------------- | ----------------  |
