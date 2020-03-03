@@ -21,7 +21,6 @@ import tqdm
 
 import core.config as cfg
 import core.config_builders as ccfgbld
-import helpers.datetime_ as hdt
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
@@ -98,42 +97,45 @@ def _run_notebook(
     dbg.dassert_exists(notebook_file)
     dbg.dassert_isinstance(config, cfg.Config)
     dbg.dassert_exists(dst_dir)
-    # Create subdirectorial structure for simulation results.
-    experiment_date = hdt.get_timestamp()
-    result_subdir = "result_%s_%s" % (experiment_date, str(i))
+    # Create subdirectory structure for simulation results.
+    result_subdir = "result_%s" % i
     html_subdir_name = os.path.join(os.path.basename(dst_dir), result_subdir)
-    config_dir = os.path.join(dst_dir, result_subdir)
-    config = ccfgbld.set_absolute_result_file_path(config_dir, config)
-    _LOG.info(config_dir)
-    io_.create_dir(config_dir, incremental=True)
-    # Generate bookeeping files.
-    config_pkl_path = os.path.join(config_dir, "config.pkl")
-    _LOG.info("config_pkl_path=%s", config_pkl_path)
-    hpickle.to_pickle(config, config_pkl_path)
-    config_txt_path = os.path.join(config_dir, "config.txt")
-    _LOG.info("config_txt_path=%s", config_txt_path)
-    io_.to_file(config_txt_path, str(config))
-    builder_txt_path = os.path.join(config_dir, "config_builder.txt")
-    _LOG.info("builder_txt_path=%s", builder_txt_path)
+    # TODO(gp): experiment_result_dir -> experiment_result_dir.
+    experiment_result_dir = os.path.join(dst_dir, result_subdir)
+    config = ccfgbld.set_experiment_result_dir(experiment_result_dir, config)
+    _LOG.info("experiment_result_dir=%s", experiment_result_dir)
+    io_.create_dir(experiment_result_dir, incremental=True)
+    # Generate book-keeping files.
+    file_name = os.path.join(experiment_result_dir, "config.pkl")
+    _LOG.info("file_name=%s", file_name)
+    hpickle.to_pickle(config, file_name)
+    #
+    file_name = os.path.join(experiment_result_dir, "config.txt")
+    _LOG.info("file_name=%s", file_name)
+    io_.to_file(file_name, str(config))
+    #
+    file_name = os.path.join(experiment_result_dir, "config_builder.txt")
+    _LOG.info("file_name=%s", file_name)
     io_.to_file(
-        builder_txt_path,
+        file_name,
         "Config builder: %s\nConfig index: %s" % (config_builder, str(i)),
     )
     #
     dst_file = os.path.join(
-        config_dir,
+        experiment_result_dir,
         os.path.basename(notebook_file).replace(".ipynb", ".%s.ipynb" % i),
     )
     _LOG.info(dst_file)
     dst_file = os.path.abspath(dst_file)
-    log_file = os.path.join(config_dir, "run_notebook.%s.log" % i)
+    log_file = os.path.join(experiment_result_dir, "run_notebook.%s.log" % i)
     log_file = os.path.abspath(os.path.abspath(log_file))
     # Execute notebook.
     _LOG.info("Executing notebook %s", i)
     # Export config function and its id to the notebook.
     cmd = (
-        'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__="%s"; export __CONFIG_DST_DIR__="%s"'
-        % (config_builder, i, config_dir)
+        f'export __CONFIG_BUILDER__="${config_builder}"; '
+        + f'export __CONFIG_IDX__="{i}"; '
+        + f'export __CONFIG_DST_DIR__="{experiment_result_dir}"'
     )
     cmd += (
         f"; jupyter nbconvert {notebook_file} "

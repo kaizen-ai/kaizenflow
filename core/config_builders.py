@@ -32,9 +32,9 @@ def get_config_from_env() -> Optional[cfg.Config]:
             _LOG.info("__CONFIG_BUILDER__=%s", config_builder)
             configs = eval(config_builder)
             # Add destination directory.
-            result_dir = os.environ["__CONFIG_DST_DIR__"]
-            _LOG.info("__DST_DIR__=%s", result_dir)
-            configs = add_result_dir(result_dir, configs)
+            dst_dir = os.environ["__CONFIG_DST_DIR__"]
+            _LOG.info("__DST_DIR__=%s", dst_dir)
+            configs = add_result_dir(dst_dir, configs)
             # Pick config with relevant index.
             config_idx = int(os.environ["__CONFIG_IDX__"])
             _LOG.info("__CONFIG_IDX__=%s", config_idx)
@@ -42,7 +42,7 @@ def get_config_from_env() -> Optional[cfg.Config]:
             dbg.dassert_lt(config_idx, len(configs))
             config = configs[config_idx]
             # Set file path by index.
-            config = set_absolute_result_file_path(result_dir, config)
+            config = set_experiment_result_dir(dst_dir, config)
         else:
             msg = "Some config vars '%s' were defined, but not all" % (
                 ", ".join(config_vars)
@@ -122,7 +122,7 @@ def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     # Compute params that vary among different configs.
     config_varying_params = dict(config_varying_params).keys()
     # Remove `meta` params that always vary.
-    redundant_params = ["meta.id", "meta.result_file_name"]
+    redundant_params = ["meta.id", "meta.experiment_result_dir"]
     config_varying_params = [
         param for param in config_varying_params if param not in redundant_params
     ]
@@ -171,6 +171,7 @@ def get_configs_dataframe(
 def add_result_dir(dst_dir: str, configs: List[cfg.Config]) -> List[cfg.Config]:
     """
     Add a result directory field to all configs in list.
+
     :param dst_dir: Location of output directory
     :param configs: List of configs for experiments
     :return: List of copied configs with result directories added
@@ -184,17 +185,16 @@ def add_result_dir(dst_dir: str, configs: List[cfg.Config]) -> List[cfg.Config]:
     return configs_with_dir
 
 
-def set_absolute_result_file_path(sim_dir: str, config: cfg.Config) -> cfg.Config:
+def set_experiment_result_dir(dst_dir: str, config: cfg.Config) -> cfg.Config:
     """
-    Set absolute path to the simulation results file.
-    :param sim_dir: Subdirectory with simulation results
+    Set path to the experiment results file.
+
+    :param dst_dir: Subdirectory with simulation results
     :param config: Config used for simulation
     :return: Config with absolute file path to results
     """
     config_with_filepath = config.copy()
-    config_with_filepath[("meta", "result_file_name")] = os.path.join(
-        sim_dir, config_with_filepath[("meta", "result_file_name")]
-    )
+    config_with_filepath[("meta", "experiment_result_dir")] = dst_dir
     return config_with_filepath
 
 
@@ -253,14 +253,14 @@ def generate_default_config_variants(
     return configs
 
 
-def load_results(results_dir: str) -> Tuple[List[cfg.Config], List[pd.DataFrame]]:
+def load_configs(results_dir: str) -> List[cfg.Config]:
     """
     Load all result pickles and save in order of corresponding configs.
+
     :param results_dir: Directory with results of experiments.
     :return: All result configs and result dataframes.
     """
     # TODO (*) Move function to a different lib.
-    result_dfs = []
     configs = []
     result_subfolders = os.listdir(results_dir)
     for subfolder in result_subfolders:
@@ -269,12 +269,7 @@ def load_results(results_dir: str) -> Tuple[List[cfg.Config], List[pd.DataFrame]
         configs.append(config)
     # Sort configs by order of simulations.
     configs = sorted(configs, key=lambda x: x[("meta", "id")])
-    # Load dataframes with results.
-    for config in configs:
-        config_result = hpickle.from_pickle(config[("meta", "result_file_name")])
-        config_result = config_result["df"]
-        result_dfs.append(config_result)
-    return configs, result_dfs
+    return configs
 
 
 def build_multiple_configs(

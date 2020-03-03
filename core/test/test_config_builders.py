@@ -70,7 +70,7 @@ def _get_test_config_1() -> cfg.Config:
     tmp_config = config["build_targets"].add_subconfig("preprocessing")
     tmp_config["preprocessor"] = "tokenizer"
     tmp_config = config.add_subconfig("meta")
-    tmp_config["result_file_name"] = "results.pkl"
+    tmp_config["experiment_result_dir"] = "results.pkl"
     return config
 
 
@@ -87,7 +87,7 @@ def _get_test_config_2() -> cfg.Config:
     tmp_config = config["build_targets"].add_subconfig("preprocessing")
     tmp_config["preprocessor"] = "tokenizer"
     tmp_config = config.add_subconfig("meta")
-    tmp_config["result_file_name"] = "results.pkl"
+    tmp_config["experiment_result_dir"] = "results.pkl"
     return config
 
 
@@ -128,7 +128,7 @@ class TestConfigIntersection(hut.TestCase):
         )
         tmp_config["preprocessor"] = "tokenizer"
         tmp_config = intersection_config.add_subconfig("meta")
-        tmp_config["result_file_name"] = "results.pkl"
+        tmp_config["experiment_result_dir"] = "results.pkl"
 
         self.assertEqual(str(intersection_config), str(actual_intersection))
 
@@ -198,7 +198,7 @@ class TestGetConfigDataframe(hut.TestCase):
                     "tokenizer",
                     "tokenizer",
                 ],
-                "meta.result_file_name": ["results.pkl", "results.pkl"],
+                "meta.experiment_result_dir": ["results.pkl", "results.pkl"],
             }
         )
         self.assertTrue(expected_result.equals(actual_result))
@@ -241,7 +241,7 @@ class TestGetConfigDataframe(hut.TestCase):
 class TestAddResultDir(hut.TestCase):
     def test_result_dir(self) -> None:
         """
-        Verify that `ccfgbld.add_result_dir` adds correct value to correct param path.
+        `Verify that `ccfgbld.add_result_dir` adds correct value to correct param path.
         """
         result_dir = "test/results"
         # Modify test config manually.
@@ -255,26 +255,22 @@ class TestAddResultDir(hut.TestCase):
         self.assertEqual(str(expected_config), str(actual_config))
 
 
-class TestSetAbsoluteResultFilePath(hut.TestCase):
-    def test_set_absolute_result_file_path(self) -> None:
+class TestSetExperimentResultDir(hut.TestCase):
+    def test_set_experiment_result_dir(self) -> None:
         """
-        Verify that `ccfgbld.set_absolute_result_file_path` adds correct value
-        to correct param path.
+        Verify that we add correct value with `set_experiment_result_dir`.
         """
         # Prepare result dir name.
-        sim_dir = "/data/tests/test_results/"
-        # Set result file name manually.
+        sim_dir = "/data/tests/test_results"
         actual_config = _get_test_config_1()
-        actual_config = ccfgbld.set_absolute_result_file_path(
-            sim_dir, actual_config
-        )
         # Set using function.
+        actual_config = ccfgbld.set_experiment_result_dir(sim_dir, actual_config)
+        # Set result file name manually.
         expected_config = _get_test_config_1()
         expected_config[
-            ("meta", "result_file_name")
-        ] = "/data/tests/test_results/results.pkl"
-
-        self.assertEqual(str(expected_config), str(actual_config))
+            ("meta", "experiment_result_dir")
+        ] = "/data/tests/test_results"
+        self.assert_equal(str(expected_config), str(actual_config))
 
 
 class TestAddConfigIdx(hut.TestCase):

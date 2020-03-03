@@ -724,9 +724,9 @@ class Test_process_jupytext(ut.TestCase):
         _, txt = si.system_to_string(cmd, abort_on_error=False)
         # There is a date in output, so we remove date using split.
         # Output example:
-        # pylint: disable=line-too-long
-        # [0m02-19_20:56 [33mWARNING[0m: _is_jupytext_version_different:108 : There is a mismatch of jupytext version: 'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
-        # pylint: enable=line-too-long
+        # [0m02-19_20:56 [33mWARNING[0m: _is_jupytext_version_different:108 :
+        #    There is a mismatch of jupytext version:
+        #    'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
         txt_no_date = txt.split("WARNING")[1].split("[")[1]
         self.check_string(txt_no_date)
 
