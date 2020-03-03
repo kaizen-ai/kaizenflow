@@ -1,3 +1,21 @@
+<!--ts-->
+   * [Agile concepts {#agile-concepts}](#agile-concepts-agile-concepts)
+      * [Mapping Agile concept onto GH {#mapping-agile-concept-onto-gh}](#mapping-agile-concept-onto-gh-mapping-agile-concept-onto-gh)
+   * [Our conventions {#our-conventions}](#our-conventions-our-conventions)
+      * [Sprint {#sprint}](#sprint-sprint)
+      * [Sprint Backlog](#sprint-backlog)
+      * [Workflow {#workflow}](#workflow-workflow)
+         * [Sprint Planning workflow {#sprint-planning-workflow}](#sprint-planning-workflow-sprint-planning-workflow)
+         * [Moving Tasks Between Pipelines Workflow {#moving-tasks-between-pipelines-workflow}](#moving-tasks-between-pipelines-workflow-moving-tasks-between-pipelines-workflow)
+      * [Epics {#epics}](#epics-epics)
+      * [Story Points aka Task Estimation {#story-points-aka-task-estimation}](#story-points-aka-task-estimation-story-points-aka-task-estimation)
+      * [Labels {#labels}](#labels-labels)
+      * [Sprint Meetings {#sprint-meetings}](#sprint-meetings-sprint-meetings)
+
+
+
+<!--te-->
+
 # ZenHub
 
 * Refs
@@ -171,29 +189,132 @@
 
 # Our conventions
 
-## Sprint
-- Sprints are numbered and have a commodity name
-  - E.g., "Sprint1 - Gold", "Sprint2 - Natural gas"
 
-- We create a Sprint for each "Team" (Dev, Tools, NLP, AutoML) with the standard
-  process (prioritization, estimate, ...)
-  - We merge the Sprint for each Team into a single Sprint for the entire DevTeam
-  - We don't want to say "one Team is ahead or behind": we win or lose together
+## Sprint
+
+
+
+-   Sprints are numbered and have a commodity name
+    -   E.g., "Sprint1 - Gold", "Sprint2 - Natural gas"
+-   We have a single Sprint for the entire company, since the teams (Dev, Tools, NLP, AutoML) are only a convenience to split the work (but we win or lose together)
+    -   The Sprint is planned for each team (Dev, Tools, NLP, AutoML)
+    -   Then we merge the Issues selected for the Sprint in a single Milestone / Sprint for the entire company
+
+
+## Sprint Backlog
+
+
+
+-   Sprint backlog remains fixed during the sprint
+    -   Since we just started to use the system, we may overplan sprints (add more issues than we can complete)
+        -   It’s better to overplan than underplan
+    -   All tasks that we didn’t compete during the current sprint (e.g., there was some work done on the task, but it wasn’t completed) are automatically transferred to the next sprint, unless they need to be de-prioritize for some reason
+    -   We will improve in sprint planning over time
+-   Sometimes it’s ok to create followup Issues and add them to the current Sprint Backlog
+    -   This can happen for research when one Issue organically leads to a follow up bug
+    -   For development we want to be a little more strict to avoid to go for a tangent, as long as we agree that’s the right approach in the specific case
+
 
 ## Workflow
-- Decide a reference Issue to which we assign 2 story points
-  - It should be small, something that can be done in around a single day
 
-- The bugs that are candidates for the next Sprint go in `SprintCandidate`
-  pipeline
-  - TODO(GP, Paul): Is `SprintCandidate` a Pipeline or a Milestone?
-  - Each Issue needs to have a clear goal, a definition of "done", and "small"
-  - Issues are ranked in terms of business value
 
-- Each Team estimates each of their Issues in `SprintCandidate` in terms of story
-  points
-- Then we select for each Team the Sprint in terms of a number of story points
-  that is doable in 2 weeks
-  - Initially we assume 2 story points = 1 day, so for the sprint is 20 points
-    per Team member
-  - We will then refine the estimates using Velocity charts
+### Sprint Planning workflow
+
+
+
+-   The bugs that are candidates for the next Sprint go in SprintCandidate pipeline
+    -   Each Issue needs to have a clear goal, a definition of "done", and "small", enough details to be clear to everybody
+        -   If we are not sure about this, we need to iterate on the Issue until it passes our threshold for being actionable and clear
+    -   Issues are ranked in terms of business value
+        -   in our case it corresponds to next product milestones, servicing customers, and so on
+-   Each Team estimates each of their Issues in SprintCandidate in terms of story points
+    -   If an issue you want to put in SprintCandidates is a potential Epic:
+        -   Convert the issue into an Epic
+        -   Create a single task inside an Epic for breaking down the Epic into smaller tasks -- the planning task
+        -   Put the planning task into SprintBacklog
+            -   Max 2 points for planning how to break down an Epic
+-   Then we select for each Team the Sprint in terms of a number of story points that is doable in 2 weeks
+    -   Initially we assume 2 story points = 1 day, so for the sprint is 20 points per Team member
+    -   We will then refine the estimates using Velocity charts
+
+
+### Moving Tasks Between Pipelines Workflow
+
+
+
+-   When an assignee  starts to work on a Issue, he/she moves it to “In progress” pipeline
+-   Once the PR process, the assignee moves the Issue to “Review / QA” for the duration of the entire review process
+    -   The Issue doesn’t go back to “In progress”
+    -   We rely on GH emails / PR interface to know what needs to be reviewed
+-   When the PR is merged, the assignee moves the Issue to “Done”
+    -   The assignee doesn’t close the GH issue, but only moves it to the “Done” pipeline in ZH
+-   GP & P see if new Issues need to be filed as follow up (or maybe a touch up)
+    -   Once there is nothing else to do, GP & P move the Issue to “Close”
+
+
+## Epics
+
+
+
+-   We keep epics on the board
+    -   It is easy to filter them
+-   Epic can be moved to “Done” only if all issues nested in it are moved to “Done”
+-   Organically it’s ok to have as many levels of the Epic as needed
+    -   No need to keep the Epics super well organized in a hierarchy (no Epic hypergraph!)
+
+
+## Story Points aka Task Estimation
+
+
+
+-   Each Atomic Issue &lt;= 5
+    -   If some is more complex, needs to turned into an Epic and be broken down into atomic issues
+-   An Epic of course can have any complexity given by its components
+-   How to calibrate story points across the team members?
+    -   With each team we pick an “medium” difficult Issue and assign value 3
+    -   Then we score each Issue with respect to the reference Issue
+-   For tricky bugs to estimate we assign:
+    -   1-5 for coding complexity
+    -   1-5 for conceptual complexity
+    -   Then we sum the scores and potentially break the Issue in sub-Issues
+
+
+## Labels
+
+
+
+-   We want to remove "in progress", "to close", "to review" since we want to use the ZH Board instead
+-   We want to keep using P0, P1, and P2 labels even in ZH
+    -   The reason is that we have lots of Issues and it's going to difficult to keep the pipeline ordered in ZH
+    -   It’s probably a good idea to have priorities set in the sprint backlog, at least to mark P0 issues
+    -   Of course, priorities may change as we go, even inside a Sprint
+-   TODO(*): What do we do with the “Paused” label?
+    -   Maybe change it into a pipeline? Or leave it as Label?
+
+
+## Sprint Meetings
+
+
+
+-   Monday group sync-up
+    -   Every week at 9 am ET, independently of Day Light Savings (although we can try to adjust things to help the Russia team)
+    -   Usual meeting agenda
+-   Monday Sprint retrospective
+    -   Probably 10-15 mins
+    -   Once every 2 weeks at the end of the Sprint, we do a Sprint retrospective with the following agenda:
+        -   we review the work done in the Sprint
+        -   the points we got vs what we estimated
+        -   check if there is anything we need to learn / improve from the last Sprint
+-   Monday Sprint planning
+    -   Once every 2 weeks
+    -   Start on 10 am EST
+        -   ~30 mins each per team
+        -   Need to schedule for the team based on their personal preferences
+    -   Sprint planning in groups: Dev, Tools, AutoML, Max, NLP
+-   Wed group meetings
+    -   Usual group sync-ups
+-   Friday meeting with Olga
+    -   30 mins max
+    -   Review intermediate results of the sprint
+    -   Q&A from the team
+    -   We can delete, if not needed
