@@ -4,8 +4,8 @@ from typing import List, Tuple
 
 import pytest
 
-import amp.dev_scripts.notebooks.process_jupytext as proc_jup  # type: ignore
 import dev_scripts.linter as lntr
+import dev_scripts.notebooks.process_jupytext as proc_jup
 import dev_scripts.url as url
 import helpers.conda as hco
 import helpers.dbg as dbg
