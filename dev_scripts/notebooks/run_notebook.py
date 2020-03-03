@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 r"""
+Run a notebook given a config or a list of configs.
+
+Use example:
 > run_notebook.py --dst_dir nlp/test_results \
  --no_incremental \
  --notebook nlp/notebooks/PartTask1102_RP_Pipeline.ipynb \
@@ -129,17 +132,14 @@ def _run_notebook(
     _LOG.info("Executing notebook %s", i)
     # Export config function and its id to the notebook.
     cmd = (
-        'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__=%s; export __DST_DIR__=%s'
+        'export __CONFIG_BUILDER__="%s"; export __CONFIG_IDX__="%s"; export __CONFIG_DST_DIR__="%s"'
         % (config_builder, i, config_dir)
     )
     cmd += (
-        "; jupyter nbconvert"
-        + " "
-        + notebook_file
+        f"; jupyter nbconvert {notebook_file} "
         + " --execute"
         + " --to notebook"
-        + " --output "
-        + dst_file
+        + f" --output {dst_file}"
         + " --ExecutePreprocessor.kernel_name=python"
         +
         # https://github.com/ContinuumIO/anaconda-issues/issues/877
@@ -151,10 +151,8 @@ def _run_notebook(
     log_file = log_file.replace(".log", ".html.log")
     cmd = (
         "python amp/dev_scripts/notebooks/publish_notebook.py"
-        + " --file "
-        + dst_file
-        + " --subdir "
-        + html_subdir_name
+        + f" --file {dst_file}"
+        + f" --subdir {html_subdir_name}"
         + " --action publish"
     )
     si.system(cmd, output_file=log_file)
