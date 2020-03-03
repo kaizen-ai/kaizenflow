@@ -717,17 +717,27 @@ from typing import List
 
 @pytest.mark.amp
 class Test_process_jupytext(ut.TestCase):
+    @pytest.mark.skip(
+        "Latest version of jupytext fixed this problem (PartTask1240)"
+    )
     def test1_end_to_end(self) -> None:
         file_name = "test_notebook.py"
         file_path = os.path.join(self.get_input_dir(), file_name)
         cmd = f"process_jupytext.py -f {file_path} --action test 2>&1"
         _, txt = si.system_to_string(cmd, abort_on_error=False)
+        _LOG.debug("txt=\n%s", txt)
         # There is a date in output, so we remove date using split.
         # Output example:
         # [0m02-19_20:56 [33mWARNING[0m: _is_jupytext_version_different:108 :
         #    There is a mismatch of jupytext version:
         #    'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
-        txt_no_date = txt.split("WARNING")[1].split("[")[1]
+        txts = txt.split("WARNING")
+        dbg.dassert_eq(2, len(txts), "txt='%s'", txt)
+        txts = txts[1]
+        #
+        txts = txts.split("[")
+        dbg.dassert_eq(2, len(txts), "txt='%s'", txt)
+        txt_no_date = txts[1]
         self.check_string(txt_no_date)
 
     def test2_is_jupytext_version_different_true(self) -> None:
