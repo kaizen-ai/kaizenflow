@@ -34,6 +34,7 @@
       * [File a bug when you have a problem](#file-a-bug-when-you-have-a-problem)
       * [Review](#review)
       * [PR](#pr)
+      * [Launching services](#launching-services)
 
 
 
@@ -409,18 +410,18 @@
 - Better commit message using convention from GH
 
 
-## Launching services on research server
+## Launching services
 
 There cold be situations when you need to run some services on a server.
 You have to take into account next things:
 
 - Inside local network (VPN) all ports are open.
-- You should use local IP address of the server which can be found here 
-  `documentation/technical/vpn.md`. If you have doubts use `0.0.0.0`, in this 
-  case service will run on all available addresses. This is not the best 
-  approach because of security (almost the same as evil import but for ip 
-  addresses), if the ports opened on the external interface everybody from 
-  the internet can get access to your service.  
+- You should use local IP address of the server which can be found here
+  `documentation/technical/vpn.md`. If you have doubts use `0.0.0.0`, in this
+  case service will run on all available addresses. This is not the best
+  approach because of security (almost the same as evil import but for ip
+  addresses), if the ports opened on the external interface everybody from
+  the internet can get access to your service.
 - You have to use VPN (`documentation/technical/vpn.md`) to reach the server.
 - Everybody can use your service.
 - If it should become permanent, file an issue and INFRA team take care of it.
