@@ -12,6 +12,36 @@ import helpers.pickle_ as hpickle
 
 _LOG = logging.getLogger(__name__)
 
+import re
+
+def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
+    """
+    Execute python code to 
+
+    :param config_builder: full Python command to create the configs.
+        E.g., 
+        `ncfgbld.build_PartTask1297_configs(random_seed_variants='[911,2,42,0]')`
+    """
+    # ncfgbld.build_PartTask1297_configs(random_seed_variants='[911,2,42,0]').
+    m = re.match("^(\S+)\.(\S+)\((.*)\)$", config_builder)
+    dbg.dassert(m, "config_builder='%s'", config_builder)
+    import_, function, args = m.groups()
+    _LOG.debug("import=%s", import_)
+    _LOG.debug("function=%s", function)
+    _LOG.debug("args=%s", args)
+    #
+    python_code = "import %s" % import_
+    #_LOG.debug("executing '%s'", python_code)
+    #eval(python_code)
+    #
+    python_code += "; configs = %s.%s(%s)" % (import_, function, args)
+    _LOG.debug("executing '%s'", python_code)
+    configs = exec(python_code)
+    dbg.dassert_isinstance(configs, list)
+    for c in configs:
+        dbg.dassert_isinstance(c, cfg.Config)
+    return configs
+
 
 def get_config_from_env() -> Optional[cfg.Config]:
     """
@@ -26,7 +56,8 @@ def get_config_from_env() -> Optional[cfg.Config]:
             # Build configs.
             config_builder = os.environ["__CONFIG_BUILDER__"]
             _LOG.info("__CONFIG_BUILDER__=%s", config_builder)
-            configs = eval(config_builder)
+            #configs = eval(config_builder)
+            configs = get_configs_from_builder()
             # Add destination directory.
             dst_dir = os.environ["__CONFIG_DST_DIR__"]
             _LOG.info("__DST_DIR__=%s", dst_dir)
@@ -47,6 +78,9 @@ def get_config_from_env() -> Optional[cfg.Config]:
     else:
         config = None
     return config
+
+
+# #############################################################################
 
 
 def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
@@ -164,6 +198,9 @@ def get_configs_dataframe(
     return config_df
 
 
+# #############################################################################
+
+
 def add_result_dir(dst_dir: str, configs: List[cfg.Config]) -> List[cfg.Config]:
     """
     Add a result directory field to all configs in list.
@@ -206,6 +243,9 @@ def add_config_idx(configs: List[cfg.Config]) -> List[cfg.Config]:
         config_with_id[("meta", "id")] = i
         configs_idx.append(config_with_id)
     return configs_idx
+
+
+# #############################################################################
 
 
 def _generate_template_config(

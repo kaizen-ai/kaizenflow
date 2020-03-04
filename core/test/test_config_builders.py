@@ -321,6 +321,23 @@ class TestGenerateDefaultConfigVariants(hut.TestCase):
         # Compare config lists element-wise.
         self.assertEqual(expected_configs, actual_configs)
 
+import nlp.build_configs as ncfgbld
+
+class TestGetConfigsFromBuilder1(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Build a config from 
+        """
+        python_code = ncfgbld.get_KOTH_config()
+        self.get
+
+    def test2(self) -> None:
+        """
+        Build a config from 
+        """
+        python_code = ("core.config_builders.build_PartTask1088_configs()")
+        actual_config = ccfgbld.get_configs_from_builder(python_code)
+
 
 class TestGetConfigFromEnv(hut.TestCase):
     def test_no_env_variables(self) -> None:
