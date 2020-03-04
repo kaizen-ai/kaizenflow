@@ -1,8 +1,57 @@
+import pprint
+from typing import List, Optional, cast
+
 import pandas as pd
 
 import core.config as cfg
 import core.config_builders as ccfgbld
 import helpers.unit_test as hut
+
+# #############################################################################
+# core/config_builders.py
+# #############################################################################
+
+
+def _build_test_configs(symbols: Optional[List[str]] = None,) -> List[cfg.Config]:
+    config_template = cfg.Config()
+    config_tmp = config_template.add_subconfig("read_data")
+    config_tmp["symbol"] = None
+    config_tmp = config_template.add_subconfig("resample")
+    config_tmp["rule"] = None
+    #
+    configs = []
+    if not symbols:
+        symbols = ["H He O C Bk"]
+    symbols = cast(List[str], symbols)
+    for symbol in symbols:
+        config = config_template.copy()
+        config[("read_data", "symbol")] = symbol
+        configs.append(config)
+    return configs
+
+
+class TestGetConfigsFromBuilder1(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Build a config from
+        """
+        config_builder = "core.test.test_config_builders._build_test_configs()"
+        configs = ccfgbld.get_configs_from_builder(config_builder)
+        txt = pprint.pformat(configs)
+        self.check_string(txt)
+
+
+class TestGetConfigFromEnv(hut.TestCase):
+    def test_no_env_variables(self) -> None:
+        """
+        Verify that if there are no config env variables, no config is created.
+        """
+        # Test that no config is created.
+        actual_config = ccfgbld.get_config_from_env()
+        self.assertTrue(actual_config is None)
+
+
+# #############################################################################
 
 
 class TestBuildMultipleConfigs(hut.TestCase):
@@ -320,30 +369,3 @@ class TestGenerateDefaultConfigVariants(hut.TestCase):
         expected_configs = [str(expected_config_1), str(expected_config_2)]
         # Compare config lists element-wise.
         self.assertEqual(expected_configs, actual_configs)
-
-import nlp.build_configs as ncfgbld
-
-class TestGetConfigsFromBuilder1(hut.TestCase):
-    def test1(self) -> None:
-        """
-        Build a config from 
-        """
-        python_code = ncfgbld.get_KOTH_config()
-        self.get
-
-    def test2(self) -> None:
-        """
-        Build a config from 
-        """
-        python_code = ("core.config_builders.build_PartTask1088_configs()")
-        actual_config = ccfgbld.get_configs_from_builder(python_code)
-
-
-class TestGetConfigFromEnv(hut.TestCase):
-    def test_no_env_variables(self) -> None:
-        """
-        Verify that if there are no config env variables, no config is created.
-        """
-        # Test that no config is created.
-        actual_config = ccfgbld.get_config_from_env()
-        self.assertTrue(actual_config is None)
