@@ -254,6 +254,11 @@
   - For development we want to be a little more strict to avoid to go for a
     tangent, as long as we agree that's the right approach in the specific case
 
+**UPD**
+ - All issues in Sprint Backlog and forward (all Pipelins to the right) should be assigned
+   - If you don’t know whom to assign the issue to, assign it to yourself 
+   - If you don’t know what to do, you assign it to GP / Paul for re-route
+
 ## Workflow
 
 ### Sprint Planning workflow
@@ -280,6 +285,11 @@
   - Initially we assume 2 story points = 1 day, so for the sprint is 20 points
     per Team member
   - We will then refine the estimates using Velocity charts
+  
+
+  **UPD**
+- Production tasks which were originally not included to the Sprint, but are urgent (like "Particle website reanimation") should be added to the current Sprint (Milestone in ZH) and estimated
+  - We want to have fair Burndown reports
 
 ### Moving Tasks Between Pipelines Workflow
 
