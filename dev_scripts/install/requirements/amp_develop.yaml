@@ -86,7 +86,7 @@ dependencies:
   #- csvkit                  # To process csv.
   - joblib
   #- jq                      # To process json.
-  - mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
+  #- mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
   #- ruby
@@ -94,8 +94,8 @@ dependencies:
   # Pip
   # ############################################################################
   - pip
-  - pip:
-    - gluonts
+    #- pip:
+    #- gluonts
     #- ta                   # Technical analysis package.
     #- trading-calendars
     #- pyannotate           # Enable this to automatically infer types.

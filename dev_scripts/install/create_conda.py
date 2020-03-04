@@ -251,7 +251,8 @@ def _run_pip_install(args: Any, conda_env_name: str) -> None:
     else:
         # PartTask1005: Moved to pip and pinned for gluonts.
         cmd = (
-            'conda activate %s && pip install --no-deps "mxnet==1.4.1"'
+            #'conda activate %s && pip install --no-deps "mxnet==1.4.1"'
+            'conda activate %s && pip install --upgrade mxnet>=1.3.1,<1.5.* && pip install gluonts'
             % conda_env_name
         )
         hco.conda_system(cmd, suppress_output=False)
@@ -333,8 +334,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.skip_pip_install:
         _LOG.warning("Skip pip install")
     else:
-        #_run_pip_install(args, conda_env_name)
-        pass
+        _run_pip_install(args, conda_env_name)
     #
     if args.skip_test_env:
         _LOG.warning("Skip test conda env")
