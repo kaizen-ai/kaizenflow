@@ -45,13 +45,12 @@ def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
     #   "core.config_builders.build_PartTask1088_configs()"
     m = re.match(r"^(\S+)\.(\S+)\((.*)\)$", config_builder)
     dbg.dassert(m, "config_builder='%s'", config_builder)
-    m = cast(re.Match[str], m)
     import_, function, args = m.groups()
     _LOG.debug("import=%s", import_)
     _LOG.debug("function=%s", function)
     _LOG.debug("args=%s", args)
     #
-    importlib.import_module(import_)
+    imp = importlib.import_module(import_)
     python_code = "imp.%s(%s)" % (function, args)
     _LOG.debug("executing '%s'", python_code)
     configs: List[cfg.Config] = eval(python_code)
