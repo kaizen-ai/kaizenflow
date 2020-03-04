@@ -150,50 +150,48 @@ def _system(
         rc = 0
         return rc, output
     # Execute the command.
-    #try:
-    stdout = subprocess.PIPE
-    stderr = subprocess.STDOUT
-    p = subprocess.Popen(
-        cmd, shell=True, executable="/bin/bash", stdout=stdout, stderr=stderr
-    )
-    output = ""
-    if blocking:
-        print("Blocking")
-        # Blocking call: get the output.
-        while True:
-            line = p.stdout.readline().decode("utf-8")
-            if not line:
-                break
-            if not suppress_output:
-                print((line.rstrip("\n")))
-            output += line
-        print("Close")
-        p.stdout.close()
-        print("Wait")
-        rc = p.wait()
-    else:
-        # Not blocking.
-        # Wait until process terminates (without using p.wait()).
-        max_cnt = 20
-        cnt = 0
-        while p.poll() is None:
-            # Process hasn't exited yet, let's wait some time.
-            time.sleep(0.1)
-            cnt += 1
-            _LOG.debug("cnt=%s, rc=%s", cnt, p.returncode)
-            if cnt > max_cnt:
-                break
-        if cnt > max_cnt:
-            # Timeout: we assume it worked.
-            rc = 0
+    try:
+        stdout = subprocess.PIPE
+        stderr = subprocess.STDOUT
+        p = subprocess.Popen(
+            cmd, shell=True, executable="/bin/bash", stdout=stdout, stderr=stderr
+        )
+        output = ""
+        if blocking:
+            # Blocking call: get the output.
+            while True:
+                line = p.stdout.readline().decode("utf-8")
+                if not line:
+                    break
+                if not suppress_output:
+                    print((line.rstrip("\n")))
+                output += line
+            p.stdout.close()
+            rc = p.wait()
         else:
-            rc = p.returncode
-    if suppress_error is not None:
-        dbg.dassert_isinstance(suppress_error, set)
-        if rc in suppress_error:
-            rc = 0
-    #except OSError:
-    #    rc = -1
+            # Not blocking.
+            # Wait until process terminates (without using p.wait()).
+            max_cnt = 20
+            cnt = 0
+            while p.poll() is None:
+                # Process hasn't exited yet, let's wait some time.
+                time.sleep(0.1)
+                cnt += 1
+                _LOG.debug("cnt=%s, rc=%s", cnt, p.returncode)
+                if cnt > max_cnt:
+                    break
+            if cnt > max_cnt:
+                # Timeout: we assume it worked.
+                rc = 0
+            else:
+                rc = p.returncode
+        if suppress_error is not None:
+            dbg.dassert_isinstance(suppress_error, set)
+            if rc in suppress_error:
+                rc = 0
+    except OSError as e:
+        rc = -1
+        _LOG.error("error=%s", str(e))
     _LOG.debug("rc=%s", rc)
     if abort_on_error and rc != 0:
         msg = (
