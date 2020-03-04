@@ -333,7 +333,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.skip_pip_install:
         _LOG.warning("Skip pip install")
     else:
-        _run_pip_install(args, conda_env_name)
+        #_run_pip_install(args, conda_env_name)
+        pass
     #
     if args.skip_test_env:
         _LOG.warning("Skip test conda env")
