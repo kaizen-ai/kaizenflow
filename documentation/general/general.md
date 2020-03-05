@@ -412,8 +412,8 @@
 
 ## Launching services
 
-There cold be situations when you need to run some services on a server.
-You have to take into account next things:
+There could be situations when you need to run some services on a server.
+You have to take into account the following things:
 
 - Inside local network (VPN) all ports are open.
 - You should use local IP address of the server which can be found here
