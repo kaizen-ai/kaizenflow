@@ -133,7 +133,7 @@ def _run_notebook(
     _LOG.info("Executing notebook %s", i)
     # Export config function and its id to the notebook.
     cmd = (
-        f'export __CONFIG_BUILDER__="${config_builder}"; '
+        f'export __CONFIG_BUILDER__="{config_builder}"; '
         + f'export __CONFIG_IDX__="{i}"; '
         + f'export __CONFIG_DST_DIR__="{experiment_result_dir}"'
     )
@@ -167,8 +167,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dst_dir = os.path.abspath(args.dst_dir)
     io_.create_dir(dst_dir, incremental=not args.no_incremental)
     #
-    _LOG.info("Executing function '%s(%s)'", args.function, args.function_args)
-    config_builder = f"{args.function}({args.function_args})"
+    config_builder = args.function
+    _LOG.info("Executing function '%s'", config_builder)
     configs = ccfgbld.get_configs_from_builder(config_builder)
     dbg.dassert_isinstance(configs, list)
     ccfgbld.assert_on_duplicated_configs(configs)
@@ -226,20 +226,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="File storing the notebook to iterate over",
     )
-    # TODO(gp): Pass the entire python function:
-    # `ncfgbld.build_PartTask1297_configs(random_seed_variants='[911,2,42,0])'
     parser.add_argument(
         "--function",
         action="store",
         required=True,
-        help="Function name to execute to generate configs. Make sure to include import:"
-        " NLP config builders are imported through `ncfgbld`.",
-    )
-    parser.add_argument(
-        "--function_args",
-        action="store",
-        default="",
-        help="Arguments to pass into function",
+        help="Full function to create configs, e.g., "
+        "nlp.build_configs.build_PartTask1297_configs("
+        "random_seed_variants=[911,2,42,0])",
     )
     parser.add_argument(
         "--dry_run",
