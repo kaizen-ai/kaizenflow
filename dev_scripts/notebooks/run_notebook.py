@@ -226,6 +226,8 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="File storing the notebook to iterate over",
     )
+    # TODO(gp): Pass the entire python function:
+    # `ncfgbld.build_PartTask1297_configs(random_seed_variants='[911,2,42,0])'
     parser.add_argument(
         "--function",
         action="store",

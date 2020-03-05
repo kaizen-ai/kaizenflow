@@ -1,0 +1,4 @@
+[read_data:
+  symbol: H He O C Bk
+resample:
+  rule: None]
