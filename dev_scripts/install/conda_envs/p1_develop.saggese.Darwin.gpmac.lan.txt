@@ -6,7 +6,7 @@ server name=gpmac.lan
 os name=Darwin
 conda path=//anaconda3/bin/conda
 conda env root=['/Users/saggese/.conda/envs', '//anaconda3/envs']
-pandas: 0.25.3
+pandas: 1.0.1
 numpy: 1.18.1
 scipy: 1.4.1
 arrow-cpp: 0.16.0
@@ -16,25 +16,26 @@ Package summary
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: osx-64
+abseil-cpp=20190808=h4a8c4bd_5
 absl-py=0.9.0=py37_0
 apipkg=1.5=py_0
 appdirs=1.4.3=py_1
 appnope=0.1.0=py37_1000
-arrow-cpp=0.16.0=py37hf327aee_1
+arrow-cpp=0.16.0=py37h3abc6c4_1
 arviz=0.7.0=py_0
 astor=0.7.1=py_0
 astroid=2.3.3=py37_1
 attrs=19.3.0=py_0
 autoflake=1.3=py_0
 aws-sdk-cpp=1.7.164=h6f10caa_0
-awscli=1.18.13=py37_0
+awscli=1.18.15=py37_0
 backcall=0.1.0=py_0
 beautifulsoup4=4.8.2=py37_0
 black=19.10b0=py37_0
 bleach=3.1.1=py_0
 boost-cpp=1.72.0=hdf9ef73_0
-boto3=1.12.13=py_0
-botocore=1.15.13=py_0
+boto3=1.12.15=py_0
+botocore=1.15.15=py_0
 brotli=1.0.7=h6de7cb9_1000
 bzip2=1.0.8=h0b31af3_2
 c-ares=1.15.0=h01d97ff_1001
@@ -56,7 +57,6 @@ coverage=5.0.3=py37h0b31af3_0
 cryptography=2.8=py37hafa8578_1
 curl=7.68.0=h8754def_0
 cycler=0.10.0=py_2
-cython=0.29.15=pypi_0
 dbus=1.13.6=h2f22bb5_0
 decorator=4.4.2=py_0
 defusedxml=0.6.0=py_0
@@ -76,14 +76,12 @@ git=2.25.0=pl526hdc91d69_0
 glib=2.58.3=py37h577aef8_1002
 glog=0.4.0=h6de7cb9_1
 gluonnlp=0.9.1=pypi_0
-gluonts=0.4.2=pypi_0
 graphviz=2.38.0=hc6cc99f_1011
-grpc-cpp=1.25.0=h00d9e76_2
+grpc-cpp=1.27.3=h15887b0_0
 grpcio=1.23.0=py37h8a88325_0
 h5py=2.10.0=nompi_py37h106b333_102
 hdf4=4.2.13=h84186c3_1003
 hdf5=1.10.5=nompi_h3e39495_1104
-holidays=0.9.12=pypi_0
 icu=64.2=h6de7cb9_1
 idna=2.9=py_1
 importlib_metadata=1.5.0=py37_0
@@ -132,7 +130,7 @@ libnetcdf=4.7.3=nompi_hda4e5f1_101
 libopenblas=0.3.8=h3d69b6c_0
 libpng=1.6.37=h2573ce8_0
 libpq=12.2=h554dc5a_0
-libprotobuf=3.11.0=hd174df1_0
+libprotobuf=3.11.4=hd174df1_0
 libsodium=1.0.17=h01d97ff_0
 libssh2=1.8.2=hcdc9a53_2
 libtiff=4.1.0=ha78913b_3
@@ -152,6 +150,7 @@ mistune=0.8.4=py37h0b31af3_1000
 mkl=2019.5=281
 mkl-service=2.3.0=py37h0b31af3_0
 more-itertools=8.2.0=py_0
+mxnet=1.6.0=pypi_0
 mypy=0.761=py_0
 mypy_extensions=0.4.3=py37_0
 nb_conda=2.2.1=py37_2
@@ -170,7 +169,7 @@ numba=0.48.0=py37h4f17bb1_0
 numpy=1.18.1=py37hde6bac1_0
 openssl=1.1.1d=h0b31af3_0
 packaging=20.1=py_0
-pandas=0.25.3=pypi_0
+pandas=1.0.1=py37h4f17bb1_0
 pandas-datareader=0.8.0=py_0
 pandoc=2.9.2=0
 pandocfilters=1.4.2=py_1
@@ -186,7 +185,7 @@ pip=20.0.2=py_2
 pluggy=0.13.0=py37_0
 prometheus_client=0.7.1=py_0
 prompt_toolkit=2.0.10=py_0
-protobuf=3.11.0=py37h4a8c4bd_0
+protobuf=3.11.4=py37h4a8c4bd_0
 psutil=5.7.0=py37h0b31af3_0
 psycopg2=2.8.4=py37hafa8578_1
 ptyprocess=0.6.0=py_1001
@@ -196,7 +195,6 @@ pyarrow=0.16.0=py37h398749e_2
 pyasn1=0.4.8=py_0
 pycodestyle=2.5.0=py_0
 pycparser=2.20=py_0
-pydantic=1.4=pypi_0
 pydocstyle=5.0.2=py_0
 pyflakes=2.1.1=py_0
 pygments=2.5.2=py_0
@@ -217,8 +215,9 @@ pytest-cov=2.8.1=py_0
 pytest-forked=1.1.2=py_0
 pytest-instafail=0.4.1=py_0
 pytest-xdist=1.31.0=py_0
-python=3.7.6=hfa4aa89_3_cpython
-python-dateutil=2.8.0=pypi_0
+python=3.7.6=hfa4aa89_4_cpython
+python-dateutil=2.8.1=py_0
+python_abi=3.7=1_cp37m
 pytz=2019.3=py_0
 pywavelets=1.1.1=py37h3b54f70_0
 pyyaml=5.3=py37h0b31af3_0
@@ -262,7 +261,6 @@ tqdm=4.43.0=py_0
 traitlets=4.3.3=py37_0
 typed-ast=1.4.1=py37h0b31af3_0
 typing_extensions=3.7.4.1=py37_0
-ujson=1.35=pypi_0
 urllib3=1.25.7=py37_0
 wcwidth=0.1.8=py_0
 webencodings=0.5.1=py_1
