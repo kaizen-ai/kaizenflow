@@ -186,6 +186,7 @@ markupsafe=1.1.1=py37h516909a_0
 matplotlib=3.1.2=py37_1
 matplotlib-base=3.1.2=py37h250f245_1
 mccabe=0.6.1=py_1
+memory-profiler=0.57.0=pypi_0
 mistune=0.8.4=py37h516909a_1000
 mkl=2019.4=243
 mkl-service=2.3.0=py37h516909a_0
@@ -199,6 +200,7 @@ mpmath=1.1.0=py_0
 msgpack-python=0.6.2=py37hc9558a2_0
 multipledispatch=0.6.0=py_0
 murmurhash=1.0.0=py37he1b5a44_0
+mxnet=1.4.1=pypi_0
 navigator-updater=0.2.1=py37_0
 nbconvert=5.6.1=py37_0
 nbformat=5.0.4=py_0
