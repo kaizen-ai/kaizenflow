@@ -38,11 +38,10 @@ def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
     Execute python code to
 
     :param config_builder: full Python command to create the configs.
-        E.g.,
-        `core.config_builders.build_PartTask1088_configs()`
+        E.g., `nlp.build_configs.build_PartTask1088_configs()`
     """
     # config_builder looks like:
-    #   "core.config_builders.build_PartTask1088_configs()"
+    #   "nlp.build_configs.build_PartTask1088_configs()"
     m = re.match(r"^(\S+)\.(\S+)\((.*)\)$", config_builder)
     dbg.dassert(m, "config_builder='%s'", config_builder)
     import_, function, args = m.groups()

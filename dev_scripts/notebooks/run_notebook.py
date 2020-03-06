@@ -6,7 +6,7 @@ Use example:
 > run_notebook.py --dst_dir nlp/test_results \
  --no_incremental \
  --notebook nlp/notebooks/PartTask1102_RP_Pipeline.ipynb \
- --function ncfgbld.build_PartTask1088_configs \
+ --function "nlp.build_configs.build_PartTask1088_configs()" \
   --num_threads 2
 """
 
