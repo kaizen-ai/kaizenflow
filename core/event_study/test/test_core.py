@@ -10,7 +10,6 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(*): Disabled because of PartTask1408.
 class TestBuildLocalTimeseries(hut.TestCase):
     def test_minutely1(self) -> None:
         np.random.seed(42)
