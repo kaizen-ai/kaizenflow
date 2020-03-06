@@ -86,7 +86,7 @@ dependencies:
   #- csvkit                  # To process csv.
   - joblib
   #- jq                      # To process json.
-  - mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
+  #- mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
   #- ruby
