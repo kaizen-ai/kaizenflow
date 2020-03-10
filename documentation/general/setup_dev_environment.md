@@ -22,6 +22,7 @@
       * [Working with multiple clients](#working-with-multiple-clients)
       * [A simple set-up](#a-simple-set-up)
       * [GP's set-up](#gps-set-up)
+      * [Run jupyter notebook](#run-jupyter-notebook)
 
 
 
@@ -279,3 +280,18 @@
   - one shell running jupyter
   - one shell cd-ed `commodity_research*/amp`
   - See details `//amp/dev_scripts/tmux.sh`
+
+## Run jupyter notebook 
+
+- Launch jupyter notebook on the server: 
+    - Everyone chooses which port to use
+    - Running notebook without a tmux session will stop as soon as you leave the server
+    - If you want to have a constantly running notebook, create a tmux session
+        - `tmux` - Create tmux session
+        - `tmux a` - Connect to the last session 
+        - leave/detach the tmux session by typing `Ctrl+b` and `then d`
+    - Example run notebook(use your port instead of a variable {PORT}): 
+    
+```bash
+jupyter notebook '--ip=*' --browser chrome . --port {PORT}
+```
