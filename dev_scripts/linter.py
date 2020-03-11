@@ -179,7 +179,7 @@ def _get_files(args: argparse.Namespace) -> List[str]:
             file_names = git.get_previous_committed_files(n_commits)
         elif args.modified_files_in_branch:
             dir_name = "."
-            dst_branch = "origin/master"
+            dst_branch = "master"
             file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
         elif args.dir_name:
             if args.dir_name == "$GIT_ROOT":
@@ -1389,7 +1389,7 @@ def _check_file_property(
 
 def _post_check() -> bool:
     """
-    Check changes in th local repo.
+    Check changes in the local repo.
     If any file in the local repo changed, returns False.
     """
     result = True
@@ -1834,7 +1834,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--post_check",
         action="store_true",
-        help="Add post check. If any file changed, the script " "returns -1.",
+        help="Add post check. Return -1 if any file changed by the linter.",
     )
     prsr.add_verbosity_arg(parser)
     return parser
@@ -1847,5 +1847,5 @@ if __name__ == "__main__":
     if args_.post_check:
         if not _post_check():
             rc_ = 1
-            _LOG.warning("`--post_check` fails.")
+            _LOG.warning("Detected that some files were changed so returning -1 as per the option `--post_check`")
     sys.exit(rc_)
