@@ -255,7 +255,7 @@
     tangent, as long as we agree that's the right approach in the specific case
 - All issues in Sprint Backlog and forward (all Pipelines to the right) should be assigned
   - If you don’t know whom to assign the issue to, assign it to yourself 
-  - If you don’t know what to do, you assign it to GP / Paul for re-route
+  - If you don’t know what to do, you assign it to GP + Paul for rerouting
 
 ## Workflow
 
