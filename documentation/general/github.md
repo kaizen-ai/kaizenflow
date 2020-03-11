@@ -238,47 +238,19 @@
 # Conventions
 
 ## Labels
-- BUG: A bug that needs to be fixed
-- CLEANUP: Tasks related to improving, refactoring, reorg (not bugs) general
-  shared code (e.g., for `helpers`)
-- ENHANCEMENT: An improvement to an existing features
-- PAUSED: An Issue that was started, made some progress, and then we stopped
-  without getting to completion
-
-- P0: High priority (it should be picked up as soon as there is time)
-- P1: Medium priority (icebox)
-- P2: Low priority (freezer)
-
-- TODO(gp): Does the priority still makes sense? Now that 
-
-## Projects
-
-- TODO(gp): Come up with precise definition
-
-- AUTOML:
-- BREAKS:
-- DATA: Research and triage of data
-- DATAFLOW:
-- DEV_TOOLS: -> Maybe just TOOLS
-- DWNLD: Downloading tastks
-- ETL2: Core ETL2 code (i.e., the infrastructure to manage data)
-- INFRA: IT, compute, AWS, sysadmin, backup
-- INVESTIGATE: Explore something (e.g., a python package)
-- JENKINS: Related to improvements to automatic build systems
-- KG: Knowledge Graph related
-- NLP:
-- ORG: Organizational issues
-- POPPP:
-- PRICE: Tasks related to price data
-- READ: Readings for the team
-- RESEARCH: Theoretical issues related to research, not necessarily about writing
-  code
-- RP: RavenPack
-- ST: StockTwits
-  - TODO: -> STOCKTWITS
-- TWITTER:
-- WIND:
-
-- Tags that should be cleaned up
-  - JODI -> ETL2
-  - ETL -> ETL2
+- `1HR`: Something that can be fixed quickly, if you have 1 hr of spare time
+- `Bug`: Report a bug with a proper repro case
+- `Cleanup`: Tasks related to improving, refactoring, reorganizing code
+- `Design`: Design a new or re-design an old software component
+- `Enhancement`: Request an improvement to an existing features
+- `Feature`: Implement a new feature
+- `Blocking`
+- `Blocked`
+- `P0`: High priority (it should be picked up as soon as there is time)
+- `P1`: Medium priority (icebox)
+- `P2`: Low priority (freezer)
+- `Paused`: An Issue that was started, we made some progress on it, and then we
+  stopped without getting to completion
+- `Duplicate`:
+- `Discussion`:
+- `Question`: How to do XYZ

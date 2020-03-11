@@ -51,11 +51,17 @@
 - We use `pytest` and `unittest` as testing framework
 
 - We have different test sets:
-  - `fast`: tests that are quick to execute (typically < 5 secs per test class)
-  - `slow`: tests that we don't want to run all the times because they are:
-    - Slow
-    - Related to pieces of code that don't change often
-    - External APIs we don't want to hit completely
+  - `fast`
+    - Tests that are quick to execute (typically < 5 secs per test class)
+    - We want to run these tests after every commit / PR to make sure things are
+      not horrible broken
+  - `slow`
+    - Tests that we don't want to run all the times because they are:
+      - Slow (typically < 30s per test)
+      - Related to pieces of code that don't change often
+      - External APIs we don't want to hit continuously
+  - `superslow`
+    - Tests that run long workload, e.g., running a production model
 
 - `fast` tests are a subset of `slow` tests
 

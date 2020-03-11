@@ -1,14 +1,19 @@
 import logging
 from typing import List, Tuple
 
-import gluonts
+# TODO(*): Disabled because of PartTask186.
+#import gluonts
+#import gluonts.dataset.artificial as gda
+#import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
+#
+## TODO(*): gluon needs this import to work properly.
+#import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
-# TODO(*): gluon needs this import to work properly.
-import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
 
 import core.data_adapters as adpt
+import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -38,138 +43,172 @@ class _TestAdapter:
         return df
 
 
-class TestCreateIterSingleIndex(hut.TestCase):
-    def test1(self) -> None:
-        ta = _TestAdapter()
-        data_iter = adpt.iterate_target_features(
-            ta._df, ta._x_vars, ta._y_vars, None
-        )
-        self.check_string(str(list(data_iter)))
-
-    def test_shape1(self) -> None:
-        ta = _TestAdapter()
-        data_iter = adpt.iterate_target_features(
-            ta._df, ta._x_vars, ta._y_vars, None
-        )
-        for data_dict in data_iter:
-            target = data_dict[gluonts.dataset.field_names.FieldName.TARGET]
-            start = data_dict[gluonts.dataset.field_names.FieldName.START]
-            features = data_dict[
-                gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL
-            ]
-            self.assertEqual(target.shape, (len(ta._y_vars), ta._df.shape[0]))
-            self.assertEqual(features.shape, (len(ta._x_vars), ta._df.shape[0]))
-            self.assertIsInstance(start, pd.Timestamp)
-
-    def test_truncate1(self) -> None:
-        ta = _TestAdapter()
-        data_iter = adpt.iterate_target_features(
-            ta._df, ta._x_vars, ta._y_vars, y_truncate=10
-        )
-        self.check_string(str(list(data_iter)))
-
-
-class TestTransformToGluon(hut.TestCase):
-    def test_transform(self) -> None:
-        ta = _TestAdapter()
-        gluon_ts = adpt.transform_to_gluon(
-            ta._df, ta._x_vars, ta._y_vars, ta._frequency
-        )
-        self.check_string(str(list(gluon_ts)))
-
-    def test_transform_local_ts(self) -> None:
-        ta = _TestAdapter()
-        local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
-        gluon_ts = adpt.transform_to_gluon(
-            local_ts, ta._x_vars, ta._y_vars, ta._frequency
-        )
-        self.check_string(str(list(gluon_ts)))
-
-    def test_transform_series_target(self) -> None:
-        ta = _TestAdapter()
-        y_vars = ta._y_vars[-1:]
-        gluon_ts = adpt.transform_to_gluon(
-            ta._df, ta._x_vars, y_vars, ta._frequency
-        )
-        self.check_string(str(list(gluon_ts)))
-
-    def test_transform_none_x_vars(self) -> None:
-        ta = _TestAdapter()
-        y_vars = ta._y_vars[-1:]
-        gluon_ts = adpt.transform_to_gluon(ta._df, None, y_vars, ta._frequency)
-        self.check_string(str(list(gluon_ts)))
-
-
-class TestTransformFromGluon(hut.TestCase):
-    def test_transform(self) -> None:
-        ta = _TestAdapter()
-        gluon_ts = adpt.transform_to_gluon(
-            ta._df, ta._x_vars, ta._y_vars, ta._frequency
-        )
-        df = adpt.transform_from_gluon(
-            gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
-        )
-        self.check_string(df.to_string())
-
-    def test_transform_none_x_vars(self) -> None:
-        ta = _TestAdapter()
-        gluon_ts = adpt.transform_to_gluon(
-            ta._df, None, ta._y_vars, ta._frequency
-        )
-        df = adpt.transform_from_gluon(
-            gluon_ts, None, ta._y_vars, index_name=ta._df.index.name,
-        )
-        self.check_string(df.to_string())
-
-    def test_correctness(self) -> None:
-        ta = _TestAdapter()
-        gluon_ts = adpt.transform_to_gluon(
-            ta._df, ta._x_vars, ta._y_vars, ta._frequency
-        )
-        inverted_df = adpt.transform_from_gluon(
-            gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
-        )
-        inverted_df = inverted_df.astype(np.float64)
-        pd.testing.assert_frame_equal(ta._df, inverted_df)
-
-    def test_correctness_local_ts(self) -> None:
-        ta = _TestAdapter()
-        local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
-        gluon_ts = adpt.transform_to_gluon(
-            local_ts, ta._x_vars, ta._y_vars, ta._frequency
-        )
-        inverted_df = adpt.transform_from_gluon(
-            gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
-        )
-        inverted_df = inverted_df.astype(np.float64)
-        pd.testing.assert_frame_equal(local_ts, inverted_df)
-
-
-class TestTransformFromGluonForecasts(hut.TestCase):
-    @staticmethod
-    def _get_mock_forecasts(
-        n_traces: int = 3,
-        n_offsets: int = 50,
-        n_forecasts: int = 2,
-        frequency: str = "T",
-    ) -> List[gluonts.model.forecast.SampleForecast]:
-        np.random.seed(42)
-        all_samples = np.random.randn(n_traces, n_offsets, n_forecasts)
-        start_dates = pd.date_range(
-            pd.Timestamp("2010-01-01"), freq="D", periods=n_forecasts
-        )
-        forecasts = [
-            gluonts.model.forecast.SampleForecast(
-                all_samples[:, :, i], start_date, frequency
-            )
-            for i, start_date in enumerate(start_dates)
-        ]
-        return forecasts
-
-    def test_transform1(self) -> None:
-        forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
-        df = adpt.transform_from_gluon_forecasts(forecasts)
-        self.check_string(df.to_string())
+#class TestCreateIterSingleIndex(hut.TestCase):
+#    def test1(self) -> None:
+#        ta = _TestAdapter()
+#        data_iter = adpt.iterate_target_features(
+#            ta._df, ta._x_vars, ta._y_vars, None
+#        )
+#        self.check_string(str(list(data_iter)))
+#
+#    def test_shape1(self) -> None:
+#        ta = _TestAdapter()
+#        data_iter = adpt.iterate_target_features(
+#            ta._df, ta._x_vars, ta._y_vars, None
+#        )
+#        for data_dict in data_iter:
+#            target = data_dict[gluonts.dataset.field_names.FieldName.TARGET]
+#            start = data_dict[gluonts.dataset.field_names.FieldName.START]
+#            features = data_dict[
+#                gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL
+#            ]
+#            self.assertEqual(target.shape, (len(ta._y_vars), ta._df.shape[0]))
+#            self.assertEqual(features.shape, (len(ta._x_vars), ta._df.shape[0]))
+#            self.assertIsInstance(start, pd.Timestamp)
+#
+#    def test_truncate1(self) -> None:
+#        ta = _TestAdapter()
+#        data_iter = adpt.iterate_target_features(
+#            ta._df, ta._x_vars, ta._y_vars, y_truncate=10
+#        )
+#        self.check_string(str(list(data_iter)))
+#
+#
+#class TestTransformToGluon(hut.TestCase):
+#    def test_transform(self) -> None:
+#        ta = _TestAdapter()
+#        gluon_ts = adpt.transform_to_gluon(
+#            ta._df, ta._x_vars, ta._y_vars, ta._frequency
+#        )
+#        self.check_string(str(list(gluon_ts)))
+#
+#    def test_transform_local_ts(self) -> None:
+#        ta = _TestAdapter()
+#        local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
+#        gluon_ts = adpt.transform_to_gluon(
+#            local_ts, ta._x_vars, ta._y_vars, ta._frequency
+#        )
+#        self.check_string(str(list(gluon_ts)))
+#
+#    def test_transform_series_target(self) -> None:
+#        ta = _TestAdapter()
+#        y_vars = ta._y_vars[-1:]
+#        gluon_ts = adpt.transform_to_gluon(
+#            ta._df, ta._x_vars, y_vars, ta._frequency
+#        )
+#        self.check_string(str(list(gluon_ts)))
+#
+#    def test_transform_none_x_vars(self) -> None:
+#        ta = _TestAdapter()
+#        y_vars = ta._y_vars[-1:]
+#        gluon_ts = adpt.transform_to_gluon(ta._df, None, y_vars, ta._frequency)
+#        self.check_string(str(list(gluon_ts)))
+#
+#
+#class TestTransformFromGluon(hut.TestCase):
+#    def test_transform(self) -> None:
+#        ta = _TestAdapter()
+#        gluon_ts = adpt.transform_to_gluon(
+#            ta._df, ta._x_vars, ta._y_vars, ta._frequency
+#        )
+#        df = adpt.transform_from_gluon(
+#            gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
+#        )
+#        self.check_string(df.to_string())
+#
+#    def test_transform_none_x_vars(self) -> None:
+#        ta = _TestAdapter()
+#        gluon_ts = adpt.transform_to_gluon(
+#            ta._df, None, ta._y_vars, ta._frequency
+#        )
+#        df = adpt.transform_from_gluon(
+#            gluon_ts, None, ta._y_vars, index_name=ta._df.index.name,
+#        )
+#        self.check_string(df.to_string())
+#
+#    def test_correctness(self) -> None:
+#        ta = _TestAdapter()
+#        gluon_ts = adpt.transform_to_gluon(
+#            ta._df, ta._x_vars, ta._y_vars, ta._frequency
+#        )
+#        inverted_df = adpt.transform_from_gluon(
+#            gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
+#        )
+#        inverted_df = inverted_df.astype(np.float64)
+#        pd.testing.assert_frame_equal(ta._df, inverted_df)
+#
+#    def test_correctness_local_ts(self) -> None:
+#        ta = _TestAdapter()
+#        local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
+#        gluon_ts = adpt.transform_to_gluon(
+#            local_ts, ta._x_vars, ta._y_vars, ta._frequency
+#        )
+#        inverted_df = adpt.transform_from_gluon(
+#            gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
+#        )
+#        inverted_df = inverted_df.astype(np.float64)
+#        pd.testing.assert_frame_equal(local_ts, inverted_df)
+#
+#    def test_transform_artificial_ts(self) -> None:
+#        """
+#        Artificial time series below has one-dimensional target.
+#        """
+#        artificial_dataset = gda.ComplexSeasonalTimeSeries(
+#            num_series=1,
+#            prediction_length=21,
+#            freq_str="H",
+#            length_low=30,
+#            length_high=40,
+#            min_val=-10000,
+#            max_val=10000,
+#            is_integer=False,
+#            proportion_missing_values=0,
+#            is_noise=True,
+#            is_scale=True,
+#            percentage_unique_timestamps=1,
+#            is_out_of_bounds_date=True,
+#        )
+#        train_ts = gluonts.dataset.common.ListDataset(
+#            artificial_dataset.train, freq=artificial_dataset.metadata.freq
+#        )
+#        test_ts = gluonts.dataset.common.ListDataset(
+#            artificial_dataset.test, freq=artificial_dataset.metadata.freq
+#        )
+#        train_df = adpt.transform_from_gluon(
+#            train_ts, None, ["y"], index_name=None
+#        )
+#        test_df = adpt.transform_from_gluon(test_ts, None, ["y"], index_name=None)
+#        str_res = (
+#            f"{prnt.frame('train')}{train_df}\n{prnt.frame('test')}{test_df}"
+#        )
+#        self.check_string(str_res)
+#
+#
+#class TestTransformFromGluonForecasts(hut.TestCase):
+#    @staticmethod
+#    def _get_mock_forecasts(
+#        n_traces: int = 3,
+#        n_offsets: int = 50,
+#        n_forecasts: int = 2,
+#        frequency: str = "T",
+#    ) -> List[gluonts.model.forecast.SampleForecast]:
+#        np.random.seed(42)
+#        all_samples = np.random.randn(n_traces, n_offsets, n_forecasts)
+#        start_dates = pd.date_range(
+#            pd.Timestamp("2010-01-01"), freq="D", periods=n_forecasts
+#        )
+#        forecasts = [
+#            gluonts.model.forecast.SampleForecast(
+#                all_samples[:, :, i], start_date, frequency
+#            )
+#            for i, start_date in enumerate(start_dates)
+#        ]
+#        return forecasts
+#
+#    def test_transform1(self) -> None:
+#        forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
+#        df = adpt.transform_from_gluon_forecasts(forecasts)
+#        self.check_string(df.to_string())
 
 
 class TestTransformToSklean(hut.TestCase):

@@ -29,7 +29,8 @@ class TestBuildLocalTimeseries(hut.TestCase):
         local_ts = esf.build_local_timeseries(
             events, grid_data, relative_grid_indices, info=info
         )
-        self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{info}")
+        str_info = str(info).replace("None", f"'{freq}'")
+        self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{str_info}")
 
     def test_daily1(self) -> None:
         np.random.seed(42)
@@ -49,7 +50,8 @@ class TestBuildLocalTimeseries(hut.TestCase):
         local_ts = esf.build_local_timeseries(
             events, grid_data, relative_grid_indices, info=info
         )
-        self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{info}")
+        str_info = str(info).replace("None", f"'{freq}'")
+        self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{str_info}")
 
     def test_daily_shift_freq1(self) -> None:
         np.random.seed(42)
@@ -70,7 +72,8 @@ class TestBuildLocalTimeseries(hut.TestCase):
         local_ts = esf.build_local_timeseries(
             events, grid_data, relative_grid_indices, freq=shift_freq, info=info
         )
-        self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{info}")
+        str_info = str(info).replace("None", f"'{freq}'")
+        self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{str_info}")
 
     def test_multiple_responses_daily1(self) -> None:
         np.random.seed(42)
@@ -93,7 +96,8 @@ class TestBuildLocalTimeseries(hut.TestCase):
         local_ts = esf.build_local_timeseries(
             events, grid_data, relative_grid_indices, info=info
         )
-        self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{info}")
+        str_info = str(info).replace("None", f"'{freq}'")
+        self.check_string(f"local_ts:\n{local_ts.to_string()}\ninfo:\n{str_info}")
 
 
 class TestUnwrapLocalTimeseries(hut.TestCase):

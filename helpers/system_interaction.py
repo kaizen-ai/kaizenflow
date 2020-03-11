@@ -189,8 +189,9 @@ def _system(
             dbg.dassert_isinstance(suppress_error, set)
             if rc in suppress_error:
                 rc = 0
-    except OSError:
+    except OSError as e:
         rc = -1
+        _LOG.error("error=%s", str(e))
     _LOG.debug("rc=%s", rc)
     if abort_on_error and rc != 0:
         msg = (

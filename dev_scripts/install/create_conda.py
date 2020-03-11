@@ -251,7 +251,8 @@ def _run_pip_install(args: Any, conda_env_name: str) -> None:
     else:
         # PartTask1005: Moved to pip and pinned for gluonts.
         cmd = (
-            'conda activate %s && pip install --no-deps "mxnet==1.4.1"'
+            #'conda activate %s && pip install --no-deps "mxnet==1.4.1" && pip install gluonts'
+            'conda activate %s && pip install --no-deps "mxnet>=1.6.0" && pip install --no-deps gluonnlp'
             % conda_env_name
         )
         hco.conda_system(cmd, suppress_output=False)

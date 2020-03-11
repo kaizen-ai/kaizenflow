@@ -24,7 +24,7 @@ dependencies:
   - matplotlib
   - networkx
   - numba
-  - numpy
+  - numpy <= 1.17
   - pandas
   - pandas-datareader=0.8.0     # PartTask344.
   - pyarrow
@@ -86,7 +86,7 @@ dependencies:
   #- csvkit                  # To process csv.
   - joblib
   #- jq                      # To process json.
-  - mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
+  #- mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
   #- ruby
@@ -94,8 +94,8 @@ dependencies:
   # Pip
   # ############################################################################
   - pip
-  - pip:
-    - gluonts
+    #- pip:
+    #- gluonts
     #- ta                   # Technical analysis package.
     #- trading-calendars
     #- pyannotate           # Enable this to automatically infer types.

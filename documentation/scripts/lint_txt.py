@@ -104,7 +104,7 @@ def _prettier(txt: str) -> str:
     tab_width = 2
     cmd_opts.append("--tab-width %s" % tab_width)
     cmd_opts.append(tmp_file_name)
-    cmd_opts.append("2>&1 >/dev/null")
+    #cmd_opts.append("2>&1 >/dev/null")
     cmd_opts_as_str = " ".join(cmd_opts)
     cmd_as_str = " ".join([executable, cmd_opts_as_str])
     _, output_tmp = si.system_to_string(cmd_as_str, abort_on_error=True)
