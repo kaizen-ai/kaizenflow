@@ -1387,7 +1387,7 @@ def _check_file_property(
     return output, actions
 
 
-def _post_check() -> bool:
+def _are_git_files_changed() -> bool:
     """
     Check changes in the local repo.
     If any file in the local repo changed, returns False.
@@ -1845,7 +1845,7 @@ if __name__ == "__main__":
     args_ = parser_.parse_args()
     rc_ = _main(args_)
     if args_.post_check:
-        if not _post_check():
+        if not _are_git_files_changed():
             rc_ = 1
             _LOG.warning("Detected that some files were changed so returning -1 as per the option `--post_check`")
     sys.exit(rc_)
