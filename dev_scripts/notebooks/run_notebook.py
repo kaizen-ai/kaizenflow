@@ -105,6 +105,10 @@ def _run_notebook(
     config = ccfgbld.set_experiment_result_dir(experiment_result_dir, config)
     _LOG.info("experiment_result_dir=%s", experiment_result_dir)
     io_.create_dir(experiment_result_dir, incremental=True)
+    # If there is already a success file in the dir, skip the experiment.
+    file_name = os.path.join(experiment_result_dir, "success.txt")
+    if os.path.exists(file_name):
+        return
     # Generate book-keeping files.
     file_name = os.path.join(experiment_result_dir, "config.pkl")
     _LOG.info("file_name=%s", file_name)
