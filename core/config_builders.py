@@ -49,7 +49,7 @@ def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
     _LOG.debug("function=%s", function)
     _LOG.debug("args=%s", args)
     #
-    imp = importlib.import_module(import_)
+    importlib.import_module(import_)
     python_code = "imp.%s(%s)" % (function, args)
     _LOG.debug("executing '%s'", python_code)
     configs: List[cfg.Config] = eval(python_code)
@@ -261,6 +261,47 @@ def add_config_idx(configs: List[cfg.Config]) -> List[cfg.Config]:
         config_with_id[("meta", "id")] = i
         configs_idx.append(config_with_id)
     return configs_idx
+
+
+def set_timestamps(
+    config_builder: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> str:
+    """
+    Set timestamps in the config builder.
+
+    :param config_builder: Config builder command.
+    :param start_date: Start datetime.
+    :param end_date: End datetime.
+    :return: Config builder command with the new start and end dates.
+    """
+    config_builder = config_builder.replace(")", ",)")
+    start_reg = r"(start_datetime=\'.+?\'),"
+    end_reg = r"(end_datetime=\'.+?\'),"
+    if start_date:
+        start_date_param = "start_datetime='{}',".format(start_date)
+        if re.findall(start_reg, config_builder):
+            config_builder = re.sub(start_reg, start_date_param, config_builder)
+        elif re.findall(end_reg, config_builder):
+            end_pattern = re.findall(end_reg, config_builder)[0] + ",)"
+            config_builder = config_builder.replace(
+                end_pattern, start_date_param + " " + end_pattern
+            )
+        else:
+            config_builder = (
+                config_builder.rstrip(")") + " " + start_date_param + ")"
+            )
+    if end_date:
+        end_date_param = "end_datetime='{}',".format(end_date)
+        if re.findall(end_reg, config_builder):
+            config_builder = re.sub(end_reg, end_date_param, config_builder)
+        else:
+            config_builder = (
+                config_builder.rstrip(")") + " " + end_date_param + ")"
+            )
+    config_builder = config_builder.replace(",)", ")").replace("(, ", "(")
+    return config_builder
 
 
 # #############################################################################
