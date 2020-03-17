@@ -175,11 +175,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     io_.create_dir(dst_dir, incremental=not args.no_incremental)
     #
     config_builder = args.function
-    #
-    if args.start_ts or args.end_ts:
-        config_builder = ccfgbld.set_timestamps(
-            config_builder, args.start_ts, args.end_ts
-        )
     _LOG.info("Executing function '%s'", config_builder)
     configs = ccfgbld.get_configs_from_builder(config_builder)
     dbg.dassert_isinstance(configs, list)
@@ -260,16 +255,6 @@ def _parse() -> argparse.ArgumentParser:
         "--start_from_index",
         action="store",
         help="Run experiments starting from a specified index",
-    )
-    parser.add_argument(
-        "--start_ts",
-        action="store",
-        help="Run experiments starting from a specified timestamp",
-    )
-    parser.add_argument(
-        "--end_ts",
-        action="store",
-        help="Run experiments ending on a specified timestamp",
     )
     parser.add_argument(
         "--dry_run",
