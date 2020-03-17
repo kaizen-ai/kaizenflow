@@ -50,6 +50,9 @@ def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
     _LOG.debug("args=%s", args)
     #
     imp = importlib.import_module(import_)
+    # Force the linter not to remove this import which is needed in the
+    # following eval.
+    _ = imp
     python_code = "imp.%s(%s)" % (function, args)
     _LOG.debug("executing '%s'", python_code)
     configs: List[cfg.Config] = eval(python_code)
