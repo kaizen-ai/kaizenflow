@@ -4,8 +4,7 @@ Run a notebook given a config or a list of configs.
 
 Use example:
 > run_notebook.py --dst_dir nlp/test_results \
- --no_incremental \
- --notebook nlp/notebooks/PartTask1102_RP_Pipeline.ipynb \
+ --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
  --function "nlp.build_configs.build_PartTask1088_configs()" \
   --num_threads 2
 """
