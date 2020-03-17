@@ -4,8 +4,7 @@ Run a notebook given a config or a list of configs.
 
 Use example:
 > run_notebook.py --dst_dir nlp/test_results \
- --no_incremental \
- --notebook nlp/notebooks/PartTask1102_RP_Pipeline.ipynb \
+ --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
  --function "nlp.build_configs.build_PartTask1088_configs()" \
   --num_threads 2
 """
@@ -105,6 +104,11 @@ def _run_notebook(
     config = ccfgbld.set_experiment_result_dir(experiment_result_dir, config)
     _LOG.info("experiment_result_dir=%s", experiment_result_dir)
     io_.create_dir(experiment_result_dir, incremental=True)
+    # If there is already a success file in the dir, skip the experiment.
+    file_name = os.path.join(experiment_result_dir, "success.txt")
+    if os.path.exists(file_name):
+        _LOG.warning("Found file '%s': skipping simulation run", file_name)
+        return
     # Generate book-keeping files.
     file_name = os.path.join(experiment_result_dir, "config.pkl")
     _LOG.info("file_name=%s", file_name)
@@ -158,6 +162,10 @@ def _run_notebook(
         + " --action publish"
     )
     si.system(cmd, output_file=log_file)
+    # Publish an empty file to indicate a successful finish.
+    file_name = os.path.join(experiment_result_dir, "success.txt")
+    _LOG.info("file_name=%s", file_name)
+    io_.to_file(file_name, "")
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -174,7 +182,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
     ccfgbld.assert_on_duplicated_configs(configs)
     configs = ccfgbld.add_result_dir(dst_dir, configs)
     configs = ccfgbld.add_config_idx(configs)
-    _LOG.info("Created %s configs", len(configs))
+    #
+    if args.index:
+        dbg.dassert_lte(0, args.index)
+        dbg.dassert_lt(args.index, len(configs))
+        _LOG.warning(
+            "Only config %s will be executed due to passing --index", args.index
+        )
+        configs = [x for x in configs if x[("meta", "id")] == args.index]
+    elif args.start_from_index:
+        dbg.dassert_lte(0, args.start_from_index)
+        dbg.dassert_lt(args.start_from_index, len(configs))
+        _LOG.warning(
+            "Only configs %s and higher will be executed due to passing --start_from_index",
+            args.start_from_index,
+        )
+        configs = [
+            x for x in configs if x[("meta", "id")] >= args.start_from_index
+        ]
+    _LOG.info("Created %s config(s)", len(configs))
     if args.dry_run:
         _LOG.warning(
             "The following configs will not be executed due to passing --dry_run:"
@@ -233,6 +259,14 @@ def _parse() -> argparse.ArgumentParser:
         help="Full function to create configs, e.g., "
         "nlp.build_configs.build_PartTask1297_configs("
         "random_seed_variants=[911,2,42,0])",
+    )
+    parser.add_argument(
+        "--index", action="store", help="Run a single experiment",
+    )
+    parser.add_argument(
+        "--start_from_index",
+        action="store",
+        help="Run experiments starting from a specified index",
     )
     parser.add_argument(
         "--dry_run",
