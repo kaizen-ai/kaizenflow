@@ -178,7 +178,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     ccfgbld.assert_on_duplicated_configs(configs)
     configs = ccfgbld.add_result_dir(dst_dir, configs)
     configs = ccfgbld.add_config_idx(configs)
-    _LOG.info("Created %s configs", len(configs))
+    if args.index:
+        configs = [x for x in configs if x[("meta", "id")] == args.index]
+    elif args.start_from_index:
+        configs = [
+            x for x in configs if x[("meta", "id")] >= args.start_from_index
+        ]
+    _LOG.info("Created %s config(s)", len(configs))
     if args.dry_run:
         _LOG.warning(
             "The following configs will not be executed due to passing --dry_run:"
@@ -237,6 +243,14 @@ def _parse() -> argparse.ArgumentParser:
         help="Full function to create configs, e.g., "
         "nlp.build_configs.build_PartTask1297_configs("
         "random_seed_variants=[911,2,42,0])",
+    )
+    parser.add_argument(
+        "--index", action="store", help="Run a single experiment",
+    )
+    parser.add_argument(
+        "--start_from_index",
+        action="store",
+        help="Run experiments starting from a specified index",
     )
     parser.add_argument(
         "--dry_run",
