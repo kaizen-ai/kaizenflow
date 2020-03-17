@@ -158,6 +158,10 @@ def _run_notebook(
         + " --action publish"
     )
     si.system(cmd, output_file=log_file)
+    # Publish an empty file to indicate a successful finish
+    file_name = os.path.join(experiment_result_dir, "success.txt")
+    _LOG.info("file_name=%s", file_name)
+    io_.to_file(file_name, "")
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
