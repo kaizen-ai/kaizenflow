@@ -107,6 +107,7 @@ def _run_notebook(
     # If there is already a success file in the dir, skip the experiment.
     file_name = os.path.join(experiment_result_dir, "success.txt")
     if os.path.exists(file_name):
+        _LOG.warning("Found file '%s': skipping simulation run", file_name)
         return
     # Generate book-keeping files.
     file_name = os.path.join(experiment_result_dir, "config.pkl")
@@ -161,7 +162,7 @@ def _run_notebook(
         + " --action publish"
     )
     si.system(cmd, output_file=log_file)
-    # Publish an empty file to indicate a successful finish
+    # Publish an empty file to indicate a successful finish.
     file_name = os.path.join(experiment_result_dir, "success.txt")
     _LOG.info("file_name=%s", file_name)
     io_.to_file(file_name, "")
@@ -183,8 +184,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     configs = ccfgbld.add_config_idx(configs)
     #
     if args.index:
+        dbg.dassert_lte(0, args.index)
+        dbg.dassert_lt(args.index, len(configs))
+        _LOG.warning(
+            "Only config %s will be executed due to passing --index", args.index
+        )
         configs = [x for x in configs if x[("meta", "id")] == args.index]
     elif args.start_from_index:
+        dbg.dassert_lte(0, args.start_from_index)
+        dbg.dassert_lt(args.start_from_index, len(configs))
+        _LOG.warning(
+            "Only configs %s and higher will be executed due to passing --start_from_index",
+            args.start_from_index,
+        )
         configs = [
             x for x in configs if x[("meta", "id")] >= args.start_from_index
         ]
