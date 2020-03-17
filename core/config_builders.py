@@ -49,7 +49,7 @@ def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
     _LOG.debug("function=%s", function)
     _LOG.debug("args=%s", args)
     #
-    importlib.import_module(import_)
+    imp = importlib.import_module(import_)
     python_code = "imp.%s(%s)" % (function, args)
     _LOG.debug("executing '%s'", python_code)
     configs: List[cfg.Config] = eval(python_code)
