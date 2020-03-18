@@ -184,21 +184,23 @@ def _main(parser: argparse.ArgumentParser) -> None:
     configs = ccfgbld.add_config_idx(configs)
     #
     if args.index:
-        dbg.dassert_lte(0, args.index)
-        dbg.dassert_lt(args.index, len(configs))
+        ind = int(args.index)
+        dbg.dassert_lte(0, ind)
+        dbg.dassert_lt(ind, len(configs))
         _LOG.warning(
-            "Only config %s will be executed due to passing --index", args.index
+            "Only config %s will be executed due to passing --index", ind
         )
-        configs = [x for x in configs if x[("meta", "id")] == args.index]
+        configs = [x for x in configs if int(x[("meta", "id")]) == ind]
     elif args.start_from_index:
-        dbg.dassert_lte(0, args.start_from_index)
-        dbg.dassert_lt(args.start_from_index, len(configs))
+        start_from_index = int(args.start_from_index)
+        dbg.dassert_lte(0, start_from_index)
+        dbg.dassert_lt(start_from_index, len(configs))
         _LOG.warning(
             "Only configs %s and higher will be executed due to passing --start_from_index",
-            args.start_from_index,
+            start_from_index,
         )
         configs = [
-            x for x in configs if x[("meta", "id")] >= args.start_from_index
+            x for x in configs if int(x[("meta", "id")]) >= start_from_index
         ]
     _LOG.info("Created %s config(s)", len(configs))
     if args.dry_run:
@@ -215,7 +217,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     num_threads = args.num_threads
     if num_threads == "serial":
-        for i, config in tqdm.tqdm(enumerate(configs)):
+        for config in tqdm.tqdm(configs):
+            i = int(config[("meta", "id")])
             _LOG.debug("\n%s", printing.frame("Config %s" % i))
             #
             _run_notebook(i, notebook_file, dst_dir, config, config_builder)
@@ -225,9 +228,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Using %d threads", num_threads)
         joblib.Parallel(n_jobs=num_threads, verbose=50)(
             joblib.delayed(_run_notebook)(
-                i, notebook_file, dst_dir, config, config_builder
+                int(config[("meta", "id")]), notebook_file, dst_dir, config, config_builder
             )
-            for i, config in enumerate(configs)
+            for config in configs
         )
 
 
