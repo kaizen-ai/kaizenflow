@@ -102,7 +102,9 @@ def _annotate_output(output: List, executable: str) -> List:
     return output
 
 
-def _tee(cmd: str, executable: str, abort_on_error: bool) -> Tuple[int, List[str]]:
+def _tee(
+    cmd: str, executable: str, abort_on_error: bool
+) -> Tuple[int, List[str]]:
     """
     Execute command "cmd", capturing its output and removing empty lines.
     :return: list of strings
@@ -116,7 +118,7 @@ def _tee(cmd: str, executable: str, abort_on_error: bool) -> Tuple[int, List[str
     output2 = prnt.remove_empty_lines_from_string_list(output1)
     _LOG.debug("output2= (%d)\n'%s'", len(output2), "\n".join(output2))
     _dassert_list_of_strings(output2)
-    return rc, output2  # type: ignore
+    return rc, output2
 
 
 # TODO(gp): Move to system_interactions.
@@ -1850,5 +1852,8 @@ if __name__ == "__main__":
     if args_.post_check:
         if not _are_git_files_changed():
             rc_ = 1
-            _LOG.warning("Detected that some files were changed so returning -1 as per the option `--post_check`")
+            _LOG.warning(
+                "Detected that some files were changed so returning -1 as per "
+                "the option `--post_check`"
+            )
     sys.exit(rc_)
