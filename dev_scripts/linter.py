@@ -102,13 +102,13 @@ def _annotate_output(output: List, executable: str) -> List:
     return output
 
 
-def _tee(cmd: str, executable: str, abort_on_error: bool) -> List[str]:
+def _tee(cmd: str, executable: str, abort_on_error: bool) -> Tuple[int, List[str]]:
     """
     Execute command "cmd", capturing its output and removing empty lines.
     :return: list of strings
     """
     _LOG.debug("cmd=%s executable=%s", cmd, executable)
-    _, output = si.system_to_string(cmd, abort_on_error=abort_on_error)
+    rc, output = si.system_to_string(cmd, abort_on_error=abort_on_error)
     dbg.dassert_isinstance(output, str)
     output1 = output.split("\n")
     _LOG.debug("output1= (%d)\n'%s'", len(output1), "\n".join(output1))
@@ -116,7 +116,7 @@ def _tee(cmd: str, executable: str, abort_on_error: bool) -> List[str]:
     output2 = prnt.remove_empty_lines_from_string_list(output1)
     _LOG.debug("output2= (%d)\n'%s'", len(output2), "\n".join(output2))
     _dassert_list_of_strings(output2)
-    return output2  # type: ignore
+    return rc, output2  # type: ignore
 
 
 # TODO(gp): Move to system_interactions.
@@ -496,7 +496,7 @@ class _Autoflake(_Action):
         #
         opts = "-i --remove-all-unused-imports --remove-unused-variables"
         cmd = self._executable + " %s %s" % (opts, file_name)
-        output = _tee(cmd, self._executable, abort_on_error=False)
+        _, output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
 
@@ -524,7 +524,7 @@ class _Yapf(_Action):
         #
         opts = "-i --style='google'"
         cmd = self._executable + " %s %s" % (opts, file_name)
-        output = _tee(cmd, self._executable, abort_on_error=False)
+        _, output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
 
@@ -552,7 +552,7 @@ class _Black(_Action):
         #
         opts = "--line-length 82"
         cmd = self._executable + " %s %s" % (opts, file_name)
-        output = _tee(cmd, self._executable, abort_on_error=False)
+        _, output = _tee(cmd, self._executable, abort_on_error=False)
         # Remove the lines:
         # - reformatted core/test/test_core.py
         # - 1 file reformatted.
@@ -586,7 +586,7 @@ class _Isort(_Action):
             return []
         #
         cmd = self._executable + " %s" % file_name
-        output = _tee(cmd, self._executable, abort_on_error=False)
+        _, output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
 
@@ -653,7 +653,7 @@ class _Flake8(_Action):
         opts += " --ignore=" + ",".join(ignore)
         cmd = self._executable + " %s %s" % (opts, file_name)
         #
-        output = _tee(cmd, self._executable, abort_on_error=True)
+        _, output = _tee(cmd, self._executable, abort_on_error=True)
         # Remove some errors.
         is_jupytext_code = is_paired_jupytext_file(file_name)
         _LOG.debug("is_jupytext_code=%s", is_jupytext_code)
@@ -794,7 +794,7 @@ class _Pyment(_Action):
             return []
         opts = "-w --first-line False -o reST"
         cmd = self._executable + " %s %s" % (opts, file_name)
-        output = _tee(cmd, self._executable, abort_on_error=False)
+        _, output = _tee(cmd, self._executable, abort_on_error=False)
         return output
 
 
@@ -938,7 +938,7 @@ class _Pylint(_Action):
         _dassert_list_of_strings(opts)
         opts_as_str = " ".join(opts)
         cmd = " ".join([self._executable, opts_as_str, file_name])
-        output = _tee(cmd, self._executable, abort_on_error=False)
+        _, output = _tee(cmd, self._executable, abort_on_error=False)
         # Remove some errors.
         output_tmp: List[str] = []
         for line in output:
@@ -984,7 +984,7 @@ class _Mypy(_Action):
             return []
         # TODO(gp): Convert all these idioms into arrays and joins.
         cmd = self._executable + " %s" % file_name
-        output = _tee(
+        _, output = _tee(
             cmd,
             self._executable,
             # mypy returns -1 if there are errors.
@@ -1131,7 +1131,10 @@ class _ProcessJupytext(_Action):
         if is_py_file(file_name) and is_paired_jupytext_file(file_name):
             cmd_opts = "-f %s --action %s" % (file_name, self._jupytext_action)
             cmd = self._executable + " " + cmd_opts
-            output = _tee(cmd, self._executable, abort_on_error=True)
+            rc, output = _tee(cmd, self._executable, abort_on_error=False)
+            if rc != 0:
+                error = "process_jupytext failed with command `%s`\n" % cmd
+                output.append(error)
         else:
             _LOG.debug("Skipping file_name='%s'", file_name)
         return output
@@ -1362,7 +1365,7 @@ class _LintMarkdown(_Action):
         cmd.append("-i %s" % file_name)
         cmd.append("--in_place")
         cmd_as_str = " ".join(cmd)
-        output = _tee(cmd_as_str, executable, abort_on_error=True)
+        _, output = _tee(cmd_as_str, executable, abort_on_error=True)
         # Remove cruft.
         output = [l for l in output if "Saving log to file" not in l]
         return output
