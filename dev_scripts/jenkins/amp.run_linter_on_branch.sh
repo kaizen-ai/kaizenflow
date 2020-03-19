@@ -70,7 +70,7 @@ fi
 message=${message}" master_lints: $master_lints, branch_lints: $branch_lints.\n"
 
 if [[ "master_dirty" -gt 0 ]] ; then
-  message=${message}"\`master(sha: ${data_pull_request_base_sha})\` branch were dirty after linter.\n"
+  message=${message}"Branch \`master(sha: ${data_pull_request_base_sha})\` branch were dirty after linter.\n"
 fi
 
 if [[ "$branch_dirty" -gt 0 ]] ; then
