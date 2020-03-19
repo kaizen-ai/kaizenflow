@@ -1137,6 +1137,7 @@ class _ProcessJupytext(_Action):
             if rc != 0:
                 error = "process_jupytext failed with command `%s`\n" % cmd
                 output.append(error)
+                _LOG.error(output)
         else:
             _LOG.debug("Skipping file_name='%s'", file_name)
         return output
