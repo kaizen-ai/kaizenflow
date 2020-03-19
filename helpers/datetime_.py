@@ -5,7 +5,7 @@ import helpers.datetime_ as hdt
 """
 
 import datetime
-from typing import Union
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -14,8 +14,12 @@ import helpers.dbg as dbg
 DATETIME_TYPE = Union[pd.Timestamp, datetime.datetime]
 
 
-def get_timestamp() -> str:
-    return datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+def get_timestamp(utc: Optional[bool] = None) -> str:
+    if utc:
+        timestamp = datetime.datetime.now()
+    else:
+        timestamp = datetime.datetime.utcnow()
+    return timestamp.strftime("%Y%m%d_%H%M%S")
 
 
 def check_et_timezone(dt: DATETIME_TYPE) -> bool:
