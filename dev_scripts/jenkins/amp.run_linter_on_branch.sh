@@ -62,16 +62,18 @@ echo "Lints in master: ${branch_lints}."
 # Prepares a message and exit status
 message="## Automatically generated report (${JOB_NAME})\nConsole url: ${console_url}\n"
 exit_status=0
+
 if [[ "$master_lints" -lt "$branch_lints" ]] ; then
-message=${message}"Number of lints were increased."
-exit_status=1
+  message=${message}"Number of lints were increased."
+  exit_status=1
 fi
 message=${message}" master_lints: $master_lints, branch_lints: $branch_lints.\n"
 
 if [[ "master_dirty" -gt 0 ]] ; then
-message=${message}"\`master(sha: ${data_pull_request_base_sha})\` branch were dirty after linter.\n"
+  message=${message}"\`master(sha: ${data_pull_request_base_sha})\` branch were dirty after linter.\n"
 fi
+
 if [[ "$branch_dirty" -gt 0 ]] ; then
-message=${message}"Branch `data_pull_request_head_ref` is dirty after linter."
-exit_status=1
+  message=${message}"Branch `data_pull_request_head_ref` is dirty after linter."
+  exit_status=1
 fi
