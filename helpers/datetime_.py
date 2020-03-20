@@ -14,8 +14,12 @@ import helpers.dbg as dbg
 DATETIME_TYPE = Union[pd.Timestamp, datetime.datetime]
 
 
-def get_timestamp() -> str:
-    return datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+def get_timestamp(utc: bool = False) -> str:
+    if utc:
+        timestamp = datetime.datetime.utcnow()
+    else:
+        timestamp = datetime.datetime.now()
+    return timestamp.strftime("%Y%m%d_%H%M%S")
 
 
 def check_et_timezone(dt: DATETIME_TYPE) -> bool:
@@ -24,7 +28,8 @@ def check_et_timezone(dt: DATETIME_TYPE) -> bool:
 
     tzinfo = dt.tzinfo
     dbg.dassert(tzinfo, "Timestamp should be tz-aware.")
-    ret = tzinfo.zone in (
+    zone = tzinfo.zone  # type: ignore
+    ret = zone in (
         pytz.timezone("US/Eastern").zone,
         pytz.timezone("America/New_York").zone,
     )
@@ -35,7 +40,7 @@ def check_et_timezone(dt: DATETIME_TYPE) -> bool:
         type(dt),
         tzinfo,
         type(tzinfo),
-        tzinfo.zone,
+        zone,
     )
     return True
 
