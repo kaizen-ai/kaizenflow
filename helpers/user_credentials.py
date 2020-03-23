@@ -231,6 +231,14 @@ def get_credentials() -> Dict[str, Any]:
         git_user_email = ""
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/var/lib/jenkins/.conda/envs"
+    # We use this for #1522
+    elif user_name == "root":
+        # Jenkins.
+        # Jenkins should not commit so it doesn't neet Git credentials.
+        git_user_name = ""
+        git_user_email = ""
+        conda_sh_path = "/opt/conda/etc/profile.d/conda.sh"
+        conda_env_path = "/root/.conda/envs/"
     # Check.
     for var_name, val_name in [
         ("git_user_name", git_user_name),
