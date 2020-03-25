@@ -114,9 +114,10 @@ class Config:
             else:
                 txt.append("%s: %s" % (k, v))
         ret = "\n".join(txt)
-        # Remove memory locations of functions, if config contains them.
+        # Remove memory locations of functions, if config contains them, e.g.,
+        # `function _filter_relevance at 0x7fe4e35b1a70`.
         memory_loc_pattern = r"(<function \w+) at \dx\w+"
-        ret = "".join(re.split(memory_loc_pattern, ret))
+        ret = re.sub(memory_loc_pattern, r"\1", ret)
         return ret
 
     def __repr__(self) -> str:
