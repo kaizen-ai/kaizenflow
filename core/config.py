@@ -7,6 +7,7 @@ import core.config as cfg
 import collections
 import copy
 import logging
+import re
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import helpers.dbg as dbg
@@ -113,6 +114,9 @@ class Config:
             else:
                 txt.append("%s: %s" % (k, v))
         ret = "\n".join(txt)
+        # Remove memory locations of functions, if config contains them.
+        memory_loc_pattern = r"(<function \w+) at \dx\w+"
+        ret = "".join(re.split(memory_loc_pattern, ret))
         return ret
 
     def __repr__(self) -> str:
