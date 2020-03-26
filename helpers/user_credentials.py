@@ -224,6 +224,15 @@ def get_credentials() -> Dict[str, Any]:
         # MaxParticle.
         git_user_name = "MaxParticle"
         git_user_email = "max@particle.one"
+    elif user_name == "asya":
+        # Asya.
+        git_user_name = "ultrasya"
+        git_user_email = "asya@particle.one"
+        jupyter_port = 9698
+        if server_name == "MacBook-Pro-Asa":
+            # Home laptop.
+            conda_sh_path = "/Users/asya/opt/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/Users/asya/.conda/envs"
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.
