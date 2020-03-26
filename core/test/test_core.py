@@ -267,6 +267,15 @@ class Test_config1(ut.TestCase):
         config1.update(config2)
         self.check_string(str(config1))
 
+    def test_config_with_function(self) -> None:
+        config = cfg.Config()
+        config[
+            "filters"
+        ] = "[(<function _filter_relevance at 0x7fe4e35b1a70>, {'thr': 90})]"
+        expected_result = "filters: [(<function _filter_relevance>, {'thr': 90})]"
+        actual_result = str(config)
+        self.assertEqual(actual_result, expected_result)
+
 
 # #############################################################################
 # dataflow_core.py
