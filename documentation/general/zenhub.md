@@ -85,7 +85,7 @@
 
 - = the work that the team is committed to tackle in a given Milestone
 
-## Mapping Agile concept onto GH
+# Mapping Agile concept onto GH
 
 ## GH Issues
 
@@ -99,7 +99,7 @@
 
 - = product backlog
 
-## ZenHub
+# ZenHub
 
 ## ZH vs GH
 
@@ -217,7 +217,7 @@ We distinguish Master Epics and non-master Epics
 - All issues (including non-master Epics) should belong to either Master Epic
 - Master Epics can be granulated to smaller Epics
   - Ex.: NLP - RP skateboard
-  - Their title should follow the pattern: "XYZ - ", where XYZ is a master Epic tilte
+  - Their title should follow the pattern: "XYZ - ", where XYZ is a master Epic title
    
 ### Non-master Epics
 
@@ -251,7 +251,7 @@ We distinguish Master Epics and non-master Epics
   - Sprint Candidates
   - Sprint Backlog
   - In Progress
-  - Reveiw/QA
+  - Review/QA
   - Done
   - Epic
   - Open Research
@@ -282,7 +282,7 @@ We distinguish Master Epics and non-master Epics
 
 - background issues to work on when you are blocked on the core task (waiting for a review, S3 problem, etc.)
 - background tasks can be selected from Backlog, Sprint Candidates, New Issues pipelines or filed
-  - backgound issues should be selected by each person independetly
+  - background issues should be selected by each person independently
   - each person should always have at least 3-4 background issues in the Pipeline
 - requirements to background issues:
   - issues you can work on independently
@@ -320,7 +320,7 @@ We distinguish Master Epics and non-master Epics
 ### Epic
 
 - all Epic issues
-  - bith Master Epics and non-master Epics
+  - both Master Epics and non-master Epics
   
 ### Open Research
 
@@ -392,7 +392,7 @@ We distinguish Master Epics and non-master Epics
     - Convert the issue into an Epic
     - Create a single task inside an Epic for breaking down the Epic into
       smaller tasks -- the planning task
-    - Put the planning task into SprintBacklog
+    - Put the planning task into Sprint Backlog
       - Max 2 points for planning how to break down an Epic
 - Then we select for each Team the Sprint in terms of a number of story points
   that is doable in 2 weeks
@@ -410,7 +410,7 @@ We distinguish Master Epics and non-master Epics
   duration of the entire review process
   - The Issue doesn't go back to "In progress"
   - We rely on GH emails / PR interface to know what needs to be reviewed
-- The issue stays in Review/QA pipleline until all PRs are merged. It means that
+- The issue stays in Review/QA pipeline until all PRs are merged. It means that
   - All tests are written
     - If tests are in a separate PR than the PR with tests should be merged
   - The documentation is updated
@@ -438,7 +438,7 @@ We distinguish Master Epics and non-master Epics
 
 ## Story Points aka Task Estimation
 
-- Each Atomic Issue &lt;= 5
+- Each Atomic Issue <= 5
   - If some is more complex, needs to turned into an Epic and be broken down
     into atomic issues
 - An Epic of course can have any complexity given by its components
@@ -460,8 +460,6 @@ We distinguish Master Epics and non-master Epics
   - It's probably a good idea to have priorities set in the sprint backlog, at
     least to mark P0 issues
   - Of course, priorities may change as we go, even inside a Sprint
-- TODO(\*): What do we do with the "Paused" label?
-  - Maybe change it into a pipeline? Or leave it as Label?
 
 ## Sprint Meetings
 
