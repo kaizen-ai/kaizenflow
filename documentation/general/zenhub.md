@@ -99,7 +99,7 @@
 
 - = product backlog
 
-## ZenHub
+# ZenHub
 
 ## ZH vs GH
 
@@ -109,8 +109,9 @@
 
 ## Workspaces
 
-- Allow you to bundle multiple GitHub repos into a single view
-- Different teams can create different pipeline structures for the same set of repos
+- Allows you to bundle multiple GitHub repos into a single view
+- Different teams can create different pipeline structure for the same set of
+  repos
   - Each team can have their own workflow
 
 ## Epics
@@ -180,7 +181,8 @@
 
 - Our project "XYZ:" (e.g., RP, ETL2, ...) become Epics
   - We can split projects into multiple Epics if the work theme is complex
-    - E.g., NLP Epic can be decomposed into multiple Epics, e.g., "NLP - RP analyses"
+    - E.g., NLP Epic can be decomposed into multiple Epics, e.g., "NLP - RP
+      analyses"
   - This is also equivalent to our purpose milestones (they become Epics)
 
 - Remove the project tags (at least moving forward)
@@ -195,7 +197,7 @@
 
 We distinguish Master Epics and non-master Epics
 
-### Master Epics 
+### Master Epics
 
 - Master Epics are long-running Epics ( = projects)
   - AUTOML
@@ -239,7 +241,7 @@ We distinguish Master Epics and non-master Epics
   - The Sprint is planned for each team (Dev, Tools, NLP, Product)
   - Then we merge the Issues selected for the Sprint in a single Milestone /
     Sprint for the entire company
-    
+
 ## Pipelines
 
 - We have the following Pipelines on the ZH board:
@@ -251,18 +253,19 @@ We distinguish Master Epics and non-master Epics
   - Sprint Candidates
   - Sprint Backlog
   - In Progress
-  - Reveiw/QA
+  - Review/QA
   - Done
   - Epic
   - Open Research
   - Working Design
   - Reading groups
   - Closed
-- Pipeline order is integral for the whole team, so make sure you are not changing the order of the pipelines on the board while working
+- Pipeline order is integral for the whole team, so make sure you are not
+  changing the order of the pipelines on the board while working
 
 ### New Issues
 
-- any new GH Issue is here
+- Any new GH Issue is here
 
 ### Junkyard
 
@@ -271,13 +274,13 @@ We distinguish Master Epics and non-master Epics
 
 ### Icebox
 
-- low priority, un-prioritized Issues
+- Low priority, un-prioritized Issues
 
 ### Backlog
 
 - = product backlog
-  - all issues that should be done to create a product
-  
+  - All issues that should be done to create a product
+
 ### Background tasks
 
 - background issues to work on when you are blocked on the core task
@@ -306,27 +309,28 @@ We distinguish Master Epics and non-master Epics
   
 ### Sprint Candidates
 
-- issues that we want to include in the following Sprint
-  - they are usually higher priority issues than issues we have in Backlog
+- Issues that we want to include in the following Sprint
+  - They are usually higher priority issues than issues we have in Backlog
 
 ### In progress
 
-- issues that we are currently working on
+- Issues that we are currently working on
 
 ### Review / QA
 
-- issues opened for review and testing
-- code is ready to be deployed pending feedback
-- issues stay in Review/QA pipeline while being reviewed
+- Issues opened for review and testing
+- Code is ready to be deployed pending feedback
+- Issues stay in Review/QA pipeline while being reviewed
 
 ### Epic
 
-- all Epic issues
-  - both Master Epics and non-master Epics
-  
+- All Epic issues
+  - Both Master Epics and non-master Epics
+
 ### Open Research
 
-- Contains Issues with exploratory analysis that might be completed, but whose implications are still unknown
+- Contains Issues with exploratory analysis that might be completed, but whose
+  implications are still unknown
 
 ### Working Design
 
@@ -347,8 +351,8 @@ We distinguish Master Epics and non-master Epics
 
 ### Closed
 
-- issues that are done and don't need a followup
-  - issues are moved from Done to Closed by GP & Paul
+- Issues that are done and don't need a followup
+  - Issues are moved from Done to Closed by GP & Paul
 
 ## Sprint Backlog
 
@@ -367,13 +371,15 @@ We distinguish Master Epics and non-master Epics
     bug
   - For development we want to be a little stricter so as to avoid going off on a
     tangent, as long as we agree that's the right approach in the specific case
-- All issues in Sprint Backlog and forward (all Pipelines to the right) should be assigned
-  - Assign Issue to the one who actually does the work
+- All issues in Sprint Backlog and forward (all Pipelines to the right) should
+  be assigned
+  - Assign Issue to who actually does the work
     - Avoid adding / removing people to the bug just to do some part of the job
-    - If you want someone to have a look at the issue and comment on it without actually working on it, just tag them in a comment
-        - @OlgaVakhonina can you please ...
-  - If you don’t know whom to assign the issue to, assign it to yourself 
-  - If you don’t know what to do, you assign it to GP + Paul for rerouting
+    - If you want someone to have a look at the issue and comment on it without
+      actually working on it, just tag them in a comment
+      - @OlgaVakhonina can you please ...
+  - If you don't know whom to assign the issue to, assign it to yourself
+  - If you don't know what to do, you assign it to GP + Paul for rerouting
 
 ## Workflow
 
@@ -388,20 +394,22 @@ We distinguish Master Epics and non-master Epics
   - Issues are ranked in terms of business value
     - In our case it corresponds to next product milestones, servicing
       customers, and so on
-- Each Team estimates each of their Issues in Sprint Candidates in terms of story
-  points
+- Each Team estimates each of their Issues in Sprint Candidates in terms of
+  story points
   - If an issue you want to put in Sprint Candidates is a potential Epic:
     - Convert the issue into an Epic
     - Create a single task inside an Epic for breaking down the Epic into
       smaller tasks -- the planning task
-    - Put the planning task into SprintBacklog
+    - Put the planning task into Sprint Backlog
       - Max 2 points for planning how to break down an Epic
 - Then we select for each Team the Sprint in terms of a number of story points
   that is doable in 2 weeks
   - Initially we assume 2 story points = 1 day, so for the sprint is 20 points
     per Team member
   - We will then refine the estimates using Velocity charts
-- Production tasks which were originally not included to the Sprint, but are urgent (like "Particle website reanimation") should be added to the current Sprint (Milestone in ZH) and estimated
+- Production tasks which were originally not included to the Sprint, but are
+  urgent (like "Particle website reanimation") should be added to the current
+  Sprint (Milestone in ZH) and estimated
   - We want to have fair Burndown reports
 
 ### Moving Tasks Between Pipelines Workflow
@@ -412,35 +420,39 @@ We distinguish Master Epics and non-master Epics
   duration of the entire review process
   - The Issue doesn't go back to "In progress"
   - We rely on GH emails / PR interface to know what needs to be reviewed
-- The issue stays in Review/QA pipleline until all PRs are merged. It means that
+- The issue stays in Review/QA pipeline until all PRs are merged. It means that
   - All tests are written
     - If tests are in a separate PR than the PR with tests should be merged
   - The documentation is updated
-      - If the issue requires a documentation update than the PR with documentation update should be merged
+    - If the issue requires a documentation update than the PR with
+      documentation update should be merged
   - When all the PRs are merged, the assignee moves the Issue to "Done"
   - The assignee doesn't close the GH issue, but only moves it to the "Done"
     pipeline in ZH
 - GP & P see if new Issues need to be filed as follow up (or maybe a touch up)
   - Once there is nothing else to do, GP & P move the Issue to "Close"
-  - If an issue stays in Done for 2 sprints in a row, it is closed automatically (by Olga)
-  
+  - If an issue stays in Done for 2 sprints in a row, it is closed automatically
+    (by Olga)
+
 ## Issue Properties
 
 - When filing an issue
-  - Add a title for the issue
-      - no need for a period at the end of the title
+  - Add title for the issue
+    - No need to for a period at the end of the title
   - Add issue to a Master Epic
   - Add issue to a non-master Epic, if needed
 - When working on an issue
-  - Make sure the issue is assigned to you / you and other people who are working on it
+  - Make sure the issue is assigned to you / you and other people who are
+    working on it
   - Make sure the issue belongs to the current sprint
   - Make sure the issue is properly estimated
-    - If the difficulty of the issue changes while you are working on it, update its estimate
+    - If the difficulty of the issue changes while you are working on it, update
+      its estimate
   - Make sure the issue is situated in the correct Pipeline
 
 ## Story Points aka Task Estimation
 
-- Each Atomic Issue &lt;= 5
+- Each Atomic Issue <= 5
   - If some is more complex, needs to turned into an Epic and be broken down
     into atomic issues
 - An Epic of course can have any complexity given by its components
@@ -462,8 +474,6 @@ We distinguish Master Epics and non-master Epics
   - It's probably a good idea to have priorities set in the sprint backlog, at
     least to mark P0 issues
   - Of course, priorities may change as we go, even inside a Sprint
-- TODO(\*): What do we do with the "Paused" label?
-  - Maybe change it into a pipeline? Or leave it as Label?
 
 ## Sprint Meetings
 
