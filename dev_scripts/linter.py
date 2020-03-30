@@ -183,6 +183,10 @@ def _get_files(args: argparse.Namespace) -> List[str]:
             dir_name = "."
             dst_branch = "master"
             file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
+        elif args.target_branch:
+            dir_name = "."
+            dst_branch = args.target_branch
+            file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
         elif args.dir_name:
             if args.dir_name == "$GIT_ROOT":
                 dir_name = git.get_client_root(super_module=True)
@@ -1755,6 +1759,13 @@ def _parse() -> argparse.ArgumentParser:
         "--modified_files_in_branch",
         action="store_true",
         help="Select files modified in current branch with respect to master",
+    )
+    parser.add_argument(
+        "-t",
+        "--target_branch",
+        action="store",
+        type=str,
+        help="Select files modified in current branch with respect to `target_branch`.",
     )
     parser.add_argument(
         "-d",
