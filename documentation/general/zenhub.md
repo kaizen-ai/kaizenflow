@@ -85,7 +85,7 @@
 
 - = the work that the team is committed to tackle in a given Milestone
 
-## Mapping Agile concept onto GH
+## Mapping Agile concepts onto GH
 
 ## GH Issues
 
@@ -109,8 +109,8 @@
 
 ## Workspaces
 
-- Allows you to bundle multiple GitHub repos into a single view
-- Different teams can create different pipeline structure for the same set of repos
+- Allow you to bundle multiple GitHub repos into a single view
+- Different teams can create different pipeline structures for the same set of repos
   - Each team can have their own workflow
 
 ## Epics
@@ -214,16 +214,16 @@ We distinguish Master Epics and non-master Epics
   - RESEARCH
   - TOOLS
   - WIND 
-- All issues (including non-master Epics) should belong to either Master Epic
-- Master Epics can be granulated to smaller Epics
+- All issues (including non-master Epics) should belong to a Master Epic
+- Master Epics can be broken down into smaller Epics
   - Ex.: NLP - RP skateboard
-  - Their title should follow the pattern: "XYZ - ", where XYZ is a master Epic tilte
+  - Their title should follow the pattern: "XYZ - ", where XYZ is a master Epic title
    
 ### Non-master Epics
 
-- Non-master Epics should have a short title and have a smaller scope
-- Non-master Epics should belong to either Master Epic
-- Epic can be moved to Done only if all issues nested in it are moved to
+- Non-master Epics should have a short title and a smaller scope
+- Non-master Epics should belong to a Master Epic
+- An epic can be moved to Done only if all issues nested in it are moved to
   Done
 - Organically it's ok to have as many levels of the Epic as needed
   - No need to keep the Epics super well organized in a hierarchy (no Epic
@@ -242,7 +242,7 @@ We distinguish Master Epics and non-master Epics
     
 ## Pipelines
 
-- We have the following Pipelines on ZH board:
+- We have the following Pipelines on the ZH board:
   - New Issues
   - Junkyard
   - Icebox
@@ -258,7 +258,7 @@ We distinguish Master Epics and non-master Epics
   - Working Design
   - Reading groups
   - Closed
-- Pipelines order is integral for the whole team, so make sure you are not changing the order of the pipelines on the board while working
+- Pipeline order is integral for the whole team, so make sure you are not changing the order of the pipelines on the board while working
 
 ### New Issues
 
@@ -280,20 +280,22 @@ We distinguish Master Epics and non-master Epics
   
 ### Background tasks
 
-- background issues to work on when you are blocked on the core task (waiting for a review, S3 problem, etc.)
-- background tasks can be selected from Backlog, Sprint Candidates, New Issues pipelines or filed
-  - backgound issues should be selected by each person independetly
+- background issues to work on when you are blocked on the core task
+  (waiting for a review, S3 problem, etc.)
+- background tasks can be selected from Backlog, Sprint Candidates, New Issues
+  pipelines or filed
+  - backgound issues should be selected by each person independently
   - each person should always have at least 3-4 background issues in the Pipeline
-- requirements to background issues:
+- requirements for background issues:
   - issues you can work on independently
     - e.g., refactoring, adding unit tests, linting your code
   - relevant to our recent work as a team
     - e.g., something related to the old Twitter pipeline is obsolete
-  - issues with small interaction with other people’s work including your current work
+  - issues with little interaction with other people’s work including your current work
     - e.g., renaming something in the entire codebase is going to interact with everybody
-  - technical debt: something that you keep hitting and it makes you slow down in your daily job
+  - technical debt: something that you keep hitting and that slows you down in your daily work 
   - reading documentation
-- to convert a task to background issue / file a background issue
+- to convert a task to a background issue / file a background issue
   - assign it to yourself
   - add it to master Epic
   - add the label "Background" to it
@@ -320,7 +322,7 @@ We distinguish Master Epics and non-master Epics
 ### Epic
 
 - all Epic issues
-  - bith Master Epics and non-master Epics
+  - both Master Epics and non-master Epics
   
 ### Open Research
 
@@ -339,7 +341,7 @@ We distinguish Master Epics and non-master Epics
 
 - Definition of Done for an issue:
   - PR which is connected to the issue is merged
-    - if there are more than 1 PR, all PRs should be merged
+    - if there is more than one PR, all PRs should be merged
   - all tests are written 
   - if an issue requires updating documentation, PR with documentation update is merged
 
@@ -354,7 +356,7 @@ We distinguish Master Epics and non-master Epics
   - Since we just started to use the system, we may overplan sprints (add more
     issues than we can complete)
     - It's better to overplan than underplan
-  - All tasks that we didn't compete during the current sprint (e.g., there was
+  - All tasks that we didn't complete during the current sprint (e.g., there was
     some work done on the task, but it wasn't completed) are automatically
     transferred to the next sprint, unless they need to be de-prioritize for
     some reason
@@ -363,10 +365,10 @@ We distinguish Master Epics and non-master Epics
   Backlog
   - This can happen for research when one Issue organically leads to a follow up
     bug
-  - For development we want to be a little more strict to avoid to go for a
+  - For development we want to be a little stricter so as to avoid going off on a
     tangent, as long as we agree that's the right approach in the specific case
 - All issues in Sprint Backlog and forward (all Pipelines to the right) should be assigned
-  - Assign Issue to who actually does the work
+  - Assign Issue to the one who actually does the work
     - Avoid adding / removing people to the bug just to do some part of the job
     - If you want someone to have a look at the issue and comment on it without actually working on it, just tag them in a comment
         - @OlgaVakhonina can you please ...
@@ -425,8 +427,8 @@ We distinguish Master Epics and non-master Epics
 ## Issue Properties
 
 - When filing an issue
-  - Add title for the issue
-      - no need to for a period at the end of the title
+  - Add a title for the issue
+      - no need for a period at the end of the title
   - Add issue to a Master Epic
   - Add issue to a non-master Epic, if needed
 - When working on an issue
