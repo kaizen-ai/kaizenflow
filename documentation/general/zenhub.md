@@ -110,8 +110,8 @@
 ## Workspaces
 
 - Allows you to bundle multiple GitHub repos into a single view
-- Different teams can create different pipeline structure for the same set of
-  repos
+- Different teams (or team members) can create different
+  pipeline structures for the same set of repos
   - Each team can have their own workflow
 
 ## Epics
@@ -121,7 +121,7 @@
 - Tasks are broken down into small, manageable chunks
 - An Epic is a "big user story"
 
-### Epics vs GH Issues
+## Epics vs GH Issues
 
 - GH issues have no hierarchy: they are a list
   - Which issues are related, which are blocked, or dependent?
@@ -236,9 +236,9 @@ We distinguish Master Epics and non-master Epics
 - Sprints are numbered and have a commodity name
   - E.g., "Sprint1 - Gold", "Sprint2 - Natural gas"
 - We have a single Sprint for the entire company, since the teams (Dev, Tools,
-  NLP, Product) are only a convenience to split the work (but we win or lose
+  NLP, AutoML) are only a convenience to split the work (but we win or lose
   together)
-  - The Sprint is planned for each team (Dev, Tools, NLP, Product)
+  - The Sprint is planned for each team (Dev, Tools, NLP, AutoML)
   - Then we merge the Issues selected for the Sprint in a single Milestone /
     Sprint for the entire company
 
@@ -493,7 +493,7 @@ We distinguish Master Epics and non-master Epics
   - Start on 10 am EST
     - ~30 mins each per team
     - Need to schedule for the team based on their personal preferences
-  - Sprint planning in groups: Dev, Tools, Product, NLP
+  - Sprint planning in groups: Dev, Tools, AutoML, Max, NLP
 - Wed group meetings
   - Usual group sync-ups
 - Friday meeting with Olga
