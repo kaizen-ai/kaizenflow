@@ -1431,3 +1431,38 @@ def describe_df(
     if sort_by_uniq_num:
         res_df.sort("num uniq", inplace=True)
     _LOG.log(log_level, "res_df=\n%s", res_df)
+
+
+def to_qgrid(df: pd.DataFrame) -> Any:
+    import qgrid
+
+    grid_options = {
+        "fullWidthRows": True,
+        "syncColumnCellResize": True,
+        # This parameter allows to extend column width to readable size a scroll to the left.
+        # Is True by default
+        "forceFitColumns": False,
+        "rowHeight": 28,
+        "enableColumnReorder": False,
+        "enableTextSelectionOnCells": True,
+        "editable": True,
+        "autoEdit": False,
+    }
+    df = df.copy()
+    if not df.index.name:
+        df.index.name = "index"
+    qgrid_widget = qgrid.show_grid(
+        df, show_toolbar=True, grid_options=grid_options
+    )
+    if False:
+        # TODO(gp): Make this general.
+        # qgrid can only either add a predefined row (list of tuples) or copy
+        # the last row of the df. Adding a single empty row is only possible in
+        # this way - dataframe must a have numeric index. But since now the
+        # last row is empty we can create new rows by duplicating it with qgrid
+        # built-in functionality.
+        empty_row = [("source_number", df.shape[0])] + [
+            (colname, None) for colname in df.columns
+        ]
+        qgrid_widget.add_row(row=empty_row)
+    return qgrid_widget
