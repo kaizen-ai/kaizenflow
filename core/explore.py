@@ -373,8 +373,16 @@ def print_column_variability(
     res = []
     for c in tqdm.tqdm(df.columns):
         vals = df[c].unique()
-        min_val = min(vals)
-        max_val = max(vals)
+        try:
+            min_val = min(vals)
+        except TypeError as e:
+            _LOG.debug("Column='%s' reported %s", c, e)
+            min_val = "nan"
+        try:
+            max_val = max(vals)
+        except TypeError as e:
+            _LOG.debug("Column='%s' reported %s", c, e)
+            max_val = "nan"
         if len(vals) <= max_num_vals:
             txt = ", ".join(map(str, vals))
         else:
