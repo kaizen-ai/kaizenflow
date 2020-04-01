@@ -10,6 +10,7 @@
 
 ## Some documentation
 
+- GitHub: <https://github.com/quantopian/qgrid>
 - Official documentation: <https://qgrid.readthedocs.io/en/latest>
 - Interesting demo:
   <https://mybinder.org/v2/gh/quantopian/qgrid-notebooks/master?filepath=index.ipynb>
