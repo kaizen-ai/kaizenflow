@@ -90,6 +90,8 @@ def get_credentials() -> Dict[str, Any]:
     #
     user_name = si.get_user_name()
     server_name = si.get_server_name()
+    _LOG.debug("user_name='%s'", user_name)
+    _LOG.debug("server_name='%s'", server_name)
     git_repo_name = git.get_repo_symbolic_name(super_module=True)
     # Values to assign.
     git_user_name = ""
@@ -224,6 +226,15 @@ def get_credentials() -> Dict[str, Any]:
         # MaxParticle.
         git_user_name = "MaxParticle"
         git_user_email = "max@particle.one"
+    elif user_name == "asya":
+        # Asya.
+        git_user_name = "ultrasya"
+        git_user_email = "asya@particle.one"
+        jupyter_port = 9698
+        if server_name == "MacBook-Pro-Asa.local":
+            # Home laptop.
+            conda_sh_path = "/Users/asya/opt/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/Users/asya/.conda/envs"
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.
@@ -284,6 +295,7 @@ def get_credentials() -> Dict[str, Any]:
         "notebook_html_path": notebook_html_path,
         "notebook_backup_path": notebook_backup_path,
     }
+    _LOG.debug("Credentials: %s", ret)
     return ret
 
 
