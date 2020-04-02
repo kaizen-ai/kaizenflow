@@ -129,11 +129,13 @@ class Test_jack1(ut.TestCase):
 
     # TODO(gp): Not clear why it's broken.
     @pytest.mark.skipif('si.get_user_name() == "jenkins"')
+    @pytest.mark.skipif('si.get_user_name() == "root"', reason="Issue #1522")
     def test_jack(self) -> None:
         cmd = 'jack -r "def dassert"'
         si.system(cmd)
 
     @pytest.mark.skipif('si.get_user_name() == "jenkins"')
+    @pytest.mark.skipif('si.get_user_name() == "root"', reason="Issue #1522")
     def test_jackpy(self) -> None:
         cmd = 'jackpy -r "def dassert"'
         si.system(cmd)
