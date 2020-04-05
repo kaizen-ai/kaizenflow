@@ -27,9 +27,11 @@ function backup_and_update() {
     OPTS="-d $FILE_NAME"
     label
 
-    # Update.
-    OPTS="-m $SRC_NAME"
-    label
+    if [[ 1 == 0 ]]; then
+        # Update.
+        OPTS="-m $SRC_NAME"
+        label
+    fi;
 }
 
 

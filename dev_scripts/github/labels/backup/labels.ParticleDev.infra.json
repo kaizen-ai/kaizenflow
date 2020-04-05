@@ -5,11 +5,6 @@
     "description": "Something that can be fixed quickly, if you have 1 hr of spare time"
   },
   {
-    "name": "Background",
-    "color": "#1d76db",
-    "description": "Issues to work on when blocked on primary tasks"
-  },
-  {
     "name": "Blocked",
     "color": "#5319e7",
     "description": "Blocked"
@@ -80,26 +75,6 @@
     "description": "Low priority"
   },
   {
-    "name": "PR_GP_approved",
-    "color": "#ff0000",
-    "description": ""
-  },
-  {
-    "name": "PR_Paul_approved",
-    "color": "#40d169",
-    "description": ""
-  },
-  {
-    "name": "PR_changes_required",
-    "color": "#fff3b5",
-    "description": "The review is back to the author for being approved"
-  },
-  {
-    "name": "PR_to_review",
-    "color": "#1c508c",
-    "description": ""
-  },
-  {
     "name": "Paused",
     "color": "#fbca04",
     "description": "After some work was done on this bug, it was paused"
@@ -133,6 +108,11 @@
     "name": "Unclear",
     "color": "#eeeeee",
     "description": "Issue is unclear or invalid"
+  },
+  {
+    "name": "Won't fix",
+    "color": "#eeeeee",
+    "description": "We will not fix this bug"
   },
   {
     "name": "Wontfix",
