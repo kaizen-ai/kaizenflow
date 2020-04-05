@@ -23,12 +23,14 @@ function label() {
 
 function backup_and_update() {
     # Backup.
-    FILE_NAME="$DST_DIR/labels.$OWNER.$REPO.json"
-    OPTS="-d $FILE_NAME"
-    label
+    if [[ 1 == 1 ]]; then
+        FILE_NAME="$DST_DIR/labels.$OWNER.$REPO.json"
+        OPTS="-d $FILE_NAME"
+        label
+    fi;
 
-    if [[ 1 == 0 ]]; then
-        # Update.
+    # Update.
+    if [[ 0 == 1 ]]; then
         OPTS="-m $SRC_NAME"
         label
     fi;

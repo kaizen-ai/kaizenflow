@@ -5,6 +5,11 @@
     "description": "Something that can be fixed quickly, if you have 1 hr of spare time"
   },
   {
+    "name": "Background",
+    "color": "#1d76db",
+    "description": "Issues to work on when blocked on primary tasks"
+  },
+  {
     "name": "Blocked",
     "color": "#5319e7",
     "description": "Blocked"
@@ -73,6 +78,26 @@
     "name": "P2",
     "color": "#888800",
     "description": "Low priority"
+  },
+  {
+    "name": "PR_GP_approved",
+    "color": "#ff0000",
+    "description": ""
+  },
+  {
+    "name": "PR_Paul_approved",
+    "color": "#40d169",
+    "description": ""
+  },
+  {
+    "name": "PR_changes_required",
+    "color": "#fff3b5",
+    "description": "The review is back to the author for being approved"
+  },
+  {
+    "name": "PR_to_review",
+    "color": "#1c508c",
+    "description": ""
   },
   {
     "name": "Paused",
