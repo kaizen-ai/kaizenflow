@@ -362,6 +362,7 @@ if __name__ == "main":
         """
         return txt
 
+    @pytest.mark.skipif('si.get_user_name() == "root"', reason="Issue #1522")
     def test_linter1(self) -> None:
         """
         Run linter.py as executable on some text.
