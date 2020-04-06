@@ -185,8 +185,7 @@
       analyses"
   - This is also equivalent to our purpose milestones (they become Epics)
 
-- Remove the project tags (at least moving forward)
-  - A quick tool to clean up the tags from the bugs
+- Remove the project tags
 
 - Give priority to the project
   - E.g., AutoML doc -> Add doc
@@ -195,7 +194,7 @@
 
 ## Epics
 
-We distinguish Master Epics and non-master Epics
+We distinguish Master Epics and non-master Epics ( =sub-epics)
 
 ### Master Epics
 
@@ -216,15 +215,16 @@ We distinguish Master Epics and non-master Epics
   - RESEARCH
   - TOOLS
   - WIND 
-- All issues (including non-master Epics) should belong to a Master Epic
-- Master Epics can be broken down into smaller Epics
+- Master Epics can be broken down into smaller Epics ( =sub-epics)
   - Ex.: NLP - RP skateboard
   - Their title should follow the pattern: "XYZ - ", where XYZ is a master Epic title
+- Each issue should belong to an Epic: either a sub-epic or a master Epic
+  - There is no need to add an issue to a Master Epic if it is already added to a sub-epic
    
 ### Non-master Epics
 
-- Non-master Epics should have a short title and a smaller scope
-- Non-master Epics should belong to a Master Epic
+- Sub-epics should have a short title and a smaller scope
+- Sub-epics should belong to a Master Epic
 - An epic can be moved to Done only if all issues nested in it are moved to
   Done
 - Organically it's ok to have as many levels of the Epic as needed
@@ -300,7 +300,7 @@ We distinguish Master Epics and non-master Epics
   - reading documentation
 - to convert a task to a background issue / file a background issue
   - assign it to yourself
-  - add it to master Epic
+  - add it to a sub-epic or a Master Epic
   - add the label "Background" to it
 - when you start working on a background task
   - add it to the current Milestone ( = Sprint)
@@ -325,7 +325,7 @@ We distinguish Master Epics and non-master Epics
 ### Epic
 
 - All Epic issues
-  - Both Master Epics and non-master Epics
+  - Both Master Epics and sub-epics
 
 ### Open Research
 
@@ -439,8 +439,7 @@ We distinguish Master Epics and non-master Epics
 - When filing an issue
   - Add title for the issue
     - No need to for a period at the end of the title
-  - Add issue to a Master Epic
-  - Add issue to a non-master Epic, if needed
+  - Add issue to a sub-epic (or a Master Epic, if it doesn't belong to any sub-epics)
 - When working on an issue
   - Make sure the issue is assigned to you / you and other people who are
     working on it
