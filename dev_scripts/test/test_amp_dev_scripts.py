@@ -375,6 +375,7 @@ if __name__ == "main":
         # Check.
         self.check_string(output)
 
+    @pytest.mark.skipif('si.get_user_name() == "root"', reason="Issue #1522")
     def test_linter2(self) -> None:
         """
         Run linter.py as library on some text.
