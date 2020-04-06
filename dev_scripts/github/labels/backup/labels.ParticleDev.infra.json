@@ -135,6 +135,11 @@
     "description": "Issue is unclear or invalid"
   },
   {
+    "name": "Won't fix",
+    "color": "#eeeeee",
+    "description": "We will not fix this bug"
+  },
+  {
     "name": "Wontfix",
     "color": "#eeeeee",
     "description": "We will not fix this bug"
