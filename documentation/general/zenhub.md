@@ -110,7 +110,8 @@
 ## Workspaces
 
 - Allows you to bundle multiple GitHub repos into a single view
-- Different teams (or team members) can create different pipeline structures for the same set of repos
+- Different teams (or team members) can create different pipeline structures
+for the same set of repos
   - Each team can have their own workflow
 
 ## Epics
@@ -311,25 +312,25 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   
 ### Sprint Backlog
 
-- Issues that we plan to acomplish during the Sprint 
-- We try to remain Sprint backlog fixed during the Sprint
-- However it's ok to create followup Issues and add them to the current Sprint
+- Issues that we plan to accomplish during the Sprint 
+- We try to keep the Sprint Backlog fixed during the Sprint
+- However it's ok to create follow-up Issues and add them to the current Sprint
   Backlog
   - We want to be flexible even inside the Sprint
     - Especially since almost all issues include a great deal of research
-  - This can happen for research when one Issue organically leads to a follow up
+  - This can happen for research when one Issue organically leads to a follow-up
     bug
   - For development we want to be a little stricter so as to avoid going off on a
     tangent, as long as we agree that's the right approach in the specific case
 - All issues in Sprint Backlog and forward (all Pipelines to the right) should
   be assigned
-  - Assign Issue to who actually does the work
+  - Assign Issue to the one who actually does the work
     - Avoid adding / removing people to the bug just to do some part of the job
     - If you want someone to have a look at the issue and comment on it without
       actually working on it, just tag them in a comment
       - @OlgaVakhonina can you please ...
   - If you don't know whom to assign the issue to, assign it to yourself
-  - If you don't know what to do, you assign it to GP + Paul for rerouting
+  - If you don't know what to do, assign it to GP + Paul for rerouting
 
 ### In progress
 
@@ -387,9 +388,9 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
     - In our case it corresponds to next product milestones, servicing
       customers, and so on
   - No need to estimate Issues in Sprint Candidates
-- At the beginning of each Sprint we select issues which we want to accomplish during this Sprint
+- At the beginning of each Sprint we select issues that we want to complete during the Sprint
   - These issues go to Sprint Backlog pipeline
-  - All issues which are added to Sprint Backlog should be estimated
+  - All issues that are added to Sprint Backlog should be estimated
   - No need to add these issues to current Sprint milestone at this point
 - We plan Sprint backlog for each Team in terms of a number of story points
   that is doable in 2 weeks
@@ -410,7 +411,7 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   duration of the entire review process
   - The Issue doesn't go back to "In progress"
   - We rely on GH emails / PR interface to know what needs to be reviewed
-- As soon as the Issue is moved to Review/QA pipleline, it should be added to the currnet Sprint milestone
+- As soon as the Issue is moved to Review/QA pipleline, it should be added to the current Sprint milestone
 - The issue stays in Review/QA pipeline until all PRs are merged. It means that
   - All tests are written
     - If tests are in a separate PR than the PR with tests should be merged
@@ -486,7 +487,7 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
     - ~30 mins each per team
     - Need to schedule for the team based on their personal preferences
   - Sprint planning in groups: Dev, Tools, AutoML, Max, NLP
-- Thr group meetings
+- Thursday group meetings
   - Usual group sync-ups
 - Friday meeting with Olga
   - 30 mins max
