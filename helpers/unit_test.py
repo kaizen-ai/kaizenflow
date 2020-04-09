@@ -13,7 +13,7 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, List, NoReturn, Optional
+from typing import Any, List, NoReturn, Optional, Iterable, Mapping, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,6 +24,7 @@ import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as prnt
 import helpers.system_interaction as si
+import collections
 
 _LOG = logging.getLogger(__name__)
 
@@ -75,6 +76,88 @@ def in_unit_test_mode() -> bool:
 
 
 # #############################################################################
+
+
+def _df_to_check_string(
+    title: str,
+    df: Union[pd.DataFrame, pd.Series],
+    n_rows: int,
+    info: collections.OrderedDict,
+) -> str:
+    """
+    Transform DataFrame or Series and info to string for checking test results.
+
+    :param title: title for test output
+    :param df: DataFrame to be checked
+    :param n_rows: Number of rows in expected output
+    :param info: info to include in output
+    :return: string output for checking
+    """
+    output = []
+    output.append(prnt.frame(title))
+    # Provide context for full representation of data.
+    with pd.option_context(
+                "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
+        ):
+        # Add top N rows.
+        output.append(df.head(n_rows).to_string(index=False))
+        # Add info.
+        output.append(prnt.frame("info"))
+        output.append(pprint.pformat(info))
+        output_str = "\n".join(output)
+    return output_str
+
+
+def get_ordered_value_counts(column: pd.Series) -> pd.Series:
+    """
+    Get column value counts and sort.
+
+    Value counts are sorted alphabetically by index, and then counts in
+    descending order. The order of indices with the same count is
+    alphabetical, which makes the string representation of the same series
+    predictable.
+
+    The output of `value_counts` without sort arranges indices with same
+    counts randomly, which makes tests dependent on string comparison
+    impossible.
+
+
+    :param column: column for value counts
+    :return: counts ordered by index and values
+    """
+    value_counts = column.value_counts()
+    value_counts = value_counts.sort_index()
+    value_counts = value_counts.sort_values(ascending=False)
+    return value_counts
+
+
+def get_value_counts_for_info(
+        df: pd.DataFrame, columns: Optional[Iterable] = None
+) -> Mapping[str, pd.Series]:
+    """
+    Get value counts for multiple columns.
+
+    The function creates a dict of value counts for each passed column. The
+    values in each resulting series are sorted first by value, then alphabetically
+    by index to keep the order predictable.
+
+    Counts are included in info for filtering and mapping functions to keep
+    track of changes in values.
+
+    :param df: dataframe with value counts going to info
+    :param columns: names of columns for counting values
+    :return: value counts for provided columns
+    """
+    columns = columns or df.columns.to_list()
+    dbg.dassert_is_subset(
+        columns,
+        df.columns.to_list(),
+        msg="The requested columns could not be found in the dataframe",
+    )
+    value_counts_by_column = collections.OrderedDict()
+    for col in columns:
+        value_counts_by_column[col] = get_ordered_value_counts(df[col])
+    return value_counts_by_column
 
 
 def to_string(var: str) -> str:
