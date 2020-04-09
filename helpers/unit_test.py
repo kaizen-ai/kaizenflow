@@ -78,7 +78,7 @@ def in_unit_test_mode() -> bool:
 # #############################################################################
 
 
-def _df_to_check_string(
+def df_to_check_string(
     title: str,
     df: Union[pd.DataFrame, pd.Series],
     n_rows: int,
