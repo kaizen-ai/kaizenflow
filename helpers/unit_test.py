@@ -84,12 +84,12 @@ def convert_df_to_string(
     title: Optional[str] = None
 ) -> str:
     """
-    Transform DataFrame or Series to string for verifying test results.
+    Convert DataFrame or Series to string for verifying test results.
 
     :param df: DataFrame to be verified
     :param n_rows: number of rows in expected output
     :param title: title for test output
-    :return: string output for verifying
+    :return: string representation of input
     """
     n_rows = n_rows or len(df)
     output = []
