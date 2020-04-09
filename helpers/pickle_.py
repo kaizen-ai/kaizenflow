@@ -18,7 +18,9 @@ def _replace_extension(file_name, ext):
     return "%s.%s" % (os.path.splitext(file_name)[0], ext)
 
 
-def to_pickle(obj, file_name, backend="pickle", log_level=logging.DEBUG):
+def to_pickle(
+    obj, file_name, backend="pickle", log_level=logging.DEBUG, verbose=True
+):
     """
     Pickle object <obj> into file <file_name>.
     """
@@ -53,12 +55,18 @@ def to_pickle(obj, file_name, backend="pickle", log_level=logging.DEBUG):
         raise ValueError("Invalid backend='%s'" % backend)
     _, elapsed_time = timer.dtimer_stop(dtmr)
     size_mb = os.path.getsize(file_name) / (1024.0 ** 2)
-    _LOG.info(
-        "Saved '%s' (size=%.2f Mb, time=%.1fs)", file_name, size_mb, elapsed_time
-    )
+    if verbose:
+        _LOG.info(
+            "Saved '%s' (size=%.2f Mb, time=%.1fs)",
+            file_name,
+            size_mb,
+            elapsed_time,
+        )
 
 
-def from_pickle(file_name, backend="pickle", log_level=logging.DEBUG):
+def from_pickle(
+    file_name, backend="pickle", log_level=logging.DEBUG, verbose=True
+):
     """
     Unpickle and return object stored in <file_name>.
     """
@@ -90,9 +98,13 @@ def from_pickle(file_name, backend="pickle", log_level=logging.DEBUG):
         raise ValueError("Invalid backend='%s'" % backend)
     _, elapsed_time = timer.dtimer_stop(dtmr)
     size_mb = os.path.getsize(file_name) / (1024.0 ** 2)
-    _LOG.info(
-        "Read '%s' (size=%.2f Mb, time=%.1fs)", file_name, size_mb, elapsed_time
-    )
+    if verbose:
+        _LOG.info(
+            "Read '%s' (size=%.2f Mb, time=%.1fs)",
+            file_name,
+            size_mb,
+            elapsed_time,
+        )
     return obj
 
 

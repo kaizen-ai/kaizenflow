@@ -376,12 +376,16 @@ class TestCase(unittest.TestCase):
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
-    def check_string(self, actual: str, fuzzy_match: bool = False) -> None:
+    def check_string(
+        self, actual: str, fuzzy_match: bool = False, purify_text: bool = True
+    ) -> None:
         """
         Check the actual outcome of a test against the expected outcomes
         contained in the file and/or updates the golden reference file with the
         actual outcome.
 
+        :param: purify_text: remove some artifacts (e.g., user names,
+            directories, reference to Git client)
         Raises if there is an error.
         """
         dbg.dassert_in(type(actual), (bytes, str))
@@ -394,7 +398,8 @@ class TestCase(unittest.TestCase):
         file_name = self.get_output_dir() + "/test.txt"
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current purify.
-        actual = purify_txt_from_client(actual)
+        if purify_text:
+            actual = purify_txt_from_client(actual)
         #
         if get_update_tests():
             # Update the test result.
