@@ -93,6 +93,7 @@ def convert_df_to_string(
     """
     n_rows = n_rows or len(df)
     output = []
+    # Add title in the beginning if provided.
     if title is not None:
         output.append(prnt.frame(title))
     # Provide context for full representation of data.
@@ -115,7 +116,6 @@ def convert_info_to_string(info: Mapping):
     :param info: info to convert to string
     :return: string representation of info
     """
-    # Add info.
     output = []
     # Provide context for full representation of pd.Series in info.
     with pd.option_context(
