@@ -4,12 +4,12 @@
 #     text_representation:
 #       extension: .py
 #       format_name: percent
-#       format_version: '1.2'
-#       jupytext_version: 1.2.4
+#       format_version: '1.3'
+#       jupytext_version: 1.3.4
 #   kernelspec:
-#     display_name: Python [conda env:.conda-p1_develop] *
+#     display_name: Python 3
 #     language: python
-#     name: conda-env-.conda-p1_develop-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -159,8 +159,12 @@ def _analyze(srs):
 # %%
 mode = "winsorize"
 lower_quantile = 0.01
+window = 1000
+min_periods = 10
 stats = collections.OrderedDict()
-srs_out = sigp.process_outliers(srs, mode, lower_quantile, info=stats)
+srs_out = sigp.process_outliers(
+    srs, window, min_periods, mode, lower_quantile, info=stats
+)
 #
 _analyze(srs_out)
 
@@ -168,9 +172,17 @@ _analyze(srs_out)
 mode = "winsorize"
 lower_quantile = 0.01
 upper_quantile = 0.90
+window = 1000
+min_periods = 10
 stats = collections.OrderedDict()
 srs_out = sigp.process_outliers(
-    srs, mode, lower_quantile, upper_quantile=upper_quantile, info=stats
+    srs,
+    window,
+    min_periods,
+    mode,
+    lower_quantile,
+    upper_quantile=upper_quantile,
+    info=stats,
 )
 #
 _analyze(srs_out)
@@ -178,15 +190,23 @@ _analyze(srs_out)
 # %%
 mode = "set_to_nan"
 lower_quantile = 0.01
+window = 1000
+min_periods = 10
 stats = collections.OrderedDict()
-srs_out = sigp.process_outliers(srs, mode, lower_quantile, info=stats)
+srs_out = sigp.process_outliers(
+    srs, window, min_periods, mode, lower_quantile, info=stats
+)
 #
 _analyze(srs_out)
 
 # %%
 mode = "set_to_zero"
 lower_quantile = 0.10
+window = 1000
+min_periods = 10
 stats = collections.OrderedDict()
-srs_out = sigp.process_outliers(srs, mode, lower_quantile, info=stats)
+srs_out = sigp.process_outliers(
+    srs, window, min_periods, mode, lower_quantile, info=stats
+)
 #
 _analyze(srs_out)

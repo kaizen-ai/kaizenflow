@@ -5,20 +5,30 @@ OrderedDict([('series_name', None),
              ('num_infs_before', 0),
              ('quantiles', (0.2, 0.8)),
              ('mode', 'set_to_nan'),
-             ('bounds', array([2.6, 7.4])),
-             ('num_elems_removed', 4),
-             ('num_elems_after', 5),
-             ('percentage_removed', 44.44444444444444),
-             ('num_nans_after', 4),
+             ('bounds',
+                 l_bound  u_bound
+0      NaN      NaN
+1      1.2      1.8
+2      2.2      2.8
+3      3.2      3.8
+4      4.2      4.8
+5      5.2      5.8
+6      6.2      6.8
+7      7.2      7.8
+8      8.2      8.8),
+             ('num_elems_removed', 8),
+             ('num_elems_after', 1),
+             ('percentage_removed', 88.88888888888889),
+             ('num_nans_after', 8),
              ('num_infs_after', 0)])
 # srs_out
-0    NaN
+0    1.0
 1    NaN
-2    3.0
-3    4.0
-4    5.0
-5    6.0
-6    7.0
+2    NaN
+3    NaN
+4    NaN
+5    NaN
+6    NaN
 7    NaN
 8    NaN
 dtype: float64
