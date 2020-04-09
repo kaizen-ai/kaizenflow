@@ -82,7 +82,6 @@ def df_to_check_string(
     title: str,
     df: Union[pd.DataFrame, pd.Series],
     n_rows: int,
-    info: collections.OrderedDict,
 ) -> str:
     """
     Transform DataFrame or Series and info to string for checking test results.
@@ -90,7 +89,6 @@ def df_to_check_string(
     :param title: title for test output
     :param df: DataFrame to be checked
     :param n_rows: Number of rows in expected output
-    :param info: info to include in output
     :return: string output for checking
     """
     output = []
@@ -101,7 +99,27 @@ def df_to_check_string(
         ):
         # Add top N rows.
         output.append(df.head(n_rows).to_string(index=False))
-        # Add info.
+        output_str = "\n".join(output)
+    return output_str
+
+
+def info_to_check_string(info, string_to_append: Optional[str] = ""):
+    """
+    Convert info to string for testing.
+
+    Info often contains pd.Series, so pandas context is provided
+    to print all rows and all contents.
+
+    :param info: info to convert to string
+    :param string_to_append: optional string to include in the output
+    :return: string representation of info
+    """
+    # Add info.
+    output = [string_to_append]
+    # Provide context for full representation of pd.Series in info.
+    with pd.option_context(
+                "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
+        ):
         output.append(prnt.frame("info"))
         output.append(pprint.pformat(info))
         output_str = "\n".join(output)
@@ -121,7 +139,6 @@ def get_ordered_value_counts(column: pd.Series) -> pd.Series:
     counts randomly, which makes tests dependent on string comparison
     impossible.
 
-
     :param column: column for value counts
     :return: counts ordered by index and values
     """
@@ -131,7 +148,7 @@ def get_ordered_value_counts(column: pd.Series) -> pd.Series:
     return value_counts
 
 
-def get_value_counts_for_info(
+def get_value_counts_for_columns(
         df: pd.DataFrame, columns: Optional[Iterable] = None
 ) -> Mapping[str, pd.Series]:
     """
