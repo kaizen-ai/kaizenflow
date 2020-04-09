@@ -242,6 +242,13 @@ def get_credentials() -> Dict[str, Any]:
         git_user_email = ""
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/var/lib/jenkins/.conda/envs"
+    # We use this for #1522
+    elif user_name == "root":
+        # Docker user.
+        git_user_name = "infraparticleone"
+        git_user_email = "infra@particle.one"
+        conda_sh_path = "/opt/conda/etc/profile.d/conda.sh"
+        conda_env_path = "~/.conda/envs/"
     # Check.
     for var_name, val_name in [
         ("git_user_name", git_user_name),
