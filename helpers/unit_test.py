@@ -78,7 +78,7 @@ def in_unit_test_mode() -> bool:
 # #############################################################################
 
 
-def df_to_check_string(
+def convert_df_to_string(
     title: str,
     df: Union[pd.DataFrame, pd.Series],
     n_rows: int,
@@ -103,7 +103,7 @@ def df_to_check_string(
     return output_str
 
 
-def info_to_check_string(info, string_to_append: Optional[str] = ""):
+def convert_info_to_string(info: Mapping, string_to_append: Optional[str] = ""):
     """
     Convert info to string for testing.
 
