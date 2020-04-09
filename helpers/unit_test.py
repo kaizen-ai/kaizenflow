@@ -79,20 +79,22 @@ def in_unit_test_mode() -> bool:
 
 
 def convert_df_to_string(
-    title: str,
     df: Union[pd.DataFrame, pd.Series],
-    n_rows: int,
+    n_rows: Optional[int] = None,
+    title: Optional[str] = None
 ) -> str:
     """
-    Transform DataFrame or Series and info to string for checking test results.
+    Transform DataFrame or Series to string for verifying test results.
 
+    :param df: DataFrame to be verified
+    :param n_rows: number of rows in expected output
     :param title: title for test output
-    :param df: DataFrame to be checked
-    :param n_rows: Number of rows in expected output
-    :return: string output for checking
+    :return: string output for verifying
     """
+    n_rows = n_rows or len(df)
     output = []
-    output.append(prnt.frame(title))
+    if title is not None:
+        output.append(prnt.frame(title))
     # Provide context for full representation of data.
     with pd.option_context(
                 "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
@@ -103,19 +105,18 @@ def convert_df_to_string(
     return output_str
 
 
-def convert_info_to_string(info: Mapping, string_to_append: Optional[str] = ""):
+def convert_info_to_string(info: Mapping):
     """
-    Convert info to string for testing.
+    Convert info to string for verifying test results.
 
     Info often contains pd.Series, so pandas context is provided
     to print all rows and all contents.
 
     :param info: info to convert to string
-    :param string_to_append: optional string to include in the output
     :return: string representation of info
     """
     # Add info.
-    output = [string_to_append]
+    output = []
     # Provide context for full representation of pd.Series in info.
     with pd.option_context(
                 "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
