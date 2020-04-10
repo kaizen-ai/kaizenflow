@@ -244,7 +244,7 @@ def get_credentials() -> Dict[str, Any]:
         conda_env_path = "/var/lib/jenkins/.conda/envs"
         if server_name == "docker-instance":
             conda_sh_path = "/opt/conda/etc/profile.d/conda.sh"
-            conda_env_path = "~/.conda/envs/"
+            conda_env_path = "/root/.conda/envs/"
     # We use this for #1522
     elif si.is_in_docker():
         # Docker user.
