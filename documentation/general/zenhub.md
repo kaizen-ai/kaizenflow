@@ -202,19 +202,19 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   - AUTOML: issues related to AutoML research
   - BUILD: issues related to Jenkins
   - CLEANUP: issues related to refactorings, reorganization of the code base
-    (especially if there is no more specific master Epic, e.g., a cleanup in AutoML will go in AutoML)
+    (especially if there is not a more specific master Epic, e.g., a cleanup in AutoML will go in AutoML)
   - CONFIG: issues related to our configuration layer for experiments
   - DATA: issues related to data source exploration
-  - DATAFLOW: issues related to related to dataflow design, structure, usage patterns, etc.
+  - DATAFLOW: issues related to dataflow design, structure, usage patterns, etc.
   - DOCUMENTATION: issues related to documenting workflow and so on (unless there is a more 
     specific software component that can be applied, e.g., AutoML)
   - ETL: issues related to ETL layer
   - INFRA: issues related to IT work, sysadmin, AWS
-  - INVESTIGATE: investigation about packages, tools, papers
+  - INVESTIGATE: investigation of packages, tools, papers
   - KG: issues related to Knowledge Graph design, schema, implementation, or population
   - NLP: issues related to NLP
-  - ORG: anything related to organization, process, convention
-  - RESEARCH: general research topic
+  - ORG: anything related to organization, process, conventions
+  - RESEARCH: general research topics
   - TOOLS: tools that make us more productive (e.g., linter, docker, git, etc.)
   - WIND: issues related to WIND terminal and data
 - Master Epics can be broken down into smaller Epics ( =sub-epics)
