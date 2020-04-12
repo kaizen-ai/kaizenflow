@@ -245,7 +245,7 @@ def get_credentials() -> Dict[str, Any]:
     # We use this for #1522
     elif server_name == "docker-instance":
         # Docker user.
-        git_user_name = "infra"
+        git_user_name = "infraparticleone"
         git_user_email = "infra@particle.one"
         conda_sh_path = "/opt/conda/etc/profile.d/conda.sh"
         conda_env_path = "~/.conda/envs/"
