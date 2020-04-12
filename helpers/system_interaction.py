@@ -60,17 +60,6 @@ def get_server_name() -> str:
     return res[1]
 
 
-def is_in_docker() -> bool:
-    """
-    Get `IS_IN_DOCKER` from the environment.
-
-    We use this to determine that process running inside a Docker container.
-    You have to pass this var inside a container manually using
-    `docker run -e "IS_IN_DOCKER=1" ...` command.
-    """
-    return os.environ.get("IS_IN_DOCKER") == 1
-
-
 def get_os_name() -> str:
     res = os.uname()
     # This is not compatible with python2.7
