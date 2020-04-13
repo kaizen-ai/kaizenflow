@@ -9,13 +9,13 @@ OrderedDict([('series_name', None),
                  l_bound  u_bound
 0      NaN      NaN
 1      1.2      1.8
-2      2.2      2.8
-3      3.2      3.8
-4      4.2      4.8
-5      5.2      5.8
-6      6.2      6.8
-7      7.2      7.8
-8      8.2      8.8),
+2      1.4      2.6
+3      1.6      3.4
+4      1.8      4.2
+5      2.0      5.0
+6      2.2      5.8
+7      2.4      6.6
+8      2.6      7.4),
              ('num_elems_removed', 8),
              ('num_elems_after', 1),
              ('percentage_removed', 88.88888888888889),

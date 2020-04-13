@@ -55,7 +55,7 @@ class Test_process_outliers1(ut.TestCase):
         mode: str,
         lower_quantile: float,
         num_df_rows: int = 10,
-        window: int = 2,
+        window: int = 100,
         min_periods: Optional[int] = 2,
         **kwargs: Any,
     ) -> None:
