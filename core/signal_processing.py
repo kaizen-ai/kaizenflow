@@ -944,7 +944,7 @@ def process_outliers(
     Process outliers in different ways given lower / upper quantiles.
 
     :param srs: pd.Series to process
-    :param window: rolling window
+    :param window: rolling window size
     :param min_periods: minimum number of observations in window required to
         calculate the quantiles. The first `min_periods` values will not be
         processed
