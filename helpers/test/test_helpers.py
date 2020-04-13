@@ -438,8 +438,9 @@ class Test_git1(ut.TestCase):
         dir_name = "."
         _ = git.get_head_hash(dir_name)
 
-    @pytest.mark.skipif('si.get_user_name() == "root"',
-                        reason="Running inside Docker. #1522")
+    @pytest.mark.skipif(
+        'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
+    )
     def test_report_submodule_status1(self) -> None:
         dir_names = ["."]
         short_hash = True
