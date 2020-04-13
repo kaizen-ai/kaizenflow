@@ -61,7 +61,13 @@ class Test_process_outliers1(ut.TestCase):
     ) -> None:
         info = collections.OrderedDict()
         srs_out = sigp.process_outliers(
-            srs, window, min_periods, mode, lower_quantile, info=info, **kwargs
+            srs,
+            window,
+            mode,
+            lower_quantile,
+            min_periods=min_periods,
+            info=info,
+            **kwargs,
         )
         txt = []
         txt.append("# info")

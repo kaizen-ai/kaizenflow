@@ -934,10 +934,10 @@ def compute_rolling_zcorr(
 def process_outliers(
     srs: pd.Series,
     window: int,
-    min_periods: Optional[int],
     mode: str,
     lower_quantile: float,
     upper_quantile: Optional[float] = None,
+    min_periods: Optional[int] = None,
     info: Optional[dict] = None,
 ) -> pd.Series:
     """
@@ -945,9 +945,6 @@ def process_outliers(
 
     :param srs: pd.Series to process
     :param window: rolling window size
-    :param min_periods: minimum number of observations in window required to
-        calculate the quantiles. The first `min_periods` values will not be
-        processed
     :param lower_quantile: lower quantile (in range [0, 1]) of the values to keep
         The interval of data kept without any changes is [lower, upper]. In other
         terms the outliers with quantiles strictly smaller and larger than the
@@ -956,6 +953,9 @@ def process_outliers(
         lower_quantile. If `None`, the quantile symmetric of the lower quantile
         with respect to 0.5 is taken. E.g., an upper quantile equal to 0.7 is
         taken for a lower_quantile = 0.3
+    :param min_periods: minimum number of observations in window required to
+        calculate the quantiles. The first `min_periods` values will not be
+        processed. If `None`, defaults to `window`.
     :param mode: it can be "winsorize", "set_to_nan", "set_to_zero"
     :param info: empty dict-like object that this function will populate with
         statistics about the performed operation
@@ -970,6 +970,12 @@ def process_outliers(
         upper_quantile = 1.0 - lower_quantile
     dbg.dassert_lte(lower_quantile, upper_quantile)
     dbg.dassert_lte(upper_quantile, 1.0)
+    if window < 30:
+        _LOG.warning("`window`=`%s` < `30`", window)
+    if min_periods is None:
+        _LOG.warning("No `min_periods` specified, using default `None`.")
+    if min_periods is not None and min_periods > window:
+        _LOG.warning("`min_periods`=`%s` > `window`=`%s`", min_periods, window)
     # Compute bounds.
     l_bound = srs.rolling(window, min_periods=min_periods, center=False).quantile(
         lower_quantile
@@ -1032,10 +1038,10 @@ def process_outliers(
 def process_outlier_df(
     df: pd.DataFrame,
     window: int,
-    min_periods: Optional[int],
     mode: str,
     lower_quantile: float,
     upper_quantile: Optional[float] = None,
+    min_periods: Optional[int] = None,
     info: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
@@ -1057,11 +1063,11 @@ def process_outlier_df(
         srs = process_outliers(
             df[col],
             window,
-            min_periods,
             mode,
             lower_quantile,
-            upper_quantile,
-            maybe_stats,
+            upper_quantile=upper_quantile,
+            min_periods=min_periods,
+            info=maybe_stats,
         )
         cols[col] = srs
         if info is not None:

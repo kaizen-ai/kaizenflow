@@ -30,7 +30,7 @@ def plot_interevent_intervals(
     timestamps: pd.Series,
     time_unit: str,
     window: int,
-    min_periods: Optional[int],
+    min_periods: Optional[int] = None,
     mode: Optional[str] = "set_to_nan",
     lower_quantile: float = 0.01,
     **kwargs: Any,
@@ -63,9 +63,9 @@ def plot_interevent_intervals(
     intervals_without_outliers = sigp.process_outliers(
         intervals.astype(f"timedelta64[{time_unit}]"),
         window,
-        min_periods,
         mode,
         lower_quantile,
+        min_periods=min_periods,
         **kwargs,
     ).dropna()
     sns.distplot(intervals_without_outliers)

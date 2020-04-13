@@ -163,7 +163,7 @@ window = 1000
 min_periods = 10
 stats = collections.OrderedDict()
 srs_out = sigp.process_outliers(
-    srs, window, min_periods, mode, lower_quantile, info=stats
+    srs, window, mode, lower_quantile, min_periods=min_periods, info=stats
 )
 #
 _analyze(srs_out)
@@ -178,10 +178,10 @@ stats = collections.OrderedDict()
 srs_out = sigp.process_outliers(
     srs,
     window,
-    min_periods,
     mode,
     lower_quantile,
     upper_quantile=upper_quantile,
+    min_periods=min_periods,
     info=stats,
 )
 #
@@ -194,7 +194,7 @@ window = 1000
 min_periods = 10
 stats = collections.OrderedDict()
 srs_out = sigp.process_outliers(
-    srs, window, min_periods, mode, lower_quantile, info=stats
+    srs, window, mode, lower_quantile, min_periods=min_periods, info=stats
 )
 #
 _analyze(srs_out)
@@ -206,7 +206,7 @@ window = 1000
 min_periods = 10
 stats = collections.OrderedDict()
 srs_out = sigp.process_outliers(
-    srs, window, min_periods, mode, lower_quantile, info=stats
+    srs, window, mode, lower_quantile, min_periods=min_periods, info=stats
 )
 #
 _analyze(srs_out)
