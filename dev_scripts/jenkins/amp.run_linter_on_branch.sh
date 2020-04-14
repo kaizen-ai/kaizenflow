@@ -30,7 +30,6 @@ setenv "$AMP/dev_scripts/setenv_amp.sh" $CONDA_ENV
 # Run linter.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-
 # Calculate stats
 files_changed_in_branch=$(git diff --name-only ${data_pull_request_base_sha}...)
 echo "Files changed in branch: ${files_changed_in_branch}."
@@ -48,7 +47,7 @@ branch_lints=$?
 echo "Lints in branch: ${branch_lints}."
 
 # Calculate "Before*" stats
-git checkout ${data_pull_request_base_sha}
+git checkout ${data_pull_request_base_sha} --recurse-submodules
 git reset --hard
 linter.py --files $files_changed_in_branch --post_check
 master_dirty=$?
@@ -57,23 +56,46 @@ echo "Master dirty: ${master_dirty}."
 git reset --hard
 linter.py --files ${files_changed_in_branch}
 master_lints=$?
-echo "Lints in master: ${branch_lints}."
+echo "Lints in master: ${master_lints}."
 
 # Prepares a message and exit status
-message="## Automatically generated report (${JOB_NAME})\nConsole url: ${console_url}\n"
+master_dirty_status="False"
+if [[ "$master_dirty" -gt 0 ]] ; then
+  master_dirty_status="True"
+fi
+
 exit_status=0
-
-if [[ "$master_lints" -lt "$branch_lints" ]] ; then
-  message=${message}"Number of lints were increased."
-  exit_status=1
-fi
-message=${message}" master_lints: $master_lints, branch_lints: $branch_lints.\n"
-
-if [[ "master_dirty" -gt 0 ]] ; then
-  message=${message}"Branch \`master(sha: ${data_pull_request_base_sha})\` was dirty after linter.\n"
-fi
-
+branch_dirty_status="False"
+errors=""
 if [[ "$branch_dirty" -gt 0 ]] ; then
-  message=${message}"Branch `data_pull_request_head_ref` is dirty after linter."
-  exit_status=1
+    branch_dirty_status="True"
+    exit_status=1
+    errors="${errors}ERROR: You didn't run the linter. Please run it with \`linter.py. -b\`"
 fi
+if [[ "$master_lints" -gt 0 ]] ; then
+    errors="${errors}\nWARNING: Your branch has lints. Please fix them."
+fi
+
+if [[ "$branch_lints" -gt "$master_lints"  ]] ; then
+  exit_status=1
+  errors="${errors}\nERROR: You introduced more lints. Please fix them."
+fi
+
+message="\n# Results of the linter build\n- Master (sha: ${data_pull_request_base_sha})"
+message="${message}\n   - Number of lints: ${master_lints}"
+message="${message}\n   - Dirty (i.e., linter was not run): ${master_dirty_status}"
+message="${message}\n- Branch (${data_pull_request_head_ref}: ${data_pull_request_head_sha})"
+message="${message}\n   - Number of lints: ${branch_lints}"
+message="${message}\n   - Dirty (i.e., linter was not run): ${branch_dirty_status}"
+message="${message}\nThe number of lints introduced with this change: $(expr ${branch_lints} - ${master_lints})"
+
+message="${message}\n${errors}"
+
+message="${message}\n\`\`\`\n"
+
+while IFS= read -r line
+do
+    message="${message}${line}\n"
+done <./linter_warnings.txt
+
+message="${message}\n\`\`\`"
