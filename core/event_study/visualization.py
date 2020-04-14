@@ -29,6 +29,8 @@ def plot_event_response(local_ts: pd.DataFrame, response_col: str) -> None:
 def plot_interevent_intervals(
     timestamps: pd.Series,
     time_unit: str,
+    window: int,
+    min_periods: Optional[int] = None,
     mode: Optional[str] = "set_to_nan",
     lower_quantile: float = 0.01,
     **kwargs: Any,
@@ -39,6 +41,8 @@ def plot_interevent_intervals(
     :param timestamps: datetime pd.Series
     :param time_unit: time units in which to plot the data. A parameter
         for timedelta64[]
+    :param window: as in sigp.process_outliers
+    :param min_periods: as in sigp.process_outliers
     :param mode: as in sigp.process_outliers
     :param lower_quantile: as in sigp.process_outliers
     :param kwargs: passed into sigp.process_outliers
@@ -58,8 +62,10 @@ def plot_interevent_intervals(
     intervals = timestamps.diff()
     intervals_without_outliers = sigp.process_outliers(
         intervals.astype(f"timedelta64[{time_unit}]"),
+        window,
         mode,
         lower_quantile,
+        min_periods=min_periods,
         **kwargs,
     ).dropna()
     sns.distplot(intervals_without_outliers)

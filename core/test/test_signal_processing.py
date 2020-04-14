@@ -2,6 +2,7 @@ import collections
 import logging
 import os
 import pprint
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -54,11 +55,19 @@ class Test_process_outliers1(ut.TestCase):
         mode: str,
         lower_quantile: float,
         num_df_rows: int = 10,
-        **kwargs,
+        window: int = 100,
+        min_periods: Optional[int] = 2,
+        **kwargs: Any,
     ) -> None:
         info = collections.OrderedDict()
         srs_out = sigp.process_outliers(
-            srs, mode, lower_quantile, info=info, **kwargs
+            srs,
+            window,
+            mode,
+            lower_quantile,
+            min_periods=min_periods,
+            info=info,
+            **kwargs,
         )
         txt = []
         txt.append("# info")
@@ -96,7 +105,7 @@ class Test_process_outliers1(ut.TestCase):
         self._helper(srs, mode, lower_quantile)
 
     @staticmethod
-    def _get_data2():
+    def _get_data2() -> pd.Series:
         return pd.Series(range(1, 10))
 
     def test_winsorize2(self) -> None:

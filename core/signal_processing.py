@@ -6,7 +6,7 @@ import core.signal_processing as sigp
 
 import functools
 import logging
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -436,7 +436,9 @@ def _wrap(signal: pd.Series, num_cols: int) -> pd.DataFrame:
     return pd.DataFrame(wrapped)
 
 
-def _unwrap(df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None):
+def _unwrap(
+    df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None
+) -> pd.Series:
     """
     Undo `_wrap`.
 
@@ -461,7 +463,7 @@ def skip_apply_func(
     signal: pd.DataFrame,
     skip_size: int,
     func: Callable[[pd.Series], pd.DataFrame],
-    **kwargs
+    **kwargs: Any,
 ) -> pd.DataFrame:
     """
     Apply `func` to each col of `signal` after a wrap, then unwrap and merge.
@@ -557,7 +559,7 @@ def compute_ema(
     com = _calculate_com_from_tau(tau)
     _LOG.debug("com = %0.2f", com)
     signal_hat = signal.copy()
-    for i in range(0, depth):
+    for _ in range(0, depth):
         signal_hat = signal_hat.ewm(
             com=com, min_periods=min_periods, adjust=True, ignore_na=False, axis=0
         ).mean()
@@ -931,18 +933,18 @@ def compute_rolling_zcorr(
 
 def process_outliers(
     srs: pd.Series,
+    window: int,
     mode: str,
     lower_quantile: float,
     upper_quantile: Optional[float] = None,
+    min_periods: Optional[int] = None,
     info: Optional[dict] = None,
 ) -> pd.Series:
     """
     Process outliers in different ways given lower / upper quantiles.
 
-    WARNING: This function is NOT causal!
-    TODO(*): https://github.com/ParticleDev/commodity_research/issues/546#issuecomment-568134765
-
     :param srs: pd.Series to process
+    :param window: rolling window size
     :param lower_quantile: lower quantile (in range [0, 1]) of the values to keep
         The interval of data kept without any changes is [lower, upper]. In other
         terms the outliers with quantiles strictly smaller and larger than the
@@ -951,6 +953,9 @@ def process_outliers(
         lower_quantile. If `None`, the quantile symmetric of the lower quantile
         with respect to 0.5 is taken. E.g., an upper quantile equal to 0.7 is
         taken for a lower_quantile = 0.3
+    :param min_periods: minimum number of observations in window required to
+        calculate the quantiles. The first `min_periods` values will not be
+        processed. If `None`, defaults to `window`.
     :param mode: it can be "winsorize", "set_to_nan", "set_to_zero"
     :param info: empty dict-like object that this function will populate with
         statistics about the performed operation
@@ -965,13 +970,23 @@ def process_outliers(
         upper_quantile = 1.0 - lower_quantile
     dbg.dassert_lte(lower_quantile, upper_quantile)
     dbg.dassert_lte(upper_quantile, 1.0)
+    if window < 30:
+        _LOG.warning("`window`=`%s` < `30`", window)
+    if min_periods is None:
+        _LOG.warning("No `min_periods` specified, using default `None`.")
+    if min_periods is not None and min_periods > window:
+        _LOG.warning("`min_periods`=`%s` > `window`=`%s`", min_periods, window)
     # Compute bounds.
-    bounds = np.nanquantile(srs, [lower_quantile, upper_quantile])
+    l_bound = srs.rolling(window, min_periods=min_periods, center=False).quantile(
+        lower_quantile
+    )
+    u_bound = srs.rolling(window, min_periods=min_periods, center=False).quantile(
+        upper_quantile
+    )
     _LOG.debug(
-        "Removing outliers in [%s, %s] -> %s with mode=%s",
+        "Removing outliers in [%s, %s] with mode=%s",
         lower_quantile,
         upper_quantile,
-        bounds,
         mode,
     )
     # Compute stats.
@@ -990,12 +1005,12 @@ def process_outliers(
     # Here we implement the functions instead of using library functions (e.g,
     # `scipy.stats.mstats.winsorize`) since we want to compute some statistics
     # that are not readily available from the library function.
-    l_mask = srs < bounds[0]
-    u_mask = bounds[1] < srs
+    l_mask = srs < l_bound
+    u_mask = u_bound < srs
     if mode == "winsorize":
         # Assign the outliers to the value of the bounds.
-        srs[l_mask] = bounds[0]
-        srs[u_mask] = bounds[1]
+        srs[l_mask] = l_bound[l_mask]
+        srs[u_mask] = u_bound[u_mask]
     else:
         mask = u_mask | l_mask
         if mode == "set_to_nan":
@@ -1006,8 +1021,8 @@ def process_outliers(
             dbg.dfatal("Invalid mode='%s'" % mode)
     # Append more the stats.
     if info is not None:
-        info["bounds"] = bounds
-        num_removed = np.sum(l_mask) + np.sum(u_mask)
+        info["bounds"] = pd.DataFrame({"l_bound": l_bound, "u_bound": u_bound})
+        num_removed = l_mask.sum() + u_mask.sum()
         info["num_elems_removed"] = num_removed
         info["num_elems_after"] = (
             info["num_elems_before"] - info["num_elems_removed"]
@@ -1022,9 +1037,11 @@ def process_outliers(
 
 def process_outlier_df(
     df: pd.DataFrame,
+    window: int,
     mode: str,
     lower_quantile: float,
     upper_quantile: Optional[float] = None,
+    min_periods: Optional[int] = None,
     info: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
@@ -1040,11 +1057,17 @@ def process_outlier_df(
     cols = {}
     for col in df.columns:
         if info is not None:
-            maybe_stats = {}
+            maybe_stats: Optional[Dict[str, Any]] = {}
         else:
             maybe_stats = None
         srs = process_outliers(
-            df[col], mode, lower_quantile, upper_quantile, maybe_stats
+            df[col],
+            window,
+            mode,
+            lower_quantile,
+            upper_quantile=upper_quantile,
+            min_periods=min_periods,
+            info=maybe_stats,
         )
         cols[col] = srs
         if info is not None:
