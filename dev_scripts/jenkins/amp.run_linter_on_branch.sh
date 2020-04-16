@@ -46,6 +46,16 @@ linter.py -b
 branch_lints=$?
 echo "Lints in branch: ${branch_lints}."
 
+# Read lints in memory
+lints_message="\`\`\`\n"
+
+while IFS= read -r line
+do
+    lints_message="${lints_message}${line}\n"
+done <./linter_warnings.txt
+
+lints_message="${lints_message}\n\`\`\`"
+
 # Calculate "Before*" stats
 git checkout ${data_pull_request_base_sha} --recurse-submodules
 git reset --hard
@@ -91,16 +101,8 @@ message="${message}\n\nThe number of lints introduced with this change: $(expr $
 
 message="${message}\n\n${errors}"
 
-# Disabled because of #1998
-# Add outputs from linter_warnings.txt to the message.
-message="${message}\n\`\`\`\n"
+message="${message}\n${lints_message}\n"
 
-while IFS= read -r line
-do
-    message="${message}${line}\n"
-done <./linter_warnings.txt
-
-message="${message}\n\`\`\`"
 printf "${message}" > ./tmp_message.txt
 
 message_to_json() {
