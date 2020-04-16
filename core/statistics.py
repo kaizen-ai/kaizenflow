@@ -378,7 +378,7 @@ def multipletests(srs: pd.Series, method: Optional[str] = None) -> pd.Series:
     :return: Series of adjusted p-values
     """
     if method is None:
-        method = "fdr_bd"
+        method = "fdr_bh"
     pvals_corrected = sm.stats.multitest.multipletests(srs, method=method)[1]
     return pd.Series(pvals_corrected, index=srs.index, name=ADJ_PVAL_COL)
 
