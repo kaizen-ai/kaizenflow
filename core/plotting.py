@@ -514,21 +514,22 @@ def plot_confusion_heatmap(
 
 def multipletests_plot(
     pvals: pd.Series, threshold: float, method: Optional[str] = None, **kwargs
-):
+) -> None:
     """
-
+    Plot adjusted p-values and pass/fail threshold.
 
     :param pvals: raw p-values
     :param threshold: threshold for adjusted p-values separating accepted and
         rejected hypotheses, e.g., "FWER", or family-wise error rate
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
-    :return:
     """
-    srs = srs.sort_values()
-    adj_srs = stats.multipletests(srs, method=method)
-    plt.plot(v, label="raw", **kwargs)
-    plt.plot(adj_srs, label="adj", **kwargs)
-    plt.text(0.1, 0.8, "adj-pval=%.3f" % adj_srs[0], fontsize=20)
+    pvals = pvals.sort_values()
+    adj_pvals = stats.multipletests(pvals, method=method)
+    plt.plot(pvals, label="pvals", **kwargs)[0]
+    plt.plot(adj_pvals, label="adj pvals", **kwargs)
+    # Show min adj p-val in text.
+    min_adj_pval = adj_pvals[0]
+    plt.text(0.1, 0.8, "adj pval=%.3f" % min_adj_pval, fontsize=20)
     plt.text(
         0.1,
         0.7,
@@ -536,10 +537,11 @@ def multipletests_plot(
         fontsize=20,
         **(
             {"s": "PASS", "color": "g"}
-            if adj_srs[0] < threshold
+            if min_adj_pval <= threshold
             else {"s": "FAIL", "color": "r"}
         ),
     )
-    plt.axhline(accept_th, ls=":", c="k")
+    # TODO(*): Force x-ticks at integers.
+    plt.axhline(threshold, ls=":", c="k")
     plt.ylim(0, 1)
     plt.legend()
