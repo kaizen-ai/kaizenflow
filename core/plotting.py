@@ -2,7 +2,6 @@
 Import as:
 
 import core.plotting as plot
-
 """
 
 import logging
@@ -18,6 +17,7 @@ import seaborn as sns
 import sklearn.metrics as skl_metrics
 
 import core.explore as expl
+import core.statistics as stats
 import helpers.dbg as dbg
 import helpers.list as hlist
 
@@ -37,6 +37,11 @@ _DATETIME_TYPES = [
     "minute",
     "second",
 ]
+
+
+# #############################################################################
+# General dataframe plotting helpers
+# #############################################################################
 
 
 def plot_non_na_cols(
@@ -94,24 +99,158 @@ def plot_non_na_cols(
     return ax
 
 
-def _get_heatmap_mask(corr, mode: str) -> np.ndarray:
-    if mode == "heatmap_semitriangle":
-        # Generate a mask for the upper triangle.
-        mask = np.zeros_like(corr, dtype=np.bool)
-        mask[np.triu_indices_from(mask)] = True
-    elif mode == "heatmap":
-        mask = None
+def plot_categories_count(
+    df: pd.core.frame.DataFrame,
+    category_column: str,
+    figsize: Optional[Tuple[int, int]] = None,
+    title: Optional[str] = None,
+    label: Optional[str] = None,
+) -> None:
+    """
+    Plot countplot of a given `category_column`.
+
+    :df: Df to plot.
+    :category_column: Categorial column to subset plots by.
+    :figsize: If nothing specified, basic (20,5) used.
+    :title: Title for the plot.
+    """
+    if not figsize:
+        figsize = FIG_SIZE
+    if not label:
+        label = category_column
+    num_categories = df[category_column].nunique()
+    if num_categories > 10:
+        ylen = math.ceil(num_categories / 26) * 5
+        figsize = (figsize[0], ylen)
+        plt.figure(figsize=figsize)
+        ax = sns.countplot(
+            y=df[category_column], order=df[category_column].value_counts().index
+        )
+        ax.set(xlabel=f"Number of {label}s")
+        ax.set(ylabel=category_column.lower())
+        for p in ax.patches:
+            ax.text(
+                p.get_width() + 0.1,
+                p.get_y() + 0.5,
+                str(round((p.get_width()), 2)),
+            )
     else:
-        raise ValueError("Invalid mode='%s'" % mode)
-    return mask
+        plt.figure(figsize=figsize)
+        ax = sns.countplot(
+            x=df[category_column], order=df[category_column].value_counts().index
+        )
+        ax.set(xlabel=category_column.lower())
+        ax.set(ylabel=f"Number of {label}s")
+        for p in ax.patches:
+            ax.annotate(p.get_height(), (p.get_x() + 0.35, p.get_height() + 1))
+    if not title:
+        plt.title(f"Distribution by {category_column}")
+    else:
+        plt.title(title)
+    plt.show()
 
 
-def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
+# #############################################################################
+# Time series plotting
+# #############################################################################
+
+
+def plot_timeseries(
+    df: pd.core.frame.DataFrame,
+    datetime_types: Optional[List[str]],
+    column: str,
+    ts_column: str,
+) -> None:
     """
-    Generate a custom diverging colormap useful for heatmaps.
+    Plot timeseries distribution by
+    - "year",
+    - "month",
+    - "quarter",
+    - "weekofyear",
+    - "dayofweek",
+    - "hour",
+    - "second"
+    unless otherwise provided by `datetime_types`.
+    :df: Df to plot.
+    :datetime_types: Types of pd.datetime, e.g. "month", "quarter".
+    :column: Distribution of which variable to represent.
+    :ts_column: Timeseries column.
     """
-    cmap = sns.diverging_palette(220, 10, as_cmap=True)
-    return cmap
+    unique_rows = expl.drop_duplicates(df=df, subset=[column])
+    if not datetime_types:
+        datetime_types = _DATETIME_TYPES
+    for datetime_type in datetime_types:
+        plt.figure(figsize=FIG_SIZE)
+        sns.countplot(getattr(unique_rows[ts_column].dt, datetime_type))
+        plt.title(f"Distribution by {datetime_type}")
+        plt.xlabel(datetime_type, fontsize=12)
+        plt.ylabel(f"Quantity of {column}", fontsize=12)
+        plt.show()
+
+
+def plot_timeseries_per_category(
+    df: pd.core.frame.DataFrame,
+    datetime_types: Optional[List["str"]],
+    column: str,
+    ts_column: str,
+    category_column: str,
+    categories: Optional[List[str]] = None,
+    top_n: Optional[int] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+) -> None:
+    """
+    Plot distribution (where `datetime_types` has the same meaning as in
+    plot_headlines) for a given list of categories.
+
+    If `categories` param is not specified, `top_n` must be specified and plots
+    will show the `top_n` most popular categories.
+    :df: Df to plot.
+    :datetime_types: Types of pd.datetime, e.g. "month", "quarter".
+    :column: Distribution of which variable to represent.
+    :ts_column: Timeseries column.
+    :category_column: Categorial column to subset plots by.
+    :categories: Categories to represent.
+    :top_n: Number of top categories to use, if categories are not specified.
+    """
+    if not figsize:
+        figsize = FIG_SIZE
+    unique_rows = expl.drop_duplicates(df=df, subset=[column])
+    if top_n:
+        categories = (
+            df[category_column].value_counts().iloc[:top_n].index.to_list()
+        )
+    dbg.dassert(categories, "No categories found.")
+    if not datetime_types:
+        datetime_types = _DATETIME_TYPES
+    for datetime_type in datetime_types:
+        rows = math.ceil(len(categories) / 3)
+        fig, ax = plt.subplots(
+            figsize=(FIG_SIZE[0], rows * 4.5),
+            ncols=3,
+            nrows=rows,
+            constrained_layout=True,
+        )
+        ax = ax.flatten()
+        a = iter(ax)
+        for category in categories:
+            j = next(a)
+            # Prepare a subset of data for the current category only.
+            rows_by_category = unique_rows.loc[
+                unique_rows[categories] == category, :
+            ]
+            sns.countplot(
+                getattr(rows_by_category[ts_column].dt, datetime_type), ax=j
+            )
+            j.set_ylabel(f"Quantity of {column}")
+            j.set_xlabel(datetime_type)
+            j.set_xticklabels(j.get_xticklabels(), rotation=45)
+            j.set_title(category)
+        fig.suptitle(f"Distribution by {datetime_type}")
+
+
+# #############################################################################
+# Correlation-type plots
+# #############################################################################
 
 
 def plot_heatmap(
@@ -229,6 +368,17 @@ def plot_correlation_matrix(
     return corr_df
 
 
+def display_corr_df(df: pd.core.frame.DataFrame) -> None:
+    """
+    Display a correlation df with values with 2 decimal places.
+    """
+    if df is not None:
+        df_tmp = df.applymap(lambda x: "%.2f" % x)
+        expl.display_df(df_tmp)
+    else:
+        _LOG.warning("Can't display correlation df since it is None")
+
+
 def plot_dendrogram(
     df: pd.core.frame.DataFrame, figsize: Optional[Tuple[int, int]] = None
 ) -> None:
@@ -259,17 +409,6 @@ def plot_dendrogram(
         color_threshold=0,
         orientation="right",
     )
-
-
-def display_corr_df(df: pd.core.frame.DataFrame) -> None:
-    """
-    Display a correlation df with values with 2 decimal places.
-    """
-    if df is not None:
-        df_tmp = df.applymap(lambda x: "%.2f" % x)
-        expl.display_df(df_tmp)
-    else:
-        _LOG.warning("Can't display correlation df since it is None")
 
 
 def plot_corr_over_time(
@@ -313,6 +452,31 @@ def plot_corr_over_time(
         axes[i].set_title(timestamps[i])
 
 
+def _get_heatmap_mask(corr, mode: str) -> np.ndarray:
+    if mode == "heatmap_semitriangle":
+        # Generate a mask for the upper triangle.
+        mask = np.zeros_like(corr, dtype=np.bool)
+        mask[np.triu_indices_from(mask)] = True
+    elif mode == "heatmap":
+        mask = None
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    return mask
+
+
+def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
+    """
+    Generate a custom diverging colormap useful for heatmaps.
+    """
+    cmap = sns.diverging_palette(220, 10, as_cmap=True)
+    return cmap
+
+
+# #############################################################################
+# Eval metrics plots
+# #############################################################################
+
+
 def plot_confusion_heatmap(
     y_true: Union[List[Union[float, int]], np.array],
     y_pred: Union[List[Union[float, int]], np.array],
@@ -348,145 +512,36 @@ def plot_confusion_heatmap(
         return df_out, df_out_percentage
 
 
-def plot_timeseries(
-    df: pd.core.frame.DataFrame,
-    datetime_types: Optional[List[str]],
-    column: str,
-    ts_column: str,
+def multipletests_plot(
+    pvals: pd.Series, threshold: float, method: Optional[str] = None, **kwargs
 ) -> None:
     """
-    Plot timeseries distribution by
-    - "year",
-    - "month",
-    - "quarter",
-    - "weekofyear",
-    - "dayofweek",
-    - "hour",
-    - "second"
-    unless otherwise provided by `datetime_types`.
-    :df: Df to plot.
-    :datetime_types: Types of pd.datetime, e.g. "month", "quarter".
-    :column: Distribution of which variable to represent.
-    :ts_column: Timeseries column.
+    Plot adjusted p-values and pass/fail threshold.
+
+    :param pvals: unadjusted p-values
+    :param threshold: threshold for adjusted p-values separating accepted and
+        rejected hypotheses, e.g., "FWER", or family-wise error rate
+    :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     """
-    unique_rows = expl.drop_duplicates(df=df, subset=[column])
-    if not datetime_types:
-        datetime_types = _DATETIME_TYPES
-    for datetime_type in datetime_types:
-        plt.figure(figsize=FIG_SIZE)
-        sns.countplot(getattr(unique_rows[ts_column].dt, datetime_type))
-        plt.title(f"Distribution by {datetime_type}")
-        plt.xlabel(datetime_type, fontsize=12)
-        plt.ylabel(f"Quantity of {column}", fontsize=12)
-        plt.show()
-
-
-def plot_timeseries_per_category(
-    df: pd.core.frame.DataFrame,
-    datetime_types: Optional[List["str"]],
-    column: str,
-    ts_column: str,
-    category_column: str,
-    categories: Optional[List[str]] = None,
-    top_n: Optional[int] = None,
-    figsize: Optional[Tuple[int, int]] = None,
-) -> None:
-    """
-    Plot distribution (where `datetime_types` has the same meaning as in
-    plot_headlines) for a given list of categories.
-
-    If `categories` param is not specified, `top_n` must be specified and plots
-    will show the `top_n` most popular categories.
-    :df: Df to plot.
-    :datetime_types: Types of pd.datetime, e.g. "month", "quarter".
-    :column: Distribution of which variable to represent.
-    :ts_column: Timeseries column.
-    :category_column: Categorial column to subset plots by.
-    :categories: Categories to represent.
-    :top_n: Number of top categories to use, if categories are not specified.
-    """
-    if not figsize:
-        figsize = FIG_SIZE
-    unique_rows = expl.drop_duplicates(df=df, subset=[column])
-    if top_n:
-        categories = (
-            df[category_column].value_counts().iloc[:top_n].index.to_list()
-        )
-    dbg.dassert(categories, "No categories found.")
-    if not datetime_types:
-        datetime_types = _DATETIME_TYPES
-    for datetime_type in datetime_types:
-        rows = math.ceil(len(categories) / 3)
-        fig, ax = plt.subplots(
-            figsize=(FIG_SIZE[0], rows * 4.5),
-            ncols=3,
-            nrows=rows,
-            constrained_layout=True,
-        )
-        ax = ax.flatten()
-        a = iter(ax)
-        for category in categories:
-            j = next(a)
-            # Prepare a subset of data for the current category only.
-            rows_by_category = unique_rows.loc[
-                unique_rows[categories] == category, :
-            ]
-            sns.countplot(
-                getattr(rows_by_category[ts_column].dt, datetime_type), ax=j
-            )
-            j.set_ylabel(f"Quantity of {column}")
-            j.set_xlabel(datetime_type)
-            j.set_xticklabels(j.get_xticklabels(), rotation=45)
-            j.set_title(category)
-        fig.suptitle(f"Distribution by {datetime_type}")
-
-
-def plot_categories_count(
-    df: pd.core.frame.DataFrame,
-    category_column: str,
-    figsize: Optional[Tuple[int, int]] = None,
-    title: Optional[str] = None,
-    label: Optional[str] = None,
-) -> None:
-    """
-    Plot countplot of a given `category_column`.
-
-    :df: Df to plot.
-    :category_column: Categorial column to subset plots by.
-    :figsize: If nothing specified, basic (20,5) used.
-    :title: Title for the plot.
-    """
-    if not figsize:
-        figsize = FIG_SIZE
-    if not label:
-        label = category_column
-    num_categories = df[category_column].nunique()
-    if num_categories > 10:
-        ylen = math.ceil(num_categories / 26) * 5
-        figsize = (figsize[0], ylen)
-        plt.figure(figsize=figsize)
-        ax = sns.countplot(
-            y=df[category_column], order=df[category_column].value_counts().index
-        )
-        ax.set(xlabel=f"Number of {label}s")
-        ax.set(ylabel=category_column.lower())
-        for p in ax.patches:
-            ax.text(
-                p.get_width() + 0.1,
-                p.get_y() + 0.5,
-                str(round((p.get_width()), 2)),
-            )
-    else:
-        plt.figure(figsize=figsize)
-        ax = sns.countplot(
-            x=df[category_column], order=df[category_column].value_counts().index
-        )
-        ax.set(xlabel=category_column.lower())
-        ax.set(ylabel=f"Number of {label}s")
-        for p in ax.patches:
-            ax.annotate(p.get_height(), (p.get_x() + 0.35, p.get_height() + 1))
-    if not title:
-        plt.title(f"Distribution by {category_column}")
-    else:
-        plt.title(title)
-    plt.show()
+    pvals = pvals.sort_values()
+    adj_pvals = stats.multipletests(pvals, method=method)
+    plt.plot(pvals, label="pvals", **kwargs)[0]
+    plt.plot(adj_pvals, label="adj pvals", **kwargs)
+    # Show min adj p-val in text.
+    min_adj_pval = adj_pvals[0]
+    plt.text(0.1, 0.8, "adj pval=%.3f" % min_adj_pval, fontsize=20)
+    plt.text(
+        0.1,
+        0.7,
+        weight="bold",
+        fontsize=20,
+        **(
+            {"s": "PASS", "color": "g"}
+            if min_adj_pval <= threshold
+            else {"s": "FAIL", "color": "r"}
+        ),
+    )
+    # TODO(*): Force x-ticks at integers.
+    plt.axhline(threshold, ls=":", c="k")
+    plt.ylim(0, 1)
+    plt.legend()
