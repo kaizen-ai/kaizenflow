@@ -518,7 +518,7 @@ def multipletests_plot(
     """
     Plot adjusted p-values and pass/fail threshold.
 
-    :param pvals: raw p-values
+    :param pvals: unadjusted p-values
     :param threshold: threshold for adjusted p-values separating accepted and
         rejected hypotheses, e.g., "FWER", or family-wise error rate
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
