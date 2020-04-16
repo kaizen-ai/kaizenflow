@@ -45,10 +45,10 @@ _DATETIME_TYPES = [
 
 
 def plot_non_na_cols(
-        df: pd.core.frame.DataFrame,
-        sort: bool = False,
-        ascending: bool = True,
-        max_num: Optional[int] = None,
+    df: pd.core.frame.DataFrame,
+    sort: bool = False,
+    ascending: bool = True,
+    max_num: Optional[int] = None,
 ) -> Any:
     """
     Plot a diagram describing the non-nans intervals for the columns of df.
@@ -100,11 +100,11 @@ def plot_non_na_cols(
 
 
 def plot_categories_count(
-        df: pd.core.frame.DataFrame,
-        category_column: str,
-        figsize: Optional[Tuple[int, int]] = None,
-        title: Optional[str] = None,
-        label: Optional[str] = None,
+    df: pd.core.frame.DataFrame,
+    category_column: str,
+    figsize: Optional[Tuple[int, int]] = None,
+    title: Optional[str] = None,
+    label: Optional[str] = None,
 ) -> None:
     """
     Plot countplot of a given `category_column`.
@@ -133,7 +133,7 @@ def plot_categories_count(
                 p.get_width() + 0.1,
                 p.get_y() + 0.5,
                 str(round((p.get_width()), 2)),
-                )
+            )
     else:
         plt.figure(figsize=figsize)
         ax = sns.countplot(
@@ -156,10 +156,10 @@ def plot_categories_count(
 
 
 def plot_timeseries(
-        df: pd.core.frame.DataFrame,
-        datetime_types: Optional[List[str]],
-        column: str,
-        ts_column: str,
+    df: pd.core.frame.DataFrame,
+    datetime_types: Optional[List[str]],
+    column: str,
+    ts_column: str,
 ) -> None:
     """
     Plot timeseries distribution by
@@ -189,14 +189,14 @@ def plot_timeseries(
 
 
 def plot_timeseries_per_category(
-        df: pd.core.frame.DataFrame,
-        datetime_types: Optional[List["str"]],
-        column: str,
-        ts_column: str,
-        category_column: str,
-        categories: Optional[List[str]] = None,
-        top_n: Optional[int] = None,
-        figsize: Optional[Tuple[int, int]] = None,
+    df: pd.core.frame.DataFrame,
+    datetime_types: Optional[List["str"]],
+    column: str,
+    ts_column: str,
+    category_column: str,
+    categories: Optional[List[str]] = None,
+    top_n: Optional[int] = None,
+    figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
     Plot distribution (where `datetime_types` has the same meaning as in
@@ -236,8 +236,8 @@ def plot_timeseries_per_category(
             j = next(a)
             # Prepare a subset of data for the current category only.
             rows_by_category = unique_rows.loc[
-                               unique_rows[categories] == category, :
-                               ]
+                unique_rows[categories] == category, :
+            ]
             sns.countplot(
                 getattr(rows_by_category[ts_column].dt, datetime_type), ax=j
             )
@@ -330,7 +330,6 @@ def plot_heatmap(
         g.ax_heatmap.set_title(title)
     else:
         raise RuntimeError("Invalid mode='%s'" % mode)
-
 
 
 # TODO(gp): Add an option to mask out the correlation with low pvalues
@@ -513,7 +512,9 @@ def plot_confusion_heatmap(
         return df_out, df_out_percentage
 
 
-def multipletests_plot(pvals: pd.Series, threshold: float, method: Optional[str] = None, **kwargs):
+def multipletests_plot(
+    pvals: pd.Series, threshold: float, method: Optional[str] = None, **kwargs
+):
     """
 
 
@@ -537,7 +538,7 @@ def multipletests_plot(pvals: pd.Series, threshold: float, method: Optional[str]
             {"s": "PASS", "color": "g"}
             if adj_srs[0] < threshold
             else {"s": "FAIL", "color": "r"}
-        )
+        ),
     )
     plt.axhline(accept_th, ls=":", c="k")
     plt.ylim(0, 1)
