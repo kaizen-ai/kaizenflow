@@ -46,6 +46,16 @@ linter.py -b
 branch_lints=$?
 echo "Lints in branch: ${branch_lints}."
 
+# Read lints in memory
+lints_message="\`\`\`\n"
+
+while IFS= read -r line
+do
+    lints_message="${lints_message}${line}\n"
+done <./linter_warnings.txt
+
+lints_message="${lints_message}\n\`\`\`"
+
 # Calculate "Before*" stats
 git checkout ${data_pull_request_base_sha} --recurse-submodules
 git reset --hard
@@ -70,15 +80,15 @@ errors=""
 if [[ "$branch_dirty" -gt 0 ]] ; then
     branch_dirty_status="True"
     exit_status=1
-    errors="${errors}ERROR: You didn't run the linter. Please run it with \`linter.py. -b\`"
+    errors="${errors}**ERROR**: You didn't run the linter. Please run it with \`linter.py. -b\`"
 fi
 if [[ "$master_lints" -gt 0 ]] ; then
-    errors="${errors}\nWARNING: Your branch has lints. Please fix them."
+    errors="${errors}\n**WARNING**: Your branch has lints. Please fix them."
 fi
 
 if [[ "$branch_lints" -gt "$master_lints"  ]] ; then
   exit_status=1
-  errors="${errors}\nERROR: You introduced more lints. Please fix them."
+  errors="${errors}\n**ERROR**: You introduced more lints. Please fix them."
 fi
 
 message="\n# Results of the linter build\n- Master (sha: ${data_pull_request_base_sha})"
@@ -87,15 +97,19 @@ message="${message}\n   - Dirty (i.e., linter was not run): ${master_dirty_statu
 message="${message}\n- Branch (${data_pull_request_head_ref}: ${data_pull_request_head_sha})"
 message="${message}\n   - Number of lints: ${branch_lints}"
 message="${message}\n   - Dirty (i.e., linter was not run): ${branch_dirty_status}"
-message="${message}\nThe number of lints introduced with this change: $(expr ${branch_lints} - ${master_lints})"
+message="${message}\n\nThe number of lints introduced with this change: $(expr ${branch_lints} - ${master_lints})"
 
-message="${message}\n${errors}"
+message="${message}\n\n${errors}"
 
-message="${message}\n\`\`\`\n"
+message="${message}\n${lints_message}\n"
 
-while IFS= read -r line
-do
-    message="${message}${line}\n"
-done <./linter_warnings.txt
+printf "${message}" > ./tmp_message.txt
 
-message="${message}\n\`\`\`"
+message_to_json() {
+converter="\
+import json
+print(json.dumps({'body':open('./tmp_message.txt').read()}))
+"
+python -c "${converter}"
+}
+message="$(message_to_json)"
