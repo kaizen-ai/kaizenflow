@@ -92,12 +92,22 @@ message="${message}\n\nThe number of lints introduced with this change: $(expr $
 message="${message}\n\n${errors}"
 
 # Disabled because of #1998
-#Add outputs from linter_warnings.txt to the message.
-#message="${message}\n\`\`\`\n"
-#
-#while IFS= read -r line
-#do
-#    message="${message}${line}\n"
-#done <./linter_warnings.txt
-#
-#message="${message}\n\`\`\`"
+# Add outputs from linter_warnings.txt to the message.
+message="${message}\n\`\`\`\n"
+
+while IFS= read -r line
+do
+    message="${message}${line}\n"
+done <./linter_warnings.txt
+
+message="${message}\n\`\`\`"
+printf "${message}" > ./tmp_message.txt
+
+message_to_json() {
+converter="\
+import json
+print(json.dumps({'body':open('./tmp_message.txt').read()}))
+"
+python -c "${converter}"
+}
+message="$(message_to_json)"
