@@ -268,7 +268,6 @@ class Test_config1(ut.TestCase):
         config1.update(config2)
         self.check_string(str(config1))
 
-    @pytest.mark.skip
     def test_hierarchical_update_empty_nested_config1(self) -> None:
         """
         Generate a config of `{"key1": {"key0": }}` structure.
