@@ -1,5 +1,6 @@
 import logging
 
+import core.config as cfg
 import helpers.dict as dct
 import helpers.unit_test as hut
 
@@ -7,13 +8,19 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_get_nested_dict_iterator(hut.TestCase):
-    def test_flat_dict1(self) -> None:
+    def test1(self) -> None:
+        """
+        Test basic case with no nesting.
+        """
         dict_ = {"key0": "value0", "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
         expected_result = [(["key0"], "value0"), (["key1"], "value1")]
         self.assertListEqual(actual_result, expected_result)
 
-    def test_nested_dict1(self) -> None:
+    def test2(self) -> None:
+        """
+        Test simple nested case.
+        """
         dict_ = {
             "key0": {"key00": "value00", "key01": "value01"},
             "key1": "value1",
@@ -26,7 +33,10 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         ]
         self.assertListEqual(actual_result, expected_result)
 
-    def test_nested_dict2(self) -> None:
+    def test3(self) -> None:
+        """
+        Test multilevel nested case.
+        """
         dict_ = {"key0": {"key00": {"key000": "value000"}}, "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
         expected_result = [
@@ -35,30 +45,58 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         ]
         self.assertListEqual(actual_result, expected_result)
 
-    def test_flat_dict_with_none1(self) -> None:
+    def test4(self) -> None:
+        """
+        Test flat case with `None` value.
+        """
         dict_ = {"key0": "value0", "key1": None}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
         expected_result = [(["key0"], "value0"), (["key1"], None)]
         self.assertListEqual(actual_result, expected_result)
 
-    def test_nested_dict_with_none1(self) -> None:
+    def test5(self) -> None:
+        """
+        Test nested case with `None` value.
+        """
         dict_ = {"key0": {"key00": None}, "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
         expected_result = [(["key0", "key00"], None), (["key1"], "value1")]
         self.assertListEqual(actual_result, expected_result)
 
-    def test_flat_dict_with_empty_subdict1(self) -> None:
+    def test6(self) -> None:
+        """
+        Test flat case with empty dict value.
+        """
         dict_ = {"key0": {}, "key1": "value1"}
-        actual_result = list(
-            dct.get_nested_dict_iterator(dict_)
-        )  # [(['key1'], 'value1')]
+        actual_result = list(dct.get_nested_dict_iterator(dict_))
         expected_result = [(["key0"], {}), (["key1"], "value1")]
         self.assertListEqual(actual_result, expected_result)
 
-    def test_nested_dict_with_empty_subdict1(self) -> None:
+    def test7(self) -> None:
+        """
+        Test nested case with empty dict value.
+        """
         dict_ = {"key0": {"key00": {}}, "key1": "value1"}
-        actual_result = list(
-            dct.get_nested_dict_iterator(dict_)
-        )  # [(['key1'], 'value1')]
+        actual_result = list(dct.get_nested_dict_iterator(dict_))
         expected_result = [(["key0", "key00"], {}), (["key1"], "value1")]
+        self.assertListEqual(actual_result, expected_result)
+
+    def test8(self) -> None:
+        """
+        Test flat case with empty Config value.
+        """
+        config = cfg.Config()
+        dict_ = {"key0": config, "key1": "value1"}
+        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        expected_result = [(["key0"], config), (["key1"], "value1")]
+        self.assertListEqual(actual_result, expected_result)
+
+    def test9(self) -> None:
+        """
+        Test nexted case with empty Config value.
+        """
+        config = cfg.Config()
+        dict_ = {"key0": {"key00": config}, "key1": "value1"}
+        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        expected_result = [(["key0", "key00"], config), (["key1"], "value1")]
         self.assertListEqual(actual_result, expected_result)
