@@ -3,6 +3,7 @@ Import as:
 
 import core.config_builders as ccfgbld
 
+
 Tested in: nlp/test_config_builders.py
 """
 
@@ -107,6 +108,7 @@ def get_config_from_env() -> Optional[cfg.Config]:
 def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     """
     Assert whether the list of configs contains no duplicates.
+
     :param configs: List of configs to run experiments on.
     :return:
     """
@@ -119,6 +121,9 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
 def _flatten_configs(configs: List[cfg.Config]) -> List[Dict[Any, Any]]:
     """
     Convert list of configs to a list of flattened dict items.
+
+    TODO(*): What is a "flattened dict item"?
+
     :param configs: A list of configs
     :return: List of flattened config dicts.
     """
@@ -177,6 +182,7 @@ def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     # Compute params that vary among different configs.
     config_varying_params = dict(config_varying_params).keys()
     # Remove `meta` params that always vary.
+    # TODO(*): Where do these come from?
     redundant_params = ["meta.id", "meta.experiment_result_dir"]
     config_varying_params = [
         param for param in config_varying_params if param not in redundant_params
@@ -201,9 +207,10 @@ def get_configs_dataframe(
     """
     Convert the configs into a df with full nested names.
 
-    The column names should correspond to `subconfig1.subconfig2.parameter` format, e.g.:
-    `build_targets.target_asset`.
-    :param configs: Configs used to run experiments.
+    The column names should correspond to `subconfig1.subconfig2.parameter`
+    format, e.g.: `build_targets.target_asset`.
+
+    :param configs: Configs used to run experiments. TODO(*): What experiments?
     :param params_subset: Parameters to include as table columns.
     :return: Table of configs.
     """
@@ -259,6 +266,9 @@ def set_experiment_result_dir(dst_dir: str, config: cfg.Config) -> cfg.Config:
 def add_config_idx(configs: List[cfg.Config]) -> List[cfg.Config]:
     """
     Add the config id as parameter.
+
+    TODO(*): What is the config id?
+
     :param configs: List of configs for experiments
     :return: List of copied configs with added ids
     """
@@ -280,6 +290,7 @@ def _generate_template_config(
     Assign `None` to variable parameters in KOTH config.
 
     A preliminary step required to generate multiple configs.
+
     :param config: Config to transform into template
     :param params_variants: Config paths to variable parameters and their values
     :return: Template config object
@@ -301,6 +312,7 @@ def generate_default_config_variants(
     It is assumed that for each research purpose there will be a KOTH-generating
     function. At the moment, the only such function is `ncfgbld.get_KOTH_config`, which
     accepts no parameters.
+
     :param template_config_builder: Function used to generate default config.
     :param params_variants: Config paths to variable parameters and their values
     :return: Configs with different parameters.
@@ -317,6 +329,8 @@ def generate_default_config_variants(
 def load_configs(results_dir: str) -> List[cfg.Config]:
     """
     Load all result pickles and save in order of corresponding configs.
+
+    TODO(*): What results?
 
     :param results_dir: Directory with results of experiments.
     :return: All result configs and result dataframes.
