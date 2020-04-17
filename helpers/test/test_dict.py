@@ -1,7 +1,5 @@
 import logging
 
-import pytest
-
 import helpers.dict as dct
 import helpers.unit_test as hut
 

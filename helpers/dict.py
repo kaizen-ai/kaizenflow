@@ -12,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_nested_dict_iterator(
-        nested: Dict[Any, Any], path: Optional[Iterable[Any]] = None,
+    nested: Dict[Any, Any], path: Optional[Iterable[Any]] = None,
 ) -> Dict[Tuple[Any], Any]:
     """
     Return nested dictionary iterator that iterates in a depth-first fashion.
