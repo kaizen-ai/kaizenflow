@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
+import pytest
 import scipy
 
 import core.config as cfg
@@ -266,6 +267,20 @@ class Test_config1(ut.TestCase):
         #
         config1.update(config2)
         self.check_string(str(config1))
+
+    @pytest.mark.skip
+    def test_hierarchical_update_empty_nested_config1(self) -> None:
+        subconfig = cfg.Config()
+        subconfig.add_subconfig("key0")
+        #
+        config = cfg.Config()
+        config_tmp = config.add_subconfig("key1")
+        config_tmp.update(subconfig)
+        #
+        expected_result = cfg.Config()
+        config_tmp = expected_result.add_subconfig("key1")
+        config_tmp.add_subconfig("key0")
+        self.assertEqual(str(config), str(expected_result))
 
     def test_config_with_function(self) -> None:
         config = cfg.Config()
