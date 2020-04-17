@@ -6,6 +6,7 @@ import core.config_builders as ccfgbld
 Tested in: nlp/test_config_builders.py
 """
 
+import collections
 import importlib
 import itertools
 import logging
@@ -128,7 +129,7 @@ def _flatten_configs(configs: List[cfg.Config]) -> List[Dict[Any, Any]]:
         flattened_config = dct.flatten_nested_dict(flattened_config)
         # Make `flattened_config` hashable.
         for key, val in flattened_config.items():
-            if isinstance(val, list):
+            if not isinstance(val, collections.abc.Hashable):
                 flattened_config[key] = tuple(val)
         flattened_configs.append(flattened_config)
     return flattened_configs
