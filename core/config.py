@@ -128,6 +128,15 @@ class Config:
         """
         return str(self)
 
+    def __len__(self) -> bool:
+        """
+        Return len of underlying dict.
+
+        This enables calculating `len` as with a dict and also enables bool
+        evaluation of a Config() object for truth value testing.
+        """
+        return len(self._config)
+
     def add_subconfig(self, key: str) -> "Config":
         dbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
@@ -143,8 +152,8 @@ class Config:
         - Recursively creates paths to leaf values if needed
         - `config` values overwrite any existing values
         """
-        nested_dict = config.to_dict()
-        for path, val in dct.get_nested_dict_iterator(nested_dict):
+        dict_ = config._to_dict_for_update()
+        for path, val in dct.get_nested_dict_iterator(dict_):
             self.__setitem__(path, val)
 
     def get(self, key: str, val: Any) -> Any:
@@ -182,12 +191,25 @@ class Config:
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        Convert to a ordered dict of order dicts, removing the class.
+        Convert to an ordered dict of ordered dicts, removing the class.
         """
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
             if isinstance(v, Config):
+                dict_[k] = v.to_dict()
+            else:
+                dict_[k] = v
+        return dict_
+
+    def _to_dict_for_update(self) -> Dict[str, Any]:
+        """
+        Convert as in `to_dict` except for leaf values.
+        """
+        # pylint: disable=unsubscriptable-object
+        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        for k, v in self._config.items():
+            if v and isinstance(v, Config):
                 dict_[k] = v.to_dict()
             else:
                 dict_[k] = v
