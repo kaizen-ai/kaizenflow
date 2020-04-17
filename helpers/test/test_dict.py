@@ -49,7 +49,6 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         expected_result = [(["key0", "key00"], None), (["key1"], "value1")]
         self.assertListEqual(actual_result, expected_result)
 
-    @pytest.mark.skip
     def test_flat_dict_with_empty_subdict1(self) -> None:
         dict_ = {"key0": {}, "key1": "value1"}
         actual_result = list(
@@ -58,11 +57,10 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         expected_result = [(["key0"], {}), (["key1"], "value1")]
         self.assertListEqual(actual_result, expected_result)
 
-    @pytest.mark.skip
     def test_nested_dict_with_empty_subdict1(self) -> None:
         dict_ = {"key0": {"key00": {}}, "key1": "value1"}
         actual_result = list(
             dct.get_nested_dict_iterator(dict_)
         )  # [(['key1'], 'value1')]
-        expected_result = [(["key0, key00"], {}), (["key1"], "value1")]
+        expected_result = [(["key0", "key00"], {}), (["key1"], "value1")]
         self.assertListEqual(actual_result, expected_result)
