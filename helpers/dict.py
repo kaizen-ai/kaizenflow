@@ -25,7 +25,7 @@ def get_nested_dict_iterator(
     if path is None:
         path = []
     if not nested.items():
-        yield path, type(nested)()
+        yield path, nested
     for key, value in nested.items():
         local_path = path + [key]
         if isinstance(value, collections.abc.Mapping):
