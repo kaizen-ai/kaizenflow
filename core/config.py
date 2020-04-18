@@ -334,8 +334,8 @@ def subtract_config(minuend: Config, subtrahend: Config) -> Config:
     dbg.dassert(minuend)
     flat_m = minuend.flatten()
     flat_s = subtrahend.flatten()
-    diff = cfg.Config()
-    for k, v in flat_m:
+    diff = Config()
+    for k, v in flat_m.items():
         if (k not in flat_s) or (flat_m[k] != flat_s[k]):
             diff[k] = v
     return diff
