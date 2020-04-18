@@ -1,0 +1,7 @@
+build_model:
+  activation: sigmoid
+build_targets:
+  preprocessing:
+    preprocessor: tokenizer
+meta:
+  experiment_result_dir: results.pkl

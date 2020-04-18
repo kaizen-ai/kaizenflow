@@ -128,6 +128,15 @@ class Config:
         """
         return str(self)
 
+    def __len__(self) -> int:
+        """
+        Return len of underlying dict.
+
+        This enables calculating `len` as with a dict and also enables bool
+        evaluation of a Config() object for truth value testing.
+        """
+        return len(self._config)
+
     def add_subconfig(self, key: str) -> "Config":
         dbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
@@ -143,8 +152,8 @@ class Config:
         - Recursively creates paths to leaf values if needed
         - `config` values overwrite any existing values
         """
-        nested_dict = config.to_dict()
-        for path, val in dct.get_nested_dict_iterator(nested_dict):
+        dict_ = config._to_dict_for_update()
+        for path, val in dct.get_nested_dict_iterator(dict_):
             self.__setitem__(path, val)
 
     def get(self, key: str, val: Any) -> Any:
@@ -182,12 +191,25 @@ class Config:
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        Convert to a ordered dict of order dicts, removing the class.
+        Convert to an ordered dict of ordered dicts, removing the class.
         """
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
             if isinstance(v, Config):
+                dict_[k] = v.to_dict()
+            else:
+                dict_[k] = v
+        return dict_
+
+    def _to_dict_for_update(self) -> Dict[str, Any]:
+        """
+        Convert as in `to_dict` except for leaf values.
+        """
+        # pylint: disable=unsubscriptable-object
+        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        for k, v in self._config.items():
+            if v and isinstance(v, Config):
                 dict_[k] = v.to_dict()
             else:
                 dict_[k] = v
@@ -245,3 +267,49 @@ class Config:
             "Invalid %s='%s' in config=\n%s"
             % (key, self._config[key], pri.space(str(self)))
         )
+
+
+# #############################################################################
+# Config utils
+# #############################################################################
+
+
+def flatten_config(config: Config) -> Dict[str, collections.abc.Hashable]:
+    """
+    Flatten config by joining nested keys with "." and making val hashable.
+    """
+    config_as_dict = config.to_dict()
+    flattened = {}
+    for k, v in dct.get_nested_dict_iterator(config_as_dict):
+        # Config() must have keys of str type.
+        flattened[".".join(k)] = v
+    for k, v in flattened.items():
+        if not isinstance(v, collections.abc.Hashable):
+            flattened[k] = tuple(v)
+    return flattened
+
+
+def intersect_configs(configs: Iterable[Config]) -> Config:
+    """
+    Return a config formed by taking the intersection of configs.
+
+    - Key insertion order is not taken into consideration for the purpose of
+      calculating the config intersection.
+    - The key insertion order of the returned config will respect the key
+      insertion order of the first config passed in.
+    """
+    # Flatten configs and convert to sets for intersection.
+    # We create a list so that we can reference a flattened config later.
+    flattened = list(map(flatten_config, configs))
+    dbg.dassert(flattened, "Empty iterable `configs` received.")
+    sets = [set(c.items()) for c in flattened]
+    intersection_of_flattened = set.intersection(*sets)
+    # Create intersection. Rely on the fact that Config keys are of type `str`.
+    intersection = Config()
+    # Obtain a reference config. The purpose of this is to ensure that the
+    # config intersection respects a key ordering.
+    reference_config = flattened[0]
+    for k, v in reference_config.items():
+        if (k, v) in intersection_of_flattened:
+            intersection[tuple(k.split("."))] = v
+    return intersection

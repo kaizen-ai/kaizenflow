@@ -162,30 +162,20 @@ class TestConfigIntersection(hut.TestCase):
         Verify that intersection of two different configs is what expected.
         """
         # Prepare actual output of intersection function.
+        # TODO(*): Bad unit testing fomr! What are these configs?
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
-        actual_intersection = ccfgbld.get_config_intersection(
+        intersection = ccfgbld.get_config_intersection(
             [config_1, config_2]
         )
-        # Create expected intersection config.
-        intersection_config = cfg.Config()
-        tmp_config = intersection_config.add_subconfig("build_model")
-        tmp_config["activation"] = "sigmoid"
-        tmp_config = intersection_config.add_subconfig("build_targets")
-        tmp_config = intersection_config["build_targets"].add_subconfig(
-            "preprocessing"
-        )
-        tmp_config["preprocessor"] = "tokenizer"
-        tmp_config = intersection_config.add_subconfig("meta")
-        tmp_config["experiment_result_dir"] = "results.pkl"
-
-        self.assertEqual(str(intersection_config), str(actual_intersection))
+        self.check_string(str(intersection))
 
     def test_same_config_intersection(self) -> None:
         """
         Verify that intersection of two same configs equals those configs.
         """
         # Prepare test config.
+        # TODO(*): Bad unit testing form! What is this config?
         test_config = _get_test_config_1()
         # FInd intersection of two same configs.
         actual_intersection = ccfgbld.get_config_intersection(

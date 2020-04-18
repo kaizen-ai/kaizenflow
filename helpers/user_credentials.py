@@ -119,9 +119,9 @@ def get_credentials() -> Dict[str, Any]:
         # GP.
         git_user_name = "saggese"
         git_user_email = "saggese@gmail.com"
-        if server_name in ("gpmac.local", "gpmac.lan"):
+        if server_name in ("gpmac.local", "gpmac.lan", "giacintos-mbp.lan"):
             # Laptop.
-            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_sh_path = "/Users/saggese/opt/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
             if git_repo_name == "ParticleDev/commodity_research":
                 # Forward port 10003 to the notebook server that is started by
@@ -130,12 +130,6 @@ def get_credentials() -> Dict[str, Any]:
                 # tunnel_info.append(service)
                 # jupyter_port = 10001
                 pass
-            elif git_repo_name == "alphamatic/lemonade":
-                # TODO(gp): This should be factored out in the including
-                #  superproject.
-                jupyter_port = 9999
-                notebook_html_path = "/Users/saggese/src/notebooks"
-                notebook_backup_path = "/Users/saggese/src/notebooks/backup"
         elif server_name == "twitter-data":
             # P1 old server.
             if git_repo_name == "ParticleDev/commodity_research":
