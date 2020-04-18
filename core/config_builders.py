@@ -6,7 +6,6 @@ import core.config_builders as ccfgbld
 Tested in: nlp/test_config_builders.py
 """
 
-import collections
 import importlib
 import itertools
 import logging
@@ -28,7 +27,6 @@ import pandas as pd
 
 import core.config as cfg
 import helpers.dbg as dbg
-import helpers.dict as dct
 import helpers.pickle_ as hpickle
 
 _LOG = logging.getLogger(__name__)
@@ -127,6 +125,7 @@ def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
     return list(map(cfg.flatten_config, configs))
 
 
+# TODO(*): Move to config.py.
 def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     """
     Compare configs from list to find the common part.
