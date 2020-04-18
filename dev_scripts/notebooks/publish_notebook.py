@@ -117,6 +117,12 @@ def _export_html(path_to_notebook: str) -> str:
     return dst_path
 
 
+def _create_remote_folder(server_address: str, dir_path: str) -> None:
+    cmd = f"ssh {server_address} mkdir -p {dir_path}"
+    si.system(cmd)
+    _LOG.debug(f"Remote directory '{dir_path}' created.")
+
+
 def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
     """
     Copy file to a directory on the remote server.
@@ -275,7 +281,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.debug("Action '%s' selected." % _ACTION_PUBLISH)
         # Convert the notebook to the HTML format and move to the PUB location.
         server_address = usc.get_p1_dev_server_ip()
-        pub_path = f"{server_address}:{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}/{args.subdir}"
+        dst_path = f"{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}/{args.subdir}"
+        _create_remote_folder(server_address, dst_path)
+        pub_path = f"{server_address}:{dst_path}"
         pub_file_name = os.path.basename(html_file_name)
         _copy_to_remote_folder(html_file_name, pub_path)
         #
@@ -292,6 +300,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         print(
             f"http://172.31.16.23:8077/{pub_file_name}"
         )
+
 
 if __name__ == "__main__":
     _main(_parse())
