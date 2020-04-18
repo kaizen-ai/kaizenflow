@@ -120,7 +120,7 @@ def _export_html(path_to_notebook: str) -> str:
 def _create_remote_folder(server_address: str, dir_path: str) -> None:
     cmd = f"ssh {server_address} mkdir -p {dir_path}"
     si.system(cmd)
-    _LOG.debug(f"Remote directory '{dir_path}' created.")
+    _LOG.debug("Remote directory '%s' created.", dir_path)
 
 
 def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
@@ -245,9 +245,8 @@ def _parse() -> argparse.ArgumentParser:
         "--action",
         nargs="+",
         action="store",
-        default=[_ACTION_PUBLISH, ],
+        default=[_ACTION_PUBLISH],
         choices=actions.keys(),
-
         help="\n".join(actions.values()),
     )
     prsr.add_verbosity_arg(parser)
@@ -273,12 +272,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     html_file_name = _export_html(src_file_name)
     if _ACTION_OPEN in args.action:
-        _LOG.debug("Action '%s' selected." % _ACTION_OPEN)
+        _LOG.debug("Action '%s' selected.", _ACTION_OPEN)
         # Convert the notebook to the HTML format and store in the TMP location.
         si.system(f"{open_link_cmd} {html_file_name}")
         print(f"You opened local file: {html_file_name}")
     if _ACTION_PUBLISH in args.action:
-        _LOG.debug("Action '%s' selected." % _ACTION_PUBLISH)
+        _LOG.debug("Action '%s' selected.", _ACTION_PUBLISH)
         # Convert the notebook to the HTML format and move to the PUB location.
         server_address = usc.get_p1_dev_server_ip()
         dst_path = f"{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}/{args.subdir}"
@@ -297,9 +296,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             f"at the dev server publishing location. "
             f"You can view it using this url:"
         )
-        print(
-            f"http://172.31.16.23:8077/{pub_file_name}"
-        )
+        print(f"http://172.31.16.23:8077/{pub_file_name}")
 
 
 if __name__ == "__main__":
