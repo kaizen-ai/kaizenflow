@@ -106,7 +106,7 @@ def get_config_from_env() -> Optional[cfg.Config]:
 
 def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     """
-    Assert whether the list of configs contains no duplicates.
+    Assert if the list of configs contains no duplicates.
 
     :param configs: List of configs to run experiments on.
     """
@@ -116,6 +116,7 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     )
 
 
+# TODO(*): Deprecate.
 def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
     """
     Flatten configs.
@@ -126,7 +127,7 @@ def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
     return list(map(cfg.flatten_config, configs))
 
 
-# TODO(*): Move to config.py.
+# TODO(*): Deprecate.
 def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     """
     Compare configs from list to find the common part.
@@ -134,20 +135,10 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     :param configs: A list of configs
     :return: A config with common part of all input configs.
     """
-    # Flatten configs and convert to sets for intersection.
-    flattened_configs = _flatten_configs(configs)
-    config_sets = [set(c.items()) for c in flattened_configs]
-    config_intersection = set.intersection(*config_sets)
-    # Select arbitrary config for iteration.
-    iter_config = flattened_configs[0]
-    # Create intersection. Rely on the fact that Config keys are of type `str`.
-    common_config = cfg.Config()
-    for k, v in iter_config.items():
-        if (k, v) in config_intersection:
-            common_config[tuple(k.split("."))] = v
-    return common_config
+    return cfg.intersect_configs(configs)
 
 
+# TODO(*): Are the values of this ever used anywhere?
 def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     """
     Find parameters in configs that are different and provide the varying values.
