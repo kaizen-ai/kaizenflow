@@ -220,8 +220,8 @@ class Config:
         Key leaves by tuple representing path to leaf.
         """
         dict_ = self._to_dict_except_for_leaves()
-        iter = dct.get_nested_dict_iterator(dict_)
-        return collections.OrderedDict(iter)
+        iter_ = dct.get_nested_dict_iterator(dict_)
+        return collections.OrderedDict(iter_)
 
     def to_python(self, check: bool = True) -> str:
         config_as_str = str(self.to_dict())
