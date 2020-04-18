@@ -127,7 +127,6 @@ def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
     """
     file_name = os.path.basename(path_to_file)
     dst_f_name = os.path.join(dst_dir, file_name)
-    io_.create_dir(dst_f_name, incremental=True)
     # File copying.
     cmd = f"scp {path_to_file} {dst_f_name}"
     si.system(cmd)
@@ -200,25 +199,33 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
 
 
 # #############################################################################
+_ACTION_PUBLISH = "publish"
+_ACTION_OPEN = "open"
 
 
 def _parse() -> argparse.ArgumentParser:
+    actions = {
+        _ACTION_PUBLISH: f"'--action {_ACTION_PUBLISH}' - Publish notebook.(default)",
+        _ACTION_OPEN: f"'--action {_ACTION_OPEN}' - Open selected notebook in a browser.",
+    }
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--branch",
-        action="store",
-        required=False,
-        type=str,
-        help="The branch, from which the notebook file will be checked out.",
-    )
-    parser.add_argument(
+        "-f",
         "--file",
         action="store",
         required=True,
         type=str,
         help="The path to the file ipynb, jupyter url, or github url.",
+    )
+    parser.add_argument(
+        "-b",
+        "--branch",
+        action="store",
+        required=False,
+        type=str,
+        help="The branch, from which the notebook file will be checked out.",
     )
     parser.add_argument(
         "--subdir",
@@ -228,11 +235,14 @@ def _parse() -> argparse.ArgumentParser:
     )
     #
     parser.add_argument(
+        "-a",
         "--action",
+        nargs="+",
         action="store",
-        default="publish",
-        choices=["open", "publish"],
-        help="Open with Chrome without publish, or archive / publish as html",
+        default=[_ACTION_PUBLISH, ],
+        choices=actions.keys(),
+
+        help="\n".join(actions.values()),
     )
     prsr.add_verbosity_arg(parser)
     return parser
@@ -247,7 +257,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         src_file_name = _get_path(args.file)
     # TODO(greg): make a special function for it, remove hardcoded server name.
-    is_server = si.get_server_name() == "ip-172-31-16-23"
     # Detect the platform family.
     platform = sys.platform
     open_link_cmd = "start"  # MS Windows
@@ -256,32 +265,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     elif platform == "darwin":
         open_link_cmd = "open"
     #
-    if args.action == "open":
+    html_file_name = _export_html(src_file_name)
+    if _ACTION_OPEN in args.action:
+        _LOG.debug("Action '%s' selected." % _ACTION_OPEN)
         # Convert the notebook to the HTML format and store in the TMP location.
-        html_file_name = _export_html(src_file_name)
-        #
-        if is_server:
-            # Just print the full file name for the HTML snapshot.
-            print(f"HTML file path is: '{html_file_name}'")
-        else:
-            # Open with a browser locally.
-            si.system(f"{open_link_cmd} {html_file_name}")
-            sys.exit(0)
-    elif args.action == "publish":
+        si.system(f"{open_link_cmd} {html_file_name}")
+        print(f"You opened local file: {html_file_name}")
+    if _ACTION_PUBLISH in args.action:
+        _LOG.debug("Action '%s' selected." % _ACTION_PUBLISH)
         # Convert the notebook to the HTML format and move to the PUB location.
         server_address = usc.get_p1_dev_server_ip()
-        if is_server:
-            pub_path = os.path.join(
-                _DEV_SERVER_NOTEBOOK_PUBLISHER_DIR, args.subdir
-            )
-            pub_html_file = _export_to_webpath(src_file_name, pub_path)
-            pub_file_name = os.path.basename(pub_html_file)
-            dbg.dassert_exists(pub_html_file)
-        else:
-            pub_path = f"{server_address}:{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}/{args.subdir}"
-            tmp_html_file_name = _export_html(src_file_name)
-            pub_file_name = os.path.basename(tmp_html_file_name)
-            _copy_to_remote_folder(tmp_html_file_name, pub_path)
+        pub_path = f"{server_address}:{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}/{args.subdir}"
+        pub_file_name = os.path.basename(html_file_name)
+        _copy_to_remote_folder(html_file_name, pub_path)
         #
         _LOG.debug(
             "Notebook '%s' was converted to the HTML format and stored at '%s'",
@@ -291,13 +287,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         print(
             f"HTML version of the notebook saved as '{pub_file_name}' "
             f"at the dev server publishing location. "
-            f"You can view it using this command:"
+            f"You can view it using this url:"
         )
         print(
-            f"(ssh -f -nNT -L 8877:localhost:8077 {server_address}; "
-            f"{open_link_cmd} http://localhost:8877/{pub_file_name})"
+            f"http://172.31.16.23:8077/{pub_file_name}"
         )
-
 
 if __name__ == "__main__":
     _main(_parse())
