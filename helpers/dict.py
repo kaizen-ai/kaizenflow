@@ -46,6 +46,6 @@ def extract_leaf_values(nested: Dict[Any, Any], key: Any) -> Dict[Any, Any]:
     """
     d = {}
     for k, v in get_nested_dict_iterator(nested):
-        if list(k)[-1] == key:
-            d[tuple(k)] = v
+        if k[-1] == key:
+            d[k] = v
     return d
