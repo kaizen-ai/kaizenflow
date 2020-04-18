@@ -292,13 +292,24 @@ def flatten_config(config: Config) -> Dict[str, collections.abc.Hashable]:
 def intersect_configs(configs: Iterable[Config]) -> Config:
     """
     Return a config formed by taking the intersection of configs.
+
+    - Key insertion order is not taken into consideration for the purpose of
+      calculating the config intersection.
+    - The key insertion order of the returned config will respect the key
+      insertion order of the first config passed in.
     """
     # Flatten configs and convert to sets for intersection.
-    flattened = map(flatten_config, configs)
+    # We create a list so that we can reference a flattened config later.
+    flattened = list(map(flatten_config, configs))
+    dbg.dassert(flattened, "Empty iterable `configs` received.")
     sets = [set(c.items()) for c in flattened]
     intersection_of_flattened = set.intersection(*sets)
     # Create intersection. Rely on the fact that Config keys are of type `str`.
     intersection = Config()
-    for (k, v) in intersection_of_flattened:
-        intersection[tuple(k.split("."))] = v
+    # Obtain a reference config. The purpose of this is to ensure that the
+    # config intersection respects a key ordering.
+    reference_config = flattened[0]
+    for k, v in reference_config.items():
+        if (k, v) in intersection_of_flattened:
+            intersection[tuple(k.split("."))] = v
     return intersection
