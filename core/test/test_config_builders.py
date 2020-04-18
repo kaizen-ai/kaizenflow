@@ -1,6 +1,8 @@
 import pprint
 from typing import List, Optional, cast
 
+import collections
+
 import pandas as pd
 
 import core.config as cfg
@@ -10,6 +12,24 @@ import helpers.unit_test as hut
 # #############################################################################
 # core/config_builders.py
 # #############################################################################
+
+class TestGetConfigFromFlattened1(hut.TestCase):
+    def test1(self) -> None:
+        flattened = collections.OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
+             (('read_data', 'nrows'), 999),
+             (('single_val',), 'hello'),
+             (('zscore', 'style'), 'gaz'),
+             (('zscore', 'com'), 28)])
+        config = ccfgbld.get_config_from_flattened(flattened)
+        self.check_string(str(config))
+
+    def test2(self) -> None:
+        flattened = collections.OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
+             (('read_data', 'nrows'), 999),
+             (('single_val',), 'hello'),
+             (('zscore',), cfg.Config())])
+        config = ccfgbld.get_config_from_flattened(flattened)
+        self.check_string(str(config))
 
 
 def _build_test_configs(symbols: Optional[List[str]] = None,) -> List[cfg.Config]:

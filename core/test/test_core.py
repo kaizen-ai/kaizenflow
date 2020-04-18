@@ -3,6 +3,8 @@ import json
 import logging
 from typing import Any, Callable, Dict, Tuple
 
+import pprint
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -292,6 +294,41 @@ class Test_config1(ut.TestCase):
         actual_result = str(config)
         self.assertEqual(actual_result, expected_result)
 
+    def test_flatten1(self) -> None:
+        config = cfg.Config()
+        #
+        config_tmp = config.add_subconfig("read_data")
+        config_tmp["file_name"] = "foo_bar.txt"
+        config_tmp["nrows"] = 999
+        #
+        config["single_val"] = "hello"
+        #
+        config_tmp = config.add_subconfig("zscore")
+        config_tmp["style"] = "gaz"
+        config_tmp["com"] = 28
+        #
+        flattened = config.flatten()
+        # TODO(*): `sort_dicts` param new in 3.8.
+        # string = pprint.pformat(flattened, sort_dicts=False)
+        string = pprint.pformat(flattened)
+        self.check_string(string)
+
+    def test_flatten2(self) -> None:
+        config = cfg.Config()
+        #
+        config_tmp = config.add_subconfig("read_data")
+        config_tmp["file_name"] = "foo_bar.txt"
+        config_tmp["nrows"] = 999
+        #
+        config["single_val"] = "hello"
+        #
+        config.add_subconfig("zscore")
+        #
+        flattened = config.flatten()
+        # TODO(*): `sort_dicts` param new in 3.8.
+        # string = pprint.pformat(flattened, sort_dicts=False)
+        string = pprint.pformat(flattened)
+        self.check_string(string)
 
 # #############################################################################
 # dataflow_core.py

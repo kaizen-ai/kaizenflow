@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 class Config:
     """
-    A hierarchical ordered dictionary storing configuration informations.
+    A hierarchical ordered dictionary storing configuration information.
     """
 
     def __init__(
@@ -152,7 +152,7 @@ class Config:
         - Recursively creates paths to leaf values if needed
         - `config` values overwrite any existing values
         """
-        dict_ = config._to_dict_for_update()
+        dict_ = config._to_dict_except_for_leaves()
         for path, val in dct.get_nested_dict_iterator(dict_):
             self.__setitem__(path, val)
 
@@ -202,7 +202,7 @@ class Config:
                 dict_[k] = v
         return dict_
 
-    def _to_dict_for_update(self) -> Dict[str, Any]:
+    def _to_dict_except_for_leaves(self) -> Dict[str, Any]:
         """
         Convert as in `to_dict` except for leaf values.
         """
@@ -214,6 +214,14 @@ class Config:
             else:
                 dict_[k] = v
         return dict_
+
+    def flatten(self) -> Dict[Tuple[str], Any]:
+        """
+        Key leaves by tuple representing path to leaf.
+        """
+        dict_ = self._to_dict_except_for_leaves()
+        iter = dct.get_nested_dict_iterator(dict_)
+        return collections.OrderedDict(iter)
 
     def to_python(self, check: bool = True) -> str:
         config_as_str = str(self.to_dict())
@@ -274,19 +282,13 @@ class Config:
 # #############################################################################
 
 
-def flatten_config(config: Config) -> Dict[str, collections.abc.Hashable]:
+def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
-    Flatten config by joining nested keys with "." and making val hashable.
+    Coerce `obj` to a hashable type by wrapping in `tuple` if needed.
     """
-    config_as_dict = config.to_dict()
-    flattened = {}
-    for k, v in dct.get_nested_dict_iterator(config_as_dict):
-        # Config() must have keys of str type.
-        flattened[".".join(k)] = v
-    for k, v in flattened.items():
-        if not isinstance(v, collections.abc.Hashable):
-            flattened[k] = tuple(v)
-    return flattened
+    if not isinstance(obj, collections.abc.Hashable):
+        return tuple(obj)
+    return obj
 
 
 def intersect_configs(configs: Iterable[Config]) -> Config:
@@ -300,8 +302,12 @@ def intersect_configs(configs: Iterable[Config]) -> Config:
     """
     # Flatten configs and convert to sets for intersection.
     # We create a list so that we can reference a flattened config later.
-    flattened = list(map(flatten_config, configs))
+    flattened = [c.flatten() for c in configs]
     dbg.dassert(flattened, "Empty iterable `configs` received.")
+    # Make vals hashable.
+    for flat in flattened:
+        for k, v in flat.items():
+            flat[k] = make_hashable(v)
     sets = [set(c.items()) for c in flattened]
     intersection_of_flattened = set.intersection(*sets)
     # Create intersection. Rely on the fact that Config keys are of type `str`.
@@ -311,5 +317,30 @@ def intersect_configs(configs: Iterable[Config]) -> Config:
     reference_config = flattened[0]
     for k, v in reference_config.items():
         if (k, v) in intersection_of_flattened:
-            intersection[tuple(k.split("."))] = v
+            intersection[k] = v
     return intersection
+
+
+def diff_configs(configs: Iterable[Config]) -> List[Config]:
+    """
+    Diff configs with respect to their common intersection.
+    """
+    configs = list(configs)
+    intersection = intersect_configs(configs)
+    return configs
+    # Flatten configs into dicts.
+    flattened_configs = _flatten_configs(configs)
+    # Convert dicts into sets of items for comparison.
+    flattened_configs = [set(config.items()) for config in flattened_configs]
+    # Build a dictionary of common config values.
+    union = set.union(*flattened_configs)
+    intersection = set.intersection(*flattened_configs)
+    config_varying_params = union - intersection
+    # Compute params that vary among different configs.
+    config_varying_params = dict(config_varying_params).keys()
+    # Remove `meta` params that always vary.
+    # TODO(*): Where do these come from?
+    redundant_params = ["meta.id", "meta.experiment_result_dir"]
+    config_varying_params = [
+        param for param in config_varying_params if param not in redundant_params
+    ]
