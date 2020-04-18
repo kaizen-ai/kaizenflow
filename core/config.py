@@ -304,6 +304,10 @@ def intersect_configs(configs: Iterable[Config]) -> Config:
     # We create a list so that we can reference a flattened config later.
     flattened = [c.flatten() for c in configs]
     dbg.dassert(flattened, "Empty iterable `configs` received.")
+    # Obtain a reference config. The purpose of this is to ensure that the
+    # config intersection respects a key ordering. We also make this copy
+    # so as to maintain the original (not necessarily hashable) values.
+    reference_config = flattened[0].copy()
     # Make vals hashable.
     for flat in flattened:
         for k, v in flat.items():
@@ -312,19 +316,45 @@ def intersect_configs(configs: Iterable[Config]) -> Config:
     intersection_of_flattened = set.intersection(*sets)
     # Create intersection. Rely on the fact that Config keys are of type `str`.
     intersection = Config()
-    # Obtain a reference config. The purpose of this is to ensure that the
-    # config intersection respects a key ordering.
-    reference_config = flattened[0]
     for k, v in reference_config.items():
-        if (k, v) in intersection_of_flattened:
+        if (k, make_hashable(v)) in intersection_of_flattened:
             intersection[k] = v
     return intersection
+
+
+def subtract_config(minuend: Config, subtrahend: Config) -> Config:
+    """
+    Return a Config() defined via minuend - subtrahend.
+
+    :return: return a Config() with path, val pairs in `minuend` that are not in
+        `subtrahend` (like a set difference). Equivalently, return a Config like
+        `minuend` but with the intersection of `minuend` and `subtrahend`
+        removed.
+    """
+    dbg.dassert(minuend)
+    flat_m = minuend.flatten()
+    flat_s = subtrahend.flatten()
+    diff = cfg.Config()
+    for k, v in flat_m:
+        if (k not in flat_s) or (flat_m[k] != flat_s[k]):
+            diff[k] = v
+    return diff
 
 
 def diff_configs(configs: Iterable[Config]) -> List[Config]:
     """
     Diff configs with respect to their common intersection.
+
+    :return: for each config `config` in `configs`, return a new Config()
+        consisting of the part of `config` not in the intersection of the
+        configs in `configs`
     """
+    # Convert `configs` to a list for convenience.
     configs = list(configs)
-    intersect_configs(configs)
-    raise NotImplementedError()
+    intersection = intersect_configs(configs)
+    config_diffs = []
+    for config in configs:
+        config_diff = subtract_config(config, intersection)
+        config_diffs.append(config_diff)
+    dbg.dassert_eq(len(config_diffs), len(configs))
+    return config_diffs
