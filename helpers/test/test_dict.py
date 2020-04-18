@@ -14,7 +14,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         dict_ = {"key0": "value0", "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
-        expected_result = [(["key0"], "value0"), (["key1"], "value1")]
+        expected_result = [(("key0",), "value0"), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
     def test2(self) -> None:
@@ -27,9 +27,9 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         }
         actual_result = list(dct.get_nested_dict_iterator(dict_))
         expected_result = [
-            (["key0", "key00"], "value00"),
-            (["key0", "key01"], "value01"),
-            (["key1"], "value1"),
+            (("key0", "key00"), "value00"),
+            (("key0", "key01"), "value01"),
+            (("key1",), "value1"),
         ]
         self.assertListEqual(actual_result, expected_result)
 
@@ -40,8 +40,8 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         dict_ = {"key0": {"key00": {"key000": "value000"}}, "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
         expected_result = [
-            (["key0", "key00", "key000"], "value000"),
-            (["key1"], "value1"),
+            (("key0", "key00", "key000"), "value000"),
+            (("key1",), "value1"),
         ]
         self.assertListEqual(actual_result, expected_result)
 
@@ -51,7 +51,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         dict_ = {"key0": "value0", "key1": None}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
-        expected_result = [(["key0"], "value0"), (["key1"], None)]
+        expected_result = [(("key0",), "value0"), (("key1",), None)]
         self.assertListEqual(actual_result, expected_result)
 
     def test5(self) -> None:
@@ -60,7 +60,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         dict_ = {"key0": {"key00": None}, "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
-        expected_result = [(["key0", "key00"], None), (["key1"], "value1")]
+        expected_result = [(("key0", "key00"), None), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
     def test6(self) -> None:
@@ -69,7 +69,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         dict_ = {"key0": {}, "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
-        expected_result = [(["key0"], {}), (["key1"], "value1")]
+        expected_result = [(("key0",), {}), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
     def test7(self) -> None:
@@ -78,7 +78,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         dict_ = {"key0": {"key00": {}}, "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
-        expected_result = [(["key0", "key00"], {}), (["key1"], "value1")]
+        expected_result = [(("key0", "key00"), {}), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
     def test8(self) -> None:
@@ -88,7 +88,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         config = cfg.Config()
         dict_ = {"key0": config, "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
-        expected_result = [(["key0"], config), (["key1"], "value1")]
+        expected_result = [(("key0",), config), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
     def test9(self) -> None:
@@ -98,5 +98,5 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         config = cfg.Config()
         dict_ = {"key0": {"key00": config}, "key1": "value1"}
         actual_result = list(dct.get_nested_dict_iterator(dict_))
-        expected_result = [(["key0", "key00"], config), (["key1"], "value1")]
+        expected_result = [(("key0", "key00"), config), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)

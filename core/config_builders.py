@@ -28,7 +28,6 @@ import pandas as pd
 
 import core.config as cfg
 import helpers.dbg as dbg
-import helpers.dict as dct
 import helpers.pickle_ as hpickle
 
 _LOG = logging.getLogger(__name__)
@@ -110,7 +109,6 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     Assert whether the list of configs contains no duplicates.
 
     :param configs: List of configs to run experiments on.
-    :return:
     """
     configs_as_str = [str(config) for config in configs]
     dbg.dassert_no_duplicates(
@@ -118,27 +116,17 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     )
 
 
-def _flatten_configs(configs: List[cfg.Config]) -> List[Dict[Any, Any]]:
+def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
     """
-    Convert list of configs to a list of flattened dict items.
+    Flatten configs.
 
-    TODO(*): What is a "flattened dict item"?
-
-    :param configs: A list of configs
-    :return: List of flattened config dicts.
+    :param configs: configs
+    :return: flattened config dicts
     """
-    flattened_configs = []
-    for config in configs:
-        flattened_config = config.to_dict()
-        flattened_config = dct.flatten_nested_dict(flattened_config)
-        # Make `flattened_config` hashable.
-        for key, val in flattened_config.items():
-            if isinstance(val, list):
-                flattened_config[key] = tuple(val)
-        flattened_configs.append(flattened_config)
-    return flattened_configs
+    return list(map(cfg.flatten_config, configs))
 
 
+# TODO(*): Move to config.py.
 def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     """
     Compare configs from list to find the common part.
@@ -146,20 +134,16 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     :param configs: A list of configs
     :return: A config with common part of all input configs.
     """
-    # Flatten configs into dict items for comparison.
+    # Flatten configs and convert to sets for intersection.
     flattened_configs = _flatten_configs(configs)
-    flattened_configs = [config.items() for config in flattened_configs]
-    # Get similar parameters from configs.
-    config_intersection = [
-        set(config_items) for config_items in flattened_configs
-    ]
-    config_intersection = set.intersection(*config_intersection)
-    # Select template config to build intersection config.
-    template_config = flattened_configs[0]
+    config_sets = [set(c.items()) for c in flattened_configs]
+    config_intersection = set.intersection(*config_sets)
+    # Select arbitrary config for iteration.
+    iter_config = flattened_configs[0]
+    # Create intersection. Rely on the fact that Config keys are of type `str`.
     common_config = cfg.Config()
-    # Add intersecting configs to template config.
-    for k, v in template_config:
-        if tuple((k, v)) in config_intersection:
+    for k, v in iter_config.items():
+        if (k, v) in config_intersection:
             common_config[tuple(k.split("."))] = v
     return common_config
 
