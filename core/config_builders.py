@@ -117,14 +117,14 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     )
 
 
-def _flatten_configs(configs: List[cfg.Config]) -> List[Dict[Any, Any]]:
+def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
     """
-    Convert list of configs to a list of flattened dict items.
+    Flatten configs.
 
-    :param configs: A list of configs
-    :return: List of flattened config dicts.
+    :param configs: configs
+    :return: flattened config dicts
     """
-    return [cfg.flatten_config(config) for config in configs]
+    return list(map(cfg.flatten_config, configs))
 
 
 def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
