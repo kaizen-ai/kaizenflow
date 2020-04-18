@@ -3,7 +3,8 @@ Import as:
 
 import core.config_builders as ccfgbld
 
-
+# TODO(*): config is imported as `cfg`, so this should be `cfgbldr`.
+# It is?
 Tested in: nlp/test_config_builders.py
 """
 
@@ -133,17 +134,15 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
 
 def _flatten_config(config: cfg.Config) -> Dict[str, collections.abc.Hashable]:
     """
+    Flatten configs, join tuples of strings with "." and make vals hashable.
 
-    :param config:
-    :return:
+    Someday you may realize that you want to use "." in the strings of your
+    keys. That likely won't be a very fun day.
     """
     flattened = config.flatten()
     normalized = {}
     for k, v in flattened.items():
-        if not isinstance(v, collections.abc.Hashable):
-            val = tuple(v)
-        else:
-            val = v
+        val = cfg.make_hashable(v)
         normalized[".".join(k)] = val
     return normalized
 
@@ -151,7 +150,7 @@ def _flatten_config(config: cfg.Config) -> Dict[str, collections.abc.Hashable]:
 # TODO(*): Deprecate.
 def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
     """
-    Flatten configs.
+    Flatten configs, squash the str keys, and make vals hashable.
 
     :param configs: configs
     :return: flattened config dicts
