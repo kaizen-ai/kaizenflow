@@ -128,7 +128,7 @@ class Config:
         """
         return str(self)
 
-    def __len__(self) -> bool:
+    def __len__(self) -> int:
         """
         Return len of underlying dict.
 
@@ -269,16 +269,16 @@ class Config:
         )
 
 
-def flatten_config(config: Config) -> Dict[str, Any]:
+def flatten_config(config: Config) -> Dict[str, collections.abc.Hashable]:
     """
     Flatten config by joining nested keys with "." and making val hashable.
     """
     config_as_dict = config.to_dict()
     flattened = {}
-    for item in get_nested_dict_iterator(config_as_dict):
-        flattened[".".join(item[0])] = item[1]
-    flattened_config = dct.flatten_nested_dict(config_as_dict)
-    for k, v in flattened_config.items():
+    for k, v in dct.get_nested_dict_iterator(config_as_dict):
+        # Config() must have keys of str type.
+        flattened[".".join(k)] = v
+    for k, v in flattened.items():
         if not isinstance(v, collections.abc.Hashable):
-            flattened_config[k] = tuple(v)
-    return flattened_config
+            flattened[k] = tuple(v)
+    return flattened
