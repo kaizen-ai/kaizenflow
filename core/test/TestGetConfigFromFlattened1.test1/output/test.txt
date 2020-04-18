@@ -1,0 +1,7 @@
+read_data:
+  file_name: foo_bar.txt
+  nrows: 999
+single_val: hello
+zscore:
+  style: gaz
+  com: 28

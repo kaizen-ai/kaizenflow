@@ -1,0 +1,5 @@
+OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
+             (('read_data', 'nrows'), 999),
+             (('single_val',), 'hello'),
+             (('zscore', 'style'), 'gaz'),
+             (('zscore', 'com'), 28)])

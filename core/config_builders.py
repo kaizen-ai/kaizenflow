@@ -3,10 +3,12 @@ Import as:
 
 import core.config_builders as ccfgbld
 
-
+# TODO(*): config is imported as `cfg`, so this should be `cfgbldr`.
+# It is?
 Tested in: nlp/test_config_builders.py
 """
 
+import collections
 import importlib
 import itertools
 import logging
@@ -31,6 +33,20 @@ import helpers.dbg as dbg
 import helpers.pickle_ as hpickle
 
 _LOG = logging.getLogger(__name__)
+
+
+def get_config_from_flattened(flattened: Dict[Tuple[str], Any]) -> cfg.Config:
+    """
+    Build a config from the flattened config representation.
+
+    :param flattened: flattened config like result from `config.flatten()`
+    :return: config object initialized from flattened representation
+    """
+    dbg.dassert(flattened)
+    config = cfg.Config()
+    for k, v in flattened.items():
+        config[k] = v
+    return config
 
 
 def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
@@ -116,15 +132,30 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     )
 
 
+def _flatten_config(config: cfg.Config) -> Dict[str, collections.abc.Hashable]:
+    """
+    Flatten configs, join tuples of strings with "." and make vals hashable.
+
+    Someday you may realize that you want to use "." in the strings of your
+    keys. That likely won't be a very fun day.
+    """
+    flattened = config.flatten()
+    normalized = {}
+    for k, v in flattened.items():
+        val = cfg.make_hashable(v)
+        normalized[".".join(k)] = val
+    return normalized
+
+
 # TODO(*): Deprecate.
 def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
     """
-    Flatten configs.
+    Flatten configs, squash the str keys, and make vals hashable.
 
     :param configs: configs
     :return: flattened config dicts
     """
-    return list(map(cfg.flatten_config, configs))
+    return list(map(_flatten_config, configs))
 
 
 # TODO(*): Deprecate.
