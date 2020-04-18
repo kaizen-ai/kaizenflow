@@ -302,4 +302,3 @@ def intersect_configs(configs: Iterable[Config]) -> Config:
     for (k, v) in intersection_of_flattened:
         intersection[tuple(k.split("."))] = v
     return intersection
-
