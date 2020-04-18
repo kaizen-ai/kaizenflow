@@ -134,20 +134,16 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     :param configs: A list of configs
     :return: A config with common part of all input configs.
     """
-    # Flatten configs into dict items for comparison.
+    # Flatten configs and conver to sets for intersection.
     flattened_configs = _flatten_configs(configs)
-    flattened_configs = [config.items() for config in flattened_configs]
-    # Get similar parameters from configs.
-    config_intersection = [
-        set(config_items) for config_items in flattened_configs
-    ]
-    config_intersection = set.intersection(*config_intersection)
-    # Select template config to build intersection config.
-    template_config = flattened_configs[0]
+    config_sets = [set(c.items()) for c in flattened_configs]
+    config_intersection = set.intersection(*config_sets)
+    # Select arbitrary config for iteration.
+    iter_config = flattened_configs[0]
+    # Create intersection. Rely on the fact that Config keys are of type `str`.
     common_config = cfg.Config()
-    # Add intersecting configs to template config.
-    for k, v in template_config:
-        if tuple((k, v)) in config_intersection:
+    for k, v in iter_config.items():
+        if (k, v) in config_intersection:
             common_config[tuple(k.split("."))] = v
     return common_config
 
