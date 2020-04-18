@@ -1,9 +1,8 @@
 import io
 import json
 import logging
-from typing import Any, Callable, Dict, Tuple
-
 import pprint
+from typing import Any, Callable, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -329,6 +328,7 @@ class Test_config1(ut.TestCase):
         # string = pprint.pformat(flattened, sort_dicts=False)
         string = pprint.pformat(flattened)
         self.check_string(string)
+
 
 # #############################################################################
 # dataflow_core.py

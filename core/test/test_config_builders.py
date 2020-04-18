@@ -1,7 +1,6 @@
+import collections
 import pprint
 from typing import List, Optional, cast
-
-import collections
 
 import pandas as pd
 
@@ -13,21 +12,30 @@ import helpers.unit_test as hut
 # core/config_builders.py
 # #############################################################################
 
+
 class TestGetConfigFromFlattened1(hut.TestCase):
     def test1(self) -> None:
-        flattened = collections.OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
-             (('read_data', 'nrows'), 999),
-             (('single_val',), 'hello'),
-             (('zscore', 'style'), 'gaz'),
-             (('zscore', 'com'), 28)])
+        flattened = collections.OrderedDict(
+            [
+                (("read_data", "file_name"), "foo_bar.txt"),
+                (("read_data", "nrows"), 999),
+                (("single_val",), "hello"),
+                (("zscore", "style"), "gaz"),
+                (("zscore", "com"), 28),
+            ]
+        )
         config = ccfgbld.get_config_from_flattened(flattened)
         self.check_string(str(config))
 
     def test2(self) -> None:
-        flattened = collections.OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
-             (('read_data', 'nrows'), 999),
-             (('single_val',), 'hello'),
-             (('zscore',), cfg.Config())])
+        flattened = collections.OrderedDict(
+            [
+                (("read_data", "file_name"), "foo_bar.txt"),
+                (("read_data", "nrows"), 999),
+                (("single_val",), "hello"),
+                (("zscore",), cfg.Config()),
+            ]
+        )
         config = ccfgbld.get_config_from_flattened(flattened)
         self.check_string(str(config))
 
@@ -185,9 +193,7 @@ class TestConfigIntersection(hut.TestCase):
         # TODO(*): Bad unit testing fomr! What are these configs?
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
-        intersection = ccfgbld.get_config_intersection(
-            [config_1, config_2]
-        )
+        intersection = ccfgbld.get_config_intersection([config_1, config_2])
         self.check_string(str(intersection))
 
     def test_same_config_intersection(self) -> None:

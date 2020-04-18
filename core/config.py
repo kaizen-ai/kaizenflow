@@ -152,8 +152,8 @@ class Config:
         - Recursively creates paths to leaf values if needed
         - `config` values overwrite any existing values
         """
-        dict_ = config._to_dict_except_for_leaves()
-        for path, val in dct.get_nested_dict_iterator(dict_):
+        flattened = config.flatten()
+        for path, val in flattened.items():
             self.__setitem__(path, val)
 
     def get(self, key: str, val: Any) -> Any:
@@ -326,21 +326,5 @@ def diff_configs(configs: Iterable[Config]) -> List[Config]:
     Diff configs with respect to their common intersection.
     """
     configs = list(configs)
-    intersection = intersect_configs(configs)
-    return configs
-    # Flatten configs into dicts.
-    flattened_configs = _flatten_configs(configs)
-    # Convert dicts into sets of items for comparison.
-    flattened_configs = [set(config.items()) for config in flattened_configs]
-    # Build a dictionary of common config values.
-    union = set.union(*flattened_configs)
-    intersection = set.intersection(*flattened_configs)
-    config_varying_params = union - intersection
-    # Compute params that vary among different configs.
-    config_varying_params = dict(config_varying_params).keys()
-    # Remove `meta` params that always vary.
-    # TODO(*): Where do these come from?
-    redundant_params = ["meta.id", "meta.experiment_result_dir"]
-    config_varying_params = [
-        param for param in config_varying_params if param not in redundant_params
-    ]
+    intersect_configs(configs)
+    raise NotImplementedError()
