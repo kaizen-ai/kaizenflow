@@ -108,8 +108,8 @@ def get_config_from_env() -> Optional[cfg.Config]:
 def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     """
     Assert whether the list of configs contains no duplicates.
+
     :param configs: List of configs to run experiments on.
-    :return:
     """
     configs_as_str = [str(config) for config in configs]
     dbg.dassert_no_duplicates(
@@ -120,19 +120,11 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
 def _flatten_configs(configs: List[cfg.Config]) -> List[Dict[Any, Any]]:
     """
     Convert list of configs to a list of flattened dict items.
+
     :param configs: A list of configs
     :return: List of flattened config dicts.
     """
-    flattened_configs = []
-    for config in configs:
-        flattened_config = config.to_dict()
-        flattened_config = dct.flatten_nested_dict(flattened_config)
-        # Make `flattened_config` hashable.
-        for key, val in flattened_config.items():
-            if not isinstance(val, collections.abc.Hashable):
-                flattened_config[key] = tuple(val)
-        flattened_configs.append(flattened_config)
-    return flattened_configs
+    return [cfg.flatten_config(config) for config in configs]
 
 
 def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
