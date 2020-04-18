@@ -134,7 +134,7 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
     :param configs: A list of configs
     :return: A config with common part of all input configs.
     """
-    # Flatten configs and conver to sets for intersection.
+    # Flatten configs and convert to sets for intersection.
     flattened_configs = _flatten_configs(configs)
     config_sets = [set(c.items()) for c in flattened_configs]
     config_intersection = set.intersection(*config_sets)
