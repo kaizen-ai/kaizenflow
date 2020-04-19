@@ -373,6 +373,8 @@ def convert_to_series(config: Config) -> pd.Series:
     - `str` tuple paths are joined on "."
     - Empty leaf configs are converted to an empty tuple
     """
+    dbg.dassert_isinstance(config, Config)
+    dbg.dassert(config, msg="`config` is empty")
     flat = config.flatten()
     keys = []
     vals = []
@@ -399,6 +401,8 @@ def convert_to_dataframe(configs: Iterable[Config]) -> pd.DataFrame:
         df = convert_to_dataframe(diffs)
         ```
     """
-    srs = map(convert_to_series, configs)
-    df = pd.concat(list(srs), axis=1).T
+    dbg.dassert_isinstance(configs, Iterable)
+    srs = list(map(convert_to_series, configs))
+    dbg.dassert(srs)
+    df = pd.concat(srs, axis=1).T
     return df
