@@ -330,6 +330,37 @@ class Test_config1(ut.TestCase):
         self.check_string(string)
 
 
+class Test_subtract_config1(ut.TestCase):
+    def test_test1(self) -> None:
+        config1 = cfg.Config()
+        config1[("l0",)] = "1st_floor"
+        config1[["l1", "l2"]] = "2nd_floor"
+        config1[["r1", "r2", "r3"]] = [1, 2]
+        #
+        config2 = cfg.Config()
+        config2["l0"] = "Euro_1nd_floor"
+        config2[["l1", "l2"]] = "2nd_floor"
+        config2[["r1", "r2", "r3"]] = [1, 2]
+        #
+        diff = cfg.subtract_config(config1, config2)
+        self.check_string(str(diff))
+
+    def test_test2(self) -> None:
+        config1 = cfg.Config()
+        config1[("l0",)] = "1st_floor"
+        config1[["l1", "l2"]] = "2nd_floor"
+        config1[["r1", "r2", "r3"]] = [1, 2, 3]
+        #
+        config2 = cfg.Config()
+        config2["l0"] = "Euro_1nd_floor"
+        config2[["l1", "l2"]] = "2nd_floor"
+        config2[["r1", "r2", "r3"]] = [1, 2]
+        config2["empty"] = cfg.Config()
+        #
+        diff = cfg.subtract_config(config1, config2)
+        self.check_string(str(diff))
+
+
 # #############################################################################
 # dataflow_core.py
 # #############################################################################
