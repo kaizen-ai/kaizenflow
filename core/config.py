@@ -15,6 +15,8 @@ import helpers.dict as dct
 import helpers.introspection as intr
 import helpers.printing as pri
 
+import pandas as pd
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -361,3 +363,42 @@ def diff_configs(configs: Iterable[Config]) -> List[Config]:
         config_diffs.append(config_diff)
     dbg.dassert_eq(len(config_diffs), len(configs))
     return config_diffs
+
+
+def convert_to_series(config: Config) -> pd.Series:
+    """
+    Convert config into a flattened series representation.
+
+    - This is lossy but useful for comparing multiple configs
+    - `str` tuple paths are joined on "."
+    - Empty leaf configs are converted to an empty tuple
+    """
+    flat = config.flatten()
+    keys = []
+    vals = []
+    for k, v in flat.items():
+        key = ".".join(k)
+        keys.append(key)
+        if isinstance(v, Config):
+            vals.append(tuple())
+        else:
+            vals.append(v)
+    dbg.dassert_no_duplicates(keys)
+    srs = pd.Series(index=keys, data=vals)
+    return srs
+
+
+def convert_to_dataframe(configs: Iterable[Config]) -> pd.DataFrame:
+    """
+    Convert multiple configs into flattened dataframe representation.
+
+    E.g., to highlight config differences in a dataframe, for an iterable
+    `configs`, do
+        ```
+        diffs = diff_configs(configs)
+        df = convert_to_dataframe(diffs)
+        ```
+    """
+    srs = map(convert_to_series, configs)
+    df = pd.concat(list(srs), axis=1).T
+    return df
