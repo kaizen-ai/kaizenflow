@@ -285,11 +285,13 @@ class Config:
 
 def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
-    Coerce `obj` to a hashable type by wrapping in `tuple` if needed.
+    Coerce `obj` to a hashable type if not already hashable.
     """
-    if not isinstance(obj, collections.abc.Hashable):
-        return (obj,)
-    return obj
+    if isinstance(obj, collections.abc.Hashable):
+        return obj
+    if isinstance(obj, collections.abc.Iterable):
+        return tuple(map(make_hashable, obj))
+    return tuple((obj))
 
 
 def intersect_configs(configs: Iterable[Config]) -> Config:
