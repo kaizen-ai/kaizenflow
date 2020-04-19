@@ -55,6 +55,7 @@ class Config:
             _LOG.debug(
                 "key=%s -> head_key=%s tail_key=%s", key, head_key, tail_key
             )
+            dbg.dassert_isinstance(head_key, str, "Keys can only be string")
             if not tail_key:
                 # Tuple of a single element, then set the value.
                 # Note that the following call is not equivalent to
@@ -62,10 +63,10 @@ class Config:
                 self.__setitem__(head_key, val)
             else:
                 # Recurse.
-                dbg.dassert_isinstance(head_key, str, "Keys can only be string")
                 subconfig = self.get(head_key, None) or self.add_subconfig(
                     head_key
                 )
+                dbg.dassert_isinstance(subconfig, Config)
                 subconfig.__setitem__(tail_key, val)
             return
         _LOG.debug("key=%s", key)
@@ -287,7 +288,7 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     Coerce `obj` to a hashable type by wrapping in `tuple` if needed.
     """
     if not isinstance(obj, collections.abc.Hashable):
-        return tuple(obj)
+        return (obj,)
     return obj
 
 
