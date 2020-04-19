@@ -120,6 +120,7 @@ def get_config_from_env() -> Optional[cfg.Config]:
 # #############################################################################
 
 
+# TODO(*): Is this used anywhere?
 def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     """
     Assert if the list of configs contains no duplicates.
@@ -132,6 +133,7 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
     )
 
 
+# TODO(*): Deprecate.
 def _flatten_config(config: cfg.Config) -> Dict[str, collections.abc.Hashable]:
     """
     Flatten configs, join tuples of strings with "." and make vals hashable.
@@ -170,6 +172,7 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
 
 
 # TODO(*): Are the values of this ever used anywhere?
+# TODO(*): Try to deprecate. If needed, compose with `cfg.diff_configs()`.
 def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     """
     Find parameters in configs that are different and provide the varying values.
@@ -206,6 +209,7 @@ def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
     return config_difference
 
 
+# TODO(*): Deprecate. Switch to `cfg.convert_to_dataframe()`.
 def get_configs_dataframe(
     configs: List[cfg.Config],
     params_subset: Optional[Union[str, List[str]]] = None,
@@ -273,7 +277,9 @@ def add_config_idx(configs: List[cfg.Config]) -> List[cfg.Config]:
     """
     Add the config id as parameter.
 
-    TODO(*): What is the config id?
+    TODO(*): What is "the config id"? Why does my config have a `meta`? And why
+        would this ever depend upon the order in which the configs appear in a
+        list?
 
     :param configs: List of configs for experiments
     :return: List of copied configs with added ids
@@ -314,6 +320,8 @@ def generate_default_config_variants(
     """
     Build a list of config files for experiments.
 
+    TODO(*): What experiments? What is a KOTH-generating function?
+
     This is the base function to be wrapped into specific config-generating functions.
     It is assumed that for each research purpose there will be a KOTH-generating
     function. At the moment, the only such function is `ncfgbld.get_KOTH_config`, which
@@ -336,7 +344,8 @@ def load_configs(results_dir: str) -> List[cfg.Config]:
     """
     Load all result pickles and save in order of corresponding configs.
 
-    TODO(*): What results?
+    TODO(*): What results? Also, the function is called `load_configs()` and
+        yet the 1-line summary starts by discussing loading results.
 
     :param results_dir: Directory with results of experiments.
     :return: All result configs and result dataframes.
@@ -358,6 +367,8 @@ def build_multiple_configs(
     params_variants: Dict[Tuple[str, ...], Iterable[Any]],
 ) -> List[cfg.Config]:
     """
+    TODO(Danya): Come up with a 1-line summary.
+
     Create multiple `cfg.Config` objects using the given config template
     and overwriting a None parameter specified through a parameter path
     and several possible elements:
