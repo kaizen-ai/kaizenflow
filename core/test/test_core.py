@@ -329,6 +329,7 @@ class Test_config1(ut.TestCase):
         string = pprint.pformat(flattened)
         self.check_string(string)
 
+
 class Test_subtract_config1(ut.TestCase):
     def test_test1(self) -> None:
         config1 = cfg.Config()
