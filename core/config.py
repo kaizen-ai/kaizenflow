@@ -10,12 +10,12 @@ import logging
 import re
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+import pandas as pd
+
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.introspection as intr
 import helpers.printing as pri
-
-import pandas as pd
 
 _LOG = logging.getLogger(__name__)
 
