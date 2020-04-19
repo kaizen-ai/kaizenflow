@@ -10,6 +10,8 @@ import logging
 import re
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+import pandas as pd
+
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.introspection as intr
@@ -285,11 +287,13 @@ class Config:
 
 def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
-    Coerce `obj` to a hashable type by wrapping in `tuple` if needed.
+    Coerce `obj` to a hashable type if not already hashable.
     """
-    if not isinstance(obj, collections.abc.Hashable):
-        return (obj,)
-    return obj
+    if isinstance(obj, collections.abc.Hashable):
+        return obj
+    if isinstance(obj, collections.abc.Iterable):
+        return tuple(map(make_hashable, obj))
+    return tuple((obj))
 
 
 def intersect_configs(configs: Iterable[Config]) -> Config:
@@ -359,3 +363,46 @@ def diff_configs(configs: Iterable[Config]) -> List[Config]:
         config_diffs.append(config_diff)
     dbg.dassert_eq(len(config_diffs), len(configs))
     return config_diffs
+
+
+def convert_to_series(config: Config) -> pd.Series:
+    """
+    Convert config into a flattened series representation.
+
+    - This is lossy but useful for comparing multiple configs
+    - `str` tuple paths are joined on "."
+    - Empty leaf configs are converted to an empty tuple
+    """
+    dbg.dassert_isinstance(config, Config)
+    dbg.dassert(config, msg="`config` is empty")
+    flat = config.flatten()
+    keys = []
+    vals = []
+    for k, v in flat.items():
+        key = ".".join(k)
+        keys.append(key)
+        if isinstance(v, Config):
+            vals.append(tuple())
+        else:
+            vals.append(v)
+    dbg.dassert_no_duplicates(keys)
+    srs = pd.Series(index=keys, data=vals)
+    return srs
+
+
+def convert_to_dataframe(configs: Iterable[Config]) -> pd.DataFrame:
+    """
+    Convert multiple configs into flattened dataframe representation.
+
+    E.g., to highlight config differences in a dataframe, for an iterable
+    `configs`, do
+        ```
+        diffs = diff_configs(configs)
+        df = convert_to_dataframe(diffs)
+        ```
+    """
+    dbg.dassert_isinstance(configs, Iterable)
+    srs = list(map(convert_to_series, configs))
+    dbg.dassert(srs)
+    df = pd.concat(srs, axis=1).T
+    return df
