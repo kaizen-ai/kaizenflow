@@ -73,9 +73,6 @@ import helpers.parser as prsr
 import helpers.system_interaction as si
 import helpers.user_credentials as usc
 
-# TODO(greg): consider moving this constant somewhere else.
-_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR = "/http/notebook_publisher"
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -280,7 +277,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.debug("Action '%s' selected.", _ACTION_PUBLISH)
         # Convert the notebook to the HTML format and move to the PUB location.
         server_address = usc.get_p1_dev_server_ip()
-        dst_path = f"{_DEV_SERVER_NOTEBOOK_PUBLISHER_DIR}/{args.subdir}"
+        publisher_dir = "/http/notebook_publisher"
+        dst_path = f"{publisher_dir}/{args.subdir}"
         _create_remote_folder(server_address, dst_path)
         pub_path = f"{server_address}:{dst_path}"
         pub_file_name = os.path.basename(html_file_name)
@@ -293,10 +291,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         )
         print(
             f"HTML version of the notebook saved as '{pub_file_name}' "
-            f"at the dev server publishing location. "
+            f"at the dev server publishing location.\n"
             f"You can view it using this url:"
         )
-        print(f"http://172.31.16.23:8077/{pub_file_name}")
+        print(f"http://{server_address}:8077/{pub_file_name}")
 
 
 if __name__ == "__main__":
