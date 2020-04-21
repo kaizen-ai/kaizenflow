@@ -37,12 +37,12 @@ echo "Files changed in branch: ${files_changed_in_branch}."
 # Calculate "After*" stats
 # Suppress all errors, we handle them on upper level.
 set +e
-linter.py -b --post_check
+linter.py -t ${data_pull_request_base_sha} --post_check
 branch_dirty=$?
 echo "Branch dirty: ${branch_dirty}."
 
 git reset --hard
-linter.py -b
+linter.py -t ${data_pull_request_base_sha}
 branch_lints=$?
 echo "Lints in branch: ${branch_lints}."
 
@@ -57,8 +57,8 @@ done <./linter_warnings.txt
 lints_message="${lints_message}\n\`\`\`"
 
 # Calculate "Before*" stats
-git checkout ${data_pull_request_base_sha} --recurse-submodules
 git reset --hard
+git checkout ${data_pull_request_base_sha} --recurse-submodules
 linter.py --files $files_changed_in_branch --post_check
 master_dirty=$?
 echo "Master dirty: ${master_dirty}."
@@ -91,7 +91,9 @@ if [[ "$branch_lints" -gt "$master_lints"  ]] ; then
   errors="${errors}\n**ERROR**: You introduced more lints. Please fix them."
 fi
 
-message="\n# Results of the linter build\n- Master (sha: ${data_pull_request_base_sha})"
+message="\n# Results of the linter build"
+message="${message}\nConsole output: ${BUILD_URL}console"
+message="${message}\n- Master (sha: ${data_pull_request_base_sha})"
 message="${message}\n   - Number of lints: ${master_lints}"
 message="${message}\n   - Dirty (i.e., linter was not run): ${master_dirty_status}"
 message="${message}\n- Branch (${data_pull_request_head_ref}: ${data_pull_request_head_sha})"
