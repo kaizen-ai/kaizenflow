@@ -557,22 +557,31 @@ def plot_value_counts(
     top_n_to_print: int = 10,
     top_n_to_plot: int = None,
     plot_title: Optional[str] = None,
-    plot_rotation: Optional[int] = None,
+    label: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None
 ) -> None:
     """
-    Plot barplot of categorical data value counts.
+    Plot barplots for value counts and print the values.
+
+    The function is typically used in conjunction with value counts
+    from KGifictation info. If the number of labels is over 20, the plot is
+    oriented horizontally and the height of the plot is automatically adjusted.
 
     :param counts: value counts
-    :param col_name: name of the column the values are counted for
-    :param top_n_to_print: top N values to show, None for all, 0 for no value.
-    :param top_n_to_plot: top N values to plot, None for all, 0 for no value
+    :param col_name: name of the column that provided the values
+    :param top_n_to_print: top N values to show. None for all. 0 for no value.
+    :param top_n_to_plot: like top_n_to_print, but for the plot.
     :param plot_title: title of the barplot
-    :param plot_rotation: rotation of the barplot x-ticks
-    :param figsize:
+    :param label: label of the X axis
+    :param figsize: size of the plot
     """
+    # Get default values for plot title and label.
     if not figsize:
         figsize = FIG_SIZE
+    if not plot_title:
+        plot_title = "Distribution by %s" % col_name
+    if not label:
+        label = "Number of %s values" % col_name
     unique_values = sorted(counts.index.to_list())
     # Display a number of unique values in сolumn.
     print("Number of unique values: %d" % len(unique_values))
@@ -585,7 +594,7 @@ def plot_value_counts(
         if top_n_to_print is not None:
             dbg.dassert_lte(1, top_n_to_print)
             counts_tmp = counts_tmp[:top_n_to_print]
-            print("Labels for up to first %d unique values:" % top_n_to_print)
+            print("Up to first %d unique labels:" % top_n_to_print)
         else:
             print("All unique labels:")
         print(counts_tmp)
@@ -603,35 +612,56 @@ def plot_value_counts(
             ylen = math.ceil(len(counts_tmp) / 26) * 5
             figsize = (figsize[0], ylen)
             counts_tmp.sort_values(ascending=True, inplace=True)
-            counts_tmp.plot(
-                kind="barh", figsize=figsize, title=plot_title, rot=plot_rotation
-            )
+            barplot_counts(counts_tmp, orientation="horizontal", title=plot_title, figsize=figsize, label=label)
         else:
             counts_tmp.sort_values(ascending=False, inplace=True)
-            barplot_counts(counts_tmp, title=plot_title, rot=plot_rotation, figsize=figsize)
+            barplot_counts(counts_tmp, orientation="vertical", title=plot_title, figsize=figsize, label=label)
 
 
 def barplot_counts(
     value_counts: pd.Series,
-    title: Optional[str] = None,
-    label: Optional[str] = None,
+    title: str,
+    label: str,
+    orientation: str,
     string_format: str = "%.2f%%",
-    figsize = None
+    figsize: Optional[Tuple[int, int]] = None
 ) -> None:
-    if figsize in None:
+    """
+    Plot a barplot from value counts.
+
+    :param value_counts: counts
+    :param title: title of the plot
+    :param label: label of the X axis
+    :param orientation: vertical or horizontal bars
+    :param string_format: format of bar annotations
+    :param figsize: size of plot
+    """
+
+    if figsize is None:
         figsize = FIG_SIZE
     plt.figure(figsize=figsize)
-    ax = sns.countplot(y=value_counts.index, order=value_counts.index)
-    ax.set(xlabel="Number of %s type entities" % label)
-    for i, p in enumerate(ax.patches):
-        width, height = p.get_width(), p.get_height()
-        x, y = p.get_xy()
-        ax.annotate(
-            string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
-            (x, y + height + 0.01),
-        )
-    if not title:
-        plt.title(f"Distribution by {label}")
+    # Plot vertical bars.
+    if orientation == "vertical":
+        ax = sns.barplot(x=value_counts.index, y=value_counts.values)
+        for i, p in enumerate(ax.patches):
+            height = p.get_height()
+            x, y = p.get_xy()
+            ax.annotate(
+                string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
+                (x, y + height + 0.5),
+            )
+    # Plot horizontal bars.
+    elif orientation == "horizontal":
+        ax = sns.barplot(y=value_counts.index, x=value_counts.values)
+        for i, p in enumerate(ax.patches):
+            width = p.get_width()
+            x, y = p.get_xy()
+            ax.annotate(
+                string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
+                (x + width + 0.5, y)
+            )
     else:
-        plt.title(title)
+        dbg.dfatal(message="Invalid plot orientation.")
+    ax.set(xlabel=label)
+    plt.title(title)
     plt.show()
