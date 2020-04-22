@@ -523,16 +523,17 @@ def multipletests_plot(
         rejected hypotheses, e.g., "FWER", or family-wise error rate
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     """
-    pvals = pvals.sort_values()
+    pvals = pvals.copy()
+    pvals = pvals.sort_values().reset_index(drop=True)
     adj_pvals = stats.multipletests(pvals, method=method)
     plt.plot(pvals, label="pvals", **kwargs)[0]
     plt.plot(adj_pvals, label="adj pvals", **kwargs)
     # Show min adj p-val in text.
     min_adj_pval = adj_pvals[0]
-    plt.text(0.1, 0.8, "adj pval=%.3f" % min_adj_pval, fontsize=20)
+    plt.text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
     plt.text(
         0.1,
-        0.7,
+        0.6,
         weight="bold",
         fontsize=20,
         **(
