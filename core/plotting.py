@@ -554,7 +554,6 @@ def multipletests_plot(
 
 def plot_value_counts(
     counts: pd.Series,
-    col_name: str,
     top_n_to_print: int = 10,
     top_n_to_plot: Optional[int] = None,
     plot_title: Optional[str] = None,
@@ -569,7 +568,6 @@ def plot_value_counts(
     oriented horizontally and the height of the plot is automatically adjusted.
 
     :param counts: value counts
-    :param col_name: name of the column that provided the values
     :param top_n_to_print: top N values to show. None for all. 0 for no value.
     :param top_n_to_plot: like top_n_to_print, but for the plot.
     :param plot_title: title of the barplot
@@ -579,10 +577,6 @@ def plot_value_counts(
     # Get default values for plot title and label.
     if not figsize:
         figsize = FIG_SIZE
-    if not plot_title:
-        plot_title = "Distribution by %s" % col_name
-    if not label:
-        label = "Number of %s values" % col_name
     unique_values = sorted(counts.index.to_list())
     # Display a number of unique values in сolumn.
     print("Number of unique values: %d" % len(unique_values))
@@ -615,7 +609,7 @@ def plot_value_counts(
             barplot_counts(
                 counts_tmp,
                 orientation="horizontal",
-                title=plot_title,
+                plot_title=plot_title,
                 figsize=figsize,
                 label=label,
             )
@@ -623,7 +617,7 @@ def plot_value_counts(
             barplot_counts(
                 counts_tmp,
                 orientation="vertical",
-                title=plot_title,
+                plot_title=plot_title,
                 figsize=figsize,
                 label=label,
             )
@@ -631,10 +625,10 @@ def plot_value_counts(
 
 def barplot_counts(
     value_counts: pd.Series,
-    title: str,
-    label: str,
     orientation: str,
     string_format: str = "%.2f%%",
+    plot_title: Optional[str] = None,
+    label: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
@@ -673,6 +667,8 @@ def barplot_counts(
             )
     else:
         dbg.dfatal(message="Invalid plot orientation.")
-    ax.set(xlabel=label)
-    plt.title(title)
+    if label:
+        ax.set(xlabel=label)
+    if plot_title:
+        plt.title(plot_title)
     plt.show()
