@@ -564,7 +564,7 @@ def plot_value_counts(
     Plot barplots for value counts and print the values.
 
     The function is typically used in conjunction with value counts
-    from KGifictation info. If the number of labels is over 20, the plot is
+    from KGification info. If the number of labels is over 20, the plot is
     oriented horizontally and the height of the plot is automatically adjusted.
 
     :param counts: value counts
@@ -637,7 +637,7 @@ def barplot_counts(
     Plot a barplot from value counts.
 
     :param value_counts: counts
-    :param title: title of the plot
+    :param plot_title: title of the plot
     :param label: label of the X axis
     :param orientation: vertical or horizontal bars
     :param string_format: format of bar annotations
