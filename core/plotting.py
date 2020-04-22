@@ -607,7 +607,7 @@ def plot_value_counts(
             counts_tmp.sort_values(ascending=True, inplace=True)
             ylen = math.ceil(len(counts_tmp) / 26) * 5
             figsize = (figsize[0], ylen)
-            barplot_counts(
+            plot_barplot(
                 counts_tmp,
                 orientation="horizontal",
                 plot_title=plot_title,
@@ -616,7 +616,7 @@ def plot_value_counts(
             )
         else:
             # Plot small number of categories vertically.
-            barplot_counts(
+            plot_barplot(
                 counts_tmp,
                 orientation="vertical",
                 plot_title=plot_title,
@@ -625,8 +625,8 @@ def plot_value_counts(
             )
 
 
-def barplot_counts(
-    value_counts: pd.Series,
+def plot_barplot(
+    integers: pd.Series,
     orientation: str,
     string_format: str = "%.2f%%",
     plot_title: Optional[str] = None,
@@ -634,9 +634,9 @@ def barplot_counts(
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
-    Plot a barplot from value counts.
+    Plot a barplot from value counts, using indices as x-labels.
 
-    :param value_counts: counts
+    :param integers: Series of integers
     :param plot_title: title of the plot
     :param label: label of the X axis
     :param orientation: vertical or horizontal bars
@@ -649,24 +649,24 @@ def barplot_counts(
     plt.figure(figsize=figsize)
     # Plot vertical bars.
     if orientation == "vertical":
-        ax = sns.barplot(x=value_counts.index, y=value_counts.values)
+        ax = sns.barplot(x=integers.index, y=integers.values)
         for i, p in enumerate(ax.patches):
             height = p.get_height()
             x, y = p.get_xy()
             # Add percentage annotations to bars.
             ax.annotate(
-                string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
+                string_format % (100 * integers.iloc[i] / integers.sum()),
                 (x, y + height + 0.5),
             )
     # Plot horizontal bars.
     elif orientation == "horizontal":
-        ax = sns.barplot(y=value_counts.index, x=value_counts.values)
+        ax = sns.barplot(y=integers.index, x=integers.values)
         for i, p in enumerate(ax.patches):
             width = p.get_width()
             x, y = p.get_xy()
             # Add percentage annotations to bars.
             ax.annotate(
-                string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
+                string_format % (100 * integers.iloc[i] / integers.sum()),
                 (x + width + 0.5, y),
             )
     else:
