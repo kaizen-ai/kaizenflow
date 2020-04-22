@@ -545,3 +545,93 @@ def multipletests_plot(
     plt.axhline(threshold, ls=":", c="k")
     plt.ylim(0, 1)
     plt.legend()
+
+
+# #############################################################################
+# Data count plots.
+# #############################################################################
+
+def plot_value_counts(
+    counts: pd.Series,
+    col_name: str,
+    top_n_to_print: int = 10,
+    top_n_to_plot: int = None,
+    plot_title: Optional[str] = None,
+    plot_rotation: Optional[int] = None,
+    figsize: Optional[Tuple[int, int]] = None
+) -> None:
+    """
+    Plot barplot of categorical data value counts.
+
+    :param counts: value counts
+    :param col_name: name of the column the values are counted for
+    :param top_n_to_print: top N values to show, None for all, 0 for no value.
+    :param top_n_to_plot: top N values to plot, None for all, 0 for no value
+    :param plot_title: title of the barplot
+    :param plot_rotation: rotation of the barplot x-ticks
+    :param figsize:
+    """
+    if not figsize:
+        figsize = FIG_SIZE
+    unique_values = sorted(counts.index.to_list())
+    # Display a number of unique values in сolumn.
+    print("Number of unique values: %d" % len(unique_values))
+    if top_n_to_print == 0:
+        # Do not show anything.
+        pass
+    else:
+        counts_tmp = counts.copy()
+        counts.sort_values(ascending=False, inplace=True)
+        if top_n_to_print is not None:
+            dbg.dassert_lte(1, top_n_to_print)
+            counts_tmp = counts_tmp[:top_n_to_print]
+            print("Labels for up to first %d unique values:" % top_n_to_print)
+        else:
+            print("All unique labels:")
+        print(counts_tmp)
+    # Plot horizontally or vertically, depending on counts number.
+    if top_n_to_plot == 0:
+        # Do not show anything.
+        pass
+    else:
+        counts_tmp = counts.copy()
+        counts_tmp.sort_values(ascending=False, inplace=True)
+        if top_n_to_plot is not None:
+            dbg.dassert_lte(1, top_n_to_plot)
+            counts_tmp = counts_tmp[:top_n_to_plot]
+        if len(counts_tmp) > 20:
+            ylen = math.ceil(len(counts_tmp) / 26) * 5
+            figsize = (figsize[0], ylen)
+            counts_tmp.sort_values(ascending=True, inplace=True)
+            counts_tmp.plot(
+                kind="barh", figsize=figsize, title=plot_title, rot=plot_rotation
+            )
+        else:
+            counts_tmp.sort_values(ascending=False, inplace=True)
+            barplot_counts(counts_tmp, title=plot_title, rot=plot_rotation, figsize=figsize)
+
+
+def barplot_counts(
+    value_counts: pd.Series,
+    title: Optional[str] = None,
+    label: Optional[str] = None,
+    string_format: str = "%.2f%%",
+    figsize = None
+) -> None:
+    if figsize in None:
+        figsize = FIG_SIZE
+    plt.figure(figsize=figsize)
+    ax = sns.countplot(y=value_counts.index, order=value_counts.index)
+    ax.set(xlabel="Number of %s type entities" % label)
+    for i, p in enumerate(ax.patches):
+        width, height = p.get_width(), p.get_height()
+        x, y = p.get_xy()
+        ax.annotate(
+            string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
+            (x, y + height + 0.01),
+        )
+    if not title:
+        plt.title(f"Distribution by {label}")
+    else:
+        plt.title(title)
+    plt.show()
