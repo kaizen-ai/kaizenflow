@@ -523,7 +523,6 @@ def multipletests_plot(
         rejected hypotheses, e.g., "FWER", or family-wise error rate
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     """
-    pvals = pvals.copy()
     pvals = pvals.sort_values().reset_index(drop=True)
     adj_pvals = stats.multipletests(pvals, method=method)
     plt.plot(pvals, label="pvals", **kwargs)[0]
