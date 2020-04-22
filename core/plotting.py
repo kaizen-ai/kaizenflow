@@ -551,14 +551,15 @@ def multipletests_plot(
 # Data count plots.
 # #############################################################################
 
+
 def plot_value_counts(
     counts: pd.Series,
     col_name: str,
     top_n_to_print: int = 10,
-    top_n_to_plot: int = None,
+    top_n_to_plot: Optional[int] = None,
     plot_title: Optional[str] = None,
     label: Optional[str] = None,
-    figsize: Optional[Tuple[int, int]] = None
+    figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
     Plot barplots for value counts and print the values.
@@ -612,10 +613,22 @@ def plot_value_counts(
             ylen = math.ceil(len(counts_tmp) / 26) * 5
             figsize = (figsize[0], ylen)
             counts_tmp.sort_values(ascending=True, inplace=True)
-            barplot_counts(counts_tmp, orientation="horizontal", title=plot_title, figsize=figsize, label=label)
+            barplot_counts(
+                counts_tmp,
+                orientation="horizontal",
+                title=plot_title,
+                figsize=figsize,
+                label=label,
+            )
         else:
             counts_tmp.sort_values(ascending=False, inplace=True)
-            barplot_counts(counts_tmp, orientation="vertical", title=plot_title, figsize=figsize, label=label)
+            barplot_counts(
+                counts_tmp,
+                orientation="vertical",
+                title=plot_title,
+                figsize=figsize,
+                label=label,
+            )
 
 
 def barplot_counts(
@@ -624,7 +637,7 @@ def barplot_counts(
     label: str,
     orientation: str,
     string_format: str = "%.2f%%",
-    figsize: Optional[Tuple[int, int]] = None
+    figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
     Plot a barplot from value counts.
@@ -658,7 +671,7 @@ def barplot_counts(
             x, y = p.get_xy()
             ax.annotate(
                 string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
-                (x + width + 0.5, y)
+                (x + width + 0.5, y),
             )
     else:
         dbg.dfatal(message="Invalid plot orientation.")
