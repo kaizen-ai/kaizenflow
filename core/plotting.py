@@ -605,14 +605,13 @@ def plot_value_counts(
         pass
     else:
         counts_tmp = counts.copy()
-        counts_tmp.sort_values(ascending=False, inplace=True)
+        counts_tmp.sort_values(ascending=True, inplace=True)
         if top_n_to_plot is not None:
             dbg.dassert_lte(1, top_n_to_plot)
             counts_tmp = counts_tmp[:top_n_to_plot]
         if len(counts_tmp) > 20:
             ylen = math.ceil(len(counts_tmp) / 26) * 5
             figsize = (figsize[0], ylen)
-            counts_tmp.sort_values(ascending=True, inplace=True)
             barplot_counts(
                 counts_tmp,
                 orientation="horizontal",
@@ -621,7 +620,6 @@ def plot_value_counts(
                 label=label,
             )
         else:
-            counts_tmp.sort_values(ascending=False, inplace=True)
             barplot_counts(
                 counts_tmp,
                 orientation="vertical",
