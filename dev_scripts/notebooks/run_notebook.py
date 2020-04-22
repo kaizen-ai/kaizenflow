@@ -79,6 +79,7 @@ def _run_notebook(
     dst_dir: str,
     config: cfg.Config,
     config_builder: str,
+    publish: bool,
 ) -> None:
     """
     Run a notebook for the particular config from a list.
@@ -91,6 +92,7 @@ def _run_notebook(
     :param dst_dir: Path to directory with results
     :param config: Config for the experiment
     :param config_builder: Function used to generate all configs
+    :param publish: publish notebook iff `True`
     :return:
     """
     dbg.dassert_exists(notebook_file)
@@ -153,15 +155,16 @@ def _run_notebook(
     )
     si.system(cmd, output_file=log_file)
     # Convert to html and publish.
-    _LOG.info("Converting notebook %s", i)
-    log_file = log_file.replace(".log", ".html.log")
-    cmd = (
-        "python amp/dev_scripts/notebooks/publish_notebook.py"
-        + f" --file {dst_file}"
-        + f" --subdir {html_subdir_name}"
-        + " --action publish"
-    )
-    si.system(cmd, output_file=log_file)
+    if publish:
+        _LOG.info("Converting notebook %s", i)
+        log_file = log_file.replace(".log", ".html.log")
+        cmd = (
+            "python amp/dev_scripts/notebooks/publish_notebook.py"
+            + f" --file {dst_file}"
+            + f" --subdir {html_subdir_name}"
+            + " --action publish"
+        )
+        si.system(cmd, output_file=log_file)
     # Publish an empty file to indicate a successful finish.
     file_name = os.path.join(experiment_result_dir, "success.txt")
     _LOG.info("file_name=%s", file_name)
@@ -215,20 +218,28 @@ def _main(parser: argparse.ArgumentParser) -> None:
     notebook_file = os.path.abspath(notebook_file)
     dbg.dassert_exists(notebook_file)
     #
+    publish = args.publish_notebook
+    #
     num_threads = args.num_threads
     if num_threads == "serial":
         for config in tqdm.tqdm(configs):
             i = int(config[("meta", "id")])
             _LOG.debug("\n%s", printing.frame("Config %s" % i))
             #
-            _run_notebook(i, notebook_file, dst_dir, config, config_builder)
+            _run_notebook(
+                i, notebook_file, dst_dir, config, config_builder, publish
+            )
     else:
         num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
         joblib.Parallel(n_jobs=num_threads, verbose=50)(
             joblib.delayed(_run_notebook)(
-                int(config[("meta", "id")]), notebook_file, dst_dir, config, config_builder
+                int(config[("meta", "id")]),
+                notebook_file,
+                dst_dir,
+                config,
+                config_builder,
             )
             for config in configs
         )
@@ -281,6 +292,11 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         help="Number of threads to use (-1 to use all CPUs)",
         required=True,
+    )
+    parser.add_argument(
+        "--publish_notebook",
+        action="store_true",
+        help="Publish each notebook after it executes",
     )
     prsr.add_verbosity_arg(parser)
     return parser
