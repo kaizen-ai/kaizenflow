@@ -603,6 +603,7 @@ def plot_value_counts(
             dbg.dassert_lte(1, top_n_to_plot)
             counts_tmp = counts_tmp[:top_n_to_plot]
         if len(counts_tmp) > 20:
+            # Plot large number of categories horizontally.
             counts_tmp.sort_values(ascending=True, inplace=True)
             ylen = math.ceil(len(counts_tmp) / 26) * 5
             figsize = (figsize[0], ylen)
@@ -614,6 +615,7 @@ def plot_value_counts(
                 label=label,
             )
         else:
+            # Plot small number of categories vertically.
             barplot_counts(
                 counts_tmp,
                 orientation="vertical",
@@ -651,6 +653,7 @@ def barplot_counts(
         for i, p in enumerate(ax.patches):
             height = p.get_height()
             x, y = p.get_xy()
+            # Add percentage annotations to bars.
             ax.annotate(
                 string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
                 (x, y + height + 0.5),
@@ -661,6 +664,7 @@ def barplot_counts(
         for i, p in enumerate(ax.patches):
             width = p.get_width()
             x, y = p.get_xy()
+            # Add percentage annotations to bars.
             ax.annotate(
                 string_format % (100 * value_counts.iloc[i] / value_counts.sum()),
                 (x + width + 0.5, y),
