@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Tuple
 import boto3
 
 import helpers.dbg as dbg
+import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ _LOG = logging.getLogger(__name__)
 def get_bucket() -> str:
     """
     Return the default s3 bucket.
+
     Make sure your ~/.aws/credentials uses the right key to access this bucket
     as default.
     """
@@ -26,17 +28,40 @@ def get_bucket() -> str:
     return s3_bucket
 
 
-# TODO(gp): -> get_root_path() ?
+# TODO(gp): -> get_s3_bucket_path() ?
 def get_path() -> str:
     """
     Return the path corresponding to the default s3 bucket.
     """
-    s3_path = "s3://" + get_bucket()
-    return s3_path
+    path = "s3://" + get_bucket()
+    return path
 
 
-def is_s3_path(path):
+def is_s3_path(path: str) -> bool:
     return path.startswith("s3://")
+
+
+def get_s3fs_root_path() -> str:
+    """
+    Return the path where S3 is mounted on the filesystem.
+    """
+    path = "/s3"
+    if si.get_os_name() == "Darwin":
+        if si.get_user_name() in ("paul", "saggese"):
+            # macOS can't access `/` since it's read-only.
+            path = "/Volumes/s3"
+    return path
+
+
+def get_s3fs_bucket_path() -> str:
+    """
+    Return the path corresponding to the default s3 bucket in the filesystem.
+    """
+    path = os.path.join(get_s3fs_root_path(), get_bucket())
+    return path
+
+
+# #############################################################################
 
 
 def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
