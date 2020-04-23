@@ -26,7 +26,6 @@ import helpers.parser as prsr
 import helpers.pickle_ as hpickle
 import helpers.printing as printing
 import helpers.system_interaction as si
-import nlp.build_configs as ncfgbld  # noqa: F401 # pylint: disable=unused-import
 
 _LOG = logging.getLogger(__name__)
 
