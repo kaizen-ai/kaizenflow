@@ -47,6 +47,7 @@ def _preprocess(txt: str) -> str:
         if re.match(r"#+ [#\/\-\=]{6,}$", line):
             continue
         line = re.sub(r"^\s*\*\s+", "- STAR", line)
+        line = re.sub(r"^\s*\*\*\s+", "- SSTAR", line)
         # Transform:
         # $$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$
         #
@@ -86,7 +87,7 @@ def _preprocess(txt: str) -> str:
     return txt_new_as_str
 
 
-def _prettier(txt: str) -> str:
+def _prettier(txt: str, print_width: Optional[int] = None) -> str:
     _LOG.debug("txt=\n%s", txt)
     #
     debug = False
@@ -97,22 +98,30 @@ def _prettier(txt: str) -> str:
     io_.to_file(tmp_file_name, txt)
     #
     executable = "prettier"
-    cmd_opts: List[str] = []
-    cmd_opts.append("--parser markdown")
-    cmd_opts.append("--prose-wrap always")
-    cmd_opts.append("--write")
+    cmd: List[str] = []
+    cmd.append(executable)
+    cmd.append("--parser markdown")
+    cmd.append("--prose-wrap always")
+    cmd.append("--write")
     tab_width = 2
-    cmd_opts.append("--tab-width %s" % tab_width)
-    cmd_opts.append(tmp_file_name)
-    #cmd_opts.append("2>&1 >/dev/null")
-    cmd_opts_as_str = " ".join(cmd_opts)
-    cmd_as_str = " ".join([executable, cmd_opts_as_str])
+    cmd.append("--tab-width %s" % tab_width)
+    if print_width is not None:
+        dbg.dassert_lte(1, print_width)
+        cmd.append("--print-width %s" % print_width)
+    if True:
+        # Workaround for PartTask2155.
+        cmd.insert(0, "cd %s &&" % os.path.dirname(tmp_file_name))
+        cmd.append(os.path.basename(tmp_file_name))
+    else:
+        cmd.append(tmp_file_name)
+    # cmd.append("2>&1 >/dev/null")
+    cmd_as_str = " ".join(cmd)
     _, output_tmp = si.system_to_string(cmd_as_str, abort_on_error=True)
     _LOG.debug("output_tmp=%s", output_tmp)
     #
     txt = io_.from_file(tmp_file_name)
     _LOG.debug("After prettier txt=\n%s", txt)
-    return txt
+    return txt  # type: ignore
 
 
 def _postprocess(txt: str, in_file_name: str) -> str:
@@ -127,6 +136,7 @@ def _postprocess(txt: str, in_file_name: str) -> str:
     for i, line in enumerate(txt.split("\n")):
         # Undo the transformation `* -> STAR`.
         line = re.sub(r"^\-(\s*)STAR", r"*\1", line, 0)
+        line = re.sub(r"^\-(\s*)SSTAR", r"**\1", line, 0)
         # Remove empty lines.
         line = re.sub(r"^\s*\n(\s*\$\$)", r"\1", line, 0, flags=re.MULTILINE)
         # Handle ``` block.
@@ -183,7 +193,7 @@ def _refresh_toc(txt: str) -> str:
 # #############################################################################
 
 
-def _to_execute_action(action: str, actions: List[str]) -> bool:
+def _to_execute_action(action: str, actions: Optional[List[str]] = None) -> bool:
     to_execute = actions is None or action in actions
     if not to_execute:
         _LOG.debug("Skipping %s", action)
@@ -191,7 +201,10 @@ def _to_execute_action(action: str, actions: List[str]) -> bool:
 
 
 def _process(
-    txt: str, in_file_name: str, actions: Optional[List[str]] = None
+    txt: str,
+    in_file_name: str,
+    actions: Optional[List[str]] = None,
+    print_width: Optional[int] = None,
 ) -> str:
     # Pre-process text.
     action = "preprocess"
@@ -200,7 +213,7 @@ def _process(
     # Prettify.
     action = "prettier"
     if _to_execute_action(action, actions):
-        txt = _prettier(txt)
+        txt = _prettier(txt, print_width=print_width)
     # Post-process text.
     action = "postprocess"
     if _to_execute_action(action, actions):
@@ -248,6 +261,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--in_place", action="store_true",
     )
+    parser.add_argument(
+        "-w", "--print-width", action="store", type=int, default=None,
+    )
     prsr.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     prsr.add_verbosity_arg(parser)
     return parser
@@ -269,7 +285,9 @@ def _main(args: argparse.Namespace) -> None:
         )
     txt = args.infile.read()
     # Process.
-    txt = _process(txt, in_file_name, actions=args.action)
+    txt = _process(
+        txt, in_file_name, actions=args.action, print_width=args.print_width
+    )
     # Write output.
     if args.in_place:
         dbg.dassert_ne(in_file_name, "<stdin>")
