@@ -239,6 +239,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 dst_dir,
                 config,
                 config_builder,
+                publish
             )
             for config in configs
         )
