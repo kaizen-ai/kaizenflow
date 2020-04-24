@@ -81,7 +81,8 @@ def in_unit_test_mode() -> bool:
 def convert_df_to_string(
     df: Union[pd.DataFrame, pd.Series],
     n_rows: Optional[int] = None,
-    title: Optional[str] = None
+    title: Optional[str] = None,
+    index: bool = False,
 ) -> str:
     """
     Convert DataFrame or Series to string for verifying test results.
@@ -101,7 +102,7 @@ def convert_df_to_string(
                 "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
         ):
         # Add top N rows.
-        output.append(df.head(n_rows).to_string(index=False))
+        output.append(df.head(n_rows).to_string(index=index))
         output_str = "\n".join(output)
     return output_str
 
