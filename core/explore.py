@@ -1293,19 +1293,6 @@ def display_df(
     """
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
-    elif isinstance(df, pd.Panel):
-        for c in list(df.keys()):
-            print("# %s" % c)
-            df_tmp = df[c]
-            display_df(
-                df_tmp,
-                index=index,
-                inline_index=inline_index,
-                max_lines=max_lines,
-                as_txt=as_txt,
-                mode=mode,
-            )
-        return
     #
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_eq(
