@@ -30,6 +30,7 @@ import pandas as pd
 
 import core.config as cfg
 import helpers.dbg as dbg
+import helpers.dict as dct
 import helpers.pickle_ as hpickle
 
 _LOG = logging.getLogger(__name__)
@@ -42,11 +43,27 @@ def get_config_from_flattened(flattened: Dict[Tuple[str], Any]) -> cfg.Config:
     :param flattened: flattened config like result from `config.flatten()`
     :return: config object initialized from flattened representation
     """
+    dbg.dassert_isinstance(flattened, dict)
     dbg.dassert(flattened)
     config = cfg.Config()
     for k, v in flattened.items():
         config[k] = v
     return config
+
+
+def get_config_from_nested_dict(nested: Dict[str, Any]) -> cfg.Config:
+    """
+    Build a config from a nested dict.
+
+    :param nested: nested dict, with certain restrictions:
+      - only leaf nodes may not be a dict
+      - every nonempty dict must only have keys of type `str`
+    """
+    dbg.dassert_isinstance(nested, dict)
+    dbg.dassert(nested)
+    iter_ = dct.get_nested_dict_iterator(nested)
+    flattened = collections.OrderedDict(iter_)
+    return get_config_from_flattened(flattened)
 
 
 def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
