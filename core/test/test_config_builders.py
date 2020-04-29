@@ -40,6 +40,35 @@ class TestGetConfigFromFlattened1(hut.TestCase):
         self.check_string(str(config))
 
 
+class TestGetConfigFromNestedDict1(hut.TestCase):
+    def test1(self) -> None:
+        nested = {
+            "read_data": {
+                "file_name": "foo_bar.txt",
+                "nrows": 999,
+            },
+            "single_val": "hello",
+            "zscore": {
+                "style": "gaz",
+                "com": 28,
+            },
+        }
+        config = ccfgbld.get_config_from_nested_dict(nested)
+        self.check_string(str(config))
+
+    def test2(self) -> None:
+        nested = {
+            "read_data": {
+                "file_name": "foo_bar.txt",
+                "nrows": 999,
+            },
+            "single_val": "hello",
+            "zscore": cfg.Config(),
+        }
+        config = ccfgbld.get_config_from_nested_dict(nested)
+        self.check_string(str(config))
+
+
 def _build_test_configs(symbols: Optional[List[str]] = None,) -> List[cfg.Config]:
     config_template = cfg.Config()
     config_tmp = config_template.add_subconfig("read_data")
