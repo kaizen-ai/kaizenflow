@@ -43,25 +43,16 @@ class TestGetConfigFromFlattened1(hut.TestCase):
 class TestGetConfigFromNestedDict1(hut.TestCase):
     def test1(self) -> None:
         nested = {
-            "read_data": {
-                "file_name": "foo_bar.txt",
-                "nrows": 999,
-            },
+            "read_data": {"file_name": "foo_bar.txt", "nrows": 999,},
             "single_val": "hello",
-            "zscore": {
-                "style": "gaz",
-                "com": 28,
-            },
+            "zscore": {"style": "gaz", "com": 28,},
         }
         config = ccfgbld.get_config_from_nested_dict(nested)
         self.check_string(str(config))
 
     def test2(self) -> None:
         nested = {
-            "read_data": {
-                "file_name": "foo_bar.txt",
-                "nrows": 999,
-            },
+            "read_data": {"file_name": "foo_bar.txt", "nrows": 999,},
             "single_val": "hello",
             "zscore": cfg.Config(),
         }
