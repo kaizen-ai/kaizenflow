@@ -545,3 +545,134 @@ def multipletests_plot(
     plt.axhline(threshold, ls=":", c="k")
     plt.ylim(0, 1)
     plt.legend()
+
+
+# #############################################################################
+# Data count plots.
+# #############################################################################
+
+
+def plot_value_counts(
+    counts: pd.Series,
+    top_n_to_print: int = 10,
+    top_n_to_plot: Optional[int] = None,
+    plot_title: Optional[str] = None,
+    label: Optional[str] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+) -> None:
+    """
+    Plot barplots for value counts and print the values.
+
+    The function is typically used in conjunction with value counts
+    from KGification info. If the number of labels is over 20, the plot is
+    oriented horizontally and the height of the plot is automatically adjusted.
+
+    :param counts: value counts
+    :param top_n_to_print: top N values to show. None for all. 0 for no value.
+    :param top_n_to_plot: like top_n_to_print, but for the plot.
+    :param plot_title: title of the barplot
+    :param label: label of the X axis
+    :param figsize: size of the plot
+    """
+    # Get default values for plot title and label.
+    if not figsize:
+        figsize = FIG_SIZE
+    unique_values = sorted(counts.index.to_list())
+    # Display a number of unique values in сolumn.
+    print("Number of unique values: %d" % len(unique_values))
+    if top_n_to_print == 0:
+        # Do not show anything.
+        pass
+    else:
+        counts_tmp = counts.copy()
+        counts.sort_values(ascending=False, inplace=True)
+        if top_n_to_print is not None:
+            dbg.dassert_lte(1, top_n_to_print)
+            counts_tmp = counts_tmp[:top_n_to_print]
+            print("Up to first %d unique labels:" % top_n_to_print)
+        else:
+            print("All unique labels:")
+        print(counts_tmp)
+    # Plot horizontally or vertically, depending on counts number.
+    if top_n_to_plot == 0:
+        # Do not show anything.
+        pass
+    else:
+        counts_tmp = counts.copy()
+        if top_n_to_plot is not None:
+            dbg.dassert_lte(1, top_n_to_plot)
+            counts_tmp = counts_tmp[:top_n_to_plot]
+        if len(counts_tmp) > 20:
+            # Plot large number of categories horizontally.
+            counts_tmp.sort_values(ascending=True, inplace=True)
+            ylen = math.ceil(len(counts_tmp) / 26) * 5
+            figsize = (figsize[0], ylen)
+            plot_barplot(
+                counts_tmp,
+                orientation="horizontal",
+                plot_title=plot_title,
+                figsize=figsize,
+                label=label,
+            )
+        else:
+            # Plot small number of categories vertically.
+            plot_barplot(
+                counts_tmp,
+                orientation="vertical",
+                plot_title=plot_title,
+                figsize=figsize,
+                label=label,
+            )
+
+
+def plot_barplot(
+    integers: pd.Series,
+    orientation: str,
+    string_format: str = "%.2f%%",
+    plot_title: Optional[str] = None,
+    label: Optional[str] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+) -> None:
+    """
+    Plot a barplot from value counts, using indices as x-labels.
+
+    :param integers: Series of integers
+    :param plot_title: title of the plot
+    :param label: label of the X axis
+    :param orientation: vertical or horizontal bars
+    :param string_format: format of bar annotations
+    :param figsize: size of plot
+    """
+
+    if figsize is None:
+        figsize = FIG_SIZE
+    plt.figure(figsize=figsize)
+    # Plot vertical bars.
+    if orientation == "vertical":
+        ax = sns.barplot(x=integers.index, y=integers.values)
+        for i, p in enumerate(ax.patches):
+            height = p.get_height()
+            x, y = p.get_xy()
+            # Add percentage annotations to bars.
+            ax.annotate(
+                string_format % (100 * integers.iloc[i] / integers.sum()),
+                (x, y + height + 0.5),
+            )
+    # Plot horizontal bars.
+    elif orientation == "horizontal":
+        ax = sns.barplot(y=integers.index, x=integers.values)
+        for i, p in enumerate(ax.patches):
+            width = p.get_width()
+            x, y = p.get_xy()
+            # Add percentage annotations to bars.
+            ax.annotate(
+                string_format % (100 * integers.iloc[i] / integers.sum()),
+                (x + width + 0.5, y),
+            )
+    else:
+        dbg.dfatal(message="Invalid plot orientation.")
+    if label:
+        ax.set(xlabel=label)
+    if plot_title:
+        plt.title(plot_title)
+    plt.show()
