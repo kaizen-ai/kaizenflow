@@ -397,8 +397,9 @@ def multi_ttest(
     return ttest
 
 
-def apply_normality_test(df: pd.DataFrame,
-        nan_policy: Optional[str] = None) -> pd.DataFrame:
+def apply_normality_test(
+    df: pd.DataFrame, nan_policy: Optional[str] = None
+) -> pd.DataFrame:
     """
     Test (indep) null hypotheses that each col is normally distributed.
 
@@ -416,7 +417,9 @@ def apply_normality_test(df: pd.DataFrame,
         stat, pval = sp.stats.normaltest(df[col], nan_policy=nan_policy)
         stats.append(stat)
         pvals.append(pval)
-    res = pd.DataFrame(data=list(zip(stats, pvals)),
-                 columns=["statistic", "pvalue"],
-                 index=df.columns)
+    res = pd.DataFrame(
+        data=list(zip(stats, pvals)),
+        columns=["statistic", "pvalue"],
+        index=df.columns,
+    )
     return res.transpose()
