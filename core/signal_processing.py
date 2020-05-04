@@ -1304,8 +1304,8 @@ def get_swt(sig: pd.Series,
     else:
         raise ValueError("Unsupported mode `%s`", mode)
     # Drop columns that are all-NaNs (e.g., artifacts of padding).
-    smooth_df.dropna(how="all", axis=1)
-    detail_df.dropna(how="all", axis=1)
+    smooth_df.dropna(how="all", axis=1, inplace=True)
+    detail_df.dropna(how="all", axis=1, inplace=True)
     return smooth_df, detail_df
 
 
