@@ -80,7 +80,7 @@ errors=""
 if [[ "$branch_dirty" -gt 0 ]] ; then
     branch_dirty_status="True"
     exit_status=1
-    errors="${errors}**ERROR**: You didn't run the linter. Please run it with \`linter.py. -b\`"
+    errors="${errors}**ERROR**: Run \`linter.py. -b\` locally before merging."
 fi
 if [[ "$master_lints" -gt 0 ]] ; then
     errors="${errors}\n**WARNING**: Your branch has lints. Please fix them."
