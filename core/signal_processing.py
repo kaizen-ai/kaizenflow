@@ -1213,3 +1213,132 @@ def compute_eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
         ang_chg.append(srs)
     df = pd.concat(ang_chg, axis=1)
     return df
+
+
+# #############################################################################
+# Discrete wavelet transform
+# #############################################################################
+
+
+def get_swt(sig: pd.Series,
+            wavelet: str,
+            mode: Optional[str] = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Get stationary wt details and smooths for all available scales.
+    
+    If sig.index.freq == "B", then there is the following rough correspondence
+    between wavelet levels and time scales:
+      weekly ~ 2-3
+      monthly ~ 4-5
+      quarterly ~ 6
+      annual ~ 8
+      business cycle ~ 11
+      
+    If sig.index.freq == "T", then the approximate scales are:
+      5 min ~ 2-3
+      quarter hourly ~ 4
+      hourly ~ 6
+      daily ~ 10-11
+
+    :param sig: input signal
+    :param wavelet: pywt wavelet name, e.g., "db8"
+    :param mode: supported modes are
+        - "knowledge_time":
+            - reindex transform according to knowledge times
+            - remove warm-up artifacts
+        - "zero_phase": 
+            - no reindexing (e.g., no phase lag in output, but transform
+              timestamps are not necessarily knowledge times)
+            - remove warm-up artifacts
+        - "raw": `pywt.swt` as-is
+    :return: (smooth_df, detail_df)
+    """
+    # Choice of wavelet may significantly impact results.
+    _LOG.debug("wavelet=`%s`", wavelet)
+    # Convert to numpy and pad, since the pywt swt implementation
+    # requires that the input be a power of 2 in length.
+    sig_len = sig.size
+    padded = _pad_to_pow_of_2(sig.values)
+    # Perform the wavelet decomposition.
+    decomp = pywt.swt(padded, wavelet=wavelet, norm=True)
+    # Ensure we have at least one level.
+    levels = len(decomp)
+    _LOG.debug("levels=%d", levels)
+    dbg.dassert_lt(0, levels)
+    # Reorganize wavelet coefficients. `pywt.swt` output is of the form
+    #     [(cAn, cDn), ..., (cA2, cD2), (cA1, cD1)]
+    smooth, detail = zip(*reversed(decomp))
+    # Reorganize `swt` output into a dataframe
+    # - columns indexed by `int` wavelet level (1 up to `level`)
+    # - index identical to `sig.index` (padded portion deleted)
+    detail_dict = {}
+    smooth_dict = {}
+    for level in range(1, levels + 1):
+        detail_dict[level] = detail[level - 1][:sig_len]
+        smooth_dict[level] = smooth[level - 1][:sig_len]
+    detail_df = pd.DataFrame.from_dict(data=detail_dict)
+    detail_df.index = sig.index
+    smooth_df = pd.DataFrame.from_dict(data=smooth_dict)
+    smooth_df.index = sig.index
+    # Record wavelet width (required for removing warm-up artifacts). 
+    width = len(pywt.Wavelet(wavelet).filter_bank[0])
+    _LOG.debug("wavelet width=%s", width)
+    if mode is None:
+        mode = "knowledge_time"
+    _LOG.debug("mode=`%s`", mode)
+    if mode == "knowledge_time":  
+        for j in range(1, levels + 1):
+            # Remove "warm-up" artifacts.
+            _set_warmup_region_to_nan(detail_df[j], width, j)
+            _set_warmup_region_to_nan(smooth_df[j], width, j)
+            # Index by knowledge time.
+            detail_df[j] = _reindex_by_knowledge_time(detail_df[j], width, j)
+            smooth_df[j] = _reindex_by_knowledge_time(smooth_df[j], width, j)
+    elif mode == "zero_phase":
+        for j in range(1, levels + 1):
+            # Delete "warm-up" artifacts.
+            _set_warmup_region_to_nan(detail_df[j], width, j)
+            _set_warmup_region_to_nan(smooth_df[j], width, j)
+    elif mode == "raw":
+        return smooth_df, detail_df
+    else:
+        raise ValueError("Unsupported mode `%s`", mode)
+    # Drop columns that are all-NaNs (e.g., artifacts of padding).
+    smooth_df.dropna(how="all", axis=1)
+    detail_df.dropna(how="all", axis=1)
+    return smooth_df, detail_df
+
+
+def _pad_to_pow_of_2(arr: np.array) -> np.array:
+    """
+    Minimally extend `arr` with zeros so that len is a power of 2.
+    """
+    sig_len = arr.shape[0]
+    _LOG.debug("signal length=%d", sig_len)
+    pow2_ceil = int(2**np.ceil(np.log2(sig_len)))
+    padded = np.pad(arr, (0, pow2_ceil - sig_len))
+    _LOG.debug("padded length=%d", len(padded))
+    return padded
+
+def _set_warmup_region_to_nan(srs: pd.Series,
+        width: int, level: int) -> None:
+    """
+    Remove warm-up artifacts by setting to `NaN`.
+
+    NOTE: Modifies `srs` in-place.
+
+    :srs: swt
+    :width: width (length of support of mother wavelet)
+    :level: wavelet level
+    """
+    srs[:width * 2**(level - 1) - width // 2] = np.nan
+
+def _reindex_by_knowledge_time(srs: pd.Series, width: int, level: int) -> pd.Series:
+    """
+    Shift series so that indexing is according to knowledge time.
+
+    :srs: swt
+    :width: width (length of support of mother wavelet)
+    :level: wavelet level
+    """
+    return srs.shift(width * 2**(level - 1) - width // 2)
