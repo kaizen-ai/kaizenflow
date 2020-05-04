@@ -285,7 +285,7 @@ def plot_autocorrelation(
         signal = signal.fillna(0).dropna()
     else:
         # TODO(*): Add more nan_mode's.
-        raise ValueError("Unsupported nan_mode `%s`", nan_mode)
+        raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
     n_rows = len(signal.columns)
     fig = plt.figure(figsize=(20, 5 * n_rows))
     if title_prefix is None:
@@ -508,7 +508,7 @@ def plot_corr_over_time(
         axes[i].set_title(timestamps[i])
 
 
-def _get_heatmap_mask(corr, mode: str) -> np.ndarray:
+def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
     if mode == "heatmap_semitriangle":
         # Generate a mask for the upper triangle.
         mask = np.zeros_like(corr, dtype=np.bool)

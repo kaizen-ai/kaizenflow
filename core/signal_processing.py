@@ -1302,7 +1302,7 @@ def get_swt(
     elif mode == "raw":
         return smooth_df, detail_df
     else:
-        raise ValueError("Unsupported mode `%s`", mode)
+        raise ValueError(f"Unsupported mode `{mode}`")
     # Drop columns that are all-NaNs (e.g., artifacts of padding).
     smooth_df.dropna(how="all", axis=1, inplace=True)
     detail_df.dropna(how="all", axis=1, inplace=True)
