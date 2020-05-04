@@ -395,3 +395,28 @@ def multi_ttest(
     ttest = ttest_1samp(df, popmean=popmean, nan_policy=nan_policy)
     ttest[ADJ_PVAL_COL] = multipletests(ttest[PVAL_COL], method=method)
     return ttest
+
+
+def apply_normality_test(df: pd.DataFrame,
+        nan_policy: Optional[str] = None) -> pd.DataFrame:
+    """
+    Test (indep) null hypotheses that each col is normally distributed.
+
+    An omnibus test of normality that combines skew and kurtosis.
+
+    :return: dataframe with same cols as `df` and two rows:
+        1. "statistic"
+        2. "pvalue"
+    """
+    if nan_policy is None:
+        nan_policy = "omit"
+    stats = []
+    pvals = []
+    for col in df.columns:
+        stat, pval = sp.stats.normaltest(df[col], nan_policy=nan_policy)
+        stats.append(stat)
+        pvals.append(pval)
+    res = pd.DataFrame(data=list(zip(stats, pvals)),
+                 columns=["statistic", "pvalue"],
+                 index=df.columns)
+    return res.transpose()
