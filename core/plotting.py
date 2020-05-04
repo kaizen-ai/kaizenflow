@@ -248,6 +248,21 @@ def plot_timeseries_per_category(
         fig.suptitle(f"Distribution by {datetime_type}")
 
 
+def plot_cols(df: pd.DataFrame,
+              colormap: str = "rainbow",
+              figsize: Tuple[int, int] = (20, 5),
+              mode: Optional[str] = None) -> None:
+    if mode is None:
+        mode = "default"
+    elif mode == "renormalize":
+        df = df.copy()
+        df /= df.std()
+    else:
+        raise ValueError("Unsupported mode `%s`", mode)
+    df.plot(kind="density", colormap=colormap, figsize=figsize)
+    df.plot(colormap=colormap, figsize=figsize)
+
+
 # #############################################################################
 # Correlation-type plots
 # #############################################################################
@@ -676,3 +691,4 @@ def plot_barplot(
     if plot_title:
         plt.title(plot_title)
     plt.show()
+
