@@ -1220,12 +1220,12 @@ def compute_eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
 # #############################################################################
 
 
-def get_swt(sig: pd.Series,
-            wavelet: str,
-            mode: Optional[str] = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def get_swt(
+    sig: pd.Series, wavelet: str, mode: Optional[str] = None
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Get stationary wt details and smooths for all available scales.
-    
+
     If sig.index.freq == "B", then there is the following rough correspondence
     between wavelet levels and time scales:
       weekly ~ 2-3
@@ -1233,7 +1233,7 @@ def get_swt(sig: pd.Series,
       quarterly ~ 6
       annual ~ 8
       business cycle ~ 11
-      
+
     If sig.index.freq == "T", then the approximate scales are:
       5 min ~ 2-3
       quarter hourly ~ 4
@@ -1246,7 +1246,7 @@ def get_swt(sig: pd.Series,
         - "knowledge_time":
             - reindex transform according to knowledge times
             - remove warm-up artifacts
-        - "zero_phase": 
+        - "zero_phase":
             - no reindexing (e.g., no phase lag in output, but transform
               timestamps are not necessarily knowledge times)
             - remove warm-up artifacts
@@ -1280,13 +1280,13 @@ def get_swt(sig: pd.Series,
     detail_df.index = sig.index
     smooth_df = pd.DataFrame.from_dict(data=smooth_dict)
     smooth_df.index = sig.index
-    # Record wavelet width (required for removing warm-up artifacts). 
+    # Record wavelet width (required for removing warm-up artifacts).
     width = len(pywt.Wavelet(wavelet).filter_bank[0])
     _LOG.debug("wavelet width=%s", width)
     if mode is None:
         mode = "knowledge_time"
     _LOG.debug("mode=`%s`", mode)
-    if mode == "knowledge_time":  
+    if mode == "knowledge_time":
         for j in range(1, levels + 1):
             # Remove "warm-up" artifacts.
             _set_warmup_region_to_nan(detail_df[j], width, j)
@@ -1315,13 +1315,13 @@ def _pad_to_pow_of_2(arr: np.array) -> np.array:
     """
     sig_len = arr.shape[0]
     _LOG.debug("signal length=%d", sig_len)
-    pow2_ceil = int(2**np.ceil(np.log2(sig_len)))
+    pow2_ceil = int(2 ** np.ceil(np.log2(sig_len)))
     padded = np.pad(arr, (0, pow2_ceil - sig_len))
     _LOG.debug("padded length=%d", len(padded))
     return padded
 
-def _set_warmup_region_to_nan(srs: pd.Series,
-        width: int, level: int) -> None:
+
+def _set_warmup_region_to_nan(srs: pd.Series, width: int, level: int) -> None:
     """
     Remove warm-up artifacts by setting to `NaN`.
 
@@ -1331,9 +1331,12 @@ def _set_warmup_region_to_nan(srs: pd.Series,
     :width: width (length of support of mother wavelet)
     :level: wavelet level
     """
-    srs[:width * 2**(level - 1) - width // 2] = np.nan
+    srs[: width * 2 ** (level - 1) - width // 2] = np.nan
 
-def _reindex_by_knowledge_time(srs: pd.Series, width: int, level: int) -> pd.Series:
+
+def _reindex_by_knowledge_time(
+    srs: pd.Series, width: int, level: int
+) -> pd.Series:
     """
     Shift series so that indexing is according to knowledge time.
 
@@ -1341,4 +1344,4 @@ def _reindex_by_knowledge_time(srs: pd.Series, width: int, level: int) -> pd.Ser
     :width: width (length of support of mother wavelet)
     :level: wavelet level
     """
-    return srs.shift(width * 2**(level - 1) - width // 2)
+    return srs.shift(width * 2 ** (level - 1) - width // 2)

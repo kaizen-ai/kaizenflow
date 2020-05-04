@@ -249,27 +249,31 @@ def plot_timeseries_per_category(
         fig.suptitle(f"Distribution by {datetime_type}")
 
 
-def plot_cols(df: pd.DataFrame,
-              colormap: str = "rainbow",
-              figsize: Tuple[int, int] = (20, 5),
-              mode: Optional[str] = None) -> None:
+def plot_cols(
+    df: pd.DataFrame,
+    colormap: str = "rainbow",
+    figsize: Tuple[int, int] = (20, 5),
+    mode: Optional[str] = None,
+) -> None:
     if mode is None:
         mode = "default"
     elif mode == "renormalize":
         df = df.copy()
         df /= df.std()
     else:
-        raise ValueError("Unsupported mode `%s`", mode)
+        raise ValueError(f"Unsupported mode `{mode}`")
     df.plot(kind="density", colormap=colormap, figsize=figsize)
     df.plot(colormap=colormap, figsize=figsize)
 
 
-def plot_autocorrelation(signal: Union[pd.Series, pd.DataFrame],
-        lags: int = 40,
-        zero: bool = False,
-        nan_mode: str = "conservative",
-        title_prefix: Optional[str] = None,
-        **kwargs):
+def plot_autocorrelation(
+    signal: Union[pd.Series, pd.DataFrame],
+    lags: int = 40,
+    zero: bool = False,
+    nan_mode: str = "conservative",
+    title_prefix: Optional[str] = None,
+    **kwargs,
+) -> None:
     """
 
     https://www.statsmodels.org/stable/_modules/statsmodels/graphics/tsaplots.html#plot_acf
@@ -283,17 +287,21 @@ def plot_autocorrelation(signal: Union[pd.Series, pd.DataFrame],
         # TODO(*): Add more nan_mode's.
         raise ValueError("Unsupported nan_mode `%s`", nan_mode)
     n_rows = len(signal.columns)
-    fig = plt.figure(figsize=(20, 5*n_rows))
+    fig = plt.figure(figsize=(20, 5 * n_rows))
     if title_prefix is None:
         title_prefix = ""
     for idx, col in enumerate(signal.columns):
-        ax1 = fig.add_subplot(n_rows, 2, 2*(idx + 1) - 1)
+        ax1 = fig.add_subplot(n_rows, 2, 2 * (idx + 1) - 1)
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
-        fig = sm.graphics.tsa.plot_acf(signal[col], lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs)
-        ax2 = fig.add_subplot(n_rows, 2, 2*(idx + 1))
+        fig = sm.graphics.tsa.plot_acf(
+            signal[col], lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs
+        )
+        ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
         pacf_title = title_prefix + f"{col} partial autocorrelation"
-        fig = sm.graphics.tsa.plot_pacf(signal[col], lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs)
+        fig = sm.graphics.tsa.plot_pacf(
+            signal[col], lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs
+        )
 
 
 # #############################################################################
@@ -724,4 +732,3 @@ def plot_barplot(
     if plot_title:
         plt.title(plot_title)
     plt.show()
-
