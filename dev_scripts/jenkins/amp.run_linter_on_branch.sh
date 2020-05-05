@@ -105,13 +105,3 @@ message="${message}\n\n${errors}"
 
 message="${message}\n${lints_message}\n"
 
-printf "${message}" > ./tmp_message.txt
-
-message_to_json() {
-converter="\
-import json
-print(json.dumps({'body':open('./tmp_message.txt').read()}))
-"
-python -c "${converter}"
-}
-message="$(message_to_json)"
