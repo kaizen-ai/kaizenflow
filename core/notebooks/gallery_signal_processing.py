@@ -73,6 +73,9 @@ plot.plot_cols(price_detail)
 # %%
 plot.plot_cols(price_smooth)
 
+# %%
+plot.plot_correlation_matrix(price_detail, mode="heatmap")
+
 # %% [markdown]
 # ## Returns
 
@@ -108,6 +111,9 @@ plot.plot_autocorrelation(rets_detail, title_prefix="Wavelet level ")
 
 # %%
 plot.plot_spectrum(rets_detail, title_prefix="Wavelet level ")
+
+# %%
+plot.plot_correlation_matrix(rets_detail, mode="heatmap")
 
 # %% [markdown]
 # ### Z-scored returns
