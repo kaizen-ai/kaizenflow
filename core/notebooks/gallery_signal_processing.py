@@ -57,25 +57,25 @@ pd.Series(chirp_signal).plot()
 # # Time domain tools
 
 # %%
-sigp.plot_autocorrelation(chirp_signal)
+#sigp.plot_autocorrelation(chirp_signal)
 
 # %%
-sigp.plot_autocorrelation(rets)
+#sigp.plot_autocorrelation(rets)
 
 # %% [markdown]
 # # Frequency domain tools
 
 # %%
-sigp.plot_power_spectral_density(chirp_signal)
+#sigp.plot_power_spectral_density(chirp_signal)
 
 # %%
-sigp.plot_power_spectral_density(rets)
+#sigp.plot_power_spectral_density(rets)
 
 # %%
-sigp.plot_spectrogram(chirp_signal)
+#sigp.plot_spectrogram(chirp_signal)
 
 # %%
-sigp.plot_spectrogram(rets)
+#sigp.plot_spectrogram(rets)
 
 # %% [markdown]
 # # Multiresolution analysis tools
@@ -87,13 +87,13 @@ sigp.plot_wavelet_levels(chirp_signal, "sym5", 5)
 sigp.plot_wavelet_levels(prices, "db5", 5)
 
 # %%
-sigp.plot_low_pass(pd.Series(chirp_signal), "db8", 2)
+#sigp.plot_low_pass(pd.Series(chirp_signal), "db8", 2)
 
 # %%
-sigp.plot_low_pass(prices, "db8", 1)
+#sigp.plot_low_pass(prices, "db8", 1)
 
 # %%
-sigp.plot_low_pass(rets, "db8", 0.2)
+#sigp.plot_low_pass(rets, "db8", 0.2)
 
 # %%
 sigp.plot_scaleogram(prices, np.arange(1, 1024), "morl")
