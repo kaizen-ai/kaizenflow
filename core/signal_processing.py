@@ -222,6 +222,44 @@ def plot_crosscorrelation(
 # #############################################################################
 
 
+def compute_jensen_ratio(signal: pd.Series, p_norm: float = 2) -> float:
+    """
+    Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
+
+    Definition and derivation:
+      - The result is the p-th root of the expectation of the p-th power of
+        abs(f), divided by the expectation of abs(f). If we apply Jensen's
+        inequality to (abs(signal)**p)**(1/p), renormalizing the lower bound to
+        1, then the upper bound is the valued calculated by this function.
+      - An alternative derivation is to apply Holder's inequality to `signal`,
+        using the constant function `1` on the support of the `signal` as the
+        2nd function.
+
+    Interpretation:
+      - If we apply this function to returns in the case where the expected
+        value of returns is 0 and we take p_norm = 2, then the result of this
+        function can be interpreted as a renormalized realized volatility.
+      - For a Gaussian signal, the expected value is np.sqrt(np.pi / 2), which
+        is approximately 1.25. This holds regardless of the volatility of the
+        Gaussian (so the measure is scale invariant).
+      - For a stationary function, the expected value does not change with
+        sampled series length.
+      - For a signal that is t-distributed with 4 dof, the expected value is
+        approximately 1.41.
+    """
+    # Require that we evaluate a norm.
+    dbg.dassert_lte(1, p_norm)
+    # TODO(*): Maybe add l-infinity support. For many stochastic signals, we
+    # should not expect a finite value.
+    dbg.dassert(np.isfinite(p_norm))
+    data = signal.dropna()
+    lp = sp.linalg.norm(data, ord=p_norm)
+    l1 = sp.linalg.norm(data, ord=1)
+    # Ignore support where `signal` has NaNs.
+    const = data.size ** (1 - 1 / p_norm)
+    return const * lp / l1
+
+
 def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
     r"""
     Compute frequency-domain-based "forecastability" of signal.
@@ -243,6 +281,7 @@ def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
     """
     dbg.dassert_isinstance(signal, pd.Series)
     dbg.dassert_isinstance(mode, str)
+    signal = signal.ffill(0).dropna()
     if mode == "welch":
         _, psd = sp.signal.welch(signal)
     elif mode == "periodogram":
