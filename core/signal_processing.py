@@ -32,61 +32,7 @@ _LOG = logging.getLogger(__name__)
 #   - etc.
 
 
-def plot_autocorrelation(
-    signal: Union[pd.DataFrame, pd.Series],
-    lags: int = 40,
-    scale_mode: str = "auto",
-) -> None:
-    """
-    Plot autocorrelation and partial autocorrelation of series.
-    """
-    dbg.dassert_lte(1, lags)
-    fig = plt.figure(figsize=(12, 8))
-    if scale_mode == "auto":
-        pass
-    elif scale_mode == "fixed":
-        plt.ylim(-1, 1)
-    else:
-        raise ValueError("scale_mode='%s' is not supported" % scale_mode)
-    ax1 = fig.add_subplot(211)
-    # Exclude lag zero so that the y-axis does not get squashed.
-    fig = sm.graphics.tsa.plot_acf(signal, lags=lags, ax=ax1, zero=False)
-    ax2 = fig.add_subplot(212)
-    fig = sm.graphics.tsa.plot_pacf(signal, lags=lags, ax=ax2, zero=False)
-
-
-def plot_power_spectral_density(signal: Union[pd.DataFrame, pd.Series]) -> None:
-    """
-    Estimate the power spectral density using Welch's method.
-
-    Related to autocorrelation via the Fourier transform (Wiener-Khinchin).
-    """
-    freqs, psd = sp.signal.welch(signal)
-    plt.figure(figsize=(5, 4))
-    plt.semilogx(freqs, psd)
-    plt.title("PSD: power spectral density")
-    plt.xlabel("Frequency")
-    plt.ylabel("Power")
-    plt.tight_layout()
-
-
-def plot_spectrogram(signal: Union[pd.DataFrame, pd.Series]) -> None:
-    """
-    Plot spectrogram of signal.
-
-    From the scipy documentation of spectrogram:
-        "Spectrograms can be used as a way of visualizing the change of a
-         nonstationary signal's frequency content over time."
-    """
-    _, _, spectrogram = sp.signal.spectrogram(signal)
-    plt.figure(figsize=(5, 4))
-    plt.imshow(spectrogram, aspect="auto", cmap="hot_r", origin="lower")
-    plt.title("Spectrogram")
-    plt.ylabel("Frequency band")
-    plt.xlabel("Time window")
-    plt.tight_layout()
-
-
+# TODO(*): Deprecate. Keep for now as a nice way to arrange subplots.
 def plot_wavelet_levels(
     signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, levels: int
 ) -> None:
@@ -146,23 +92,6 @@ def filter_low_pass(
         rec = rec[1:]
     reconstructed_signal = pd.Series(rec, index=signal.index)
     return reconstructed_signal
-
-
-def plot_low_pass(
-    signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, threshold: float
-) -> None:
-    """
-    Overlay signal with result of filter_low_pass().
-    """
-    _, ax = plt.subplots(figsize=(12, 8))
-    ax.plot(signal, color="b", alpha=0.5, label="original signal")
-    rec = filter_low_pass(signal, wavelet_name, threshold)
-    ax.plot(rec, "k", label="DWT smoothing}", linewidth=2)
-    ax.legend()
-    ax.set_title("Removing High Frequency Noise with DWT", fontsize=18)
-    ax.set_ylabel("Signal Amplitude", fontsize=16)
-    ax.set_xlabel("Sample", fontsize=16)
-    plt.show()
 
 
 def plot_scaleogram(

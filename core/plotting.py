@@ -306,18 +306,28 @@ def plot_autocorrelation(
         )
 
 
-def plot_spectrum(signal: Union[pd.Series, pd.DataFrame],
-                  nan_mode: str = "conservative",
-                  title_prefix: Optional[str] = None) -> None:
+def plot_spectrum(
+    signal: Union[pd.Series, pd.DataFrame],
+    nan_mode: str = "conservative",
+    title_prefix: Optional[str] = None,
+) -> None:
     """
     Plot power spectral density and spectrogram of columns.
+
+    PSD:
+      - Estimate the power spectral density using Welch's method.
+      - Related to autocorrelation via the Fourier transform (Wiener-Khinchin).
+    Spectrogram:
+      - From the scipy documentation of spectrogram:
+        "Spectrograms can be used as a way of visualizing the change of a
+         nonstationary signal's frequency content over time."
     """
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
     if title_prefix is None:
         title_prefix = ""
     n_rows = len(signal.columns)
-    fig = plt.figure(figsize=(20, 5*n_rows))
+    fig = plt.figure(figsize=(20, 5 * n_rows))
     for idx, col in enumerate(signal.columns):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
@@ -328,14 +338,14 @@ def plot_spectrum(signal: Union[pd.Series, pd.DataFrame],
         ax1.semilogy(f_pxx, Pxx)
         ax1.set_title(title_prefix + f"{col} power spectral density")
         # TODO(*): Maybe put labels on a shared axis.
-        #ax1.set_xlabel("Frequency")
-        #ax1.set_ylabel("Power")
+        # ax1.set_xlabel("Frequency")
+        # ax1.set_ylabel("Power")
         ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
         f_sxx, t, Sxx = sp.signal.spectrogram(data)
         ax2.pcolormesh(t, f_sxx, Sxx)
         ax2.set_title(title_prefix + f"{col} spectrogram")
-        #ax2.set_ylabel("Frequency band")
-        #ax2.set_xlabel("Time window")
+        # ax2.set_ylabel("Frequency band")
+        # ax2.set_xlabel("Time window")
 
 
 # #############################################################################
