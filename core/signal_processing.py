@@ -229,8 +229,8 @@ def compute_jensen_ratio(signal: pd.Series, p_norm: float = 2) -> float:
     Definition and derivation:
       - The result is the p-th root of the expectation of the p-th power of
         abs(f), divided by the expectation of abs(f). If we apply Jensen's
-        inequality to (abs(signal)**p)**(1/p), renormalizing so that the lhs is
-        1, then the rhs is the valued calculated by this function.
+        inequality to (abs(signal)**p)**(1/p), renormalizing the lower bound to
+        1, then the upper bound is the valued calculated by this function.
       - An alternative derivation is to apply Holder's inequality to `signal`,
         using the constant function `1` on the support of the `signal` as the
         2nd function.
@@ -281,6 +281,7 @@ def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
     """
     dbg.dassert_isinstance(signal, pd.Series)
     dbg.dassert_isinstance(mode, str)
+    signal = signal.ffill(0).dropna()
     if mode == "welch":
         _, psd = sp.signal.welch(signal)
     elif mode == "periodogram":
