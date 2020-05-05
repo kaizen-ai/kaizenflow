@@ -50,7 +50,7 @@ prnt.config_notebook()
 
 # %%
 price = sig_gen.get_gaussian_walk(0, 0.01, 4 * 252, seed=20)
-price.index = pd.date_range('1/1/2000', periods=1008, freq='B')
+price.index = pd.date_range("1/1/2000", periods=1008, freq="B")
 rets = (np.log(price) - np.log(price.shift(1))).dropna()
 
 # %% [markdown]
