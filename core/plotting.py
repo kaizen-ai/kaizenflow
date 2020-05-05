@@ -250,20 +250,22 @@ def plot_timeseries_per_category(
 
 
 def plot_cols(
-    df: pd.DataFrame,
+    data: Union[pd.Series, pd.DataFrame],
     colormap: str = "rainbow",
     figsize: Tuple[int, int] = (20, 5),
     mode: Optional[str] = None,
 ) -> None:
+    if isinstance(data, pd.Series):
+        data = data.to_frame()
     if mode is None:
         mode = "default"
     elif mode == "renormalize":
-        df = df.copy()
-        df /= df.std()
+        data = data.copy()
+        data /= data.std()
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
-    df.plot(kind="density", colormap=colormap, figsize=figsize)
-    df.plot(colormap=colormap, figsize=figsize)
+    data.plot(kind="density", colormap=colormap, figsize=figsize)
+    data.plot(colormap=colormap, figsize=figsize)
 
 
 def plot_autocorrelation(
@@ -275,6 +277,7 @@ def plot_autocorrelation(
     **kwargs,
 ) -> None:
     """
+    Plot ACF and PACF of columns.
 
     https://www.statsmodels.org/stable/_modules/statsmodels/graphics/tsaplots.html#plot_acf
     https://www.statsmodels.org/stable/_modules/statsmodels/tsa/stattools.html#acf

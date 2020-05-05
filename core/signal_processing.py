@@ -1345,3 +1345,18 @@ def _reindex_by_knowledge_time(
     :level: wavelet level
     """
     return srs.shift(width * 2 ** (level - 1) - width // 2)
+
+
+def get_dyadic_zscored(sig: pd.Series, demean: bool = False, **kwargs) -> pd.DataFrame:
+    """
+    Z-score `sig` with successive powers of 2.
+
+    :return: dataframe with cols named according to the exponent of 2. Number
+        of cols is determined based on signal length.
+    """
+    pow2_ceil = int(np.ceil(np.log2(sig.size)))
+    zscored = {}
+    for tau_pow in range(1, pow2_ceil):
+        zscored[tau_pow] = compute_rolling_zscore(sig, tau=2**tau_pow, demean=demean, **kwargs)
+    df = pd.DataFrame.from_dict(zscored)
+    return df
