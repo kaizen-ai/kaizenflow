@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.4
+#       jupytext_version: 1.4.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -21,6 +21,7 @@
 # %matplotlib inline
 
 import collections
+import logging
 import pprint
 
 import matplotlib.pyplot as plt
@@ -28,75 +29,111 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as sig_gen
+import core.plotting as plot
 import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dbg as dbg
+import helpers.env as env
+import helpers.printing as prnt
+
+# %%
+dbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+_LOG.info("%s", env.get_system_signature()[0])
+
+prnt.config_notebook()
 
 # %% [markdown]
 # # Generate signal
 
 # %%
-prices = sig_gen.get_gaussian_walk(0, 0.01, 4 * 252, seed=20)
-
-# %%
-prices.plot()
-
-# %%
-rets = (np.log(prices) - np.log(prices.shift(1))).dropna()
-
-# %%
-rets.plot()
-
-# %%
-# Data for example
-x = np.linspace(0, 1, num=2048)
-chirp_signal = np.sin(250 * np.pi * x ** 2)
-
-# %%
-pd.Series(chirp_signal).plot()
+price = sig_gen.get_gaussian_walk(0, 0.01, 4 * 252, seed=20)
+price.index = pd.date_range("1/1/2000", periods=1008, freq="B")
+rets = (np.log(price) - np.log(price.shift(1))).dropna()
 
 # %% [markdown]
-# # Time domain tools
+# ## Price
 
 # %%
-sigp.plot_autocorrelation(chirp_signal)
+plot.plot_cols(price)
 
 # %%
-sigp.plot_autocorrelation(rets)
 
 # %% [markdown]
-# # Frequency domain tools
+# ### Price wavelet decomposition
 
 # %%
-sigp.plot_power_spectral_density(chirp_signal)
+price_smooth, price_detail = sigp.get_swt(price, wavelet="haar")
 
 # %%
-sigp.plot_power_spectral_density(rets)
+plot.plot_cols(price_detail)
 
 # %%
-sigp.plot_spectrogram(chirp_signal)
+plot.plot_cols(price_smooth)
 
 # %%
-sigp.plot_spectrogram(rets)
+plot.plot_correlation_matrix(price_detail, mode="heatmap")
 
 # %% [markdown]
-# # Multiresolution analysis tools
+# ## Returns
 
 # %%
-sigp.plot_wavelet_levels(chirp_signal, "sym5", 5)
+plot.plot_cols(rets)
 
 # %%
-sigp.plot_wavelet_levels(prices, "db5", 5)
+stats.apply_normality_test(rets.to_frame())
 
 # %%
-sigp.plot_low_pass(pd.Series(chirp_signal), "db8", 2)
+plot.plot_autocorrelation(rets)
 
 # %%
-sigp.plot_low_pass(prices, "db8", 1)
+plot.plot_spectrum(rets)
+
+# %% [markdown]
+# ### Returns wavelet decomposition
 
 # %%
-sigp.plot_low_pass(rets, "db8", 0.2)
+rets_smooth, rets_detail = sigp.get_swt(rets, "haar")
 
 # %%
-sigp.plot_scaleogram(prices, np.arange(1, 1024), "morl")
+plot.plot_cols(rets_detail)
+
+# %%
+plot.plot_cols(rets_detail, mode="renormalize")
+
+# %%
+stats.apply_normality_test(rets_detail)
+
+# %%
+plot.plot_autocorrelation(rets_detail, title_prefix="Wavelet level ")
+
+# %%
+plot.plot_spectrum(rets_detail, title_prefix="Wavelet level ")
+
+# %%
+plot.plot_correlation_matrix(rets_detail, mode="heatmap")
+
+# %% [markdown]
+# ### Z-scored returns
+
+# %%
+zscored_rets = sigp.get_dyadic_zscored(rets, demean=False)
+
+# %%
+plot.plot_cols(zscored_rets)
+
+# %%
+stats.apply_normality_test(zscored_rets)
+
+# %%
+plot.plot_autocorrelation(zscored_rets, title_prefix="tau exp = ")
+
+# %%
+plot.plot_spectrum(zscored_rets, title_prefix="tau exp = ")
+
+# %%
 
 # %% [markdown]
 # # EMAs

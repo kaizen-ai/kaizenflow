@@ -12,9 +12,10 @@ import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy
+import scipy as sp
 import seaborn as sns
 import sklearn.metrics as skl_metrics
+import statsmodels.api as sm
 
 import core.explore as expl
 import core.statistics as stats
@@ -248,6 +249,105 @@ def plot_timeseries_per_category(
         fig.suptitle(f"Distribution by {datetime_type}")
 
 
+def plot_cols(
+    data: Union[pd.Series, pd.DataFrame],
+    colormap: str = "rainbow",
+    figsize: Tuple[int, int] = (20, 5),
+    mode: Optional[str] = None,
+) -> None:
+    if isinstance(data, pd.Series):
+        data = data.to_frame()
+    if mode is None:
+        mode = "default"
+    elif mode == "renormalize":
+        data = data.copy()
+        data /= data.std()
+    else:
+        raise ValueError(f"Unsupported mode `{mode}`")
+    data.plot(kind="density", colormap=colormap, figsize=figsize)
+    data.plot(colormap=colormap, figsize=figsize)
+
+
+def plot_autocorrelation(
+    signal: Union[pd.Series, pd.DataFrame],
+    lags: int = 40,
+    zero: bool = False,
+    nan_mode: str = "conservative",
+    title_prefix: Optional[str] = None,
+    **kwargs,
+) -> None:
+    """
+    Plot ACF and PACF of columns.
+
+    https://www.statsmodels.org/stable/_modules/statsmodels/graphics/tsaplots.html#plot_acf
+    https://www.statsmodels.org/stable/_modules/statsmodels/tsa/stattools.html#acf
+    """
+    if isinstance(signal, pd.Series):
+        signal = signal.to_frame()
+    n_rows = len(signal.columns)
+    fig = plt.figure(figsize=(20, 5 * n_rows))
+    if title_prefix is None:
+        title_prefix = ""
+    for idx, col in enumerate(signal.columns):
+        if nan_mode == "conservative":
+            data = signal[col].fillna(0).dropna()
+        else:
+            raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
+        ax1 = fig.add_subplot(n_rows, 2, 2 * (idx + 1) - 1)
+        # Exclude lag zero so that the y-axis does not get squashed.
+        acf_title = title_prefix + f"{col} autocorrelation"
+        fig = sm.graphics.tsa.plot_acf(
+            data, lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs
+        )
+        ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
+        pacf_title = title_prefix + f"{col} partial autocorrelation"
+        fig = sm.graphics.tsa.plot_pacf(
+            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs
+        )
+
+
+def plot_spectrum(
+    signal: Union[pd.Series, pd.DataFrame],
+    nan_mode: str = "conservative",
+    title_prefix: Optional[str] = None,
+) -> None:
+    """
+    Plot power spectral density and spectrogram of columns.
+
+    PSD:
+      - Estimate the power spectral density using Welch's method.
+      - Related to autocorrelation via the Fourier transform (Wiener-Khinchin).
+    Spectrogram:
+      - From the scipy documentation of spectrogram:
+        "Spectrograms can be used as a way of visualizing the change of a
+         nonstationary signal's frequency content over time."
+    """
+    if isinstance(signal, pd.Series):
+        signal = signal.to_frame()
+    if title_prefix is None:
+        title_prefix = ""
+    n_rows = len(signal.columns)
+    fig = plt.figure(figsize=(20, 5 * n_rows))
+    for idx, col in enumerate(signal.columns):
+        if nan_mode == "conservative":
+            data = signal[col].fillna(0).dropna()
+        else:
+            raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
+        ax1 = fig.add_subplot(n_rows, 2, 2 * (idx + 1) - 1)
+        f_pxx, Pxx = sp.signal.welch(data)
+        ax1.semilogy(f_pxx, Pxx)
+        ax1.set_title(title_prefix + f"{col} power spectral density")
+        # TODO(*): Maybe put labels on a shared axis.
+        # ax1.set_xlabel("Frequency")
+        # ax1.set_ylabel("Power")
+        ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
+        f_sxx, t, Sxx = sp.signal.spectrogram(data)
+        ax2.pcolormesh(t, f_sxx, Sxx)
+        ax2.set_title(title_prefix + f"{col} spectrogram")
+        # ax2.set_ylabel("Frequency band")
+        # ax2.set_xlabel("Time window")
+
+
 # #############################################################################
 # Correlation-type plots
 # #############################################################################
@@ -398,11 +498,11 @@ def plot_dendrogram(
     # y = scipy.spatial.distance.pdist(df.values, 'correlation')
     y = df.corr().values
     # z = scipy.cluster.hierarchy.linkage(y, 'single')
-    z = scipy.cluster.hierarchy.linkage(y, "average")
+    z = sp.cluster.hierarchy.linkage(y, "average")
     if figsize is None:
         figsize = FIG_SIZE
     _ = plt.figure(figsize=figsize)
-    scipy.cluster.hierarchy.dendrogram(
+    sp.cluster.hierarchy.dendrogram(
         z,
         labels=df.columns.tolist(),
         leaf_rotation=0,
@@ -452,7 +552,7 @@ def plot_corr_over_time(
         axes[i].set_title(timestamps[i])
 
 
-def _get_heatmap_mask(corr, mode: str) -> np.ndarray:
+def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
     if mode == "heatmap_semitriangle":
         # Generate a mask for the upper triangle.
         mask = np.zeros_like(corr, dtype=np.bool)
