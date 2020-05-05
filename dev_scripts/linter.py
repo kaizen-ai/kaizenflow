@@ -936,6 +936,8 @@ class _Pylint(_Action):
         # TODO(gp): Not sure this is needed anymore.
         opts.append("--ignored-modules=pandas")
         opts.append("--output-format=parseable")
+        # Disable score #2241
+        opts.append("--score=no")
         # TODO(gp): Does -j 4 help?
         opts.append("-j 4")
         # pylint crashed due to lack of memory.
