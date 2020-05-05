@@ -284,26 +284,25 @@ def plot_autocorrelation(
     """
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
-    if nan_mode == "conservative":
-        signal = signal.fillna(0).dropna()
-    else:
-        # TODO(*): Add more nan_mode's.
-        raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
     n_rows = len(signal.columns)
     fig = plt.figure(figsize=(20, 5 * n_rows))
     if title_prefix is None:
         title_prefix = ""
     for idx, col in enumerate(signal.columns):
+        if nan_mode == "conservative":
+            data = signal[col].fillna(0).dropna()
+        else:
+            raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
         ax1 = fig.add_subplot(n_rows, 2, 2 * (idx + 1) - 1)
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
         fig = sm.graphics.tsa.plot_acf(
-            signal[col], lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs
+            data, lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs
         )
         ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         fig = sm.graphics.tsa.plot_pacf(
-            signal[col], lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs
+            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs
         )
 
 
