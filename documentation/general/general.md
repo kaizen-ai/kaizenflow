@@ -43,11 +43,15 @@
 # Ask somebody if you have any doubts
 
 - If you have doubts on how to do something you want to do:
+  - Look in the documentation:
+    ```
+    > grep -r "hello" documentation_p1 amp/documentation/ | grep md
+    ```
   - Ask your team-members
-    - The problem is that sometimes somebody tells you his / hers interpretation
-      or their workaround for a problem
-    - So, be careful
-  - Ask Sergey if he is around
+    - Note that often people tells you his / her interpretation or their
+      workaround for a problem, which might not be the best approach, so be
+      careful
+  - Ask Sergey
   - Don't hesitate to ask GP & Paul
 
 # Collaboration
@@ -56,26 +60,26 @@
 
 ### Learning from each other
 
-- Good research and software engineer practices allow us to:
+- Proper research and software engineering practices allow us to:
   - Learn from each other
   - Accumulate and distill the wisdom of experts
-  - Share lessons that we have learned from our mistakes along the way
+  - Share lessons learned from our mistakes along the way
 
 ### Consistency and process
 
-- Consistency is a key enabler to make teams faster
+- Consistency is a crucial enabler to make teams faster
 - Productivity increases when team members "work in the same way", i.e., there
   is a single official way of performing a task, so that it's possible and easy
   to:
   - Re-use research and software components
   - Help each other in debugging issues
-  - Add / transfer new people to teams
+  - Add/transfer new people to teams
   - Work on multiple projects simultaneously
   - Learn from each other's experience and mistakes
-  - Review each other's work looking for mistakes and improvements
+  - Review each other's work looking for errors and improvements
   - ...
 
-- We are not going to discuss this, but rather assume the above as self-evident
+- We are not going to discuss and debate the rationale, but instead assume the above as self-evident
   truth
 
 ## Sync-ups
@@ -87,14 +91,15 @@
 
 - All-hands meeting on Mondays has the following goals:
   - Summarize projects going on and their status
-    - E.g. what are blocking tasks across projects
+    - Review the ZenHub board
+    - E.g., what are blocking tasks across projects
   - Discuss topics of general interest
     - E.g., organization, process
-  - Talk about team, hiring, ...
+  - Talk about the team, hiring, customers
 
 ### Technical sync-ups
 
-- We meet one time per week for each of the projects (e.g., NLP, INFRA, SCORING)
+- We meet one or two times per week for each of the projects (e.g., NLP, INFRA)
 
 - Please check your calendar to make sure the times work and the invited
   participants are correct
@@ -105,7 +110,7 @@
 
 - Typically 2-3 issues are more than enough to fill one hour of discussion
   - Give priority to tasks that are controversial, blocking, or finished
-  - No reason to linger on the successes or on the easy stuff
+  - No reason to linger on the successes or the easy stuff
 
 - Send an email or tag a comment to Gdocs to broadcast the agenda
 
@@ -115,22 +120,22 @@
 
 ### Ad-hoc meetings
 
-- If somebody is unsure about
-  - What exactly needs to be done
-  - The specs of a task please don't hesitate to ask for a quick meeting to
-    discuss the issue
+- If somebody is unsure about:
+  - What exactly needs to be done in a GitHub Issue
+  - The specs of a task
+   don't hesitate to ask for a quick meeting to discuss the issue
 
 - Better safe than sorry
 
 ### Org emails
 
-- GP & Paul will send emails with subject starting with "ORG:" pointing to
+- GP & Paul will send emails with the subject starting with "ORG:" pointing to
   interesting docs that are of general interest and relevance
 
-- Please make sure to read carefully the docs and internalize what we suggest to
+- Please make sure to read the docs carefully and internalize what we suggest to
   do and, especially, the rationale of the proposed solutions
 
-- If it's ok acknowledge the email replying to all
+- If it's ok to acknowledge the email replying to all
 
 ### The need for synchronization points
 
@@ -147,43 +152,37 @@
 ### Synchronization point
 
 - The procedure is:
-  - One of us (e.g., Paul / Sergey / me) creates a GitHub task, with:
+  - One of us (e.g., GP or Paul) creates a GitHub task, with:
     - Detailed instructions
-    - The list of all of the persons affected by the task
+    - The list of all of the persons in charge of executing the task
   - Send a ping with the link on Telegram if the task is urgent
   - Everybody does what's asked
   - Mark on the GitHub task your name
 
-### Morning Moscow sync ups
-
-- Particle team discusses various organizational topics in the morning, e.g.,
-  - Best Git practices
-  - ORG emails from previous days
-
 ### Morning email
 
-- First thing in the morning, send an email to all@particle.one to broadcast
-  what you are working on.
+- First thing in the morning, send an email to `all@particle.one` to broadcast
+  what you are planning to work on during that day
 
 - The goal is:
   - Think about what you are going to work on for the day, so you have a clear
     plan
   - Make sure people blocked on your tasks know that / whether you are working
     on those tasks
-  - Broadcast if you are blocked and / or if you don't have tasks
+  - Broadcast if you are blocked or if you don't have tasks
   - Communicate realistic ETAs (no reason to be optimistic: complex things take
-    time to be done properly)
-  - Use a date in the usual format (e.g., 2018-10-10) and add "today",
+    time to be done correctly)
+  - Use a date in the usual format (e.g., in our standard format 2018-10-10) and add "today",
     "yesterday", "tomorrow", "end of week" so that it's easier to parse
   - Please list tasks in priority order
-  - Please stick to using "TODO" (all caps) as subject, and the suggested
+  - Please stick to using `TODO` (all caps) as the email subject, and the suggested
     format, so that it's easy to filter emails and see what everybody is doing
     today and what was doing in the previous days.
   - If your original ETA needs to be updated (e.g., you thought that you would
     have finished a task by yesterday, but it's taking longer) keep the older
     ETA and add the new one, e.g.,
     ```
-    #240 edg: Metadata
+    #PartTask240: Implement Universe metadata
     - ETA: today (2018-10-10)
     - Original ETA: yesterday (2018-10-09)
     - Reason: it was more complex than what we thought
@@ -196,20 +195,20 @@
 - Here is an example of an email
   ```
   Subject: TODO
-  - #240 edg: Metadata
+  - PartTask240: Implement Universe metadata
       - ETA: today (2018-10-10)
       - Original ETA: yesterday (2018-10-09)
       - Reason: the download didn't finish
-  -   #166 edg: Generate h5 file from forms4
+  -   PartTask166: Generate h5 file from forms4
       - reorganize document
       - ETA: tomorrow (2018-10-11)
   - Background tasks
       - working with Dima on #203 RP: Market cap mapping
-      - #233 RP: Create convenience pickles
-      - working with Vitaly #238 INFRA: Total reorg of AWS
+      - PartTask233 Create convenience pickles
+      - working with Vitaly PartTask238 INFRA: Total reorg of AWS
       - scoring sync up
-  - Blocked on #XYZ Fix the world before it explodes
-  - I'm running out of tasks in a few days!
+  - Blocked on PartTaskXYZ Fix the world before it explodes
+  - I'm running out of tasks!
   ```
 
 ## Communication
@@ -218,13 +217,13 @@
 
 - Guidelines on how we use the many communication tools we have
 
-- Github issues
+- GitHub Issues
   - Are concerned with technical details, the process of debugging, discussion
     about a solution, ...
 - Jupyter notebooks
   - Describe the research in detail
 - Markdown files
-  - Document instructions on how to run the code
+  - Document instructions, process, design closely related to code
   - Notes that need to be close to the code itself
   - Documents that need to be authoritative and long-term (e.g., reviewed,
     tracked carefully)
@@ -235,27 +234,28 @@
   - For discussions that need tight interaction (like a debug session) or
     immediacy (e.g., "are you ready for the sync up?")
 - Emails
-  - Are rarely used: everything should be in some other form
+  - Are rarely used
   - Exceptions are to send non-urgent information to everybody
 
 - There should be little replication among these forms of documentation
+   - It's not ok to file a bug and then ping on IM unless it's urgent
 
-### DRY applies also to documentation
+### DRY also applies to documentation
 
 - DRY! Do not Repeat Yourself
 - E.g., it's not a good idea to cut & paste pieces of gdocs in a github bug,
   rather just point to the relevant session on gdocs from the github bug
 
-### Avoid write-once code / research
+### Avoid write-once code and research
 
-- Code / research is:
+- Code and research is:
   - Written once by a few people
   - Read many times by many people
-- Therefore it is important to heavily invest in the process of writing it
+- Therefore it is essential to invest in the process of writing it heavily
 
 ### Consistency
 
-- Coding / research across our group is done with consistent procedures, code
+- Coding/research across our group is done with consistent procedures, code
   layout, and naming conventions
 
 ### Training period
@@ -266,26 +266,26 @@
 - We understand that this is a painful process for you:
   - You need to change your old habits for new habits that you might disagree
     with, or not comprehend
-  - You need to rework your code / notebooks that is already perfectly working
+  - You need to rework your code/notebooks that are already correctly working
     until it adheres to the new conventions
 
 - Understand that this is also a painful process for the reviewers:
-  - On top of their usual workload they need to:
-    - Invest time to explain you how we do things
+  - On top of their usual workload, they need to:
+    - Invest time to explain to you how we do things
     - Answer your questions
     - Try to convey the sense of why these procedures are important
 
 - In a few words, nobody _enjoys_ this process, and yet it is necessary,
   mandatory, and even beneficial
-- Acquaintance can take a few days if you are open and patient, but months if
+- Acquaintance can take several days if you are open and patient, but months if
   you resist or treat it as an afterthought
   - Our suggestion is to accept these rules as the existence of gravity
 
 ### Go slowly to go faster
 
-- Once you reach proficiency you will be moving much faster and make up for the
+- Once you reach proficiency, you will be moving much faster and make up for the
   invested time
-  - In fact, everyone will be much faster, because everyone will be able to look
+  - In fact, everyone will be much quicker, because everyone will be able to look
     at any part of the codebase or any notebook and get oriented quickly
 
 ## Improve your English!
@@ -306,7 +306,7 @@
 - Feel free to use [Google Translate](https://translate.google.com/) when you
   are not sure about a word or a phrase
 
-- What's the point of doing a really good job if you can't communicate it?
+- What's the point of doing an excellent job if you can't communicate it?
 
 ### Study an English grammar book
 
@@ -317,12 +317,14 @@
 
 # Vacation policy
 
+- TODO: Move it to team_member_handbook.txt
+
 ## Vacation
 
 - We don't count the vacation days
-  - We expect people to take vacations on a as-needed basis in a responsible way
+  - We expect people to take vacations on an as-needed basis in a responsible way
   - E.g., if you know that in January there is going to be a product release,
-    try to schedule vacation after the deadline
+    try to schedule a vacation after the deadline
 
 ## Taking days off
 
@@ -339,7 +341,7 @@
 - Once it's confirmed that it's ok to take the days off
   - Mark the calendar, creating an event spanning multiple days with a title
     "XYZ is OOO" (OOO = Out Of the Office)
-  - Send an email to the entire team with an heads up
+  - Send an email to the entire team with a heads up
     - "I am going on vacation from ... to .... I won't be reachable unless for
       emergencies"
   - Send a reminder email to the team, like 1 week before the day that your time
@@ -378,50 +380,3 @@
   - Vacation means "vacate your mind"
 - If you want to catch up on reading (e.g., "The pragmatic programmer",
   technical papers on machine learning), that's fine
-
-# Mix (to reorg)
-
-## Use the tools we have
-
-> find . -name "ssh_tunnels.py" ./amp/dev_scripts/infra/ssh_tunnels.py
-
-## File a bug when you have a problem
-
-- Report the command
-- The log
-- The more information the better
-
-## Review
-
-- We try to review all the changes that go directly to `master` as post-commit
-  - Code authors are invited to make changes right away before we all forget
-  - Please refrain from committing to `master` and use feature branches unless
-    it's a small change or emergency
-
-- We don't review changes that go in feature branches unless the author is ready
-  for merging back to `master`
-
-## PR
-
-- Better description in the PR
-- Separate refactoring, changes in docstring, type hints
-- Tell if one needs to look at commit one by one
-
-- Better commit message using convention from GH
-
-
-## Launching services
-
-There could be situations when you need to run some services on a server.
-You have to take into account the following things:
-
-- Inside local network (VPN) all ports are open.
-- You should use local IP address of the server which can be found here
-  `documentation/technical/vpn.md`. If you have doubts use `0.0.0.0`, in this
-  case service will run on all available addresses. This is not the best
-  approach because of security (almost the same as evil import but for ip
-  addresses), if the ports opened on the external interface everybody from
-  the internet can get access to your service.
-- You have to use VPN (`documentation/technical/vpn.md`) to reach the server.
-- Everybody can use your service.
-- If it should become permanent, file an issue and INFRA team take care of it.

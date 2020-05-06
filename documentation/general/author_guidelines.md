@@ -1,4 +1,4 @@
-<!--ts-->
+<--ts-->
    * [Guidelines for writing workflows](#guidelines-for-writing-workflows)
    * [Useful reference](#useful-reference)
    * [Style and cosmetic lints](#style-and-cosmetic-lints)
