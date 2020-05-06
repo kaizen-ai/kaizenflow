@@ -11,13 +11,12 @@
          * [Org emails](#org-emails)
          * [The need for synchronization points](#the-need-for-synchronization-points)
          * [Synchronization point](#synchronization-point)
-         * [Morning Moscow sync ups](#morning-moscow-sync-ups)
          * [Morning email](#morning-email)
          * [Morning email: example](#morning-email-example)
       * [Communication](#communication)
          * [Use the right form of communication](#use-the-right-form-of-communication)
-         * [DRY applies also to documentation](#dry-applies-also-to-documentation)
-         * [Avoid write-once code / research](#avoid-write-once-code--research)
+         * [DRY also applies to documentation](#dry-also-applies-to-documentation)
+         * [Avoid write-once code and research](#avoid-write-once-code-and-research)
          * [Consistency](#consistency)
          * [Training period](#training-period)
          * [Go slowly to go faster](#go-slowly-to-go-faster)
@@ -29,12 +28,6 @@
       * [Mark the calendar](#mark-the-calendar)
       * [Long vacations](#long-vacations)
       * [When you are off, you are off](#when-you-are-off-you-are-off)
-   * [Mix (to reorg)](#mix-to-reorg)
-      * [Use the tools we have](#use-the-tools-we-have)
-      * [File a bug when you have a problem](#file-a-bug-when-you-have-a-problem)
-      * [Review](#review)
-      * [PR](#pr)
-      * [Launching services](#launching-services)
 
 
 
@@ -79,8 +72,8 @@
   - Review each other's work looking for errors and improvements
   - ...
 
-- We are not going to discuss and debate the rationale, but instead assume the above as self-evident
-  truth
+- We are not going to discuss and debate the rationale, but instead assume the
+  above as self-evident truth
 
 ## Sync-ups
 
@@ -122,8 +115,8 @@
 
 - If somebody is unsure about:
   - What exactly needs to be done in a GitHub Issue
-  - The specs of a task
-   don't hesitate to ask for a quick meeting to discuss the issue
+  - The specs of a task don't hesitate to ask for a quick meeting to discuss the
+    issue
 
 - Better safe than sorry
 
@@ -172,12 +165,13 @@
   - Broadcast if you are blocked or if you don't have tasks
   - Communicate realistic ETAs (no reason to be optimistic: complex things take
     time to be done correctly)
-  - Use a date in the usual format (e.g., in our standard format 2018-10-10) and add "today",
-    "yesterday", "tomorrow", "end of week" so that it's easier to parse
+  - Use a date in the usual format (e.g., in our standard format 2018-10-10) and
+    add "today", "yesterday", "tomorrow", "end of week" so that it's easier to
+    parse
   - Please list tasks in priority order
-  - Please stick to using `TODO` (all caps) as the email subject, and the suggested
-    format, so that it's easy to filter emails and see what everybody is doing
-    today and what was doing in the previous days.
+  - Please stick to using `TODO` (all caps) as the email subject, and the
+    suggested format, so that it's easy to filter emails and see what everybody
+    is doing today and what was doing in the previous days.
   - If your original ETA needs to be updated (e.g., you thought that you would
     have finished a task by yesterday, but it's taking longer) keep the older
     ETA and add the new one, e.g.,
@@ -238,7 +232,7 @@
   - Exceptions are to send non-urgent information to everybody
 
 - There should be little replication among these forms of documentation
-   - It's not ok to file a bug and then ping on IM unless it's urgent
+  - It's not ok to file a bug and then ping on IM unless it's urgent
 
 ### DRY also applies to documentation
 
@@ -285,8 +279,8 @@
 
 - Once you reach proficiency, you will be moving much faster and make up for the
   invested time
-  - In fact, everyone will be much quicker, because everyone will be able to look
-    at any part of the codebase or any notebook and get oriented quickly
+  - In fact, everyone will be much quicker, because everyone will be able to
+    look at any part of the codebase or any notebook and get oriented quickly
 
 ## Improve your English!
 
@@ -322,7 +316,8 @@
 ## Vacation
 
 - We don't count the vacation days
-  - We expect people to take vacations on an as-needed basis in a responsible way
+  - We expect people to take vacations on an as-needed basis in a responsible
+    way
   - E.g., if you know that in January there is going to be a product release,
     try to schedule a vacation after the deadline
 

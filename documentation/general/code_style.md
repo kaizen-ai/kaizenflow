@@ -1254,6 +1254,7 @@ def ...(...):
 - We use a `None` default value when a function needs to be wrapped and the
   default parameter needs to be propagated
   - **Good**
+
     ```python
     def function1(
       ...,

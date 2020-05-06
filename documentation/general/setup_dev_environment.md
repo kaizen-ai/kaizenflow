@@ -1,4 +1,8 @@
 <!--ts-->
+   * [Tools](#tools)
+      * [Editors](#editors)
+      * [Dev](#dev)
+      * [Infra](#infra)
    * [Set up a new machine](#set-up-a-new-machine)
       * [Definitions](#definitions)
       * [Connect to the server](#connect-to-the-server)
@@ -31,15 +35,17 @@
 # Tools
 
 ## Editors
+
 - PyCharm
-- vim (or something worse like Emacs)
+- Vim (or something worse like Emacs)
 
 ## Dev
+
 - Python 3
-- conda: manage virtual environments
+- Conda: manage virtual environments
 - Linux and bash: we prefer command line: learn how to use it
 - Standard data science stack (e.g., Jupyter, pandas, numpy)
-- git: source control
+- Git: source control
 - GitHub: repo and bug tracker
 - ZenHub: project management
 - Chrome (recommended) or Firefox: browser
@@ -49,6 +55,7 @@
 - Telegram: instant messaging
 
 ## Infra
+
 - WireGuard: VPN
 - AWS: compute
 - Jenkins: continuous integration and development
@@ -62,9 +69,9 @@
 - You have an option to work on your laptop, but it's not officially supported,
   so you are kind of your own
   - People use their laptop to:
-    - have an option when Internet is slow
-    - use PyCharm
-    - use the browser
+    - Have an option when Internet is slow
+    - Use PyCharm
+    - Use the browser
 
 - You need to set up any machine you use (e.g., laptop and AWS) in order to
   develop
@@ -316,18 +323,20 @@
   - one shell cd-ed `commodity_research*/amp`
   - See details `//amp/dev_scripts/tmux.sh`
 
-## Run jupyter notebook 
+## Run jupyter notebook
 
-- Launch jupyter notebook on the server: 
-    - Everyone chooses which port to use.
-    - Running notebook without a tmux session will stop as soon as you leave the server.
-    - If you want to have a constantly running notebook, create a tmux session.
-        - `tmux` - Create tmux session.
-        - `tmux a` - Connect to the last session. 
-        - leave/detach the tmux session by typing `Ctrl+b` and `then d`.
-    - Example run notebook:
-        - IP - You can allow all addresses, but we expect you to use the internal server addresses(Example: 172.31.16.23).
-        - PORT - use your port instead of a variable {PORT}(Example: 8088).
+- Launch jupyter notebook on the server:
+  - Everyone chooses which port to use.
+  - Running notebook without a tmux session will stop as soon as you leave the
+    server.
+  - If you want to have a constantly running notebook, create a tmux session.
+    - `tmux` - Create tmux session.
+    - `tmux a` - Connect to the last session.
+    - leave/detach the tmux session by typing `Ctrl+b` and `then d`.
+  - Example run notebook:
+    - IP - You can allow all addresses, but we expect you to use the internal
+      server addresses(Example: 172.31.16.23).
+    - PORT - use your port instead of a variable {PORT}(Example: 8088).
   ```bash
   jupyter notebook --ip=172.31.16.23 --port 8088
   ```
