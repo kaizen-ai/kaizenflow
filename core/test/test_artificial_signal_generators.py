@@ -12,7 +12,7 @@ class TestArmaProcess(hut.TestCase):
         ma_params = [0.65, 0.35]
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
-            {"start": "2000-01-01", "periods": 110, "freq": "B",},
+            {"start": "2000-01-01", "periods": 40, "freq": "B",},
             scale=1,
             burnin=10,
         )
@@ -27,7 +27,7 @@ class TestArmaProcess(hut.TestCase):
         ma_params = [-0.5]
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
-            {"start": "2000-01-01", "periods": 55, "freq": "B",},
+            {"start": "2000-01-01", "periods": 40, "freq": "B",},
             scale=1,
             burnin=5,
         )
@@ -42,7 +42,7 @@ class TestArmaProcess(hut.TestCase):
         ma_params = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
-            {"start": "2000-01-01", "periods": 55, "freq": "B",},
+            {"start": "2000-01-01", "periods": 40, "freq": "B",},
             scale=1,
             burnin=5,
         )
