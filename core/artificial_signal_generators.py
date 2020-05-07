@@ -5,28 +5,30 @@ import core.artificial_signal_generators as sig_gen
 """
 
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 # TODO(*): Disabled because of PartTask186.
-#import gluonts
-#import gluonts.dataset.artificial as gda
-#import gluonts.dataset.artificial.recipe as rcp
-#import gluonts.dataset.repository.datasets as gdrd  # isort: skip # noqa: F401 # pylint: disable=unused-import
-#import gluonts.dataset.util as gdu  # isort: skip # noqa: F401 # pylint: disable=unused-import
+# import gluonts
+# import gluonts.dataset.artificial as gda
+# import gluonts.dataset.artificial.recipe as rcp
+# import gluonts.dataset.repository.datasets as gdrd  # isort: skip # noqa: F401 # pylint: disable=unused-import
+# import gluonts.dataset.util as gdu  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
-#import statsmodels as sm
+
+# import statsmodels as sm
 import statsmodels.api as sm
+
+import helpers.dbg as dbg
 
 # TODO(*): statsmodels needs this import to work properly.
 # import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
 
-#def get_gluon_dataset_names() -> List[str]:
+# def get_gluon_dataset_names() -> List[str]:
 #    """
 #    Get names of available Gluon datasets. Each of those names can be
 #    used in `get_gluon_dataset` function.
@@ -36,11 +38,11 @@ _LOG = logging.getLogger(__name__)
 #    return list(gluonts.dataset.repository.datasets.dataset_recipes.keys())
 #
 #
-#def get_gluon_dataset(
+# def get_gluon_dataset(
 #    dataset_name: str = "m4_hourly",
 #    train_length: Optional[int] = None,
 #    test_length: Optional[int] = None,
-#) -> Tuple[pd.DataFrame, pd.DataFrame]:
+# ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 #    """
 #    Load Gluon dataset, transform it into train and test dataframes.
 #
@@ -69,9 +71,9 @@ _LOG = logging.getLogger(__name__)
 #    return train_df, test_df
 #
 #
-#def evaluate_recipe(
+# def evaluate_recipe(
 #    recipe: List[Tuple[str, Callable]], length: int, **kwargs: Any
-#) -> Dict[str, np.array]:
+# ) -> Dict[str, np.array]:
 #    """
 #    Generate data based on recipe.
 #
@@ -86,9 +88,9 @@ _LOG = logging.getLogger(__name__)
 #    return rcp.evaluate(recipe, length, **kwargs)
 #
 #
-#def add_recipe_components(
+# def add_recipe_components(
 #    recipe: List[Tuple[str, Callable]], name: str = "signal"
-#) -> List[Tuple[str, rcp.Lifted]]:
+# ) -> List[Tuple[str, rcp.Lifted]]:
 #    """
 #    Append the sum of the components to the recipe.
 #
@@ -103,7 +105,7 @@ _LOG = logging.getLogger(__name__)
 #    return recipe
 #
 #
-#def generate_recipe_dataset(
+# def generate_recipe_dataset(
 #    recipe: Union[Callable, List[Tuple[str, Callable]]],
 #    freq: str,
 #    start_date: pd.Timestamp,
@@ -111,7 +113,7 @@ _LOG = logging.getLogger(__name__)
 #    prediction_length: int,
 #    num_timeseries: int,
 #    trim_length_func: Callable = lambda x, **kwargs: 0,
-#) -> gluonts.dataset.common.TrainDatasets:
+# ) -> gluonts.dataset.common.TrainDatasets:
 #    """
 #    Generate GluonTS TrainDatasets from recipe.
 #
@@ -150,10 +152,11 @@ _LOG = logging.getLogger(__name__)
 #    return recipe_dataset.generate()
 
 
-class ArmaProcess():
+class ArmaProcess:
     """
     A thin wrapper around statsmodels `ArmaProcess`, with Pandas support.
     """
+
     def __init__(self, ar_coeffs: List[float], ma_coeffs: List[float]) -> None:
         """
         Initialize `arma_process` using given coefficients.
@@ -169,13 +172,17 @@ class ArmaProcess():
         """
         self.ar_coeffs = ar_coeffs
         self.ma_coeffs = ma_coeffs
-        self.arma_process = sm.tsa.ArmaProcess.from_coeffs(self.ar_coeffs, self.ma_coeffs)
+        self.arma_process = sm.tsa.ArmaProcess.from_coeffs(
+            self.ar_coeffs, self.ma_coeffs
+        )
 
-    def generate_sample(self,
-            date_range_kwargs: Dict[str, Any],
-            scale: float=1,
-            burnin: float=0,
-            seed: Optional[int]=None) -> pd.Series:
+    def generate_sample(
+        self,
+        date_range_kwargs: Dict[str, Any],
+        scale: float = 1,
+        burnin: float = 0,
+        seed: Optional[int] = None,
+    ) -> pd.Series:
         """
         Generate an ARMA realization.
 
@@ -195,7 +202,9 @@ class ArmaProcess():
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
         # Generate the time series.
-        data = self.arma_process.generate_sample(nsample=nsample, scale=scale, burnin=burnin)
+        data = self.arma_process.generate_sample(
+            nsample=nsample, scale=scale, burnin=burnin
+        )
         # Create series index and name.
         name = f"arma({len(self.ar_coeffs)},{len(self.ma_coeffs)})"
         return pd.Series(index=index, data=data, name=name)
