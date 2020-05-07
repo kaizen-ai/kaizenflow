@@ -206,7 +206,16 @@ def get_credentials() -> Dict[str, Any]:
         elif server_name == "Daniils-MacBook-Air.local":
             # Home laptop.
             conda_sh_path = "/Users/danya/opt/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/Users/danya/opt/anaconda3/envs"
+            conda_env_path = "/Users/danya/opt/anaconda3/envs" 
+    elif user_name == "dan":
+        # Dan.
+        git_user_name = "DanilYachmenev"
+        git_user_email = "dan@particle.one"
+        jupyter_port = 9901
+        if server_name == "liza-particle-laptop":
+            # Laptop.
+            conda_sh_path = "/home/liza/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/dan/anaconda3/envs"
     elif user_name == "greg":
         # Gregory.
         git_user_name = "greg-ptcl"
