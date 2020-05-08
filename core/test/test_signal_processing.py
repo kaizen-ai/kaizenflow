@@ -59,12 +59,12 @@ class Test_process_outliers1(ut.TestCase):
         min_periods: Optional[int] = 2,
         **kwargs: Any,
     ) -> None:
-        info = collections.OrderedDict()
+        info: collections.OrderedDict = collections.OrderedDict()
         srs_out = sigp.process_outliers(
             srs,
-            window,
             mode,
             lower_quantile,
+            window=window,
             min_periods=min_periods,
             info=info,
             **kwargs,
