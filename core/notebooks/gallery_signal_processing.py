@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.4
+#       jupytext_version: 1.4.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -49,17 +49,28 @@ prnt.config_notebook()
 # # Generate signal
 
 # %%
-price = sig_gen.get_gaussian_walk(0, 0.01, 4 * 252, seed=20)
-price.index = pd.date_range("1/1/2000", periods=1008, freq="B")
-rets = (np.log(price) - np.log(price.shift(1))).dropna()
+arma00process = sig_gen.ArmaProcess([], [])
+
+# %%
+rets = arma00process.generate_sample(
+    {"start": "2000-01-01", "periods": 4*252, "freq": "B"},
+    scale=5,
+    burnin=20,
+    seed=42
+)
+
+# %%
+price = rets.cumsum()
+
+# %%
+rets.name += "_rets"
+price.name += "_price"
 
 # %% [markdown]
 # ## Price
 
 # %%
 plot.plot_cols(price)
-
-# %%
 
 # %% [markdown]
 # ### Price wavelet decomposition
