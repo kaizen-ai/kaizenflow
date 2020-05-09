@@ -1,3 +1,25 @@
+<!--ts-->
+   * [Guidelines for writing workflows](#guidelines-for-writing-workflows)
+   * [Useful reference](#useful-reference)
+   * [Style and cosmetic lints](#style-and-cosmetic-lints)
+      * [Use nice 80 columns formatting](#use-nice-80-columns-formatting)
+      * [Empty line after heading](#empty-line-after-heading)
+      * [Style for numbered lists](#style-for-numbered-lists)
+      * [Using code style](#using-code-style)
+      * [Indenting code style](#indenting-code-style)
+      * [Use bullet lists](#use-bullet-lists)
+      * [Improve your written English](#improve-your-written-english)
+      * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
+      * [Table of content (TOC)](#table-of-content-toc)
+         * [Markdown TOC](#markdown-toc)
+         * [To insert a TOC](#to-insert-a-toc)
+         * [To update all markdown files](#to-update-all-markdown-files)
+         * [Script installation](#script-installation)
+   * [Team member list](#team-member-list)
+
+
+
+<!--te-->
 # Guidelines for writing workflows
 
 - Make no assumptions on the user
@@ -150,12 +172,13 @@
 
 # Team member list
 
-- In reversed alphabetical order (just to be fair)
-  - [ ] Stas
-  - [ ] Sonya
-  - [ ] Sergey
-  - [ ] Paul
-  - [ ] Liza
-  - [ ] Julia
-  - [ ] GP
+- In alphabetical order (just to be fair)
+  - [ ] Dan
   - [ ] Daniil
+  - [ ] GP
+  - [ ] Greg
+  - [ ] Julia
+  - [ ] Paul
+  - [ ] Sergey
+  - [ ] Sonya
+  - [ ] Vitaliy
