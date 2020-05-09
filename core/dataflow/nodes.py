@@ -9,12 +9,11 @@ import os
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 # TODO(*): Disabled because of PartTask186.
-#import gluonts.model.deepar as gmd
-#import gluonts.trainer as gt
+# import gluonts.model.deepar as gmd
+# import gluonts.trainer as gt
 import numpy as np
 import pandas as pd
 
-import core.backtest as bcktst
 import core.data_adapters as adpt
 import core.finance as fin
 import core.statistics as stats
@@ -641,7 +640,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_fit)
         #
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(non_nan_idx, fwd_y_hat_vars, fwd_y_hat)
+        fwd_y_hat = adpt.transform_from_sklearn(
+            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
+        )
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
@@ -650,7 +651,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._set_info("fit", info)
         # Return targets and predictions.
         return {
-            "df_out": fwd_y_df.reindex(idx).merge(fwd_y_hat.reindex(idx), left_index=True, right_index=True)
+            "df_out": fwd_y_df.reindex(idx).merge(
+                fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            )
         }
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -676,14 +679,18 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(non_nan_idx, fwd_y_hat_vars, fwd_y_hat)
+        fwd_y_hat = adpt.transform_from_sklearn(
+            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
+        )
         # Generate basic perf stats.
         info = collections.OrderedDict()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
         return {
-            "df_out": fwd_y_df.reindex(idx).merge(fwd_y_hat.reindex(idx), left_index=True, right_index=True)
+            "df_out": fwd_y_df.reindex(idx).merge(
+                fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            )
         }
 
     @staticmethod
@@ -879,7 +886,7 @@ class SkLearnModel(FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-#class ContinuousDeepArModel(FitPredictNode):
+# class ContinuousDeepArModel(FitPredictNode):
 #    """
 #    A dataflow node for a DeepAR model.
 #
@@ -1066,7 +1073,7 @@ class SkLearnModel(FitPredictNode):
 #        raise TypeError("Data type=`%s`" % type(to_list))
 #
 #
-#class DeepARGlobalModel(FitPredictNode):
+# class DeepARGlobalModel(FitPredictNode):
 #    """
 #    A dataflow node for a DeepAR model.
 #
