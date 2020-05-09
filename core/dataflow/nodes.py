@@ -229,6 +229,7 @@ class DiskDataSource(DataSource):
 
         :param nid: node identifier
         :param file_path: path to the file
+        # TODO(*): Don't the readers support this already?
         :param timestamp_col: name of the timestamp column. If `None`, assume
             that index contains timestamps
         :param start_date: data start date in timezone of the dataset, included
@@ -574,6 +575,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         y_vars: Union[List[str], Callable[[], List[str]]],
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -607,6 +609,10 @@ class ContinuousSkLearnModel(FitPredictNode):
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
+        if nan_mode is None:
+            self._nan_mode = "raise"
+        else:
+            self._nan_mode = nan_mode
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -614,11 +620,19 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._steps_ahead, df.index.size)
         idx = df.index[: -self._steps_ahead]
+        # Restrict to times where x_vars have no NaNs.
+        non_nan_idx = df.loc[idx][self._x_vars + self._y_vars].dropna().index
+        if self._nan_mode == "raise":
+            dbg.dassert_eq(idx.shape[0], non_nan_idx.shape[0])
+        elif self._nan_mode == "drop":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
         # Prepare x_vars in sklearn format.
         x_vars = self._to_list(self._x_vars)
-        x_fit = adpt.transform_to_sklearn(df.loc[idx], x_vars)
+        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         # Prepare forward y_vars in sklearn format.
-        fwd_y_df = self._get_fwd_y_df(df).loc[idx]
+        fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_fit = adpt.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
         # Define and fit model.
         self._model = self._model_func(**self._model_kwargs)
@@ -627,7 +641,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_fit)
         #
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
+        fwd_y_hat = adpt.transform_from_sklearn(non_nan_idx, fwd_y_hat_vars, fwd_y_hat)
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
@@ -636,32 +650,40 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._set_info("fit", info)
         # Return targets and predictions.
         return {
-            "df_out": fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
+            "df_out": fwd_y_df.reindex(idx).merge(fwd_y_hat.reindex(idx), left_index=True, right_index=True)
         }
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = df_in.copy()
         idx = df.index
+        # Restrict to times where x_vars have no NaNs.
+        non_nan_idx = df.loc[idx][self._x_vars + self._y_vars].dropna().index
+        if self._nan_mode == "raise":
+            dbg.dassert_eq(idx.shape[0], non_nan_idx.shape[0])
+        elif self._nan_mode == "drop":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
         # Transform x_vars to sklearn format.
         x_vars = self._to_list(self._x_vars)
-        x_predict = adpt.transform_to_sklearn(df, x_vars)
+        x_predict = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         # Use trained model to generate predictions.
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
         fwd_y_hat = self._model.predict(x_predict)
         # Put predictions in dataflow dataframe format.
-        fwd_y_df = self._get_fwd_y_df(df)
+        fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(idx, fwd_y_hat_vars, fwd_y_hat)
+        fwd_y_hat = adpt.transform_from_sklearn(non_nan_idx, fwd_y_hat_vars, fwd_y_hat)
         # Generate basic perf stats.
         info = collections.OrderedDict()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
         return {
-            "df_out": fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
+            "df_out": fwd_y_df.reindex(idx).merge(fwd_y_hat.reindex(idx), left_index=True, right_index=True)
         }
 
     @staticmethod
