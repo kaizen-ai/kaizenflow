@@ -1,9 +1,15 @@
 <!--ts-->
       * [Convention](#convention)
       * [What to annotate with type hints](#what-to-annotate-with-type-hints)
+      * [reveal_type](#reveal_type)
+      * [Library without types](#library-without-types)
       * [Handling the annoying Incompatible types in assignment](#handling-the-annoying-incompatible-types-in-assignment)
       * [Disabling mypy errors](#disabling-mypy-errors)
+      * [What to do when you don't know what to do](#what-to-do-when-you-dont-know-what-to-do)
    * [Inferring types using unit tests](#inferring-types-using-unit-tests)
+
+
+
 <!--te-->
 
 - We use python3 type hints to:
@@ -34,24 +40,24 @@
 
 ## `reveal_type`
 
-- To find out what type `mypy` infers for an expression anywhere in your program,
-  wrap it in `reveal_type()`
+- To find out what type `mypy` infers for an expression anywhere in your
+  program, wrap it in `reveal_type()`
 - `mypy` will print an error message with the type; remove it again before
   running the code
-- See [here](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#when-you-re-puzzled-or-when-things-are-complicated)
+- See
+  [here](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#when-you-re-puzzled-or-when-things-are-complicated)
 
 ## Library without types
 
 - `mypy` is unhappy when a library doesn't have types
 - Lots of libraries are starting to add type hints now that python 2 has been
   deprecated
-
 ```
 *.py:14: error: No library stub file for module 'sklearn.model_selection' [mypy]
 ```
 
-- You can go in `mypy.ini` and add the library (following the alphabetical order)
-  to the list
+- You can go in `mypy.ini` and add the library (following the alphabetical
+  order) to the list
 
 - Note that you need to ensure that different copies of `mypy.ini` in different
   subprojects are equal
@@ -112,7 +118,8 @@ or
 
 ## What to do when you don't know what to do
 
-- You can check [here](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html)
+- You can check
+  [here](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html)
 
 # Inferring types using unit tests
 

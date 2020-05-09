@@ -1,8 +1,12 @@
 <!--ts-->
-      * [Conda bloat](#conda-bloat)
+   * [Conda bloat](#conda-bloat)
       * [Minimize conda bloat](#minimize-conda-bloat)
+   * [Conda environment lifecycle](#conda-environment-lifecycle)
       * [Experimental conda environment](#experimental-conda-environment)
       * [Releasing a new conda environment](#releasing-a-new-conda-environment)
+   * [Conda maintenance (only for admins)](#conda-maintenance-only-for-admins)
+      * [Updating conda itself](#updating-conda-itself)
+      * [Cleaning conda packages](#cleaning-conda-packages)
 
 
 
@@ -79,6 +83,7 @@
 ## Updating conda itself
 
 - To update conda itself you can run:
+
 ```bash
 > conda activate base
 
@@ -92,12 +97,14 @@
 ```
 
 ## Cleaning conda packages
+
 - One can clean up the entire cache of packages with:
+
 ```bash
 > conda clean --yes --all
 ```
 
 - This operation:
-  - affects the conda system for all the users
-  - is just about deleting cached artifacts so it should not have destructive
+  - Affects the conda system for all the users
+  - Is just about deleting cached artifacts so it should not have destructive
     effects

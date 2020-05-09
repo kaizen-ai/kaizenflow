@@ -1,4 +1,8 @@
 <!--ts-->
+   * [Tools](#tools)
+      * [Editors](#editors)
+      * [Dev](#dev)
+      * [Infra](#infra)
    * [Set up a new machine](#set-up-a-new-machine)
       * [Definitions](#definitions)
       * [Connect to the server](#connect-to-the-server)
@@ -28,7 +32,46 @@
 
 <!--te-->
 
+# Tools
+
+## Editors
+
+- PyCharm
+- Vim (or something worse like Emacs)
+
+## Dev
+
+- Python 3
+- Conda: manage virtual environments
+- Linux and bash: we prefer command line: learn how to use it
+- Standard data science stack (e.g., Jupyter, pandas, numpy)
+- Git: source control
+- GitHub: repo and bug tracker
+- ZenHub: project management
+- Chrome (recommended) or Firefox: browser
+- Google docs and markdown: documentation
+- Google suite: email, calendar
+- Email client (recommended) or Gmail web client
+- Telegram: instant messaging
+
+## Infra
+
+- WireGuard: VPN
+- AWS: compute
+- Jenkins: continuous integration and development
+- MongoDB, SQL: backends
+- Docker: container
+
 # Set up a new machine
+
+- We prefer to work on the dev server on AWS since it is more reliable and
+  powerful
+- You have an option to work on your laptop, but it's not officially supported,
+  so you are kind of your own
+  - People use their laptop to:
+    - Have an option when Internet is slow
+    - Use PyCharm
+    - Use the browser
 
 - You need to set up any machine you use (e.g., laptop and AWS) in order to
   develop
@@ -36,8 +79,8 @@
 ## Definitions
 
 - We refer to Git repos in the following way:
-  - `ParticleDev/commodity_research` as `//Part`
-  - `alphamatic/amp` as `//Amp`
+  - `ParticleDev/commodity_research` as `//p1`
+  - `alphamatic/amp` as `//amp`
 
 ## Connect to the server
 
@@ -157,7 +200,6 @@
 
 - There are some pre-packaged command lines to create the standard environments,
   e.g., `./dev_scripts_p1/create_conda.p1_develop.sh`
-  `bash > amp/dev_scripts/install/create_conda.py \ --env_name $CONDA_ENV \ --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \ --req_file dev_scripts_p1/install/requirements/p1_develop.yaml \ --delete_env_if_exists`
 
 - The `create_conda.py` help as some useful examples of command lines, see the
   help:
@@ -281,18 +323,20 @@
   - one shell cd-ed `commodity_research*/amp`
   - See details `//amp/dev_scripts/tmux.sh`
 
-## Run jupyter notebook 
+## Run jupyter notebook
 
-- Launch jupyter notebook on the server: 
-    - Everyone chooses which port to use.
-    - Running notebook without a tmux session will stop as soon as you leave the server.
-    - If you want to have a constantly running notebook, create a tmux session.
-        - `tmux` - Create tmux session.
-        - `tmux a` - Connect to the last session. 
-        - leave/detach the tmux session by typing `Ctrl+b` and `then d`.
-    - Example run notebook:
-        - IP - You can allow all addresses, but we expect you to use the internal server addresses(Example: 172.31.16.23).
-        - PORT - use your port instead of a variable {PORT}(Example: 8088).
-```bash
-jupyter notebook --ip=172.31.16.23 --port 8088
-```
+- Launch jupyter notebook on the server:
+  - Everyone chooses which port to use.
+  - Running notebook without a tmux session will stop as soon as you leave the
+    server.
+  - If you want to have a constantly running notebook, create a tmux session.
+    - `tmux` - Create tmux session.
+    - `tmux a` - Connect to the last session.
+    - leave/detach the tmux session by typing `Ctrl+b` and `then d`.
+  - Example run notebook:
+    - IP - You can allow all addresses, but we expect you to use the internal
+      server addresses(Example: 172.31.16.23).
+    - PORT - use your port instead of a variable {PORT}(Example: 8088).
+  ```bash
+  jupyter notebook --ip=172.31.16.23 --port 8088
+  ```

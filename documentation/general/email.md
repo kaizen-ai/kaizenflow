@@ -95,7 +95,6 @@
 ## GitHub pull requests
 
 - These emails look like:
-
   ```
   Paul <notifications@github.com>
   Fri, Oct 11, 8:49 PM (22 hours ago)
@@ -121,7 +120,6 @@
 ## GitHub issue activity
 
 - These emails look like:
-
   ```
   GP Saggese <notifications@github.com>
   to
@@ -142,7 +140,6 @@
   ```
 
 - Another email looks like:
-
   ```
   To: GP Saggese <notifications@github.com>
   Suject: [ParticleDev/commodity_research] BUG: jupytext sync doesn't work anymore (#572)
@@ -177,7 +174,6 @@
 ## Commits
 
 - These emails look like:
-
   ```
   Sergey Malanin <noreply@github.com>
   to git

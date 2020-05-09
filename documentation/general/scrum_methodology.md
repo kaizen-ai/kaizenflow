@@ -22,6 +22,9 @@
       * [Sprint review](#sprint-review)
       * [Sprint retrospective](#sprint-retrospective)
       * [Sprint retrospective: questions](#sprint-retrospective-questions)
+
+
+
 <!--te-->
 
 - From "Lacey, The Scrum Field Guide: Practical Advice for Your First Year,

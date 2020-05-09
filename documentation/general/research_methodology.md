@@ -1,9 +1,34 @@
 <!--ts-->
    * [Common research patterns](#common-research-patterns)
+      * [The "Model" notebook](#the-model-notebook)
+      * ["Adding-a-loop-around" notebook](#adding-a-loop-around-notebook)
+      * [Increase / decrease the level of detail of a notebook](#increase--decrease-the-level-of-detail-of-a-notebook)
+      * [Hierarchical notebooks](#hierarchical-notebooks)
+      * [Process outputs from different models](#process-outputs-from-different-models)
+      * [Nested loops around a notebook](#nested-loops-around-a-notebook)
+      * [Variant analysis](#variant-analysis)
+      * [Convert notebook into a library](#convert-notebook-into-a-library)
    * [Config](#config)
       * [Config](#config-1)
-         * [Old approach](#old-approach)
-         * [New approach](#new-approach)
+      * [Config object](#config-object)
+      * [Hierarchical config](#hierarchical-config)
+      * [Mapping config params to free-standing functions](#mapping-config-params-to-free-standing-functions)
+      * [Use functional approach, whenever possible](#use-functional-approach-whenever-possible)
+   * [Building a processing pipeline](#building-a-processing-pipeline)
+      * [Simple approach](#simple-approach)
+   * [Experiment workflows](#experiment-workflows)
+      * [General description](#general-description)
+      * [King of the Hill config](#king-of-the-hill-config)
+         * [Definition](#definition)
+      * [Config builders](#config-builders)
+      * [Running experiments](#running-experiments)
+         * [1. Feature implementation](#1-feature-implementation)
+         * [2. Experiment](#2-experiment)
+      * [Sharing results](#sharing-results)
+      * [Crowning ceremony](#crowning-ceremony)
+
+
+
 <!--te-->
 
 # Common research patterns
@@ -22,6 +47,7 @@
       notebook to libs
 
 ## "Adding-a-loop-around" notebook
+
 - This is a pretty general idiom since a notebook can be:
   - An exploratory analysis on a specific asset
   - A model to be run on each asset
@@ -36,20 +62,22 @@
   - Save the results from each notebook in a `ResultBundle`
 
 ## Increase / decrease the level of detail of a notebook
+
 - Often you alternate between running lots of tests in batch mode and then
   needing to run a few model with high level of details
-    - E.g., you do a monster run of many models
-    - One models gives weird results or crashes
-    - How to debug it?
+  - E.g., you do a monster run of many models
+  - One models gives weird results or crashes
+  - How to debug it?
 
 - **_Solution_**
-    - Plug the config of the model that gives problem in the model notebook, run
-      again, and debug it
+  - Plug the config of the model that gives problem in the model notebook, run
+    again, and debug it
 
 ## Hierarchical notebooks
+
 - A notebook often becomes "part" of another notebook or more complex flow
-  - E.g., a notebook is used to compute a feature (with lots of statistics),
-    and the feature becomes a piece of a model (with lots of statistics)
+  - E.g., a notebook is used to compute a feature (with lots of statistics), and
+    the feature becomes a piece of a model (with lots of statistics)
 
 - **_Solution_**
   - Move the code into a library and call the same code from multiple places,
@@ -63,8 +91,9 @@
       following DRY
 
 ## Process outputs from different models
+
 - Often we need to post-process different models together
-    - E.g., comparing models, A/B testing, mixing models
+  - E.g., comparing models, A/B testing, mixing models
 
 - **_Solution_**
   - Run all the notebooks to generate `ResultBundle`s
@@ -74,6 +103,7 @@
     - Mixing notebook
 
 ## Nested loops around a notebook
+
 - In many cases there are multiple "loops" (one on configs and one on "models")
   and it's not clear how to solve it
   - E.g., we want to compare two models (e.g., with a different param X), each
@@ -81,18 +111,20 @@
 
 - **_Solution_**
   - We assume that a model can run on multiple assets
-    - We need to keep clear what is part of the predictive model and what is part
-      of mixing the different outputs
+    - We need to keep clear what is part of the predictive model and what is
+      part of mixing the different outputs
   - The simpler case of one model on one asset is represented by mixing =
     pass-through
   - This is very general since we can always think of a set of models, followed
     by an aggregation step
 
 ## Variant analysis
+
 - **_Problem_**
-  - You create a model in a notebook, then you need to run many models changing a
-    set of params
-  - You have replicated code in the single-model notebook vs the variant analysis
+  - You create a model in a notebook, then you need to run many models changing
+    a set of params
+  - You have replicated code in the single-model notebook vs the variant
+    analysis
 
 - **_Solution_**
   - Use the config approach
@@ -102,6 +134,7 @@
       computation in the same notebook
 
 ## Convert notebook into a library
+
 - **_Problem_**
   - Often we start with a notebook to write code / debug
   - The we need to convert it into a script
@@ -131,10 +164,12 @@
 - We call the pieces of the pipeline, "blocks" (or "stages", "components")
 
 ## Config object
+
 - The config is an object
 - The code is in `core/config.py`
 
 ## Hierarchical config
+
 - We want to clarify which parameter from the config are used by each block of
   the pipeline
 
@@ -144,6 +179,7 @@
       - It can become very complex with too many level
 
 ## Mapping config params to free-standing functions
+
 - Each block `..._from_config()` needs to specify which params it needs from the
   config
 
@@ -152,14 +188,15 @@
     ```
     cfg.check_params(config, mandatory=[...], optional=[...])
     ```
-    -   Pros:
-        -   Fails fast
-        -   Helps to document what are the actual interfaces of the blocks
-    -   Cons:
-        -   Documentation is different from the code, and they can drift apart
-        -   You change the code, forget to change the check and the code fails and you get upset
-    -   Each function checks its own parameters
-        -   I.e., the constraints are local and do not percolate up
+    - Pros:
+      - Fails fast
+      - Helps to document what are the actual interfaces of the blocks
+    - Cons:
+      - Documentation is different from the code, and they can drift apart
+      - You change the code, forget to change the check and the code fails and
+        you get upset
+    - Each function checks its own parameters
+      - I.e., the constraints are local and do not percolate up
 
 - When calling a block we pass the piece of the config that it needs
   ```
@@ -172,6 +209,7 @@
   - All the cons of explicit
 
 ## Use functional approach, whenever possible
+
 - Each block accepts a dataframe and returns a dataframe
   - A purely functional approach would require to make a copy of the dataframe
     before modifying it
@@ -182,14 +220,15 @@
 - Preferred approach is to always add new columns to the df, unless the df.index
   is changed
 - Pros:
-    - Functional programming
-    - Easier to debug
+  - Functional programming
+  - Easier to debug
 - Cons:
-    - More memory / slower
+  - More memory / slower
 
 # Building a processing pipeline
 
 ## Simple approach
+
 - While the pipeline is still linear and simple we can just use functions taking
   a `Config` object
 - The next step is use our `DataFlow` framework to build complex graph
@@ -202,7 +241,7 @@
 - The pipeline for a particular model is located inside a notebook and a library
   - The notebook contains the "skeleton" of all necessary training stages, and
     the library the implementation of each stage
-  - E.g., the NLP sentiment pipeline is in 
+  - E.g., the NLP sentiment pipeline is in
     `nlp/notebooks/PartTask1102_RP_Pipeline.py` and in `nlp/lstm_utils.py`
 - The specific configuration of the stages are passed using a Config object.
 - Config objects are generated using config builder functions for a particular
@@ -236,6 +275,7 @@
 - A general flow is:
 
 ### 1. Feature implementation
+
 - File a GH Issue with the description of the feature
 - Implement the feature in the library together with unit tests
   - E.g., `nlp/lstm_utils.py`
@@ -245,15 +285,16 @@
 - Experiment with the KOTH (as a different notebook derived from the KOTH, or
   with the KOTH directly) to make sure the feature works as expected inside the
   official pipeline
-  - You should add / compute statistics and so on to make sure things are working
-    properly
+  - You should add / compute statistics and so on to make sure things are
+    working properly
 - Do a PR and check in the code
 
 ### 2. Experiment
+
 - It's better to have one single notebook (derived from the current KOTH) with a
   switch to change the experiment variable (e.g., a quantile transformation of
   the y-variable), instead of one notebook for each configuration of the
-  experiment 
+  experiment
   - Otherwise we are going to have so many notebooks with tons of redundancy
 - Then you run each experiment changing the value of the variable manually and
   save the result with `publish_notebok.py`
