@@ -19,7 +19,7 @@ BUILD_URL="The script was run locally. No "
 # Run linter.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-source amp/dev_scripts/jenkins/test_runners/run_linter_on_branch.sh 1>/dev/null
+source ${AMP}/dev_scripts/jenkins/test_runners/run_linter_on_branch.sh 1>/dev/null
 
 
 git stash &>/dev/null
