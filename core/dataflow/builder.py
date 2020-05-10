@@ -14,17 +14,17 @@ class DagBuilder(abc.ABC):
     """
     Abstract class for creating DAGs.
 
-    Concrete classes must specify
+    Concrete classes must specify:
       - a default configuration (which may depend upon variables used in class
         initialization)
-      - the construction of a dag
+      - the construction of a DAG
     """
 
     def __init__(self, nid_prefix: Optional[str] = None) -> None:
         """
 
         :param nid_prefix: a namespace ending with "/" for graph node naming.
-            This may be useful if the DAG built by the builder is eiter built
+            This may be useful if the DAG built by the builder is either built
             upon an existing DAG or will be built upon subsequently.
         """
         # If no nid prefix is specified, make it an empty string to simplify
@@ -63,7 +63,7 @@ class DagBuilder(abc.ABC):
             compatibility. The result of `self.get_config_template` should
             always be compatible following template completion.
         :param dag: may or may not have nodes. If the DAG already has nodes,
-            it is up to the client to ensure that there are no nid (node id)
+            it is up to the client to ensure that there are no `nid` (node id)
             collisions, which can be ensured through the use of `nid_prefix`.
             If this parameter is `None`, then a new `dtf.DAG` object is
             created.
