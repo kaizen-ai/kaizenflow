@@ -67,7 +67,7 @@ def _check_packages() -> str:
 
 def _get_modified_files() -> str:
     cmd = 'git status -s | grep " M"'
-    _, output = si.system_to_string(cmd)
+    _, output = si.system_to_string(cmd, abort_on_error=False)
     return output
 
 
