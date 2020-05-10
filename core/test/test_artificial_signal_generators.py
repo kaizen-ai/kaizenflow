@@ -1,19 +1,68 @@
 import logging
 
+import core.artificial_signal_generators as sig_gen
+import helpers.unit_test as hut
+
+_LOG = logging.getLogger(__name__)
+
+
+class TestArmaProcess(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = [0.75, -0.25]
+        ma_params = [0.65, 0.35]
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B",},
+            scale=1,
+            burnin=10,
+        )
+        self.check_string(
+            hut.convert_df_to_string(
+                realization, title=realization.name, index=True
+            )
+        )
+
+    def test2(self) -> None:
+        ar_params = [0.5]
+        ma_params = [-0.5]
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B",},
+            scale=1,
+            burnin=5,
+        )
+        self.check_string(
+            hut.convert_df_to_string(
+                realization, title=realization.name, index=True
+            )
+        )
+
+    def test3(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B",},
+            scale=1,
+            burnin=5,
+        )
+        self.check_string(
+            hut.convert_df_to_string(
+                realization, title=realization.name, index=True
+            )
+        )
+
+
 # TODO(*): Disabled because of PartTask186.
-#import gluonts
-#import gluonts.dataset.artificial.recipe as gdar  # isort: skip # noqa: F401 # pylint: disable=unused-import
-#import mxnet
-#import pandas as pd
-#
-#import core.artificial_signal_generators as sig_gen
-#import helpers.printing as prnt
-#import helpers.unit_test as hut
-#
-#_LOG = logging.getLogger(__name__)
+# import gluonts
+# import gluonts.dataset.artificial.recipe as gdar  # isort: skip # noqa: F401 # pylint: disable=unused-import
+# import mxnet
+# import pandas as pd
 #
 #
-#class TestGenerateRecipeDataset(hut.TestCase):
+#
+#
+# class TestGenerateRecipeDataset(hut.TestCase):
 #    def test1(self) -> None:
 #        mxnet.random.seed(0, ctx="all")
 #        recipe = [

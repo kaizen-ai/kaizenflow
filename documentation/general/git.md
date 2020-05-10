@@ -399,7 +399,6 @@
 - TODO(gp): Fix this ours and theirs. The first option represents the current
   branch from which you executed the command before getting the conflicts, and
   the second option refers to the branch where the changes are coming from.
-
 ```
 > git show :1:README
 
@@ -487,9 +486,7 @@ version, and stage #3 is the version you are merging from.
   28 18:55:12 2019 (HEAD -> PartTask274, origin/PartTask274) ...
 * a637594 saggese PartTask274: Add tag for review ( 3 days ago) Thu Sep 26
   17:13:33 2019
-
   ```
-
   ```
 
 - To see the actual changes in a branch you can't do (**Bad**)
@@ -519,9 +516,7 @@ version, and stage #3 is the version you are merging from.
   (origin/master, origin/HEAD, master)
 * 8acd60c saggese Add a basic end-to-end unit test for the linter ( 19 hours
   ago) Fri Oct 4 21:28:09 2019 ...
-
   ```
-
   ```
 
 - You want to `rebase` your feature branch onto `master`
@@ -532,7 +527,6 @@ version, and stage #3 is the version you are merging from.
 
   ```bash
   > git ll master..PartTask274 vendors/cme
-
   ```
 
 * 39a9e33 Julia PartTask274 lint ( 2 days ago) Fri Sep 27 11:43:41 2019

@@ -110,13 +110,14 @@
 ## Workspaces
 
 - Allows you to bundle multiple GitHub repos into a single view
-- Different teams (or team members) can create different pipeline structures
-for the same set of repos
+- Different teams (or team members) can create different pipeline structures for
+  the same set of repos
   - Each team can have their own workflow
 
 ## Epics
 
-- = theme of work containing several sub-tasks required to complete a larger goal
+- = theme of work containing several sub-tasks required to complete a larger
+  goal
 - Tasks are broken down into small, manageable chunks
 - An Epic is a "big user story"
 
@@ -145,7 +146,8 @@ for the same set of repos
 
 ## Velocity charts
 
-- Reporting on how the amount of work completed fluctuates over time (i.e., sprint over sprint)
+- Reporting on how the amount of work completed fluctuates over time (i.e.,
+  sprint over sprint)
 
 ## Issue cycle and control chart
 
@@ -200,16 +202,19 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   - AUTOML: issues related to AutoML research
   - BUILD: issues related to Jenkins
   - CLEANUP: issues related to refactorings, reorganization of the code base
-    (especially if there is not a more specific master Epic, e.g., a cleanup in AutoML will go in AutoML)
+    (especially if there is not a more specific master Epic, e.g., a cleanup in
+    AutoML will go in AutoML)
   - CONFIG: issues related to our configuration layer for experiments
   - DATA: issues related to data source exploration
   - DATAFLOW: issues related to dataflow design, structure, usage patterns, etc.
-  - DOCUMENTATION: issues related to documenting workflow and so on (unless there is a more 
-    specific software component that can be applied, e.g., AutoML)
+  - DOCUMENTATION: issues related to documenting workflow and so on (unless
+    there is a more specific software component that can be applied, e.g.,
+    AutoML)
   - ETL: issues related to ETL layer
   - INFRA: issues related to IT work, sysadmin, AWS
   - INVESTIGATE: investigation of packages, tools, papers
-  - KG: issues related to Knowledge Graph design, schema, implementation, or population
+  - KG: issues related to Knowledge Graph design, schema, implementation, or
+    population
   - NLP: issues related to NLP
   - ORG: anything related to organization, process, conventions
   - RESEARCH: general research topics
@@ -217,16 +222,17 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   - WIND: issues related to WIND terminal and data
 - Master Epics can be broken down into smaller Epics ( =sub-epics)
   - Ex.: NLP - RP skateboard
-  - Their title should follow the pattern: "XYZ - ", where XYZ is a master Epic title
+  - Their title should follow the pattern: "XYZ - ", where XYZ is a master Epic
+    title
 - Each issue should belong to an Epic: either a sub-epic or a master Epic
-  - There is no need to add an issue to a Master Epic if it is already added to a sub-epic
-   
+  - There is no need to add an issue to a Master Epic if it is already added to
+    a sub-epic
+
 ### Non-master Epics
 
 - Sub-epics should have a short title and a smaller scope
 - Sub-epics should belong to a Master Epic
-- An epic can be moved to Done only if all issues nested in it are moved to
-  Done
+- An epic can be moved to Done only if all issues nested in it are moved to Done
 - Organically it's ok to have as many levels of the Epic as needed
   - No need to keep the Epics super well organized in a hierarchy (no Epic
     hypergraph!)
@@ -284,37 +290,41 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
 
 ### Background tasks
 
-- background issues to work on when you are blocked on the core task
-  (waiting for a review, S3 problem, etc.)
-- background tasks can be selected from Backlog, Sprint Candidates, New Issues
+- Background issues to work on when you are blocked on the core task (waiting
+  for a review, S3 problem, etc.)
+- Background tasks can be selected from Backlog, Sprint Candidates, New Issues
   pipelines or filed
-  - backgound issues should be selected by each person independently
-  - each person should always have at least 3-4 background issues in the Pipeline
-- requirements for background issues:
-  - issues you can work on independently
-    - e.g., refactoring, adding unit tests, linting your code
-  - relevant to our recent work as a team
-    - e.g., something related to the old Twitter pipeline is obsolete
-  - issues with little interaction with other people’s work including your current work
-    - e.g., renaming something in the entire codebase is going to interact with everybody
-  - technical debt: something that you keep hitting and that slows you down in your daily work 
-  - reading documentation
-- to convert a task to a background issue / file a background issue
-  - assign it to yourself
-  - add it to a sub-epic or a Master Epic
-  - add the label "Background" to it
-- when you start working on a background task
-  - estimate it
-  - move it to "In Progress" pipeline
-  
+  - Backgound issues should be selected by each person independently
+  - Each person should always have at least 3-4 background issues in the
+    Pipeline
+- Requirements for background issues:
+  - Issues you can work on independently
+    - E.g., refactoring, adding unit tests, linting your code
+  - Relevant to our recent work as a team
+    - E.g., something related to the old Twitter pipeline is obsolete
+  - Issues with little interaction with other people's work including your
+    current work
+    - E.g., renaming something in the entire codebase is going to interact with
+      everybody
+  - Technical debt: something that you keep hitting and that slows you down in
+    your daily work
+  - Reading documentation
+- To convert a task to a background issue / file a background issue
+  - Assign it to yourself
+  - Add it to a sub-epic or a Master Epic
+  - Add the label "Background" to it
+- When you start working on a background task
+  - Estimate it
+  - Move it to "In Progress" pipeline
+
 ### Sprint Candidates
 
 - Issues that we want to include in the following Sprint
   - They are usually higher priority issues than issues we have in Backlog
-  
+
 ### Sprint Backlog
 
-- Issues that we plan to accomplish during the Sprint 
+- Issues that we plan to accomplish during the Sprint
 - We try to keep the Sprint Backlog fixed during the Sprint
 - However it's ok to create follow-up Issues and add them to the current Sprint
   Backlog
@@ -322,8 +332,9 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
     - Especially since almost all issues include a great deal of research
   - This can happen for research when one Issue organically leads to a follow-up
     bug
-  - For development we want to be a little stricter so as to avoid going off on a
-    tangent, as long as we agree that's the right approach in the specific case
+  - For development we want to be a little stricter so as to avoid going off on
+    a tangent, as long as we agree that's the right approach in the specific
+    case
 - All issues in Sprint Backlog and forward (all Pipelines to the right) should
   be assigned
   - Assign Issue to the one who actually does the work
@@ -367,9 +378,10 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
 
 - Definition of Done for an issue:
   - PR which is connected to the issue is merged
-    - if there is more than one PR, all PRs should be merged
-  - all tests are written 
-  - if an issue requires updating documentation, PR with documentation update is merged
+    - If there is more than one PR, all PRs should be merged
+  - All tests are written
+  - If an issue requires updating documentation, PR with documentation update is
+    merged
 
 ### Closed
 
@@ -390,12 +402,13 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
     - In our case it corresponds to next product milestones, servicing
       customers, and so on
   - No need to estimate Issues in Sprint Candidates
-- At the beginning of each Sprint we select issues that we want to complete during the Sprint
+- At the beginning of each Sprint we select issues that we want to complete
+  during the Sprint
   - These issues go to Sprint Backlog pipeline
   - All issues that are added to Sprint Backlog should be estimated
   - No need to add these issues to current Sprint milestone at this point
-- We plan Sprint backlog for each Team in terms of a number of story points
-  that is doable in 2 weeks
+- We plan Sprint backlog for each Team in terms of a number of story points that
+  is doable in 2 weeks
   - Initially we assume 2 story points = 1 day, so for the sprint is 20 points
     per Team member
   - We will then refine the estimates using Velocity charts
@@ -413,7 +426,8 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   duration of the entire review process
   - The Issue doesn't go back to "In progress"
   - We rely on GH emails / PR interface to know what needs to be reviewed
-- As soon as the Issue is moved to Review/QA pipleline, it should be added to the current Sprint milestone
+- As soon as the Issue is moved to Review/QA pipleline, it should be added to
+  the current Sprint milestone
 - The issue stays in Review/QA pipeline until all PRs are merged. It means that
   - All tests are written
     - If tests are in a separate PR than the PR with tests should be merged
@@ -433,7 +447,8 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
 - When filing an issue
   - Add title for the issue
     - No need to for a period at the end of the title
-  - Add issue to a sub-epic (or a Master Epic, if it doesn't belong to any sub-epics)
+  - Add issue to a sub-epic (or a Master Epic, if it doesn't belong to any
+    sub-epics)
 - When working on an issue
   - Make sure the issue is assigned to you / you and other people who are
     working on it

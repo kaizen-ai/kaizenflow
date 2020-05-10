@@ -20,6 +20,8 @@
       * [Reviewers vs assignees](#reviewers-vs-assignees)
       * [Reviewers and authors interactions](#reviewers-and-authors-interactions)
       * ["Pending" comments](#pending-comments)
+   * [Conventions](#conventions)
+      * [Labels](#labels)
 
 
 
@@ -238,6 +240,7 @@
 # Conventions
 
 ## Labels
+
 - `1HR`: Something that can be fixed quickly, if you have 1 hr of spare time
 - `Bug`: Report a bug with a proper repro case
 - `Cleanup`: Tasks related to improving, refactoring, reorganizing code
@@ -254,3 +257,23 @@
 - `Duplicate`:
 - `Discussion`:
 - `Question`: How to do XYZ
+
+Label PR
+
+- TODO(Reorg):
+
+```
+PR_TO_REVIEW: assigned by the author PR_GP_APPROVED: assigned by GP
+PR_PAUL_APPROVED: assigned by Paul PR_CHANGE_REQUIRED: assigned by one of us
+It's not obvious if we GP and Paul should both review the code and then mark it
+as PR_CHANGE_REQUIRED
+
+I'd say if the code it's close enough we can both review it and then the author
+can apply quick fixes and re-submit
+
+The author should link a PR to Bug so that a PR closes the bug
+
+Then we need to mark issues in REVIEW with current milestone, otherwise, the bug
+gets closed without going to DONE Let's finalize the process, and document in
+github.md and inform the team
+```

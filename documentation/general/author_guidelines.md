@@ -20,7 +20,6 @@
 
 
 <!--te-->
-
 # Guidelines for writing workflows
 
 - Make no assumptions on the user
@@ -49,7 +48,6 @@
 ## Empty line after heading
 
 - Leave an empty line after an heading to make it more visible
-
   ```
   # Very important title
   - Not really important
@@ -61,7 +59,6 @@
 ## Style for numbered lists
 
 - We use number lists like:
-
   ```
   1. Foo bar!
       - hello
@@ -175,12 +172,13 @@
 
 # Team member list
 
-- In reversed alphabetical order (just to be fair)
-  - [ ] Stas
-  - [ ] Sonya
-  - [ ] Sergey
-  - [ ] Paul
-  - [ ] Liza
-  - [ ] Julia
-  - [ ] GP
+- In alphabetical order (just to be fair)
+  - [ ] Dan
   - [ ] Daniil
+  - [ ] GP
+  - [ ] Greg
+  - [ ] Julia
+  - [ ] Paul
+  - [ ] Sergey
+  - [ ] Sonya
+  - [ ] Vitaliy

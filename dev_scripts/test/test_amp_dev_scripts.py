@@ -332,6 +332,9 @@ class Test_linter_py1(ut.TestCase):
             #   cmd line='.../linter.py -f input.py --linter_log ./linter.log'
             if "cmd line=" in l:
                 continue
+            # Filter out code rate because of #2241
+            if "Your code has been rated at" in l:
+                continue
             output.append(l)
         # Read output.
         _LOG.debug("file_name=%s", file_name)
