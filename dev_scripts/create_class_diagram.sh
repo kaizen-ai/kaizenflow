@@ -1,4 +1,9 @@
 #!/bin/bash -xe
+
+# """
+# Compute a UML plot of the class hierarchy of code in a dir using pylint.
+# """
+
 DIR=$1
 if [[ -z $DIR ]]; then
     echo "You need to specify a dir"
