@@ -698,7 +698,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert(df.index.freq)
-        return None
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -706,7 +705,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         """
         y_vars = self._to_list(self._y_vars)
         mapper = lambda y: y + "_%i" % self._steps_ahead
-        [mapper(y) for y in y_vars]
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
