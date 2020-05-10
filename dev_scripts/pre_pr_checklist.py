@@ -7,6 +7,7 @@
 import argparse
 import difflib
 import logging
+import os
 import sys
 from typing import List
 
@@ -16,6 +17,11 @@ import helpers.system_interaction as si
 
 _log = logging.getLogger(__name__)
 
+ACTION_CHECK_PACKAGES = 'check-packages'
+ACTION_RUN_LINTER = 'run-linter'
+ACTIONS = [ACTION_CHECK_PACKAGES,
+           ACTION_RUN_LINTER, ]
+
 
 def _print_help(parser):
     print(parser.format_help())
@@ -23,8 +29,6 @@ def _print_help(parser):
 
 
 def _parse() -> argparse.ArgumentParser:
-    check_packages_action = 'check-packages'
-    actions = [check_packages_action, ]
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -32,8 +36,8 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "-a",
         "--action",
-        choices=actions,
-        help=f"Pick action to perform. \n\tActions: {actions}",
+        choices=ACTIONS,
+        help=f"Pick action to perform. \n\tActions: {ACTIONS}",
     )
     prsr.add_verbosity_arg(parser)
     return parser
@@ -53,6 +57,7 @@ def _get_local_conda_list() -> List[str]:
 
 
 def _check_packages() -> str:
+    # TODO(Sergey): This one still in progress.
     differ = difflib.Differ()
     reference_data = _get_reference_conda_list()
     local_data = _get_local_conda_list()
@@ -60,9 +65,27 @@ def _check_packages() -> str:
     return '\n'.join(diff)
 
 
+def _get_modified_files() -> str:
+    cmd = 'git status -s | grep " M"'
+    _, output = si.system_to_string(cmd)
+    return output
+
+
+def _run_linter_check() -> None:
+    modified_files = _get_modified_files()
+    dbg.dassert(len(modified_files) == 0,
+                msg=f"Commit changes or stash them.\n{modified_files}")
+    amp_path = os.environ["AMP"]
+    cmd = f"source {amp_path}/dev_scripts/jenkins/test_runners/run_linter_on_branch.local.sh"
+    _, output = si.system_to_string(cmd)
+    print(output.strip())
+
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
+    if args.action == ACTION_RUN_LINTER:
+        _run_linter_check()
 
 
 if __name__ == "__main__":

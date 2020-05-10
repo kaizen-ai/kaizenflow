@@ -50,3 +50,5 @@ fi;
 
 # Create and execute the setenv_amp.sh script to configure the env.
 execute_setenv "_setenv_amp" $ENV_NAME
+
+export AMP="."
