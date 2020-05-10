@@ -711,7 +711,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
 
-    def _handle_nans(self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index) -> None:
+    def _handle_nans(
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+    ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
                 nan_idx = idx.difference(non_nan_idx)
