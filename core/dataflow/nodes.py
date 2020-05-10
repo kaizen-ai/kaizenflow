@@ -619,20 +619,19 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._steps_ahead, df.index.size)
         idx = df.index[: -self._steps_ahead]
-        # Prepare x_vars in sklearn format.
+        # Determine index where no x_vars are NaN.
         x_vars = self._to_list(self._x_vars)
-        # Restrict to times where x_vars have no NaNs.
+        non_nan_idx_x = df.loc[idx][x_vars].dropna().index
+        # Determine index where target is not NaN.
         fwd_y_df = self._get_fwd_y_df(df).loc[idx].dropna()
-        non_nan_idx_x = df.loc[idx][self._x_vars].dropna().index
         non_nan_idx_fwd_y = fwd_y_df.dropna().index
+        # Intersect non-NaN indices.
         non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_fwd_y)
+        dbg.dassert(not non_nan_idx.empty)
         fwd_y_df = fwd_y_df.loc[non_nan_idx]
-        if self._nan_mode == "raise":
-            dbg.dassert_eq(idx.shape[0], non_nan_idx.shape[0])
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(idx, non_nan_idx)
+        # Prepare x_vars in sklearn format.
         x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         # Prepare forward y_vars in sklearn format.
         fwd_y_fit = adpt.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
@@ -664,15 +663,11 @@ class ContinuousSkLearnModel(FitPredictNode):
         df = df_in.copy()
         idx = df.index
         # Restrict to times where x_vars have no NaNs.
-        non_nan_idx = df.loc[idx][self._x_vars + self._y_vars].dropna().index
-        if self._nan_mode == "raise":
-            dbg.dassert_eq(idx.shape[0], non_nan_idx.shape[0])
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
-        # Transform x_vars to sklearn format.
         x_vars = self._to_list(self._x_vars)
+        non_nan_idx = df.loc[idx][x_vars].dropna().index
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(idx, non_nan_idx)
+        # Transform x_vars to sklearn format.
         x_predict = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         # Use trained model to generate predictions.
         dbg.dassert_is_not(
@@ -715,6 +710,16 @@ class ContinuousSkLearnModel(FitPredictNode):
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
+
+    def _handle_nans(self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index) -> None:
+        if self._nan_mode == "raise":
+            if idx.shape[0] != non_nan_idx.shape[0]:
+                nan_idx = idx.difference(non_nan_idx)
+                raise ValueError(f"NaNs detected at {nan_idx}")
+        elif self._nan_mode == "drop":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
     # TODO(Paul): Add type hints.
     # TODO(Paul): Consider omitting this (and relying on downstream
