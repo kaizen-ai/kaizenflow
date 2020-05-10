@@ -22,7 +22,6 @@ BUILD_URL="The script was run locally. No "
 source ${AMP}/dev_scripts/jenkins/test_runners/run_linter_on_branch.sh 1>/dev/null
 
 
-git stash &>/dev/null
-echo ${current_branch}
+git stash &>/dev/null 1>/dev/null
 git checkout ${current_branch} --recurse-submodules 1>/dev/null
 echo -e ${message}
