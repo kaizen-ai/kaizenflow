@@ -128,9 +128,10 @@ class Node(NodeInterface):
             name,
             self.nid,
         )
-        # Create dictionary of values for `method` if it doesn't exist.
+        # Create a dictionary of values for `method` if it doesn't exist.
         if method not in self._output_vals:
-            self._output_vals[method] = {}
+            self._output_vals[method] : Dict[str, Any] = {}
+        # Assign the requested value.
         self._output_vals[method][name] = value
 
 
@@ -154,17 +155,19 @@ class DAG:
         Create a DAG.
 
         :param name: optional str identifier
-        :param mode: determines how to handle an attempt to add a node to the
-            DAG that already belongs to the DAG:
+        :param mode: determines how to handle an attempt to add a node that already
+            belongs to the DAG:
                 - "strict": asserts
                 - "loose": deletes old node (also removes edges) and adds new
                     node
             mode = "loose" is useful for interactive notebooks and debugging.
         """
         self._dag = nx.DiGraph()
+        #
         if name is not None:
             dbg.dassert_isinstance(name, str)
         self._name = name
+        #
         if mode is None:
             mode = "strict"
         dbg.dassert_in(
@@ -176,6 +179,8 @@ class DAG:
     def dag(self) -> nx.DiGraph:
         return self._dag
 
+    # TODO(*): Should we force to always have a name? So mypy can perform more
+    #  checks.
     @property
     def name(self) -> Optional[str]:
         return self._name
@@ -190,15 +195,15 @@ class DAG:
 
         Rely upon the unique nid for identifying the node.
         """
-        # In principle, NodeInterface could be supported; however, to do so,
+        # In principle, `NodeInterface` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
         dbg.dassert_isinstance(
             node, Node, "Only DAGs of class `Node` are supported!"
         )
         # NetworkX requires that nodes be hashable and uses hashes for
         # identifying nodes. Because our Nodes are objects whose hashes can
-        # change as operations are performed, we use the Node.nid as the
-        # NetworkX node and the Node instance as a `node attribute`, which we
+        # change as operations are performed, we use the `Node.nid` as the
+        # NetworkX node and the `Node` instance as a `node attribute`, which we
         # identifying internally with the keyword `stage`.
         #
         # Note that this usage requires that nid's be unique within a given
@@ -222,13 +227,16 @@ class DAG:
                     "successors, and all incident edges of such nodes. ",
                     node.nid,
                 )
+                # Remove node successors.
                 for nid in nx.descendants(self._dag, node.nid):
                     _LOG.warning("Removing nid=%s", nid)
                     self.remove_node(nid)
+                # Remove node.
                 _LOG.warning("Removing nid=%s", node.nid)
                 self.remove_node(node.nid)
         else:
             dbg.dfatal("mode=%s", self.mode)
+        # Add node.
         self._dag.add_node(node.nid, stage=node)
 
     def get_node(self, nid: str) -> Node:
@@ -236,7 +244,6 @@ class DAG:
         Implement a convenience node accessor.
 
         :param nid: unique string node id
-        :return: Node object
         """
         dbg.dassert_isinstance(
             nid, str, "Expected str nid but got type %s!", type(nid)
