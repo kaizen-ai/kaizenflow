@@ -133,6 +133,35 @@ def filter_by_time(
     return df
 
 
+def set_non_ath_to_nan(
+    df: pd.DataFrame,
+    start_time: Optional[datetime.time] = None,
+    end_time: Optional[datetime.time] = None,
+) -> pd.DataFrame:
+    """
+    Filter according to active trading hours.
+
+    We assume time intervals are left closed, right open, labeled right.
+
+    Row is not set to `np.nan` iff its `time` satisifies
+      - `start_time < time`, and
+      - `time <= end_time`
+    """
+    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    if start_time is None:
+        start_time = datetime.time(9, 30)
+    if end_time is None:
+        end_time = datetime.time(16, 0)
+    dbg.dassert_lte(start_time, end_time)
+    #
+    times = df.index.time
+    mask = (start_time < times) & (times <= end_time)
+    #
+    df = df.copy()
+    df[~mask] = np.nan
+    return df
+
+
 # TODO(gp): ATHs vary over futures. Use volume to estimate them.
 def filter_ath(
     df: pd.DataFrame, dt_col_name: Optional[Any] = None
