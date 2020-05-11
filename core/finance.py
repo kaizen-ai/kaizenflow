@@ -133,16 +133,18 @@ def filter_by_time(
     return df
 
 
-def set_non_ath_to_nan(df: pd.DataFrame,
-                      start_time: Optional[datetime.time] = None,
-                      end_time: Optional[datetime.time] = None) -> pd.DataFrame:
+def set_non_ath_to_nan(
+    df: pd.DataFrame,
+    start_time: Optional[datetime.time] = None,
+    end_time: Optional[datetime.time] = None,
+) -> pd.DataFrame:
     """
     Filter according to active trading hours.
-    
+
     We assume time intervals are left closed, right open, labeled right.
-    
+
     Row is not set to `np.nan` iff its `time` satisifies
-      - `start_time < time`, and 
+      - `start_time < time`, and
       - `time <= end_time`
     """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
