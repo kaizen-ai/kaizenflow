@@ -15,27 +15,34 @@ _LOG = logging.getLogger(__name__)
 
 
 def _calculate_stats(
-        base_sha: str,
-        head_sha: str,
-        branch_name: str,
+        base_commit_sha: str,
+        head_commit_sha: str,
+        head_branch_name: str,
         build_url: Optional[str] = None,
 ) -> Tuple[int, str]:
+    """
+    
+    :param base_commit_sha: Respect to this commit or branch will be compared.  
+    :param head_commit_sha: 
+    :param head_branch_name: 
+    :param build_url: 
+    """
     # Calculate stats
     dir_name = "."
     # TODO: Think about it.
     remove_files_non_present = False
     mod_files = git.get_modified_files_in_branch(
-        dir_name, base_sha, remove_files_non_present=remove_files_non_present,
+        dir_name, base_commit_sha, remove_files_non_present=remove_files_non_present,
     )
     # _LOG.info("modirty: %s", master_dirty)
-    cmd = f"linter.py -t ${base_sha} --post_check"
+    cmd = f"linter.py -t {base_commit_sha} --post_check"
     branch_dirty = si.system(cmd, abort_on_error=False)
     _LOG.info("Branch dirty: %s", branch_dirty)
     #
     cmd = "git reset --hard"
     si.system(cmd)
     #
-    cmd = f"linter.py -t ${base_sha}"
+    cmd = f"linter.py -t {base_commit_sha}"
     branch_lints = si.system(cmd, abort_on_error=False)
     _LOG.info("Branch lints: %s", branch_lints)
     #
@@ -47,7 +54,7 @@ def _calculate_stats(
     # # Calculate "Before*" stats
     cmd = "git reset --hard"
     si.system(cmd)
-    cmd = f"git checkout ${base_sha} --recurse-submodules"
+    cmd = f"git checkout {base_commit_sha} --recurse-submodules"
     si.system(cmd)
     mod_files_as_str = " ".join(mod_files)
     cmd = f"linter.py --files {mod_files_as_str} --post_check"
@@ -82,11 +89,11 @@ def _calculate_stats(
     else:
         console_message = f"Console output: No console output"
     message.append(console_message)
-    message.append(f"- Master (sha: {base_sha})")
+    message.append(f"- Master (sha: {base_commit_sha})")
     message.append(f"\t- Number of lints: {master_lints}")
     message.append(
         f"\t- Dirty (i.e., linter was not run): {master_dirty_status}")
-    message.append(f"- Branch (${branch_name}: {head_sha})")
+    message.append(f"- Branch ({head_branch_name}: {head_commit_sha})")
     message.append(f"\t- Number of lints: {branch_lints}")
     message.append(
         f"\t- Dirty (i.e., linter was not run): {branch_dirty_status}")
@@ -111,7 +118,7 @@ def _parse() -> argparse.ArgumentParser:
         "--jenkins", action="store_true", help="",
     )
     parser.add_argument("--base_commit_sha", type=str, required=False, help="")
-    parser.add_argument("--branch_name", type=str, required=False, help="")
+    parser.add_argument("--head_branch_name", type=str, required=False, help="")
 
     prsr.add_verbosity_arg(parser)
     return parser
@@ -120,19 +127,19 @@ def _parse() -> argparse.ArgumentParser:
 def _main(args: argparse.Namespace) -> int:
     build_url = None
     if args.jenkins:
-        base_sha = os.environ["data_pull_request_base_sha"]
-        head_ref = os.environ["data_pull_request_head_ref"]
+        base_commit_sha = os.environ["data_pull_request_base_sha"]
+        head_branch_name = os.environ["data_pull_request_head_ref"]
         build_url = os.environ["BUILD_URL"]
     else:
-        base_sha = args.base_commit_sha or "master"
-        head_ref = args.branch_name or git.get_branch_name()
-    rc, message = _calculate_stats(base_sha, head_ref, build_url)
+        base_commit_sha = args.base_commit_sha or "master"
+        head_branch_name = args.branch_name or git.get_branch_name()
+    rc, message = _calculate_stats(base_commit_sha, head_branch_name, build_url)
     if args.jenkins:
         io_.to_file("./tmp_message.txt", message)
         io_.to_file("./tmp_exit_status.txt", str(rc))
     else:
         print(message)
-        cmd = f"git checkout {head_ref} --recurse-submodules"
+        cmd = f"git checkout {head_branch_name} --recurse-submodules"
         si.system(cmd)
     return rc
 
