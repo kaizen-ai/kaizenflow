@@ -16,7 +16,8 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
+# TODO(gp):
+#  Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
 
 # TODO(gp): Avoid "stuttering": the module is already called "git", so no need
 #  to make reference to git again.
@@ -261,7 +262,7 @@ def get_head_hash(dir_name: str) -> str:
     return output
 
 
-def get_current_commit_hash(dir_name: str = './') -> str:
+def get_current_commit_hash(dir_name: str = "./") -> str:
     dbg.dassert_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
     data: Tuple[int, str] = si.system_to_one_line(cmd)
