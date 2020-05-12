@@ -130,7 +130,7 @@ def _main(args: argparse.Namespace) -> int:
         build_url = os.environ["BUILD_URL"]
     else:
         base_commit_sha = args.base_commit_sha or "master"
-        head_branch_name = args.branch_name or git.get_branch_name()
+        head_branch_name = args.head_branch_name or git.get_branch_name()
     rc, message = _calculate_stats(base_commit_sha, head_branch_name, build_url)
     if args.jenkins:
         io_.to_file("./tmp_message.txt", message)
