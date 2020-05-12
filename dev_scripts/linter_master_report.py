@@ -117,6 +117,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--base_commit_sha", type=str, required=False, help="")
     parser.add_argument("--head_branch_name", type=str, required=False, help="")
+    parser.add_argument("--head_commit_sha", type=str, required=False, help="")
 
     prsr.add_verbosity_arg(parser)
     return parser
@@ -127,11 +128,15 @@ def _main(args: argparse.Namespace) -> int:
     if args.jenkins:
         base_commit_sha = os.environ["data_pull_request_base_sha"]
         head_branch_name = os.environ["data_pull_request_head_ref"]
+        head_commit_sha = os.environ["data_pull_request_head_sha"]
         build_url = os.environ["BUILD_URL"]
     else:
         base_commit_sha = args.base_commit_sha or "master"
         head_branch_name = args.head_branch_name or git.get_branch_name()
-    rc, message = _calculate_stats(base_commit_sha, head_branch_name, build_url)
+        head_commit_sha = args.head_commit_sha or git.get_current_commit_hash()
+    rc, message = _calculate_stats(
+        base_commit_sha, head_commit_sha, head_branch_name, build_url
+    )
     if args.jenkins:
         io_.to_file("./tmp_message.txt", message)
         io_.to_file("./tmp_exit_status.txt", str(rc))

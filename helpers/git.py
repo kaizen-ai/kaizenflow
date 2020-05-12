@@ -261,6 +261,16 @@ def get_head_hash(dir_name: str) -> str:
     return output
 
 
+def get_current_commit_hash(dir_name: str = './') -> str:
+    dbg.dassert_exists(dir_name)
+    cmd = f"cd {dir_name} && git rev-parse HEAD"
+    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    _, sha = data
+    # 0011776388b4c0582161eb2749b665fc45b87e7e
+    _LOG.debug("sha=%s", sha)
+    return sha
+
+
 def get_remote_head_hash(dir_name: str) -> str:
     """
     Report the hash that the remote Git repo is at.
