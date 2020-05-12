@@ -1,16 +1,13 @@
 import logging
 import os
-import pprint
 
-#import mxnet
-import numpy as np
+# import mxnet
 import pandas as pd
 import sklearn.linear_model as slm
 
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
 import core.dataflow as dtf
-import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -156,10 +153,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         pred_lag = 1
         # Load test data.
         data = self._get_data(pred_lag)
-        fit_interval = ("1776-07-04 12:00:00",
-                        "2010-01-01 00:29:00")
-        predict_interval = ("2010-01-01 00:30:00",
-                            "2100")
+        fit_interval = ("1776-07-04 12:00:00", "2010-01-01 00:29:00")
+        predict_interval = ("2010-01-01 00:30:00", "2100")
         data_source_node = dtf.ReadDataFromDf("data", data)
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
@@ -182,10 +177,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         pred_lag = 2
         # Load test data.
         data = self._get_data(pred_lag)
-        fit_interval = ("1776-07-04 12:00:00",
-                        "2010-01-01 00:29:00")
-        predict_interval = ("2010-01-01 00:30:00",
-                            "2100")
+        fit_interval = ("1776-07-04 12:00:00", "2010-01-01 00:29:00")
+        predict_interval = ("2010-01-01 00:30:00", "2100")
         data_source_node = dtf.ReadDataFromDf("data", data)
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
@@ -229,7 +222,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
 
 # TODO(*): Disabled because of PartTask186.
-#class TestContinuousDeepArModel(hut.TestCase):
+# class TestContinuousDeepArModel(hut.TestCase):
 #    def test_fit_dag1(self) -> None:
 #        dag = self._get_dag()
 #        #
@@ -268,7 +261,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
 #        return dag
 #
 #
-#class TestDeepARGlobalModel(hut.TestCase):
+# class TestDeepARGlobalModel(hut.TestCase):
 #    def test_fit1(self) -> None:
 #        mxnet.random.seed(0)
 #        local_ts = self._get_local_ts()
