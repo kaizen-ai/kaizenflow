@@ -2,6 +2,7 @@ import abc
 import collections
 import copy
 import datetime
+import functools
 import inspect
 import io
 import logging
@@ -120,14 +121,15 @@ class DataSource(FitPredictNode, abc.ABC):
         super().__init__(nid, inputs=[], outputs=outputs)
         #
         self.df = None
-        self._fit_idxs = None
+        self._fit_intervals = None
         self._predict_idxs = None
 
-    def set_fit_idxs(self, fit_idxs: pd.DatetimeIndex) -> None:
+    def set_fit_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
         """
-        :param fit_idxs: indices of the df to use for fitting
+        :param intervals: closed time intervals like [start1, end1], [start2, end2]
         """
-        self._fit_idxs = fit_idxs
+        self._validate_intervals(intervals)
+        self._fit_intervals = intervals
 
     # DataSource does not have a `df_in` in either `fit` or `predict` as a
     # typical `FitPredictNode` does.
@@ -136,8 +138,13 @@ class DataSource(FitPredictNode, abc.ABC):
         """
         :return: training set as df
         """
-        if self._fit_idxs is not None:
-            fit_df = self.df.loc[self._fit_idxs].copy()
+        if self._fit_intervals is not None:
+            idx_slices = [
+                self.df.loc[interval[0] : interval[1]].index
+                for interval in self._fit_intervals
+            ]
+            idx = functools.reduce(lambda x, y: x.union(y), idx_slices)
+            fit_df = self.df.loc[idx].copy()
         else:
             fit_df = self.df.copy()
         info = collections.OrderedDict()
@@ -145,19 +152,28 @@ class DataSource(FitPredictNode, abc.ABC):
         self._set_info("fit", info)
         return {self.output_names[0]: fit_df}
 
-    def set_predict_idxs(self, predict_idxs: pd.DatetimeIndex) -> None:
+    def set_predict_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
         """
-        :param predict_idxs: indices of the df to use for predicting
+        :param intervals: closed time intervals like [start1, end1], [start2, end2]
+
+        TODO(*): Warn if intervals overlap with `fit` intervals.
+        TODO(*): Maybe enforce that the intervals be ordered.
         """
-        self._predict_idxs = predict_idxs
+        self._validate_intervals(intervals)
+        self._predict_intervals = intervals
 
     # pylint: disable=arguments-differ
     def predict(self) -> Dict[str, pd.DataFrame]:
         """
         :return: test set as df
         """
-        if self._predict_idxs is not None:
-            predict_df = self.df.loc[self._predict_idxs].copy()
+        if self._predict_intervals is not None:
+            idx_slices = [
+                self.df.loc[interval[0] : interval[1]].index
+                for interval in self._predict_intervals
+            ]
+            idx = functools.reduce(lambda x, y: x.union(y), idx_slices)
+            predict_df = self.df.loc[idx].copy()
         else:
             predict_df = self.df.copy()
         info = collections.OrderedDict()
@@ -168,6 +184,13 @@ class DataSource(FitPredictNode, abc.ABC):
     def get_df(self) -> pd.DataFrame:
         dbg.dassert_is_not(self.df, None, "No DataFrame found!")
         return self.df
+
+    @staticmethod
+    def _validate_intervals(intervals: List[Tuple[Any, Any]]) -> None:
+        dbg.dassert_isinstance(intervals, list)
+        for interval in intervals:
+            dbg.dassert_eq(len(interval), 2)
+            dbg.dassert_lte(interval[0], interval[1])
 
 
 class Transformer(FitPredictNode, abc.ABC):
