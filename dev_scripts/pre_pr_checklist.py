@@ -76,7 +76,7 @@ def _run_linter_check() -> None:
     dbg.dassert(len(modified_files) == 0,
                 msg=f"Commit changes or stash them.\n{modified_files}")
     amp_path = os.environ["AMP"]
-    cmd = f"source {amp_path}/dev_scripts/jenkins/test_runners/run_linter_on_branch.local.sh"
+    cmd = f"{amp_path}/dev_scripts/linter_master_report.py"
     _, output = si.system_to_string(cmd)
     print(output.strip())
 

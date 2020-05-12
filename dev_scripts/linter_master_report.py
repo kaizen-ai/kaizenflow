@@ -43,7 +43,7 @@ def _calculate_stats(
     linter_output_filename = "./linter_warnings.txt"
     # TODO: Rename -> linter_message
     lints_message = io_.from_file(linter_output_filename)
-    lints_message = "```\n" + lints_message + "```\n"
+    lints_message = "```\n" + lints_message + "\n```\n"
 
     # # Calculate "Before*" stats
     cmd = f"git reset --hard"
@@ -85,10 +85,14 @@ def _calculate_stats(
     message.append(console_message)
     message.append(f"- Master (sha: ${base_sha})")
     message.append(f"\t- Number of lints: ${master_lints}")
-    message.append(f"\t- Dirty (i.e., linter was not run): ${master_dirty_status}")
+    message.append(
+        f"\t- Dirty (i.e., linter was not run): ${master_dirty_status}"
+    )
     message.append(f"- Branch (${branch_name}: ${head_sha})")
     message.append(f"\t- Number of lints: ${branch_lints}")
-    message.append(f"\t- Dirty (i.e., linter was not run): ${branch_dirty_status}")
+    message.append(
+        f"\t- Dirty (i.e., linter was not run): ${branch_dirty_status}"
+    )
     diff_lints = branch_lints - master_lints
     message.append(
         f"\nThe number of lints introduced with this change: {diff_lints}"
