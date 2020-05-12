@@ -79,19 +79,19 @@ def _calculate_stats(
     message.append("# Results of the linter build")
     console_url = os.path.join(str(build_url), "consoleFull")
     if build_url is not None:
-        console_message = f"Console output: ${console_url}"
+        console_message = f"Console output: {console_url}"
     else:
         console_message = f"Console output: No console output"
     message.append(console_message)
-    message.append(f"- Master (sha: ${base_sha})")
-    message.append(f"\t- Number of lints: ${master_lints}")
+    message.append(f"- Master (sha: {base_sha})")
+    message.append(f"\t- Number of lints: {master_lints}")
     message.append(
-        f"\t- Dirty (i.e., linter was not run): ${master_dirty_status}"
+        f"\t- Dirty (i.e., linter was not run): {master_dirty_status}"
     )
-    message.append(f"- Branch (${branch_name}: ${head_sha})")
-    message.append(f"\t- Number of lints: ${branch_lints}")
+    message.append(f"- Branch (${branch_name}: {head_sha})")
+    message.append(f"\t- Number of lints: {branch_lints}")
     message.append(
-        f"\t- Dirty (i.e., linter was not run): ${branch_dirty_status}"
+        f"\t- Dirty (i.e., linter was not run): {branch_dirty_status}"
     )
     diff_lints = branch_lints - master_lints
     message.append(
