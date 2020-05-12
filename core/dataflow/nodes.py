@@ -155,7 +155,7 @@ class DataSource(FitPredictNode, abc.ABC):
     def set_predict_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
         """
         :param intervals: closed time intervals like [start1, end1], [start2, end2]
-        
+
         TODO(*): Warn if intervals overlap with `fit` intervals.
         TODO(*): Maybe enforce that the intervals be ordered.
         """
@@ -186,7 +186,7 @@ class DataSource(FitPredictNode, abc.ABC):
         return self.df
 
     @staticmethod
-    def _validate_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
+    def _validate_intervals(intervals: List[Tuple[Any, Any]]) -> None:
         for interval in intervals:
             dbg.dassert_eq(len(interval), 2)
             dbg.dassert_lte(interval[0], interval[1])
