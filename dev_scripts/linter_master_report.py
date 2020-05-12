@@ -84,11 +84,11 @@ def _calculate_stats(
         console_message = f"Console output: No console output"
     message.append(console_message)
     message.append(f"- Master (sha: ${base_sha})")
-    message.append(f"- Number of lints: ${master_lints}")
-    message.append(f"- Dirty (i.e., linter was not run): ${master_dirty_status}")
+    message.append(f"\t- Number of lints: ${master_lints}")
+    message.append(f"\t- Dirty (i.e., linter was not run): ${master_dirty_status}")
     message.append(f"- Branch (${branch_name}: ${head_sha})")
-    message.append(f"- Number of lints: ${branch_lints}")
-    message.append(f"- Dirty (i.e., linter was not run): ${branch_dirty_status}")
+    message.append(f"\t- Number of lints: ${branch_lints}")
+    message.append(f"\t- Dirty (i.e., linter was not run): ${branch_dirty_status}")
     diff_lints = branch_lints - master_lints
     message.append(
         f"\nThe number of lints introduced with this change: {diff_lints}"
