@@ -142,10 +142,10 @@ def _main(args: argparse.Namespace) -> int:
         io_.to_file("./tmp_exit_status.txt", str(rc))
     else:
         print(message)
-        cmd = "git reset --hard"
-        si.system(cmd)
-        cmd = f"git checkout {head_branch_name} --recurse-submodules"
-        si.system(cmd)
+    cmd = "git reset --hard"
+    si.system(cmd)
+    cmd = f"git checkout {head_branch_name} --recurse-submodules"
+    si.system(cmd)
     return rc
 
 
