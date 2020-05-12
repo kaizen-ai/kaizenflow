@@ -214,7 +214,7 @@ def get_credentials() -> Dict[str, Any]:
         jupyter_port = 9901
         if server_name == "liza-particle-laptop":
             # Laptop.
-            conda_sh_path = "/home/liza/anaconda3/etc/profile.d/conda.sh"
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/home/dan/anaconda3/envs"
     elif user_name == "greg":
         # Gregory.
