@@ -15,19 +15,17 @@ _LOG = logging.getLogger(__name__)
 
 
 def _calculate_stats(
-        base_sha: str,
-        branch_name: str,
-        head_sha: str,
-        build_url: Optional[str] = None
+    base_sha: str,
+    branch_name: str,
+    head_sha: str,
+    build_url: Optional[str] = None,
 ):
-    #Calculate stats
+    # Calculate stats
     dir_name = "."
     # TODO: Think about it.
     remove_files_non_present = False
     mod_files = git.get_modified_files_in_branch(
-        dir_name,
-        base_sha,
-        remove_files_non_present=remove_files_non_present,
+        dir_name, base_sha, remove_files_non_present=remove_files_non_present,
     )
     # _LOG.info("modirty: %s", master_dirty)
 
@@ -69,8 +67,7 @@ def _calculate_stats(
     errors = []
     branch_dirty_status = branch_dirty > 0
     if branch_dirty_status:
-        errors.append(
-            "**ERROR**: Run \`linter.py. -b\` locally before merging.")
+        errors.append("**ERROR**: Run \`linter.py. -b\` locally before merging.")
         exit_status = 1
     if master_lints > 0:
         errors.append("**WARNING**: Your branch has lints. Please fix them.")
@@ -80,7 +77,7 @@ def _calculate_stats(
     # Message
     message = list()
     message.append("# Results of the linter build")
-    console_url = os.path.join(build_url, "consoleFull")
+    console_url = os.path.join(str(build_url), "consoleFull")
     if build_url is not None:
         console_message = f"Console output: ${console_url}"
     else:
@@ -88,14 +85,10 @@ def _calculate_stats(
     message.append(console_message)
     message.append(f"- Master (sha: ${base_sha})")
     message.append(f"- Number of lints: ${master_lints}")
-    message.append(
-        f"- Dirty (i.e., linter was not run): ${master_dirty_status}")
-    message.append(
-        f"- Branch (${branch_name}: ${head_sha})"
-    )
+    message.append(f"- Dirty (i.e., linter was not run): ${master_dirty_status}")
+    message.append(f"- Branch (${branch_name}: ${head_sha})")
     message.append(f"- Number of lints: ${branch_lints}")
-    message.append(
-        f"- Dirty (i.e., linter was not run): ${branch_dirty_status}")
+    message.append(f"- Dirty (i.e., linter was not run): ${branch_dirty_status}")
     diff_lints = branch_lints - master_lints
     message.append(
         f"\nThe number of lints introduced with this change: {diff_lints}"
@@ -109,8 +102,7 @@ def _calculate_stats(
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Select files.
     parser.add_argument(
@@ -132,9 +124,7 @@ def _main(args: argparse.Namespace) -> int:
     else:
         base_sha = args.base_commit_sha or "master"
         head_ref = args.branch_name or git.get_branch_name()
-    rc, message = _calculate_stats(base_sha,
-                                   head_ref,
-                                   build_url)
+    rc, message = _calculate_stats(base_sha, head_ref, build_url)
     if args.jenkins:
         io_.to_file("./tmp_message.txt", message)
         io_.to_file("./tmp_exit_status.txt", str(rc))
@@ -143,6 +133,7 @@ def _main(args: argparse.Namespace) -> int:
         cmd = f"git checkout {head_ref} --recurse-submodules"
         si.system(cmd)
     return rc
+
 
 if __name__ == "__main__":
     parser_ = _parse()
