@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import sys
+from typing import Optional
 
 import helpers.git as git
 import helpers.io_ as io_
@@ -14,79 +15,42 @@ _LOG = logging.getLogger(__name__)
 
 
 def _calculate_stats(
-    data_pull_request_base_sha: str,
-    data_pull_request_head_ref,
-    data_pull_request_head_sha,
+        base_sha: str,
+        branch_name: str,
+        head_sha: str,
+        build_url: Optional[str] = None
 ):
-
-    # # Calculate stats
-    # files_changed_in_branch=$(git diff --name-only ${data_pull_request_base_sha}...)
-    # echo "Files changed in branch: ${files_changed_in_branch}."
-
+    #Calculate stats
     dir_name = "."
     # TODO: Think about it.
-    remove_files_non_present = True
+    remove_files_non_present = False
     mod_files = git.get_modified_files_in_branch(
         dir_name,
-        data_pull_request_base_sha,
+        base_sha,
         remove_files_non_present=remove_files_non_present,
     )
     # _LOG.info("modirty: %s", master_dirty)
 
-    # # Calculate "After*" stats
-    # # Suppress all errors, we handle them on upper level.
-    # set +e
-    # linter.py -t ${data_pull_request_base_sha} --post_check
-    # branch_dirty=$?
-    # echo "Branch dirty: ${branch_dirty}."
-    #
-    # git reset --hard
-    # linter.py -t ${data_pull_request_base_sha}
-    # branch_lints=$?
-    # echo "Lints in branch: ${branch_lints}."
-    #
-    # # Read lints in memory
-    # lints_message="\`\`\`\n"
-    #
-    # while IFS= read -r line
-    # do
-    # lints_message="${lints_message}${line}\n"
-    # done <./linter_warnings.txt
-    #
-    # lints_message="${lints_message}\n\`\`\`"
-
-    cmd = f"linter.py -t ${data_pull_request_base_sha} --post_check"
+    cmd = f"linter.py -t ${base_sha} --post_check"
     branch_dirty = si.system(cmd, abort_on_error=False)
     _LOG.info("Branch dirty: %s", branch_dirty)
     #
     cmd = f"git reset --hard"
     si.system(cmd)
     #
-    cmd = f"linter.py -t ${data_pull_request_base_sha}"
+    cmd = f"linter.py -t ${base_sha}"
     branch_lints = si.system(cmd, abort_on_error=False)
     _LOG.info("Branch lints: %s", branch_lints)
     #
     linter_output_filename = "./linter_warnings.txt"
     # TODO: Rename -> linter_message
     lints_message = io_.from_file(linter_output_filename)
-    lints_message = "```\n" + txt + "```\n"
-
-    # # Calculate "Before*" stats
-    # git reset --hard
-    # git checkout ${data_pull_request_base_sha} --recurse-submodules
-    # linter.py --files $files_changed_in_branch --post_check
-    # master_dirty=$?
-    # echo "Master dirty: ${master_dirty}."
-    #
-    # git reset --hard
-    # linter.py --files ${files_changed_in_branch}
-    # master_lints=$?
-    # echo "Lints in master: ${master_lints}."
+    lints_message = "```\n" + lints_message + "```\n"
 
     # # Calculate "Before*" stats
     cmd = f"git reset --hard"
     si.system(cmd)
-    cmd = f"git checkout ${data_pull_request_base_sha} --recurse-submodules"
+    cmd = f"git checkout ${base_sha} --recurse-submodules"
     si.system(cmd)
     mod_files_as_str = " ".join(mod_files)
     cmd = f"linter.py --files {mod_files_as_str} --post_check"
@@ -99,71 +63,39 @@ def _calculate_stats(
     master_lints = si.system(cmd, abort_on_error=False)
     _LOG.info("Master lints: %s", master_lints)
 
-    # # Prepares a message and exit status
-    # master_dirty_status="False"
-    # if [[ "$master_dirty" -gt 0 ]] ; then
-    # master_dirty_status="True"
-    # fi
-
+    # Prepares a message and exit status
     master_dirty_status = master_dirty > 0
-    #
-    # exit_status=0
-    # branch_dirty_status="False"
-    # errors=""
-    # if [[ "$branch_dirty" -gt 0 ]] ; then
-    # branch_dirty_status="True"
-    # exit_status=1
-    # errors="${errors}**ERROR**: Run \`linter.py. -b\` locally before merging."
-    # fi
-
     exit_status = 0
     errors = []
-
     branch_dirty_status = branch_dirty > 0
     if branch_dirty_status:
-        errors.append("**ERROR**: Run \`linter.py. -b\` locally before merging.")
-
-    # if [[ "$master_lints" -gt 0 ]] ; then
-    # errors="${errors}\n**WARNING**: Your branch has lints. Please fix them."
-    # fi
-
+        errors.append(
+            "**ERROR**: Run \`linter.py. -b\` locally before merging.")
+        exit_status = 1
     if master_lints > 0:
         errors.append("**WARNING**: Your branch has lints. Please fix them.")
-    #
-    # if [[ "$branch_lints" -gt "$master_lints"  ]] ; then
-    # exit_status=1
-    # errors="${errors}\n**ERROR**: You introduced more lints. Please fix them."
-    # fi
-
     if branch_lints > master_lints:
         exit_status = 1
         errors.append("**ERROR**: You introduced more lints. Please fix them.")
-
-    #
-    # message="\n# Results of the linter build"
-    # message="${message}\nConsole output: ${BUILD_URL}console"
-    # message="${message}\n- Master (sha: ${data_pull_request_base_sha})"
-    # message="${message}\n   - Number of lints: ${master_lints}"
-    # message="${message}\n   - Dirty (i.e., linter was not run): ${master_dirty_status}"
-    # message="${message}\n- Branch (${data_pull_request_head_ref}: ${data_pull_request_head_sha})"
-    # message="${message}\n   - Number of lints: ${branch_lints}"
-    # message="${message}\n   - Dirty (i.e., linter was not run): ${branch_dirty_status}"
-    # message="${message}\n\nThe number of lints introduced with this change: $(expr ${branch_lints} - ${master_lints})"
-    #
-    # message="${message}\n\n${errors}"
-    #
-    # message="${message}\n${lints_message}\n"
-
+    # Message
+    message = list()
     message.append("# Results of the linter build")
-    message.append(f"Console output: ${BUILD_URL}console")
-    message.append(f"- Master (sha: ${data_pull_request_base_sha})")
+    console_url = os.path.join(build_url, "consoleFull")
+    if build_url is not None:
+        console_message = f"Console output: ${console_url}"
+    else:
+        console_message = f"Console output: No console output"
+    message.append(console_message)
+    message.append(f"- Master (sha: ${base_sha})")
     message.append(f"- Number of lints: ${master_lints}")
-    message.append(f"- Dirty (i.e., linter was not run): ${master_dirty_status}")
     message.append(
-        f"- Branch (${data_pull_request_head_ref}: ${data_pull_request_head_sha})"
+        f"- Dirty (i.e., linter was not run): ${master_dirty_status}")
+    message.append(
+        f"- Branch (${branch_name}: ${head_sha})"
     )
     message.append(f"- Number of lints: ${branch_lints}")
-    message.append(f"- Dirty (i.e., linter was not run): ${branch_dirty_status}")
+    message.append(
+        f"- Dirty (i.e., linter was not run): ${branch_dirty_status}")
     diff_lints = branch_lints - master_lints
     message.append(
         f"\nThe number of lints introduced with this change: {diff_lints}"
@@ -171,33 +103,49 @@ def _calculate_stats(
     message = "\n".join(message)
     message += "\n\n" + "\n".join(errors)
     message += "\n" + lints_message
-    #
-    # message="${message}\n\n${errors}"
-    #
-    # message="${message}\n${lints_message}\n"
+
     return exit_status, message
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Select files.
     parser.add_argument(
         "--jenkins", action="store_true", help="",
     )
+    parser.add_argument("--base_commit_sha", store=str, required=False, help="")
+    parser.add_argument("--branch_name", store=str, required=False, help="")
+
     prsr.add_verbosity_arg(parser)
     return parser
 
+
+def _main(args: argparse.Namespace) -> int:
+    build_url = None
+    if args.jenkins:
+        base_sha = os.environ["data_pull_request_base_sha"]
+        head_ref = os.environ["data_pull_request_head_ref"]
+        build_url = os.environ["BUILD_URL"]
+    else:
+        base_sha = args.base_commit_sha or "master"
+        head_ref = args.branch_name or git.get_branch_name()
+    rc, message = _calculate_stats(base_sha,
+                                   head_ref,
+                                   build_url)
+    if args.jenkins:
+        io_.to_file("./tmp_message.txt", message)
+        io_.to_file("./tmp_exit_status.txt", str(rc))
+    else:
+        print(message)
+        cmd = f"git checkout {head_ref} --recurse-submodules"
+        si.system(cmd)
+    return rc
 
 if __name__ == "__main__":
     parser_ = _parse()
     args_ = parser_.parse_args()
     rc_ = _main(args_)
-    if args.jenkins:
-        data_pull_request_base_sha = os.environ["data_pull_request_base_sha"]
-        data_pull_request_head_ref = os.environ["data_pull_request_head_ref"]
-        data_pull_request_head_sha = os.environ["data_pull_request_head_sha"]
-        # printf "${message}" > ./tmp_message.txt
-        # printf "${exit_status}" > ./tmp_exit_status.txt
     sys.exit(rc_)
