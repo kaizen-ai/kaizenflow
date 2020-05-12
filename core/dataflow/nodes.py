@@ -187,6 +187,7 @@ class DataSource(FitPredictNode, abc.ABC):
 
     @staticmethod
     def _validate_intervals(intervals: List[Tuple[Any, Any]]) -> None:
+        dbg.dassert_isinstance(intervals, list)
         for interval in intervals:
             dbg.dassert_eq(len(interval), 2)
             dbg.dassert_lte(interval[0], interval[1])
