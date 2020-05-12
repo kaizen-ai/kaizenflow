@@ -108,8 +108,8 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--jenkins", action="store_true", help="",
     )
-    parser.add_argument("--base_commit_sha", store=str, required=False, help="")
-    parser.add_argument("--branch_name", store=str, required=False, help="")
+    parser.add_argument("--base_commit_sha", type=str, required=False, help="")
+    parser.add_argument("--branch_name", type=str, required=False, help="")
 
     prsr.add_verbosity_arg(parser)
     return parser
