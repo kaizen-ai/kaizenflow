@@ -25,7 +25,7 @@ ACTIONS = [
 ]
 
 
-def _print_help(parser):
+def _print_help(parser: argparse.ArgumentParser) -> None:
     print(parser.format_help())
     sys.exit(-1)
 
