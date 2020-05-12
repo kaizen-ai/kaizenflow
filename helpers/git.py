@@ -306,7 +306,7 @@ def get_hash(git_hash: str, short_hash: bool, num_digits: int = 8) -> str:
     return ret
 
 
-def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str):
+def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str) -> str:
     """
     head_hash: a
     remh_hash: b
