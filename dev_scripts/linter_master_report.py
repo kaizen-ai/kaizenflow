@@ -15,24 +15,26 @@ _LOG = logging.getLogger(__name__)
 
 
 def _calculate_stats(
-        base_commit_sha: str,
-        head_commit_sha: str,
-        head_branch_name: str,
-        build_url: Optional[str] = None,
+    base_commit_sha: str,
+    head_commit_sha: str,
+    head_branch_name: str,
+    build_url: Optional[str] = None,
 ) -> Tuple[int, str]:
     """
-    
-    :param base_commit_sha: Respect to this commit or branch will be compared.  
-    :param head_commit_sha: 
-    :param head_branch_name: 
-    :param build_url: 
+
+    :param base_commit_sha: Respect to this commit or branch will be compared.
+    :param head_commit_sha:
+    :param head_branch_name:
+    :param build_url:
     """
     # Calculate stats
     dir_name = "."
     # TODO: Think about it.
     remove_files_non_present = False
     mod_files = git.get_modified_files_in_branch(
-        dir_name, base_commit_sha, remove_files_non_present=remove_files_non_present,
+        dir_name,
+        base_commit_sha,
+        remove_files_non_present=remove_files_non_present,
     )
     # _LOG.info("modirty: %s", master_dirty)
     cmd = f"linter.py -t {base_commit_sha} --post_check"
@@ -72,8 +74,7 @@ def _calculate_stats(
     errors = []
     branch_dirty_status = branch_dirty > 0
     if branch_dirty_status:
-        errors.append(
-            "**ERROR**: Run \`linter.py. -b\` locally before merging.")
+        errors.append("**ERROR**: Run `linter.py. -b` locally before merging.")
         exit_status = 1
     if master_lints > 0:
         errors.append("**WARNING**: Your branch has lints. Please fix them.")
@@ -87,16 +88,14 @@ def _calculate_stats(
     if build_url is not None:
         console_message = f"Console output: {console_url}"
     else:
-        console_message = f"Console output: No console output"
+        console_message = "Console output: No console output"
     message.append(console_message)
     message.append(f"- Master (sha: {base_commit_sha})")
     message.append(f"\t- Number of lints: {master_lints}")
-    message.append(
-        f"\t- Dirty (i.e., linter was not run): {master_dirty_status}")
+    message.append(f"\t- Dirty (i.e., linter was not run): {master_dirty_status}")
     message.append(f"- Branch ({head_branch_name}: {head_commit_sha})")
     message.append(f"\t- Number of lints: {branch_lints}")
-    message.append(
-        f"\t- Dirty (i.e., linter was not run): {branch_dirty_status}")
+    message.append(f"\t- Dirty (i.e., linter was not run): {branch_dirty_status}")
     diff_lints = branch_lints - master_lints
     message.append(
         f"\nThe number of lints introduced with this change: {diff_lints}"
@@ -110,8 +109,7 @@ def _calculate_stats(
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Select files.
     parser.add_argument(
