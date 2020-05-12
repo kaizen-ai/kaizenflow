@@ -156,11 +156,13 @@ class TestContinuousSkLearnModel(hut.TestCase):
         pred_lag = 1
         # Load test data.
         data = self._get_data(pred_lag)
-        fit_idxs = data.iloc[:30].index
-        predict_idxs = data.iloc[30:].index
+        fit_interval = ("1776-07-04 12:00:00",
+                        "2010-01-01 00:29:00")
+        predict_interval = ("2010-01-01 00:30:00",
+                            "2100")
         data_source_node = dtf.ReadDataFromDf("data", data)
-        data_source_node.set_fit_idxs(fit_idxs)
-        data_source_node.set_predict_idxs(predict_idxs)
+        data_source_node.set_fit_intervals([fit_interval])
+        data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
         dag = dtf.DAG(mode="strict")
         dag.add_node(data_source_node)
@@ -180,11 +182,13 @@ class TestContinuousSkLearnModel(hut.TestCase):
         pred_lag = 2
         # Load test data.
         data = self._get_data(pred_lag)
-        fit_idxs = data.iloc[:30].index
-        predict_idxs = data.iloc[30:].index
+        fit_interval = ("1776-07-04 12:00:00",
+                        "2010-01-01 00:29:00")
+        predict_interval = ("2010-01-01 00:30:00",
+                            "2100")
         data_source_node = dtf.ReadDataFromDf("data", data)
-        data_source_node.set_fit_idxs(fit_idxs)
-        data_source_node.set_predict_idxs(predict_idxs)
+        data_source_node.set_fit_intervals([fit_interval])
+        data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
         dag = dtf.DAG(mode="strict")
         dag.add_node(data_source_node)
