@@ -139,7 +139,10 @@ class DataSource(FitPredictNode, abc.ABC):
         :return: training set as df
         """
         if self._fit_intervals is not None:
-            idx_slices = [self.df.loc[interval[0]: interval[1]].index for interval in self._fit_intervals]
+            idx_slices = [
+                self.df.loc[interval[0] : interval[1]].index
+                for interval in self._fit_intervals
+            ]
             idx = functools.reduce(lambda x, y: x.union(y), idx_slices)
             fit_df = self.df.loc[idx].copy()
         else:
@@ -162,7 +165,10 @@ class DataSource(FitPredictNode, abc.ABC):
         :return: test set as df
         """
         if self._predict_intervals is not None:
-            idx_slices = [self.df.loc[interval[0]: interval[1]].index for interval in self._predict_intervals]
+            idx_slices = [
+                self.df.loc[interval[0] : interval[1]].index
+                for interval in self._predict_intervals
+            ]
             idx = functools.reduce(lambda x, y: x.union(y), idx_slices)
             predict_df = self.df.loc[idx].copy()
         else:
