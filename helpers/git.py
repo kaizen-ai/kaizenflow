@@ -16,7 +16,8 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
+# TODO(gp):
+#  Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
 
 # TODO(gp): Avoid "stuttering": the module is already called "git", so no need
 #  to make reference to git again.
@@ -261,6 +262,16 @@ def get_head_hash(dir_name: str) -> str:
     return output
 
 
+def get_current_commit_hash(dir_name: str = "./") -> str:
+    dbg.dassert_exists(dir_name)
+    cmd = f"cd {dir_name} && git rev-parse HEAD"
+    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    _, sha = data
+    # 0011776388b4c0582161eb2749b665fc45b87e7e
+    _LOG.debug("sha=%s", sha)
+    return sha
+
+
 def get_remote_head_hash(dir_name: str) -> str:
     """
     Report the hash that the remote Git repo is at.
@@ -296,7 +307,7 @@ def get_hash(git_hash: str, short_hash: bool, num_digits: int = 8) -> str:
     return ret
 
 
-def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str):
+def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str) -> str:
     """
     head_hash: a
     remh_hash: b

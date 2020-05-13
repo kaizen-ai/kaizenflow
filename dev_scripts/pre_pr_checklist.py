@@ -25,7 +25,7 @@ ACTIONS = [
 ]
 
 
-def _print_help(parser):
+def _print_help(parser: argparse.ArgumentParser) -> None:
     print(parser.format_help())
     sys.exit(-1)
 
@@ -79,8 +79,8 @@ def _run_linter_check() -> None:
         msg=f"Commit changes or stash them.\n{modified_files}",
     )
     amp_path = os.environ["AMP"]
-    cmd = f"source {amp_path}/dev_scripts/jenkins/test_runners/run_linter_on_branch.local.sh"
-    _, output = si.system_to_string(cmd)
+    cmd = f"{amp_path}/dev_scripts/linter_master_report.py"
+    _, output = si.system_to_string(cmd, abort_on_error=False)
     print(output.strip())
 
 
