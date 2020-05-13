@@ -26,6 +26,10 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Add si.pytest_clean_artifacts()
 # TODO(gp): Add unit tests freezing the command to be executed given the args.
+# TODO(gp): Add --approx_trans_closure that
+#  - get all the files modified (-b, -c)
+#  - find all the largest subset of including dirs
+#  - run all the tests there
 
 
 def _build_pytest_opts(args, test: str):
@@ -209,6 +213,18 @@ def _main(parser: argparse.ArgumentParser) -> None:
     print("> %s" % cmd)
     # This is the only system that should be not execute to dry run.
     _system(cmd, dry_run=args.dry_run)
+    #
+    if not args.dry_run and args.coverage:
+        # run_tests.py --coverage --test /Users/saggese/src/commodity_research4/amp/core/dataflow/test/test_nodes.py
+        # coverage report
+        # coverage report --show_missing
+        # coverage report --include=core/dataflow/*
+        # coverage report --include=core/dataflow/* --omit=*/test/test_*
+        # Compare to master.
+        # Go to your browser at open htmlcov/index.html
+        # https://stackoverflow.com/questions/10252010/serializing-class-instance-to-json
+        # https://github.com/jsonpickle/jsonpickle
+        pass
 
 
 if __name__ == "__main__":
