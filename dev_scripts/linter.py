@@ -1868,4 +1868,6 @@ if __name__ == "__main__":
                 "Detected that some files were changed so returning -1 as per "
                 "the option `--post_check`"
             )
+        else:
+            rc_ = 0
     sys.exit(rc_)
