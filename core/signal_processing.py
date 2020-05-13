@@ -1201,12 +1201,14 @@ def compute_eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
 # #############################################################################
 
 
-def get_trend_residual_decomp(signal: pd.Series,
-                              tau: float,
-                              min_periods: int = 0,
-                              min_depth: int = 1,
-                              max_depth: int = 1,
-                              nan_mode: Optional[str] = None) -> pd.DataFrame:
+def get_trend_residual_decomp(
+    signal: pd.Series,
+    tau: float,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    nan_mode: Optional[str] = None,
+) -> pd.DataFrame:
     """
     Decompose a signal into trend + residual.
 
