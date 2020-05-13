@@ -422,6 +422,12 @@ def apply_normality_test(
     stats = []
     pvals = []
     for col in data.columns:
+        if data[col].dropna().size < 8:
+            # The `skewtest` requires at least 8 samples and will raise if it
+            # does not receive at least 8.
+            stats.append(np.nan)
+            pvals.append(np.nan)
+            continue
         stat, pval = sp.stats.normaltest(data[col], nan_policy=nan_policy)
         stats.append(stat)
         pvals.append(pval)
