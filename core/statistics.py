@@ -19,14 +19,6 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-MEAN_COL = "mean"
-STD_COL = "std"
-SKEW_COL = "skew"
-KURT_COL = "kurt"
-PVAL_COL = "pvals"
-TVAL_COL = "tvals"
-ADJ_PVAL_COL = "adj_pvals"
-
 
 # #############################################################################
 # Descriptive statistics
@@ -35,21 +27,29 @@ ADJ_PVAL_COL = "adj_pvals"
 
 # TODO(Paul): Double-check axes in used in calculation.
 # Consider exposing `nan_policy`.
-def moments(df: pd.DataFrame) -> pd.DataFrame:
+def compute_moments(data: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
     """
     Calculate, mean, standard deviation, skew, and kurtosis.
+
+    :param data: if a dataframe, columns correspond to data sets
+    :return: dataframe with columns like `df`'s (or a single column if input
+        is a series) and rows with stats
     """
-    mean = df.mean()
-    std = df.std()
-    skew = sp.stats.skew(df, nan_policy="omit")
-    kurt = sp.stats.kurtosis(df, nan_policy="omit")
+    if isinstance(data, pd.Series):
+        data = data.to_frame()
+    dbg.dassert_isinstance(data, pd.DataFrame)
+    mean = data.mean()
+    std = data.std()
+    skew = sp.stats.skew(data, nan_policy="omit")
+    kurt = sp.stats.kurtosis(data, nan_policy="omit")
     result = pd.DataFrame(
-        {MEAN_COL: mean, STD_COL: std, SKEW_COL: skew, KURT_COL: kurt},
-        index=df.columns,
-    )
+        {"mean": mean, "std": std, "skew": skew, "kurtosis": kurt},
+        index=data.columns,
+    ).transpose()
     return result
 
 
+# TODO(*): Move this function out of this library.
 def replace_infs_with_nans(
     data: Union[pd.Series, pd.DataFrame],
 ) -> Union[pd.Series, pd.DataFrame]:
@@ -68,7 +68,7 @@ def compute_frac_zero(
     Calculate fraction of zeros in a numerical series or dataframe.
 
     :param data: numeric series or dataframe
-    :param atol: relative tolerance, as in `np.isclose`
+    :param atol: absolute tolerance, as in `np.isclose`
     :param axis: numpy axis for summation
     """
     # Create an ndarray of zeros of the same shape.
@@ -338,7 +338,7 @@ def convert_splits_to_string(splits):
 
 
 def ttest_1samp(
-    df: pd.DataFrame,
+    data: Union[pd.Series, pd.DataFrame],
     popmean: Optional[float] = None,
     nan_policy: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -352,16 +352,19 @@ def ttest_1samp(
     :param df: DataFrame with samples along rows, groups along columns.
     :param popmean: assumed population mean for test
     :param nan_policy: `nan_policy` for scipy's ttest_1samp
-    :return: DataFrame with t-value and p-value columns, rows like df's columns
+    :return: DataFrame with t-value and p-value rows, columns like df's columns
     """
+    if isinstance(data, pd.Series):
+        data = data.to_frame()
+    dbg.dassert_isinstance(data, pd.DataFrame)
     if popmean is None:
         popmean = 0
     if nan_policy is None:
         nan_policy = "omit"
     tvals, pvals = sp.stats.ttest_1samp(
-        df, popmean=popmean, nan_policy=nan_policy
+        data, popmean=popmean, nan_policy=nan_policy
     )
-    result = pd.DataFrame({TVAL_COL: tvals, PVAL_COL: pvals}, index=df.columns)
+    result = pd.DataFrame({"tval": tvals, "pval": pvals}, index=data.columns).transpose()
     return result
 
 
@@ -377,10 +380,11 @@ def multipletests(srs: pd.Series, method: Optional[str] = None) -> pd.Series:
     :param method: `method` for scipy's multipletests
     :return: Series of adjusted p-values
     """
+    dbg.dassert_isinstance(srs, pd.Series)
     if method is None:
         method = "fdr_bh"
     pvals_corrected = sm.stats.multitest.multipletests(srs, method=method)[1]
-    return pd.Series(pvals_corrected, index=srs.index, name=ADJ_PVAL_COL)
+    return pd.Series(pvals_corrected, index=srs.index, name="adj_pval")
 
 
 def multi_ttest(
@@ -392,13 +396,14 @@ def multi_ttest(
     """
     Combine ttest and multitest pvalue adjustment.
     """
-    ttest = ttest_1samp(df, popmean=popmean, nan_policy=nan_policy)
-    ttest[ADJ_PVAL_COL] = multipletests(ttest[PVAL_COL], method=method)
-    return ttest
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    ttest = ttest_1samp(df, popmean=popmean, nan_policy=nan_policy).transpose()
+    ttest["adj_pval"] = multipletests(ttest["pval"], method=method)
+    return ttest.transpose()
 
 
 def apply_normality_test(
-    df: pd.DataFrame, nan_policy: Optional[str] = None
+    data: Union[pd.Series, pd.DataFrame], nan_policy: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Test (indep) null hypotheses that each col is normally distributed.
@@ -409,17 +414,20 @@ def apply_normality_test(
         1. "statistic"
         2. "pvalue"
     """
+    if isinstance(data, pd.Series):
+        data = data.to_frame()
+    dbg.dassert_isinstance(data, pd.DataFrame)
     if nan_policy is None:
         nan_policy = "omit"
     stats = []
     pvals = []
-    for col in df.columns:
-        stat, pval = sp.stats.normaltest(df[col], nan_policy=nan_policy)
+    for col in data.columns:
+        stat, pval = sp.stats.normaltest(data[col], nan_policy=nan_policy)
         stats.append(stat)
         pvals.append(pval)
     res = pd.DataFrame(
         data=list(zip(stats, pvals)),
         columns=["statistic", "pvalue"],
-        index=df.columns,
+        index=data.columns,
     )
     return res.transpose()
