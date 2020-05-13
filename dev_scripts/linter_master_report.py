@@ -7,7 +7,7 @@ import argparse
 import logging
 import os
 import sys
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
 
 import helpers.git as git
 import helpers.io_ as io_
@@ -17,9 +17,9 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
-def _calculate_exit_status(branch_dirty_status: bool,
-                           master_lints: int,
-                           branch_lints: int, ) -> Tuple[int, str]:
+def _calculate_exit_status(
+    branch_dirty_status: bool, master_lints: int, branch_lints: int,
+) -> Tuple[int, str]:
     """
     Calculate status and error message.
     """
@@ -36,22 +36,19 @@ def _calculate_exit_status(branch_dirty_status: bool,
     return exit_status, "\n".join(errors)
 
 
-def _compute_stats(master_dirty: int,
-                   branch_dirty: int,
-                   master_lints: int,
-                   branch_lints: int, ) -> Tuple[bool, bool, int, str]:
+def _compute_stats(
+    master_dirty: int, branch_dirty: int, master_lints: int, branch_lints: int,
+) -> Tuple[bool, bool, int, str]:
     # Prepares a message and exit status
     master_dirty_status = master_dirty > 0
     branch_dirty_status = branch_dirty > 0
-    exit_status, errors = _calculate_exit_status(branch_dirty_status,
-                                                 master_lints,
-                                                 branch_lints)
+    exit_status, errors = _calculate_exit_status(
+        branch_dirty_status, master_lints, branch_lints
+    )
     return master_dirty_status, branch_dirty_status, exit_status, errors
 
 
-def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int,
-                                                                   int,
-                                                                   str]:
+def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int, int, str]:
     cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
     si.system(cmd)
@@ -82,8 +79,9 @@ def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int,
     return branch_lints, branch_dirty, linter_message
 
 
-def _perform_linter_for_reference_branch(base_commit_sha: str,
-                                         mod_files: List[str]) -> int:
+def _perform_linter_for_reference_branch(
+    base_commit_sha: str, mod_files: List[str]
+) -> Tuple[int, int]:
     # # Calculate "Before*" stats
     cmd = "git reset --hard"
     si.system(cmd)
@@ -114,16 +112,17 @@ def _perform_linter_for_reference_branch(base_commit_sha: str,
 
 
 def _prepare_message(
-        base_commit_sha,
-        master_lints,
-        master_dirty_status,
-        head_branch_name,
-        head_commit_sha,
-        branch_lints,
-        branch_dirty_status,
-        errors,
-        linter_message,
-        build_url: Optional[str]) -> str:
+    base_commit_sha,
+    master_lints,
+    master_dirty_status,
+    head_branch_name,
+    head_commit_sha,
+    branch_lints,
+    branch_dirty_status,
+    errors,
+    linter_message,
+    build_url: Optional[str],
+) -> str:
     # Message
     message = list()
     message.append("# Results of the linter build")
@@ -135,12 +134,10 @@ def _prepare_message(
     message.append(console_message)
     message.append(f"- Master (sha: {base_commit_sha})")
     message.append(f"\t- Number of lints: {master_lints}")
-    message.append(
-        f"\t- Dirty (i.e., linter was not run): {master_dirty_status}")
+    message.append(f"\t- Dirty (i.e., linter was not run): {master_dirty_status}")
     message.append(f"- Branch ({head_branch_name}: {head_commit_sha})")
     message.append(f"\t- Number of lints: {branch_lints}")
-    message.append(
-        f"\t- Dirty (i.e., linter was not run): {branch_dirty_status}")
+    message.append(f"\t- Dirty (i.e., linter was not run): {branch_dirty_status}")
     diff_lints = branch_lints - master_lints
     message.append(
         f"\nThe number of lints introduced with this change: {diff_lints}"
@@ -153,10 +150,10 @@ def _prepare_message(
 
 
 def _calculate_stats(
-        base_commit_sha: str,
-        head_commit_sha: str,
-        head_branch_name: str,
-        build_url: Optional[str] = None
+    base_commit_sha: str,
+    head_commit_sha: str,
+    head_branch_name: str,
+    build_url: Optional[str] = None,
 ) -> Tuple[int, str]:
     """
     Compute the statistics from the linter when run on a branch vs master.
@@ -178,28 +175,35 @@ def _calculate_stats(
         remove_files_non_present=remove_files_non_present,
     )
     branch_lints, branch_dirty, linter_message = _perform_linter_for_test_branch(
-        base_commit_sha)
+        base_commit_sha
+    )
     master_lints, master_dirty = _perform_linter_for_reference_branch(
-        base_commit_sha, mod_files)
-    master_dirty_status, branch_dirty_status, exit_status, errors = _compute_stats(
-        master_dirty, branch_dirty, master_lints, branch_lints)
-    message = _prepare_message(base_commit_sha,
-                               master_lints,
-                               master_dirty_status,
-                               head_branch_name,
-                               head_commit_sha,
-                               branch_lints,
-                               branch_dirty_status,
-                               errors,
-                               linter_message,
-                               build_url)
+        base_commit_sha, mod_files
+    )
+    (
+        master_dirty_status,
+        branch_dirty_status,
+        exit_status,
+        errors,
+    ) = _compute_stats(master_dirty, branch_dirty, master_lints, branch_lints)
+    message = _prepare_message(
+        base_commit_sha,
+        master_lints,
+        master_dirty_status,
+        head_branch_name,
+        head_commit_sha,
+        branch_lints,
+        branch_dirty_status,
+        errors,
+        linter_message,
+        build_url,
+    )
     return exit_status, message
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Select files.
     parser.add_argument(
