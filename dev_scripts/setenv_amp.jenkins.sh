@@ -1,13 +1,12 @@
 #!/bin/bash -e
 
-CONDA_ENV="p1_develop.daily_build"
-DEV_SCRIPTS_DIR="./dev_scripts"
+CONDA_ENV="amp_develop.daily_build"
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-CMD="source $DEV_SCRIPTS_DIR/jenkins/jenkins_helpers.sh"
+CMD="source ./dev_scripts/jenkins/amp.jenkins_helpers.sh"
 echo "+ $CMD"
 eval $CMD
 
@@ -17,5 +16,5 @@ source_scripts
 # Setenv.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-setenv "$DEV_SCRIPTS_DIR/setenv_amp.sh" $CONDA_ENV
+setenv "$AMP/dev_scripts/setenv_amp.sh" $CONDA_ENV
 
