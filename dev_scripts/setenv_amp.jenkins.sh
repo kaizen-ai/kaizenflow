@@ -1,12 +1,21 @@
 #!/bin/bash -e
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# Set env.
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-source dev_scripts/setenv_amp.jenkins.sh
+CONDA_ENV="p1_develop.daily_build"
+DEV_SCRIPTS_DIR="./dev_scripts_p1"
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# Run tests.
+# Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-source dev_scripts/jenkins/test_runners/run_linter_on_branch.sh
+CMD="source $DEV_SCRIPTS_DIR/jenkins/p1.jenkins_helpers.sh"
+echo "+ $CMD"
+eval $CMD
+
+source_scripts
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Setenv.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+setenv "$DEV_SCRIPTS_DIR/setenv_p1.sh" $CONDA_ENV
+

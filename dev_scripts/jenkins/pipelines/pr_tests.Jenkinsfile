@@ -395,12 +395,12 @@ pipeline {
                         }
                     }
                 }
-                // Run fast tests
+                // Run linter tests
                 script {
                     try {
                         dir(getLinterWorkspacePath()) {
                             sh('''
-                                    bash -c "source dev_scripts/jenkins/multi_repo_run_linter_on_branch.sh"
+                                    bash -c "source dev_scripts/jenkins/amp.run_linter_on_branch.sh"
                                     ''')
 //                            sh('''printf "0" > ./tmp_exit_status.txt''')
 //                            sh('''printf "0" > ./tmp_message.txt''')
@@ -511,7 +511,7 @@ pipeline {
                                     echo("Entering failure branch.")
                                     labelAddToIssue('fast_tests_fail')
                                     statusSetFail(getFastTestName())
-                                    error("TEST FAILED. exitSatus=${exitStatus}")
+                                    currentBuild.result = 'FAILURE'
                                 }
                             }
                         }
@@ -601,7 +601,7 @@ pipeline {
                                     echo("Entering failure branch.")
                                     labelAddToIssue('slow_tests_fail')
                                     statusSetFail(getSlowTestName())
-                                    error("TEST FAILED. exitSatus=${exitStatus}")
+                                    currentBuild.result = 'FAILURE'
                                 }
                             }
                             dir(getSlowTestWorkspacePath()) {
