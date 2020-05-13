@@ -364,7 +364,9 @@ def ttest_1samp(
     tvals, pvals = sp.stats.ttest_1samp(
         data, popmean=popmean, nan_policy=nan_policy
     )
-    result = pd.DataFrame({"tval": tvals, "pval": pvals}, index=data.columns).transpose()
+    result = pd.DataFrame(
+        {"tval": tvals, "pval": pvals}, index=data.columns
+    ).transpose()
     return result
 
 
