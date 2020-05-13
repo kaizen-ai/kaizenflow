@@ -261,9 +261,7 @@ def _get_files_to_lint(
     #
     _LOG.debug("file_names=(%s) %s", len(file_names), " ".join(file_names))
     if len(file_names) < 1:
-        msg = "No files that can be linted are specified"
-        _LOG.error(msg)
-        raise ValueError(msg)
+        _LOG.warning("No files that can be linted are specified")
     return file_names
 
 
