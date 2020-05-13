@@ -150,13 +150,16 @@ def _calculate_stats(
     ) = _compute_stats(master_dirty, branch_dirty, master_lints, branch_lints)
     # Message
     message = list()
+    # Report title
     message.append("# Results of the linter build")
+    # Console url for Jenkins
     console_url = os.path.join(str(build_url), "consoleFull")
     if build_url is not None:
         console_message = f"Console output: {console_url}"
     else:
         console_message = "Console output: No console output"
     message.append(console_message)
+    # Statuses and additional info
     message.append(f"- Master (sha: {base_commit_sha})")
     message.append(f"\t- Number of lints: {master_lints}")
     message.append(f"\t- Dirty (i.e., linter was not run): {master_dirty_status}")
@@ -167,6 +170,7 @@ def _calculate_stats(
     message.append(
         f"\nThe number of lints introduced with this change: {diff_lints}"
     )
+    # Format report in order. Message \n Errors \n Linter output.
     message = "\n".join(message)
     message += "\n\n" + errors
     message += "\n" + linter_message
@@ -192,17 +196,21 @@ def _parse() -> argparse.ArgumentParser:
 def _main(args: argparse.Namespace) -> int:
     build_url = None
     if args.jenkins:
+        # Fetch the environment variable as passed by Jenkins from Git web-hook
         base_commit_sha = os.environ["data_pull_request_base_sha"]
         head_branch_name = os.environ["data_pull_request_head_ref"]
         head_commit_sha = os.environ["data_pull_request_head_sha"]
         build_url = os.environ["BUILD_URL"]
     else:
+        # Use passed parameters from command line or infer some defaults from
+        # the current git client.
         base_commit_sha = args.base_commit_sha or "master"
         head_branch_name = args.head_branch_name or git.get_branch_name()
         head_commit_sha = args.head_commit_sha or git.get_current_commit_hash()
     rc, message = _calculate_stats(
         base_commit_sha, head_commit_sha, head_branch_name, build_url
     )
+    # Save the result or print it to the screen.
     if args.jenkins:
         io_.to_file("./tmp_message.txt", message)
         io_.to_file("./tmp_exit_status.txt", str(rc))
@@ -211,6 +219,7 @@ def _main(args: argparse.Namespace) -> int:
     cmd = "git reset --hard"
     si.system(cmd)
     cmd = f"git checkout {head_branch_name} --recurse-submodules"
+    # Clean up the branch bringing to the original status.
     si.system(cmd)
     return rc
 
