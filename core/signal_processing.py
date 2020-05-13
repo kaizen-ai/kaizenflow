@@ -1197,6 +1197,54 @@ def compute_eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
 
 
 # #############################################################################
+# Trend + Residual decomposition
+# #############################################################################
+
+
+def get_trend_residual_decomp(signal: pd.Series,
+                              tau: float,
+                              min_periods: int = 0,
+                              min_depth: int = 1,
+                              max_depth: int = 1,
+                              nan_mode: Optional[str] = None) -> pd.DataFrame:
+    """
+    Decompose a signal into trend + residual.
+
+    - The `trend` warm-up period is set by `min_periods`
+    - If `min_periods` is positive, then leading values of `trend` are NaN
+      - If `nan_mode = "propagate"`, then `residual` and `trend` are Nan
+        whenever at least one is
+      - If `nan_mode = "restore_to_residual", then `residual` is always non-NaN
+        whenever `residual` is
+        - E.g., so, in particular, during any `trend` warm-up period,
+          `signal = residual` and `signal = trend + residual` always holds
+        - However, when the warm-up phase ends, `residual` may experience a
+          large jump
+
+    :return: dataframe with columns "trend" and "residual", indexed like
+        "signal"
+    """
+    if nan_mode is None:
+        nan_mode = "propagate"
+    signal_ma = compute_smooth_moving_average(
+        signal, tau, min_periods, min_depth, max_depth
+    )
+    df = pd.DataFrame(index=signal.index)
+    df["trend"] = signal_ma
+    detrended = signal - signal_ma
+    if nan_mode == "restore_to_residual":
+        # Restore `signal` values if `detrended` is NaN due to detrending artifacts
+        # (e.g., from setting `min_periods`).
+        detrended.loc[detrended.isna()] = signal
+    elif nan_mode == "propagate":
+        pass
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}`")
+    df["residual"] = detrended
+    return df
+
+
+# #############################################################################
 # Discrete wavelet transform
 # #############################################################################
 
