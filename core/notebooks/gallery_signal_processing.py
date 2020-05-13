@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.4.1
+#       jupytext_version: 1.4.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -53,10 +53,10 @@ arma00process = sig_gen.ArmaProcess([], [])
 
 # %%
 rets = arma00process.generate_sample(
-    {"start": "2000-01-01", "periods": 4*252, "freq": "B"},
+    {"start": "2000-01-01", "periods": 4 * 252, "freq": "B"},
     scale=5,
     burnin=20,
-    seed=42
+    seed=42,
 )
 
 # %%
@@ -71,6 +71,15 @@ price.name += "_price"
 
 # %%
 plot.plot_cols(price)
+
+# %%
+price_decomp = sigp.get_trend_residual_decomp(price, tau=16)
+
+# %%
+price_decomp.head(3)
+
+# %%
+plot.plot_cols(price_decomp)
 
 # %% [markdown]
 # ### Price wavelet decomposition
