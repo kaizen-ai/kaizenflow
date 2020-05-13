@@ -10,3 +10,5 @@ source dev_scripts/setenv_amp.jenkins.sh
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 source dev_scripts/jenkins/test_runners/run_slow_tests.sh
+# Jenkins read this file in the pipeline
+printf "$?" > ./tmp_exit_status.txt
