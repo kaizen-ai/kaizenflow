@@ -222,7 +222,9 @@ def plot_crosscorrelation(
 # #############################################################################
 
 
-def compute_jensen_ratio(signal: pd.Series, p_norm: float = 2) -> float:
+def compute_jensen_ratio(signal: pd.Series, p_norm: float = 2,
+                         inf_mode: Optional[str] = None,
+                         nan_mode: Optional[str] = None) -> float:
     """
     Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
 
@@ -247,20 +249,54 @@ def compute_jensen_ratio(signal: pd.Series, p_norm: float = 2) -> float:
       - For a signal that is t-distributed with 4 dof, the expected value is
         approximately 1.41.
     """
+    dbg.dassert_isinstance(signal, pd.Series)
     # Require that we evaluate a norm.
     dbg.dassert_lte(1, p_norm)
     # TODO(*): Maybe add l-infinity support. For many stochastic signals, we
-    # should not expect a finite value.
+    # should not expect a finite value in the continuous limit.
     dbg.dassert(np.isfinite(p_norm))
-    data = signal.dropna()
+    # Set reasonable defaults for inf and nan modes.
+    if inf_mode is None:
+        inf_mode = "return_nan"
+    if nan_mode is None:
+        nan_mode = "ignore"
+    # Handle NaNs.
+    if nan_mode == "ignore":
+        data = signal.dropna()
+    elif nan_mode == "ffill":
+        data = signal.ffill().dropna()
+    elif nan_mode == "strict":
+        if signal.isna().any():
+            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}`")
+    dbg.dassert(not data.isna().any())
+    # Handle infs.
+    has_infs = (~data.apply(np.isfinite)).any()
+    if has_infs:
+        if inf_mode == "return_nan":
+            # According to a strict interpretation, each norm is infinite, and
+            # and so their quotient is undefined.
+            return np.nan
+        elif inf_mode == "ignore":
+            # Replace inf values with np.nan and drop.
+            data = data.replace([-np.inf, np.inf], np.nan).dropna()
+        else:
+            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
+    dbg.dassert(data.apply(np.isfinite).all())
+    # Return NaN if there is no data.
+    if data.size < 1:
+        return np.nan
+    # Calculate norms.
     lp = sp.linalg.norm(data, ord=p_norm)
     l1 = sp.linalg.norm(data, ord=1)
     # Ignore support where `signal` has NaNs.
-    const = data.size ** (1 - 1 / p_norm)
-    return const * lp / l1
+    scaled_support = data.size ** (1 - 1 / p_norm)
+    return scaled_support * lp / l1
 
 
-def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
+def compute_forecastability(signal: pd.Series, mode: str = "welch",
+                            nan_mode: Optional[str] = None) -> float:
     r"""
     Compute frequency-domain-based "forecastability" of signal.
 
@@ -280,8 +316,18 @@ def compute_forecastability(signal: pd.Series, mode: str = "welch") -> float:
        equality iff alpha \in \{0, 1\}.
     """
     dbg.dassert_isinstance(signal, pd.Series)
-    dbg.dassert_isinstance(mode, str)
-    signal = signal.ffill(0).dropna()
+    if nan_mode is None:
+        nan_mode = "fill_with_zero"
+    # Handle NaNs
+    if nan_mode == "fill_with_zero":
+        signal = signal.fillna(0)
+    elif nan_mode == "ffill":
+        signal = signal.ffill().dropna()
+    elif nan_mode == "strict":
+        if signal.hasna().any():
+            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     if mode == "welch":
         _, psd = sp.signal.welch(signal)
     elif mode == "periodogram":
