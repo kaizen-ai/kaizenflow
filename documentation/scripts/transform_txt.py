@@ -35,12 +35,14 @@ import os
 import re
 import sys
 
+import helpers.dbg as dbg
 import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
 
-def read_file(file_name):
+# TODO(gp): Factor this out.
+def _read_file(file_name):
     """
     Read file or stdin, returning an array of lines.
     """
@@ -57,7 +59,7 @@ def read_file(file_name):
     return txt
 
 
-def write_file(file_name, txt):
+def _write_file(file_name, txt):
     if file_name == "-":
         print("\n".join(txt))
     else:
@@ -93,7 +95,7 @@ def skip_comments(line, skip_block):
 
 def table_of_content(file_name, max_lev):
     skip_block = False
-    txt = read_file(file_name)
+    txt = _read_file(file_name)
     for l in txt:
         # Skip comments.
         skip_this_line, skip_block = skip_comments(l, skip_block)
@@ -115,7 +117,15 @@ def table_of_content(file_name, max_lev):
 
 
 def format_text(in_file_name, out_file_name, max_lev):
-    txt = read_file(in_file_name)
+    txt = _read_file(in_file_name)
+    #
+    for line in txt:
+        m = re.search("max_level=(\d+)", line)
+        if m:
+            max_lev = int(m.group(1))
+            _LOG.warning("Inferred max_level=%s", max_lev)
+            break
+    dbg.dassert_lte(1, max_lev)
     # Remove all headings.
     txt_tmp = []
     for l in txt:
@@ -144,7 +154,7 @@ def format_text(in_file_name, out_file_name, max_lev):
             txt_tmp.append(l)
     # TODO(gp): Remove all empty lines after a heading.
     # TODO(gp): Format title (first line capital and then small).
-    write_file(out_file_name, txt_tmp)
+    _write_file(out_file_name, txt_tmp)
 
 
 def increase_chapter(in_file_name, out_file_name):
@@ -152,7 +162,7 @@ def increase_chapter(in_file_name, out_file_name):
     Increase the level of chapters by one for text in stdin.
     """
     skip_block = False
-    txt = read_file(in_file_name)
+    txt = _read_file(in_file_name)
     #
     txt_tmp = []
     for line in txt:
@@ -167,7 +177,7 @@ def increase_chapter(in_file_name, out_file_name):
                 break
         txt_tmp.append(line)
     #
-    write_file(out_file_name, txt_tmp)
+    _write_file(out_file_name, txt_tmp)
 
 
 # #############################################################################
@@ -189,6 +199,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
+    print("cmd line: %s" % dbg.get_command_line())
     _LOG.setLevel(args.log_level)
     #
     cmd = args.action
