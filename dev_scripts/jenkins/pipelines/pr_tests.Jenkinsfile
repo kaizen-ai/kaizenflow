@@ -486,7 +486,7 @@ pipeline {
                     try {
                         dir(getFastTestWorkspacePath()) {
                             sh('''
-                                    bash -c "source dev_scripts/jenkins/multi_repo_run_fast_tests_on_branch.sh"
+                                    bash -c "source dev_scripts/jenkins/amp.run_fast_tests.sh"
                                     ''')
 //                            sh('''printf "0" > ./tmp_exit_status.txt''')
                             // TODO: delete after tests
@@ -576,7 +576,7 @@ pipeline {
                     try {
                         dir(getSlowTestWorkspacePath()) {
                             sh('''
-                                    bash -c "source dev_scripts/jenkins/multi_repo_run_slow_tests_on_branch.sh"
+                                    bash -c "source dev_scripts/jenkins/amp.run_slow_tests.sh"
                                     ''')
 //                            sh('''printf "0" > ./tmp_exit_status.txt''')
                             // TODO: delete after tests
