@@ -53,10 +53,10 @@ arma00process = sig_gen.ArmaProcess([], [])
 
 # %%
 rets = arma00process.generate_sample(
-    {"start": "2000-01-01", "periods": 4*252, "freq": "B"},
+    {"start": "2000-01-01", "periods": 4 * 252, "freq": "B"},
     scale=5,
     burnin=20,
-    seed=42
+    seed=42,
 )
 
 # %%
