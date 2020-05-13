@@ -17,37 +17,6 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
-def _calculate_exit_status(
-    branch_dirty_status: bool, master_lints: int, branch_lints: int,
-) -> Tuple[int, str]:
-    """
-    Calculate status and error message.
-    """
-    exit_status = 0
-    errors = []
-    if branch_dirty_status:
-        errors.append("**ERROR**: Run `linter.py. -b` locally before merging.")
-        exit_status = 1
-    if master_lints > 0:
-        errors.append("**WARNING**: Your branch has lints. Please fix them.")
-    if branch_lints > master_lints:
-        exit_status = 1
-        errors.append("**ERROR**: You introduced more lints. Please fix them.")
-    return exit_status, "\n".join(errors)
-
-
-def _compute_stats(
-    master_dirty: int, branch_dirty: int, master_lints: int, branch_lints: int,
-) -> Tuple[bool, bool, int, str]:
-    # Prepares a message and exit status
-    master_dirty_status = master_dirty > 0
-    branch_dirty_status = branch_dirty > 0
-    exit_status, errors = _calculate_exit_status(
-        branch_dirty_status, master_lints, branch_lints
-    )
-    return master_dirty_status, branch_dirty_status, exit_status, errors
-
-
 def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int, int, str]:
     cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
@@ -111,42 +80,35 @@ def _perform_linter_for_reference_branch(
     return master_lints, master_dirty
 
 
-def _prepare_message(
-    base_commit_sha,
-    master_lints,
-    master_dirty_status,
-    head_branch_name,
-    head_commit_sha,
-    branch_lints,
-    branch_dirty_status,
-    errors,
-    linter_message,
-    build_url: Optional[str],
-) -> str:
-    # Message
-    message = list()
-    message.append("# Results of the linter build")
-    console_url = os.path.join(str(build_url), "consoleFull")
-    if build_url is not None:
-        console_message = f"Console output: {console_url}"
-    else:
-        console_message = "Console output: No console output"
-    message.append(console_message)
-    message.append(f"- Master (sha: {base_commit_sha})")
-    message.append(f"\t- Number of lints: {master_lints}")
-    message.append(f"\t- Dirty (i.e., linter was not run): {master_dirty_status}")
-    message.append(f"- Branch ({head_branch_name}: {head_commit_sha})")
-    message.append(f"\t- Number of lints: {branch_lints}")
-    message.append(f"\t- Dirty (i.e., linter was not run): {branch_dirty_status}")
-    diff_lints = branch_lints - master_lints
-    message.append(
-        f"\nThe number of lints introduced with this change: {diff_lints}"
-    )
-    message = "\n".join(message)
-    message += "\n\n" + errors
-    message += "\n" + linter_message
+def _calculate_exit_status(
+    branch_dirty_status: bool, master_lints: int, branch_lints: int,
+) -> Tuple[int, str]:
+    """
+    Calculate status and error message.
+    """
+    exit_status = 0
+    errors = []
+    if branch_dirty_status:
+        errors.append("**ERROR**: Run `linter.py. -b` locally before merging.")
+        exit_status = 1
+    if master_lints > 0:
+        errors.append("**WARNING**: Your branch has lints. Please fix them.")
+    if branch_lints > master_lints:
+        exit_status = 1
+        errors.append("**ERROR**: You introduced more lints. Please fix them.")
+    return exit_status, "\n".join(errors)
 
-    return message
+
+def _compute_stats(
+    master_dirty: int, branch_dirty: int, master_lints: int, branch_lints: int,
+) -> Tuple[bool, bool, int, str]:
+    # Prepares a message and exit status
+    master_dirty_status = master_dirty > 0
+    branch_dirty_status = branch_dirty > 0
+    exit_status, errors = _calculate_exit_status(
+        branch_dirty_status, master_lints, branch_lints
+    )
+    return master_dirty_status, branch_dirty_status, exit_status, errors
 
 
 def _calculate_stats(
@@ -186,18 +148,28 @@ def _calculate_stats(
         exit_status,
         errors,
     ) = _compute_stats(master_dirty, branch_dirty, master_lints, branch_lints)
-    message = _prepare_message(
-        base_commit_sha,
-        master_lints,
-        master_dirty_status,
-        head_branch_name,
-        head_commit_sha,
-        branch_lints,
-        branch_dirty_status,
-        errors,
-        linter_message,
-        build_url,
+    # Message
+    message = list()
+    message.append("# Results of the linter build")
+    console_url = os.path.join(str(build_url), "consoleFull")
+    if build_url is not None:
+        console_message = f"Console output: {console_url}"
+    else:
+        console_message = "Console output: No console output"
+    message.append(console_message)
+    message.append(f"- Master (sha: {base_commit_sha})")
+    message.append(f"\t- Number of lints: {master_lints}")
+    message.append(f"\t- Dirty (i.e., linter was not run): {master_dirty_status}")
+    message.append(f"- Branch ({head_branch_name}: {head_commit_sha})")
+    message.append(f"\t- Number of lints: {branch_lints}")
+    message.append(f"\t- Dirty (i.e., linter was not run): {branch_dirty_status}")
+    diff_lints = branch_lints - master_lints
+    message.append(
+        f"\nThe number of lints introduced with this change: {diff_lints}"
     )
+    message = "\n".join(message)
+    message += "\n\n" + errors
+    message += "\n" + linter_message
     return exit_status, message
 
 
