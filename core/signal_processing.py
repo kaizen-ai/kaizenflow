@@ -288,7 +288,7 @@ def compute_jensen_ratio(
             raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
     dbg.dassert(data.apply(np.isfinite).all())
     # Return NaN if there is no data.
-    if data.size < 1:
+    if data.size == 0:
         return np.nan
     # Calculate norms.
     lp = sp.linalg.norm(data, ord=p_norm)
@@ -332,6 +332,9 @@ def compute_forecastability(
             raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
     else:
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    # Return NaN if there is no data.
+    if signal.size == 0:
+        return np.nan
     if mode == "welch":
         _, psd = sp.signal.welch(signal)
     elif mode == "periodogram":
