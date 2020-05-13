@@ -1,14 +1,20 @@
 #!/bin/bash -e
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# Set env.
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-source dev_scripts/setenv_amp.jenkins.sh
+CONDA_ENV="amp_develop.daily_build"
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# Run tests.
+# Init.
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-source dev_scripts/jenkins/test_runners/run_fast_tests.sh
-# Jenkins read this file in the pipeline
-printf "$?" > ./tmp_exit_status.txt
+CMD="source ./dev_scripts/jenkins/amp.jenkins_helpers.sh"
+echo "+ $CMD"
+eval $CMD
+
+source_scripts
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Setenv.
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+setenv "$AMP/dev_scripts/setenv_amp.sh" $CONDA_ENV
+
