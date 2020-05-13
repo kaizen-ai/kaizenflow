@@ -222,9 +222,12 @@ def plot_crosscorrelation(
 # #############################################################################
 
 
-def compute_jensen_ratio(signal: pd.Series, p_norm: float = 2,
-                         inf_mode: Optional[str] = None,
-                         nan_mode: Optional[str] = None) -> float:
+def compute_jensen_ratio(
+    signal: pd.Series,
+    p_norm: float = 2,
+    inf_mode: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+) -> float:
     """
     Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
 
@@ -295,8 +298,9 @@ def compute_jensen_ratio(signal: pd.Series, p_norm: float = 2,
     return scaled_support * lp / l1
 
 
-def compute_forecastability(signal: pd.Series, mode: str = "welch",
-                            nan_mode: Optional[str] = None) -> float:
+def compute_forecastability(
+    signal: pd.Series, mode: str = "welch", nan_mode: Optional[str] = None
+) -> float:
     r"""
     Compute frequency-domain-based "forecastability" of signal.
 
