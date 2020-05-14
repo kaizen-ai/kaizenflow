@@ -210,7 +210,7 @@ def _analyze(srs):
     print(np.isnan(srs).sum())
     srs.plot(kind="hist")
     plt.show()
-    pprint.pprint(stats)
+    pprint.pprint(info)
 
 
 # %%
@@ -218,9 +218,9 @@ mode = "winsorize"
 lower_quantile = 0.01
 window = 1000
 min_periods = 10
-stats = collections.OrderedDict()
+info = collections.OrderedDict()
 srs_out = sigp.process_outliers(
-    srs, mode, lower_quantile, window=window, min_periods=min_periods, info=stats
+    srs, mode, lower_quantile, window=window, min_periods=min_periods, info=info
 )
 #
 _analyze(srs_out)
@@ -231,7 +231,7 @@ lower_quantile = 0.01
 upper_quantile = 0.90
 window = 1000
 min_periods = 10
-stats = collections.OrderedDict()
+info = collections.OrderedDict()
 srs_out = sigp.process_outliers(
     srs,
     mode,
@@ -239,7 +239,7 @@ srs_out = sigp.process_outliers(
     upper_quantile=upper_quantile,
     window=window,
     min_periods=min_periods,
-    info=stats,
+    info=info,
 )
 #
 _analyze(srs_out)
@@ -249,9 +249,9 @@ mode = "set_to_nan"
 lower_quantile = 0.01
 window = 1000
 min_periods = 10
-stats = collections.OrderedDict()
+info = collections.OrderedDict()
 srs_out = sigp.process_outliers(
-    srs, mode, lower_quantile, window=window, min_periods=min_periods, info=stats
+    srs, mode, lower_quantile, window=window, min_periods=min_periods, info=info
 )
 #
 _analyze(srs_out)
@@ -261,9 +261,11 @@ mode = "set_to_zero"
 lower_quantile = 0.10
 window = 1000
 min_periods = 10
-stats = collections.OrderedDict()
+info = collections.OrderedDict()
 srs_out = sigp.process_outliers(
-    srs, mode, lower_quantile, window=window, min_periods=min_periods, info=stats
+    srs, mode, lower_quantile, window=window, min_periods=min_periods, info=info
 )
 #
 _analyze(srs_out)
+
+# %%
