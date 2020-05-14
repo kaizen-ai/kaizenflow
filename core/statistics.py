@@ -487,8 +487,14 @@ def apply_adf_test(
         )
     except ValueError as inst:
         _LOG.warning(inst)
-        (adf_stat, pvalue, usedlag, nobs, critical_values, icbest) = \
-        (np.nan, np.nan, np.nan, np.nan, {"1%": np.nan, "5%": np.nan, "10%": np.nan}, np.nan)
+        (adf_stat, pvalue, usedlag, nobs, critical_values, icbest) = (
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            {"1%": np.nan, "5%": np.nan, "10%": np.nan},
+            np.nan,
+        )
         #
     res = [
         ("adf_stat", adf_stat),
