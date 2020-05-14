@@ -474,16 +474,22 @@ def apply_adf_test(
     else:
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
-    (
-        adf_stat,
-        pvalue,
-        usedlag,
-        nobs,
-        critical_values,
-        icbest,
-    ) = sm.tsa.stattools.adfuller(
-        data.values, maxlag=maxlag, regression=regression, autolag=autolag
-    )
+    try:
+        (
+            adf_stat,
+            pvalue,
+            usedlag,
+            nobs,
+            critical_values,
+            icbest,
+        ) = sm.tsa.stattools.adfuller(
+            data.values, maxlag=maxlag, regression=regression, autolag=autolag
+        )
+    except ValueError as inst:
+        _LOG.warning(inst)
+        (adf_stat, pvalue, usedlag, nobs, critical_values, icbest) = \
+        (np.nan, np.nan, np.nan, np.nan, {"1%": np.nan, "5%": np.nan, "10%": np.nan}, np.nan)
+        #
     res = [
         ("adf_stat", adf_stat),
         ("pval", pvalue),
