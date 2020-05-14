@@ -111,6 +111,25 @@ plot.plot_autocorrelation(rets)
 # %%
 plot.plot_spectrum(rets)
 
+# %%
+stats.apply_adf_test(rets, verbose=True)
+
+# %%
+rets
+
+# %%
+import statsmodels as sm
+
+# %%
+adf_stat, pvalue, usedlag, nobs, critical_values, icbest = sm.tsa.stattools.adfuller(
+        rets.values + [np.nan]
+    )
+
+# %%
+critical_values
+
+# %%
+
 # %% [markdown]
 # ### Returns wavelet decomposition
 
