@@ -81,6 +81,9 @@ price_decomp.head(3)
 # %%
 plot.plot_cols(price_decomp)
 
+# %%
+price_decomp.apply(stats.apply_adf_test)
+
 # %% [markdown]
 # ### Price wavelet decomposition
 
