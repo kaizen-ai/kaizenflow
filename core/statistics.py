@@ -442,14 +442,15 @@ def apply_normality_test(
 
 
 # TODO(*): Maybe add `inf_mode`.
-def apply_adf_test(srs: pd.Series,
-                   maxlag: Optional[int] = None,
-                   regression: Optional[str] = None,
-                   autolag: Optional[str] = None,
-                   nan_mode: Optional[str] = None,
-                   ) -> pd.Series:
+def apply_adf_test(
+    srs: pd.Series,
+    maxlag: Optional[int] = None,
+    regression: Optional[str] = None,
+    autolag: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+) -> pd.Series:
     """
-    Implement a wrapper around statsmodels' adfuller test
+    Implement a wrapper around statsmodels' adfuller test.
 
     :param srs: pandas series of floats
     :param maxlag: as in stattools.adfuller
@@ -473,20 +474,26 @@ def apply_adf_test(srs: pd.Series,
     else:
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
-    adf_stat, pvalue, usedlag, nobs, critical_values, icbest = sm.tsa.stattools.adfuller(
+    (
+        adf_stat,
+        pvalue,
+        usedlag,
+        nobs,
+        critical_values,
+        icbest,
+    ) = sm.tsa.stattools.adfuller(
         data.values, maxlag=maxlag, regression=regression, autolag=autolag
     )
-    res =  [
-                ("adf_stat", adf_stat),
-                ("pval", pvalue),
-                ("used_lag", usedlag),
-                ("nobs", nobs),
-                ("critical_values_1%", critical_values["1%"]),
-                ("critical_values_5%", critical_values["5%"]),
-                ("critical_values_10%", critical_values["10%"]),
-                ("ic_best", icbest),
-            ]
+    res = [
+        ("adf_stat", adf_stat),
+        ("pval", pvalue),
+        ("used_lag", usedlag),
+        ("nobs", nobs),
+        ("critical_values_1%", critical_values["1%"]),
+        ("critical_values_5%", critical_values["5%"]),
+        ("critical_values_10%", critical_values["10%"]),
+        ("ic_best", icbest),
+    ]
     data = list(zip(*res))
     res = pd.Series(data[1], index=data[0], name=srs.name)
     return res
-

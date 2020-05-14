@@ -1393,7 +1393,7 @@ def to_qgrid(df: pd.DataFrame) -> Any:
         "autoEdit": False,
     }
     df = df.copy()
-    #if not df.index.name:
+    # if not df.index.name:
     #    df.index.name = "index"
     qgrid_widget = qgrid.show_grid(
         df, show_toolbar=True, grid_options=grid_options
