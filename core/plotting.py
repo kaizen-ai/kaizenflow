@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Import as:
 
@@ -40,7 +41,7 @@ _DATETIME_TYPES = [
 ]
 
 
-# #############################################################################
+###############################################################################
 # General dataframe plotting helpers
 # #############################################################################
 
@@ -151,7 +152,7 @@ def plot_categories_count(
     plt.show()
 
 
-# #############################################################################
+###############################################################################
 # Time series plotting
 # #############################################################################
 
@@ -348,7 +349,7 @@ def plot_spectrum(
         # ax2.set_xlabel("Time window")
 
 
-# #############################################################################
+###############################################################################
 # Correlation-type plots
 # #############################################################################
 
@@ -440,6 +441,8 @@ def plot_correlation_matrix(
     annot: Union[bool, str] = False,
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
+    method: Optional[str] = 'pearson',
+    min_periods: Optional[int] = 1
 ) -> pd.core.frame.DataFrame:
     """
     Compute correlation matrix and plot its heatmap .
@@ -449,12 +452,14 @@ def plot_correlation_matrix(
     :annot:
     :figsize: If nothing specified, basic (20,5) used.
     :title: Title for the plot.
+    :method: "pearson", "kendall", "spearman" or callable method of correlation.
+    :min_periods: Minimum number of observations required per pair of columns to have a valid result. Currently only available for Pearson and Spearman correlation.
     """
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return None
     # Compute the correlation matrix.
-    corr_df = df.corr()
+    corr_df = df.corr(method, min_periods)
     # Plot heatmap.
     plot_heatmap(
         corr_df,
@@ -572,7 +577,7 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-# #############################################################################
+###############################################################################
 # Eval metrics plots
 # #############################################################################
 
@@ -647,7 +652,7 @@ def multipletests_plot(
     plt.legend()
 
 
-# #############################################################################
+###############################################################################
 # Data count plots.
 # #############################################################################
 
@@ -776,3 +781,6 @@ def plot_barplot(
     if plot_title:
         plt.title(plot_title)
     plt.show()
+
+""
+
