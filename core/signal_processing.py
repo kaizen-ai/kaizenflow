@@ -968,11 +968,16 @@ def process_outliers(
     Process outliers in different ways given lower / upper quantiles.
 
     Default behavior:
+    - If `window` is `None`, set `window` to series length
+      - This works like an expanding window (we always look at the full
+        history, except for anything burned by `min_periods`)
     - if `min_periods` is `None` and `window` is `None`, set `min_periods` to
       `0`
+      - Like an expanding window with no data burned
     - if `min_periods` is `None` and `window` is not `None`, set `min_periods`
-       to `window`
-    - if `window` is `None`, set `window` to series length
+      to `window`
+      - This is a sliding window with leading data burned so that every estimate
+        uses a full window's worth of data
 
     :param srs: pd.Series to process
     :param lower_quantile: lower quantile (in range [0, 1]) of the values to keep
