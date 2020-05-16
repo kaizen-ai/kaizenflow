@@ -460,7 +460,8 @@ def plot_correlation_matrix(
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return None
     # Compute the correlation matrix.
-    corr_df = df.corr(method=method or "pearson", min_periods=min_periods)
+    method = method or "pearson"
+    corr_df = df.corr(method=method, min_periods=min_periods)
     # Plot heatmap.
     plot_heatmap(
         corr_df,
