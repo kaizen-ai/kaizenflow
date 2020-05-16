@@ -216,10 +216,12 @@ class MultivariateNormalProcess:
     A wrapper around sp.stats.multivariate_normal, with Pandas support.
     """
 
-    def __init__(self,
-                 mean: Optional[pd.Series] = None,
-                 cov: Optional[pd.DataFrame] = None,
-                 allow_singular: Optional[bool] = None) -> None:
+    def __init__(
+        self,
+        mean: Optional[pd.Series] = None,
+        cov: Optional[pd.DataFrame] = None,
+        allow_singular: Optional[bool] = None,
+    ) -> None:
         """
         Optionally initialize mean and covariance of multivariate normal RV.
         """
@@ -227,9 +229,9 @@ class MultivariateNormalProcess:
         self.cov = self._maybe_return_values(cov, pd.DataFrame)
         self.allow_singular = allow_singular
 
-    def set_cov_from_inv_wishart_draw(self,
-                                      dim: int,
-                                      seed: Optional[int] = None) -> None:
+    def set_cov_from_inv_wishart_draw(
+        self, dim: int, seed: Optional[int] = None
+    ) -> None:
         """
         Default to least informative proper distribution.
 
@@ -241,9 +243,9 @@ class MultivariateNormalProcess:
         rv = sp.stats.invwishart(df=dim, scale=scale)
         self.cov = rv.rvs(random_state=seed)
 
-    def generate_sample(self,
-                        date_range_kwargs: Dict[str, Any],
-                        seed: Optional[int] = None) -> pd.DataFrame:
+    def generate_sample(
+        self, date_range_kwargs: Dict[str, Any], seed: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Generate a multivariate normal distribution sample over index.
 
@@ -251,13 +253,17 @@ class MultivariateNormalProcess:
         """
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
-        rv = sp.stats.multivariate_normal(mean=self.mean, cov=self.cov, allow_singular=self.allow_singular)
+        rv = sp.stats.multivariate_normal(
+            mean=self.mean, cov=self.cov, allow_singular=self.allow_singular
+        )
         data = rv.rvs(size=nsample, random_state=seed)
         return pd.DataFrame(index=index, data=data)
 
     @staticmethod
-    def _maybe_return_values(obj: Union[pd.Series, pd.DataFrame, None],
-                             expected_type: Union[pd.Series, pd.DataFrame]) -> Union[None, np.array]:
+    def _maybe_return_values(
+        obj: Union[pd.Series, pd.DataFrame, None],
+        expected_type: Union[pd.Series, pd.DataFrame],
+    ) -> Union[None, np.array]:
         """
         Return values of series or dataframe or else None if object is None.
 
