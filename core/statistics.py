@@ -460,12 +460,10 @@ def apply_adf_test(
     :return: test statistic, pvalue, and related info
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    if regression is None:
-        regression = "c"
-    if autolag is None:
-        autolag = "AIC"
-    if nan_mode is None:
-        nan_mode = "ignore"
+    regression = regression or "c"
+    autolag = autolag or "AIC"
+    nan_mode = nan_mode or "ignore"
+    # TODO(PartTask2386): Think about factoring out this idiom.
     if nan_mode == "ignore":
         data = srs.dropna()
     elif nan_mode == "strict":
@@ -486,6 +484,8 @@ def apply_adf_test(
             data.values, maxlag=maxlag, regression=regression, autolag=autolag
         )
     except ValueError as inst:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
         _LOG.warning(inst)
         (adf_stat, pvalue, usedlag, nobs, critical_values, icbest) = (
             np.nan,
