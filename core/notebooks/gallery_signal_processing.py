@@ -218,14 +218,18 @@ for i in np.arange(0.5, 4.5, 0.5):
 
 # %%
 for i in range(1, 6):
-    sigp.compute_smooth_derivative(impulse, tau=100*i, min_periods=0, scaling=0, order=1).plot()
+    sigp.compute_smooth_derivative(
+        impulse, tau=100 * i, min_periods=0, scaling=0, order=1
+    ).plot()
 
 # %% [markdown]
 # ## Dependence on order
 
 # %%
 for i in range(1, 6):
-    sigp.compute_smooth_derivative(impulse, tau=100, min_periods=0, scaling=0, order=i).plot()
+    sigp.compute_smooth_derivative(
+        impulse, tau=100, min_periods=0, scaling=0, order=i
+    ).plot()
 
 # %% [markdown]
 # ## Application to slope 1 linear growth with varying tau, scaling = 1
@@ -235,7 +239,9 @@ linear_growth = pd.Series(index=price.index, data=range(price.size))
 
 # %%
 for i in range(1, 6):
-    sigp.compute_smooth_derivative(linear_growth, tau=2**i, min_periods=0, scaling=1, order=1).plot()
+    sigp.compute_smooth_derivative(
+        linear_growth, tau=2 ** i, min_periods=0, scaling=1, order=1
+    ).plot()
 
 # %% [markdown]
 # ## Application to prices
@@ -246,7 +252,9 @@ dprice["rets"] = rets
 
 # %%
 for i in range(0, 7):
-    dprice[i] = sigp.compute_smooth_derivative(price, tau=2**i, min_periods=0, scaling=1, order=1)
+    dprice[i] = sigp.compute_smooth_derivative(
+        price, tau=2 ** i, min_periods=0, scaling=1, order=1
+    )
 
 # %%
 plot.plot_cols(dprice)
