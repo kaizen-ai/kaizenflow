@@ -631,7 +631,7 @@ def compute_smooth_derivative(
         differential = gamma * (s1 + s2 + s3)
         if scaling == 0:
             return differential
-        return differential / (tau ** scaling)
+        return NotImplementedError(f"scaling={scaling} not yet supported.")
 
     signal_diff = signal.copy()
     for _ in range(0, order):
