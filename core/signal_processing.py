@@ -591,19 +591,22 @@ def compute_smooth_derivative(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int,
-    scaling: int = 0,
+    scaling: int = 1,
     order: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
     r"""
+    Compute a "low-noise" differential operator.
+
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 
-    Compute difference of around time "now" over a time interval \tau_1
-    and an average around time "now - \tau" over a time interval \tau_2.
-    Here, \tau_1, \tau_2 are taken to be approximately \tau / 2.
+    - Computes difference of around time "now" over a time interval \tau_1 and
+      an average around time "now - \tau" over a time interval \tau_2
+    - Here, \tau_1, \tau_2 are taken to be approximately `tau`/ 2
 
-    The normalization factors are chosen so that the differential of a constant
-    is zero and so that the differential of 't' is approximately \tau (for
-    order = 0).
+    The normalization factors are chosen so that
+      - the differential of a constant is zero
+      - the differential (`scaling` = 0) of `t` is approximately `tau`
+      - the derivative (`order` = 1) of `t` is approximately 1
 
     The `scaling` parameter refers to the exponential weighting of inverse
     tau.

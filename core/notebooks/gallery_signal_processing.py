@@ -159,7 +159,7 @@ plot.plot_spectrum(zscored_rets, title_prefix="tau exp = ")
 # %%
 
 # %% [markdown]
-# # EMAs
+# # EMAs and Smooth Moving Averages
 
 # %%
 impulse = sig_gen.get_impulse(-252, 3 * 252, tick=1)
@@ -167,9 +167,15 @@ impulse = sig_gen.get_impulse(-252, 3 * 252, tick=1)
 # %%
 impulse.plot()
 
+# %% [markdown]
+# ## Dependence of ema on depth
+
 # %%
 for i in range(1, 6):
     sigp.compute_ema(impulse, tau=40, min_periods=20, depth=i).plot()
+
+# %% [markdown]
+# ## Dependence of smooth moving average on max depth
 
 # %%
 for i in range(1, 6):
@@ -177,17 +183,26 @@ for i in range(1, 6):
         impulse, tau=40, min_periods=20, min_depth=1, max_depth=i
     ).plot()
 
+# %% [markdown]
+# ## Dependence of smooth moving average on min depth
+
 # %%
 for i in range(1, 6):
     sigp.compute_smooth_moving_average(
         impulse, tau=40, min_periods=20, min_depth=i, max_depth=5
     ).plot()
 
+# %% [markdown]
+# ## Dependence of rolling norm on max depth
+
 # %%
 for i in range(1, 6):
     sigp.compute_rolling_norm(
         impulse, tau=40, min_periods=20, min_depth=1, max_depth=i, p_moment=1
     ).plot()
+
+# %% [markdown]
+# ## Dependence of rolling norm on moment
 
 # %%
 for i in np.arange(0.5, 4.5, 0.5):
@@ -196,7 +211,59 @@ for i in np.arange(0.5, 4.5, 0.5):
     ).plot()
 
 # %% [markdown]
-# # Outliers handling
+# # Smooth Derivatives
+
+# %% [markdown]
+# ## Dependence on tau
+
+# %%
+for i in range(1, 6):
+    sigp.compute_smooth_derivative(
+        impulse, tau=100 * i, min_periods=0, scaling=0, order=1
+    ).plot()
+
+# %% [markdown]
+# ## Dependence on order
+
+# %%
+for i in range(1, 6):
+    sigp.compute_smooth_derivative(
+        impulse, tau=100, min_periods=0, scaling=0, order=i
+    ).plot()
+
+# %% [markdown]
+# ## Application to slope 1 linear growth with varying tau, scaling = 1
+
+# %%
+linear_growth = pd.Series(index=price.index, data=range(price.size))
+
+# %%
+for i in range(1, 6):
+    sigp.compute_smooth_derivative(
+        linear_growth, tau=2 ** i, min_periods=0, scaling=1, order=1
+    ).plot()
+
+# %% [markdown]
+# ## Application to prices
+
+# %%
+dprice = pd.DataFrame(index=price.index)
+dprice["rets"] = rets
+
+# %%
+for i in range(0, 7):
+    dprice[i] = sigp.compute_smooth_derivative(
+        price, tau=2 ** i, min_periods=0, scaling=1, order=1
+    )
+
+# %%
+plot.plot_cols(dprice)
+
+# %%
+plot.plot_cols(dprice.cumsum(), mode="renormalize")
+
+# %% [markdown]
+# # Outlier handling
 
 # %%
 np.random.seed(100)
