@@ -15,6 +15,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 # import gluonts.dataset.util as gdu  # isort: skip # noqa: F401 # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
+import scipy as sp
 
 # import statsmodels as sm
 import statsmodels.api as sm
@@ -208,6 +209,66 @@ class ArmaProcess:
         # Create series index and name.
         name = f"arma({len(self.ar_coeffs)},{len(self.ma_coeffs)})"
         return pd.Series(index=index, data=data, name=name)
+
+
+class MultivariateNormalProcess:
+    """
+    A wrapper around sp.stats.multivariate_normal, with Pandas support.
+    """
+
+    def __init__(self,
+                 mean: Optional[pd.Series] = None,
+                 cov: Optional[pd.DataFrame] = None,
+                 allow_singular: Optional[bool] = None) -> None:
+        """
+        Optionally initialize mean and covariance of multivariate normal RV.
+        """
+        self.mean = self._maybe_return_values(mean, pd.Series)
+        self.cov = self._maybe_return_values(cov, pd.DataFrame)
+        self.allow_singular = allow_singular
+
+    def set_cov_from_inv_wishart_draw(self,
+                                      dim: int,
+                                      seed: Optional[int] = None) -> None:
+        """
+        Default to least informative proper distribution.
+
+        Take dof = n, scale = I_n.
+
+        https://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.stats.invwishart.html#scipy.stats.invwishart
+        """
+        scale = np.identity(dim)
+        rv = sp.stats.invwishart(df=dim, scale=scale)
+        self.cov = rv.rvs(random_state=seed)
+
+    def generate_sample(self,
+                        date_range_kwargs: Dict[str, Any],
+                        seed: Optional[int] = None) -> pd.DataFrame:
+        """
+        Generate a multivariate normal distribution sample over index.
+
+        https://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.stats.multivariate_normal.html#scipy.stats.multivariate_normal
+        """
+        index = pd.date_range(**date_range_kwargs)
+        nsample = index.size
+        rv = sp.stats.multivariate_normal(mean=self.mean, cov=self.cov, allow_singular=self.allow_singular)
+        data = rv.rvs(size=nsample, random_state=seed)
+        return pd.DataFrame(index=index, data=data)
+
+    @staticmethod
+    def _maybe_return_values(obj: Union[pd.Series, pd.DataFrame, None],
+                             expected_type: Union[pd.Series, pd.DataFrame]) -> Union[None, np.array]:
+        """
+        Return values of series or dataframe or else None if object is None.
+
+        This is a convenience method used in initialization.
+        """
+        if obj is None:
+            return None
+        elif isinstance(obj, expected_type):
+            return obj.values
+        else:
+            raise ValueError(f"Unsupported type {type(obj)}")
 
 
 def generate_arima_signal_and_response(
