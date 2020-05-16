@@ -130,7 +130,7 @@ class Node(NodeInterface):
         )
         # Create a dictionary of values for `method` if it doesn't exist.
         if method not in self._output_vals:
-            self._output_vals[method] : Dict[str, Any] = {}
+            self._output_vals[method]: Dict[str, Any] = {}
         # Assign the requested value.
         self._output_vals[method][name] = value
 
