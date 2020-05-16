@@ -233,9 +233,10 @@ class MultivariateNormalProcess:
         self, dim: int, seed: Optional[int] = None
     ) -> None:
         """
-        Default to least informative proper distribution.
+        Set covariance matrix equal to a draw from Inverse Wishart.
 
-        Take dof = n, scale = I_n.
+        - Defaults to least informative proper distribution
+        - Takes dof = dim, scale = identify matrix of dimension `dim`
 
         https://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.stats.invwishart.html#scipy.stats.invwishart
         """
