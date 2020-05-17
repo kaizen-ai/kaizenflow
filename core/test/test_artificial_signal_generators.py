@@ -1,5 +1,7 @@
 import logging
 
+import pandas as pd
+
 import core.artificial_signal_generators as sig_gen
 import helpers.unit_test as hut
 
@@ -51,6 +53,25 @@ class TestArmaProcess(hut.TestCase):
                 realization, title=realization.name, index=True
             )
         )
+
+
+class TestMultivariateNormalProcess(hut.TestCase):
+    def test1(self) -> None:
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
+        realization = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B",}, seed=0
+        )
+        self.check_string(hut.convert_df_to_string(realization, index=True))
+
+    def test2(self) -> None:
+        mean = pd.Series([1, 2])
+        cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
+        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
+        realization = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B",}, seed=0
+        )
+        self.check_string(hut.convert_df_to_string(realization, index=True))
 
 
 # TODO(*): Disabled because of PartTask186.
