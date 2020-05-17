@@ -263,6 +263,61 @@ plot.plot_cols(dprice)
 plot.plot_cols(dprice.cumsum(), mode="renormalize")
 
 # %% [markdown]
+# # Multivariate series
+
+# %%
+mvn = sig_gen.MultivariateNormalProcess()
+mvn.set_cov_from_inv_wishart_draw(dim=8, seed=10)
+mvn_rets = mvn.generate_sample(
+    {"start": "2000-01-01", "periods": 4 * 252, "freq": "B"}, seed=10
+)
+
+# %%
+plot.plot_cols(mvn_rets)
+
+# %% [markdown]
+# ## Z-score the time series
+
+# %%
+mvn_zrets = sigp.compute_rolling_zscore(mvn_rets, tau=16, demean=False)
+
+# %%
+plot.plot_cols(mvn_zrets)
+
+# %% [markdown]
+# ## Compute Incremental PCA
+
+# %%
+eigenvalues, eigenvectors = sigp.compute_ipca(mvn_zrets, num_pc=3, alpha=1 / 65)
+
+# %% [markdown]
+# ### Plot eigenvalue evolution over time
+
+# %%
+plot.plot_cols(eigenvalues)
+
+# %% [markdown]
+# ### Plot eigenvector evolution over time
+
+# %%
+eigenvectors[0].plot()
+
+# %%
+eigenvectors[1].plot()
+
+# %%
+eigenvectors[2].plot()
+
+# %% [markdown]
+# ### Plot eigenvector angular distance change over time
+
+# %%
+eigenvector_diffs = sigp.compute_eigenvector_diffs(eigenvectors)
+
+# %%
+plot.plot_cols(eigenvector_diffs)
+
+# %% [markdown]
 # # Outlier handling
 
 # %%
