@@ -269,8 +269,8 @@ plot.plot_cols(dprice.cumsum(), mode="renormalize")
 mvn = sig_gen.MultivariateNormalProcess()
 mvn.set_cov_from_inv_wishart_draw(dim=8, seed=10)
 mvn_rets = mvn.generate_sample(
-    {"start": "2000-01-01", "periods": 4 * 252, "freq": "B"},
-    seed=10)
+    {"start": "2000-01-01", "periods": 4 * 252, "freq": "B"}, seed=10
+)
 
 # %%
 plot.plot_cols(mvn_rets)
@@ -288,7 +288,7 @@ plot.plot_cols(mvn_zrets)
 # ## Compute Incremental PCA
 
 # %%
-eigenvalues, eigenvectors = sigp.compute_ipca(mvn_zrets, num_pc=3, alpha=1/65)
+eigenvalues, eigenvectors = sigp.compute_ipca(mvn_zrets, num_pc=3, alpha=1 / 65)
 
 # %% [markdown]
 # ### Plot eigenvalue evolution over time

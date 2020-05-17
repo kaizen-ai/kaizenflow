@@ -1218,7 +1218,7 @@ def compute_ipca(
 
 
 def _compute_ipca_step(
-        u: pd.Series, v: pd.Series, alpha: float
+    u: pd.Series, v: pd.Series, alpha: float
 ) -> Tuple[pd.Series, pd.Series]:
     """
     Single step of incremental PCA.
