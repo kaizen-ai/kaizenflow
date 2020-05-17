@@ -440,6 +440,8 @@ def plot_correlation_matrix(
     annot: Union[bool, str] = False,
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
+    method: Optional[str] = None,
+    min_periods: Optional[int] = None,
 ) -> pd.core.frame.DataFrame:
     """
     Compute correlation matrix and plot its heatmap .
@@ -449,12 +451,16 @@ def plot_correlation_matrix(
     :annot:
     :figsize: If nothing specified, basic (20,5) used.
     :title: Title for the plot.
+    :method: "pearson", "kendall", "spearman" or callable method of correlation.
+    :min_periods: Minimum number of observations required per pair of columns to have
+        a valid result. Currently only available for Pearson and Spearman correlation.
     """
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return None
     # Compute the correlation matrix.
-    corr_df = df.corr()
+    method = method or "pearson"
+    corr_df = df.corr(method=method, min_periods=min_periods)
     # Plot heatmap.
     plot_heatmap(
         corr_df,
