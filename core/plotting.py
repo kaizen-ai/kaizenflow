@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Import as:
 
@@ -783,6 +782,3 @@ def plot_barplot(
     if plot_title:
         plt.title(plot_title)
     plt.show()
-
-""
-
