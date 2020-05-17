@@ -1139,41 +1139,22 @@ def process_outlier_df(
 # #############################################################################
 
 
-def compute_ipca_step(
-    u: pd.Series, v: pd.Series, alpha: float
-) -> Tuple[pd.Series, pd.Series]:
-    """
-    Single step of incremental PCA.
-
-    At each point, the norm of v is the eigenvalue estimate (for the component
-    to which u and v refer).
-
-    :param u: residualized observation for step n, component i
-    :param v: unnormalized eigenvector estimate for step n - 1, component i
-    :param alpha: compute_ema-type weight (choose in [0, 1] and typically < 0.5)
-
-    :return: (u_next, v_next), where
-      * u_next is residualized observation for step n, component i + 1
-      * v_next is unnormalized eigenvector estimate for step n, component i
-    """
-    v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
-    u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
-    return u_next, v_next
-
-
 def compute_ipca(
     df: pd.DataFrame, num_pc: int, alpha: float
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """
     Incremental PCA.
 
-    df should already be centered.
+    The dataframe should already be centered.
 
     https://ieeexplore.ieee.org/document/1217609
     https://www.cse.msu.edu/~weng/research/CCIPCApami.pdf
 
-    :return: df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
-        list of dfs of unit eigenvectors (0 indexes df eigenvectors
+    :param num_pc: number of principal components to calculate
+    :param alpha: analogous to Pandas ewm's `alpha`
+    :return:
+      - df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
+      - list of dfs of unit eigenvectors (0 indexes df eigenvectors
         corresponding to max eigenvalue, etc.).
     """
     dbg.dassert_isinstance(
@@ -1215,7 +1196,7 @@ def compute_ipca(
                 unit_eigenvecs.append([v / norm])
             else:
                 # Main update step for eigenvector i.
-                u, v = compute_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
+                u, v = _compute_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
                 # Bookkeeping.
                 u.name = n
                 v.name = n
@@ -1236,10 +1217,34 @@ def compute_ipca(
     return lambda_df, unit_eigenvec_dfs
 
 
+def _compute_ipca_step(
+        u: pd.Series, v: pd.Series, alpha: float
+) -> Tuple[pd.Series, pd.Series]:
+    """
+    Single step of incremental PCA.
+
+    At each point, the norm of v is the eigenvalue estimate (for the component
+    to which u and v refer).
+
+    :param u: residualized observation for step n, component i
+    :param v: unnormalized eigenvector estimate for step n - 1, component i
+    :param alpha: compute_ema-type weight (choose in [0, 1] and typically < 0.5)
+
+    :return: (u_next, v_next), where
+      * u_next is residualized observation for step n, component i + 1
+      * v_next is unnormalized eigenvector estimate for step n, component i
+    """
+    v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
+    u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
+    return u_next, v_next
+
+
 def compute_unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
     """
-    Accept a df of unit eigenvectors (rows) and returns a series with angular
-    distance from index i to index i + 1.
+    Calculate the angular distance between unit vectors.
+
+    Accepts a df of unit vectors (each row a unit vector) and returns a series
+    of consecutive angular distances indexed according to the later time point.
 
     The angular distance lies in [0, 1].
     """
@@ -1254,7 +1259,7 @@ def compute_unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
 
 def compute_eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
     """
-    Take a list of eigenvectors and returns a df of angular distances.
+    Take a list of eigenvectors and return a df of angular distances.
     """
     ang_chg = []
     for i, vec in enumerate(eigenvecs):
