@@ -467,6 +467,7 @@ def apply_adf_test(
     if nan_mode == "ignore":
         data = srs.dropna()
     elif nan_mode == "strict":
+        data = srs
         if srs.isna().any():
             raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
     else:
@@ -534,6 +535,7 @@ def apply_kpss_test(
     if nan_mode == "ignore":
         data = srs.dropna()
     elif nan_mode == "strict":
+        data = srs
         if srs.isna().any():
             raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
     else:
