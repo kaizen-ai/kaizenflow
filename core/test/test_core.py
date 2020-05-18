@@ -16,6 +16,7 @@ import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
 import core.statistics as stats
+import core.artificial_signal_generators as sig_gen
 import helpers.dbg as dbg
 import helpers.printing as pri
 import helpers.unit_test as ut
@@ -1240,3 +1241,90 @@ class TestComputeFracConstant1(ut.TestCase):
         expected = 0.357143
         actual = stats.compute_frac_constant(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+
+class TestApplyKpssTest1(ut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+
+        np.random.seed(seed=1)
+        arparams = np.array([.75, -.25])
+        maparams = np.array([.65, .35])
+        ar = np.r_[1, -arparams]  # add zero-lag and negate
+        ma = np.r_[1, maparams]  # add zero-lag
+        arma_process = sig_gen.ArmaProcess(ar, ma)
+        date_range = {'start':'1/1/2010', 'periods':40, 'freq':'M'}
+        series = arma_process.generate_sample(date_range_kwargs=date_range)
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series(1)
+        data = [0.359434,
+                0.094641,
+                10.00000,
+                0.739000,
+                0.463000,
+                0.347000,
+                ]
+        index = ['kpss_stat', 'pval', 'lags',
+                 'critical_values_1%',
+                 'critical_values_5%',
+                 'critical_values_10%',
+                 ]
+        expected = pd.Series(data=data, index=index)
+        actual = stats.apply_kpss_test(series)
+        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+
+    def test2(self) -> None:
+        series = self._get_series(1)
+        data = [0.152928,
+                0.044227,
+                10.00000,
+                0.216000,
+                0.146000,
+                0.119000,
+                ]
+        index = ['kpss_stat', 'pval', 'lags',
+                 'critical_values_1%',
+                 'critical_values_5%',
+                 'critical_values_10%',
+                 ]
+        expected = pd.Series(data=data, index=index)
+        actual = stats.apply_kpss_test(series, regression='ct')
+        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+
+    def test3(self) -> None:
+        series = self._get_series(1)
+        data = [0.329548,
+                0.100000,
+                3.000000,
+                0.739000,
+                0.463000,
+                0.347000,
+                ]
+        index = ['kpss_stat', 'pval', 'lags',
+                 'critical_values_1%',
+                 'critical_values_5%',
+                 'critical_values_10%',
+                 ]
+        expected = pd.Series(data=data, index=index)
+        actual = stats.apply_kpss_test(series, nlags='auto')
+        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+
+    def test4(self) -> None:
+        series = self._get_series(1)
+        data = [0.347294,
+                0.099873,
+                5.000000,
+                0.739000,
+                0.463000,
+                0.347000,
+                ]
+        index = ['kpss_stat', 'pval', 'lags',
+                 'critical_values_1%',
+                 'critical_values_5%',
+                 'critical_values_10%',
+                 ]
+        expected = pd.Series(data=data, index=index)
+        actual = stats.apply_kpss_test(series, nlags=5)
+        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
