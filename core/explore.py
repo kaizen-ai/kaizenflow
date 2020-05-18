@@ -657,7 +657,7 @@ def plot_pca_analysis(df, plot_explained_variance=False, num_pcs_to_plot=0):
             num_pcs_to_plot, num_cols=4, sharex=True, sharey=True
         )
         for i in range(num_pcs_to_plot):
-            pc = pcs.ix[:, i]
+            pc = pcs.iloc[:, i]
             pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
 
 
@@ -1218,49 +1218,6 @@ def robust_regression(
 
 
 # #############################################################################
-# Statistics.
-# #############################################################################
-
-
-def adf(srs, verbose=False):
-    """
-    Implement adfuller test as a wrapper around statsmodels.adfuller().
-
-    :param verbose: return all info, instead of just p-value.
-    :return: srs
-    """
-    srs = cast_to_series(srs)
-    import statsmodels.tsa.stattools as sts
-
-    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
-    adf_stat, pvalue, usedlag, nobs, critical_values, icbest = sts.adfuller(
-        srs.values
-    )
-    # E.g.,
-    # (-25.618120847156426, 0.0, 1, 998,
-    # {'1%': -3.4369193380671,
-    #   '5%': -2.864440383452517,
-    #   '10%': -2.56831430323573},
-    # 2658.933246559476)
-    res = [("pvalue", pvalue)]
-    if verbose:
-        res.extend(
-            [
-                ("adf_stat", adf_stat),
-                ("usedlag", usedlag),
-                ("nobs", nobs),
-                ("critical_values_1%", critical_values["1%"]),
-                ("critical_values_5%", critical_values["5%"]),
-                ("critical_values_10%", critical_values["10%"]),
-                ("icbest", icbest),
-            ]
-        )
-    data = list(zip(*res))
-    res = pd.Series(data[1], index=data[0])
-    return res
-
-
-# #############################################################################
 # Printing
 # #############################################################################
 
@@ -1436,7 +1393,7 @@ def to_qgrid(df: pd.DataFrame) -> Any:
         "autoEdit": False,
     }
     df = df.copy()
-    #if not df.index.name:
+    # if not df.index.name:
     #    df.index.name = "index"
     qgrid_widget = qgrid.show_grid(
         df, show_toolbar=True, grid_options=grid_options

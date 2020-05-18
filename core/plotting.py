@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Import as:
 
@@ -442,7 +441,7 @@ def plot_correlation_matrix(
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
     method: Optional[str] = None,
-    min_periods: Optional[int] = None
+    min_periods: Optional[int] = None,
 ) -> pd.core.frame.DataFrame:
     """
     Compute correlation matrix and plot its heatmap .
@@ -783,6 +782,3 @@ def plot_barplot(
     if plot_title:
         plt.title(plot_title)
     plt.show()
-
-""
-

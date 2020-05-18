@@ -206,7 +206,16 @@ def get_credentials() -> Dict[str, Any]:
         elif server_name == "Daniils-MacBook-Air.local":
             # Home laptop.
             conda_sh_path = "/Users/danya/opt/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/Users/danya/opt/anaconda3/envs"
+            conda_env_path = "/Users/danya/opt/anaconda3/envs" 
+    elif user_name == "dan":
+        # Dan.
+        git_user_name = "DanilYachmenev"
+        git_user_email = "dan@particle.one"
+        jupyter_port = 9901
+        if server_name == "dan-particle-laptop":
+            # Laptop.
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "/home/dan/anaconda3/envs"
     elif user_name == "greg":
         # Gregory.
         git_user_name = "greg-ptcl"
@@ -229,6 +238,15 @@ def get_credentials() -> Dict[str, Any]:
             # Home laptop.
             conda_sh_path = "/Users/asya/opt/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/asya/.conda/envs"
+    elif user_name == "grisha":
+        # Grisha Pomazkin.
+        git_user_name = "PomazkinG"
+        git_user_email = "pomazkinG@particle.one"
+        jupyter_port = 9631
+        if server_name == "particle-grisha":
+            # Home laptop.
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "~/.conda/envs"
     elif user_name == "jenkins":
         # Jenkins.
         # Jenkins should not commit so it doesn't neet Git credentials.

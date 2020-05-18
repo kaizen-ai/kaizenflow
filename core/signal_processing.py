@@ -591,19 +591,22 @@ def compute_smooth_derivative(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int,
-    scaling: int = 0,
+    scaling: int = 1,
     order: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
     r"""
+    Compute a "low-noise" differential operator.
+
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 
-    Compute difference of around time "now" over a time interval \tau_1
-    and an average around time "now - \tau" over a time interval \tau_2.
-    Here, \tau_1, \tau_2 are taken to be approximately \tau / 2.
+    - Computes difference of around time "now" over a time interval \tau_1 and
+      an average around time "now - \tau" over a time interval \tau_2
+    - Here, \tau_1, \tau_2 are taken to be approximately `tau`/ 2
 
-    The normalization factors are chosen so that the differential of a constant
-    is zero and so that the differential of 't' is approximately \tau (for
-    order = 0).
+    The normalization factors are chosen so that
+      - the differential of a constant is zero
+      - the differential (`scaling` = 0) of `t` is approximately `tau`
+      - the derivative (`order` = 1) of `t` is approximately 1
 
     The `scaling` parameter refers to the exponential weighting of inverse
     tau.
@@ -965,11 +968,24 @@ def process_outliers(
     Process outliers in different ways given lower / upper quantiles.
 
     Default behavior:
-    - if `min_periods` is `None` and `window` is `None`, set `min_periods` to
-      `0`
-    - if `min_periods` is `None` and `window` is not `None`, set `min_periods`
-       to `window`
-    - if `window` is `None`, set `window` to series length
+      - If `window` is `None`, set `window` to series length
+        - This works like an expanding window (we always look at the full
+          history, except for anything burned by `min_periods`)
+      - If `min_periods` is `None` and `window` is `None`, set `min_periods` to
+        `0`
+        - Like an expanding window with no data burned
+      - If `min_periods` is `None` and `window` is not `None`, set `min_periods`
+        to `window`
+        - This is a sliding window with leading data burned so that every
+          estimate uses a full window's worth of data
+
+    Note:
+      - If `window` is set to `None` according to these conventions (i.e., we
+        are in an "expanding window" mode), then outlier effects are never
+        "forgotten" and the processing of the data can depend strongly upon
+        where the series starts
+      - For this reason, it is suggested that `window` be set to a finite value
+        adapted to the data/frequency
 
     :param srs: pd.Series to process
     :param lower_quantile: lower quantile (in range [0, 1]) of the values to keep
@@ -1123,41 +1139,22 @@ def process_outlier_df(
 # #############################################################################
 
 
-def compute_ipca_step(
-    u: pd.Series, v: pd.Series, alpha: float
-) -> Tuple[pd.Series, pd.Series]:
-    """
-    Single step of incremental PCA.
-
-    At each point, the norm of v is the eigenvalue estimate (for the component
-    to which u and v refer).
-
-    :param u: residualized observation for step n, component i
-    :param v: unnormalized eigenvector estimate for step n - 1, component i
-    :param alpha: compute_ema-type weight (choose in [0, 1] and typically < 0.5)
-
-    :return: (u_next, v_next), where
-      * u_next is residualized observation for step n, component i + 1
-      * v_next is unnormalized eigenvector estimate for step n, component i
-    """
-    v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
-    u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
-    return u_next, v_next
-
-
 def compute_ipca(
     df: pd.DataFrame, num_pc: int, alpha: float
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """
     Incremental PCA.
 
-    df should already be centered.
+    The dataframe should already be centered.
 
     https://ieeexplore.ieee.org/document/1217609
     https://www.cse.msu.edu/~weng/research/CCIPCApami.pdf
 
-    :return: df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
-        list of dfs of unit eigenvectors (0 indexes df eigenvectors
+    :param num_pc: number of principal components to calculate
+    :param alpha: analogous to Pandas ewm's `alpha`
+    :return:
+      - df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
+      - list of dfs of unit eigenvectors (0 indexes df eigenvectors
         corresponding to max eigenvalue, etc.).
     """
     dbg.dassert_isinstance(
@@ -1199,7 +1196,7 @@ def compute_ipca(
                 unit_eigenvecs.append([v / norm])
             else:
                 # Main update step for eigenvector i.
-                u, v = compute_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
+                u, v = _compute_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
                 # Bookkeeping.
                 u.name = n
                 v.name = n
@@ -1220,10 +1217,34 @@ def compute_ipca(
     return lambda_df, unit_eigenvec_dfs
 
 
+def _compute_ipca_step(
+    u: pd.Series, v: pd.Series, alpha: float
+) -> Tuple[pd.Series, pd.Series]:
+    """
+    Single step of incremental PCA.
+
+    At each point, the norm of v is the eigenvalue estimate (for the component
+    to which u and v refer).
+
+    :param u: residualized observation for step n, component i
+    :param v: unnormalized eigenvector estimate for step n - 1, component i
+    :param alpha: compute_ema-type weight (choose in [0, 1] and typically < 0.5)
+
+    :return: (u_next, v_next), where
+      * u_next is residualized observation for step n, component i + 1
+      * v_next is unnormalized eigenvector estimate for step n, component i
+    """
+    v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
+    u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
+    return u_next, v_next
+
+
 def compute_unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
     """
-    Accept a df of unit eigenvectors (rows) and returns a series with angular
-    distance from index i to index i + 1.
+    Calculate the angular distance between unit vectors.
+
+    Accepts a df of unit vectors (each row a unit vector) and returns a series
+    of consecutive angular distances indexed according to the later time point.
 
     The angular distance lies in [0, 1].
     """
@@ -1238,7 +1259,7 @@ def compute_unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
 
 def compute_eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
     """
-    Take a list of eigenvectors and returns a df of angular distances.
+    Take a list of eigenvectors and return a df of angular distances.
     """
     ang_chg = []
     for i, vec in enumerate(eigenvecs):

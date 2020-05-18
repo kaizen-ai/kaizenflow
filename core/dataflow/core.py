@@ -1,7 +1,7 @@
 import abc
 import itertools
 import logging
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
 
@@ -38,8 +38,8 @@ class NodeInterface(abc.ABC):
     ) -> None:
         """
         :param nid: node identifier. Should be unique in a graph.
-        :param inputs: list-like string names of input_names.
-        :param outputs: list-like string names out output_names.
+        :param inputs: list-like string names of input_names. None for no names.
+        :param outputs: list-like string names of output_names. None for no names.
         """
         dbg.dassert_isinstance(nid, str)
         dbg.dassert(nid, "Empty string chosen for unique nid!")
@@ -59,17 +59,23 @@ class NodeInterface(abc.ABC):
     def output_names(self) -> List[str]:
         return self._output_names
 
-    def _init_validation_helper(self, l: Optional[List[str]]) -> List[str]:
-        if l is None:
+    @staticmethod
+    def _init_validation_helper(items: Optional[List[str]]) -> List[str]:
+        """
+        Ensure that items are valid.
+        """
+        if items is None:
             return []
-        for item in l:
+        for item in items:
             dbg.dassert_isinstance(item, str)
-        return l
+        return items
 
 
 class Node(NodeInterface):
     """
-    A node class that also can store and retrieve its outputs.
+    A node class that stores and retrieves its output values on a "per-method" basis.
+
+    TODO: Explain use case.
     """
 
     def __init__(
@@ -79,12 +85,15 @@ class Node(NodeInterface):
         outputs: Optional[List[str]] = None,
     ) -> None:
         """
-        Same interface as `NodeInterface`.
+        Implement the same interface as `NodeInterface`.
         """
         super().__init__(nid=nid, inputs=inputs, outputs=outputs)
-        self._output_vals = {}
+        self._output_vals: Dict[str, Dict[str, Any]] = {}
 
-    def get_output(self, method, name):
+    def get_output(self, method: str, name: str) -> Any:
+        """
+        Return the value of output `name` for the requested `method`.
+        """
         dbg.dassert_in(
             name,
             self.output_names,
@@ -101,13 +110,16 @@ class Node(NodeInterface):
         )
         return self._output_vals[method][name]
 
-    def get_outputs(self, method):
+    def get_outputs(self, method: str) -> Dict[str, Any]:
+        """
+        Return all the output values for the requested `method`.
+        """
         dbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method]
 
-    def _store_output(self, method, name, value):
+    def _store_output(self, method: str, name: str, value: Any) -> None:
         """
-        Store the output for a specific method.
+        Store the output for `name` and the specific `method`.
         """
         dbg.dassert_in(
             name,
@@ -116,8 +128,10 @@ class Node(NodeInterface):
             name,
             self.nid,
         )
+        # Create a dictionary of values for `method` if it doesn't exist.
         if method not in self._output_vals:
-            self._output_vals[method] = {}
+            self._output_vals[method]: Dict[str, Any] = {}
+        # Assign the requested value.
         self._output_vals[method][name] = value
 
 
@@ -135,22 +149,25 @@ class DAG:
     """
 
     def __init__(
-        self, name: Optional[Any] = None, mode: Optional[str] = None
+        self, name: Optional[str] = None, mode: Optional[str] = None
     ) -> None:
         """
+        Create a DAG.
 
         :param name: optional str identifier
-        :param mode: determines how to handle an attempt to add a node to the
-            DAG that already belongs to the DAG:
+        :param mode: determines how to handle an attempt to add a node that already
+            belongs to the DAG:
                 - "strict": asserts
                 - "loose": deletes old node (also removes edges) and adds new
                     node
             mode = "loose" is useful for interactive notebooks and debugging.
         """
         self._dag = nx.DiGraph()
+        #
         if name is not None:
             dbg.dassert_isinstance(name, str)
         self._name = name
+        #
         if mode is None:
             mode = "strict"
         dbg.dassert_in(
@@ -162,8 +179,10 @@ class DAG:
     def dag(self) -> nx.DiGraph:
         return self._dag
 
+    # TODO(*): Should we force to always have a name? So mypy can perform more
+    #  checks.
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
         return self._name
 
     @property
@@ -172,21 +191,19 @@ class DAG:
 
     def add_node(self, node: Node) -> None:
         """
-        Adds `node` to the DAG.
+        Add `node` to the DAG.
 
-        Relies upon the unique nid for identifying the node.
-
-        :param node: Node object
+        Rely upon the unique nid for identifying the node.
         """
-        # In principle, NodeInterface could be supported; however, to do so,
+        # In principle, `NodeInterface` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
         dbg.dassert_isinstance(
             node, Node, "Only DAGs of class `Node` are supported!"
         )
         # NetworkX requires that nodes be hashable and uses hashes for
         # identifying nodes. Because our Nodes are objects whose hashes can
-        # change as operations are performed, we use the Node.nid as the
-        # NetworkX node and the Node instance as a `node attribute`, which we
+        # change as operations are performed, we use the `Node.nid` as the
+        # NetworkX node and the `Node` instance as a `node attribute`, which we
         # identifying internally with the keyword `stage`.
         #
         # Note that this usage requires that nid's be unique within a given
@@ -210,31 +227,33 @@ class DAG:
                     "successors, and all incident edges of such nodes. ",
                     node.nid,
                 )
+                # Remove node successors.
                 for nid in nx.descendants(self._dag, node.nid):
                     _LOG.warning("Removing nid=%s", nid)
                     self.remove_node(nid)
+                # Remove node.
                 _LOG.warning("Removing nid=%s", node.nid)
                 self.remove_node(node.nid)
         else:
             dbg.dfatal("mode=%s", self.mode)
+        # Add node.
         self._dag.add_node(node.nid, stage=node)
 
-    def get_node(self, nid: str):
+    def get_node(self, nid: str) -> Node:
         """
-        Convenience node accessor.
+        Implement a convenience node accessor.
 
         :param nid: unique string node id
-        :return: Node object
         """
         dbg.dassert_isinstance(
             nid, str, "Expected str nid but got type %s!", type(nid)
         )
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
-        return self._dag.nodes[nid]["stage"]
+        return self._dag.nodes[nid]["stage"]  # type: ignore
 
     def remove_node(self, nid: str) -> None:
         """
-        Removes node from DAG (and clears any edges).
+        Remove node from DAG (and clears any edges).
         """
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         self._dag.remove_node(nid)
@@ -245,9 +264,9 @@ class DAG:
         child: Union[Tuple[str, str], str],
     ) -> None:
         """
-        Adds a directed edge from parent node output to child node input.
+        Add a directed edge from parent node output to child node input.
 
-        Raises if the requested edge is invalid or forms a cycle.
+        Raise if the requested edge is invalid or forms a cycle.
 
         If this is called multiple times on the same nid's but with different
         output/input pairs, the additional input/output pairs are simply added
@@ -319,9 +338,9 @@ class DAG:
                 sinks.append(nid)
         return sinks
 
-    def run_dag(self, method):
+    def run_dag(self, method: str) -> Dict[str, Any]:
         """
-        Executes entire DAG.
+        Execute entire DAG.
 
         :param method: method of class `Node` (or subclass) to be executed for
             the entire DAG.
@@ -333,9 +352,9 @@ class DAG:
             self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
-    def run_leq_node(self, nid, method):
+    def run_leq_node(self, nid: str, method: str) -> Dict[str, Any]:
         """
-        Executes DAG up to (and including) Node `nid` and returns output.
+        Execute DAG up to (and including) Node `nid` and returns output.
 
         "leq" refers to the partial ordering on the vertices. This method
         runs a node if and only if there is a directed path from the node to
@@ -356,9 +375,9 @@ class DAG:
             self._run_node(n, method)
         return self.get_node(nid).get_outputs(method)
 
-    def _run_node(self, nid, method):
+    def _run_node(self, nid: str, method: str) -> None:
         """
-        Runs a single node.
+        Run a single node.
 
         This method DOES NOT run (or re-run) ancestors of `nid`.
         """
