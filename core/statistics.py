@@ -509,3 +509,62 @@ def apply_adf_test(
     data = list(zip(*res))
     res = pd.Series(data[1], index=data[0], name=srs.name)
     return res
+
+
+def apply_kpss_test(
+    srs: pd.Series,
+    regression: Optional[str] = None,
+    nlags: Optional[Union[int, str]] = None,
+    nan_mode: Optional[str] = None,
+) -> pd.Series:
+    """
+    Implement a wrapper around statsmodels' KPSS test.
+
+    :param srs: pandas series of floats
+    :param regression: as in stattools.kpss
+    :param nlags: as in stattools.kpss
+    :param nan_mode: "ignore" or "strict"
+    :return: test statistic, pvalue, and related info
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    regression = regression or "c"
+    nan_mode = nan_mode or "ignore"
+    if nan_mode == "ignore":
+        data = srs.dropna()
+    elif nan_mode == "strict":
+        if srs.isna().any():
+            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
+    try:
+        (
+            kpss_stat,
+            pvalue,
+            lags,
+            critical_values,
+        ) = sm.tsa.stattools.kpss(
+            data.values, regression=regression, nlags=nlags
+        )
+    except ValueError as inst:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        _LOG.warning(inst)
+        (kpss_stat, pvalue, lags, critical_values) = (
+            np.nan,
+            np.nan,
+            np.nan,
+            {"1%": np.nan, "5%": np.nan, "10%": np.nan},
+        )
+        #
+    res = [
+        ("kpss_stat", kpss_stat),
+        ("pval", pvalue),
+        ("lags", lags),
+        ("critical_values_1%", critical_values["1%"]),
+        ("critical_values_5%", critical_values["5%"]),
+        ("critical_values_10%", critical_values["10%"]),
+    ]
+    data = list(zip(*res))
+    res = pd.Series(data[1], index=data[0], name=srs.name)
+    return res
