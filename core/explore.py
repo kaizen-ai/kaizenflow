@@ -657,7 +657,7 @@ def plot_pca_analysis(df, plot_explained_variance=False, num_pcs_to_plot=0):
             num_pcs_to_plot, num_cols=4, sharex=True, sharey=True
         )
         for i in range(num_pcs_to_plot):
-            pc = pcs.ix[:, i]
+            pc = pcs.iloc[:, i]
             pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
 
 
