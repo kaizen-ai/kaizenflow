@@ -400,11 +400,8 @@ pipeline {
                     try {
                         dir(getLinterWorkspacePath()) {
                             sh('''
-                                    bash -c "source dev_scripts/jenkins/amp.run_linter_on_branch.sh"
+                                    source dev_scripts/jenkins/amp.run_linter_on_branch.sh || exit 0
                                     ''')
-//                            sh('''printf "0" > ./tmp_exit_status.txt''')
-//                            sh('''printf "0" > ./tmp_message.txt''')
-                            // TODO: Remove after tests
                             def msg = getFileMessage(getLinterWorkspacePath())
                             def exitStatus = getFileExitStatus(getLinterWorkspacePath())
                             echo("message=${msg}")
