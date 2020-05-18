@@ -519,6 +519,7 @@ def apply_kpss_test(
 ) -> pd.Series:
     """
     Implement a wrapper around statsmodels' KPSS test.
+    http://debis.deu.edu.tr/userweb//onder.hanedar/dosyalar/kpss.pdf
 
     :param srs: pandas series of floats
     :param regression: as in stattools.kpss
