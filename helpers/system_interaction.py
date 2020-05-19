@@ -15,7 +15,7 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -88,7 +88,7 @@ def _system(
     output_file: Optional[Any],
     tee: bool,
     dry_run: bool,
-    log_level: int,
+    log_level: Union[int, str],
 ) -> Tuple[int, str]:
     """
     Execute a shell command.
@@ -129,7 +129,8 @@ def _system(
     #
     # TODO(gp): Add a check for the valid values.
     # TODO(gp): Make it "ECHO".
-    if log_level == "echo":
+    if isinstance(log_level, str):
+        dbg.dassert_eq(log_level, "echo")
         print("> %s" % orig_cmd)
         _LOG.debug(log_level, "> %s", cmd)
     else:
@@ -160,13 +161,13 @@ def _system(
         if blocking:
             # Blocking call: get the output.
             while True:
-                line = p.stdout.readline().decode("utf-8")
+                line = p.stdout.readline().decode("utf-8")  # type: ignore
                 if not line:
                     break
                 if not suppress_output:
                     print((line.rstrip("\n")))
                 output += line
-            p.stdout.close()
+            p.stdout.close()  # type: ignore
             rc = p.wait()
         else:
             # Not blocking.
@@ -217,7 +218,7 @@ def system(
     output_file: Optional[Any] = None,
     tee: bool = False,
     dry_run: bool = False,
-    log_level: int = logging.DEBUG,
+    log_level: Union[int, str] = logging.DEBUG,
 ) -> int:
     """
     Execute a shell command, without capturing its output.
@@ -256,7 +257,7 @@ def system_to_string(
     abort_on_error: bool = True,
     wrapper: Optional[Any] = None,
     dry_run: bool = False,
-    log_level: int = logging.DEBUG,
+    log_level: Union[int, str] = logging.DEBUG,
 ) -> Tuple[int, str]:
     """
     Execute a shell command and capture its output.
