@@ -98,4 +98,9 @@ dependencies:
     #- pyannotate           # Enable this to automatically infer types.
     #- ta                   # Technical analysis package.
     #- trading-calendars
-    - gluonts
+    # ##########################################################################
+    # Keep the following section unchanged in order, since we need to install
+    # mxnet first.
+    - mxnet >= 1.6.0
+    - gluonnlp              # gluon* and mxnet need to be installed through pip
+    - gluonts               # since conda doesn't support / has old packages.
