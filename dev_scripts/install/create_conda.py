@@ -249,13 +249,15 @@ def _run_pip_install(args: Any, conda_env_name: str) -> None:
         # To work around the break of PartTask1124.
         pass
     else:
-        # PartTask1005: Moved to pip and pinned for gluonts.
-        cmd = (
-            #'conda activate %s && pip install --no-deps "mxnet==1.4.1" && pip install gluonts'
-            'conda activate %s && pip install --no-deps "mxnet>=1.6.0" && pip install --no-deps gluonnlp'
-            % conda_env_name
-        )
-        hco.conda_system(cmd, suppress_output=False)
+        if False:
+            # PartTask1005: Moved to pip and pinned for gluonts.
+            cmd = [
+                'conda activate %s' % conda_env_name,
+                'pip install --no-deps "mxnet>=1.6.0"',
+                'pip install --no-deps gluonnlp'
+                ]
+            cmd = " && ".join(cmd)
+            hco.conda_system(cmd, suppress_output=False)
 
 
 def _test_conda_env(conda_env_name: str) -> None:
