@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -23,6 +24,7 @@ def conda_system(cmd, *args, **kwargs):
     # TODO(gp): Pass conda_env_name as done in get_conda_list()
     path = usc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
+    dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
     return si.system(cmd, *args, **kwargs)
 
@@ -30,6 +32,7 @@ def conda_system(cmd, *args, **kwargs):
 def conda_system_to_string(cmd, *args, **kwargs):
     path = usc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
+    dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
     return si.system_to_string(cmd, *args, **kwargs)
 
