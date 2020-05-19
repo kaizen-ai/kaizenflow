@@ -1,6 +1,6 @@
 channels:
-  - conda-forge
   #- quantopian
+  - conda-forge
 dependencies:
   # ############################################################################
   # python dev
@@ -47,14 +47,14 @@ dependencies:
   # Linter
   # ############################################################################
   #- pyment                   # conda install -c akode pyment
-  - yapf                     # Superseded by black, but useful for notebooks.
   - autoflake
   - black
   - flake8
   - isort
+  - mypy
   - pydocstyle
   - pylint
-  - mypy
+  - yapf                     # Superseded by black, but useful for notebooks.
   # ############################################################################
   # Latex
   # ############################################################################
@@ -78,24 +78,24 @@ dependencies:
   # ############################################################################
   # Misc
   # ############################################################################
-  #- gdrive                  # To interact with Google Drive.
-  #- pymongo
-  #- rclone                  # To back up Google Drive (conda install -c hcc rclone)
-  - git                     # To use latest git client.
-  - beautifulsoup4
   #- csvkit                  # To process csv.
-  - joblib
+  #- gdrive                  # To interact with Google Drive.
   #- jq                      # To process json.
   #- mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
+  #- pymongo
+  #- rclone                  # To back up Google Drive (conda install -c hcc rclone)
+  #- ruby
+  - beautifulsoup4
+  - git                     # To use latest git client.
+  - joblib
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
-  #- ruby
   # ############################################################################
   # Pip
   # ############################################################################
   - pip
-    #- pip:
-    #- gluonts
+  - pip:
+    #- pyannotate           # Enable this to automatically infer types.
     #- ta                   # Technical analysis package.
     #- trading-calendars
-    #- pyannotate           # Enable this to automatically infer types.
+    - gluonts
