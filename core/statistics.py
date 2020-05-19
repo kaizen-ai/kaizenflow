@@ -542,12 +542,7 @@ def apply_kpss_test(
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
     try:
-        (
-            kpss_stat,
-            pvalue,
-            lags,
-            critical_values,
-        ) = sm.tsa.stattools.kpss(
+        (kpss_stat, pvalue, lags, critical_values,) = sm.tsa.stattools.kpss(
             data.values, regression=regression, nlags=nlags
         )
     except ValueError as inst:

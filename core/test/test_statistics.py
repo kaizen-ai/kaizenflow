@@ -1,23 +1,10 @@
-import json
 import logging
-import pprint
-from typing import Any, Callable, Dict, Tuple
 
-import matplotlib.pyplot as plt
-import networkx as nx
 import numpy as np
 import pandas as pd
-import scipy
 
 import core.artificial_signal_generators as sig_gen
-import core.config as cfg
-import core.dataflow as dtf
-import core.explore as exp
-import core.pandas_helpers as pde
-import core.residualizer as res
 import core.statistics as stats
-import helpers.dbg as dbg
-import helpers.printing as pri
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -25,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 class TestComputeFracZero1(hut.TestCase):
     @staticmethod
-    def _get_df(seed: int) -> pd.DataFrame:
+    def _get_df(seed: int) -> pd.DataFram:
         nrows = 15
         ncols = 5
         num_nans = 15
@@ -198,10 +185,10 @@ class TestApplyKpssTest1(hut.TestCase):
     def _get_series(seed: int) -> pd.Series:
 
         np.random.seed(seed=1)
-        arparams = np.array([.75, -.25])
-        maparams = np.array([.65, .35])
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
         arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {'start':'1/1/2010', 'periods':40, 'freq':'M'}
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(date_range_kwargs=date_range)
         return series
 
@@ -213,13 +200,13 @@ class TestApplyKpssTest1(hut.TestCase):
 
     def test2(self) -> None:
         series = self._get_series(1)
-        actual = stats.apply_kpss_test(series, regression='ct')
+        actual = stats.apply_kpss_test(series, regression="ct")
         actual_string = hut.convert_df_to_string(actual)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(1)
-        actual = stats.apply_kpss_test(series, nlags='auto')
+        actual = stats.apply_kpss_test(series, nlags="auto")
         actual_string = hut.convert_df_to_string(actual)
         self.check_string(actual_string)
 
