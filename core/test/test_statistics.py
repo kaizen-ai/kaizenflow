@@ -12,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 class TestComputeFracZero1(hut.TestCase):
     @staticmethod
-    def _get_df(seed: int) -> pd.DataFram:
+    def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
         ncols = 5
         num_nans = 15
@@ -195,23 +195,23 @@ class TestApplyKpssTest1(hut.TestCase):
     def test1(self) -> None:
         series = self._get_series(1)
         actual = stats.apply_kpss_test(series)
-        actual_string = hut.convert_df_to_string(actual)
+        actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(1)
         actual = stats.apply_kpss_test(series, regression="ct")
-        actual_string = hut.convert_df_to_string(actual)
+        actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(1)
         actual = stats.apply_kpss_test(series, nlags="auto")
-        actual_string = hut.convert_df_to_string(actual)
+        actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series(1)
         actual = stats.apply_kpss_test(series, nlags=5)
-        actual_string = hut.convert_df_to_string(actual)
+        actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
