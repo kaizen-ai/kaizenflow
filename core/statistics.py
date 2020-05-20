@@ -366,15 +366,13 @@ def ttest_1samp(
         data, popmean=popmean, nan_policy=nan_policy
     )
     result = pd.DataFrame(
-        {prefix+"tval": tvals, prefix+"pval": pvals}, index=data.columns
+        {prefix + "tval": tvals, prefix + "pval": pvals}, index=data.columns
     ).transpose()
     return result
 
 
 def multipletests(
-    srs: pd.Series,
-    method: Optional[str] = None,
-    prefix: Optional[str] = None,
+    srs: pd.Series, method: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Wrap statsmodel's multipletests.
@@ -392,7 +390,7 @@ def multipletests(
     method = method or "fdr_bh"
     prefix = prefix or ""
     pvals_corrected = sm.stats.multitest.multipletests(srs, method=method)[1]
-    return pd.Series(pvals_corrected, index=srs.index, name=prefix+"adj_pval")
+    return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
 
 
 def multi_ttest(
@@ -406,8 +404,12 @@ def multi_ttest(
     Combine ttest and multitest pvalue adjustment.
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    ttest = ttest_1samp(df, popmean=popmean, nan_policy=nan_policy, prefix=prefix).transpose()
-    ttest[prefix+"adj_pval"] = multipletests(ttest[prefix+"pval"], method=method)
+    ttest = ttest_1samp(
+        df, popmean=popmean, nan_policy=nan_policy, prefix=prefix
+    ).transpose()
+    ttest[prefix + "adj_pval"] = multipletests(
+        ttest[prefix + "pval"], method=method
+    )
     return ttest.transpose()
 
 
@@ -446,7 +448,7 @@ def apply_normality_test(
         pvals.append(pval)
     res = pd.DataFrame(
         data=list(zip(stats, pvals)),
-        columns=[prefix+"stat", prefix+"pval"],
+        columns=[prefix + "stat", prefix + "pval"],
         index=data.columns,
     )
     return res.transpose()
@@ -512,14 +514,14 @@ def apply_adf_test(
         )
         #
     res = [
-        (prefix+"stat", adf_stat),
-        (prefix+"pval", pval),
-        (prefix+"used_lag", usedlag),
-        (prefix+"nobs", nobs),
-        (prefix+"critical_values_1%", critical_values["1%"]),
-        (prefix+"critical_values_5%", critical_values["5%"]),
-        (prefix+"critical_values_10%", critical_values["10%"]),
-        (prefix+"ic_best", icbest),
+        (prefix + "stat", adf_stat),
+        (prefix + "pval", pval),
+        (prefix + "used_lag", usedlag),
+        (prefix + "nobs", nobs),
+        (prefix + "critical_values_1%", critical_values["1%"]),
+        (prefix + "critical_values_5%", critical_values["5%"]),
+        (prefix + "critical_values_10%", critical_values["10%"]),
+        (prefix + "ic_best", icbest),
     ]
     data = list(zip(*res))
     res = pd.Series(data[1], index=data[0], name=srs.name)
@@ -574,12 +576,12 @@ def apply_kpss_test(
         )
         #
     res = [
-        (prefix+"stat", kpss_stat),
-        (prefix+"pval", pval),
-        (prefix+"lags", lags),
-        (prefix+"critical_values_1%", critical_values["1%"]),
-        (prefix+"critical_values_5%", critical_values["5%"]),
-        (prefix+"critical_values_10%", critical_values["10%"]),
+        (prefix + "stat", kpss_stat),
+        (prefix + "pval", pval),
+        (prefix + "lags", lags),
+        (prefix + "critical_values_1%", critical_values["1%"]),
+        (prefix + "critical_values_5%", critical_values["5%"]),
+        (prefix + "critical_values_10%", critical_values["10%"]),
     ]
     data = list(zip(*res))
     res = pd.Series(data[1], index=data[0], name=srs.name)
