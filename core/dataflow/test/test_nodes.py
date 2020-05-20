@@ -1,8 +1,10 @@
 import logging
 import os
 
+import numpy as np
 import mxnet
 import pandas as pd
+import pytest
 import sklearn.linear_model as slm
 
 import core.artificial_signal_generators as sig_gen
@@ -223,12 +225,15 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
 if True:
     class TestContinuousDeepArModel(hut.TestCase):
+
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_fit_dag1(self) -> None:
             dag = self._get_dag()
             #
             output_df = dag.run_leq_node("deepar", "fit")["df_out"]
             self.check_string(output_df.to_string())
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_predict_dag1(self) -> None:
             dag = self._get_dag()
             #
@@ -262,6 +267,7 @@ if True:
 
 
     class TestDeepARGlobalModel(hut.TestCase):
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_fit1(self) -> None:
             mxnet.random.seed(0)
             local_ts = self._get_local_ts()
@@ -285,6 +291,7 @@ if True:
             )
             self.check_string(config_info_output)
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_fit_dag1(self) -> None:
             mxnet.random.seed(0)
             dag = dtf.DAG(mode="strict")
