@@ -341,6 +341,7 @@ def ttest_1samp(
     data: Union[pd.Series, pd.DataFrame],
     popmean: Optional[float] = None,
     nan_policy: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Thin wrapper around scipy's ttest.
@@ -352,25 +353,29 @@ def ttest_1samp(
     :param df: DataFrame with samples along rows, groups along columns.
     :param popmean: assumed population mean for test
     :param nan_policy: `nan_policy` for scipy's ttest_1samp
+    :param prefix: optional prefix for metrics' outcome
     :return: DataFrame with t-value and p-value rows, columns like df's columns
     """
     if isinstance(data, pd.Series):
         data = data.to_frame()
     dbg.dassert_isinstance(data, pd.DataFrame)
-    if popmean is None:
-        popmean = 0
-    if nan_policy is None:
-        nan_policy = "omit"
+    prefix = prefix or ""
+    popmean = popmean or 0
+    nan_policy = nan_policy or "omit"
     tvals, pvals = sp.stats.ttest_1samp(
         data, popmean=popmean, nan_policy=nan_policy
     )
     result = pd.DataFrame(
-        {"tval": tvals, "pval": pvals}, index=data.columns
+        {prefix+"tval": tvals, prefix+"pval": pvals}, index=data.columns
     ).transpose()
     return result
 
 
-def multipletests(srs: pd.Series, method: Optional[str] = None) -> pd.Series:
+def multipletests(
+    srs: pd.Series,
+    method: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
     """
     Wrap statsmodel's multipletests.
 
@@ -380,13 +385,14 @@ def multipletests(srs: pd.Series, method: Optional[str] = None) -> pd.Series:
 
     :param srs: Series with pvalues
     :param method: `method` for scipy's multipletests
+    :param prefix: optional prefix for metrics' outcome
     :return: Series of adjusted p-values
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    if method is None:
-        method = "fdr_bh"
+    method = method or "fdr_bh"
+    prefix = prefix or ""
     pvals_corrected = sm.stats.multitest.multipletests(srs, method=method)[1]
-    return pd.Series(pvals_corrected, index=srs.index, name="adj_pval")
+    return pd.Series(pvals_corrected, index=srs.index, name=prefix+"adj_pval")
 
 
 def multi_ttest(
@@ -394,28 +400,33 @@ def multi_ttest(
     popmean: Optional[float] = None,
     nan_policy: Optional[str] = None,
     method: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Combine ttest and multitest pvalue adjustment.
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    ttest = ttest_1samp(df, popmean=popmean, nan_policy=nan_policy).transpose()
-    ttest["adj_pval"] = multipletests(ttest["pval"], method=method)
+    ttest = ttest_1samp(df, popmean=popmean, nan_policy=nan_policy, prefix=prefix).transpose()
+    ttest[prefix+"adj_pval"] = multipletests(ttest[prefix+"pval"], method=method)
     return ttest.transpose()
 
 
 def apply_normality_test(
-    data: Union[pd.Series, pd.DataFrame], nan_policy: Optional[str] = None
+    data: Union[pd.Series, pd.DataFrame],
+    nan_policy: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Test (indep) null hypotheses that each col is normally distributed.
 
     An omnibus test of normality that combines skew and kurtosis.
 
+    :param prefix: optional prefix for metrics' outcome
     :return: dataframe with same cols as `df` and two rows:
         1. "statistic"
         2. "pvalue"
     """
+    prefix = prefix or ""
     if isinstance(data, pd.Series):
         data = data.to_frame()
     dbg.dassert_isinstance(data, pd.DataFrame)
@@ -435,7 +446,7 @@ def apply_normality_test(
         pvals.append(pval)
     res = pd.DataFrame(
         data=list(zip(stats, pvals)),
-        columns=["statistic", "pvalue"],
+        columns=[prefix+"stat", prefix+"pval"],
         index=data.columns,
     )
     return res.transpose()
@@ -448,6 +459,7 @@ def apply_adf_test(
     regression: Optional[str] = None,
     autolag: Optional[str] = None,
     nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Implement a wrapper around statsmodels' adfuller test.
@@ -457,12 +469,14 @@ def apply_adf_test(
     :param regression: as in stattools.adfuller
     :param autolag: as in stattools.adfuller
     :param nan_mode: "ignore" or "strict"
+    :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue, and related info
     """
     dbg.dassert_isinstance(srs, pd.Series)
     regression = regression or "c"
     autolag = autolag or "AIC"
     nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
     # TODO(PartTask2386): Think about factoring out this idiom.
     if nan_mode == "ignore":
         data = srs.dropna()
@@ -476,7 +490,7 @@ def apply_adf_test(
     try:
         (
             adf_stat,
-            pvalue,
+            pval,
             usedlag,
             nobs,
             critical_values,
@@ -488,7 +502,7 @@ def apply_adf_test(
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
         _LOG.warning(inst)
-        (adf_stat, pvalue, usedlag, nobs, critical_values, icbest) = (
+        (adf_stat, pval, usedlag, nobs, critical_values, icbest) = (
             np.nan,
             np.nan,
             np.nan,
@@ -498,14 +512,14 @@ def apply_adf_test(
         )
         #
     res = [
-        ("adf_stat", adf_stat),
-        ("pval", pvalue),
-        ("used_lag", usedlag),
-        ("nobs", nobs),
-        ("critical_values_1%", critical_values["1%"]),
-        ("critical_values_5%", critical_values["5%"]),
-        ("critical_values_10%", critical_values["10%"]),
-        ("ic_best", icbest),
+        (prefix+"stat", adf_stat),
+        (prefix+"pval", pval),
+        (prefix+"used_lag", usedlag),
+        (prefix+"nobs", nobs),
+        (prefix+"critical_values_1%", critical_values["1%"]),
+        (prefix+"critical_values_5%", critical_values["5%"]),
+        (prefix+"critical_values_10%", critical_values["10%"]),
+        (prefix+"ic_best", icbest),
     ]
     data = list(zip(*res))
     res = pd.Series(data[1], index=data[0], name=srs.name)
@@ -517,6 +531,7 @@ def apply_kpss_test(
     regression: Optional[str] = None,
     nlags: Optional[Union[int, str]] = None,
     nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Implement a wrapper around statsmodels' KPSS test.
@@ -527,11 +542,13 @@ def apply_kpss_test(
     :param regression: as in stattools.kpss
     :param nlags: as in stattools.kpss
     :param nan_mode: "ignore" or "strict"
+    :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue, and related info
     """
     dbg.dassert_isinstance(srs, pd.Series)
     regression = regression or "c"
     nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
     if nan_mode == "ignore":
         data = srs.dropna()
     elif nan_mode == "strict":
@@ -542,14 +559,14 @@ def apply_kpss_test(
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
     try:
-        (kpss_stat, pvalue, lags, critical_values,) = sm.tsa.stattools.kpss(
+        (kpss_stat, pval, lags, critical_values,) = sm.tsa.stattools.kpss(
             data.values, regression=regression, nlags=nlags
         )
     except ValueError as inst:
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
         _LOG.warning(inst)
-        (kpss_stat, pvalue, lags, critical_values) = (
+        (kpss_stat, pval, lags, critical_values) = (
             np.nan,
             np.nan,
             np.nan,
@@ -557,12 +574,12 @@ def apply_kpss_test(
         )
         #
     res = [
-        ("kpss_stat", kpss_stat),
-        ("pval", pvalue),
-        ("lags", lags),
-        ("critical_values_1%", critical_values["1%"]),
-        ("critical_values_5%", critical_values["5%"]),
-        ("critical_values_10%", critical_values["10%"]),
+        (prefix+"stat", kpss_stat),
+        (prefix+"pval", pval),
+        (prefix+"lags", lags),
+        (prefix+"critical_values_1%", critical_values["1%"]),
+        (prefix+"critical_values_5%", critical_values["5%"]),
+        (prefix+"critical_values_10%", critical_values["10%"]),
     ]
     data = list(zip(*res))
     res = pd.Series(data[1], index=data[0], name=srs.name)

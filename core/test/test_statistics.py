@@ -215,3 +215,9 @@ class TestApplyKpssTest1(hut.TestCase):
         actual = stats.apply_kpss_test(series, nlags=5)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+    def test5(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_kpss_test(series, prefix="kpss_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
