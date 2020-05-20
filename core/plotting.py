@@ -14,7 +14,9 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import seaborn as sns
+import sklearn.decomposition as skl_dec
 import sklearn.metrics as skl_metrics
+import sklearn.utils.validation as skl_val
 import statsmodels.api as sm
 
 import core.explore as expl
@@ -25,6 +27,11 @@ import helpers.list as hlist
 _LOG = logging.getLogger(__name__)
 
 sns.set_palette("bright")
+
+_ARRAY_LIKE_TYPE = Union[np.array, pd.DataFrame]
+_PCA_TYPE = Union[
+    skl_dec.PCA, skl_dec.IncrementalPCA, skl_dec.KernelPCA, skl_dec.SparsePCA
+]
 
 FIG_SIZE = (20, 5)
 
@@ -782,3 +789,87 @@ def plot_barplot(
     if plot_title:
         plt.title(plot_title)
     plt.show()
+
+
+# #############################################################################
+# PCA
+# #############################################################################
+
+# TODO(Julia): Consider wrapping `np.array` outputs into pandas objects.
+class PCA:
+    def __init__(self, mode: str, **kwargs: Any):
+        # TODO(Julia): Find a better name than `linear` since incremental PCA
+        #     is linear too.
+        dbg.dassert_in(mode, ["linear", "kernel", "sparse", "incremental"])
+        if mode == "linear":
+            full_mode = "PCA"
+        else:
+            full_mode = mode.capitalize() + "PCA"
+        # TODO(Julia): Either need to make this public, or to stop supporting
+        #     sparse PCA and kernel PCA.
+        self._pca = getattr(skl_dec, full_mode)(**kwargs)
+
+    def plot(self) -> None:
+        skl_val.check_is_fitted(self._pca)
+
+    def plot_explained_variance(self) -> None:
+        skl_val.check_is_fitted(self._pca)
+
+    def fit(self, X: _ARRAY_LIKE_TYPE) -> _PCA_TYPE:
+        return self._pca.fit(X)
+
+    def partial_fit(
+        self, X: _ARRAY_LIKE_TYPE, check_input: bool = True
+    ) -> skl_dec.IncrementalPCA:
+        if not isinstance(self._pca, skl_dec.IncrementalPCA):
+            raise ValueError("`partial_fit` is supported only by incremental PCA")
+        return self._pca.partial_fit(X, check_input=check_input)
+
+    def transform(self, X: _ARRAY_LIKE_TYPE) -> np.array:
+        return self._pca.transform(X)
+
+    # TODO(Julia): Add `fit_transform`? It is not built in for sparse PCA and
+    #     incremental PCA.
+
+    def inverse_transform(self, X: _ARRAY_LIKE_TYPE) -> np.array:
+        return self._pca.inverse_transform(X)
+
+    # TODO(Julia): There are no such methods for kernel PCA and sparse PCA.
+    def get_covariance(self) -> np.array:
+        return self._pca.get_covariance()
+
+    def get_precision(self) -> np.array:
+        return self._pca.get_precision()
+
+    # TODO(Julia): It's `n_samples_seen_` for incremental PCA>
+    @property
+    def n_samples_(self) -> int:
+        return self._pca.n_samples_
+
+    @property
+    def n_features_(self) -> int:
+        return self._pca.n_features_
+
+    @property
+    def n_components(self) -> int:
+        return self._pca.n_components_
+
+    @property
+    def components_(self) -> np.array:
+        return self._pca.components_
+
+    @property
+    def explained_variance_(self) -> np.array:
+        return self._pca.explained_variance_
+
+    @property
+    def explained_variance_ratio_(self) -> np.array:
+        return self._pca.explained_variance_ratio_
+
+    @property
+    def singular_values_(self) -> np.array:
+        return self._pca.singular_values_
+
+    @property
+    def noise_variance_(self) -> float:
+        return self._pca.noise_variance_
