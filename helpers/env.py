@@ -37,10 +37,13 @@ def get_system_signature(git_commit_type="all"):
     # import sys
     # print(sys.version)
     libs = [
+        "gluonnlp",
+        "gluonts",
+        "joblib",
+        "mxnet",
         "numpy",
         "pandas",
         "pyarrow",
-        "joblib",
         "scipy",
         "seaborn",
         "sklearn",

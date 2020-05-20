@@ -11,8 +11,8 @@ import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
- # TODO(gp): Remove after PartTask2335.
- if True:
+# TODO(gp): Remove after PartTask2335.
+if True:
     import gluonts
     import gluonts.evaluation.backtest
     import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
