@@ -15,10 +15,9 @@ import core.dataflow as dtf
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
-import core.statistics as stats
 import helpers.dbg as dbg
 import helpers.printing as pri
-import helpers.unit_test as ut
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class Test_config1(ut.TestCase):
+class Test_config1(hut.TestCase):
     def test_config1(self) -> None:
         """
         Test print flatten config.
@@ -330,7 +329,7 @@ class Test_config1(ut.TestCase):
         self.check_string(string)
 
 
-class Test_subtract_config1(ut.TestCase):
+class Test_subtract_config1(hut.TestCase):
     def test_test1(self) -> None:
         config1 = cfg.Config()
         config1[("l0",)] = "1st_floor"
@@ -366,7 +365,7 @@ class Test_subtract_config1(ut.TestCase):
 # #############################################################################
 
 
-class _Dataflow_helper(ut.TestCase):
+class _Dataflow_helper(hut.TestCase):
     @staticmethod
     def _remove_stage_names(node_link_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -639,7 +638,7 @@ class Test_dataflow_core_DAG3(_Dataflow_helper):
 # #############################################################################
 
 
-class Test_explore1(ut.TestCase):
+class Test_explore1(hut.TestCase):
     def test_ols_regress_series(self) -> None:
         x = 5 * np.random.randn(100)
         y = x + np.random.randn(*x.shape)
@@ -671,7 +670,7 @@ class Test_explore1(ut.TestCase):
 
 
 # TODO(gp): -> Test_pandas_helper1
-class TestResampleIndex1(ut.TestCase):
+class TestResampleIndex1(hut.TestCase):
     def test1(self) -> None:
         index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
         df = pd.DataFrame(np.random.rand(len(index), 3), index=index)
@@ -692,7 +691,7 @@ class TestResampleIndex1(ut.TestCase):
 
 
 # TODO(gp): -> Test_pandas_helper2
-class TestDfRollingApply(ut.TestCase):
+class TestDfRollingApply(hut.TestCase):
     def test1(self) -> None:
         """
         Test with function returning a pd.Series.
@@ -815,7 +814,7 @@ class TestDfRollingApply(ut.TestCase):
 
 
 # TODO(gp): -> Test_residualizer1
-class TestPcaFactorComputer1(ut.TestCase):
+class TestPcaFactorComputer1(hut.TestCase):
     @staticmethod
     def get_ex1() -> Tuple[
         pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
@@ -960,7 +959,7 @@ class TestPcaFactorComputer1(ut.TestCase):
 # #############################################################################
 
 
-class TestPcaFactorComputer2(ut.TestCase):
+class TestPcaFactorComputer2(hut.TestCase):
     @staticmethod
     def _get_data(num_samples: int, report_stats: bool) -> Dict[str, Any]:
         # The desired covariance matrix.
@@ -1065,178 +1064,3 @@ class TestPcaFactorComputer2(ut.TestCase):
             num_samples, report_stats, stabilize_eig, window
         )
         self._check(comp, df_res)
-
-
-# #############################################################################
-# statistics.py
-# #############################################################################
-
-
-class TestComputeFracZero1(ut.TestCase):
-    @staticmethod
-    def _get_df(seed: int) -> pd.DataFrame:
-        nrows = 15
-        ncols = 5
-        num_nans = 15
-        num_infs = 5
-        num_zeros = 20
-        #
-        np.random.seed(seed=seed)
-        mat = np.random.randn(nrows, ncols)
-        mat.ravel()[np.random.choice(mat.size, num_nans, replace=False)] = np.nan
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = np.inf
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = -np.inf
-        mat.ravel()[np.random.choice(mat.size, num_zeros, replace=False)] = 0
-        #
-        index = pd.date_range(start="01-04-2018", periods=nrows, freq="30T")
-        df = pd.DataFrame(data=mat, index=index)
-        return df
-
-    def test1(self) -> None:
-        data = [0.466667, 0.2, 0.13333, 0.2, 0.33333]
-        index = [0, 1, 2, 3, 4]
-        expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_zero(self._get_df(1))
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
-
-    def test2(self) -> None:
-        data = [
-            0.4,
-            0.0,
-            0.2,
-            0.4,
-            0.4,
-            0.2,
-            0.4,
-            0.0,
-            0.6,
-            0.4,
-            0.6,
-            0.2,
-            0.0,
-            0.0,
-            0.2,
-        ]
-        index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
-        expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_zero(self._get_df(1), axis=1)
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
-
-    def test3(self) -> None:
-        # Equals 20 / 75 = num_zeros / num_points.
-        expected = 0.266666
-        actual = stats.compute_frac_zero(self._get_df(1), axis=None)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
-
-    def test4(self) -> None:
-        series = self._get_df(1)[0]
-        expected = 0.466667
-        actual = stats.compute_frac_zero(series)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
-
-    def test5(self) -> None:
-        series = self._get_df(1)[0]
-        expected = 0.466667
-        actual = stats.compute_frac_zero(series, axis=0)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
-
-
-class TestComputeFracNan1(ut.TestCase):
-    @staticmethod
-    def _get_df(seed: int) -> pd.DataFrame:
-        nrows = 15
-        ncols = 5
-        num_nans = 15
-        num_infs = 5
-        num_zeros = 20
-        #
-        np.random.seed(seed=seed)
-        mat = np.random.randn(nrows, ncols)
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = np.inf
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = -np.inf
-        mat.ravel()[np.random.choice(mat.size, num_zeros, replace=False)] = 0
-        mat.ravel()[np.random.choice(mat.size, num_nans, replace=False)] = np.nan
-        #
-        index = pd.date_range(start="01-04-2018", periods=nrows, freq="30T")
-        df = pd.DataFrame(data=mat, index=index)
-        return df
-
-    def test1(self) -> None:
-        data = [0.4, 0.133333, 0.133333, 0.133333, 0.2]
-        index = [0, 1, 2, 3, 4]
-        expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_nan(self._get_df(1))
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
-
-    def test2(self) -> None:
-        data = [
-            0.4,
-            0.0,
-            0.2,
-            0.4,
-            0.2,
-            0.2,
-            0.2,
-            0.0,
-            0.4,
-            0.2,
-            0.6,
-            0.0,
-            0.0,
-            0.0,
-            0.2,
-        ]
-        index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
-        expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_nan(self._get_df(1), axis=1)
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
-
-    def test3(self) -> None:
-        # Equals 15 / 75 = num_nans / num_points.
-        expected = 0.2
-        actual = stats.compute_frac_nan(self._get_df(1), axis=None)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
-
-    def test4(self) -> None:
-        series = self._get_df(1)[0]
-        expected = 0.4
-        actual = stats.compute_frac_nan(series)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
-
-    def test5(self) -> None:
-        series = self._get_df(1)[0]
-        expected = 0.4
-        actual = stats.compute_frac_nan(series, axis=0)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
-
-
-class TestComputeFracConstant1(ut.TestCase):
-    @staticmethod
-    def _get_df(seed: int) -> pd.DataFrame:
-        nrows = 15
-        ncols = 5
-        num_nans = 4
-        num_infs = 2
-        #
-        np.random.seed(seed=1)
-        mat = np.random.randint(-1, 1, (nrows, ncols)).astype("float")
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = np.inf
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = -np.inf
-        mat.ravel()[np.random.choice(mat.size, num_nans, replace=False)] = np.nan
-        #
-        index = pd.date_range(start="01-04-2018", periods=nrows, freq="30T")
-        df = pd.DataFrame(data=mat, index=index)
-        return df
-
-    def test1(self) -> None:
-        data = [0.357143, 0.5, 0.285714, 0.285714, 0.071429]
-        index = [0, 1, 2, 3, 4]
-        expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_constant(self._get_df(1))
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
-
-    def test2(self) -> None:
-        series = self._get_df(1)[0]
-        expected = 0.357143
-        actual = stats.compute_frac_constant(series)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
