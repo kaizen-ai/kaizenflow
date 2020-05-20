@@ -132,7 +132,7 @@ def _system(
     if isinstance(log_level, str):
         dbg.dassert_eq(log_level, "echo")
         print("> %s" % orig_cmd)
-        _LOG.debug(log_level, "> %s", cmd)
+        _LOG.debug("> %s", cmd)
     else:
         _LOG.log(log_level, "> %s", cmd)
     #
