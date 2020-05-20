@@ -399,6 +399,7 @@ if __name__ == "main":
         # Check.
         self.check_string(output)
 
+    @pytest.mark.skip(reason="Disabled until #2430 is solved")
     def test_linter_md1(self) -> None:
         """
         Run linter.py as executable on some text.
