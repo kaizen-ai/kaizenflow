@@ -180,6 +180,74 @@ class TestComputeFracConstant1(hut.TestCase):
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
 
+class TestApplyNormalityTest1(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+
+        np.random.seed(seed=1)
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(date_range_kwargs=date_range)
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_normality_test(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_normality_test(series, prefix="norm_test_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
+class TestApplyAdfTest1(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+
+        np.random.seed(seed=1)
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(date_range_kwargs=date_range)
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_adf_test(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_adf_test(series, regression="ctt")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_adf_test(series, maxlag=5)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_adf_test(series, autolag="t-stat")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_adf_test(series, prefix="adf_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
 class TestApplyKpssTest1(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
@@ -213,5 +281,11 @@ class TestApplyKpssTest1(hut.TestCase):
     def test4(self) -> None:
         series = self._get_series(1)
         actual = stats.apply_kpss_test(series, nlags=5)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_kpss_test(series, prefix="kpss_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)

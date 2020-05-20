@@ -1,4 +1,4 @@
-kpss_stat              0.342142
+stat                   0.342142
 pval                   0.100000
 lags                   5.000000
 critical_values_1%     0.739000

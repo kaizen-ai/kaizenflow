@@ -1,0 +1,8 @@
+stat                   -5.147519
+pval                    0.000011
+used_lag                1.000000
+nobs                   38.000000
+critical_values_1%     -3.615509
+critical_values_5%     -2.941262
+critical_values_10%    -2.609200
+ic_best                88.408332
