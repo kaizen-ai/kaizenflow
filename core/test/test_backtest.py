@@ -175,6 +175,7 @@ if True:
             self.check_string(str_output)
 
         @pytest.mark.slow
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test4(self) -> None:
             """
             Generate y using `m4_hourly` Gluon dataset. No `x_vars`.
