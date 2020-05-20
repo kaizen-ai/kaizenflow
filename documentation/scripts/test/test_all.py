@@ -340,21 +340,21 @@ $$"""
 
     # #########################################################################
 
-    def _helper_process(self, txt, exp, file_name):
+    def _helper_process(self, txt, exp, file_name) -> None:
         file_name = os.path.join(self.get_scratch_space(), file_name)
         act = dslt._process(txt, file_name)
         if exp:
             self.assert_equal(act, exp)
         return act
 
-    def test_process1(self):
+    def test_process1(self) -> None:
         txt = self._get_text1()
         exp = None
         file_name = "test.txt"
         act = self._helper_process(txt, exp, file_name)
         self.check_string(act)
 
-    def test_process2(self):
+    def test_process2(self) -> None:
         """
         Run the text linter on a txt file.
         """
@@ -372,7 +372,7 @@ $$"""
         file_name = "test.txt"
         self._helper_process(txt, exp, file_name)
 
-    def test_process3(self):
+    def test_process3(self) -> None:
         """
         Run the text linter on a md file.
         """
@@ -407,7 +407,7 @@ $$"""
         file_name = "test.md"
         self._helper_process(txt, exp, file_name)
 
-    def test_process4(self):
+    def test_process4(self) -> None:
         """
         Check that no replacement happens inside a ``` block.
         """
@@ -437,7 +437,7 @@ $$"""
         self.assert_equal(act, exp)
 
     @staticmethod
-    def _get_text_problematic_for_prettier1():
+    def _get_text_problematic_for_prettier1() -> None:
         txt = r"""
 * Python formatting
 - Python has several built-in ways of formatting strings
@@ -451,7 +451,7 @@ $$"""
 """
         return txt
 
-    def test_process_prettier_bug1(self):
+    def test_process_prettier_bug1(self) -> None:
         """
         For some reason prettier replaces - with * when there are 2 empty lines.
         """
@@ -470,7 +470,7 @@ $$"""
         act = dslt._prettier(txt)
         self.assert_equal(act, exp)
 
-    def test_process5(self):
+    def test_process5(self) -> None:
         """
         Run the text linter on a txt file.
         """
@@ -488,7 +488,7 @@ $$"""
         file_name = "test.txt"
         self._helper_process(txt, exp, file_name)
 
-    def test_process6(self):
+    def test_process6(self) -> None:
         """
         Run the text linter on a txt file.
         """

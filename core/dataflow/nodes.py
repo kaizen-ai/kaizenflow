@@ -14,10 +14,10 @@ import gluonts.trainer as gt
 import numpy as np
 import pandas as pd
 
+import core.backtest as bcktst
 import core.data_adapters as adpt
 import core.finance as fin
 import core.statistics as stats
-import core.backtest as bcktst
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
@@ -1083,7 +1083,7 @@ class ContinuousDeepArModel(FitPredictNode):
         y_vars = self._to_list(self._y_vars)
         mapper = lambda y: y + "_%i" % self._prediction_length
         # TODO(gp): Not sure if the following is needed.
-        #[mapper(y) for y in y_vars]
+        # [mapper(y) for y in y_vars]
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
         fwd_y_df = (
             df[y_vars].shift(-self._prediction_length).rename(columns=mapper)

@@ -15,7 +15,7 @@ class TestArmaProcess(hut.TestCase):
         ma_params = [0.65, 0.35]
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
-            {"start": "2000-01-01", "periods": 40, "freq": "B",},
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=10,
         )
@@ -30,7 +30,7 @@ class TestArmaProcess(hut.TestCase):
         ma_params = [-0.5]
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
-            {"start": "2000-01-01", "periods": 40, "freq": "B",},
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=5,
         )
@@ -45,7 +45,7 @@ class TestArmaProcess(hut.TestCase):
         ma_params = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
-            {"start": "2000-01-01", "periods": 40, "freq": "B",},
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
             burnin=5,
         )
@@ -63,14 +63,14 @@ class TestMultivariateNormalProcess(hut.TestCase):
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B",}, seed=0
         )
-        self.check_string(hut.convert_df_to_string(realization, index=True))
+        self.check_string(hut.convert_df_to_string(realization index=True))
 
     def test2(self) -> None:
         mean = pd.Series([1, 2])
         cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
         mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
         realization = mn_process.generate_sample(
-            {"start": "2000-01-01", "periods": 40, "freq": "B",}, seed=0
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
         self.check_string(hut.convert_df_to_string(realization, index=True))
 
@@ -105,7 +105,9 @@ if True:
                 ),
                 (
                     "feat_dynamic_real",
-                    gluonts.dataset.artificial.recipe.RandomGaussian(shape=(1, 0)),
+                    gluonts.dataset.artificial.recipe.RandomGaussian(
+                        shape=(1, 0)
+                    ),
                 ),
                 # What GluonTS does is find zeros in shape and replace them
                 # with length.

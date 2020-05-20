@@ -1,5 +1,6 @@
 import logging
 from typing import Iterable
+
 import pytest
 
 # TODO(gp): Remove after PartTask2335.
@@ -13,7 +14,6 @@ if True:
     import mxnet
     import numpy as np
     import pandas as pd
-    import pytest
 
     import core.artificial_signal_generators as sig_gen
     import core.backtest as btest
@@ -22,7 +22,6 @@ if True:
     import helpers.unit_test as hut
 
     _LOG = logging.getLogger(__name__)
-
 
     class TestGeneratePredictions(hut.TestCase):
         @staticmethod

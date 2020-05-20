@@ -1,8 +1,9 @@
 import logging
 import os
+import pprint
 
-import numpy as np
 import mxnet
+import numpy as np
 import pandas as pd
 import pytest
 import sklearn.linear_model as slm
@@ -10,6 +11,7 @@ import sklearn.linear_model as slm
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
 import core.dataflow as dtf
+import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -224,8 +226,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
 
 if True:
-    class TestContinuousDeepArModel(hut.TestCase):
 
+    class TestContinuousDeepArModel(hut.TestCase):
         @pytest.mark.skip("Disabled because of PartTask2440")
         def test_fit_dag1(self) -> None:
             dag = self._get_dag()
@@ -265,7 +267,6 @@ if True:
             dag.connect("data", "deepar")
             return dag
 
-
     class TestDeepARGlobalModel(hut.TestCase):
         @pytest.mark.skip("Disabled because of PartTask2440")
         def test_fit1(self) -> None:
@@ -282,7 +283,9 @@ if True:
                     for key, val in output.items()
                 ]
             )
-            output_shape = {str(key): str(val.shape) for key, val in output.items()}
+            output_shape = {
+                str(key): str(val.shape) for key, val in output.items()
+            }
             config_info_output = (
                 f"{prnt.frame('config')}\n{config}\n"
                 f"{prnt.frame('info')}\n{pprint.pformat(info)}\n"
@@ -336,7 +339,10 @@ if True:
             config = cfg.Config()
             config["nid"] = "deepar"
             config["trainer_kwargs"] = {"epochs": 1}
-            config["estimator_kwargs"] = {"freq": "T", "use_feat_dynamic_real": False}
+            config["estimator_kwargs"] = {
+                "freq": "T",
+                "use_feat_dynamic_real": False,
+            }
             config["x_vars"] = self._x_vars
             config["y_vars"] = self._y_vars
             return config

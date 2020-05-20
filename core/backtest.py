@@ -54,15 +54,20 @@ if True:
         else:
             y_truncate = None
         data = adpt.transform_to_gluon(
-            df, x_vars, y_vars, frequency=df.index.freq.freqstr, y_truncate=y_truncate
+            df,
+            x_vars,
+            y_vars,
+            frequency=df.index.freq.freqstr,
+            y_truncate=y_truncate,
         )
         # Make predictions.
         predictions = predictor.predict(data, num_samples=num_samples)
         predictions = hlist.assert_single_element_and_return(list(predictions))
         #
-        dbg.dassert_eq(predictions.samples.shape, (num_samples, prediction_length))
+        dbg.dassert_eq(
+            predictions.samples.shape, (num_samples, prediction_length)
+        )
         return predictions
-
 
     def generate_predictions(
         predictor: gluonts.model.predictor.Predictor,
@@ -95,7 +100,9 @@ if True:
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-        dbg.dassert(df.index.freq, "The dataframe should have uniform datetime grid")
+        dbg.dassert(
+            df.index.freq, "The dataframe should have uniform datetime grid"
+        )
         dbg.dassert_monotonic_index(df.index)
         if isinstance(y_vars, str):
             y_vars = [y_vars]

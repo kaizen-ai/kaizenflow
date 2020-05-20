@@ -116,7 +116,9 @@ def get_credentials() -> Dict[str, Any]:
         # GP.
         git_user_name = "saggese"
         git_user_email = "saggese@gmail.com"
-        if server_name.startswith("gpmac") or server_name.startswith("giacintos-mbp"):
+        if server_name.startswith("gpmac") or server_name.startswith(
+            "giacintos-mbp"
+        ):
             # Laptop.
             conda_sh_path = "/Users/saggese/opt/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/saggese/.conda/envs"
@@ -187,7 +189,7 @@ def get_credentials() -> Dict[str, Any]:
         elif server_name == "Daniils-MacBook-Air.local":
             # Home laptop.
             conda_sh_path = "/Users/danya/opt/anaconda3/etc/profile.d/conda.sh"
-            conda_env_path = "/Users/danya/opt/anaconda3/envs" 
+            conda_env_path = "/Users/danya/opt/anaconda3/envs"
         else:
             dbg.dassert_ne(conda_sh_path, "")
     elif user_name == "dan":
@@ -246,7 +248,7 @@ def get_credentials() -> Dict[str, Any]:
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
         conda_env_path = "/var/lib/jenkins/.conda/envs"
     # We use this for #1522, #1831.
-    elif server_name == "docker-instance" or user_name == 'root':
+    elif server_name == "docker-instance" or user_name == "root":
         # Docker user.
         git_user_name = "infraparticleone"
         git_user_email = "infra@particle.one"

@@ -10,7 +10,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# ##############################################################################
+# #############################################################################
 
 # TODO(gp): Merge env in system_interaction or conda.py? Or split the functions.
 
@@ -75,7 +75,7 @@ def get_system_signature(git_commit_type="all"):
     return txt, failed_imports
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def get_system_info(add_frame):

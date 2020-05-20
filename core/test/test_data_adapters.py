@@ -1,21 +1,23 @@
 import logging
 from typing import List, Tuple
+
+import numpy as np
+import pandas as pd
 import pytest
+
+import core.data_adapters as adpt
+import helpers.printing as prnt
+import helpers.unit_test as hut
 
 # TODO(gp): Remove after PartTask2335.
 if True:
     import gluonts
     import gluonts.dataset.artificial as gda
     import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
+
     # TODO(*): gluon needs this import to work properly.
     import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
-import numpy as np
-import pandas as pd
-
-import core.data_adapters as adpt
-import helpers.printing as prnt
-import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,6 +48,7 @@ class _TestAdapter:
 
 # TODO(gp): Remove after PartTask2335.
 if True:
+
     class TestCreateIterSingleIndex(hut.TestCase):
         def test1(self) -> None:
             ta = _TestAdapter()
@@ -66,7 +69,9 @@ if True:
                     gluonts.dataset.field_names.FieldName.FEAT_DYNAMIC_REAL
                 ]
                 self.assertEqual(target.shape, (len(ta._y_vars), ta._df.shape[0]))
-                self.assertEqual(features.shape, (len(ta._x_vars), ta._df.shape[0]))
+                self.assertEqual(
+                    features.shape, (len(ta._x_vars), ta._df.shape[0])
+                )
                 self.assertIsInstance(start, pd.Timestamp)
 
         def test_truncate1(self) -> None:
@@ -75,7 +80,6 @@ if True:
                 ta._df, ta._x_vars, ta._y_vars, y_truncate=10
             )
             self.check_string(str(list(data_iter)))
-
 
     class TestTransformToGluon(hut.TestCase):
         def test_transform(self) -> None:
@@ -104,12 +108,12 @@ if True:
         def test_transform_none_x_vars(self) -> None:
             ta = _TestAdapter()
             y_vars = ta._y_vars[-1:]
-            gluon_ts = adpt.transform_to_gluon(ta._df, None, y_vars, ta._frequency)
+            gluon_ts = adpt.transform_to_gluon(
+                ta._df, None, y_vars, ta._frequency
+            )
             self.check_string(str(list(gluon_ts)))
 
-
     class TestTransformFromGluon(hut.TestCase):
-
         @pytest.mark.skip("Disabled because of PartTask2440")
         def test_transform(self) -> None:
             ta = _TestAdapter()
@@ -186,12 +190,13 @@ if True:
             train_df = adpt.transform_from_gluon(
                 train_ts, None, ["y"], index_name=None
             )
-            test_df = adpt.transform_from_gluon(test_ts, None, ["y"], index_name=None)
+            test_df = adpt.transform_from_gluon(
+                test_ts, None, ["y"], index_name=None
+            )
             str_res = (
                 f"{prnt.frame('train')}{train_df}\n{prnt.frame('test')}{test_df}"
             )
             self.check_string(str_res)
-
 
     class TestTransformFromGluonForecasts(hut.TestCase):
         @staticmethod

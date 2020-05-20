@@ -155,14 +155,14 @@ def get_conda_list(conda_env_name):
     ret = ret.split("\n")
     env_dict = {}
     labels = {1: "version", 2: "build", 3: "channel"}
-    for l in ret:
-        l = l.rstrip().lstrip()
-        _LOG.debug("line='%s'", l)
-        if l == "":
+    for line in ret:
+        line = line.rstrip().lstrip()
+        _LOG.debug("line='%s'", line)
+        if line == "":
             continue
-        if l.startswith("#"):
+        if line.startswith("#"):
             continue
-        vals = l.split()
+        vals = line.split()
         env_dict[vals[0]] = {labels[k]: vals[k] for k in range(1, len(vals[:4]))}
     return env_dict
 

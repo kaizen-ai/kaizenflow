@@ -18,15 +18,15 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Remove after PartTask2335.
 if True:
     import gluonts
+
     #
     # TODO(*): gluon needs these imports to work properly.
     import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
     import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
-    # #############################################################################
+    # #########################################################################
     # GluonTS
-    # #############################################################################
-
+    # #########################################################################
 
     def iterate_target_features(
         df: pd.DataFrame,
@@ -58,7 +58,9 @@ if True:
         if y_truncate == 0:
             y = df[y_vars]
         else:
-            dbg.dassert_lt(y_truncate, df.shape[0], "Cannot truncate the dataframe")
+            dbg.dassert_lt(
+                y_truncate, df.shape[0], "Cannot truncate the dataframe"
+            )
             y = df[y_vars].iloc[:-y_truncate]
         if not x_vars:
             yield {
@@ -73,7 +75,6 @@ if True:
                     x_vars
                 ].values.T,
             }
-
 
     def transform_to_gluon(
         df: pd.DataFrame,
@@ -141,7 +142,6 @@ if True:
         )
         return ts
 
-
     def transform_from_gluon(
         gluon_ts: gluonts.dataset.common.ListDataset,
         x_vars: Optional[Iterable[str]],
@@ -192,7 +192,6 @@ if True:
         df = _convert_tuples_list_to_df(dfs, index_name)
         return df
 
-
     # TODO(Julia): Add support of multitarget models.
     def transform_from_gluon_forecasts(
         forecasts: List[gluonts.model.forecast.SampleForecast],
@@ -219,10 +218,10 @@ if True:
             start_dates, "Forecast start dates should be unique"
         )
         forecast_dfs = [
-            _transform_from_gluon_forecast_entry(forecast) for forecast in forecasts
+            _transform_from_gluon_forecast_entry(forecast)
+            for forecast in forecasts
         ]
         return pd.concat(forecast_dfs).sort_index(level=0)
-
 
     def _convert_tuples_list_to_df(
         dfs: List[Tuple[pd.DataFrame, pd.DataFrame]], index_name: Optional[str],
@@ -237,7 +236,9 @@ if True:
             return combined
 
         dfs = dfs.copy()
-        dfs = [_process_features_target(features, target) for features, target in dfs]
+        dfs = [
+            _process_features_target(features, target) for features, target in dfs
+        ]
         # If `ListDataset` contains only one gluon time series, return
         # singly indexed dataframe; else return a multiindexed dataframe.
         if len(dfs) == 1:
@@ -249,7 +250,6 @@ if True:
             df.sort_index(level=0, inplace=True)
             df.index.names = [None, index_name]
         return df
-
 
     def _iterate_target_features_multiindex(
         local_ts: pd.DataFrame,
@@ -276,7 +276,6 @@ if True:
             yield from iterate_target_features(
                 df, x_vars, y_vars, y_truncate=y_truncate
             )
-
 
     def _transform_from_gluon_forecast_entry(
         forecast_entry: gluonts.model.forecast.SampleForecast,
