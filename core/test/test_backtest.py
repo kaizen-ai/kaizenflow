@@ -1,5 +1,6 @@
 import logging
 from typing import Iterable
+import pytest
 
 # TODO(gp): Remove after PartTask2335.
 if True:
@@ -51,6 +52,7 @@ if True:
                 shift=shift,
             )
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test1(self) -> None:
             """
             Generate y from a shift of an ARIMA series.
@@ -92,6 +94,7 @@ if True:
             )
             self.check_string(str_output)
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test2(self) -> None:
             """
             Generate y from a shift of a linear combination of ARIMA series.
@@ -133,6 +136,7 @@ if True:
             )
             self.check_string(str_output)
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test3(self) -> None:
             """
             Generate y from a shift of an ARIMA series. Ignore x.

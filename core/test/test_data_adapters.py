@@ -1,5 +1,6 @@
 import logging
 from typing import List, Tuple
+import pytest
 
 # TODO(gp): Remove after PartTask2335.
 if True:
@@ -108,6 +109,8 @@ if True:
 
 
     class TestTransformFromGluon(hut.TestCase):
+
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_transform(self) -> None:
             ta = _TestAdapter()
             gluon_ts = adpt.transform_to_gluon(
@@ -118,6 +121,7 @@ if True:
             )
             self.check_string(df.to_string())
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_transform_none_x_vars(self) -> None:
             ta = _TestAdapter()
             gluon_ts = adpt.transform_to_gluon(
@@ -128,6 +132,7 @@ if True:
             )
             self.check_string(df.to_string())
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_correctness(self) -> None:
             ta = _TestAdapter()
             gluon_ts = adpt.transform_to_gluon(
@@ -139,6 +144,7 @@ if True:
             inverted_df = inverted_df.astype(np.float64)
             pd.testing.assert_frame_equal(ta._df, inverted_df)
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_correctness_local_ts(self) -> None:
             ta = _TestAdapter()
             local_ts = pd.concat([ta._df, ta._df + 1], keys=[0, 1])
@@ -151,6 +157,7 @@ if True:
             inverted_df = inverted_df.astype(np.float64)
             pd.testing.assert_frame_equal(local_ts, inverted_df)
 
+        @pytest.mark.skip("Disabled because of PartTask2440")
         def test_transform_artificial_ts(self) -> None:
             """
             Artificial time series below has one-dimensional target.

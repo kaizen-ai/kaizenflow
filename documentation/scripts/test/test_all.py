@@ -33,13 +33,12 @@ class Test_pandoc1(ut.TestCase):
         out_file = os.path.join(tmp_dir, "output.pdf")
         cmd = []
         cmd.append(exec_path)
-        cmd.append("-a %s" % action)
+        cmd.append("--type %s" % action)
         cmd.append("--tmp_dir %s" % tmp_dir)
         cmd.append("--input %s" % in_file)
         cmd.append("--output %s" % out_file)
-        cmd.append("--no_open")
-        cmd.append("--no_gdrive")
-        cmd.append("--no_cleanup")
+        cmd.append("--action convert_txt_to_pandoc")
+        cmd.append("--action run_pandoc")
         cmd = " ".join(cmd)
         si.system(cmd)
         # Check.
