@@ -33,4 +33,4 @@
                nan,  0.77067834,         nan,         nan,  0.33070055,
                nan,         nan,         nan,         nan, -0.30232424,
                nan, -0.34320125,  0.08019871, -0.3178469 ,         nan,
-               nan,  0.7840064 ], dtype=float32), 'start': Timestamp('2010-01-01 00:00:00', freq='T'), 'source': SourceContext(source='list_data', row=1)}]
+               nan,  0.7840064 ], dtype=float32), 'start': Timestamp('2010-01-01 00:00:00', freq='T'), 'source': SourceContext(source='list_data', row=0)}]

@@ -36,7 +36,7 @@ export MYPYPATH=$PYTHONPATH
 echo '################################################################################'
 echo Config conda
 echo '################################################################################'
-echo 'conda_sh_path=/anaconda3/etc/profile.d/conda.sh'
+echo 'conda_sh_path=/Users/$USER_NAME/opt/anaconda3/etc/profile.d/conda.sh'
 echo "CONDA_PATH="$(which conda)
 echo "CONDA_VER="$(conda -V)
 echo '> conda info --envs'
