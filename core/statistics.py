@@ -588,31 +588,26 @@ def apply_kpss_test(
     return res
 
 
-def compute_zero_nan_inf_stats(
-    data: Union[pd.Series, pd.DataFrame]
-) -> pd.DataFrame():
+def compute_zero_nan_inf_stats(srs: pd.Series) -> pd.Series():
     """
     Calculate finite and non-finite values in time series.
 
-    :param data: time series or dataframe of time series
-    :return: dataframe of stats
+    :param srs: pandas series of floats
+    :return: series of stats
     """
     # TODO(*): To be optimized/rewritten in #2340.
-    if isinstance(data, pd.Series):
-        data = data.to_frame()
-    target_functions = {
-        "n_rows": len,
-        "frac_zero": stats.compute_frac_zero,
-        "frac_nan": stats.compute_frac_nan,
-        "frac_inf": stats.compute_frac_inf,
-        "frac_constant": stats.compute_frac_constant,
-        "num_finite_samples": stats.count_num_finite_samples,
+    dbg.dassert_isinstance(srs, pd.Series)
+    res = [
+        ("n_rows", len(srs)),
+        ("frac_zero", stats.compute_frac_zero(srs)),
+        ("frac_nan", stats.compute_frac_nan(srs)),
+        ("frac_inf", stats.compute_frac_inf(srs)),
+        ("frac_constant", stats.compute_frac_constant(srs)),
+        ("num_finite_samples", stats.count_num_finite_samples(srs)),
         # TODO(*): Add after extension to dataframes.
-        # "num_unique_values": stats.count_num_unique_values
-    }
-    result = {}
+        # ("num_unique_values", stats.count_num_unique_values),
+    ]
     # Add float output of each function to resulting series.
-    for label, function in target_functions.items():
-        result[label] = function(data)
-    result = pd.DataFrame(result, index=data.columns).transpose()
-    return result
+    data = list(zip(*res))
+    res = pd.Series(data[1], index=data[0], name=srs.name)
+    return res
