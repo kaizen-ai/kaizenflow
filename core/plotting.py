@@ -8,6 +8,7 @@ import logging
 import math
 from typing import Any, List, Optional, Tuple, Union
 
+import matplotlib as mpl
 import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,7 +50,13 @@ _DATETIME_TYPES = [
 # #############################################################################
 
 
-def get_multiple_plots(num_plots, num_cols, y_scale=None, *args, **kwargs):
+def get_multiple_plots(
+    num_plots: int,
+    num_cols: int,
+    y_scale: Optional[float] = None,
+    *args: Any,
+    **kwargs: Any,
+) -> Tuple[mpl.figure.Figure, np.array]:
     """
     Create figure to accommodate `num_plots` plots, arranged in rows with
     `num_cols` columns.
@@ -64,7 +71,7 @@ def get_multiple_plots(num_plots, num_cols, y_scale=None, *args, **kwargs):
     if y_scale is not None:
         dbg.dassert_lt(0, y_scale)
         ysize = (num_plots / num_cols) * y_scale
-        figsize = (20, ysize)
+        figsize: Optional[Tuple[float, float]] = (20, ysize)
     else:
         figsize = None
     fig, ax = plt.subplots(
@@ -311,7 +318,7 @@ def plot_autocorrelation(
     zero: bool = False,
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     """
     Plot ACF and PACF of columns.
@@ -636,7 +643,7 @@ def plot_confusion_heatmap(
     labels = set(list(y_true))
     df_out = pd.DataFrame(confusion, index=labels, columns=labels)
     df_out_percentage = df_out.apply(lambda x: x / x.sum(), axis=1)
-    fig, (ax, ax2) = plt.subplots(figsize=(FIG_SIZE), ncols=2)
+    _, (ax, ax2) = plt.subplots(figsize=(FIG_SIZE), ncols=2)
     plot_heatmap(
         df_out,
         mode="heatmap",
@@ -656,7 +663,10 @@ def plot_confusion_heatmap(
 
 
 def multipletests_plot(
-    pvals: pd.Series, threshold: float, method: Optional[str] = None, **kwargs
+    pvals: pd.Series,
+    threshold: float,
+    method: Optional[str] = None,
+    **kwargs: Any,
 ) -> None:
     """
     Plot adjusted p-values and pass/fail threshold.
@@ -668,7 +678,7 @@ def multipletests_plot(
     """
     pvals = pvals.sort_values().reset_index(drop=True)
     adj_pvals = stats.multipletests(pvals, method=method)
-    plt.plot(pvals, label="pvals", **kwargs)[0]
+    _ = plt.plot(pvals, label="pvals", **kwargs)[0]
     plt.plot(adj_pvals, label="adj pvals", **kwargs)
     # Show min adj p-val in text.
     min_adj_pval = adj_pvals[0]
@@ -867,7 +877,7 @@ class PCA:
         return self.pca.fit(X)
 
 
-def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
+def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
     """
     Get the number of principal components to plot.
     """
