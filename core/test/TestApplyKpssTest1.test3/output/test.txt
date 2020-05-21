@@ -1,4 +1,4 @@
-stat                   0.334322
+stat                   0.078132
 pval                   0.100000
 lags                   3.000000
 critical_values_1%     0.739000
