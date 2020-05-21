@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.4.0
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -54,13 +54,13 @@ arma00process = sig_gen.ArmaProcess([], [])
 # %%
 rets = arma00process.generate_sample(
     {"start": "2000-01-01", "periods": 4 * 252, "freq": "B"},
-    scale=5,
+    scale=0.01,
     burnin=20,
     seed=42,
 )
 
 # %%
-price = rets.cumsum()
+price = np.exp(rets.cumsum())
 
 # %%
 rets.name += "_rets"
