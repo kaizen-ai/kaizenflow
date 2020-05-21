@@ -14,9 +14,9 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import seaborn as sns
-import sklearn.decomposition as skl_dec
-import sklearn.metrics as skl_metrics
-import sklearn.utils.validation as skl_val
+import sklearn.decomposition as skldec
+import sklearn.metrics as sklmet
+import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 
 import core.explore as expl
@@ -28,10 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 sns.set_palette("bright")
 
-_ARRAY_LIKE_TYPE = Union[np.array, pd.DataFrame]
-_PCA_TYPE = Union[
-    skl_dec.PCA, skl_dec.IncrementalPCA, skl_dec.KernelPCA, skl_dec.SparsePCA
-]
+_PCA_TYPE = Union[skldec.PCA, skldec.IncrementalPCA]
 
 FIG_SIZE = (20, 5)
 
@@ -45,6 +42,39 @@ _DATETIME_TYPES = [
     "minute",
     "second",
 ]
+
+
+# #############################################################################
+# General plotting helpers
+# #############################################################################
+
+
+def get_multiple_plots(num_plots, num_cols, y_scale=None, *args, **kwargs):
+    """
+    Create figure to accommodate `num_plots` plots, arranged in rows with
+    `num_cols` columns.
+    :param num_plots: number of plots
+    :param num_cols: number of columns to use in the subplot
+    :param y_scale: if not None
+    Return a figure and an array of axes
+    """
+    dbg.dassert_lte(1, num_plots)
+    dbg.dassert_lte(1, num_cols)
+    # Heuristic to find the dimension of the fig.
+    if y_scale is not None:
+        dbg.dassert_lt(0, y_scale)
+        ysize = (num_plots / num_cols) * y_scale
+        figsize = (20, ysize)
+    else:
+        figsize = None
+    fig, ax = plt.subplots(
+        math.ceil(num_plots / num_cols),
+        num_cols,
+        figsize=figsize,
+        *args,
+        **kwargs,
+    )
+    return fig, ax.flatten()
 
 
 # #############################################################################
@@ -536,7 +566,7 @@ def plot_corr_over_time(
     timestamps = corr_df.index.get_level_values(0).unique()
     dbg.dassert_lte(len(timestamps), 20)
     # Get the axes.
-    fig, axes = expl.get_multiple_plots(
+    fig, axes = get_multiple_plots(
         len(timestamps), num_cols=num_cols, y_scale=4, sharex=True, sharey=True
     )
     # Add color map bar on the side.
@@ -602,7 +632,7 @@ def plot_confusion_heatmap(
     :y_pred: Predictions.
     :percentage: to represent values from confusion matrix in percentage or not.
     """
-    confusion = skl_metrics.confusion_matrix(y_true, y_pred)
+    confusion = sklmet.confusion_matrix(y_true, y_pred)
     labels = set(list(y_true))
     df_out = pd.DataFrame(confusion, index=labels, columns=labels)
     df_out_percentage = df_out.apply(lambda x: x / x.sum(), axis=1)
@@ -795,81 +825,54 @@ def plot_barplot(
 # PCA
 # #############################################################################
 
-# TODO(Julia): Consider wrapping `np.array` outputs into pandas objects.
+
 class PCA:
     def __init__(self, mode: str, **kwargs: Any):
-        # TODO(Julia): Find a better name than `linear` since incremental PCA
-        #     is linear too.
-        dbg.dassert_in(mode, ["linear", "kernel", "sparse", "incremental"])
-        if mode == "linear":
-            full_mode = "PCA"
+        if mode == "standard":
+            self.pca = skldec.PCA(**kwargs)
+        elif mode == "incremental":
+            self.pca = skldec.IncrementalPCA(**kwargs)
         else:
-            full_mode = mode.capitalize() + "PCA"
-        # TODO(Julia): Either need to make this public, or to stop supporting
-        #     sparse PCA and kernel PCA.
-        self._pca = getattr(skl_dec, full_mode)(**kwargs)
+            raise ValueError("Invalid mode='%s'" % mode)
 
-    def plot(self) -> None:
-        skl_val.check_is_fitted(self._pca)
+    def plot_components(self, num_pcs_to_plot: int) -> None:
+        skluv.check_is_fitted(self.pca)
+        eigenvals = pd.Series(self.pca.explained_variance_)
+        pcs = pd.DataFrame(self.pca.components_)
+        max_pcs = eigenvals.shape[0]
+        num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
+        _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
+        if num_pcs_to_plot > 0:
+            _, axes = get_multiple_plots(
+                num_pcs_to_plot, num_cols=4, sharex=True, sharey=True
+            )
+            plt.suptitle("Principal components")
+            for i in range(num_pcs_to_plot):
+                pc = pcs.iloc[i, :]
+                pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
 
     def plot_explained_variance(self) -> None:
-        skl_val.check_is_fitted(self._pca)
+        skluv.check_is_fitted(self.pca)
+        explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
+        eigenvals = pd.Series(self.pca.explained_variance_)
+        # Plot explained variance.
+        explained_variance_ratio.cumsum().plot(
+            title="Explained variance ratio", lw=5, ylim=(0, 1)
+        )
+        (eigenvals / eigenvals.max()).plot(color="g", kind="bar")
 
-    def fit(self, X: _ARRAY_LIKE_TYPE) -> _PCA_TYPE:
-        return self._pca.fit(X)
+    def fit(self, X: pd.DataFrame, standardize: bool = False) -> _PCA_TYPE:
+        if standardize:
+            X = X - X.mean() / X.std(ddof=1)
+        return self.pca.fit(X)
 
-    def partial_fit(
-        self, X: _ARRAY_LIKE_TYPE, check_input: bool = True
-    ) -> skl_dec.IncrementalPCA:
-        if not isinstance(self._pca, skl_dec.IncrementalPCA):
-            raise ValueError("`partial_fit` is supported only by incremental PCA")
-        return self._pca.partial_fit(X, check_input=check_input)
 
-    def transform(self, X: _ARRAY_LIKE_TYPE) -> np.array:
-        return self._pca.transform(X)
-
-    # TODO(Julia): Add `fit_transform`? It is not built in for sparse PCA and
-    #     incremental PCA.
-
-    def inverse_transform(self, X: _ARRAY_LIKE_TYPE) -> np.array:
-        return self._pca.inverse_transform(X)
-
-    # TODO(Julia): There are no such methods for kernel PCA and sparse PCA.
-    def get_covariance(self) -> np.array:
-        return self._pca.get_covariance()
-
-    def get_precision(self) -> np.array:
-        return self._pca.get_precision()
-
-    # TODO(Julia): It's `n_samples_seen_` for incremental PCA>
-    @property
-    def n_samples_(self) -> int:
-        return self._pca.n_samples_
-
-    @property
-    def n_features_(self) -> int:
-        return self._pca.n_features_
-
-    @property
-    def n_components(self) -> int:
-        return self._pca.n_components_
-
-    @property
-    def components_(self) -> np.array:
-        return self._pca.components_
-
-    @property
-    def explained_variance_(self) -> np.array:
-        return self._pca.explained_variance_
-
-    @property
-    def explained_variance_ratio_(self) -> np.array:
-        return self._pca.explained_variance_ratio_
-
-    @property
-    def singular_values_(self) -> np.array:
-        return self._pca.singular_values_
-
-    @property
-    def noise_variance_(self) -> float:
-        return self._pca.noise_variance_
+def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
+    """
+    Get the number of principal components to plot.
+    """
+    if num_pcs_to_plot == -1:
+        num_pcs_to_plot = max_pcs
+    dbg.dassert_lte(0, num_pcs_to_plot)
+    dbg.dassert_lte(num_pcs_to_plot, max_pcs)
+    return num_pcs_to_plot
