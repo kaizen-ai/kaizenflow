@@ -599,11 +599,11 @@ def compute_zero_nan_inf_stats(srs: pd.Series) -> pd.Series():
     dbg.dassert_isinstance(srs, pd.Series)
     res = [
         ("n_rows", len(srs)),
-        ("frac_zero", stats.compute_frac_zero(srs)),
-        ("frac_nan", stats.compute_frac_nan(srs)),
-        ("frac_inf", stats.compute_frac_inf(srs)),
-        ("frac_constant", stats.compute_frac_constant(srs)),
-        ("num_finite_samples", stats.count_num_finite_samples(srs)),
+        ("frac_zero", compute_frac_zero(srs)),
+        ("frac_nan", compute_frac_nan(srs)),
+        ("frac_inf", compute_frac_inf(srs)),
+        ("frac_constant", compute_frac_constant(srs)),
+        ("num_finite_samples", count_num_finite_samples(srs)),
         # TODO(*): Add after extension to dataframes.
         # ("num_unique_values", stats.count_num_unique_values),
     ]
