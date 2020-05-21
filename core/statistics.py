@@ -630,7 +630,7 @@ def apply_ljung_box_test(
     :param period: as in diagnostic.acorr_ljungbox
     :param nan_mode: "ignore" or "strict"
     :param prefix: optional prefix for metrics' outcome
-    :return: test statistic, pvalue, and related info
+    :return: test statistic, pvalue
     """
     dbg.dassert_isinstance(srs, pd.Series)
     model_df = model_df or 0
@@ -645,19 +645,14 @@ def apply_ljung_box_test(
     else:
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
-    (   LB_stat,
-        pval,
-        bpval,
-        bppval,
-    ) = sm.stats.diagnostic.acorr_ljungbox(
+
+    (LB_stat, pval,) = sm.stats.diagnostic.acorr_ljungbox(
         data.values, lags=lags, model_df=model_df, period=period
     )
 
     res = [
         (prefix + "stat", LB_stat),
         (prefix + "pval", pval),
-        (prefix + "bpval", bpval),
-        (prefix + "bppval", bppval),
     ]
     data = list(zip(*res))
     res = pd.Series(data[1], index=data[0], name=srs.name)
