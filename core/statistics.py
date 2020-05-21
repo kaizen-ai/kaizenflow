@@ -611,3 +611,66 @@ def compute_zero_nan_inf_stats(srs: pd.Series) -> pd.Series():
     data = list(zip(*res))
     res = pd.Series(data[1], index=data[0], name=srs.name)
     return res
+
+
+def apply_ljung_box_test(
+    srs: pd.Series,
+    lags: Optional[Union[int, pd.Series] = None,
+    model_df: Optional[int] = None,
+    period: Optional[int] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Implement a wrapper around statsmodels' Ljung-Box test.
+
+    :param srs: pandas series of floats
+    :param lags: as in diagnostic.acorr_ljungbox
+    :param model_df: as in diagnostic.acorr_ljungbox
+    :param period: as in diagnostic.acorr_ljungbox
+    :param nan_mode: "ignore" or "strict"
+    :param prefix: optional prefix for metrics' outcome
+    :return: test statistic, pvalue, and related info
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    model_df = model_df or 0
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    if nan_mode == "ignore":
+        data = srs.dropna()
+    elif nan_mode == "strict":
+        data = srs
+        if srs.isna().any():
+            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
+    try:
+        (
+            LB_stat,
+            pval,
+            bpval,
+            bppval,
+        ) = sm.stats.diagnostic.acorr_ljungbox(
+            data.values, lags=lags, model_df=model_df, period=period
+        )
+    except ValueError as inst:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        _LOG.warning(inst)
+        (LB_stat, pval, bpval, bppval,) = (
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+        )
+        #
+    res = [
+        (prefix + "stat", LB_stat),
+        (prefix + "pval", pval),
+        (prefix + "bpval", bpval),
+        (prefix + "bppval", bppval),
+    ]
+    data = list(zip(*res))
+    res = pd.Series(data[1], index=data[0], name=srs.name)
+    return res
