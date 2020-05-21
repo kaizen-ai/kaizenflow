@@ -289,3 +289,46 @@ class TestApplyKpssTest1(hut.TestCase):
         actual = stats.apply_kpss_test(series, prefix="kpss_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+
+class TestApplyLjungBoxTest1(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+
+        np.random.seed(seed=1)
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(date_range_kwargs=date_range)
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_ljung_box_test(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_ljung_box_test(series, lags=3)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_ljung_box_test(series, model_df=3)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_ljung_box_test(series, period=5)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        series = self._get_series(1)
+        actual = stats.apply_ljung_box_test(series, prefix="LB_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)

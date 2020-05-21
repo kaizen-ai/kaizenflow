@@ -645,26 +645,14 @@ def apply_ljung_box_test(
     else:
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
-    try:
-        (
-            LB_stat,
-            pval,
-            bpval,
-            bppval,
-        ) = sm.stats.diagnostic.acorr_ljungbox(
-            data.values, lags=lags, model_df=model_df, period=period
-        )
-    except ValueError as inst:
-        # This can raise if there are not enough data points, but the number
-        # required can depend upon the input parameters.
-        _LOG.warning(inst)
-        (LB_stat, pval, bpval, bppval,) = (
-            np.nan,
-            np.nan,
-            np.nan,
-            np.nan,
-        )
-        #
+    (   LB_stat,
+        pval,
+        bpval,
+        bppval,
+    ) = sm.stats.diagnostic.acorr_ljungbox(
+        data.values, lags=lags, model_df=model_df, period=period
+    )
+
     res = [
         (prefix + "stat", LB_stat),
         (prefix + "pval", pval),
