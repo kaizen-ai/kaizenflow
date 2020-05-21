@@ -615,7 +615,7 @@ def compute_zero_nan_inf_stats(srs: pd.Series) -> pd.Series():
 
 def apply_ljung_box_test(
     srs: pd.Series,
-    lags: Optional[Union[int, pd.Series] = None,
+    lags: Optional[Union[int, pd.Series]] = None,
     model_df: Optional[int] = None,
     period: Optional[int] = None,
     nan_mode: Optional[str] = None,
