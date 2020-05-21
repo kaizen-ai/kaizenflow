@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -23,6 +24,7 @@ def conda_system(cmd, *args, **kwargs):
     # TODO(gp): Pass conda_env_name as done in get_conda_list()
     path = usc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
+    dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
     return si.system(cmd, *args, **kwargs)
 
@@ -30,6 +32,7 @@ def conda_system(cmd, *args, **kwargs):
 def conda_system_to_string(cmd, *args, **kwargs):
     path = usc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
+    dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
     return si.system_to_string(cmd, *args, **kwargs)
 
@@ -152,14 +155,14 @@ def get_conda_list(conda_env_name):
     ret = ret.split("\n")
     env_dict = {}
     labels = {1: "version", 2: "build", 3: "channel"}
-    for l in ret:
-        l = l.rstrip().lstrip()
-        _LOG.debug("line='%s'", l)
-        if l == "":
+    for line in ret:
+        line = line.rstrip().lstrip()
+        _LOG.debug("line='%s'", line)
+        if line == "":
             continue
-        if l.startswith("#"):
+        if line.startswith("#"):
             continue
-        vals = l.split()
+        vals = line.split()
         env_dict[vals[0]] = {labels[k]: vals[k] for k in range(1, len(vals[:4]))}
     return env_dict
 

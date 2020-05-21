@@ -140,4 +140,4 @@
                 nan,  1.2049229 ,         nan,         nan,  1.3344456 ,
                 nan,         nan,         nan,         nan, -2.037076  ,
                 nan, -1.4456099 ,  0.35730454,  1.6613017 ,         nan,
-                nan,  0.9763091 ]], dtype=float32), 'source': SourceContext(source='list_data', row=1)}]
+                nan,  0.9763091 ]], dtype=float32), 'source': SourceContext(source='list_data', row=0)}]
