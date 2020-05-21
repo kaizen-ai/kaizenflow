@@ -46,45 +46,6 @@ _DATETIME_TYPES = [
 
 
 # #############################################################################
-# General plotting helpers
-# #############################################################################
-
-
-def get_multiple_plots(
-    num_plots: int,
-    num_cols: int,
-    y_scale: Optional[float] = None,
-    *args: Any,
-    **kwargs: Any,
-) -> Tuple[mpl.figure.Figure, np.array]:
-    """
-    Create figure to accommodate `num_plots` plots, arranged in rows with
-    `num_cols` columns.
-    :param num_plots: number of plots
-    :param num_cols: number of columns to use in the subplot
-    :param y_scale: if not None
-    Return a figure and an array of axes
-    """
-    dbg.dassert_lte(1, num_plots)
-    dbg.dassert_lte(1, num_cols)
-    # Heuristic to find the dimension of the fig.
-    if y_scale is not None:
-        dbg.dassert_lt(0, y_scale)
-        ysize = (num_plots / num_cols) * y_scale
-        figsize: Optional[Tuple[float, float]] = (20, ysize)
-    else:
-        figsize = None
-    fig, ax = plt.subplots(
-        math.ceil(num_plots / num_cols),
-        num_cols,
-        figsize=figsize,
-        *args,
-        **kwargs,
-    )
-    return fig, ax.flatten()
-
-
-# #############################################################################
 # General dataframe plotting helpers
 # #############################################################################
 
@@ -602,6 +563,53 @@ def plot_corr_over_time(
         axes[i].set_title(timestamps[i])
 
 
+class PCA:
+    def __init__(self, mode: str, **kwargs: Any):
+        if mode == "standard":
+            self.pca = skldec.PCA(**kwargs)
+        elif mode == "incremental":
+            self.pca = skldec.IncrementalPCA(**kwargs)
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
+
+    def plot_components(
+        self, num_components: Optional[int] = None, num_cols: int = 4
+    ) -> None:
+        """
+        Plot principal components.
+
+        :param num_components: number of top components to plot
+        :param num_cols: number of columns to use in the subplot
+        """
+        skluv.check_is_fitted(self.pca)
+        pcs = pd.DataFrame(self.pca.components_)
+        max_pcs = self.pca.components_.shape[0]
+        num_components = _get_num_pcs_to_plot(num_components, max_pcs)
+        _LOG.info("num_components=%s", num_components)
+        _, axes = get_multiple_plots(
+            num_components, num_cols=num_cols, sharex=True, sharey=True
+        )
+        plt.suptitle("Principal components")
+        for i in range(num_components):
+            pc = pcs.iloc[i, :]
+            pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
+
+    def plot_explained_variance(self) -> None:
+        skluv.check_is_fitted(self.pca)
+        explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
+        eigenvals = pd.Series(self.pca.explained_variance_)
+        # Plot explained variance.
+        explained_variance_ratio.cumsum().plot(
+            title="Explained variance ratio", lw=5, ylim=(0, 1)
+        )
+        (eigenvals / eigenvals.max()).plot(color="g", kind="bar", rot=0)
+
+    def fit(self, X: pd.DataFrame, standardize: bool = False) -> _PCA_TYPE:
+        if standardize:
+            X = (X - X.mean()) / X.std()
+        return self.pca.fit(X)
+
+
 def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
     if mode == "heatmap_semitriangle":
         # Generate a mask for the upper triangle.
@@ -832,57 +840,53 @@ def plot_barplot(
 
 
 # #############################################################################
-# PCA
+# General plotting helpers
 # #############################################################################
 
 
-class PCA:
-    def __init__(self, mode: str, **kwargs: Any):
-        if mode == "standard":
-            self.pca = skldec.PCA(**kwargs)
-        elif mode == "incremental":
-            self.pca = skldec.IncrementalPCA(**kwargs)
-        else:
-            raise ValueError("Invalid mode='%s'" % mode)
+def get_multiple_plots(
+    num_plots: int,
+    num_cols: int,
+    y_scale: Optional[float] = None,
+    *args: Any,
+    **kwargs: Any,
+) -> Tuple[mpl.figure.Figure, np.array]:
+    """
+    Create figure to accommodate `num_plots` plots.
 
-    def plot_components(self, num_pcs_to_plot: int) -> None:
-        skluv.check_is_fitted(self.pca)
-        eigenvals = pd.Series(self.pca.explained_variance_)
-        pcs = pd.DataFrame(self.pca.components_)
-        max_pcs = eigenvals.shape[0]
-        num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
-        _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
-        if num_pcs_to_plot > 0:
-            _, axes = get_multiple_plots(
-                num_pcs_to_plot, num_cols=4, sharex=True, sharey=True
-            )
-            plt.suptitle("Principal components")
-            for i in range(num_pcs_to_plot):
-                pc = pcs.iloc[i, :]
-                pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
+    The figure is arranged in rows with `num_cols` columns.
 
-    def plot_explained_variance(self) -> None:
-        skluv.check_is_fitted(self.pca)
-        explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
-        eigenvals = pd.Series(self.pca.explained_variance_)
-        # Plot explained variance.
-        explained_variance_ratio.cumsum().plot(
-            title="Explained variance ratio", lw=5, ylim=(0, 1)
-        )
-        (eigenvals / eigenvals.max()).plot(color="g", kind="bar")
-
-    def fit(self, X: pd.DataFrame, standardize: bool = False) -> _PCA_TYPE:
-        if standardize:
-            X = X - X.mean() / X.std(ddof=1)
-        return self.pca.fit(X)
+    :param num_plots: number of plots
+    :param num_cols: number of columns to use in the subplot
+    :param y_scale: if not None
+    :return: figure and array of axes
+    """
+    dbg.dassert_lte(1, num_plots)
+    dbg.dassert_lte(1, num_cols)
+    # Heuristic to find the dimension of the fig.
+    if y_scale is not None:
+        dbg.dassert_lt(0, y_scale)
+        ysize = (num_plots / num_cols) * y_scale
+        figsize: Optional[Tuple[float, float]] = (20, ysize)
+    else:
+        figsize = None
+    fig, ax = plt.subplots(
+        math.ceil(num_plots / num_cols),
+        num_cols,
+        figsize=figsize,
+        *args,
+        **kwargs,
+    )
+    return fig, ax.flatten()
 
 
-def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
+def _get_num_pcs_to_plot(num_pcs_to_plot: Optional[int], max_pcs: int) -> int:
     """
     Get the number of principal components to plot.
     """
-    if num_pcs_to_plot == -1:
+    if num_pcs_to_plot is None:
         num_pcs_to_plot = max_pcs
-    dbg.dassert_lte(0, num_pcs_to_plot)
+        _LOG.warning("Plotting all %s components", num_pcs_to_plot)
+    dbg.dassert_lte(1, num_pcs_to_plot)
     dbg.dassert_lte(num_pcs_to_plot, max_pcs)
     return num_pcs_to_plot
