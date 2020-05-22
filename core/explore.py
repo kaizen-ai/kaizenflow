@@ -23,7 +23,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import sklearn
-import sklearn.decomposition as skl_dec
 import statsmodels
 import statsmodels.api
 import tqdm.autonotebook as tqdm
@@ -584,40 +583,6 @@ def filter_by_val(
 # /////////////////////////////////////////////////////////////////////////////
 
 
-def get_multiple_plots(
-    num_plots: int,
-    num_cols: int,
-    y_scale: Optional[float] = None,
-    *args: Any,
-    **kwargs: Any,
-) -> Tuple[mpl.figure.Figure, np.array]:
-    """
-    Create figure to accommodate `num_plots` plots, arranged in rows with
-    `num_cols` columns.
-    :param num_plots: number of plots
-    :param num_cols: number of columns to use in the subplot
-    :param y_scale: if not None
-    Return a figure and an array of axes
-    """
-    dbg.dassert_lte(1, num_plots)
-    dbg.dassert_lte(1, num_cols)
-    # Heuristic to find the dimension of the fig.
-    if y_scale is not None:
-        dbg.dassert_lt(0, y_scale)
-        ysize = (num_plots / num_cols) * y_scale
-        figsize = (20, ysize)
-    else:
-        figsize = None
-    fig, ax = plt.subplots(
-        math.ceil(num_plots / num_cols),
-        num_cols,
-        figsize=figsize,
-        *args,
-        **kwargs,
-    )
-    return fig, ax.flatten()
-
-
 def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
     """
     Get the number of principal components to plot.
@@ -658,59 +623,6 @@ def sample_rolling_df(
     # rolling_df_out = rolling_df.unstack().reindex(ts).stack(dropna=False)
     rolling_df_out = rolling_df.loc[ts]
     return rolling_df_out, ts
-
-
-# TODO(gp): Maybe we should package all the PCA code into a single object.
-
-
-def plot_pca_analysis(
-    df: pd.DataFrame,
-    plot_explained_variance: bool = False,
-    num_pcs_to_plot: int = 0,
-) -> None:
-    """
-    Plot results of PCA analysis for data in `df`
-    - eigenvalues
-    - explained variance
-    - eigenvectors components
-    """
-    # Compute PCA.
-    corr = df.corr(method="pearson")
-    pca = skl_dec.PCA()
-    pca.fit(df.fillna(0.0))
-    explained_variance = pd.Series(pca.explained_variance_ratio_)
-    # Find indices of assets with no nans in the covariance matrix.
-    num_non_nan_corr = corr.notnull().sum()
-    is_valid = num_non_nan_corr == num_non_nan_corr.max()
-    valid_indices = sorted(is_valid[is_valid].index.tolist())
-    # Compute eigenvalues / vectors for the subset of the matrix without nans.
-    # TODO(Paul): Consider replacing `eig` with `eigh` as per
-    # https://stackoverflow.com/questions/45434989
-    eigenval, eigenvec = np.linalg.eig(
-        corr.loc[valid_indices, valid_indices].values
-    )
-    # Sort by decreasing eigenvalue.
-    ind = eigenval.argsort()[::-1]
-    selected_pcs = eigenvec[:, ind]
-    pcs = pd.DataFrame(selected_pcs, index=valid_indices)
-    lambdas = pd.Series(eigenval[ind])
-    # Plot explained variance.
-    if plot_explained_variance:
-        title = "Eigenvalues and explained variance vs ordered PCs"
-        explained_variance.cumsum().plot(title=title, lw=5, ylim=(0, 1))
-        # Plot principal component lambda.
-        (lambdas / lambdas.max()).plot(color="g", kind="bar")
-    # Plot eigenvectors.
-    max_pcs = len(lambdas)
-    num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
-    _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
-    if num_pcs_to_plot > 0:
-        _, axes = get_multiple_plots(
-            num_pcs_to_plot, num_cols=4, sharex=True, sharey=True
-        )
-        for i in range(num_pcs_to_plot):
-            pc = pcs.iloc[:, i]
-            pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
 
 
 # NOTE:
@@ -817,7 +729,7 @@ def plot_pca_over_time(
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        _, axes = get_multiple_plots(
+        _, axes = plot.get_multiple_plots(
             num_pcs_to_plot,
             num_cols=num_cols,
             y_scale=4,

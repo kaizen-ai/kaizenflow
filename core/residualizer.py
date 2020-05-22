@@ -22,6 +22,7 @@ import pandas as pd
 from scipy.spatial.distance import cosine
 
 import core.explore as exp
+import core.plotting as plot
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -484,7 +485,7 @@ class PcaFactorComputer(FactorComputer):
         num_pcs_to_plot = self._get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
         _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
         if num_pcs_to_plot > 0:
-            _, axes = exp.get_multiple_plots(
+            _, axes = plot.get_multiple_plots(
                 num_pcs_to_plot,
                 num_cols=num_cols,
                 y_scale=4,

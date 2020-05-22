@@ -8,13 +8,16 @@ import logging
 import math
 from typing import Any, List, Optional, Tuple, Union
 
+import matplotlib as mpl
 import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy as sp
 import seaborn as sns
-import sklearn.metrics as skl_metrics
+import sklearn.decomposition as skldec
+import sklearn.metrics as sklmet
+import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 
 import core.explore as expl
@@ -25,6 +28,8 @@ import helpers.list as hlist
 _LOG = logging.getLogger(__name__)
 
 sns.set_palette("bright")
+
+_PCA_TYPE = Union[skldec.PCA, skldec.IncrementalPCA]
 
 FIG_SIZE = (20, 5)
 
@@ -274,7 +279,7 @@ def plot_autocorrelation(
     zero: bool = False,
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     """
     Plot ACF and PACF of columns.
@@ -529,7 +534,7 @@ def plot_corr_over_time(
     timestamps = corr_df.index.get_level_values(0).unique()
     dbg.dassert_lte(len(timestamps), 20)
     # Get the axes.
-    fig, axes = expl.get_multiple_plots(
+    fig, axes = get_multiple_plots(
         len(timestamps), num_cols=num_cols, y_scale=4, sharex=True, sharey=True
     )
     # Add color map bar on the side.
@@ -556,6 +561,65 @@ def plot_corr_over_time(
             ax=axes[i],
         )
         axes[i].set_title(timestamps[i])
+
+
+class PCA:
+    def __init__(self, mode: str, **kwargs: Any):
+        if mode == "standard":
+            self.pca = skldec.PCA(**kwargs)
+        elif mode == "incremental":
+            self.pca = skldec.IncrementalPCA(**kwargs)
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
+
+    def plot_components(
+        self, num_components: Optional[int] = None, num_cols: int = 4
+    ) -> None:
+        """
+        Plot principal components.
+
+        :param num_components: number of top components to plot
+        :param num_cols: number of columns to use in the subplot
+        """
+        skluv.check_is_fitted(self.pca)
+        pcs = pd.DataFrame(self.pca.components_)
+        max_pcs = self.pca.components_.shape[0]
+        num_components = self._get_num_pcs_to_plot(num_components, max_pcs)
+        _LOG.info("num_components=%s", num_components)
+        _, axes = get_multiple_plots(
+            num_components, num_cols=num_cols, sharex=True, sharey=True
+        )
+        plt.suptitle("Principal components")
+        for i in range(num_components):
+            pc = pcs.iloc[i, :]
+            pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
+
+    def plot_explained_variance(self) -> None:
+        skluv.check_is_fitted(self.pca)
+        explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
+        eigenvals = pd.Series(self.pca.explained_variance_)
+        # Plot explained variance.
+        explained_variance_ratio.cumsum().plot(
+            title="Explained variance ratio", lw=5, ylim=(0, 1)
+        )
+        (eigenvals / eigenvals.max()).plot(color="g", kind="bar", rot=0)
+
+    def fit(self, X: pd.DataFrame, standardize: bool = False) -> _PCA_TYPE:
+        if standardize:
+            X = (X - X.mean()) / X.std()
+        return self.pca.fit(X)
+
+    @staticmethod
+    def _get_num_pcs_to_plot(num_pcs_to_plot: Optional[int], max_pcs: int) -> int:
+        """
+        Get the number of principal components to plot.
+        """
+        if num_pcs_to_plot is None:
+            num_pcs_to_plot = max_pcs
+            _LOG.warning("Plotting all %s components", num_pcs_to_plot)
+        dbg.dassert_lte(1, num_pcs_to_plot)
+        dbg.dassert_lte(num_pcs_to_plot, max_pcs)
+        return num_pcs_to_plot
 
 
 def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
@@ -595,11 +659,11 @@ def plot_confusion_heatmap(
     :y_pred: Predictions.
     :percentage: to represent values from confusion matrix in percentage or not.
     """
-    confusion = skl_metrics.confusion_matrix(y_true, y_pred)
+    confusion = sklmet.confusion_matrix(y_true, y_pred)
     labels = set(list(y_true))
     df_out = pd.DataFrame(confusion, index=labels, columns=labels)
     df_out_percentage = df_out.apply(lambda x: x / x.sum(), axis=1)
-    fig, (ax, ax2) = plt.subplots(figsize=(FIG_SIZE), ncols=2)
+    _, (ax, ax2) = plt.subplots(figsize=(FIG_SIZE), ncols=2)
     plot_heatmap(
         df_out,
         mode="heatmap",
@@ -619,7 +683,10 @@ def plot_confusion_heatmap(
 
 
 def multipletests_plot(
-    pvals: pd.Series, threshold: float, method: Optional[str] = None, **kwargs
+    pvals: pd.Series,
+    threshold: float,
+    method: Optional[str] = None,
+    **kwargs: Any,
 ) -> None:
     """
     Plot adjusted p-values and pass/fail threshold.
@@ -631,7 +698,7 @@ def multipletests_plot(
     """
     pvals = pvals.sort_values().reset_index(drop=True)
     adj_pvals = stats.multipletests(pvals, method=method)
-    plt.plot(pvals, label="pvals", **kwargs)[0]
+    _ = plt.plot(pvals, label="pvals", **kwargs)[0]
     plt.plot(adj_pvals, label="adj pvals", **kwargs)
     # Show min adj p-val in text.
     min_adj_pval = adj_pvals[0]
@@ -782,3 +849,44 @@ def plot_barplot(
     if plot_title:
         plt.title(plot_title)
     plt.show()
+
+
+# #############################################################################
+# General plotting helpers
+# #############################################################################
+
+
+def get_multiple_plots(
+    num_plots: int,
+    num_cols: int,
+    y_scale: Optional[float] = None,
+    *args: Any,
+    **kwargs: Any,
+) -> Tuple[mpl.figure.Figure, np.array]:
+    """
+    Create figure to accommodate `num_plots` plots.
+
+    The figure is arranged in rows with `num_cols` columns.
+
+    :param num_plots: number of plots
+    :param num_cols: number of columns to use in the subplot
+    :param y_scale: if not None
+    :return: figure and array of axes
+    """
+    dbg.dassert_lte(1, num_plots)
+    dbg.dassert_lte(1, num_cols)
+    # Heuristic to find the dimension of the fig.
+    if y_scale is not None:
+        dbg.dassert_lt(0, y_scale)
+        ysize = (num_plots / num_cols) * y_scale
+        figsize: Optional[Tuple[float, float]] = (20, ysize)
+    else:
+        figsize = None
+    fig, ax = plt.subplots(
+        math.ceil(num_plots / num_cols),
+        num_cols,
+        figsize=figsize,
+        *args,
+        **kwargs,
+    )
+    return fig, ax.flatten()
