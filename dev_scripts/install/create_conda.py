@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 r"""
+Create the conda environment for developing.
+
 This script should have *no* dependencies from anything: it should be able to run
 before setenv.sh, on a new system with nothing installed. It can use //amp
 libraries.
@@ -252,10 +254,10 @@ def _run_pip_install(args: Any, conda_env_name: str) -> None:
         if False:
             # PartTask1005: Moved to pip and pinned for gluonts.
             cmd = [
-                'conda activate %s' % conda_env_name,
+                "conda activate %s" % conda_env_name,
                 'pip install --no-deps "mxnet>=1.6.0"',
-                'pip install --no-deps gluonnlp'
-                ]
+                "pip install --no-deps gluonnlp",
+            ]
             cmd = " && ".join(cmd)
             hco.conda_system(cmd, suppress_output=False)
 

@@ -15,8 +15,9 @@ more complex pipelines. The output is reported through logging.
 import datetime
 import logging
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Collection, Dict, List, Optional, Tuple, Union
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -41,7 +42,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Move this to helpers/pandas_helpers.py
 
 
-def cast_to_df(obj):
+def cast_to_df(obj: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
     if isinstance(obj, pd.Series):
         df = pd.DataFrame(obj)
     else:
@@ -50,7 +51,7 @@ def cast_to_df(obj):
     return df
 
 
-def cast_to_series(obj):
+def cast_to_series(obj: Union[pd.Series, pd.DataFrame]) -> pd.Series:
     if isinstance(obj, pd.DataFrame):
         dbg.dassert_eq(obj.shape[1], 1)
         srs = obj.iloc[:, 1]
@@ -61,15 +62,17 @@ def cast_to_series(obj):
 
 
 # TODO(gp): Need to be tested.
-def adapt_to_series(f):
+def adapt_to_series(f: Callable) -> Callable:
     """
     Decorate a function working on data frames in order to work on series.
     """
 
-    def wrapper(obj, *args, **kwargs):
+    def wrapper(
+        obj: Union[pd.Series, pd.DataFrame], *args: Any, **kwargs: Any
+    ) -> Any:
         # Convert a pd.Series to a pd.DataFrame.
         was_series = False
-        if isinstance(pd.Series):
+        if isinstance(obj, pd.Series):
             obj = pd.DataFrame(obj)
             was_series = True
         dbg.dassert_isinstance(obj, pd.DataFrame)
@@ -80,7 +83,9 @@ def adapt_to_series(f):
             if isinstance(res, tuple):
                 res_obj, res_tmp = res[0], res[1:]
                 res_obj_srs = cast_to_series(res_obj)
-                res = tuple([res_obj_srs].extend(res_tmp))
+                res_obj_srs = [res_obj_srs]
+                res_obj_srs.extend(res_tmp)
+                res = tuple(res_obj_srs)
             else:
                 res = cast_to_series(res)
         return res
@@ -94,8 +99,12 @@ def adapt_to_series(f):
 
 
 def drop_axis_with_all_nans(
-    df, drop_rows=True, drop_columns=False, drop_infs=False, report_stats=False
-):
+    df: pd.DataFrame,
+    drop_rows: bool = True,
+    drop_columns: bool = False,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+) -> pd.DataFrame:
     """
     Remove columns and rows completely empty.
     The operation is not in place and the resulting df is returned.
@@ -152,7 +161,13 @@ def drop_axis_with_all_nans(
     return df
 
 
-def drop_na(df, drop_infs=False, report_stats=False, *args, **kwargs):
+def drop_na(
+    df: pd.DataFrame,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
     """
     Wrapper around pd.dropna() reporting information about the removed rows.
     """
@@ -169,8 +184,11 @@ def drop_na(df, drop_infs=False, report_stats=False, *args, **kwargs):
 
 
 def report_zero_nan_inf_stats(
-    df, zero_threshold=1e-9, verbose=False, as_txt=False
-):
+    df: pd.DataFrame,
+    zero_threshold: float = 1e-9,
+    verbose: bool = False,
+    as_txt: bool = False,
+) -> pd.DataFrame:
     """
     Report count and percentage about zeros, nans, infs for a df.
 
@@ -249,7 +267,9 @@ def drop_duplicates(
 # //////////////////////////////////////////////////////////////////////////////
 
 
-def _get_variable_cols(df, threshold=1):
+def _get_variable_cols(
+    df: pd.DataFrame, threshold: int = 1
+) -> Tuple[List[str], List[str]]:
     """
     Return columns of a df that contain less than <threshold> unique values.
 
@@ -265,7 +285,9 @@ def _get_variable_cols(df, threshold=1):
     return var_cols, const_cols
 
 
-def remove_columns_with_low_variability(df, threshold=1, log_level=logging.DEBUG):
+def remove_columns_with_low_variability(
+    df: pd.DataFrame, threshold: int = 1, log_level: int = logging.DEBUG
+) -> pd.DataFrame:
     """
     Remove columns of a df that contain less than <threshold> unique values.
 
@@ -286,8 +308,13 @@ def remove_columns_with_low_variability(df, threshold=1, log_level=logging.DEBUG
 
 
 def add_pct(
-    df, col_name, total, dst_col_name, num_digits=2, use_thousands_separator=True
-):
+    df: pd.DataFrame,
+    col_name: str,
+    total: int,
+    dst_col_name: str,
+    num_digits: int = 2,
+    use_thousands_separator: bool = True,
+) -> pd.DataFrame:
     """
     Add to df a column "dst_col_name" storing the percentage of values in
     column "col_name" with respect to "total".
@@ -319,8 +346,12 @@ def add_pct(
 
 # TODO(gp): Explain what this is supposed to do.
 def breakdown_table(
-    df, col_name, num_digits=2, use_thousands_separator=True, verbosity=False
-):
+    df: pd.DataFrame,
+    col_name: str,
+    num_digits: int = 2,
+    use_thousands_separator: bool = True,
+    verbosity: bool = False,
+) -> pd.DataFrame:
     if isinstance(col_name, list):
         for c in col_name:
             print(("\n" + pri.frame(c).rstrip("\n")))
@@ -362,8 +393,11 @@ def breakdown_table(
 
 
 def print_column_variability(
-    df, max_num_vals=3, num_digits=2, use_thousands_separator=True
-):
+    df: pd.DataFrame,
+    max_num_vals: int = 3,
+    num_digits: int = 2,
+    use_thousands_separator: bool = True,
+) -> pd.DataFrame:
     """
     Print statistics about the values in each column of a data frame.
     This is useful to get a sense of which columns are interesting.
@@ -404,7 +438,9 @@ def print_column_variability(
     return res
 
 
-def find_common_columns(names, dfs):
+def find_common_columns(
+    names: Collection[str], dfs: Collection[pd.DataFrame]
+) -> pd.DataFrame:
     df = []
     for i, df1 in enumerate(dfs):
         df1 = dfs[i].columns
@@ -440,7 +476,9 @@ def find_common_columns(names, dfs):
 # #############################################################################
 
 
-def remove_columns(df, cols, log_level=logging.DEBUG):
+def remove_columns(
+    df: pd.DataFrame, cols: Collection[str], log_level: int = logging.DEBUG
+) -> pd.DataFrame:
     to_remove = set(cols).intersection(set(df.columns))
     _LOG.log(log_level, "to_remove=%s", pri.list_to_str(to_remove))
     df.drop(to_remove, axis=1, inplace=True)
@@ -449,7 +487,9 @@ def remove_columns(df, cols, log_level=logging.DEBUG):
     return df
 
 
-def filter_with_df(df, filter_df, log_level=logging.DEBUG):
+def filter_with_df(
+    df: pd.DataFrame, filter_df: pd.DataFrame, log_level: int = logging.DEBUG
+) -> pd.Series:
     """
     Compute a mask for DataFrame df using common columns and values in
     "filter_df".
@@ -467,13 +507,13 @@ def filter_with_df(df, filter_df, log_level=logging.DEBUG):
 
 
 def filter_around_time(
-    df,
-    col_name,
-    timestamp,
-    timedelta_before,
-    timedelta_after=None,
-    log_level=logging.DEBUG,
-):
+    df: pd.DataFrame,
+    col_name: str,
+    timestamp: Union[datetime.datetime, pd.Timestamp],
+    timedelta_before: pd.Timedelta,
+    timedelta_after: Optional[pd.Timedelta] = None,
+    log_level: int = logging.DEBUG,
+) -> pd.DataFrame:
     dbg.dassert_in(col_name, df)
     dbg.dassert_lte(pd.Timedelta(0), timedelta_before)
     if timedelta_after is None:
@@ -495,13 +535,13 @@ def filter_around_time(
 
 
 def filter_by_val(
-    df,
-    col_name,
-    min_val,
-    max_val,
-    use_thousands_separator=True,
-    log_level=logging.DEBUG,
-):
+    df: pd.DataFrame,
+    col_name: str,
+    min_val: float,
+    max_val: float,
+    use_thousands_separator: bool = True,
+    log_level: int = logging.DEBUG,
+) -> pd.DataFrame:
     """
     Filter out rows of df where df[col_name] is not in [min_val, max_val].
     """
@@ -543,7 +583,7 @@ def filter_by_val(
 # /////////////////////////////////////////////////////////////////////////////
 
 
-def _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs):
+def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
     """
     Get the number of principal components to plot.
     """
@@ -569,7 +609,9 @@ def handle_nans(df: pd.DataFrame, nan_mode: str) -> pd.DataFrame:
     return df
 
 
-def sample_rolling_df(rolling_df, periods):
+def sample_rolling_df(
+    rolling_df: pd.DataFrame, periods: int
+) -> Tuple[pd.DataFrame, pd.DatetimeIndex]:
     """
     Given a rolling metric stored as multiindex (e.g., correlation computed by
     pd.ewm) sample `periods` equispaced samples.
@@ -583,13 +625,13 @@ def sample_rolling_df(rolling_df, periods):
     return rolling_df_out, ts
 
 
-# TODO(gp): Maybe we should package all the PCA code into a single object.
-
 # NOTE:
 #   - DRY: We have a rolling corr function elsewhere.
 #   - Functional style: This one seems to be able to modify `ret` through
 #     `nan_mode`.
-def rolling_corr_over_time(df, com, nan_mode):
+def rolling_corr_over_time(
+    df: pd.DataFrame, com: float, nan_mode: str
+) -> pd.DataFrame:
     """
     Compute rolling correlation over time.
     :return: corr_df is a multi-index df storing correlation matrices with
@@ -667,7 +709,12 @@ def rolling_pca_over_time(
     return corr_df, eigval_df, eigvec_df
 
 
-def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0, num_cols=2):
+def plot_pca_over_time(
+    eigval_df: pd.DataFrame,
+    eigvec_df: pd.DataFrame,
+    num_pcs_to_plot: int = 0,
+    num_cols: int = 2,
+) -> None:
     """
     Similar to plot_pca_analysis() but over time.
     """
@@ -695,7 +742,11 @@ def plot_pca_over_time(eigval_df, eigvec_df, num_pcs_to_plot=0, num_cols=2):
             )
 
 
-def plot_time_distributions(dts, mode, density=True):
+def plot_time_distributions(
+    dts: Collection[Union[datetime.datetime, pd.Timestamp]],
+    mode: str,
+    density: bool = True,
+) -> mpl.axes.Axes:
     """
     Compute distribution for an array of timestamps `dts`.
     - mode: see below
@@ -792,7 +843,7 @@ def jointplot(
     df: pd.DataFrame,
     predicted_var: str,
     predictor_var: str,
-    height: int = None,
+    height: Optional[int] = None,
     *args: Any,
     **kwargs: Any,
 ) -> None:
@@ -823,7 +874,7 @@ def _preprocess_regression(
     intercept: bool,
     predicted_var: str,
     predicted_var_delay: int,
-    predictor_vars: str,
+    predictor_vars: Union[str, List[str]],
     predictor_vars_delay: int,
 ) -> Optional[Tuple[pd.DataFrame, List[str], List[str]]]:
     """
@@ -833,7 +884,7 @@ def _preprocess_regression(
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_lte(1, df.shape[0])
     if isinstance(predictor_vars, str):
-        predictor_vars = [predictor_vars]  # type: ignore
+        predictor_vars = [predictor_vars]
     dbg.dassert_type_is(predictor_vars, list)
     # dbg.dassert_type_is(predicted_var, str)
     dbg.dassert_not_in(predicted_var, predictor_vars)
@@ -900,7 +951,7 @@ def ols_regress(
     predicted_var_delay: int = 0,
     predictor_vars_delay: int = 0,
     max_nrows: float = 1e4,
-) -> Dict[str, Any]:
+) -> Optional[Dict[str, Any]]:
     """
     Perform OLS on columns of a dataframe.
 
@@ -1031,7 +1082,7 @@ def ols_regress_series(
     return val
 
 
-def pvalue_to_stars(pval):
+def pvalue_to_stars(pval: Optional[float]) -> str:
     if np.isnan(pval):
         stars = "NA"
     else:
@@ -1054,12 +1105,12 @@ def pvalue_to_stars(pval):
     return stars
 
 
-def format_ols_regress_results(regr_res):
+def format_ols_regress_results(regr_res: Optional[pd.DataFrame]) -> pd.DataFrame:
     if regr_res is None:
         _LOG.warning("regr_res=None: skipping")
         df = pd.DataFrame(None)
         return df
-    row = [
+    row: List[str, float] = [
         "%.3f (%s)" % (coeff, pvalue_to_stars(pval))
         for (coeff, pval) in zip(regr_res["coeffs"], regr_res["pvals"])
     ]
@@ -1071,15 +1122,15 @@ def format_ols_regress_results(regr_res):
 
 
 def robust_regression(
-    df,
-    predicted_var,
-    predictor_vars,
-    intercept,
-    jointplot_=True,
-    jointplot_figsize=None,
-    predicted_var_delay=0,
-    predictor_vars_delay=0,
-):
+    df: pd.DataFrame,
+    predicted_var: str,
+    predictor_vars: str,
+    intercept: bool,
+    jointplot_: bool = True,
+    jointplot_figsize: Optional[Any] = None,
+    predicted_var_delay: int = 0,
+    predictor_vars_delay: int = 0,
+) -> None:
     obj = _preprocess_regression(
         df,
         intercept,
@@ -1147,14 +1198,14 @@ def robust_regression(
 
 
 def display_df(
-    df,
-    index=True,
-    inline_index=False,
-    max_lines=5,
-    as_txt=False,
-    tag=None,
-    mode=None,
-):
+    df: pd.DataFrame,
+    index: bool = True,
+    inline_index: bool = False,
+    max_lines: int = 5,
+    as_txt: bool = False,
+    tag: Optional[str] = None,
+    mode: Optional[str] = None,
+) -> None:
     """
     Display a pandas object (series, df, panel) in a better way than the
     ipython display, e.g.,
@@ -1211,7 +1262,7 @@ def display_df(
         index = False
 
     # Finally, print / display.
-    def _print_display():
+    def _print_display() -> None:
         if as_txt:
             print(df.to_string(index=index))
         else:
@@ -1251,13 +1302,13 @@ def display_df(
 
 
 def describe_df(
-    df,
-    ts_col=None,
-    max_col_width=30,
-    max_thr=15,
-    sort_by_uniq_num=False,
-    log_level=logging.INFO,
-):
+    df: pd.DataFrame,
+    ts_col: Optional[str] = None,
+    max_col_width: int = 30,
+    max_thr: int = 15,
+    sort_by_uniq_num: bool = False,
+    log_level: int = logging.INFO,
+) -> None:
     """
     Improved version of pd.DataFrame.describe()
     :param ts_col: timestamp column
