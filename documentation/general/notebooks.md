@@ -1,47 +1,47 @@
 <!--ts-->
-   * [Structure of a notebook](#structure-of-a-notebook)
-      * [Add a description for a notebook](#add-a-description-for-a-notebook)
-      * [General format of a notebook](#general-format-of-a-notebook)
-         * [Description](#description)
-         * [Imports](#imports)
-      * [Imports](#imports-1)
-         * [Configuration](#configuration)
-      * [Make the notebook flow clear](#make-the-notebook-flow-clear)
-   * [General](#general)
-      * [Write beautiful code, even in notebooks](#write-beautiful-code-even-in-notebooks)
-      * [Show how data is transformed as you go](#show-how-data-is-transformed-as-you-go)
-      * [Use keyboard shortcuts](#use-keyboard-shortcuts)
-      * [Strive for simplicity](#strive-for-simplicity)
-      * [Dependencies among cells](#dependencies-among-cells)
-      * [Re-execute from scratch](#re-execute-from-scratch)
-      * [Add comments for complex cells](#add-comments-for-complex-cells)
-      * [Do not cut &amp; paste code](#do-not-cut--paste-code)
-      * [Avoid "wall-of-code" cell](#avoid-wall-of-code-cell)
-      * [Avoid data biases](#avoid-data-biases)
-      * [Avoid hardwired constants](#avoid-hardwired-constants)
-      * [Explain where data is coming from](#explain-where-data-is-coming-from)
-      * [Use ET times](#use-et-times)
-      * [Fix warnings](#fix-warnings)
-      * [Make cells idempotent](#make-cells-idempotent)
-      * [Always look at the discarded data](#always-look-at-the-discarded-data)
-      * [Use a progress bar](#use-a-progress-bar)
-   * [Notebooks and libraries](#notebooks-and-libraries)
-      * [Pros](#pros)
-      * [Cons](#cons)
-   * [Plots](#plots)
-      * [Use the proper y-scale](#use-the-proper-y-scale)
-      * [Make each plot self-explanatory](#make-each-plot-self-explanatory)
-      * [Avoid wall-of-text tables](#avoid-wall-of-text-tables)
-      * [Use common axes to allow visual comparisons](#use-common-axes-to-allow-visual-comparisons)
-      * [Use the right plot](#use-the-right-plot)
-   * [Useful plugins](#useful-plugins)
-      * [Vim bindings](#vim-bindings)
-      * [Table of content (2)](#table-of-content-2)
-      * [ExecuteTime](#executetime)
-      * [Spellchecker](#spellchecker)
-      * [AutoSaveTime](#autosavetime)
-      * [Notify](#notify)
-      * [Jupytext](#jupytext)
+ * [Structure of a notebook](#structure-of-a-notebook)
+    * [Add a description for a notebook](#add-a-description-for-a-notebook)
+    * [General format of a notebook](#general-format-of-a-notebook)
+       * [Description](#description)
+       * [Imports](#imports)
+       * [Configuration](#configuration)
+    * [Make the notebook flow clear](#make-the-notebook-flow-clear)
+ * [General](#general)
+    * [Keep together in a cell code that belongs together](#keep-together-in-a-cell-code-that-belongs-together)
+    * [Write beautiful code, even in notebooks](#write-beautiful-code-even-in-notebooks)
+    * [Show how data is transformed as you go](#show-how-data-is-transformed-as-you-go)
+    * [Use keyboard shortcuts](#use-keyboard-shortcuts)
+    * [Strive for simplicity](#strive-for-simplicity)
+    * [Dependencies among cells](#dependencies-among-cells)
+    * [Re-execute from scratch](#re-execute-from-scratch)
+    * [Add comments for complex cells](#add-comments-for-complex-cells)
+    * [Do not cut &amp; paste code](#do-not-cut--paste-code)
+    * [Avoid "wall-of-code" cell](#avoid-wall-of-code-cell)
+    * [Avoid data biases](#avoid-data-biases)
+    * [Avoid hardwired constants](#avoid-hardwired-constants)
+    * [Explain where data is coming from](#explain-where-data-is-coming-from)
+    * [Use ET times](#use-et-times)
+    * [Fix warnings](#fix-warnings)
+    * [Make cells idempotent](#make-cells-idempotent)
+    * [Always look at the discarded data](#always-look-at-the-discarded-data)
+    * [Use a progress bar](#use-a-progress-bar)
+ * [Notebooks and libraries](#notebooks-and-libraries)
+    * [Pros](#pros)
+    * [Cons](#cons)
+ * [Plots](#plots)
+    * [Use the proper y-scale](#use-the-proper-y-scale)
+    * [Make each plot self-explanatory](#make-each-plot-self-explanatory)
+    * [Avoid wall-of-text tables](#avoid-wall-of-text-tables)
+    * [Use common axes to allow visual comparisons](#use-common-axes-to-allow-visual-comparisons)
+    * [Use the right plot](#use-the-right-plot)
+ * [Useful plugins](#useful-plugins)
+    * [Vim bindings](#vim-bindings)
+    * [Table of content (2)](#table-of-content-2)
+    * [ExecuteTime](#executetime)
+    * [Spellchecker](#spellchecker)
+    * [AutoSaveTime](#autosavetime)
+    * [Notify](#notify)
+    * [Jupytext](#jupytext)
 
 
 
@@ -51,23 +51,22 @@
 
 ## Add a description for a notebook
 
-- A notebook can be used for:
+- A notebook can be used for various goals:
+  - Tutorial / gallery
+    - Show how some code works (e.g., functions in `signal_processing.py` or
+      `data_encyclopedia.ipynb`)
+    - The code should always work
+    - We might want to add unit tests for it
+  - Prototyping / one-off
+    - E.g.,
+      - We prototype some code, before it becomes library code
+      - We did some one-off analysis
   - Analysis
+    - Aka "master" notebooks
     - The notebook should always work so we need to treat it as part of the code
       base
     - We might want to add unit tests for it
-  - Tutorial / gallery
-    - Shows how some code works (e.g., functions in `signal_processing.py`)
-    - E.g., `data_encyclopedia.ipynb`
-    - The code should always work
-    - We might want to add unit tests for it
-  - Prototyping
-    - E.g.,
-      - We prototyped some code, before it becomes library code
-      - We did some one-off analysis
 
-- At the top of the notebook add a markdown cell explaining what this notebook
-  does, e.g.,
   ```python
   ## Description
   - This notebook was used for prototyping / debugging code that was moved
@@ -80,10 +79,11 @@
 
 ### Description
 
-- Add a description of the notebook for the reader
+- At the top of the notebook add a markdown cell explaining what this notebook
+  does, e.g.,
   ```
   ## Description
-  - This notebook was used for prototyping / debugging code that was moved
+  - This notebook is used for prototyping / debugging code that was later moved
     in the file `abc.py`
   ```
 
@@ -101,33 +101,28 @@
   import logging
   import os
 
-  #
+  # Third-party imports.
   import matplotlib.pyplot as plt
   import pandas as pd
 
-  #
+  # ParticleOne imports.
   import helpers.dbg as dbg
   import helpers.env as env
   import helpers.printing as prnt
-
-  #
   import core.explore as exp
   import core.signal_processing as sigp
   ...
   ```
 
-## Imports
+- In this way executing one cell is enough to configure the notebook
 
 ### Configuration
 
 - You can configure the notebooks with some utils, logging, and report info on
-  how the notebook was executed (e.g., Git commit, libs, etc.):
+  how the notebook was executed (e.g., Git commit, libs, etc.) by using the
+  following cell:
 
   ```python
-  import helpers.dbg as dbg
-  import helpers.env as env
-  import helpers.printing as prnt
-
   # Print system signature.
   print(env.get_system_signature()[0])
 
@@ -152,22 +147,24 @@
           sklearn: 0.21.3
       statsmodels: 0.10.1
   # Last commits:
-  * 3c11dd7 Julia PartTask461: Add correlation and autocorrelation analysis (
-    22 hours ago) Thu Oct 31 14:31:14 2019 (HEAD ->
-    PartTask461_PRICE_Familiarize_with_target_commodities,
-    origin/PartTask461_PRICE_Familiarize_with_target_commodities)
-  * 99417bc Julia PartTask418: Address a TODO in \_normalize_1_min() ( 2 days
-    ago) Wed Oct 30 07:48:34 2019
-  * 6ad45a8 saggese More docs and lint ( 3 days ago) Tue Oct 29 21:31:55 2019
-    WARNING: Running in Jupyter
+  ```
+* 3c11dd7 Julia PartTask461: Add correlation and autocorrelation analysis (
+  22 hours ago) Thu Oct 31 14:31:14 2019 (HEAD ->
+  PartTask461_PRICE_Familiarize_with_target_commodities,
+  origin/PartTask461_PRICE_Familiarize_with_target_commodities)
+* 99417bc Julia PartTask418: Address a TODO in \_normalize_1_min() ( 2 days
+  ago) Wed Oct 30 07:48:34 2019
+* 6ad45a8 saggese More docs and lint ( 3 days ago) Tue Oct 29 21:31:55 2019
+  WARNING: Running in Jupyter
+  ```
   ```
 
 ## Make the notebook flow clear
 
-- Each notebook needs to follow a clear and logical flow, e.g.,
+- Each notebook needs to follow a clear and logical flow
+- E.g.,
   - Load data
-    - For each data structure it's good to show a snippet, e.g., df.head(3)
-  - Compute stats / results
+  - Compute stats, show some results
   - Clean data
   - Compute stats, show some results
   - Do analysis
@@ -194,14 +191,24 @@
 
 # General
 
+## Keep together in a cell code that belongs together
+
+- It's often useful to keep in a cell computation that needs to be always
+  executed together
+  - E.g., compute something and then print results
+- In this way a single cell execution computes all data together
+- Often computation starts in multiple cells, e.g., to inline debugging, and
+  once we are more confident that it works correctly we can merge it in a cell
+  (or even better in a function)
+
 ## Write beautiful code, even in notebooks
 
 - Follow the conventions and suggestions for Python code
   - E.g., `code_style.md`, `design_philosophy.md`
-- When prototyping with a notebook, notebook code can be of a little lower
-  quality than code, but still needs to be readable and robust
-  - IMO it's just better to always do write robust and readable code: it doesn't
-    buy much time to cut corners
+- When prototyping with a notebook, the code can be of lower quality than code,
+  but still needs to be readable and robust
+- In our opinion it's just better to always do write robust and readable code:
+  it doesn't buy much time to cut corners
 
 ## Show how data is transformed as you go
 
@@ -211,30 +218,38 @@
 ## Use keyboard shortcuts
 
 - Learn the default keyboard shortcuts to edit efficiently
+- You can use the vim plug-in (see below) and become 3x more ninja
 
 ## Strive for simplicity
 
 - Always make the notebook easy to be understood and run by somebody else
+- Explain what happens
+- Organize the code in a logical way
+- Use decent variable names
+- Comment the results, when possible / needed
 
 ## Dependencies among cells
 
-- Try to avoid dependencies between cells: ideally avoid any dependency
+- Try to avoid dependencies between cells
+- Even better avoid any dependency between cells
 
-- E.g., put all the imports in one cell at the beginning, so with one cell
-  execution you can make sure that all the imports are done
-  - Compare this with the case where the imports are randomly sprinkled in the
-    notebook, then you need to go execute them one by one if you re-initialize
-    the notebook
+- E.g.,
+  - Put all the imports in one cell at the beginning, so with one cell execution
+    you can make sure that all the imports are done
+  - Compare this approach with the case where the imports are randomly sprinkled
+    in the notebook, then you need to go execute them one by one if you
+    re-initialize the notebook
 
 - For the same reason group functions in one cell that you can easily re-execute
 
 ## Re-execute from scratch
 
-- Once in a while (e.g., once a day) make sure you can re-execute everything
-  from the top with `Kernel -> Restart & Clean output` and then
-  `Kernel -> Run all`
-  - Then visually verify that the results didn't change, so that there is no
-    weird state or dependency in the code
+- Once in a while (e.g., once a day)
+- Commit your changes
+- Make sure you can re-execute everything from the top with
+  `Kernel -> Restart & Clean output` and then `Kernel -> Run all`
+- Visually verify that the results didn't change, so that there is no weird
+  state or dependency in the code
 
 - Before a commit (and definitively before a PR) do a clean run
 
@@ -250,17 +265,18 @@
   num_nans.sort_values(ascending=False, inplace=True)
 
   num_stocks_with_no_nans = (num_nans == 0.0).sum()
-  print "num_stocks_with_no_nans=%s" % perc(num_stocks_with_no_nans, rets.shape[1])
+  print("num_stocks_with_no_nans=%s" % perc(num_stocks_with_no_nans, rets.shape[1]))
   ```
 
-- Another approach is to factor out the code in functions and simplify the flow
+- Another approach is to factor out the code in functions with clear names and
+  simplify the flow
 
 ## Do not cut & paste code
 
-- It's _never_ a good idea
+- Cutting + paste + modify is _NEVER_ a good idea
 - It takes more time to clean up cut & paste code than doing right in the first
   place
-- Just make a function and call it!
+- Just make a function out of the code and call it!
 
 ## Avoid "wall-of-code" cell
 
@@ -270,12 +286,14 @@
 
 - Try to compute statistics on the entire data set so that results are
   representative and not dependent on a particular slice of the data
+- You can sample the data and check stability of the results
 - If it takes too long to compute the statistics on the entire data set, report
-  the problem and we can think of solutions
+  the problem and we can think of how to speed it up
 
 ## Avoid hardwired constants
 
-- Don't use hardwired constants, but try to parametrize the code
+- Don't use hardwired constants
+- Try to parametrize the code
 
 ## Explain where data is coming from
 
@@ -329,20 +347,20 @@
     between pieces of code that can be painful to debug and fix
 
 - If you have warnings in your code or notebook you can't be sure that the code
-  is doing exactly what you think it is
+  is doing exactly what you think it is doing
   - For what we know your code might be deleting your hard-disk, moving money
-    from your account to mine, ..
+    from your account to mine, starting World War 3, ...
   - You don't ever want to program by coincidence
 
 - Typically the warnings are informative and tell us what's the issue and how to
   fix it, so please fix your code
-  - If it's not obvious how to interpret or fix a warning file a bug, reporting
-    clearly a repro case and the error message
+  - If it's not obvious how to interpret or fix a warning file a bug, file a bug
+    reporting clearly a repro case and the error message
 
 ## Make cells idempotent
 
-- Try to make a notebook cell being executed multiple times without changing its
-  output value, e.g.,
+- Try to make a notebook cell able of being executed multiple times without
+  changing its output value, e.g.,
 
 - **_Bad_**
 
@@ -350,7 +368,7 @@
   df["id"] = df["id"] + 1
   ```
   - This computation is not idempotent, since if you execute it multiple times
-    is going to increment the column "id" at every iteration
+    is going to increment the column `id` at every iteration
 
 - **_Good_**
   - A better approach is to always create a new "copy", e.g.,
@@ -360,7 +378,7 @@
   ```
 
 - For data frames and variables is a good idea to create copies of the data
-  along the way
+  along the way:
 
   ```python
   df_without1s = df[df["id"] != 1].copy()
@@ -377,15 +395,15 @@
   ```
   - In this way it's easy to add another stage in the pipeline without changing
     everything
-  - Of course the names `tmp_1`, `tmp_2`, ... are a horrible idea since they are
-    not self-explanatory and adding a new stage screws up the numbering
+  - Of course the names `tmp_1`, `tmp_2` are a horrible idea since they are not
+    self-explanatory and adding a new stage screws up the numbering
 
 ## Always look at the discarded data
 
 - Filtering the data is a risky operation since once the data is dropped, nobody
   is going to go back and double check what exactly happened
-- Everything downstream (all the results, all the conclusions, all the decisions
-  based on those conclusions) rely on the filtering being correct
+- Everything downstream (e.g., all the results, all the conclusions, all the
+  decisions based on those conclusions) rely on the filtering being correct
 
 - Any time there is a `dropna` or a filtering / masking operation, e.g.,
 
@@ -415,7 +433,7 @@
 
 ## Use a progress bar
 
-- Always use progress bars even in notebooks so that user can see how long it
+- Always use progress bars (even in notebooks) so that user can see how long it
   will take for a certain computation
 
 - It is also possible to let `tqdm` automatically choose between console or
@@ -452,15 +470,15 @@
 
 - One disadvantage is that changes that were immediate in the notebook are not
   immediate anymore
-  - That's actually not true, since using
-    ```python
-    %load_ext autoreload
-    %autoreload 2
-    ```
-    the notebook reads the changes automatically and you don't even need to
-    execute the cell with the change
-  - One doesn't have to scroll back and forth to execute the cell with the
-    functions with all the possible mistakes
+- That's actually not true, since using:
+  ```python
+  %load_ext autoreload
+  %autoreload 2
+  ```
+  the notebook reads the changes automatically and you don't even need to
+  execute the cell with the change
+- One doesn't have to scroll back and forth to execute the cell with the
+  functions with all the possible mistakes
 
 # Plots
 
@@ -474,7 +492,7 @@
 
 - Make sure that each plot has a descriptive title, x and y label
 - Explain the set-up of a plot / analysis
-  - E.g., what is the universe of stock used? What is the period of time?
+  - E.g., what is the universe of stocks used? What is the period of time?
   - Add this information also to the plots
 
 ## Avoid wall-of-text tables
@@ -492,7 +510,7 @@
 ## Use the right plot
 
 - Pick the right type of graph to make your point
-  - Pandas, seaborn, matplotlib are your friends
+  - `pandas`, `seaborn`, `matplotlib` are your friends
 
 # Useful plugins
 
@@ -516,6 +534,8 @@
 
 ## Spellchecker
 
+- To improve your English!
+
 ## AutoSaveTime
 
 - To save the code automatically every minute
@@ -525,3 +545,6 @@
 - Show a browser notification when kernel becomes idle
 
 ## Jupytext
+
+- We use Jupytext as standard part of our development flow
+- See `documentation/general/jupytext.md`
