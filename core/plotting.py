@@ -584,7 +584,7 @@ class PCA:
         skluv.check_is_fitted(self.pca)
         pcs = pd.DataFrame(self.pca.components_)
         max_pcs = self.pca.components_.shape[0]
-        num_components = _get_num_pcs_to_plot(num_components, max_pcs)
+        num_components = self._get_num_pcs_to_plot(num_components, max_pcs)
         _LOG.info("num_components=%s", num_components)
         _, axes = get_multiple_plots(
             num_components, num_cols=num_cols, sharex=True, sharey=True
@@ -608,6 +608,18 @@ class PCA:
         if standardize:
             X = (X - X.mean()) / X.std()
         return self.pca.fit(X)
+
+    @staticmethod
+    def _get_num_pcs_to_plot(num_pcs_to_plot: Optional[int], max_pcs: int) -> int:
+        """
+        Get the number of principal components to plot.
+        """
+        if num_pcs_to_plot is None:
+            num_pcs_to_plot = max_pcs
+            _LOG.warning("Plotting all %s components", num_pcs_to_plot)
+        dbg.dassert_lte(1, num_pcs_to_plot)
+        dbg.dassert_lte(num_pcs_to_plot, max_pcs)
+        return num_pcs_to_plot
 
 
 def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
@@ -878,15 +890,3 @@ def get_multiple_plots(
         **kwargs,
     )
     return fig, ax.flatten()
-
-
-def _get_num_pcs_to_plot(num_pcs_to_plot: Optional[int], max_pcs: int) -> int:
-    """
-    Get the number of principal components to plot.
-    """
-    if num_pcs_to_plot is None:
-        num_pcs_to_plot = max_pcs
-        _LOG.warning("Plotting all %s components", num_pcs_to_plot)
-    dbg.dassert_lte(1, num_pcs_to_plot)
-    dbg.dassert_lte(num_pcs_to_plot, max_pcs)
-    return num_pcs_to_plot
