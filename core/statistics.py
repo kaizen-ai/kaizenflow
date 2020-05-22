@@ -652,23 +652,16 @@ def apply_ljung_box_test(
         prefix + "stat",
         prefix + "pval",
     ]
+    result = sm.stats.diagnostic.acorr_ljungbox(
+        data.values,
+        lags=lags,
+        model_df=model_df,
+        period=period,
+        return_df=return_df,
+    )
     if return_df:
-        df_result = sm.stats.diagnostic.acorr_ljungbox(
-            data.values,
-            lags=lags,
-            model_df=model_df,
-            period=period,
-            return_df=return_df,
-        )
-        df_result.columns = columns
+        df_result = result
     else:
-        result = sm.stats.diagnostic.acorr_ljungbox(
-            data.values,
-            lags=lags,
-            model_df=model_df,
-            period=period,
-            return_df=return_df,
-        )
         df_result = pd.DataFrame(result).T
-        df_result.columns = columns
+    df_result.columns = columns
     return df_result
