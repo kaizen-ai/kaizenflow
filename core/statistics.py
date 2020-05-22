@@ -618,9 +618,10 @@ def apply_ljung_box_test(
     lags: Optional[Union[int, pd.Series]] = None,
     model_df: Optional[int] = None,
     period: Optional[int] = None,
+    return_df: Optional[bool] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-) -> pd.Series:
+) -> pd.DataFrame:
     """
     Implement a wrapper around statsmodels' Ljung-Box test.
 
@@ -628,12 +629,14 @@ def apply_ljung_box_test(
     :param lags: as in diagnostic.acorr_ljungbox
     :param model_df: as in diagnostic.acorr_ljungbox
     :param period: as in diagnostic.acorr_ljungbox
+    :param return_df: as in diagnostic.acorr_ljungbox
     :param nan_mode: "ignore" or "strict"
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue
     """
     dbg.dassert_isinstance(srs, pd.Series)
     model_df = model_df or 0
+    return_df = return_df or True
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     if nan_mode == "ignore":
@@ -645,14 +648,27 @@ def apply_ljung_box_test(
     else:
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
-    (lb_stat, pval,) = sm.stats.diagnostic.acorr_ljungbox(
-        data.values, lags=lags, model_df=model_df, period=period
-    )
-    #
-    res = [
-        (prefix + "stat", lb_stat),
-        (prefix + "pval", pval),
+    columns = [
+        prefix + "stat",
+        prefix + "pval",
     ]
-    data = list(zip(*res))
-    res = pd.Series(data[1], index=data[0], name=srs.name)
-    return res
+    if return_df:
+        df_result = sm.stats.diagnostic.acorr_ljungbox(
+            data.values,
+            lags=lags,
+            model_df=model_df,
+            period=period,
+            return_df=return_df,
+        )
+        df_result.columns = columns
+    else:
+        result = sm.stats.diagnostic.acorr_ljungbox(
+            data.values,
+            lags=lags,
+            model_df=model_df,
+            period=period,
+            return_df=return_df,
+        )
+        df_result = pd.DataFrame(result).T
+        df_result.columns = columns
+    return df_result
