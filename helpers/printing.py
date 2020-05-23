@@ -154,10 +154,10 @@ def thousand_separator(v: float) -> str:
 def perc(
     a: float,
     b: float,
+    only_perc: bool = False,
     invert: bool = False,
     num_digits: int = 2,
     use_thousands_separator: bool = False,
-    only_perc: bool = False,
 ) -> str:
     """
     Calculate percentage a / b as a string.
@@ -166,10 +166,10 @@ def perc(
 
     :param a: numerator
     :param b: denominator
+    :param only_perc: return only the percentage, without the original numbers
     :param invert: assume the fraction is (b - a) / b
         This is useful when we want to compute the complement of a count.
     :param use_thousands_separator: report the numbers using thousands separator
-    :param only_perc: return only the percentage, without the original numbers
     :return: string with a/b
     """
     dbg.dassert_lte(0, a)
