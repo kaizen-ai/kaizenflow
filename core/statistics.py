@@ -27,14 +27,18 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Paul): Double-check axes in used in calculation.
 # Consider exposing `nan_policy`.
-def compute_moments(data: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
+def compute_moments(
+    data: Union[pd.Series, pd.DataFrame], prefix: Optional[str] = None,
+) -> pd.DataFrame:
     """
     Calculate, mean, standard deviation, skew, and kurtosis.
 
     :param data: if a dataframe, columns correspond to data sets
+    :param prefix: optional prefix for metrics' outcome
     :return: dataframe with columns like `df`'s (or a single column if input
         is a series) and rows with stats
     """
+    prefix = prefix or ""
     if isinstance(data, pd.Series):
         data = data.to_frame()
     dbg.dassert_isinstance(data, pd.DataFrame)
@@ -43,7 +47,12 @@ def compute_moments(data: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
     skew = sp.stats.skew(data, nan_policy="omit")
     kurt = sp.stats.kurtosis(data, nan_policy="omit")
     result = pd.DataFrame(
-        {"mean": mean, "std": std, "skew": skew, "kurtosis": kurt},
+        {
+            prefix + "mean": mean,
+            prefix + "std": std,
+            prefix + "skew": skew,
+            prefix + "kurtosis": kurt,
+        },
         index=data.columns,
     ).transpose()
     return result
@@ -588,22 +597,27 @@ def apply_kpss_test(
     return res
 
 
-def compute_zero_nan_inf_stats(srs: pd.Series) -> pd.Series():
+def compute_zero_nan_inf_stats(
+        srs: pd.Series,
+        prefix: Optional[str] = None,
+) -> pd.Series():
     """
     Calculate finite and non-finite values in time series.
 
     :param srs: pandas series of floats
+    :param prefix: optional prefix for metrics' outcome
     :return: series of stats
     """
     # TODO(*): To be optimized/rewritten in #2340.
+    prefix = prefix or ""
     dbg.dassert_isinstance(srs, pd.Series)
     res = [
-        ("n_rows", len(srs)),
-        ("frac_zero", compute_frac_zero(srs)),
-        ("frac_nan", compute_frac_nan(srs)),
-        ("frac_inf", compute_frac_inf(srs)),
-        ("frac_constant", compute_frac_constant(srs)),
-        ("num_finite_samples", count_num_finite_samples(srs)),
+        (prefix + "n_rows", len(srs)),
+        (prefix + "frac_zero", compute_frac_zero(srs)),
+        (prefix + "frac_nan", compute_frac_nan(srs)),
+        (prefix + "frac_inf", compute_frac_inf(srs)),
+        (prefix + "frac_constant", compute_frac_constant(srs)),
+        (prefix + "num_finite_samples", count_num_finite_samples(srs)),
         # TODO(*): Add after extension to dataframes.
         # ("num_unique_values", stats.count_num_unique_values),
     ]
