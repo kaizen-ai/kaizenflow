@@ -1,5 +1,5 @@
-stat                    0.158410
-pval                    0.039658
+stat                    0.091333
+pval                    0.100000
 lags                   10.000000
 critical_values_1%      0.216000
 critical_values_5%      0.146000
