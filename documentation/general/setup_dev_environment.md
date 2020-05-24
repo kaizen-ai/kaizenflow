@@ -37,14 +37,13 @@
 ## Editors
 
 - PyCharm
-- Vim (or something worse like Emacs)
+- `vim` (or something worse like `emacs`)
 
-## Dev
+## Development / Data science
 
 - Python 3
 - Conda: manage virtual environments
 - Linux and bash: we prefer command line: learn how to use it
-- Standard data science stack (e.g., Jupyter, pandas, numpy)
 - Git: source control
 - GitHub: repo and bug tracker
 - ZenHub: project management
@@ -53,28 +52,34 @@
 - Google suite: email, calendar
 - Email client (recommended) or Gmail web client
 - Telegram: instant messaging
+- Standard data science stack (e.g., Jupyter, pandas, numpy)
 
 ## Infra
 
 - WireGuard: VPN
-- AWS: compute
+- AWS: computing infrastructure
 - Jenkins: continuous integration and development
-- MongoDB, SQL: backends
+- MongoDB, SQL: DB backends
 - Docker: container
 
 # Set up a new machine
 
+## Server vs laptop
 - We prefer to work on the dev server on AWS since it is more reliable and
   powerful
+
 - You have an option to work on your laptop, but it's not officially supported,
   so you are kind of your own
-  - People use their laptop to:
-    - Have an option when Internet is slow
+  - People use their laptop as thin client:
     - Use PyCharm
-    - Use the browser
+    - Use the browser, email
+    - To develop when Internet is slow
 
 - You need to set up any machine you use (e.g., laptop and AWS) in order to
   develop
+
+- We recommend to set up the server first and then over time set up also the
+  laptop for some development
 
 ## Definitions
 
@@ -84,13 +89,25 @@
 
 ## Connect to the server
 
-- E.g., `ssh 3.16.128.114`
-- Add your pub key to the server so that you can login without typing in a
-  password
+- After enabling the VPN on your laptop, open a terminal
+- Make sure you see the servers:
+  ```bash
+  > ping research.p1
+  PING research.p1 (172.31.16.23): 56 data bytes
+  64 bytes from 172.31.16.23: icmp_seq=0 ttl=63 time=19.780 ms
+  ...
+  ```
+
+- Try to connect to the servers:
+  ```bash
+  > ssh research.p1
+  ```
+- Best course of action is to pass your public key to Infra so that you can login
+  without typing in a password
 
 ## Use python3
 
-- Confirm that python3 is referenced upon running `python -V`, e.g.,
+- Confirm that python 3 is the default upon running `python -V`, e.g.,
   ```bash
   > python -V
   Python 3.7.3
@@ -98,14 +115,14 @@
 
 ## (optional) Install anaconda
 
-- For the AWS machine there is already a central conda, and so there is no need
-  for users to install
+- For the AWS machine there is already a central conda, so there is no need for
+  users to install
 - For a laptop you need to install it yourself
-- You need _anaconda3_
+  - You need _anaconda3_
 
 ## Configure anaconda
 
-- Configure anaconda for your shell using
+- Configure anaconda for your shell using:
   ```bash
   > conda init bash
   ```
@@ -113,48 +130,54 @@
 
 # Create a Git client
 
-## Check out the git code
+## Clone the git code
 
-- You can check out the code multiple times in different directories, if you
-  want to have multiple clients
+- You can clone the code multiple times in different directories, if you want to
+  have multiple clients
+  - E.g., `$HOME/src/commodity_research1`, `$HOME/src/commodity_research2`, ...
+- For now let's create a single client
 
-- To check out the code for the first time, do:
+- To clone the code for the first time run:
 
   ```bash
   > DST_DIR="commodity_research"
   > git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
   ```
-  - If you encounter the error ```bash git@github.com: Permission denied
-    (publickey). fatal: Could not read from remote repository.
 
-        Please make sure you have the correct access rights
-        and the repository exists.
-        ```
-
-    then make sure that your SSH key in `/.ssh/id_rsa.pub` is on your GitHub
-    account. Follow the instructions
-    [here](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account)
-
-- To check out another copy of the codebase (e.g., see possible workflows below)
-  do:
+- If you encounter the error
   ```bash
-  > more dev_scripts_p1/git_checkout.sh
-  #!/bin/bash -xe
-  DST_DIR="commodity_research"
-  git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
+  bash git@github.com: Permission denied (publickey).
+  fatal: Could not read from remote repository.
+
+  Please make sure you have the correct access rights
+  and the repository exists.
   ```
+  make sure that your SSH key in `$HOME/.ssh/id_rsa.pub` is on your GitHub account.
+  Follow the instructions
+  [here](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account)
+
+- If you have problems run
+  ```bash
+  > ssh -T git@github.com
+  ```
+  and follow this
+  [tutorial](https://help.github.com/en/github/authenticating-to-github/testing-your-ssh-connection)
 
 ## Configure git submodules
 
-- This is needed to have each submodule use the `master` branch
-
+- Make sure you have both submodule repos `infra` and `amp` by running:
   ```bash
-  > cd commodity_research
+  > cd $DST_DIR
+  > ls amp
+  > ls infra
+  ```
+
+- Make sure each submodule uses the `master` branch:
+  ```bash
+  > cd $DST_DIR
   > (cd amp; git checkout master)
   > (cd infra; git checkout master)
   ```
-
-- Make sure you have both submodule repos `infra` and `amp`
 
 ## Configure user credentials
 
@@ -165,15 +188,20 @@
 
 ## Create conda environment
 
-- This is needed to install all the packages that are required for development
+- This is needed to install all the packages that are required for development:
   ```bash
-  > cd commodity_research
+  > cd $DST_DIR
   > ./dev_scripts_p1/create_conda.p1_develop.sh
   ```
+- This script takes 5 mins to run
+
+- You need to create an environment for every server you use (e.g., for the AWS
+  server `research.p1`, for your laptop)
+- You can reuse the same environment for multiple Git clients
 
 ## Check conda environment
 
-- Check that your conda environment is working
+- Check that your conda environment exists:
   ```bash
   > conda info --envs
   # conda environments:
@@ -184,11 +212,17 @@
 
 ## Configure conda environment
 
-- Every time you cd in a shell:
-- You need to run:
+- Every time you open a shell you need to activate the development environment
+  run:
   ```bash
-  source dev_scripts_p1/setenv_p1.sh
+  > source dev_scripts_p1/setenv_p1.sh
   ```
+
+- This script:
+  - activates the conda environment
+  - sets environment variables
+  - makes sure things are working properly
+
 
 ## Delete / recreate environment
 
@@ -268,6 +302,17 @@
   > conda activate amp_develop
   > which python
   /Users/saggese/.conda/envs/amp_develop/bin/python
+  ```
+
+## Clone multiple git client
+
+- To check out another copy of the codebase (e.g., see possible workflows below)
+  do:
+  ```bash
+  > more dev_scripts_p1/git_checkout.sh
+  #!/bin/bash -xe
+  DST_DIR="commodity_research"
+  git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
   ```
 
 # Be patient
