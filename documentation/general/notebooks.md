@@ -1,6 +1,6 @@
 <!--ts-->
  * [Structure of a notebook](#structure-of-a-notebook)
-    * [Add a description for a notebook](#add-a-description-for-a-notebook)
+    * [Always add a description for a notebook](#always-add-a-description-for-a-notebook)
     * [General format of a notebook](#general-format-of-a-notebook)
        * [Description](#description)
        * [Imports](#imports)
@@ -49,7 +49,7 @@
 
 # Structure of a notebook
 
-## Add a description for a notebook
+## Always add a description for a notebook
 
 - A notebook can be used for various goals:
   - Tutorial / gallery
@@ -66,12 +66,13 @@
     - The notebook should always work so we need to treat it as part of the code
       base
     - We might want to add unit tests for it
-
-  ```python
-  ## Description
-  - This notebook was used for prototyping / debugging code that was moved
-    in the file `abc.py`
-  ```
+    
+- Indicate a notebook's goal and what it does in its description, e.g.,
+    ```python
+    ## Description
+    - This notebook was used for prototyping / debugging code that was moved
+      in the file `abc.py`
+    ```
 
 ## General format of a notebook
 
@@ -147,16 +148,14 @@
           sklearn: 0.21.3
       statsmodels: 0.10.1
   # Last commits:
-  ```
-* 3c11dd7 Julia PartTask461: Add correlation and autocorrelation analysis (
-  22 hours ago) Thu Oct 31 14:31:14 2019 (HEAD ->
-  PartTask461_PRICE_Familiarize_with_target_commodities,
-  origin/PartTask461_PRICE_Familiarize_with_target_commodities)
-* 99417bc Julia PartTask418: Address a TODO in \_normalize_1_min() ( 2 days
-  ago) Wed Oct 30 07:48:34 2019
-* 6ad45a8 saggese More docs and lint ( 3 days ago) Tue Oct 29 21:31:55 2019
-  WARNING: Running in Jupyter
-  ```
+  * 3c11dd7 Julia PartTask461: Add correlation and autocorrelation analysis (
+    22 hours ago) Thu Oct 31 14:31:14 2019 (HEAD ->
+    PartTask461_PRICE_Familiarize_with_target_commodities,
+    origin/PartTask461_PRICE_Familiarize_with_target_commodities)
+  * 99417bc Julia PartTask418: Address a TODO in \_normalize_1_min() ( 2 days
+    ago) Wed Oct 30 07:48:34 2019
+  * 6ad45a8 saggese More docs and lint ( 3 days ago) Tue Oct 29 21:31:55 2019
+    WARNING: Running in Jupyter
   ```
 
 ## Make the notebook flow clear
