@@ -382,7 +382,8 @@ def plot_heatmap(
     """
     # Sanity check.
     dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
-    dbg.dassert_lte(corr_df.shape[0], 20)
+    if corr_df.shape[0] > 20:
+        _LOG.warning("The corr_df.shape[0]='%s' > 20", corr_df.shape[0])
     if corr_df.shape[0] < 2 or corr_df.shape[1] < 2:
         _LOG.warning(
             "Can't plot heatmap for corr_df with shape=%s", str(corr_df.shape)
@@ -532,7 +533,8 @@ def plot_corr_over_time(
     Plot correlation over time.
     """
     timestamps = corr_df.index.get_level_values(0).unique()
-    dbg.dassert_lte(len(timestamps), 20)
+    if len(timestamps) > 20:
+        _LOG.warning("The first level of index length='%s' > 20", len(timestamps))
     # Get the axes.
     fig, axes = get_multiple_plots(
         len(timestamps), num_cols=num_cols, y_scale=4, sharex=True, sharey=True
