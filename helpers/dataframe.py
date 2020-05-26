@@ -43,17 +43,8 @@ def filter_data(
         info[f"perc_{col_name}"] = prnt.perc(mask.sum(), data.shape[0])
         masks.append(mask)
     masks = pd.concat(masks, axis=1)
-    # Combine masks.
-    if mode == "and":
-        combined_mask = masks.all(axis=1)
-    elif mode == "or":
-        combined_mask = masks.any(axis=1)
-    else:
-        raise ValueError("Invalid `mode`='%s'" % mode)
-    if combined_mask.sum() == 0:
-        _LOG.warning("No data is left after filtering.")
+    combined_mask = _combine_masks(masks, mode, info)
     filtered_data = data.loc[combined_mask].copy()
-    info["nrows_left"] = filtered_data.shape[0]
     return filtered_data
 
 
@@ -88,7 +79,12 @@ def filter_data_by_comparison(
         )
         masks.append(mask)
     masks = pd.concat(masks, axis=1)
-    # Combine masks.
+    combined_mask = _combine_masks(masks, mode, info)
+    filtered_data = data.loc[combined_mask].copy()
+    return filtered_data
+
+
+def _combine_masks(masks: pd.DataFrame, mode: str, info: collections.OrderedDict):
     if mode == "and":
         combined_mask = masks.all(axis=1)
     elif mode == "or":
@@ -96,7 +92,6 @@ def filter_data_by_comparison(
     else:
         raise ValueError("Invalid `mode`='%s'" % mode)
     if combined_mask.sum() == 0:
-        _LOG.warning("No data is left after filtering.")
-    filtered_data = data.loc[combined_mask].copy()
-    info["nrows_left"] = filtered_data.shape[0]
-    return filtered_data
+        _LOG.warning("No data remaining after filtering.")
+    info["nrows_remaining"] = combined_mask.sum()
+    return combined_mask

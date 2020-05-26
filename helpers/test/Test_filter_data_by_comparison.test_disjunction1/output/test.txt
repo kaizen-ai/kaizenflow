@@ -25,4 +25,4 @@ OrderedDict([('nrows', 4),
              ('perc_col_0_gt_2', '3 / 4 = 75.00%'),
              ('n_col_1_eq_5', 1),
              ('perc_col_1_eq_5', '1 / 4 = 25.00%'),
-             ('nrows_left', 3)])
+             ('nrows_remaining', 3)])
