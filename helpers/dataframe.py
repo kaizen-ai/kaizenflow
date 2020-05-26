@@ -53,7 +53,7 @@ def filter_data(
     if combined_mask.sum() == 0:
         _LOG.warning("No data is left after filtering.")
     filtered_data = data.loc[combined_mask].copy()
-    info["nrows_filtered"] = filtered_data.shape[0]
+    info["nrows_left"] = filtered_data.shape[0]
     return filtered_data
 
 
@@ -64,7 +64,7 @@ def filter_data_by_comparison(
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
     """
-    Filter dataframe by comparing column to values..
+    Filter dataframe by comparing columns to values.
 
     :param data: dataframe
     :param filters: `[(col_name, comparison_method, value)]`.
@@ -98,5 +98,5 @@ def filter_data_by_comparison(
     if combined_mask.sum() == 0:
         _LOG.warning("No data is left after filtering.")
     filtered_data = data.loc[combined_mask].copy()
-    info["nrows_filtered"] = filtered_data.shape[0]
+    info["nrows_left"] = filtered_data.shape[0]
     return filtered_data

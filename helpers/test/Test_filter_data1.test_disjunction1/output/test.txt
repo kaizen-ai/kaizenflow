@@ -24,4 +24,4 @@ OrderedDict([('nrows', 2),
              ('perc_col_1', '1 / 2 = 50.00%'),
              ('n_col_2', 2),
              ('perc_col_2', '2 / 2 = 100.00%'),
-             ('nrows_filtered', 2)])
+             ('nrows_left', 2)])
