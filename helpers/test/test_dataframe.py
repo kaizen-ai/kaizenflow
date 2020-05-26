@@ -42,3 +42,37 @@ class Test_filter_data1(hut.TestCase):
             f"{hut.convert_info_to_string(info)}"
         )
         self.check_string(str_output)
+
+
+class Test_filter_data_by_comparison(hut.TestCase):
+    def test_conjunction1(self) -> None:
+        data = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
+        data = data.add_prefix("col_")
+        filters = [("col_0", "gt", 1), ("col_0", "lt", 7), ("col_1", "eq", 5)]
+        info: collections.OrderedDict = collections.OrderedDict()
+        filtered_data = hdf.filter_data_by_comparison(data, filters, "and", info)
+        str_output = (
+            f"{prnt.frame('data')}\n"
+            f"{hut.convert_df_to_string(data, index=True)}\n"
+            f"{prnt.frame('filters')}\n{filters}\n"
+            f"{prnt.frame('filtered_data')}\n"
+            f"{hut.convert_df_to_string(filtered_data, index=True)}\n"
+            f"{hut.convert_info_to_string(info)}"
+        )
+        self.check_string(str_output)
+
+    def test_disjunction1(self) -> None:
+        data = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
+        data = data.add_prefix("col_")
+        filters = [("col_0", "gt", 2), ("col_1", "eq", 5)]
+        info: collections.OrderedDict = collections.OrderedDict()
+        filtered_data = hdf.filter_data_by_comparison(data, filters, "or", info)
+        str_output = (
+            f"{prnt.frame('data')}\n"
+            f"{hut.convert_df_to_string(data, index=True)}\n"
+            f"{prnt.frame('filters')}\n{filters}\n"
+            f"{prnt.frame('filtered_data')}"
+            f"\n{hut.convert_df_to_string(filtered_data, index=True)}\n"
+            f"{hut.convert_info_to_string(info)}"
+        )
+        self.check_string(str_output)
