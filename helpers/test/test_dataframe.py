@@ -10,13 +10,13 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-class Test_filter_data1(hut.TestCase):
+class Test_filter_data_by_values1(hut.TestCase):
     def test_conjunction1(self) -> None:
         data = pd.DataFrame([[1, 2, 3], [4, 5, 6]])
         data = data.add_prefix("col_")
         filters = {"col_0": (1, 12), "col_1": (2, 11), "col_2": (3, 6)}
         info: collections.OrderedDict = collections.OrderedDict()
-        filtered_data = hdf.filter_data(data, filters, "and", info)
+        filtered_data = hdf.filter_data_by_values(data, filters, "and", info)
         str_output = (
             f"{prnt.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
@@ -32,7 +32,7 @@ class Test_filter_data1(hut.TestCase):
         data = data.add_prefix("col_")
         filters = {"col_0": (1, 12), "col_1": (2, 11), "col_2": (3, 6)}
         info: collections.OrderedDict = collections.OrderedDict()
-        filtered_data = hdf.filter_data(data, filters, "or", info)
+        filtered_data = hdf.filter_data_by_values(data, filters, "or", info)
         str_output = (
             f"{prnt.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
@@ -48,7 +48,7 @@ class Test_filter_data_by_comparison(hut.TestCase):
     def test_conjunction1(self) -> None:
         data = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
         data = data.add_prefix("col_")
-        filters = [("col_0", "gt", 1), ("col_0", "lt", 7), ("col_1", "eq", 5)]
+        filters = {"col_0": (("gt", 1), ("lt", 7)), "col_1": ("eq", 5)}
         info: collections.OrderedDict = collections.OrderedDict()
         filtered_data = hdf.filter_data_by_comparison(data, filters, "and", info)
         str_output = (
@@ -64,7 +64,7 @@ class Test_filter_data_by_comparison(hut.TestCase):
     def test_disjunction1(self) -> None:
         data = pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
         data = data.add_prefix("col_")
-        filters = [("col_0", "gt", 2), ("col_1", "eq", 5)]
+        filters = {"col_0": ("gt", 2), "col_1": ("eq", 5)}
         info: collections.OrderedDict = collections.OrderedDict()
         filtered_data = hdf.filter_data_by_comparison(data, filters, "or", info)
         str_output = (

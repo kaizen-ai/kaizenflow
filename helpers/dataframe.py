@@ -6,7 +6,7 @@ import helpers.dataframe as hdf
 
 import collections
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -16,7 +16,7 @@ import helpers.printing as prnt
 _LOG = logging.getLogger(__name__)
 
 
-def filter_data(
+def filter_data_by_values(
     data: pd.DataFrame,
     filters: Dict[Union[int, str], Tuple[Any, ...]],
     mode: str,
@@ -50,7 +50,7 @@ def filter_data(
 
 def filter_data_by_comparison(
     data: pd.DataFrame,
-    filters: List[Tuple[Union[int, str], str, Any]],
+    filters: Dict[str, Union[Tuple[str, Any], Tuple[Tuple[str, Any], ...]]],
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
@@ -58,7 +58,8 @@ def filter_data_by_comparison(
     Filter dataframe by comparing columns to values.
 
     :param data: dataframe
-    :param filters: `[(col_name, comparison_method, value)]`.
+    :param filters: `{col_name: (comparison_method, value)}` or
+        `{col_name: ((comparison_method_i, value_i))}`.
         `comparison_method` is one of the ("eq", "ne", "le", "lt", "ge", "gt")
         pandas method names.
     :param mode: `and` for conjunction and `or` for disjunction of filters
@@ -70,21 +71,28 @@ def filter_data_by_comparison(
     info["nrows"] = data.shape[0]
     # Create filter masks for each column.
     masks = []
-    for col_name, comparison_method, val in filters:
-        dbg.dassert_in(comparison_method, ("eq", "ne", "le", "lt", "ge", "gt"))
-        mask = getattr(data[col_name], comparison_method)(val)
-        info[f"n_{col_name}_{comparison_method}_{val}"] = mask.sum()
-        info[f"perc_{col_name}_{comparison_method}_{val}"] = prnt.perc(
-            mask.sum(), data.shape[0]
-        )
-        masks.append(mask)
+    for col_name, tuple_ in filters.items():
+        if not isinstance(tuple_[0], tuple):
+            tuple_ = (tuple_,)
+        for comparison_method, val in tuple_:
+            dbg.dassert_in(
+                comparison_method, ("eq", "ne", "le", "lt", "ge", "gt")
+            )
+            mask = getattr(data[col_name], comparison_method)(val)
+            info[f"n_{col_name}_{comparison_method}_{val}"] = mask.sum()
+            info[f"perc_{col_name}_{comparison_method}_{val}"] = prnt.perc(
+                mask.sum(), data.shape[0]
+            )
+            masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)
     filtered_data = data.loc[combined_mask].copy()
     return filtered_data
 
 
-def _combine_masks(masks: pd.DataFrame, mode: str, info: collections.OrderedDict):
+def _combine_masks(
+    masks: pd.DataFrame, mode: str, info: collections.OrderedDict
+) -> pd.Series:
     if mode == "and":
         combined_mask = masks.all(axis=1)
     elif mode == "or":
