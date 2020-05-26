@@ -598,8 +598,7 @@ def apply_kpss_test(
 
 
 def compute_zero_nan_inf_stats(
-        srs: pd.Series,
-        prefix: Optional[str] = None,
+    srs: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series():
     """
     Calculate finite and non-finite values in time series.
