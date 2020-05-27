@@ -1155,13 +1155,14 @@ def process_nonfinite(
     inf_mask = np.isinf(srs)
     nan_inf_mask = nan_mask | inf_mask
     # Make a copy of input that will be processed
-    res = srs.copy()
     if remove_nan & remove_inf:
-        res = res[~nan_inf_mask].copy()
+        res = srs[~nan_inf_mask].copy()
     elif remove_nan & ~remove_inf:
-        res = res[~nan_mask].copy()
+        res = srs[~nan_mask].copy()
     elif ~remove_nan & remove_inf:
-        res = res[~inf_mask].copy()
+        res = srs[~inf_mask].copy()
+    else:
+        res = srs.copy()
     if info is not None:
         dbg.dassert_isinstance(info, dict)
         # Dictionary should be empty.
