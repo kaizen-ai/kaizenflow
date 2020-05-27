@@ -225,6 +225,30 @@ class TestComputeFracConstant1(hut.TestCase):
         stats.compute_moments(series)
 
 
+class TestComputeNumFiniteSamples1(hut.TestCase):
+    @staticmethod
+    # Smoke test for empty input
+    def test1() -> None:
+        series = pd.Series([])
+        stats.count_num_finite_samples(series)
+
+
+class TestComputeNumUniqueValues1(hut.TestCase):
+    @staticmethod
+    # Smoke test for empty input
+    def test1() -> None:
+        series = pd.Series([])
+        stats.count_num_unique_values(series)
+
+
+class TestComputeDenominatorAndPackage1(hut.TestCase):
+    @staticmethod
+    # Smoke test for empty input
+    def test1() -> None:
+        series = pd.Series([])
+        stats._compute_denominator_and_package(reduction=1, data=series)
+
+
 class TestTTest1samp1(hut.TestCase):
     @staticmethod
     # Smoke test for empty input
