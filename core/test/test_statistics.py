@@ -225,6 +225,30 @@ class TestComputeFracConstant1(hut.TestCase):
         stats.compute_moments(series)
 
 
+class TestTTest1samp1(hut.TestCase):
+    @staticmethod
+    # Smoke test for empty input
+    def test1() -> None:
+        series = pd.Series([])
+        stats.ttest_1samp(series)
+
+
+class TestMultipleTests1(hut.TestCase):
+    @staticmethod
+    # Smoke test for empty input
+    def test1() -> None:
+        series = pd.Series([])
+        stats.multipletests(series)
+
+
+class TestMultiTTest1(hut.TestCase):
+    @staticmethod
+    # Smoke test for empty input
+    def test1() -> None:
+        df = pd.DataFrame(columns=["series_name"])
+        stats.multi_ttest(df)
+
+
 class TestApplyNormalityTest1(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
