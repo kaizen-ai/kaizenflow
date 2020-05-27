@@ -11,12 +11,12 @@ import pytest
 import core.artificial_signal_generators as sig_gen
 import core.signal_processing as sigp
 import helpers.git as git
-import helpers.unit_test as ut
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_get_symmetric_equisized_bins(ut.TestCase):
+class Test_get_symmetric_equisized_bins(hut.TestCase):
     def test_zero_in_bin_interior_false(self) -> None:
         input_ = pd.Series([-1, 3])
         expected = np.array([-3, -2, -1, 0, 1, 2, 3])
@@ -36,7 +36,7 @@ class Test_get_symmetric_equisized_bins(ut.TestCase):
         np.testing.assert_array_equal(actual, expected)
 
 
-class Test_compute_rolling_zscore1(ut.TestCase):
+class Test_compute_rolling_zscore1(hut.TestCase):
     def test_default_values1(self) -> None:
         heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
@@ -48,7 +48,7 @@ class Test_compute_rolling_zscore1(ut.TestCase):
         self.check_string(zscored.to_string())
 
 
-class Test_process_outliers1(ut.TestCase):
+class Test_process_outliers1(hut.TestCase):
     def _helper(
         self,
         srs: pd.Series,
@@ -137,7 +137,7 @@ class Test_process_outliers1(ut.TestCase):
         )
 
 
-class Test_compute_smooth_derivative1(ut.TestCase):
+class Test_compute_smooth_derivative1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -152,7 +152,7 @@ class Test_compute_smooth_derivative1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_smooth_moving_average1(ut.TestCase):
+class Test_compute_smooth_moving_average1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -167,7 +167,7 @@ class Test_compute_smooth_moving_average1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_forecastability1(ut.TestCase):
+class Test_compute_forecastability1(hut.TestCase):
     def test_welch(self) -> None:
         np.random.seed(42)
         n = 1000
@@ -185,7 +185,7 @@ class Test_compute_forecastability1(ut.TestCase):
         np.testing.assert_almost_equal(actual, expected)
 
 
-class Test_digitize1(ut.TestCase):
+class Test_digitize1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         bins = [0, 0.2, 0.4]
@@ -203,7 +203,7 @@ class Test_digitize1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_moment1(ut.TestCase):
+class Test_compute_rolling_moment1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -219,7 +219,7 @@ class Test_compute_rolling_moment1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_norm1(ut.TestCase):
+class Test_compute_rolling_norm1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -235,7 +235,7 @@ class Test_compute_rolling_norm1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_var1(ut.TestCase):
+class Test_compute_rolling_var1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -251,7 +251,7 @@ class Test_compute_rolling_var1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_std1(ut.TestCase):
+class Test_compute_rolling_std1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -267,7 +267,7 @@ class Test_compute_rolling_std1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_demean1(ut.TestCase):
+class Test_compute_rolling_demean1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -282,7 +282,7 @@ class Test_compute_rolling_demean1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_skew1(ut.TestCase):
+class Test_compute_rolling_skew1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau_z = 40
@@ -299,7 +299,7 @@ class Test_compute_rolling_skew1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_kurtosis1(ut.TestCase):
+class Test_compute_rolling_kurtosis1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau_z = 40
@@ -316,7 +316,7 @@ class Test_compute_rolling_kurtosis1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_sharpe_ratio1(ut.TestCase):
+class Test_compute_rolling_sharpe_ratio1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -332,7 +332,7 @@ class Test_compute_rolling_sharpe_ratio1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_corr1(ut.TestCase):
+class Test_compute_rolling_corr1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -358,7 +358,7 @@ class Test_compute_rolling_corr1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_rolling_zcorr1(ut.TestCase):
+class Test_compute_rolling_zcorr1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         tau = 40
@@ -384,7 +384,7 @@ class Test_compute_rolling_zcorr1(ut.TestCase):
         self.check_string(actual.to_string())
 
 
-class Test_compute_ipca(ut.TestCase):
+class Test_compute_ipca(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
         num_pc = 3
@@ -404,11 +404,34 @@ class Test_compute_ipca(ut.TestCase):
 
 
 @pytest.mark.slow
-class Test_gallery_signal_processing1(ut.TestCase):
+class Test_gallery_signal_processing1(hut.TestCase):
     def test_notebook1(self) -> None:
         file_name = os.path.join(
             git.get_amp_abs_path(),
             "core/notebooks/gallery_signal_processing.ipynb",
         )
         scratch_dir = self.get_scratch_space()
-        ut.run_notebook(file_name, scratch_dir)
+        hut.run_notebook(file_name, scratch_dir)
+
+
+class TestProcessNonfinite1(hut.TestCase):
+    @staticmethod
+    def _get_messy_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        series[:5] = 0
+        series[-5:] = np.nan
+        series[10:13] = np.inf
+        series[13:16] = -np.inf
+        return series
+
+    def test1(self) -> None:
+        series = self._get_messy_series(1)
+        actual = sigp.process_nonfinite(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)

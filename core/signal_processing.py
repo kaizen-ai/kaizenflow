@@ -1134,6 +1134,44 @@ def process_outlier_df(
     return ret
 
 
+def process_nonfinite(
+    srs: pd.Series,
+    remove_nan: bool = True,
+    remove_inf: bool = True,
+    info: Optional[dict] = None,
+) -> pd.Series:
+    """
+    Remove infinite and NaN values if keeping some of them is not specified.
+
+    :param srs: pd.Series to process
+    :param remove_nan: remove NaN values if True and keep if False
+    :param remove_inf: remove infinite values if True and keep if False
+    :param info: empty dict-like object that this function will populate with
+        statistics about how many items were removed
+    :return
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mask = np.isnan(srs)
+    inf_mask = np.isinf(srs)
+    # Make a copy of input that will be processed
+    res = srs.copy()
+    if remove_nan:
+        res = res[~nan_mask].copy()
+    if remove_inf:
+        res = res[~inf_mask].copy()
+    if info is not None:
+        dbg.dassert_isinstance(info, dict)
+        # Dictionary should be empty.
+        dbg.dassert(not info)
+        info["series_name"] = srs.name
+        info["num_elems_before"] = len(srs)
+        info["num_elems_removed"] = len(srs) - len(res)
+        info["percentage_removed"] = (
+            100.0 * info["num_elems_removed"] / info["num_elems_before"]
+        )
+    return res
+
+
 # #############################################################################
 # Incremental PCA
 # #############################################################################
