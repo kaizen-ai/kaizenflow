@@ -34,6 +34,11 @@ class TestComputeMoments1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    # Smoke test for empty input
+    def test3(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
+
 
 class TestComputeFracZero1(hut.TestCase):
     @staticmethod
@@ -102,6 +107,11 @@ class TestComputeFracZero1(hut.TestCase):
         expected = 0.466667
         actual = stats.compute_frac_zero(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+    # Smoke test for empty input
+    def test6(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
 
 
 class TestComputeFracNan1(hut.TestCase):
@@ -172,6 +182,11 @@ class TestComputeFracNan1(hut.TestCase):
         actual = stats.compute_frac_nan(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
+    # Smoke test for empty input
+    def test6(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
+
 
 class TestComputeFracConstant1(hut.TestCase):
     @staticmethod
@@ -204,6 +219,11 @@ class TestComputeFracConstant1(hut.TestCase):
         actual = stats.compute_frac_constant(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
+    # Smoke test for empty input
+    def test3(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
+
 
 class TestApplyNormalityTest1(hut.TestCase):
     @staticmethod
@@ -228,6 +248,11 @@ class TestApplyNormalityTest1(hut.TestCase):
         actual = stats.apply_normality_test(series, prefix="norm_test_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+    # Smoke test for empty input
+    def test3(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
 
 
 class TestApplyAdfTest1(hut.TestCase):
@@ -272,6 +297,11 @@ class TestApplyAdfTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    # Smoke test for empty input
+    def test6(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
+
 
 class TestApplyKpssTest1(hut.TestCase):
     @staticmethod
@@ -314,6 +344,11 @@ class TestApplyKpssTest1(hut.TestCase):
         actual = stats.apply_kpss_test(series, prefix="kpss_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+    # Smoke test for empty input
+    def test6(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
 
 
 class TestApplyLjungBoxTest1(hut.TestCase):
@@ -364,6 +399,11 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    # Smoke test for empty input
+    def test7(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
+
 
 class TestComputeZeroNanInfStats1(hut.TestCase):
     @staticmethod
@@ -392,3 +432,8 @@ class TestComputeZeroNanInfStats1(hut.TestCase):
         actual = stats.compute_zero_nan_inf_stats(series, prefix="data_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+    # Smoke test for empty input
+    def test3(self) -> None:
+        series = pd.Series([])
+        stats.compute_moments(series)
