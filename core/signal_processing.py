@@ -1141,23 +1141,26 @@ def process_nonfinite(
     info: Optional[dict] = None,
 ) -> pd.Series:
     """
-    Remove infinite and NaN values if keeping some of them is not specified.
+    Remove infinite and NaN values according to the parameters.
 
     :param srs: pd.Series to process
     :param remove_nan: remove NaN values if True and keep if False
     :param remove_inf: remove infinite values if True and keep if False
     :param info: empty dict-like object that this function will populate with
         statistics about how many items were removed
-    :return: transformed series
+    :return: transformed copy of the input series
     """
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mask = np.isnan(srs)
     inf_mask = np.isinf(srs)
+    nan_inf_mask = nan_mask | inf_mask
     # Make a copy of input that will be processed
     res = srs.copy()
-    if remove_nan:
+    if remove_nan & remove_inf:
+        res = res[~nan_inf_mask].copy()
+    elif remove_nan & ~remove_inf:
         res = res[~nan_mask].copy()
-    if remove_inf:
+    elif ~remove_nan & remove_inf:
         res = res[~inf_mask].copy()
     if info is not None:
         dbg.dassert_isinstance(info, dict)
@@ -1165,8 +1168,12 @@ def process_nonfinite(
         dbg.dassert(not info)
         info["series_name"] = srs.name
         info["num_elems_before"] = len(srs)
+        info["num_nans_before"] = np.isnan(srs).sum()
+        info["num_infs_before"] = np.isinf(srs).sum()
         info["num_elems_removed"] = len(srs) - len(res)
-        info["percentage_removed"] = (
+        info["num_nans_removed"] = info["num_nans_before"] - np.isnan(res).sum()
+        info["num_infs_removed"] = info["num_infs_before"] - np.isinf(res).sum()
+        info["percentage_elems_removed"] = (
             100.0 * info["num_elems_removed"] / info["num_elems_before"]
         )
     return res

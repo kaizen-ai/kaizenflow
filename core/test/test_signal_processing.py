@@ -435,3 +435,15 @@ class TestProcessNonfinite1(hut.TestCase):
         actual = sigp.process_nonfinite(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_messy_series(1)
+        actual = sigp.process_nonfinite(series, remove_nan=False)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_messy_series(1)
+        actual = sigp.process_nonfinite(series, remove_inf=False)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
