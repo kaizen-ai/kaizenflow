@@ -1148,7 +1148,7 @@ def process_nonfinite(
     :param remove_inf: remove infinite values if True and keep if False
     :param info: empty dict-like object that this function will populate with
         statistics about how many items were removed
-    :return
+    :return: transformed series
     """
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mask = np.isnan(srs)
