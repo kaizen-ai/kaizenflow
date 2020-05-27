@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import sklearn.model_selection
+import statsmodels
 import statsmodels.api as sm
 
 import helpers.dbg as dbg
@@ -42,6 +43,8 @@ def compute_moments(
     if isinstance(data, pd.Series):
         data = data.to_frame()
     dbg.dassert_isinstance(data, pd.DataFrame)
+    if data.empty:
+        _LOG.warning("Input is empty!")
     mean = data.mean()
     std = data.std()
     skew = sp.stats.skew(data, nan_policy="omit")
@@ -65,6 +68,8 @@ def replace_infs_with_nans(
     """
     Replace infs with nans in a copy of `data`.
     """
+    if data.empty:
+        _LOG.warning("Input is empty!")
     return data.replace([np.inf, -np.inf], np.nan)
 
 
@@ -137,6 +142,9 @@ def count_num_finite_samples(data: pd.Series) -> float:
 
     :param data: numeric series or dataframe
     """
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return np.nan
     data = data.copy()
     data = replace_infs_with_nans(data)
     return data.count()
@@ -147,6 +155,9 @@ def count_num_unique_values(data: pd.Series) -> int:
     """
     Count number of unique values in the series.
     """
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return np.nan
     srs = pd.Series(data=data.unique())
     return count_num_finite_samples(srs)
 
@@ -371,9 +382,14 @@ def ttest_1samp(
     prefix = prefix or ""
     popmean = popmean or 0
     nan_policy = nan_policy or "omit"
-    tvals, pvals = sp.stats.ttest_1samp(
-        data, popmean=popmean, nan_policy=nan_policy
-    )
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        tvals = np.nan
+        pvals = np.nan
+    else:
+        tvals, pvals = sp.stats.ttest_1samp(
+            data, popmean=popmean, nan_policy=nan_policy
+        )
     result = pd.DataFrame(
         {prefix + "tval": tvals, prefix + "pval": pvals}, index=data.columns
     ).transpose()
@@ -398,12 +414,17 @@ def multipletests(
     dbg.dassert_isinstance(srs, pd.Series)
     method = method or "fdr_bh"
     prefix = prefix or ""
-    pvals_corrected = sm.stats.multitest.multipletests(srs, method=method)[1]
+    if srs.empty:
+        _LOG.warning("Input is empty!")
+        return pd.Series([np.nan], name=prefix + "adj_pval")
+    pvals_corrected = statsmodels.stats.multitest.multipletests(
+        srs, method=method
+    )[1]
     return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
 
 
 def multi_ttest(
-    df: pd.DataFrame,
+    data: pd.DataFrame,
     popmean: Optional[float] = None,
     nan_policy: Optional[str] = None,
     method: Optional[str] = None,
@@ -412,9 +433,17 @@ def multi_ttest(
     """
     Combine ttest and multitest pvalue adjustment.
     """
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    prefix = prefix or ""
+    dbg.dassert_isinstance(data, pd.DataFrame)
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return pd.DataFrame(
+            [np.nan, np.nan, np.nan],
+            index=[prefix + "tval", prefix + "pval", prefix + "adj_pval"],
+            columns=[data.columns],
+        )
     ttest = ttest_1samp(
-        df, popmean=popmean, nan_policy=nan_policy, prefix=prefix
+        data, popmean=popmean, nan_policy=nan_policy, prefix=prefix
     ).transpose()
     ttest[prefix + "adj_pval"] = multipletests(
         ttest[prefix + "pval"], method=method
@@ -445,16 +474,23 @@ def apply_normality_test(
         nan_policy = "omit"
     stats = []
     pvals = []
-    for col in data.columns:
-        if data[col].dropna().size < 8:
-            # The `skewtest` requires at least 8 samples and will raise if it
-            # does not receive at least 8.
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        stats.append(np.nan)
+        pvals.append(np.nan)
+    else:
+        try:
+            for col in data.columns:
+                stat, pval = sp.stats.normaltest(data[col], nan_policy=nan_policy)
+                stats.append(stat)
+                pvals.append(pval)
+        except ValueError as inst:
+            # This can raise if there are less than 8 samples, because
+            # skew test is not valid in this case
+            _LOG.warning(inst)
             stats.append(np.nan)
             pvals.append(np.nan)
-            continue
-        stat, pval = sp.stats.normaltest(data[col], nan_policy=nan_policy)
-        stats.append(stat)
-        pvals.append(pval)
+    #
     res = pd.DataFrame(
         data=list(zip(stats, pvals)),
         columns=[prefix + "stat", prefix + "pval"],
@@ -498,6 +534,25 @@ def apply_adf_test(
     else:
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+        prefix + "used_lag",
+        prefix + "nobs",
+        prefix + "critical_values_1%",
+        prefix + "critical_values_5%",
+        prefix + "critical_values_10%",
+        prefix + "ic_best",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)],
+        index=[result_index],
+        name=data.name,
+    )
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
     try:
         (
             adf_stat,
@@ -513,28 +568,20 @@ def apply_adf_test(
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
         _LOG.warning(inst)
-        (adf_stat, pval, usedlag, nobs, critical_values, icbest) = (
-            np.nan,
-            np.nan,
-            np.nan,
-            np.nan,
-            {"1%": np.nan, "5%": np.nan, "10%": np.nan},
-            np.nan,
-        )
+        return nan_result
         #
-    res = [
-        (prefix + "stat", adf_stat),
-        (prefix + "pval", pval),
-        (prefix + "used_lag", usedlag),
-        (prefix + "nobs", nobs),
-        (prefix + "critical_values_1%", critical_values["1%"]),
-        (prefix + "critical_values_5%", critical_values["5%"]),
-        (prefix + "critical_values_10%", critical_values["10%"]),
-        (prefix + "ic_best", icbest),
+    result_values = [
+        adf_stat,
+        pval,
+        usedlag,
+        nobs,
+        critical_values["1%"],
+        critical_values["5%"],
+        critical_values["10%"],
+        icbest,
     ]
-    data = list(zip(*res))
-    res = pd.Series(data[1], index=data[0], name=srs.name)
-    return res
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
 
 
 def apply_kpss_test(
@@ -569,37 +616,46 @@ def apply_kpss_test(
     else:
         raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+        prefix + "lags",
+        prefix + "critical_values_1%",
+        prefix + "critical_values_5%",
+        prefix + "critical_values_10%",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)],
+        index=[result_index],
+        name=data.name,
+    )
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
     try:
         (kpss_stat, pval, lags, critical_values,) = sm.tsa.stattools.kpss(
             data.values, regression=regression, nlags=nlags
         )
-    except ValueError as inst:
+    except ValueError:
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
-        _LOG.warning(inst)
-        (kpss_stat, pval, lags, critical_values) = (
-            np.nan,
-            np.nan,
-            np.nan,
-            {"1%": np.nan, "5%": np.nan, "10%": np.nan},
-        )
+        return nan_result
         #
-    res = [
-        (prefix + "stat", kpss_stat),
-        (prefix + "pval", pval),
-        (prefix + "lags", lags),
-        (prefix + "critical_values_1%", critical_values["1%"]),
-        (prefix + "critical_values_5%", critical_values["5%"]),
-        (prefix + "critical_values_10%", critical_values["10%"]),
+    result_values = [
+        kpss_stat,
+        pval,
+        lags,
+        critical_values["1%"],
+        critical_values["5%"],
+        critical_values["10%"],
     ]
-    data = list(zip(*res))
-    res = pd.Series(data[1], index=data[0], name=srs.name)
-    return res
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
 
 
 def compute_zero_nan_inf_stats(
-        srs: pd.Series,
-        prefix: Optional[str] = None,
+    srs: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series():
     """
     Calculate finite and non-finite values in time series.
@@ -611,20 +667,34 @@ def compute_zero_nan_inf_stats(
     # TODO(*): To be optimized/rewritten in #2340.
     prefix = prefix or ""
     dbg.dassert_isinstance(srs, pd.Series)
-    res = [
-        (prefix + "n_rows", len(srs)),
-        (prefix + "frac_zero", compute_frac_zero(srs)),
-        (prefix + "frac_nan", compute_frac_nan(srs)),
-        (prefix + "frac_inf", compute_frac_inf(srs)),
-        (prefix + "frac_constant", compute_frac_constant(srs)),
-        (prefix + "num_finite_samples", count_num_finite_samples(srs)),
-        # TODO(*): Add after extension to dataframes.
-        # ("num_unique_values", stats.count_num_unique_values),
+    result_index = [
+        prefix + "n_rows",
+        prefix + "frac_zero",
+        prefix + "frac_nan",
+        prefix + "frac_inf",
+        prefix + "frac_constant",
+        prefix + "num_finite_samples",
     ]
-    # Add float output of each function to resulting series.
-    data = list(zip(*res))
-    res = pd.Series(data[1], index=data[0], name=srs.name)
-    return res
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=[result_index], name=srs.name
+    )
+    if srs.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
+    result_values = [
+        len(srs),
+        compute_frac_zero(srs),
+        compute_frac_nan(srs),
+        compute_frac_inf(srs),
+        compute_frac_constant(srs),
+        count_num_finite_samples(srs),
+        # TODO(*): Add after extension to dataframes.
+        # "num_unique_values",
+        # stats.count_num_unique_values
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
 
 
 def apply_ljung_box_test(
@@ -666,13 +736,23 @@ def apply_ljung_box_test(
         prefix + "stat",
         prefix + "pval",
     ]
-    result = sm.stats.diagnostic.acorr_ljungbox(
-        data.values,
-        lags=lags,
-        model_df=model_df,
-        period=period,
-        return_df=return_df,
-    )
+    # Make an output for empty or too short inputs.
+    nan_result = pd.DataFrame([[np.nan, np.nan]], columns=columns)
+    if srs.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
+    try:
+        result = sm.stats.diagnostic.acorr_ljungbox(
+            data.values,
+            lags=lags,
+            model_df=model_df,
+            period=period,
+            return_df=return_df,
+        )
+    except ValueError as inst:
+        _LOG.warning(inst)
+        return nan_result
+    #
     if return_df:
         df_result = result
     else:
