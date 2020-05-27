@@ -386,9 +386,9 @@ def build_multiple_configs(
     """
     TODO(Danya): Come up with a 1-line summary.
 
-    Create multiple `cfg.Config` objects using the given config template
-    and overwriting a None parameter specified through a parameter path
-    and several possible elements:
+    Create multiple `cfg.Config` objects using the given config template and
+    overwriting `None` or `_DUMMY_` parameter specified through a parameter
+    path and several possible elements:
     param_path: Tuple(str) -> param_values: Iterable[Any]
     A parameter path is represented by a tuple of nested names.
 
@@ -427,7 +427,10 @@ def build_multiple_configs(
                 conf_tmp.check_params([pp])
                 conf_tmp = conf_tmp[pp]
             conf_tmp.check_params([param_path[-1]])
-            if conf_tmp[param_path[-1]] is not None:
+            if not (
+                conf_tmp[param_path[-1]] is None
+                or conf_tmp[param_path[-1]] == "_DUMMY_"
+            ):
                 raise ValueError("Trying to change a parameter that is not None.")
             conf_tmp[param_path[-1]] = param_val
         param_configs.append(config_var)
