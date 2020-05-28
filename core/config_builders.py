@@ -384,16 +384,16 @@ def build_multiple_configs(
     params_variants: Dict[Tuple[str, ...], Iterable[Any]],
 ) -> List[cfg.Config]:
     """
-    TODO(Danya): Come up with a 1-line summary.
+    Build configs from a template and the Cartesian product of given keys/vals.
 
     Create multiple `cfg.Config` objects using the given config template and
     overwriting `None` or `_DUMMY_` parameter specified through a parameter
     path and several possible elements:
-    param_path: Tuple(str) -> param_values: Iterable[Any]
+        param_path: Tuple(str) -> param_values: Iterable[Any]
     A parameter path is represented by a tuple of nested names.
 
-    Note that we create a config for each element of the Cartesian
-    product of the values to be assigned.
+    Note that we create a config for each element of the Cartesian product of
+    the values to be assigned.
 
     :param template_config: cfg.Config object
     :param params_variants: {(param_name_in_the_config_path):
@@ -401,15 +401,10 @@ def build_multiple_configs(
                                 ('resample', 'rule'): ['5T', '10T']}
     :return: a list of configs
     """
-    # In the example from above, list(possible_values) = [('CL', '5T'),
+    # In the example from above, list(params_values) = [('CL', '5T'),
     # ('CL', '10T'), ('QM', '5T'), ('QM', '10T')]
-    possible_values = list(itertools.product(*params_variants.values()))
-    # A dataframe indexed with param_paths and with their possible
-    # combinations as columns.
-    comb_df = pd.DataFrame(
-        possible_values, columns=list(params_variants.keys())
-    ).T
-    param_vars = list(comb_df.to_dict().values())
+    params_values = itertools.product(*params_variants.values())
+    param_vars = list(dict(zip(params_variants.keys(), values)) for values in params_values)
     # In the example above, param_vars = [
     #    {('read_data', 'symbol'): 'CL', ('resample', 'rule'): '5T'},
     #    {('read_data', 'symbol'): 'CL', ('resample', 'rule'): '10T'},
