@@ -1,6 +1,7 @@
 import collections
 import logging
 
+import numpy as np
 import pandas as pd
 
 import helpers.dataframe as hdf
@@ -76,3 +77,49 @@ class Test_filter_data_by_comparison(hut.TestCase):
             f"{hut.convert_info_to_string(info)}"
         )
         self.check_string(str_output)
+
+
+class Test_apply_nan_mode(hut.TestCase):
+    @staticmethod
+    def _get_series_with_nans(seed: int) -> pd.Series:
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
+        series[:3] = np.nan
+        series[-3:] = np.nan
+        series[5:7] = np.nan
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series_with_nans(1)
+        actual = hdf.apply_nan_mode(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_series_with_nans(1)
+        actual = hdf.apply_nan_mode(series, nan_mode="ignore")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_series_with_nans(1)
+        actual = hdf.apply_nan_mode(series, nan_mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        series = self._get_series_with_nans(1)
+        actual = hdf.apply_nan_mode(series, nan_mode="ffill_and_drop_leading")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        series = self._get_series_with_nans(1)
+        actual = hdf.apply_nan_mode(series, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input.
+    def test6(self) -> None:
+        series = pd.Series([])
+        hdf.apply_nan_mode(series)

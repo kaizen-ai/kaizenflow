@@ -8,6 +8,7 @@ import collections
 import logging
 from typing import Any, Dict, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
@@ -103,3 +104,60 @@ def _combine_masks(
         _LOG.warning("No data remaining after filtering.")
     info["nrows_remaining"] = combined_mask.sum()
     return combined_mask
+
+
+def apply_nan_mode(
+    srs: pd.Series, nan_mode: Optional[str] = None, info: Optional[dict] = None,
+) -> pd.Series:
+    """
+    Process NaN values in a series according to the parameters.
+
+    :param srs: pd.Series to process
+    :param nan_mode: method of processing NaNs
+        - None - no transformation
+        - "ignore" - drop all NaNs
+        - "ffill" - forward fill not leading NaNs
+        - "ffill_and_drop_leading" - do ffill and drop leading NaNs
+        - "fill_with_zero" - fill NaNs with 0
+        - "strict" - raise ValueError that NaNs are detected
+    :param info: information storage
+    :return: transformed copy of input series
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    if srs.empty:
+        _LOG.warning("Input is empty!")
+    if nan_mode is None:
+        res = srs.copy()
+    elif nan_mode == "ignore":
+        res = srs.dropna().copy()
+    elif nan_mode == "ffill":
+        res = srs.ffill().copy()
+    elif nan_mode == "ffill_and_drop_leading":
+        res = srs.ffill().dropna().copy()
+    elif nan_mode == "fill_with_zero":
+        res = srs.fillna(0).copy()
+    elif nan_mode == "strict":
+        res = srs.copy()
+        if srs.isna().any():
+            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}`")
+    #
+    if info is not None:
+        dbg.dassert_isinstance(info, dict)
+        # Dictionary should be empty.
+        dbg.dassert(not info)
+        info["series_name"] = srs.name
+        info["num_elems_before"] = len(srs)
+        info["num_nans_before"] = np.isnan(srs).sum()
+        info["num_elems_removed"] = len(srs) - len(res)
+        info["num_nans_imputed"] = (
+            info["num_nans_before"] - info["num_elems_removed"]
+        )
+        info["percentage_elems_removed"] = (
+            100.0 * info["num_elems_removed"] / info["num_elems_before"]
+        )
+        info["percentage_elems_imputed"] = (
+            100.0 * info["num_nans_imputed"] / info["num_elems_before"]
+        )
+    return res
