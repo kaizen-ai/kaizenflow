@@ -404,7 +404,9 @@ def build_multiple_configs(
     # In the example from above, list(params_values) = [('CL', '5T'),
     # ('CL', '10T'), ('QM', '5T'), ('QM', '10T')]
     params_values = itertools.product(*params_variants.values())
-    param_vars = list(dict(zip(params_variants.keys(), values)) for values in params_values)
+    param_vars = list(
+        dict(zip(params_variants.keys(), values)) for values in params_values
+    )
     # In the example above, param_vars = [
     #    {('read_data', 'symbol'): 'CL', ('resample', 'rule'): '5T'},
     #    {('read_data', 'symbol'): 'CL', ('resample', 'rule'): '10T'},
