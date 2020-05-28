@@ -114,9 +114,10 @@ def apply_nan_mode(
 
     :param srs: pd.Series to process
     :param nan_mode: method of processing NaNs
-        - "None" - no transformation
+        - None - no transformation
         - "ignore" - drop all NaNs
-        - "ffill" - forward fill NaNs where applicable, drop remaining NaNs
+        - "ffill" - forward fill not leading NaNs
+        - "ffill_and_drop_leading" - do ffill and drop leading NaNs
         - "fill_with_zero" - fill NaNs with 0
         - "strict" - raise ValueError that NaNs are detected
     :param info: information storage
@@ -130,6 +131,8 @@ def apply_nan_mode(
     elif nan_mode == "ignore":
         res = srs.dropna().copy()
     elif nan_mode == "ffill":
+        res = srs.ffill().copy()
+    elif nan_mode == "ffill_and_drop_leading":
         res = srs.ffill().dropna().copy()
     elif nan_mode == "fill_with_zero":
         res = srs.fillna(0).copy()
