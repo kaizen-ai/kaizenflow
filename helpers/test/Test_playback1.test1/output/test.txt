@@ -1,0 +1,10 @@
+# Initialize values for unit test.
+a = r'3'
+a = jsonpickle.decode(a)
+b = r'2'
+b = jsonpickle.decode(b)
+# Apply values.
+act = F(a, b)
+exp = r'5'
+exp = jsonpickle.decode(exp)
+assert act.equals(exp)
