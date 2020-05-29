@@ -16,6 +16,7 @@ import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
 
+import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -515,7 +516,7 @@ def apply_adf_test(
     :param maxlag: as in stattools.adfuller
     :param regression: as in stattools.adfuller
     :param autolag: as in stattools.adfuller
-    :param nan_mode: "ignore" or "strict"
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue, and related info
     """
@@ -524,15 +525,7 @@ def apply_adf_test(
     autolag = autolag or "AIC"
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    # TODO(PartTask2386): Think about factoring out this idiom.
-    if nan_mode == "ignore":
-        data = srs.dropna()
-    elif nan_mode == "strict":
-        data = srs
-        if srs.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
     result_index = [
         prefix + "stat",
@@ -599,7 +592,7 @@ def apply_kpss_test(
     :param srs: pandas series of floats
     :param regression: as in stattools.kpss
     :param nlags: as in stattools.kpss
-    :param nan_mode: "ignore" or "strict"
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue, and related info
     """
@@ -607,14 +600,7 @@ def apply_kpss_test(
     regression = regression or "c"
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    if nan_mode == "ignore":
-        data = srs.dropna()
-    elif nan_mode == "strict":
-        data = srs
-        if srs.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
     result_index = [
         prefix + "stat",
@@ -714,7 +700,7 @@ def apply_ljung_box_test(
     :param model_df: as in diagnostic.acorr_ljungbox
     :param period: as in diagnostic.acorr_ljungbox
     :param return_df: as in diagnostic.acorr_ljungbox
-    :param nan_mode: "ignore" or "strict"
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue
     """
@@ -723,14 +709,7 @@ def apply_ljung_box_test(
     return_df = return_df or True
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    if nan_mode == "ignore":
-        data = srs.dropna()
-    elif nan_mode == "strict":
-        data = srs
-        if srs.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
     columns = [
         prefix + "stat",
