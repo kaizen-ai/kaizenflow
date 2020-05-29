@@ -15,6 +15,7 @@ import pywt
 import scipy as sp
 import statsmodels.api as sm
 
+import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -261,18 +262,8 @@ def compute_jensen_ratio(
     # Set reasonable defaults for inf and nan modes.
     if inf_mode is None:
         inf_mode = "return_nan"
-    if nan_mode is None:
-        nan_mode = "ignore"
-    # Handle NaNs.
-    if nan_mode == "ignore":
-        data = signal.dropna()
-    elif nan_mode == "ffill":
-        data = signal.ffill().dropna()
-    elif nan_mode == "strict":
-        if signal.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}`")
+    nan_mode = nan_mode or "ignore"
+    data = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
     dbg.dassert(not data.isna().any())
     # Handle infs.
     has_infs = (~data.apply(np.isfinite)).any()
@@ -320,18 +311,8 @@ def compute_forecastability(
        equality iff alpha \in \{0, 1\}.
     """
     dbg.dassert_isinstance(signal, pd.Series)
-    if nan_mode is None:
-        nan_mode = "fill_with_zero"
-    # Handle NaNs
-    if nan_mode == "fill_with_zero":
-        signal = signal.fillna(0)
-    elif nan_mode == "ffill":
-        signal = signal.ffill().dropna()
-    elif nan_mode == "strict":
-        if signal.hasna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    nan_mode = nan_mode or "fill_with_zero"
+    signal = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
     # Return NaN if there is no data.
     if signal.size == 0:
         return np.nan

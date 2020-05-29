@@ -167,6 +167,19 @@ class Test_compute_smooth_moving_average1(hut.TestCase):
         self.check_string(actual.to_string())
 
 
+class Test_compute_jensen_ratio1(hut.TestCase):
+    def test_nan_mode(self) -> None:
+        np.random.seed(42)
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        signal[30:50] = np.nan
+        actual = sigp.compute_jensen_ratio(
+            signal, nan_mode="ffill_and_drop_leading"
+        )
+        expected = 1.260425237446316
+        np.testing.assert_almost_equal(actual, expected)
+
+
 class Test_compute_forecastability1(hut.TestCase):
     def test_welch(self) -> None:
         np.random.seed(42)
@@ -182,6 +195,17 @@ class Test_compute_forecastability1(hut.TestCase):
         signal = pd.Series(np.random.randn(n))
         actual = sigp.compute_forecastability(signal, mode="periodogram")
         expected = 0.06319779777321788
+        np.testing.assert_almost_equal(actual, expected)
+
+    def test_nan_mode(self) -> None:
+        np.random.seed(42)
+        n = 1000
+        signal = pd.Series(np.random.randn(n))
+        signal[30:50] = np.nan
+        actual = sigp.compute_forecastability(
+            signal, nan_mode="ffill_and_drop_leading"
+        )
+        expected = 0.014727780099773713
         np.testing.assert_almost_equal(actual, expected)
 
 
