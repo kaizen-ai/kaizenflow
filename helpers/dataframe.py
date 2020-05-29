@@ -35,6 +35,9 @@ def filter_data_by_values(
     if info is None:
         info = collections.OrderedDict()
     info["nrows"] = data.shape[0]
+    if not filters:
+        info["nrows_remaining"] = data.shape[0]
+        return data.copy()
     # Create filter masks for each column.
     masks = []
     for col_name, vals in filters.items():
@@ -70,6 +73,9 @@ def filter_data_by_comparison(
     if info is None:
         info = collections.OrderedDict()
     info["nrows"] = data.shape[0]
+    if not filters:
+        info["nrows_remaining"] = data.shape[0]
+        return data.copy()
     # Create filter masks for each column.
     masks = []
     for col_name, tuple_ in filters.items():
