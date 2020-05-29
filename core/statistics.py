@@ -540,7 +540,7 @@ def apply_adf_test(
     n_stats = len(result_index)
     nan_result = pd.Series(
         data=[np.nan for i in range(n_stats)],
-        index=[result_index],
+        index=result_index,
         name=data.name,
     )
     if data.empty:
@@ -613,7 +613,7 @@ def apply_kpss_test(
     n_stats = len(result_index)
     nan_result = pd.Series(
         data=[np.nan for i in range(n_stats)],
-        index=[result_index],
+        index=result_index,
         name=data.name,
     )
     if data.empty:
@@ -663,7 +663,7 @@ def compute_zero_nan_inf_stats(
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=[result_index], name=srs.name
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
     )
     if srs.empty:
         _LOG.warning("Input is empty!")
