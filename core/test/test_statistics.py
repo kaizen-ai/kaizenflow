@@ -350,6 +350,13 @@ class TestApplyAdfTest1(hut.TestCase):
         series = pd.Series([])
         stats.compute_moments(series)
 
+    def test7(self) -> None:
+        series = self._get_series(1)
+        series[3:5] = np.nan
+        actual = stats.apply_adf_test(series, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
 
 class TestApplyKpssTest1(hut.TestCase):
     @staticmethod
@@ -397,6 +404,13 @@ class TestApplyKpssTest1(hut.TestCase):
     def test6(self) -> None:
         series = pd.Series([])
         stats.compute_moments(series)
+
+    def test7(self) -> None:
+        series = self._get_series(1)
+        series[3:5] = np.nan
+        actual = stats.apply_kpss_test(series, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
 
 
 class TestApplyLjungBoxTest1(hut.TestCase):
@@ -451,6 +465,13 @@ class TestApplyLjungBoxTest1(hut.TestCase):
     def test7(self) -> None:
         series = pd.Series([])
         stats.compute_moments(series)
+
+    def test8(self) -> None:
+        series = self._get_series(1)
+        series[3:5] = np.nan
+        actual = stats.apply_ljung_box_test(series, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
 
 
 class TestComputeZeroNanInfStats1(hut.TestCase):
