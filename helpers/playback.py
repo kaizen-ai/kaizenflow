@@ -4,17 +4,36 @@ Import as:
 import helpers.playback as plbck
 """
 
+# - DONE: Handle complex types with jsonpickle (e.g., pandas data frame)
+# - IN PROGRESS: Unit test the unit tester
+# - Generalize for args, kwargs
+#   
+# - Create code to make it look like a ParticleOne unit test
+# - Improve the serialization by generating "nicer" code directly, instead of
+#   using jsonpicle.
+# - Make it a decorator
+
 import jsonpickle
 
+#def serialize_to_python_code(obj: Any):
+#    if isinstance(obj, pd.DataFrame):
+#        ret = []
+#        ret.append("pd.DataFrame(...")
+#    elif isinstance(obj, pd.Series):
+#        ret = []
+#        ret.append("pd.Series(...")
+#    elif isinstance(obj, 
+
+
 class Playback:
-    
+
     #def __init__(self, file_name, mode, *args, **kwargs):
     # self.args = args
     # self.kwargs = kwargs
     def __init__(self, file_name, mode, func_name, a, b):
         self.a = a
         self.b = b
-        
+
     def start(self):
         self.a_json = jsonpickle.encode(self.a)
         self.b_json = jsonpickle.encode(self.b)
@@ -44,16 +63,16 @@ class Playback:
     def test_code(output: str):
         # Try to execute in a fake environment.
         #local_env = {}
-        ########_ = exec(output, local_env)
+        #_ = exec(output, local_env)
         _ = exec(output)
-    
-    
-#        
+
+
+#
 ## def F(a: int, b: int):
 ##     c = {}
 ##     c["pavel"] = a + b
 ##     return c
-#        
+#
 #use_playback = True
 #
 #def F(a: pd.DataFrame, b: pd.DataFrame):
@@ -69,7 +88,7 @@ class Playback:
 #    else:
 #        res = c
 #    return res
-#    
+#
 #a = pd.DataFrame(
 # {
 #    'Price': [700, 250, 800, 1200]
@@ -78,7 +97,7 @@ class Playback:
 # {
 #    'Price': [1, 1, 1, 1]
 #})
-#    
+#
 #res = F(a, b)
 #output = res[0]
 #print(output)
