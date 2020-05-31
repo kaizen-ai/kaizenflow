@@ -218,8 +218,8 @@ def _compute_denominator_and_package(
 
 
 def compute_annualized_sharpe_ratio(
-        log_rets: pd.Series, prefix: Optional[str] = None,
-        ) -> pd.DataFrame:
+    log_rets: pd.Series, prefix: Optional[str] = None,
+) -> pd.DataFrame:
     """
     Calculate SR from rets with an index freq and annualize.
 
@@ -242,9 +242,11 @@ def compute_annualized_sharpe_ratio(
     sr = fin.compute_sharpe_ratio(log_rets, time_scaling)
     sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
     sr_se_estimate = np.sqrt(sr_var_estimate)
-    res = pd.Series(data=[sr, sr_se_estimate],
-                    index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
-                    name=log_rets.name)
+    res = pd.Series(
+        data=[sr, sr_se_estimate],
+        index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
+        name=log_rets.name,
+    )
     return res.to_frame()
 
 
@@ -571,9 +573,7 @@ def apply_adf_test(
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
-        index=result_index,
-        name=data.name,
+        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
     )
     if data.empty:
         _LOG.warning("Input is empty!")
@@ -644,9 +644,7 @@ def apply_kpss_test(
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
-        index=result_index,
-        name=data.name,
+        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
     )
     if data.empty:
         _LOG.warning("Input is empty!")
