@@ -16,6 +16,7 @@ import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
 
+import core.finance as fin
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
@@ -214,6 +215,31 @@ def _compute_denominator_and_package(
             return pd.Series(data=normalized, index=df.index)
         else:
             raise ValueError("axis=`%s` but expected to be `0` or `1`!", axis)
+
+
+def compute_annualized_sharpe_ratio(
+        log_rets: pd.Series, prefix: Optional[str] = None,
+        ) -> pd.DataFrame:
+    """
+    Calculate SR from rets with an index freq and annualize.
+    """
+    prefix = prefix or ""
+    dbg.dassert(log_rets.index.freq)
+    freq = log_rets.index.freq
+    if freq == "D":
+        time_scaling = 365
+    elif freq == "B":
+        time_scaling = 252
+    elif freq == "W":
+        time_scaling = 52
+    elif freq == "M":
+        time_scaling = 12
+    else:
+        raise ValueError(f"Unsupported freq=`{freq}`")
+    sr = fin.compute_sharpe_ratio(log_rets, time_scaling)
+    res = pd.Series(data=[sr], index=[prefix + "ann_sharpe"],
+                    name=log_rets.name)
+    return res.to_frame()
 
 
 # #############################################################################
