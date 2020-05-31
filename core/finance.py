@@ -297,6 +297,28 @@ def convert_pct_rets_to_log_rets(
     return np.log(pct_rets + 1)
 
 
+def compute_annualized_sharpe_ratio(
+    log_rets: Union[pd.Series, pd.DataFrame]
+) -> Union[float, pd.Series]:
+    """
+    Calculate SR from rets with an index freq and annualize.
+    """
+    dbg.dassert(log_rets.index.freq)
+    freq = log_rets.index.freq
+    if freq == "D":
+        time_scaling = 365
+    elif freq == "B":
+        time_scaling = 252
+    elif freq == "W":
+        time_scaling = 52
+    elif freq == "M":
+        time_scaling = 12
+    else:
+        raise ValueError(f"Unsupported freq=`{freq}`")
+    sr = compute_sharpe_ratio(log_rets, time_scaling)
+    return sr
+
+
 def compute_sharpe_ratio(
     log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
 ) -> Union[float, pd.Series]:
