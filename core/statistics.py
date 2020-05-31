@@ -222,6 +222,9 @@ def compute_annualized_sharpe_ratio(
         ) -> pd.DataFrame:
     """
     Calculate SR from rets with an index freq and annualize.
+
+    TODO(*): Consider de-biasing when the number of sample points is small,
+        e.g., https://www.twosigma.com/wp-content/uploads/sharpe-tr-1.pdf
     """
     prefix = prefix or ""
     dbg.dassert(log_rets.index.freq)
@@ -237,7 +240,10 @@ def compute_annualized_sharpe_ratio(
     else:
         raise ValueError(f"Unsupported freq=`{freq}`")
     sr = fin.compute_sharpe_ratio(log_rets, time_scaling)
-    res = pd.Series(data=[sr], index=[prefix + "ann_sharpe"],
+    sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
+    sr_se_estimate = np.sqrt(sr_var_estimate)
+    res = pd.Series(data=[sr, sr_se_estimate],
+                    index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
                     name=log_rets.name)
     return res.to_frame()
 
