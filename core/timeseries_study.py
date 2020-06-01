@@ -5,7 +5,7 @@ import core.timeseries_study as tss
 """
 
 import logging
-from typing import Callable, Dict, Iterable, Optional
+from typing import Any, Callable, Dict, Iterable, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -325,3 +325,35 @@ def compute_metadata(
     for series_id, series in timeseries_data.items():
         metadata[series_id] = compute_series_metadata(functions, series)
     return pd.DataFrame.from_dict(metadata, orient="index")
+
+
+def map_dict_to_dataframe(
+    dict_: Dict[Any, pd.Series], functions: Dict[str, Callable]
+) -> pd.DataFrame:
+    """
+    Apply and combine results of specified functions on a dict of series.
+
+    :param dict_: dict of series to apply functions to.
+    :param functions: dict with functions prefixes in keys and functions
+        returns in values. Each function should receive a series as input
+        and return a series or 1-column dataframe.
+    :return: dataframe with dict of series keys as column names and
+         prefix + functions metrics' names as index.
+    """
+    all_func_outs = []
+    for key, series in dict_.items():
+        # Apply all functions in `functions` to `series`.
+        key_func_outs = []
+        for prefix, func in functions.items():
+            func_out = func(series, prefix=prefix)
+            if isinstance(func_out, pd.DataFrame):
+                func_out = func_out.squeeze("columns")
+            dbg.dassert_isinstance(func_out, pd.Series)
+            key_func_outs.append(func_out)
+        # Create a single series from individual function series.
+        key_func_out_srs = pd.concat(key_func_outs)
+        key_func_out_srs.name = key
+        all_func_outs.append(key_func_out_srs)
+    # Concatenate each output series.
+    df = pd.concat(all_func_outs, axis=1)
+    return df
