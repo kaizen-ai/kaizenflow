@@ -16,6 +16,7 @@ import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
 
+import core.finance as fin
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
@@ -214,6 +215,39 @@ def _compute_denominator_and_package(
             return pd.Series(data=normalized, index=df.index)
         else:
             raise ValueError("axis=`%s` but expected to be `0` or `1`!", axis)
+
+
+def compute_annualized_sharpe_ratio(
+    log_rets: pd.Series, prefix: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Calculate SR from rets with an index freq and annualize.
+
+    TODO(*): Consider de-biasing when the number of sample points is small,
+        e.g., https://www.twosigma.com/wp-content/uploads/sharpe-tr-1.pdf
+    """
+    prefix = prefix or ""
+    dbg.dassert(log_rets.index.freq)
+    freq = log_rets.index.freq
+    if freq == "D":
+        time_scaling = 365
+    elif freq == "B":
+        time_scaling = 252
+    elif freq == "W":
+        time_scaling = 52
+    elif freq == "M":
+        time_scaling = 12
+    else:
+        raise ValueError(f"Unsupported freq=`{freq}`")
+    sr = fin.compute_sharpe_ratio(log_rets, time_scaling)
+    sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
+    sr_se_estimate = np.sqrt(sr_var_estimate)
+    res = pd.Series(
+        data=[sr, sr_se_estimate],
+        index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
+        name=log_rets.name,
+    )
+    return res.to_frame()
 
 
 # #############################################################################
@@ -539,9 +573,7 @@ def apply_adf_test(
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
-        index=result_index,
-        name=data.name,
+        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
     )
     if data.empty:
         _LOG.warning("Input is empty!")
@@ -612,9 +644,7 @@ def apply_kpss_test(
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
-        index=result_index,
-        name=data.name,
+        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
     )
     if data.empty:
         _LOG.warning("Input is empty!")
