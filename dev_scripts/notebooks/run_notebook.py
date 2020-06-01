@@ -19,7 +19,7 @@ import joblib
 import tqdm
 
 import core.config as cfg
-import core.config_builders as ccfgbld
+import core.config_builders as cfgb
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
@@ -102,7 +102,7 @@ def _run_notebook(
     html_subdir_name = os.path.join(os.path.basename(dst_dir), result_subdir)
     # TODO(gp): experiment_result_dir -> experiment_result_dir.
     experiment_result_dir = os.path.join(dst_dir, result_subdir)
-    config = ccfgbld.set_experiment_result_dir(experiment_result_dir, config)
+    config = cfgb.set_experiment_result_dir(experiment_result_dir, config)
     _LOG.info("experiment_result_dir=%s", experiment_result_dir)
     io_.create_dir(experiment_result_dir, incremental=True)
     # If there is already a success file in the dir, skip the experiment.
@@ -179,11 +179,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     config_builder = args.function
     _LOG.info("Executing function '%s'", config_builder)
-    configs = ccfgbld.get_configs_from_builder(config_builder)
+    configs = cfgb.get_configs_from_builder(config_builder)
     dbg.dassert_isinstance(configs, list)
-    ccfgbld.assert_on_duplicated_configs(configs)
-    configs = ccfgbld.add_result_dir(dst_dir, configs)
-    configs = ccfgbld.add_config_idx(configs)
+    cfgb.assert_on_duplicated_configs(configs)
+    configs = cfgb.add_result_dir(dst_dir, configs)
+    configs = cfgb.add_config_idx(configs)
     #
     if args.index:
         ind = int(args.index)
@@ -239,7 +239,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 dst_dir,
                 config,
                 config_builder,
-                publish
+                publish,
             )
             for config in configs
         )
