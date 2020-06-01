@@ -736,12 +736,12 @@ def plot_value_counts(
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
-    Plot barplots for series  value counts and print the values.
+    Plot barplots for series value counts and print the values.
 
     If the number of labels is over 20, the plot is oriented horizontally
     and the height of the plot is automatically adjusted.
 
-    :param values: Series to plot value counts for
+    :param values: series to plot value counts for
     :param top_n_to_print: top N values by count to print. None for all. 0 for no values
     :param top_n_to_plot: like top_n_to_print, but for the plot
     :param plot_title: title of the barplot
