@@ -738,20 +738,21 @@ def plot_value_counts(
     """
     Plot barplots for series  value counts and print the values.
 
-    If the number of labels is over 20, the plot is
-    oriented horizontally and the height of the plot is automatically adjusted.
+    If the number of labels is over 20, the plot is oriented horizontally
+    and the height of the plot is automatically adjusted.
 
-    :param values: value counts
-    :param top_n_to_print: top N values to show. None for all. 0 for no value.
-    :param top_n_to_plot: like top_n_to_print, but for the plot.
+    :param values: Series to plot value counts for
+    :param top_n_to_print: top N values by count to print. None for all. 0 for no values
+    :param top_n_to_plot: like top_n_to_print, but for the plot
     :param plot_title: title of the barplot
     :param label: label of the X axis
     :param figsize: size of the plot
     """
+    # Get value counts for series.
+    counts = values.value_counts()
     # Get default values for plot title and label.
     if not figsize:
         figsize = FIG_SIZE
-    counts = values.value_counts()
     unique_values = sorted(counts.index.to_list())
     # Display a number of unique values in сolumn.
     print("Number of unique values: %d" % len(unique_values))
@@ -774,6 +775,7 @@ def plot_value_counts(
         pass
     else:
         counts_tmp = counts.copy()
+        # Subset N values to plot.
         if top_n_to_plot is not None:
             dbg.dassert_lte(1, top_n_to_plot)
             counts_tmp = counts_tmp[:top_n_to_plot]
