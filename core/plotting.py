@@ -728,7 +728,7 @@ def multipletests_plot(
 
 
 def plot_value_counts(
-    counts: pd.Series,
+    values: pd.Series,
     top_n_to_print: int = 10,
     top_n_to_plot: Optional[int] = None,
     plot_title: Optional[str] = None,
@@ -736,13 +736,12 @@ def plot_value_counts(
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
-    Plot barplots for value counts and print the values.
+    Plot barplots for series  value counts and print the values.
 
-    The function is typically used in conjunction with value counts
-    from KGification info. If the number of labels is over 20, the plot is
+    If the number of labels is over 20, the plot is
     oriented horizontally and the height of the plot is automatically adjusted.
 
-    :param counts: value counts
+    :param values: value counts
     :param top_n_to_print: top N values to show. None for all. 0 for no value.
     :param top_n_to_plot: like top_n_to_print, but for the plot.
     :param plot_title: title of the barplot
@@ -752,6 +751,7 @@ def plot_value_counts(
     # Get default values for plot title and label.
     if not figsize:
         figsize = FIG_SIZE
+    counts = values.value_counts()
     unique_values = sorted(counts.index.to_list())
     # Display a number of unique values in сolumn.
     print("Number of unique values: %d" % len(unique_values))
