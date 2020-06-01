@@ -1,9 +1,8 @@
 """
 Import as:
 
-import core.config_builders as ccfgbld
+import core.config_builders as cfgb
 
-# TODO(*): config is imported as `cfg`, so this should be `cfgbldr`.
 # It is?
 Tested in: nlp/test_config_builders.py
 """
