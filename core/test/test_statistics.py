@@ -129,7 +129,7 @@ class TestComputeFracZero1(hut.TestCase):
     # Smoke test for empty input
     def test6(self) -> None:
         series = pd.Series([])
-        stats.compute_moments(series)
+        stats.compute_frac_zero(series)
 
 
 class TestComputeFracNan1(hut.TestCase):
@@ -203,7 +203,7 @@ class TestComputeFracNan1(hut.TestCase):
     # Smoke test for empty input
     def test6(self) -> None:
         series = pd.Series([])
-        stats.compute_moments(series)
+        stats.compute_frac_nan(series)
 
 
 class TestComputeFracConstant1(hut.TestCase):
@@ -240,7 +240,7 @@ class TestComputeFracConstant1(hut.TestCase):
     # Smoke test for empty input
     def test3(self) -> None:
         series = pd.Series([])
-        stats.compute_moments(series)
+        stats.compute_frac_constant(series)
 
 
 class TestComputeNumFiniteSamples1(hut.TestCase):
@@ -346,7 +346,7 @@ class TestApplyNormalityTest1(hut.TestCase):
     # Smoke test for empty input
     def test3(self) -> None:
         series = pd.Series([])
-        stats.compute_moments(series)
+        stats.apply_normality_test(series)
 
     def test4(self) -> None:
         series = self._get_series(1)
@@ -414,7 +414,7 @@ class TestApplyAdfTest1(hut.TestCase):
     # Smoke test for empty input
     def test6(self) -> None:
         series = pd.Series([])
-        stats.compute_moments(series)
+        stats.apply_adf_test(series)
 
     def test7(self) -> None:
         series = self._get_series(1)
@@ -469,7 +469,7 @@ class TestApplyKpssTest1(hut.TestCase):
     # Smoke test for empty input
     def test6(self) -> None:
         series = pd.Series([])
-        stats.compute_moments(series)
+        stats.apply_kpss_test(series)
 
     def test7(self) -> None:
         series = self._get_series(1)
@@ -530,7 +530,7 @@ class TestApplyLjungBoxTest1(hut.TestCase):
     # Smoke test for empty input
     def test7(self) -> None:
         series = pd.Series([])
-        stats.compute_moments(series)
+        stats.apply_ljung_box_test(series)
 
     def test8(self) -> None:
         series = self._get_series(1)
@@ -571,4 +571,4 @@ class TestComputeZeroNanInfStats1(hut.TestCase):
     # Smoke test for empty input
     def test3(self) -> None:
         series = pd.Series([])
-        stats.compute_moments(series)
+        stats.compute_zero_nan_inf_stats(series)
