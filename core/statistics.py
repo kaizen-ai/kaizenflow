@@ -679,3 +679,35 @@ def apply_ljung_box_test(
         df_result = pd.DataFrame(result).T
     df_result.columns = columns
     return df_result
+
+
+def calculate_hits(
+        pnl: pd.DataFrame
+
+) -> pd.DataFrame:
+    pnl[pnl < 0] = 0
+    pnl[pnl >= 0] = 1
+
+    return pnl
+
+
+def calculate_hit_rate(
+        hit: pd.Series,
+        nan_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    # prefix = prefix or ""
+    if nan_mode == "ignore":
+        data = hit.dropna()
+    elif nan_mode == "strict":
+        data = hit
+        if hit.isna().any():
+            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    point_estimate = hit.mean()
+    hit_std = hit.std()
+    hit_lower, hit_higher = statsmodels.stats.proportion.proportion_confint(count=hit.sum(), nobs=hit.count())
+    hit_df = pd.DataFrame(data={'hit_rate_point_est': [point_estimate],
+                                'hit_rate_std': [hit_std], 'hit_rate_lower_bound': [hit_lower],
+                                'hit_rate_higher_bound': [hit_higher]})
+    return hit_df
