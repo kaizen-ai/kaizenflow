@@ -775,33 +775,49 @@ def apply_ljung_box_test(
     return df_result
 
 
-def calculate_hits(
-        pnl: pd.DataFrame
-
-) -> pd.DataFrame:
-    pnl[pnl < 0] = 0
-    pnl[pnl >= 0] = 1
-
-    return pnl
-
-
 def calculate_hit_rate(
         hit: pd.Series,
         nan_mode: Optional[str] = None,
+        prefix: Optional[str] = None
 ) -> pd.DataFrame:
-    # prefix = prefix or ""
-    if nan_mode == "ignore":
-        data = hit.dropna()
-    elif nan_mode == "strict":
-        data = hit
-        if hit.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
-    point_estimate = hit.mean()
-    hit_std = hit.std()
-    hit_lower, hit_higher = statsmodels.stats.proportion.proportion_confint(count=hit.sum(), nobs=hit.count())
-    hit_df = pd.DataFrame(data={'hit_rate_point_est': [point_estimate],
-                                'hit_rate_std': [hit_std], 'hit_rate_lower_bound': [hit_lower],
-                                'hit_rate_higher_bound': [hit_higher]})
-    return hit_df
+
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+
+
+    result_index = [
+        prefix + 'hit_rate_point_est',
+        prefix + 'hit_rate_std',
+        prefix + 'hit_rate_lower_bound',
+        prefix + 'hit_rate_higher_bound'
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=hit.name,
+    )
+    if hit.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
+    try:
+        hit = hdf.apply_nan_mode(hit, nan_mode=nan_mode)
+        point_estimate = hit.mean()
+        hit_std = hit.std()
+        hit_lower, hit_higher = statsmodels.stats.proportion.proportion_confint(count=hit.sum(), nobs=hit.count())
+
+    except ValueError:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        _LOG.warning(inst)
+        return nan_result
+        #
+
+    result_values = [
+        point_estimate,
+        hit_std,
+        hit_lower,
+        hit_higher
+    ]
+
+    result = pd.Series(data=result_values, index=result_index, name = hit.name)
+
+    return result
