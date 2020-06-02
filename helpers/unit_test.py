@@ -6,6 +6,7 @@ import helpers.unit_test as ut
 # TODO(gp): use hut instead of ut.
 """
 
+import gzip
 import inspect
 import logging
 import os
@@ -479,7 +480,8 @@ class TestCase(unittest.TestCase):
         _assert_equal(actual, expected, test_name, dir_name)
 
     def check_string(
-        self, actual: str, fuzzy_match: bool = False, purify_text: bool = True
+        self, actual: str, fuzzy_match: bool = False, purify_text: bool = True,
+        use_gzip: bool = False
     ) -> None:
         """
         Check the actual outcome of a test against the expected outcomes
@@ -498,6 +500,8 @@ class TestCase(unittest.TestCase):
         dbg.dassert_exists(dir_name)
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
+        if use_gzip:
+            file_name += ".gz"
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current purify.
         if purify_text:
@@ -508,8 +512,13 @@ class TestCase(unittest.TestCase):
             outcome_updated = False
             file_exists = os.path.exists(file_name)
             if file_exists:
-                # The golden outcome exists.
-                expected = io_.from_file(file_name)
+                if file_exists:
+                    if use_gzip:
+                        with gzip.open(file_name, "wt") as f:
+                            expected = f.read()
+                    else:
+                        # The golden outcome exists.
+                        expected = io_.from_file(file_name)
                 if expected != actual:
                     outcome_updated = True
             else:
