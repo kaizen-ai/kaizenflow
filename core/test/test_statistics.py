@@ -572,3 +572,27 @@ class TestComputeZeroNanInfStats1(hut.TestCase):
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_zero_nan_inf_stats(series)
+
+
+class TestCalculateHitRate1(hut.TestCase):
+    def test1(self) -> None:
+        series = pd.Series([0, 1, 0, 0, 1, None])
+        actual = stats.calculate_hit_rate(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = pd.Series([0, 1, 0, 0, 1, None])
+        actual = stats.calculate_hit_rate(series, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = pd.Series([0, 1, 0, 0, 1, None])
+        actual = stats.calculate_hit_rate(series, prefix="hit_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        series = pd.Series([])
+        stats.calculate_hit_rate(series)

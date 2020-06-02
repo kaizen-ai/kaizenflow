@@ -468,6 +468,7 @@ def multipletests(
     )[1]
     return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
 
+
 # TODO(*): rewrite according to new ttest_1samp(), issued in #2631.
 def multi_ttest(
     data: pd.DataFrame,
@@ -776,20 +777,17 @@ def apply_ljung_box_test(
 
 
 def calculate_hit_rate(
-        hit: pd.Series,
-        nan_mode: Optional[str] = None,
-        prefix: Optional[str] = None
+    hit: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None
 ) -> pd.DataFrame:
 
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
 
-
     result_index = [
-        prefix + 'hit_rate_point_est',
-        prefix + 'hit_rate_std',
-        prefix + 'hit_rate_lower_bound',
-        prefix + 'hit_rate_higher_bound'
+        prefix + "hit_rate_point_est",
+        prefix + "hit_rate_std",
+        prefix + "hit_rate_lower_bound",
+        prefix + "hit_rate_higher_bound",
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
@@ -802,22 +800,15 @@ def calculate_hit_rate(
         hit = hdf.apply_nan_mode(hit, nan_mode=nan_mode)
         point_estimate = hit.mean()
         hit_std = hit.std()
-        hit_lower, hit_higher = statsmodels.stats.proportion.proportion_confint(count=hit.sum(), nobs=hit.count())
-
-    except ValueError:
+        hit_lower, hit_higher = statsmodels.stats.proportion.proportion_confint(
+            count=hit.sum(), nobs=hit.count()
+        )
+    except ValueError as inst:
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
         _LOG.warning(inst)
         return nan_result
         #
-
-    result_values = [
-        point_estimate,
-        hit_std,
-        hit_lower,
-        hit_higher
-    ]
-
-    result = pd.Series(data=result_values, index=result_index, name = hit.name)
-
+    result_values = [point_estimate, hit_std, hit_lower, hit_higher]
+    result = pd.Series(data=result_values, index=result_index, name=hit.name)
     return result
