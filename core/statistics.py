@@ -13,8 +13,11 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import sklearn.model_selection
+import statsmodels
 import statsmodels.api as sm
 
+import core.finance as fin
+import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -26,35 +29,42 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(Paul): Double-check axes in used in calculation.
-# Consider exposing `nan_policy`.
 def compute_moments(
-    data: Union[pd.Series, pd.DataFrame], prefix: Optional[str] = None,
-) -> pd.DataFrame:
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> pd.Series:
     """
     Calculate, mean, standard deviation, skew, and kurtosis.
-
-    :param data: if a dataframe, columns correspond to data sets
+    :param srs: input series for computing moments
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
-    :return: dataframe with columns like `df`'s (or a single column if input
-        is a series) and rows with stats
+    :return: series of computed moments
     """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    if isinstance(data, pd.Series):
-        data = data.to_frame()
-    dbg.dassert_isinstance(data, pd.DataFrame)
-    mean = data.mean()
-    std = data.std()
-    skew = sp.stats.skew(data, nan_policy="omit")
-    kurt = sp.stats.kurtosis(data, nan_policy="omit")
-    result = pd.DataFrame(
-        {
-            prefix + "mean": mean,
-            prefix + "std": std,
-            prefix + "skew": skew,
-            prefix + "kurtosis": kurt,
-        },
-        index=data.columns,
-    ).transpose()
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "mean",
+        prefix + "std",
+        prefix + "skew",
+        prefix + "kurtosis",
+    ]
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        n_stats = len(result_index)
+        nan_result = pd.Series(
+            data=[np.nan for i in range(n_stats)],
+            index=result_index,
+            name=srs.name,
+        )
+        return nan_result
+    result_values = [
+        data.mean(),
+        data.std(),
+        sp.stats.skew(data, nan_policy="raise"),
+        sp.stats.kurtosis(data, nan_policy="raise"),
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
 
 
@@ -65,6 +75,8 @@ def replace_infs_with_nans(
     """
     Replace infs with nans in a copy of `data`.
     """
+    if data.empty:
+        _LOG.warning("Input is empty!")
     return data.replace([np.inf, -np.inf], np.nan)
 
 
@@ -137,6 +149,9 @@ def count_num_finite_samples(data: pd.Series) -> float:
 
     :param data: numeric series or dataframe
     """
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return np.nan
     data = data.copy()
     data = replace_infs_with_nans(data)
     return data.count()
@@ -147,6 +162,9 @@ def count_num_unique_values(data: pd.Series) -> int:
     """
     Count number of unique values in the series.
     """
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return np.nan
     srs = pd.Series(data=data.unique())
     return count_num_finite_samples(srs)
 
@@ -202,6 +220,39 @@ def _compute_denominator_and_package(
             return pd.Series(data=normalized, index=df.index)
         else:
             raise ValueError("axis=`%s` but expected to be `0` or `1`!", axis)
+
+
+def compute_annualized_sharpe_ratio(
+    log_rets: pd.Series, prefix: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Calculate SR from rets with an index freq and annualize.
+
+    TODO(*): Consider de-biasing when the number of sample points is small,
+        e.g., https://www.twosigma.com/wp-content/uploads/sharpe-tr-1.pdf
+    """
+    prefix = prefix or ""
+    dbg.dassert(log_rets.index.freq)
+    freq = log_rets.index.freq
+    if freq == "D":
+        time_scaling = 365
+    elif freq == "B":
+        time_scaling = 252
+    elif freq == "W":
+        time_scaling = 52
+    elif freq == "M":
+        time_scaling = 12
+    else:
+        raise ValueError(f"Unsupported freq=`{freq}`")
+    sr = fin.compute_sharpe_ratio(log_rets, time_scaling)
+    sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
+    sr_se_estimate = np.sqrt(sr_var_estimate)
+    res = pd.Series(
+        data=[sr, sr_se_estimate],
+        index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
+        name=log_rets.name,
+    )
+    return res.to_frame()
 
 
 # #############################################################################
@@ -347,36 +398,47 @@ def convert_splits_to_string(splits):
 
 
 def ttest_1samp(
-    data: Union[pd.Series, pd.DataFrame],
+    srs: pd.Series,
     popmean: Optional[float] = None,
-    nan_policy: Optional[str] = None,
+    nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-) -> pd.DataFrame:
+) -> pd.Series:
     """
     Thin wrapper around scipy's ttest.
 
-    WARNING: Passing in df.dropna(how='all') vs df.dropna() (which defaults to
-    'any') can yield different results. Safest is to NOT DROP NANs in the input
-    and instead use `nan_policy='omit'`.
-
-    :param df: DataFrame with samples along rows, groups along columns.
+    :param srs: input series for computing statistics
     :param popmean: assumed population mean for test
-    :param nan_policy: `nan_policy` for scipy's ttest_1samp
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
-    :return: DataFrame with t-value and p-value rows, columns like df's columns
+    :return: series with t-value and p-value
     """
-    if isinstance(data, pd.Series):
-        data = data.to_frame()
-    dbg.dassert_isinstance(data, pd.DataFrame)
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     popmean = popmean or 0
-    nan_policy = nan_policy or "omit"
-    tvals, pvals = sp.stats.ttest_1samp(
-        data, popmean=popmean, nan_policy=nan_policy
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "tval",
+        prefix + "pval",
+    ]
+    nan_result = pd.Series(
+        data=[np.nan, np.nan], index=result_index, name=srs.name
     )
-    result = pd.DataFrame(
-        {prefix + "tval": tvals, prefix + "pval": pvals}, index=data.columns
-    ).transpose()
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
+    try:
+        tval, pval = sp.stats.ttest_1samp(
+            data, popmean=popmean, nan_policy="raise"
+        )
+    except ValueError as inst:
+        _LOG.warning(inst)
+        return nan_result
+    result_values = [
+        tval,
+        pval,
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
     return result
 
 
@@ -398,12 +460,17 @@ def multipletests(
     dbg.dassert_isinstance(srs, pd.Series)
     method = method or "fdr_bh"
     prefix = prefix or ""
-    pvals_corrected = sm.stats.multitest.multipletests(srs, method=method)[1]
+    if srs.empty:
+        _LOG.warning("Input is empty!")
+        return pd.Series([np.nan], name=prefix + "adj_pval")
+    pvals_corrected = statsmodels.stats.multitest.multipletests(
+        srs, method=method
+    )[1]
     return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
 
-
+# TODO(*): rewrite according to new ttest_1samp(), issued in #2631.
 def multi_ttest(
-    df: pd.DataFrame,
+    data: pd.DataFrame,
     popmean: Optional[float] = None,
     nan_policy: Optional[str] = None,
     method: Optional[str] = None,
@@ -412,9 +479,17 @@ def multi_ttest(
     """
     Combine ttest and multitest pvalue adjustment.
     """
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    prefix = prefix or ""
+    dbg.dassert_isinstance(data, pd.DataFrame)
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return pd.DataFrame(
+            [np.nan, np.nan, np.nan],
+            index=[prefix + "tval", prefix + "pval", prefix + "adj_pval"],
+            columns=[data.columns],
+        )
     ttest = ttest_1samp(
-        df, popmean=popmean, nan_policy=nan_policy, prefix=prefix
+        data, popmean=popmean, nan_policy=nan_policy, prefix=prefix
     ).transpose()
     ttest[prefix + "adj_pval"] = multipletests(
         ttest[prefix + "pval"], method=method
@@ -423,44 +498,45 @@ def multi_ttest(
 
 
 def apply_normality_test(
-    data: Union[pd.Series, pd.DataFrame],
-    nan_policy: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.DataFrame:
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> pd.Series:
     """
     Test (indep) null hypotheses that each col is normally distributed.
 
     An omnibus test of normality that combines skew and kurtosis.
 
     :param prefix: optional prefix for metrics' outcome
-    :return: dataframe with same cols as `df` and two rows:
-        1. "statistic"
-        2. "pvalue"
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: series with statistics and p-value
     """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    if isinstance(data, pd.Series):
-        data = data.to_frame()
-    dbg.dassert_isinstance(data, pd.DataFrame)
-    if nan_policy is None:
-        nan_policy = "omit"
-    stats = []
-    pvals = []
-    for col in data.columns:
-        if data[col].dropna().size < 8:
-            # The `skewtest` requires at least 8 samples and will raise if it
-            # does not receive at least 8.
-            stats.append(np.nan)
-            pvals.append(np.nan)
-            continue
-        stat, pval = sp.stats.normaltest(data[col], nan_policy=nan_policy)
-        stats.append(stat)
-        pvals.append(pval)
-    res = pd.DataFrame(
-        data=list(zip(stats, pvals)),
-        columns=[prefix + "stat", prefix + "pval"],
-        index=data.columns,
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
     )
-    return res.transpose()
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
+    try:
+        stat, pval = sp.stats.normaltest(data, nan_policy="raise")
+    except ValueError as inst:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        _LOG.warning(inst)
+        return nan_result
+    result_values = [
+        stat,
+        pval,
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
 
 
 # TODO(*): Maybe add `inf_mode`.
@@ -479,7 +555,7 @@ def apply_adf_test(
     :param maxlag: as in stattools.adfuller
     :param regression: as in stattools.adfuller
     :param autolag: as in stattools.adfuller
-    :param nan_mode: "ignore" or "strict"
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue, and related info
     """
@@ -488,16 +564,25 @@ def apply_adf_test(
     autolag = autolag or "AIC"
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    # TODO(PartTask2386): Think about factoring out this idiom.
-    if nan_mode == "ignore":
-        data = srs.dropna()
-    elif nan_mode == "strict":
-        data = srs
-        if srs.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+        prefix + "used_lag",
+        prefix + "nobs",
+        prefix + "critical_values_1%",
+        prefix + "critical_values_5%",
+        prefix + "critical_values_10%",
+        prefix + "ic_best",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
+    )
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
     try:
         (
             adf_stat,
@@ -513,28 +598,20 @@ def apply_adf_test(
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
         _LOG.warning(inst)
-        (adf_stat, pval, usedlag, nobs, critical_values, icbest) = (
-            np.nan,
-            np.nan,
-            np.nan,
-            np.nan,
-            {"1%": np.nan, "5%": np.nan, "10%": np.nan},
-            np.nan,
-        )
+        return nan_result
         #
-    res = [
-        (prefix + "stat", adf_stat),
-        (prefix + "pval", pval),
-        (prefix + "used_lag", usedlag),
-        (prefix + "nobs", nobs),
-        (prefix + "critical_values_1%", critical_values["1%"]),
-        (prefix + "critical_values_5%", critical_values["5%"]),
-        (prefix + "critical_values_10%", critical_values["10%"]),
-        (prefix + "ic_best", icbest),
+    result_values = [
+        adf_stat,
+        pval,
+        usedlag,
+        nobs,
+        critical_values["1%"],
+        critical_values["5%"],
+        critical_values["10%"],
+        icbest,
     ]
-    data = list(zip(*res))
-    res = pd.Series(data[1], index=data[0], name=srs.name)
-    return res
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
 
 
 def apply_kpss_test(
@@ -552,7 +629,7 @@ def apply_kpss_test(
     :param srs: pandas series of floats
     :param regression: as in stattools.kpss
     :param nlags: as in stattools.kpss
-    :param nan_mode: "ignore" or "strict"
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue, and related info
     """
@@ -560,46 +637,46 @@ def apply_kpss_test(
     regression = regression or "c"
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    if nan_mode == "ignore":
-        data = srs.dropna()
-    elif nan_mode == "strict":
-        data = srs
-        if srs.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+        prefix + "lags",
+        prefix + "critical_values_1%",
+        prefix + "critical_values_5%",
+        prefix + "critical_values_10%",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
+    )
+    if data.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
     try:
         (kpss_stat, pval, lags, critical_values,) = sm.tsa.stattools.kpss(
             data.values, regression=regression, nlags=nlags
         )
-    except ValueError as inst:
+    except ValueError:
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
-        _LOG.warning(inst)
-        (kpss_stat, pval, lags, critical_values) = (
-            np.nan,
-            np.nan,
-            np.nan,
-            {"1%": np.nan, "5%": np.nan, "10%": np.nan},
-        )
+        return nan_result
         #
-    res = [
-        (prefix + "stat", kpss_stat),
-        (prefix + "pval", pval),
-        (prefix + "lags", lags),
-        (prefix + "critical_values_1%", critical_values["1%"]),
-        (prefix + "critical_values_5%", critical_values["5%"]),
-        (prefix + "critical_values_10%", critical_values["10%"]),
+    result_values = [
+        kpss_stat,
+        pval,
+        lags,
+        critical_values["1%"],
+        critical_values["5%"],
+        critical_values["10%"],
     ]
-    data = list(zip(*res))
-    res = pd.Series(data[1], index=data[0], name=srs.name)
-    return res
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
 
 
 def compute_zero_nan_inf_stats(
-        srs: pd.Series,
-        prefix: Optional[str] = None,
+    srs: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series():
     """
     Calculate finite and non-finite values in time series.
@@ -611,20 +688,34 @@ def compute_zero_nan_inf_stats(
     # TODO(*): To be optimized/rewritten in #2340.
     prefix = prefix or ""
     dbg.dassert_isinstance(srs, pd.Series)
-    res = [
-        (prefix + "n_rows", len(srs)),
-        (prefix + "frac_zero", compute_frac_zero(srs)),
-        (prefix + "frac_nan", compute_frac_nan(srs)),
-        (prefix + "frac_inf", compute_frac_inf(srs)),
-        (prefix + "frac_constant", compute_frac_constant(srs)),
-        (prefix + "num_finite_samples", count_num_finite_samples(srs)),
-        # TODO(*): Add after extension to dataframes.
-        # ("num_unique_values", stats.count_num_unique_values),
+    result_index = [
+        prefix + "n_rows",
+        prefix + "frac_zero",
+        prefix + "frac_nan",
+        prefix + "frac_inf",
+        prefix + "frac_constant",
+        prefix + "num_finite_samples",
     ]
-    # Add float output of each function to resulting series.
-    data = list(zip(*res))
-    res = pd.Series(data[1], index=data[0], name=srs.name)
-    return res
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
+    )
+    if srs.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
+    result_values = [
+        len(srs),
+        compute_frac_zero(srs),
+        compute_frac_nan(srs),
+        compute_frac_inf(srs),
+        compute_frac_constant(srs),
+        count_num_finite_samples(srs),
+        # TODO(*): Add after extension to dataframes.
+        # "num_unique_values",
+        # stats.count_num_unique_values
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
 
 
 def apply_ljung_box_test(
@@ -644,7 +735,7 @@ def apply_ljung_box_test(
     :param model_df: as in diagnostic.acorr_ljungbox
     :param period: as in diagnostic.acorr_ljungbox
     :param return_df: as in diagnostic.acorr_ljungbox
-    :param nan_mode: "ignore" or "strict"
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: test statistic, pvalue
     """
@@ -653,26 +744,29 @@ def apply_ljung_box_test(
     return_df = return_df or True
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    if nan_mode == "ignore":
-        data = srs.dropna()
-    elif nan_mode == "strict":
-        data = srs
-        if srs.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
     columns = [
         prefix + "stat",
         prefix + "pval",
     ]
-    result = sm.stats.diagnostic.acorr_ljungbox(
-        data.values,
-        lags=lags,
-        model_df=model_df,
-        period=period,
-        return_df=return_df,
-    )
+    # Make an output for empty or too short inputs.
+    nan_result = pd.DataFrame([[np.nan, np.nan]], columns=columns)
+    if srs.empty:
+        _LOG.warning("Input is empty!")
+        return nan_result
+    try:
+        result = sm.stats.diagnostic.acorr_ljungbox(
+            data.values,
+            lags=lags,
+            model_df=model_df,
+            period=period,
+            return_df=return_df,
+        )
+    except ValueError as inst:
+        _LOG.warning(inst)
+        return nan_result
+    #
     if return_df:
         df_result = result
     else:

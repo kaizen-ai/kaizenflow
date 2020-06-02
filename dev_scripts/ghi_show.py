@@ -42,7 +42,9 @@ _COLOR = "green"
 
 
 def _parse_issue_title(txt):
+    # #2649: Improvements to Nickel KG mapping
     m = re.match(r"#(\d+):\s*(.*)\s*", txt)
+    dbg.dassert(m, "Can't parse '%s'", txt)
     issue_num = m.group(1)
     issue_num = int(issue_num)
     # Extract the bug subject.

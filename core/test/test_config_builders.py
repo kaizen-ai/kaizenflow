@@ -5,7 +5,7 @@ from typing import List, Optional, cast
 import pandas as pd
 
 import core.config as cfg
-import core.config_builders as ccfgbld
+import core.config_builders as cfgb
 import helpers.unit_test as hut
 
 # #############################################################################
@@ -24,7 +24,7 @@ class TestGetConfigFromFlattened1(hut.TestCase):
                 (("zscore", "com"), 28),
             ]
         )
-        config = ccfgbld.get_config_from_flattened(flattened)
+        config = cfgb.get_config_from_flattened(flattened)
         self.check_string(str(config))
 
     def test2(self) -> None:
@@ -36,7 +36,7 @@ class TestGetConfigFromFlattened1(hut.TestCase):
                 (("zscore",), cfg.Config()),
             ]
         )
-        config = ccfgbld.get_config_from_flattened(flattened)
+        config = cfgb.get_config_from_flattened(flattened)
         self.check_string(str(config))
 
 
@@ -47,7 +47,7 @@ class TestGetConfigFromNestedDict1(hut.TestCase):
             "single_val": "hello",
             "zscore": {"style": "gaz", "com": 28,},
         }
-        config = ccfgbld.get_config_from_nested_dict(nested)
+        config = cfgb.get_config_from_nested_dict(nested)
         self.check_string(str(config))
 
     def test2(self) -> None:
@@ -56,7 +56,7 @@ class TestGetConfigFromNestedDict1(hut.TestCase):
             "single_val": "hello",
             "zscore": cfg.Config(),
         }
-        config = ccfgbld.get_config_from_nested_dict(nested)
+        config = cfgb.get_config_from_nested_dict(nested)
         self.check_string(str(config))
 
 
@@ -84,7 +84,7 @@ class TestGetConfigsFromBuilder1(hut.TestCase):
         Build a config from
         """
         config_builder = "core.test.test_config_builders._build_test_configs()"
-        configs = ccfgbld.get_configs_from_builder(config_builder)
+        configs = cfgb.get_configs_from_builder(config_builder)
         txt = pprint.pformat(configs)
         self.check_string(txt)
 
@@ -95,7 +95,7 @@ class TestGetConfigFromEnv(hut.TestCase):
         Verify that if there are no config env variables, no config is created.
         """
         # Test that no config is created.
-        actual_config = ccfgbld.get_config_from_env()
+        actual_config = cfgb.get_config_from_env()
         self.assertTrue(actual_config is None)
 
 
@@ -116,7 +116,7 @@ class TestBuildMultipleConfigs(hut.TestCase):
             ("resample", "rule"): ["5T", "7T", "10T"],
         }
         # Check the results.
-        actual_result = ccfgbld.build_multiple_configs(
+        actual_result = cfgb.build_multiple_configs(
             config_template, params_variants
         )
         self.check_string(str(actual_result))
@@ -135,7 +135,7 @@ class TestBuildMultipleConfigs(hut.TestCase):
         }
         # Check the results.
         with self.assertRaises(ValueError):
-            _ = ccfgbld.build_multiple_configs(config_template, params_variants)
+            _ = cfgb.build_multiple_configs(config_template, params_variants)
 
     def test_not_nan_parameter(self) -> None:
         # Create config template.
@@ -151,7 +151,7 @@ class TestBuildMultipleConfigs(hut.TestCase):
         }
         # Check the results.
         with self.assertRaises(ValueError):
-            _ = ccfgbld.build_multiple_configs(config_template, params_variants)
+            _ = cfgb.build_multiple_configs(config_template, params_variants)
 
 
 def _get_test_config_1() -> cfg.Config:
@@ -201,7 +201,7 @@ class TestCheckSameConfigs(hut.TestCase):
         ]
         # Make sure fnction raises an error.
         with self.assertRaises(AssertionError):
-            ccfgbld.assert_on_duplicated_configs(configs)
+            cfgb.assert_on_duplicated_configs(configs)
 
 
 class TestConfigIntersection(hut.TestCase):
@@ -213,7 +213,7 @@ class TestConfigIntersection(hut.TestCase):
         # TODO(*): Bad unit testing fomr! What are these configs?
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
-        intersection = ccfgbld.get_config_intersection([config_1, config_2])
+        intersection = cfgb.get_config_intersection([config_1, config_2])
         self.check_string(str(intersection))
 
     def test_same_config_intersection(self) -> None:
@@ -224,7 +224,7 @@ class TestConfigIntersection(hut.TestCase):
         # TODO(*): Bad unit testing form! What is this config?
         test_config = _get_test_config_1()
         # FInd intersection of two same configs.
-        actual_intersection = ccfgbld.get_config_intersection(
+        actual_intersection = cfgb.get_config_intersection(
             [test_config, test_config]
         )
         # Verify that intersection is equal to initial config.
@@ -240,7 +240,7 @@ class TestConfigDifference(hut.TestCase):
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
         # Compute variation between configs.
-        actual_difference = ccfgbld.get_config_difference([config_1, config_2])
+        actual_difference = cfgb.get_config_difference([config_1, config_2])
         # Define expected variation.
         expected_difference = {
             "build_targets.target_asset": ["Crude Oil", "Gold"]
@@ -254,14 +254,14 @@ class TestConfigDifference(hut.TestCase):
         # Create test config.
         config = _get_test_config_1()
         # Compute difference between two instances of same config.
-        actual_difference = ccfgbld.get_config_difference([config, config])
+        actual_difference = cfgb.get_config_difference([config, config])
         # Verify that the difference is empty.
         self.assertFalse(actual_difference)
 
 
 class TestGetConfigDataframe(hut.TestCase):
     """
-    Compare manually constructed dfs and dfs created by `ccfgbld.get_configs_dataframe`
+    Compare manually constructed dfs and dfs created by `cfgb.get_configs_dataframe`
     using `pd.DataFrame.equals()`
     """
 
@@ -273,7 +273,7 @@ class TestGetConfigDataframe(hut.TestCase):
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
         # Convert configs to dataframe.
-        actual_result = ccfgbld.get_configs_dataframe([config_1, config_2])
+        actual_result = cfgb.get_configs_dataframe([config_1, config_2])
         # Create expected dataframe and one with function.
         expected_result = pd.DataFrame(
             {
@@ -296,7 +296,7 @@ class TestGetConfigDataframe(hut.TestCase):
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
         # Convert configs to df, keeping only varying params.
-        actual_result = ccfgbld.get_configs_dataframe(
+        actual_result = cfgb.get_configs_dataframe(
             [config_1, config_2], params_subset="difference"
         )
         # Create expected dataframe and one with function.
@@ -313,7 +313,7 @@ class TestGetConfigDataframe(hut.TestCase):
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
         # Convert configs to df, keeping arbitrary parameter.
-        actual_result = ccfgbld.get_configs_dataframe(
+        actual_result = cfgb.get_configs_dataframe(
             [config_1, config_2], params_subset=["build_model.activation"]
         )
         # Create expected dataframe and one with function.
@@ -326,7 +326,7 @@ class TestGetConfigDataframe(hut.TestCase):
 class TestAddResultDir(hut.TestCase):
     def test_result_dir(self) -> None:
         """
-        `Verify that `ccfgbld.add_result_dir` adds correct value to correct param path.
+        `Verify that `cfgb.add_result_dir` adds correct value to correct param path.
         """
         result_dir = "test/results"
         # Modify test config manually.
@@ -334,7 +334,7 @@ class TestAddResultDir(hut.TestCase):
         expected_config[("meta", "result_dir")] = result_dir
         # Pass test config as one-item list and apply function.
         actual_config = [_get_test_config_1()]
-        actual_config = ccfgbld.add_result_dir(result_dir, actual_config)
+        actual_config = cfgb.add_result_dir(result_dir, actual_config)
         # Unpack and check.
         actual_config = actual_config[0]
         self.assertEqual(str(expected_config), str(actual_config))
@@ -349,7 +349,7 @@ class TestSetExperimentResultDir(hut.TestCase):
         sim_dir = "/data/tests/test_results"
         actual_config = _get_test_config_1()
         # Set using function.
-        actual_config = ccfgbld.set_experiment_result_dir(sim_dir, actual_config)
+        actual_config = cfgb.set_experiment_result_dir(sim_dir, actual_config)
         # Set result file name manually.
         expected_config = _get_test_config_1()
         expected_config[
@@ -361,14 +361,14 @@ class TestSetExperimentResultDir(hut.TestCase):
 class TestAddConfigIdx(hut.TestCase):
     def test_add_config_idx(self) -> None:
         """
-        Verify that `ccfgbld.add_config_idx` adds correct index to correct param path.
+        Verify that `cfgb.add_config_idx` adds correct index to correct param path.
         """
         # Assign id parameters through function.
         actual_configs = [
             _get_test_config_1(),
             _get_test_config_1(),
         ]
-        actual_configs = ccfgbld.add_config_idx(actual_configs)
+        actual_configs = cfgb.add_config_idx(actual_configs)
         # Convert configs to string for comparison.
         actual_configs = [str(config) for config in actual_configs]
         # Assign id parameters manually.
@@ -391,7 +391,7 @@ class TestGenerateDefaultConfigVariants(hut.TestCase):
         # Prepare varying parameters.
         params_variants = {("build_targets", "target_asset"): ["Gasoil", "Soy"]}
         # Pass test config builder to generating function.
-        actual_configs = ccfgbld.generate_default_config_variants(
+        actual_configs = cfgb.generate_default_config_variants(
             _get_test_config_1, params_variants
         )
         # Convert configs to string for comparison.

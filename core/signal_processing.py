@@ -15,6 +15,7 @@ import pywt
 import scipy as sp
 import statsmodels.api as sm
 
+import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -261,18 +262,8 @@ def compute_jensen_ratio(
     # Set reasonable defaults for inf and nan modes.
     if inf_mode is None:
         inf_mode = "return_nan"
-    if nan_mode is None:
-        nan_mode = "ignore"
-    # Handle NaNs.
-    if nan_mode == "ignore":
-        data = signal.dropna()
-    elif nan_mode == "ffill":
-        data = signal.ffill().dropna()
-    elif nan_mode == "strict":
-        if signal.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}`")
+    nan_mode = nan_mode or "ignore"
+    data = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
     dbg.dassert(not data.isna().any())
     # Handle infs.
     has_infs = (~data.apply(np.isfinite)).any()
@@ -320,18 +311,8 @@ def compute_forecastability(
        equality iff alpha \in \{0, 1\}.
     """
     dbg.dassert_isinstance(signal, pd.Series)
-    if nan_mode is None:
-        nan_mode = "fill_with_zero"
-    # Handle NaNs
-    if nan_mode == "fill_with_zero":
-        signal = signal.fillna(0)
-    elif nan_mode == "ffill":
-        signal = signal.ffill().dropna()
-    elif nan_mode == "strict":
-        if signal.hasna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
-    else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}")
+    nan_mode = nan_mode or "fill_with_zero"
+    signal = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
     # Return NaN if there is no data.
     if signal.size == 0:
         return np.nan
@@ -1132,6 +1113,52 @@ def process_outlier_df(
         str(ret.columns),
     )
     return ret
+
+
+def process_nonfinite(
+    srs: pd.Series,
+    remove_nan: bool = True,
+    remove_inf: bool = True,
+    info: Optional[dict] = None,
+) -> pd.Series:
+    """
+    Remove infinite and NaN values according to the parameters.
+
+    :param srs: pd.Series to process
+    :param remove_nan: remove NaN values if True and keep if False
+    :param remove_inf: remove infinite values if True and keep if False
+    :param info: empty dict-like object that this function will populate with
+        statistics about how many items were removed
+    :return: transformed copy of the input series
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mask = np.isnan(srs)
+    inf_mask = np.isinf(srs)
+    nan_inf_mask = nan_mask | inf_mask
+    # Make a copy of input that will be processed
+    if remove_nan & remove_inf:
+        res = srs[~nan_inf_mask].copy()
+    elif remove_nan & ~remove_inf:
+        res = srs[~nan_mask].copy()
+    elif ~remove_nan & remove_inf:
+        res = srs[~inf_mask].copy()
+    else:
+        res = srs.copy()
+    if info is not None:
+        dbg.dassert_isinstance(info, dict)
+        # Dictionary should be empty.
+        dbg.dassert(not info)
+        info["series_name"] = srs.name
+        info["num_elems_before"] = len(srs)
+        info["num_nans_before"] = np.isnan(srs).sum()
+        info["num_infs_before"] = np.isinf(srs).sum()
+        info["num_elems_removed"] = len(srs) - len(res)
+        info["num_nans_removed"] = info["num_nans_before"] - np.isnan(res).sum()
+        info["num_infs_removed"] = info["num_infs_before"] - np.isinf(res).sum()
+        info["percentage_elems_removed"] = (
+            100.0 * info["num_elems_removed"] / info["num_elems_before"]
+        )
+    return res
 
 
 # #############################################################################

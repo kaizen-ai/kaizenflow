@@ -1,9 +1,8 @@
 """
 Import as:
 
-import core.config_builders as ccfgbld
+import core.config_builders as cfgb
 
-# TODO(*): config is imported as `cfg`, so this should be `cfgbldr`.
 # It is?
 Tested in: nlp/test_config_builders.py
 """
@@ -384,16 +383,16 @@ def build_multiple_configs(
     params_variants: Dict[Tuple[str, ...], Iterable[Any]],
 ) -> List[cfg.Config]:
     """
-    TODO(Danya): Come up with a 1-line summary.
+    Build configs from a template and the Cartesian product of given keys/vals.
 
-    Create multiple `cfg.Config` objects using the given config template
-    and overwriting a None parameter specified through a parameter path
-    and several possible elements:
-    param_path: Tuple(str) -> param_values: Iterable[Any]
+    Create multiple `cfg.Config` objects using the given config template and
+    overwriting `None` or `_DUMMY_` parameter specified through a parameter
+    path and several possible elements:
+        param_path: Tuple(str) -> param_values: Iterable[Any]
     A parameter path is represented by a tuple of nested names.
 
-    Note that we create a config for each element of the Cartesian
-    product of the values to be assigned.
+    Note that we create a config for each element of the Cartesian product of
+    the values to be assigned.
 
     :param template_config: cfg.Config object
     :param params_variants: {(param_name_in_the_config_path):
@@ -401,15 +400,12 @@ def build_multiple_configs(
                                 ('resample', 'rule'): ['5T', '10T']}
     :return: a list of configs
     """
-    # In the example from above, list(possible_values) = [('CL', '5T'),
+    # In the example from above, list(params_values) = [('CL', '5T'),
     # ('CL', '10T'), ('QM', '5T'), ('QM', '10T')]
-    possible_values = list(itertools.product(*params_variants.values()))
-    # A dataframe indexed with param_paths and with their possible
-    # combinations as columns.
-    comb_df = pd.DataFrame(
-        possible_values, columns=list(params_variants.keys())
-    ).T
-    param_vars = list(comb_df.to_dict().values())
+    params_values = itertools.product(*params_variants.values())
+    param_vars = list(
+        dict(zip(params_variants.keys(), values)) for values in params_values
+    )
     # In the example above, param_vars = [
     #    {('read_data', 'symbol'): 'CL', ('resample', 'rule'): '5T'},
     #    {('read_data', 'symbol'): 'CL', ('resample', 'rule'): '10T'},
@@ -427,7 +423,10 @@ def build_multiple_configs(
                 conf_tmp.check_params([pp])
                 conf_tmp = conf_tmp[pp]
             conf_tmp.check_params([param_path[-1]])
-            if conf_tmp[param_path[-1]] is not None:
+            if not (
+                conf_tmp[param_path[-1]] is None
+                or conf_tmp[param_path[-1]] == "_DUMMY_"
+            ):
                 raise ValueError("Trying to change a parameter that is not None.")
             conf_tmp[param_path[-1]] = param_val
         param_configs.append(config_var)

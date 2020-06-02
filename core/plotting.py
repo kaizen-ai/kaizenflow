@@ -728,7 +728,7 @@ def multipletests_plot(
 
 
 def plot_value_counts(
-    counts: pd.Series,
+    values: pd.Series,
     top_n_to_print: int = 10,
     top_n_to_plot: Optional[int] = None,
     plot_title: Optional[str] = None,
@@ -736,19 +736,20 @@ def plot_value_counts(
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
-    Plot barplots for value counts and print the values.
+    Plot barplots for series value counts and print the values.
 
-    The function is typically used in conjunction with value counts
-    from KGification info. If the number of labels is over 20, the plot is
-    oriented horizontally and the height of the plot is automatically adjusted.
+    If the number of labels is over 20, the plot is oriented horizontally
+    and the height of the plot is automatically adjusted.
 
-    :param counts: value counts
-    :param top_n_to_print: top N values to show. None for all. 0 for no value.
-    :param top_n_to_plot: like top_n_to_print, but for the plot.
+    :param values: series to plot value counts for
+    :param top_n_to_print: top N values by count to print. None for all. 0 for no values
+    :param top_n_to_plot: like top_n_to_print, but for the plot
     :param plot_title: title of the barplot
     :param label: label of the X axis
     :param figsize: size of the plot
     """
+    # Get value counts for series.
+    counts = values.value_counts()
     # Get default values for plot title and label.
     if not figsize:
         figsize = FIG_SIZE
@@ -774,6 +775,7 @@ def plot_value_counts(
         pass
     else:
         counts_tmp = counts.copy()
+        # Subset N values to plot.
         if top_n_to_plot is not None:
             dbg.dassert_lte(1, top_n_to_plot)
             counts_tmp = counts_tmp[:top_n_to_plot]
