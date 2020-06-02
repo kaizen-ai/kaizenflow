@@ -1,3 +1,2 @@
-                arma(2,2)
-norm_test_stat   3.030315
-norm_test_pval   0.219774
+norm_test_stat    3.030315
+norm_test_pval    0.219774

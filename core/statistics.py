@@ -29,37 +29,42 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(Paul): Double-check axes in used in calculation.
-# Consider exposing `nan_policy`.
 def compute_moments(
-    data: Union[pd.Series, pd.DataFrame], prefix: Optional[str] = None,
-) -> pd.DataFrame:
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> pd.Series:
     """
     Calculate, mean, standard deviation, skew, and kurtosis.
-
-    :param data: if a dataframe, columns correspond to data sets
+    :param srs: input series for computing moments
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
-    :return: dataframe with columns like `df`'s (or a single column if input
-        is a series) and rows with stats
+    :return: series of computed moments
     """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    if isinstance(data, pd.Series):
-        data = data.to_frame()
-    dbg.dassert_isinstance(data, pd.DataFrame)
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "mean",
+        prefix + "std",
+        prefix + "skew",
+        prefix + "kurtosis",
+    ]
     if data.empty:
         _LOG.warning("Input is empty!")
-    mean = data.mean()
-    std = data.std()
-    skew = sp.stats.skew(data, nan_policy="omit")
-    kurt = sp.stats.kurtosis(data, nan_policy="omit")
-    result = pd.DataFrame(
-        {
-            prefix + "mean": mean,
-            prefix + "std": std,
-            prefix + "skew": skew,
-            prefix + "kurtosis": kurt,
-        },
-        index=data.columns,
-    ).transpose()
+        n_stats = len(result_index)
+        nan_result = pd.Series(
+            data=[np.nan for i in range(n_stats)],
+            index=result_index,
+            name=srs.name,
+        )
+        return nan_result
+    result_values = [
+        data.mean(),
+        data.std(),
+        sp.stats.skew(data, nan_policy="raise"),
+        sp.stats.kurtosis(data, nan_policy="raise"),
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
 
 
@@ -393,41 +398,47 @@ def convert_splits_to_string(splits):
 
 
 def ttest_1samp(
-    data: Union[pd.Series, pd.DataFrame],
+    srs: pd.Series,
     popmean: Optional[float] = None,
-    nan_policy: Optional[str] = None,
+    nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-) -> pd.DataFrame:
+) -> pd.Series:
     """
     Thin wrapper around scipy's ttest.
 
-    WARNING: Passing in df.dropna(how='all') vs df.dropna() (which defaults to
-    'any') can yield different results. Safest is to NOT DROP NANs in the input
-    and instead use `nan_policy='omit'`.
-
-    :param df: DataFrame with samples along rows, groups along columns.
+    :param srs: input series for computing statistics
     :param popmean: assumed population mean for test
-    :param nan_policy: `nan_policy` for scipy's ttest_1samp
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
-    :return: DataFrame with t-value and p-value rows, columns like df's columns
+    :return: series with t-value and p-value
     """
-    if isinstance(data, pd.Series):
-        data = data.to_frame()
-    dbg.dassert_isinstance(data, pd.DataFrame)
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     popmean = popmean or 0
-    nan_policy = nan_policy or "omit"
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "tval",
+        prefix + "pval",
+    ]
+    nan_result = pd.Series(
+        data=[np.nan, np.nan], index=result_index, name=srs.name
+    )
     if data.empty:
         _LOG.warning("Input is empty!")
-        tvals = np.nan
-        pvals = np.nan
-    else:
-        tvals, pvals = sp.stats.ttest_1samp(
-            data, popmean=popmean, nan_policy=nan_policy
+        return nan_result
+    try:
+        tval, pval = sp.stats.ttest_1samp(
+            data, popmean=popmean, nan_policy="raise"
         )
-    result = pd.DataFrame(
-        {prefix + "tval": tvals, prefix + "pval": pvals}, index=data.columns
-    ).transpose()
+    except ValueError as inst:
+        _LOG.warning(inst)
+        return nan_result
+    result_values = [
+        tval,
+        pval,
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
     return result
 
 
@@ -457,7 +468,7 @@ def multipletests(
     )[1]
     return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
 
-
+# TODO(*): rewrite according to new ttest_1samp(), issued in #2631.
 def multi_ttest(
     data: pd.DataFrame,
     popmean: Optional[float] = None,
@@ -487,51 +498,45 @@ def multi_ttest(
 
 
 def apply_normality_test(
-    data: Union[pd.Series, pd.DataFrame],
-    nan_policy: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.DataFrame:
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> pd.Series:
     """
     Test (indep) null hypotheses that each col is normally distributed.
 
     An omnibus test of normality that combines skew and kurtosis.
 
     :param prefix: optional prefix for metrics' outcome
-    :return: dataframe with same cols as `df` and two rows:
-        1. "statistic"
-        2. "pvalue"
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: series with statistics and p-value
     """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    if isinstance(data, pd.Series):
-        data = data.to_frame()
-    dbg.dassert_isinstance(data, pd.DataFrame)
-    if nan_policy is None:
-        nan_policy = "omit"
-    stats = []
-    pvals = []
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
+    )
     if data.empty:
         _LOG.warning("Input is empty!")
-        stats.append(np.nan)
-        pvals.append(np.nan)
-    else:
-        try:
-            for col in data.columns:
-                stat, pval = sp.stats.normaltest(data[col], nan_policy=nan_policy)
-                stats.append(stat)
-                pvals.append(pval)
-        except ValueError as inst:
-            # This can raise if there are less than 8 samples, because
-            # skew test is not valid in this case
-            _LOG.warning(inst)
-            stats.append(np.nan)
-            pvals.append(np.nan)
-    #
-    res = pd.DataFrame(
-        data=list(zip(stats, pvals)),
-        columns=[prefix + "stat", prefix + "pval"],
-        index=data.columns,
-    )
-    return res.transpose()
+        return nan_result
+    try:
+        stat, pval = sp.stats.normaltest(data, nan_policy="raise")
+    except ValueError as inst:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        _LOG.warning(inst)
+        return nan_result
+    result_values = [
+        stat,
+        pval,
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
 
 
 # TODO(*): Maybe add `inf_mode`.
