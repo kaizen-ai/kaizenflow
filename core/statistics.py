@@ -49,12 +49,14 @@ def compute_moments(
         prefix + "skew",
         prefix + "kurtosis",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
     if data.empty:
         _LOG.warning("Input is empty!")
+        n_stats = len(result_index)
+        nan_result = pd.Series(
+            data=[np.nan for i in range(n_stats)],
+            index=result_index,
+            name=srs.name,
+        )
         return nan_result
     result_values = [
         data.mean(),
@@ -419,9 +421,8 @@ def ttest_1samp(
         prefix + "tval",
         prefix + "pval",
     ]
-    n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
+        data=[np.nan, np.nan], index=result_index, name=srs.name
     )
     if data.empty:
         _LOG.warning("Input is empty!")
@@ -430,7 +431,8 @@ def ttest_1samp(
         tval, pval = sp.stats.ttest_1samp(
             data, popmean=popmean, nan_policy="raise"
         )
-    except ValueError:
+    except ValueError as inst:
+        _LOG.warning(inst)
         return nan_result
     result_values = [
         tval,
@@ -466,7 +468,7 @@ def multipletests(
     )[1]
     return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
 
-
+# TODO(*): rewrite according to new ttest_1samp(), issued in #2631.
 def multi_ttest(
     data: pd.DataFrame,
     popmean: Optional[float] = None,
@@ -496,10 +498,8 @@ def multi_ttest(
 
 
 def apply_normality_test(
-    srs: pd.Series,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.DataFrame:
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> pd.Series:
     """
     Test (indep) null hypotheses that each col is normally distributed.
 
@@ -525,10 +525,11 @@ def apply_normality_test(
         _LOG.warning("Input is empty!")
         return nan_result
     try:
-        stat, pval = sp.stats.normaltest(
-            data, nan_policy="raise"
-        )
-    except ValueError:
+        stat, pval = sp.stats.normaltest(data, nan_policy="raise")
+    except ValueError as inst:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        _LOG.warning(inst)
         return nan_result
     result_values = [
         stat,
