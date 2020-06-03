@@ -160,6 +160,14 @@ def get_credentials() -> Dict[str, Any]:
             dbg.dassert_ne(conda_sh_path, "")
         # service = ("Jupyter", get_p1_dev_server_ip(), jupyter_port, jupyter_port)
         # tunnel_info.append(service)
+    elif user_name == "kosta":
+        # Kostya naumov.
+        if server_name == "ip-172-31-16-23":
+            git_user_name = "k0nsta"
+            git_user_email = "kostya@particle.one"
+            conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "~/.conda/envs"
+            jupyter_port = 9556
     elif user_name == "julia":
         # Julia.
         git_user_name = "Julia"
