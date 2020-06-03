@@ -809,7 +809,7 @@ def calculate_hit_rate(
         data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
     )
     if srs.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         hit = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
@@ -818,10 +818,10 @@ def calculate_hit_rate(
         hit_lower, hit_higher = statsmodels.stats.proportion.proportion_confint(
             count=hit.sum(), nobs=hit.count(), alpha=alpha, method=method
         )
-    except ValueError:
+    except ValueError as inst:
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
-        _LOG.warning("Empty input series `%s`", srs.name)
+        _LOG.warning(inst)
         return nan_result
         #
     result_values = [point_estimate, hit_std, hit_lower, hit_higher]
