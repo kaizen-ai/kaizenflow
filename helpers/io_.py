@@ -278,7 +278,7 @@ def from_file(file_name: str, use_gzip: bool =False, encoding: Optional[Any] = N
         # Verify that the file has correct `gzip` extension.
         dbg.dassert_file_extension(file_name, ["gz", "gzip"])
         # Read gzipped file.
-        with gzip.open(file_name, "r", encoding=encoding) as f:
+        with gzip.open(file_name, "rt", encoding=encoding) as f:
             try:
                 # Read data.
                 data = f.read()
