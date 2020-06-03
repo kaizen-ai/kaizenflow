@@ -778,8 +778,8 @@ def apply_ljung_box_test(
 
 def calculate_hit_rate(
     srs: pd.Series,
-    alpha: Optional[float] = 0.05,
-    method: Optional[str] = "normal",
+    alpha: Optional[float] = None,
+    method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -793,16 +793,19 @@ def calculate_hit_rate(
     :param prefix: optional prefix for metrics' outcome
     :return: hit rate statistics: point estimate, std, confidence intervals
     """
+    alpha = alpha or 0.05
+    method = method or "jeffreys"
+    dbg.dassert_lte(0, alpha)
+    dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
     cond = all(srs.isin([0, 1, np.nan]))
-    dbg.dassert(cond)
+    dbg.dassert(cond, msg="Series should contain only 0s, 1s and NaNs")
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     result_index = [
         prefix + "hit_rate_point_est",
-        prefix + "hit_rate_std",
         prefix + "hit_rate_lower_bound",
-        prefix + "hit_rate_higher_bound",
+        prefix + "hit_rate_upper_bound",
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
@@ -811,19 +814,11 @@ def calculate_hit_rate(
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    try:
-        hit = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
-        point_estimate = hit.mean()
-        hit_std = hit.std()
-        hit_lower, hit_higher = statsmodels.stats.proportion.proportion_confint(
-            count=hit.sum(), nobs=hit.count(), alpha=alpha, method=method
-        )
-    except ValueError as inst:
-        # This can raise if there are not enough data points, but the number
-        # required can depend upon the input parameters.
-        _LOG.warning(inst)
-        return nan_result
-        #
-    result_values = [point_estimate, hit_std, hit_lower, hit_higher]
-    result = pd.Series(data=result_values, index=result_index, name=hit.name)
+    srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    point_estimate = srs.mean()
+    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
+        count=srs.sum(), nobs=srs.count(), alpha=alpha, method=method
+    )
+    result_values = [point_estimate, hit_lower, hit_upper]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
