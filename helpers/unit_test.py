@@ -525,12 +525,7 @@ class TestCase(unittest.TestCase):
             if outcome_updated:
                 # Update the test result.
                 _LOG.warning("Test outcome updated ... ")
-                if use_gzip:
-                    # Change write mode to "wt" for gzipped files.
-                    mode = "wt"
-                else:
-                    mode = "w"
-                io_.to_file(file_name, actual, use_gzip=use_gzip, mode=mode)
+                io_.to_file(file_name, actual, use_gzip=use_gzip)
                 # Add to git.
                 cmd = "git add %s" % file_name
                 rc = si.system(cmd, abort_on_error=False)
