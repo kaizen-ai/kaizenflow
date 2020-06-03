@@ -92,6 +92,8 @@ def convert_df_to_string(
     :param title: title for test output
     :return: string representation of input
     """
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
     n_rows = n_rows or len(df)
     output = []
     # Add title in the beginning if provided.
