@@ -15,7 +15,7 @@
 - A [short tutorial](https://git-scm.com/docs/gittutorial)
 
 - [Pro Git book](https://git-scm.com/book/en/v2)
-- To achieve mastery
+  - To achieve mastery
 
 # Bash / Linux
 
