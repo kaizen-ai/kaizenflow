@@ -230,13 +230,17 @@ def to_file(
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental=True)
     if use_gzip:
+        # Verify that the user provided correct file name.
         dbg.dassert_file_extension(file_name, ["gz", "gzip"])
+        # Write text as a gzipped file.
         with gzip.open(file_name, mode) as f:
             f = f.writelines(lines)
     else:
+        # Write file as text.
         with open(file_name, mode, buffering=0 if mode == "a" else -1) as f:
             f.writelines(lines)
     if force_flush:
+        # Clear internal buffer of the file.
         f.flush()
         os.fsync(f.fileno())
 
@@ -274,7 +278,7 @@ def from_file(file_name: str, use_gzip: bool =False, encoding: Optional[Any] = N
         # Verify that the file has correct `gzip` extension.
         dbg.dassert_file_extension(file_name, ["gz", "gzip"])
         # Read gzipped file.
-        with gzip.open(file_name, "rt", encoding=encoding) as f:
+        with gzip.open(file_name, "r", encoding=encoding) as f:
             try:
                 # Read data.
                 data = f.read()
