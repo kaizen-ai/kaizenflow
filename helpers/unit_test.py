@@ -528,11 +528,7 @@ class TestCase(unittest.TestCase):
             outcome_updated = False
             file_exists = os.path.exists(file_name)
             if file_exists:
-                if use_gzip:
-                    expected = self.unzip_expected(file_name)
-                else:
-                    # The golden outcome exists.
-                    expected = io_.from_file(file_name)
+                expected = io_.from_file(file_name, use_gzip=use_gzip)
                 if expected != actual:
                     outcome_updated = True
             else:
@@ -558,10 +554,7 @@ class TestCase(unittest.TestCase):
             if os.path.exists(file_name):
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                if use_gzip:
-                    expected = self.unzip_expected(file_name)
-                else:
-                    expected = io_.from_file(file_name)
+                expected = io_.from_file(file_name, use_gzip=use_gzip)
                 test_name = self._get_test_name()
                 _assert_equal(
                     actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
