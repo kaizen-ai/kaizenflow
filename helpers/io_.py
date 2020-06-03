@@ -227,17 +227,18 @@ def to_file(
     # dbg.dassert_in(type(file_name), (str, unicode))
     # Create the enclosing dir, if needed.
     dir_name = os.path.dirname(file_name)
-
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental=True)
     if use_gzip:
-
+        dbg.dassert_file_extension(file_name, ["gz", "gzip"])
+        with gzip.open(file_name, mode) as f:
+            f = f.writelines(lines)
     else:
         with open(file_name, mode, buffering=0 if mode == "a" else -1) as f:
             f.writelines(lines)
-        if force_flush:
-            f.flush()
-            os.fsync(f.fileno())
+    if force_flush:
+        f.flush()
+        os.fsync(f.fileno())
 
 
 def _raise_file_decode_error(error: Exception, file_name: str) -> None:
