@@ -486,12 +486,12 @@ class TestCase(unittest.TestCase):
         :param file_name: a path to .txt file with golden outcome
         :return: contents of file as string
         """
-        with gzip.open(file_name) as archive:
+        with gzip.open(file_name, "rt") as archive:
             file_content = archive.read()
         return file_content
 
     def save_actual_as_gzip(self, expected: str, file_name: str):
-        with gzip.open(file_name, "wb") as archive:
+        with gzip.open(file_name, "wt") as archive:
             archive.writelines(expected)
 
     def check_string(
@@ -517,6 +517,7 @@ class TestCase(unittest.TestCase):
         file_name = self.get_output_dir() + "/test.txt"
         if use_gzip:
             file_name += ".gz"
+        print(file_name)
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current purify.
         if purify_text:
@@ -552,6 +553,7 @@ class TestCase(unittest.TestCase):
                         "Can't run '%s': you need to add the file " "manually",
                         cmd,
                     )
+        else:
             # Just check the test result.
             if os.path.exists(file_name):
                 # Golden outcome is available: check the actual outcome against
