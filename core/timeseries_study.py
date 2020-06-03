@@ -18,8 +18,7 @@ import helpers.introspection as intr
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> TimeSeriesAnalyzer?
-class _TimeSeriesStudy:
+class _TimeSeriesAnalyzer:
     """
     Perform basic study of time series, such as:
         - analysis at different time frequencies by resampling
@@ -188,7 +187,7 @@ class _TimeSeriesStudy:
         return ret
 
 
-class TimeSeriesDailyStudy(_TimeSeriesStudy):
+class TimeSeriesDailyStudy(_TimeSeriesAnalyzer):
     def __init__(
         self,
         time_series: pd.Series,
@@ -202,7 +201,7 @@ class TimeSeriesDailyStudy(_TimeSeriesStudy):
         )
 
 
-class TimeSeriesMinuteStudy(_TimeSeriesStudy):
+class TimeSeriesMinuteStudy(_TimeSeriesAnalyzer):
     def boxplot_minutely_hour(self):
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -272,59 +271,6 @@ def compute_coefficient_of_variation(series):
 
 # Functions for processing dict of time series to generate a df with statistics
 # of these series.
-
-
-# TODO(Stas): docstring.
-def convert_data_to_series(data):
-    transposed_data = list(map(list, zip(*data)))
-    dates, vals = transposed_data[0], transposed_data[1]
-    if len(dates[0]) == 8:
-        pass
-    elif len(dates[0]) == 6:
-        dates = list(map(lambda x: x[:4] + "-" + x[4:], dates))
-    elif len(dates[0]) == 4:
-        pass
-    else:
-        raise ValueError("dates[0]='%s' is invalid" % dates[0])
-    dates = [pd.to_datetime(s) for s in dates]
-    srs = pd.Series(vals, dates)
-    srs.sort_index(inplace=True)
-    return srs
-
-
-def compute_series_metadata(
-    functions: Dict[str, Callable], series: pd.Series
-) -> Dict:
-    """
-    Iterate over the dict of metadata functions and applies them to the series.
-
-    If a function returns a dict, iterate on the dict and add each dict element
-    to the result.
-    :return: dict of metrics
-    """
-    metadata = {}
-    for metric, function in functions.items():
-        result = function(series)
-        if isinstance(result, dict):
-            for k, v in result.items():
-                metadata[k] = v
-        else:
-            metadata[metric] = result
-    return metadata
-
-
-def compute_metadata(
-    functions: Dict[str, Callable], timeseries_data: Dict[str, pd.Series]
-) -> pd.DataFrame:
-    """
-    Apply compute_series_metadata to all time series from time-series_data.
-
-    :return: metadata df indexed by series_id with computed metrics as columns
-    """
-    metadata = {}
-    for series_id, series in timeseries_data.items():
-        metadata[series_id] = compute_series_metadata(functions, series)
-    return pd.DataFrame.from_dict(metadata, orient="index")
 
 
 def map_dict_to_dataframe(
