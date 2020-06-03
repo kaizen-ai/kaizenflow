@@ -216,7 +216,7 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 
 # TODO(saggese): We should have lines first since it is an input param.
 def to_file(
-    file_name: str, lines: str, mode: str = "w", force_flush: bool = False
+    file_name: str, lines: str, use_gzip: bool = False, mode: str = "w", force_flush: bool = False
 ) -> None:
     """
     Write the content of lines into file_name, creating the enclosing directory
@@ -227,10 +227,14 @@ def to_file(
     # dbg.dassert_in(type(file_name), (str, unicode))
     # Create the enclosing dir, if needed.
     dir_name = os.path.dirname(file_name)
+
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental=True)
-    with open(file_name, mode, buffering=0 if mode == "a" else -1) as f:
-        f.writelines(lines)
+    if use_gzip:
+
+    else:
+        with open(file_name, mode, buffering=0 if mode == "a" else -1) as f:
+            f.writelines(lines)
         if force_flush:
             f.flush()
             os.fsync(f.fileno())
@@ -251,7 +255,7 @@ def _raise_file_decode_error(error: Exception, file_name: str) -> None:
     raise RuntimeError(msg_as_str)
 
 
-def from_file(file_name: str, use_gzip=False, encoding: Optional[Any] = None) -> str:
+def from_file(file_name: str, use_gzip: bool =False, encoding: Optional[Any] = None) -> str:
     """
     Read contents of a file as string.
 
