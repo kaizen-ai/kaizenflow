@@ -479,6 +479,21 @@ class TestCase(unittest.TestCase):
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
+    def unzip_expected(self, file_name: str):
+        """
+        Unzip the contents of a gzipped golden outcome.
+
+        :param file_name: a path to .txt file with golden outcome
+        :return: contents of file as string
+        """
+        with gzip.open(file_name) as archive:
+            file_content = archive.read()
+        return file_content
+
+    def save_actual_as_gzip(self, expected: str, file_name: str):
+        with gzip.open(file_name, "wb") as archive:
+            archive.writelines(expected)
+
     def check_string(
         self, actual: str, fuzzy_match: bool = False, purify_text: bool = True,
         use_gzip: bool = False
@@ -501,11 +516,7 @@ class TestCase(unittest.TestCase):
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
         if use_gzip:
-            # Unzip the contents of a gzipped file.
-            gz_name = file_name + ".gz"
-            with gzip.open(gz_name) as archive:
-                file_content = archive.read()
-                io_.to_file(file_name, file_content)
+            file_name += ".gz"
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current purify.
         if purify_text:
@@ -516,8 +527,11 @@ class TestCase(unittest.TestCase):
             outcome_updated = False
             file_exists = os.path.exists(file_name)
             if file_exists:
-                # The golden outcome exists.
-                expected = io_.from_file(file_name)
+                if use_gzip:
+                    expected = self.unzip_expected(file_name)
+                else:
+                    # The golden outcome exists.
+                    expected = io_.from_file(file_name)
                 if expected != actual:
                     outcome_updated = True
             else:
@@ -526,7 +540,10 @@ class TestCase(unittest.TestCase):
             if outcome_updated:
                 # Update the test result.
                 _LOG.warning("Test outcome updated ... ")
-                io_.to_file(file_name, actual)
+                if use_gzip:
+                    self.save_actual_as_gzip(actual, file_name)
+                else:
+                    io_.to_file(file_name, actual)
                 # Add to git.
                 cmd = "git add %s" % file_name
                 rc = si.system(cmd, abort_on_error=False)
@@ -539,7 +556,10 @@ class TestCase(unittest.TestCase):
             if os.path.exists(file_name):
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                expected = io_.from_file(file_name)
+                if use_gzip:
+                    expected = self.unzip_expected(file_name)
+                else:
+                    expected = io_.from_file(file_name)
                 test_name = self._get_test_name()
                 _assert_equal(
                     actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
