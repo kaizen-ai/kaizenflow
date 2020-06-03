@@ -106,7 +106,7 @@ plot.plot_correlation_matrix(price_detail, mode="heatmap")
 plot.plot_cols(rets)
 
 # %%
-stats.apply_normality_test(rets.to_frame())
+stats.apply_normality_test(rets).to_frame()
 
 # %%
 plot.plot_autocorrelation(rets)
@@ -127,7 +127,7 @@ plot.plot_cols(rets_detail)
 plot.plot_cols(rets_detail, mode="renormalize")
 
 # %%
-stats.apply_normality_test(rets_detail)
+rets_detail.apply(stats.apply_normality_test)
 
 # %%
 plot.plot_autocorrelation(rets_detail, title_prefix="Wavelet level ")
@@ -148,7 +148,7 @@ zscored_rets = sigp.get_dyadic_zscored(rets, demean=False)
 plot.plot_cols(zscored_rets)
 
 # %%
-stats.apply_normality_test(zscored_rets)
+zscored_rets.apply(stats.apply_normality_test)
 
 # %%
 plot.plot_autocorrelation(zscored_rets, title_prefix="tau exp = ")
