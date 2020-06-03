@@ -777,12 +777,27 @@ def apply_ljung_box_test(
 
 
 def calculate_hit_rate(
-    hit: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None
+    srs: pd.Series,
+    alpha: Optional[float] = 0.05,
+    method: Optional[str] = "normal",
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.DataFrame:
+    """
+    Calculate hit rate statistics.
 
+    :param srs: pandas series of 0s, 1s and NaNs
+    :param alpha: as in statsmodels.stats.proportion.proportion_confint()
+    :param method: as in statsmodels.stats.proportion.proportion_confint()
+    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence intervals calculation
+    :param prefix: optional prefix for metrics' outcome
+    :return: hit rate statistics: point estimate, std, confidence intervals
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    cond = all(srs.isin([0, 1, np.nan]))
+    dbg.dassert(cond)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-
     result_index = [
         prefix + "hit_rate_point_est",
         prefix + "hit_rate_std",
@@ -791,22 +806,22 @@ def calculate_hit_rate(
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=hit.name,
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
     )
-    if hit.empty:
+    if srs.empty:
         _LOG.warning("Input is empty!")
         return nan_result
     try:
-        hit = hdf.apply_nan_mode(hit, nan_mode=nan_mode)
+        hit = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
         point_estimate = hit.mean()
         hit_std = hit.std()
         hit_lower, hit_higher = statsmodels.stats.proportion.proportion_confint(
-            count=hit.sum(), nobs=hit.count()
+            count=hit.sum(), nobs=hit.count(), alpha=alpha, method=method
         )
-    except ValueError as inst:
+    except ValueError:
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
-        _LOG.warning(inst)
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
         #
     result_values = [point_estimate, hit_std, hit_lower, hit_higher]

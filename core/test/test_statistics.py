@@ -582,17 +582,29 @@ class TestCalculateHitRate1(hut.TestCase):
         self.check_string(actual_string)
 
     def test2(self) -> None:
+        series = pd.Series(np.random.choice([0, 1, np.nan], size=(30,)))
+        actual = stats.calculate_hit_rate(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = pd.Series(np.random.choice([0, 1, np.nan], size=(40,)))
+        actual = stats.calculate_hit_rate(series, alpha=0.1)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
         series = pd.Series([0, 1, 0, 0, 1, None])
         actual = stats.calculate_hit_rate(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    def test3(self) -> None:
+    def test5(self) -> None:
         series = pd.Series([0, 1, 0, 0, 1, None])
         actual = stats.calculate_hit_rate(series, prefix="hit_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    def test4(self) -> None:
+    def test6(self) -> None:
         series = pd.Series([])
         stats.calculate_hit_rate(series)
