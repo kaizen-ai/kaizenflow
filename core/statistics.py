@@ -224,7 +224,7 @@ def _compute_denominator_and_package(
 
 def compute_annualized_sharpe_ratio(
     log_rets: pd.Series, prefix: Optional[str] = None,
-) -> pd.DataFrame:
+    ) -> pd.Series:
     """
     Calculate SR from rets with an index freq and annualize.
 
@@ -252,7 +252,7 @@ def compute_annualized_sharpe_ratio(
         index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
         name=log_rets.name,
     )
-    return res.to_frame()
+    return res
 
 
 # #############################################################################
