@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.unit_test as ut
+import helpers.unit_test as hut
 
 # TODO(gp): use hut instead of ut.
 """
@@ -501,29 +501,27 @@ class TestCase(unittest.TestCase):
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
         if use_gzip:
-            file_name += ".gz"
+            gz_name = file_name + ".gz"
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current purify.
         if purify_text:
             actual = purify_txt_from_client(actual)
         #
         if get_update_tests():
-            # Update the test result.
+            # Determine whether outcome needs to be updated
             outcome_updated = False
             file_exists = os.path.exists(file_name)
             if file_exists:
-                if file_exists:
-                    if use_gzip:
-                        with gzip.open(file_name, "wt") as f:
-                            expected = f.read()
-                    else:
-                        # The golden outcome exists.
-                        expected = io_.from_file(file_name)
+                # The golden outcome exists.
+                expected = io_.from_file(file_name)
                 if expected != actual:
                     outcome_updated = True
             else:
                 # The golden outcome doesn't exist.
                 outcome_updated = True
+            if outcome_updated:
+                # Update the test result.
+                _LOG.warning("Test outcome updated ... ")
                 io_.to_file(file_name, actual)
                 # Add to git.
                 cmd = "git add %s" % file_name
@@ -533,10 +531,6 @@ class TestCase(unittest.TestCase):
                         "Can't run '%s': you need to add the file " "manually",
                         cmd,
                     )
-            if outcome_updated:
-                _LOG.warning("Test outcome updated ... ")
-                io_.to_file(file_name, actual)
-        else:
             # Just check the test result.
             if os.path.exists(file_name):
                 # Golden outcome is available: check the actual outcome against
