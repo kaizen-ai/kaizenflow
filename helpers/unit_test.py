@@ -479,10 +479,6 @@ class TestCase(unittest.TestCase):
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
-    def save_actual_as_gzip(self, expected: str, file_name: str):
-        with gzip.open(file_name, "wt") as archive:
-            archive.writelines(expected)
-
     def check_string(
         self, actual: str, fuzzy_match: bool = False, purify_text: bool = True,
         use_gzip: bool = False

@@ -282,8 +282,9 @@ def from_file(file_name: str, use_gzip: bool = False, encoding: Optional[Any] = 
     :param encoding: encoding to use when reading the string
     :return: contents of file as string
     """
-    # Verify that the file name exists.
+    # Verify that file name is not empty.
     dbg.dassert_ne(file_name, "")
+    # Verify that the file name exists.
     dbg.dassert_exists(file_name)
     if use_gzip:
         # Verify that the file has correct `gzip` extension.
