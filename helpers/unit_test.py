@@ -501,7 +501,11 @@ class TestCase(unittest.TestCase):
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
         if use_gzip:
+            # Unzip the contents of a gzipped file.
             gz_name = file_name + ".gz"
+            with gzip.open(gz_name) as archive:
+                file_content = archive.read()
+                io_.to_file(file_name, file_content)
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current purify.
         if purify_text:
