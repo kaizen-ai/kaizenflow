@@ -479,17 +479,6 @@ class TestCase(unittest.TestCase):
         test_name = self._get_test_name()
         _assert_equal(actual, expected, test_name, dir_name)
 
-    def unzip_expected(self, file_name: str):
-        """
-        Unzip the contents of a gzipped golden outcome.
-
-        :param file_name: a path to .txt file with golden outcome
-        :return: contents of file as string
-        """
-        with gzip.open(file_name, "rt") as archive:
-            file_content = archive.read()
-        return file_content
-
     def save_actual_as_gzip(self, expected: str, file_name: str):
         with gzip.open(file_name, "wt") as archive:
             archive.writelines(expected)
@@ -517,7 +506,6 @@ class TestCase(unittest.TestCase):
         file_name = self.get_output_dir() + "/test.txt"
         if use_gzip:
             file_name += ".gz"
-        print(file_name)
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current purify.
         if purify_text:
