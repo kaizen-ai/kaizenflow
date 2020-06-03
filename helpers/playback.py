@@ -4,59 +4,58 @@ Import as:
 import helpers.playback as plbck
 """
 
-# - DONE: Handle complex types with jsonpickle (e.g., pandas data frame)
-# - IN PROGRESS: Unit test the unit tester
-# - Generalize for args, kwargs
-#   
-# - Create code to make it look like a ParticleOne unit test
-# - Improve the serialization by generating "nicer" code directly, instead of
-#   using jsonpicle.
-# - Make it a decorator
-
 import jsonpickle
-
-#def serialize_to_python_code(obj: Any):
-#    if isinstance(obj, pd.DataFrame):
-#        ret = []
-#        ret.append("pd.DataFrame(...")
-#    elif isinstance(obj, pd.Series):
-#        ret = []
-#        ret.append("pd.Series(...")
-#    elif isinstance(obj, 
+import jsonpickle.ext.pandas as jsonpickle_pd
+import jsonpickle.ext.numpy as jsonpickle_numpy
+jsonpickle_pd.register_handlers()
 
 
 class Playback:
-
-    #def __init__(self, file_name, mode, *args, **kwargs):
+    # def __init__(self, file_name, mode, *args, **kwargs):
     # self.args = args
     # self.kwargs = kwargs
-    def __init__(self, file_name, mode, func_name, a, b):
-        self.a = a
-        self.b = b
+    import string
+    letters = list(string.ascii_lowercase)
+
+    def __init__(self, file_name, mode, func_name, *args, **kwargs):
+        self.func_name = func_name
+        self.args = args
+        self.kwargs = kwargs
+
 
     def start(self):
-        self.a_json = jsonpickle.encode(self.a)
-        self.b_json = jsonpickle.encode(self.b)
+        self.json_args = [jsonpickle.encode(x) for x in self.args]
+        self.json_kwargs = {x[0]: jsonpickle.encode(x[1]) for x in self.kwargs.items()}
+
+    def type_identification(self, output):
+        letter_ind = 0
+        variables = []
+        if self.json_args:
+            for json_param in self.json_args:
+                output.append("%s = r'%s'" % (self.letters[letter_ind], json_param))
+                output.append("{0} = jsonpickle.decode({0})".format(self.letters[letter_ind]))
+                variables.append(self.letters[letter_ind])
+                letter_ind += 1
+        if self.json_kwargs:
+            for key in self.json_kwargs:
+                output.append("%s = r'%s'" % (key, self.json_kwargs[key]))
+                output.append("{0} = jsonpickle.decode({0})".format(key))
+                variables.append(key)
+        return variables
+
 
     def end(self, ret):
         self.ret_json = jsonpickle.encode(ret)
         output = []
         output.append("# Initialize values for unit test.")
-        #output.append("a = %s" % jsonpickle.decode(self.a_json))
-        #output.append("b = %s" % jsonpickle.decode(self.b_json))
-        output.append("a = r'%s'" % self.a_json)
-        output.append("a = jsonpickle.decode(a)")
-        output.append("b = r'%s'" % self.b_json)
-        output.append("b = jsonpickle.decode(b)")
+        variables = self.type_identification(output)
         output.append("# Apply values.")
-        #output.append("act = F(a, b)[1]")
-        output.append("act = F(a, b)")
+        output.append("act = %s(%s)" % (self.func_name, ', '.join(variables)))
         output.append("exp = r'%s'" % self.ret_json)
         output.append("exp = jsonpickle.decode(exp)")
-        #output.append("self.assertEqual(act, exp)")
         output.append("assert act.equals(exp)")
-        #output.append("assert act == exp")
         output = "\n".join(output)
+        print("output=", output)
         return output
 
     @staticmethod

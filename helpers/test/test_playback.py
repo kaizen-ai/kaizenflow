@@ -49,3 +49,53 @@ class Test_playback1(hut.TestCase):
         #playback.test_code(output)
         # Freeze output.
         self.check_string(output)
+
+    def test3(self) -> None:
+        """
+
+        """
+        # Create inputs.
+        a = "test"
+        b = "case"
+        # Serialize through Playback.
+        playback = plbck.Playback("", "", "F", a, b)
+        playback.start()
+        c = a + b
+        output = playback.end(c)
+        res = output, c
+        # Freeze output.
+        self.check_string(output)
+
+    def test4(self) -> None:
+        """
+
+        """
+        # Create inputs.
+        a = [1, 2, 3]
+        b = [4, 5, 6]
+        # Serialize through Playback.
+        playback = plbck.Playback("", "", "F", a, b)
+        playback.start()
+        c = a + b
+        output = playback.end(c)
+        res = output, c
+        # Freeze output.
+        self.check_string(output)
+
+    def test5(self) -> None:
+        """
+
+        """
+        # Create inputs.
+        a = {'1': 2}
+        b = {'3': 4}
+        c = {}
+        # Serialize through Playback.
+        playback = plbck.Playback("", "", "F_dict", a, b)
+        playback.start()
+        c.update(a)
+        c.update(b)
+        output = playback.end(c)
+        res = output, c
+        # Freeze output.
+        self.check_string(output)
