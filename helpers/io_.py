@@ -7,6 +7,7 @@ import helpers.io_ as io_
 """
 
 import fnmatch
+import gzip
 import logging
 import os
 import shutil
@@ -235,19 +236,54 @@ def to_file(
             os.fsync(f.fileno())
 
 
-def from_file(file_name: str, encoding: Optional[Any] = None) -> str:
+def _raise_file_decode_error(error: Exception, file_name: str) -> None:
+    """
+    Raise UnicodeDecodeError with detailed error message.
+
+    :param error: raised UnicodeDecodeError
+    :param file_name: name of read file that raised the exception
+    """
+    msg = []
+    msg.append("error=%s" % error)
+    msg.append("file_name='%s'" % file_name)
+    msg_as_str = "\n".join(msg)
+    _LOG.error(msg_as_str)
+    raise RuntimeError(msg_as_str)
+
+
+def from_file(file_name: str, use_gzip=False, encoding: Optional[Any] = None) -> str:
+    """
+    Read contents of a file as string.
+
+    Use `use_gzip` flag to load a compressed file with correct extenstion.
+
+    :param file_name: path to .txt or .gz file
+    :param use_gzip: whether to decompress the archived file
+    :param encoding: encoding to use when reading the string
+    :return: contents of file as string
+    """
+    # Verify that the file name exists.
     dbg.dassert_ne(file_name, "")
     dbg.dassert_exists(file_name)
-    with open(file_name, "r", encoding=encoding) as f:
-        try:
-            data = f.read()
-        except UnicodeDecodeError as e:
-            msg = []
-            msg.append("error=%s" % e)
-            msg.append("file_name='%s'" % file_name)
-            msg_as_str = "\n".join(msg)
-            _LOG.error(msg_as_str)
-            raise RuntimeError(msg_as_str)
+    if use_gzip:
+        # Verify that the file has correct `gzip` extension.
+        dbg.dassert_file_extension(file_name, ["gz", "gzip"])
+        # Read gzipped file.
+        with gzip.open(file_name, "rt", encoding=encoding) as f:
+            try:
+                # Read data.
+                data = f.read()
+            except UnicodeDecodeError as e:
+                # Raise unicode decode error message.
+                _raise_file_decode_error(e, file_name)
+    else:
+        # Read text file.
+        with open(file_name, "r", encoding=encoding) as f:
+            try:
+                data = f.read()
+            except UnicodeDecodeError as e:
+                # Raise unicode decode error message.
+                _raise_file_decode_error(e, file_name)
     dbg.dassert_isinstance(data, str)
     return data
 
