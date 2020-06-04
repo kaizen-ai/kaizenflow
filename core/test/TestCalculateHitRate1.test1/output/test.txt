@@ -1,0 +1,3 @@
+hit_rate_point_est      0.400000
+hit_rate_lower_bound    0.094390
+hit_rate_upper_bound    0.790583
