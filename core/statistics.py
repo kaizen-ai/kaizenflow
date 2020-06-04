@@ -224,7 +224,7 @@ def _compute_denominator_and_package(
 
 def compute_annualized_sharpe_ratio(
     log_rets: pd.Series, prefix: Optional[str] = None,
-) -> pd.DataFrame:
+    ) -> pd.Series:
     """
     Calculate SR from rets with an index freq and annualize.
 
@@ -252,7 +252,7 @@ def compute_annualized_sharpe_ratio(
         index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
         name=log_rets.name,
     )
-    return res.to_frame()
+    return res
 
 
 # #############################################################################
@@ -467,6 +467,7 @@ def multipletests(
         srs, method=method
     )[1]
     return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
+
 
 # TODO(*): rewrite according to new ttest_1samp(), issued in #2631.
 def multi_ttest(
@@ -773,3 +774,51 @@ def apply_ljung_box_test(
         df_result = pd.DataFrame(result).T
     df_result.columns = columns
     return df_result
+
+
+def calculate_hit_rate(
+    srs: pd.Series,
+    alpha: Optional[float] = None,
+    method: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Calculate hit rate statistics.
+
+    :param srs: pandas series of 0s, 1s and NaNs
+    :param alpha: as in statsmodels.stats.proportion.proportion_confint()
+    :param method: as in statsmodels.stats.proportion.proportion_confint()
+    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence intervals calculation
+    :param prefix: optional prefix for metrics' outcome
+    :return: hit rate statistics: point estimate, std, confidence intervals
+    """
+    alpha = alpha or 0.05
+    method = method or "jeffreys"
+    dbg.dassert_lte(0, alpha)
+    dbg.dassert_lte(alpha, 1)
+    dbg.dassert_isinstance(srs, pd.Series)
+    cond = all(srs.isin([0, 1, np.nan]))
+    dbg.dassert(cond, msg="Series should contain only 0s, 1s and NaNs")
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    result_index = [
+        prefix + "hit_rate_point_est",
+        prefix + "hit_rate_lower_bound",
+        prefix + "hit_rate_upper_bound",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
+    )
+    if srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    point_estimate = srs.mean()
+    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
+        count=srs.sum(), nobs=srs.count(), alpha=alpha, method=method
+    )
+    result_values = [point_estimate, hit_lower, hit_upper]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
