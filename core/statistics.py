@@ -4,10 +4,12 @@ Import as:
 import core.statistics as stats
 """
 
+import collections
+import datetime
 import functools
 import logging
 import math
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -173,7 +175,7 @@ def _compute_denominator_and_package(
     reduction: Union[float, np.ndarray],
     data: Union[pd.Series, pd.DataFrame],
     axis: Optional[float] = None,
-):
+) -> Union[float, pd.Series]:
     """
     Normalize and package `reduction` according to `axis` and `data` metadata.
 
@@ -206,20 +208,18 @@ def _compute_denominator_and_package(
     elif axis == 1:
         denom = ncols
     else:
-        raise ValueError("axis=%i", axis)
+        raise ValueError("axis=%i" % axis)
     normalized = reduction / denom
     # Return float or pd.Series as appropriate based on dimensions and axis.
     if isinstance(normalized, float):
         dbg.dassert(not axis)
         return normalized
-    else:
-        dbg.dassert_isinstance(normalized, np.ndarray)
-        if axis == 0:
-            return pd.Series(data=normalized, index=df.columns)
-        elif axis == 1:
-            return pd.Series(data=normalized, index=df.index)
-        else:
-            raise ValueError("axis=`%s` but expected to be `0` or `1`!", axis)
+    dbg.dassert_isinstance(normalized, np.ndarray)
+    if axis == 0:
+        return pd.Series(data=normalized, index=df.columns)
+    if axis == 1:
+        return pd.Series(data=normalized, index=df.index)
+    raise ValueError("axis=`%s` but expected to be `0` or `1`!" % axis)
 
 
 def compute_annualized_sharpe_ratio(
@@ -290,7 +290,7 @@ def get_rolling_splits(
 
 
 def get_oos_start_split(
-    idx: pd.Index, datetime_
+    idx: pd.Index, datetime_: Union[datetime.datetime, pd.Timestamp]
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Split index using OOS (out-of-sample) start datetime.
@@ -337,7 +337,7 @@ def get_expanding_window_splits(
     return splits
 
 
-def truncate_index(idx: pd.Index, min_idx, max_idx) -> pd.Index:
+def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
     """
     Return subset of idx with values >= min_idx and < max_idx.
     """
@@ -374,7 +374,7 @@ def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
     return composite_idx
 
 
-def convert_splits_to_string(splits):
+def convert_splits_to_string(splits: collections.OrderedDict) -> str:
     txt = "n_splits=%s\n" % len(splits)
     for train_idxs, test_idxs in splits:
         txt += "train=%s [%s, %s]" % (
@@ -678,7 +678,7 @@ def apply_kpss_test(
 
 def compute_zero_nan_inf_stats(
     srs: pd.Series, prefix: Optional[str] = None,
-) -> pd.Series():
+) -> pd.Series:
     """
     Calculate finite and non-finite values in time series.
 
@@ -782,14 +782,15 @@ def calculate_hit_rate(
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-) -> pd.DataFrame:
+) -> pd.Series:
     """
     Calculate hit rate statistics.
 
     :param srs: pandas series of 0s, 1s and NaNs
     :param alpha: as in statsmodels.stats.proportion.proportion_confint()
     :param method: as in statsmodels.stats.proportion.proportion_confint()
-    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence intervals calculation
+    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence
+        intervals calculation
     :param prefix: optional prefix for metrics' outcome
     :return: hit rate statistics: point estimate, std, confidence intervals
     """
@@ -798,22 +799,21 @@ def calculate_hit_rate(
     dbg.dassert_lte(0, alpha)
     dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
-    cond = all(srs.isin([0, 1, np.nan]))
-    dbg.dassert(cond, msg="Series should contain only 0s, 1s and NaNs")
+    dbg.dassert_is_subset(
+        srs, [0, 1, np.nan], "Series should contain only 0s, 1s and NaNs"
+    )
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
+    #
     data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     result_index = [
         prefix + "hit_rate_point_est",
         prefix + "hit_rate_lower_bound",
         prefix + "hit_rate_upper_bound",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
-    )
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
+        nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
         return nan_result
     point_estimate = data.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
@@ -873,7 +873,7 @@ def compute_jensen_ratio(
             # According to a strict interpretation, each norm is infinite, and
             # and so their quotient is undefined.
             return np.nan
-        elif inf_mode == "ignore":
+        if inf_mode == "ignore":
             # Replace inf values with np.nan and drop.
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
         else:
