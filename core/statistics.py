@@ -871,6 +871,7 @@ def compute_jensen_ratio(
     )
     dbg.dassert(not data.isna().any())
     # Handle infs.
+    # TODO(*): apply special functions for inf_mode after #2624 is completed.
     has_infs = (~data.apply(np.isfinite)).any()
     if has_infs:
         if inf_mode == "return_nan":
