@@ -292,6 +292,15 @@ class Test_config1(hut.TestCase):
         actual_result = str(config)
         self.assertEqual(actual_result, expected_result)
 
+    def test_config_with_object(self) -> None:
+        config = cfg.Config()
+        config[
+            "dag_builder"
+        ] = "<dataflow_p1.task2538_pipeline.ArPredictorBuilder object at 0x7fd7a9ddd190>"
+        expected_result = "dag_builder: <dataflow_p1.task2538_pipeline.ArPredictorBuilder object>"
+        actual_result = str(config)
+        self.assertEqual(actual_result, expected_result)
+
     def test_flatten1(self) -> None:
         config = cfg.Config()
         #
