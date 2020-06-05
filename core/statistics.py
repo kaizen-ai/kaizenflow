@@ -50,7 +50,7 @@ def compute_moments(
         prefix + "kurtosis",
     ]
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         n_stats = len(result_index)
         nan_result = pd.Series(
             data=[np.nan for i in range(n_stats)],
@@ -76,7 +76,7 @@ def replace_infs_with_nans(
     Replace infs with nans in a copy of `data`.
     """
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input!")
     return data.replace([np.inf, -np.inf], np.nan)
 
 
@@ -150,7 +150,7 @@ def count_num_finite_samples(data: pd.Series) -> float:
     :param data: numeric series or dataframe
     """
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", data.name)
         return np.nan
     data = data.copy()
     data = replace_infs_with_nans(data)
@@ -163,7 +163,7 @@ def count_num_unique_values(data: pd.Series) -> int:
     Count number of unique values in the series.
     """
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", data.name)
         return np.nan
     srs = pd.Series(data=data.unique())
     return count_num_finite_samples(srs)
@@ -425,7 +425,7 @@ def ttest_1samp(
         data=[np.nan, np.nan], index=result_index, name=srs.name
     )
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         tval, pval = sp.stats.ttest_1samp(
@@ -461,7 +461,7 @@ def multipletests(
     method = method or "fdr_bh"
     prefix = prefix or ""
     if srs.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return pd.Series([np.nan], name=prefix + "adj_pval")
     pvals_corrected = statsmodels.stats.multitest.multipletests(
         srs, method=method
@@ -485,7 +485,7 @@ def multi_ttest(
     prefix = prefix or ""
     dbg.dassert_isinstance(data, pd.DataFrame)
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input!")
         return pd.DataFrame(
             [np.nan, np.nan, np.nan],
             index=[prefix + "tval", prefix + "pval", prefix + "adj_pval"],
@@ -494,9 +494,7 @@ def multi_ttest(
     res = data.apply(
         ttest_1samp, popmean=popmean, nan_mode=nan_mode, prefix=prefix
     ).T
-    res[prefix + "adj_pval"] = multipletests(
-        res[prefix + "pval"], method=method
-    )
+    res[prefix + "adj_pval"] = multipletests(res[prefix + "pval"], method=method)
     return res
 
 
@@ -525,7 +523,7 @@ def apply_normality_test(
         data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
     )
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         stat, pval = sp.stats.normaltest(data, nan_policy="raise")
@@ -584,7 +582,7 @@ def apply_adf_test(
         data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
     )
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         (
@@ -655,7 +653,7 @@ def apply_kpss_test(
         data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
     )
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         (kpss_stat, pval, lags, critical_values,) = sm.tsa.stattools.kpss(
@@ -704,7 +702,7 @@ def compute_zero_nan_inf_stats(
         data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
     )
     if srs.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     result_values = [
         len(srs),
@@ -755,8 +753,8 @@ def apply_ljung_box_test(
     ]
     # Make an output for empty or too short inputs.
     nan_result = pd.DataFrame([[np.nan, np.nan]], columns=columns)
-    if srs.empty:
-        _LOG.warning("Input is empty!")
+    if data.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         result = sm.stats.diagnostic.acorr_ljungbox(
@@ -804,6 +802,7 @@ def calculate_hit_rate(
     dbg.dassert(cond, msg="Series should contain only 0s, 1s and NaNs")
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     result_index = [
         prefix + "hit_rate_point_est",
         prefix + "hit_rate_lower_bound",
@@ -813,13 +812,12 @@ def calculate_hit_rate(
     nan_result = pd.Series(
         data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
     )
-    if srs.empty:
+    if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
-    point_estimate = srs.mean()
+    point_estimate = data.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=srs.sum(), nobs=srs.count(), alpha=alpha, method=method
+        count=data.sum(), nobs=data.count(), alpha=alpha, method=method
     )
     result_values = [point_estimate, hit_lower, hit_upper]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)

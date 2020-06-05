@@ -131,7 +131,7 @@ def apply_nan_mode(
     """
     dbg.dassert_isinstance(srs, pd.Series)
     if srs.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
     if nan_mode is None:
         res = srs.copy()
     elif nan_mode == "ignore":
