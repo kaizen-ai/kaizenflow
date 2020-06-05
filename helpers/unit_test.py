@@ -6,7 +6,7 @@ import helpers.unit_test as hut
 # TODO(gp): use hut instead of ut.
 """
 
-import gzip
+import collections
 import inspect
 import logging
 import os
@@ -14,7 +14,7 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, List, NoReturn, Optional, Iterable, Mapping, Union
+from typing import Any, Iterable, List, Mapping, NoReturn, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,7 +25,6 @@ import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as prnt
 import helpers.system_interaction as si
-import collections
 
 _LOG = logging.getLogger(__name__)
 
@@ -102,15 +101,20 @@ def convert_df_to_string(
         output.append(prnt.frame(title))
     # Provide context for full representation of data.
     with pd.option_context(
-                "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
-        ):
+        "display.max_colwidth",
+        int(1e6),
+        "display.max_columns",
+        None,
+        "display.max_rows",
+        None,
+    ):
         # Add top N rows.
         output.append(df.head(n_rows).to_string(index=index))
         output_str = "\n".join(output)
     return output_str
 
 
-def convert_info_to_string(info: Mapping):
+def convert_info_to_string(info: Mapping) -> str:
     """
     Convert info to string for verifying test results.
 
@@ -123,8 +127,13 @@ def convert_info_to_string(info: Mapping):
     output = []
     # Provide context for full representation of pd.Series in info.
     with pd.option_context(
-                "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
-        ):
+        "display.max_colwidth",
+        int(1e6),
+        "display.max_columns",
+        None,
+        "display.max_rows",
+        None,
+    ):
         output.append(prnt.frame("info"))
         output.append(pprint.pformat(info))
         output_str = "\n".join(output)
@@ -154,7 +163,7 @@ def get_ordered_value_counts(column: pd.Series) -> pd.Series:
 
 
 def get_value_counts_for_columns(
-        df: pd.DataFrame, columns: Optional[Iterable] = None
+    df: pd.DataFrame, columns: Optional[Iterable] = None
 ) -> Mapping[str, pd.Series]:
     """
     Get value counts for multiple columns.
@@ -482,8 +491,11 @@ class TestCase(unittest.TestCase):
         _assert_equal(actual, expected, test_name, dir_name)
 
     def check_string(
-        self, actual: str, fuzzy_match: bool = False, purify_text: bool = True,
-        use_gzip: bool = False
+        self,
+        actual: str,
+        fuzzy_match: bool = False,
+        purify_text: bool = True,
+        use_gzip: bool = False,
     ) -> None:
         """
         Check the actual outcome of a test against the expected outcomes
