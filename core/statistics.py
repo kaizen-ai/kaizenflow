@@ -469,17 +469,19 @@ def multipletests(
     return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
 
 
-# TODO(*): rewrite according to new ttest_1samp(), issued in #2631.
 def multi_ttest(
     data: pd.DataFrame,
     popmean: Optional[float] = None,
-    nan_policy: Optional[str] = None,
+    nan_mode: Optional[str] = None,
     method: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Combine ttest and multitest pvalue adjustment.
     """
+    popmean = popmean or 0
+    nan_mode = nan_mode or "ignore"
+    method = method or "fdr_bh"
     prefix = prefix or ""
     dbg.dassert_isinstance(data, pd.DataFrame)
     if data.empty:
@@ -489,13 +491,13 @@ def multi_ttest(
             index=[prefix + "tval", prefix + "pval", prefix + "adj_pval"],
             columns=[data.columns],
         )
-    ttest = ttest_1samp(
-        data, popmean=popmean, nan_policy=nan_policy, prefix=prefix
-    ).transpose()
-    ttest[prefix + "adj_pval"] = multipletests(
-        ttest[prefix + "pval"], method=method
+    res = data.apply(
+        ttest_1samp, popmean=popmean, nan_mode=nan_mode, prefix=prefix
+    ).T
+    res[prefix + "adj_pval"] = multipletests(
+        res[prefix + "pval"], method=method
     )
-    return ttest.transpose()
+    return res
 
 
 def apply_normality_test(

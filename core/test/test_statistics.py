@@ -313,10 +313,58 @@ class TestMultipleTests1(hut.TestCase):
 
 class TestMultiTTest1(hut.TestCase):
     @staticmethod
+    def _get_df_of_series(seed: int) -> pd.DataFrame:
+        n_series = 7
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        # Generating a dataframe from different series.
+        df = pd.DataFrame(
+            [
+                arma_process.generate_sample(
+                    date_range_kwargs=date_range, seed=seed + i
+                )
+                for i in range(n_series)
+            ],
+            index=["series_" + str(i) for i in range(n_series)],
+        ).T
+        return df
+
     # Smoke test for empty input
-    def test1() -> None:
+    def test1(self) -> None:
         df = pd.DataFrame(columns=["series_name"])
         stats.multi_ttest(df)
+
+    def test2(self) -> None:
+        df = self._get_df_of_series(1)
+        actual = stats.multi_ttest(df)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        df = self._get_df_of_series(1)
+        actual = stats.multi_ttest(df, prefix="multi_ttest_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        df = self._get_df_of_series(1)
+        actual = stats.multi_ttest(df, popmean=1)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        df = self._get_df_of_series(1)
+        actual = stats.multi_ttest(df, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test6(self) -> None:
+        df = self._get_df_of_series(1)
+        actual = stats.multi_ttest(df, method="sidak")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
 
 
 class TestApplyNormalityTest1(hut.TestCase):
