@@ -720,6 +720,7 @@ def multipletests_plot(
     plt.axhline(threshold, ls=":", c="k")
     plt.ylim(0, 1)
     plt.legend()
+    plt.show()
 
 
 # #############################################################################
