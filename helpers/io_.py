@@ -216,7 +216,11 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 
 # TODO(saggese): We should have lines first since it is an input param.
 def to_file(
-    file_name: str, lines: str, use_gzip: bool = False, mode: Optional[str] = None, force_flush: bool = False
+    file_name: str,
+    lines: str,
+    use_gzip: bool = False,
+    mode: Optional[str] = None,
+    force_flush: bool = False,
 ) -> None:
     """
     Write the content of lines into file_name, creating the enclosing directory
@@ -228,7 +232,9 @@ def to_file(
     :param force_flush: whether to forcibly clear the file buffer
     """
     # TODO(gp): create_enclosing_dir().
+    # Verify that the file name is correct.
     dbg.dassert_is_not(file_name, None)
+    dbg.dassert_ne(file_name, "")
     # Choose default writing mode based on compression.
     if mode is None:
         if use_gzip:
@@ -241,17 +247,19 @@ def to_file(
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental=True)
     if use_gzip:
-        # Verify that the user provided correct file name.
-        dbg.dassert_file_extension(file_name, ["gz", "gzip"])
-        # Write text as a gzipped file.
-        with gzip.open(file_name, mode) as f:
-            f = f.writelines(lines)
+        # Check if user provided correct file name.
+        if not file_name.endswith(("gz", "gzip")):
+            _LOG.warning("The provided file extension is not for a gzip file.")
+        # Open gzipped file.
+        f = gzip.open(file_name, mode)
     else:
-        # Write file as text.
-        with open(file_name, mode, buffering=0 if mode == "a" else -1) as f:
-            f.writelines(lines)
+        # Open regular text file.
+        f = open(file_name, mode, buffering=0 if mode == "a" else -1)
+    # Write file contents.
+    f.writelines(lines)
+    f.close()
+    # Clear internal buffer of the file.
     if force_flush:
-        # Clear internal buffer of the file.
         f.flush()
         os.fsync(f.fileno())
 
@@ -271,7 +279,9 @@ def _raise_file_decode_error(error: Exception, file_name: str) -> None:
     raise RuntimeError(msg_as_str)
 
 
-def from_file(file_name: str, use_gzip: bool = False, encoding: Optional[Any] = None) -> str:
+def from_file(
+    file_name: str, use_gzip: bool = False, encoding: Optional[Any] = None
+) -> str:
     """
     Read contents of a file as string.
 
@@ -287,24 +297,22 @@ def from_file(file_name: str, use_gzip: bool = False, encoding: Optional[Any] = 
     # Verify that the file name exists.
     dbg.dassert_exists(file_name)
     if use_gzip:
-        # Verify that the file has correct `gzip` extension.
-        dbg.dassert_file_extension(file_name, ["gz", "gzip"])
-        # Read gzipped file.
-        with gzip.open(file_name, "rt", encoding=encoding) as f:
-            try:
-                # Read data.
-                data = f.read()
-            except UnicodeDecodeError as e:
-                # Raise unicode decode error message.
-                _raise_file_decode_error(e, file_name)
+        # Check if user provided correct file name.
+        if not file_name.endswith(("gz", "gzip")):
+            _LOG.warning("The provided file extension is not for a gzip file.")
+        # Open gzipped file.
+        f = gzip.open(file_name, "rt", encoding=encoding)
     else:
-        # Read text file.
-        with open(file_name, "r", encoding=encoding) as f:
-            try:
-                data = f.read()
-            except UnicodeDecodeError as e:
-                # Raise unicode decode error message.
-                _raise_file_decode_error(e, file_name)
+        # Open regular text file.
+        f = open(file_name, "r", encoding=encoding)
+    try:
+        # Read data.
+        data = f.read()
+    except UnicodeDecodeError as e:
+        # Raise unicode decode error message.
+        _raise_file_decode_error(e, file_name)
+    finally:
+        f.close()
     dbg.dassert_isinstance(data, str)
     return data
 

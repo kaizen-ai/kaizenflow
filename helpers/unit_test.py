@@ -510,7 +510,7 @@ class TestCase(unittest.TestCase):
             actual = purify_txt_from_client(actual)
         #
         if get_update_tests():
-            # Determine whether outcome needs to be updated
+            # Determine whether outcome needs to be updated.
             outcome_updated = False
             file_exists = os.path.exists(file_name)
             if file_exists:
