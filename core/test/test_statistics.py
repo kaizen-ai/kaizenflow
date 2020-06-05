@@ -57,6 +57,11 @@ class TestComputeMoments1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    # Smoke test for input of `np.nan`s
+    def test6(self) -> None:
+        series = pd.Series([np.nan for i in range(10)])
+        stats.compute_moments(series)
+
 
 class TestComputeFracZero1(hut.TestCase):
     @staticmethod
@@ -302,6 +307,11 @@ class TestTTest1samp1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    # Smoke test for input of `np.nan`s
+    def test4(self) -> None:
+        series = pd.Series([np.nan for i in range(10)])
+        stats.ttest_1samp(series)
+
 
 class TestMultipleTests1(hut.TestCase):
     @staticmethod
@@ -416,6 +426,11 @@ class TestApplyNormalityTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    # Smoke test for input of `np.nan`s
+    def test6(self) -> None:
+        series = pd.Series([np.nan for i in range(10)])
+        stats.apply_normality_test(series)
+
 
 class TestApplyAdfTest1(hut.TestCase):
     @staticmethod
@@ -471,6 +486,11 @@ class TestApplyAdfTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    # Smoke test for input of `np.nan`s
+    def test8(self) -> None:
+        series = pd.Series([np.nan for i in range(10)])
+        stats.apply_adf_test(series)
+
 
 class TestApplyKpssTest1(hut.TestCase):
     @staticmethod
@@ -525,6 +545,11 @@ class TestApplyKpssTest1(hut.TestCase):
         actual = stats.apply_kpss_test(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+    # Smoke test for input of `np.nan`s
+    def test8(self) -> None:
+        series = pd.Series([np.nan for i in range(10)])
+        stats.apply_kpss_test(series)
 
 
 class TestApplyLjungBoxTest1(hut.TestCase):
@@ -586,6 +611,11 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         actual = stats.apply_ljung_box_test(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+    # Smoke test for input of `np.nan`s
+    def test9(self) -> None:
+        series = pd.Series([np.nan for i in range(10)])
+        stats.apply_ljung_box_test(series)
 
 
 class TestComputeZeroNanInfStats1(hut.TestCase):
@@ -655,8 +685,14 @@ class TestCalculateHitRate1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    # Smoke test for empty input
     def test6(self) -> None:
         series = pd.Series([])
+        stats.calculate_hit_rate(series)
+
+    # Smoke test for input of `np.nan`s
+    def test7(self) -> None:
+        series = pd.Series([np.nan for i in range(10)])
         stats.calculate_hit_rate(series)
 
 
