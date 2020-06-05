@@ -800,7 +800,7 @@ def calculate_hit_rate(
     dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
     dbg.dassert_is_subset(
-        srs, [0, 1, np.nan], "Series should contain only 0s, 1s and NaNs"
+        srs.dropna(), [0, 1], "Series should contain only 0s, 1s and NaNs"
     )
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
