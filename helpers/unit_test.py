@@ -1,11 +1,12 @@
 """
 Import as:
 
-import helpers.unit_test as ut
+import helpers.unit_test as hut
 
 # TODO(gp): use hut instead of ut.
 """
 
+import collections
 import inspect
 import logging
 import os
@@ -13,7 +14,7 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, List, NoReturn, Optional, Iterable, Mapping, Union
+from typing import Any, Iterable, List, Mapping, NoReturn, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,7 +25,6 @@ import helpers.git as git
 import helpers.io_ as io_
 import helpers.printing as prnt
 import helpers.system_interaction as si
-import collections
 
 _LOG = logging.getLogger(__name__)
 
@@ -101,15 +101,20 @@ def convert_df_to_string(
         output.append(prnt.frame(title))
     # Provide context for full representation of data.
     with pd.option_context(
-                "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
-        ):
+        "display.max_colwidth",
+        int(1e6),
+        "display.max_columns",
+        None,
+        "display.max_rows",
+        None,
+    ):
         # Add top N rows.
         output.append(df.head(n_rows).to_string(index=index))
         output_str = "\n".join(output)
     return output_str
 
 
-def convert_info_to_string(info: Mapping):
+def convert_info_to_string(info: Mapping) -> str:
     """
     Convert info to string for verifying test results.
 
@@ -122,8 +127,13 @@ def convert_info_to_string(info: Mapping):
     output = []
     # Provide context for full representation of pd.Series in info.
     with pd.option_context(
-                "display.max_colwidth", int(1e6), "display.max_columns", None, "display.max_rows", None
-        ):
+        "display.max_colwidth",
+        int(1e6),
+        "display.max_columns",
+        None,
+        "display.max_rows",
+        None,
+    ):
         output.append(prnt.frame("info"))
         output.append(pprint.pformat(info))
         output_str = "\n".join(output)
@@ -153,7 +163,7 @@ def get_ordered_value_counts(column: pd.Series) -> pd.Series:
 
 
 def get_value_counts_for_columns(
-        df: pd.DataFrame, columns: Optional[Iterable] = None
+    df: pd.DataFrame, columns: Optional[Iterable] = None
 ) -> Mapping[str, pd.Series]:
     """
     Get value counts for multiple columns.
@@ -481,7 +491,11 @@ class TestCase(unittest.TestCase):
         _assert_equal(actual, expected, test_name, dir_name)
 
     def check_string(
-        self, actual: str, fuzzy_match: bool = False, purify_text: bool = True
+        self,
+        actual: str,
+        fuzzy_match: bool = False,
+        purify_text: bool = True,
+        use_gzip: bool = False,
     ) -> None:
         """
         Check the actual outcome of a test against the expected outcomes
@@ -500,24 +514,28 @@ class TestCase(unittest.TestCase):
         dbg.dassert_exists(dir_name)
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
+        if use_gzip:
+            file_name += ".gz"
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current purify.
         if purify_text:
             actual = purify_txt_from_client(actual)
         #
         if get_update_tests():
-            # Update the test result.
+            # Determine whether outcome needs to be updated.
             outcome_updated = False
             file_exists = os.path.exists(file_name)
             if file_exists:
-                # The golden outcome exists.
-                expected = io_.from_file(file_name)
+                expected = io_.from_file(file_name, use_gzip=use_gzip)
                 if expected != actual:
                     outcome_updated = True
             else:
                 # The golden outcome doesn't exist.
                 outcome_updated = True
-                io_.to_file(file_name, actual)
+            if outcome_updated:
+                # Update the test result.
+                _LOG.warning("Test outcome updated ... ")
+                io_.to_file(file_name, actual, use_gzip=use_gzip)
                 # Add to git.
                 cmd = "git add %s" % file_name
                 rc = si.system(cmd, abort_on_error=False)
@@ -526,15 +544,12 @@ class TestCase(unittest.TestCase):
                         "Can't run '%s': you need to add the file " "manually",
                         cmd,
                     )
-            if outcome_updated:
-                _LOG.warning("Test outcome updated ... ")
-                io_.to_file(file_name, actual)
         else:
             # Just check the test result.
             if os.path.exists(file_name):
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                expected = io_.from_file(file_name)
+                expected = io_.from_file(file_name, use_gzip=use_gzip)
                 test_name = self._get_test_name()
                 _assert_equal(
                     actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match

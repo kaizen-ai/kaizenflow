@@ -7,6 +7,7 @@ import helpers.io_ as io_
 """
 
 import fnmatch
+import gzip
 import logging
 import os
 import shutil
@@ -215,39 +216,103 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 
 # TODO(saggese): We should have lines first since it is an input param.
 def to_file(
-    file_name: str, lines: str, mode: str = "w", force_flush: bool = False
+    file_name: str,
+    lines: str,
+    use_gzip: bool = False,
+    mode: Optional[str] = None,
+    force_flush: bool = False,
 ) -> None:
     """
     Write the content of lines into file_name, creating the enclosing directory
     if needed.
+    :param file_name: name of written file
+    :param lines: content of the file
+    :param use_gzip: whether the file should be compressed as gzip
+    :param mode: file writing mode
+    :param force_flush: whether to forcibly clear the file buffer
     """
     # TODO(gp): create_enclosing_dir().
+    # Verify that the file name is correct.
     dbg.dassert_is_not(file_name, None)
+    dbg.dassert_ne(file_name, "")
+    # Choose default writing mode based on compression.
+    if mode is None:
+        if use_gzip:
+            mode = "wt"
+        else:
+            mode = "w"
     # dbg.dassert_in(type(file_name), (str, unicode))
     # Create the enclosing dir, if needed.
     dir_name = os.path.dirname(file_name)
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental=True)
-    with open(file_name, mode, buffering=0 if mode == "a" else -1) as f:
-        f.writelines(lines)
-        if force_flush:
-            f.flush()
-            os.fsync(f.fileno())
+    if use_gzip:
+        # Check if user provided correct file name.
+        if not file_name.endswith(("gz", "gzip")):
+            _LOG.warning("The provided file extension is not for a gzip file.")
+        # Open gzipped file.
+        f = gzip.open(file_name, mode)
+    else:
+        # Open regular text file.
+        f = open(file_name, mode, buffering=0 if mode == "a" else -1)
+    # Write file contents.
+    f.writelines(lines)
+    f.close()
+    # Clear internal buffer of the file.
+    if force_flush:
+        f.flush()
+        os.fsync(f.fileno())
 
 
-def from_file(file_name: str, encoding: Optional[Any] = None) -> str:
+def _raise_file_decode_error(error: Exception, file_name: str) -> None:
+    """
+    Raise UnicodeDecodeError with detailed error message.
+
+    :param error: raised UnicodeDecodeError
+    :param file_name: name of read file that raised the exception
+    """
+    msg = []
+    msg.append("error=%s" % error)
+    msg.append("file_name='%s'" % file_name)
+    msg_as_str = "\n".join(msg)
+    _LOG.error(msg_as_str)
+    raise RuntimeError(msg_as_str)
+
+
+def from_file(
+    file_name: str, use_gzip: bool = False, encoding: Optional[Any] = None
+) -> str:
+    """
+    Read contents of a file as string.
+
+    Use `use_gzip` flag to load a compressed file with correct extenstion.
+
+    :param file_name: path to .txt or .gz file
+    :param use_gzip: whether to decompress the archived file
+    :param encoding: encoding to use when reading the string
+    :return: contents of file as string
+    """
+    # Verify that file name is not empty.
     dbg.dassert_ne(file_name, "")
+    # Verify that the file name exists.
     dbg.dassert_exists(file_name)
-    with open(file_name, "r", encoding=encoding) as f:
-        try:
-            data = f.read()
-        except UnicodeDecodeError as e:
-            msg = []
-            msg.append("error=%s" % e)
-            msg.append("file_name='%s'" % file_name)
-            msg_as_str = "\n".join(msg)
-            _LOG.error(msg_as_str)
-            raise RuntimeError(msg_as_str)
+    if use_gzip:
+        # Check if user provided correct file name.
+        if not file_name.endswith(("gz", "gzip")):
+            _LOG.warning("The provided file extension is not for a gzip file.")
+        # Open gzipped file.
+        f = gzip.open(file_name, "rt", encoding=encoding)
+    else:
+        # Open regular text file.
+        f = open(file_name, "r", encoding=encoding)
+    try:
+        # Read data.
+        data = f.read()
+    except UnicodeDecodeError as e:
+        # Raise unicode decode error message.
+        _raise_file_decode_error(e, file_name)
+    finally:
+        f.close()
     dbg.dassert_isinstance(data, str)
     return data
 
