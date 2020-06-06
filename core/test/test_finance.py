@@ -9,6 +9,7 @@ import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
+
 class Test_compute_drawdown(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
@@ -26,4 +27,3 @@ class Test_compute_drawdown(hut.TestCase):
         actual = fin.compute_drawdown(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
-
