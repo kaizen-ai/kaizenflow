@@ -697,42 +697,87 @@ class TestCalculateHitRate1(hut.TestCase):
 
 
 class Test_compute_jensen_ratio1(hut.TestCase):
-    def test_nan_mode(self) -> None:
-        np.random.seed(42)
+    @staticmethod
+    def _get_signal(seed: int) -> pd.Series:
+        np.random.seed(seed)
         n = 1000
         signal = pd.Series(np.random.randn(n))
         signal[30:50] = np.nan
-        actual = stats.compute_jensen_ratio(
-            signal, nan_mode="ffill_and_drop_leading"
-        )
-        expected = 1.260425237446316
-        np.testing.assert_almost_equal(actual, expected)
+        return signal
+
+    def test1(self) -> None:
+        signal = self._get_signal(seed=1)
+        actual = stats.compute_jensen_ratio(signal,)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        signal = self._get_signal(seed=1)
+        actual = stats.compute_jensen_ratio(signal, p_norm=3,)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        signal = self._get_signal(seed=1)
+        signal[5:8] = np.inf
+        actual = stats.compute_jensen_ratio(signal, inf_mode="ignore",)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        signal = self._get_signal(seed=1)
+        actual = stats.compute_jensen_ratio(signal, nan_mode="ffill",)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        signal = self._get_signal(seed=1)
+        actual = stats.compute_jensen_ratio(signal, prefix="commodity_",)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input
+    def test6(self) -> None:
+        signal = pd.Series([])
+        stats.compute_jensen_ratio(signal)
 
 
 class Test_compute_forecastability1(hut.TestCase):
-    def test_welch(self) -> None:
-        np.random.seed(42)
-        n = 1000
-        signal = pd.Series(np.random.randn(n))
-        actual = stats.compute_forecastability(signal, mode="welch")
-        expected = 0.014599675035670168
-        np.testing.assert_almost_equal(actual, expected)
-
-    def test_periodogram(self) -> None:
-        np.random.seed(42)
-        n = 1000
-        signal = pd.Series(np.random.randn(n))
-        actual = stats.compute_forecastability(signal, mode="periodogram")
-        expected = 0.06319779777321788
-        np.testing.assert_almost_equal(actual, expected)
-
-    def test_nan_mode(self) -> None:
-        np.random.seed(42)
+    @staticmethod
+    def _get_signal(seed: int) -> pd.Series:
+        np.random.seed(seed)
         n = 1000
         signal = pd.Series(np.random.randn(n))
         signal[30:50] = np.nan
+        return signal
+
+    def test1(self) -> None:
+        signal = self._get_signal(seed=1)
+        actual = stats.compute_forecastability(signal,)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        signal = self._get_signal(seed=1)
+        actual = stats.compute_forecastability(signal, mode="periodogram",)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        signal = self._get_signal(seed=1)
         actual = stats.compute_forecastability(
-            signal, nan_mode="ffill_and_drop_leading"
+            signal, nan_mode="ffill_and_drop_leading",
         )
-        expected = 0.014727780099773713
-        np.testing.assert_almost_equal(actual, expected)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        signal = self._get_signal(seed=1)
+        actual = stats.compute_forecastability(signal, prefix="commodity_",)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input
+    def test5(self) -> None:
+        signal = self._get_signal(seed=1)
+        stats.compute_forecastability(signal)
