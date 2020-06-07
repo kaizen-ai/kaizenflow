@@ -782,6 +782,7 @@ def calculate_hit_rate(
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
+    mode: str = "strict",
 ) -> pd.Series:
     """
     Calculate hit rate statistics.
@@ -792,32 +793,42 @@ def calculate_hit_rate(
     :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence
         intervals calculation
     :param prefix: optional prefix for metrics' outcome
-    :return: hit rate statistics: point estimate, std, confidence intervals
+    :param mode: `strict` or `sign`. `strict` requires a series of `0`s, `1`s
+        and possibly `NaNs`; `sign` interprets positive finite numbers as hits
+    :return: hit rate statistics: point estimate, lower bound, upper bound
     """
     alpha = alpha or 0.05
     method = method or "jeffreys"
     dbg.dassert_lte(0, alpha)
     dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
-    dbg.dassert_is_subset(
-        srs.dropna(), [0, 1], "Series should contain only 0s, 1s and NaNs"
-    )
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    #
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    # Process series.
     result_index = [
         prefix + "hit_rate_point_est",
         prefix + "hit_rate_lower_bound",
         prefix + "hit_rate_upper_bound",
     ]
-    if data.empty:
+    srs = srs.replace([-np.inf, np.inf], np.nan)
+    srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
         return nan_result
-    point_estimate = data.mean()
+    if mode == "strict":
+        dbg.dassert_is_subset(
+            srs, [0, 1], "Series should contain only 0s, 1s and NaNs"
+        )
+        hit_mask = srs.copy()
+    elif mode == "sign":
+        hit_mask = srs > 0
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    # Calculate confidence intervals.
+    point_estimate = hit_mask.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=data.sum(), nobs=data.count(), alpha=alpha, method=method
+        count=hit_mask.sum(), nobs=hit_mask.count(), alpha=alpha, method=method
     )
     result_values = [point_estimate, hit_lower, hit_upper]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
