@@ -4,10 +4,12 @@ Import as:
 import core.statistics as stats
 """
 
+import collections
+import datetime
 import functools
 import logging
 import math
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -50,7 +52,7 @@ def compute_moments(
         prefix + "kurtosis",
     ]
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         n_stats = len(result_index)
         nan_result = pd.Series(
             data=[np.nan for i in range(n_stats)],
@@ -76,7 +78,7 @@ def replace_infs_with_nans(
     Replace infs with nans in a copy of `data`.
     """
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input!")
     return data.replace([np.inf, -np.inf], np.nan)
 
 
@@ -150,7 +152,7 @@ def count_num_finite_samples(data: pd.Series) -> float:
     :param data: numeric series or dataframe
     """
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", data.name)
         return np.nan
     data = data.copy()
     data = replace_infs_with_nans(data)
@@ -163,7 +165,7 @@ def count_num_unique_values(data: pd.Series) -> int:
     Count number of unique values in the series.
     """
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", data.name)
         return np.nan
     srs = pd.Series(data=data.unique())
     return count_num_finite_samples(srs)
@@ -173,7 +175,7 @@ def _compute_denominator_and_package(
     reduction: Union[float, np.ndarray],
     data: Union[pd.Series, pd.DataFrame],
     axis: Optional[float] = None,
-):
+) -> Union[float, pd.Series]:
     """
     Normalize and package `reduction` according to `axis` and `data` metadata.
 
@@ -206,20 +208,18 @@ def _compute_denominator_and_package(
     elif axis == 1:
         denom = ncols
     else:
-        raise ValueError("axis=%i", axis)
+        raise ValueError("axis=%i" % axis)
     normalized = reduction / denom
     # Return float or pd.Series as appropriate based on dimensions and axis.
     if isinstance(normalized, float):
         dbg.dassert(not axis)
         return normalized
-    else:
-        dbg.dassert_isinstance(normalized, np.ndarray)
-        if axis == 0:
-            return pd.Series(data=normalized, index=df.columns)
-        elif axis == 1:
-            return pd.Series(data=normalized, index=df.index)
-        else:
-            raise ValueError("axis=`%s` but expected to be `0` or `1`!", axis)
+    dbg.dassert_isinstance(normalized, np.ndarray)
+    if axis == 0:
+        return pd.Series(data=normalized, index=df.columns)
+    if axis == 1:
+        return pd.Series(data=normalized, index=df.index)
+    raise ValueError("axis=`%s` but expected to be `0` or `1`!" % axis)
 
 
 def compute_annualized_sharpe_ratio(
@@ -290,7 +290,7 @@ def get_rolling_splits(
 
 
 def get_oos_start_split(
-    idx: pd.Index, datetime_
+    idx: pd.Index, datetime_: Union[datetime.datetime, pd.Timestamp]
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Split index using OOS (out-of-sample) start datetime.
@@ -337,7 +337,7 @@ def get_expanding_window_splits(
     return splits
 
 
-def truncate_index(idx: pd.Index, min_idx, max_idx) -> pd.Index:
+def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
     """
     Return subset of idx with values >= min_idx and < max_idx.
     """
@@ -374,7 +374,7 @@ def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
     return composite_idx
 
 
-def convert_splits_to_string(splits):
+def convert_splits_to_string(splits: collections.OrderedDict) -> str:
     txt = "n_splits=%s\n" % len(splits)
     for train_idxs, test_idxs in splits:
         txt += "train=%s [%s, %s]" % (
@@ -425,7 +425,7 @@ def ttest_1samp(
         data=[np.nan, np.nan], index=result_index, name=srs.name
     )
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         tval, pval = sp.stats.ttest_1samp(
@@ -461,7 +461,7 @@ def multipletests(
     method = method or "fdr_bh"
     prefix = prefix or ""
     if srs.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return pd.Series([np.nan], name=prefix + "adj_pval")
     pvals_corrected = statsmodels.stats.multitest.multipletests(
         srs, method=method
@@ -469,33 +469,33 @@ def multipletests(
     return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
 
 
-# TODO(*): rewrite according to new ttest_1samp(), issued in #2631.
 def multi_ttest(
     data: pd.DataFrame,
     popmean: Optional[float] = None,
-    nan_policy: Optional[str] = None,
+    nan_mode: Optional[str] = None,
     method: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Combine ttest and multitest pvalue adjustment.
     """
+    popmean = popmean or 0
+    nan_mode = nan_mode or "ignore"
+    method = method or "fdr_bh"
     prefix = prefix or ""
     dbg.dassert_isinstance(data, pd.DataFrame)
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input!")
         return pd.DataFrame(
             [np.nan, np.nan, np.nan],
             index=[prefix + "tval", prefix + "pval", prefix + "adj_pval"],
             columns=[data.columns],
         )
-    ttest = ttest_1samp(
-        data, popmean=popmean, nan_policy=nan_policy, prefix=prefix
-    ).transpose()
-    ttest[prefix + "adj_pval"] = multipletests(
-        ttest[prefix + "pval"], method=method
-    )
-    return ttest.transpose()
+    res = data.apply(
+        ttest_1samp, popmean=popmean, nan_mode=nan_mode, prefix=prefix
+    ).T
+    res[prefix + "adj_pval"] = multipletests(res[prefix + "pval"], method=method)
+    return res
 
 
 def apply_normality_test(
@@ -523,7 +523,7 @@ def apply_normality_test(
         data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
     )
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         stat, pval = sp.stats.normaltest(data, nan_policy="raise")
@@ -582,7 +582,7 @@ def apply_adf_test(
         data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
     )
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         (
@@ -653,7 +653,7 @@ def apply_kpss_test(
         data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
     )
     if data.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         (kpss_stat, pval, lags, critical_values,) = sm.tsa.stattools.kpss(
@@ -678,7 +678,7 @@ def apply_kpss_test(
 
 def compute_zero_nan_inf_stats(
     srs: pd.Series, prefix: Optional[str] = None,
-) -> pd.Series():
+) -> pd.Series:
     """
     Calculate finite and non-finite values in time series.
 
@@ -702,7 +702,7 @@ def compute_zero_nan_inf_stats(
         data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
     )
     if srs.empty:
-        _LOG.warning("Input is empty!")
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     result_values = [
         len(srs),
@@ -753,8 +753,8 @@ def apply_ljung_box_test(
     ]
     # Make an output for empty or too short inputs.
     nan_result = pd.DataFrame([[np.nan, np.nan]], columns=columns)
-    if srs.empty:
-        _LOG.warning("Input is empty!")
+    if data.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
         result = sm.stats.diagnostic.acorr_ljungbox(
@@ -782,14 +782,15 @@ def calculate_hit_rate(
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-) -> pd.DataFrame:
+) -> pd.Series:
     """
     Calculate hit rate statistics.
 
     :param srs: pandas series of 0s, 1s and NaNs
     :param alpha: as in statsmodels.stats.proportion.proportion_confint()
     :param method: as in statsmodels.stats.proportion.proportion_confint()
-    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence intervals calculation
+    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence
+        intervals calculation
     :param prefix: optional prefix for metrics' outcome
     :return: hit rate statistics: point estimate, std, confidence intervals
     """
@@ -798,26 +799,25 @@ def calculate_hit_rate(
     dbg.dassert_lte(0, alpha)
     dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
-    cond = all(srs.isin([0, 1, np.nan]))
-    dbg.dassert(cond, msg="Series should contain only 0s, 1s and NaNs")
+    dbg.dassert_is_subset(
+        srs.dropna(), [0, 1], "Series should contain only 0s, 1s and NaNs"
+    )
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
+    #
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     result_index = [
         prefix + "hit_rate_point_est",
         prefix + "hit_rate_lower_bound",
         prefix + "hit_rate_upper_bound",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
-    )
-    if srs.empty:
+    if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
+        nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
         return nan_result
-    srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
-    point_estimate = srs.mean()
+    point_estimate = data.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=srs.sum(), nobs=srs.count(), alpha=alpha, method=method
+        count=data.sum(), nobs=data.count(), alpha=alpha, method=method
     )
     result_values = [point_estimate, hit_lower, hit_upper]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)

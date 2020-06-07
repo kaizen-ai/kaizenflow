@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
+import helpers.dataframe as hdf
 import helpers.dbg as dbg
 import helpers.printing as pri
 
@@ -360,7 +361,7 @@ def compute_kratio(rets, y_var):
     return kratio
 
 
-def _compute_drawdown(log_rets: pd.Series) -> pd.Series:
+def compute_drawdown(log_rets: pd.Series) -> pd.Series:
     r"""
     Calculate drawdown of a time series of log returns.
 
@@ -373,22 +374,15 @@ def _compute_drawdown(log_rets: pd.Series) -> pd.Series:
 
     :param log_rets: time series of log returns
     :return: drawdown time series
-
-    # TODO(Paul): Extend this to dataframes
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
-    # Keep track of maximum drawdown ending at index location i + 1.
-    sums = log_rets.dropna()
-    for i in range(sums.shape[0] - 1):
-        if sums.iloc[i] <= 0:
-            sums.iloc[i + 1] += sums.iloc[i]
-    # Correction for case where max occurs at i == j.
-    sums[sums > 0] = 0
-    # Sign normalization.
-    return -sums
+    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
+    cum_rets = log_rets.cumsum()
+    running_max = np.maximum.accumulate(cum_rets)
+    drawdown = running_max - cum_rets
+    return drawdown
 
 
-# TODO(Paul): Extend to DataFrames.
 def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     """
     Calculate drawdown in terms of percentage loss.
@@ -396,5 +390,5 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     :param log_rets: time series of log returns
     :return: drawdown time series as percentage loss
     """
-    dd = _compute_drawdown(log_rets)
+    dd = compute_drawdown(log_rets)
     return 1 - np.exp(-dd)
