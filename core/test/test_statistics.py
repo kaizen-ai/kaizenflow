@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.artificial_signal_generators as sig_gen
 import core.statistics as stats
@@ -315,10 +316,31 @@ class TestTTest1samp1(hut.TestCase):
 
 class TestMultipleTests1(hut.TestCase):
     @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
+        return series
+
     # Smoke test for empty input
-    def test1() -> None:
+    def test1(self) -> None:
         series = pd.Series([])
         stats.multipletests(series)
+
+    # Test if error is raised with default arguments when input contains NaNs
+    @pytest.mark.xfail()
+    def test2(self) -> None:
+        series_with_nans = self._get_series(1)
+        series_with_nans[0:5] = np.nan
+        actual = stats.multipletests(series_with_nans)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series_with_nans = self._get_series(1)
+        series_with_nans[0:5] = np.nan
+        actual = stats.multipletests(series_with_nans, nan_policy="ignore")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
 
 
 class TestMultiTTest1(hut.TestCase):
@@ -373,6 +395,14 @@ class TestMultiTTest1(hut.TestCase):
     def test6(self) -> None:
         df = self._get_df_of_series(1)
         actual = stats.multi_ttest(df, method="sidak")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    @pytest.mark.xfail()
+    def test7(self) -> None:
+        df = self._get_df_of_series(1)
+        df.iloc[:, 0] = np.nan
+        actual = stats.multi_ttest(df)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 

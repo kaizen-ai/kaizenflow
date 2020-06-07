@@ -443,7 +443,10 @@ def ttest_1samp(
 
 
 def multipletests(
-    srs: pd.Series, method: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    method: Optional[str] = None,
+    nan_policy: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Wrap statsmodel's multipletests.
@@ -454,15 +457,24 @@ def multipletests(
 
     :param srs: Series with pvalues
     :param method: `method` for scipy's multipletests
+    :param nan_policy: approach to deal with NaNs
     :param prefix: optional prefix for metrics' outcome
     :return: Series of adjusted p-values
     """
     dbg.dassert_isinstance(srs, pd.Series)
     method = method or "fdr_bh"
+    nan_policy = nan_policy or "raise"
     prefix = prefix or ""
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return pd.Series([np.nan], name=prefix + "adj_pval")
+    if srs.isna().any():
+        if nan_policy == "raise":
+            raise ValueError(f"NaNs detected in nan_mode `{nan_policy}`")
+        elif nan_policy == "ignore":
+            srs = srs.dropna().copy()
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{nan_policy}`")
     pvals_corrected = statsmodels.stats.multitest.multipletests(
         srs, method=method
     )[1]
