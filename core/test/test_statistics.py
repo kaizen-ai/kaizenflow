@@ -692,8 +692,15 @@ class TestCalculateHitRate1(hut.TestCase):
 
     # Smoke test for input of `np.nan`s
     def test7(self) -> None:
-        series = pd.Series([np.nan for i in range(10)])
+        series = pd.Series([np.nan] * 10)
         stats.calculate_hit_rate(series)
+
+    def test_sign1(self) -> None:
+        np.random.seed(42)
+        data = list(np.random.randn(100)) + [np.inf, np.nan]
+        series = pd.Series(data)
+        actual = stats.calculate_hit_rate(series, mode="sign")
+        self.check_string(hut.convert_df_to_string(actual, index=True))
 
 
 class Test_compute_jensen_ratio1(hut.TestCase):
