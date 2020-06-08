@@ -226,6 +226,7 @@ def to_file(
     """
     Write the content of lines into file_name, creating the enclosing directory
     if needed.
+
     :param file_name: name of written file
     :param lines: content of the file
     :param use_gzip: whether the file should be compressed as gzip
@@ -335,24 +336,30 @@ def get_size_as_str(file_name: str) -> str:
     return res
 
 
-def to_json(obj: dict, file_name: str) -> None:
+def to_json(file_name: str, obj: dict) -> None:
     """
-    Json implementation for writing to file
+    JSON implementation for writing to file
+
     :param obj: data for writing
     :param file_name: name of file
     :return:
     """
+    dir_name = os.path.dirname(file_name)
+    if dir_name != "" and not os.path.isdir(dir_name):
+        create_dir(dir_name, incremental=True)
+
     with open(file_name, "w") as outfile:
         json.dump(obj, outfile)
 
 
 def from_json(file_name: str) -> dict:
     """
-    Json implementation for reading from file
+    JSON implementation for reading from file
+
     :param file_name: name of file
-    :return:
-    Dict with data
+    :return: dict with data
     """
+    dbg.dassert_exists(file_name)
     with open(file_name, "r") as f:
         data = json.loads(f.read())
     return data
