@@ -12,6 +12,7 @@ import logging
 import os
 import shutil
 import time
+import json
 from typing import Any, List, Optional
 
 import helpers.dbg as dbg
@@ -332,3 +333,26 @@ def get_size_as_str(file_name: str) -> str:
     else:
         res = "nan"
     return res
+
+
+def to_json(obj: dict, file_name: str) -> None:
+    """
+    Json implementation for writing to file
+    :param obj: data for writing
+    :param file_name: name of file
+    :return:
+    """
+    with open(file_name, "w") as outfile:
+        json.dump(obj, outfile)
+
+
+def from_json(file_name: str) -> dict:
+    """
+    Json implementation for reading from file
+    :param file_name: name of file
+    :return:
+    Dict with data
+    """
+    with open(file_name, "r") as f:
+        data = json.loads(f.read())
+    return data
