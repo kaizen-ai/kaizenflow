@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Import as:
 
@@ -701,6 +700,8 @@ def multipletests_plot(
     :param threshold: threshold for adjusted p-values separating accepted and
         rejected hypotheses, e.g., "FWER", or family-wise error rate
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
+    :param i: row number in a column of plots in case of multiplotting, default = 0
+    :param rows: number of plots in case of multiplotting, default = 1
     """
     if i is None:
         i = 0
@@ -708,14 +709,9 @@ def multipletests_plot(
         rows = 1
     pvals = pvals.sort_values().reset_index(drop=True)
     adj_pvals = stats.multipletests(pvals, method=method)
-
-    # rows = 20
-
     gs = gridspec.GridSpec(rows, 1)
     fig = plt.figure(figsize=(10.0, 8.0 * rows))
-
     ax = fig.add_subplot(gs[i])
-
     _ = ax.plot(pvals, label="pvals", **kwargs)[0]
     ax.plot(adj_pvals, label="adj pvals", **kwargs)
     # Show min adj p-val in text.
@@ -736,11 +732,8 @@ def multipletests_plot(
     plt.axhline(threshold, ls=":", c="k")
     plt.ylim(0, 1)
     plt.legend()
-<<<<<<< HEAD
     plt.show()
-=======
     plt.title(pvals.name)
->>>>>>> 6038d7a5... PartTask2751: Changes in plotting.py multipletests_plot function, to allow multiplotting
 
 
 # #############################################################################
