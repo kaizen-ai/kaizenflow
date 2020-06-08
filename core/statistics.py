@@ -782,7 +782,7 @@ def calculate_hit_rate(
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-) -> pd.DataFrame:
+) -> pd.Series:
     """
     Calculate hit rate statistics.
 
@@ -820,5 +820,34 @@ def calculate_hit_rate(
         count=srs.sum(), nobs=srs.count(), alpha=alpha, method=method
     )
     result_values = [point_estimate, hit_lower, hit_upper]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
+
+
+def calculate_max_drawdown(
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate max drawdown statistics
+
+    :param srs: pandas series of returns
+    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence intervals calculation
+    :param prefix: optional prefix for metrics' outcome
+    :return: hit rate statistics: point estimate, std, confidence intervals
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    result_index = [prefix + "max_drawdown"]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
+    )
+    if srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    value = fin.compute_perc_loss_from_high_water_mark(srs).min()
+    result_values = [value]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
