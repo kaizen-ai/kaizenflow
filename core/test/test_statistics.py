@@ -610,3 +610,38 @@ class TestCalculateHitRate1(hut.TestCase):
     def test6(self) -> None:
         series = pd.Series([])
         stats.calculate_hit_rate(series)
+
+
+class TestCalculateMaxDrawdown1(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series(1)
+        actual = stats.calculate_max_drawdown(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_series(1)
+        actual = stats.calculate_max_drawdown(series, prefix='new')
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_series(1)
+        actual = stats.calculate_max_drawdown(series, nan_mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        series = pd.Series([])
+        stats.calculate_hit_rate(series)

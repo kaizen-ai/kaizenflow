@@ -1,0 +1,1 @@
+newmax_drawdown    0.0
