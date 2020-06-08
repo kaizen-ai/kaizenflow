@@ -12,47 +12,41 @@
 #     name: conda-env-.conda-p1_develop-py
 # ---
 
+# %% [markdown]
+# # Description
+
+# %% [markdown]
+# # Imports
+
 # %%
+# %load_ext autoreload
+# %autoreload 2
+# %matplotlib inline
+
 import jsonpickle
 
 import json
+import inspect
 import pprint
-
-def json_pretty_print(parsed):
-    """
-    Pretty print a json object.
-    """
-    if isinstance(parsed, str):
-        parsed = json.loads(parsed)
-    #ret = pprint.pformat(parsed)
-    ret = json.dumps(parsed, indent=4, sort_keys=True)
-    return ret
 
 import jsonpickle.ext.pandas as jsonpickle_pandas
 jsonpickle_pandas.register_handlers()
 
+import logging
+import pandas as pd
+
+import helpers.dbg as dbg
+import helpers.env as env
+import helpers.playback as plbck
+
 # %%
-import inspect
+dbg.init_logger(verbosity=logging.INFO)
 
-def round_trip(obj):
-    print("obj=\n", obj)
-    frozen = jsonpickle.encode(obj)
-    #
-    print("frozen=")
-    print(json_pretty_print(frozen))
-    #
-    obj2 = jsonpickle.decode(frozen)
-    print("obj2=\n", obj2)
-    print("class=%s" % type(obj))
-    if str(type(obj)).startswith("<class '"):
-        pass
-    else:
-        if isinstance(obj, pd.DataFrame):
-            assert obj.equals(obj2)
-        else:
-            assert obj == obj2
-    return obj2
+_LOG = logging.getLogger(__name__)
 
+_LOG.info("%s", env.get_system_signature()[0])
+
+prnt.config_notebook()
 
 # %%
 import pandas as pd
@@ -67,7 +61,10 @@ df.index.name = "hello"
 print(df)
 
 # %%
-round_trip(3)
+plbck.round_trip_convert(df, logging.INFO)
+
+# %%
+plbck.round_trip_convert("hello", logging.INFO)
 
 
 # %%
