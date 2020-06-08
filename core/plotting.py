@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Import as:
 
@@ -19,6 +20,7 @@ import sklearn.decomposition as skldec
 import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
+from matplotlib import gridspec
 
 import core.explore as expl
 import core.statistics as stats
@@ -688,6 +690,8 @@ def multipletests_plot(
     pvals: pd.Series,
     threshold: float,
     method: Optional[str] = None,
+    i: Optional[int] = None,
+    rows: Optional[int] = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -698,14 +702,26 @@ def multipletests_plot(
         rejected hypotheses, e.g., "FWER", or family-wise error rate
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     """
+    if i is None:
+        i = 0
+    if rows is None:
+        rows = 1
     pvals = pvals.sort_values().reset_index(drop=True)
     adj_pvals = stats.multipletests(pvals, method=method)
-    _ = plt.plot(pvals, label="pvals", **kwargs)[0]
-    plt.plot(adj_pvals, label="adj pvals", **kwargs)
+
+    # rows = 20
+
+    gs = gridspec.GridSpec(rows, 1)
+    fig = plt.figure(figsize=(10.0, 8.0 * rows))
+
+    ax = fig.add_subplot(gs[i])
+
+    _ = ax.plot(pvals, label="pvals", **kwargs)[0]
+    ax.plot(adj_pvals, label="adj pvals", **kwargs)
     # Show min adj p-val in text.
     min_adj_pval = adj_pvals[0]
-    plt.text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
-    plt.text(
+    ax.text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
+    ax.text(
         0.1,
         0.6,
         weight="bold",
@@ -720,7 +736,11 @@ def multipletests_plot(
     plt.axhline(threshold, ls=":", c="k")
     plt.ylim(0, 1)
     plt.legend()
+<<<<<<< HEAD
     plt.show()
+=======
+    plt.title(pvals.name)
+>>>>>>> 6038d7a5... PartTask2751: Changes in plotting.py multipletests_plot function, to allow multiplotting
 
 
 # #############################################################################
