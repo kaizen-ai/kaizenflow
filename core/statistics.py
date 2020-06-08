@@ -830,10 +830,10 @@ def calculate_max_drawdown(
     """
     Calculate max drawdown statistics
 
-    :param srs: pandas series of returns
-    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence intervals calculation
+    :param srs: pandas series of log returns
+    :param nan_mode: argument for hdf.apply_nan_mode(),
     :param prefix: optional prefix for metrics' outcome
-    :return: hit rate statistics: point estimate, std, confidence intervals
+    :return: max drawdown
     """
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
