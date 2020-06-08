@@ -463,22 +463,16 @@ def multipletests(
     """
     dbg.dassert_isinstance(srs, pd.Series)
     method = method or "fdr_bh"
-    nan_policy = nan_policy or "raise"
+    nan_policy = nan_policy or "strict"
     prefix = prefix or ""
-    if srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_policy)
+    if data.empty:
+        _LOG.warning("Empty input series `%s`", data.name)
         return pd.Series([np.nan], name=prefix + "adj_pval")
-    if srs.isna().any():
-        if nan_policy == "raise":
-            raise ValueError(f"NaNs detected in nan_mode `{nan_policy}`")
-        elif nan_policy == "ignore":
-            srs = srs.dropna().copy()
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{nan_policy}`")
     pvals_corrected = statsmodels.stats.multitest.multipletests(
-        srs, method=method
+        data, method=method
     )[1]
-    return pd.Series(pvals_corrected, index=srs.index, name=prefix + "adj_pval")
+    return pd.Series(pvals_corrected, index=data.index, name=prefix + "adj_pval")
 
 
 def multi_ttest(

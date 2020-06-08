@@ -24,13 +24,13 @@ class TestComputeMoments1(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.compute_moments(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.compute_moments(series, prefix="moments_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
@@ -41,7 +41,7 @@ class TestComputeMoments1(hut.TestCase):
         stats.compute_moments(series)
 
     def test4(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         # Place some `NaN` values in the series
         series[:5] = np.nan
         series[8:10] = np.nan
@@ -50,7 +50,7 @@ class TestComputeMoments1(hut.TestCase):
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         # Place some `NaN` values in the series
         series[:5] = np.nan
         series[8:10] = np.nan
@@ -88,7 +88,7 @@ class TestComputeFracZero1(hut.TestCase):
         data = [0.466667, 0.2, 0.13333, 0.2, 0.33333]
         index = [0, 1, 2, 3, 4]
         expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_zero(self._get_df(1))
+        actual = stats.compute_frac_zero(self._get_df(seed=1))
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test2(self) -> None:
@@ -111,23 +111,23 @@ class TestComputeFracZero1(hut.TestCase):
         ]
         index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
         expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_zero(self._get_df(1), axis=1)
+        actual = stats.compute_frac_zero(self._get_df(seed=1), axis=1)
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test3(self) -> None:
         # Equals 20 / 75 = num_zeros / num_points.
         expected = 0.266666
-        actual = stats.compute_frac_zero(self._get_df(1), axis=None)
+        actual = stats.compute_frac_zero(self._get_df(seed=1), axis=None)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test4(self) -> None:
-        series = self._get_df(1)[0]
+        series = self._get_df(seed=1)[0]
         expected = 0.466667
         actual = stats.compute_frac_zero(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test5(self) -> None:
-        series = self._get_df(1)[0]
+        series = self._get_df(seed=1)[0]
         expected = 0.466667
         actual = stats.compute_frac_zero(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
@@ -162,7 +162,7 @@ class TestComputeFracNan1(hut.TestCase):
         data = [0.4, 0.133333, 0.133333, 0.133333, 0.2]
         index = [0, 1, 2, 3, 4]
         expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_nan(self._get_df(1))
+        actual = stats.compute_frac_nan(self._get_df(seed=1))
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test2(self) -> None:
@@ -185,23 +185,23 @@ class TestComputeFracNan1(hut.TestCase):
         ]
         index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
         expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_nan(self._get_df(1), axis=1)
+        actual = stats.compute_frac_nan(self._get_df(seed=1), axis=1)
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test3(self) -> None:
         # Equals 15 / 75 = num_nans / num_points.
         expected = 0.2
-        actual = stats.compute_frac_nan(self._get_df(1), axis=None)
+        actual = stats.compute_frac_nan(self._get_df(seed=1), axis=None)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test4(self) -> None:
-        series = self._get_df(1)[0]
+        series = self._get_df(seed=1)[0]
         expected = 0.4
         actual = stats.compute_frac_nan(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test5(self) -> None:
-        series = self._get_df(1)[0]
+        series = self._get_df(seed=1)[0]
         expected = 0.4
         actual = stats.compute_frac_nan(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
@@ -234,11 +234,11 @@ class TestComputeFracConstant1(hut.TestCase):
         data = [0.357143, 0.5, 0.285714, 0.285714, 0.071429]
         index = [0, 1, 2, 3, 4]
         expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_constant(self._get_df(1))
+        actual = stats.compute_frac_constant(self._get_df(seed=1))
         pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
 
     def test2(self) -> None:
-        series = self._get_df(1)[0]
+        series = self._get_df(seed=1)[0]
         expected = 0.357143
         actual = stats.compute_frac_constant(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
@@ -291,7 +291,7 @@ class TestTTest1samp1(hut.TestCase):
         stats.ttest_1samp(series)
 
     def test2(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         # Place some `NaN` values in the series
         series[:5] = np.nan
         series[8:10] = np.nan
@@ -300,7 +300,7 @@ class TestTTest1samp1(hut.TestCase):
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         # Place some `NaN` values in the series
         series[:5] = np.nan
         series[8:10] = np.nan
@@ -329,14 +329,14 @@ class TestMultipleTests1(hut.TestCase):
     # Test if error is raised with default arguments when input contains NaNs
     @pytest.mark.xfail()
     def test2(self) -> None:
-        series_with_nans = self._get_series(1)
+        series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
         actual = stats.multipletests(series_with_nans)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        series_with_nans = self._get_series(1)
+        series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
         actual = stats.multipletests(series_with_nans, nan_policy="ignore")
         actual_string = hut.convert_df_to_string(actual, index=True)
@@ -369,38 +369,38 @@ class TestMultiTTest1(hut.TestCase):
         stats.multi_ttest(df)
 
     def test2(self) -> None:
-        df = self._get_df_of_series(1)
+        df = self._get_df_of_series(seed=1)
         actual = stats.multi_ttest(df)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        df = self._get_df_of_series(1)
+        df = self._get_df_of_series(seed=1)
         actual = stats.multi_ttest(df, prefix="multi_ttest_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
-        df = self._get_df_of_series(1)
+        df = self._get_df_of_series(seed=1)
         actual = stats.multi_ttest(df, popmean=1)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        df = self._get_df_of_series(1)
+        df = self._get_df_of_series(seed=1)
         actual = stats.multi_ttest(df, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test6(self) -> None:
-        df = self._get_df_of_series(1)
+        df = self._get_df_of_series(seed=1)
         actual = stats.multi_ttest(df, method="sidak")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     @pytest.mark.xfail()
     def test7(self) -> None:
-        df = self._get_df_of_series(1)
+        df = self._get_df_of_series(seed=1)
         df.iloc[:, 0] = np.nan
         actual = stats.multi_ttest(df)
         actual_string = hut.convert_df_to_string(actual, index=True)
@@ -420,13 +420,13 @@ class TestApplyNormalityTest1(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_normality_test(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_normality_test(series, prefix="norm_test_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
@@ -437,7 +437,7 @@ class TestApplyNormalityTest1(hut.TestCase):
         stats.apply_normality_test(series)
 
     def test4(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         # Place some `NaN` values in the series
         series[:5] = np.nan
         series[8:10] = np.nan
@@ -446,7 +446,7 @@ class TestApplyNormalityTest1(hut.TestCase):
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         # Place some `NaN` values in the series
         series[:5] = np.nan
         series[8:10] = np.nan
@@ -475,31 +475,31 @@ class TestApplyAdfTest1(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_adf_test(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_adf_test(series, regression="ctt")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_adf_test(series, maxlag=5)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_adf_test(series, autolag="t-stat")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_adf_test(series, prefix="adf_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
@@ -510,7 +510,7 @@ class TestApplyAdfTest1(hut.TestCase):
         stats.apply_adf_test(series)
 
     def test7(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         series[3:5] = np.nan
         actual = stats.apply_adf_test(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
@@ -535,31 +535,31 @@ class TestApplyKpssTest1(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_kpss_test(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_kpss_test(series, regression="ct")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_kpss_test(series, nlags="auto")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_kpss_test(series, nlags=5)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_kpss_test(series, prefix="kpss_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
@@ -570,7 +570,7 @@ class TestApplyKpssTest1(hut.TestCase):
         stats.apply_kpss_test(series)
 
     def test7(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         series[3:5] = np.nan
         actual = stats.apply_kpss_test(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
@@ -595,37 +595,37 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_ljung_box_test(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_ljung_box_test(series, lags=3)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_ljung_box_test(series, model_df=3)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_ljung_box_test(series, period=5)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_ljung_box_test(series, prefix="lb_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test6(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         actual = stats.apply_ljung_box_test(series, return_df=False)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
@@ -636,7 +636,7 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         stats.apply_ljung_box_test(series)
 
     def test8(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         series[3:5] = np.nan
         actual = stats.apply_ljung_box_test(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
@@ -665,13 +665,13 @@ class TestComputeZeroNanInfStats1(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        series = self._get_messy_series(1)
+        series = self._get_messy_series(seed=1)
         actual = stats.compute_zero_nan_inf_stats(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        series = self._get_messy_series(1)
+        series = self._get_messy_series(seed=1)
         actual = stats.compute_zero_nan_inf_stats(series, prefix="data_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
