@@ -794,6 +794,7 @@ def calculate_hit_rate(
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
+    mode: str = "strict",
 ) -> pd.Series:
     """
     Calculate hit rate statistics.
@@ -804,32 +805,42 @@ def calculate_hit_rate(
     :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence
         intervals calculation
     :param prefix: optional prefix for metrics' outcome
-    :return: hit rate statistics: point estimate, std, confidence intervals
+    :param mode: `strict` or `sign`. `strict` requires a series of `0`s, `1`s
+        and possibly `NaNs`; `sign` interprets positive finite numbers as hits
+    :return: hit rate statistics: point estimate, lower bound, upper bound
     """
     alpha = alpha or 0.05
     method = method or "jeffreys"
     dbg.dassert_lte(0, alpha)
     dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
-    dbg.dassert_is_subset(
-        srs.dropna(), [0, 1], "Series should contain only 0s, 1s and NaNs"
-    )
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    #
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    # Process series.
     result_index = [
         prefix + "hit_rate_point_est",
         prefix + "hit_rate_lower_bound",
         prefix + "hit_rate_upper_bound",
     ]
-    if data.empty:
+    srs = srs.replace([-np.inf, np.inf], np.nan)
+    srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
         return nan_result
-    point_estimate = data.mean()
+    if mode == "strict":
+        dbg.dassert_is_subset(
+            srs, [0, 1], "Series should contain only 0s, 1s and NaNs"
+        )
+        hit_mask = srs.copy()
+    elif mode == "sign":
+        hit_mask = srs > 0
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    # Calculate confidence intervals.
+    point_estimate = hit_mask.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=data.sum(), nobs=data.count(), alpha=alpha, method=method
+        count=hit_mask.sum(), nobs=hit_mask.count(), alpha=alpha, method=method
     )
     result_values = [point_estimate, hit_lower, hit_upper]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
@@ -841,7 +852,8 @@ def compute_jensen_ratio(
     p_norm: float = 2,
     inf_mode: Optional[str] = None,
     nan_mode: Optional[str] = None,
-) -> float:
+    prefix: Optional[str] = None,
+) -> pd.Series:
     """
     Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
 
@@ -873,19 +885,23 @@ def compute_jensen_ratio(
     # should not expect a finite value in the continuous limit.
     dbg.dassert(np.isfinite(p_norm))
     # Set reasonable defaults for inf and nan modes.
-    if inf_mode is None:
-        inf_mode = "return_nan"
+    inf_mode = inf_mode or "return_nan"
     nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
+    nan_result = pd.Series(
+        data=[np.nan], index=[prefix + "jensen_ratio"], name=signal.name
+    )
     dbg.dassert(not data.isna().any())
     # Handle infs.
+    # TODO(*): apply special functions for inf_mode after #2624 is completed.
     has_infs = (~data.apply(np.isfinite)).any()
     if has_infs:
         if inf_mode == "return_nan":
             # According to a strict interpretation, each norm is infinite, and
             # and so their quotient is undefined.
-            return np.nan
-        if inf_mode == "ignore":
+            return nan_result
+        elif inf_mode == "ignore":
             # Replace inf values with np.nan and drop.
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
         else:
@@ -893,18 +909,26 @@ def compute_jensen_ratio(
     dbg.dassert(data.apply(np.isfinite).all())
     # Return NaN if there is no data.
     if data.size == 0:
-        return np.nan
+        _LOG.warning("Empty input signal `%s`", signal.name)
+        return nan_result
     # Calculate norms.
     lp = sp.linalg.norm(data, ord=p_norm)
     l1 = sp.linalg.norm(data, ord=1)
     # Ignore support where `signal` has NaNs.
     scaled_support = data.size ** (1 - 1 / p_norm)
-    return scaled_support * lp / l1
+    jensen_ratio = scaled_support * lp / l1
+    res = pd.Series(
+        data=[jensen_ratio], index=[prefix + "jensen_ratio"], name=signal.name
+    )
+    return res
 
 
 def compute_forecastability(
-    signal: pd.Series, mode: str = "welch", nan_mode: Optional[str] = None
-) -> float:
+    signal: pd.Series,
+    mode: str = "welch",
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
     r"""
     Compute frequency-domain-based "forecastability" of signal.
 
@@ -925,17 +949,27 @@ def compute_forecastability(
     """
     dbg.dassert_isinstance(signal, pd.Series)
     nan_mode = nan_mode or "fill_with_zero"
-    signal = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
+    prefix = prefix or ""
+    data = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
     # Return NaN if there is no data.
-    if signal.size == 0:
-        return np.nan
+    if data.size == 0:
+        _LOG.warning("Empty input signal `%s`", signal.name)
+        nan_result = pd.Series(
+            data=[np.nan], index=[prefix + "forecastability"], name=signal.name
+        )
+        return nan_result
     if mode == "welch":
-        _, psd = sp.signal.welch(signal)
+        _, psd = sp.signal.welch(data)
     elif mode == "periodogram":
         # TODO(Paul): Maybe log a warning about inconsistency of periodogram
         #     for estimating power spectral density.
-        _, psd = sp.signal.periodogram(signal)
+        _, psd = sp.signal.periodogram(data)
     else:
         raise ValueError("Unsupported mode=`%s`" % mode)
     forecastability = 1 - sp.stats.entropy(psd, base=psd.size)
-    return forecastability
+    res = pd.Series(
+        data=[forecastability],
+        index=[prefix + "forecastability"],
+        name=signal.name,
+    )
+    return res
