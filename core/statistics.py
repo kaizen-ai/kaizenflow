@@ -445,7 +445,7 @@ def ttest_1samp(
 def multipletests(
     srs: pd.Series,
     method: Optional[str] = None,
-    nan_policy: Optional[str] = None,
+    nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
@@ -457,15 +457,16 @@ def multipletests(
 
     :param srs: Series with pvalues
     :param method: `method` for scipy's multipletests
-    :param nan_policy: approach to deal with NaNs
+    :param nan_mode: approach to deal with NaNs, can be "strict" or "ignore"
     :param prefix: optional prefix for metrics' outcome
     :return: Series of adjusted p-values
     """
     dbg.dassert_isinstance(srs, pd.Series)
     method = method or "fdr_bh"
-    nan_policy = nan_policy or "strict"
+    nan_mode = nan_mode or "strict"
+    dbg.dassert_in(nan_mode, ["strict", "ignore"])
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_policy)
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
         return pd.Series([np.nan], name=prefix + "adj_pval")

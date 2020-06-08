@@ -338,7 +338,7 @@ class TestMultipleTests1(hut.TestCase):
     def test3(self) -> None:
         series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
-        actual = stats.multipletests(series_with_nans, nan_policy="ignore")
+        actual = stats.multipletests(series_with_nans, nan_mode="ignore")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
