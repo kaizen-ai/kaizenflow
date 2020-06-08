@@ -847,7 +847,9 @@ def calculate_max_drawdown(
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
-    value = fin.compute_perc_loss_from_high_water_mark(srs).min()
+    max = fin.compute_perc_loss_from_high_water_mark(srs).argmax()
+    srs = fin._compute_drawdown(srs)
+    value = srs[max]
     result_values = [value]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
