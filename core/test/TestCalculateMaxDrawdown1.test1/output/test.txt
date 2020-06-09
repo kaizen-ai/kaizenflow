@@ -1,1 +1,2 @@
-max_drawdown    26.887216
+              arma(2,2)
+max_drawdown        0.0

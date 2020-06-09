@@ -1,1 +1,2 @@
-newmax_drawdown    26.887216
+                 arma(2,2)
+newmax_drawdown        0.0
