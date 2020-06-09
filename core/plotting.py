@@ -701,6 +701,8 @@ def multipletests_plot(
         rejected hypotheses, e.g., "FWER", or family-wise error rate
     :param cols_num: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
+    :param i: row number in a column of plots in case of multiplotting, default = 0
+    :param rows: number of plots in case of multiplotting, default = 1
     """
     if isinstance(pvals, pd.Series):
         pvals = pvals.to_frame()
