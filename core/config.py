@@ -118,8 +118,12 @@ class Config:
                 txt.append("%s: %s" % (k, v))
         ret = "\n".join(txt)
         # Remove memory locations of functions, if config contains them, e.g.,
-        # `function _filter_relevance at 0x7fe4e35b1a70`.
-        memory_loc_pattern = r"(<function \w+) at \dx\w+"
+        # `<function _filter_relevance at 0x7fe4e35b1a70>`.
+        memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
+        ret = re.sub(memory_loc_pattern, r"\1", ret)
+        # Remove memory locations of objects, if config contains them, e.g.,
+        # "<dataflow_p1.task2538_pipeline.ArPredictorBuilder object at 0x7f7c7991d390>"
+        memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
         ret = re.sub(memory_loc_pattern, r"\1", ret)
         return ret
 

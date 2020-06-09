@@ -827,6 +827,10 @@ def compute_jensen_ratio(
 ) -> pd.Series:
     """
     Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     Definition and derivation:
       - The result is the p-th root of the expectation of the p-th power of
         abs(f), divided by the expectation of abs(f). If we apply Jensen's
@@ -835,6 +839,10 @@ def compute_jensen_ratio(
       - An alternative derivation is to apply Holder's inequality to `signal`,
         using the constant function `1` on the support of the `signal` as the
         2nd function.
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     Interpretation:
       - If we apply this function to returns in the case where the expected
         value of returns is 0 and we take p_norm = 2, then the result of this
@@ -900,8 +908,16 @@ def compute_forecastability(
 ) -> pd.Series:
     r"""
     Compute frequency-domain-based "forecastability" of signal.
+<<<<<<< HEAD
     Reference: https://arxiv.org/abs/1205.4591
     `signal` is assumed to be second-order stationary.
+=======
+
+    Reference: https://arxiv.org/abs/1205.4591
+
+    `signal` is assumed to be second-order stationary.
+
+>>>>>>> master
     Denote the forecastability estimator by \Omega(\cdot).
     Let x_t, y_t be time series. Properties of \Omega include:
     a) \Omega(y_t) = 0 iff y_t is white noise

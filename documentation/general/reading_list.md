@@ -10,6 +10,17 @@
 - Let's keep this reading list short (e.g., one / two books per topic) with
   really the best of the best
 
+# Git
+
+- A [short tutorial](https://git-scm.com/docs/gittutorial)
+
+- [Pro Git book](https://git-scm.com/book/en/v2)
+  - To achieve mastery
+
+# Bash / Linux
+
+- A [short tutorial](https://www.usenix.org/sites/default/files/conference/protected-files/lisa19_maheshwari.pdf)
+
 # Coding
 
 - [The Pragmatic Programmer](https://www.amazon.com/Pragmatic-Programmer-Journeyman-Master/dp/020161622X)
