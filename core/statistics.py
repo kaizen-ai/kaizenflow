@@ -945,21 +945,18 @@ def calculate_max_drawdown(
     srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate max drawdown statistics
+    Calculate max drawdown statistics.
 
-    :param srs: pandas series of returns
-    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence intervals calculation
+    :param srs: pandas series of log returns
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
-    :return: hit rate statistics: point estimate, std, confidence intervals
+    :return: max drawdown
     """
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     result_index = [prefix + "max_drawdown"]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
-    )
+    nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
