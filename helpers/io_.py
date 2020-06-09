@@ -338,7 +338,7 @@ def get_size_as_str(file_name: str) -> str:
 
 def to_json(file_name: str, obj: dict) -> None:
     """
-    JSON implementation for writing to file
+    Write an object into a JSON file.
 
     :param obj: data for writing
     :param file_name: name of file
@@ -349,12 +349,12 @@ def to_json(file_name: str, obj: dict) -> None:
         create_dir(dir_name, incremental=True)
 
     with open(file_name, "w") as outfile:
-        json.dump(obj, outfile)
+        json.dump(obj, outfile, indent=4)
 
 
 def from_json(file_name: str) -> dict:
     """
-    JSON implementation for reading from file
+    Read object from JSON file.
 
     :param file_name: name of file
     :return: dict with data
