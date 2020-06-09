@@ -20,7 +20,7 @@ import sklearn.decomposition as skldec
 import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
-from matplotlib import gridspec
+import matplotlib.gridspec as gridspec
 
 import core.explore as expl
 import core.statistics as stats
@@ -47,7 +47,7 @@ _DATETIME_TYPES = [
 ]
 
 
-# #############################################################################
+###############################################################################
 # General dataframe plotting helpers
 # #############################################################################
 
@@ -158,7 +158,7 @@ def plot_categories_count(
     plt.show()
 
 
-# #############################################################################
+###############################################################################
 # Time series plotting
 # #############################################################################
 
@@ -355,7 +355,7 @@ def plot_spectrum(
         # ax2.set_xlabel("Time window")
 
 
-# #############################################################################
+###############################################################################
 # Correlation-type plots
 # #############################################################################
 
@@ -646,7 +646,7 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-# #############################################################################
+###############################################################################
 # Eval metrics plots
 # #############################################################################
 
@@ -687,11 +687,10 @@ def plot_confusion_heatmap(
 
 
 def multipletests_plot(
-    pvals: pd.Series,
+    pvals: Union[pd.Series, pd.DataFrame],
     threshold: float,
+    cols_num: Optional[int] = None,
     method: Optional[str] = None,
-    i: Optional[int] = None,
-    rows: Optional[int] = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -700,50 +699,51 @@ def multipletests_plot(
     :param pvals: unadjusted p-values
     :param threshold: threshold for adjusted p-values separating accepted and
         rejected hypotheses, e.g., "FWER", or family-wise error rate
+    :param cols_num: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     """
-    if i is None:
-        i = 0
-    if rows is None:
-        rows = 1
-    pvals = pvals.sort_values().reset_index(drop=True)
-    adj_pvals = stats.multipletests(pvals, method=method)
-
-    # rows = 20
-
-    gs = gridspec.GridSpec(rows, 1)
-    fig = plt.figure(figsize=(10.0, 8.0 * rows))
-
-    ax = fig.add_subplot(gs[i])
-
-    _ = ax.plot(pvals, label="pvals", **kwargs)[0]
-    ax.plot(adj_pvals, label="adj pvals", **kwargs)
-    # Show min adj p-val in text.
-    min_adj_pval = adj_pvals[0]
-    ax.text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
-    ax.text(
-        0.1,
-        0.6,
-        weight="bold",
-        fontsize=20,
-        **(
-            {"s": "PASS", "color": "g"}
-            if min_adj_pval <= threshold
-            else {"s": "FAIL", "color": "r"}
-        ),
-    )
-    # TODO(*): Force x-ticks at integers.
-    plt.axhline(threshold, ls=":", c="k")
-    plt.ylim(0, 1)
-    plt.legend()
-<<<<<<< HEAD
+    if isinstance(pvals, pd.Series):
+        pvals = pvals.to_frame()
+    if cols_num == None:
+        cols_num = 1
+    rows = len(pvals.columns) // cols_num + 1
+    fig = plt.figure(figsize=(10.0*cols_num, 8.0*rows))
+    gs = gridspec.GridSpec(rows, cols_num)
+    for i, col in enumerate(pvals.columns):
+        if cols_num > 1:
+            j = i % cols_num
+            i = i//cols_num
+        else:
+            j = 0
+        pval_series = pvals[col]
+        pval_series = pval_series.dropna()
+        pval_series = pval_series.sort_values().reset_index(drop=True)
+        adj_pvals = stats.multipletests(pval_series, method=method)
+        ax = plt.subplot(gs[i, j])
+        _ = ax.plot(pval_series, label="pvals", **kwargs)[0]
+        ax.plot(adj_pvals, label="adj pvals", **kwargs)
+        # Show min adj p-val in text.
+        min_adj_pval = adj_pvals[0]
+        ax.text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
+        ax.text(
+            0.1,
+            0.6,
+            weight="bold",
+            fontsize=20,
+            **(
+                {"s": "PASS", "color": "g"}
+                if min_adj_pval <= threshold
+                else {"s": "FAIL", "color": "r"}
+            ),
+        )
+        ax.set_title(pval_series.name)
+        ax.axhline(threshold, ls=":", c="k")
+        ax.set_ylim(0, 1)
+        ax.legend()
+        fig.add_subplot(ax)
     plt.show()
-=======
-    plt.title(pvals.name)
->>>>>>> 6038d7a5... PartTask2751: Changes in plotting.py multipletests_plot function, to allow multiplotting
 
-
-# #############################################################################
+###############################################################################
 # Data count plots.
 # #############################################################################
 
@@ -876,7 +876,7 @@ def plot_barplot(
     plt.show()
 
 
-# #############################################################################
+###############################################################################
 # General plotting helpers
 # #############################################################################
 
