@@ -931,10 +931,6 @@ def compute_forecastability(
 
     `signal` is assumed to be second-order stationary.
 
-    Reference: https://arxiv.org/abs/1205.4591
-
-    `signal` is assumed to be second-order stationary.
-
     Denote the forecastability estimator by \Omega(\cdot).
     Let x_t, y_t be time series. Properties of \Omega include:
     a) \Omega(y_t) = 0 iff y_t is white noise
@@ -994,7 +990,8 @@ def calculate_max_drawdown(
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
-    max_perc_loss = -fin.compute_perc_loss_from_high_water_mark(srs).max()
+    max_perc_loss = fin.compute_perc_loss_from_high_water_mark(srs).max()
+    max_perc_loss = -(max_perc_loss*100)
     result_values = [max_perc_loss]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
