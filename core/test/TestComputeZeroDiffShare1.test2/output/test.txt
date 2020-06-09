@@ -1,0 +1,2 @@
+                 arma(2,2)
+zero_diff_share   0.558824

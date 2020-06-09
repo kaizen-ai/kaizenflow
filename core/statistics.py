@@ -9,7 +9,7 @@ import datetime
 import functools
 import logging
 import math
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -968,3 +968,103 @@ def compute_forecastability(
         name=signal.name,
     )
     return res
+
+
+def compute_zero_diff_share(
+    srs: pd.Series,
+    atol: Optional[float] = None,
+    rtol: Optional[float] = None,
+    equal_nan: Optional[bool] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute share of unvarying periods in a series.
+
+    https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
+
+    :param srs: pandas series of floats
+    :param atol: as in numpy.isclose
+    :param rtol: as in numpy.isclose
+    :param equal_nan: as in numpy.isclose
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: series with share of unvarying periods
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    atol = atol or 0
+    rtol = rtol or 1e-05
+    equal_nan = equal_nan or False
+    if not equal_nan:
+        nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    # Return NaN if there is no data.
+    nan_result = pd.Series(
+        data=[np.nan], index=[prefix + "zero_diff_share"], name=srs.name
+    )
+    if data.size == 0:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    try:
+        # Compute if neighbouring elements are equal within the given tolerance
+        equal_ngb_srs = np.isclose(
+            data, data.shift(1), atol=atol, rtol=rtol, equal_nan=equal_nan,
+        )
+        # Compute share of equal pairs among all neighbours pairs
+        n_equal = equal_ngb_srs.sum()
+        n_pairs = data.shape[0] - 1
+        result = n_equal / n_pairs
+    except ValueError as inst:
+        _LOG.warning(inst)
+        return nan_result
+    #
+    res = pd.Series(
+        data=[result], index=[prefix + "zero_diff_share"], name=srs.name,
+    )
+    return res
+
+
+def compute_interarrival_time_stats(
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> Dict:
+    """
+    Compute statistics about interarrival time of a series.
+
+    :param srs: pandas series of floats
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: Dict with statistic and related info
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    res_dict_base = {
+        prefix + "n_unique": None,
+        prefix + "mean": None,
+        prefix + "max": None,
+        prefix + "min": None,
+        prefix + "std": None,
+        prefix + "value_counts": None,
+    }
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    if data.empty:
+        _LOG.warning("Empty input `%s`", srs.name)
+        return res_dict_base
+    # Compute interrarival time in data index to compute stats
+    index_series = pd.Series(data.index)
+    interrarival_series = index_series.diff()
+    try:
+        res_dict_base[prefix + "n_unique"] = interrarival_series.nunique()
+        res_dict_base[prefix + "mean"] = interrarival_series.mean()
+        res_dict_base[prefix + "max"] = interrarival_series.max()
+        res_dict_base[prefix + "min"] = interrarival_series.min()
+        res_dict_base[prefix + "std"] = interrarival_series.std()
+        res_dict_base[
+            prefix + "value_counts"
+        ] = interrarival_series.value_counts()
+    except ValueError as inst:
+        _LOG.warning(inst)
+        return res_dict_base
+    result = res_dict_base
+    return result
