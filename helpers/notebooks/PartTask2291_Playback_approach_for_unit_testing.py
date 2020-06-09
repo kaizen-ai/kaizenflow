@@ -37,6 +37,7 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.env as env
+import helpers.printing as prnt
 import helpers.playback as plbck
 
 # %%
@@ -61,10 +62,62 @@ df.index.name = "hello"
 print(df)
 
 # %%
+#df.to_json(orient="")
+df.to_dict(orient="series")
+
+# %%
+plbck.to_python_code(df)
+
+# %%
+pd.DataFrame.from_dict({'Product': ['Desktop Computer', 'Tablet', 'iPhone', 'Laptop'], 'Price': [700, 250, 800, 1200]})
+
+# %%
+use_playback = True
+def F(a, b):
+    if use_playback:
+        playback = plbck.Playback("assert_equal", "F", a, b)
+        playback.start()
+    c = a + b
+    if use_playback:
+        output = playback.end(c)
+        res = output
+    else:
+        res = c
+    return res
+
+
+a = df
+b = df
+print(F(a,b))
+
+# %%
+plbck.to_python_code(["3", 3])
+
+# %%
 plbck.round_trip_convert(df, logging.INFO)
 
 # %%
 plbck.round_trip_convert("hello", logging.INFO)
+
+
+# %%
+def F(a, b):
+    return a + b
+
+
+# %%
+# Initialize values for unit test.
+dummy_0 = r'3'
+dummy_0 = jsonpickle.decode(dummy_0)
+dummy_1 = r'2'
+dummy_1 = jsonpickle.decode(dummy_1)
+# Call function.
+act = F(dummy_0, dummy_1)
+# Create expected value of function output.
+exp = r'5'
+exp = jsonpickle.decode(exp)
+# Check.
+assert act == exp
 
 
 # %%

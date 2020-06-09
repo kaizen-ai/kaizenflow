@@ -45,73 +45,79 @@ class TestPlaybackInputOutput1(hut.TestCase):
         """
         Test for int inputs.
         """
+        def F(a, b):
+            return a + b
         # Create inputs.
         a = 3
         b = 2
         # Serialize through Playback.
         playback = plbck.Playback("assert_equal", "F", a, b)
         playback.start()
-        c = a + b
+        c = F(a, b)
         code = playback.end(c)
         # Freeze output.
         self.check_string(code)
-        # Make sure that code can be executed.
-        playback.test_code(code)
+        # Execute the code.
+        _LOG.debug("Testing code:\n%s", code)
+        import jsonpickle
+        exec(code, locals())
 
-    def test3(self) -> None:
-        """
-
-        """
-        # Create inputs.
-        a = "test"
-        b = "case"
-        # Serialize through Playback.
-        playback = plbck.Playback("assert_equal", "F", a, b)
-        playback.start()
-        c = a + b
-        output = playback.end(c)
-        res = output, c
-        # Freeze output.
-        self.check_string(output)
-
-    def test4(self) -> None:
-        """
-
-        """
-        # Create inputs.
-        a = [1, 2, 3]
-        b = [4, 5, 6]
-        # Serialize through Playback.
-        playback = plbck.Playback("assert_equal", "F", a, b)
-        playback.start()
-        c = a + b
-        output = playback.end(c)
-        res = output, c
-        # Freeze output.
-        self.check_string(output)
-
-    def test5(self) -> None:
-        """
-
-        """
-        # Create inputs.
-        a = {'1': 2}
-        b = {'3': 4}
-        c = {}
-        # Serialize through Playback.
-        playback = plbck.Playback("assert_equal", "F_dict", a, b)
-        playback.start()
-        c.update(a)
-        c.update(b)
-        output = playback.end(c)
-        res = output, c
-        # Freeze output.
-        self.check_string(output)
+    # def test3(self) -> None:
+    #     """
+    #
+    #     """
+    #     # Create inputs.
+    #     a = "test"
+    #     b = "case"
+    #     # Serialize through Playback.
+    #     playback = plbck.Playback("assert_equal", "F", a, b)
+    #     playback.start()
+    #     c = a + b
+    #     output = playback.end(c)
+    #     res = output, c
+    #     # Freeze output.
+    #     self.check_string(output)
+    #
+    # def test4(self) -> None:
+    #     """
+    #
+    #     """
+    #     # Create inputs.
+    #     a = [1, 2, 3]
+    #     b = [4, 5, 6]
+    #     # Serialize through Playback.
+    #     playback = plbck.Playback("assert_equal", "F", a, b)
+    #     playback.start()
+    #     c = a + b
+    #     output = playback.end(c)
+    #     res = output, c
+    #     # Freeze output.
+    #     self.check_string(output)
+    #
+    # def test5(self) -> None:
+    #     """
+    #
+    #     """
+    #     # Create inputs.
+    #     a = {'1': 2}
+    #     b = {'3': 4}
+    #     c = {}
+    #     # Serialize through Playback.
+    #     playback = plbck.Playback("assert_equal", "F_dict", a, b)
+    #     playback.start()
+    #     c.update(a)
+    #     c.update(b)
+    #     output = playback.end(c)
+    #     res = output, c
+    #     # Freeze output.
+    #     self.check_string(output)
 
     def test5(self) -> None:
         """
         Test for pd.DataFrame inputs.
         """
+        def F(a, b):
+            return a + b
         # Create inputs.
         a = pd.DataFrame(
             {
@@ -124,25 +130,45 @@ class TestPlaybackInputOutput1(hut.TestCase):
         # Serialize through Playback.
         playback = plbck.Playback("assert_equal", "F", a, b)
         playback.start()
-        c = a + b
-        output = playback.end(c)
+        c = F(a, b)
+        code = playback.end(c)
         # Freeze output.
-        self.check_string(output)
+        self.check_string(code)
+        # Execute the code.
+        _LOG.debug("Testing code:\n%s", code)
+        import jsonpickle
+        exec(code, locals())
 
 
-use_playback = True
+class TestPlaybackUseCase1(hut.TestCase):
 
-
-def F(a: pd.DataFrame, b: pd.DataFrame):
-    if use_playback:
-        playback = Playback("", "", "F", a, b)
-        playback.start()
-    c = a + b
-    if use_playback:
-        output = playback.end(c)
-        res = output, c
-    else:
-        res = c
-    return res
-
-
+    def test1(self):
+        def F(a, b):
+            if use_playback:
+                playback = plbck.Playback("assert_equal", "F", a, b)
+                playback.start()
+            c = a + b
+            if use_playback:
+                output = playback.end(c)
+                res = output
+            else:
+                res = c
+            return res
+        # Execute without playback.
+        a = 3
+        b = 2
+        use_playback = False
+        ret = F(a, b)
+        self.assertEqual(ret, 5)
+        # Execute capturing the function as a unit test.
+        a = 3
+        b = 2
+        use_playback = True
+        code = F(a, b)
+        self.check_string(code)
+        # Execute the code.
+        _LOG.debug("Testing code:\n%s", code)
+        import jsonpickle
+        # We need to disable the unit test generation.
+        use_playback = False
+        exec(code, locals())

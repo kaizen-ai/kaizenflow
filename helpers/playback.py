@@ -13,9 +13,42 @@ import logging
 import jsonpickle
 
 import helpers.dbg as dbg
+# Register the pandas handler.
+import jsonpickle.ext.pandas as jsonpickle_pd
+jsonpickle_pd.register_handlers()
+#import jsonpickle.ext.numpy as jsonpickle_numpy
+import pandas as pd
 
 _LOG = logging.getLogger(__name__)
 
+
+# TODO: Unit test and add more types.
+def to_python_code(obj):
+    output = []
+    if isinstance(obj, (int, float, str)):
+        #output.append(str(type(obj)) + "(" + str(obj) + ")")
+        output.append(str(obj))
+    elif isinstance(obj, list):
+        output_tmp = "["
+        for l in obj:
+            output_tmp += to_python_code(l) + ", "
+        output_tmp += "]"
+        output.append(output_tmp)
+    elif isinstance(obj, pd.DataFrame):
+        vals = obj.to_dict(orient="list")
+        output.append("pd.DataFrame.from_dict(%s)" % vals)
+        # TODO: If there is a name of the data frame
+        # output.append("df.name = "..."))
+    else:
+        _LOG.warning("...")
+        # use jsonpickle.
+    output = "\n".join(output)
+    return output
+
+
+# TODO: Pass the name of the unit test class.
+# TODO: Add option to generate input files instead of inlining variables.
+# TODO: Always use jsonpickle
 class Playback:
 
     def __init__(self, mode, func_name, *args, **kwargs):
@@ -25,9 +58,6 @@ class Playback:
         :param args: the positional parameters for the function to test
         :param kwargs: the keyword parameters for the function to test
         """
-        # Register the pandas handler.
-        jsonpickle.ext.pandas.register_handlers()
-        #import jsonpickle.ext.numpy as jsonpickle_numpy
         dbg.dassert_in(mode, ("check_string", "assert_equal"))
         self.mode = mode
         # TODO(gp): We can infer the name of the function automatically.
@@ -55,34 +85,41 @@ class Playback:
         code.append("# Initialize values for unit test.")
         # Name of the variables to assign to the function.
         var_names = []
+        # TODO: Add boilerplate for unit test.
+        # class TestPlaybackInputOutput1(hut.TestCase):
+        #
+        #     def test1(self) -> None:
         # For positional parameters we need to generate dummy variables.
         if self.json_args:
             prefix_var_name = "dummy_"
             for i, json_param in enumerate(self.json_args):
                 var_name = prefix_var_name + str(i)
-                output.append("%s = r'%s'" % (var_name, json_param))
-                output.append("{0} = jsonpickle.decode({0})".format(json_param))
+                code.append("%s = r'%s'" % (var_name, json_param))
+                code.append("{0} = jsonpickle.decode({0})".format(var_name))
                 var_names.append(var_name)
         if self.json_kwargs:
             for key in self.json_kwargs:
-                output.append("%s = r'%s'" % (key, self.json_kwargs[key]))
-                output.append("{0} = jsonpickle.decode({0})".format(key))
+                code.append("%s = r'%s'" % (key, self.json_kwargs[key]))
+                code.append("{0} = jsonpickle.decode({0})".format(key))
                 var_names.append(key)
         code.append("# Call function.")
-        code.append("act = %s(%s)" % (self.func_name, ', '.join(variables)))
+        code.append("act = %s(%s)" % (self.func_name, ', '.join(var_names)))
         code.append("# Create expected value of function output.")
         # TODO(gp): Factor out this idiom.
         code.append("exp = r'%s'" % self.ret_json)
         code.append("exp = jsonpickle.decode(exp)")
         code.append("# Check.")
         if self.mode == "assert_equal":
-            # TODO(gp): Add a different check for different values.
-            code.append("assert act.equals(exp)")
+            # Add a different check for different values.
+            if isinstance(ret, pd.DataFrame):
+                code.append("assert act.equals(exp)")
+            else:
+                code.append("assert act == exp")
         else:
             raise ValueError("Invalid mode='%s'" % self.mode)
         #
         code = "\n".join(code)
-        #_LOG.debug("output=", code)
+        _LOG.debug("code=\n%s", code)
         return code
 
     @staticmethod
@@ -128,40 +165,3 @@ def round_trip_convert(obj1, log_level):
         else:
             dbg.dassert_eq(obj1, obj2)
     return obj2
-
-
-#
-## def F(a: int, b: int):
-##     c = {}
-##     c["pavel"] = a + b
-##     return c
-#
-#use_playback = True
-#
-#def F(a: pd.DataFrame, b: pd.DataFrame):
-#    if use_playback:
-#        playback = Playback("", "", "F", a, b)
-#        playback.start()
-#    #c = {}
-#    #c["pavel"] = a + b
-#    c = a + b
-#    if use_playback:
-#        output = playback.end(c)
-#        res = output, c
-#    else:
-#        res = c
-#    return res
-#
-#a = pd.DataFrame(
-# {
-#    'Price': [700, 250, 800, 1200]
-#})
-#b = pd.DataFrame(
-# {
-#    'Price': [1, 1, 1, 1]
-#})
-#
-#res = F(a, b)
-#output = res[0]
-#print(output)
-#exec(output)
