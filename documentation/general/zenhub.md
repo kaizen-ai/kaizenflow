@@ -240,6 +240,7 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
 ## Sprint
 
 - 1 Sprint = 2 weeks of work
+  - Sprint starts on Monday at 10:00 am ET = after the All-hands meeting
 - Sprints are numbered and have a commodity name
   - E.g., "Sprint1 - Gold", "Sprint2 - Natural gas"
 - We have a single Sprint for the entire company, since the teams (Dev, Tools,
@@ -441,6 +442,30 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   - Once there is nothing else to do, GP & P move the Issue to "Close"
   - If an issue stays in Done for 2 sprints in a row, it is closed automatically
     (by Olga)
+    
+### Closing the Sprint workflow
+
+To close the Sprint the PM team (GP, Paul, Olga) should follow the checklist below.
+
+- On Monday before the All-hands sync-up
+  - [ ] Olga: create an issue called "Checklist to close Sprint #N" and copy&paste the following checklist to it
+  - [ ] Olga: make sure all completed issues are moved from the Review/QA pipeline to the Done pipeline
+  - [ ] Olga: make sure all issues in the Done pipeline are ready to be closed
+    - They all have estimates
+    - They all are added to the current Sprint milestone
+    - They all belong to the corresponding Epic
+  - [ ] Olga: remind Paul & GP to come up with the name of the new Sprint
+  - [ ] Olga: create a new tab in the Team assessment spreadsheet
+  
+- On Monday after All-hands sync-up:
+  - [ ] Olga: create a new Milestone in ZH
+  - [ ] Paul & GP: close issues in the Done pipeline in ZH
+  - [ ] Paul & GP: assess team performance as a result of the sprint
+
+- On Tuesday - the second day of the new Sprint
+  - [ ] Olga: review the Sprint burndown report and send an email to Paul & GP to review the stats
+    - We might want to start sending this info on Fri email 
+  - [ ] Olga: make sure that all issues left from the previous Sprint are reassigned to the new Sprint
 
 ## Issue Properties
 
