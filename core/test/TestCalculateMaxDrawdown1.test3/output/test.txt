@@ -1,2 +1,2 @@
               arma(2,2)
-max_drawdown        0.0
+max_drawdown       -1.0

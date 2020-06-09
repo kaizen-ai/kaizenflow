@@ -35,6 +35,7 @@ def compute_moments(
 ) -> pd.Series:
     """
     Calculate, mean, standard deviation, skew, and kurtosis.
+
     :param srs: input series for computing moments
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
@@ -88,6 +89,7 @@ def compute_frac_zero(
 ) -> Union[float, pd.Series]:
     """
     Calculate fraction of zeros in a numerical series or dataframe.
+
     :param data: numeric series or dataframe
     :param atol: absolute tolerance, as in `np.isclose`
     :param axis: numpy axis for summation
@@ -105,6 +107,7 @@ def compute_frac_nan(
 ) -> Union[float, pd.Series]:
     """
     Calculate fraction of nans in `data`.
+
     :param data: numeric series or dataframe
     :param axis: numpy axis for summation
     """
@@ -117,6 +120,7 @@ def compute_frac_inf(
 ) -> Union[float, pd.Series]:
     """
     Count fraction of infs in a numerical series or dataframe.
+
     :param data: numeric series or dataframe
     :param axis: numpy axis for summation
     """
@@ -130,6 +134,7 @@ def compute_frac_constant(
 ) -> Union[float, pd.Series]:
     """
     Compute fraction of values in the series that changes at the next timestamp.
+
     :param data: numeric series or dataframe
     :param axis: numpy axis for summation
     """
@@ -143,6 +148,7 @@ def compute_frac_constant(
 def count_num_finite_samples(data: pd.Series) -> float:
     """
     Count number of finite data points in a given time series.
+
     :param data: numeric series or dataframe
     """
     if data.empty:
@@ -172,11 +178,13 @@ def _compute_denominator_and_package(
 ) -> Union[float, pd.Series]:
     """
     Normalize and package `reduction` according to `axis` and `data` metadata.
+
     This is a helper function used for several `compute_frac_*` functions:
     - It determines the denominator to use in normalization (for the `frac`
       part)
     - It packages the output so that it has index/column information as
       appropriate
+
     :param reduction: contains a reduction of `data` along `axis`
     :param data: numeric series or dataframe
     :param axis: indicates row or column or else `None` for ignoring 2d
@@ -219,6 +227,7 @@ def compute_annualized_sharpe_ratio(
 ) -> pd.Series:
     """
     Calculate SR from rets with an index freq and annualize.
+
     TODO(*): Consider de-biasing when the number of sample points is small,
         e.g., https://www.twosigma.com/wp-content/uploads/sharpe-tr-1.pdf
     """
@@ -256,12 +265,14 @@ def get_rolling_splits(
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Partition index into chunks and returns pairs of successive chunks.
+
     If the index looks like
         [0, 1, 2, 3, 4, 5, 6]
     and n_splits = 4, then the splits would be
         [([0, 1], [2, 3]),
          ([2, 3], [4, 5]),
          ([4, 5], [6])]
+
     A typical use case is where the index is a monotonic increasing datetime
     index. For such cases, causality is respected by the splits.
     """
@@ -342,8 +353,10 @@ def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
 def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
     """
     Combine multiple indices into a single index for cross-validation splits.
+
     This is computed as the union of all the indices within the largest common
     interval.
+
     TODO(Paul): Consider supporting multiple behaviors with `mode`.
     """
     for idx in idxs:
@@ -392,6 +405,7 @@ def ttest_1samp(
 ) -> pd.Series:
     """
     Thin wrapper around scipy's ttest.
+
     :param srs: input series for computing statistics
     :param popmean: assumed population mean for test
     :param nan_mode: argument for hdf.apply_nan_mode()
@@ -436,9 +450,11 @@ def multipletests(
 ) -> pd.Series:
     """
     Wrap statsmodel's multipletests.
+
     Returns results in a series indexed like srs.
     Documentation at
     https://www.statsmodels.org/stable/generated/statsmodels.stats.multitest.multipletests.html
+
     :param srs: Series with pvalues
     :param method: `method` for scipy's multipletests
     :param nan_mode: approach to deal with NaNs, can be "strict" or "ignore"
@@ -494,7 +510,9 @@ def apply_normality_test(
 ) -> pd.Series:
     """
     Test (indep) null hypotheses that each col is normally distributed.
+
     An omnibus test of normality that combines skew and kurtosis.
+
     :param prefix: optional prefix for metrics' outcome
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: series with statistics and p-value
@@ -540,6 +558,7 @@ def apply_adf_test(
 ) -> pd.Series:
     """
     Implement a wrapper around statsmodels' adfuller test.
+
     :param srs: pandas series of floats
     :param maxlag: as in stattools.adfuller
     :param regression: as in stattools.adfuller
@@ -612,7 +631,9 @@ def apply_kpss_test(
 ) -> pd.Series:
     """
     Implement a wrapper around statsmodels' KPSS test.
+
     http://debis.deu.edu.tr/userweb//onder.hanedar/dosyalar/kpss.pdf
+
     :param srs: pandas series of floats
     :param regression: as in stattools.kpss
     :param nlags: as in stattools.kpss
@@ -667,6 +688,7 @@ def compute_zero_nan_inf_stats(
 ) -> pd.Series:
     """
     Calculate finite and non-finite values in time series.
+
     :param srs: pandas series of floats
     :param prefix: optional prefix for metrics' outcome
     :return: series of stats
@@ -715,6 +737,7 @@ def apply_ljung_box_test(
 ) -> pd.DataFrame:
     """
     Implement a wrapper around statsmodels' Ljung-Box test.
+
     :param srs: pandas series of floats
     :param lags: as in diagnostic.acorr_ljungbox
     :param model_df: as in diagnostic.acorr_ljungbox
@@ -770,6 +793,7 @@ def calculate_hit_rate(
 ) -> pd.Series:
     """
     Calculate hit rate statistics.
+
     :param srs: pandas series of 0s, 1s and NaNs
     :param alpha: as in statsmodels.stats.proportion.proportion_confint()
     :param method: as in statsmodels.stats.proportion.proportion_confint()
@@ -827,6 +851,7 @@ def compute_jensen_ratio(
 ) -> pd.Series:
     """
     Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
+
     Definition and derivation:
       - The result is the p-th root of the expectation of the p-th power of
         abs(f), divided by the expectation of abs(f). If we apply Jensen's
@@ -835,6 +860,7 @@ def compute_jensen_ratio(
       - An alternative derivation is to apply Holder's inequality to `signal`,
         using the constant function `1` on the support of the `signal` as the
         2nd function.
+
     Interpretation:
       - If we apply this function to returns in the case where the expected
         value of returns is 0 and we take p_norm = 2, then the result of this
@@ -900,10 +926,15 @@ def compute_forecastability(
 ) -> pd.Series:
     r"""
     Compute frequency-domain-based "forecastability" of signal.
+
     Reference: https://arxiv.org/abs/1205.4591
+
     `signal` is assumed to be second-order stationary.
+
     Reference: https://arxiv.org/abs/1205.4591
+
     `signal` is assumed to be second-order stationary.
+
     Denote the forecastability estimator by \Omega(\cdot).
     Let x_t, y_t be time series. Properties of \Omega include:
     a) \Omega(y_t) = 0 iff y_t is white noise
@@ -963,7 +994,7 @@ def calculate_max_drawdown(
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
-    value = fin.compute_perc_loss_from_high_water_mark(srs).min()
-    result_values = [value]
+    max_perc_loss = -fin.compute_perc_loss_from_high_water_mark(srs).max()
+    result_values = [max_perc_loss]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result

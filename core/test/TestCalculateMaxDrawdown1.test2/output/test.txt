@@ -1,2 +1,2 @@
                  arma(2,2)
-newmax_drawdown        0.0
+newmax_drawdown       -1.0
