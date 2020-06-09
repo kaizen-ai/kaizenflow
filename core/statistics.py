@@ -828,7 +828,7 @@ def calculate_max_drawdown(
     srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate max drawdown statistics
+    Calculate max drawdown statistics.
 
     :param srs: pandas series of log returns
     :param nan_mode: argument for hdf.apply_nan_mode(),
@@ -839,17 +839,12 @@ def calculate_max_drawdown(
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     result_index = [prefix + "max_drawdown"]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name,
-    )
+    nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
-    max = fin.compute_perc_loss_from_high_water_mark(srs).argmax()
-    srs = fin._compute_drawdown(srs)
-    value = srs[max]
+    value = fin.compute_perc_loss_from_high_water_mark(srs).min()
     result_values = [value]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
