@@ -251,10 +251,10 @@ def compute_annualized_sharpe_ratio(
         log_rets: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
     """
-    Compute SR from  rets
+    Compute SR from rets with an index freq and annualize.
 
-    :param log_rets:
-    :return:
+    :param log_rets: time series of log returns
+    :return: annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
     sr = compute_sharpe_ratio(log_rets, points_per_year)
@@ -265,9 +265,14 @@ def compute_annualized_sharpe_ratio_standard_error(
         log_rets: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
     """
+    Compute SE(SR) from rets with an index freq and annualize.
 
-    :param log_rets:
-    :return:
+    This function calculates the standard error with respect to the original
+    sampling frequency and then rescales to turn it into a standard error
+    for the corresponding annualized Sharpe ratio.
+
+    :param log_rets: time series of log returns
+    :return: standard error estimate of annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
     se_sr = compute_sharpe_ratio_standard_error(log_rets, points_per_year)
@@ -302,10 +307,11 @@ def compute_sharpe_ratio_standard_error(
         log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
 ) -> Union[float, pd.Series]:
     """
+    Calculate Sharpe Ratio standard error from log returns and rescale.
 
-    :param log_rets:
-    :param time_scaling:
-    :return:
+    :param log_rets: time series of log returns
+    :param time_scaling: as in `compute_sharpe_ratio`
+    :return: Sharpe ratio standard error estimate
     """
     dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
     # Compute the Sharpe ratio using the sampling frequency units[

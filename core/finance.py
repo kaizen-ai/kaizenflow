@@ -66,7 +66,7 @@ def resample(df, agg_interval):
     rets = resampler.sum()
     return rets
 
-j
+
 # TODO(GPP): DEPRECATE. PyCharm doesn't find any callers, and we are
 # using "result bundles" differently now.
 def filter_by_time(
