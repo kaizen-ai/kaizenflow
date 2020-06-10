@@ -1048,7 +1048,7 @@ def compute_max_drawdown(
     """
     Calculate max drawdown statistic.
 
-    :param srs: pandas series of log returns
+    :param log_rets: pandas series of log returns
     :param prefix: optional prefix for metrics' outcome
     :return: max drawdown as a negative percentage loss
     """
