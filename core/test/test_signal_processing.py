@@ -441,9 +441,7 @@ class Test_compute_rolling_annualized_sharpe_ratio(hut.TestCase):
             scale=1,
             burnin=5,
         )
-        rolling_sr = sigp.compute_rolling_annualized_sharpe_ratio(realization, tau=16)
-        self.check_string(
-            hut.convert_df_to_string(
-                rolling_sr, index=True
-            )
+        rolling_sr = sigp.compute_rolling_annualized_sharpe_ratio(
+            realization, tau=16
         )
+        self.check_string(hut.convert_df_to_string(rolling_sr, index=True))
