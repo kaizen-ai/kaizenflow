@@ -820,7 +820,7 @@ class Test_compute_forecastability1(hut.TestCase):
         stats.compute_forecastability(signal)
 
 
-class TestComputeZeroDiffShare1(hut.TestCase):
+class TestComputeZeroDiffProportion1(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -835,44 +835,44 @@ class TestComputeZeroDiffShare1(hut.TestCase):
 
     def test1(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_zero_diff_share(series)
+        actual = stats.compute_zero_diff_proportion(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_zero_diff_share(series, atol=1)
+        actual = stats.compute_zero_diff_proportion(series, atol=1)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_zero_diff_share(series, rtol=0.3)
+        actual = stats.compute_zero_diff_proportion(series, rtol=0.3)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_zero_diff_share(series, equal_nan=True)
+        actual = stats.compute_zero_diff_proportion(series, equal_nan=True)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_zero_diff_share(series, nan_mode="fill_with_zero")
+        actual = stats.compute_zero_diff_proportion(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test6(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_zero_diff_share(series, prefix="prefix_")
+        actual = stats.compute_zero_diff_proportion(series, prefix="prefix_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input
     def test7(self) -> None:
         series = pd.Series([])
-        stats.compute_zero_diff_share(series)
+        stats.compute_zero_diff_proportion(series)
 
 
 class TestComputeInterarrivalTimeStats1(hut.TestCase):
