@@ -18,7 +18,6 @@ import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
 
-import core.finance as fin
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 

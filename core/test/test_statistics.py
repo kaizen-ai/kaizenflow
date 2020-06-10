@@ -830,9 +830,7 @@ class Test_compute_sharpe_ratio(hut.TestCase):
             scale=1,
             burnin=5,
         )
-        sr = stats.compute_sharpe_ratio(
-            realization
-        )
+        sr = stats.compute_sharpe_ratio(realization)
         np.testing.assert_almost_equal(sr, 0.057670899)
 
 
@@ -846,9 +844,7 @@ class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
             scale=1,
             burnin=5,
         )
-        sr_se = stats.compute_sharpe_ratio_standard_error(
-            realization
-        )
+        sr_se = stats.compute_sharpe_ratio_standard_error(realization)
         np.testing.assert_almost_equal(sr_se, 0.158245297)
 
 
