@@ -820,29 +820,29 @@ class Test_compute_forecastability1(hut.TestCase):
         stats.compute_forecastability(signal)
 
 
-class TestCalculateMaxDrawdown1(hut.TestCase):
+class TestComputeMaxDrawdown(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([0], [0])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed
+            date_range_kwargs=date_range, scale=0.1, seed=seed
         )
         return series
 
     def test1(self) -> None:
-        series = self._get_series(1)
-        actual = stats.calculate_max_drawdown(series)
+        series = self._get_series(seed=1)
+        actual = stats.compute_max_drawdown(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        series = self._get_series(1)
-        actual = stats.calculate_max_drawdown(series, prefix="new")
+        series = self._get_series(seed=1)
+        actual = stats.compute_max_drawdown(series, prefix="new")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input
     def test3(self) -> None:
         series = pd.Series([])
-        stats.calculate_max_drawdown(series)
+        stats.compute_max_drawdown(series)

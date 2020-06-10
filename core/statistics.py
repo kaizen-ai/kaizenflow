@@ -971,11 +971,11 @@ def compute_forecastability(
     return res
 
 
-def calculate_max_drawdown(
+def compute_max_drawdown(
     srs: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate max drawdown statistics.
+    Calculate max drawdown statistic.
 
     :param srs: pandas series of log returns
     :param prefix: optional prefix for metrics' outcome
@@ -988,6 +988,7 @@ def calculate_max_drawdown(
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    max_drawdown = -(fin.compute_perc_loss_from_high_water_mark(srs).max()) * 100
+    pct_drawdown = fin.compute_perc_loss_from_high_water_mark(srs)
+    max_drawdown = -100 * (pct_drawdown.max())
     result = pd.Series(data=max_drawdown, index=result_index, name=srs.name)
     return result
