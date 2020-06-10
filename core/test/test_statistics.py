@@ -818,3 +818,45 @@ class Test_compute_forecastability1(hut.TestCase):
     def test5(self) -> None:
         signal = self._get_signal(seed=1)
         stats.compute_forecastability(signal)
+
+
+class Test_compute_sharpe_ratio(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        sr = stats.compute_sharpe_ratio(realization)
+        np.testing.assert_almost_equal(sr, 0.057670899)
+
+
+class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        sr_se = stats.compute_sharpe_ratio_standard_error(realization)
+        np.testing.assert_almost_equal(sr_se, 0.158245297)
+
+
+class Test_summarize_sharpe_ratio(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        res = stats.summarize_sharpe_ratio(realization)
+        self.check_string(hut.convert_df_to_string(res, index=True))
