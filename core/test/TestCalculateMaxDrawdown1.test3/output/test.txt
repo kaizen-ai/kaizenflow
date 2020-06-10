@@ -1,2 +1,0 @@
-              arma(2,2)
-max_drawdown -99.960811

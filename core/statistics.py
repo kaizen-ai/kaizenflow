@@ -979,7 +979,7 @@ def calculate_max_drawdown(
 
     :param srs: pandas series of log returns
     :param prefix: optional prefix for metrics' outcome
-    :return: max drawdown
+    :return: max drawdown as negative percentage loss
     """
     dbg.dassert_isinstance(srs, pd.Series)
     prefix = prefix or ""
