@@ -886,6 +886,7 @@ def calculate_hit_rate(
     # Process series.
     result_index = [
         prefix + "hit_rate_point_est",
+        prefix + "hit_rate_confidence_interval_alpha",
         prefix + "hit_rate_lower_bound",
         prefix + "hit_rate_upper_bound",
     ]
@@ -909,7 +910,8 @@ def calculate_hit_rate(
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
         count=hit_mask.sum(), nobs=hit_mask.count(), alpha=alpha, method=method
     )
-    result_values = [point_estimate, hit_lower, hit_upper]
+    alpha = "%.2f" % alpha
+    result_values = [point_estimate, alpha, hit_lower, hit_upper]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
 
