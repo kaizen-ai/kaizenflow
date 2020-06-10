@@ -979,7 +979,7 @@ def compute_zero_diff_proportion(
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Compute share of unvarying periods in a series.
+    Compute proportion of unvarying periods in a series.
 
     https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
 
@@ -989,7 +989,7 @@ def compute_zero_diff_proportion(
     :param equal_nan: as in numpy.isclose
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
-    :return: series with share of unvarying periods
+    :return: series with proportion of unvarying periods
     """
     dbg.dassert_isinstance(srs, pd.Series)
     atol = atol or 0
