@@ -37,30 +37,25 @@
 - Where the Google guide says "CL", think "PR"
 - Read it (several times, if you need to)
 - Think about it
-- Understand it
+- Understand the rationale
 
 # Code review workflows
 
 ## Pull request
 
 - Our usual review process is to work in a branch and create a pull request
-- See the `git.md` notes for details
+  - See the `git.md` notes for details
+  - The name of the pull request is generated with `ghi_show.py` and looks like
+    `PartTask2704 make exchange contracts get contracts applicable to series`
 
-## Post-commit review
+# From the code author point of view
 
-- It is best to create a branch with the files you want to review and to add
-  TODOs in the code (so that the PR will pick up those sections)
-- If you want a review on a single commit you don't have to create a branch,
-  although creating a review branch and pull request is still best
-- The alternative is to comment on the relevant lines in an individual commit
+## Why we review code
 
-## Close the PR and delete the branch
-
-- When code is merged into `master` by one of the reviewers through the UI one
-  can select the delete branch option
-- Otherwise you can delete the branch using the procedure in `git.md`
-
-# Some other remarks about getting your code reviewed
+- We spend time reviewing each other code so that we can:
+  - Build a better product, by letting other people look for bugs
+  - Propagate knowledge of the code base through the team
+  - Learn from each other
 
 ## PR checklist
 
@@ -83,8 +78,9 @@
 ## The golden rule of code review
 
 - Make life easy for the reviewers
-  - Aka "Do not upset the reviewers"
-- Reviewing other people code is hard and unrewarding work
+  - Aka "Do not upset the reviewers, otherwise they won't let you merge your
+    code"
+- Remember that reviewing other people's code is hard and unrewarding work
   - Do your best for not frustrating the reviewers
 - If you are in doubt "it's probably clear, although I am not 100% sure", err on
   giving more information and answer potential questions
@@ -96,11 +92,15 @@
   - A PR can implement only part of a complex task
     - Which part is it implementing?
     - Why is it doing it in a certain way?
-- Do you want just an architectural review?
+- If the code is not ready for merge, but you want a "pre-review" mark it as
+  "Draft PR"
+  - E.g., ask for an architectural review
+  - Draft PRs can not be merged
 - Is it blocking?
   - Do not abuse asking for a quick review
   - All code is important and we do our best to review code quickly and
     carefully
+  - If it's blocking a ping on IM is a good idea
 
 ## Do not mix changes and refactoring / shuffling code
 
@@ -121,46 +121,35 @@
 
 - Another approach is to develop in a branch and break the code into PRs as the
   code firms up
-  - In this case you need to be very organized and be fluent in using Git
+  - In this case you need to be very organized and be fluent in using Git: both
+    qualities are expected of you
   - E.g., develop in a branch (e.g., `gp_scratch`)
-  - Create a branch (e.g., `TaskXYZ_do_this_and_that`)
-  - Copy / edit the files from `gp_scratch` to `TaskXYZ_do_this_and_that`
+  - Create a branch from it (e.g., `TaskXYZ_do_this_and_that`) or copy the files
+    from `gp_scratch` to `TaskXYZ_do_this_and_that`
+  - Edit the files to make the PR self-consistent
   - Do a PR for `TaskXYZ_do_this_and_that`
   - Keep working in `gp_scratch` while the review is moving forward
-  - Make changes to the `TaskXYZ_do_this_and_that` as request
-  - Merge `TaskXYZ_do_this_and_that` back into `gp_scratch` and keep moving
+  - Make changes to the `TaskXYZ_do_this_and_that` as requested
+  - Merge `TaskXYZ_do_this_and_that` to master
+  - Merge `master` back into `gp_scratch` and keep moving
 
 ## Double check before sending a PR
 
 - After creating a PR take a look at it to make sure things look good, e.g.,
-  - E.g., are there merge problems?
+  - Are there merge problems?
   - Did you forget some file?
   - Skim through the PR to make sure that people can understand what you changed
-
-## Give priority to code review
-
-- We target to give feedback on a PR in 24hr so that the author is not blocked
-  for too long
-- Advanced user: to keep working on a related changes and make progress, one
-  can:
-  - Merge the branch under review with another branch; or
-  - Branch from a branch
-
-## Why we review code
-
-- We spend time reviewing each other code so that we can:
-  - Build a better product, by letting other people look for bugs
-  - Propagate knowledge of the code base through the team
-  - Learn from each other
 
 ## Reviewing other people's code is usually not fun
 
 - Reviewing code is time-consuming and tedious
   - So do everything you can to make the reviewer's job easier
   - Don't cut corners
-- If a reviewer is confused about something, others likely would be too
-  - What is obvious to you as the author may not be obvious to readers
+- If a reviewer is confused about something, other readers (including you in 1
+  year) likely would be too
+  - What is obvious to you as the author is often not obvious to readers
   - Readability is paramount
+  - You should abhor write-only code
 
 ## The first reviews are painful
 
@@ -168,7 +157,7 @@
   - Just think about the fact that the reviewer is also reading (still crappy)
     code over and over
 - Unfortunately it is needed pain to get to the quality of code we need to make
-  progress
+  progress as a team
 
 ## Apply review comments everywhere
 
@@ -183,7 +172,7 @@
   ```python
   _LOG.warning("Hello %s", name)
   ```
-  you are expected to do this replacement everywhere
+  you are expected to do this replacement:
   1. In the current review
   2. In all future code you write
   3. In old code, as you come across it in the course of your work
@@ -200,12 +189,13 @@
   - Use "start a review" (not in conversation)
 - If one of the comment is urgent (e.g., other comments depend on this) you can
   send it as single comment
+- When you answer a comment, mark it as resolved
 
 ## Apply changes to a review quickly
 
 - In the same way the reviewers are expected to review PRs within 24 hours, the
-  author of a PR is expected to apply the requested changes quickly, ideally 1
-  or 2 days
+  author of a PR is expected to apply the requested changes quickly, ideally in
+  few hours
   - If it takes longer, then either the PR was too big or the quality of the PR
     was too low
 
@@ -219,9 +209,82 @@
     fix the problems and then open a PR with new code
   - Other people that rely on your code are blocked
 
-# Some other remarks about reviewing other people code
+## Ask for another review
 
-## Final comment
+- Once you are done with resolving all the comments ask for another review
+
+## Workflow of a review in terms of GH labels
+
+- Please always add GP and Paul as reviewers, together with anybody else that can
+  be useful to review the code
+
+- The current meaning of the labels are:
+  - `PR_TO_REVIEW`: assigned by the automatic PR syste, / author
+  - `PR_CHANGE_REQUIRED`: assigned by Paul and GP if the PR needs some changes
+  - `PR_GP_APPROVED`: assigned by GP when he is ok with merging
+  - `PR_PAUL_APPROVED`: assigned by Paul when he is ok with merging
+
+## Link PR to GH issue
+
+- TODO(Paul): Not sure what's the latest approach
+
+## Fix later
+
+- It's ok for an author to file a follow up Issue (e.g., with a clean up), by
+  pointing the new Issue to the comments to address, and move on with merge
+- The Issue needs to be addressed immediately after
+
+# From the code reviewer point of view
+
+## Post-commit review
+- You can comment on a PR already merged
+- You can comment on the relevant lines in a commit straight to `master` (this
+  is the exception)
+
+## Code walk-through
+- It is best to create a branch with the files you want to review
+  - Add TODOs in the code (so that the PR will pick up those sections)
+  - File bugs for the more involved changes
+- Try to get a top to bottom review of a component once every N weeks (N = 2, 3)
+  - Sometimes the structure of the 
+
+## Close the PR and delete the branch
+
+- When code is merged into `master` by one of the reviewers through the UI one
+  can select the delete branch option
+- Otherwise you can delete the branch using the procedure in `git.md`
+
+## Give priority to code review
+
+- We target to give feedback on a PR within 24hr so that the author is not
+  blocked for too long
+  - Usually we respond in few hours
+
+## Multiple reviewers problem
+
+- When there are multiple reviewers for the same PR there can be some problem
+
+- Ok to keep moving fast and avoid blocking
+  - Block only if it is controversial
+
+- Merge when we are confident that the other is ok
+  - The other can catch up with post-commit review
+  - A good approach is to monitor recently merged PRs in GH to catch up
+
+## Remember "small steps ahead"
+
+- Follow the Google approach of “merge a PR that is a strict improvement”
+
+## Nothing is too small
+
+- Each reviewer reviews the code pointing out everything that can be a problem
+- Problems are highlighted even if small or controversial
+  - Not all of those comments might not be implemented by the author
+- Of course if different approaches are really equivalent but reviewers have
+  their own stylistic preference, this should not be pointed, unless it’s a
+  matter of consistency or leave the choice to the author
+
+## Final GH comment
 
 - Once you are done with the detailed review of the code, you need to
   - Write a short comment
@@ -233,8 +296,8 @@
     3. Request changes
        - Submit feedback that must be addressed before merging
 
-- We use an integrator / developer manager, initially with Paul and GP testing
-  and merging most of the PRs
+- We use an integrator / developer manager workflow, initially with Paul and GP
+  testing and merging most of the PRs
 
 - We use the 3 possible options in the following way:
   1. Comment
