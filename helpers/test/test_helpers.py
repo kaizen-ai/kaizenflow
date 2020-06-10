@@ -2,9 +2,12 @@ import logging
 import os
 from typing import Any, Optional, Tuple
 
+import numpy as np
+import pandas as pd
 import pytest
 
 import helpers.cache as hcac
+import helpers.csv as csv
 import helpers.env as env
 import helpers.git as git
 import helpers.io_ as io_
@@ -316,6 +319,23 @@ class Test_cache2(ut.TestCase):
 
 
 # #############################################################################
+# csv.py
+# #############################################################################
+
+
+class Test_convert_csv_to_dict(ut.TestCase):
+    def test1(self) -> None:
+        test_csv_path = os.path.join(self.get_input_dir(), "test.csv")
+        actual_result = csv.convert_csv_to_dict(test_csv_path, remove_nans=True)
+        expected_result = {
+            "col1": ["a", "b", "c", "d"],
+            "col2": ["a", "b"],
+            "col3": ["a", "b", "c"],
+        }
+        self.assertEqual(actual_result, expected_result)
+
+
+# #############################################################################
 # env.py
 # #############################################################################
 
@@ -476,6 +496,27 @@ remh_hash = subm_hash = 92167662"""
         exp = "head_hash = remh_hash = subm_hash = 7ea03eb6"
         #
         self._helper_group_hashes(head_hash, remh_hash, subm_hash, exp)
+
+
+# #############################################################################
+# io_.py
+# #############################################################################
+
+
+class Test_load_df_from_json(ut.TestCase):
+    def test1(self) -> None:
+        test_json_path = os.path.join(self.get_input_dir(), "test.json")
+        actual_result = io_.load_df_from_json(test_json_path)
+        expected_result = pd.DataFrame(
+            {
+                "col1": ["a", "b", "c", "d"],
+                "col2": ["a", "b", np.nan, np.nan],
+                "col3": ["a", "b", "c", np.nan],
+            }
+        )
+        actual_result = prnt.dataframe_to_str(actual_result)
+        expected_result = prnt.dataframe_to_str(expected_result)
+        self.assertEqual(actual_result, expected_result)
 
 
 # #############################################################################

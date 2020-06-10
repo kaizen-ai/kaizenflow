@@ -8,11 +8,14 @@ import helpers.io_ as io_
 
 import fnmatch
 import gzip
+import json
 import logging
 import os
 import shutil
 import time
 from typing import Any, List, Optional
+
+import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -225,6 +228,7 @@ def to_file(
     """
     Write the content of lines into file_name, creating the enclosing directory
     if needed.
+
     :param file_name: name of written file
     :param lines: content of the file
     :param use_gzip: whether the file should be compressed as gzip
@@ -332,3 +336,70 @@ def get_size_as_str(file_name: str) -> str:
     else:
         res = "nan"
     return res
+
+
+def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
+    """
+    Change extension of a filename (e.g. "data.csv" to "data.json").
+
+    :param filename: the old filename (including extension)
+    :param old_ext: the extension of the old filename
+    :param new_ext: the extension to replace the old extension
+    :return: a filename with the new extension
+    """
+    dbg.dassert(
+        filename.endswith(old_ext),
+        "Extension '%s' doesn't match file '%s'",
+        old_ext,
+        filename,
+    )
+    # Remove the old extension.
+    new_filename = filename.rstrip(old_ext)
+    # Add the new extension.
+    new_filename = new_filename + new_ext
+    return new_filename
+
+
+def to_json(file_name: str, obj: dict) -> None:
+    """
+    Write an object into a JSON file.
+
+    :param obj: data for writing
+    :param file_name: name of file
+    :return:
+    """
+    dir_name = os.path.dirname(file_name)
+    if dir_name != "" and not os.path.isdir(dir_name):
+        create_dir(dir_name, incremental=True)
+
+    with open(file_name, "w") as outfile:
+        json.dump(obj, outfile, indent=4)
+
+
+def from_json(file_name: str) -> dict:
+    """
+    Read object from JSON file.
+
+    :param file_name: name of file
+    :return: dict with data
+    """
+    dbg.dassert_exists(file_name)
+    with open(file_name, "r") as f:
+        data = json.loads(f.read())
+    return data
+
+
+def load_df_from_json(path_to_json: str) -> pd.DataFrame:
+    """
+    Load a dataframe from a json file.
+
+    :param path_to_json: path to the json file
+    :return:
+    """
+    # Load the dict with the data.
+    data = from_json(path_to_json)
+    # Preprocess the dict to handle arrays with different length.
+    data = dict([(k, pd.Series(v)) for k, v in data.items()])
+    # Package into a dataframe.
+    df = pd.DataFrame(data)
+    return df

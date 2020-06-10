@@ -820,6 +820,76 @@ class Test_compute_forecastability1(hut.TestCase):
         stats.compute_forecastability(signal)
 
 
+class TestComputeMaxDrawdown(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_max_drawdown(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_max_drawdown(series, prefix="new")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input
+    def test3(self) -> None:
+        series = pd.Series([])
+        stats.compute_max_drawdown(series)
+
+
+class Test_compute_sharpe_ratio(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        sr = stats.compute_sharpe_ratio(realization)
+        np.testing.assert_almost_equal(sr, 0.057670899)
+
+
+class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        sr_se = stats.compute_sharpe_ratio_standard_error(realization)
+        np.testing.assert_almost_equal(sr_se, 0.158245297)
+
+
+class Test_summarize_sharpe_ratio(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        res = stats.summarize_sharpe_ratio(realization)
+        self.check_string(hut.convert_df_to_string(res, index=True))
+
+
 class TestComputeZeroDiffProportion1(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
