@@ -870,7 +870,6 @@ def plot_barplot(
         ax.set(xlabel=label)
     if plot_title:
         plt.title(plot_title)
-    plt.show()
 
 
 # #############################################################################
