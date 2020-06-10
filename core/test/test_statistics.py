@@ -823,8 +823,11 @@ class Test_compute_forecastability1(hut.TestCase):
 class TestCalculateMaxDrawdown1(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        np.random.seed(seed)
-        series = pd.Series(np.random.normal(0, 0.5, 100))
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
         return series
 
     def test1(self) -> None:

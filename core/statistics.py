@@ -979,7 +979,7 @@ def calculate_max_drawdown(
 
     :param srs: pandas series of log returns
     :param prefix: optional prefix for metrics' outcome
-    :return: max drawdown as negative percentage loss
+    :return: max drawdown as a negative percentage loss
     """
     dbg.dassert_isinstance(srs, pd.Series)
     prefix = prefix or ""
@@ -988,8 +988,6 @@ def calculate_max_drawdown(
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    max_perc_loss = fin.compute_perc_loss_from_high_water_mark(srs).max()
-    max_perc_loss = -(max_perc_loss * 100)
-    result_values = [max_perc_loss]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    max_drawdown = -(fin.compute_perc_loss_from_high_water_mark(srs).max()) * 100
+    result = pd.Series(data=max_drawdown, index=result_index, name=srs.name)
     return result
