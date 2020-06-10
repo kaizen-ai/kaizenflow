@@ -13,32 +13,6 @@ import helpers.printing as pri
 _LOG = logging.getLogger(__name__)
 
 
-SR_COL = "sharpe"
-RET_0_COL = "ret_0"
-
-
-def resample_1min(df, skip_weekends):
-    """
-    Resample a df to one minute resolution leaving np.nan for the empty minutes.
-    Note that this is done on a 24h / calendar basis, without accounting for
-    any trading times.
-    :param skip_weekends: remove Sat and Sun
-    :return: resampled df
-    """
-    dbg.dassert_monotonic_index(df)
-    date_range = pd.date_range(
-        start=df.index.min(), end=df.index.max(), freq="1T"
-    )
-    # Remove weekends.
-    if skip_weekends:
-        # TODO(gp): Use thej proper calendar.
-        # date_range = [d for d in df.index if d.date().weekday() < 5]
-        mask = [d.weekday() < 5 for d in date_range]
-        date_range = date_range[mask]
-    df = df.reindex(date_range)
-    return df
-
-
 def remove_dates_with_no_data(df, report_stats):
     """
     Given a df indexed with timestamps, scan the data by date and filter out
@@ -149,6 +123,7 @@ def set_non_ath_to_nan(
       - `time <= end_time`
     """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    dbg.dassert_monotonic_index(df)
     if start_time is None:
         start_time = datetime.time(9, 30)
     if end_time is None:
@@ -190,11 +165,6 @@ def filter_ath(
     return df
 
 
-def show_distribution_by(by, ascending=False):
-    by = by.sort_values(ascending=ascending)
-    by.plot(kind="bar")
-
-
 # #############################################################################
 # Pnl returns stats.
 # #############################################################################
@@ -214,7 +184,7 @@ def compute_ret_0(
     else:
         raise ValueError("Invalid mode='%s'" % mode)
     if isinstance(ret_0, pd.Series):
-        ret_0.name = RET_0_COL
+        ret_0.name = "ret_0"
     return ret_0
 
 
@@ -230,43 +200,6 @@ def compute_ret_0_from_multiple_prices(
         rets_tmp.columns = ["%s_ret_0" % s]
         rets.append(rets_tmp)
     rets = pd.concat(rets, sort=True, axis=1)
-    return rets
-
-
-# TODO(*): Refactor this so that we
-# - have a core function that calculates returns by subtracting one
-#   series from the other, with all of the `mode` options
-# - have `compute_ret_0` wrap this core function, calling it with the
-#   original series and a shifted series
-# - have compute_first_causal_lag wrap the core function, calling it
-#   after shifting each series
-def compute_first_causal_lag(
-    lhs: pd.Series, rhs: pd.Series, mode: str
-) -> pd.Series:
-    """
-    Given the semantic of some price data sets (e.g., Kibot) the first
-    "causal" return we can use to trade ret_0 is the
-    TODO(gp): finish this
-
-    :param lhs: series from which the `rhs` is
-        subtracted
-    :param rhs: series is subtracted from the
-        `minuend_series`
-    :param mode: `pct_change`, `log_rets` or `diff`
-    :return: returns series
-    """
-    # TODO(GPP): Consider using fin.compute_ret_0 and then shifting.
-    if mode == "pct_change":
-        rets = lhs.shift(1) - rhs.shift(1)
-        rets /= rhs.shift(1)
-    elif mode == "log_rets":
-        rets = lhs.shift(1) - rhs.shift(1)
-        rets = np.log(1 + rets)
-    elif mode == "diff":
-        rets = lhs.shift(1) - rhs.shift(1)
-    else:
-        raise ValueError("Invalid mode='%s'" % mode)
-    rets.name = "ret_1_star"
     return rets
 
 
@@ -296,48 +229,6 @@ def convert_pct_rets_to_log_rets(
     :return: time series of log returns
     """
     return np.log(pct_rets + 1)
-
-
-def compute_sharpe_ratio(
-    log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
-) -> Union[float, pd.Series]:
-    r"""
-    Calculate Sharpe Ratio (SR) from log returns and rescale.
-
-    For a detailed exploration of SR, see
-    http://www.gilgamath.com/pages/ssc.html.
-
-    :param log_rets: time series of log returns
-    :param time_scaling: rescales SR by a factor of \sqrt(time_scaling).
-        - For SR with respect to the sampling frequency, set equal to 1
-        - For annualization, set equal to the number of sampling frequency
-          ticks per year (e.g., =252 if daily returns are provided)
-    :return: Sharpe Ratio
-    """
-    dbg.dassert_lte(1, time_scaling, "Time scaling factor must be positive!")
-    sr = log_rets.mean() / log_rets.std()
-    sr *= np.sqrt(time_scaling)
-    if isinstance(sr, pd.Series):
-        sr.name = SR_COL
-    return sr
-
-
-# TODO(Paul): Consider renaming.
-def compute_sr(rets):
-    """
-    NOTE: The current implementation of this resamples to daily but does not
-    filter out non-trading days. This will tend to deflate the SR.
-
-    See also compute_rolling_sharpe_ratio in signal_processing.py
-
-    We can also use tools in bayesian.py for a more comprehensive assessment.
-    """
-    # Annualize (brutally).
-    # sr = rets.mean() / rets.std()
-    # sr *= np.sqrt(252 * ((16 - 9.5) * 60))
-    daily_rets = rets.resample("1D").sum()
-    sr = compute_sharpe_ratio(daily_rets, 252)
-    return sr
 
 
 def compute_kratio(rets, y_var):

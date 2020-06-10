@@ -167,3 +167,28 @@ def apply_nan_mode(
             100.0 * info["num_nans_imputed"] / info["num_elems_before"]
         )
     return res
+
+
+def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
+    """
+    Return the number of index time points per year.
+
+    TODO(*): Consider extending to all frequencies and count points by
+        explicitly building indices of the given frequency.
+
+    :param data: series or dataframe with non-null `data.index.freq`
+    :return: number of time points per year (approximate)
+    """
+    dbg.dassert(data.index.freq)
+    freq = data.index.freq
+    if freq == "D":
+        points_per_year = 365
+    elif freq == "B":
+        points_per_year = 252
+    elif freq == "W":
+        points_per_year = 52
+    elif freq == "M":
+        points_per_year = 12
+    else:
+        raise ValueError(f"Unsupported freq=`{freq}`")
+    return points_per_year
