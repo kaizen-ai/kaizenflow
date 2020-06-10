@@ -27,8 +27,6 @@ import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
-sns.set_palette("bright")
-
 _PCA_TYPE = Union[skldec.PCA, skldec.IncrementalPCA]
 
 FIG_SIZE = (20, 5)
