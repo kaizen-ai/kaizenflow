@@ -1,2 +1,2 @@
                  arma(2,2)
-newmax_drawdown     -100.0
+newmax_drawdown -99.960811
