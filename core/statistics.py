@@ -974,7 +974,7 @@ def compute_zero_diff_proportion(
     srs: pd.Series,
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
-    equal_nan: Optional[bool] = None,
+    equal_nan: Optional[bool] = False,
     nan_mode: Optional[str] = False,
     prefix: Optional[str] = None,
 ) -> pd.Series:
