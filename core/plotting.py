@@ -786,18 +786,18 @@ def plot_value_counts(
             plot_barplot(
                 counts_tmp,
                 orientation="horizontal",
-                plot_title=plot_title,
+                title=plot_title,
                 figsize=figsize,
-                label=label,
+                xlabel=label,
             )
         else:
             # Plot small number of categories vertically.
             plot_barplot(
                 counts_tmp,
                 orientation="vertical",
-                plot_title=plot_title,
+                title=plot_title,
                 figsize=figsize,
-                label=label,
+                xlabel=label,
             )
 
 
@@ -806,9 +806,10 @@ def plot_barplot(
     orientation: str = "vertical",
     annotation_mode: str = "pct",
     string_format: str = "%.2f",
-    plot_title: Optional[str] = None,
-    label: Optional[str] = None,
+    title: Optional[str] = None,
+    xlabel: Optional[str] = None,
     unicolor: bool = False,
+    colormap: Optional[mpl.colors.Colormap] = None,
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
@@ -818,9 +819,10 @@ def plot_barplot(
     :param orientation: vertical or horizontal bars
     :param annotation_mode: `pct` or `value`
     :param string_format: format of bar annotations
-    :param plot_title: title of the plot
-    :param label: label of the X axis
+    :param title: title of the plot
+    :param xlabel: label of the X axis
     :param unicolor: if True, plot all bars in neutral blue color
+    :param colormap:
     :param figsize: size of plot
     """
 
@@ -836,18 +838,19 @@ def plot_barplot(
     if figsize is None:
         figsize = FIG_SIZE
     plt.figure(figsize=figsize)
+    if orientation == "vertical":
+        pass
+    elif orientation == "horizontal":
+        srs = pd.Series(srs.index, index=srs.values)
+    else:
+        raise ValueError("Invalid orientation='%s'" % orientation)
+    # Choose colors.
+    colormap = colormap or sns.diverging_palette(10, 220, as_cmap=True)
     if unicolor:
         color = sns.color_palette("muted")[0]
     else:
-        color = None
-    # Plot vertical bars.
-    if orientation == "vertical":
-        ax = sns.barplot(x=srs.index, y=srs.values, color=color)
-    # Plot horizontal bars.
-    elif orientation == "horizontal":
-        ax = sns.barplot(y=srs.index, x=srs.values, color=color)
-    else:
-        raise ValueError("Invalid orientation='%s'" % orientation)
+        color = srs.apply(colormap)
+    ax = srs.plot(kind="bar", color=color, rot=0, title=title)
     # Add annotations to bars.
     if annotation_mode == "pct":
         annotations = srs * 100 / srs.sum()
@@ -864,10 +867,8 @@ def plot_barplot(
         x, y = p.get_xy()
         annotation_loc = _get_annotation_loc(x, y, height, width)
         ax.annotate(annotations.iloc[i], annotation_loc)
-    if label:
-        ax.set(xlabel=label)
-    if plot_title:
-        plt.title(plot_title)
+    if xlabel:
+        ax.set(xlabel=xlabel)
 
 
 # #############################################################################
