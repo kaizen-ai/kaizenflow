@@ -248,7 +248,7 @@ def summarize_sharpe_ratio(
 
 
 def compute_annualized_sharpe_ratio(
-        log_rets: Union[pd.Series, pd.DataFrame],
+    log_rets: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
     """
     Compute SR from rets with an index freq and annualize.
@@ -262,7 +262,7 @@ def compute_annualized_sharpe_ratio(
 
 
 def compute_annualized_sharpe_ratio_standard_error(
-        log_rets: Union[pd.Series, pd.DataFrame],
+    log_rets: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
     """
     Compute SE(SR) from rets with an index freq and annualize.
@@ -280,7 +280,7 @@ def compute_annualized_sharpe_ratio_standard_error(
 
 
 def compute_sharpe_ratio(
-        log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
+    log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
 ) -> Union[float, pd.Series]:
     r"""
     Calculate Sharpe Ratio (SR) from log returns and rescale.
@@ -304,7 +304,7 @@ def compute_sharpe_ratio(
 
 
 def compute_sharpe_ratio_standard_error(
-        log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
+    log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
 ) -> Union[float, pd.Series]:
     """
     Calculate Sharpe Ratio standard error from log returns and rescale.
