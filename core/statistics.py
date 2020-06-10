@@ -910,7 +910,6 @@ def calculate_hit_rate(
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
         count=hit_mask.sum(), nobs=hit_mask.count(), alpha=alpha, method=method
     )
-    alpha = "%.2f" % alpha
     result_values = [point_estimate, alpha, hit_lower, hit_upper]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result

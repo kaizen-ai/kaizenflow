@@ -1,5 +1,5 @@
                                            0
-hit_rate_point_est                      0.46
-hit_rate_confidence_interval_alpha     0.050
+hit_rate_point_est                  0.460000
+hit_rate_confidence_interval_alpha  0.050000
 hit_rate_lower_bound                0.364619
 hit_rate_upper_bound                0.557659
