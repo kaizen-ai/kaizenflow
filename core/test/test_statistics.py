@@ -35,14 +35,14 @@ class TestComputeMoments1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_moments(series)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.compute_moments(series)
@@ -51,14 +51,14 @@ class TestComputeMoments1(hut.TestCase):
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.compute_moments(series, nan_mode="ffill_and_drop_leading")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test6(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.compute_moments(series)
@@ -132,7 +132,7 @@ class TestComputeFracZero1(hut.TestCase):
         actual = stats.compute_frac_zero(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.compute_frac_zero(series)
@@ -206,7 +206,7 @@ class TestComputeFracNan1(hut.TestCase):
         actual = stats.compute_frac_nan(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.compute_frac_nan(series)
@@ -243,7 +243,7 @@ class TestComputeFracConstant1(hut.TestCase):
         actual = stats.compute_frac_constant(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_frac_constant(series)
@@ -251,7 +251,7 @@ class TestComputeFracConstant1(hut.TestCase):
 
 class TestComputeNumFiniteSamples1(hut.TestCase):
     @staticmethod
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
         stats.count_num_finite_samples(series)
@@ -259,7 +259,7 @@ class TestComputeNumFiniteSamples1(hut.TestCase):
 
 class TestComputeNumUniqueValues1(hut.TestCase):
     @staticmethod
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
         stats.count_num_unique_values(series)
@@ -267,7 +267,7 @@ class TestComputeNumUniqueValues1(hut.TestCase):
 
 class TestComputeDenominatorAndPackage1(hut.TestCase):
     @staticmethod
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
         stats._compute_denominator_and_package(reduction=1, data=series)
@@ -285,14 +285,14 @@ class TestTTest1samp1(hut.TestCase):
         )
         return series
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
         stats.ttest_1samp(series)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.ttest_1samp(series)
@@ -301,14 +301,14 @@ class TestTTest1samp1(hut.TestCase):
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.ttest_1samp(series, nan_mode="ffill_and_drop_leading")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test4(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.ttest_1samp(series)
@@ -321,12 +321,12 @@ class TestMultipleTests1(hut.TestCase):
         series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
         return series
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
         stats.multipletests(series)
 
-    # Test if error is raised with default arguments when input contains NaNs
+    # Test if error is raised with default arguments when input contains NaNs.
     @pytest.mark.xfail()
     def test2(self) -> None:
         series_with_nans = self._get_series(seed=1)
@@ -363,7 +363,7 @@ class TestMultiTTest1(hut.TestCase):
         ).T
         return df
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1(self) -> None:
         df = pd.DataFrame(columns=["series_name"])
         stats.multi_ttest(df)
@@ -431,14 +431,14 @@ class TestApplyNormalityTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
         stats.apply_normality_test(series)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.apply_normality_test(series)
@@ -447,7 +447,7 @@ class TestApplyNormalityTest1(hut.TestCase):
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.apply_normality_test(
@@ -456,7 +456,7 @@ class TestApplyNormalityTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test6(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.apply_normality_test(series)
@@ -504,7 +504,7 @@ class TestApplyAdfTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.apply_adf_test(series)
@@ -516,7 +516,7 @@ class TestApplyAdfTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test8(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.apply_adf_test(series)
@@ -564,7 +564,7 @@ class TestApplyKpssTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.apply_kpss_test(series)
@@ -576,7 +576,7 @@ class TestApplyKpssTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test8(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.apply_kpss_test(series)
@@ -630,7 +630,7 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test7(self) -> None:
         series = pd.Series([])
         stats.apply_ljung_box_test(series)
@@ -642,7 +642,7 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test9(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.apply_ljung_box_test(series)
@@ -676,7 +676,7 @@ class TestComputeZeroNanInfStats1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_zero_nan_inf_stats(series)
@@ -715,12 +715,12 @@ class TestCalculateHitRate1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.calculate_hit_rate(series)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test7(self) -> None:
         series = pd.Series([np.nan] * 10)
         stats.calculate_hit_rate(series)
@@ -773,7 +773,7 @@ class Test_compute_jensen_ratio1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         signal = pd.Series([])
         stats.compute_jensen_ratio(signal)
@@ -814,7 +814,7 @@ class Test_compute_forecastability1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test5(self) -> None:
         signal = self._get_signal(seed=1)
         stats.compute_forecastability(signal)
@@ -871,7 +871,7 @@ class TestComputeZeroDiffProportion1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test7(self) -> None:
         series = pd.Series([])
         stats.compute_zero_diff_proportion(series)
@@ -890,7 +890,7 @@ class TestGetInterarrivalTime1(hut.TestCase):
         series[5:10] = np.nan
         return series
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
         stats.get_interarrival_time(series)
@@ -923,7 +923,7 @@ class TestComputeInterarrivalTimeStats1(hut.TestCase):
         interarrival_time[5:10] = np.nan
         return interarrival_time
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
         stats.compute_interarrival_time_stats(series)
