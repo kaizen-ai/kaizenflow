@@ -733,13 +733,16 @@ def compute_rolling_annualized_sharpe_ratio(
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-    
+    Compute rolling annualized Sharpe ratio and standard error.
+
+    The standard error adjustment uses the range of the smooth moving average
+    kernel as an estimate of the "number of data points" used in the
+    calculation of the Sharpe ratio.
     """
     ppy = hdf.infer_sampling_points_per_year(signal)
-    sr = compute_rolling_sharpe_ratio(signal, tau,
-                                      min_periods,
-                                      min_depth, max_depth,
-                                      p_moment)
+    sr = compute_rolling_sharpe_ratio(
+        signal, tau, min_periods, min_depth, max_depth, p_moment
+    )
     # TODO(*): May need to rescale denominator by a constant.
     se_sr = np.sqrt((1 + (sr ** 2) / 2) / (tau * max_depth))
     rescaled_sr = np.sqrt(ppy) * sr
