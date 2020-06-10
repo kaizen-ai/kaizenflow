@@ -861,7 +861,7 @@ def calculate_hit_rate(
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-    mode: str = "strict",
+    mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate hit rate statistics.
@@ -883,6 +883,7 @@ def calculate_hit_rate(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
+    mode = mode or "sign"
     # Process series.
     result_index = [
         prefix + "hit_rate_point_est",
