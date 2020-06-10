@@ -1,0 +1,36 @@
+          0
+0       NaT
+1   28 days
+2   31 days
+3   30 days
+4   31 days
+5  183 days
+6   31 days
+7   31 days
+8   28 days
+9   31 days
+10  30 days
+11  31 days
+12  30 days
+13  31 days
+14  31 days
+15  30 days
+16  31 days
+17  30 days
+18  31 days
+19  31 days
+20  29 days
+21  31 days
+22  30 days
+23  31 days
+24  30 days
+25  31 days
+26  31 days
+27  30 days
+28  31 days
+29  30 days
+30  31 days
+31  31 days
+32  28 days
+33  31 days
+34  30 days

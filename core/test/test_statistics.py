@@ -859,7 +859,9 @@ class TestComputeZeroDiffProportion1(hut.TestCase):
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_zero_diff_proportion(series, nan_mode="fill_with_zero")
+        actual = stats.compute_zero_diff_proportion(
+            series, nan_mode="fill_with_zero"
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -875,7 +877,7 @@ class TestComputeZeroDiffProportion1(hut.TestCase):
         stats.compute_zero_diff_proportion(series)
 
 
-class TestComputeInterarrivalTimeStats1(hut.TestCase):
+class TestGetInterarrivalTime1(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -891,4 +893,49 @@ class TestComputeInterarrivalTimeStats1(hut.TestCase):
     # Smoke test for empty input
     def test1(self) -> None:
         series = pd.Series([])
+        stats.get_interarrival_time(series)
+
+    def test2(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.get_interarrival_time(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.get_interarrival_time(series, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
+class TestComputeInterarrivalTimeStats1(hut.TestCase):
+    @staticmethod
+    def _get_interarrival_time(seed: int) -> pd.Series:
+        np.random.seed(seed)
+        start = pd.to_datetime("2015-01-01")
+        end = pd.to_datetime("2018-01-01")
+        ndays = (end - start).days + 1
+        random_datetime = pd.Series(
+            pd.to_timedelta(np.random.rand(20) * ndays, unit="D") + start,
+            name="test_time",
+        )
+        interarrival_time = random_datetime.diff()
+        interarrival_time[5:10] = np.nan
+        return interarrival_time
+
+    # Smoke test for empty input
+    def test1(self) -> None:
+        series = pd.Series([])
         stats.compute_interarrival_time_stats(series)
+
+    def test2(self) -> None:
+        series = self._get_interarrival_time(seed=1)
+        actual = stats.compute_interarrival_time_stats(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_interarrival_time(seed=1)
+        actual = stats.compute_interarrival_time_stats(series, nan_mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)

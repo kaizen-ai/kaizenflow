@@ -1013,7 +1013,7 @@ def compute_zero_diff_proportion(
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     if data.shape[0] < 2:
-        _LOG.warning("Empty input series `%s` is too small", srs.name)
+        _LOG.warning("Input series `%s` is too small", srs.name)
         return nan_result
     else:
         # Compute if neighbouring elements are equal within the given tolerance.
@@ -1031,45 +1031,81 @@ def compute_zero_diff_proportion(
     return res
 
 
+def get_interarrival_time(
+        srs: pd.Series, nan_mode: Optional[str] = None,
+) -> pd.Series:
+    """
+    Get interrarival time from index of a time series.
+
+    :param srs: pandas series of floats
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: series with interrarival time
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    if data.empty:
+        _LOG.warning("Empty input `%s`", srs.name)
+        return None
+    index = data.index
+    # Check if index of a series is a DateTimeIndex.
+    dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    # Get series of interrairival time.
+    interrarival_time = pd.Series(index).diff()
+    return interrarival_time
+
+
 def compute_interarrival_time_stats(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    interrarival_time: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Compute statistics about interarrival time of a series.
 
-    :param srs: pandas series of floats
+    :param srs: pandas series of interrarival time
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
-    :return: Dict with statistic and related info
+    :return: series with statistic and related info
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    dbg.dassert_isinstance(interrarival_time, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    res_dict_base = {
-        prefix + "n_unique": None,
-        prefix + "mean": None,
-        prefix + "max": None,
-        prefix + "min": None,
-        prefix + "std": None,
-        prefix + "value_counts": None,
-    }
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(interrarival_time, nan_mode=nan_mode)
+    result_index = [
+        prefix + "n_unique",
+        prefix + "mean",
+        prefix + "max",
+        prefix + "min",
+        prefix + "std",
+        prefix + "value_counts",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)],
+        index=result_index,
+        name=data.name,
+        dtype = "object"
+    )
     if data.empty:
-        _LOG.warning("Empty input `%s`", srs.name)
-        return res_dict_base
-    # Compute interrarival time in data index to compute stats.
-    index_series = pd.Series(data.index)
-    interrarival_series = index_series.diff()
-    try:
-        res_dict_base[prefix + "n_unique"] = interrarival_series.nunique()
-        res_dict_base[prefix + "mean"] = interrarival_series.mean()
-        res_dict_base[prefix + "max"] = interrarival_series.max()
-        res_dict_base[prefix + "min"] = interrarival_series.min()
-        res_dict_base[prefix + "std"] = interrarival_series.std()
-        res_dict_base[
-            prefix + "value_counts"
-        ] = interrarival_series.value_counts().to_dict()
-    except ValueError as inst:
-        _LOG.warning(inst)
-        return res_dict_base
-    return res_dict_base
+        _LOG.warning("Empty input `%s`", interrarival_time.name)
+        return nan_result
+    if data.shape[0] < 2:
+        _LOG.warning("Input `%s` is too small", interrarival_time.name)
+        return nan_result
+    else:
+        n_unique = data.nunique()
+        mean = data.mean()
+        max_value = data.max()
+        min_value = data.min()
+        std = data.std()
+        value_counts = data.value_counts().to_dict()
+    #
+    result_values = [n_unique, mean, max_value, min_value, std, value_counts]
+    res = pd.Series(
+        data=result_values,
+        index=result_index,
+        name=interrarival_time.name,
+        dtype = "object"
+    )
+    return res
