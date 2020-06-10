@@ -18,6 +18,7 @@ import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
 
+import core.finance as fin
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
@@ -35,6 +36,7 @@ def compute_moments(
 ) -> pd.Series:
     """
     Calculate, mean, standard deviation, skew, and kurtosis.
+
     :param srs: input series for computing moments
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
@@ -859,7 +861,7 @@ def calculate_hit_rate(
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-    mode: str = "strict",
+    mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate hit rate statistics.
@@ -881,6 +883,7 @@ def calculate_hit_rate(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
+    mode = mode or "sign"
     # Process series.
     result_index = [
         prefix + "hit_rate_point_est",
@@ -1038,3 +1041,28 @@ def compute_forecastability(
         name=signal.name,
     )
     return res
+
+
+def compute_max_drawdown(
+    log_rets: pd.Series, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate max drawdown statistic.
+
+    :param log_rets: pandas series of log returns
+    :param prefix: optional prefix for metrics' outcome
+    :return: max drawdown as a negative percentage loss
+    """
+    dbg.dassert_isinstance(log_rets, pd.Series)
+    prefix = prefix or ""
+    result_index = [prefix + "max_drawdown"]
+    nan_result = pd.Series(
+        index=result_index, name=log_rets.name, dtype="float64"
+    )
+    if log_rets.empty:
+        _LOG.warning("Empty input series `%s`", log_rets.name)
+        return nan_result
+    pct_drawdown = fin.compute_perc_loss_from_high_water_mark(log_rets)
+    max_drawdown = -100 * (pct_drawdown.max())
+    result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
+    return result
