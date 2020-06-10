@@ -12,6 +12,7 @@ import logging
 import os
 import shutil
 import time
+import json
 from typing import Any, List, Optional
 
 import helpers.dbg as dbg
@@ -225,6 +226,7 @@ def to_file(
     """
     Write the content of lines into file_name, creating the enclosing directory
     if needed.
+
     :param file_name: name of written file
     :param lines: content of the file
     :param use_gzip: whether the file should be compressed as gzip
@@ -332,3 +334,32 @@ def get_size_as_str(file_name: str) -> str:
     else:
         res = "nan"
     return res
+
+
+def to_json(file_name: str, obj: dict) -> None:
+    """
+    Write an object into a JSON file.
+
+    :param obj: data for writing
+    :param file_name: name of file
+    :return:
+    """
+    dir_name = os.path.dirname(file_name)
+    if dir_name != "" and not os.path.isdir(dir_name):
+        create_dir(dir_name, incremental=True)
+
+    with open(file_name, "w") as outfile:
+        json.dump(obj, outfile, indent=4)
+
+
+def from_json(file_name: str) -> dict:
+    """
+    Read object from JSON file.
+
+    :param file_name: name of file
+    :return: dict with data
+    """
+    dbg.dassert_exists(file_name)
+    with open(file_name, "r") as f:
+        data = json.loads(f.read())
+    return data
