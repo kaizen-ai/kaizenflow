@@ -838,19 +838,20 @@ def plot_barplot(
     if figsize is None:
         figsize = FIG_SIZE
     plt.figure(figsize=figsize)
-    if orientation == "vertical":
-        pass
-    elif orientation == "horizontal":
-        srs = pd.Series(srs.index, index=srs.values)
-    else:
-        raise ValueError("Invalid orientation='%s'" % orientation)
     # Choose colors.
     colormap = colormap or sns.diverging_palette(10, 220, as_cmap=True)
     if unicolor:
         color = sns.color_palette("muted")[0]
     else:
         color = srs.apply(colormap)
-    ax = srs.plot(kind="bar", color=color, rot=0, title=title)
+    # Plot.
+    if orientation == "vertical":
+        kind = "bar"
+    elif orientation == "horizontal":
+        kind = "barh"
+    else:
+        raise ValueError("Invalid orientation='%s'" % orientation)
+    ax = srs.plot(kind=kind, color=color, rot=0, title=title)
     # Add annotations to bars.
     if annotation_mode == "pct":
         annotations = srs * 100 / srs.sum()
