@@ -15,6 +15,7 @@ import pywt
 import scipy as sp
 import statsmodels.api as sm
 
+import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -723,10 +724,36 @@ def compute_rolling_kurtosis(
 # #############################################################################
 
 
+def compute_rolling_annualized_sharpe_ratio(
+    signal: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    min_periods: int = 2,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+) -> Union[pd.DataFrame, pd.Series]:
+    """
+    
+    """
+    ppy = hdf.infer_sampling_points_per_year(signal)
+    sr = compute_rolling_sharpe_ratio(signal, tau,
+                                      min_periods,
+                                      min_depth, max_depth,
+                                      p_moment)
+    # TODO(*): May need to rescale denominator by a constant.
+    se_sr = np.sqrt((1 + (sr ** 2) / 2) / (tau * max_depth))
+    rescaled_sr = np.sqrt(ppy) * sr
+    rescaled_se_sr = np.sqrt(ppy) * se_sr
+    df = pd.DataFrame(index=signal.index)
+    df["annualized_SR"] = rescaled_sr
+    df["annualized_SE(SR)"] = rescaled_se_sr
+    return df
+
+
 def compute_rolling_sharpe_ratio(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
-    min_periods: int = 0,
+    min_periods: int = 2,
     min_depth: int = 1,
     max_depth: int = 1,
     p_moment: float = 2,
