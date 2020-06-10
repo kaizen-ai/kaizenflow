@@ -18,6 +18,7 @@ import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
 
+import core.finance as fin
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 
@@ -1042,7 +1043,7 @@ def compute_forecastability(
 
 
 def compute_max_drawdown(
-    srs: pd.Series, prefix: Optional[str] = None,
+    log_rets: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate max drawdown statistic.
@@ -1051,14 +1052,16 @@ def compute_max_drawdown(
     :param prefix: optional prefix for metrics' outcome
     :return: max drawdown as a negative percentage loss
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    dbg.dassert_isinstance(log_rets, pd.Series)
     prefix = prefix or ""
     result_index = [prefix + "max_drawdown"]
-    nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
-    if srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
+    nan_result = pd.Series(
+        index=result_index, name=log_rets.name, dtype="float64"
+    )
+    if log_rets.empty:
+        _LOG.warning("Empty input series `%s`", log_rets.name)
         return nan_result
-    pct_drawdown = fin.compute_perc_loss_from_high_water_mark(srs)
+    pct_drawdown = fin.compute_perc_loss_from_high_water_mark(log_rets)
     max_drawdown = -100 * (pct_drawdown.max())
-    result = pd.Series(data=max_drawdown, index=result_index, name=srs.name)
+    result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
     return result
