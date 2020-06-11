@@ -698,20 +698,18 @@ def multipletests_plot(
     Plot adjusted p-values and pass/fail threshold.
 
     :param pvals: unadjusted p-values
-    :param adj_pvals: adjusted p-values
     :param threshold: threshold for adjusted p-values separating accepted and
         rejected hypotheses, e.g., "FWER", or family-wise error rate
+    :param adj_pvals: adjusted p-values, if provided, will be used instead 
+        calculating inside the function
     :param num_cols: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
-    :param i: row number in a column of plots in case of multiplotting, default = 0
-    :param rows: number of plots in case of multiplotting, default = 1
     """
     if isinstance(pvals, pd.Series):
         pvals = pvals.to_frame()
     if isinstance(adj_pvals, pd.Series):
         pvals = adj_pvals.to_frame()
-    if num_cols is None:
-        num_cols = 1
+    num_cols = num_cols or 1
     rows = len(pvals.columns) // num_cols + 1
     fig = plt.figure(figsize=(10.0 * num_cols, 8.0 * rows))
     gs = gridspec.GridSpec(rows, num_cols)
@@ -752,8 +750,7 @@ def multipletests_plot(
         fig.add_subplot(ax)
     plt.show()
 
-
-""
+    
 def multipletests_plot(
     pvals: Union[pd.Series, pd.DataFrame],
     threshold: float,
@@ -766,21 +763,18 @@ def multipletests_plot(
     Plot adjusted p-values and pass/fail threshold.
 
     :param pvals: unadjusted p-values
-    :param adj_pvals: adjusted p-values
     :param threshold: threshold for adjusted p-values separating accepted and
         rejected hypotheses, e.g., "FWER", or family-wise error rate
+    :param adj_pvals: adjusted p-values, if provided, will be used instead 
+        calculating inside the function
     :param num_cols: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
-    :param i: row number in a column of plots in case of multiplotting, default = 0
-    :param rows: number of plots in case of multiplotting, default = 1
     """
     if isinstance(pvals, pd.Series):
         pvals = pvals.to_frame()
     if isinstance(adj_pvals, pd.Series):
         pvals = adj_pvals.to_frame()
-    if num_cols is None:
-        num_cols = 1
-    rows = len(pvals.columns) // num_cols + 1
+    num_cols = num_cols or 1
     fig, ax = get_multiple_plots(
         len(pvals.columns), num_cols=num_cols, sharex=True, sharey=True, y_scale = 5
     )
