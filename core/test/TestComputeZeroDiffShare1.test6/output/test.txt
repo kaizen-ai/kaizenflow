@@ -1,2 +1,0 @@
-                        arma(2,2)
-prefix_zero_diff_share        0.0

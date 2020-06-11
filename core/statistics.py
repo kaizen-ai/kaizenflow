@@ -1113,15 +1113,14 @@ def compute_zero_diff_proportion(
     if data.shape[0] < 2:
         _LOG.warning("Input series `%s` is too small", srs.name)
         return nan_result
-    else:
-        # Compute if neighbouring elements are equal within the given tolerance.
-        equal_ngb_srs = np.isclose(
-            data, data.shift(1), atol=atol, rtol=rtol, equal_nan=equal_nan,
-        )
-        # Compute number and proportion of equals among all neighbours pairs.
-        n_equal = equal_ngb_srs.sum()
-        n_pairs = data.shape[0] - 1
-        proportion = n_equal / n_pairs
+    # Compute if neighbouring elements are equal within the given tolerance.
+    equal_ngb_srs = np.isclose(
+        data, data.shift(1), atol=atol, rtol=rtol, equal_nan=equal_nan,
+    )
+    # Compute number and proportion of equals among all neighbours pairs.
+    n_equal = equal_ngb_srs.sum()
+    n_pairs = data.shape[0] - 1
+    proportion = n_equal / n_pairs
     result_values = [n_equal, proportion]
     res = pd.Series(
         data=result_values, index=result_index, name=srs.name,
@@ -1131,7 +1130,7 @@ def compute_zero_diff_proportion(
 
 def get_interarrival_time(
         srs: pd.Series, nan_mode: Optional[str] = None,
-) -> pd.Series:
+) -> Optional[pd.Series]:
     """
     Get interrarival time from index of a time series.
 
@@ -1148,6 +1147,8 @@ def get_interarrival_time(
     index = data.index
     # Check if index of a series is a DateTimeIndex.
     dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    # Check if index of a series is monotonically increasing.
+    dbg.dassert_monotonic_index(index)
     # Get series of interrairival time.
     interrarival_time = pd.Series(index).diff()
     return interrarival_time
@@ -1178,12 +1179,7 @@ def compute_interarrival_time_stats(
         prefix + "std",
         prefix + "value_counts",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
-        index=result_index,
-        name=data.name,
-        dtype = "object"
+    nan_result = pd.Series(index=result_index, name=data.name, dtype = "object"
     )
     if data.empty:
         _LOG.warning("Empty input `%s`", interrarival_time.name)
@@ -1191,13 +1187,12 @@ def compute_interarrival_time_stats(
     if data.shape[0] < 2:
         _LOG.warning("Input `%s` is too small", interrarival_time.name)
         return nan_result
-    else:
-        n_unique = data.nunique()
-        mean = data.mean()
-        max_value = data.max()
-        min_value = data.min()
-        std = data.std()
-        value_counts = data.value_counts().to_dict()
+    n_unique = data.nunique()
+    mean = data.mean()
+    max_value = data.max()
+    min_value = data.min()
+    std = data.std()
+    value_counts = data.value_counts().to_dict()
     #
     result_values = [n_unique, mean, max_value, min_value, std, value_counts]
     res = pd.Series(
