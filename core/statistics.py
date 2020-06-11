@@ -885,8 +885,8 @@ def calculate_hit_rate(
     prefix = prefix or ""
     # Process series.
     if method in ("beta", "jeffreys"):
-        # Methods with central intervals
-        conf_alpha = (1 - alpha) / 2 * 100
+        # Methods with central intervals.
+        conf_alpha = (1 - alpha / 2) * 100
     else:
         conf_alpha = (1 - alpha) * 100
     result_index = [
