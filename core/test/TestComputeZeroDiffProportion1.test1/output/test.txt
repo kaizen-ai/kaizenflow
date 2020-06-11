@@ -1,3 +1,0 @@
-                      arma(2,2)
-zero_diff_number            0.0
-zero_diff_proportion        0.0

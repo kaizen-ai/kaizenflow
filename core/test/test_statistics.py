@@ -11,7 +11,7 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-class TestComputeMoments1(hut.TestCase):
+class TestComputeMoments(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -64,7 +64,7 @@ class TestComputeMoments1(hut.TestCase):
         stats.compute_moments(series)
 
 
-class TestComputeFracZero1(hut.TestCase):
+class TestComputeFracZero(hut.TestCase):
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
@@ -138,7 +138,7 @@ class TestComputeFracZero1(hut.TestCase):
         stats.compute_frac_zero(series)
 
 
-class TestComputeFracNan1(hut.TestCase):
+class TestComputeFracNan(hut.TestCase):
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
@@ -212,7 +212,7 @@ class TestComputeFracNan1(hut.TestCase):
         stats.compute_frac_nan(series)
 
 
-class TestComputeFracConstant1(hut.TestCase):
+class TestComputeFracConstant(hut.TestCase):
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
@@ -249,7 +249,7 @@ class TestComputeFracConstant1(hut.TestCase):
         stats.compute_frac_constant(series)
 
 
-class TestComputeNumFiniteSamples1(hut.TestCase):
+class TestComputeNumFiniteSamples(hut.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
@@ -257,7 +257,7 @@ class TestComputeNumFiniteSamples1(hut.TestCase):
         stats.count_num_finite_samples(series)
 
 
-class TestComputeNumUniqueValues1(hut.TestCase):
+class TestComputeNumUniqueValues(hut.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
@@ -265,7 +265,7 @@ class TestComputeNumUniqueValues1(hut.TestCase):
         stats.count_num_unique_values(series)
 
 
-class TestComputeDenominatorAndPackage1(hut.TestCase):
+class TestComputeDenominatorAndPackage(hut.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
@@ -273,7 +273,7 @@ class TestComputeDenominatorAndPackage1(hut.TestCase):
         stats._compute_denominator_and_package(reduction=1, data=series)
 
 
-class TestTTest1samp1(hut.TestCase):
+class TestTTest1samp(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -314,7 +314,7 @@ class TestTTest1samp1(hut.TestCase):
         stats.ttest_1samp(series)
 
 
-class TestMultipleTests1(hut.TestCase):
+class TestMultipleTests(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
@@ -343,7 +343,7 @@ class TestMultipleTests1(hut.TestCase):
         self.check_string(actual_string)
 
 
-class TestMultiTTest1(hut.TestCase):
+class TestMultiTTest(hut.TestCase):
     @staticmethod
     def _get_df_of_series(seed: int) -> pd.DataFrame:
         n_series = 7
@@ -407,7 +407,7 @@ class TestMultiTTest1(hut.TestCase):
         self.check_string(actual_string)
 
 
-class TestApplyNormalityTest1(hut.TestCase):
+class TestApplyNormalityTest(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -462,7 +462,7 @@ class TestApplyNormalityTest1(hut.TestCase):
         stats.apply_normality_test(series)
 
 
-class TestApplyAdfTest1(hut.TestCase):
+class TestApplyAdfTest(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -522,7 +522,7 @@ class TestApplyAdfTest1(hut.TestCase):
         stats.apply_adf_test(series)
 
 
-class TestApplyKpssTest1(hut.TestCase):
+class TestApplyKpssTest(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -582,7 +582,7 @@ class TestApplyKpssTest1(hut.TestCase):
         stats.apply_kpss_test(series)
 
 
-class TestApplyLjungBoxTest1(hut.TestCase):
+class TestApplyLjungBoxTest(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -648,7 +648,7 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         stats.apply_ljung_box_test(series)
 
 
-class TestComputeZeroNanInfStats1(hut.TestCase):
+class TestComputeZeroNanInfStats(hut.TestCase):
     @staticmethod
     def _get_messy_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -682,7 +682,7 @@ class TestComputeZeroNanInfStats1(hut.TestCase):
         stats.compute_zero_nan_inf_stats(series)
 
 
-class TestCalculateHitRate1(hut.TestCase):
+class TestCalculateHitRate(hut.TestCase):
     def test1(self) -> None:
         series = pd.Series([0, 1, 0, 0, 1, None])
         actual = stats.calculate_hit_rate(series)
@@ -733,7 +733,7 @@ class TestCalculateHitRate1(hut.TestCase):
         self.check_string(hut.convert_df_to_string(actual, index=True))
 
 
-class Test_compute_jensen_ratio1(hut.TestCase):
+class Test_compute_jensen_ratio(hut.TestCase):
     @staticmethod
     def _get_signal(seed: int) -> pd.Series:
         np.random.seed(seed)
@@ -779,7 +779,7 @@ class Test_compute_jensen_ratio1(hut.TestCase):
         stats.compute_jensen_ratio(signal)
 
 
-class Test_compute_forecastability1(hut.TestCase):
+class Test_compute_forecastability(hut.TestCase):
     @staticmethod
     def _get_signal(seed: int) -> pd.Series:
         np.random.seed(seed)
@@ -890,17 +890,15 @@ class Test_summarize_sharpe_ratio(hut.TestCase):
         self.check_string(hut.convert_df_to_string(res, index=True))
 
 
-class TestComputeZeroDiffProportion1(hut.TestCase):
+class TestComputeZeroDiffProportion(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arparams = np.array([0.75, -0.25])
-        maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed
-        )
-        series[5:10] = np.nan
+        np.random.seed(seed=seed)
+        n_elements = 100
+        index = pd.date_range(start="1-04-2018", periods=n_elements, freq="D")
+        data = list(np.random.randint(10, size=n_elements))
+        series = pd.Series(data=data, index=index, name="test")
+        series[45:50] = np.nan
         return series
 
     def test1(self) -> None:
@@ -947,17 +945,19 @@ class TestComputeZeroDiffProportion1(hut.TestCase):
         stats.compute_zero_diff_proportion(series)
 
 
-class TestGetInterarrivalTime1(hut.TestCase):
+class TestGetInterarrivalTime(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arparams = np.array([0.75, -0.25])
-        maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed
-        )
-        series[5:10] = np.nan
+        n = 100
+        start = pd.to_datetime("2015-01-01")
+        end = pd.to_datetime("2018-01-01")
+        start_u = start.value // 10 ** 9
+        end_u = end.value // 10 ** 9
+        dates = pd.to_datetime(np.random.randint(start_u, end_u, n), unit="s")
+        sorted_dates = dates.sort_values()
+        data = list(np.random.randint(10, size=n))
+        series = pd.Series(data=data, index=sorted_dates, name="test")
+        series[45:50] = np.nan
         return series
 
     # Smoke test for empty input.
@@ -978,7 +978,7 @@ class TestGetInterarrivalTime1(hut.TestCase):
         self.check_string(actual_string)
 
 
-class TestComputeInterarrivalTimeStats1(hut.TestCase):
+class TestComputeInterarrivalTimeStats(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
