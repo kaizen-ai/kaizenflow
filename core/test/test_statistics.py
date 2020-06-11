@@ -980,18 +980,17 @@ class TestGetInterarrivalTime1(hut.TestCase):
 
 class TestComputeInterarrivalTimeStats1(hut.TestCase):
     @staticmethod
-    def _get_interarrival_time(seed: int) -> pd.Series:
-        np.random.seed(seed)
-        start = pd.to_datetime("2015-01-01")
-        end = pd.to_datetime("2018-01-01")
-        ndays = (end - start).days + 1
-        random_datetime = pd.Series(
-            pd.to_timedelta(np.random.rand(20) * ndays, unit="D") + start,
-            name="test_time",
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
         )
-        interarrival_time = random_datetime.diff()
-        interarrival_time[5:10] = np.nan
-        return interarrival_time
+        series.drop(series.index[15:20], inplace=True)
+        series[5:10] = np.nan
+        return series
 
     # Smoke test for empty input.
     def test1(self) -> None:
@@ -999,13 +998,13 @@ class TestComputeInterarrivalTimeStats1(hut.TestCase):
         stats.compute_interarrival_time_stats(series)
 
     def test2(self) -> None:
-        series = self._get_interarrival_time(seed=1)
+        series = self._get_series(seed=1)
         actual = stats.compute_interarrival_time_stats(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        series = self._get_interarrival_time(seed=1)
+        series = self._get_series(seed=1)
         actual = stats.compute_interarrival_time_stats(series, nan_mode="ffill")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)

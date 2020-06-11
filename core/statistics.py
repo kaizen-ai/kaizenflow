@@ -1073,7 +1073,7 @@ def compute_zero_diff_proportion(
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
     equal_nan: Optional[bool] = False,
-    nan_mode: Optional[str] = False,
+    nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
@@ -1151,9 +1151,7 @@ def get_interarrival_time(
 
 
 def compute_interarrival_time_stats(
-    interrarival_time: pd.Series,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Compute statistics about interarrival time of a series.
@@ -1163,10 +1161,10 @@ def compute_interarrival_time_stats(
     :param prefix: optional prefix for metrics' outcome
     :return: series with statistic and related info
     """
-    dbg.dassert_isinstance(interrarival_time, pd.Series)
+    dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(interrarival_time, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     result_index = [
         prefix + "n_unique",
         prefix + "mean",
@@ -1177,11 +1175,12 @@ def compute_interarrival_time_stats(
     ]
     nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
     if data.empty:
-        _LOG.warning("Empty input `%s`", interrarival_time.name)
+        _LOG.warning("Empty input `%s`", srs.name)
         return nan_result
     if data.shape[0] < 2:
-        _LOG.warning("Input `%s` is too small", interrarival_time.name)
+        _LOG.warning("Input `%s` is too small", srs.name)
         return nan_result
+    data = get_interarrival_time(data, nan_mode=nan_mode)
     n_unique = data.nunique()
     mean = data.mean()
     max_value = data.max()
@@ -1191,9 +1190,6 @@ def compute_interarrival_time_stats(
     #
     result_values = [n_unique, mean, max_value, min_value, std, value_counts]
     res = pd.Series(
-        data=result_values,
-        index=result_index,
-        name=interrarival_time.name,
-        dtype="object",
+        data=result_values, index=result_index, name=srs.name, dtype="object",
     )
     return res
