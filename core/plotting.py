@@ -11,7 +11,6 @@ from typing import Any, List, Optional, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.colors as mpl_col
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -47,7 +46,7 @@ _DATETIME_TYPES = [
 ]
 
 
-###############################################################################
+# #############################################################################
 # General dataframe plotting helpers
 # #############################################################################
 
@@ -158,7 +157,7 @@ def plot_categories_count(
     plt.show()
 
 
-###############################################################################
+# #############################################################################
 # Time series plotting
 # #############################################################################
 
@@ -355,7 +354,7 @@ def plot_spectrum(
         # ax2.set_xlabel("Time window")
 
 
-###############################################################################
+# #############################################################################
 # Correlation-type plots
 # #############################################################################
 
@@ -646,7 +645,7 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-###############################################################################
+# #############################################################################
 # Eval metrics plots
 # #############################################################################
 
@@ -700,72 +699,7 @@ def multipletests_plot(
     :param pvals: unadjusted p-values
     :param threshold: threshold for adjusted p-values separating accepted and
         rejected hypotheses, e.g., "FWER", or family-wise error rate
-    :param adj_pvals: adjusted p-values, if provided, will be used instead 
-        calculating inside the function
-    :param num_cols: number of columns in multiplotting
-    :param method: method for performing p-value adjustment, e.g., "fdr_bh"
-    """
-    if isinstance(pvals, pd.Series):
-        pvals = pvals.to_frame()
-    if isinstance(adj_pvals, pd.Series):
-        pvals = adj_pvals.to_frame()
-    num_cols = num_cols or 1
-    rows = len(pvals.columns) // num_cols + 1
-    fig = plt.figure(figsize=(10.0 * num_cols, 8.0 * rows))
-    gs = gridspec.GridSpec(rows, num_cols)
-    for i, col in enumerate(pvals.columns):
-        if num_cols > 1:
-            j = i % num_cols
-            i = i // num_cols
-        else:
-            j = 0
-        pval_series = pvals[col]
-        pval_series = pval_series.dropna()
-        pval_series = pval_series.sort_values().reset_index(drop=True)
-        if adj_pvals is None:
-            adj_pval = stats.multipletests(pval_series, method=method)
-        else:
-            adj_pval = adj_pvals[col + "_adj_pval"]
-        ax = plt.subplot(gs[i, j])
-        _ = ax.plot(pval_series, label="pvals", **kwargs)[0]
-        ax.plot(adj_pval, label="adj pvals", **kwargs)
-        # Show min adj p-val in text.
-        min_adj_pval = adj_pval[0]
-        ax.text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
-        ax.text(
-            0.1,
-            0.6,
-            weight="bold",
-            fontsize=20,
-            **(
-                {"s": "PASS", "color": "g"}
-                if min_adj_pval <= threshold
-                else {"s": "FAIL", "color": "r"}
-            ),
-        )
-        ax.set_title(pval_series.name)
-        ax.axhline(threshold, ls=":", c="k")
-        ax.set_ylim(0, 1)
-        ax.legend()
-        fig.add_subplot(ax)
-    plt.show()
-
-    
-def multipletests_plot(
-    pvals: Union[pd.Series, pd.DataFrame],
-    threshold: float,
-    adj_pvals: Optional[Union[pd.Series, pd.DataFrame]] = None,
-    num_cols: Optional[int] = None,
-    method: Optional[str] = None,
-    **kwargs: Any,
-) -> None:
-    """
-    Plot adjusted p-values and pass/fail threshold.
-
-    :param pvals: unadjusted p-values
-    :param threshold: threshold for adjusted p-values separating accepted and
-        rejected hypotheses, e.g., "FWER", or family-wise error rate
-    :param adj_pvals: adjusted p-values, if provided, will be used instead 
+    :param adj_pvals: adjusted p-values, if provided, will be used instead
         calculating inside the function
     :param num_cols: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
@@ -776,8 +710,10 @@ def multipletests_plot(
         pvals = adj_pvals.to_frame()
     num_cols = num_cols or 1
     fig, ax = get_multiple_plots(
-        len(pvals.columns), num_cols=num_cols, sharex=True, sharey=True, y_scale = 5
+        len(pvals.columns), num_cols=num_cols, sharex=True, sharey=True
     )
+    if not isinstance(ax, np.ndarray):
+        ax = [ax]
     for i, col in enumerate(pvals.columns):
         pval_series = pvals[col]
         pval_series = pval_series.dropna()
@@ -808,7 +744,8 @@ def multipletests_plot(
         ax[i].legend()
     plt.show()
 
-###############################################################################
+
+# #############################################################################
 # Data count plots.
 # #############################################################################
 
@@ -941,7 +878,7 @@ def plot_barplot(
     plt.show()
 
 
-###############################################################################
+# #############################################################################
 # General plotting helpers
 # #############################################################################
 
@@ -949,6 +886,7 @@ def plot_barplot(
 def get_multiple_plots(
     num_plots: int,
     num_cols: int,
+    x_scale: Optional[float] = None,
     y_scale: Optional[float] = None,
     *args: Any,
     **kwargs: Any,
@@ -960,18 +898,20 @@ def get_multiple_plots(
 
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
-    :param y_scale: if not None
+    :param x_scale: if not None, x-size of single subplot
+    :param y_scale: if not None, y-size of single subplot
     :return: figure and array of axes
     """
     dbg.dassert_lte(1, num_plots)
     dbg.dassert_lte(1, num_cols)
     # Heuristic to find the dimension of the fig.
-    if y_scale is not None:
-        dbg.dassert_lt(0, y_scale)
-        ysize = (num_plots / num_cols) * y_scale
-        figsize: Optional[Tuple[float, float]] = (20, ysize)
-    else:
-        figsize = None
+    x_scale = x_scale or 10
+    y_scale = y_scale or 8
+    dbg.dassert_lt(0, x_scale)
+    dbg.dassert_lt(0, y_scale)
+    xsize = num_cols * x_scale
+    ysize = math.ceil(num_plots / num_cols) * y_scale
+    figsize: Optional[Tuple[float, float]] = (xsize, ysize)
     fig, ax = plt.subplots(
         math.ceil(num_plots / num_cols),
         num_cols,
@@ -979,4 +919,9 @@ def get_multiple_plots(
         *args,
         **kwargs,
     )
-    return fig, ax.flatten()
+    if isinstance(ax, np.ndarray):
+        return fig, ax.flatten()
+    return fig, ax
+
+
+""
