@@ -884,7 +884,11 @@ def calculate_hit_rate(
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     # Process series.
-    conf_alpha = (1 - alpha) * 100
+    if method in ("beta", "jeffreys"):
+        # Methods with central intervals
+        conf_alpha = (1 - alpha) / 2 * 100
+    else:
+        conf_alpha = (1 - alpha) * 100
     result_index = [
         prefix + "hit_rate_point_est",
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
