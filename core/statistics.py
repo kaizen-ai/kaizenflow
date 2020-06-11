@@ -9,7 +9,7 @@ import datetime
 import functools
 import logging
 import math
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -1103,9 +1103,7 @@ def compute_zero_diff_proportion(
     ]
     # Return NaN if there is no data.
     nan_result = pd.Series(
-        data=[np.nan, np.nan],
-        index=result_index,
-        name=srs.name
+        data=[np.nan, np.nan], index=result_index, name=srs.name
     )
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
@@ -1122,14 +1120,12 @@ def compute_zero_diff_proportion(
     n_pairs = data.shape[0] - 1
     proportion = n_equal / n_pairs
     result_values = [n_equal, proportion]
-    res = pd.Series(
-        data=result_values, index=result_index, name=srs.name,
-    )
+    res = pd.Series(data=result_values, index=result_index, name=srs.name,)
     return res
 
 
 def get_interarrival_time(
-        srs: pd.Series, nan_mode: Optional[str] = None,
+    srs: pd.Series, nan_mode: Optional[str] = None,
 ) -> Optional[pd.Series]:
     """
     Get interrarival time from index of a time series.
@@ -1179,8 +1175,7 @@ def compute_interarrival_time_stats(
         prefix + "std",
         prefix + "value_counts",
     ]
-    nan_result = pd.Series(index=result_index, name=data.name, dtype = "object"
-    )
+    nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
     if data.empty:
         _LOG.warning("Empty input `%s`", interrarival_time.name)
         return nan_result
@@ -1199,6 +1194,6 @@ def compute_interarrival_time_stats(
         data=result_values,
         index=result_index,
         name=interrarival_time.name,
-        dtype = "object"
+        dtype="object",
     )
     return res
