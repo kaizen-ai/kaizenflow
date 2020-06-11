@@ -839,7 +839,7 @@ def plot_barplot(
         figsize = FIG_SIZE
     plt.figure(figsize=figsize)
     # Choose colors.
-    colormap = colormap or sns.diverging_palette(10, 220, as_cmap=True)
+    colormap = colormap or sns.diverging_palette(10, 133, as_cmap=True)
     if unicolor:
         color = sns.color_palette("muted")[0]
     else:
