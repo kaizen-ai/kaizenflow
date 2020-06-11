@@ -27,8 +27,6 @@ import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
-sns.set_palette("bright")
-
 _PCA_TYPE = Union[skldec.PCA, skldec.IncrementalPCA]
 
 FIG_SIZE = (20, 5)
@@ -788,72 +786,90 @@ def plot_value_counts(
             plot_barplot(
                 counts_tmp,
                 orientation="horizontal",
-                plot_title=plot_title,
+                title=plot_title,
                 figsize=figsize,
-                label=label,
+                xlabel=label,
             )
         else:
             # Plot small number of categories vertically.
             plot_barplot(
                 counts_tmp,
                 orientation="vertical",
-                plot_title=plot_title,
+                title=plot_title,
                 figsize=figsize,
-                label=label,
+                xlabel=label,
             )
 
 
 def plot_barplot(
-    integers: pd.Series,
-    orientation: str,
-    string_format: str = "%.2f%%",
-    plot_title: Optional[str] = None,
-    label: Optional[str] = None,
+    srs: pd.Series,
+    orientation: str = "vertical",
+    annotation_mode: str = "pct",
+    string_format: str = "%.2f",
+    title: Optional[str] = None,
+    xlabel: Optional[str] = None,
+    unicolor: bool = False,
+    colormap: Optional[mpl.colors.Colormap] = None,
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
-    Plot a barplot from value counts, using indices as x-labels.
+    Plot a barplot.
 
-    :param integers: Series of integers
-    :param plot_title: title of the plot
-    :param label: label of the X axis
+    :param srs: pd.Series
     :param orientation: vertical or horizontal bars
+    :param annotation_mode: `pct` or `value`
     :param string_format: format of bar annotations
+    :param title: title of the plot
+    :param xlabel: label of the X axis
+    :param unicolor: if True, plot all bars in neutral blue color
+    :param colormap:
     :param figsize: size of plot
     """
+
+    def _get_annotation_loc(
+        x_: float, y_: float, height_: float, width_: float
+    ) -> Tuple[float, float]:
+        if orientation == "vertical":
+            return x_, y_ + height_ + 0.5
+        if orientation == "horizontal":
+            return x_ + width_ + 0.5, y_
+        raise ValueError("Invalid orientation='%s'" % orientation)
 
     if figsize is None:
         figsize = FIG_SIZE
     plt.figure(figsize=figsize)
-    # Plot vertical bars.
-    if orientation == "vertical":
-        ax = sns.barplot(x=integers.index, y=integers.values)
-        for i, p in enumerate(ax.patches):
-            height = p.get_height()
-            x, y = p.get_xy()
-            # Add percentage annotations to bars.
-            ax.annotate(
-                string_format % (100 * integers.iloc[i] / integers.sum()),
-                (x, y + height + 0.5),
-            )
-    # Plot horizontal bars.
-    elif orientation == "horizontal":
-        ax = sns.barplot(y=integers.index, x=integers.values)
-        for i, p in enumerate(ax.patches):
-            width = p.get_width()
-            x, y = p.get_xy()
-            # Add percentage annotations to bars.
-            ax.annotate(
-                string_format % (100 * integers.iloc[i] / integers.sum()),
-                (x + width + 0.5, y),
-            )
+    # Choose colors.
+    colormap = colormap or sns.diverging_palette(10, 220, as_cmap=True)
+    if unicolor:
+        color = sns.color_palette("muted")[0]
     else:
-        dbg.dfatal(message="Invalid plot orientation.")
-    if label:
-        ax.set(xlabel=label)
-    if plot_title:
-        plt.title(plot_title)
-    plt.show()
+        color = srs.apply(colormap)
+    # Plot.
+    if orientation == "vertical":
+        kind = "bar"
+    elif orientation == "horizontal":
+        kind = "barh"
+    else:
+        raise ValueError("Invalid orientation='%s'" % orientation)
+    ax = srs.plot(kind=kind, color=color, rot=0, title=title)
+    # Add annotations to bars.
+    if annotation_mode == "pct":
+        annotations = srs * 100 / srs.sum()
+        string_format = string_format + "%%"
+        annotations = annotations.apply(lambda z: string_format % z)
+    elif annotation_mode == "value":
+        annotations = srs.apply(lambda z: string_format % z)
+    else:
+        raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
+    #
+    for i, p in enumerate(ax.patches):
+        height = p.get_height()
+        width = p.get_width()
+        x, y = p.get_xy()
+        annotation_loc = _get_annotation_loc(x, y, height, width)
+        ax.annotate(annotations.iloc[i], annotation_loc)
+    if xlabel:
+        ax.set(xlabel=xlabel)
 
 
 # #############################################################################
