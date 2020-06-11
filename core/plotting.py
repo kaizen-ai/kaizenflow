@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Import as:
 
@@ -46,7 +47,7 @@ _DATETIME_TYPES = [
 ]
 
 
-# #############################################################################
+###############################################################################
 # General dataframe plotting helpers
 # #############################################################################
 
@@ -157,7 +158,7 @@ def plot_categories_count(
     plt.show()
 
 
-# #############################################################################
+###############################################################################
 # Time series plotting
 # #############################################################################
 
@@ -354,7 +355,7 @@ def plot_spectrum(
         # ax2.set_xlabel("Time window")
 
 
-# #############################################################################
+###############################################################################
 # Correlation-type plots
 # #############################################################################
 
@@ -645,7 +646,7 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-# #############################################################################
+###############################################################################
 # Eval metrics plots
 # #############################################################################
 
@@ -752,7 +753,68 @@ def multipletests_plot(
     plt.show()
 
 
-# #############################################################################
+""
+def multipletests_plot(
+    pvals: Union[pd.Series, pd.DataFrame],
+    threshold: float,
+    adj_pvals: Optional[Union[pd.Series, pd.DataFrame]] = None,
+    num_cols: Optional[int] = None,
+    method: Optional[str] = None,
+    **kwargs: Any,
+) -> None:
+    """
+    Plot adjusted p-values and pass/fail threshold.
+
+    :param pvals: unadjusted p-values
+    :param adj_pvals: adjusted p-values
+    :param threshold: threshold for adjusted p-values separating accepted and
+        rejected hypotheses, e.g., "FWER", or family-wise error rate
+    :param num_cols: number of columns in multiplotting
+    :param method: method for performing p-value adjustment, e.g., "fdr_bh"
+    :param i: row number in a column of plots in case of multiplotting, default = 0
+    :param rows: number of plots in case of multiplotting, default = 1
+    """
+    if isinstance(pvals, pd.Series):
+        pvals = pvals.to_frame()
+    if isinstance(adj_pvals, pd.Series):
+        pvals = adj_pvals.to_frame()
+    if num_cols is None:
+        num_cols = 1
+    rows = len(pvals.columns) // num_cols + 1
+    fig, ax = get_multiple_plots(
+        len(pvals.columns), num_cols=num_cols, sharex=True, sharey=True, y_scale = 5
+    )
+    for i, col in enumerate(pvals.columns):
+        pval_series = pvals[col]
+        pval_series = pval_series.dropna()
+        pval_series = pval_series.sort_values().reset_index(drop=True)
+        if adj_pvals is None:
+            adj_pval = stats.multipletests(pval_series, method=method)
+        else:
+            adj_pval = adj_pvals[col + "_adj_pval"]
+        _ = ax[i].plot(pval_series, label="pvals", **kwargs)[0]
+        ax[i].plot(adj_pval, label="adj pvals", **kwargs)
+        # Show min adj p-val in text.
+        min_adj_pval = adj_pval[0]
+        ax[i].text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
+        ax[i].text(
+            0.1,
+            0.6,
+            weight="bold",
+            fontsize=20,
+            **(
+                {"s": "PASS", "color": "g"}
+                if min_adj_pval <= threshold
+                else {"s": "FAIL", "color": "r"}
+            ),
+        )
+        ax[i].set_title(pval_series.name)
+        ax[i].axhline(threshold, ls=":", c="k")
+        ax[i].set_ylim(0, 1)
+        ax[i].legend()
+    plt.show()
+
+###############################################################################
 # Data count plots.
 # #############################################################################
 
@@ -885,7 +947,7 @@ def plot_barplot(
     plt.show()
 
 
-# #############################################################################
+###############################################################################
 # General plotting helpers
 # #############################################################################
 
