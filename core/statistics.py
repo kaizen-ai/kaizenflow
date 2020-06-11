@@ -884,10 +884,11 @@ def calculate_hit_rate(
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     # Process series.
+    conf_alpha = (1 - alpha) * 100
     result_index = [
         prefix + "hit_rate_point_est",
-        prefix + "hit_rate_" + "%.2f" % ((1 - alpha) * 100) + "%CI_lower_bound",
-        prefix + "hit_rate_" + "%.2f" % ((1 - alpha) * 100) + "%CI_upper_bound",
+        prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
+        prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
     ]
     srs = srs.replace([-np.inf, np.inf], np.nan)
     srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
