@@ -1099,16 +1099,17 @@ def compute_zero_diff_proportion(
         prefix + "approx_const_frac",
     ]
     if data.shape[0] < 2:
-        _LOG.warning("Input series `%s` size '%f', is too small",
-                     srs.name, data.shape[0])
+        _LOG.warning(
+            "Input series `%s` with size '%d' is too small",
+            srs.name,
+            data.shape[0],
+        )
         nan_result = pd.Series(
             data=[np.nan, np.nan], index=result_index, name=srs.name
         )
         return nan_result
     # Compute if neighboring elements are equal within the given tolerance.
-    equal_ngb_srs = np.isclose(
-        data, data.shift(1), atol=atol, rtol=rtol
-    )
+    equal_ngb_srs = np.isclose(data.shift(1)[1:], data[1:], atol=atol, rtol=rtol)
     # Compute number and proportion of equals among all neighbors pairs.
     approx_const_count = equal_ngb_srs.sum()
     n_pairs = data.shape[0] - 1
@@ -1167,8 +1168,11 @@ def compute_interarrival_time_stats(
         prefix + "min",
     ]
     if data.shape[0] < 2:
-        _LOG.warning("Input series `%s` size '%f', is too small",
-                     srs.name, data.shape[0])
+        _LOG.warning(
+            "Input series `%s` with size '%d' is too small",
+            srs.name,
+            data.shape[0],
+        )
         nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
         return nan_result
     interarrival_time = get_interarrival_time(data)
