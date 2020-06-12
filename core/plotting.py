@@ -726,8 +726,21 @@ def multipletests_plot(
 # #############################################################################
 
 
-def plot_value_counts(
-    values: pd.Series,
+def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
+    """
+    Plot barplots for the counts of a series and print the values.
+
+    Same interface as plot_count_series() but computing the count of the given
+    series `srs`.
+    """
+    # Compute the counts.
+    counts = srs.value_counts()
+    # Plot.
+    return plot_counts(counts, *args, **kwargs)
+
+
+def plot_counts(
+    counts: pd.Series,
     top_n_to_print: int = 10,
     top_n_to_plot: Optional[int] = None,
     plot_title: Optional[str] = None,
@@ -735,20 +748,19 @@ def plot_value_counts(
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
     """
-    Plot barplots for series value counts and print the values.
+    Plot barplots for series containing counts and print the values.
 
     If the number of labels is over 20, the plot is oriented horizontally
     and the height of the plot is automatically adjusted.
 
-    :param values: series to plot value counts for
-    :param top_n_to_print: top N values by count to print. None for all. 0 for no values
+    :param counts: series to plot value counts for
+    :param top_n_to_print: top N values by count to print. None for all. 0 for
+        no values
     :param top_n_to_plot: like top_n_to_print, but for the plot
     :param plot_title: title of the barplot
     :param label: label of the X axis
     :param figsize: size of the plot
     """
-    # Get value counts for series.
-    counts = values.value_counts()
     # Get default values for plot title and label.
     if not figsize:
         figsize = FIG_SIZE

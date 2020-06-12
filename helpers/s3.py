@@ -61,6 +61,20 @@ def get_s3fs_bucket_path() -> str:
     return path
 
 
+# TODO(*): Move to amp/helpers/fsx.py at some point.
+def get_fsx_root_path() -> str:
+    """
+    Return the path where FSx is mounted on the filesystem.
+    """
+    path = "/fsx"
+    if si.get_os_name() == "Darwin":
+        if si.get_user_name() in ("paul", "saggese"):
+            # macOS can't access `/` since it's read-only.
+            home = os.path.expanduser("~")
+            path = "%s/fsx" % home
+    return path
+
+
 # #############################################################################
 
 
