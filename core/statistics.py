@@ -1164,8 +1164,8 @@ def compute_interarrival_time_stats(
         prefix + "n_unique",
         prefix + "mean",
         prefix + "std",
-        prefix + "max",
         prefix + "min",
+        prefix + "max",
     ]
     if data.shape[0] < 2:
         _LOG.warning(
@@ -1179,10 +1179,10 @@ def compute_interarrival_time_stats(
     n_unique = interarrival_time.nunique()
     mean = interarrival_time.mean()
     std = interarrival_time.std()
-    max_value = interarrival_time.max()
     min_value = interarrival_time.min()
+    max_value = interarrival_time.max()
     #
-    result_values = [n_unique, mean, std, max_value, min_value]
+    result_values = [n_unique, mean, std, min_value, max_value]
     res = pd.Series(
         data=result_values, index=result_index, name=srs.name, dtype="object"
     )
