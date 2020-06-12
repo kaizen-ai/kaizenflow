@@ -710,7 +710,7 @@ def multipletests_plot(
         pvals = adj_pvals.to_frame()
     num_cols = num_cols or 1
     fig, ax = get_multiple_plots(
-        len(pvals.columns), num_cols=num_cols, sharex=True, sharey=True
+        len(pvals.columns), num_cols=num_cols, sharex=True, sharey=True, y_scale=5
     )
     if not isinstance(ax, np.ndarray):
         ax = [ax]
@@ -722,7 +722,7 @@ def multipletests_plot(
             adj_pval = stats.multipletests(pval_series, method=method)
         else:
             adj_pval = adj_pvals[col + "_adj_pval"]
-        _ = ax[i].plot(pval_series, label="pvals", **kwargs)[0]
+        ax[i].plot(pval_series, label="pvals", **kwargs)
         ax[i].plot(adj_pval, label="adj pvals", **kwargs)
         # Show min adj p-val in text.
         min_adj_pval = adj_pval[0]
@@ -886,32 +886,27 @@ def plot_barplot(
 def get_multiple_plots(
     num_plots: int,
     num_cols: int,
-    x_scale: Optional[float] = None,
     y_scale: Optional[float] = None,
     *args: Any,
     **kwargs: Any,
 ) -> Tuple[mpl.figure.Figure, np.array]:
     """
     Create figure to accommodate `num_plots` plots.
-
     The figure is arranged in rows with `num_cols` columns.
-
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
-    :param x_scale: if not None, x-size of single subplot
-    :param y_scale: if not None, y-size of single subplot
+    :param y_scale: if not None
     :return: figure and array of axes
     """
     dbg.dassert_lte(1, num_plots)
     dbg.dassert_lte(1, num_cols)
     # Heuristic to find the dimension of the fig.
-    x_scale = x_scale or 10
-    y_scale = y_scale or 8
-    dbg.dassert_lt(0, x_scale)
-    dbg.dassert_lt(0, y_scale)
-    xsize = num_cols * x_scale
-    ysize = math.ceil(num_plots / num_cols) * y_scale
-    figsize: Optional[Tuple[float, float]] = (xsize, ysize)
+    if y_scale is not None:
+        dbg.dassert_lt(0, y_scale)
+        ysize = math.ceil(num_plots / num_cols) * y_scale
+        figsize: Optional[Tuple[float, float]] = (20, ysize)
+    else:
+        figsize = None
     fig, ax = plt.subplots(
         math.ceil(num_plots / num_cols),
         num_cols,
@@ -922,6 +917,3 @@ def get_multiple_plots(
     if isinstance(ax, np.ndarray):
         return fig, ax.flatten()
     return fig, ax
-
-
-""
