@@ -223,6 +223,49 @@ def _compute_denominator_and_package(
     raise ValueError("axis=`%s` but expected to be `0` or `1`!" % axis)
 
 
+def compute_zero_nan_inf_stats(
+    srs: pd.Series, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate finite and non-finite values in time series.
+
+    :param srs: pandas series of floats
+    :param prefix: optional prefix for metrics' outcome
+    :return: series of stats
+    """
+    # TODO(*): To be optimized/rewritten in #2340.
+    prefix = prefix or ""
+    dbg.dassert_isinstance(srs, pd.Series)
+    result_index = [
+        prefix + "n_rows",
+        prefix + "frac_zero",
+        prefix + "frac_nan",
+        prefix + "frac_inf",
+        prefix + "frac_constant",
+        prefix + "num_finite_samples",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
+    )
+    if srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    result_values = [
+        len(srs),
+        compute_frac_zero(srs),
+        compute_frac_nan(srs),
+        compute_frac_inf(srs),
+        compute_frac_constant(srs),
+        count_num_finite_samples(srs),
+        # TODO(*): Add after extension to dataframes.
+        # "num_unique_values",
+        # stats.count_num_unique_values
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
+
+
 # #############################################################################
 # Sharpe Ratio
 # #############################################################################
@@ -752,49 +795,6 @@ def apply_kpss_test(
         critical_values["10%"],
     ]
     result = pd.Series(data=result_values, index=result_index, name=data.name)
-    return result
-
-
-def compute_zero_nan_inf_stats(
-    srs: pd.Series, prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Calculate finite and non-finite values in time series.
-
-    :param srs: pandas series of floats
-    :param prefix: optional prefix for metrics' outcome
-    :return: series of stats
-    """
-    # TODO(*): To be optimized/rewritten in #2340.
-    prefix = prefix or ""
-    dbg.dassert_isinstance(srs, pd.Series)
-    result_index = [
-        prefix + "n_rows",
-        prefix + "frac_zero",
-        prefix + "frac_nan",
-        prefix + "frac_inf",
-        prefix + "frac_constant",
-        prefix + "num_finite_samples",
-    ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
-    if srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
-    result_values = [
-        len(srs),
-        compute_frac_zero(srs),
-        compute_frac_nan(srs),
-        compute_frac_inf(srs),
-        compute_frac_constant(srs),
-        count_num_finite_samples(srs),
-        # TODO(*): Add after extension to dataframes.
-        # "num_unique_values",
-        # stats.count_num_unique_values
-    ]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
 
 
