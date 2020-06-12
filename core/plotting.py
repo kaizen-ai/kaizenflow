@@ -46,7 +46,7 @@ _DATETIME_TYPES = [
 ]
 
 
-# #############################################################################
+###############################################################################
 # General dataframe plotting helpers
 # #############################################################################
 
@@ -157,7 +157,7 @@ def plot_categories_count(
     plt.show()
 
 
-# #############################################################################
+###############################################################################
 # Time series plotting
 # #############################################################################
 
@@ -354,7 +354,7 @@ def plot_spectrum(
         # ax2.set_xlabel("Time window")
 
 
-# #############################################################################
+###############################################################################
 # Correlation-type plots
 # #############################################################################
 
@@ -645,7 +645,7 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-# #############################################################################
+###############################################################################
 # Eval metrics plots
 # #############################################################################
 
@@ -691,6 +691,7 @@ def multipletests_plot(
     adj_pvals: Optional[Union[pd.Series, pd.DataFrame]] = None,
     num_cols: Optional[int] = None,
     method: Optional[str] = None,
+    suptitle: Optional[str] = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -703,6 +704,7 @@ def multipletests_plot(
         calculating inside the function
     :param num_cols: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
+    :param suptitle: overal title of all plots
     """
     if isinstance(pvals, pd.Series):
         pvals = pvals.to_frame()
@@ -742,10 +744,11 @@ def multipletests_plot(
         ax[i].axhline(threshold, ls=":", c="k")
         ax[i].set_ylim(0, 1)
         ax[i].legend()
-    plt.show()
+    plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
+    plt.tight_layout()
 
 
-# #############################################################################
+###############################################################################
 # Data count plots.
 # #############################################################################
 
@@ -878,7 +881,7 @@ def plot_barplot(
     plt.show()
 
 
-# #############################################################################
+###############################################################################
 # General plotting helpers
 # #############################################################################
 

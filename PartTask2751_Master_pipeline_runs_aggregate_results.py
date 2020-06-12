@@ -159,7 +159,7 @@ results_df = pd.concat([pnl_stats_with_adj, config_diffs], axis=1)
 results_df.head()
 
 # %%
-#Using get_multiple_plots does not allow us to use multipletests_plot with series or dataframe with one column.
+# Using get_multiple_plots does not allow us to use multipletests_plot with series or dataframe with one column.
 plot.multipletests_plot(
     results_df["global_adj_pval"].dropna(),
     threshold=eval_config["global_adj_pval_threshold"],
@@ -184,7 +184,8 @@ adj_cols = tags + "_adj_pval"
 plot.multipletests_plot(
     results_df[adj_cols],
     threshold=eval_config["global_adj_pval_threshold"],
-    num_cols=2
+    num_cols=3,
+    suptitle="All RHs",
 )
 
 # %% [markdown]
