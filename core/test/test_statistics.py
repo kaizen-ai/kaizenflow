@@ -919,12 +919,6 @@ class TestComputeZeroDiffProportion(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    def test4(self) -> None:
-        series = self._get_series(seed=1)
-        actual = stats.compute_zero_diff_proportion(series, equal_nan=True)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
     def test5(self) -> None:
         series = self._get_series(seed=1)
         actual = stats.compute_zero_diff_proportion(

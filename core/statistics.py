@@ -1073,7 +1073,6 @@ def compute_zero_diff_proportion(
     srs: pd.Series,
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
-    equal_nan: Optional[bool] = False,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
@@ -1085,7 +1084,6 @@ def compute_zero_diff_proportion(
     :param srs: pandas series of floats
     :param atol: as in numpy.isclose
     :param rtol: as in numpy.isclose
-    :param equal_nan: as in numpy.isclose
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: series with proportion of unvarying periods
@@ -1094,33 +1092,28 @@ def compute_zero_diff_proportion(
     atol = atol or 0
     rtol = rtol or 1e-05
     nan_mode = nan_mode or "ignore"
-    if equal_nan:
-        nan_mode = None
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
     result_index = [
-        prefix + "zero_diff_number",
-        prefix + "zero_diff_proportion",
+        prefix + "approx_const_count",
+        prefix + "approx_const_frac",
     ]
-    # Return NaN if there is no data.
-    nan_result = pd.Series(
-        data=[np.nan, np.nan], index=result_index, name=srs.name
-    )
-    if data.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
     if data.shape[0] < 2:
-        _LOG.warning("Input series `%s` is too small", srs.name)
+        _LOG.warning("Input series `%s` size '%f', is too small",
+                     srs.name, data.shape[0])
+        nan_result = pd.Series(
+            data=[np.nan, np.nan], index=result_index, name=srs.name
+        )
         return nan_result
-    # Compute if neighbouring elements are equal within the given tolerance.
+    # Compute if neighboring elements are equal within the given tolerance.
     equal_ngb_srs = np.isclose(
-        data, data.shift(1), atol=atol, rtol=rtol, equal_nan=equal_nan
+        data, data.shift(1), atol=atol, rtol=rtol
     )
-    # Compute number and proportion of equals among all neighbours pairs.
-    n_equal = equal_ngb_srs.sum()
+    # Compute number and proportion of equals among all neighbors pairs.
+    approx_const_count = equal_ngb_srs.sum()
     n_pairs = data.shape[0] - 1
-    proportion = n_equal / n_pairs
-    result_values = [n_equal, proportion]
+    approx_const_frac = approx_const_count / n_pairs
+    result_values = [approx_const_count, approx_const_frac]
     res = pd.Series(data=result_values, index=result_index, name=srs.name)
     return res
 
@@ -1142,11 +1135,11 @@ def get_interarrival_time(
         _LOG.warning("Empty input `%s`", srs.name)
         return None
     index = data.index
-    # Check if index of a series is a DateTimeIndex.
+    # Check index of a series. We require that the input
+    #     series have a sorted datetime index.
     dbg.dassert_isinstance(index, pd.DatetimeIndex)
-    # Check if index of a series is monotonically increasing.
     dbg.dassert_monotonic_index(index)
-    # Get series of interrairival time.
+    # Compute a series of interrairival time.
     interrarival_time = pd.Series(index).diff()
     return interrarival_time
 
@@ -1155,7 +1148,7 @@ def compute_interarrival_time_stats(
     srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Compute statistics about interarrival time of a series.
+    Compute interarrival time statistics.
 
     :param srs: pandas series of interrarival time
     :param nan_mode: argument for hdf.apply_nan_mode()
@@ -1169,27 +1162,23 @@ def compute_interarrival_time_stats(
     result_index = [
         prefix + "n_unique",
         prefix + "mean",
+        prefix + "std",
         prefix + "max",
         prefix + "min",
-        prefix + "std",
-        prefix + "value_counts",
     ]
-    nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
-    if data.empty:
-        _LOG.warning("Empty input `%s`", srs.name)
-        return nan_result
     if data.shape[0] < 2:
-        _LOG.warning("Input `%s` is too small", srs.name)
+        _LOG.warning("Input series `%s` size '%f', is too small",
+                     srs.name, data.shape[0])
+        nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
         return nan_result
     interarrival_time = get_interarrival_time(data)
     n_unique = interarrival_time.nunique()
     mean = interarrival_time.mean()
+    std = interarrival_time.std()
     max_value = interarrival_time.max()
     min_value = interarrival_time.min()
-    std = interarrival_time.std()
-    value_counts = interarrival_time.value_counts().to_dict()
     #
-    result_values = [n_unique, mean, max_value, min_value, std, value_counts]
+    result_values = [n_unique, mean, std, max_value, min_value]
     res = pd.Series(
         data=result_values, index=result_index, name=srs.name, dtype="object"
     )
