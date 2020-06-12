@@ -1,3 +1,0 @@
-                           test
-zero_diff_number      15.000000
-zero_diff_proportion   0.151515
