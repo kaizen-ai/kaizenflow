@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Import as:
 
@@ -685,7 +686,7 @@ def plot_confusion_heatmap(
 
 
 def multipletests_plot(
-    pvals: Union[pd.Series, pd.DataFrame],
+    pvals: pd.Series,
     threshold: float,
     adj_pvals: Optional[Union[pd.Series, pd.DataFrame]] = None,
     num_cols: Optional[int] = None,
@@ -705,24 +706,22 @@ def multipletests_plot(
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     :param suptitle: overal title of all plots
     """
-    if isinstance(pvals, pd.Series):
-        pvals = pvals.to_frame()
-    if isinstance(adj_pvals, pd.Series):
-        pvals = adj_pvals.to_frame()
+    pval_series = pvals.dropna().sort_values().reset_index(drop=True)
+    if adj_pvals is None:
+        adj_pvals = stats.multipletests(pval_series, method=method).to_frame()
+        plt_count = 1
+    else:
+        if isinstance(adj_pvals, pd.Series):
+            adj_pvals = adj_pvals.to_frame()
+        plt_count = len(adj_pvals.columns)
     num_cols = num_cols or 1
-    fig, ax = get_multiple_plots(
-        len(pvals.columns), num_cols=num_cols, sharex=True, sharey=True, y_scale=5
+    _, ax = get_multiple_plots(
+        plt_count, num_cols=num_cols, sharex=True, sharey=True, y_scale=5
     )
     if not isinstance(ax, np.ndarray):
         ax = [ax]
-    for i, col in enumerate(pvals.columns):
-        pval_series = pvals[col]
-        pval_series = pval_series.dropna()
-        pval_series = pval_series.sort_values().reset_index(drop=True)
-        if adj_pvals is None:
-            adj_pval = stats.multipletests(pval_series, method=method)
-        else:
-            adj_pval = adj_pvals[col + "_adj_pval"]
+    for i, col in enumerate(adj_pvals.columns):
+        adj_pval = adj_pvals[col].dropna().sort_values().reset_index(drop=True)
         ax[i].plot(pval_series, label="pvals", **kwargs)
         ax[i].plot(adj_pval, label="adj pvals", **kwargs)
         # Show min adj p-val in text.
@@ -739,7 +738,7 @@ def multipletests_plot(
                 else {"s": "FAIL", "color": "r"}
             ),
         )
-        ax[i].set_title(pval_series.name)
+        ax[i].set_title(col)
         ax[i].axhline(threshold, ls=":", c="k")
         ax[i].set_ylim(0, 1)
         ax[i].legend()
