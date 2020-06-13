@@ -181,14 +181,11 @@ def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> floa
     """
     dbg.dassert(data.index.freq)
     freq = data.index.freq
-    if freq == "D":
-        points_per_year = 365
-    elif freq == "B":
-        points_per_year = 252
-    elif freq == "W":
-        points_per_year = 52
-    elif freq == "M":
-        points_per_year = 12
-    else:
-        raise ValueError(f"Unsupported freq=`{freq}`")
+    # TODO(*): Make start, end dates parameters that can be passed in.
+    # Leap years: 2012, 2016.
+    points_in_span = pd.date_range(freq=freq,
+                                   start="2012-01-01",
+                                   end="2019-12-31").size
+    span_in_years = 8
+    points_per_year = points_in_span / span_in_years
     return points_per_year
