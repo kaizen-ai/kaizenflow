@@ -70,3 +70,16 @@ class TestMapDictToDataframeTest1(hut.TestCase):
         )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+    def test3(self) -> None:
+        stat_funcs = {
+            "norm_": stats.apply_normality_test,
+            "adf_": stats.apply_adf_test,
+            "kpss_": stats.apply_kpss_test,
+        }
+        result_dict = self._get_dict_of_series(1)
+        actual = tss.map_dict_to_dataframe(
+            dict_=result_dict, functions=stat_funcs, progress_bar=False,
+        )
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)

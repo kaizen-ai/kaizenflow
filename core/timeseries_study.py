@@ -278,6 +278,7 @@ def map_dict_to_dataframe(
     dict_: Dict[Any, pd.Series],
     functions: Dict[str, Callable],
     add_prefix: bool = True,
+    progress_bar: bool = True,
 ) -> pd.DataFrame:
     """
     Apply and combine results of specified functions on a dict of series.
@@ -288,11 +289,16 @@ def map_dict_to_dataframe(
         and return a series or 1-column dataframe.
     :param add_prefix: bool value. If True, add specified prefixes to
         the functions outcomes and do not add if False.
+    :param progress_bar: bool value. If True, show progress bar of applying
+        the function to the series in the input and do not show if False.
     :return: dataframe with dict of series keys as column names and
          prefix + functions metrics' names as index.
     """
     all_func_outs = []
-    for key, series in tqdm(dict_.items()):
+    dict_items = dict_.items()
+    if progress_bar:
+        dict_items = tqdm(dict_.items())
+    for key, series in dict_items:
         # Apply all functions in `functions` to `series`.
         key_func_outs = []
         for prefix, func in functions.items():
