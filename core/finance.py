@@ -283,3 +283,21 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     """
     dd = compute_drawdown(log_rets)
     return 1 - np.exp(-dd)
+
+
+def rescale_to_target_annual_volatility(srs: pd.Series, volatility: float) -> pd.Series:
+    """
+    Rescale srs to achieve target annual volatility.
+
+    NOTE: This is not a causal rescaling, but SR is an invariant.
+
+    :param srs: returns series. Index must have `freq`.
+    :param volatility: annualized volatility as a proportion (e.g., `0.1`
+        corresponds to 10% annual volatility)
+    :return: rescaled returns series
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
+    _LOG.debug(f"`scale_factor`={scale_factor}")
+    return scale_factor * srs
