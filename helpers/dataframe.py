@@ -183,9 +183,9 @@ def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> floa
     freq = data.index.freq
     # TODO(*): Make start, end dates parameters that can be passed in.
     # Leap years: 2012, 2016.
-    points_in_span = pd.date_range(freq=freq,
-                                   start="2012-01-01",
-                                   end="2019-12-31").size
+    points_in_span = pd.date_range(
+        freq=freq, start="2012-01-01", end="2019-12-31"
+    ).size
     span_in_years = 8
     points_per_year = points_in_span / span_in_years
     return points_per_year
