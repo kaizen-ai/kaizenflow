@@ -29,6 +29,7 @@
 
 import pandas as pd
 
+
 import automl.notebooks.utils as amlnut
 import core.config as cfg
 import core.config_builders as cfgb
@@ -123,9 +124,6 @@ result_bundles = amlnut.load_files(
     eval_config["results_directory"], "result_bundle.pkl"
 )
 
-# %%
-len(result_bundles)
-
 # %% [markdown]
 # # Calculate metrics and performance statistics
 
@@ -153,15 +151,18 @@ pnl_stats_with_adj = amlnut.perform_global_adj(
 pnl_stats_with_adj
 
 # %%
+config_diffs.head()
+
+# %%
 results_df = pd.concat([pnl_stats_with_adj, config_diffs], axis=1)
 
 # %%
 results_df.head()
 
 # %%
-# Using get_multiple_plots does not allow us to use multipletests_plot with series or dataframe with one column.
 plot.multipletests_plot(
-    results_df["global_adj_pval"].dropna(),
+    pvals = results_df['ttest_pval'],
+    adj_pvals = results_df["global_adj_pval"].dropna(),
     threshold=eval_config["global_adj_pval_threshold"],
 )
 
@@ -182,10 +183,10 @@ adj_cols = tags + "_adj_pval"
 
 # %%
 plot.multipletests_plot(
-    results_df[adj_cols],
+    pvals = results_df['ttest_pval'],
+    adj_pvals = results_df[adj_cols],
     threshold=eval_config["global_adj_pval_threshold"],
-    num_cols=3,
-    suptitle="All RHs",
+    num_cols=3, suptitle = "All RHs"
 )
 
 # %% [markdown]
