@@ -494,7 +494,7 @@ class TestCase(unittest.TestCase):
         self,
         actual: str,
         fuzzy_match: bool = False,
-        purify_text: bool = True,
+        purify_text: bool = False,
         use_gzip: bool = False,
     ) -> None:
         """
