@@ -823,6 +823,7 @@ def plot_barplot(
     unicolor: bool = False,
     colormap: Optional[mpl.colors.Colormap] = None,
     figsize: Optional[Tuple[int, int]] = None,
+    rotation: int = 0,
 ) -> None:
     """
     Plot a barplot.
@@ -834,8 +835,9 @@ def plot_barplot(
     :param title: title of the plot
     :param xlabel: label of the X axis
     :param unicolor: if True, plot all bars in neutral blue color
-    :param colormap:
+    :param colormap: matplotlib colormap
     :param figsize: size of plot
+    :param rotation: rotation of xtick labels
     """
 
     def _get_annotation_loc(
@@ -863,7 +865,7 @@ def plot_barplot(
         kind = "barh"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
-    ax = srs.plot(kind=kind, color=color, rot=0, title=title)
+    ax = srs.plot(kind=kind, color=color, rot=rotation, title=title)
     # Add annotations to bars.
     if annotation_mode == "pct":
         annotations = srs * 100 / srs.sum()
