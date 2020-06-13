@@ -285,7 +285,9 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     return 1 - np.exp(-dd)
 
 
-def rescale_to_target_annual_volatility(srs: pd.Series, volatility: float) -> pd.Series:
+def rescale_to_target_annual_volatility(
+    srs: pd.Series, volatility: float
+) -> pd.Series:
     """
     Rescale srs to achieve target annual volatility.
 
