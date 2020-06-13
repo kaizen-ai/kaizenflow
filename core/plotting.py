@@ -746,6 +746,7 @@ def plot_counts(
     plot_title: Optional[str] = None,
     label: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
+    rotation: int = 0,
 ) -> None:
     """
     Plot barplots for series containing counts and print the values.
@@ -760,6 +761,7 @@ def plot_counts(
     :param plot_title: title of the barplot
     :param label: label of the X axis
     :param figsize: size of the plot
+    :param rotation: rotation of xtick labels
     """
     # Get default values for plot title and label.
     if not figsize:
@@ -801,6 +803,7 @@ def plot_counts(
                 title=plot_title,
                 figsize=figsize,
                 xlabel=label,
+                rotation=rotation,
             )
         else:
             # Plot small number of categories vertically.
@@ -810,6 +813,7 @@ def plot_counts(
                 title=plot_title,
                 figsize=figsize,
                 xlabel=label,
+                rotation=rotation,
             )
 
 
