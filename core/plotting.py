@@ -7,7 +7,7 @@ import core.plotting as plot
 import calendar
 import logging
 import math
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.colors as mpl_col
@@ -21,10 +21,8 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 
-import core.config as cfg
 import core.explore as expl
 import core.finance as fin
-import core.plotting as plot
 import core.signal_processing as sigp
 import core.statistics as stats
 import helpers.dataframe as hdf
@@ -1001,6 +999,18 @@ def plot_rolling_annualized_sharpe_ratio(
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
+    """
+    Plot rolling annualized Sharpe ratio.
+
+    :param srs: input series
+    :param tau: argument as for sigp.compute_smooth_moving_average
+    :param min_depth: argument as for sigp.compute_smooth_moving_average
+    :param max_depth: argument as for sigp.compute_smooth_moving_average
+    :param p_moment: argument as for sigp.compute_smooth_moving_average
+    :param ci: confidence interval
+    :param title_suffix: suffix added to the title
+    :param ax: axes
+    """
     title_suffix = title_suffix or ""
     min_periods = tau * max_depth
     rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
@@ -1051,22 +1061,13 @@ def plot_rolling_annualized_sharpe_ratio(
     ax.legend()
 
 
-def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
-    srs_name = log_rets.name or 0
-    log_rets_df = pd.DataFrame(log_rets)
-    log_rets_df["year"] = log_rets_df.index.year
-    log_rets_df["month"] = log_rets_df.index.month
-    log_rets_df.reset_index(inplace=True)
-    monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
-    monthly_pct_returns = fin.convert_log_rets_to_pct_rets(monthly_log_returns)
-    monthly_pct_spread = monthly_pct_returns.unstack()
-    monthly_pct_spread.columns = monthly_pct_spread.columns.map(
-        lambda x: calendar.month_abbr[x]
-    )
-    return monthly_pct_spread
-
-
 def plot_monthly_heatmap(log_rets: pd.Series, unit: str = "ratio") -> None:
+    """
+    Plot a heatmap of log returns statistics by year and month.
+
+    :param srs: input series of log returns
+    :param unit: `ratio`, `%` or `bps` scaling coefficent
+    """
     # Choose scaling coefficent.
     if unit == "%":
         scale_coeff = 100
@@ -1086,12 +1087,42 @@ def plot_monthly_heatmap(log_rets: pd.Series, unit: str = "ratio") -> None:
     plt.yticks(rotation=0)
 
 
+def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
+    """
+    Calculate log returns statistics by year and month.
+
+    :param srs: input series of log returns
+    :return: dataframe of log returns with years on y-axis and
+        months on x-axis
+    """
+    srs_name = log_rets.name or 0
+    log_rets_df = pd.DataFrame(log_rets)
+    log_rets_df["year"] = log_rets_df.index.year
+    log_rets_df["month"] = log_rets_df.index.month
+    log_rets_df.reset_index(inplace=True)
+    monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
+    monthly_pct_returns = fin.convert_log_rets_to_pct_rets(monthly_log_returns)
+    monthly_pct_spread = monthly_pct_returns.unstack()
+    monthly_pct_spread.columns = monthly_pct_spread.columns.map(
+        lambda x: calendar.month_abbr[x]
+    )
+    return monthly_pct_spread
+
+
 def plot_yearly_barplot(
     log_rets: pd.Series,
     unit: str = "ratio",
     unicolor: bool = False,
     orientation: str = "vertical",
 ) -> None:
+    """
+    Plot a barplot of log returns statistics by year.
+
+    :param srs: input series of log returns
+    :param unit: `ratio`, `%` or `bps` scaling coefficent
+    :param unicolor: if True, plot all bars in neutral blue color
+    :param orientation: vertical or horizontal bars
+    """
     # Choose scaling coefficent.
     if unit == "%":
         scale_coeff = 100
@@ -1105,7 +1136,7 @@ def plot_yearly_barplot(
     yearly_pct_returns = fin.convert_log_rets_to_pct_rets(yearly_log_returns)
     yearly_returns = yearly_pct_returns * scale_coeff
     yearly_returns.index = yearly_returns.index.year
-    plot.plot_barplot(
+    plot_barplot(
         yearly_returns,
         annotation_mode="value",
         orientation=orientation,
@@ -1124,31 +1155,6 @@ def plot_yearly_barplot(
     plt.ylabel(ylabel)
 
 
-def _plot_returns_wrapper(
-    returns: _RETURNS_DICT_TYPE,
-    config_dict: Dict[int, cfg.Config],
-    plotting_func: Callable[[pd.Series, mpl.axes.Axes, Optional[str]], None],
-) -> None:
-    for tag, rets_for_tag in returns.items():
-        num_cols = 3
-        _, axis = plot.get_multiple_plots(
-            len(rets_for_tag), num_cols, y_scale=4, sharex=True, sharey=True
-        )
-        for i, (idx, rets_for_idx) in enumerate(rets_for_tag.items()):
-            payload_code = _get_payload_code(config_dict[idx])
-            plotting_func(
-                rets_for_idx, ax=axis[i], title=f"{payload_code}, {idx}"
-            )
-        plt.suptitle(tag, y=1.01)
-        plt.tight_layout()
-
-
-def _get_payload_code(config: cfg.Config) -> str:
-    return config["DAG"]["rets/read_price_data"]["source_node_kwargs"][
-        "payload_code"
-    ]
-
-
 def plot_pnl(
     df: pd.DataFrame,
     title: Optional[str] = None,
@@ -1163,9 +1169,15 @@ def plot_pnl(
     """
     Plot a pnl for the dataframe of pnl time series.
 
-    param df: dataframe of pnl time series.
-    param title: plot title.
-    return: sorted series with all the unique values of input indices.
+    :param df: dataframe of pnl time series
+    :param title: plot title
+    :param colormap: matplotlib colormap
+    :param figsize: size of plot
+    :param left_lim: left limit value of the X axis
+    :param right_lim: right limit value of the X axis
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param xlabel: label of the X axis
+    :param ylabel: label of the Y axis
     """
     title = title or ""
     colormap = colormap or "rainbow"
