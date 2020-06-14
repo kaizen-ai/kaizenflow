@@ -917,13 +917,15 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         srs = self._generate_minutely_series(n_days=100, seed=10)
         # Filter out non-trading time points.
         filtered_srs = fin.set_non_ath_to_nan(srs)
-        filtered_srs= fin.set_weekends_to_nan(filtered_srs)
-        filtered_srs= filtered_srs.dropna()
+        filtered_srs = fin.set_weekends_to_nan(filtered_srs)
+        filtered_srs = filtered_srs.dropna()
         # Treat srs as an intraday trading day-only series, e.g.,
         # approximately 252 trading days per year, ATH only.
         n_samples = filtered_srs.size
         points_per_year = 2.52 * n_samples
-        filtered_srs_sr = stats.compute_sharpe_ratio(filtered_srs, time_scaling=points_per_year)
+        filtered_srs_sr = stats.compute_sharpe_ratio(
+            filtered_srs, time_scaling=points_per_year
+        )
         np.testing.assert_almost_equal(filtered_srs_sr, -2.7093, decimal=3)
         # Compare to SR annualized using `freq`.
         srs_sr = stats.compute_annualized_sharpe_ratio(srs)
