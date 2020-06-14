@@ -67,47 +67,6 @@ def resample(df, agg_interval):
     return rets
 
 
-# TODO(GPP): DEPRECATE. PyCharm doesn't find any callers, and we are
-# using "result bundles" differently now.
-def filter_by_time(
-    df,
-    start_dt,
-    end_dt,
-    result_bundle=None,
-    dt_col_name=None,
-    log_level=logging.INFO,
-):
-    dbg.dassert_lte(1, df.shape[0])
-    if start_dt is not None and end_dt is not None:
-        dbg.dassert_lte(start_dt, end_dt)
-    #
-    if start_dt is not None:
-        _LOG.log(log_level, "Filtering df with start_dt=%s", start_dt)
-        if dt_col_name:
-            mask = df[dt_col_name] >= start_dt
-        else:
-            mask = df.index >= start_dt
-        kept_perc = pri.perc(mask.sum(), df.shape[0])
-        _LOG.info(">= start_dt=%s: kept %s rows", start_dt, kept_perc)
-        if result_bundle:
-            result_bundle["filter_ge_start_dt"] = kept_perc
-        df = df[mask]
-    #
-    if end_dt is not None:
-        _LOG.info("Filtering df with end_dt=%s", end_dt)
-        if dt_col_name:
-            mask = df[dt_col_name] < end_dt
-        else:
-            mask = df.index < end_dt
-        kept_perc = pri.perc(mask.sum(), df.shape[0])
-        _LOG.info("< end_dt=%s: kept %s rows", end_dt, kept_perc)
-        if result_bundle:
-            result_bundle["filter_lt_end_dt"] = kept_perc
-        df = df[mask]
-    dbg.dassert_lte(1, df.shape[0])
-    return df
-
-
 def set_non_ath_to_nan(
     df: pd.DataFrame,
     start_time: Optional[datetime.time] = None,
@@ -135,6 +94,20 @@ def set_non_ath_to_nan(
     #
     df = df.copy()
     df[~mask] = np.nan
+    return df
+
+
+def set_weekends_to_nan(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Filter out weekends.
+    """
+    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    # 5 = Saturday, 6 = Sunday.
+    mask = df.index.day.isin([5, 6])
+    df = df.copy()
+    df[mask] = np.nan
     return df
 
 
