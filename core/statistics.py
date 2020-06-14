@@ -223,6 +223,49 @@ def _compute_denominator_and_package(
     raise ValueError("axis=`%s` but expected to be `0` or `1`!" % axis)
 
 
+def compute_zero_nan_inf_stats(
+    srs: pd.Series, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate finite and non-finite values in time series.
+
+    :param srs: pandas series of floats
+    :param prefix: optional prefix for metrics' outcome
+    :return: series of stats
+    """
+    # TODO(*): To be optimized/rewritten in #2340.
+    prefix = prefix or ""
+    dbg.dassert_isinstance(srs, pd.Series)
+    result_index = [
+        prefix + "n_rows",
+        prefix + "frac_zero",
+        prefix + "frac_nan",
+        prefix + "frac_inf",
+        prefix + "frac_constant",
+        prefix + "num_finite_samples",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
+    )
+    if srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    result_values = [
+        len(srs),
+        compute_frac_zero(srs),
+        compute_frac_nan(srs),
+        compute_frac_inf(srs),
+        compute_frac_constant(srs),
+        count_num_finite_samples(srs),
+        # TODO(*): Add after extension to dataframes.
+        # "num_unique_values",
+        # stats.count_num_unique_values
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
+
+
 # #############################################################################
 # Sharpe Ratio
 # #############################################################################
@@ -258,6 +301,7 @@ def compute_annualized_sharpe_ratio(
     :return: annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
+    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
     sr = compute_sharpe_ratio(log_rets, points_per_year)
     return sr
 
@@ -276,6 +320,7 @@ def compute_annualized_sharpe_ratio_standard_error(
     :return: standard error estimate of annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
+    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
     se_sr = compute_sharpe_ratio_standard_error(log_rets, points_per_year)
     return se_sr
 
@@ -755,49 +800,6 @@ def apply_kpss_test(
     return result
 
 
-def compute_zero_nan_inf_stats(
-    srs: pd.Series, prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Calculate finite and non-finite values in time series.
-
-    :param srs: pandas series of floats
-    :param prefix: optional prefix for metrics' outcome
-    :return: series of stats
-    """
-    # TODO(*): To be optimized/rewritten in #2340.
-    prefix = prefix or ""
-    dbg.dassert_isinstance(srs, pd.Series)
-    result_index = [
-        prefix + "n_rows",
-        prefix + "frac_zero",
-        prefix + "frac_nan",
-        prefix + "frac_inf",
-        prefix + "frac_constant",
-        prefix + "num_finite_samples",
-    ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
-    if srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
-    result_values = [
-        len(srs),
-        compute_frac_zero(srs),
-        compute_frac_nan(srs),
-        compute_frac_inf(srs),
-        compute_frac_constant(srs),
-        count_num_finite_samples(srs),
-        # TODO(*): Add after extension to dataframes.
-        # "num_unique_values",
-        # stats.count_num_unique_values
-    ]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
-    return result
-
-
 def apply_ljung_box_test(
     srs: pd.Series,
     lags: Optional[Union[int, pd.Series]] = None,
@@ -1067,3 +1069,123 @@ def compute_max_drawdown(
     max_drawdown = -100 * (pct_drawdown.max())
     result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
     return result
+
+
+def compute_zero_diff_proportion(
+    srs: pd.Series,
+    atol: Optional[float] = None,
+    rtol: Optional[float] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute proportion of unvarying periods in a series.
+
+    https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
+
+    :param srs: pandas series of floats
+    :param atol: as in numpy.isclose
+    :param rtol: as in numpy.isclose
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: series with proportion of unvarying periods
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    atol = atol or 0
+    rtol = rtol or 1e-05
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "approx_const_count",
+        prefix + "approx_const_frac",
+    ]
+    if data.shape[0] < 2:
+        _LOG.warning(
+            "Input series `%s` with size '%d' is too small",
+            srs.name,
+            data.shape[0],
+        )
+        nan_result = pd.Series(
+            data=[np.nan, np.nan], index=result_index, name=srs.name
+        )
+        return nan_result
+    # Compute if neighboring elements are equal within the given tolerance.
+    equal_ngb_srs = np.isclose(data.shift(1)[1:], data[1:], atol=atol, rtol=rtol)
+    # Compute number and proportion of equals among all neighbors pairs.
+    approx_const_count = equal_ngb_srs.sum()
+    n_pairs = data.shape[0] - 1
+    approx_const_frac = approx_const_count / n_pairs
+    result_values = [approx_const_count, approx_const_frac]
+    res = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return res
+
+
+def get_interarrival_time(
+    srs: pd.Series, nan_mode: Optional[str] = None,
+) -> Optional[pd.Series]:
+    """
+    Get interrarival time from index of a time series.
+
+    :param srs: pandas series of floats
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: series with interrarival time
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    if data.empty:
+        _LOG.warning("Empty input `%s`", srs.name)
+        return None
+    index = data.index
+    # Check index of a series. We require that the input
+    #     series have a sorted datetime index.
+    dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    dbg.dassert_monotonic_index(index)
+    # Compute a series of interrairival time.
+    interrarival_time = pd.Series(index).diff()
+    return interrarival_time
+
+
+def compute_interarrival_time_stats(
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute interarrival time statistics.
+
+    :param srs: pandas series of interrarival time
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: series with statistic and related info
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "n_unique",
+        prefix + "mean",
+        prefix + "std",
+        prefix + "min",
+        prefix + "max",
+    ]
+    if data.shape[0] < 2:
+        _LOG.warning(
+            "Input series `%s` with size '%d' is too small",
+            srs.name,
+            data.shape[0],
+        )
+        nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
+        return nan_result
+    interarrival_time = get_interarrival_time(data)
+    n_unique = interarrival_time.nunique()
+    mean = interarrival_time.mean()
+    std = interarrival_time.std()
+    min_value = interarrival_time.min()
+    max_value = interarrival_time.max()
+    #
+    result_values = [n_unique, mean, std, min_value, max_value]
+    res = pd.Series(
+        data=result_values, index=result_index, name=srs.name, dtype="object"
+    )
+    return res

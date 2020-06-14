@@ -734,29 +734,43 @@ def multipletests_plot(
 # #############################################################################
 
 
-def plot_value_counts(
-    values: pd.Series,
+def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
+    """
+    Plot barplots for the counts of a series and print the values.
+
+    Same interface as plot_count_series() but computing the count of the given
+    series `srs`.
+    """
+    # Compute the counts.
+    counts = srs.value_counts()
+    # Plot.
+    return plot_counts(counts, *args, **kwargs)
+
+
+def plot_counts(
+    counts: pd.Series,
     top_n_to_print: int = 10,
     top_n_to_plot: Optional[int] = None,
     plot_title: Optional[str] = None,
     label: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
+    rotation: int = 0,
 ) -> None:
     """
-    Plot barplots for series value counts and print the values.
+    Plot barplots for series containing counts and print the values.
 
     If the number of labels is over 20, the plot is oriented horizontally
     and the height of the plot is automatically adjusted.
 
-    :param values: series to plot value counts for
-    :param top_n_to_print: top N values by count to print. None for all. 0 for no values
+    :param counts: series to plot value counts for
+    :param top_n_to_print: top N values by count to print. None for all. 0 for
+        no values
     :param top_n_to_plot: like top_n_to_print, but for the plot
     :param plot_title: title of the barplot
     :param label: label of the X axis
     :param figsize: size of the plot
+    :param rotation: rotation of xtick labels
     """
-    # Get value counts for series.
-    counts = values.value_counts()
     # Get default values for plot title and label.
     if not figsize:
         figsize = FIG_SIZE
@@ -797,6 +811,7 @@ def plot_value_counts(
                 title=plot_title,
                 figsize=figsize,
                 xlabel=label,
+                rotation=rotation,
             )
         else:
             # Plot small number of categories vertically.
@@ -806,6 +821,7 @@ def plot_value_counts(
                 title=plot_title,
                 figsize=figsize,
                 xlabel=label,
+                rotation=rotation,
             )
 
 
@@ -819,6 +835,7 @@ def plot_barplot(
     unicolor: bool = False,
     colormap: Optional[mpl.colors.Colormap] = None,
     figsize: Optional[Tuple[int, int]] = None,
+    rotation: int = 0,
 ) -> None:
     """
     Plot a barplot.
@@ -830,8 +847,9 @@ def plot_barplot(
     :param title: title of the plot
     :param xlabel: label of the X axis
     :param unicolor: if True, plot all bars in neutral blue color
-    :param colormap:
+    :param colormap: matplotlib colormap
     :param figsize: size of plot
+    :param rotation: rotation of xtick labels
     """
 
     def _get_annotation_loc(
@@ -859,7 +877,7 @@ def plot_barplot(
         kind = "barh"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
-    ax = srs.plot(kind=kind, color=color, rot=0, title=title)
+    ax = srs.plot(kind=kind, color=color, rot=rotation, title=title)
     # Add annotations to bars.
     if annotation_mode == "pct":
         annotations = srs * 100 / srs.sum()

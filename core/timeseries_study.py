@@ -10,6 +10,7 @@ from typing import Any, Callable, Dict, Iterable, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from tqdm.auto import tqdm
 
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -274,7 +275,10 @@ def compute_coefficient_of_variation(series):
 
 
 def map_dict_to_dataframe(
-    dict_: Dict[Any, pd.Series], functions: Dict[str, Callable]
+    dict_: Dict[Any, pd.Series],
+    functions: Dict[str, Callable],
+    add_prefix: bool = True,
+    progress_bar: bool = True,
 ) -> pd.DataFrame:
     """
     Apply and combine results of specified functions on a dict of series.
@@ -283,14 +287,23 @@ def map_dict_to_dataframe(
     :param functions: dict with functions prefixes in keys and functions
         returns in values. Each function should receive a series as input
         and return a series or 1-column dataframe.
+    :param add_prefix: bool value. If True, add specified prefixes to
+        the functions outcomes and do not add if False.
+    :param progress_bar: bool value. If True, show progress bar of applying
+        the function to the series in the input and do not show if False.
     :return: dataframe with dict of series keys as column names and
          prefix + functions metrics' names as index.
     """
     all_func_outs = []
-    for key, series in dict_.items():
+    dict_items = dict_.items()
+    if progress_bar:
+        dict_items = tqdm(dict_.items())
+    for key, series in dict_items:
         # Apply all functions in `functions` to `series`.
         key_func_outs = []
         for prefix, func in functions.items():
+            if not add_prefix:
+                prefix = ""
             func_out = func(series, prefix=prefix)
             if isinstance(func_out, pd.DataFrame):
                 func_out = func_out.squeeze("columns")
