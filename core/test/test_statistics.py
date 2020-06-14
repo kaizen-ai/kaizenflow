@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 import core.artificial_signal_generators as sig_gen
+import core.finance as fin
 import core.statistics as stats
 import helpers.unit_test as hut
 
@@ -874,6 +875,59 @@ class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
         )
         sr_se = stats.compute_sharpe_ratio_standard_error(realization)
         np.testing.assert_almost_equal(sr_se, 0.158245297)
+
+
+class Test_compute_annualized_sharpe_ratio(hut.TestCase):
+    def _generate_minutely_series(self, n_days: float, seed) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
+            scale=1,
+            seed=seed,
+        )
+        return realization
+
+    def test1(self) -> None:
+        """
+        Demonstrate the approximate invariance of the annualized SR (at least
+        for iid returns) under resampling.
+        """
+        srs = self._generate_minutely_series(n_days=100, seed=10)
+        # Calculate SR from minutely time series.
+        srs_sr = stats.compute_annualized_sharpe_ratio(srs)
+        np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
+        # Resample to hourly and calculate SR.
+        hourly_srs = srs.resample("60T").sum()
+        hourly_sr = stats.compute_annualized_sharpe_ratio(hourly_srs)
+        np.testing.assert_almost_equal(hourly_sr, -2.6412, decimal=3)
+        # Resample to daily and calculate SR.
+        daily_srs = srs.resample("D").sum()
+        daily_srs_sr = stats.compute_annualized_sharpe_ratio(daily_srs)
+        np.testing.assert_almost_equal(daily_srs_sr, -2.5167, decimal=3)
+        # Resample to weekly and calculate SR.
+        weekly_srs = srs.resample("W").sum()
+        weekly_srs_sr = stats.compute_annualized_sharpe_ratio(weekly_srs)
+        np.testing.assert_almost_equal(weekly_srs_sr, -2.7717, decimal=3)
+
+    def test2(self) -> None:
+        """
+        Demonstrate the approximate invariance of the annualized SR in moving
+        from a "uniform" ATH-only time grid to a truly uniform time grid.
+        """
+        srs = self._generate_minutely_series(n_days=100, seed=10)
+        # Filter out non-trading time points.
+        filtered_srs = fin.set_non_ath_to_nan(srs)
+        filtered_srs= fin.set_weekends_to_nan(filtered_srs)
+        filtered_srs= filtered_srs.dropna()
+        # Treat srs as an intraday trading day-only series, e.g.,
+        # approximately 252 trading days per year, ATH only.
+        n_samples = filtered_srs.size
+        points_per_year = 2.52 * n_samples
+        filtered_srs_sr = stats.compute_sharpe_ratio(filtered_srs, time_scaling=points_per_year)
+        np.testing.assert_almost_equal(filtered_srs_sr, -2.7093, decimal=3)
+        # Compare to SR annualized using `freq`.
+        srs_sr = stats.compute_annualized_sharpe_ratio(srs)
+        np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
 
 
 class Test_summarize_sharpe_ratio(hut.TestCase):
