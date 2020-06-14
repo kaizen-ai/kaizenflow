@@ -97,9 +97,7 @@ def set_non_ath_to_nan(
     return df
 
 
-def set_weekends_to_nan(
-    df: pd.DataFrame
-) -> pd.DataFrame:
+def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
     """
     Filter out weekends.
     """
