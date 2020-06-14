@@ -301,6 +301,7 @@ def compute_annualized_sharpe_ratio(
     :return: annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
+    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
     sr = compute_sharpe_ratio(log_rets, points_per_year)
     return sr
 
@@ -319,6 +320,7 @@ def compute_annualized_sharpe_ratio_standard_error(
     :return: standard error estimate of annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
+    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
     se_sr = compute_sharpe_ratio_standard_error(log_rets, points_per_year)
     return se_sr
 
