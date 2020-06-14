@@ -67,47 +67,6 @@ def resample(df, agg_interval):
     return rets
 
 
-# TODO(GPP): DEPRECATE. PyCharm doesn't find any callers, and we are
-# using "result bundles" differently now.
-def filter_by_time(
-    df,
-    start_dt,
-    end_dt,
-    result_bundle=None,
-    dt_col_name=None,
-    log_level=logging.INFO,
-):
-    dbg.dassert_lte(1, df.shape[0])
-    if start_dt is not None and end_dt is not None:
-        dbg.dassert_lte(start_dt, end_dt)
-    #
-    if start_dt is not None:
-        _LOG.log(log_level, "Filtering df with start_dt=%s", start_dt)
-        if dt_col_name:
-            mask = df[dt_col_name] >= start_dt
-        else:
-            mask = df.index >= start_dt
-        kept_perc = pri.perc(mask.sum(), df.shape[0])
-        _LOG.info(">= start_dt=%s: kept %s rows", start_dt, kept_perc)
-        if result_bundle:
-            result_bundle["filter_ge_start_dt"] = kept_perc
-        df = df[mask]
-    #
-    if end_dt is not None:
-        _LOG.info("Filtering df with end_dt=%s", end_dt)
-        if dt_col_name:
-            mask = df[dt_col_name] < end_dt
-        else:
-            mask = df.index < end_dt
-        kept_perc = pri.perc(mask.sum(), df.shape[0])
-        _LOG.info("< end_dt=%s: kept %s rows", end_dt, kept_perc)
-        if result_bundle:
-            result_bundle["filter_lt_end_dt"] = kept_perc
-        df = df[mask]
-    dbg.dassert_lte(1, df.shape[0])
-    return df
-
-
 def set_non_ath_to_nan(
     df: pd.DataFrame,
     start_time: Optional[datetime.time] = None,
@@ -138,30 +97,15 @@ def set_non_ath_to_nan(
     return df
 
 
-# TODO(gp): ATHs vary over futures. Use volume to estimate them.
-def filter_ath(
-    df: pd.DataFrame, dt_col_name: Optional[Any] = None
-) -> pd.DataFrame:
+def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Filter according to active trading hours.
+    Filter out weekends.
     """
-    dbg.dassert_lte(1, df.shape[0])
-    if dt_col_name:
-        times = np.array([dt.time() for dt in df[dt_col_name]])
-    else:
-        # Use index.
-        # times = np.array([dt.time() for dt in df.index])
-        times = df.index.time
-    # Note that we need to exclude time(16, 0) since the last bar is tagged
-    # with time(15, 59).
-    # TODO(gp): Pass this values since they depend on the interval conventions.
-    start_time = datetime.time(9, 30)
-    end_time = datetime.time(15, 59)
-    mask = (start_time <= times) & (times <= end_time)
-    #
+    dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+    # 5 = Saturday, 6 = Sunday.
+    mask = df.index.day.isin([5, 6])
     df = df.copy()
-    df = df[mask]
-    dbg.dassert_lte(1, df.shape[0])
+    df[mask] = np.nan
     return df
 
 
