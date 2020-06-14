@@ -109,33 +109,6 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# TODO(gp): ATHs vary over futures. Use volume to estimate them.
-def filter_ath(
-    df: pd.DataFrame, dt_col_name: Optional[Any] = None
-) -> pd.DataFrame:
-    """
-    Filter according to active trading hours.
-    """
-    dbg.dassert_lte(1, df.shape[0])
-    if dt_col_name:
-        times = np.array([dt.time() for dt in df[dt_col_name]])
-    else:
-        # Use index.
-        # times = np.array([dt.time() for dt in df.index])
-        times = df.index.time
-    # Note that we need to exclude time(16, 0) since the last bar is tagged
-    # with time(15, 59).
-    # TODO(gp): Pass this values since they depend on the interval conventions.
-    start_time = datetime.time(9, 30)
-    end_time = datetime.time(15, 59)
-    mask = (start_time <= times) & (times <= end_time)
-    #
-    df = df.copy()
-    df = df[mask]
-    dbg.dassert_lte(1, df.shape[0])
-    return df
-
-
 # #############################################################################
 # Pnl returns stats.
 # #############################################################################
