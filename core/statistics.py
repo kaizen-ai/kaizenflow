@@ -363,7 +363,7 @@ def compute_sharpe_ratio_standard_error(
     # Compute the Sharpe ratio using the sampling frequency units[
     sr = compute_sharpe_ratio(log_rets, time_scaling=1)
     # TODO(*): Use `nan_mode` to determine size
-    sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
+    sr_var_estimate = (1 + (sr ** 2) / 2) / (log_rets.dropna().size - 1)
     sr_se_estimate = np.sqrt(sr_var_estimate)
     # Rescale.
     rescaled_sr_se_estimate = np.sqrt(time_scaling) * sr_se_estimate

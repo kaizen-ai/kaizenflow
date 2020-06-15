@@ -874,7 +874,7 @@ class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
             burnin=5,
         )
         sr_se = stats.compute_sharpe_ratio_standard_error(realization)
-        np.testing.assert_almost_equal(sr_se, 0.158245297)
+        np.testing.assert_almost_equal(sr_se, 0.160261242)
 
 
 class Test_compute_annualized_sharpe_ratio(hut.TestCase):
