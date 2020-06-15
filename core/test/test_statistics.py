@@ -949,15 +949,21 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
         np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)
         # Resample to hourly and calculate SR.
         hourly_srs = srs.resample("60T").sum()
-        hourly_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(hourly_srs)
+        hourly_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(
+            hourly_srs
+        )
         np.testing.assert_almost_equal(hourly_sr_se, 1.9112, decimal=3)
         # Resample to daily and calculate SR.
         daily_srs = srs.resample("D").sum()
-        daily_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(daily_srs)
+        daily_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
+            daily_srs
+        )
         np.testing.assert_almost_equal(daily_sr_se_sr, 1.9194, decimal=3)
         # Resample to weekly and calculate SR.
         weekly_srs = srs.resample("W").sum()
-        weekly_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(weekly_srs)
+        weekly_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
+            weekly_srs
+        )
         np.testing.assert_almost_equal(weekly_sr_se_sr, 1.9337, decimal=3)
 
     def test2(self) -> None:
