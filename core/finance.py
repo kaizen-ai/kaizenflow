@@ -208,7 +208,6 @@ def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
     df = df.apply(
         lambda x: rescale_to_target_annual_volatility(x, target_volatility)
     )
-    print(df.std())
     df = df.apply(convert_log_rets_to_pct_rets)
     df = df.mean(axis=1)
     srs = df.squeeze()
