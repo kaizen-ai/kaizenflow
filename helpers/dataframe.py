@@ -113,13 +113,13 @@ def _combine_masks(
 
 
 def apply_nan_mode(
-    srs: pd.Series, nan_mode: Optional[str] = None, info: Optional[dict] = None,
+    srs: pd.Series, mode: Optional[str] = None, info: Optional[dict] = None,
 ) -> pd.Series:
     """
     Process NaN values in a series according to the parameters.
 
     :param srs: pd.Series to process
-    :param nan_mode: method of processing NaNs
+    :param mode: method of processing NaNs
         - None - no transformation
         - "ignore" - drop all NaNs
         - "ffill" - forward fill not leading NaNs
@@ -132,22 +132,22 @@ def apply_nan_mode(
     dbg.dassert_isinstance(srs, pd.Series)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-    if nan_mode is None:
+    if mode is None:
         res = srs.copy()
-    elif nan_mode == "ignore":
+    elif mode == "ignore":
         res = srs.dropna().copy()
-    elif nan_mode == "ffill":
+    elif mode == "ffill":
         res = srs.ffill().copy()
-    elif nan_mode == "ffill_and_drop_leading":
+    elif mode == "ffill_and_drop_leading":
         res = srs.ffill().dropna().copy()
-    elif nan_mode == "fill_with_zero":
+    elif mode == "fill_with_zero":
         res = srs.fillna(0).copy()
-    elif nan_mode == "strict":
+    elif mode == "strict":
         res = srs.copy()
         if srs.isna().any():
-            raise ValueError(f"NaNs detected in nan_mode `{nan_mode}`")
+            raise ValueError(f"NaNs detected in mode `{mode}`")
     else:
-        raise ValueError(f"Unrecognized nan_mode `{nan_mode}`")
+        raise ValueError(f"Unrecognized mode `{mode}`")
     #
     if info is not None:
         dbg.dassert_isinstance(info, dict)

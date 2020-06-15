@@ -97,25 +97,25 @@ class Test_apply_nan_mode(hut.TestCase):
 
     def test2(self) -> None:
         series = self._get_series_with_nans(1)
-        actual = hdf.apply_nan_mode(series, nan_mode="ignore")
+        actual = hdf.apply_nan_mode(series, mode="ignore")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series_with_nans(1)
-        actual = hdf.apply_nan_mode(series, nan_mode="ffill")
+        actual = hdf.apply_nan_mode(series, mode="ffill")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series_with_nans(1)
-        actual = hdf.apply_nan_mode(series, nan_mode="ffill_and_drop_leading")
+        actual = hdf.apply_nan_mode(series, mode="ffill_and_drop_leading")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         series = self._get_series_with_nans(1)
-        actual = hdf.apply_nan_mode(series, nan_mode="fill_with_zero")
+        actual = hdf.apply_nan_mode(series, mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 

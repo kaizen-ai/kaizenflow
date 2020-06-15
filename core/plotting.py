@@ -4,9 +4,10 @@ Import as:
 import core.plotting as plot
 """
 
+import calendar
 import logging
 import math
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.colors as mpl_col
@@ -21,11 +22,16 @@ import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 
 import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
 import core.statistics as stats
+import helpers.dataframe as hdf
 import helpers.dbg as dbg
 import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
+
+_RETURNS_DICT_TYPE = Dict[str, Dict[int, pd.Series]]
 
 _PCA_TYPE = Union[skldec.PCA, skldec.IncrementalPCA]
 
@@ -951,3 +957,313 @@ def get_multiple_plots(
     if isinstance(ax, np.ndarray):
         return fig, ax.flatten()
     return fig, ax
+
+
+
+def plot_cumulative_returns(
+    cumulative_rets: pd.Series,
+    mode: str,
+    unit: str = "ratio",
+    benchmark_series: Optional[pd.Series] = None,
+    title_suffix: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+    plot_zero_line: bool = True,
+) -> None:
+    """
+    Plot cumulative returns.
+
+    :param cumulative_rets: log or pct cumulative returns
+    :param mode: log or pct, used to choose plot title
+    :param unit: `ratio`, `%` or `bps`. Both input series are rescaled appropriately
+    :param benchmark_series: additional series to plot
+    :param title_suffix: suffix added to the title
+    :param ax: axes
+    :param plot_zero_line: whether to plot horizontal line at 0
+    """
+    title_suffix = title_suffix or ""
+    # Choose scaling coefficent.
+    if unit == "%":
+        scale_coeff = 100
+    elif unit == "bps":
+        scale_coeff = 10000
+    elif unit == "ratio":
+        scale_coeff = 1
+    else:
+        raise ValueError("Invalid unit='%s'" % unit)
+    cumulative_rets = cumulative_rets * scale_coeff
+    #
+    if mode == "log":
+        title = "Cumulative log returns"
+    elif mode == "pct":
+        title = "Cumulative returns"
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    label = cumulative_rets.name or "returns"
+    #
+    cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
+    if benchmark_series is not None:
+        benchmark_series = benchmark_series * scale_coeff
+        bs_label = benchmark_series.name or "benchmark_series"
+        benchmark_series.plot(ax=ax, label=bs_label)
+    ax = ax or plt.gca()
+    if plot_zero_line:
+        ax.axhline(0, linestyle="--", linewidth=0.8, color="black", label="0")
+    ax.set_ylabel(unit)
+    plt.legend()
+
+
+def plot_rolling_annualized_sharpe_ratio(
+    srs: pd.Series,
+    tau: float,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+    ci: float = 0.95,
+    title_suffix: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """
+    Plot rolling annualized Sharpe ratio.
+
+    :param srs: input series
+    :param tau: argument as for sigp.compute_smooth_moving_average
+    :param min_depth: argument as for sigp.compute_smooth_moving_average
+    :param max_depth: argument as for sigp.compute_smooth_moving_average
+    :param p_moment: argument as for sigp.compute_smooth_moving_average
+    :param ci: confidence interval
+    :param title_suffix: suffix added to the title
+    :param ax: axes
+    """
+    title_suffix = title_suffix or ""
+    min_periods = tau * max_depth
+    rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
+        srs,
+        tau,
+        min_periods=min_periods,
+        min_depth=min_depth,
+        max_depth=max_depth,
+        p_moment=p_moment,
+    )
+    # Remove leading `NaNs`.
+    first_valid_index = rolling_sharpe.first_valid_index()
+    rolling_sharpe = rolling_sharpe.loc[first_valid_index:]
+    # Prepare for plotting SE band.
+    z = sp.stats.norm.ppf((1 - ci) / 2)
+    rolling_sharpe["sr-z*se"] = (
+        rolling_sharpe["annualized_SR"] + z * rolling_sharpe["annualized_SE(SR)"]
+    )
+    rolling_sharpe["sr+z*se"] = (
+        rolling_sharpe["annualized_SR"] - z * rolling_sharpe["annualized_SE(SR)"]
+    )
+    # Plot.
+    ax = rolling_sharpe["annualized_SR"].plot(
+        ax=ax, title=f"Annualized rolling Sharpe ratio{title_suffix}", label="SR"
+    )
+    ax.fill_between(
+        rolling_sharpe.index,
+        rolling_sharpe["sr-z*se"],
+        rolling_sharpe["sr+z*se"],
+        alpha=0.4,
+        label=f"{100*ci:.2f}% confidence interval",
+    )
+    mean_sharpe_ratio = (
+        rolling_sharpe["annualized_SR"]
+        .replace([np.inf, -np.inf], value=np.nan)
+        .mean()
+    )
+    ax = ax or plt.gca()
+    ax.axhline(
+        mean_sharpe_ratio,
+        linestyle="--",
+        linewidth=2,
+        color="green",
+        label="average SR",
+    )
+    ax.axhline(0, linewidth=0.8, color="black", label="0")
+    ax.set_ylabel("annualized SR")
+    ax.legend()
+
+
+def plot_monthly_heatmap(log_rets: pd.Series, unit: str = "ratio") -> None:
+    """
+    Plot a heatmap of log returns statistics by year and month.
+
+    :param srs: input series of log returns
+    :param unit: `ratio`, `%` or `bps` scaling coefficent
+    """
+    # Choose scaling coefficent.
+    if unit == "%":
+        scale_coeff = 100
+    elif unit == "bps":
+        scale_coeff = 10000
+    elif unit == "ratio":
+        scale_coeff = 1
+    else:
+        raise ValueError("Invalid unit='%s'" % unit)
+    monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
+    monthly_spread = monthly_pct_spread * scale_coeff
+    cmap = sns.diverging_palette(10, 133, as_cmap=True)
+    sns.heatmap(
+        monthly_spread, center=0, cmap=cmap, annot=True, fmt=".2f",
+    )
+    plt.title(f"Monthly returns ({unit})")
+    plt.yticks(rotation=0)
+
+
+def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
+    """
+    Calculate log returns statistics by year and month.
+
+    :param srs: input series of log returns
+    :return: dataframe of log returns with years on y-axis and
+        months on x-axis
+    """
+    srs_name = log_rets.name or 0
+    log_rets_df = pd.DataFrame(log_rets)
+    log_rets_df["year"] = log_rets_df.index.year
+    log_rets_df["month"] = log_rets_df.index.month
+    log_rets_df.reset_index(inplace=True)
+    monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
+    monthly_pct_returns = fin.convert_log_rets_to_pct_rets(monthly_log_returns)
+    monthly_pct_spread = monthly_pct_returns.unstack()
+    monthly_pct_spread.columns = monthly_pct_spread.columns.map(
+        lambda x: calendar.month_abbr[x]
+    )
+    return monthly_pct_spread
+
+
+def plot_yearly_barplot(
+    log_rets: pd.Series,
+    unit: str = "ratio",
+    unicolor: bool = False,
+    orientation: str = "vertical",
+) -> None:
+    """
+    Plot a barplot of log returns statistics by year.
+
+    :param srs: input series of log returns
+    :param unit: `ratio`, `%` or `bps` scaling coefficent
+    :param unicolor: if True, plot all bars in neutral blue color
+    :param orientation: vertical or horizontal bars
+    """
+    # Choose scaling coefficent.
+    if unit == "%":
+        scale_coeff = 100
+    elif unit == "bps":
+        scale_coeff = 10000
+    elif unit == "ratio":
+        scale_coeff = 1
+    else:
+        raise ValueError("Invalid unit='%s'" % unit)
+    yearly_log_returns = log_rets.resample("Y").sum()
+    yearly_pct_returns = fin.convert_log_rets_to_pct_rets(yearly_log_returns)
+    yearly_returns = yearly_pct_returns * scale_coeff
+    yearly_returns.index = yearly_returns.index.year
+    plot_barplot(
+        yearly_returns,
+        annotation_mode="value",
+        orientation=orientation,
+        title=f"Annual returns ({unit})",
+        unicolor=unicolor,
+    )
+    if orientation == "vertical":
+        xlabel = "year"
+        ylabel = "unit"
+    elif orientation == "horizontal":
+        xlabel = "unit"
+        ylabel = "year"
+    else:
+        raise ValueError("Invalid orientation='%s'" % orientation)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+
+def plot_pnl(
+    df: pd.DataFrame,
+    title: Optional[str] = None,
+    colormap: Optional[str] = None,
+    figsize: Optional[Tuple[int]] = None,
+    left_lim: Optional[Any] = None,
+    right_lim: Optional[Any] = None,
+    nan_mode: Optional[str] = None,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+):
+    """
+    Plot a pnl for the dataframe of pnl time series.
+
+    :param df: dataframe of pnl time series
+    :param title: plot title
+    :param colormap: matplotlib colormap
+    :param figsize: size of plot
+    :param left_lim: left limit value of the X axis
+    :param right_lim: right limit value of the X axis
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param xlabel: label of the X axis
+    :param ylabel: label of the Y axis
+    """
+    title = title or ""
+    colormap = colormap or "rainbow"
+    figsize = figsize or (20, 5)
+    left_lim = left_lim or min(df.index)
+    right_lim = right_lim or max(df.index)
+    nan_mode = nan_mode or "ignore"
+    xlabel = xlabel or None
+    ylabel = ylabel or None
+    if df.isna().all().any():
+        empty_series = [(idx) for idx, val in df.isna().all().items() if val]
+        _LOG.warning(
+            "Empty input columns were dropped: '%s'", ", ".join(empty_series)
+        )
+        df.drop(empty_series, axis=1, inplace=True)
+    df_plot = df.apply(hdf.apply_nan_mode, nan_mode=nan_mode)
+    fig, ax = plt.subplots(figsize=figsize)
+    df_plot.plot(x_compat=True, ax=ax, colormap=colormap)
+    # Setting fixed borders of x-axis.
+    ax.set_xlim([left_lim, right_lim])
+    # Formatting.
+    ax.set_title(title, fontsize=20)
+    plt.xticks(fontsize=13)
+    plt.yticks(fontsize=13)
+    ax.set_ylabel(ylabel, fontsize=20)
+    ax.set_xlabel(xlabel, fontsize=20)
+    ax.legend(prop=dict(size=13), loc="upper left")
+    plt.show()
+
+
+def plot_drawdown(
+    log_rets: pd.Series,
+    unit: str = "%",
+    title_suffix: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+    plot_zero_line: bool = True,
+) -> None:
+    """
+    Plot drawdown.
+
+    :param log_rets: log returns
+    :param unit: `ratio`, `%`. Input series are rescaled appropriately
+    :param title_suffix: suffix added to the title
+    :param ax: axes
+    :param plot_benchmark_line: whether to plot horizontal line at 0
+    """
+    title_suffix = title_suffix or ""
+    # Choose scaling coefficent.
+    if unit == "%":
+        scale_coeff = -100
+        title = "Drawdown (%)"
+    elif unit == "ratio":
+        scale_coeff = -1
+        title = "Drawdown (ratio)"
+    else:
+        raise ValueError("Invalid unit='%s'" % unit)
+    drawdown = scale_coeff * fin.compute_perc_loss_from_high_water_mark(log_rets)
+    label = drawdown.name or "drawdown"
+    ax = ax or plt.gca()
+    drawdown.plot(ax=ax, label="_nolegend_", color="b", linewidth=3.5)
+    drawdown.plot.area(
+        ax=ax, title=f"{title}{title_suffix}", label=label, color="b", alpha=0.3
+    )
+    ax.set_ylim(top=0)
+    ax.set_ylabel(unit)
+    plt.legend()
