@@ -1,9 +1,11 @@
 import logging
 import os
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -224,3 +226,48 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
             normalizer=normalizer,
             header=header,
         )
+
+
+def convert_csv_to_dict(path_to_csv: str, remove_nans: bool) -> Dict[Any, Any]:
+    """
+    Convert a csv file with a dataframe into a json-compatible dict.
+
+    :param path_to_csv: path to the csv file
+    :param remove_nans: whether to remove NaNs from the dictionary
+    :return: a json-compatible dict with the dataframe data
+    """
+    dbg.dassert_exists(
+        path_to_csv, "The file '%s' is not found.", path_to_csv,
+    )
+    # Load the dataframe from a csv file.
+    df = pd.read_csv(path_to_csv)
+    # Transform the dataframe into a dict.
+    dict_df = df.to_dict(orient="list")
+    if remove_nans:
+        # Remove NaNs from the dict.
+        for key in dict_df:
+            dict_df[key] = [x for x in dict_df[key] if not pd.isnull(x)]
+    return dict_df
+
+
+def save_csv_as_json(
+    path_to_csv: str, remove_nans: bool, path_to_json: Optional[str] = None
+) -> None:
+    """
+    Convert the df from a csv into a dict and save it into a json file.
+
+    If the `path_to_json` is not provided, the json is saved in the folder where
+    the csv file is located.
+
+    :param path_to_csv: path to the csv file
+    :param remove_nans: whether to remove NaNs from the dictionary
+    :param path_to_json: path to save the json file
+    :return:
+    """
+    # Convert the df from the csv into a json-compatible dict.
+    dict_df = convert_csv_to_dict(path_to_csv, remove_nans)
+    # Determine the json destination path.
+    if path_to_json is None:
+        path_to_json = io_.change_filename_extension(path_to_csv, ".csv", ".json")
+    # Save the dict into a json file.
+    io_.to_json(path_to_json, dict_df)

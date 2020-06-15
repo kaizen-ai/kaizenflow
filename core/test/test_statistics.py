@@ -5,13 +5,14 @@ import pandas as pd
 import pytest
 
 import core.artificial_signal_generators as sig_gen
+import core.finance as fin
 import core.statistics as stats
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestComputeMoments1(hut.TestCase):
+class TestComputeMoments(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -35,14 +36,14 @@ class TestComputeMoments1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_moments(series)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.compute_moments(series)
@@ -51,20 +52,20 @@ class TestComputeMoments1(hut.TestCase):
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.compute_moments(series, nan_mode="ffill_and_drop_leading")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test6(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.compute_moments(series)
 
 
-class TestComputeFracZero1(hut.TestCase):
+class TestComputeFracZero(hut.TestCase):
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
@@ -132,13 +133,13 @@ class TestComputeFracZero1(hut.TestCase):
         actual = stats.compute_frac_zero(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.compute_frac_zero(series)
 
 
-class TestComputeFracNan1(hut.TestCase):
+class TestComputeFracNan(hut.TestCase):
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
@@ -206,13 +207,13 @@ class TestComputeFracNan1(hut.TestCase):
         actual = stats.compute_frac_nan(series, axis=0)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.compute_frac_nan(series)
 
 
-class TestComputeFracConstant1(hut.TestCase):
+class TestComputeFracConstant(hut.TestCase):
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
@@ -243,37 +244,37 @@ class TestComputeFracConstant1(hut.TestCase):
         actual = stats.compute_frac_constant(series)
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_frac_constant(series)
 
 
-class TestComputeNumFiniteSamples1(hut.TestCase):
+class TestComputeNumFiniteSamples(hut.TestCase):
     @staticmethod
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
         stats.count_num_finite_samples(series)
 
 
-class TestComputeNumUniqueValues1(hut.TestCase):
+class TestComputeNumUniqueValues(hut.TestCase):
     @staticmethod
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
         stats.count_num_unique_values(series)
 
 
-class TestComputeDenominatorAndPackage1(hut.TestCase):
+class TestComputeDenominatorAndPackage(hut.TestCase):
     @staticmethod
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1() -> None:
         series = pd.Series([])
         stats._compute_denominator_and_package(reduction=1, data=series)
 
 
-class TestTTest1samp1(hut.TestCase):
+class TestTTest1samp(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -285,14 +286,14 @@ class TestTTest1samp1(hut.TestCase):
         )
         return series
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
         stats.ttest_1samp(series)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.ttest_1samp(series)
@@ -301,32 +302,32 @@ class TestTTest1samp1(hut.TestCase):
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.ttest_1samp(series, nan_mode="ffill_and_drop_leading")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test4(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.ttest_1samp(series)
 
 
-class TestMultipleTests1(hut.TestCase):
+class TestMultipleTests(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
         return series
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1(self) -> None:
         series = pd.Series([])
         stats.multipletests(series)
 
-    # Test if error is raised with default arguments when input contains NaNs
+    # Test if error is raised with default arguments when input contains NaNs.
     @pytest.mark.xfail()
     def test2(self) -> None:
         series_with_nans = self._get_series(seed=1)
@@ -343,7 +344,7 @@ class TestMultipleTests1(hut.TestCase):
         self.check_string(actual_string)
 
 
-class TestMultiTTest1(hut.TestCase):
+class TestMultiTTest(hut.TestCase):
     @staticmethod
     def _get_df_of_series(seed: int) -> pd.DataFrame:
         n_series = 7
@@ -363,7 +364,7 @@ class TestMultiTTest1(hut.TestCase):
         ).T
         return df
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test1(self) -> None:
         df = pd.DataFrame(columns=["series_name"])
         stats.multi_ttest(df)
@@ -407,7 +408,7 @@ class TestMultiTTest1(hut.TestCase):
         self.check_string(actual_string)
 
 
-class TestApplyNormalityTest1(hut.TestCase):
+class TestApplyNormalityTest(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -431,14 +432,14 @@ class TestApplyNormalityTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
         stats.apply_normality_test(series)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.apply_normality_test(series)
@@ -447,7 +448,7 @@ class TestApplyNormalityTest1(hut.TestCase):
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
-        # Place some `NaN` values in the series
+        # Place some `NaN` values in the series.
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = stats.apply_normality_test(
@@ -456,13 +457,13 @@ class TestApplyNormalityTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test6(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.apply_normality_test(series)
 
 
-class TestApplyAdfTest1(hut.TestCase):
+class TestApplyAdfTest(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -504,7 +505,7 @@ class TestApplyAdfTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.apply_adf_test(series)
@@ -516,13 +517,13 @@ class TestApplyAdfTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test8(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.apply_adf_test(series)
 
 
-class TestApplyKpssTest1(hut.TestCase):
+class TestApplyKpssTest(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -564,7 +565,7 @@ class TestApplyKpssTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.apply_kpss_test(series)
@@ -576,13 +577,13 @@ class TestApplyKpssTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test8(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.apply_kpss_test(series)
 
 
-class TestApplyLjungBoxTest1(hut.TestCase):
+class TestApplyLjungBoxTest(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -630,7 +631,7 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test7(self) -> None:
         series = pd.Series([])
         stats.apply_ljung_box_test(series)
@@ -642,13 +643,13 @@ class TestApplyLjungBoxTest1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test9(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.apply_ljung_box_test(series)
 
 
-class TestComputeZeroNanInfStats1(hut.TestCase):
+class TestComputeZeroNanInfStats(hut.TestCase):
     @staticmethod
     def _get_messy_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -676,13 +677,13 @@ class TestComputeZeroNanInfStats1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_zero_nan_inf_stats(series)
 
 
-class TestCalculateHitRate1(hut.TestCase):
+class TestCalculateHitRate(hut.TestCase):
     def test1(self) -> None:
         series = pd.Series([0, 1, 0, 0, 1, None])
         actual = stats.calculate_hit_rate(series)
@@ -715,12 +716,12 @@ class TestCalculateHitRate1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         series = pd.Series([])
         stats.calculate_hit_rate(series)
 
-    # Smoke test for input of `np.nan`s
+    # Smoke test for input of `np.nan`s.
     def test7(self) -> None:
         series = pd.Series([np.nan] * 10)
         stats.calculate_hit_rate(series)
@@ -733,7 +734,7 @@ class TestCalculateHitRate1(hut.TestCase):
         self.check_string(hut.convert_df_to_string(actual, index=True))
 
 
-class Test_compute_jensen_ratio1(hut.TestCase):
+class Test_compute_jensen_ratio(hut.TestCase):
     @staticmethod
     def _get_signal(seed: int) -> pd.Series:
         np.random.seed(seed)
@@ -773,13 +774,13 @@ class Test_compute_jensen_ratio1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test6(self) -> None:
         signal = pd.Series([])
         stats.compute_jensen_ratio(signal)
 
 
-class Test_compute_forecastability1(hut.TestCase):
+class Test_compute_forecastability(hut.TestCase):
     @staticmethod
     def _get_signal(seed: int) -> pd.Series:
         np.random.seed(seed)
@@ -814,7 +815,247 @@ class Test_compute_forecastability1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
+    # Smoke test for empty input.
     def test5(self) -> None:
         signal = self._get_signal(seed=1)
         stats.compute_forecastability(signal)
+
+
+class TestComputeMaxDrawdown(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_max_drawdown(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_max_drawdown(series, prefix="new")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input
+    def test3(self) -> None:
+        series = pd.Series([])
+        stats.compute_max_drawdown(series)
+
+
+class Test_compute_sharpe_ratio(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        sr = stats.compute_sharpe_ratio(realization)
+        np.testing.assert_almost_equal(sr, 0.057670899)
+
+
+class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        sr_se = stats.compute_sharpe_ratio_standard_error(realization)
+        np.testing.assert_almost_equal(sr_se, 0.158245297)
+
+
+class Test_compute_annualized_sharpe_ratio(hut.TestCase):
+    def _generate_minutely_series(self, n_days: float, seed) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
+            scale=1,
+            seed=seed,
+        )
+        return realization
+
+    def test1(self) -> None:
+        """
+        Demonstrate the approximate invariance of the annualized SR (at least
+        for iid returns) under resampling.
+        """
+        srs = self._generate_minutely_series(n_days=100, seed=10)
+        # Calculate SR from minutely time series.
+        srs_sr = stats.compute_annualized_sharpe_ratio(srs)
+        np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
+        # Resample to hourly and calculate SR.
+        hourly_srs = srs.resample("60T").sum()
+        hourly_sr = stats.compute_annualized_sharpe_ratio(hourly_srs)
+        np.testing.assert_almost_equal(hourly_sr, -2.6412, decimal=3)
+        # Resample to daily and calculate SR.
+        daily_srs = srs.resample("D").sum()
+        daily_srs_sr = stats.compute_annualized_sharpe_ratio(daily_srs)
+        np.testing.assert_almost_equal(daily_srs_sr, -2.5167, decimal=3)
+        # Resample to weekly and calculate SR.
+        weekly_srs = srs.resample("W").sum()
+        weekly_srs_sr = stats.compute_annualized_sharpe_ratio(weekly_srs)
+        np.testing.assert_almost_equal(weekly_srs_sr, -2.7717, decimal=3)
+
+    def test2(self) -> None:
+        """
+        Demonstrate the approximate invariance of the annualized SR in moving
+        from a "uniform" ATH-only time grid to a truly uniform time grid.
+        """
+        srs = self._generate_minutely_series(n_days=100, seed=10)
+        # Filter out non-trading time points.
+        filtered_srs = fin.set_non_ath_to_nan(srs)
+        filtered_srs = fin.set_weekends_to_nan(filtered_srs)
+        filtered_srs = filtered_srs.dropna()
+        # Treat srs as an intraday trading day-only series, e.g.,
+        # approximately 252 trading days per year, ATH only.
+        n_samples = filtered_srs.size
+        points_per_year = 2.52 * n_samples
+        filtered_srs_sr = stats.compute_sharpe_ratio(
+            filtered_srs, time_scaling=points_per_year
+        )
+        np.testing.assert_almost_equal(filtered_srs_sr, -2.7093, decimal=3)
+        # Compare to SR annualized using `freq`.
+        srs_sr = stats.compute_annualized_sharpe_ratio(srs)
+        np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
+
+
+class Test_summarize_sharpe_ratio(hut.TestCase):
+    def test1(self) -> None:
+        ar_params = []
+        ma_params = []
+        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"},
+            scale=1,
+            burnin=5,
+        )
+        res = stats.summarize_sharpe_ratio(realization)
+        self.check_string(hut.convert_df_to_string(res, index=True))
+
+
+class TestComputeZeroDiffProportion(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        np.random.seed(seed=seed)
+        n_elements = 100
+        index = pd.date_range(start="1-04-2018", periods=n_elements, freq="D")
+        data = list(np.random.randint(10, size=n_elements))
+        series = pd.Series(data=data, index=index, name="test")
+        series[45:50] = np.nan
+        return series
+
+    def test1(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_zero_diff_proportion(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_zero_diff_proportion(series, atol=1)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_zero_diff_proportion(series, rtol=0.3)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_zero_diff_proportion(
+            series, nan_mode="fill_with_zero"
+        )
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test6(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_zero_diff_proportion(series, prefix="prefix_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input.
+    def test7(self) -> None:
+        series = pd.Series([])
+        stats.compute_zero_diff_proportion(series)
+
+
+class TestGetInterarrivalTime(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        n = 100
+        start = pd.to_datetime("2015-01-01")
+        end = pd.to_datetime("2018-01-01")
+        start_u = start.value // 10 ** 9
+        end_u = end.value // 10 ** 9
+        np.random.seed(seed=seed)
+        dates = pd.to_datetime(np.random.randint(start_u, end_u, n), unit="s")
+        sorted_dates = dates.sort_values()
+        data = list(np.random.randint(10, size=n))
+        series = pd.Series(data=data, index=sorted_dates, name="test")
+        series[45:50] = np.nan
+        return series
+
+    # Smoke test for empty input.
+    def test1(self) -> None:
+        series = pd.Series([])
+        stats.get_interarrival_time(series)
+
+    def test2(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.get_interarrival_time(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.get_interarrival_time(series, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
+class TestComputeInterarrivalTimeStats(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        series.drop(series.index[15:20], inplace=True)
+        series[5:10] = np.nan
+        return series
+
+    # Smoke test for empty input.
+    def test1(self) -> None:
+        series = pd.Series([])
+        stats.compute_interarrival_time_stats(series)
+
+    def test2(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_interarrival_time_stats(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        series = self._get_series(seed=1)
+        actual = stats.compute_interarrival_time_stats(series, nan_mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)

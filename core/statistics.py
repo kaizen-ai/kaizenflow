@@ -36,6 +36,7 @@ def compute_moments(
 ) -> pd.Series:
     """
     Calculate, mean, standard deviation, skew, and kurtosis.
+
     :param srs: input series for computing moments
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
@@ -222,37 +223,153 @@ def _compute_denominator_and_package(
     raise ValueError("axis=`%s` but expected to be `0` or `1`!" % axis)
 
 
-def compute_annualized_sharpe_ratio(
+def compute_zero_nan_inf_stats(
+    srs: pd.Series, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate finite and non-finite values in time series.
+
+    :param srs: pandas series of floats
+    :param prefix: optional prefix for metrics' outcome
+    :return: series of stats
+    """
+    # TODO(*): To be optimized/rewritten in #2340.
+    prefix = prefix or ""
+    dbg.dassert_isinstance(srs, pd.Series)
+    result_index = [
+        prefix + "n_rows",
+        prefix + "frac_zero",
+        prefix + "frac_nan",
+        prefix + "frac_inf",
+        prefix + "frac_constant",
+        prefix + "num_finite_samples",
+    ]
+    n_stats = len(result_index)
+    nan_result = pd.Series(
+        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
+    )
+    if srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    result_values = [
+        len(srs),
+        compute_frac_zero(srs),
+        compute_frac_nan(srs),
+        compute_frac_inf(srs),
+        compute_frac_constant(srs),
+        count_num_finite_samples(srs),
+        # TODO(*): Add after extension to dataframes.
+        # "num_unique_values",
+        # stats.count_num_unique_values
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
+
+
+# #############################################################################
+# Sharpe Ratio
+# #############################################################################
+
+
+def summarize_sharpe_ratio(
     log_rets: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate SR from rets with an index freq and annualize.
+    Calculate SR, SE(SR) from rets with an index freq and annualize.
 
     TODO(*): Consider de-biasing when the number of sample points is small,
         e.g., https://www.twosigma.com/wp-content/uploads/sharpe-tr-1.pdf
     """
     prefix = prefix or ""
-    dbg.dassert(log_rets.index.freq)
-    freq = log_rets.index.freq
-    if freq == "D":
-        time_scaling = 365
-    elif freq == "B":
-        time_scaling = 252
-    elif freq == "W":
-        time_scaling = 52
-    elif freq == "M":
-        time_scaling = 12
-    else:
-        raise ValueError(f"Unsupported freq=`{freq}`")
-    sr = fin.compute_sharpe_ratio(log_rets, time_scaling)
-    sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
-    sr_se_estimate = np.sqrt(sr_var_estimate)
+    sr = compute_annualized_sharpe_ratio(log_rets)
+    sr_se_estimate = compute_annualized_sharpe_ratio_standard_error(log_rets)
     res = pd.Series(
         data=[sr, sr_se_estimate],
         index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
         name=log_rets.name,
     )
     return res
+
+
+def compute_annualized_sharpe_ratio(
+    log_rets: Union[pd.Series, pd.DataFrame],
+) -> Union[float, pd.Series]:
+    """
+    Compute SR from rets with an index freq and annualize.
+
+    :param log_rets: time series of log returns
+    :return: annualized Sharpe ratio
+    """
+    points_per_year = hdf.infer_sampling_points_per_year(log_rets)
+    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
+    sr = compute_sharpe_ratio(log_rets, points_per_year)
+    return sr
+
+
+def compute_annualized_sharpe_ratio_standard_error(
+    log_rets: Union[pd.Series, pd.DataFrame],
+) -> Union[float, pd.Series]:
+    """
+    Compute SE(SR) from rets with an index freq and annualize.
+
+    This function calculates the standard error with respect to the original
+    sampling frequency and then rescales to turn it into a standard error
+    for the corresponding annualized Sharpe ratio.
+
+    :param log_rets: time series of log returns
+    :return: standard error estimate of annualized Sharpe ratio
+    """
+    points_per_year = hdf.infer_sampling_points_per_year(log_rets)
+    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
+    se_sr = compute_sharpe_ratio_standard_error(log_rets, points_per_year)
+    return se_sr
+
+
+def compute_sharpe_ratio(
+    log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
+) -> Union[float, pd.Series]:
+    r"""
+    Calculate Sharpe Ratio (SR) from log returns and rescale.
+
+    For a detailed exploration of SR, see
+    http://www.gilgamath.com/pages/ssc.html.
+
+    :param log_rets: time series of log returns
+    :param time_scaling: rescales SR by a factor of \sqrt(time_scaling).
+        - For SR with respect to the sampling frequency, set equal to 1
+        - For annualization, set equal to the number of sampling frequency
+          ticks per year (e.g., =252 if daily returns are provided)
+    :return: Sharpe Ratio
+    """
+    dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
+    sr = log_rets.mean() / log_rets.std()
+    sr *= np.sqrt(time_scaling)
+    if isinstance(sr, pd.Series):
+        sr.name = "SR"
+    return sr
+
+
+def compute_sharpe_ratio_standard_error(
+    log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
+) -> Union[float, pd.Series]:
+    """
+    Calculate Sharpe Ratio standard error from log returns and rescale.
+
+    :param log_rets: time series of log returns
+    :param time_scaling: as in `compute_sharpe_ratio`
+    :return: Sharpe ratio standard error estimate
+    """
+    dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
+    # Compute the Sharpe ratio using the sampling frequency units[
+    sr = compute_sharpe_ratio(log_rets, time_scaling=1)
+    # TODO(*): Use `nan_mode` to determine size
+    sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
+    sr_se_estimate = np.sqrt(sr_var_estimate)
+    # Rescale.
+    rescaled_sr_se_estimate = np.sqrt(time_scaling) * sr_se_estimate
+    if isinstance(sr, pd.Series):
+        rescaled_sr_se_estimate = "SE(SR)"
+    return rescaled_sr_se_estimate
 
 
 # #############################################################################
@@ -683,49 +800,6 @@ def apply_kpss_test(
     return result
 
 
-def compute_zero_nan_inf_stats(
-    srs: pd.Series, prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Calculate finite and non-finite values in time series.
-
-    :param srs: pandas series of floats
-    :param prefix: optional prefix for metrics' outcome
-    :return: series of stats
-    """
-    # TODO(*): To be optimized/rewritten in #2340.
-    prefix = prefix or ""
-    dbg.dassert_isinstance(srs, pd.Series)
-    result_index = [
-        prefix + "n_rows",
-        prefix + "frac_zero",
-        prefix + "frac_nan",
-        prefix + "frac_inf",
-        prefix + "frac_constant",
-        prefix + "num_finite_samples",
-    ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
-    if srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
-    result_values = [
-        len(srs),
-        compute_frac_zero(srs),
-        compute_frac_nan(srs),
-        compute_frac_inf(srs),
-        compute_frac_constant(srs),
-        count_num_finite_samples(srs),
-        # TODO(*): Add after extension to dataframes.
-        # "num_unique_values",
-        # stats.count_num_unique_values
-    ]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
-    return result
-
-
 def apply_ljung_box_test(
     srs: pd.Series,
     lags: Optional[Union[int, pd.Series]] = None,
@@ -789,7 +863,7 @@ def calculate_hit_rate(
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
-    mode: str = "strict",
+    mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate hit rate statistics.
@@ -811,11 +885,13 @@ def calculate_hit_rate(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
+    mode = mode or "sign"
     # Process series.
+    conf_alpha = (1 - alpha / 2) * 100
     result_index = [
         prefix + "hit_rate_point_est",
-        prefix + "hit_rate_lower_bound",
-        prefix + "hit_rate_upper_bound",
+        prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
+        prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
     ]
     srs = srs.replace([-np.inf, np.inf], np.nan)
     srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
@@ -966,5 +1042,150 @@ def compute_forecastability(
         data=[forecastability],
         index=[prefix + "forecastability"],
         name=signal.name,
+    )
+    return res
+
+
+def compute_max_drawdown(
+    log_rets: pd.Series, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate max drawdown statistic.
+
+    :param log_rets: pandas series of log returns
+    :param prefix: optional prefix for metrics' outcome
+    :return: max drawdown as a negative percentage loss
+    """
+    dbg.dassert_isinstance(log_rets, pd.Series)
+    prefix = prefix or ""
+    result_index = [prefix + "max_drawdown"]
+    nan_result = pd.Series(
+        index=result_index, name=log_rets.name, dtype="float64"
+    )
+    if log_rets.empty:
+        _LOG.warning("Empty input series `%s`", log_rets.name)
+        return nan_result
+    pct_drawdown = fin.compute_perc_loss_from_high_water_mark(log_rets)
+    max_drawdown = -100 * (pct_drawdown.max())
+    result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
+    return result
+
+
+def compute_zero_diff_proportion(
+    srs: pd.Series,
+    atol: Optional[float] = None,
+    rtol: Optional[float] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute proportion of unvarying periods in a series.
+
+    https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
+
+    :param srs: pandas series of floats
+    :param atol: as in numpy.isclose
+    :param rtol: as in numpy.isclose
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: series with proportion of unvarying periods
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    atol = atol or 0
+    rtol = rtol or 1e-05
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "approx_const_count",
+        prefix + "approx_const_frac",
+    ]
+    if data.shape[0] < 2:
+        _LOG.warning(
+            "Input series `%s` with size '%d' is too small",
+            srs.name,
+            data.shape[0],
+        )
+        nan_result = pd.Series(
+            data=[np.nan, np.nan], index=result_index, name=srs.name
+        )
+        return nan_result
+    # Compute if neighboring elements are equal within the given tolerance.
+    equal_ngb_srs = np.isclose(data.shift(1)[1:], data[1:], atol=atol, rtol=rtol)
+    # Compute number and proportion of equals among all neighbors pairs.
+    approx_const_count = equal_ngb_srs.sum()
+    n_pairs = data.shape[0] - 1
+    approx_const_frac = approx_const_count / n_pairs
+    result_values = [approx_const_count, approx_const_frac]
+    res = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return res
+
+
+def get_interarrival_time(
+    srs: pd.Series, nan_mode: Optional[str] = None,
+) -> Optional[pd.Series]:
+    """
+    Get interrarival time from index of a time series.
+
+    :param srs: pandas series of floats
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: series with interrarival time
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    if data.empty:
+        _LOG.warning("Empty input `%s`", srs.name)
+        return None
+    index = data.index
+    # Check index of a series. We require that the input
+    #     series have a sorted datetime index.
+    dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    dbg.dassert_monotonic_index(index)
+    # Compute a series of interrairival time.
+    interrarival_time = pd.Series(index).diff()
+    return interrarival_time
+
+
+def compute_interarrival_time_stats(
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute interarrival time statistics.
+
+    :param srs: pandas series of interrarival time
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: series with statistic and related info
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    result_index = [
+        prefix + "n_unique",
+        prefix + "mean",
+        prefix + "std",
+        prefix + "min",
+        prefix + "max",
+    ]
+    if data.shape[0] < 2:
+        _LOG.warning(
+            "Input series `%s` with size '%d' is too small",
+            srs.name,
+            data.shape[0],
+        )
+        nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
+        return nan_result
+    interarrival_time = get_interarrival_time(data)
+    n_unique = interarrival_time.nunique()
+    mean = interarrival_time.mean()
+    std = interarrival_time.std()
+    min_value = interarrival_time.min()
+    max_value = interarrival_time.max()
+    #
+    result_values = [n_unique, mean, std, min_value, max_value]
+    res = pd.Series(
+        data=result_values, index=result_index, name=srs.name, dtype="object"
     )
     return res

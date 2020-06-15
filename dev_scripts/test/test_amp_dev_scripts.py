@@ -382,7 +382,7 @@ if __name__ == "main":
         as_system_call = True
         output = self._helper(txt, file_name, as_system_call)
         # Check.
-        self.check_string(output)
+        self.check_string(output, purify_text=True)
 
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
@@ -397,7 +397,7 @@ if __name__ == "main":
         as_system_call = False
         output = self._helper(txt, file_name, as_system_call)
         # Check.
-        self.check_string(output)
+        self.check_string(output, purify_text=True)
 
     @pytest.mark.skip(reason="Disabled until #2430 is solved")
     def test_linter_md1(self) -> None:

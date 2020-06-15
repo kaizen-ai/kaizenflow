@@ -757,7 +757,7 @@ class ContinuousSkLearnModel(FitPredictNode):
             y_hat.rename(columns=lambda x: x.replace("_hat", ""))
         )
         info["pnl_rets"] = pnl_rets
-        info["sr"] = fin.compute_sharpe_ratio(
+        info["sr"] = stats.compute_sharpe_ratio(
             pnl_rets.resample("1B").sum(), time_scaling=252
         )
         return info
@@ -859,7 +859,7 @@ class SkLearnModel(FitPredictNode):
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
-        info["sr"] = fin.compute_sharpe_ratio(
+        info["sr"] = stats.compute_sharpe_ratio(
             pnl_rets.resample("1B").sum(), time_scaling=252
         )
         return info
@@ -1384,7 +1384,7 @@ def process_result_bundle(result_bundle: Dict) -> collections.OrderedDict:
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = fin.compute_sharpe_ratio(pnl_rets.resample("1B").sum(), time_scaling=252)
+    sr = stats.compute_sharpe_ratio(pnl_rets.resample("1B").sum(), time_scaling=252)
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
     info["sr"] = copy.copy(sr)
