@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -176,7 +176,7 @@ def convert_pct_rets_to_log_rets(
 
 
 def rescale_to_target_annual_volatility(
-        srs: pd.Series, volatility: float
+    srs: pd.Series, volatility: float
 ) -> pd.Series:
     """
     Rescale srs to achieve target annual volatility.
@@ -196,8 +196,7 @@ def rescale_to_target_annual_volatility(
     return scale_factor * srs
 
 
-def aggregate_log_rets(df: pd.DataFrame,
-                       target_volatility: float) -> pd.Series:
+def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
     """
     Perform inverse variance weighting and normalize volatility.
 
@@ -206,7 +205,9 @@ def aggregate_log_rets(df: pd.DataFrame,
     :return: srs of log returns
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    df = df.apply(lambda x: rescale_to_target_annual_volatility(x, target_volatility))
+    df = df.apply(
+        lambda x: rescale_to_target_annual_volatility(x, target_volatility)
+    )
     print(df.std())
     df = df.apply(convert_log_rets_to_pct_rets)
     df = df.mean(axis=1)
