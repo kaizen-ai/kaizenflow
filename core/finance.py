@@ -211,7 +211,7 @@ def compute_drawdown(log_rets: pd.Series) -> pd.Series:
     :return: drawdown time series
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
-    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
+    log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
     cum_rets = log_rets.cumsum()
     running_max = np.maximum.accumulate(cum_rets)
     drawdown = running_max - cum_rets
@@ -244,7 +244,7 @@ def rescale_to_target_annual_volatility(
     """
     dbg.dassert_isinstance(srs, pd.Series)
     ppy = hdf.infer_sampling_points_per_year(srs)
-    srs = hdf.apply_nan_mode(srs, nan_mode="fill_with_zero")
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
     scale_factor = volatility / (np.sqrt(ppy) * srs.std())
     _LOG.debug(f"`scale_factor`={scale_factor}")
     return scale_factor * srs

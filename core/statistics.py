@@ -45,7 +45,7 @@ def compute_moments(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "mean",
         prefix + "std",
@@ -301,7 +301,7 @@ def compute_annualized_sharpe_ratio(
     :return: annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
-    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
+    log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
     sr = compute_sharpe_ratio(log_rets, points_per_year)
     return sr
 
@@ -320,7 +320,7 @@ def compute_annualized_sharpe_ratio_standard_error(
     :return: standard error estimate of annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
-    log_rets = hdf.apply_nan_mode(log_rets, nan_mode="fill_with_zero")
+    log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
     se_sr = compute_sharpe_ratio_standard_error(log_rets, points_per_year)
     return se_sr
 
@@ -533,7 +533,7 @@ def ttest_1samp(
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
     popmean = popmean or 0
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "tval",
         prefix + "pval",
@@ -583,7 +583,7 @@ def multipletests(
     nan_mode = nan_mode or "strict"
     dbg.dassert_in(nan_mode, ["strict", "ignore"])
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
         return pd.Series([np.nan], name=prefix + "adj_pval")
@@ -637,7 +637,7 @@ def apply_normality_test(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "stat",
         prefix + "pval",
@@ -689,7 +689,7 @@ def apply_adf_test(
     autolag = autolag or "AIC"
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
     result_index = [
         prefix + "stat",
@@ -762,7 +762,7 @@ def apply_kpss_test(
     regression = regression or "c"
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
     result_index = [
         prefix + "stat",
@@ -826,7 +826,7 @@ def apply_ljung_box_test(
     return_df = return_df or True
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
     columns = [
         prefix + "stat",
@@ -894,7 +894,7 @@ def calculate_hit_rate(
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
     ]
     srs = srs.replace([-np.inf, np.inf], np.nan)
-    srs = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
@@ -959,7 +959,7 @@ def compute_jensen_ratio(
     inf_mode = inf_mode or "return_nan"
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(signal, mode=nan_mode)
     nan_result = pd.Series(
         data=[np.nan], index=[prefix + "jensen_ratio"], name=signal.name
     )
@@ -1021,7 +1021,7 @@ def compute_forecastability(
     dbg.dassert_isinstance(signal, pd.Series)
     nan_mode = nan_mode or "fill_with_zero"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(signal, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(signal, mode=nan_mode)
     # Return NaN if there is no data.
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)
@@ -1095,7 +1095,7 @@ def compute_zero_diff_proportion(
     rtol = rtol or 1e-05
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "approx_const_count",
         prefix + "approx_const_frac",
@@ -1133,7 +1133,7 @@ def get_interarrival_time(
     """
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     if data.empty:
         _LOG.warning("Empty input `%s`", srs.name)
         return None
@@ -1161,7 +1161,7 @@ def compute_interarrival_time_stats(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, nan_mode=nan_mode)
+    data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "n_unique",
         prefix + "mean",
