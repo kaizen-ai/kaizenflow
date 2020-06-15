@@ -50,7 +50,7 @@ _DATETIME_TYPES = [
 ]
 
 
-###############################################################################
+# #############################################################################
 # General dataframe plotting helpers
 # #############################################################################
 
@@ -161,7 +161,7 @@ def plot_categories_count(
     plt.show()
 
 
-###############################################################################
+# #############################################################################
 # Time series plotting
 # #############################################################################
 
@@ -358,7 +358,7 @@ def plot_spectrum(
         # ax2.set_xlabel("Time window")
 
 
-###############################################################################
+# #############################################################################
 # Correlation-type plots
 # #############################################################################
 
@@ -649,7 +649,7 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-###############################################################################
+# #############################################################################
 # Eval metrics plots
 # #############################################################################
 
@@ -710,7 +710,7 @@ def multipletests_plot(
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     :param suptitle: overal title of all plots
     """
-    
+
     if adj_pvals is None:
         pval_series = pvals.dropna().sort_values().reset_index(drop=True)
         adj_pvals = stats.multipletests(pval_series, method=method).to_frame()
@@ -729,10 +729,14 @@ def multipletests_plot(
     for i, col in enumerate(adj_pvals.columns):
         mask = adj_pvals[col].notna()
         adj_pval = adj_pvals[col].dropna().sort_values().reset_index(drop=True)
-        ax[i].plot(pval_series.loc[mask].sort_values().reset_index(drop=True), label="pvals", **kwargs)
+        ax[i].plot(
+            pval_series.loc[mask].sort_values().reset_index(drop=True),
+            label="pvals",
+            **kwargs,
+        )
         ax[i].plot(adj_pval, label="adj pvals", **kwargs)
         # Show min adj p-val in text.
-        min_adj_pval = adj_pval[0]
+        min_adj_pval = adj_pval.iloc[0]
         ax[i].text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
         ax[i].text(
             0.1,
@@ -753,7 +757,7 @@ def multipletests_plot(
     plt.tight_layout()
 
 
-###############################################################################
+# #############################################################################
 # Data count plots.
 # #############################################################################
 
@@ -922,7 +926,7 @@ def plot_barplot(
         ax.set(xlabel=xlabel)
 
 
-###############################################################################
+# #############################################################################
 # General plotting helpers
 # #############################################################################
 
@@ -961,7 +965,6 @@ def get_multiple_plots(
     if isinstance(ax, np.ndarray):
         return fig, ax.flatten()
     return fig, ax
-
 
 
 def plot_cumulative_returns(
