@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -110,7 +110,7 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # #############################################################################
-# Pnl returns stats.
+# Returns calculation and helpers.
 # #############################################################################
 
 
@@ -175,6 +175,52 @@ def convert_pct_rets_to_log_rets(
     return np.log(pct_rets + 1)
 
 
+def rescale_to_target_annual_volatility(
+    srs: pd.Series, volatility: float
+) -> pd.Series:
+    """
+    Rescale srs to achieve target annual volatility.
+
+    NOTE: This is not a causal rescaling, but SR is an invariant.
+
+    :param srs: returns series. Index must have `freq`.
+    :param volatility: annualized volatility as a proportion (e.g., `0.1`
+        corresponds to 10% annual volatility)
+    :return: rescaled returns series
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    srs = hdf.apply_nan_mode(srs, nan_mode="fill_with_zero")
+    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
+    _LOG.debug("`scale_factor`=%f", scale_factor)
+    return scale_factor * srs
+
+
+def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
+    """
+    Perform inverse variance weighting and normalize volatility.
+
+    :param df: cols contain log returns
+    :param target_volatility: annualize target volatility
+    :return: srs of log returns
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    df = df.apply(
+        lambda x: rescale_to_target_annual_volatility(x, target_volatility)
+    )
+    df = df.apply(convert_log_rets_to_pct_rets)
+    df = df.mean(axis=1)
+    srs = df.squeeze()
+    srs = convert_pct_rets_to_log_rets(srs)
+    return srs
+
+
+# TODO(*): Consider moving to `statistics.py`.
+# #############################################################################
+# Returns stats.
+# #############################################################################
+
+
 def compute_kratio(rets, y_var):
     # From http://s3.amazonaws.com/zanran_storage/www.styleadvisor.com/
     #   ContentPages/2449998087.pdf
@@ -227,24 +273,3 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     """
     dd = compute_drawdown(log_rets)
     return 1 - np.exp(-dd)
-
-
-def rescale_to_target_annual_volatility(
-    srs: pd.Series, volatility: float
-) -> pd.Series:
-    """
-    Rescale srs to achieve target annual volatility.
-
-    NOTE: This is not a causal rescaling, but SR is an invariant.
-
-    :param srs: returns series. Index must have `freq`.
-    :param volatility: annualized volatility as a proportion (e.g., `0.1`
-        corresponds to 10% annual volatility)
-    :return: rescaled returns series
-    """
-    dbg.dassert_isinstance(srs, pd.Series)
-    ppy = hdf.infer_sampling_points_per_year(srs)
-    srs = hdf.apply_nan_mode(srs, nan_mode="fill_with_zero")
-    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
-    _LOG.debug(f"`scale_factor`={scale_factor}")
-    return scale_factor * srs
