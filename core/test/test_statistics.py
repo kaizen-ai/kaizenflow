@@ -932,6 +932,59 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
 
 
+class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
+    def _generate_minutely_series(self, n_days: float, seed) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        realization = arma_process.generate_sample(
+            {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
+            scale=1,
+            seed=seed,
+        )
+        return realization
+
+    def test1(self) -> None:
+        srs = self._generate_minutely_series(n_days=100, seed=10)
+        # Calculate SR from minutely time series.
+        srs_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(srs)
+        np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)
+        # Resample to hourly and calculate SR.
+        hourly_srs = srs.resample("60T").sum()
+        hourly_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(
+            hourly_srs
+        )
+        np.testing.assert_almost_equal(hourly_sr_se, 1.9112, decimal=3)
+        # Resample to daily and calculate SR.
+        daily_srs = srs.resample("D").sum()
+        daily_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
+            daily_srs
+        )
+        np.testing.assert_almost_equal(daily_sr_se_sr, 1.9194, decimal=3)
+        # Resample to weekly and calculate SR.
+        weekly_srs = srs.resample("W").sum()
+        weekly_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
+            weekly_srs
+        )
+        np.testing.assert_almost_equal(weekly_sr_se_sr, 1.9337, decimal=3)
+
+    def test2(self) -> None:
+        srs = self._generate_minutely_series(n_days=100, seed=10)
+        # Filter out non-trading time points.
+        filtered_srs = fin.set_non_ath_to_nan(srs)
+        filtered_srs = fin.set_weekends_to_nan(filtered_srs)
+        filtered_srs = filtered_srs.dropna()
+        # Treat srs as an intraday trading day-only series, e.g.,
+        # approximately 252 trading days per year, ATH only.
+        n_samples = filtered_srs.size
+        points_per_year = 2.52 * n_samples
+        filtered_srs_se = stats.compute_sharpe_ratio_standard_error(
+            filtered_srs, time_scaling=points_per_year
+        )
+        np.testing.assert_almost_equal(filtered_srs_se, 1.5874, decimal=3)
+        # Compare to SR annualized using `freq`.
+        srs_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(srs)
+        np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)
+
+
 class Test_summarize_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
         ar_params = []
