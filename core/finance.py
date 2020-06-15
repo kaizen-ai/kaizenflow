@@ -192,7 +192,7 @@ def rescale_to_target_annual_volatility(
     ppy = hdf.infer_sampling_points_per_year(srs)
     srs = hdf.apply_nan_mode(srs, nan_mode="fill_with_zero")
     scale_factor = volatility / (np.sqrt(ppy) * srs.std())
-    _LOG.debug(f"`scale_factor`={scale_factor}")
+    _LOG.debug("`scale_factor`=%f", scale_factor)
     return scale_factor * srs
 
 
