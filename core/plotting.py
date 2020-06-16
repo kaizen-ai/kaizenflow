@@ -598,7 +598,9 @@ class PCA:
         plt.suptitle("Principal components")
         for i in range(num_components):
             pc = pcs.iloc[i, :]
-            pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
+            pc.plot(
+                kind="barh", ax=axes[i], title="PC%s" % i, edgecolor="tab:blue"
+            )
 
     def plot_explained_variance(self) -> None:
         skluv.check_is_fitted(self.pca)
@@ -691,7 +693,10 @@ def plot_confusion_heatmap(
 def multipletests_plot(
     pvals: pd.Series,
     threshold: float,
+    adj_pvals: Optional[Union[pd.Series, pd.DataFrame]] = None,
+    num_cols: Optional[int] = None,
     method: Optional[str] = None,
+    suptitle: Optional[str] = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -700,31 +705,57 @@ def multipletests_plot(
     :param pvals: unadjusted p-values
     :param threshold: threshold for adjusted p-values separating accepted and
         rejected hypotheses, e.g., "FWER", or family-wise error rate
+    :param adj_pvals: adjusted p-values, if provided, will be used instead
+        calculating inside the function
+    :param num_cols: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
+    :param suptitle: overal title of all plots
     """
-    pvals = pvals.sort_values().reset_index(drop=True)
-    adj_pvals = stats.multipletests(pvals, method=method)
-    _ = plt.plot(pvals, label="pvals", **kwargs)[0]
-    plt.plot(adj_pvals, label="adj pvals", **kwargs)
-    # Show min adj p-val in text.
-    min_adj_pval = adj_pvals[0]
-    plt.text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
-    plt.text(
-        0.1,
-        0.6,
-        weight="bold",
-        fontsize=20,
-        **(
-            {"s": "PASS", "color": "g"}
-            if min_adj_pval <= threshold
-            else {"s": "FAIL", "color": "r"}
-        ),
+
+    if adj_pvals is None:
+        pval_series = pvals.dropna().sort_values().reset_index(drop=True)
+        adj_pvals = stats.multipletests(pval_series, method=method).to_frame()
+        plt_count = 1
+    else:
+        pval_series = pvals.dropna()
+        if isinstance(adj_pvals, pd.Series):
+            adj_pvals = adj_pvals.to_frame()
+        plt_count = len(adj_pvals.columns)
+    num_cols = num_cols or 1
+    _, ax = get_multiple_plots(
+        plt_count, num_cols=num_cols, sharex=False, sharey=True, y_scale=5
     )
-    # TODO(*): Force x-ticks at integers.
-    plt.axhline(threshold, ls=":", c="k")
-    plt.ylim(0, 1)
-    plt.legend()
-    plt.show()
+    if not isinstance(ax, np.ndarray):
+        ax = [ax]
+    for i, col in enumerate(adj_pvals.columns):
+        mask = adj_pvals[col].notna()
+        adj_pval = adj_pvals.loc[mask, col].sort_values().reset_index(drop=True)
+        ax[i].plot(
+            pval_series.loc[mask].sort_values().reset_index(drop=True),
+            label="pvals",
+            **kwargs,
+        )
+        ax[i].plot(adj_pval, label="adj pvals", **kwargs)
+        # Show min adj p-val in text.
+        min_adj_pval = adj_pval.iloc[0]
+        ax[i].text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
+        ax[i].text(
+            0.1,
+            0.6,
+            weight="bold",
+            fontsize=20,
+            **(
+                {"s": "PASS", "color": "g"}
+                if min_adj_pval <= threshold
+                else {"s": "FAIL", "color": "r"}
+            ),
+        )
+        ax[i].set_title(col)
+        ax[i].axhline(threshold, ls=":", c="k")
+        ax[i].set_ylim(0, 1)
+        ax[i].legend()
+    plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
+    plt.tight_layout()
 
 
 # #############################################################################
@@ -910,9 +941,7 @@ def get_multiple_plots(
 ) -> Tuple[mpl.figure.Figure, np.array]:
     """
     Create figure to accommodate `num_plots` plots.
-
     The figure is arranged in rows with `num_cols` columns.
-
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
     :param y_scale: if not None
@@ -923,7 +952,7 @@ def get_multiple_plots(
     # Heuristic to find the dimension of the fig.
     if y_scale is not None:
         dbg.dassert_lt(0, y_scale)
-        ysize = (num_plots / num_cols) * y_scale
+        ysize = math.ceil(num_plots / num_cols) * y_scale
         figsize: Optional[Tuple[float, float]] = (20, ysize)
     else:
         figsize = None
@@ -934,7 +963,9 @@ def get_multiple_plots(
         *args,
         **kwargs,
     )
-    return fig, ax.flatten()
+    if isinstance(ax, np.ndarray):
+        return fig, ax.flatten()
+    return fig, ax
 
 
 def plot_cumulative_returns(
@@ -979,9 +1010,12 @@ def plot_cumulative_returns(
     #
     cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
     if benchmark_series is not None:
+        benchmark_series = benchmark_series.loc[
+            cumulative_rets.index[0] : cumulative_rets.index[-1]
+        ]
         benchmark_series = benchmark_series * scale_coeff
         bs_label = benchmark_series.name or "benchmark_series"
-        benchmark_series.plot(ax=ax, label=bs_label)
+        benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     ax = ax or plt.gca()
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black", label="0")

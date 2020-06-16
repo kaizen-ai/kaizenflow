@@ -267,7 +267,7 @@ def compute_zero_nan_inf_stats(
 
 
 # #############################################################################
-# Sharpe Ratio
+# Sharpe ratio
 # #############################################################################
 
 
@@ -362,8 +362,9 @@ def compute_sharpe_ratio_standard_error(
     dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
     # Compute the Sharpe ratio using the sampling frequency units[
     sr = compute_sharpe_ratio(log_rets, time_scaling=1)
-    # TODO(*): Use `nan_mode` to determine size
-    sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
+    srs_size = hdf.apply_nan_mode(log_rets, mode="ignore").size
+    dbg.dassert_lt(1, srs_size)
+    sr_var_estimate = (1 + (sr ** 2) / 2) / (srs_size - 1)
     sr_se_estimate = np.sqrt(sr_var_estimate)
     # Rescale.
     rescaled_sr_se_estimate = np.sqrt(time_scaling) * sr_se_estimate
@@ -373,140 +374,123 @@ def compute_sharpe_ratio_standard_error(
 
 
 # #############################################################################
-# Cross-validation
+# Returns
 # #############################################################################
 
 
-def get_rolling_splits(
-    idx: pd.Index, n_splits: int
-) -> List[Tuple[pd.Index, pd.Index]]:
+def compute_annualized_return(srs: pd.Series) -> float:
     """
-    Partition index into chunks and returns pairs of successive chunks.
+    Annualize mean return.
 
-    If the index looks like
-        [0, 1, 2, 3, 4, 5, 6]
-    and n_splits = 4, then the splits would be
-        [([0, 1], [2, 3]),
-         ([2, 3], [4, 5]),
-         ([4, 5], [6])]
-
-    A typical use case is where the index is a monotonic increasing datetime
-    index. For such cases, causality is respected by the splits.
+    :param srs: series with datetimeindex with `freq`
+    :return: annualized return; pct rets if `srs` consists of pct rets,
+        log rets if `srs` consists of log rets.
     """
-    dbg.dassert_monotonic_index(idx)
-    n_chunks = n_splits + 1
-    dbg.dassert_lte(1, n_splits)
-    # Split into equal chunks.
-    chunk_size = int(math.ceil(idx.size / n_chunks))
-    dbg.dassert_lte(1, chunk_size)
-    chunks = [idx[i : i + chunk_size] for i in range(0, idx.size, chunk_size)]
-    dbg.dassert_eq(len(chunks), n_chunks)
-    #
-    splits = list(zip(chunks[:-1], chunks[1:]))
-    return splits
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    mean_rets = srs.mean()
+    annualized_mean_rets = ppy * mean_rets
+    return annualized_mean_rets
 
 
-def get_oos_start_split(
-    idx: pd.Index, datetime_: Union[datetime.datetime, pd.Timestamp]
-) -> List[Tuple[pd.Index, pd.Index]]:
+def compute_annualized_volatility(srs: pd.Series) -> float:
     """
-    Split index using OOS (out-of-sample) start datetime.
+    Annualize sample volatility.
+
+    :param srs: series with datetimeindex with `freq`
+    :return: annualized volatility (stdev)
     """
-    dbg.dassert_monotonic_index(idx)
-    ins_mask = idx < datetime_
-    dbg.dassert_lte(1, ins_mask.sum())
-    oos_mask = ~ins_mask
-    dbg.dassert_lte(1, oos_mask.sum())
-    ins = idx[ins_mask]
-    oos = idx[oos_mask]
-    return [(ins, oos)]
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    std = srs.std()
+    annualized_volatility = np.sqrt(ppy) * std
+    return annualized_volatility
 
 
-# TODO(Paul): Support train/test/validation or more.
-def get_train_test_pct_split(
-    idx: pd.Index, train_pct: float
-) -> List[Tuple[pd.Index, pd.Index]]:
+def compute_max_drawdown(
+    log_rets: pd.Series, prefix: Optional[str] = None,
+) -> pd.Series:
     """
-    Split index into train and test sets by percentage.
+    Calculate max drawdown statistic.
+
+    :param log_rets: pandas series of log returns
+    :param prefix: optional prefix for metrics' outcome
+    :return: max drawdown as a negative percentage loss
     """
-    dbg.dassert_monotonic_index(idx)
-    dbg.dassert_lt(0.0, train_pct)
-    dbg.dassert_lt(train_pct, 1.0)
-    #
-    train_size = int(train_pct * idx.size)
-    dbg.dassert_lte(0, train_size)
-    train_split = idx[:train_size]
-    test_split = idx[train_size:]
-    return [(train_split, test_split)]
+    dbg.dassert_isinstance(log_rets, pd.Series)
+    prefix = prefix or ""
+    result_index = [prefix + "max_drawdown"]
+    nan_result = pd.Series(
+        index=result_index, name=log_rets.name, dtype="float64"
+    )
+    if log_rets.empty:
+        _LOG.warning("Empty input series `%s`", log_rets.name)
+        return nan_result
+    pct_drawdown = fin.compute_perc_loss_from_high_water_mark(log_rets)
+    max_drawdown = -100 * (pct_drawdown.max())
+    result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
+    return result
 
 
-def get_expanding_window_splits(
-    idx: pd.Index, n_splits: int
-) -> List[Tuple[pd.Index, pd.Index]]:
+def calculate_hit_rate(
+    srs: pd.Series,
+    alpha: Optional[float] = None,
+    method: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+    mode: Optional[str] = None,
+) -> pd.Series:
     """
-    Generate splits with expanding overlapping windows.
+    Calculate hit rate statistics.
+
+    :param srs: pandas series of 0s, 1s and NaNs
+    :param alpha: as in statsmodels.stats.proportion.proportion_confint()
+    :param method: as in statsmodels.stats.proportion.proportion_confint()
+    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence
+        intervals calculation
+    :param prefix: optional prefix for metrics' outcome
+    :param mode: `strict` or `sign`. `strict` requires a series of `0`s, `1`s
+        and possibly `NaNs`; `sign` interprets positive finite numbers as hits
+    :return: hit rate statistics: point estimate, lower bound, upper bound
     """
-    dbg.dassert_monotonic_index(idx)
-    dbg.dassert_lte(1, n_splits)
-    tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=n_splits)
-    locs = list(tscv.split(idx))
-    splits = [(idx[loc[0]], idx[loc[1]]) for loc in locs]
-    return splits
-
-
-def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
-    """
-    Return subset of idx with values >= min_idx and < max_idx.
-    """
-    dbg.dassert_monotonic_index(idx)
-    # TODO(*): PartTask667: Consider using bisection to avoid linear scans.
-    min_mask = idx >= min_idx
-    max_mask = idx < max_idx
-    mask = min_mask & max_mask
-    dbg.dassert_lte(1, mask.sum())
-    return idx[mask]
-
-
-def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
-    """
-    Combine multiple indices into a single index for cross-validation splits.
-
-    This is computed as the union of all the indices within the largest common
-    interval.
-
-    TODO(Paul): Consider supporting multiple behaviors with `mode`.
-    """
-    for idx in idxs:
-        dbg.dassert_monotonic_index(idx)
-    # Find the maximum start/end datetime overlap of all source indices.
-    max_min = max([idx.min() for idx in idxs])
-    _LOG.debug("Latest start datetime of indices=%s", max_min)
-    min_max = min([idx.max() for idx in idxs])
-    _LOG.debug("Earliest end datetime of indices=%s", min_max)
-    truncated_idxs = [truncate_index(idx, max_min, min_max) for idx in idxs]
-    # Take the union of truncated indices. Though all indices fall within the
-    # datetime range [max_min, min_max), they do not necessarily have the same
-    # resolution or all values.
-    composite_idx = functools.reduce(lambda x, y: x.union(y), truncated_idxs)
-    return composite_idx
-
-
-def convert_splits_to_string(splits: collections.OrderedDict) -> str:
-    txt = "n_splits=%s\n" % len(splits)
-    for train_idxs, test_idxs in splits:
-        txt += "train=%s [%s, %s]" % (
-            len(train_idxs),
-            min(train_idxs),
-            max(train_idxs),
+    alpha = alpha or 0.05
+    method = method or "jeffreys"
+    dbg.dassert_lte(0, alpha)
+    dbg.dassert_lte(alpha, 1)
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    prefix = prefix or ""
+    mode = mode or "sign"
+    # Process series.
+    conf_alpha = (1 - alpha / 2) * 100
+    result_index = [
+        prefix + "hit_rate_point_est",
+        prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
+        prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
+    ]
+    srs = srs.replace([-np.inf, np.inf], np.nan)
+    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    if srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
+        return nan_result
+    if mode == "strict":
+        dbg.dassert_is_subset(
+            srs, [0, 1], "Series should contain only 0s, 1s and NaNs"
         )
-        txt += "\n"
-        txt += "test=%s [%s, %s]" % (
-            len(test_idxs),
-            min(test_idxs),
-            max(test_idxs),
-        )
-        txt += "\n"
-    return txt
+        hit_mask = srs.copy()
+    elif mode == "sign":
+        hit_mask = srs > 0
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    # Calculate confidence intervals.
+    point_estimate = hit_mask.mean()
+    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
+        count=hit_mask.sum(), nobs=hit_mask.count(), alpha=alpha, method=method
+    )
+    result_values = [point_estimate, hit_lower, hit_upper]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
 
 
 # #############################################################################
@@ -857,67 +841,6 @@ def apply_ljung_box_test(
     return df_result
 
 
-def calculate_hit_rate(
-    srs: pd.Series,
-    alpha: Optional[float] = None,
-    method: Optional[str] = None,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-    mode: Optional[str] = None,
-) -> pd.Series:
-    """
-    Calculate hit rate statistics.
-
-    :param srs: pandas series of 0s, 1s and NaNs
-    :param alpha: as in statsmodels.stats.proportion.proportion_confint()
-    :param method: as in statsmodels.stats.proportion.proportion_confint()
-    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence
-        intervals calculation
-    :param prefix: optional prefix for metrics' outcome
-    :param mode: `strict` or `sign`. `strict` requires a series of `0`s, `1`s
-        and possibly `NaNs`; `sign` interprets positive finite numbers as hits
-    :return: hit rate statistics: point estimate, lower bound, upper bound
-    """
-    alpha = alpha or 0.05
-    method = method or "jeffreys"
-    dbg.dassert_lte(0, alpha)
-    dbg.dassert_lte(alpha, 1)
-    dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "ignore"
-    prefix = prefix or ""
-    mode = mode or "sign"
-    # Process series.
-    conf_alpha = (1 - alpha / 2) * 100
-    result_index = [
-        prefix + "hit_rate_point_est",
-        prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
-        prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
-    ]
-    srs = srs.replace([-np.inf, np.inf], np.nan)
-    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
-    if srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
-        return nan_result
-    if mode == "strict":
-        dbg.dassert_is_subset(
-            srs, [0, 1], "Series should contain only 0s, 1s and NaNs"
-        )
-        hit_mask = srs.copy()
-    elif mode == "sign":
-        hit_mask = srs > 0
-    else:
-        raise ValueError("Invalid mode='%s'" % mode)
-    # Calculate confidence intervals.
-    point_estimate = hit_mask.mean()
-    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=hit_mask.sum(), nobs=hit_mask.count(), alpha=alpha, method=method
-    )
-    result_values = [point_estimate, hit_lower, hit_upper]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
-    return result
-
-
 def compute_jensen_ratio(
     signal: pd.Series,
     p_norm: float = 2,
@@ -972,7 +895,7 @@ def compute_jensen_ratio(
             # According to a strict interpretation, each norm is infinite, and
             # and so their quotient is undefined.
             return nan_result
-        elif inf_mode == "ignore":
+        if inf_mode == "ignore":
             # Replace inf values with np.nan and drop.
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
         else:
@@ -1044,31 +967,6 @@ def compute_forecastability(
         name=signal.name,
     )
     return res
-
-
-def compute_max_drawdown(
-    log_rets: pd.Series, prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Calculate max drawdown statistic.
-
-    :param log_rets: pandas series of log returns
-    :param prefix: optional prefix for metrics' outcome
-    :return: max drawdown as a negative percentage loss
-    """
-    dbg.dassert_isinstance(log_rets, pd.Series)
-    prefix = prefix or ""
-    result_index = [prefix + "max_drawdown"]
-    nan_result = pd.Series(
-        index=result_index, name=log_rets.name, dtype="float64"
-    )
-    if log_rets.empty:
-        _LOG.warning("Empty input series `%s`", log_rets.name)
-        return nan_result
-    pct_drawdown = fin.compute_perc_loss_from_high_water_mark(log_rets)
-    max_drawdown = -100 * (pct_drawdown.max())
-    result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
-    return result
 
 
 def compute_zero_diff_proportion(
@@ -1189,3 +1087,140 @@ def compute_interarrival_time_stats(
         data=result_values, index=result_index, name=srs.name, dtype="object"
     )
     return res
+
+
+# #############################################################################
+# Cross-validation
+# #############################################################################
+
+
+def get_rolling_splits(
+    idx: pd.Index, n_splits: int
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Partition index into chunks and returns pairs of successive chunks.
+
+    If the index looks like
+        [0, 1, 2, 3, 4, 5, 6]
+    and n_splits = 4, then the splits would be
+        [([0, 1], [2, 3]),
+         ([2, 3], [4, 5]),
+         ([4, 5], [6])]
+
+    A typical use case is where the index is a monotonic increasing datetime
+    index. For such cases, causality is respected by the splits.
+    """
+    dbg.dassert_monotonic_index(idx)
+    n_chunks = n_splits + 1
+    dbg.dassert_lte(1, n_splits)
+    # Split into equal chunks.
+    chunk_size = int(math.ceil(idx.size / n_chunks))
+    dbg.dassert_lte(1, chunk_size)
+    chunks = [idx[i : i + chunk_size] for i in range(0, idx.size, chunk_size)]
+    dbg.dassert_eq(len(chunks), n_chunks)
+    #
+    splits = list(zip(chunks[:-1], chunks[1:]))
+    return splits
+
+
+def get_oos_start_split(
+    idx: pd.Index, datetime_: Union[datetime.datetime, pd.Timestamp]
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Split index using OOS (out-of-sample) start datetime.
+    """
+    dbg.dassert_monotonic_index(idx)
+    ins_mask = idx < datetime_
+    dbg.dassert_lte(1, ins_mask.sum())
+    oos_mask = ~ins_mask
+    dbg.dassert_lte(1, oos_mask.sum())
+    ins = idx[ins_mask]
+    oos = idx[oos_mask]
+    return [(ins, oos)]
+
+
+# TODO(Paul): Support train/test/validation or more.
+def get_train_test_pct_split(
+    idx: pd.Index, train_pct: float
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Split index into train and test sets by percentage.
+    """
+    dbg.dassert_monotonic_index(idx)
+    dbg.dassert_lt(0.0, train_pct)
+    dbg.dassert_lt(train_pct, 1.0)
+    #
+    train_size = int(train_pct * idx.size)
+    dbg.dassert_lte(0, train_size)
+    train_split = idx[:train_size]
+    test_split = idx[train_size:]
+    return [(train_split, test_split)]
+
+
+def get_expanding_window_splits(
+    idx: pd.Index, n_splits: int
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Generate splits with expanding overlapping windows.
+    """
+    dbg.dassert_monotonic_index(idx)
+    dbg.dassert_lte(1, n_splits)
+    tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=n_splits)
+    locs = list(tscv.split(idx))
+    splits = [(idx[loc[0]], idx[loc[1]]) for loc in locs]
+    return splits
+
+
+def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
+    """
+    Return subset of idx with values >= min_idx and < max_idx.
+    """
+    dbg.dassert_monotonic_index(idx)
+    # TODO(*): PartTask667: Consider using bisection to avoid linear scans.
+    min_mask = idx >= min_idx
+    max_mask = idx < max_idx
+    mask = min_mask & max_mask
+    dbg.dassert_lte(1, mask.sum())
+    return idx[mask]
+
+
+def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
+    """
+    Combine multiple indices into a single index for cross-validation splits.
+
+    This is computed as the union of all the indices within the largest common
+    interval.
+
+    TODO(Paul): Consider supporting multiple behaviors with `mode`.
+    """
+    for idx in idxs:
+        dbg.dassert_monotonic_index(idx)
+    # Find the maximum start/end datetime overlap of all source indices.
+    max_min = max([idx.min() for idx in idxs])
+    _LOG.debug("Latest start datetime of indices=%s", max_min)
+    min_max = min([idx.max() for idx in idxs])
+    _LOG.debug("Earliest end datetime of indices=%s", min_max)
+    truncated_idxs = [truncate_index(idx, max_min, min_max) for idx in idxs]
+    # Take the union of truncated indices. Though all indices fall within the
+    # datetime range [max_min, min_max), they do not necessarily have the same
+    # resolution or all values.
+    composite_idx = functools.reduce(lambda x, y: x.union(y), truncated_idxs)
+    return composite_idx
+
+
+def convert_splits_to_string(splits: collections.OrderedDict) -> str:
+    txt = "n_splits=%s\n" % len(splits)
+    for train_idxs, test_idxs in splits:
+        txt += "train=%s [%s, %s]" % (
+            len(train_idxs),
+            min(train_idxs),
+            max(train_idxs),
+        )
+        txt += "\n"
+        txt += "test=%s [%s, %s]" % (
+            len(test_idxs),
+            min(test_idxs),
+            max(test_idxs),
+        )
+        txt += "\n"
+    return txt
