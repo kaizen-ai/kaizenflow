@@ -598,7 +598,9 @@ class PCA:
         plt.suptitle("Principal components")
         for i in range(num_components):
             pc = pcs.iloc[i, :]
-            pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
+            pc.plot(
+                kind="barh", ax=axes[i], title="PC%s" % i, edgecolor="tab:blue"
+            )
 
     def plot_explained_variance(self) -> None:
         skluv.check_is_fitted(self.pca)
@@ -1153,9 +1155,9 @@ def plot_yearly_barplot(
     )
     if orientation == "vertical":
         xlabel = "year"
-        ylabel = "unit"
+        ylabel = unit
     elif orientation == "horizontal":
-        xlabel = "unit"
+        xlabel = unit
         ylabel = "year"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
