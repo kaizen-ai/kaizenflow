@@ -1008,6 +1008,9 @@ def plot_cumulative_returns(
     #
     cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
     if benchmark_series is not None:
+        benchmark_series = benchmark_series.loc[
+            cumulative_rets.index[0] : cumulative_rets.index[-1]
+        ]
         benchmark_series = benchmark_series * scale_coeff
         bs_label = benchmark_series.name or "benchmark_series"
         benchmark_series.plot(ax=ax, label=bs_label)
