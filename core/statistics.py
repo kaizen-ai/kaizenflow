@@ -386,8 +386,8 @@ def compute_annualized_return(srs: pd.Series) -> float:
         log rets if `srs` consists of log rets.
     """
     srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
-    mean_rets = srs.mean()
     ppy = hdf.infer_sampling_points_per_year(srs)
+    mean_rets = srs.mean()
     annualized_mean_rets = ppy * mean_rets
     return annualized_mean_rets
 
@@ -400,14 +400,14 @@ def compute_annualized_volatility(srs: pd.Series) -> float:
     :return: annualized volatility (stdev)
     """
     srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
-    std = srs.std()
     ppy = hdf.infer_sampling_points_per_year(srs)
+    std = srs.std()
     annualized_volatility = np.sqrt(ppy) * std
     return annualized_volatility
 
 
 def compute_max_drawdown(
-        log_rets: pd.Series, prefix: Optional[str] = None,
+    log_rets: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate max drawdown statistic.
@@ -432,12 +432,12 @@ def compute_max_drawdown(
 
 
 def calculate_hit_rate(
-        srs: pd.Series,
-        alpha: Optional[float] = None,
-        method: Optional[str] = None,
-        nan_mode: Optional[str] = None,
-        prefix: Optional[str] = None,
-        mode: Optional[str] = None,
+    srs: pd.Series,
+    alpha: Optional[float] = None,
+    method: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+    mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate hit rate statistics.
@@ -466,7 +466,7 @@ def calculate_hit_rate(
         prefix + "hit_rate_point_est",
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
-        ]
+    ]
     srs = srs.replace([-np.inf, np.inf], np.nan)
     srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     if srs.empty:
@@ -894,7 +894,7 @@ def compute_jensen_ratio(
             # According to a strict interpretation, each norm is infinite, and
             # and so their quotient is undefined.
             return nan_result
-        elif inf_mode == "ignore":
+        if inf_mode == "ignore":
             # Replace inf values with np.nan and drop.
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
         else:
@@ -1094,7 +1094,7 @@ def compute_interarrival_time_stats(
 
 
 def get_rolling_splits(
-        idx: pd.Index, n_splits: int
+    idx: pd.Index, n_splits: int
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Partition index into chunks and returns pairs of successive chunks.
@@ -1123,7 +1123,7 @@ def get_rolling_splits(
 
 
 def get_oos_start_split(
-        idx: pd.Index, datetime_: Union[datetime.datetime, pd.Timestamp]
+    idx: pd.Index, datetime_: Union[datetime.datetime, pd.Timestamp]
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Split index using OOS (out-of-sample) start datetime.
@@ -1140,7 +1140,7 @@ def get_oos_start_split(
 
 # TODO(Paul): Support train/test/validation or more.
 def get_train_test_pct_split(
-        idx: pd.Index, train_pct: float
+    idx: pd.Index, train_pct: float
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Split index into train and test sets by percentage.
@@ -1157,7 +1157,7 @@ def get_train_test_pct_split(
 
 
 def get_expanding_window_splits(
-        idx: pd.Index, n_splits: int
+    idx: pd.Index, n_splits: int
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Generate splits with expanding overlapping windows.
