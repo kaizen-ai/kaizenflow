@@ -123,3 +123,29 @@ class Test_apply_nan_mode(hut.TestCase):
     def test6(self) -> None:
         series = pd.Series([])
         hdf.apply_nan_mode(series)
+
+
+class Test_compute_points_per_year_for_given_freq(hut.TestCase):
+    def test1(self) -> None:
+        actual = hdf._compute_points_per_year_for_given_freq("T")
+        self.check_string(str(actual))
+
+    def test2(self) -> None:
+        actual = hdf._compute_points_per_year_for_given_freq("B")
+        self.check_string(str(actual))
+
+    def test3(self) -> None:
+        actual = hdf._compute_points_per_year_for_given_freq("D")
+        self.check_string(str(actual))
+
+    def test4(self) -> None:
+        actual = hdf._compute_points_per_year_for_given_freq("W")
+        self.check_string(str(actual))
+
+    def test5(self) -> None:
+        actual = hdf._compute_points_per_year_for_given_freq("M")
+        self.check_string(str(actual))
+
+    def test6(self) -> None:
+        actual = hdf._compute_points_per_year_for_given_freq("Y")
+        self.check_string(str(actual))
