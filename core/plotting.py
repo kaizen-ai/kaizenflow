@@ -1245,6 +1245,27 @@ def plot_drawdown(
     plt.legend()
 
 
+def plot_holdings(
+    holdings: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
+) -> None:
+    ax = ax or plt.gca()
+    scale_coeff = _choose_scaling_coefficient(unit)
+    holdings = scale_coeff * holdings
+    holdings.plot(linewidth=1, ax=ax, label="holdings")
+    holdings.resample("M").mean().plot(
+        linewidth=2.5, ax=ax, label="average holdings by month"
+    )
+    ax.axhline(
+        holdings.mean(),
+        linestyle="--",
+        color="green",
+        label="average holdings, overall",
+    )
+    ax.set_ylabel(unit)
+    ax.legend()
+    ax.set_title(f"Total holdings ({unit})")
+
+
 def _choose_scaling_coefficient(unit: str) -> int:
     if unit == "%":
         scale_coeff = 100
