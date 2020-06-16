@@ -989,15 +989,7 @@ def plot_cumulative_returns(
     :param plot_zero_line: whether to plot horizontal line at 0
     """
     title_suffix = title_suffix or ""
-    # Choose scaling coefficent.
-    if unit == "%":
-        scale_coeff = 100
-    elif unit == "bps":
-        scale_coeff = 10000
-    elif unit == "ratio":
-        scale_coeff = 1
-    else:
-        raise ValueError("Invalid unit='%s'" % unit)
+    scale_coeff = _choose_scaling_coefficient(unit)
     cumulative_rets = cumulative_rets * scale_coeff
     #
     if mode == "log":
@@ -1099,18 +1091,10 @@ def plot_monthly_heatmap(log_rets: pd.Series, unit: str = "ratio") -> None:
     """
     Plot a heatmap of log returns statistics by year and month.
 
-    :param srs: input series of log returns
-    :param unit: `ratio`, `%` or `bps` scaling coefficent
+    :param log_rets: input series of log returns
+    :param unit: `ratio`, `%` or `bps` scaling coefficient
     """
-    # Choose scaling coefficent.
-    if unit == "%":
-        scale_coeff = 100
-    elif unit == "bps":
-        scale_coeff = 10000
-    elif unit == "ratio":
-        scale_coeff = 1
-    else:
-        raise ValueError("Invalid unit='%s'" % unit)
+    scale_coeff = _choose_scaling_coefficient(unit)
     monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
     monthly_spread = monthly_pct_spread * scale_coeff
     cmap = sns.diverging_palette(10, 133, as_cmap=True)
@@ -1152,20 +1136,12 @@ def plot_yearly_barplot(
     """
     Plot a barplot of log returns statistics by year.
 
-    :param srs: input series of log returns
-    :param unit: `ratio`, `%` or `bps` scaling coefficent
+    :param log_rets: input series of log returns
+    :param unit: `ratio`, `%` or `bps` scaling coefficient
     :param unicolor: if True, plot all bars in neutral blue color
     :param orientation: vertical or horizontal bars
     """
-    # Choose scaling coefficent.
-    if unit == "%":
-        scale_coeff = 100
-    elif unit == "bps":
-        scale_coeff = 10000
-    elif unit == "ratio":
-        scale_coeff = 1
-    else:
-        raise ValueError("Invalid unit='%s'" % unit)
+    scale_coeff = _choose_scaling_coefficient(unit)
     yearly_log_returns = log_rets.resample("Y").sum()
     yearly_pct_returns = fin.convert_log_rets_to_pct_rets(yearly_log_returns)
     yearly_returns = yearly_pct_returns * scale_coeff
@@ -1179,9 +1155,9 @@ def plot_yearly_barplot(
     )
     if orientation == "vertical":
         xlabel = "year"
-        ylabel = "unit"
+        ylabel = unit
     elif orientation == "horizontal":
-        xlabel = "unit"
+        xlabel = unit
         ylabel = "year"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
@@ -1247,7 +1223,6 @@ def plot_drawdown(
     unit: str = "%",
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
-    plot_zero_line: bool = True,
 ) -> None:
     """
     Plot drawdown.
@@ -1256,20 +1231,12 @@ def plot_drawdown(
     :param unit: `ratio`, `%`. Input series are rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
-    :param plot_benchmark_line: whether to plot horizontal line at 0
     """
     title_suffix = title_suffix or ""
-    # Choose scaling coefficent.
-    if unit == "%":
-        scale_coeff = -100
-        title = "Drawdown (%)"
-    elif unit == "ratio":
-        scale_coeff = -1
-        title = "Drawdown (ratio)"
-    else:
-        raise ValueError("Invalid unit='%s'" % unit)
-    drawdown = scale_coeff * fin.compute_perc_loss_from_high_water_mark(log_rets)
+    scale_coeff = _choose_scaling_coefficient(unit)
+    drawdown = -scale_coeff * fin.compute_perc_loss_from_high_water_mark(log_rets)
     label = drawdown.name or "drawdown"
+    title = f"Drawdown ({unit})"
     ax = ax or plt.gca()
     drawdown.plot(ax=ax, label="_nolegend_", color="b", linewidth=3.5)
     drawdown.plot.area(
@@ -1278,3 +1245,15 @@ def plot_drawdown(
     ax.set_ylim(top=0)
     ax.set_ylabel(unit)
     plt.legend()
+
+
+def _choose_scaling_coefficient(unit: str) -> int:
+    if unit == "%":
+        scale_coeff = 100
+    elif unit == "bps":
+        scale_coeff = 10000
+    elif unit == "ratio":
+        scale_coeff = 1
+    else:
+        raise ValueError("Invalid unit='%s'" % unit)
+    return scale_coeff
