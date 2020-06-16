@@ -5,6 +5,7 @@ import helpers.dataframe as hdf
 """
 
 import collections
+import functools
 import logging
 from typing import Any, Dict, Optional, Tuple, Union
 
@@ -182,6 +183,17 @@ def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> floa
     dbg.dassert(data.index.freq)
     freq = data.index.freq
     # TODO(*): Make start, end dates parameters that can be passed in.
+    return _compute_points_per_year_for_given_freq(freq)
+
+
+@functools.lru_cache()
+def _compute_points_per_year_for_given_freq(freq: str) -> float:
+    """
+    Return the number of index time points per year.
+
+    :param freq: string identifier of date frequency
+    :return: number of time points per year (approximate)
+    """
     # Leap years: 2012, 2016.
     points_in_span = pd.date_range(
         freq=freq, start="2012-01-01", end="2019-12-31"
