@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Import as:
 
@@ -893,7 +892,6 @@ def plot_barplot(
 
     if figsize is None:
         figsize = FIG_SIZE
-    # plt.figure(figsize=figsize)
     # Choose colors.
     colormap = colormap or sns.diverging_palette(10, 133, as_cmap=True)
     if unicolor:
@@ -908,7 +906,9 @@ def plot_barplot(
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
     ax = ax or plt.gca()
-    srs.plot(kind=kind, color=color, rot=rotation, title=title, ax=ax)
+    srs.plot(
+        kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
+    )
     # Add annotations to bars.
     if annotation_mode == "pct":
         annotations = srs * 100 / srs.sum()
