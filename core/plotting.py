@@ -1153,9 +1153,9 @@ def plot_yearly_barplot(
     )
     if orientation == "vertical":
         xlabel = "year"
-        ylabel = "unit"
+        ylabel = unit
     elif orientation == "horizontal":
-        xlabel = "unit"
+        xlabel = unit
         ylabel = "year"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
