@@ -362,8 +362,9 @@ def compute_sharpe_ratio_standard_error(
     dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
     # Compute the Sharpe ratio using the sampling frequency units[
     sr = compute_sharpe_ratio(log_rets, time_scaling=1)
-    # TODO(*): Use `nan_mode` to determine size
-    sr_var_estimate = (1 + (sr ** 2) / 2) / (log_rets.dropna().size - 1)
+    srs_size = hdf.apply_nan_mode(log_rets, mode="ignore").size
+    dbg.dassert_lt(1, srs_size)
+    sr_var_estimate = (1 + (sr ** 2) / 2) / (srs_size - 1)
     sr_se_estimate = np.sqrt(sr_var_estimate)
     # Rescale.
     rescaled_sr_se_estimate = np.sqrt(time_scaling) * sr_se_estimate
