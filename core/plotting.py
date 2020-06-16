@@ -1013,7 +1013,7 @@ def plot_cumulative_returns(
         ]
         benchmark_series = benchmark_series * scale_coeff
         bs_label = benchmark_series.name or "benchmark_series"
-        benchmark_series.plot(ax=ax, label=bs_label)
+        benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     ax = ax or plt.gca()
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black", label="0")
