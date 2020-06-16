@@ -728,7 +728,7 @@ def multipletests_plot(
         ax = [ax]
     for i, col in enumerate(adj_pvals.columns):
         mask = adj_pvals[col].notna()
-        adj_pval = adj_pvals[col].dropna().sort_values().reset_index(drop=True)
+        adj_pval = adj_pvals.loc[mask, col].sort_values().reset_index(drop=True)
         ax[i].plot(
             pval_series.loc[mask].sort_values().reset_index(drop=True),
             label="pvals",
