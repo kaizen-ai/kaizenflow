@@ -379,11 +379,13 @@ def compute_sharpe_ratio_standard_error(
 # #############################################################################
 
 
-def apply_ttest_power_rule(alpha: float,
-                           power: float,
-                           two_sided: bool = False,
-                           years: Optional[float] = None,
-                           sharpe_ratio: Optional[float] = None) -> pd.Series:
+def apply_ttest_power_rule(
+    alpha: float,
+    power: float,
+    two_sided: bool = False,
+    years: Optional[float] = None,
+    sharpe_ratio: Optional[float] = None,
+) -> pd.Series:
     """
     Apply t-test power rule to SR will null hypothesis SR = 0.
 
@@ -402,9 +404,9 @@ def apply_ttest_power_rule(alpha: float,
     :param sharpe_ratio: annualized Sharpe ratio
     :return: pd.Series of power rule formula values and assumptions
     """
-    const = compute_ttest_power_rule_constant(alpha=alpha,
-                                              power=power,
-                                              two_sided=two_sided)
+    const = compute_ttest_power_rule_constant(
+        alpha=alpha, power=power, two_sided=two_sided
+    )
     if years is None:
         dbg.dassert_isinstance(sharpe_ratio, numbers.Number)
         years = const / (sharpe_ratio ** 2)
@@ -412,16 +414,26 @@ def apply_ttest_power_rule(alpha: float,
         dbg.dassert_isinstance(years, numbers.Number)
         sharpe_ratio = np.sqrt(const / years)
     else:
-        raise ValueError("Precisely one of `years` and `sharpe_ratio` should not be `None`")
-    idx = ["sharpe_ratio", "years", "power_rule_const",
-           "type_I_error", "two_sided", "type_II_error", "power"]
-    data = [sharpe_ratio, years, const,
-            alpha, two_sided, 1 - power, power]
+        raise ValueError(
+            "Precisely one of `years` and `sharpe_ratio` should not be `None`"
+        )
+    idx = [
+        "sharpe_ratio",
+        "years",
+        "power_rule_const",
+        "type_I_error",
+        "two_sided",
+        "type_II_error",
+        "power",
+    ]
+    data = [sharpe_ratio, years, const, alpha, two_sided, 1 - power, power]
     srs = pd.Series(index=idx, data=data, name="ttest_power_rule")
     return srs
 
 
-def compute_ttest_power_rule_constant(alpha: float, power: float, two_sided: bool = False) -> float:
+def compute_ttest_power_rule_constant(
+    alpha: float, power: float, two_sided: bool = False
+) -> float:
     """
     Compute the constant to use in the t-test power law.
 
@@ -1159,7 +1171,6 @@ def compute_interarrival_time_stats(
         data=result_values, index=result_index, name=srs.name, dtype="object"
     )
     return res
-
 
 
 # #############################################################################
