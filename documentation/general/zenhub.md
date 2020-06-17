@@ -243,30 +243,22 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   - Sprint starts on Monday at 10:00 am ET = after the All-hands meeting
 - Sprints are numbered and have a commodity name
   - E.g., "Sprint1 - Gold", "Sprint2 - Natural gas"
-- We have a single Sprint for the entire company, since the teams (Dev, Tools,
-  NLP, AutoML) are only a convenience to split the work (but we win or lose
+- We have a single Sprint for the entire company, since the teams (ETL, Infra / Tools,
+  NLP, KG, AutoML) are only a convenience to split the work (but we win or lose
   together)
-  - The Sprint is planned for each team (Dev, Tools, NLP, AutoML)
-  - Then we merge the Issues selected for the Sprint in a single Milestone /
-    Sprint for the entire company
 
 ## Pipelines
 
 - We have the following Pipelines on the ZH board:
   - New Issues
-  - Junkyard
-  - Icebox
-  - Backlog
-  - Background tasks
-  - Sprint Candidates
-  - Sprint Backlog
+  - Icebox (P2)
+  - Backlog (P1)
+  - Ready to go (P0)
   - In Progress
   - Review/QA
   - Done
-  - Epic
+  - Epics
   - Open Research
-  - Working Design
-  - Reading groups
   - Closed
 - Pipeline order is integral for the whole team, so make sure you are not
   changing the order of the pipelines on the board while working
@@ -275,76 +267,21 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
 
 - Any new GH Issue is here
 
-### Junkyard
+### Icebox (P2)
 
-- Legacy Issues (crap we don't know what the heck do it with)
-  - We will either promote them to Icebox, Backlog, or terminate them.
+- Low priority, un-prioritized issues that are not immediate priorities
 
-### Icebox
-
-- Low priority, un-prioritized Issues
-
-### Backlog
+### Backlog (P1)
 
 - = product backlog
   - All issues that should be done to create a product
+- issues of meduim priority at the moment
+  
+### Ready to go (P0)
 
-### Background tasks
-
-- Background issues to work on when you are blocked on the core task (waiting
-  for a review, S3 problem, etc.)
-- Background tasks can be selected from Backlog, Sprint Candidates, New Issues
-  pipelines or filed
-  - Backgound issues should be selected by each person independently
-  - Each person should always have at least 3-4 background issues in the
-    Pipeline
-- Requirements for background issues:
-  - Issues you can work on independently
-    - E.g., refactoring, adding unit tests, linting your code
-  - Relevant to our recent work as a team
-    - E.g., something related to the old Twitter pipeline is obsolete
-  - Issues with little interaction with other people's work including your
-    current work
-    - E.g., renaming something in the entire codebase is going to interact with
-      everybody
-  - Technical debt: something that you keep hitting and that slows you down in
-    your daily work
-  - Reading documentation
-- To convert a task to a background issue / file a background issue
-  - Assign it to yourself
-  - Add it to a sub-epic or a Master Epic
-  - Add the label "Background" to it
-- When you start working on a background task
-  - Estimate it
-  - Move it to "In Progress" pipeline
-
-### Sprint Candidates
-
-- Issues that we want to include in the following Sprint
-  - They are usually higher priority issues than issues we have in Backlog
-
-### Sprint Backlog
-
-- Issues that we plan to accomplish during the Sprint
-- We try to keep the Sprint Backlog fixed during the Sprint
-- However it's ok to create follow-up Issues and add them to the current Sprint
-  Backlog
-  - We want to be flexible even inside the Sprint
-    - Especially since almost all issues include a great deal of research
-  - This can happen for research when one Issue organically leads to a follow-up
-    bug
-  - For development we want to be a little stricter so as to avoid going off on
-    a tangent, as long as we agree that's the right approach in the specific
-    case
-- All issues in Sprint Backlog and forward (all Pipelines to the right) should
-  be assigned
-  - Assign Issue to the one who actually does the work
-    - Avoid adding / removing people to the bug just to do some part of the job
-    - If you want someone to have a look at the issue and comment on it without
-      actually working on it, just tag them in a comment
-      - @OlgaVakhonina can you please ...
-  - If you don't know whom to assign the issue to, assign it to yourself
-  - If you don't know what to do, assign it to GP + Paul for rerouting
+- = Sprint backlog
+  - All issues to be completed during the current Sprint
+- issues of high prioirty at the moment
 
 ### In progress
 
@@ -366,15 +303,6 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
 - Contains Issues with exploratory analysis that might be completed, but whose
   implications are still unknown
 
-### Working Design
-
-- Design specs subject to change based on implementation iterations
-- Not yet ready to go into markdown
-
-### Reading groups
-
-- Issues related to on-going reading groups
-
 ### Done
 
 - Definition of Done for an issue:
@@ -391,34 +319,7 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
 
 ## Workflow
 
-### Sprint Planning Workflow
-
-- The bugs that are candidates for the next Sprint go in Sprint Candidates
-  pipeline
-  - Each Issue needs to have a clear goal, a definition of "done", and "small",
-    enough details to be clear to everybody
-    - If we are not sure about this, we need to iterate on the Issue until it
-      passes our threshold for being actionable and clear
-  - Issues are ranked in terms of business value
-    - In our case it corresponds to next product milestones, servicing
-      customers, and so on
-  - No need to estimate Issues in Sprint Candidates
-- At the beginning of each Sprint we select issues that we want to complete
-  during the Sprint
-  - These issues go to Sprint Backlog pipeline
-  - All issues that are added to Sprint Backlog should be estimated
-  - No need to add these issues to current Sprint milestone at this point
-- We plan Sprint backlog for each Team in terms of a number of story points that
-  is doable in 2 weeks
-  - Initially we assume 2 story points = 1 day, so for the sprint is 20 points
-    per Team member
-  - We will then refine the estimates using Velocity charts
-- Production tasks which were originally not included to the Sprint, but are
-  urgent (like "Particle website reanimation") should be added to the current
-  Sprint (Milestone in ZH) and estimated
-  - We want to have fair Burndown reports
-
-### Moving Tasks Between Pipelines Workflow
+### Moving tasks between pipelines workflow
 
 - When an assignee starts to work on a Issue, he/she moves it to "In progress"
   pipeline
@@ -474,9 +375,24 @@ To close the Sprint the PM team (GP, Paul, Olga) should follow the checklist bel
     - No need to for a period at the end of the title
   - Add issue to a sub-epic (or a Master Epic, if it doesn't belong to any
     sub-epics)
+  - Add issue to the pipeline it should belong to based on its priority
+    - if an issue is of high (immediate) priority, add it to Ready to go (P0) pipeline
+    - if an issue is of medium priority, add it to the Backlog (P1) pipeline
+    - if an issue is of low priority, add it to the Icebox (P2) pipeline
+    - if you are not sure about the priority of an issue, leave it in New Issues pipeline
+      - Paul & GP are to sort out the New Issues pipeline by priorities
 - When working on an issue
   - Make sure the issue is assigned to you / you and other people who are
     working on it
+    - All issues in Ready to go (P0) and forward (all Pipelines to the right) 
+      should be assigned
+    - Assign Issue to the one who actually does the work
+    - Avoid adding / removing people to the bug just to do some part of the job
+      - If you want someone to have a look at the issue and comment on it without 
+        actually working on it, just tag them in a comment
+        - @OlgaVakhonina can you please ...
+    - If you don't know whom to assign the issue to, assign it to yourself
+    - If you don't know what to do, assign it to GP + Paul for rerouting
   - Make sure the issue is properly estimated
     - If the difficulty of the issue changes while you are working on it, update
       its estimate
@@ -501,14 +417,25 @@ To close the Sprint the PM team (GP, Paul, Olga) should follow the checklist bel
 
 ## Labels
 
-- We removed "in progress", "to close", "to review" labels since we want to use
-  the ZH Board pipelines instead
-- We want to keep using P0, P1, and P2 labels even in ZH
-  - The reason is that we have lots of Issues and it's going to difficult to
-    keep the pipeline ordered in ZH
-  - It's probably a good idea to have priorities set in the sprint backlog, at
-    least to mark P0 issues
-  - Of course, priorities may change as we go, even inside a Sprint
+- We removed "in progress", "to close", "to review", "P0", "P1" and "P2" labels 
+  since we want to use the ZH Board pipelines instead
+- "Background" label
+  - The label "Background" is added to the issues, which are to work on 
+    when you are blocked on the core task (waiting for a review, S3 problem, etc.)
+  - Requirements for background issues:
+    - Issues you can work on independently
+      - E.g., refactoring, adding unit tests, linting your code
+    - Relevant to our recent work as a team
+      - E.g., something related to the old Twitter pipeline is obsolete
+    - Issues with little interaction with other people's work including your current work
+      - E.g., renaming something in the entire codebase is going to interact with
+        everybody
+    - Technical debt: something that you keep hitting and that slows you down 
+      in your daily work
+    - Reading documentation
+  - The issue may be converted to a background task either by Paul & GP, or by yourself
+  - Background issues have the same issue properties and follow the same rules of moving 
+    tasks between pipelines as all other issues
 
 ## Sprint Meetings
 
@@ -516,19 +443,6 @@ To close the Sprint the PM team (GP, Paul, Olga) should follow the checklist bel
   - Every week at 9 am ET, independently of Day Light Savings (although we can
     try to adjust things to help the Russia team)
   - Usual meeting agenda
-- Monday Sprint retrospective
-  - Probably 10-15 mins
-  - Once every 2 weeks at the end of the Sprint, we do a Sprint retrospective
-    with the following agenda:
-    - We review the work done in the Sprint
-    - The story points we got during current Sprint vs previous Sprint
-    - Check if there is anything we need to learn / improve from the last Sprint
-- Monday Sprint planning
-  - Once every 2 weeks
-  - Start on 10 am EST
-    - ~30 mins each per team
-    - Need to schedule for the team based on their personal preferences
-  - Sprint planning in groups: Dev, Tools, AutoML, Max, NLP
 - Thursday group meetings
   - Usual group sync-ups
 - Friday meeting with Olga
