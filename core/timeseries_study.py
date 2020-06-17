@@ -202,7 +202,7 @@ class TimeSeriesDailyStudy(_TimeSeriesAnalyzer):
         )
 
 
-class TimeSeriesMinuteStudy(_TimeSeriesAnalyzer):
+class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
     def boxplot_minutely_hour(self):
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
