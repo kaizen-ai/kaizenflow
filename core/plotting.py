@@ -1134,10 +1134,7 @@ def plot_rolling_annualized_sharpe_ratio(
 
 # %%
 def plot_monthly_heatmap(
-    log_rets: pd.Series,
-    unit: str = "ratio",
-    ax: Optional[mpl.axes.Axes] = None,
-    figsize: Optional[Tuple[int]] = None,
+    log_rets: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
 ) -> None:
     """
     Plot a heatmap of log returns statistics by year and month.
@@ -1156,9 +1153,6 @@ def plot_monthly_heatmap(
     else:
         raise ValueError("Invalid unit='%s'" % unit)
     ax = ax or plt.gca()
-    # if figsize is None:
-    #    figsize = FIG_SIZE
-    # ax.figure.set_size_inches(figsize)
     monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
     monthly_spread = monthly_pct_spread * scale_coeff
     cmap = sns.diverging_palette(10, 133, as_cmap=True)
