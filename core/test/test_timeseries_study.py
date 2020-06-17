@@ -18,12 +18,12 @@ class TestTimeSeriesDailyStudy(hut.TestCase):
         tsds.execute()
 
 
-class TestTimeSeriesMinuteStudy(hut.TestCase):
+class TestTimeSeriesMinutelyStudy(hut.TestCase):
     def test_usual_case(self) -> None:
         idx = pd.date_range("2018-12-31", "2019-01-31", freq="5T")
         vals = np.random.randn(len(idx))
         ts = pd.Series(vals, index=idx)
-        tsms = tss.TimeSeriesMinuteStudy(ts, freq_name="5 minutes")
+        tsms = tss.TimeSeriesMinutelyStudy(ts, freq_name="5 minutes")
         tsms.execute()
 
 
