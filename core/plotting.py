@@ -1203,7 +1203,7 @@ def plot_pnl(
             "Empty input columns were dropped: '%s'", ", ".join(empty_series)
         )
         df.drop(empty_series, axis=1, inplace=True)
-    df_plot = df.apply(hdf.apply_nan_mode, nan_mode=nan_mode)
+    df_plot = df.apply(hdf.apply_nan_mode, mode=nan_mode)
     fig, ax = plt.subplots(figsize=figsize)
     df_plot.plot(x_compat=True, ax=ax, colormap=colormap)
     # Setting fixed borders of x-axis.
