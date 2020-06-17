@@ -441,7 +441,6 @@ def compute_ttest_power_rule_constant(
 
     A special case of this is known as Lehr's rule.
 
-
     :param alpha: type I error rate
     :param power: 1 - type II error rate
     :param two_sided: one or two-sided t-test
