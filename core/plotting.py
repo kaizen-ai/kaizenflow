@@ -1,17 +1,15 @@
-# %%
 """
 Import as:
 
 import core.plotting as plot
 """
 
-# %%
+
 import calendar
 import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-# %%
 import matplotlib as mpl
 import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
@@ -24,7 +22,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 
-# %%
 import core.explore as expl
 import core.finance as fin
 import core.signal_processing as sigp
@@ -33,19 +30,18 @@ import helpers.dataframe as hdf
 import helpers.dbg as dbg
 import helpers.list as hlist
 
-# %%
 _LOG = logging.getLogger(__name__)
 
-# %%
+
 _RETURNS_DICT_TYPE = Dict[str, Dict[int, pd.Series]]
 
-# %%
+
 _PCA_TYPE = Union[skldec.PCA, skldec.IncrementalPCA]
 
-# %%
+
 FIG_SIZE = (20, 5)
 
-# %%
+
 _DATETIME_TYPES = [
     "year",
     "month",
@@ -58,13 +54,11 @@ _DATETIME_TYPES = [
 ]
 
 
-# %% [markdown]
 # #############################################################################
 # General dataframe plotting helpers
 # #############################################################################
 
 
-# %%
 def plot_non_na_cols(
     df: pd.core.frame.DataFrame,
     sort: bool = False,
@@ -120,7 +114,6 @@ def plot_non_na_cols(
     return ax
 
 
-# %%
 def plot_categories_count(
     df: pd.core.frame.DataFrame,
     category_column: str,
@@ -172,13 +165,11 @@ def plot_categories_count(
     plt.show()
 
 
-# %% [markdown]
 # #############################################################################
 # Time series plotting
 # #############################################################################
 
 
-# %%
 def plot_timeseries(
     df: pd.core.frame.DataFrame,
     datetime_types: Optional[List[str]],
@@ -212,7 +203,6 @@ def plot_timeseries(
         plt.show()
 
 
-# %%
 def plot_timeseries_per_category(
     df: pd.core.frame.DataFrame,
     datetime_types: Optional[List["str"]],
@@ -273,7 +263,6 @@ def plot_timeseries_per_category(
         fig.suptitle(f"Distribution by {datetime_type}")
 
 
-# %%
 def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
     colormap: str = "rainbow",
@@ -293,7 +282,6 @@ def plot_cols(
     data.plot(colormap=colormap, figsize=figsize)
 
 
-# %%
 def plot_autocorrelation(
     signal: Union[pd.Series, pd.DataFrame],
     lags: int = 40,
@@ -332,7 +320,6 @@ def plot_autocorrelation(
         )
 
 
-# %%
 def plot_spectrum(
     signal: Union[pd.Series, pd.DataFrame],
     nan_mode: str = "conservative",
@@ -375,13 +362,11 @@ def plot_spectrum(
         # ax2.set_xlabel("Time window")
 
 
-# %% [markdown]
 # #############################################################################
 # Correlation-type plots
 # #############################################################################
 
 
-# %%
 def plot_heatmap(
     corr_df: pd.core.frame.DataFrame,
     mode: str,
@@ -462,7 +447,6 @@ def plot_heatmap(
         raise RuntimeError("Invalid mode='%s'" % mode)
 
 
-# %%
 # TODO(gp): Add an option to mask out the correlation with low pvalues
 # http://stackoverflow.com/questions/24432101/correlation-coefficients-and-p-values-for-all-pairs-of-rows-of-a-matrix
 def plot_correlation_matrix(
@@ -505,7 +489,6 @@ def plot_correlation_matrix(
     return corr_df
 
 
-# %%
 def display_corr_df(df: pd.core.frame.DataFrame) -> None:
     """
     Display a correlation df with values with 2 decimal places.
@@ -517,7 +500,6 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
         _LOG.warning("Can't display correlation df since it is None")
 
 
-# %%
 def plot_dendrogram(
     df: pd.core.frame.DataFrame, figsize: Optional[Tuple[int, int]] = None
 ) -> None:
@@ -550,7 +532,6 @@ def plot_dendrogram(
     )
 
 
-# %%
 def plot_corr_over_time(
     corr_df: pd.core.frame.DataFrame,
     mode: str,
@@ -593,7 +574,6 @@ def plot_corr_over_time(
         axes[i].set_title(timestamps[i])
 
 
-# %%
 class PCA:
     def __init__(self, mode: str, **kwargs: Any):
         if mode == "standard":
@@ -653,7 +633,6 @@ class PCA:
         return num_pcs_to_plot
 
 
-# %%
 def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
     if mode == "heatmap_semitriangle":
         # Generate a mask for the upper triangle.
@@ -666,7 +645,6 @@ def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
     return mask
 
 
-# %%
 def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     """
     Generate a custom diverging colormap useful for heatmaps.
@@ -675,13 +653,11 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-# %% [markdown]
 # #############################################################################
 # Eval metrics plots
 # #############################################################################
 
 
-# %%
 def plot_confusion_heatmap(
     y_true: Union[List[Union[float, int]], np.array],
     y_pred: Union[List[Union[float, int]], np.array],
@@ -717,7 +693,6 @@ def plot_confusion_heatmap(
         return df_out, df_out_percentage
 
 
-# %%
 def multipletests_plot(
     pvals: pd.Series,
     threshold: float,
@@ -786,13 +761,11 @@ def multipletests_plot(
     plt.tight_layout()
 
 
-# %% [markdown]
 # #############################################################################
 # Data count plots.
 # #############################################################################
 
 
-# %%
 def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
     """
     Plot barplots for the counts of a series and print the values.
@@ -806,7 +779,6 @@ def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
     return plot_counts(counts, *args, **kwargs)
 
 
-# %%
 def plot_counts(
     counts: pd.Series,
     top_n_to_print: int = 10,
@@ -885,7 +857,6 @@ def plot_counts(
             )
 
 
-# %%
 def plot_barplot(
     srs: pd.Series,
     orientation: str = "vertical",
@@ -963,13 +934,11 @@ def plot_barplot(
         ax.set(xlabel=xlabel)
 
 
-# %% [markdown]
 # #############################################################################
 # General plotting helpers
 # #############################################################################
 
 
-# %%
 def get_multiple_plots(
     num_plots: int,
     num_cols: int,
@@ -1006,7 +975,6 @@ def get_multiple_plots(
     return fig, ax
 
 
-# %%
 def plot_cumulative_returns(
     cumulative_rets: pd.Series,
     mode: str,
@@ -1059,7 +1027,6 @@ def plot_cumulative_returns(
     plt.legend()
 
 
-# %%
 def plot_rolling_annualized_sharpe_ratio(
     srs: pd.Series,
     tau: float,
@@ -1132,7 +1099,6 @@ def plot_rolling_annualized_sharpe_ratio(
     ax.legend()
 
 
-# %%
 def plot_monthly_heatmap(
     log_rets: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
 ) -> None:
@@ -1161,7 +1127,6 @@ def plot_monthly_heatmap(
     ax.tick_params(axis="y", rotation=0)
 
 
-# %%
 def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
     """
     Calculate log returns statistics by year and month.
@@ -1184,7 +1149,6 @@ def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
     return monthly_pct_spread
 
 
-# %%
 def plot_yearly_barplot(
     log_rets: pd.Series,
     unit: str = "ratio",
@@ -1238,7 +1202,6 @@ def plot_yearly_barplot(
     ax.set_ylabel(ylabel)
 
 
-# %%
 def plot_pnl(
     df: pd.DataFrame,
     title: Optional[str] = None,
@@ -1292,7 +1255,6 @@ def plot_pnl(
     plt.show()
 
 
-# %%
 def plot_drawdown(
     log_rets: pd.Series,
     unit: str = "%",
