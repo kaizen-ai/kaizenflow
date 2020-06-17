@@ -874,7 +874,7 @@ class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
             burnin=5,
         )
         sr_se = stats.compute_sharpe_ratio_standard_error(realization)
-        np.testing.assert_almost_equal(sr_se, 0.158245297)
+        np.testing.assert_almost_equal(sr_se, 0.160261242)
 
 
 class Test_compute_annualized_sharpe_ratio(hut.TestCase):
@@ -952,19 +952,19 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
         hourly_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(
             hourly_srs
         )
-        np.testing.assert_almost_equal(hourly_sr_se, 1.9112, decimal=3)
+        np.testing.assert_almost_equal(hourly_sr_se, 1.9116, decimal=3)
         # Resample to daily and calculate SR.
         daily_srs = srs.resample("D").sum()
         daily_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
             daily_srs
         )
-        np.testing.assert_almost_equal(daily_sr_se_sr, 1.9194, decimal=3)
+        np.testing.assert_almost_equal(daily_sr_se_sr, 1.9290, decimal=3)
         # Resample to weekly and calculate SR.
         weekly_srs = srs.resample("W").sum()
         weekly_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
             weekly_srs
         )
-        np.testing.assert_almost_equal(weekly_sr_se_sr, 1.9337, decimal=3)
+        np.testing.assert_almost_equal(weekly_sr_se_sr, 2.0016, decimal=3)
 
     def test2(self) -> None:
         srs = self._generate_minutely_series(n_days=100, seed=10)
@@ -979,7 +979,7 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
         filtered_srs_se = stats.compute_sharpe_ratio_standard_error(
             filtered_srs, time_scaling=points_per_year
         )
-        np.testing.assert_almost_equal(filtered_srs_se, 1.5874, decimal=3)
+        np.testing.assert_almost_equal(filtered_srs_se, 1.5875, decimal=3)
         # Compare to SR annualized using `freq`.
         srs_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(srs)
         np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)

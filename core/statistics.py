@@ -9,6 +9,7 @@ import datetime
 import functools
 import logging
 import math
+import numbers
 from typing import Any, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
@@ -362,14 +363,97 @@ def compute_sharpe_ratio_standard_error(
     dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
     # Compute the Sharpe ratio using the sampling frequency units[
     sr = compute_sharpe_ratio(log_rets, time_scaling=1)
-    # TODO(*): Use `nan_mode` to determine size
-    sr_var_estimate = (1 + (sr ** 2) / 2) / log_rets.dropna().size
+    srs_size = hdf.apply_nan_mode(log_rets, mode="ignore").size
+    dbg.dassert_lt(1, srs_size)
+    sr_var_estimate = (1 + (sr ** 2) / 2) / (srs_size - 1)
     sr_se_estimate = np.sqrt(sr_var_estimate)
     # Rescale.
     rescaled_sr_se_estimate = np.sqrt(time_scaling) * sr_se_estimate
     if isinstance(sr, pd.Series):
         rescaled_sr_se_estimate = "SE(SR)"
     return rescaled_sr_se_estimate
+
+
+# #############################################################################
+# Sharpe ratio tests
+# #############################################################################
+
+
+def apply_ttest_power_rule(
+    alpha: float,
+    power: float,
+    two_sided: bool = False,
+    years: Optional[float] = None,
+    sharpe_ratio: Optional[float] = None,
+) -> pd.Series:
+    """
+    Apply t-test power rule to SR will null hypothesis SR = 0.
+
+    - The `power` is with respect to a specific type I error probability
+      `alpha`
+    - Supply exactly one of `years` and `sharpe_ratio`; the other is computed
+      - E.g., if `sharpe_ratio` is supplied, then `years` can be interpreted
+        as the required sample size
+      - If `years` is supplied, then `sharpe_ratio` is the threshold at which
+        the specified power holds.
+
+    :param alpha: type I error probability
+    :param power: 1 - type II error probability
+    :param two_sided: one or two-sided t-test
+    :param years: number of years
+    :param sharpe_ratio: annualized Sharpe ratio
+    :return: pd.Series of power rule formula values and assumptions
+    """
+    const = compute_ttest_power_rule_constant(
+        alpha=alpha, power=power, two_sided=two_sided
+    )
+    if years is None:
+        dbg.dassert_isinstance(sharpe_ratio, numbers.Number)
+        years = const / (sharpe_ratio ** 2)
+    elif sharpe_ratio is None:
+        dbg.dassert_isinstance(years, numbers.Number)
+        sharpe_ratio = np.sqrt(const / years)
+    else:
+        raise ValueError(
+            "Precisely one of `years` and `sharpe_ratio` should not be `None`"
+        )
+    idx = [
+        "sharpe_ratio",
+        "years",
+        "power_rule_const",
+        "type_I_error",
+        "two_sided",
+        "type_II_error",
+        "power",
+    ]
+    data = [sharpe_ratio, years, const, alpha, two_sided, 1 - power, power]
+    srs = pd.Series(index=idx, data=data, name="ttest_power_rule")
+    return srs
+
+
+def compute_ttest_power_rule_constant(
+    alpha: float, power: float, two_sided: bool = False
+) -> float:
+    """
+    Compute the constant to use in the t-test power law.
+
+    E.g., http://www.vanbelle.org/chapters/webchapter2.pdf
+
+    A special case of this is known as Lehr's rule.
+
+    :param alpha: type I error rate
+    :param power: 1 - type II error rate
+    :param two_sided: one or two-sided t-test
+    :return: constant to use in (one sample) t-test power law
+    """
+    dbg.dassert_lt(0, alpha)
+    dbg.dassert_lt(alpha, 1)
+    dbg.dassert_lt(0, power)
+    dbg.dassert_lt(power, 1)
+    if two_sided:
+        alpha /= 2
+    const = (sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2
+    return const
 
 
 # #############################################################################

@@ -603,7 +603,9 @@ class PCA:
         plt.suptitle("Principal components")
         for i in range(num_components):
             pc = pcs.iloc[i, :]
-            pc.plot(kind="barh", ax=axes[i], ylim=(-1, 1), title="PC%s" % i)
+            pc.plot(
+                kind="barh", ax=axes[i], title="PC%s" % i, edgecolor="tab:blue"
+            )
 
     def plot_explained_variance(self) -> None:
         skluv.check_is_fitted(self.pca)
@@ -996,15 +998,7 @@ def plot_cumulative_returns(
     :param plot_zero_line: whether to plot horizontal line at 0
     """
     title_suffix = title_suffix or ""
-    # Choose scaling coefficent.
-    if unit == "%":
-        scale_coeff = 100
-    elif unit == "bps":
-        scale_coeff = 10000
-    elif unit == "ratio":
-        scale_coeff = 1
-    else:
-        raise ValueError("Invalid unit='%s'" % unit)
+    scale_coeff = _choose_scaling_coefficient(unit)
     cumulative_rets = cumulative_rets * scale_coeff
     #
     if mode == "log":
@@ -1017,9 +1011,12 @@ def plot_cumulative_returns(
     #
     cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
     if benchmark_series is not None:
+        benchmark_series = benchmark_series.loc[
+            cumulative_rets.index[0] : cumulative_rets.index[-1]
+        ]
         benchmark_series = benchmark_series * scale_coeff
         bs_label = benchmark_series.name or "benchmark_series"
-        benchmark_series.plot(ax=ax, label=bs_label)
+        benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     ax = ax or plt.gca()
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black", label="0")
@@ -1105,19 +1102,11 @@ def plot_monthly_heatmap(
     """
     Plot a heatmap of log returns statistics by year and month.
 
-    :param srs: input series of log returns
-    :param unit: `ratio`, `%` or `bps` scaling coefficent
+    :param log_rets: input series of log returns
+    :param unit: `ratio`, `%` or `bps` scaling coefficient
     :param ax: axes
     """
-    # Choose scaling coefficent.
-    if unit == "%":
-        scale_coeff = 100
-    elif unit == "bps":
-        scale_coeff = 10000
-    elif unit == "ratio":
-        scale_coeff = 1
-    else:
-        raise ValueError("Invalid unit='%s'" % unit)
+    scale_coeff = _choose_scaling_coefficient(unit)
     ax = ax or plt.gca()
     monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
     monthly_spread = monthly_pct_spread * scale_coeff
@@ -1160,22 +1149,14 @@ def plot_yearly_barplot(
     """
     Plot a barplot of log returns statistics by year.
 
-    :param srs: input series of log returns
-    :param unit: `ratio`, `%` or `bps` scaling coefficent
+    :param log_rets: input series of log returns
+    :param unit: `ratio`, `%` or `bps` scaling coefficient
     :param unicolor: if True, plot all bars in neutral blue color
     :param orientation: vertical or horizontal bars
     :param figsize: size of plot
     :param ax: axes
     """
-    # Choose scaling coefficent.
-    if unit == "%":
-        scale_coeff = 100
-    elif unit == "bps":
-        scale_coeff = 10000
-    elif unit == "ratio":
-        scale_coeff = 1
-    else:
-        raise ValueError("Invalid unit='%s'" % unit)
+    scale_coeff = _choose_scaling_coefficient(unit)
     yearly_log_returns = log_rets.resample("Y").sum()
     yearly_pct_returns = fin.convert_log_rets_to_pct_rets(yearly_log_returns)
     yearly_returns = yearly_pct_returns * scale_coeff
@@ -1192,9 +1173,9 @@ def plot_yearly_barplot(
     )
     if orientation == "vertical":
         xlabel = "year"
-        ylabel = "unit"
+        ylabel = unit
     elif orientation == "horizontal":
-        xlabel = "unit"
+        xlabel = unit
         ylabel = "year"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
@@ -1260,7 +1241,6 @@ def plot_drawdown(
     unit: str = "%",
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
-    plot_zero_line: bool = True,
 ) -> None:
     """
     Plot drawdown.
@@ -1269,20 +1249,12 @@ def plot_drawdown(
     :param unit: `ratio`, `%`. Input series are rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
-    :param plot_zero_line: whether to plot horizontal line at 0
     """
     title_suffix = title_suffix or ""
-    # Choose scaling coefficent.
-    if unit == "%":
-        scale_coeff = -100
-        title = "Drawdown (%)"
-    elif unit == "ratio":
-        scale_coeff = -1
-        title = "Drawdown (ratio)"
-    else:
-        raise ValueError("Invalid unit='%s'" % unit)
-    drawdown = scale_coeff * fin.compute_perc_loss_from_high_water_mark(log_rets)
+    scale_coeff = _choose_scaling_coefficient(unit)
+    drawdown = -scale_coeff * fin.compute_perc_loss_from_high_water_mark(log_rets)
     label = drawdown.name or "drawdown"
+    title = f"Drawdown ({unit})"
     ax = ax or plt.gca()
     drawdown.plot(ax=ax, label="_nolegend_", color="b", linewidth=3.5)
     drawdown.plot.area(
@@ -1291,3 +1263,36 @@ def plot_drawdown(
     ax.set_ylim(top=0)
     ax.set_ylabel(unit)
     plt.legend()
+
+
+def plot_holdings(
+    holdings: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
+) -> None:
+    ax = ax or plt.gca()
+    scale_coeff = _choose_scaling_coefficient(unit)
+    holdings = scale_coeff * holdings
+    holdings.plot(linewidth=1, ax=ax, label="holdings")
+    holdings.resample("M").mean().plot(
+        linewidth=2.5, ax=ax, label="average holdings by month"
+    )
+    ax.axhline(
+        holdings.mean(),
+        linestyle="--",
+        color="green",
+        label="average holdings, overall",
+    )
+    ax.set_ylabel(unit)
+    ax.legend()
+    ax.set_title(f"Total holdings ({unit})")
+
+
+def _choose_scaling_coefficient(unit: str) -> int:
+    if unit == "%":
+        scale_coeff = 100
+    elif unit == "bps":
+        scale_coeff = 10000
+    elif unit == "ratio":
+        scale_coeff = 1
+    else:
+        raise ValueError("Invalid unit='%s'" % unit)
+    return scale_coeff
