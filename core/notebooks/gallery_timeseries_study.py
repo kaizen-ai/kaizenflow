@@ -77,7 +77,7 @@ tsds.execute()
 # ## Minutely
 
 # %%
-tsms = tss.TimeSeriesMinuteStudy(ts_minutely)
+tsms = tss.TimeSeriesMinutelyStudy(ts_minutely)
 tsms.execute()
 
 # %%
