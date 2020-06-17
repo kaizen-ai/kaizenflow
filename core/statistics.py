@@ -456,6 +456,20 @@ def compute_ttest_power_rule_constant(
     return const
 
 
+def compute_sharpe_ratio_prediction_interval_inflation_factor(ins_nobs: Union[int, float],
+                                                              oos_nobs: Union[int, float]) -> float:
+    """
+    Compute the SE(SR) inflation factor for obtaining conditional OOS bounds.
+
+    :param ins_nobs: number of observations in-sample
+    :param oos_nobs: number of observations out-of-sample
+    :return: float > 1
+    """
+    se_inflation_factor = np.sqrt(1 + ins_nobs / oos_nobs)
+    return se_inflation_factor
+
+
+
 # #############################################################################
 # Returns
 # #############################################################################
