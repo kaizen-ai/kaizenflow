@@ -4,7 +4,6 @@ Import as:
 import core.plotting as plot
 """
 
-
 import calendar
 import logging
 import math
@@ -32,15 +31,11 @@ import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
-
 _RETURNS_DICT_TYPE = Dict[str, Dict[int, pd.Series]]
-
 
 _PCA_TYPE = Union[skldec.PCA, skldec.IncrementalPCA]
 
-
 FIG_SIZE = (20, 5)
-
 
 _DATETIME_TYPES = [
     "year",
