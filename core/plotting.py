@@ -1017,17 +1017,32 @@ def plot_cumulative_returns(
 
 def plot_rolling_annualized_volatility(
     srs: pd.Series,
+    tau: float,
+    min_periods: int = 2,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
     ax: Optional[mpl.axes.Axes] = None,
-
 ) -> None:
     """
     Plot rolling annualized volatility.
     """
-    rolling_volatility = sigp.compute_rolling_annualized_volatility(srs)
+    rolling_volatility = sigp.compute_rolling_annualized_volatility(
+        srs, tau, min_periods, min_depth, max_depth, p_moment
+    )
+    ann_vol = stats.compute_annualized_volatility(srs)
     ax = ax or plt.gca()
-    rolling_volatility.plot(ax=ax)
-    ax.set_ylabel("Annualized Volatility")
+    rolling_volatility.plot(ax=ax, label="Rolling Volatility")
+    ax.axhline(
+        ann_vol,
+        linestyle="--",
+        linewidth=2,
+        color="green",
+        label="Annual Volatility",
+    )
+    ax.set_ylabel("Volatility")
     ax.legend()
+
 
 def plot_rolling_annualized_sharpe_ratio(
     srs: pd.Series,
