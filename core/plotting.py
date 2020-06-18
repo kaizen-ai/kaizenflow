@@ -1034,7 +1034,6 @@ def plot_rolling_annualized_volatility(
     ax = ax or plt.gca()
     ax.plot(
         rolling_volatility,
-        ax=ax,
         title="Rolling Annualized Volatility",
         label="Rolling Volatility",
     )
