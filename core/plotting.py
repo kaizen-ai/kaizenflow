@@ -1022,7 +1022,6 @@ def plot_rolling_annualized_volatility(
     min_depth: int = 1,
     max_depth: int = 1,
     p_moment: float = 2,
-    ci: float = 0.95,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
@@ -1035,23 +1034,8 @@ def plot_rolling_annualized_volatility(
     rolling_volatility = rolling_volatility.loc[first_valid_index:]
     ann_vol = stats.compute_annualized_volatility(srs)
     ax = ax or plt.gca()
-    z = sp.stats.norm.ppf((1 - ci) / 2)
-    rolling_volatility["sr-z*se"] = (
-        rolling_volatility["annualized_volatility"] + z * ann_vol
-    )
-    rolling_volatility["sr+z*se"] = (
-        rolling_volatility["annualized_volatility"] - z * ann_vol
-    )
-    # Plot.
     ax.plot(
-        rolling_volatility["annualized_volatility"], label="Rolling Volatility",
-    )
-    ax.fill_between(
-        rolling_volatility.index,
-        rolling_volatility["sr-z*se"],
-        rolling_volatility["sr+z*se"],
-        alpha=0.4,
-        label=f"{100*ci:.2f}% confidence interval",
+        rolling_volatility, label="Rolling Volatility",
     )
     ax.set_title = "Rolling Annualized Volatility"
     ax.axhline(
@@ -1062,6 +1046,7 @@ def plot_rolling_annualized_volatility(
         label="Annual Volatility",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
+    ax.set_xlim(rolling_volatility.index[0], rolling_volatility.index[-1])
     ax.set_ylabel("Volatility")
     ax.legend()
 
