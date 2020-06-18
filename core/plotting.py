@@ -1030,6 +1030,8 @@ def plot_rolling_annualized_volatility(
     rolling_volatility = sigp.compute_rolling_annualized_volatility(
         srs, tau, min_periods, min_depth, max_depth, p_moment
     )
+    first_valid_index = rolling_volatility.first_valid_index()
+    rolling_volatility = rolling_volatility.loc[first_valid_index:]
     ann_vol = stats.compute_annualized_volatility(srs)
     ax = ax or plt.gca()
     ax.plot(
@@ -1043,6 +1045,7 @@ def plot_rolling_annualized_volatility(
         color="green",
         label="Annual Volatility",
     )
+    ax.axhline(0, linewidth=0.8, color="black", label="0")
     ax.set_ylabel("Volatility")
     ax.legend()
 
