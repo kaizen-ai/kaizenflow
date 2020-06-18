@@ -465,8 +465,10 @@ def compute_drawdown_cdf(
     """
     Compute the drawdown cdf for `drawdown_value` at `time` given SR, vol specs.
 
-    - Ref: https://www.jstor.org/stable/3318509
-    - DD has law like that of RBM(-mu)
+    - Refs:
+      - https://www.jstor.org/stable/3318509
+      - https://en.wikipedia.org/wiki/Reflected_Brownian_motion
+    - DD has law like that of RBM(-mu, sigma ** 2))
     - RMB(-mu) converges in distribution as t -> infinity to an exponential
       distribution with parameter 2 * mu / (sigma ** 2)
 
