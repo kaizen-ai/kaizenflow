@@ -1268,27 +1268,25 @@ def plot_holdings(
     ax.set_title(f"Total holdings ({unit})")
 
 
-def plot_daily_turnover(
-    daily_turnover: pd.Series,
-    unit: str = "ratio",
-    ax: Optional[mpl.axes.Axes] = None,
+def plot_turnover(
+    turnover: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
-    daily_turnover = scale_coeff * daily_turnover
-    daily_turnover.plot(linewidth=1, ax=ax, label="daily turnover")
-    daily_turnover.resample("M").mean().plot(
-        linewidth=2.5, ax=ax, label="average daily turnover by month"
+    turnover = scale_coeff * turnover
+    turnover.plot(linewidth=1, ax=ax, label="turnover")
+    turnover.resample("M").mean().plot(
+        linewidth=2.5, ax=ax, label="average turnover by month"
     )
     ax.axhline(
-        daily_turnover.mean(),
+        turnover.mean(),
         linestyle="--",
         color="green",
-        label="average daily turnover, overall",
+        label="average turnover, overall",
     )
     ax.set_ylabel(unit)
     ax.legend()
-    ax.set_title(f"Daily turnover ({unit})")
+    ax.set_title(f"Turnover ({unit})")
 
 
 def _choose_scaling_coefficient(unit: str) -> int:
