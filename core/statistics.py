@@ -456,7 +456,12 @@ def compute_ttest_power_rule_constant(
     return const
 
 
-def compute_drawdown_cdf(sharpe_ratio: float, volatility: float, drawdown_value: float, time: Optional[float] = None):
+def compute_drawdown_cdf(
+    sharpe_ratio: float,
+    volatility: float,
+    drawdown_value: float,
+    time: Optional[float] = None,
+):
     """
     Compute the drawdown cdf for `drawdown_value` at `time` given SR, vol specs.
 
@@ -482,10 +487,12 @@ def compute_drawdown_cdf(sharpe_ratio: float, volatility: float, drawdown_value:
         b = np.inf
     else:
         a = (drawdown_value + ret * time) / (volatility * (time ** 0.5))
-        b = (-1*drawdown_value + ret * time) / (volatility * (time ** 0.5))
+        b = (-1 * drawdown_value + ret * time) / (volatility * (time ** 0.5))
     lambda_ = 2 * ret / (volatility ** 2)
     print(lambda_)
-    probability = sp.stats.norm.cdf(a) - np.exp(-1 * lambda_ * drawdown_value) * sp.stats.norm.cdf(b)
+    probability = sp.stats.norm.cdf(a) - np.exp(
+        -1 * lambda_ * drawdown_value
+    ) * sp.stats.norm.cdf(b)
     return probability
 
 
