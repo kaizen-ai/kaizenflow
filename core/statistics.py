@@ -456,6 +456,39 @@ def compute_ttest_power_rule_constant(
     return const
 
 
+def compute_drawdown_cdf(sharpe_ratio: float, volatility: float, drawdown_value: float, time: Optional[float] = None):
+    """
+    Compute the drawdown cdf for `drawdown_value` at `time` given SR, vol specs.
+
+    - Ref: https://www.jstor.org/stable/3318509
+    - DD has law like that of RBM(-mu)
+    - RMB(-mu) converges in distribution as t -> infinity to an exponential
+      distribution with parameter 2 * mu / (sigma ** 2)
+
+    :param sharpe_ratio: Sharpe ratio
+    :param volatility: volatility, with units compatible with those of the
+        Sharpe ratio
+    :param drawdown_value: drawdown, as a positive ratio
+    :param time: time in units consistent with those of SR and vol (i.e.,
+        "years" if SR and vol are annualized)
+    :return: Prob(drawdown at time `time` <= `drawdown_value`)
+        - If time is `None`, then we use the limiting exponential distribution.
+    """
+    dbg.dassert_lt(0, sharpe_ratio)
+    dbg.dassert_lt(0, volatility)
+    ret = sharpe_ratio * volatility
+    if time is None:
+        a = np.inf
+        b = np.inf
+    else:
+        a = (drawdown_value + ret * time) / (volatility * (time ** 0.5))
+        b = (-1*drawdown_value + ret * time) / (volatility * (time ** 0.5))
+    lambda_ = 2 * ret / (volatility ** 2)
+    print(lambda_)
+    probability = sp.stats.norm.cdf(a) - np.exp(-1 * lambda_ * drawdown_value) * sp.stats.norm.cdf(b)
+    return probability
+
+
 # #############################################################################
 # Returns
 # #############################################################################
