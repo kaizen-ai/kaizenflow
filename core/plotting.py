@@ -1015,6 +1015,20 @@ def plot_cumulative_returns(
     plt.legend()
 
 
+def plot_rolling_annualized_volatility(
+    srs: pd.Series,
+    ax: Optional[mpl.axes.Axes] = None,
+
+) -> None:
+    """
+    Plot rolling annualized volatility.
+    """
+    rolling_volatility = sigp.compute_rolling_annualized_volatility(srs)
+    ax = ax or plt.gca()
+    rolling_volatility.plot(ax=ax)
+    ax.set_ylabel("Annualized Volatility")
+    ax.legend()
+
 def plot_rolling_annualized_sharpe_ratio(
     srs: pd.Series,
     tau: float,
