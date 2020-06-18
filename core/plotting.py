@@ -1033,10 +1033,9 @@ def plot_rolling_annualized_volatility(
     ann_vol = stats.compute_annualized_volatility(srs)
     ax = ax or plt.gca()
     ax.plot(
-        rolling_volatility,
-        title="Rolling Annualized Volatility",
-        label="Rolling Volatility",
+        rolling_volatility, label="Rolling Volatility",
     )
+    ax.set_title = "Rolling Annualized Volatility"
     ax.axhline(
         ann_vol,
         linestyle="--",
