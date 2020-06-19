@@ -1039,6 +1039,7 @@ def plot_rolling_annualized_volatility(
     first_valid_index = rolling_volatility.first_valid_index()
     rolling_volatility = rolling_volatility.loc[first_valid_index:]
     ann_vol = stats.compute_annualized_volatility(srs)
+    ann_vol = ann_vol * scale_coeff
     ax = ax or plt.gca()
     ax.plot(
         rolling_volatility, label="rolling annualized volatility",
@@ -1051,9 +1052,10 @@ def plot_rolling_annualized_volatility(
         label="annualized volatility",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
-    ax.set_title = "Rolling Annualized Volatility"
+    ax.set_title(f"Rolling Annualized Volatility ({unit})")
     ax.set_xlim(rolling_volatility.index[0], rolling_volatility.index[-1])
-    ax.set_ylabel("Volatility, "+unit)
+    ax.set_ylabel(unit)
+    ax.set_ylabel("period")
     ax.legend()
 
 
