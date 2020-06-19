@@ -720,32 +720,6 @@ def compute_rolling_kurtosis(
 
 
 # #############################################################################
-# Rolling volatility
-# #############################################################################
-
-
-def compute_rolling_annualized_volatility(
-    signal: Union[pd.DataFrame, pd.Series],
-    tau: float,
-    min_periods: int = 2,
-    min_depth: int = 1,
-    max_depth: int = 1,
-    p_moment: float = 2,
-) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Compute rolling annualized volatility.
-    """
-    ppy = hdf.infer_sampling_points_per_year(signal)
-    sr = compute_rolling_std(
-        signal, tau, min_periods, min_depth, max_depth, p_moment
-    )
-    rescaled_vol = np.sqrt(ppy) * sr
-    df = pd.DataFrame(index=signal.index)
-    df["annualized_volatility"] = rescaled_vol
-    return df
-
-
-# #############################################################################
 # Rolling Sharpe ratio
 # #############################################################################
 

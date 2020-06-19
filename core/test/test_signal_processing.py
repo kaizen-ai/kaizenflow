@@ -445,19 +445,3 @@ class Test_compute_rolling_annualized_sharpe_ratio(hut.TestCase):
             realization, tau=16
         )
         self.check_string(hut.convert_df_to_string(rolling_sr, index=True))
-
-
-class Test_compute_rolling_annualized_volatility(hut.TestCase):
-    def test1(self) -> None:
-        ar_params = []
-        ma_params = []
-        arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
-        realization = arma_process.generate_sample(
-            {"start": "2000-01-01", "periods": 40, "freq": "B"},
-            scale=1,
-            burnin=5,
-        )
-        rolling_vol = sigp.compute_rolling_annualized_volatility(
-            realization, tau=16
-        )
-        self.check_string(hut.convert_df_to_string(rolling_vol, index=True))

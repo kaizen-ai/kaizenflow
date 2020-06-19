@@ -1022,32 +1022,38 @@ def plot_rolling_annualized_volatility(
     min_depth: int = 1,
     max_depth: int = 1,
     p_moment: float = 2,
+    unit: str = "ratio",
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot rolling annualized volatility.
     """
-    rolling_volatility = sigp.compute_rolling_annualized_volatility(
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    vol = sigp.compute_rolling_std(
         srs, tau, min_periods, min_depth, max_depth, p_moment
     )
+    rescaled_vol = np.sqrt(ppy) * vol
+    scale_coeff = _choose_scaling_coefficient(unit)
+    rescaled_vol = rescaled_vol * scale_coeff
+    rolling_volatility = pd.Series(data=rescaled_vol, index=srs.index)
     first_valid_index = rolling_volatility.first_valid_index()
     rolling_volatility = rolling_volatility.loc[first_valid_index:]
     ann_vol = stats.compute_annualized_volatility(srs)
     ax = ax or plt.gca()
     ax.plot(
-        rolling_volatility, label="Rolling Volatility",
+        rolling_volatility, label="rolling annualized volatility",
     )
-    ax.set_title = "Rolling Annualized Volatility"
     ax.axhline(
         ann_vol,
         linestyle="--",
         linewidth=2,
         color="green",
-        label="Annual Volatility",
+        label="annualized volatility",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
+    ax.set_title = "Rolling Annualized Volatility"
     ax.set_xlim(rolling_volatility.index[0], rolling_volatility.index[-1])
-    ax.set_ylabel("Volatility")
+    ax.set_ylabel("Volatility, "+unit)
     ax.legend()
 
 
