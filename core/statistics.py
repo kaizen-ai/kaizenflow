@@ -461,7 +461,7 @@ def compute_drawdown_cdf(
     volatility: float,
     drawdown_value: float,
     time: Optional[float] = None,
-):
+) -> float:
     """
     Compute the drawdown cdf for `drawdown_value` at `time` given SR, vol specs.
 
@@ -471,6 +471,10 @@ def compute_drawdown_cdf(
     - DD has law like that of RBM(-mu, sigma ** 2))
     - RMB(-mu) converges in distribution as t -> infinity to an exponential
       distribution with parameter 2 * mu / (sigma ** 2)
+    - The drawdown cdf for the asymptotic distribution can be expressed in a
+      "scale-free" way via an exponential distribution with parameter 2 * SR
+      provided we interpret the result as being expressed in units of
+      volatility.
 
     :param sharpe_ratio: Sharpe ratio
     :param volatility: volatility, with units compatible with those of the
@@ -491,11 +495,29 @@ def compute_drawdown_cdf(
         a = (drawdown_value + ret * time) / (volatility * (time ** 0.5))
         b = (-1 * drawdown_value + ret * time) / (volatility * (time ** 0.5))
     lambda_ = 2 * ret / (volatility ** 2)
-    print(lambda_)
     probability = sp.stats.norm.cdf(a) - np.exp(
         -1 * lambda_ * drawdown_value
     ) * sp.stats.norm.cdf(b)
     return probability
+
+
+def compute_max_drawdown_approximate_cdf(
+    sharpe_ratio: float,
+    volatility: float,
+    max_drawdown_value: float
+) -> float:
+    """
+
+    https://www.sciencedirect.com/science/article/pii/S0304414913001695
+
+    :return:
+    """
+    ret = sharpe_ratio * volatility
+    # Exponential distribution parameter.
+    lambda_ = 2 * ret / (volatility ** 2)
+    return NotImplementedError()
+
+
 
 
 # #############################################################################
