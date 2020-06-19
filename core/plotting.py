@@ -1281,6 +1281,27 @@ def plot_holdings(
     ax.set_title(f"Total holdings ({unit})")
 
 
+def plot_turnover(
+    turnover: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    ax = ax or plt.gca()
+    scale_coeff = _choose_scaling_coefficient(unit)
+    turnover = scale_coeff * turnover
+    turnover.plot(linewidth=1, ax=ax, label="turnover")
+    turnover.resample("M").mean().plot(
+        linewidth=2.5, ax=ax, label="average turnover by month"
+    )
+    ax.axhline(
+        turnover.mean(),
+        linestyle="--",
+        color="green",
+        label="average turnover, overall",
+    )
+    ax.set_ylabel(unit)
+    ax.legend()
+    ax.set_title(f"Turnover ({unit})")
+
+
 def _choose_scaling_coefficient(unit: str) -> int:
     if unit == "%":
         scale_coeff = 100
