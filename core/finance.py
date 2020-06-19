@@ -273,3 +273,20 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     """
     dd = compute_drawdown(log_rets)
     return 1 - np.exp(-dd)
+
+
+def compute_turnover(pos: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
+    """
+    Compute turnover for a sequence of positions.
+
+    :param pos: sequence of positions
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: turnover
+    """
+    dbg.dassert_isinstance(pos, pd.Series)
+    nan_mode = nan_mode or "ignore"
+    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
+    numerator = pos.diff().abs()
+    denominator = (pos.abs() + pos.shift().abs()) / 2
+    turnover = numerator / denominator
+    return turnover
