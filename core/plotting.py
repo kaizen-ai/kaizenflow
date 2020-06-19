@@ -1036,8 +1036,7 @@ def plot_rolling_annualized_volatility(
     scale_coeff = _choose_scaling_coefficient(unit)
     rescaled_vol = rescaled_vol * scale_coeff
     rolling_volatility = pd.Series(data=rescaled_vol, index=srs.index)
-    first_valid_index = rolling_volatility.first_valid_index()
-    rolling_volatility = rolling_volatility.loc[first_valid_index:]
+    rolling_volatility = rolling_volatility.fillna(0)
     ann_vol = stats.compute_annualized_volatility(srs)
     ann_vol = ann_vol * scale_coeff
     ax = ax or plt.gca()
