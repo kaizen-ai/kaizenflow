@@ -502,9 +502,7 @@ def compute_drawdown_cdf(
 
 
 def compute_max_drawdown_approximate_cdf(
-    sharpe_ratio: float,
-    volatility: float,
-    max_drawdown_value: float
+    sharpe_ratio: float, volatility: float, max_drawdown_value: float
 ) -> float:
     """
 
@@ -514,10 +512,8 @@ def compute_max_drawdown_approximate_cdf(
     """
     ret = sharpe_ratio * volatility
     # Exponential distribution parameter.
-    lambda_ = 2 * ret / (volatility ** 2)
+    2 * ret / (volatility ** 2)
     return NotImplementedError()
-
-
 
 
 # #############################################################################
