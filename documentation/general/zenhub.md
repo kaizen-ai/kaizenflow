@@ -253,7 +253,7 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   - New Issues
   - Icebox (P2)
   - Backlog (P1)
-  - Ready to go (P0)
+  - Ready to Go (P0)
   - In Progress
   - Review/QA
   - Done
@@ -277,11 +277,11 @@ We distinguish Master Epics and non-master Epics ( =sub-epics)
   - All issues that should be done to create a product
 - issues of meduim priority at the moment
   
-### Ready to go (P0)
+### Ready to Go (P0)
 
 - = Sprint backlog
   - All issues to be completed during the current Sprint
-- issues of high prioirty at the moment
+- issues of high priority at the moment
 
 ### In progress
 
@@ -376,7 +376,7 @@ To close the Sprint the PM team (GP, Paul, Olga) should follow the checklist bel
   - Add issue to a sub-epic (or a Master Epic, if it doesn't belong to any
     sub-epics)
   - Add issue to the pipeline it should belong to based on its priority
-    - if an issue is of high (immediate) priority, add it to Ready to go (P0) pipeline
+    - if an issue is of high (immediate) priority, add it to Ready to Go (P0) pipeline
     - if an issue is of medium priority, add it to the Backlog (P1) pipeline
     - if an issue is of low priority, add it to the Icebox (P2) pipeline
     - if you are not sure about the priority of an issue, leave it in New Issues pipeline
@@ -384,7 +384,7 @@ To close the Sprint the PM team (GP, Paul, Olga) should follow the checklist bel
 - When working on an issue
   - Make sure the issue is assigned to you / you and other people who are
     working on it
-    - All issues in Ready to go (P0) and forward (all Pipelines to the right) 
+    - All issues in Ready to Go (P0) and forward (all Pipelines to the right) 
       should be assigned
     - Assign Issue to the one who actually does the work
     - Avoid adding / removing people to the bug just to do some part of the job
