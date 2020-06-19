@@ -862,7 +862,7 @@ def plot_barplot(
     title: Optional[str] = None,
     xlabel: Optional[str] = None,
     unicolor: bool = False,
-    color_palette: Optional[sns.palettes._ColorPalette] = None,
+    color_palette: Optional[List[Tuple[float, float, float]]] = None,
     figsize: Optional[Tuple[int, int]] = None,
     rotation: int = 0,
     ax: Optional[mpl.axes.Axes] = None,
@@ -877,7 +877,7 @@ def plot_barplot(
     :param title: title of the plot
     :param xlabel: label of the X axis
     :param unicolor: if True, plot all bars in neutral blue color
-    :param color_palette: seaborn color palette
+    :param color_palette: color palette
     :param figsize: size of plot
     :param rotation: rotation of xtick labels
     :param ax: axes
@@ -899,7 +899,7 @@ def plot_barplot(
         color = sns.color_palette("muted")[0]
     else:
         color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
-        color = (srs > 0).map({True: color_palette[1], False: color_palette[0]})
+        color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
     # Plot.
     if orientation == "vertical":
         kind = "bar"
