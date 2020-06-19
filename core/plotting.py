@@ -1285,13 +1285,14 @@ def plot_qq(
     x: pd.Series,
     ax: Optional[mpl.axes.Axes] = None,
     dist: Optional[str] = None,
-    nan_mode: Optional[str] = None
+    nan_mode: Optional[str] = None,
 ) -> None:
-    dist = dist or 'norm'
+    dist = dist or "norm"
     ax = ax or plt.gca()
     nan_mode = nan_mode or "ignore"
-    x_plot = x.apply(x.apply_nan_mode, mode=nan_mode)
+    x_plot = hdf.apply_nan_mode(x, mode=nan_mode)
     sp.stats.probplot(x_plot, dist=dist, plot=ax)
+    ax.set_title(f"{dist} probability plot")
 
 
 def plot_turnover(
