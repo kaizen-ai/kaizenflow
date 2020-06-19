@@ -459,11 +459,11 @@ def compute_ttest_power_rule_constant(
 def compute_drawdown_cdf(
     sharpe_ratio: float,
     volatility: float,
-    drawdown_value: float,
+    drawdown: float,
     time: Optional[float] = None,
 ) -> float:
     """
-    Compute the drawdown cdf for `drawdown_value` at `time` given SR, vol specs.
+    Compute the drawdown cdf for `drawdown` at `time` given SR, vol specs.
 
     - Refs:
       - https://www.jstor.org/stable/3318509
@@ -479,10 +479,10 @@ def compute_drawdown_cdf(
     :param sharpe_ratio: Sharpe ratio
     :param volatility: volatility, with units compatible with those of the
         Sharpe ratio
-    :param drawdown_value: drawdown, as a positive ratio
+    :param drawdown: drawdown, as a positive ratio
     :param time: time in units consistent with those of SR and vol (i.e.,
         "years" if SR and vol are annualized)
-    :return: Prob(drawdown at time `time` <= `drawdown_value`)
+    :return: Prob(drawdown at time `time` <= `drawdown`)
         - If time is `None`, then we use the limiting exponential distribution.
     """
     dbg.dassert_lt(0, sharpe_ratio)
@@ -492,28 +492,30 @@ def compute_drawdown_cdf(
         a = np.inf
         b = np.inf
     else:
-        a = (drawdown_value + ret * time) / (volatility * (time ** 0.5))
-        b = (-1 * drawdown_value + ret * time) / (volatility * (time ** 0.5))
+        a = (drawdown + ret * time) / (volatility * (time ** 0.5))
+        b = (-1 * drawdown + ret * time) / (volatility * (time ** 0.5))
     lambda_ = 2 * ret / (volatility ** 2)
     probability = sp.stats.norm.cdf(a) - np.exp(
-        -1 * lambda_ * drawdown_value
+        -1 * lambda_ * drawdown
     ) * sp.stats.norm.cdf(b)
     return probability
 
 
 def compute_max_drawdown_approximate_cdf(
-    sharpe_ratio: float, volatility: float, max_drawdown_value: float
+    sharpe_ratio: float, volatility: float, max_drawdown: float, time: float
 ) -> float:
     """
+    Compute the approximate cdf for the maximum drawdown over a span of time.
 
     https://www.sciencedirect.com/science/article/pii/S0304414913001695
 
-    :return:
+    :return: estimate of
+        Prob(max drawdown over time period of length `time` <= `max_drawdown`)
     """
-    ret = sharpe_ratio * volatility
-    # Exponential distribution parameter.
-    2 * ret / (volatility ** 2)
-    return NotImplementedError()
+    lambda_ = 2 * sharpe_ratio / volatility
+    y = lambda_ * max_drawdown - np.log(time)
+    probability = sp.stats.gumbel_r.cdf(y)
+    return probability
 
 
 # #############################################################################
