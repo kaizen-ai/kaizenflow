@@ -487,16 +487,39 @@ def compute_drawdown_cdf(
     """
     dbg.dassert_lt(0, sharpe_ratio)
     dbg.dassert_lt(0, volatility)
-    ret = sharpe_ratio * volatility
+    normalized_drawdown = drawdown / volatility
+    probability = compute_normalized_drawdown_cdf(sharpe_ratio=sharpe_ratio,
+                                                  normalized_drawdown=normalized_drawdown,
+                                                  time=time)
+    return probability
+
+
+def compute_normalized_drawdown_cdf(
+    sharpe_ratio: float,
+    normalized_drawdown: float,
+    time: Optional[float] = None,
+) -> float:
+    """
+    Compute the drawdown cdf for drawdown given in units of volatility.
+
+    :param sharpe_ratio: Sharpe ratio
+    :param normalized_drawdown: drawdown in units of volatility, e.g.,
+        (actual) drawdown / volatility
+    :param time: time in units consistent with those of SR
+    :return: Prob(normalized drawdown at time `time` <= `normalized_drawdown`)
+    """
+    dbg.dassert_lt(0, sharpe_ratio)
     if time is None:
         a = np.inf
         b = np.inf
     else:
-        a = (drawdown + ret * time) / (volatility * (time ** 0.5))
-        b = (-1 * drawdown + ret * time) / (volatility * (time ** 0.5))
-    lambda_ = 2 * ret / (volatility ** 2)
+        # NOTE: SR and DD become unitless after these time multiplications.
+        sr_t = sharpe_ratio * np.sqrt(time)
+        dd_t = normalized_drawdown / np.sqrt(time)
+        a = sr_t + dd_t
+        b = sr_t - dd_t
     probability = sp.stats.norm.cdf(a) - np.exp(
-        -1 * lambda_ * drawdown
+        -2 * sharpe_ratio * normalized_drawdown
     ) * sp.stats.norm.cdf(b)
     return probability
 
@@ -508,6 +531,8 @@ def compute_max_drawdown_approximate_cdf(
     Compute the approximate cdf for the maximum drawdown over a span of time.
 
     https://www.sciencedirect.com/science/article/pii/S0304414913001695
+
+    TODO(*): Revisit units and rescaling.
 
     :return: estimate of
         Prob(max drawdown over time period of length `time` <= `max_drawdown`)
