@@ -12,81 +12,72 @@ from typing import List, Optional, Tuple
 import helpers.git as git
 import helpers.io_ as io_
 import helpers.parser as prsr
-import helpers.printing as prnt
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
 
-def _clean_up_git_client() -> None:
+def _perform_linter_for_test_branch(base_commit_sha: str) -> Tuple[int, int, str]:
     cmd = "git reset --hard"
-    si.system(cmd)
-
-
-def _lint_after_branch(base_commit_sha: str) -> Tuple[int, bool, str]:
-    _LOG.info("Linting branch after changes")
-    linter_message: List[str] = []
     # Clean up the client from all linter artifacts.
-    _clean_up_git_client()
-    # Sync at the HEAD of the branch.
+    si.system(cmd)
+    cmd = f"linter.py -t {base_commit_sha} --post_check"
+    # We run the same comment twice since we need to get 2 different information
+    # from the linter.
+    # With `--post_check` we get information about whether any file needed to be
+    # linted. Without we receive the number of lints.
+    # TODO(Sergey): Pass both values with one execution of the linter and stop
+    #  this insanity.
+    branch_dirty = si.system(cmd, abort_on_error=False)
+    _LOG.info("Branch dirty: %s", branch_dirty)
+    #
+    cmd = "git reset --hard"
+    # Clean up the client from all linter artifacts.
+    si.system(cmd)
+    #
     cmd = f"linter.py -t {base_commit_sha}"
     branch_lints = si.system(cmd, abort_on_error=False)
-    # Count the lints.
     _LOG.info("Branch lints: %s", branch_lints)
-    # Check if the Git client is dirty.
-    changed_files = git.get_modified_files()
-    branch_dirty = len(changed_files) != 0
-    _LOG.info("Branch dirty: %s", branch_dirty)
-    tmp = "%d files not linted:\n%s" + prnt.space("\n".join(changed_files))
-    tmp = "```\n" + tmp + "\n```\n"
-    linter_message.append(tmp)
     # Read the lints reported from the linter.
     linter_output_filename = "./linter_warnings.txt"
-    tmp = io_.from_file(linter_output_filename)
-    tmp = "```\n" + tmp + "\n```\n"
-    linter_message.append(tmp)
+    linter_message = io_.from_file(linter_output_filename)
+    linter_message = "```\n" + linter_message + "\n```\n"
+    cmd = "git reset --hard"
     # Clean up the client from all linter artifacts.
-    _clean_up_git_client()
+    si.system(cmd)
     return branch_lints, branch_dirty, linter_message
 
 
-def _lint_before_branch(
+def _perform_linter_for_reference_branch(
     base_commit_sha: str, mod_files: List[str]
 ) -> Tuple[int, int]:
-    _LOG.info("Linting branch before changes")
-    # Clean up the client from all linter artifacts.
-    _clean_up_git_client()
-    # Check out master at the requested hash.
+    # # Calculate "Before*" stats
+    cmd = "git reset --hard"
+    si.system(cmd)
     cmd = f"git checkout {base_commit_sha} --recurse-submodules"
+    # Check out master at the requested hash.
     si.system(cmd)
     mod_files_as_str = " ".join(mod_files)
     cmd = f"linter.py --files {mod_files_as_str} --post_check"
-    branch_lints = si.system(cmd, abort_on_error=False)
-    # # We run the same comment twice since we need to get 2 different information
-    # # from the linter.
-    # # With `--post_check` we get information about whether any file needed to be
-    # # linted. Without we receive the number of lints.
-    # # TODO(Sergey): Pass both values with one execution of the linter and stop
-    # #  this insanity.
-    # # Lint the files that are modified.
-    # master_dirty = si.system(cmd, abort_on_error=False)
-    # _LOG.info("Master dirty: %s", master_dirty)
-    # # Clean up the client.
-    # cmd = "git reset --hard"
-    # si.system(cmd)
-    # cmd = f"linter.py --files {mod_files_as_str}"
-    # master_lints = si.system(cmd, abort_on_error=False)
-    # _LOG.info("Master lints: %s", master_lints)
-    # Clean up the client from all linter artifacts.
-    # Count the lints.
-    _LOG.info("Branch lints: %s", branch_lints)
-    # Check if the Git client is dirty.
-    changed_files = git.get_modified_files()
-    branch_dirty = len(changed_files) != 0
-    _LOG.info("Branch dirty: %s", branch_dirty)
-    #
-    _clean_up_git_client()
-    return branch_lints, branch_dirty
+    # We run the same comment twice since we need to get 2 different information
+    # from the linter.
+    # With `--post_check` we get information about whether any file needed to be
+    # linted. Without we receive the number of lints.
+    # TODO(Sergey): Pass both values with one execution of the linter and stop
+    #  this insanity.
+    # Lint the files that are modified.
+    master_dirty = si.system(cmd, abort_on_error=False)
+    _LOG.info("Master dirty: %s", master_dirty)
+    # Clean up the client.
+    cmd = "git reset --hard"
+    si.system(cmd)
+    cmd = f"linter.py --files {mod_files_as_str}"
+    master_lints = si.system(cmd, abort_on_error=False)
+    _LOG.info("Master lints: %s", master_lints)
+    # Clean up the client.
+    cmd = "git reset --hard"
+    si.system(cmd)
+    return master_lints, master_dirty
 
 
 def _calculate_exit_status(
@@ -145,10 +136,12 @@ def _calculate_stats(
         base_commit_sha,
         remove_files_non_present=remove_files_non_present,
     )
-    branch_lints, branch_dirty, linter_message = _lint_after_branch(
+    branch_lints, branch_dirty, linter_message = _perform_linter_for_test_branch(
         base_commit_sha
     )
-    master_lints, master_dirty = _lint_before_branch(base_commit_sha, mod_files)
+    master_lints, master_dirty = _perform_linter_for_reference_branch(
+        base_commit_sha, mod_files
+    )
     (
         master_dirty_status,
         branch_dirty_status,
@@ -182,9 +175,6 @@ def _calculate_stats(
     message += "\n\n" + errors
     message += "\n" + linter_message
     return exit_status, message
-
-
-# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:
