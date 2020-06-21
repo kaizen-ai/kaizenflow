@@ -42,20 +42,20 @@ class Test_compute_turnover(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         series[5:10] = np.nan
         actual = fin.compute_turnover(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        positive_series = self._get_series(1).abs()
+        positive_series = self._get_series(seed=1).abs()
         actual = fin.compute_turnover(positive_series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        series = self._get_series(1)
+        series = self._get_series(seed=1)
         series[5:10] = np.nan
         actual = fin.compute_turnover(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
