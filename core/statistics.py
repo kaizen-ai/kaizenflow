@@ -468,7 +468,7 @@ def compute_drawdown_cdf(
     - Refs:
       - https://www.jstor.org/stable/3318509
       - https://en.wikipedia.org/wiki/Reflected_Brownian_motion
-    - DD has law like that of RBM(-mu, sigma ** 2))
+    - DD has law like that of RBM(-mu, sigma ** 2)
     - RMB(-mu, sigma ** 2) converges in distribution as t -> infinity to an
       exponential distribution with parameter 2 * mu / (sigma ** 2)
     - The drawdown cdf for the asymptotic distribution can be expressed in a
