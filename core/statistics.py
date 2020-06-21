@@ -488,16 +488,16 @@ def compute_drawdown_cdf(
     dbg.dassert_lt(0, sharpe_ratio)
     dbg.dassert_lt(0, volatility)
     normalized_drawdown = drawdown / volatility
-    probability = compute_normalized_drawdown_cdf(sharpe_ratio=sharpe_ratio,
-                                                  normalized_drawdown=normalized_drawdown,
-                                                  time=time)
+    probability = compute_normalized_drawdown_cdf(
+        sharpe_ratio=sharpe_ratio,
+        normalized_drawdown=normalized_drawdown,
+        time=time,
+    )
     return probability
 
 
 def compute_normalized_drawdown_cdf(
-    sharpe_ratio: float,
-    normalized_drawdown: float,
-    time: Optional[float] = None,
+    sharpe_ratio: float, normalized_drawdown: float, time: Optional[float] = None,
 ) -> float:
     """
     Compute the drawdown cdf for drawdown given in units of volatility.
@@ -514,10 +514,10 @@ def compute_normalized_drawdown_cdf(
         b = np.inf
     else:
         # NOTE: SR and DD become unitless after these time multiplications.
-        sr_t = sharpe_ratio * np.sqrt(time)
-        dd_t = normalized_drawdown / np.sqrt(time)
-        a = sr_t + dd_t
-        b = sr_t - dd_t
+        sr_mult_root_t = sharpe_ratio * np.sqrt(time)
+        dd_div_root_t = normalized_drawdown / np.sqrt(time)
+        a = sr_mult_root_t + dd_div_root_t
+        b = sr_mult_root_t - dd_div_root_t
     probability = sp.stats.norm.cdf(a) - np.exp(
         -2 * sharpe_ratio * normalized_drawdown
     ) * sp.stats.norm.cdf(b)
@@ -530,15 +530,28 @@ def compute_max_drawdown_approximate_cdf(
     """
     Compute the approximate cdf for the maximum drawdown over a span of time.
 
-    https://www.sciencedirect.com/science/article/pii/S0304414913001695
+    - https://www.sciencedirect.com/science/article/pii/S0304414913001695
+    - G. F. Newell, Asymptotic Extreme Value Distribution for One-dimensional
+      Diffusion Processes
 
     TODO(*): Revisit units and rescaling.
+    TODO(*): Maybe normalize drawdown.
 
     :return: estimate of
         Prob(max drawdown over time period of length `time` <= `max_drawdown`)
     """
     lambda_ = 2 * sharpe_ratio / volatility
+    # lambda_ * max_drawdown is the same as
+    #     -2 * sharpe_ratio * (max_drawdown / volatility)
     y = lambda_ * max_drawdown - np.log(time)
+    probability = sp.stats.gumbel_r.cdf(y)
+    return probability
+
+
+def compute_max_normalized_drawdown_approximate_cdf(
+    sharpe_ratio: float, max_normalized_drawdown: float, n_obs: int
+) -> float:
+    y = 2 * sharpe_ratio * max_normalized_drawdown - np.log(n_obs)
     probability = sp.stats.gumbel_r.cdf(y)
     return probability
 
