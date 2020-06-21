@@ -469,17 +469,20 @@ def compute_drawdown_cdf(
       - https://www.jstor.org/stable/3318509
       - https://en.wikipedia.org/wiki/Reflected_Brownian_motion
     - DD has law like that of RBM(-mu, sigma ** 2))
-    - RMB(-mu) converges in distribution as t -> infinity to an exponential
-      distribution with parameter 2 * mu / (sigma ** 2)
+    - RMB(-mu, sigma ** 2) converges in distribution as t -> infinity to an
+      exponential distribution with parameter 2 * mu / (sigma ** 2)
     - The drawdown cdf for the asymptotic distribution can be expressed in a
       "scale-free" way via an exponential distribution with parameter 2 * SR
       provided we interpret the result as being expressed in units of
-      volatility.
+      volatility (see `compute_normalized_drawdown_cdf()`).
+
+    NOTE: The maximum drawdown experienced up to time `time` may exceed any
+        terminal drawdown.
 
     :param sharpe_ratio: Sharpe ratio
     :param volatility: volatility, with units compatible with those of the
         Sharpe ratio
-    :param drawdown: drawdown, as a positive ratio
+    :param drawdown: drawdown as a positive ratio
     :param time: time in units consistent with those of SR and vol (i.e.,
         "years" if SR and vol are annualized)
     :return: Prob(drawdown at time `time` <= `drawdown`)
@@ -544,14 +547,6 @@ def compute_max_drawdown_approximate_cdf(
     # lambda_ * max_drawdown is the same as
     #     -2 * sharpe_ratio * (max_drawdown / volatility)
     y = lambda_ * max_drawdown - np.log(time)
-    probability = sp.stats.gumbel_r.cdf(y)
-    return probability
-
-
-def compute_max_normalized_drawdown_approximate_cdf(
-    sharpe_ratio: float, max_normalized_drawdown: float, n_obs: int
-) -> float:
-    y = 2 * sharpe_ratio * max_normalized_drawdown - np.log(n_obs)
     probability = sp.stats.gumbel_r.cdf(y)
     return probability
 
