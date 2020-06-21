@@ -282,21 +282,26 @@ def compute_average_holding_period(
     Compute average holding period for a sequence of positions.
 
     :param pos: sequence of positions
-    :param unit: desired output unit (e.g. 'B', 'D', 'W', etc.)
+    :param unit: desired output unit (e.g. 'D', 'W', 'M', etc.)
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: average holding period in specified units
     """
-    unit = unit or 'D'
+    unit = unit or "D"
     dbg.dassert_isinstance(pos, pd.Series)
     dbg.dassert(pos.index.freq)
-    dbg.dassert_lte(
-        pd.Timedelta(1, unit=pd.infer_freq(pos.index)), pd.Timedelta(1, unit=unit)
+    # TODO (Dan): Find a better way to compare frequencies.
+    # The way to move frequencies to a computable form.
+    #    https://stackoverflow.com/questions/24635721/how-to-compare-frequencies-sampling-rates-in-pandas
+    dummy_date = pd.to_datetime("2000-01-01")
+    pos_freq = (
+        dummy_date + pd.tseries.frequencies.to_offset(pos.index.freq) - dummy_date
     )
+    unit_freq = dummy_date + pd.tseries.frequencies.to_offset(unit) - dummy_date
+    #
+    dbg.dassert_lte(pos_freq, unit_freq)
     nan_mode = nan_mode or "ffill"
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
-    unit_coef = pd.Timedelta(1, unit=pd.infer_freq(pos.index)) / pd.Timedelta(
-        1, unit=unit
-    )
+    unit_coef = pos_freq / unit_freq
     average_holding_period = (
         pos.abs().mean() / pos.diff().abs().mean()
     ) * unit_coef

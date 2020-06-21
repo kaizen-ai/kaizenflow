@@ -31,7 +31,7 @@ class Test_compute_drawdown(hut.TestCase):
 
 class Test_compute_average_holding_period(hut.TestCase):
     @staticmethod
-    def _get_series_in_unit(seed: int, freq: str = 'D') -> pd.Series:
+    def _get_series_in_unit(seed: int, freq: str = "D") -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
         arma_process = sig_gen.ArmaProcess(arparams, maparams)
@@ -45,17 +45,17 @@ class Test_compute_average_holding_period(hut.TestCase):
         series = self._get_series_in_unit(seed=1)
         series[5:10] = np.nan
         actual = fin.compute_average_holding_period(series)
-        #actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(str(actual))
+        expected = 1.72854
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test2(self) -> None:
         positive_series = self._get_series_in_unit(seed=1).abs()
         actual = fin.compute_average_holding_period(positive_series)
-        #actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(str(actual))
+        expected = 1.73081
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test3(self) -> None:
-        series = self._get_series_in_unit(seed=1).abs()
-        actual = fin.compute_average_holding_period(series, unit='W')
-        #actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(str(actual))
+        series = self._get_series_in_unit(seed=1)
+        actual = fin.compute_average_holding_period(series, unit="M")
+        expected = 0.05074
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
