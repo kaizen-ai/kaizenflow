@@ -273,3 +273,31 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     """
     dd = compute_drawdown(log_rets)
     return 1 - np.exp(-dd)
+
+
+def compute_average_holding_period(
+    pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    Compute average holding period for a sequence of positions.
+
+    :param pos: sequence of positions
+    :param unit: desired output unit (e.g. 'B', 'D', 'W', etc.)
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: average holding period in specified units
+    """
+    unit = unit or 'D'
+    dbg.dassert_isinstance(pos, pd.Series)
+    dbg.dassert(pos.index.freq)
+    dbg.dassert_lte(
+        pd.Timedelta(1, unit=pd.infer_freq(pos.index)), pd.Timedelta(1, unit=unit)
+    )
+    nan_mode = nan_mode or "ffill"
+    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
+    unit_coef = pd.Timedelta(1, unit=pd.infer_freq(pos.index)) / pd.Timedelta(
+        1, unit=unit
+    )
+    average_holding_period = (
+        pos.abs().mean() / pos.diff().abs().mean()
+    ) * unit_coef
+    return average_holding_period
