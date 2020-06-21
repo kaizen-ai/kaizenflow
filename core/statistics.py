@@ -490,6 +490,8 @@ def compute_drawdown_cdf(
     """
     dbg.dassert_lt(0, sharpe_ratio)
     dbg.dassert_lt(0, volatility)
+    dbg.dassert_lt(0, drawdown)
+    dbg.dassert_lt(0, time)
     normalized_drawdown = drawdown / volatility
     probability = compute_normalized_drawdown_cdf(
         sharpe_ratio=sharpe_ratio,
@@ -512,6 +514,8 @@ def compute_normalized_drawdown_cdf(
     :return: Prob(normalized drawdown at time `time` <= `normalized_drawdown`)
     """
     dbg.dassert_lt(0, sharpe_ratio)
+    dbg.dassert_lt(0, normalized_drawdown)
+    dbg.dassert_lt(0, time)
     if time is None:
         a = np.inf
         b = np.inf
@@ -543,6 +547,10 @@ def compute_max_drawdown_approximate_cdf(
     :return: estimate of
         Prob(max drawdown over time period of length `time` <= `max_drawdown`)
     """
+    dbg.dassert_lt(0, sharpe_ratio)
+    dbg.dassert_lt(0, volatility)
+    dbg.dassert_lt(0, max_drawdown)
+    dbg.dassert_lt(0, time)
     lambda_ = 2 * sharpe_ratio / volatility
     # lambda_ * max_drawdown is the same as
     #     -2 * sharpe_ratio * (max_drawdown / volatility)
