@@ -1296,10 +1296,11 @@ def plot_qq(
 
 
 def plot_turnover(
-    turnover: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
+    pnl: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
+    turnover = fin.compute_turnover(pnl)
     turnover = scale_coeff * turnover
     turnover.plot(linewidth=1, ax=ax, label="turnover")
     turnover.resample("M").mean().plot(
