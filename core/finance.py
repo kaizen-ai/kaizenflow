@@ -284,7 +284,7 @@ def compute_turnover(pos: pd.Series, nan_mode: Optional[str] = None) -> pd.Serie
     :return: turnover
     """
     dbg.dassert_isinstance(pos, pd.Series)
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "ffill"
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
