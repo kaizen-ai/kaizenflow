@@ -470,6 +470,109 @@ def compute_sharpe_ratio_prediction_interval_inflation_factor(
     return se_inflation_factor
 
 
+def compute_drawdown_cdf(
+    sharpe_ratio: float,
+    volatility: float,
+    drawdown: float,
+    time: Optional[float] = None,
+) -> float:
+    """
+    Compute the drawdown cdf for `drawdown` at `time` given SR, vol specs.
+
+    - Refs:
+      - https://www.jstor.org/stable/3318509
+      - https://en.wikipedia.org/wiki/Reflected_Brownian_motion
+    - DD has law like that of RBM(-mu, sigma ** 2)
+    - RMB(-mu, sigma ** 2) converges in distribution as t -> infinity to an
+      exponential distribution with parameter 2 * mu / (sigma ** 2)
+    - The drawdown cdf for the asymptotic distribution can be expressed in a
+      "scale-free" way via an exponential distribution with parameter 2 * SR
+      provided we interpret the result as being expressed in units of
+      volatility (see `compute_normalized_drawdown_cdf()`).
+
+    NOTE: The maximum drawdown experienced up to time `time` may exceed any
+        terminal drawdown.
+
+    :param sharpe_ratio: Sharpe ratio
+    :param volatility: volatility, with units compatible with those of the
+        Sharpe ratio
+    :param drawdown: drawdown as a positive ratio
+    :param time: time in units consistent with those of SR and vol (i.e.,
+        "years" if SR and vol are annualized)
+    :return: Prob(drawdown at time `time` <= `drawdown`)
+        - If time is `None`, then we use the limiting exponential distribution.
+    """
+    dbg.dassert_lt(0, sharpe_ratio)
+    dbg.dassert_lt(0, volatility)
+    dbg.dassert_lt(0, drawdown)
+    dbg.dassert_lt(0, time)
+    normalized_drawdown = drawdown / volatility
+    probability = compute_normalized_drawdown_cdf(
+        sharpe_ratio=sharpe_ratio,
+        normalized_drawdown=normalized_drawdown,
+        time=time,
+    )
+    return probability
+
+
+def compute_normalized_drawdown_cdf(
+    sharpe_ratio: float, normalized_drawdown: float, time: Optional[float] = None,
+) -> float:
+    """
+    Compute the drawdown cdf for drawdown given in units of volatility.
+
+    :param sharpe_ratio: Sharpe ratio
+    :param normalized_drawdown: drawdown in units of volatility, e.g.,
+        (actual) drawdown / volatility
+    :param time: time in units consistent with those of SR
+    :return: Prob(normalized drawdown at time `time` <= `normalized_drawdown`)
+    """
+    dbg.dassert_lt(0, sharpe_ratio)
+    dbg.dassert_lt(0, normalized_drawdown)
+    dbg.dassert_lt(0, time)
+    if time is None:
+        a = np.inf
+        b = np.inf
+    else:
+        # NOTE: SR and DD become unitless after these time multiplications.
+        sr_mult_root_t = sharpe_ratio * np.sqrt(time)
+        dd_div_root_t = normalized_drawdown / np.sqrt(time)
+        a = sr_mult_root_t + dd_div_root_t
+        b = sr_mult_root_t - dd_div_root_t
+    probability = sp.stats.norm.cdf(a) - np.exp(
+        -2 * sharpe_ratio * normalized_drawdown
+    ) * sp.stats.norm.cdf(b)
+    return probability
+
+
+def compute_max_drawdown_approximate_cdf(
+    sharpe_ratio: float, volatility: float, max_drawdown: float, time: float
+) -> float:
+    """
+    Compute the approximate cdf for the maximum drawdown over a span of time.
+
+    - https://www.sciencedirect.com/science/article/pii/S0304414913001695
+    - G. F. Newell, Asymptotic Extreme Value Distribution for One-dimensional
+      Diffusion Processes
+
+    TODO(*): Revisit units and rescaling.
+    TODO(*): Maybe normalize drawdown.
+
+    :return: estimate of
+        Prob(max drawdown over time period of length `time` <= `max_drawdown`)
+    """
+    dbg.dassert_lt(0, sharpe_ratio)
+    dbg.dassert_lt(0, volatility)
+    dbg.dassert_lt(0, max_drawdown)
+    dbg.dassert_lt(0, time)
+    lambda_ = 2 * sharpe_ratio / volatility
+    # lambda_ * max_drawdown is the same as
+    #     -2 * sharpe_ratio * (max_drawdown / volatility)
+    y = lambda_ * max_drawdown - np.log(time)
+    probability = sp.stats.gumbel_r.cdf(y)
+    return probability
+
+
 # #############################################################################
 # Returns
 # #############################################################################

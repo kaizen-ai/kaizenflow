@@ -149,6 +149,8 @@ def _filter_target_files(file_names: List[str]) -> List[str]:
         is_valid = file_ext in (".py", ".txt", ".md")
         is_valid &= ".ipynb_checkpoints/" not in file_name
         is_valid &= "dev_scripts/install/conda_envs" not in file_name
+        # Skip requirements.txt.
+        is_valid &= os.path.basename(file_name) != "requirements.txt"
         # Skip tmp names since we need to run on unit tests.
         if False:
             # Skip files in directory starting with "tmp.".

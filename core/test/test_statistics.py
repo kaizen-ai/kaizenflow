@@ -999,6 +999,112 @@ class Test_summarize_sharpe_ratio(hut.TestCase):
         self.check_string(hut.convert_df_to_string(res, index=True))
 
 
+class Test_compute_drawdown_cdf(hut.TestCase):
+    def test1(self) -> None:
+        sharpe_ratio = 1
+        volatility = 0.15
+        drawdown = 0.05
+        time = 1
+        probalility = stats.compute_drawdown_cdf(
+            sharpe_ratio=sharpe_ratio,
+            volatility=volatility,
+            drawdown=drawdown,
+            time=time,
+        )
+        np.testing.assert_almost_equal(probalility, 0.52500, decimal=3)
+
+    def test2(self) -> None:
+        sharpe_ratio = 3
+        volatility = 0.15
+        drawdown = 0.05
+        time = 1
+        probalility = stats.compute_drawdown_cdf(
+            sharpe_ratio=sharpe_ratio,
+            volatility=volatility,
+            drawdown=drawdown,
+            time=time,
+        )
+        np.testing.assert_almost_equal(probalility, 0.86475, decimal=3)
+
+    def test3(self) -> None:
+        sharpe_ratio = 3
+        volatility = 0.15
+        drawdown = 0.05
+        time = 10
+        probalility = stats.compute_drawdown_cdf(
+            sharpe_ratio=sharpe_ratio,
+            volatility=volatility,
+            drawdown=drawdown,
+            time=time,
+        )
+        np.testing.assert_almost_equal(probalility, 0.86466, decimal=3)
+
+
+class Test_compute_normalized_drawdown_cdf(hut.TestCase):
+    def test1(self) -> None:
+        sharpe_ratio = 1
+        normalized_drawdown = 0.5
+        time = 1
+        probalility = stats.compute_normalized_drawdown_cdf(
+            sharpe_ratio=sharpe_ratio,
+            normalized_drawdown=normalized_drawdown,
+            time=time,
+        )
+        np.testing.assert_almost_equal(probalility, 0.67881, decimal=3)
+
+    def test2(self) -> None:
+        sharpe_ratio = 3
+        normalized_drawdown = 1
+        time = 1
+        probalility = stats.compute_normalized_drawdown_cdf(
+            sharpe_ratio=sharpe_ratio,
+            normalized_drawdown=normalized_drawdown,
+            time=time,
+        )
+        np.testing.assert_almost_equal(probalility, 0.99754, decimal=3)
+
+
+class Test_compute_max_drawdown_approximate_cdf(hut.TestCase):
+    def test1(self) -> None:
+        sharpe_ratio = 1
+        volatility = 0.15
+        max_drawdown = 0.05
+        time = 1
+        probalility = stats.compute_max_drawdown_approximate_cdf(
+            sharpe_ratio=sharpe_ratio,
+            volatility=volatility,
+            max_drawdown=max_drawdown,
+            time=time,
+        )
+        np.testing.assert_almost_equal(probalility, 0.59844, decimal=3)
+
+    def test2(self) -> None:
+        sharpe_ratio = 3
+        volatility = 0.15
+        max_drawdown = 0.05
+        time = 1
+        probalility = stats.compute_max_drawdown_approximate_cdf(
+            sharpe_ratio=sharpe_ratio,
+            volatility=volatility,
+            max_drawdown=max_drawdown,
+            time=time,
+        )
+        np.testing.assert_almost_equal(probalility, 0.87342, decimal=3)
+
+    def test3(self) -> None:
+        sharpe_ratio = 3
+        volatility = 0.15
+        max_drawdown = 0.05
+        time = 10
+        probalility = stats.compute_max_drawdown_approximate_cdf(
+            sharpe_ratio=sharpe_ratio,
+            volatility=volatility,
+            max_drawdown=max_drawdown,
+            time=time,
+        )
+        np.testing.assert_almost_equal(probalility, 0.25837, decimal=3)
+
+
 class TestComputeZeroDiffProportion(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
