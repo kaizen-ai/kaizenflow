@@ -460,6 +460,8 @@ def zscore_oos_sharpe_ratio(log_rets: pd.Series, oos: Any) -> float:
     """
     Z-score the observed OOS SR wrt the INS SR and inflated SE.
 
+    TODO(*): Consider factoring out pieces and/or returning more info.
+
     :param log_rets: log returns over entire period
     :param oos: start of OOS (right endpoint)
     :return: z-scored OOS SR
@@ -472,7 +474,9 @@ def zscore_oos_sharpe_ratio(log_rets: pd.Series, oos: Any) -> float:
     dbg.dassert(oos_mask.any())
     oos_nobs = oos_mask.sum()
     #
-    inflation = compute_sharpe_ratio_prediction_interval_inflation_factor(ins_nobs, oos_nobs)
+    inflation = compute_sharpe_ratio_prediction_interval_inflation_factor(
+        ins_nobs, oos_nobs
+    )
     #
     ins_srs = log_rets.loc[ins_mask].copy()
     oos_srs = log_rets.loc[oos_mask].copy()
