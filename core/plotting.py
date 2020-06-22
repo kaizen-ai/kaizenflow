@@ -1281,6 +1281,20 @@ def plot_holdings(
     ax.set_title(f"Total holdings ({unit})")
 
 
+def plot_qq(
+    x: pd.Series,
+    ax: Optional[mpl.axes.Axes] = None,
+    dist: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+) -> None:
+    dist = dist or "norm"
+    ax = ax or plt.gca()
+    nan_mode = nan_mode or "ignore"
+    x_plot = hdf.apply_nan_mode(x, mode=nan_mode)
+    sp.stats.probplot(x_plot, dist=dist, plot=ax)
+    ax.set_title(f"{dist} probability plot")
+
+
 def plot_turnover(
     turnover: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
