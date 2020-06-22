@@ -862,7 +862,7 @@ def plot_barplot(
     title: Optional[str] = None,
     xlabel: Optional[str] = None,
     unicolor: bool = False,
-    colormap: Optional[mpl.colors.Colormap] = None,
+    color_palette: Optional[List[Tuple[float, float, float]]] = None,
     figsize: Optional[Tuple[int, int]] = None,
     rotation: int = 0,
     ax: Optional[mpl.axes.Axes] = None,
@@ -877,7 +877,7 @@ def plot_barplot(
     :param title: title of the plot
     :param xlabel: label of the X axis
     :param unicolor: if True, plot all bars in neutral blue color
-    :param colormap: matplotlib colormap
+    :param color_palette: color palette
     :param figsize: size of plot
     :param rotation: rotation of xtick labels
     :param ax: axes
@@ -895,11 +895,11 @@ def plot_barplot(
     if figsize is None:
         figsize = FIG_SIZE
     # Choose colors.
-    colormap = colormap or sns.diverging_palette(10, 133, as_cmap=True)
     if unicolor:
         color = sns.color_palette("muted")[0]
     else:
-        color = srs.apply(colormap)
+        color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
+        color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
     # Plot.
     if orientation == "vertical":
         kind = "bar"
@@ -1279,6 +1279,20 @@ def plot_holdings(
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
+
+
+def plot_qq(
+    x: pd.Series,
+    ax: Optional[mpl.axes.Axes] = None,
+    dist: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+) -> None:
+    dist = dist or "norm"
+    ax = ax or plt.gca()
+    nan_mode = nan_mode or "ignore"
+    x_plot = hdf.apply_nan_mode(x, mode=nan_mode)
+    sp.stats.probplot(x_plot, dist=dist, plot=ax)
+    ax.set_title(f"{dist} probability plot")
 
 
 def plot_turnover(
