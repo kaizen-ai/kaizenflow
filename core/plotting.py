@@ -1024,21 +1024,24 @@ def plot_rolling_annualized_volatility(
     p_moment: float = 2,
     unit: str = "ratio",
     ax: Optional[mpl.axes.Axes] = None,
+    nan_mode: Optional[str] = None,
 ) -> None:
     """
     Plot rolling annualized volatility.
     """
+    nan_mode = nan_mode or "fill_with_zero"
     ppy = hdf.infer_sampling_points_per_year(srs)
     vol = sigp.compute_rolling_std(
         srs, tau, min_periods, min_depth, max_depth, p_moment
     )
     rescaled_vol = np.sqrt(ppy) * vol
     scale_coeff = _choose_scaling_coefficient(unit)
-    rescaled_vol = rescaled_vol * scale_coeff
+    rescaled_vol *= scale_coeff
     rolling_volatility = pd.Series(data=rescaled_vol, index=srs.index)
-    rolling_volatility = rolling_volatility.fillna(0)
+    # Change leading NaN's to zeros.
+    rolling_volatility = hdf.apply_nan_mode(rolling_volatility, nan_mode)
     ann_vol = stats.compute_annualized_volatility(srs)
-    ann_vol = ann_vol * scale_coeff
+    ann_vol *= scale_coeff
     ax = ax or plt.gca()
     ax.plot(
         rolling_volatility, label="rolling annualized volatility",
