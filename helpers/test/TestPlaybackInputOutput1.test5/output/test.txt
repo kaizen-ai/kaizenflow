@@ -1,8 +1,5 @@
 # Initialize values for unit test.
 dummy_0 = r'{"py/object": "pandas.core.frame.DataFrame", "values": "Price\n700\n250\n800\n1200\n", "txt": true, "meta": {"dtypes": {"Price": "int64"}, "index": "{\"py/object\": \"pandas.core.indexes.range.RangeIndex\", \"values\": \"[0, 1, 2, 3]\", \"txt\": true, \"meta\": {\"dtype\": \"int64\", \"name\": null}}"}}'
-
-dummy_0 = pd.DataFrame(
-
 dummy_0 = jsonpickle.decode(dummy_0)
 dummy_1 = r'{"py/object": "pandas.core.frame.DataFrame", "values": "Price\n1\n1\n1\n1\n", "txt": true, "meta": {"dtypes": {"Price": "int64"}, "index": "{\"py/object\": \"pandas.core.indexes.range.RangeIndex\", \"values\": \"[0, 1, 2, 3]\", \"txt\": true, \"meta\": {\"dtype\": \"int64\", \"name\": null}}"}}'
 dummy_1 = jsonpickle.decode(dummy_1)

@@ -1,0 +1,12 @@
+# Initialize values for unit test.
+dummy_0 = r'"test"'
+dummy_0 = jsonpickle.decode(dummy_0)
+dummy_1 = r'"case"'
+dummy_1 = jsonpickle.decode(dummy_1)
+# Call function.
+act = F(dummy_0, dummy_1)
+# Create expected value of function output.
+exp = r'"testcase"'
+exp = jsonpickle.decode(exp)
+# Check.
+assert act == exp
