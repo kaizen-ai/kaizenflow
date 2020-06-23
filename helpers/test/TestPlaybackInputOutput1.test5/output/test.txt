@@ -1,0 +1,9 @@
+# Initialize function parameters.
+param0 = pd.DataFrame.from_dict({'Price': [700, 250, 800, 1200]})
+param1 = pd.DataFrame.from_dict({'Price': [1, 1, 1, 1]})
+# Get the actual function output.
+act = F(param0, param1)
+# Create the expected function output.
+exp = pd.DataFrame.from_dict({'Price': [701, 251, 801, 1201]})
+# Check whether the expected value equals the actual value.
+assert act.equals(exp)

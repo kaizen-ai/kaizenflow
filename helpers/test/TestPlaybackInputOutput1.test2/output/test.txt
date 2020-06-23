@@ -1,0 +1,9 @@
+# Initialize function parameters.
+param0 = "test"
+param1 = "case"
+# Get the actual function output.
+act = F(param0, param1)
+# Create the expected function output.
+exp = "testcase"
+# Check whether the expected value equals the actual value.
+assert act == exp
