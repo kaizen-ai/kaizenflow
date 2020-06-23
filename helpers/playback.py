@@ -1,5 +1,5 @@
 """
-Code to generate automatically unit tests for code.
+Code to automatically generate unit tests for functions.
 
 Import as:
 
@@ -8,55 +8,83 @@ import helpers.playback as plbck
 
 import json
 import logging
+from typing import Any
 
 # TODO(gp): Add to conda env.
 import jsonpickle
 
-import helpers.dbg as dbg
 # Register the pandas handler.
 import jsonpickle.ext.pandas as jsonpickle_pd
-jsonpickle_pd.register_handlers()
-#import jsonpickle.ext.numpy as jsonpickle_numpy
 import pandas as pd
+
+import helpers.dbg as dbg
+
+jsonpickle_pd.register_handlers()
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO: Unit test and add more types.
-def to_python_code(obj):
+def to_python_code(obj: Any) -> str:
+    """
+    Serialize an object to a string of python code.
+
+    :param obj: an object to serialize
+    :return: a string of python code representing the object
+    """
     output = []
-    if isinstance(obj, (int, float, str)):
-        #output.append(str(type(obj)) + "(" + str(obj) + ")")
+    if isinstance(obj, (int, float)):
+        # Float 2.5 -> "2.5".
         output.append(str(obj))
+    elif isinstance(obj, str):
+        # String test -> '"test"'.
+        output.append('"' + obj + '"')
     elif isinstance(obj, list):
+        # List ["a", 1] -> '["a", 1]'.
         output_tmp = "["
         for l in obj:
             output_tmp += to_python_code(l) + ", "
-        output_tmp += "]"
+        output_tmp = output_tmp.rstrip(", ") + "]"
+        output.append(output_tmp)
+    elif isinstance(obj, dict):
+        # Dict {"a": 1} -> '{"a": 1}'.
+        output_tmp = "{"
+        for key in obj:
+            output_tmp += (
+                to_python_code(key) + ": " + to_python_code(obj[key]) + ", "
+            )
+        output_tmp = output_tmp.rstrip(", ") + "}"
         output.append(output_tmp)
     elif isinstance(obj, pd.DataFrame):
+        # Dataframe with a column "a" and row values 1, 2 ->
+        # "pd.DataFrame.from_dict({'a': [1, 2]})".
         vals = obj.to_dict(orient="list")
         output.append("pd.DataFrame.from_dict(%s)" % vals)
-        # TODO: If there is a name of the data frame
-        # output.append("df.name = "..."))
     else:
-        _LOG.warning("...")
-        # use jsonpickle.
+        # Use `jsonpickle` for serialization.
+        _LOG.warning(
+            "Type %s not found in serialization function: using jsonpickle.",
+            type(obj),
+        )
+        output.append(f"r'{jsonpickle.encode(obj)}'")
     output = "\n".join(output)
     return output
 
 
 # TODO: Pass the name of the unit test class.
 # TODO: Add option to generate input files instead of inlining variables.
-# TODO: Always use jsonpickle
 class Playback:
-
-    def __init__(self, mode, func_name, *args, **kwargs):
+    def __init__(
+        self, mode: str, func_name: str, *args: Any, **kwargs: Any
+    ) -> None:
         """
-        :param mode: the type of unit test to be generated
+        Initialize the class variables.
+
+        :param mode: the type of unit test to be generated (e.g. "assert_equal")
         :param func_name: the name of the function to test
         :param args: the positional parameters for the function to test
         :param kwargs: the keyword parameters for the function to test
+        :return:
         """
         dbg.dassert_in(mode, ("check_string", "assert_equal"))
         self.mode = mode
@@ -65,53 +93,68 @@ class Playback:
         self.args = args
         self.kwargs = kwargs
 
-    def start(self):
+    def run(self, func_output: Any) -> str:
         """
-        Sample the inputs to the function under test.
-        """
-        self.json_args = [jsonpickle.encode(x) for x in self.args]
-        self.json_kwargs = {x[0]: jsonpickle.encode(x[1]) for x in self.kwargs.items()}
+        Generate a unit test for the function.
 
-    def end(self, ret):
-        """
-        Sample the output of the function under test.
+        The unit test compares the actual function output with the expected
+        `func_output`.
 
-        :param ret:
+        :param func_output: the expected function output
+        :return: the code of the unit test
         """
-        # Encode the json to construct the expected variable.
-        self.ret_json = jsonpickle.encode(ret)
-        #
         code = []
-        code.append("# Initialize values for unit test.")
-        # Name of the variables to assign to the function.
+        code.append("# Initialize function parameters.")
+        # To store the names of the variables, to which function parameters are
+        # assigned.
         var_names = []
         # TODO: Add boilerplate for unit test.
         # class TestPlaybackInputOutput1(hut.TestCase):
         #
         #     def test1(self) -> None:
         # For positional parameters we need to generate dummy variables.
-        if self.json_args:
-            prefix_var_name = "dummy_"
-            for i, json_param in enumerate(self.json_args):
+        if self.args:
+            prefix_var_name = "param"
+            for i, param_obj in enumerate(self.args):
+                # The variables will be called "param0", "param1", etc.
                 var_name = prefix_var_name + str(i)
-                code.append("%s = r'%s'" % (var_name, json_param))
-                code.append("{0} = jsonpickle.decode({0})".format(var_name))
                 var_names.append(var_name)
-        if self.json_kwargs:
-            for key in self.json_kwargs:
-                code.append("%s = r'%s'" % (key, self.json_kwargs[key]))
-                code.append("{0} = jsonpickle.decode({0})".format(key))
+                # Serialize the object to a string of python code.
+                var_code = to_python_code(param_obj)
+                code.append("%s = %s" % (var_name, var_code))
+                if not isinstance(
+                    param_obj, (int, float, str, list, dict, pd.DataFrame)
+                ):
+                    # Decode the jsonpickle encoding.
+                    code.append("{0} = jsonpickle.decode({0})".format(var_name))
+        if self.kwargs:
+            for key in self.kwargs:
                 var_names.append(key)
-        code.append("# Call function.")
-        code.append("act = %s(%s)" % (self.func_name, ', '.join(var_names)))
-        code.append("# Create expected value of function output.")
-        # TODO(gp): Factor out this idiom.
-        code.append("exp = r'%s'" % self.ret_json)
-        code.append("exp = jsonpickle.decode(exp)")
-        code.append("# Check.")
+                # Serialize the object to a string of python code.
+                var_code = to_python_code(self.kwargs[key])
+                code.append("%s = %s" % (key, var_code))
+                if not isinstance(
+                    self.kwargs[key], (int, float, str, list, dict, pd.DataFrame)
+                ):
+                    # Decode the jsonpickle encoding.
+                    code.append("{0} = jsonpickle.decode({0})".format(key))
+        # Add to the code the function call that generates the actual output.
+        code.append("# Get the actual function output.")
+        code.append("act = %s(%s)" % (self.func_name, ", ".join(var_names)))
+        # Add to the code the serialization of the expected output.
+        code.append("# Create the expected function output.")
+        func_output_code = to_python_code(func_output)
+        code.append("exp = %s" % func_output_code)
+        if not isinstance(
+            func_output, (int, float, str, list, dict, pd.DataFrame)
+        ):
+            # Decode the jsonpickle encoding.
+            code.append("exp = jsonpickle.decode(exp)")
+        # Add to the code the equality check between actual and expected.
+        code.append("# Check whether the expected value equals the actual value.")
         if self.mode == "assert_equal":
             # Add a different check for different values.
-            if isinstance(ret, pd.DataFrame):
+            if isinstance(func_output, pd.DataFrame):
                 code.append("assert act.equals(exp)")
             else:
                 code.append("assert act == exp")
@@ -123,28 +166,34 @@ class Playback:
         return code
 
     @staticmethod
-    def test_code(output: str):
+    def test_code(output: str) -> None:
         # Try to execute in a fake environment.
-        #local_env = {}
-        #_ = exec(output, local_env)
+        # local_env = {}
+        # _ = exec(output, local_env)
         _ = exec(output)
 
 
-
-def json_pretty_print(parsed):
+def json_pretty_print(parsed: Any) -> str:
     """
     Pretty print a json object.
+
+    :param parsed: a json object
+    :return: a prettified json object
     """
     if isinstance(parsed, str):
         parsed = json.loads(parsed)
-    #ret = pprint.pformat(parsed)
+    # ret = pprint.pformat(parsed)
     ret = json.dumps(parsed, indent=4, sort_keys=True)
     return ret
 
 
-def round_trip_convert(obj1, log_level):
+def round_trip_convert(obj1: Any, log_level: int) -> Any:
     """
-    Encode and decode with JSON ensuring the object is the same.
+    Encode and decode with `jsonpickle` ensuring the object remains the same.
+
+    :param obj1: the initial object
+    :param log_level: the level of logging
+    :return: the object after encoding and decoding
     """
     _LOG.log(log_level, "# obj1=\n%s", obj1)
     _LOG.log(log_level, "class=%s", type(obj1))
@@ -155,7 +204,7 @@ def round_trip_convert(obj1, log_level):
     obj2 = jsonpickle.decode(frozen)
     _LOG.log(log_level, "# obj2=\n%s", obj2)
     _LOG.log(log_level, "class=%s", type(obj1))
-    # Check whether the decoded version is the same as the intial object.
+    # Check whether the decoded version is the same as the initial object.
     if str(type(obj1)).startswith("<class '"):
         # TODO(gp): Check the str representation.
         pass
