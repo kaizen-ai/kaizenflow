@@ -1,12 +1,9 @@
-# Initialize values for unit test.
-dummy_0 = r'"test"'
-dummy_0 = jsonpickle.decode(dummy_0)
-dummy_1 = r'"case"'
-dummy_1 = jsonpickle.decode(dummy_1)
-# Call function.
-act = F(dummy_0, dummy_1)
-# Create expected value of function output.
-exp = r'"testcase"'
-exp = jsonpickle.decode(exp)
-# Check.
+# Initialize function parameters.
+param0 = "test"
+param1 = "case"
+# Get the actual function output.
+act = F(param0, param1)
+# Create the expected function output.
+exp = "testcase"
+# Check whether the expected value equals the actual value.
 assert act == exp
