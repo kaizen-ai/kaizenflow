@@ -78,17 +78,17 @@ class Test_compute_average_holding_period(hut.TestCase):
         series = self._get_series_in_unit(seed=1)
         series[5:10] = np.nan
         actual = fin.compute_average_holding_period(series)
-        expected = 1.72854
+        expected = 1.23458
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test2(self) -> None:
         positive_series = self._get_series_in_unit(seed=1).abs()
         actual = fin.compute_average_holding_period(positive_series)
-        expected = 1.73081
+        expected = 1.23620
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test3(self) -> None:
         series = self._get_series_in_unit(seed=1)
         actual = fin.compute_average_holding_period(series, unit="M")
-        expected = 0.05074
+        expected = 0.05001
         np.testing.assert_almost_equal(actual, expected, decimal=3)

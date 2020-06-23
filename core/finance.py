@@ -299,18 +299,22 @@ def compute_average_holding_period(
     Compute average holding period for a sequence of positions.
 
     :param pos: sequence of positions
-    :param unit: desired output unit (e.g. 'D', 'W', 'M', etc.)
+    :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: average holding period in specified units
     """
-    unit = unit or "D"
+    unit = unit or "B"
     dbg.dassert_isinstance(pos, pd.Series)
     dbg.dassert(pos.index.freq)
     pos_freq_in_year = hdf.infer_sampling_points_per_year(pos)
     unit_freq_in_year = hdf.infer_sampling_points_per_year(
         pos.resample(unit).sum()
     )
-    dbg.dassert_lte(unit_freq_in_year, pos_freq_in_year)
+    dbg.dassert_lte(
+        unit_freq_in_year,
+        pos_freq_in_year,
+        msg=f"Upsampling pos freq={pd.infer_freq(pos.index)} to unit freq={unit} is not allowed",
+    )
     nan_mode = nan_mode or "ffill"
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     unit_coef = unit_freq_in_year / pos_freq_in_year
