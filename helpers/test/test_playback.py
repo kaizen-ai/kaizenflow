@@ -17,12 +17,12 @@ class TestJsonRoundtrip1(hut.TestCase):
     def test1(self) -> None:
         obj = 3
         #
-        plbck.round_trip_convert(obj)
+        plbck.round_trip_convert(obj, logging.DEBUG)
 
     def test2(self) -> None:
         obj = "hello"
         #
-        plbck.round_trip_convert(obj)
+        plbck.round_trip_convert(obj, logging.DEBUG)
 
     def test3(self) -> None:
         data = {
@@ -33,7 +33,7 @@ class TestJsonRoundtrip1(hut.TestCase):
         df.index.name = "hello"
         #
         obj = df
-        plbck.round_trip_convert(obj)
+        plbck.round_trip_convert(obj, logging.DEBUG)
 
 
 class TestPlaybackInputOutput1(hut.TestCase):
