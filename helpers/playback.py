@@ -10,7 +10,6 @@ import json
 import logging
 from typing import Any
 
-# TODO(gp): Add to conda env.
 import jsonpickle
 
 # Register the pandas handler.
@@ -27,10 +26,10 @@ _LOG = logging.getLogger(__name__)
 # TODO: Unit test and add more types.
 def to_python_code(obj: Any) -> str:
     """
-    Serialize an object to a string of python code.
+    Serialize an object into a string of python code.
 
     :param obj: an object to serialize
-    :return: a string of python code representing the object
+    :return: a string of python code building the object
     """
     output = []
     if isinstance(obj, (int, float)):
@@ -119,7 +118,7 @@ class Playback:
                 # The variables will be called "param0", "param1", etc.
                 var_name = prefix_var_name + str(i)
                 var_names.append(var_name)
-                # Serialize the object to a string of python code.
+                # Serialize the object into a string of python code.
                 var_code = to_python_code(param_obj)
                 code.append("%s = %s" % (var_name, var_code))
                 if not isinstance(
@@ -130,7 +129,7 @@ class Playback:
         if self.kwargs:
             for key in self.kwargs:
                 var_names.append(key)
-                # Serialize the object to a string of python code.
+                # Serialize the object into a string of python code.
                 var_code = to_python_code(self.kwargs[key])
                 code.append("%s = %s" % (key, var_code))
                 if not isinstance(
