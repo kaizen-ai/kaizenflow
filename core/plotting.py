@@ -1041,9 +1041,8 @@ def plot_rolling_annualized_volatility(
     rescaled_vol = np.sqrt(ppy) * vol
     scale_coeff = _choose_scaling_coefficient(unit)
     rescaled_vol *= scale_coeff
-    rolling_volatility = pd.Series(data=rescaled_vol, index=srs.index)
     # Change leading NaN's to zeros.
-    rolling_volatility = hdf.apply_nan_mode(rolling_volatility, nan_mode)
+    rolling_volatility = hdf.apply_nan_mode(rescaled_vol, nan_mode)
     ann_vol = stats.compute_annualized_volatility(srs)
     ann_vol *= scale_coeff
     ax = ax or plt.gca()
