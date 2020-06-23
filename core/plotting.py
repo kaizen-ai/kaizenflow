@@ -862,9 +862,10 @@ def plot_barplot(
     title: Optional[str] = None,
     xlabel: Optional[str] = None,
     unicolor: bool = False,
-    colormap: Optional[mpl.colors.Colormap] = None,
+    color_palette: Optional[List[Tuple[float, float, float]]] = None,
     figsize: Optional[Tuple[int, int]] = None,
     rotation: int = 0,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot a barplot.
@@ -876,29 +877,29 @@ def plot_barplot(
     :param title: title of the plot
     :param xlabel: label of the X axis
     :param unicolor: if True, plot all bars in neutral blue color
-    :param colormap: matplotlib colormap
+    :param color_palette: color palette
     :param figsize: size of plot
     :param rotation: rotation of xtick labels
+    :param ax: axes
     """
 
     def _get_annotation_loc(
         x_: float, y_: float, height_: float, width_: float
     ) -> Tuple[float, float]:
         if orientation == "vertical":
-            return x_, y_ + height_ + 0.5
+            return x_, y_ + max(height_, 0)
         if orientation == "horizontal":
-            return x_ + width_ + 0.5, y_
+            return x_ + max(width_, 0), y_
         raise ValueError("Invalid orientation='%s'" % orientation)
 
     if figsize is None:
         figsize = FIG_SIZE
-    plt.figure(figsize=figsize)
     # Choose colors.
-    colormap = colormap or sns.diverging_palette(10, 133, as_cmap=True)
     if unicolor:
         color = sns.color_palette("muted")[0]
     else:
-        color = srs.apply(colormap)
+        color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
+        color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
     # Plot.
     if orientation == "vertical":
         kind = "bar"
@@ -906,7 +907,10 @@ def plot_barplot(
         kind = "barh"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
-    ax = srs.plot(kind=kind, color=color, rot=rotation, title=title)
+    ax = ax or plt.gca()
+    srs.plot(
+        kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
+    )
     # Add annotations to bars.
     if annotation_mode == "pct":
         annotations = srs * 100 / srs.sum()
@@ -1133,22 +1137,24 @@ def plot_rolling_annualized_sharpe_ratio(
     ax.legend()
 
 
-def plot_monthly_heatmap(log_rets: pd.Series, unit: str = "ratio") -> None:
+def plot_monthly_heatmap(
+    log_rets: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
+) -> None:
     """
     Plot a heatmap of log returns statistics by year and month.
 
     :param log_rets: input series of log returns
     :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param ax: axes
     """
     scale_coeff = _choose_scaling_coefficient(unit)
+    ax = ax or plt.gca()
     monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
     monthly_spread = monthly_pct_spread * scale_coeff
     cmap = sns.diverging_palette(10, 133, as_cmap=True)
-    sns.heatmap(
-        monthly_spread, center=0, cmap=cmap, annot=True, fmt=".2f",
-    )
-    plt.title(f"Monthly returns ({unit})")
-    plt.yticks(rotation=0)
+    sns.heatmap(monthly_spread, center=0, cmap=cmap, annot=True, fmt=".2f", ax=ax)
+    ax.set_title(f"Monthly returns ({unit})")
+    ax.tick_params(axis="y", rotation=0)
 
 
 def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
@@ -1178,6 +1184,8 @@ def plot_yearly_barplot(
     unit: str = "ratio",
     unicolor: bool = False,
     orientation: str = "vertical",
+    figsize: Optional[Tuple[int, int]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot a barplot of log returns statistics by year.
@@ -1186,18 +1194,23 @@ def plot_yearly_barplot(
     :param unit: `ratio`, `%` or `bps` scaling coefficient
     :param unicolor: if True, plot all bars in neutral blue color
     :param orientation: vertical or horizontal bars
+    :param figsize: size of plot
+    :param ax: axes
     """
     scale_coeff = _choose_scaling_coefficient(unit)
     yearly_log_returns = log_rets.resample("Y").sum()
     yearly_pct_returns = fin.convert_log_rets_to_pct_rets(yearly_log_returns)
     yearly_returns = yearly_pct_returns * scale_coeff
     yearly_returns.index = yearly_returns.index.year
+    ax = ax or plt.gca()
     plot_barplot(
         yearly_returns,
         annotation_mode="value",
         orientation=orientation,
         title=f"Annual returns ({unit})",
         unicolor=unicolor,
+        ax=ax,
+        figsize=figsize,
     )
     if orientation == "vertical":
         xlabel = "year"
@@ -1207,8 +1220,8 @@ def plot_yearly_barplot(
         ylabel = "year"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
 
 
 def plot_pnl(
@@ -1312,6 +1325,42 @@ def plot_holdings(
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
+
+
+def plot_qq(
+    x: pd.Series,
+    ax: Optional[mpl.axes.Axes] = None,
+    dist: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+) -> None:
+    dist = dist or "norm"
+    ax = ax or plt.gca()
+    nan_mode = nan_mode or "ignore"
+    x_plot = hdf.apply_nan_mode(x, mode=nan_mode)
+    sp.stats.probplot(x_plot, dist=dist, plot=ax)
+    ax.set_title(f"{dist} probability plot")
+
+
+def plot_turnover(
+    pnl: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    ax = ax or plt.gca()
+    scale_coeff = _choose_scaling_coefficient(unit)
+    turnover = fin.compute_turnover(pnl)
+    turnover = scale_coeff * turnover
+    turnover.plot(linewidth=1, ax=ax, label="turnover")
+    turnover.resample("M").mean().plot(
+        linewidth=2.5, ax=ax, label="average turnover by month"
+    )
+    ax.axhline(
+        turnover.mean(),
+        linestyle="--",
+        color="green",
+        label="average turnover, overall",
+    )
+    ax.set_ylabel(unit)
+    ax.legend()
+    ax.set_title(f"Turnover ({unit})")
 
 
 def _choose_scaling_coefficient(unit: str) -> int:

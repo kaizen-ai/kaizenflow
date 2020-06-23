@@ -1086,7 +1086,7 @@ def process_nonfinite(
 
 
 def compute_ipca(
-    df: pd.DataFrame, num_pc: int, alpha: float
+    df: pd.DataFrame, num_pc: int, alpha: float, nan_mode: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """
     Incremental PCA.
@@ -1098,6 +1098,7 @@ def compute_ipca(
 
     :param num_pc: number of principal components to calculate
     :param alpha: analogous to Pandas ewm's `alpha`
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :return:
       - df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
       - list of dfs of unit eigenvectors (0 indexes df eigenvectors
@@ -1119,6 +1120,8 @@ def compute_ipca(
     dbg.dassert_lte(0, alpha, msg="alpha should belong to [0, 1].")
     dbg.dassert_lte(alpha, 1, msg="alpha should belong to [0, 1].")
     _LOG.info("com = %0.2f", 1.0 / alpha - 1)
+    nan_mode = nan_mode or "fill_with_zero"
+    df = df.apply(hdf.apply_nan_mode, mode=nan_mode)
     lambdas = []
     # V's are eigenvectors with norm equal to corresponding eigenvalue
     # vsl = [[v1], [v2], ...].
@@ -1128,8 +1131,7 @@ def compute_ipca(
     for n in df.index:
         step += 1
         # Initialize u1(n).
-        # Handle NaN's by replacing with 0.
-        ul = [df.loc[n].fillna(value=0)]
+        ul = [df.loc[n]]
         for i in range(1, min(num_pc, step) + 1):
             # Initialize ith eigenvector.
             if i == step:

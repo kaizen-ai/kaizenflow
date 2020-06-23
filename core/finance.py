@@ -273,3 +273,52 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     """
     dd = compute_drawdown(log_rets)
     return 1 - np.exp(-dd)
+
+
+def compute_turnover(pos: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
+    """
+    Compute turnover for a sequence of positions.
+
+    :param pos: sequence of positions
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: turnover
+    """
+    dbg.dassert_isinstance(pos, pd.Series)
+    nan_mode = nan_mode or "ffill"
+    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
+    numerator = pos.diff().abs()
+    denominator = (pos.abs() + pos.shift().abs()) / 2
+    turnover = numerator / denominator
+    return turnover
+
+
+def compute_average_holding_period(
+    pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    Compute average holding period for a sequence of positions.
+
+    :param pos: sequence of positions
+    :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: average holding period in specified units
+    """
+    unit = unit or "B"
+    dbg.dassert_isinstance(pos, pd.Series)
+    dbg.dassert(pos.index.freq)
+    pos_freq_in_year = hdf.infer_sampling_points_per_year(pos)
+    unit_freq_in_year = hdf.infer_sampling_points_per_year(
+        pos.resample(unit).sum()
+    )
+    dbg.dassert_lte(
+        unit_freq_in_year,
+        pos_freq_in_year,
+        msg=f"Upsampling pos freq={pd.infer_freq(pos.index)} to unit freq={unit} is not allowed",
+    )
+    nan_mode = nan_mode or "ffill"
+    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
+    unit_coef = unit_freq_in_year / pos_freq_in_year
+    average_holding_period = (
+        pos.abs().mean() / pos.diff().abs().mean()
+    ) * unit_coef
+    return average_holding_period
