@@ -306,19 +306,14 @@ def compute_average_holding_period(
     unit = unit or "D"
     dbg.dassert_isinstance(pos, pd.Series)
     dbg.dassert(pos.index.freq)
-    # TODO (Dan): Find a better way to compare frequencies.
-    # The way to move frequencies to a computable form.
-    #    https://stackoverflow.com/questions/24635721/how-to-compare-frequencies-sampling-rates-in-pandas
-    dummy_date = pd.to_datetime("2000-01-01")
-    pos_freq = (
-        dummy_date + pd.tseries.frequencies.to_offset(pos.index.freq) - dummy_date
+    pos_freq_in_year = hdf.infer_sampling_points_per_year(pos)
+    unit_freq_in_year = hdf.infer_sampling_points_per_year(
+        pos.resample(unit).sum()
     )
-    unit_freq = dummy_date + pd.tseries.frequencies.to_offset(unit) - dummy_date
-    #
-    dbg.dassert_lte(pos_freq, unit_freq)
+    dbg.dassert_lte(unit_freq_in_year, pos_freq_in_year)
     nan_mode = nan_mode or "ffill"
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
-    unit_coef = pos_freq / unit_freq
+    unit_coef = unit_freq_in_year / pos_freq_in_year
     average_holding_period = (
         pos.abs().mean() / pos.diff().abs().mean()
     ) * unit_coef
