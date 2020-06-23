@@ -887,9 +887,9 @@ def plot_barplot(
         x_: float, y_: float, height_: float, width_: float
     ) -> Tuple[float, float]:
         if orientation == "vertical":
-            return x_, y_ + height_ + 0.5
+            return x_, y_ + max(height_, 0)
         if orientation == "horizontal":
-            return x_ + width_ + 0.5, y_
+            return x_ + max(width_, 0), y_
         raise ValueError("Invalid orientation='%s'" % orientation)
 
     if figsize is None:
