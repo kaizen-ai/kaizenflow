@@ -429,7 +429,7 @@ def build_multiple_configs(
             ):
                 raise ValueError(
                     "Trying to change a parameter that is not `None` or "
-                    "`_DUMMY_`. Parameter path is %s" % str(param_path)
+                    "`'_DUMMY_'`. Parameter path is %s" % str(param_path)
                 )
             conf_tmp[param_path[-1]] = param_val
         param_configs.append(config_var)
