@@ -1058,7 +1058,7 @@ def plot_rolling_annualized_volatility(
         label="annualized volatility",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
-    ax.set_title(f"Rolling Annualized Volatility ({unit})")
+    ax.set_title(f"Rolling annualized volatility ({unit})")
     ax.set_xlim(rolling_volatility.index[0], rolling_volatility.index[-1])
     ax.set_ylabel(unit)
     ax.set_xlabel("period")
