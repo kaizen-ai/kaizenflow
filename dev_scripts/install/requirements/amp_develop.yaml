@@ -88,6 +88,7 @@ dependencies:
   - beautifulsoup4
   - git                     # To use latest git client.
   - joblib
+  - jsonpickle
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
   # ############################################################################
