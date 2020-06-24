@@ -1027,7 +1027,7 @@ def plot_rolling_annualized_volatility(
     max_depth: int = 1,
     p_moment: float = 2,
     unit: str = "ratio",
-    ax: Optional[mpl.axes.Axes] = None
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot rolling annualized volatility.
@@ -1068,7 +1068,10 @@ def plot_rolling_annualized_volatility(
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
     ax.set_title(f"Annualized rolling volatility ({unit})")
-    ax.set_xlim(annualized_rolling_volatility.index[0], annualized_rolling_volatility.index[-1])
+    ax.set_xlim(
+        annualized_rolling_volatility.index[0],
+        annualized_rolling_volatility.index[-1],
+    )
     ax.set_ylabel(unit)
     ax.set_xlabel("period")
     ax.legend()
