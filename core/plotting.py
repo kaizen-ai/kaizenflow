@@ -1022,7 +1022,7 @@ def plot_cumulative_returns(
 def plot_rolling_annualized_volatility(
     srs: pd.Series,
     tau: float,
-    min_periods: int = 0,
+    min_periods: Optional[int] = None,
     min_depth: int = 1,
     max_depth: int = 1,
     p_moment: float = 2,
@@ -1041,6 +1041,7 @@ def plot_rolling_annualized_volatility(
     :param unit: `ratio`, `%` or `bps` scaling coefficient
     :param ax: axes
     """
+    min_periods = min_periods or tau
     # Calculate rolling volatility.
     rolling_volatility = sigp.compute_rolling_std(
         srs, tau, min_periods, min_depth, max_depth, p_moment
@@ -1048,6 +1049,11 @@ def plot_rolling_annualized_volatility(
     # Annualize rolling volatility.
     ppy = hdf.infer_sampling_points_per_year(srs)
     annualized_rolling_volatility = np.sqrt(ppy) * rolling_volatility
+    # Remove leading `NaNs`.
+    first_valid_index = annualized_rolling_volatility.first_valid_index()
+    annualized_rolling_volatility = annualized_rolling_volatility.loc[
+        first_valid_index:
+    ]
     # Rescale according to desired output units.
     scale_coeff = _choose_scaling_coefficient(unit)
     annualized_rolling_volatility *= scale_coeff
@@ -1066,7 +1072,7 @@ def plot_rolling_annualized_volatility(
         color="green",
         label="average annualized volatility",
     )
-    ax.axhline(0, linewidth=0.8, color="black", label="0")
+    ax.axhline(0, linewidth=0.8, color="black")
     ax.set_title(f"Annualized rolling volatility ({unit})")
     ax.set_xlim(
         annualized_rolling_volatility.index[0],
