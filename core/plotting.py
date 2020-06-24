@@ -1072,7 +1072,7 @@ def plot_rolling_annualized_volatility(
         color="green",
         label="average annualized volatility",
     )
-    ax.axhline(0, linewidth=0.8, color="black", label="0")
+    ax.axhline(0, linewidth=0.8, color="black")
     ax.set_title(f"Annualized rolling volatility ({unit})")
     ax.set_xlim(
         annualized_rolling_volatility.index[0],
