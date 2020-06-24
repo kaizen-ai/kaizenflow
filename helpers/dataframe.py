@@ -183,11 +183,11 @@ def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> floa
     dbg.dassert(data.index.freq)
     freq = data.index.freq
     # TODO(*): Make start, end dates parameters that can be passed in.
-    return _compute_points_per_year_for_given_freq(freq)
+    return compute_points_per_year_for_given_freq(freq)
 
 
 @functools.lru_cache()
-def _compute_points_per_year_for_given_freq(freq: str) -> float:
+def compute_points_per_year_for_given_freq(freq: str) -> float:
     """
     Return the number of index time points per year.
 
