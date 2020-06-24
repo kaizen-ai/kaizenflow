@@ -1051,7 +1051,9 @@ def plot_rolling_annualized_volatility(
     annualized_rolling_volatility = np.sqrt(ppy) * rolling_volatility
     # Remove leading `NaNs`.
     first_valid_index = annualized_rolling_volatility.first_valid_index()
-    annualized_rolling_volatility = annualized_rolling_volatility.loc[first_valid_index:]
+    annualized_rolling_volatility = annualized_rolling_volatility.loc[
+        first_valid_index:
+    ]
     # Rescale according to desired output units.
     scale_coeff = _choose_scaling_coefficient(unit)
     annualized_rolling_volatility *= scale_coeff
