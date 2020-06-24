@@ -1027,8 +1027,7 @@ def plot_rolling_annualized_volatility(
     max_depth: int = 1,
     p_moment: float = 2,
     unit: str = "ratio",
-    ax: Optional[mpl.axes.Axes] = None,
-    nan_mode: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None
 ) -> None:
     """
     Plot rolling annualized volatility.
@@ -1041,35 +1040,35 @@ def plot_rolling_annualized_volatility(
     :param p_moment: argument as for sigp.compute_rolling_std
     :param unit: `ratio`, `%` or `bps` scaling coefficient
     :param ax: axes
-    :param nan_mode: argument for hdf.apply_nan_mode()
     """
-    nan_mode = nan_mode or "ignore"
-    ppy = hdf.infer_sampling_points_per_year(srs)
-    vol = sigp.compute_rolling_std(
+    # Calculate rolling volatility.
+    rolling_volatility = sigp.compute_rolling_std(
         srs, tau, min_periods, min_depth, max_depth, p_moment
     )
-    rescaled_vol = np.sqrt(ppy) * vol
+    # Annualize rolling volatility.
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    annualized_rolling_volatility = np.sqrt(ppy) * rolling_volatility
+    # Rescale according to desired output units.
     scale_coeff = _choose_scaling_coefficient(unit)
-    rescaled_vol *= scale_coeff
-    # Change leading NaN's to zeros.
-    rolling_volatility = hdf.apply_nan_mode(rescaled_vol, nan_mode)
+    annualized_rolling_volatility *= scale_coeff
     # Calculate whole-period target volatility.
-    ann_vol = stats.compute_annualized_volatility(srs)
-    ann_vol *= scale_coeff
+    annualized_volatility = stats.compute_annualized_volatility(srs)
+    annualized_volatility *= scale_coeff
+    # Plot.
     ax = ax or plt.gca()
     ax.plot(
-        rolling_volatility, label="rolling annualized volatility",
+        annualized_rolling_volatility, label="annualized rolling volatility",
     )
     ax.axhline(
-        ann_vol,
+        annualized_volatility,
         linestyle="--",
         linewidth=2,
         color="green",
-        label="annualized volatility",
+        label="average annualized volatility",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
-    ax.set_title(f"Rolling annualized volatility ({unit})")
-    ax.set_xlim(rolling_volatility.index[0], rolling_volatility.index[-1])
+    ax.set_title(f"Annualized rolling volatility ({unit})")
+    ax.set_xlim(annualized_rolling_volatility.index[0], annualized_rolling_volatility.index[-1])
     ax.set_ylabel(unit)
     ax.set_xlabel("period")
     ax.legend()
