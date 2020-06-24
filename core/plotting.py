@@ -1022,7 +1022,7 @@ def plot_cumulative_returns(
 def plot_rolling_annualized_volatility(
     srs: pd.Series,
     tau: float,
-    min_periods: int = 2,
+    min_periods: int = 0,
     min_depth: int = 1,
     max_depth: int = 1,
     p_moment: float = 2,
