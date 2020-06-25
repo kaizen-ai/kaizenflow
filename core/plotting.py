@@ -1307,7 +1307,7 @@ def plot_pnl(
         sharpe_cols.append(sharpe_col)
     # Change column names and order to column names with sharpe ratio.
     df.columns = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
-    sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0])
+    sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
     sorted_names = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
     df = df.reindex(sorted_names, axis=1)
     if df.isna().all().any():
