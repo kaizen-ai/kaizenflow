@@ -1244,7 +1244,6 @@ def plot_yearly_barplot(
 
 def plot_pnl(
     df: pd.DataFrame,
-    tau: float,
     title: Optional[str] = None,
     colormap: Optional[str] = None,
     figsize: Optional[Tuple[int]] = None,
@@ -1253,10 +1252,7 @@ def plot_pnl(
     nan_mode: Optional[str] = None,
     xlabel: Optional[str] = None,
     ylabel: Optional[str] = None,
-    min_depth: int = 1,
-    max_depth: int = 1,
-    p_moment: float = 2,
-):
+) -> None:
     """
     Plot a pnl for the dataframe of pnl time series.
 
@@ -1269,10 +1265,6 @@ def plot_pnl(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param xlabel: label of the X axis
     :param ylabel: label of the Y axis
-    :param tau: argument as for sigp.compute_smooth_moving_average
-    :param min_depth: argument as for sigp.compute_smooth_moving_average
-    :param max_depth: argument as for sigp.compute_smooth_moving_average
-    :param p_moment: argument as for sigp.compute_smooth_moving_average
     """
     title = title or ""
     colormap = colormap or "rainbow"
@@ -1282,27 +1274,12 @@ def plot_pnl(
     nan_mode = nan_mode or "ignore"
     xlabel = xlabel or None
     ylabel = ylabel or None
-    min_periods = tau * max_depth
     sharpe_cols = []
-    # Compute average sharpe ratio for every timeseries.
+    # Compute sharpe ratio for every timeseries.
     for col in df.columns:
         sharpe_col = []
-        rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
-            df[col],
-            tau,
-            min_periods=min_periods,
-            min_depth=min_depth,
-            max_depth=max_depth,
-            p_moment=p_moment,
-        )
-        first_valid_index = rolling_sharpe.first_valid_index()
-        rolling_sharpe = rolling_sharpe.loc[first_valid_index:]
-        mean_sharpe_ratio = (
-            rolling_sharpe["annualized_SR"]
-            .replace([np.inf, -np.inf], value=np.nan)
-            .mean()
-        )
-        sharpe_col.append(round(mean_sharpe_ratio, 1))
+        sharpe_ratio = stats.compute_annualized_sharpe_ratio(df[col])
+        sharpe_col.append(round(sharpe_ratio, 1))
         sharpe_col.append(str(col))
         sharpe_cols.append(sharpe_col)
     # Change column names and order to column names with sharpe ratio.
