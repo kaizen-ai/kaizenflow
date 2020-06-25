@@ -1271,9 +1271,16 @@ def plot_pnl(
     :param ylabel: label of the Y axis
     """
     title = title or ""
+    colormap = colormap or "rainbow"
+    figsize = figsize or (20, 5)
+    left_lim = left_lim or min(df.index)
+    right_lim = right_lim or max(df.index)
+    nan_mode = nan_mode or "ignore"
+    xlabel = xlabel or None
+    ylabel = ylabel or None
     min_periods = tau * max_depth
-    sr_arr = []
-    sr_num = []
+    # sr_arr = []
+    sharpe_cols = []
     for col in df.columns:
         sr = []
         rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
@@ -1293,19 +1300,13 @@ def plot_pnl(
         )
         sr.append(round(mean_sharpe_ratio, 1))
         sr.append(str(col))
-        sr_num.append(sr)
-        sr_arr.append(str(col) + "; SR=" + str(round(mean_sharpe_ratio, 1)))
-    sr_num = sorted(sr_num, key=lambda x: x[0])
-    sr_names = [item[1] + "; SR=" + str(item[0]) for item in sr_num]
-    df.columns = sr_arr
+        sharpe_cols.append(sr)
+        # sr_arr.append(str(col) + "; SR=" + str(round(mean_sharpe_ratio, 1)))
+    df.columns = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
+    sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0])
+    sr_names = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
+    # df.columns = sr_arr
     df = df.reindex(sr_names, axis=1)
-    colormap = colormap or "rainbow"
-    figsize = figsize or (20, 5)
-    left_lim = left_lim or min(df.index)
-    right_lim = right_lim or max(df.index)
-    nan_mode = nan_mode or "ignore"
-    xlabel = xlabel or None
-    ylabel = ylabel or None
     if df.isna().all().any():
         empty_series = [(idx) for idx, val in df.isna().all().items() if val]
         _LOG.warning(
