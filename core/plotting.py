@@ -1273,7 +1273,9 @@ def plot_pnl(
     title = title or ""
     min_periods = tau * max_depth
     sr_arr = []
+    sr_num = []
     for col in df.columns:
+        sr = []
         rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
             df[col],
             tau,
@@ -1289,8 +1291,14 @@ def plot_pnl(
             .replace([np.inf, -np.inf], value=np.nan)
             .mean()
         )
-        sr_arr.append(str(col) + "; " + str(mean_sharpe_ratio))
+        sr.append(round(mean_sharpe_ratio, 1))
+        sr.append(str(col))
+        sr_num.append(sr)
+        sr_arr.append(str(col) + "; SR=" + str(round(mean_sharpe_ratio, 1)))
+    sr_num = sorted(sr_num, key=lambda x: x[0])
+    sr_names = [item[1] + "; SR=" + item[0] for item in sr_num]
     df.columns = sr_arr
+    df = df.reindex(sr_names, axis=1)
     colormap = colormap or "rainbow"
     figsize = figsize or (20, 5)
     left_lim = left_lim or min(df.index)
