@@ -1244,6 +1244,7 @@ def plot_yearly_barplot(
 
 def plot_pnl(
     df: pd.DataFrame,
+    tau: float,
     title: Optional[str] = None,
     colormap: Optional[str] = None,
     figsize: Optional[Tuple[int]] = None,
@@ -1252,6 +1253,9 @@ def plot_pnl(
     nan_mode: Optional[str] = None,
     xlabel: Optional[str] = None,
     ylabel: Optional[str] = None,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
 ):
     """
     Plot a pnl for the dataframe of pnl time series.
@@ -1267,6 +1271,26 @@ def plot_pnl(
     :param ylabel: label of the Y axis
     """
     title = title or ""
+    min_periods = tau * max_depth
+    sr_arr = []
+    for col in df.columns:
+        rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
+            df[col],
+            tau,
+            min_periods=min_periods,
+            min_depth=min_depth,
+            max_depth=max_depth,
+            p_moment=p_moment,
+        )
+        first_valid_index = rolling_sharpe.first_valid_index()
+        rolling_sharpe = rolling_sharpe.loc[first_valid_index:]
+        mean_sharpe_ratio = (
+            rolling_sharpe["annualized_SR"]
+            .replace([np.inf, -np.inf], value=np.nan)
+            .mean()
+        )
+        sr_arr.append(col + "; " + str(mean_sharpe_ratio))
+    df.columns = sr_arr
     colormap = colormap or "rainbow"
     figsize = figsize or (20, 5)
     left_lim = left_lim or min(df.index)
