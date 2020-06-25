@@ -996,7 +996,8 @@ def plot_cumulative_returns(
 
     :param cumulative_rets: log or pct cumulative returns
     :param mode: log or pct, used to choose plot title
-    :param unit: `ratio`, `%` or `bps`. Both input series are rescaled appropriately
+    :param unit: `ratio`, `%` or `bps`, both input series are rescaled
+        appropriately
     :param benchmark_series: additional series to plot
     :param title_suffix: suffix added to the title
     :param ax: axes
@@ -1338,7 +1339,8 @@ def plot_holdings(
     holdings: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
 ) -> None:
     """
-    Plot holdings, average holdings and average holdings by month for the given series.
+    Plot holdings, average holdings and average holdings by month for the given
+    series.
 
     :param holdings: pnl series to plot
     :param unit: `ratio`, `%` or `bps` scaling coefficient
@@ -1369,8 +1371,8 @@ def plot_qq(
     nan_mode: Optional[str] = None,
 ) -> None:
     """
-    Plot ordered values against theoretical quantiles of the given distribution for the given
-    series.
+    Plot ordered values against theoretical quantiles of the given distribution
+    for the given series.
 
     :param x: data to plot
     :param ax: axes in which to draw the plot
@@ -1389,7 +1391,8 @@ def plot_turnover(
     pnl: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
-    Plot turnover, average turnover by month and overall average turnover for the given series.
+    Plot turnover, average turnover by month and overall average turnover for
+    the given series.
 
     :param pnl: pnl series to plot
     :param unit: `ratio`, `%` or `bps` scaling coefficient
