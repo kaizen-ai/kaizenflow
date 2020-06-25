@@ -264,6 +264,14 @@ def plot_cols(
     figsize: Tuple[int, int] = (20, 5),
     mode: Optional[str] = None,
 ) -> None:
+    """
+    Plot lineplot and density plot for the given series.
+
+    :data: Data to plot.
+    :colormap: Preferred colors.
+    :figsize: Plot size.
+    :mode: "renormalize" or "default"
+    """
     if isinstance(data, pd.Series):
         data = data.to_frame()
     if mode is None:
@@ -709,7 +717,7 @@ def multipletests_plot(
         calculating inside the function
     :param num_cols: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
-    :param suptitle: overal title of all plots
+    :param suptitle: overall title of all plots
     """
 
     if adj_pvals is None:
@@ -1327,6 +1335,13 @@ def plot_drawdown(
 def plot_holdings(
     holdings: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
 ) -> None:
+    """
+    Plot holdings, average holdings and average holdings by month for the given series.
+
+    :holdings: Pnl series to plot.
+    :param unit: `ratio`, `%` or `bps` scaling coefficient.
+    :ax: Axes in which to draw the plot.
+    """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
     holdings = scale_coeff * holdings
@@ -1351,6 +1366,14 @@ def plot_qq(
     dist: Optional[str] = None,
     nan_mode: Optional[str] = None,
 ) -> None:
+    """
+    Plot ordered values against theoretical quantiles of the given distribution for the given series.
+
+    :x: Data to plot.
+    :ax: Axes in which to draw the plot.
+    :dist: distribution name
+    :nan_mode: argument for hdf.apply_nan_mode()
+    """
     dist = dist or "norm"
     ax = ax or plt.gca()
     nan_mode = nan_mode or "ignore"
@@ -1362,6 +1385,13 @@ def plot_qq(
 def plot_turnover(
     pnl: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
+    """
+    Plot turnover, average turnover by month and overall average turnover for the given series.
+
+    :pnl: Pnl series to plot.
+    :unit: `ratio`, `%` or `bps` scaling coefficient.
+    :ax: Axes in which to draw the plot.
+    """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
     turnover = fin.compute_turnover(pnl)
