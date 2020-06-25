@@ -1296,7 +1296,7 @@ def plot_pnl(
         sr_num.append(sr)
         sr_arr.append(str(col) + "; SR=" + str(round(mean_sharpe_ratio, 1)))
     sr_num = sorted(sr_num, key=lambda x: x[0])
-    sr_names = [str(item[1]) + "; SR=" + item[0] for item in sr_num]
+    sr_names = [item[1] + "; SR=" + str(item[0]) for item in sr_num]
     df.columns = sr_arr
     df = df.reindex(sr_names, axis=1)
     colormap = colormap or "rainbow"
