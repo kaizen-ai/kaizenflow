@@ -1289,7 +1289,7 @@ def plot_pnl(
             .replace([np.inf, -np.inf], value=np.nan)
             .mean()
         )
-        sr_arr.append(col + "; " + str(mean_sharpe_ratio))
+        sr_arr.append(str(col) + "; " + str(mean_sharpe_ratio))
     df.columns = sr_arr
     colormap = colormap or "rainbow"
     figsize = figsize or (20, 5)
