@@ -66,7 +66,7 @@ def plot_non_na_cols(
     :param df: usual df indexed with times
     :param sort: sort the columns by number of non-nans
     :param ascending:
-    :param max_num: max number of columns to plot.
+    :param max_num: max number of columns to plot
     """
     # Check that there are no repeated columns.
     # TODO(gp): dassert_no_duplicates
@@ -119,10 +119,10 @@ def plot_categories_count(
     """
     Plot countplot of a given `category_column`.
 
-    :df: Df to plot.
-    :category_column: Categorial column to subset plots by.
-    :figsize: If nothing specified, basic (20,5) used.
-    :title: Title for the plot.
+    :param df: df to plot
+    :param category_column: categorical column to subset plots by
+    :param figsize: if nothing specified, basic (20,5) used
+    :param title: title for the plot
     """
     if not figsize:
         figsize = FIG_SIZE
@@ -181,10 +181,11 @@ def plot_timeseries(
     - "hour",
     - "second"
     unless otherwise provided by `datetime_types`.
-    :df: Df to plot.
-    :datetime_types: Types of pd.datetime, e.g. "month", "quarter".
-    :column: Distribution of which variable to represent.
-    :ts_column: Timeseries column.
+
+    :param df: df to plot
+    :param datetime_types: types of pd.datetime, e.g. "month", "quarter"
+    :param column: distribution of which variable to represent
+    :param ts_column: timeseries column
     """
     unique_rows = expl.drop_duplicates(df=df, subset=[column])
     if not datetime_types:
@@ -214,13 +215,13 @@ def plot_timeseries_per_category(
 
     If `categories` param is not specified, `top_n` must be specified and plots
     will show the `top_n` most popular categories.
-    :df: Df to plot.
-    :datetime_types: Types of pd.datetime, e.g. "month", "quarter".
-    :column: Distribution of which variable to represent.
-    :ts_column: Timeseries column.
-    :category_column: Categorial column to subset plots by.
-    :categories: Categories to represent.
-    :top_n: Number of top categories to use, if categories are not specified.
+    :param df: df to plot
+    :param datetime_types: types of pd.datetime, e.g. "month", "quarter"
+    :param column: distribution of which variable to represent
+    :param ts_column: timeseries column
+    :param category_column: categorical column to subset plots by
+    :param categories: categories to represent
+    :param top_n: number of top categories to use, if categories are not specified
     """
     if not figsize:
         figsize = FIG_SIZE
@@ -264,6 +265,14 @@ def plot_cols(
     figsize: Tuple[int, int] = (20, 5),
     mode: Optional[str] = None,
 ) -> None:
+    """
+    Plot lineplot and density plot for the given series.
+
+    :param data: data to plot
+    :param colormap: preferred colors
+    :param figsize: plot size
+    :param mode: "renormalize" or "default"
+    """
     if isinstance(data, pd.Series):
         data = data.to_frame()
     if mode is None:
@@ -375,14 +384,14 @@ def plot_heatmap(
     """
     Plot a heatmap for a corr / cov df.
 
-    :corr_df: Df to plot a heatmap.
-    :mode: "heatmap_semitriangle", "heatmap" or "clustermap".
-    :annot:
-    :figsize: If nothing specified, basic (20,5) used.
-    :title: Title for the plot.
-    :vmin: Minimum value to anchor the colormap.
-    :vmax: Maximum value to anchor the colormap.
-    :ax: Axes in which to draw the plot.
+    :param corr_df: df to plot a heatmap
+    :param mode: "heatmap_semitriangle", "heatmap" or "clustermap"
+    :param annot: determines whether to use annotations
+    :param figsize: if nothing specified, basic (20,5) used
+    :param title: title for the plot
+    :param vmin: minimum value to anchor the colormap
+    :param vmax: maximum value to anchor the colormap
+    :param ax: axes in which to draw the plot
     """
     # Sanity check.
     dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
@@ -454,16 +463,16 @@ def plot_correlation_matrix(
     min_periods: Optional[int] = None,
 ) -> pd.core.frame.DataFrame:
     """
-    Compute correlation matrix and plot its heatmap .
+    Compute correlation matrix and plot its heatmap.
 
-    :df: Df to compute correlation matrix and plot a heatmap.
-    :mode: "heatmap_semitriangle", "heatmap" or "clustermap".
-    :annot:
-    :figsize: If nothing specified, basic (20,5) used.
-    :title: Title for the plot.
-    :method: "pearson", "kendall", "spearman" or callable method of correlation.
-    :min_periods: Minimum number of observations required per pair of columns to have
-        a valid result. Currently only available for Pearson and Spearman correlation.
+    :param df: Df to compute correlation matrix and plot a heatmap
+    :param mode: "heatmap_semitriangle", "heatmap" or "clustermap"
+    :param annot: determines whether to use annotations
+    :param figsize: if nothing specified, basic (20,5) used
+    :param title: title for the plot
+    :param method: "pearson", "kendall", "spearman" or callable method of correlation
+    :param min_periods: minimum number of observations required per pair of columns to have
+        a valid result; currently only available for Pearson and Spearman correlation
     """
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
@@ -502,8 +511,8 @@ def plot_dendrogram(
     Plot a dendrogram.
 
     A dendrogram is a diagram representing a tree.
-    :df: Df to plot a heatmap.
-    :figsize: If nothing specified, basic (20,5) used.
+    :param df: df to plot a heatmap
+    :param figsize: if nothing specified, basic (20,5) used
     """
     # Look at:
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
@@ -663,9 +672,9 @@ def plot_confusion_heatmap(
     """
     Construct and plot a heatmap for a confusion matrix of fact and prediction.
 
-    :y_true: True values.
-    :y_pred: Predictions.
-    :percentage: to represent values from confusion matrix in percentage or not.
+    :param y_true: true values
+    :param y_pred: predictions
+    :param return_results: determines whether to return result dataframes
     """
     confusion = sklmet.confusion_matrix(y_true, y_pred)
     labels = set(list(y_true))
@@ -709,7 +718,7 @@ def multipletests_plot(
         calculating inside the function
     :param num_cols: number of columns in multiplotting
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
-    :param suptitle: overal title of all plots
+    :param suptitle: overall title of all plots
     """
 
     if adj_pvals is None:
@@ -946,6 +955,7 @@ def get_multiple_plots(
     """
     Create figure to accommodate `num_plots` plots.
     The figure is arranged in rows with `num_cols` columns.
+
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
     :param y_scale: if not None
@@ -986,7 +996,8 @@ def plot_cumulative_returns(
 
     :param cumulative_rets: log or pct cumulative returns
     :param mode: log or pct, used to choose plot title
-    :param unit: `ratio`, `%` or `bps`. Both input series are rescaled appropriately
+    :param unit: "ratio", "%" or "bps", both input series are rescaled
+        appropriately
     :param benchmark_series: additional series to plot
     :param title_suffix: suffix added to the title
     :param ax: axes
@@ -1038,7 +1049,9 @@ def plot_rolling_annualized_volatility(
     :param min_depth: argument as for sigp.compute_rolling_std
     :param max_depth: argument as for sigp.compute_rolling_std
     :param p_moment: argument as for sigp.compute_rolling_std
-    :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param unit: "ratio", "%" or "bps" scaling coefficient
+        "Exchange:Kibot_symbol"
+        "Exchange:Exchange_symbol"
     :param ax: axes
     """
     min_periods = min_periods or tau
@@ -1162,7 +1175,7 @@ def plot_monthly_heatmap(
     Plot a heatmap of log returns statistics by year and month.
 
     :param log_rets: input series of log returns
-    :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param unit: "ratio", `%` or "bps" scaling coefficient
     :param ax: axes
     """
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1179,7 +1192,7 @@ def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
     """
     Calculate log returns statistics by year and month.
 
-    :param srs: input series of log returns
+    :param log_rets: input series of log returns
     :return: dataframe of log returns with years on y-axis and
         months on x-axis
     """
@@ -1209,7 +1222,7 @@ def plot_yearly_barplot(
     Plot a barplot of log returns statistics by year.
 
     :param log_rets: input series of log returns
-    :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param unit: "ratio", "%" or "bps" scaling coefficient
     :param unicolor: if True, plot all bars in neutral blue color
     :param orientation: vertical or horizontal bars
     :param figsize: size of plot
@@ -1318,7 +1331,7 @@ def plot_drawdown(
     Plot drawdown.
 
     :param log_rets: log returns
-    :param unit: `ratio`, `%`. Input series are rescaled appropriately
+    :param unit: `ratio`, `%`, input series is rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
     """
@@ -1340,6 +1353,13 @@ def plot_drawdown(
 def plot_holdings(
     holdings: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
 ) -> None:
+    """
+    Plot holdings, average holdings and average holdings by month.
+
+    :param holdings: pnl series to plot
+    :param unit: "ratio", "%" or "bps" scaling coefficient
+    :param ax: axes in which to draw the plot
+    """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
     holdings = scale_coeff * holdings
@@ -1359,15 +1379,23 @@ def plot_holdings(
 
 
 def plot_qq(
-    x: pd.Series,
+    srs: pd.Series,
     ax: Optional[mpl.axes.Axes] = None,
     dist: Optional[str] = None,
     nan_mode: Optional[str] = None,
 ) -> None:
+    """
+    Plot ordered values against theoretical quantiles of the given distribution.
+
+    :param srs: data to plot
+    :param ax: axes in which to draw the plot
+    :param dist: distribution name
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    """
     dist = dist or "norm"
     ax = ax or plt.gca()
     nan_mode = nan_mode or "ignore"
-    x_plot = hdf.apply_nan_mode(x, mode=nan_mode)
+    x_plot = hdf.apply_nan_mode(srs, mode=nan_mode)
     sp.stats.probplot(x_plot, dist=dist, plot=ax)
     ax.set_title(f"{dist} probability plot")
 
@@ -1375,6 +1403,13 @@ def plot_qq(
 def plot_turnover(
     pnl: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
+    """
+    Plot turnover, average turnover by month and overall average turnover.
+
+    :param pnl: pnl series to plot
+    :param unit: "ratio", "%" or "bps" scaling coefficient
+    :param ax: axes in which to draw the plot
+    """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
     turnover = fin.compute_turnover(pnl)
