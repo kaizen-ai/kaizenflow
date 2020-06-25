@@ -1339,8 +1339,7 @@ def plot_holdings(
     holdings: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
 ) -> None:
     """
-    Plot holdings, average holdings and average holdings by month for the given
-    series.
+    Plot holdings, average holdings and average holdings by month.
 
     :param holdings: pnl series to plot
     :param unit: `ratio`, `%` or `bps` scaling coefficient
@@ -1365,16 +1364,15 @@ def plot_holdings(
 
 
 def plot_qq(
-    x: pd.Series,
+    srs: pd.Series,
     ax: Optional[mpl.axes.Axes] = None,
     dist: Optional[str] = None,
     nan_mode: Optional[str] = None,
 ) -> None:
     """
-    Plot ordered values against theoretical quantiles of the given distribution
-    for the given series.
+    Plot ordered values against theoretical quantiles of the given distribution.
 
-    :param x: data to plot
+    :param srs: data to plot
     :param ax: axes in which to draw the plot
     :param dist: distribution name
     :param nan_mode: argument for hdf.apply_nan_mode()
@@ -1382,7 +1380,7 @@ def plot_qq(
     dist = dist or "norm"
     ax = ax or plt.gca()
     nan_mode = nan_mode or "ignore"
-    x_plot = hdf.apply_nan_mode(x, mode=nan_mode)
+    x_plot = hdf.apply_nan_mode(srs, mode=nan_mode)
     sp.stats.probplot(x_plot, dist=dist, plot=ax)
     ax.set_title(f"{dist} probability plot")
 
@@ -1391,8 +1389,7 @@ def plot_turnover(
     pnl: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
-    Plot turnover, average turnover by month and overall average turnover for
-    the given series.
+    Plot turnover, average turnover by month and overall average turnover.
 
     :param pnl: pnl series to plot
     :param unit: `ratio`, `%` or `bps` scaling coefficient
