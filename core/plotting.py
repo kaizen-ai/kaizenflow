@@ -1269,6 +1269,10 @@ def plot_pnl(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param xlabel: label of the X axis
     :param ylabel: label of the Y axis
+    :param tau: argument as for sigp.compute_smooth_moving_average
+    :param min_depth: argument as for sigp.compute_smooth_moving_average
+    :param max_depth: argument as for sigp.compute_smooth_moving_average
+    :param p_moment: argument as for sigp.compute_smooth_moving_average
     """
     title = title or ""
     colormap = colormap or "rainbow"
@@ -1279,10 +1283,10 @@ def plot_pnl(
     xlabel = xlabel or None
     ylabel = ylabel or None
     min_periods = tau * max_depth
-    # sr_arr = []
     sharpe_cols = []
+    # Compute average sharpe ratio for every timeseries.
     for col in df.columns:
-        sr = []
+        sharpe_col = []
         rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
             df[col],
             tau,
@@ -1298,15 +1302,14 @@ def plot_pnl(
             .replace([np.inf, -np.inf], value=np.nan)
             .mean()
         )
-        sr.append(round(mean_sharpe_ratio, 1))
-        sr.append(str(col))
-        sharpe_cols.append(sr)
-        # sr_arr.append(str(col) + "; SR=" + str(round(mean_sharpe_ratio, 1)))
+        sharpe_col.append(round(mean_sharpe_ratio, 1))
+        sharpe_col.append(str(col))
+        sharpe_cols.append(sharpe_col)
+    # Change column names and order to column names with sharpe ratio.
     df.columns = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
     sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0])
-    sr_names = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
-    # df.columns = sr_arr
-    df = df.reindex(sr_names, axis=1)
+    sorted_names = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
+    df = df.reindex(sorted_names, axis=1)
     if df.isna().all().any():
         empty_series = [(idx) for idx, val in df.isna().all().items() if val]
         _LOG.warning(
