@@ -996,7 +996,7 @@ def plot_cumulative_returns(
 
     :param cumulative_rets: log or pct cumulative returns
     :param mode: log or pct, used to choose plot title
-    :param unit: `ratio`, `%` or `bps`, both input series are rescaled
+    :param unit: "ratio", "%" or "bps", both input series are rescaled
         appropriately
     :param benchmark_series: additional series to plot
     :param title_suffix: suffix added to the title
@@ -1049,7 +1049,9 @@ def plot_rolling_annualized_volatility(
     :param min_depth: argument as for sigp.compute_rolling_std
     :param max_depth: argument as for sigp.compute_rolling_std
     :param p_moment: argument as for sigp.compute_rolling_std
-    :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param unit: "ratio", "%" or "bps" scaling coefficient
+        "Exchange:Kibot_symbol"
+        "Exchange:Exchange_symbol"
     :param ax: axes
     """
     min_periods = min_periods or tau
@@ -1173,7 +1175,7 @@ def plot_monthly_heatmap(
     Plot a heatmap of log returns statistics by year and month.
 
     :param log_rets: input series of log returns
-    :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param unit: "ratio", `%` or "bps" scaling coefficient
     :param ax: axes
     """
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1220,7 +1222,7 @@ def plot_yearly_barplot(
     Plot a barplot of log returns statistics by year.
 
     :param log_rets: input series of log returns
-    :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param unit: "ratio", "%" or "bps" scaling coefficient
     :param unicolor: if True, plot all bars in neutral blue color
     :param orientation: vertical or horizontal bars
     :param figsize: size of plot
@@ -1342,7 +1344,7 @@ def plot_holdings(
     Plot holdings, average holdings and average holdings by month.
 
     :param holdings: pnl series to plot
-    :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
     """
     ax = ax or plt.gca()
@@ -1392,7 +1394,7 @@ def plot_turnover(
     Plot turnover, average turnover by month and overall average turnover.
 
     :param pnl: pnl series to plot
-    :param unit: `ratio`, `%` or `bps` scaling coefficient
+    :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
     """
     ax = ax or plt.gca()
