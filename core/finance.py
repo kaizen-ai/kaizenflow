@@ -327,6 +327,8 @@ def compute_average_holding_period(
 def compute_bets(srs: pd.Series):
     """
     Calculate runs of long/short bets and the starts of these bets.
+
+    TODO(*): Calculate series of bet lengths.
     """
     zero_mask = srs == 0
     # Calculate bet "runs".
