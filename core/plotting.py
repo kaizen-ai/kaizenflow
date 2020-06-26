@@ -1293,8 +1293,7 @@ def plot_pnl(
             "Empty input columns were dropped: '%s'", ", ".join(empty_series)
         )
         df.drop(empty_series, axis=1, inplace=True)
-    df_plot = df.apply(hdf.apply_nan_mode, mode=nan_mode)
-    sharpe_cols = []
+    df_plot = df.copy()
     # Compute sharpe ratio for every timeseries.
     sharpe_ratio = df_plot.apply(stats.compute_annualized_sharpe_ratio)
     sharpe_cols = [[sr, df_plot.columns[i]] for i, sr in enumerate(sharpe_ratio)]
@@ -1302,7 +1301,8 @@ def plot_pnl(
     df_plot.columns = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
     sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
     sorted_names = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
-    df = df.reindex(sorted_names, axis=1)
+    df_plot = df_plot.reindex(sorted_names, axis=1)
+    df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
     fig, ax = plt.subplots(figsize=figsize)
     df_plot.plot(x_compat=True, ax=ax, colormap=colormap)
     # Setting fixed borders of x-axis.
