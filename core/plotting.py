@@ -1304,11 +1304,11 @@ def plot_pnl(
         str(item[1]) + "; SR=" + str(item[0]) for item in sharpe_cols
     ]
     sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
-    sorted_names = [str(item[1]) + "; SR=" + str(item[0]) for item in sharpe_cols]
+    sorted_names = [str(item[1]) + " (SR=" + str(item[0]) + ")" for item in sharpe_cols]
     df_plot = df_plot.reindex(sorted_names, axis=1)
     df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
     fig, ax = plt.subplots(figsize=figsize)
-    df_plot.plot(x_compat=True, ax=ax, colormap=colormap)
+    df_plot.cumsum().plot(x_compat=True, ax=ax, colormap=colormap)
     # Setting fixed borders of x-axis.
     ax.set_xlim([left_lim, right_lim])
     # Formatting.
