@@ -1298,9 +1298,9 @@ def plot_pnl(
     sharpe_ratio = df_plot.apply(stats.compute_annualized_sharpe_ratio)
     sharpe_cols = [[sr, df_plot.columns[i]] for i, sr in enumerate(sharpe_ratio)]
     # Change column names and order to column names with sharpe ratio.
-    df_plot.columns = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
+    df_plot.columns = [str(item[1]) + "; SR=" + str(item[0]) for item in sharpe_cols]
     sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
-    sorted_names = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
+    sorted_names = [str(item[1]) + "; SR=" + str(item[0]) for item in sharpe_cols]
     df_plot = df_plot.reindex(sorted_names, axis=1)
     df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
     fig, ax = plt.subplots(figsize=figsize)
