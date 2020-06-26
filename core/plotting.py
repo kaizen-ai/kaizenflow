@@ -1287,6 +1287,7 @@ def plot_pnl(
     nan_mode = nan_mode or "ignore"
     xlabel = xlabel or None
     ylabel = ylabel or None
+    fstr = "{col} (SR={sr})"
     if df.isna().all().any():
         empty_series = [(idx) for idx, val in df.isna().all().items() if val]
         _LOG.warning(
@@ -1301,10 +1302,12 @@ def plot_pnl(
     ]
     # Change column names and order to column names with sharpe ratio.
     df_plot.columns = [
-        str(item[1]) + "; SR=" + str(item[0]) for item in sharpe_cols
+        fstr.format(col=str(item[1]), sr=str(item[0])) for item in sharpe_cols
     ]
     sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
-    sorted_names = [str(item[1]) + " (SR=" + str(item[0]) + ")" for item in sharpe_cols]
+    sorted_names = [
+        fstr.format(col=str(item[1]), sr=str(item[0])) for item in sharpe_cols
+    ]
     df_plot = df_plot.reindex(sorted_names, axis=1)
     df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
     fig, ax = plt.subplots(figsize=figsize)
