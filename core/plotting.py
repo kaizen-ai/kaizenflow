@@ -1287,19 +1287,6 @@ def plot_pnl(
     nan_mode = nan_mode or "ignore"
     xlabel = xlabel or None
     ylabel = ylabel or None
-    sharpe_cols = []
-    # Compute sharpe ratio for every timeseries.
-    for col in df.columns:
-        sharpe_col = []
-        sharpe_ratio = stats.compute_annualized_sharpe_ratio(df[col])
-        sharpe_col.append(round(sharpe_ratio, 1))
-        sharpe_col.append(str(col))
-        sharpe_cols.append(sharpe_col)
-    # Change column names and order to column names with sharpe ratio.
-    df.columns = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
-    sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
-    sorted_names = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
-    df = df.reindex(sorted_names, axis=1)
     if df.isna().all().any():
         empty_series = [(idx) for idx, val in df.isna().all().items() if val]
         _LOG.warning(
@@ -1307,6 +1294,15 @@ def plot_pnl(
         )
         df.drop(empty_series, axis=1, inplace=True)
     df_plot = df.apply(hdf.apply_nan_mode, mode=nan_mode)
+    sharpe_cols = []
+    # Compute sharpe ratio for every timeseries.
+    sharpe_ratio = df_plot.apply(stats.compute_annualized_sharpe_ratio)
+    sharpe_cols = [[sr, df_plot.columns[i]] for i, sr in enumerate(sharpe_ratio)]
+    # Change column names and order to column names with sharpe ratio.
+    df_plot.columns = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
+    sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
+    sorted_names = [item[1] + "; SR=" + str(item[0]) for item in sharpe_cols]
+    df = df.reindex(sorted_names, axis=1)
     fig, ax = plt.subplots(figsize=figsize)
     df_plot.plot(x_compat=True, ax=ax, colormap=colormap)
     # Setting fixed borders of x-axis.
