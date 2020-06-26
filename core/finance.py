@@ -322,3 +322,18 @@ def compute_average_holding_period(
         pos.abs().mean() / pos.diff().abs().mean()
     ) * unit_coef
     return average_holding_period
+
+
+def compute_bets(srs: pd.Series):
+    """
+    Calculate runs of long/short bets and the starts of these bets.
+    """
+    zero_mask = srs == 0
+    # Calculate bet "runs".
+    bet_runs = srs.copy()
+    bet_runs.loc[~zero_mask] /= np.abs(bet_runs.loc[~zero_mask])
+    # Determine start of bets.
+    bet_starts = bet_runs - bet_runs.shift(1, fill_value=0)
+    bets_zero_mask = bet_starts == 0
+    bet_starts.loc[~bets_zero_mask] /= np.abs(bet_starts.loc[~bets_zero_mask])
+    return bet_runs, bet_starts
