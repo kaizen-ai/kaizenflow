@@ -1287,15 +1287,31 @@ def plot_pnl(
     nan_mode = nan_mode or "ignore"
     xlabel = xlabel or None
     ylabel = ylabel or None
+    fstr = "{col} (SR={sr})"
     if df.isna().all().any():
         empty_series = [(idx) for idx, val in df.isna().all().items() if val]
         _LOG.warning(
             "Empty input columns were dropped: '%s'", ", ".join(empty_series)
         )
         df.drop(empty_series, axis=1, inplace=True)
-    df_plot = df.apply(hdf.apply_nan_mode, mode=nan_mode)
+    df_plot = df.copy()
+    # Compute sharpe ratio for every timeseries.
+    sharpe_ratio = df_plot.apply(stats.compute_annualized_sharpe_ratio)
+    sharpe_cols = [
+        [round(sr, 1), df_plot.columns[i]] for i, sr in enumerate(sharpe_ratio)
+    ]
+    # Change column names and order to column names with sharpe ratio.
+    df_plot.columns = [
+        fstr.format(col=str(item[1]), sr=str(item[0])) for item in sharpe_cols
+    ]
+    sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
+    sorted_names = [
+        fstr.format(col=str(item[1]), sr=str(item[0])) for item in sharpe_cols
+    ]
+    df_plot = df_plot.reindex(sorted_names, axis=1)
+    df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
     fig, ax = plt.subplots(figsize=figsize)
-    df_plot.plot(x_compat=True, ax=ax, colormap=colormap)
+    df_plot.cumsum().plot(x_compat=True, ax=ax, colormap=colormap)
     # Setting fixed borders of x-axis.
     ax.set_xlim([left_lim, right_lim])
     # Formatting.
