@@ -328,7 +328,7 @@ def compute_bets(srs: pd.Series):
     """
     Calculate runs of long/short bets and the starts of these bets.
 
-    TODO(*): Calculate series of bet lengths.
+    # TODO(*): Consider splitting off the bet starts calculation.
     """
     zero_mask = srs == 0
     # Calculate bet "runs".
@@ -339,3 +339,19 @@ def compute_bets(srs: pd.Series):
     bets_zero_mask = bet_starts == 0
     bet_starts.loc[~bets_zero_mask] /= np.abs(bet_starts.loc[~bets_zero_mask])
     return bet_runs, bet_starts
+
+
+def get_signed_bet_lengths(bets):
+    """
+    Calculate lengths of bets (in sampling freq).
+
+    :param bets: like `bet_runs`
+    :return: signed lengths of bets
+    """
+    bet_lengths = []
+    for i, t0 in enumerate(idx[:-1]):
+        t0_mask = bets.index >= t0
+        t1_mask = bets.index < idx[i + 1]
+        bet_l = bets.loc[t0_mask & t1_mask].sum()
+        bet_lengths.append(bet_l)
+    return bet_lengths
