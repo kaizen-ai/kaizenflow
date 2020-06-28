@@ -262,8 +262,8 @@ def plot_timeseries_per_category(
 def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
     colormap: str = "rainbow",
-    figsize: Tuple[int, int] = (20, 5),
     mode: Optional[str] = None,
+    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
 ) -> None:
     """
     Plot lineplot and density plot for the given series.
@@ -272,9 +272,15 @@ def plot_cols(
     :param colormap: preferred colors
     :param figsize: plot size
     :param mode: "renormalize" or "default"
+    :param ax: axes
     """
     if isinstance(data, pd.Series):
         data = data.to_frame()
+    nrows = len(data.columns)
+    if axes == [[None, None]]:
+        _, axes = plt.subplots(nrows=nrows * 2, ncols=1)
+        if axes.size == 2:
+            axes = [axes]
     if mode is None:
         mode = "default"
     elif mode == "renormalize":
@@ -282,8 +288,11 @@ def plot_cols(
         data /= data.std()
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
-    data.plot(kind="density", colormap=colormap, figsize=figsize)
-    data.plot(colormap=colormap, figsize=figsize)
+    for idx, col in enumerate(data.columns):
+        ax1 = axes[idx][0]
+        data.plot(kind="density", colormap=colormap, ax=ax1)
+        ax2 = axes[idx][1]
+        data.plot(colormap=colormap, ax=ax2)
 
 
 def plot_autocorrelation(
@@ -292,6 +301,7 @@ def plot_autocorrelation(
     zero: bool = False,
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
+    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
     **kwargs: Any,
 ) -> None:
     """
@@ -302,8 +312,11 @@ def plot_autocorrelation(
     """
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
-    n_rows = len(signal.columns)
-    fig = plt.figure(figsize=(20, 5 * n_rows))
+    nrows = len(signal.columns)
+    if axes == [[None, None]]:
+        _, axes = plt.subplots(nrows=nrows, ncols=2)
+        if axes.size == 2:
+            axes = [axes]
     if title_prefix is None:
         title_prefix = ""
     for idx, col in enumerate(signal.columns):
@@ -311,15 +324,15 @@ def plot_autocorrelation(
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
-        ax1 = fig.add_subplot(n_rows, 2, 2 * (idx + 1) - 1)
+        ax1 = axes[idx][0]
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
-        fig = sm.graphics.tsa.plot_acf(
+        _ = sm.graphics.tsa.plot_acf(
             data, lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs
         )
-        ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
+        ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
-        fig = sm.graphics.tsa.plot_pacf(
+        _ = sm.graphics.tsa.plot_pacf(
             data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs
         )
 
@@ -328,6 +341,7 @@ def plot_spectrum(
     signal: Union[pd.Series, pd.DataFrame],
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
+    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
 ) -> None:
     """
     Plot power spectral density and spectrogram of columns.
@@ -344,21 +358,24 @@ def plot_spectrum(
         signal = signal.to_frame()
     if title_prefix is None:
         title_prefix = ""
-    n_rows = len(signal.columns)
-    fig = plt.figure(figsize=(20, 5 * n_rows))
+    nrows = len(signal.columns)
+    if axes == [[None, None]]:
+        _, axes = plt.subplots(nrows=nrows, ncols=2)
+        if axes.size == 2:
+            axes = [axes]
     for idx, col in enumerate(signal.columns):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
-        ax1 = fig.add_subplot(n_rows, 2, 2 * (idx + 1) - 1)
+        ax1 = axes[idx][0]
         f_pxx, Pxx = sp.signal.welch(data)
         ax1.semilogy(f_pxx, Pxx)
         ax1.set_title(title_prefix + f"{col} power spectral density")
         # TODO(*): Maybe put labels on a shared axis.
         # ax1.set_xlabel("Frequency")
         # ax1.set_ylabel("Power")
-        ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
+        ax2 = axes[idx][1]
         f_sxx, t, Sxx = sp.signal.spectrogram(data)
         ax2.pcolormesh(t, f_sxx, Sxx)
         ax2.set_title(title_prefix + f"{col} spectrogram")
@@ -1265,6 +1282,7 @@ def plot_pnl(
     nan_mode: Optional[str] = None,
     xlabel: Optional[str] = None,
     ylabel: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot a pnl for the dataframe of pnl time series.
@@ -1278,7 +1296,10 @@ def plot_pnl(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param xlabel: label of the X axis
     :param ylabel: label of the Y axis
+    :param ax: axes
     """
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
     title = title or ""
     colormap = colormap or "rainbow"
     figsize = figsize or (20, 5)
@@ -1288,6 +1309,7 @@ def plot_pnl(
     xlabel = xlabel or None
     ylabel = ylabel or None
     fstr = "{col} (SR={sr})"
+    ax = ax or plt.gca()
     if df.isna().all().any():
         empty_series = [(idx) for idx, val in df.isna().all().items() if val]
         _LOG.warning(
@@ -1310,18 +1332,14 @@ def plot_pnl(
     ]
     df_plot = df_plot.reindex(sorted_names, axis=1)
     df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
-    fig, ax = plt.subplots(figsize=figsize)
-    df_plot.cumsum().plot(x_compat=True, ax=ax, colormap=colormap)
+    df_plot.cumsum().plot(ax=ax, colormap=colormap)
     # Setting fixed borders of x-axis.
     ax.set_xlim([left_lim, right_lim])
     # Formatting.
     ax.set_title(title, fontsize=20)
-    plt.xticks(fontsize=13)
-    plt.yticks(fontsize=13)
     ax.set_ylabel(ylabel, fontsize=20)
     ax.set_xlabel(xlabel, fontsize=20)
     ax.legend(prop=dict(size=13), loc="upper left")
-    plt.show()
 
 
 def plot_drawdown(
