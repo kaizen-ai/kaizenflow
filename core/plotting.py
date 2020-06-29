@@ -1466,7 +1466,7 @@ def plot_top_allocation(
     """
     ax = ax or plt.gca()
     figsize = figsize or (20, 5)
-    labels = [key + "[" + config[key]["tag"] + "]" for key in config.keys()]
+    labels = [str(key) + "[" + config[key]["tag"] + "]" for key in config.keys()]
     pnl_df_plot = pnl_df.copy()
     pnl_df_plot.columns = labels
     pnl_df_plot.plot(ax=ax, figsize=figsize)
