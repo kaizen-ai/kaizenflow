@@ -1470,7 +1470,7 @@ def plot_top_allocation(
     pnl_df_plot = pnl_df.copy()
     pnl_df_plot.columns = labels
     pnl_df_plot.plot(ax=ax, figsize=figsize)
-    ax.title(f"Portfolio allocation over time; top {pnl_df.shape[0]} positions")
+    ax.set_title(f"Portfolio allocation over time; top {pnl_df.shape[0]} positions")
     ax.set_xlabel("period")
     ax.legend()
 
