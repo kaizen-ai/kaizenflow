@@ -1451,15 +1451,15 @@ def plot_turnover(
 
 
 def plot_top_allocation(
-    pnl_df: pd.DataFrame,
+    position_df: pd.DataFrame,
     config: Dict[str, Any],
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
-    Plot top PnL of portfolio allocation.
+    Plot position allocations over time.
 
-    :param pnl_df: dataframe with top timeseries by allocation
+    :param position_df: dataframe with top timeseries by allocation
     :param config: information about timeseries
     :param figsize: size of plot
     :param ax: axes
@@ -1467,10 +1467,12 @@ def plot_top_allocation(
     ax = ax or plt.gca()
     figsize = figsize or (20, 5)
     labels = [str(key) + "[" + config[key]["tag"] + "]" for key in config.keys()]
-    pnl_df_plot = pnl_df.copy()
+    pnl_df_plot = position_df.copy()
     pnl_df_plot.columns = labels
     pnl_df_plot.plot(ax=ax, figsize=figsize)
-    ax.set_title(f"Portfolio allocation over time; top {pnl_df.shape[1]} positions")
+    ax.set_title(
+        f"Portfolio allocation over time; top {position_df.shape[1]} positions"
+    )
     ax.set_xlabel("period")
     ax.legend()
 
