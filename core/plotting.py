@@ -1422,18 +1422,18 @@ def plot_qq(
 
 
 def plot_turnover(
-    pnl: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
+    positions: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot turnover, average turnover by month and overall average turnover.
 
-    :param pnl: pnl series to plot
+    :param positions: series of positions to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
-    turnover = fin.compute_turnover(pnl)
+    turnover = fin.compute_turnover(positions)
     turnover = scale_coeff * turnover
     turnover.plot(linewidth=1, ax=ax, label="turnover")
     turnover.resample("M").mean().plot(
