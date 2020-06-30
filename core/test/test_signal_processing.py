@@ -421,6 +421,24 @@ class Test_compute_ipca(hut.TestCase):
         )
         self.check_string(txt)
 
+    def test4(self) -> None:
+        np.random.seed(42)
+        num_pc = 3
+        alpha = 0.5
+        n = 100
+        m = 10
+        df = pd.DataFrame(np.random.randn(n, m))
+        df.iloc[1:2, :] = np.nan
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
 
 @pytest.mark.slow
 class Test_gallery_signal_processing1(hut.TestCase):
