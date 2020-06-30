@@ -756,8 +756,8 @@ def multipletests_plot(
     for i, col in enumerate(adj_pvals.columns):
         mask = adj_pvals[col].notna()
         adj_pval = adj_pvals.loc[mask, col].sort_values().reset_index(drop=True)
-        ax[i].set_title(col)
         if adj_pval.empty:
+            ax[i].set_title(col)
             continue
         ax[i].plot(
             pval_series.loc[mask].sort_values().reset_index(drop=True),
@@ -779,6 +779,7 @@ def multipletests_plot(
                 else {"s": "FAIL", "color": "r"}
             ),
         )
+        ax[i].set_title(col)
         ax[i].axhline(threshold, ls=":", c="k")
         ax[i].set_ylim(0, 1)
         ax[i].legend()
