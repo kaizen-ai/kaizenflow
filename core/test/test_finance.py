@@ -10,6 +10,23 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+class Test_aggregate_log_rets(hut.TestCase):
+    @staticmethod
+    def _get_sample(seed: int) -> pd.DataFrame:
+        mean = pd.Series([1, 2])
+        cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
+        date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
+        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
+        sample = mn_process.generate_sample(date_range, seed=seed)
+        return sample
+
+    def test1(self) -> None:
+        sample = self._get_sample(42)
+        actual = fin.aggregate_log_rets(sample, 0.1)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
 class Test_compute_drawdown(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
