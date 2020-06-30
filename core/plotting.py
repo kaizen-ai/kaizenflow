@@ -1450,6 +1450,36 @@ def plot_turnover(
     ax.set_title(f"Turnover ({unit})")
 
 
+def plot_allocation(
+    position_df: pd.DataFrame,
+    config: Dict[str, Any],
+    figsize: Optional[Tuple[int, int]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """
+    Plot position allocations over time.
+
+    :param position_df: dataframe with position time series
+    :param config: information about time series
+    :param figsize: size of plot
+    :param ax: axes
+    """
+    ax = ax or plt.gca()
+    figsize = figsize or (20, 5)
+    fstr = "{key} [{tag}]"
+    labels = [
+        fstr.format(key=str(key), tag=config[key]["tag"]) for key in config.keys()
+    ]
+    position_df_plot = position_df.copy()
+    position_df_plot.columns = labels
+    position_df_plot.plot(ax=ax, figsize=figsize)
+    ax.set_title(
+        f"Portfolio allocation over time; {position_df.shape[1]} positions"
+    )
+    ax.set_xlabel("period")
+    ax.legend()
+
+
 def _choose_scaling_coefficient(unit: str) -> int:
     if unit == "%":
         scale_coeff = 100
