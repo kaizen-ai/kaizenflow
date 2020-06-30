@@ -1450,7 +1450,7 @@ def plot_turnover(
     ax.set_title(f"Turnover ({unit})")
 
 
-def plot_top_allocation(
+def plot_allocation(
     position_df: pd.DataFrame,
     config: Dict[str, Any],
     figsize: Optional[Tuple[int, int]] = None,
@@ -1459,8 +1459,8 @@ def plot_top_allocation(
     """
     Plot position allocations over time.
 
-    :param position_df: dataframe with top timeseries by allocation
-    :param config: information about timeseries
+    :param position_df: dataframe with position time series
+    :param config: information about time series
     :param figsize: size of plot
     :param ax: axes
     """
@@ -1474,7 +1474,7 @@ def plot_top_allocation(
     position_df_plot.columns = labels
     position_df_plot.plot(ax=ax, figsize=figsize)
     ax.set_title(
-        f"Portfolio allocation over time; top {position_df.shape[1]} positions"
+        f"Portfolio allocation over time; {position_df.shape[1]} positions"
     )
     ax.set_xlabel("period")
     ax.legend()
