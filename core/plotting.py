@@ -1470,9 +1470,9 @@ def plot_top_allocation(
     labels = [
         fstr.format(key=str(key), tag=config[key]["tag"]) for key in config.keys()
     ]
-    pnl_df_plot = position_df.copy()
-    pnl_df_plot.columns = labels
-    pnl_df_plot.plot(ax=ax, figsize=figsize)
+    position_df_plot = position_df.copy()
+    position_df_plot.columns = labels
+    position_df_plot.plot(ax=ax, figsize=figsize)
     ax.set_title(
         f"Portfolio allocation over time; top {position_df.shape[1]} positions"
     )
