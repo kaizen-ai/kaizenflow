@@ -324,7 +324,7 @@ def compute_average_holding_period(
     return average_holding_period
 
 
-def compute_bet_runs(positions: pd.Series):
+def compute_bet_runs(positions: pd.Series) -> pd.Series:
     """
     Calculate runs of long/short bets.
 
@@ -342,7 +342,7 @@ def compute_bet_runs(positions: pd.Series):
     return bet_runs
 
 
-def compute_bet_starts(positions: pd.Series):
+def compute_bet_starts(positions: pd.Series) -> pd.Series:
     """
     Calculate the start of each new bet.
 
