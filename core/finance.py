@@ -209,6 +209,9 @@ def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
     :return: srs of log returns
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
+    df = df.apply(
+        lambda x: rescale_to_target_annual_volatility(x, target_volatility)
+    )
     df = df.apply(convert_log_rets_to_pct_rets)
     df = df.mean(axis=1)
     srs = df.squeeze()
