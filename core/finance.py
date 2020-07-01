@@ -358,22 +358,30 @@ def compute_bet_starts(positions: pd.Series):
     return bet_starts
 
 
-def compute_signed_bet_lengths(positions):
+def compute_signed_bet_lengths(positions: pd.Series) -> pd.Series:
     """
     Calculate lengths of bets (in sampling freq).
 
     :param positions: series of long/short positions
-    :return: signed lengths of bets, e.g., the sign indicates whether the
-        length corresponds to a long bet or a short bet
+    :return: signed lengths of bets, i.e., the sign indicates whether the
+        length corresponds to a long bet or a short bet. Index corresponds to
+        start of bet.
     """
     bet_runs = compute_bet_runs(positions)
     bet_starts = compute_bet_starts(positions)
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
-    bet_starts_idx = bet_starts[bet_starts != 0].index
+    bet_starts_idx = bet_starts[bet_starts != 0].dropna().index
     bet_lengths = []
-    for i, t0 in enumerate(bet_starts_idx[:-1]):
+    for i, t0 in enumerate(bet_starts_idx):
         t0_mask = bet_runs.index >= t0
-        t1_mask = bet_runs.index < bet_starts_idx[i + 1]
-        bet_length = bet_runs.loc[t0_mask & t1_mask].sum()
+        if i < bet_starts_idx.size - 1:
+            t1_mask = bet_runs.index < bet_starts_idx[i + 1]
+            mask = t0_mask & t1_mask
+        else:
+            mask = t0_mask
+        bet_length = bet_runs.loc[mask].sum()
         bet_lengths.append(bet_length)
-    return bet_lengths
+    bet_length_srs = pd.Series(index=bet_starts_idx,
+                               data=bet_lengths,
+                               name=positions.name)
+    return bet_length_srs
