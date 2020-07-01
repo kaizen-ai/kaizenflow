@@ -1055,7 +1055,7 @@ def plot_rolling_annualized_volatility(
     max_depth: int = 1,
     p_moment: float = 2,
     unit: str = "ratio",
-    orig_index_start: Optional[bool] = False,
+    trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
@@ -1070,7 +1070,7 @@ def plot_rolling_annualized_volatility(
     :param unit: "ratio", "%" or "bps" scaling coefficient
         "Exchange:Kibot_symbol"
         "Exchange:Exchange_symbol"
-    :param orig_index_start: start plot at original index if True
+    :param trim_index: start plot at original index if True
     :param ax: axes
     """
     min_periods = min_periods or tau
@@ -1107,7 +1107,7 @@ def plot_rolling_annualized_volatility(
     ax.axhline(0, linewidth=0.8, color="black")
     ax.set_title(f"Annualized rolling volatility ({unit})")
     # Start plot from original index if specified.
-    if orig_index_start:
+    if trim_index:
         ax.set_xlim([min(srs.index), max(srs.index)])
     else:
         ax.set_xlim(
@@ -1127,7 +1127,7 @@ def plot_rolling_annualized_sharpe_ratio(
     p_moment: float = 2,
     ci: float = 0.95,
     title_suffix: Optional[str] = None,
-    orig_index_start: Optional[bool] = False,
+    trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
@@ -1140,7 +1140,7 @@ def plot_rolling_annualized_sharpe_ratio(
     :param p_moment: argument as for sigp.compute_smooth_moving_average
     :param ci: confidence interval
     :param title_suffix: suffix added to the title
-    :param orig_index_start: start plot at original index if True
+    :param trim_index: start plot at original index if True
     :param ax: axes
     """
     title_suffix = title_suffix or ""
@@ -1190,7 +1190,7 @@ def plot_rolling_annualized_sharpe_ratio(
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
     # Start plot from original index if specified.
-    if orig_index_start:
+    if trim_index:
         ax.set_xlim([min(srs.index), max(srs.index)])
     ax.set_ylabel("annualized SR")
     ax.legend()
