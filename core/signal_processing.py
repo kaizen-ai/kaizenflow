@@ -1182,8 +1182,12 @@ def _compute_ipca_step(
       * u_next is residualized observation for step n, component i + 1
       * v_next is unnormalized eigenvector estimate for step n, component i
     """
-    v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
-    u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
+    if np.linalg.norm(v) == 0:
+        v_next = v * 0
+        u_next = u
+    else:
+        v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
+        u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
     return u_next, v_next
 
 

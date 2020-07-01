@@ -373,6 +373,7 @@ class Test_compute_ipca(hut.TestCase):
         df = hut.get_random_df(num_cols=10, seed=seed, **date_range,)
         return df
 
+    # Test for a clean df.
     def test1(self) -> None:
         df = self._get_df(seed=1)
         num_pc = 3
@@ -387,6 +388,7 @@ class Test_compute_ipca(hut.TestCase):
         )
         self.check_string(txt)
 
+    # Test for a df with leading NaNs in only a subset of cols.
     def test2(self) -> None:
         df = self._get_df(seed=1)
         df.iloc[0:3, :-3] = np.nan
@@ -402,6 +404,7 @@ class Test_compute_ipca(hut.TestCase):
         )
         self.check_string(txt)
 
+    # Test for a df with interspersed NaNs.
     def test3(self) -> None:
         df = self._get_df(seed=1)
         df.iloc[10:13, 3:5] = np.nan
@@ -418,11 +421,26 @@ class Test_compute_ipca(hut.TestCase):
         )
         self.check_string(txt)
 
-    # Output for this test is not intended yet.
-    # TODO(Dan): Make `sigp.compute_ipca` robust to all-NaN in the first 3 rows.
+    # Test for a df with a full-NaN row among the 3 first rows.
     def test4(self) -> None:
         df = self._get_df(seed=1)
         df.iloc[1:2, :] = np.nan
+        num_pc = 3
+        alpha = 0.5
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    # Test for a df with 5 leading NaNs in all cols.
+    def test5(self) -> None:
+        df = self._get_df(seed=1)
+        df.iloc[:5, :] = np.nan
         num_pc = 3
         alpha = 0.5
         lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
