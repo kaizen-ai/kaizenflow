@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import matplotlib as mpl
 import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
+import natsort
 import numpy as np
 import pandas as pd
 import scipy as sp
@@ -756,7 +757,8 @@ def multipletests_plot(
     )
     if not isinstance(ax, np.ndarray):
         ax = [ax]
-    for i, col in enumerate(adj_pvals.columns):
+    sorted_cols = natsort.natsorted(adj_pvals.columns)
+    for i, col in enumerate(sorted_cols):
         mask = adj_pvals[col].notna()
         adj_pval = adj_pvals.loc[mask, col].sort_values().reset_index(drop=True)
         ax[i].plot(
