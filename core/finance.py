@@ -381,7 +381,7 @@ def compute_signed_bet_lengths(positions: pd.Series) -> pd.Series:
             mask = t0_mask
         bet_length = bet_runs.loc[mask].sum()
         bet_lengths.append(bet_length)
-    bet_length_srs = pd.Series(index=bet_starts_idx,
-                               data=bet_lengths,
-                               name=positions.name)
+    bet_length_srs = pd.Series(
+        index=bet_starts_idx, data=bet_lengths, name=positions.name
+    )
     return bet_length_srs
