@@ -1060,6 +1060,7 @@ def plot_rolling_annualized_volatility(
 ) -> None:
     """
     Plot rolling annualized volatility.
+
     :param srs: input series
     :param tau: argument as for sigp.compute_rolling_std
     :param min_periods: argument as for sigp.compute_rolling_std
@@ -1131,6 +1132,7 @@ def plot_rolling_annualized_sharpe_ratio(
 ) -> None:
     """
     Plot rolling annualized Sharpe ratio.
+
     :param srs: input series
     :param tau: argument as for sigp.compute_smooth_moving_average
     :param min_depth: argument as for sigp.compute_smooth_moving_average
