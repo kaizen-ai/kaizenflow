@@ -324,34 +324,56 @@ def compute_average_holding_period(
     return average_holding_period
 
 
-def compute_bets(srs: pd.Series):
+def compute_bet_runs(positions: pd.Series):
     """
-    Calculate runs of long/short bets and the starts of these bets.
+    Calculate runs of long/short bets.
 
-    # TODO(*): Consider splitting off the bet starts calculation.
+    A bet "run" is a (maximal) series of positions on the same "side", e.g.,
+    long or short.
+
+    :param positions: series of long/short positions
+    :return: series of -1/0/1 with 1's indicating long bets and -1 indicating
+        short bets
     """
-    zero_mask = srs == 0
+    zero_mask = positions == 0
     # Calculate bet "runs".
-    bet_runs = srs.copy()
+    bet_runs = positions.copy()
     bet_runs.loc[~zero_mask] /= np.abs(bet_runs.loc[~zero_mask])
+    return bet_runs
+
+
+def compute_bet_starts(positions: pd.Series):
+    """
+    Calculate the start of each new bet.
+
+    :param positions: series of long/short positions
+    :return: a series with a +1 at the start of each new long bet and a -1 at
+        the start of each new short bet; all other values are 0 or NaN
+    """
+    bet_runs = compute_bet_runs(positions)
     # Determine start of bets.
     bet_starts = bet_runs - bet_runs.shift(1, fill_value=0)
     bets_zero_mask = bet_starts == 0
     bet_starts.loc[~bets_zero_mask] /= np.abs(bet_starts.loc[~bets_zero_mask])
-    return bet_runs, bet_starts
+    return bet_starts
 
 
-def get_signed_bet_lengths(bets):
+def compute_signed_bet_lengths(positions):
     """
     Calculate lengths of bets (in sampling freq).
 
-    :param bets: like `bet_runs`
-    :return: signed lengths of bets
+    :param positions: series of long/short positions
+    :return: signed lengths of bets, e.g., the sign indicates whether the
+        length corresponds to a long bet or a short bet
     """
+    bet_runs = compute_bet_runs(positions)
+    bet_starts = compute_bet_starts(positions)
+    dbg.dassert(bet_runs.index.equals(bet_starts.index))
+    bet_starts_idx = bet_starts[bet_starts != 0].index
     bet_lengths = []
-    for i, t0 in enumerate(idx[:-1]):
-        t0_mask = bets.index >= t0
-        t1_mask = bets.index < idx[i + 1]
-        bet_l = bets.loc[t0_mask & t1_mask].sum()
-        bet_lengths.append(bet_l)
+    for i, t0 in enumerate(bet_starts_idx[:-1]):
+        t0_mask = bet_runs.index >= t0
+        t1_mask = bet_runs.index < bet_starts_idx[i + 1]
+        bet_length = bet_runs.loc[t0_mask & t1_mask].sum()
+        bet_lengths.append(bet_length)
     return bet_lengths
