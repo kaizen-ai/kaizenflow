@@ -1055,11 +1055,11 @@ def plot_rolling_annualized_volatility(
     max_depth: int = 1,
     p_moment: float = 2,
     unit: str = "ratio",
+    orig_index_start: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot rolling annualized volatility.
-
     :param srs: input series
     :param tau: argument as for sigp.compute_rolling_std
     :param min_periods: argument as for sigp.compute_rolling_std
@@ -1069,6 +1069,7 @@ def plot_rolling_annualized_volatility(
     :param unit: "ratio", "%" or "bps" scaling coefficient
         "Exchange:Kibot_symbol"
         "Exchange:Exchange_symbol"
+    :param orig_index_start: start plot at original index if True
     :param ax: axes
     """
     min_periods = min_periods or tau
@@ -1104,10 +1105,14 @@ def plot_rolling_annualized_volatility(
     )
     ax.axhline(0, linewidth=0.8, color="black")
     ax.set_title(f"Annualized rolling volatility ({unit})")
-    ax.set_xlim(
-        annualized_rolling_volatility.index[0],
-        annualized_rolling_volatility.index[-1],
-    )
+    # Start plot from original index if specified.
+    if orig_index_start:
+        ax.set_xlim([min(srs.index), max(srs.index)])
+    else:
+        ax.set_xlim(
+            annualized_rolling_volatility.index[0],
+            annualized_rolling_volatility.index[-1],
+        )
     ax.set_ylabel(unit)
     ax.set_xlabel("period")
     ax.legend()
@@ -1121,11 +1126,11 @@ def plot_rolling_annualized_sharpe_ratio(
     p_moment: float = 2,
     ci: float = 0.95,
     title_suffix: Optional[str] = None,
+    orig_index_start: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot rolling annualized Sharpe ratio.
-
     :param srs: input series
     :param tau: argument as for sigp.compute_smooth_moving_average
     :param min_depth: argument as for sigp.compute_smooth_moving_average
@@ -1133,6 +1138,7 @@ def plot_rolling_annualized_sharpe_ratio(
     :param p_moment: argument as for sigp.compute_smooth_moving_average
     :param ci: confidence interval
     :param title_suffix: suffix added to the title
+    :param orig_index_start: start plot at original index if True
     :param ax: axes
     """
     title_suffix = title_suffix or ""
@@ -1181,6 +1187,9 @@ def plot_rolling_annualized_sharpe_ratio(
         label="average SR",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
+    # Start plot from original index if specified.
+    if orig_index_start:
+        ax.set_xlim([min(srs.index), max(srs.index)])
     ax.set_ylabel("annualized SR")
     ax.legend()
 
