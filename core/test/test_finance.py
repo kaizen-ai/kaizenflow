@@ -285,3 +285,23 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         )
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
+
+
+class Test_compute_returns_per_bet(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        log_rets = self._get_series(42)
+        positions = self._get_series(0)
+        actual = fin.compute_returns_per_bet(log_rets, positions)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)

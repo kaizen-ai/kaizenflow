@@ -376,7 +376,7 @@ def compute_signed_bet_lengths(
         length corresponds to a long bet or a short bet. Index corresponds to
         end of bet.
     """
-    positions = hdf.apply_nan_mode(positions, nan_mode)
+    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
     bet_runs = compute_bet_runs(positions)
     bet_starts = compute_bet_starts(positions)
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
@@ -399,3 +399,34 @@ def compute_signed_bet_lengths(
         index=bet_ends_idx, data=bet_lengths, name=positions.name
     )
     return bet_length_srs
+
+
+def compute_returns_per_bet(
+    log_rets: pd.Series, positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    Calculate returns for each bet.
+
+    :param log_rets: log returns
+    :param positions: series of long/short positions
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: signed returns for each bet, index corresponds to end of bet. If
+        bet is 0, return is 0.
+    """
+    bet_lengths = compute_signed_bet_lengths(positions, nan_mode=nan_mode)
+    log_rets = hdf.apply_nan_mode(log_rets, mode=nan_mode)
+    bet_starts = compute_bet_starts(positions)
+    bet_starts_idx = bet_starts[bet_starts != 0].index
+    dbg.dassert(bet_starts.index.equals(log_rets.index))
+    rets_per_bet = []
+    for i, (bet_start, bet_end) in enumerate(
+        zip(bet_starts_idx, bet_lengths.index)
+    ):
+        bet_sign = np.sign(bet_lengths.iloc[i])
+        rets_sum = log_rets.loc[bet_start:bet_end].sum()
+        rets_sum_bet = rets_sum * bet_sign
+        rets_per_bet.append(rets_sum_bet)
+    rets_per_bet = pd.Series(
+        data=rets_per_bet, index=bet_lengths.index, name=log_rets.name
+    )
+    return rets_per_bet
