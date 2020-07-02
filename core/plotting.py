@@ -270,7 +270,6 @@ def plot_cols(
 
     :param data: data to plot
     :param colormap: preferred colors
-    :param figsize: plot size
     :param mode: "renormalize" or "default"
     :param ax: axes
     """
@@ -278,9 +277,7 @@ def plot_cols(
         data = data.to_frame()
     nrows = len(data.columns)
     if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows * 2, ncols=1)
-        if axes.size == 2:
-            axes = [axes]
+        _, axes = plt.subplots(nrows=nrows * 2, ncols=1, figsize=(20, 5 * nrows))
     if mode is None:
         mode = "default"
     elif mode == "renormalize":
@@ -289,10 +286,10 @@ def plot_cols(
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
     for idx, col in enumerate(data.columns):
-        ax1 = axes[idx][0]
-        data.plot(kind="density", colormap=colormap, ax=ax1)
-        ax2 = axes[idx][1]
-        data.plot(colormap=colormap, ax=ax2)
+        ax1 = axes[idx * 2]
+        data[col].plot(kind="density", colormap=colormap, ax=ax1)
+        ax2 = axes[idx * 2 + 1]
+        data[col].plot(colormap=colormap, ax=ax2)
 
 
 def plot_autocorrelation(
