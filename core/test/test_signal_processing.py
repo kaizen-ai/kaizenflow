@@ -367,13 +367,64 @@ class Test_compute_rolling_zcorr1(hut.TestCase):
 
 
 class Test_compute_ipca(hut.TestCase):
+    @staticmethod
+    def _get_df(seed: int) -> pd.Series:
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        df = hut.get_random_df(num_cols=10, seed=seed, **date_range,)
+        return df
+
     def test1(self) -> None:
-        np.random.seed(42)
+        df = self._get_df(seed=1)
         num_pc = 3
         alpha = 0.5
-        n = 100
-        m = 10
-        df = pd.DataFrame(np.random.randn(n, m))
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        df = self._get_df(seed=1)
+        df.iloc[0:3, :-3] = np.nan
+        num_pc = 3
+        alpha = 0.5
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    def test3(self) -> None:
+        df = self._get_df(seed=1)
+        df.iloc[10:13, 3:5] = np.nan
+        df.iloc[25:28, 8:] = np.nan
+        num_pc = 3
+        alpha = 0.5
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    # Output for this test is not intended yet.
+    # TODO(Dan): Make `sigp.compute_ipca` robust to all-NaN in the first 3 rows.
+    def test4(self) -> None:
+        df = self._get_df(seed=1)
+        df.iloc[1:2, :] = np.nan
+        num_pc = 3
+        alpha = 0.5
         lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]

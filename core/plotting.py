@@ -262,8 +262,8 @@ def plot_timeseries_per_category(
 def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
     colormap: str = "rainbow",
-    figsize: Tuple[int, int] = (20, 5),
     mode: Optional[str] = None,
+    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
 ) -> None:
     """
     Plot lineplot and density plot for the given series.
@@ -272,9 +272,15 @@ def plot_cols(
     :param colormap: preferred colors
     :param figsize: plot size
     :param mode: "renormalize" or "default"
+    :param ax: axes
     """
     if isinstance(data, pd.Series):
         data = data.to_frame()
+    nrows = len(data.columns)
+    if axes == [[None, None]]:
+        _, axes = plt.subplots(nrows=nrows * 2, ncols=1)
+        if axes.size == 2:
+            axes = [axes]
     if mode is None:
         mode = "default"
     elif mode == "renormalize":
@@ -282,8 +288,11 @@ def plot_cols(
         data /= data.std()
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
-    data.plot(kind="density", colormap=colormap, figsize=figsize)
-    data.plot(colormap=colormap, figsize=figsize)
+    for idx, col in enumerate(data.columns):
+        ax1 = axes[idx][0]
+        data.plot(kind="density", colormap=colormap, ax=ax1)
+        ax2 = axes[idx][1]
+        data.plot(colormap=colormap, ax=ax2)
 
 
 def plot_autocorrelation(
@@ -292,6 +301,7 @@ def plot_autocorrelation(
     zero: bool = False,
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
+    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
     **kwargs: Any,
 ) -> None:
     """
@@ -302,8 +312,11 @@ def plot_autocorrelation(
     """
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
-    n_rows = len(signal.columns)
-    fig = plt.figure(figsize=(20, 5 * n_rows))
+    nrows = len(signal.columns)
+    if axes == [[None, None]]:
+        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
+        if axes.size == 2:
+            axes = [axes]
     if title_prefix is None:
         title_prefix = ""
     for idx, col in enumerate(signal.columns):
@@ -311,15 +324,15 @@ def plot_autocorrelation(
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
-        ax1 = fig.add_subplot(n_rows, 2, 2 * (idx + 1) - 1)
+        ax1 = axes[idx][0]
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
-        fig = sm.graphics.tsa.plot_acf(
+        _ = sm.graphics.tsa.plot_acf(
             data, lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs
         )
-        ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
+        ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
-        fig = sm.graphics.tsa.plot_pacf(
+        _ = sm.graphics.tsa.plot_pacf(
             data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs
         )
 
@@ -328,6 +341,7 @@ def plot_spectrum(
     signal: Union[pd.Series, pd.DataFrame],
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
+    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
 ) -> None:
     """
     Plot power spectral density and spectrogram of columns.
@@ -344,21 +358,24 @@ def plot_spectrum(
         signal = signal.to_frame()
     if title_prefix is None:
         title_prefix = ""
-    n_rows = len(signal.columns)
-    fig = plt.figure(figsize=(20, 5 * n_rows))
+    nrows = len(signal.columns)
+    if axes == [[None, None]]:
+        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
+        if axes.size == 2:
+            axes = [axes]
     for idx, col in enumerate(signal.columns):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
-        ax1 = fig.add_subplot(n_rows, 2, 2 * (idx + 1) - 1)
+        ax1 = axes[idx][0]
         f_pxx, Pxx = sp.signal.welch(data)
         ax1.semilogy(f_pxx, Pxx)
         ax1.set_title(title_prefix + f"{col} power spectral density")
         # TODO(*): Maybe put labels on a shared axis.
         # ax1.set_xlabel("Frequency")
         # ax1.set_ylabel("Power")
-        ax2 = fig.add_subplot(n_rows, 2, 2 * (idx + 1))
+        ax2 = axes[idx][1]
         f_sxx, t, Sxx = sp.signal.spectrogram(data)
         ax2.pcolormesh(t, f_sxx, Sxx)
         ax2.set_title(title_prefix + f"{col} spectrogram")
@@ -739,6 +756,9 @@ def multipletests_plot(
     for i, col in enumerate(adj_pvals.columns):
         mask = adj_pvals[col].notna()
         adj_pval = adj_pvals.loc[mask, col].sort_values().reset_index(drop=True)
+        if adj_pval.empty:
+            ax[i].set_title(col)
+            continue
         ax[i].plot(
             pval_series.loc[mask].sort_values().reset_index(drop=True),
             label="pvals",
@@ -1038,6 +1058,7 @@ def plot_rolling_annualized_volatility(
     max_depth: int = 1,
     p_moment: float = 2,
     unit: str = "ratio",
+    trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
@@ -1052,6 +1073,7 @@ def plot_rolling_annualized_volatility(
     :param unit: "ratio", "%" or "bps" scaling coefficient
         "Exchange:Kibot_symbol"
         "Exchange:Exchange_symbol"
+    :param trim_index: start plot at original index if True
     :param ax: axes
     """
     min_periods = min_periods or tau
@@ -1087,10 +1109,14 @@ def plot_rolling_annualized_volatility(
     )
     ax.axhline(0, linewidth=0.8, color="black")
     ax.set_title(f"Annualized rolling volatility ({unit})")
-    ax.set_xlim(
-        annualized_rolling_volatility.index[0],
-        annualized_rolling_volatility.index[-1],
-    )
+    # Start plot from original index if specified.
+    if not trim_index:
+        ax.set_xlim([min(srs.index), max(srs.index)])
+    else:
+        ax.set_xlim(
+            annualized_rolling_volatility.index[0],
+            annualized_rolling_volatility.index[-1],
+        )
     ax.set_ylabel(unit)
     ax.set_xlabel("period")
     ax.legend()
@@ -1104,6 +1130,7 @@ def plot_rolling_annualized_sharpe_ratio(
     p_moment: float = 2,
     ci: float = 0.95,
     title_suffix: Optional[str] = None,
+    trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
@@ -1116,6 +1143,7 @@ def plot_rolling_annualized_sharpe_ratio(
     :param p_moment: argument as for sigp.compute_smooth_moving_average
     :param ci: confidence interval
     :param title_suffix: suffix added to the title
+    :param trim_index: start plot at original index if True
     :param ax: axes
     """
     title_suffix = title_suffix or ""
@@ -1164,6 +1192,9 @@ def plot_rolling_annualized_sharpe_ratio(
         label="average SR",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
+    # Start plot from original index if specified.
+    if not trim_index:
+        ax.set_xlim([min(srs.index), max(srs.index)])
     ax.set_ylabel("annualized SR")
     ax.legend()
 
@@ -1265,6 +1296,7 @@ def plot_pnl(
     nan_mode: Optional[str] = None,
     xlabel: Optional[str] = None,
     ylabel: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot a pnl for the dataframe of pnl time series.
@@ -1278,7 +1310,10 @@ def plot_pnl(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param xlabel: label of the X axis
     :param ylabel: label of the Y axis
+    :param ax: axes
     """
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
     title = title or ""
     colormap = colormap or "rainbow"
     figsize = figsize or (20, 5)
@@ -1287,25 +1322,38 @@ def plot_pnl(
     nan_mode = nan_mode or "ignore"
     xlabel = xlabel or None
     ylabel = ylabel or None
+    fstr = "{col} (SR={sr})"
+    ax = ax or plt.gca()
     if df.isna().all().any():
         empty_series = [(idx) for idx, val in df.isna().all().items() if val]
         _LOG.warning(
             "Empty input columns were dropped: '%s'", ", ".join(empty_series)
         )
         df.drop(empty_series, axis=1, inplace=True)
-    df_plot = df.apply(hdf.apply_nan_mode, mode=nan_mode)
-    fig, ax = plt.subplots(figsize=figsize)
-    df_plot.plot(x_compat=True, ax=ax, colormap=colormap)
+    df_plot = df.copy()
+    # Compute sharpe ratio for every timeseries.
+    sharpe_ratio = df_plot.apply(stats.compute_annualized_sharpe_ratio)
+    sharpe_cols = [
+        [round(sr, 1), df_plot.columns[i]] for i, sr in enumerate(sharpe_ratio)
+    ]
+    # Change column names and order to column names with sharpe ratio.
+    df_plot.columns = [
+        fstr.format(col=str(item[1]), sr=str(item[0])) for item in sharpe_cols
+    ]
+    sharpe_cols = sorted(sharpe_cols, key=lambda x: x[0], reverse=True)
+    sorted_names = [
+        fstr.format(col=str(item[1]), sr=str(item[0])) for item in sharpe_cols
+    ]
+    df_plot = df_plot.reindex(sorted_names, axis=1)
+    df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
+    df_plot.cumsum().plot(ax=ax, colormap=colormap)
     # Setting fixed borders of x-axis.
     ax.set_xlim([left_lim, right_lim])
     # Formatting.
     ax.set_title(title, fontsize=20)
-    plt.xticks(fontsize=13)
-    plt.yticks(fontsize=13)
     ax.set_ylabel(ylabel, fontsize=20)
     ax.set_xlabel(xlabel, fontsize=20)
     ax.legend(prop=dict(size=13), loc="upper left")
-    plt.show()
 
 
 def plot_drawdown(
@@ -1388,18 +1436,18 @@ def plot_qq(
 
 
 def plot_turnover(
-    pnl: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
+    positions: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
     Plot turnover, average turnover by month and overall average turnover.
 
-    :param pnl: pnl series to plot
+    :param positions: series of positions to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
-    turnover = fin.compute_turnover(pnl)
+    turnover = fin.compute_turnover(positions)
     turnover = scale_coeff * turnover
     turnover.plot(linewidth=1, ax=ax, label="turnover")
     turnover.resample("M").mean().plot(
@@ -1414,6 +1462,36 @@ def plot_turnover(
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Turnover ({unit})")
+
+
+def plot_allocation(
+    position_df: pd.DataFrame,
+    config: Dict[str, Any],
+    figsize: Optional[Tuple[int, int]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """
+    Plot position allocations over time.
+
+    :param position_df: dataframe with position time series
+    :param config: information about time series
+    :param figsize: size of plot
+    :param ax: axes
+    """
+    ax = ax or plt.gca()
+    figsize = figsize or (20, 5)
+    fstr = "{key} [{tag}]"
+    labels = [
+        fstr.format(key=str(key), tag=config[key]["tag"]) for key in config.keys()
+    ]
+    position_df_plot = position_df.copy()
+    position_df_plot.columns = labels
+    position_df_plot.plot(ax=ax, figsize=figsize)
+    ax.set_title(
+        f"Portfolio allocation over time; {position_df.shape[1]} positions"
+    )
+    ax.set_xlabel("period")
+    ax.legend()
 
 
 def _choose_scaling_coefficient(unit: str) -> int:

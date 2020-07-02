@@ -13,7 +13,9 @@ import helpers.printing as pri
 _LOG = logging.getLogger(__name__)
 
 
-def remove_dates_with_no_data(df, report_stats):
+def remove_dates_with_no_data(
+    df: pd.DataFrame, report_stats: bool
+) -> pd.DataFrame:
     """
     Given a df indexed with timestamps, scan the data by date and filter out
     all the data when it's all nans.
@@ -57,7 +59,9 @@ def remove_dates_with_no_data(df, report_stats):
     return df_out
 
 
-def resample(df, agg_interval):
+def resample(
+    df: pd.DataFrame, agg_interval: Union[str, pd.Timedelta, pd.DateOffset]
+) -> pd.DataFrame:
     """
     Resample returns (using sum) using our timing convention.
     """
@@ -212,7 +216,8 @@ def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
     df = df.mean(axis=1)
     srs = df.squeeze()
     srs = convert_pct_rets_to_log_rets(srs)
-    return srs
+    rescaled_srs = rescale_to_target_annual_volatility(srs, target_volatility)
+    return rescaled_srs
 
 
 # TODO(*): Consider moving to `statistics.py`.
@@ -221,7 +226,7 @@ def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
 # #############################################################################
 
 
-def compute_kratio(rets, y_var):
+def compute_kratio(rets: pd.DataFrame, y_var: str) -> float:
     # From http://s3.amazonaws.com/zanran_storage/www.styleadvisor.com/
     #   ContentPages/2449998087.pdf
     daily_rets = rets.resample("1B").sum().cumsum()

@@ -6,8 +6,8 @@
 
 source helpers.sh
 
-#branch="master"
-branch="PartTask2335_Re-enable_gluonts"
+branch="master"
+#branch="PartTask2335_Re-enable_gluonts"
 
 cmd="git fetch origin $branch:$branch"
 execute $cmd
