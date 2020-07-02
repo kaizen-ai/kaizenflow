@@ -373,8 +373,10 @@ class Test_compute_ipca(hut.TestCase):
         df = hut.get_random_df(num_cols=10, seed=seed, **date_range,)
         return df
 
-    # Test for a clean df.
     def test1(self) -> None:
+        """
+        Test for a clean input.
+        """
         df = self._get_df(seed=1)
         num_pc = 3
         alpha = 0.5
@@ -388,8 +390,10 @@ class Test_compute_ipca(hut.TestCase):
         )
         self.check_string(txt)
 
-    # Test for a df with leading NaNs in only a subset of cols.
     def test2(self) -> None:
+        """
+        Test for an input with leading NaNs in only a subset of cols.
+        """
         df = self._get_df(seed=1)
         df.iloc[0:3, :-3] = np.nan
         num_pc = 3
@@ -404,8 +408,10 @@ class Test_compute_ipca(hut.TestCase):
         )
         self.check_string(txt)
 
-    # Test for a df with interspersed NaNs.
     def test3(self) -> None:
+        """
+        Test for an input with interspersed NaNs.
+        """
         df = self._get_df(seed=1)
         df.iloc[10:13, 3:5] = np.nan
         df.iloc[25:28, 8:] = np.nan
@@ -421,8 +427,13 @@ class Test_compute_ipca(hut.TestCase):
         )
         self.check_string(txt)
 
-    # Test for a df with a full-NaN row among the 3 first rows.
     def test4(self) -> None:
+        """
+        Test for an input with a full-NaN row among the 3 first rows.
+
+        TODO(*): The eigenvalue estimates aren't in sorted order,
+            so something is wrong and should be fixed.
+        """
         df = self._get_df(seed=1)
         df.iloc[1:2, :] = np.nan
         num_pc = 3
@@ -437,8 +448,10 @@ class Test_compute_ipca(hut.TestCase):
         )
         self.check_string(txt)
 
-    # Test for a df with 5 leading NaNs in all cols.
     def test5(self) -> None:
+        """
+        Test for an input with 5 leading NaNs in all cols.
+        """
         df = self._get_df(seed=1)
         df.iloc[:5, :] = np.nan
         num_pc = 3
