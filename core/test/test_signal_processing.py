@@ -500,6 +500,21 @@ class Test__compute_ipca_step(hut.TestCase):
         txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
         self.check_string(txt)
 
+    def test3(self) -> None:
+        """
+        Test that u == u_next for the case when np.linalg.norm(v)=0.
+        """
+        u = self._get_series(seed=1)
+        v = self._get_series(seed=2) * 0
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_next_string = hut.convert_df_to_string(u_next, index=True)
+        v_next_string = hut.convert_df_to_string(v_next, index=True)
+        # Checking that u == u_next.
+        if u.equals(u_next):
+            txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        self.check_string(txt)
+
 
 @pytest.mark.slow
 class Test_gallery_signal_processing1(hut.TestCase):
