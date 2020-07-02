@@ -1316,7 +1316,6 @@ def plot_pnl(
         df = df.to_frame()
     title = title or ""
     colormap = colormap or "rainbow"
-    figsize = figsize or (20, 5)
     left_lim = left_lim or min(df.index)
     right_lim = right_lim or max(df.index)
     nan_mode = nan_mode or "ignore"
