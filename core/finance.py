@@ -373,7 +373,7 @@ def compute_signed_bet_lengths(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed lengths of bets, i.e., the sign indicates whether the
         length corresponds to a long bet or a short bet. Index corresponds to
-        start of bet.
+        end of bet.
     """
     positions = hdf.apply_nan_mode(positions, nan_mode)
     bet_runs = compute_bet_runs(positions)
@@ -381,6 +381,7 @@ def compute_signed_bet_lengths(
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
     bet_starts_idx = bet_starts[bet_starts != 0].index
     bet_lengths = []
+    bet_ends_idx = []
     for i, t0 in enumerate(bet_starts_idx):
         t0_mask = bet_runs.index >= t0
         if i < bet_starts_idx.size - 1:
@@ -388,9 +389,12 @@ def compute_signed_bet_lengths(
             mask = t0_mask & t1_mask
         else:
             mask = t0_mask
-        bet_length = bet_runs.loc[mask].sum()
+        bet_mask = bet_runs.loc[mask]
+        bet_length = bet_mask.sum()
+        bet_end = bet_runs.loc[mask].index[-1]
         bet_lengths.append(bet_length)
+        bet_ends_idx.append(bet_end)
     bet_length_srs = pd.Series(
-        index=bet_starts_idx, data=bet_lengths, name=positions.name
+        index=bet_ends_idx, data=bet_lengths, name=positions.name
     )
     return bet_length_srs

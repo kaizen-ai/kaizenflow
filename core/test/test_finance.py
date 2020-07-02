@@ -143,9 +143,9 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         )
         expected_bet_starts = pd.to_datetime(
             [
-                "2010-01-01",
-                "2010-01-05",
-                "2010-01-08",
+                "2010-01-04",
+                "2010-01-07",
+                "2010-01-09",
                 "2010-01-10",
                 "2010-01-11",
                 "2010-01-12",
