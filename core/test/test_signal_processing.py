@@ -467,6 +467,40 @@ class Test_compute_ipca(hut.TestCase):
         self.check_string(txt)
 
 
+class Test__compute_ipca_step(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
+        return series
+
+    def test1(self) -> None:
+        """
+        Test for clean input series.
+        """
+        u = self._get_series(seed=1)
+        v = self._get_series(seed=2)
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_next_string = hut.convert_df_to_string(u_next, index=True)
+        v_next_string = hut.convert_df_to_string(v_next, index=True)
+        txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        """
+        Test for input series with all zeros.
+        """
+        u = self._get_series(seed=1) * 0
+        v = self._get_series(seed=2) * 0
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_next_string = hut.convert_df_to_string(u_next, index=True)
+        v_next_string = hut.convert_df_to_string(v_next, index=True)
+        txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        self.check_string(txt)
+
+
 @pytest.mark.slow
 class Test_gallery_signal_processing1(hut.TestCase):
     def test_notebook1(self) -> None:
