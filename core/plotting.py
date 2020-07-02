@@ -278,6 +278,7 @@ def plot_cols(
     nrows = len(data.columns)
     if axes == [[None, None]]:
         _, axes = plt.subplots(nrows=nrows * 2, ncols=1, figsize=(20, 5 * nrows))
+        axes = [axes]
     if mode is None:
         mode = "default"
     elif mode == "renormalize":
@@ -286,9 +287,9 @@ def plot_cols(
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
     for idx, col in enumerate(data.columns):
-        ax1 = axes[idx * 2]
+        ax1 = axes[0][idx * 2]
         data[col].plot(kind="density", colormap=colormap, ax=ax1)
-        ax2 = axes[idx * 2 + 1]
+        ax2 = axes[0][idx * 2 + 1]
         data[col].plot(colormap=colormap, ax=ax2)
 
 
