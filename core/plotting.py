@@ -314,7 +314,7 @@ def plot_autocorrelation(
         signal = signal.to_frame()
     nrows = len(signal.columns)
     if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows, ncols=2)
+        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
         if axes.size == 2:
             axes = [axes]
     if title_prefix is None:
@@ -360,7 +360,7 @@ def plot_spectrum(
         title_prefix = ""
     nrows = len(signal.columns)
     if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows, ncols=2)
+        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
         if axes.size == 2:
             axes = [axes]
     for idx, col in enumerate(signal.columns):
