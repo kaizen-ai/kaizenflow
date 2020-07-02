@@ -1324,15 +1324,20 @@ def plot_pnl(
     ylabel = ylabel or None
     fstr = "{col} (SR={sr})"
     ax = ax or plt.gca()
-    if df.isna().all().any():
-        empty_series = [(idx) for idx, val in df.isna().all().items() if val]
+    df_plot = df.dropna(how="all", axis=1).copy()
+    if df.shape[0] > df_plot.shape[0]:
+        dropped_columns = df.columns.difference(df_plot.columns)
         _LOG.warning(
-            "Empty input columns were dropped: '%s'", ", ".join(empty_series)
+            "Empty input columns were dropped: '%s'",
+            ", ".join(dropped_columns.astype(str)),
         )
-        df.drop(empty_series, axis=1, inplace=True)
-    df_plot = df.copy()
     # Compute sharpe ratio for every timeseries.
-    sharpe_ratio = df_plot.apply(stats.compute_annualized_sharpe_ratio)
+    sharpe_ratio = {}
+    for i, series in df_plot.iteritems():
+        series.dropna(inplace=True)
+        series.index.freq = series.index.inferred_freq
+        sharpe_ratio[i] = stats.compute_annualized_sharpe_ratio(series)
+    sharpe_ratio = pd.Series(sharpe_ratio)
     sharpe_cols = [
         [round(sr, 1), df_plot.columns[i]] for i, sr in enumerate(sharpe_ratio)
     ]
@@ -1346,7 +1351,7 @@ def plot_pnl(
     ]
     df_plot = df_plot.reindex(sorted_names, axis=1)
     df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
-    df_plot.cumsum().plot(ax=ax, colormap=colormap)
+    df_plot.cumsum().plot(ax=ax, colormap=colormap, figsize=figsize)
     # Setting fixed borders of x-axis.
     ax.set_xlim([left_lim, right_lim])
     # Formatting.
