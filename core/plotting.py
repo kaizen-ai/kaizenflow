@@ -737,14 +737,13 @@ def multipletests_plot(
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     :param suptitle: overall title of all plots
     """
-    adj_pvals = adj_pvals.copy()
     if adj_pvals is None:
         pval_series = pvals.dropna().sort_values().reset_index(drop=True)
         adj_pvals = stats.multipletests(pval_series, method=method).to_frame()
     else:
         pval_series = pvals.dropna()
         if isinstance(adj_pvals, pd.Series):
-            adj_pvals = adj_pvals.to_frame()
+            adj_pvals = adj_pvals.copy().to_frame()
     num_cols = num_cols or 1
     adj_pvals.dropna(axis=1, how="all", inplace=True)
     _, ax = get_multiple_plots(
