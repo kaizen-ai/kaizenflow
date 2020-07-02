@@ -1110,7 +1110,7 @@ def plot_rolling_annualized_volatility(
     ax.axhline(0, linewidth=0.8, color="black")
     ax.set_title(f"Annualized rolling volatility ({unit})")
     # Start plot from original index if specified.
-    if trim_index:
+    if not trim_index:
         ax.set_xlim([min(srs.index), max(srs.index)])
     else:
         ax.set_xlim(
@@ -1193,7 +1193,7 @@ def plot_rolling_annualized_sharpe_ratio(
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
     # Start plot from original index if specified.
-    if trim_index:
+    if not trim_index:
         ax.set_xlim([min(srs.index), max(srs.index)])
     ax.set_ylabel("annualized SR")
     ax.legend()
