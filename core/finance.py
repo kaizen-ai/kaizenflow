@@ -340,6 +340,7 @@ def compute_bet_runs(positions: pd.Series) -> pd.Series:
     :return: series of -1/0/1 with 1's indicating long bets and -1 indicating
         short bets
     """
+    dbg.dassert_monotonic_index(positions)
     zero_mask = positions == 0
     # Calculate bet "runs".
     bet_runs = positions.copy()
