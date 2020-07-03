@@ -209,11 +209,11 @@ def aggregate_log_rets(
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert(not df.columns.has_duplicates)
-    # Compute relative weights.
+    # Compute inverse volatility weights.
     weights = df.apply(lambda x: _compute_scale_factor(x, target_volatility))
     # Replace inf's with 0's in weights.
     weights.replace([np.inf, -np.inf], np.nan, inplace=True)
-    # Rescale to get % weights.
+    # Rescale weights to percentages.
     weights /= weights.sum()
     weights.name = "weights"
     # Replace NaN with zero for weights.
