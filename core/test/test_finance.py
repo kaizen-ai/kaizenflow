@@ -48,6 +48,38 @@ class Test_aggregate_log_rets(hut.TestCase):
         )
         self.check_string(txt)
 
+    def test3(self) -> None:
+        """
+        Test for an input with all-NaN column.
+
+        Results are not intended.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, 0] = np.nan
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n, "
+            f"relative_weights:\n{str(relative_weights)}"
+        )
+        self.check_string(txt)
+
+    def test4(self) -> None:
+        """
+        Test for an all-NaN input.
+
+        Results are not intended.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, :] = np.nan
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n, "
+            f"relative_weights:\n{str(relative_weights)}"
+        )
+        self.check_string(txt)
+
 
 class Test_compute_drawdown(hut.TestCase):
     @staticmethod
