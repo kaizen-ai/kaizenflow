@@ -199,20 +199,25 @@ def rescale_to_target_annual_volatility(
 
 def aggregate_log_rets(
     df: pd.DataFrame, target_volatility: float
-) -> Tuple[pd.Series, List[int]]:
+) -> Tuple[pd.Series, pd.Series]:
     """
     Perform inverse volatility weighting and normalize volatility.
 
     :param df: cols contain log returns
     :param target_volatility: annualize target volatility
-    :return: srs of log returns
+    :return: series of log returns, series of weights
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(not df.columns.has_duplicates)
     # Compute relative weights.
-    scale_factors = [
-        _compute_scale_factor(df[col], target_volatility) for col in df.columns
-    ]
-    relative_weights = scale_factors / sum(scale_factors)
+    weights = df.apply(lambda x: _compute_scale_factor(x, target_volatility))
+    # Replace inf's with 0's in weights.
+    weights.replace([np.inf, -np.inf], np.nan, inplace=True)
+    # Rescale to get % weights.
+    weights /= weights.sum()
+    weights.name = "weights"
+    # Replace NaN with zero for weights.
+    weights = hdf.apply_nan_mode(weights, mode="fill_with_zero")
     # Compute aggregate log returns.
     df = df.apply(
         lambda x: rescale_to_target_annual_volatility(x, target_volatility)
@@ -222,7 +227,7 @@ def aggregate_log_rets(
     srs = df.squeeze()
     srs = convert_pct_rets_to_log_rets(srs)
     rescaled_srs = rescale_to_target_annual_volatility(srs, target_volatility)
-    return rescaled_srs, relative_weights
+    return rescaled_srs, weights
 
 
 def _compute_scale_factor(srs: pd.Series, volatility: float) -> pd.Series:

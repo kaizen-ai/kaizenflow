@@ -40,5 +40,8 @@ rescaled_srs:
 2010-02-23  0.014822
 2010-02-24  0.021462
 2010-02-25  0.017781
-, relative_weights:
-[0.50111279 0.49888721]
+
+relative_weights:
+       weights
+srs1  0.501113
+srs2  0.498887

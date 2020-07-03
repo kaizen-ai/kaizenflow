@@ -40,5 +40,8 @@ rescaled_srs:
 2010-02-23 NaN
 2010-02-24 NaN
 2010-02-25 NaN
-, relative_weights:
-[nan nan]
+
+relative_weights:
+      weights
+srs1      0.0
+srs2      0.0
