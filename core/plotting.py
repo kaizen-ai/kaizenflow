@@ -312,7 +312,7 @@ def plot_autocorrelation(
         signal = signal.to_frame()
     nrows = len(signal.columns)
     if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows, ncols=2)
+        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
         if axes.size == 2:
             axes = [axes]
     if title_prefix is None:
@@ -358,7 +358,7 @@ def plot_spectrum(
         title_prefix = ""
     nrows = len(signal.columns)
     if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows, ncols=2)
+        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
         if axes.size == 2:
             axes = [axes]
     for idx, col in enumerate(signal.columns):
@@ -735,28 +735,28 @@ def multipletests_plot(
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     :param suptitle: overall title of all plots
     """
-
+    adj_pvals = adj_pvals.copy()
     if adj_pvals is None:
         pval_series = pvals.dropna().sort_values().reset_index(drop=True)
         adj_pvals = stats.multipletests(pval_series, method=method).to_frame()
-        plt_count = 1
     else:
         pval_series = pvals.dropna()
         if isinstance(adj_pvals, pd.Series):
             adj_pvals = adj_pvals.to_frame()
-        plt_count = len(adj_pvals.columns)
     num_cols = num_cols or 1
+    adj_pvals.dropna(axis=1, how="all", inplace=True)
     _, ax = get_multiple_plots(
-        plt_count, num_cols=num_cols, sharex=False, sharey=True, y_scale=5
+        adj_pvals.shape[1],
+        num_cols=num_cols,
+        sharex=False,
+        sharey=True,
+        y_scale=5,
     )
     if not isinstance(ax, np.ndarray):
         ax = [ax]
     for i, col in enumerate(adj_pvals.columns):
         mask = adj_pvals[col].notna()
         adj_pval = adj_pvals.loc[mask, col].sort_values().reset_index(drop=True)
-        if adj_pval.empty:
-            ax[i].set_title(col)
-            continue
         ax[i].plot(
             pval_series.loc[mask].sort_values().reset_index(drop=True),
             label="pvals",
@@ -1056,6 +1056,7 @@ def plot_rolling_annualized_volatility(
     max_depth: int = 1,
     p_moment: float = 2,
     unit: str = "ratio",
+    trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
@@ -1070,6 +1071,7 @@ def plot_rolling_annualized_volatility(
     :param unit: "ratio", "%" or "bps" scaling coefficient
         "Exchange:Kibot_symbol"
         "Exchange:Exchange_symbol"
+    :param trim_index: start plot at original index if True
     :param ax: axes
     """
     min_periods = min_periods or tau
@@ -1105,10 +1107,14 @@ def plot_rolling_annualized_volatility(
     )
     ax.axhline(0, linewidth=0.8, color="black")
     ax.set_title(f"Annualized rolling volatility ({unit})")
-    ax.set_xlim(
-        annualized_rolling_volatility.index[0],
-        annualized_rolling_volatility.index[-1],
-    )
+    # Start plot from original index if specified.
+    if not trim_index:
+        ax.set_xlim([min(srs.index), max(srs.index)])
+    else:
+        ax.set_xlim(
+            annualized_rolling_volatility.index[0],
+            annualized_rolling_volatility.index[-1],
+        )
     ax.set_ylabel(unit)
     ax.set_xlabel("period")
     ax.legend()
@@ -1122,6 +1128,7 @@ def plot_rolling_annualized_sharpe_ratio(
     p_moment: float = 2,
     ci: float = 0.95,
     title_suffix: Optional[str] = None,
+    trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
@@ -1134,6 +1141,7 @@ def plot_rolling_annualized_sharpe_ratio(
     :param p_moment: argument as for sigp.compute_smooth_moving_average
     :param ci: confidence interval
     :param title_suffix: suffix added to the title
+    :param trim_index: start plot at original index if True
     :param ax: axes
     """
     title_suffix = title_suffix or ""
@@ -1182,6 +1190,9 @@ def plot_rolling_annualized_sharpe_ratio(
         label="average SR",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
+    # Start plot from original index if specified.
+    if not trim_index:
+        ax.set_xlim([min(srs.index), max(srs.index)])
     ax.set_ylabel("annualized SR")
     ax.legend()
 
