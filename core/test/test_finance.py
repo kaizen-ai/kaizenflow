@@ -22,9 +22,13 @@ class Test_aggregate_log_rets(hut.TestCase):
 
     def test1(self) -> None:
         sample = self._get_sample(42)
-        actual = fin.aggregate_log_rets(sample, 0.1)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n, "
+            f"relative_weights:\n{str(relative_weights)}"
+        )
+        self.check_string(txt)
 
 
 class Test_compute_drawdown(hut.TestCase):
