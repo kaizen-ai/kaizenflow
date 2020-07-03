@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -193,22 +193,32 @@ def rescale_to_target_annual_volatility(
     :return: rescaled returns series
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    ppy = hdf.infer_sampling_points_per_year(srs)
-    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
-    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
-    _LOG.debug("`scale_factor`=%f", scale_factor)
+    scale_factor = _compute_scale_factor(srs, volatility=volatility)
     return scale_factor * srs
 
 
-def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
+def aggregate_log_rets(
+    df: pd.DataFrame, target_volatility: float
+) -> Tuple[pd.Series, pd.Series]:
     """
-    Perform inverse variance weighting and normalize volatility.
+    Perform inverse volatility weighting and normalize volatility.
 
     :param df: cols contain log returns
     :param target_volatility: annualize target volatility
-    :return: srs of log returns
+    :return: series of log returns, series of weights
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(not df.columns.has_duplicates)
+    # Compute inverse volatility weights.
+    weights = df.apply(lambda x: _compute_scale_factor(x, target_volatility))
+    # Replace inf's with 0's in weights.
+    weights.replace([np.inf, -np.inf], np.nan, inplace=True)
+    # Rescale weights to percentages.
+    weights /= weights.sum()
+    weights.name = "weights"
+    # Replace NaN with zero for weights.
+    weights = hdf.apply_nan_mode(weights, mode="fill_with_zero")
+    # Compute aggregate log returns.
     df = df.apply(
         lambda x: rescale_to_target_annual_volatility(x, target_volatility)
     )
@@ -217,7 +227,24 @@ def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
     srs = df.squeeze()
     srs = convert_pct_rets_to_log_rets(srs)
     rescaled_srs = rescale_to_target_annual_volatility(srs, target_volatility)
-    return rescaled_srs
+    return rescaled_srs, weights
+
+
+def _compute_scale_factor(srs: pd.Series, volatility: float) -> pd.Series:
+    """
+    Compute scale factor of a series according to a target volatility.
+
+    :param srs: returns series. Index must have `freq`.
+    :param volatility: volatility as a proportion (e.g., `0.1`
+        corresponds to 10% annual volatility)
+    :return: scale factor
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
+    _LOG.debug("`scale_factor`=%f", scale_factor)
+    return scale_factor
 
 
 # TODO(*): Consider moving to `statistics.py`.

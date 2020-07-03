@@ -18,13 +18,80 @@ class Test_aggregate_log_rets(hut.TestCase):
         date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
         mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
         sample = mn_process.generate_sample(date_range, seed=seed)
+        sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
         return sample
 
     def test1(self) -> None:
-        sample = self._get_sample(42)
-        actual = fin.aggregate_log_rets(sample, 0.1)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        """
+        Test for a clean input.
+        """
+        sample = self._get_sample(seed=1)
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        relative_weights_string = hut.convert_df_to_string(
+            relative_weights, index=True
+        )
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
+            f"relative_weights:\n{relative_weights_string}"
+        )
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        """
+        Test for an input with NaNs.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[1, 1] = np.nan
+        sample.iloc[0:5, 0] = np.nan
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        relative_weights_string = hut.convert_df_to_string(
+            relative_weights, index=True
+        )
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
+            f"relative_weights:\n{relative_weights_string}"
+        )
+        self.check_string(txt)
+
+    def test3(self) -> None:
+        """
+        Test for an input with all-NaN column.
+
+        Results are not intended.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, 0] = np.nan
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        relative_weights_string = hut.convert_df_to_string(
+            relative_weights, index=True
+        )
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
+            f"relative_weights:\n{relative_weights_string}"
+        )
+        self.check_string(txt)
+
+    def test4(self) -> None:
+        """
+        Test for an all-NaN input.
+
+        Results are not intended.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, :] = np.nan
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        relative_weights_string = hut.convert_df_to_string(
+            relative_weights, index=True
+        )
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
+            f"relative_weights:\n{relative_weights_string}"
+        )
+        self.check_string(txt)
 
 
 class Test_compute_drawdown(hut.TestCase):
