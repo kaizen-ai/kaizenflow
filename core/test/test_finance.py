@@ -21,7 +21,25 @@ class Test_aggregate_log_rets(hut.TestCase):
         return sample
 
     def test1(self) -> None:
-        sample = self._get_sample(42)
+        """
+        Test for a clean input.
+        """
+        sample = self._get_sample(seed=1)
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n, "
+            f"relative_weights:\n{str(relative_weights)}"
+        )
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        """
+        Test for an input with NaNs.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[1, 1] = np.nan
+        sample.iloc[0:5, 0] = np.nan
         rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
         rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
         txt = (
