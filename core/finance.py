@@ -388,6 +388,7 @@ def compute_signed_bet_lengths(
         length corresponds to a long bet or a short bet. Index corresponds to
         end of bet.
     """
+    nan_mode = nan_mode or "ffill"
     positions = hdf.apply_nan_mode(positions, nan_mode)
     bet_runs = compute_bet_runs(positions)
     bet_starts = compute_bet_starts(positions)
@@ -395,7 +396,7 @@ def compute_signed_bet_lengths(
     bet_starts_idx = bet_starts[bet_starts != 0].index
     bet_lengths = []
     bet_ends_idx = []
-    for i, t0 in enumerate(bet_starts_idx):
+    for i, t0 in enumerate(bet_starts_idx[:-1]):
         t0_mask = bet_runs.index >= t0
         if i < bet_starts_idx.size - 1:
             t1_mask = bet_runs.index < bet_starts_idx[i + 1]
@@ -404,7 +405,7 @@ def compute_signed_bet_lengths(
             mask = t0_mask
         bet_mask = bet_runs.loc[mask]
         bet_length = bet_mask.sum()
-        bet_end = bet_runs.loc[mask].index[-1]
+        bet_end = bet_starts_idx[i + 1]
         bet_lengths.append(bet_length)
         bet_ends_idx.append(bet_end)
     bet_length_srs = pd.Series(
