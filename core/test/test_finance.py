@@ -282,7 +282,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, np.nan, np.nan], index=idx)
-        expected = pd.Series([1, 0, 0], index=idx, dtype=float)
+        expected = pd.Series([0, 0, 3], index=idx, dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
