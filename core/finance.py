@@ -329,7 +329,9 @@ def compute_average_holding_period(
     return average_holding_period
 
 
-def compute_bet_runs(positions: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
+def compute_bet_runs(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
     """
     Calculate runs of long/short bets.
 
