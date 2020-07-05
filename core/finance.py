@@ -354,3 +354,89 @@ def compute_average_holding_period(
         pos.abs().mean() / pos.diff().abs().mean()
     ) * unit_coef
     return average_holding_period
+
+
+def compute_bet_runs(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    Calculate runs of long/short bets.
+
+    A bet "run" is a (maximal) series of positions on the same "side", e.g.,
+    long or short.
+
+    :param positions: series of long/short positions
+    :return: series of -1/0/1 with 1's indicating long bets and -1 indicating
+        short bets
+    """
+    dbg.dassert_monotonic_index(positions)
+    # Forward fill NaN positions by default (e.g., do not assume they are
+    # closed out).
+    nan_mode = nan_mode or "ffill"
+    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
+    # Locate zero positions so that we can avoid dividing by zero when
+    # determining bet sign.
+    zero_mask = positions == 0
+    # Calculate bet "runs".
+    bet_runs = positions.copy()
+    bet_runs.loc[~zero_mask] /= np.abs(bet_runs.loc[~zero_mask])
+    return bet_runs
+
+
+def compute_bet_starts(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    Calculate the start of each new bet.
+
+    :param positions: series of long/short positions
+    :return: a series with a +1 at the start of each new long bet and a -1 at
+        the start of each new short bet; all other values are 0 or NaN
+    """
+    bet_runs = compute_bet_runs(positions, nan_mode)
+    # Determine start of bets.
+    bet_starts = bet_runs.subtract(bet_runs.shift(1, fill_value=0), fill_value=0)
+    # TODO(*): Consider factoring out this operation.
+    # Locate zero positions so that we can avoid dividing by zero when
+    # determining bet sign.
+    bets_zero_mask = bet_starts == 0
+    bet_starts.loc[~bets_zero_mask] /= np.abs(bet_starts.loc[~bets_zero_mask])
+    return bet_starts
+
+
+def compute_signed_bet_lengths(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    Calculate lengths of bets (in sampling freq).
+
+    :param positions: series of long/short positions
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: signed lengths of bets, i.e., the sign indicates whether the
+        length corresponds to a long bet or a short bet. Index corresponds to
+        end of bet.
+    """
+    bet_runs = compute_bet_runs(positions, nan_mode)
+    bet_starts = compute_bet_starts(positions, nan_mode)
+    dbg.dassert(bet_runs.index.equals(bet_starts.index))
+    # Remove NaNs as from `bet_starts`.
+    bet_starts = bet_starts.dropna()
+    bet_starts_idx = bet_starts[bet_starts != 0].index
+    bet_lengths = []
+    bet_ends_idx = []
+    for i, t0 in enumerate(bet_starts_idx[:-1]):
+        t0_mask = bet_runs.index >= t0
+        if i < bet_starts_idx.size - 1:
+            t1_mask = bet_runs.index < bet_starts_idx[i + 1]
+            mask = t0_mask & t1_mask
+        else:
+            mask = t0_mask
+        bet_mask = bet_runs.loc[mask]
+        bet_length = bet_mask.sum()
+        bet_end = bet_starts_idx[i + 1]
+        bet_lengths.append(bet_length)
+        bet_ends_idx.append(bet_end)
+    bet_length_srs = pd.Series(
+        index=bet_ends_idx, data=bet_lengths, name=positions.name
+    )
+    return bet_length_srs
