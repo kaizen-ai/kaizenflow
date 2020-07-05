@@ -356,7 +356,9 @@ def compute_bet_runs(
     return bet_runs
 
 
-def compute_bet_starts(positions: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
+def compute_bet_starts(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
     """
     Calculate the start of each new bet.
 
