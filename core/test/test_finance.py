@@ -151,7 +151,7 @@ class Test_compute_bet_runs(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Test zeros.
+        Test leading zeros.
         """
         idx = pd.date_range(start="2010-01-01", periods=4, freq="D")
         positions = pd.Series([0, 0, 0, 1], index=idx)
@@ -171,7 +171,7 @@ class Test_compute_bet_runs(hut.TestCase):
 
     def test5(self) -> None:
         """
-        Test NaNs.
+        Test leading NaNs.
         """
         idx = pd.date_range(start="2010-01-01", periods=4, freq="D")
         positions = pd.Series([np.nan, np.nan, 0, 1], index=idx)
@@ -183,7 +183,7 @@ class Test_compute_bet_runs(hut.TestCase):
         """
         Test series with a single value.
         """
-        positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
+        positions = pd.Series([10], index=[pd.Timestamp("2010-01-01")])
         expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
         actual = fin.compute_bet_runs(positions)
         pd.testing.assert_series_equal(actual, expected)
@@ -217,7 +217,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         positions.iloc[:4] = np.nan
         positions.iloc[10:15] = np.nan
         positions.iloc[-4:] = np.nan
-        actual = fin.compute_signed_bet_lengths(positions, "fill_with_zero")
+        actual = fin.compute_signed_bet_lengths(positions)
         output_str = (
             f"{prnt.frame('positions')}\n"
             f"{hut.convert_df_to_string(positions, index=True)}\n"
@@ -243,7 +243,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         expected = pd.Series(
             [4, -3, 0, -1, 0], index=expected_bet_starts, dtype=float
         )
-        actual = fin.compute_signed_bet_lengths(positions, "fill_with_zero")
+        actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
     def test4(self) -> None:
