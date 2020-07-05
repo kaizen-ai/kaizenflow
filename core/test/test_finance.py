@@ -247,48 +247,69 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         actual = fin.compute_signed_bet_lengths(positions, "fill_with_zero")
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_one_val1(self) -> None:
+    def test4(self) -> None:
+        """
+        Test a single value.
+        """
         positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
         expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_nans1(self) -> None:
+    def test5(self) -> None:
+        """
+        Test NaNs.
+        """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([np.nan, np.nan], index=idx)
         expected = pd.Series([0, 0], index=idx, dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_nans2(self) -> None:
+    def test6(self) -> None:
+        """
+        Test NaNs.
+        """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([np.nan, np.nan, 1], index=idx)
         expected = pd.Series([0, 0, 1], index=idx, dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_nans3(self) -> None:
+    def test7(self) -> None:
+        """
+        Test NaNs
+        """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, np.nan, np.nan], index=idx)
         expected = pd.Series([1, 0, 0], index=idx, dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_zeros1(self) -> None:
+    def test8(self) -> None:
+        """
+        Test zeroes.
+        """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([0, 0], index=idx)
         expected = pd.Series()
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_zeros2(self) -> None:
+    def test9(self) -> None:
+        """
+        Test zeroes.
+        """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([0, 0, 1], index=idx)
         expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-03")])
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_zeros3(self) -> None:
+    def test10(self) -> None:
+        """
+        Test zeroes.
+        """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, 0, 0], index=idx)
         expected = pd.Series(

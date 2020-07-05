@@ -356,7 +356,7 @@ def compute_bet_runs(
     return bet_runs
 
 
-def compute_bet_starts(positions: pd.Series) -> pd.Series:
+def compute_bet_starts(positions: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
     """
     Calculate the start of each new bet.
 
@@ -364,6 +364,8 @@ def compute_bet_starts(positions: pd.Series) -> pd.Series:
     :return: a series with a +1 at the start of each new long bet and a -1 at
         the start of each new short bet; all other values are 0 or NaN
     """
+    nan_mode = nan_mode or "ffill"
+    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
     bet_runs = compute_bet_runs(positions)
     # Determine start of bets.
     bet_starts = bet_runs - bet_runs.shift(1, fill_value=0)
