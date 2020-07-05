@@ -233,16 +233,15 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         )
         expected_bet_starts = pd.to_datetime(
             [
-                "2010-01-04",
-                "2010-01-07",
-                "2010-01-09",
+                "2010-01-05",
+                "2010-01-08",
                 "2010-01-10",
                 "2010-01-11",
                 "2010-01-12",
             ]
         )
         expected = pd.Series(
-            [4, -3, 0, -1, 0, 1], index=expected_bet_starts, dtype=float
+            [4, -3, 0, -1, 0], index=expected_bet_starts, dtype=float
         )
         actual = fin.compute_signed_bet_lengths(positions, "fill_with_zero")
         pd.testing.assert_series_equal(actual, expected)
@@ -252,7 +251,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         Test a single value.
         """
         positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
-        expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
+        expected = pd.Series()
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -262,7 +261,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([np.nan, np.nan], index=idx)
-        expected = pd.Series([0, 0], index=idx, dtype=float)
+        expected = pd.Series()
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -271,8 +270,8 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         Test NaNs.
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
-        positions = pd.Series([np.nan, np.nan, 1], index=idx)
-        expected = pd.Series([0, 0, 1], index=idx, dtype=float)
+        positions = pd.Series([1, np.nan, 0], index=idx)
+        expected = pd.Series([2], index=pd.to_datetime(["2010-01-03"]), dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -282,7 +281,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, np.nan, np.nan], index=idx)
-        expected = pd.Series([0, 0, 3], index=idx, dtype=float)
+        expected = pd.Series()
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -301,7 +300,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         Test zeroes.
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
-        positions = pd.Series([0, 0, 1], index=idx)
+        positions = pd.Series([0, 1, 0], index=idx)
         expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-03")])
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
@@ -313,8 +312,8 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, 0, 0], index=idx)
         expected = pd.Series(
-            [1.0, 0.0],
-            index=[pd.Timestamp("2010-01-01"), pd.Timestamp("2010-01-03")],
+            [1.0],
+            index=[pd.Timestamp("2010-01-02")]
         )
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)

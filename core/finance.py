@@ -393,6 +393,8 @@ def compute_signed_bet_lengths(
     bet_runs = compute_bet_runs(positions)
     bet_starts = compute_bet_starts(positions)
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
+    # Remove NaNs as from `bet_starts`.
+    bet_starts = bet_starts.dropna()
     bet_starts_idx = bet_starts[bet_starts != 0].index
     bet_lengths = []
     bet_ends_idx = []
