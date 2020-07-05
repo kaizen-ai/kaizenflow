@@ -149,28 +149,40 @@ class Test_compute_bet_runs(hut.TestCase):
         )
         self.check_string(output_str)
 
-    def test_zeros1(self) -> None:
+    def test3(self) -> None:
+        """
+        Test zeros.
+        """
         idx = pd.date_range(start="2010-01-01", periods=4, freq="D")
         positions = pd.Series([0, 0, 0, 1], index=idx)
         expected = pd.Series([0, 0, 0, 1], index=idx, dtype=float)
         actual = fin.compute_bet_runs(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_zeros2(self) -> None:
+    def test4(self) -> None:
+        """
+        Test all zeros.
+        """
         idx = pd.date_range(start="2010-01-01", periods=2, freq="D")
         positions = pd.Series([0, 0], index=idx)
         expected = pd.Series([0, 0], index=idx, dtype=float)
         actual = fin.compute_bet_runs(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_nans1(self) -> None:
+    def test5(self) -> None:
+        """
+        Test NaNs.
+        """
         idx = pd.date_range(start="2010-01-01", periods=4, freq="D")
         positions = pd.Series([np.nan, np.nan, 0, 1], index=idx)
         expected = pd.Series([np.nan, np.nan, 0, 1], index=idx, dtype=float)
         actual = fin.compute_bet_runs(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    def test_one_val1(self) -> None:
+    def test6(self) -> None:
+        """
+        Test series with a single value.
+        """
         positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
         expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
         actual = fin.compute_bet_runs(positions)

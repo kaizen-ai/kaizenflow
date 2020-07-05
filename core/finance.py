@@ -329,7 +329,7 @@ def compute_average_holding_period(
     return average_holding_period
 
 
-def compute_bet_runs(positions: pd.Series) -> pd.Series:
+def compute_bet_runs(positions: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
     """
     Calculate runs of long/short bets.
 
@@ -341,6 +341,12 @@ def compute_bet_runs(positions: pd.Series) -> pd.Series:
         short bets
     """
     dbg.dassert_monotonic_index(positions)
+    # Forward fill NaN positions by default (e.g., do not assume they are
+    # closed out).
+    nan_mode = nan_mode or "ffill"
+    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
+    # Locate zero positions so that we can avoid dividing by zero when
+    # determining bet sign.
     zero_mask = positions == 0
     # Calculate bet "runs".
     bet_runs = positions.copy()
