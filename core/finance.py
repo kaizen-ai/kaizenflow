@@ -366,11 +366,12 @@ def compute_bet_starts(
     :return: a series with a +1 at the start of each new long bet and a -1 at
         the start of each new short bet; all other values are 0 or NaN
     """
-    nan_mode = nan_mode or "ffill"
-    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
-    bet_runs = compute_bet_runs(positions)
+    bet_runs = compute_bet_runs(positions, nan_mode)
     # Determine start of bets.
     bet_starts = bet_runs - bet_runs.shift(1, fill_value=0)
+    # TODO(*): Consider factoring out this operation.
+    # Locate zero positions so that we can avoid dividing by zero when
+    # determining bet sign.
     bets_zero_mask = bet_starts == 0
     bet_starts.loc[~bets_zero_mask] /= np.abs(bet_starts.loc[~bets_zero_mask])
     return bet_starts
@@ -388,10 +389,8 @@ def compute_signed_bet_lengths(
         length corresponds to a long bet or a short bet. Index corresponds to
         end of bet.
     """
-    nan_mode = nan_mode or "ffill"
-    positions = hdf.apply_nan_mode(positions, nan_mode)
-    bet_runs = compute_bet_runs(positions)
-    bet_starts = compute_bet_starts(positions)
+    bet_runs = compute_bet_runs(positions, nan_mode)
+    bet_starts = compute_bet_starts(positions, nan_mode)
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
     # Remove NaNs as from `bet_starts`.
     bet_starts = bet_starts.dropna()
