@@ -189,6 +189,44 @@ class Test_compute_bet_runs(hut.TestCase):
         pd.testing.assert_series_equal(actual, expected)
 
 
+class Test_compute_bet_starts(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        positions = Test_compute_bet_starts._get_series(42)
+        actual = fin.compute_bet_starts(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test2(self) -> None:
+        positions = Test_compute_bet_starts._get_series(42)
+        positions.iloc[:4] = np.nan
+        positions.iloc[10:15] = np.nan
+        positions.iloc[-4:] = np.nan
+        actual = fin.compute_bet_starts(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+
 class Test_compute_signed_bet_lengths(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
@@ -203,7 +241,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
 
     def test1(self) -> None:
         positions = Test_compute_signed_bet_lengths._get_series(42)
-        actual = fin.compute_signed_bet_lengths(positions, "fill_with_zero")
+        actual = fin.compute_signed_bet_lengths(positions)
         output_str = (
             f"{prnt.frame('positions')}\n"
             f"{hut.convert_df_to_string(positions, index=True)}\n"

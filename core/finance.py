@@ -368,7 +368,7 @@ def compute_bet_starts(
     """
     bet_runs = compute_bet_runs(positions, nan_mode)
     # Determine start of bets.
-    bet_starts = bet_runs - bet_runs.shift(1, fill_value=0)
+    bet_starts = bet_runs.subtract(bet_runs.shift(1, fill_value=0), fill_value=0)
     # TODO(*): Consider factoring out this operation.
     # Locate zero positions so that we can avoid dividing by zero when
     # determining bet sign.
