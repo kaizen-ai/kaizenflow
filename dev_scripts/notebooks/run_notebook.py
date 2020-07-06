@@ -154,13 +154,17 @@ def _run_notebook(
         # https://github.com/ContinuumIO/anaconda-issues/issues/877
         " --ExecutePreprocessor.timeout=-1"
     )
-    rc = si.system(cmd, output_file=log_file)
+    rc = si.system(cmd, output_file=log_file, abort_on_error=False)
     # Re-run the notebook if command exited with an error.
     for n in range(num_attempts):
         if rc == 0:
             break
-        _LOG.info("Attempting to re-run the notebook for the %s time", n)
-        rc = si.system(cmd, output_file=log_file)
+        _LOG.warning("Attempting to re-run the notebook for the %s time", n)
+        if n == num_attempts - 1:
+            abort_on_error = True
+        else:
+            abort_on_error = False
+        rc = si.system(cmd, output_file=log_file, abort_on_error=abort_on_error)
     # Convert to html and publish.
     if publish:
         _LOG.info("Converting notebook %s", i)
@@ -306,6 +310,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--num_attempts",
         default=0,
+        type=int,
         help="Retry executing the notebook after an error `n` times",
         required=False,
     )
