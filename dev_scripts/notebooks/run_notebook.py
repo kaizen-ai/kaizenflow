@@ -78,6 +78,7 @@ def _run_notebook(
     dst_dir: str,
     config: cfg.Config,
     config_builder: str,
+    num_attempts: int,
     publish: bool,
 ) -> None:
     """
@@ -86,13 +87,14 @@ def _run_notebook(
     The `config_builder` is passed inside the notebook to generate a list
     of all configs to be run as part of a series of experiments, but only the
     `i`-th config is run inside a particular notebook.
-    :param i: Index of config in a list of configs
-    :param notebook_file: Path to file with experiment template
-    :param dst_dir: Path to directory with results
-    :param config: Config for the experiment
-    :param config_builder: Function used to generate all configs
-    :param publish: publish notebook iff `True`
-    :return:
+
+    :param i: index of config in a list of configs
+    :param notebook_file: path to file with experiment template
+    :param dst_dir: path to directory with results
+    :param config: config for the experiment
+    :param config_builder: function used to generate all configs
+    :param num_attempts: number of times to re-run the notebook after an error
+    :param publish: publish notebook if `True`
     """
     dbg.dassert_exists(notebook_file)
     dbg.dassert_isinstance(config, cfg.Config)
@@ -152,7 +154,13 @@ def _run_notebook(
         # https://github.com/ContinuumIO/anaconda-issues/issues/877
         " --ExecutePreprocessor.timeout=-1"
     )
-    si.system(cmd, output_file=log_file)
+    rc = si.system(cmd, output_file=log_file)
+    # Re-run the notebook if command exited with an error.
+    for n in range(num_attempts):
+        if rc == 0:
+            break
+        _LOG.info("Attempting to re-run the notebook for the %s time", n)
+        rc = si.system(cmd, output_file=log_file)
     # Convert to html and publish.
     if publish:
         _LOG.info("Converting notebook %s", i)
@@ -218,6 +226,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.dassert_exists(notebook_file)
     #
     publish = args.publish_notebook
+    num_attempts = args.num_attempts
     #
     num_threads = args.num_threads
     if num_threads == "serial":
@@ -226,7 +235,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.debug("\n%s", printing.frame("Config %s" % i))
             #
             _run_notebook(
-                i, notebook_file, dst_dir, config, config_builder, publish
+                i,
+                notebook_file,
+                dst_dir,
+                config,
+                config_builder,
+                num_attempts,
+                publish,
             )
     else:
         num_threads = int(num_threads)
@@ -239,6 +254,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 dst_dir,
                 config,
                 config_builder,
+                num_attempts,
                 publish,
             )
             for config in configs
@@ -286,6 +302,12 @@ def _parse() -> argparse.ArgumentParser:
         "--dry_run",
         action="store_true",
         help="Run a short sim to sanity check the flow",
+    )
+    parser.add_argument(
+        "--num_attempts",
+        default=0,
+        help="Retry executing the notebook after an error `n` times",
+        required=False,
     )
     parser.add_argument(
         "--num_threads",
