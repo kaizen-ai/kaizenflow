@@ -263,34 +263,31 @@ def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
     colormap: str = "rainbow",
     mode: Optional[str] = None,
-    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
+    axes: Optional[List[mpl.axes.Axes]] = None,
+    figsize: Optional[Tuple[float, float]] = None,
 ) -> None:
     """
-    Plot lineplot and density plot for the given series.
+    Plot lineplot and density plot for the given dataframe.
 
     :param data: data to plot
     :param colormap: preferred colors
     :param mode: "renormalize" or "default"
-    :param ax: axes
+    :param axes: pair of axes for plot over time and density plot
+    :param figsize: matplotlib figsize
     """
     if isinstance(data, pd.Series):
         data = data.to_frame()
-    nrows = len(data.columns)
-    if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows * 2, ncols=1, figsize=(20, 5 * nrows))
-        axes = [[axes[i], axes[i + 1]] for i in range(0, len(axes), 2)]
-    if mode is None:
-        mode = "default"
+    if axes is None:
+        _, axes = plt.subplots(2, ncols=1, figsize=figsize)
+    if mode is None or mode == "default":
+        pass
     elif mode == "renormalize":
         data = data.copy()
         data /= data.std()
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
-    for idx, col in enumerate(data.columns):
-        ax1 = axes[idx][0]
-        data[col].plot(kind="density", colormap=colormap, ax=ax1)
-        ax2 = axes[idx][1]
-        data[col].plot(colormap=colormap, ax=ax2)
+    data.plot(kind="density", colormap=colormap, ax=axes[0])
+    data.plot(colormap=colormap, ax=axes[1])
 
 
 def plot_autocorrelation(
