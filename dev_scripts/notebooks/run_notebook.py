@@ -160,10 +160,10 @@ def _run_notebook(
         if rc == 0:
             break
         _LOG.warning("Attempting to re-run the notebook for the %s time", n)
-        if n == num_attempts - 1:
-            abort_on_error = True
-        else:
+        if n < num_attempts - 1:
             abort_on_error = False
+        else:
+            abort_on_error = True
         rc = si.system(cmd, output_file=log_file, abort_on_error=abort_on_error)
     # Convert to html and publish.
     if publish:
