@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as sig_gen
 import core.finance as fin
+import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -18,13 +19,80 @@ class Test_aggregate_log_rets(hut.TestCase):
         date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
         mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
         sample = mn_process.generate_sample(date_range, seed=seed)
+        sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
         return sample
 
     def test1(self) -> None:
-        sample = self._get_sample(42)
-        actual = fin.aggregate_log_rets(sample, 0.1)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        """
+        Test for a clean input.
+        """
+        sample = self._get_sample(seed=1)
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        relative_weights_string = hut.convert_df_to_string(
+            relative_weights, index=True
+        )
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
+            f"relative_weights:\n{relative_weights_string}"
+        )
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        """
+        Test for an input with NaNs.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[1, 1] = np.nan
+        sample.iloc[0:5, 0] = np.nan
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        relative_weights_string = hut.convert_df_to_string(
+            relative_weights, index=True
+        )
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
+            f"relative_weights:\n{relative_weights_string}"
+        )
+        self.check_string(txt)
+
+    def test3(self) -> None:
+        """
+        Test for an input with all-NaN column.
+
+        Results are not intended.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, 0] = np.nan
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        relative_weights_string = hut.convert_df_to_string(
+            relative_weights, index=True
+        )
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
+            f"relative_weights:\n{relative_weights_string}"
+        )
+        self.check_string(txt)
+
+    def test4(self) -> None:
+        """
+        Test for an all-NaN input.
+
+        Results are not intended.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, :] = np.nan
+        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
+        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
+        relative_weights_string = hut.convert_df_to_string(
+            relative_weights, index=True
+        )
+        txt = (
+            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
+            f"relative_weights:\n{relative_weights_string}"
+        )
+        self.check_string(txt)
 
 
 class Test_compute_drawdown(hut.TestCase):
@@ -109,3 +177,247 @@ class Test_compute_average_holding_period(hut.TestCase):
         actual = fin.compute_average_holding_period(series, unit="M")
         expected = 0.05001
         np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+
+class Test_compute_bet_runs(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        positions = Test_compute_bet_runs._get_series(42)
+        actual = fin.compute_bet_runs(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_runs')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test2(self) -> None:
+        positions = Test_compute_bet_runs._get_series(42)
+        positions.iloc[:4] = np.nan
+        positions.iloc[10:15] = np.nan
+        positions.iloc[-4:] = np.nan
+        actual = fin.compute_bet_runs(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_runs')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test3(self) -> None:
+        """
+        Test leading zeros.
+        """
+        idx = pd.date_range(start="2010-01-01", periods=4, freq="D")
+        positions = pd.Series([0, 0, 0, 1], index=idx)
+        expected = pd.Series([0, 0, 0, 1], index=idx, dtype=float)
+        actual = fin.compute_bet_runs(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test4(self) -> None:
+        """
+        Test all zeros.
+        """
+        idx = pd.date_range(start="2010-01-01", periods=2, freq="D")
+        positions = pd.Series([0, 0], index=idx)
+        expected = pd.Series([0, 0], index=idx, dtype=float)
+        actual = fin.compute_bet_runs(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test5(self) -> None:
+        """
+        Test leading NaNs.
+        """
+        idx = pd.date_range(start="2010-01-01", periods=4, freq="D")
+        positions = pd.Series([np.nan, np.nan, 0, 1], index=idx)
+        expected = pd.Series([np.nan, np.nan, 0, 1], index=idx, dtype=float)
+        actual = fin.compute_bet_runs(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test6(self) -> None:
+        """
+        Test series with a single value.
+        """
+        positions = pd.Series([10], index=[pd.Timestamp("2010-01-01")])
+        expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
+        actual = fin.compute_bet_runs(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+
+class Test_compute_bet_starts(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        positions = Test_compute_bet_starts._get_series(42)
+        actual = fin.compute_bet_starts(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test2(self) -> None:
+        positions = Test_compute_bet_starts._get_series(42)
+        positions.iloc[:4] = np.nan
+        positions.iloc[10:15] = np.nan
+        positions.iloc[-4:] = np.nan
+        actual = fin.compute_bet_starts(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+
+class Test_compute_signed_bet_lengths(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        positions = Test_compute_signed_bet_lengths._get_series(42)
+        actual = fin.compute_signed_bet_lengths(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test2(self) -> None:
+        positions = Test_compute_signed_bet_lengths._get_series(42)
+        positions.iloc[:4] = np.nan
+        positions.iloc[10:15] = np.nan
+        positions.iloc[-4:] = np.nan
+        actual = fin.compute_signed_bet_lengths(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test3(self) -> None:
+        positions = pd.Series(
+            [1, 1, 1, 2, -1, -4, -0.5, 0, 0, -1, 0, 1],
+            index=pd.date_range(start="2010-01-01", periods=12, freq="D"),
+        )
+        expected_bet_starts = pd.to_datetime(
+            [
+                "2010-01-05",
+                "2010-01-08",
+                "2010-01-10",
+                "2010-01-11",
+                "2010-01-12",
+            ]
+        )
+        expected = pd.Series(
+            [4, -3, 0, -1, 0], index=expected_bet_starts, dtype=float
+        )
+        actual = fin.compute_signed_bet_lengths(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test4(self) -> None:
+        """
+        Test a single value.
+        """
+        positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
+        expected = pd.Series()
+        actual = fin.compute_signed_bet_lengths(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test5(self) -> None:
+        """
+        Test NaNs.
+        """
+        idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
+        positions = pd.Series([np.nan, np.nan], index=idx)
+        expected = pd.Series()
+        actual = fin.compute_signed_bet_lengths(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test6(self) -> None:
+        """
+        Test NaNs.
+        """
+        idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
+        positions = pd.Series([1, np.nan, 0], index=idx)
+        expected = pd.Series(
+            [2], index=pd.to_datetime(["2010-01-03"]), dtype=float
+        )
+        actual = fin.compute_signed_bet_lengths(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test7(self) -> None:
+        """
+        Test NaNs
+        """
+        idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
+        positions = pd.Series([1, np.nan, np.nan], index=idx)
+        expected = pd.Series()
+        actual = fin.compute_signed_bet_lengths(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test8(self) -> None:
+        """
+        Test zeroes.
+        """
+        idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
+        positions = pd.Series([0, 0], index=idx)
+        expected = pd.Series()
+        actual = fin.compute_signed_bet_lengths(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test9(self) -> None:
+        """
+        Test zeroes.
+        """
+        idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
+        positions = pd.Series([0, 1, 0], index=idx)
+        expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-03")])
+        actual = fin.compute_signed_bet_lengths(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test10(self) -> None:
+        """
+        Test zeroes.
+        """
+        idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
+        positions = pd.Series([1, 0, 0], index=idx)
+        expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-02")])
+        actual = fin.compute_signed_bet_lengths(positions)
+        pd.testing.assert_series_equal(actual, expected)
