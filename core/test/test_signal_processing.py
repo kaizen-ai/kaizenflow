@@ -368,16 +368,19 @@ class Test_compute_rolling_zcorr1(hut.TestCase):
 
 class Test_compute_ipca(hut.TestCase):
     @staticmethod
-    def _get_df(seed: int) -> pd.Series:
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        df = hut.get_random_df(num_cols=10, seed=seed, **date_range,)
+    def _get_df_of_series(seed: int) -> pd.DataFrame:
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=seed)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=seed
+        )
         return df
 
     def test1(self) -> None:
         """
         Test for a clean input.
         """
-        df = self._get_df(seed=1)
+        df = self._get_df_of_series(seed=1)
         num_pc = 3
         alpha = 0.5
         lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
@@ -394,7 +397,7 @@ class Test_compute_ipca(hut.TestCase):
         """
         Test for an input with leading NaNs in only a subset of cols.
         """
-        df = self._get_df(seed=1)
+        df = self._get_df_of_series(seed=1)
         df.iloc[0:3, :-3] = np.nan
         num_pc = 3
         alpha = 0.5
@@ -412,9 +415,9 @@ class Test_compute_ipca(hut.TestCase):
         """
         Test for an input with interspersed NaNs.
         """
-        df = self._get_df(seed=1)
-        df.iloc[10:13, 3:5] = np.nan
-        df.iloc[25:28, 8:] = np.nan
+        df = self._get_df_of_series(seed=1)
+        df.iloc[5:8, 3:5] = np.nan
+        df.iloc[2:4, 8:] = np.nan
         num_pc = 3
         alpha = 0.5
         lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
@@ -434,7 +437,7 @@ class Test_compute_ipca(hut.TestCase):
         The eigenvalue estimates aren't in sorted order but should be.
         TODO(*): Fix problem with not sorted eigenvalue estimates.
         """
-        df = self._get_df(seed=1)
+        df = self._get_df_of_series(seed=1)
         df.iloc[1:2, :] = np.nan
         num_pc = 3
         alpha = 0.5
@@ -452,7 +455,7 @@ class Test_compute_ipca(hut.TestCase):
         """
         Test for an input with 5 leading NaNs in all cols.
         """
-        df = self._get_df(seed=1)
+        df = self._get_df_of_series(seed=1)
         df.iloc[:5, :] = np.nan
         num_pc = 3
         alpha = 0.5
@@ -470,21 +473,11 @@ class Test_compute_ipca(hut.TestCase):
 class Test__compute_ipca_step(hut.TestCase):
     @staticmethod
     def _get_df_of_series(seed: int) -> pd.DataFrame:
-        n_series = 10
-        arparams = np.array([])
-        maparams = np.array([])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 10, "freq": "M"}
-        # Generating a dataframe from different series.
-        df = pd.DataFrame(
-            [
-                arma_process.generate_sample(
-                    date_range_kwargs=date_range, seed=seed + i
-                )
-                for i in range(n_series)
-            ],
-            index=["series_" + str(i) for i in range(n_series)],
-        ).T
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=seed)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=seed
+        )
         return df
 
     def test1(self) -> None:
