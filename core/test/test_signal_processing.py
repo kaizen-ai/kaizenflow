@@ -431,8 +431,8 @@ class Test_compute_ipca(hut.TestCase):
         """
         Test for an input with a full-NaN row among the 3 first rows.
 
-        TODO(*): The eigenvalue estimates aren't in sorted order,
-            so something is wrong and should be fixed.
+        The eigenvalue estimates aren't in sorted order but should be.
+        TODO(*): Fix problem with not sorted eigenvalue estimates.
         """
         df = self._get_df(seed=1)
         df.iloc[1:2, :] = np.nan
@@ -496,9 +496,16 @@ class Test__compute_ipca_step(hut.TestCase):
         v = df.iloc[2]
         alpha = 0.5
         u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_string = hut.convert_df_to_string(u, index=True)
+        v_string = hut.convert_df_to_string(v, index=True)
         u_next_string = hut.convert_df_to_string(u_next, index=True)
         v_next_string = hut.convert_df_to_string(v_next, index=True)
-        txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        txt = (
+            f"u:\n{u_string}\n"
+            f"v:\n{v_string}\n"
+            f"u_next:\n{u_next_string}\n"
+            f"v_next:\n{v_next_string}"
+        )
         self.check_string(txt)
 
     def test2(self) -> None:
@@ -512,9 +519,16 @@ class Test__compute_ipca_step(hut.TestCase):
         v[:] = 0
         alpha = 0.5
         u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_string = hut.convert_df_to_string(u, index=True)
+        v_string = hut.convert_df_to_string(v, index=True)
         u_next_string = hut.convert_df_to_string(u_next, index=True)
         v_next_string = hut.convert_df_to_string(v_next, index=True)
-        txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        txt = (
+            f"u:\n{u_string}\n"
+            f"v:\n{v_string}\n"
+            f"u_next:\n{u_next_string}\n"
+            f"v_next:\n{v_next_string}"
+        )
         self.check_string(txt)
 
     def test3(self) -> None:
@@ -527,11 +541,18 @@ class Test__compute_ipca_step(hut.TestCase):
         v[:] = 0
         alpha = 0.5
         u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_string = hut.convert_df_to_string(u, index=True)
+        v_string = hut.convert_df_to_string(v, index=True)
         u_next_string = hut.convert_df_to_string(u_next, index=True)
         v_next_string = hut.convert_df_to_string(v_next, index=True)
         # Checking that u == u_next.
         if u.equals(u_next):
-            txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+            txt = (
+                f"u:\n{u_string}\n"
+                f"v:\n{v_string}\n"
+                f"u_next:\n{u_next_string}\n"
+                f"v_next:\n{v_next_string}"
+            )
         self.check_string(txt)
 
     def test4(self) -> None:
@@ -548,9 +569,16 @@ class Test__compute_ipca_step(hut.TestCase):
         v[:] = np.nan
         alpha = 0.5
         u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_string = hut.convert_df_to_string(u, index=True)
+        v_string = hut.convert_df_to_string(v, index=True)
         u_next_string = hut.convert_df_to_string(u_next, index=True)
         v_next_string = hut.convert_df_to_string(v_next, index=True)
-        txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        txt = (
+            f"u:\n{u_string}\n"
+            f"v:\n{v_string}\n"
+            f"u_next:\n{u_next_string}\n"
+            f"v_next:\n{v_next_string}"
+        )
         self.check_string(txt)
 
     def test5(self) -> None:
@@ -566,9 +594,16 @@ class Test__compute_ipca_step(hut.TestCase):
         v[5:8] = np.nan
         alpha = 0.5
         u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_string = hut.convert_df_to_string(u, index=True)
+        v_string = hut.convert_df_to_string(v, index=True)
         u_next_string = hut.convert_df_to_string(u_next, index=True)
         v_next_string = hut.convert_df_to_string(v_next, index=True)
-        txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        txt = (
+            f"u:\n{u_string}\n"
+            f"v:\n{v_string}\n"
+            f"u_next:\n{u_next_string}\n"
+            f"v_next:\n{v_next_string}"
+        )
         self.check_string(txt)
 
 

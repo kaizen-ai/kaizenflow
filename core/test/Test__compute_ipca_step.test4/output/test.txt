@@ -1,3 +1,27 @@
+u:
+          2010-02-28
+series_0         NaN
+series_1         NaN
+series_2         NaN
+series_3         NaN
+series_4         NaN
+series_5         NaN
+series_6         NaN
+series_7         NaN
+series_8         NaN
+series_9         NaN
+v:
+          2010-03-31
+series_0         NaN
+series_1         NaN
+series_2         NaN
+series_3         NaN
+series_4         NaN
+series_5         NaN
+series_6         NaN
+series_7         NaN
+series_8         NaN
+series_9         NaN
 u_next:
            0
 series_0 NaN

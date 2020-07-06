@@ -1,3 +1,27 @@
+u:
+          2010-02-28
+series_0   -0.611756
+series_1   -0.056267
+series_2    0.436510
+series_3    0.499951
+series_4   -0.330870
+series_5    0.729004
+series_6   -0.465937
+series_7    1.091283
+series_8   -0.289544
+series_9    0.715279
+v:
+          2010-03-31
+series_0   -0.528172
+series_1   -2.136196
+series_2    0.096497
+series_3   -0.995909
+series_4    2.430771
+series_5    0.217821
+series_6    0.032820
+series_7   -1.946970
+series_8   -1.116066
+series_9   -1.545400
 u_next:
                  0
 series_0 -0.710114
