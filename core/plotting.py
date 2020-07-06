@@ -264,7 +264,7 @@ def plot_cols(
     colormap: str = "rainbow",
     mode: Optional[str] = None,
     axes: Optional[List[mpl.axes.Axes]] = None,
-    figsize: Optional[Tuple[float, float]] = None,
+    figsize: Optional[Tuple[float, float]] = (20, 10),
 ) -> None:
     """
     Plot lineplot and density plot for the given dataframe.
@@ -273,7 +273,8 @@ def plot_cols(
     :param colormap: preferred colors
     :param mode: "renormalize" or "default"
     :param axes: pair of axes for plot over time and density plot
-    :param figsize: matplotlib figsize
+    :param figsize: matplotlib figsize. Default is `(20, 10)`. If `None`, uses
+        notebook default parameters
     """
     if isinstance(data, pd.Series):
         data = data.to_frame()
