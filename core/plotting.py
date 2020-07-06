@@ -743,7 +743,7 @@ def multipletests_plot(
     else:
         pval_series = pvals.dropna()
         if isinstance(adj_pvals, pd.Series):
-            adj_pvals = adj_pvals.copy().to_frame()
+            adj_pvals = adj_pvals.to_frame()
     num_cols = num_cols or 1
     adj_pvals.dropna(axis=1, how="all", inplace=True)
     _, ax = get_multiple_plots(
@@ -1322,7 +1322,7 @@ def plot_pnl(
     ylabel = ylabel or None
     fstr = "{col} (SR={sr})"
     ax = ax or plt.gca()
-    df_plot = df.dropna(how="all", axis=1).copy()
+    df_plot = df.dropna(how="all", axis=1)
     if df.shape[0] > df_plot.shape[0]:
         dropped_columns = df.columns.difference(df_plot.columns)
         _LOG.warning(
