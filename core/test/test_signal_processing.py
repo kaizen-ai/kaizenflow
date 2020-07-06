@@ -469,17 +469,31 @@ class Test_compute_ipca(hut.TestCase):
 
 class Test__compute_ipca_step(hut.TestCase):
     @staticmethod
-    def _get_series(seed: int) -> pd.Series:
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
-        return series
+    def _get_df_of_series(seed: int) -> pd.DataFrame:
+        n_series = 10
+        arparams = np.array([])
+        maparams = np.array([])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 10, "freq": "M"}
+        # Generating a dataframe from different series.
+        df = pd.DataFrame(
+            [
+                arma_process.generate_sample(
+                    date_range_kwargs=date_range, seed=seed + i
+                )
+                for i in range(n_series)
+            ],
+            index=["series_" + str(i) for i in range(n_series)],
+        ).T
+        return df
 
     def test1(self) -> None:
         """
         Test for clean input series.
         """
-        u = self._get_series(seed=1)
-        v = self._get_series(seed=2)
+        df = self._get_df_of_series(seed=1)
+        u = df.iloc[1]
+        v = df.iloc[2]
         alpha = 0.5
         u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
         u_next_string = hut.convert_df_to_string(u_next, index=True)
@@ -491,8 +505,11 @@ class Test__compute_ipca_step(hut.TestCase):
         """
         Test for input series with all zeros.
         """
-        u = self._get_series(seed=1) * 0
-        v = self._get_series(seed=2) * 0
+        df = self._get_df_of_series(seed=1)
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[:] = 0
+        v[:] = 0
         alpha = 0.5
         u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
         u_next_string = hut.convert_df_to_string(u_next, index=True)
@@ -504,8 +521,10 @@ class Test__compute_ipca_step(hut.TestCase):
         """
         Test that u == u_next for the case when np.linalg.norm(v)=0.
         """
-        u = self._get_series(seed=1)
-        v = self._get_series(seed=2) * 0
+        df = self._get_df_of_series(seed=1)
+        u = df.iloc[1]
+        v = df.iloc[2]
+        v[:] = 0
         alpha = 0.5
         u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
         u_next_string = hut.convert_df_to_string(u_next, index=True)
@@ -513,6 +532,43 @@ class Test__compute_ipca_step(hut.TestCase):
         # Checking that u == u_next.
         if u.equals(u_next):
             txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        self.check_string(txt)
+
+    def test4(self) -> None:
+        """
+       Test for input series with all NaNs.
+
+       Output is not intended.
+       TODO(Dan): implement a way to deal with NaNs in the input.
+        """
+        df = self._get_df_of_series(seed=1)
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[:] = np.nan
+        v[:] = np.nan
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_next_string = hut.convert_df_to_string(u_next, index=True)
+        v_next_string = hut.convert_df_to_string(v_next, index=True)
+        txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
+        self.check_string(txt)
+
+    def test5(self) -> None:
+        """
+        Test for input series with some NaNs.
+
+        Output is not intended.
+        """
+        df = self._get_df_of_series(seed=1)
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[3:6] = np.nan
+        v[5:8] = np.nan
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        u_next_string = hut.convert_df_to_string(u_next, index=True)
+        v_next_string = hut.convert_df_to_string(v_next, index=True)
+        txt = f"u_next:\n{u_next_string}\n" f"v_next:\n{v_next_string}"
         self.check_string(txt)
 
 
