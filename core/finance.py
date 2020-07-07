@@ -451,8 +451,8 @@ def compute_returns_per_bet(
     :param positions: series of long/short positions
     :param log_rets: log returns
     :param nan_mode: argument for hdf.apply_nan_mode()
-    :return: signed returns for each bet, index corresponds to end of bet. If
-        bet is 0, return is 0.
+    :return: signed returns for each bet, index corresponds to the last date of
+        bet. If bet is 0, return is 0.
     """
     bet_lengths = compute_signed_bet_lengths(positions, nan_mode=nan_mode)
     log_rets = hdf.apply_nan_mode(log_rets, mode=nan_mode)
@@ -463,8 +463,8 @@ def compute_returns_per_bet(
     for i, (bet_start, bet_end) in enumerate(zip(bet_starts_idx, bet_ends)):
         bet_sign = np.sign(bet_lengths.iloc[i])
         rets_sum = log_rets.loc[bet_start:bet_end].sum()
-        rets_sum_bet = rets_sum * bet_sign
-        rets_per_bet.append(rets_sum_bet)
+        bet_rets = rets_sum * bet_sign
+        rets_per_bet.append(bet_rets)
     rets_per_bet = pd.Series(
         data=rets_per_bet, index=bet_ends.rename(), name=log_rets.name
     )
@@ -473,7 +473,7 @@ def compute_returns_per_bet(
 
 def _get_bet_ends(positions: pd.Series, next_bet_starts: pd.Index) -> pd.Series:
     """
-    Get ends of bets.
+    Get last dates of bets.
 
     :param positions: series of long/short positions
     :param next_bet_starts: bet starts, index of `bet_lengths`
