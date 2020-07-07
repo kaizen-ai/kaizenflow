@@ -1286,55 +1286,58 @@ def plot_yearly_barplot(
 
 
 def plot_pnl(
-    df: pd.DataFrame,
+    pnls: Dict[int, pd.Series],
     title: Optional[str] = None,
     colormap: Optional[str] = None,
     figsize: Optional[Tuple[int]] = None,
-    left_lim: Optional[Any] = None,
-    right_lim: Optional[Any] = None,
+    start_date: Optional[Union[str, pd.Timestamp]] = None,
+    end_date: Optional[Union[str, pd.Timestamp]] = None,
     nan_mode: Optional[str] = None,
     xlabel: Optional[str] = None,
     ylabel: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
-    Plot a pnl for the dataframe of pnl time series.
+    Plot pnls for dict of pnl time series.
 
-    :param df: dataframe of pnl time series
+    :param pnls: dict of pnl time series
     :param title: plot title
     :param colormap: matplotlib colormap
     :param figsize: size of plot
-    :param left_lim: left limit value of the X axis
-    :param right_lim: right limit value of the X axis
+    :param start_date: left limit value of the X axis
+    :param end_date: right limit value of the X axis
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param xlabel: label of the X axis
     :param ylabel: label of the Y axis
     :param ax: axes
     """
-    if isinstance(df, pd.Series):
-        df = df.to_frame()
     title = title or ""
     colormap = colormap or "rainbow"
-    left_lim = left_lim or min(df.index)
-    right_lim = right_lim or max(df.index)
     nan_mode = nan_mode or "ignore"
     xlabel = xlabel or None
     ylabel = ylabel or None
     fstr = "{col} (SR={sr})"
     ax = ax or plt.gca()
-    df_plot = df.dropna(how="all", axis=1)
-    if df.shape[0] > df_plot.shape[0]:
-        dropped_columns = df.columns.difference(df_plot.columns)
+    #
+    # TODO(Julia): Change to deepcopy?
+    pnls = pnls.copy()
+    empty_srs = []
+    for key, srs in pnls.items():
+        srs.dropna(inplace=True)
+        if srs.empty:
+            pnls.pop(key)
+            empty_srs.append(key)
+    if empty_srs:
         _LOG.warning(
-            "Empty input columns were dropped: '%s'",
-            ", ".join(dropped_columns.astype(str)),
+            "Empty input series were dropped: '%s'",
+            ", ".join(empty_srs.astype(str)),
         )
-    # Compute sharpe ratio for every timeseries.
-    sharpe_ratio = {}
-    for i, series in df_plot.iteritems():
-        series.dropna(inplace=True)
-        series.index.freq = series.index.inferred_freq
-        sharpe_ratio[i] = stats.compute_annualized_sharpe_ratio(series)
+    df_plot = pd.concat(pnls, axis=1)
+    # Compute sharpe ratio for every time series.
+    sharpe_ratio = {
+        key: stats.compute_annualized_sharpe_ratio(srs)
+        for key, srs in pnls.items()
+    }
     sharpe_ratio = pd.Series(sharpe_ratio)
     sharpe_cols = [
         [round(sr, 1), df_plot.columns[i]] for i, sr in enumerate(sharpe_ratio)
@@ -1351,6 +1354,8 @@ def plot_pnl(
     df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
     df_plot.cumsum().plot(ax=ax, colormap=colormap, figsize=figsize)
     # Setting fixed borders of x-axis.
+    left_lim = start_date or min(df_plot.index)
+    right_lim = end_date or max(df_plot.index)
     ax.set_xlim([left_lim, right_lim])
     # Formatting.
     ax.set_title(title, fontsize=20)
