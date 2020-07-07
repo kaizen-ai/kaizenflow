@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as sig_gen
 import core.finance as fin
+import core.signal_processing as sigp
 import helpers.printing as prnt
 import helpers.unit_test as hut
 
@@ -426,9 +427,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
 class Test_compute_returns_per_bet(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arparams = np.array([0.75, -0.25])
-        maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        arma_process = sig_gen.ArmaProcess([], [])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -437,7 +436,13 @@ class Test_compute_returns_per_bet(hut.TestCase):
 
     def test1(self) -> None:
         log_rets = self._get_series(42)
-        positions = self._get_series(0)
+        positions = sigp.compute_smooth_moving_average(log_rets, 4)
         actual = fin.compute_returns_per_bet(positions, log_rets)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        rets_pos = pd.concat({"pos": positions, "rets": log_rets}, axis=1)
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos, index=True)}\n"
+            f"{prnt.frame('rets_per_bet')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
