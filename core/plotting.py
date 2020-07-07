@@ -263,36 +263,32 @@ def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
     colormap: str = "rainbow",
     mode: Optional[str] = None,
-    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
+    axes: Optional[List[mpl.axes.Axes]] = None,
+    figsize: Optional[Tuple[float, float]] = (20, 10),
 ) -> None:
     """
-    Plot lineplot and density plot for the given series.
+    Plot lineplot and density plot for the given dataframe.
 
     :param data: data to plot
     :param colormap: preferred colors
-    :param figsize: plot size
     :param mode: "renormalize" or "default"
-    :param ax: axes
+    :param axes: pair of axes for plot over time and density plot
+    :param figsize: matplotlib figsize. Default is `(20, 10)`. If `None`, uses
+        notebook default parameters
     """
     if isinstance(data, pd.Series):
         data = data.to_frame()
-    nrows = len(data.columns)
-    if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows * 2, ncols=1)
-        if axes.size == 2:
-            axes = [axes]
-    if mode is None:
-        mode = "default"
+    if axes is None:
+        _, axes = plt.subplots(2, ncols=1, figsize=figsize)
+    if mode is None or mode == "default":
+        pass
     elif mode == "renormalize":
         data = data.copy()
         data /= data.std()
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
-    for idx, col in enumerate(data.columns):
-        ax1 = axes[idx][0]
-        data.plot(kind="density", colormap=colormap, ax=ax1)
-        ax2 = axes[idx][1]
-        data.plot(colormap=colormap, ax=ax2)
+    data.plot(kind="density", colormap=colormap, ax=axes[0])
+    data.plot(colormap=colormap, ax=axes[1])
 
 
 def plot_autocorrelation(
@@ -737,28 +733,28 @@ def multipletests_plot(
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     :param suptitle: overall title of all plots
     """
-
+    adj_pvals = adj_pvals.copy()
     if adj_pvals is None:
         pval_series = pvals.dropna().sort_values().reset_index(drop=True)
         adj_pvals = stats.multipletests(pval_series, method=method).to_frame()
-        plt_count = 1
     else:
         pval_series = pvals.dropna()
         if isinstance(adj_pvals, pd.Series):
             adj_pvals = adj_pvals.to_frame()
-        plt_count = len(adj_pvals.columns)
     num_cols = num_cols or 1
+    adj_pvals.dropna(axis=1, how="all", inplace=True)
     _, ax = get_multiple_plots(
-        plt_count, num_cols=num_cols, sharex=False, sharey=True, y_scale=5
+        adj_pvals.shape[1],
+        num_cols=num_cols,
+        sharex=False,
+        sharey=True,
+        y_scale=5,
     )
     if not isinstance(ax, np.ndarray):
         ax = [ax]
     for i, col in enumerate(adj_pvals.columns):
         mask = adj_pvals[col].notna()
         adj_pval = adj_pvals.loc[mask, col].sort_values().reset_index(drop=True)
-        if adj_pval.empty:
-            ax[i].set_title(col)
-            continue
         ax[i].plot(
             pval_series.loc[mask].sort_values().reset_index(drop=True),
             label="pvals",

@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -193,22 +193,32 @@ def rescale_to_target_annual_volatility(
     :return: rescaled returns series
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    ppy = hdf.infer_sampling_points_per_year(srs)
-    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
-    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
-    _LOG.debug("`scale_factor`=%f", scale_factor)
+    scale_factor = _compute_scale_factor(srs, volatility=volatility)
     return scale_factor * srs
 
 
-def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
+def aggregate_log_rets(
+    df: pd.DataFrame, target_volatility: float
+) -> Tuple[pd.Series, pd.Series]:
     """
-    Perform inverse variance weighting and normalize volatility.
+    Perform inverse volatility weighting and normalize volatility.
 
     :param df: cols contain log returns
     :param target_volatility: annualize target volatility
-    :return: srs of log returns
+    :return: series of log returns, series of weights
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(not df.columns.has_duplicates)
+    # Compute inverse volatility weights.
+    weights = df.apply(lambda x: _compute_scale_factor(x, target_volatility))
+    # Replace inf's with 0's in weights.
+    weights.replace([np.inf, -np.inf], np.nan, inplace=True)
+    # Rescale weights to percentages.
+    weights /= weights.sum()
+    weights.name = "weights"
+    # Replace NaN with zero for weights.
+    weights = hdf.apply_nan_mode(weights, mode="fill_with_zero")
+    # Compute aggregate log returns.
     df = df.apply(
         lambda x: rescale_to_target_annual_volatility(x, target_volatility)
     )
@@ -217,7 +227,24 @@ def aggregate_log_rets(df: pd.DataFrame, target_volatility: float) -> pd.Series:
     srs = df.squeeze()
     srs = convert_pct_rets_to_log_rets(srs)
     rescaled_srs = rescale_to_target_annual_volatility(srs, target_volatility)
-    return rescaled_srs
+    return rescaled_srs, weights
+
+
+def _compute_scale_factor(srs: pd.Series, volatility: float) -> pd.Series:
+    """
+    Compute scale factor of a series according to a target volatility.
+
+    :param srs: returns series. Index must have `freq`.
+    :param volatility: volatility as a proportion (e.g., `0.1`
+        corresponds to 10% annual volatility)
+    :return: scale factor
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
+    _LOG.debug("`scale_factor`=%f", scale_factor)
+    return scale_factor
 
 
 # TODO(*): Consider moving to `statistics.py`.
@@ -329,7 +356,9 @@ def compute_average_holding_period(
     return average_holding_period
 
 
-def compute_bet_runs(positions: pd.Series) -> pd.Series:
+def compute_bet_runs(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
     """
     Calculate runs of long/short bets.
 
@@ -341,6 +370,12 @@ def compute_bet_runs(positions: pd.Series) -> pd.Series:
         short bets
     """
     dbg.dassert_monotonic_index(positions)
+    # Forward fill NaN positions by default (e.g., do not assume they are
+    # closed out).
+    nan_mode = nan_mode or "ffill"
+    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
+    # Locate zero positions so that we can avoid dividing by zero when
+    # determining bet sign.
     zero_mask = positions == 0
     # Calculate bet "runs".
     bet_runs = positions.copy()
@@ -348,7 +383,9 @@ def compute_bet_runs(positions: pd.Series) -> pd.Series:
     return bet_runs
 
 
-def compute_bet_starts(positions: pd.Series) -> pd.Series:
+def compute_bet_starts(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
     """
     Calculate the start of each new bet.
 
@@ -356,9 +393,12 @@ def compute_bet_starts(positions: pd.Series) -> pd.Series:
     :return: a series with a +1 at the start of each new long bet and a -1 at
         the start of each new short bet; all other values are 0 or NaN
     """
-    bet_runs = compute_bet_runs(positions)
+    bet_runs = compute_bet_runs(positions, nan_mode)
     # Determine start of bets.
-    bet_starts = bet_runs - bet_runs.shift(1, fill_value=0)
+    bet_starts = bet_runs.subtract(bet_runs.shift(1, fill_value=0), fill_value=0)
+    # TODO(*): Consider factoring out this operation.
+    # Locate zero positions so that we can avoid dividing by zero when
+    # determining bet sign.
     bets_zero_mask = bet_starts == 0
     bet_starts.loc[~bets_zero_mask] /= np.abs(bet_starts.loc[~bets_zero_mask])
     return bet_starts
@@ -376,14 +416,15 @@ def compute_signed_bet_lengths(
         length corresponds to a long bet or a short bet. Index corresponds to
         end of bet.
     """
-    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
-    bet_runs = compute_bet_runs(positions)
-    bet_starts = compute_bet_starts(positions)
+    bet_runs = compute_bet_runs(positions, nan_mode)
+    bet_starts = compute_bet_starts(positions, nan_mode)
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
+    # Remove NaNs as from `bet_starts`.
+    bet_starts = bet_starts.dropna()
     bet_starts_idx = bet_starts[bet_starts != 0].index
     bet_lengths = []
     bet_ends_idx = []
-    for i, t0 in enumerate(bet_starts_idx):
+    for i, t0 in enumerate(bet_starts_idx[:-1]):
         t0_mask = bet_runs.index >= t0
         if i < bet_starts_idx.size - 1:
             t1_mask = bet_runs.index < bet_starts_idx[i + 1]
@@ -392,7 +433,7 @@ def compute_signed_bet_lengths(
             mask = t0_mask
         bet_mask = bet_runs.loc[mask]
         bet_length = bet_mask.sum()
-        bet_end = bet_runs.loc[mask].index[-1]
+        bet_end = bet_starts_idx[i + 1]
         bet_lengths.append(bet_length)
         bet_ends_idx.append(bet_end)
     bet_length_srs = pd.Series(
