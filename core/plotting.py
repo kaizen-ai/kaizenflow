@@ -1302,7 +1302,7 @@ def plot_pnl(
 
     :param pnls: dict of pnl time series
     :param title: plot title
-    :param colormap: matplotlib colormap
+    :param colormap: matplotlib colormap name
     :param figsize: size of plot
     :param start_date: left limit value of the X axis
     :param end_date: right limit value of the X axis
@@ -1319,20 +1319,20 @@ def plot_pnl(
     fstr = "{col} (SR={sr})"
     ax = ax or plt.gca()
     #
-    # TODO(Julia): Change to deepcopy?
-    pnls = pnls.copy()
+    pnls_notna = {}
     empty_srs = []
     for key, srs in pnls.items():
-        srs.dropna(inplace=True)
-        if srs.empty:
-            pnls.pop(key)
+        srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+        if srs.dropna().empty:
             empty_srs.append(key)
+        else:
+            pnls_notna[key] = srs
     if empty_srs:
         _LOG.warning(
             "Empty input series were dropped: '%s'",
             ", ".join(empty_srs.astype(str)),
         )
-    df_plot = pd.concat(pnls, axis=1)
+    df_plot = pd.concat(pnls_notna, axis=1)
     # Compute sharpe ratio for every time series.
     sharpe_ratio = {
         key: stats.compute_annualized_sharpe_ratio(srs)
@@ -1351,8 +1351,13 @@ def plot_pnl(
         fstr.format(col=str(item[1]), sr=str(item[0])) for item in sharpe_cols
     ]
     df_plot = df_plot.reindex(sorted_names, axis=1)
-    df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
-    df_plot.cumsum().plot(ax=ax, colormap=colormap, figsize=figsize)
+    # Plotting the dataframe without dropping `NaN`s in each column results in
+    # a missing line for some of the pnls. To avoid it, plot by column.
+    cmap = mpl.cm.get_cmap(colormap)
+    colors = np.linspace(0, 1, df_plot.shape[1])
+    colors = [cmap(c) for c in colors]
+    for color, col in zip(colors, df_plot.columns):
+        df_plot[col].cumsum().dropna().plot(ax=ax, color=color, figsize=figsize)
     # Setting fixed borders of x-axis.
     left_lim = start_date or min(df_plot.index)
     right_lim = end_date or max(df_plot.index)
