@@ -93,7 +93,8 @@ def _run_notebook(
     :param dst_dir: path to directory with results
     :param config: config for the experiment
     :param config_builder: function used to generate all configs
-    :param num_attempts: number of times to re-run the notebook after an error
+    :param num_attempts: maximum number of times to attempt running the
+        notebook
     :param publish: publish notebook if `True`
     """
     dbg.dassert_exists(notebook_file)
@@ -154,17 +155,23 @@ def _run_notebook(
         # https://github.com/ContinuumIO/anaconda-issues/issues/877
         " --ExecutePreprocessor.timeout=-1"
     )
-    rc = si.system(cmd, output_file=log_file, abort_on_error=False)
-    # Re-run the notebook if command exited with an error.
-    for n in range(num_attempts):
+    # Try running the notebook up to `num_attempts` times.
+    dbg.dassert_lte(1, num_attempts)
+    rc = -1
+    for n in range(1, num_attempts + 1):
+        if n > 1:
+            _LOG.warning(
+                "Attempting to re-run the notebook for the %d / %d time after "
+                "rc='%s'",
+                n - 1,
+                num_attempts,
+                rc,
+            )
+        # Abort on the last attempt.
+        abort_on_error = n == num_attempts
+        rc = si.system(cmd, output_file=log_file, abort_on_error=abort_on_error)
         if rc == 0:
             break
-        _LOG.warning("Attempting to re-run the notebook for the %s time", n)
-        if n < num_attempts - 1:
-            abort_on_error = False
-        else:
-            abort_on_error = True
-        rc = si.system(cmd, output_file=log_file, abort_on_error=abort_on_error)
     # Convert to html and publish.
     if publish:
         _LOG.info("Converting notebook %s", i)
@@ -309,9 +316,9 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--num_attempts",
-        default=0,
+        default=1,
         type=int,
-        help="Retry executing the notebook after an error `n` times",
+        help="Maximum number of times to attempt running the notebook",
         required=False,
     )
     parser.add_argument(
