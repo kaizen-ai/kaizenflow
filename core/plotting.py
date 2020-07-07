@@ -733,7 +733,6 @@ def multipletests_plot(
     :param method: method for performing p-value adjustment, e.g., "fdr_bh"
     :param suptitle: overall title of all plots
     """
-    adj_pvals = adj_pvals.copy()
     if adj_pvals is None:
         pval_series = pvals.dropna().sort_values().reset_index(drop=True)
         adj_pvals = stats.multipletests(pval_series, method=method).to_frame()
@@ -1283,52 +1282,59 @@ def plot_yearly_barplot(
 
 
 def plot_pnl(
-    df: pd.DataFrame,
+    pnls: Dict[int, pd.Series],
     title: Optional[str] = None,
     colormap: Optional[str] = None,
     figsize: Optional[Tuple[int]] = None,
-    left_lim: Optional[Any] = None,
-    right_lim: Optional[Any] = None,
+    start_date: Optional[Union[str, pd.Timestamp]] = None,
+    end_date: Optional[Union[str, pd.Timestamp]] = None,
     nan_mode: Optional[str] = None,
     xlabel: Optional[str] = None,
     ylabel: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """
-    Plot a pnl for the dataframe of pnl time series.
+    Plot pnls for dict of pnl time series.
 
-    :param df: dataframe of pnl time series
+    :param pnls: dict of pnl time series
     :param title: plot title
-    :param colormap: matplotlib colormap
+    :param colormap: matplotlib colormap name
     :param figsize: size of plot
-    :param left_lim: left limit value of the X axis
-    :param right_lim: right limit value of the X axis
+    :param start_date: left limit value of the X axis
+    :param end_date: right limit value of the X axis
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param xlabel: label of the X axis
     :param ylabel: label of the Y axis
     :param ax: axes
     """
-    if isinstance(df, pd.Series):
-        df = df.to_frame()
     title = title or ""
     colormap = colormap or "rainbow"
-    figsize = figsize or (20, 5)
-    left_lim = left_lim or min(df.index)
-    right_lim = right_lim or max(df.index)
     nan_mode = nan_mode or "ignore"
     xlabel = xlabel or None
     ylabel = ylabel or None
     fstr = "{col} (SR={sr})"
     ax = ax or plt.gca()
-    if df.isna().all().any():
-        empty_series = [(idx) for idx, val in df.isna().all().items() if val]
+    #
+    pnls_notna = {}
+    empty_srs = []
+    for key, srs in pnls.items():
+        srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+        if srs.dropna().empty:
+            empty_srs.append(key)
+        else:
+            pnls_notna[key] = srs
+    if empty_srs:
         _LOG.warning(
-            "Empty input columns were dropped: '%s'", ", ".join(empty_series)
+            "Empty input series were dropped: '%s'",
+            ", ".join(empty_srs.astype(str)),
         )
-        df.drop(empty_series, axis=1, inplace=True)
-    df_plot = df.copy()
-    # Compute sharpe ratio for every timeseries.
-    sharpe_ratio = df_plot.apply(stats.compute_annualized_sharpe_ratio)
+    df_plot = pd.concat(pnls_notna, axis=1)
+    # Compute sharpe ratio for every time series.
+    sharpe_ratio = {
+        key: stats.compute_annualized_sharpe_ratio(srs)
+        for key, srs in pnls.items()
+    }
+    sharpe_ratio = pd.Series(sharpe_ratio)
     sharpe_cols = [
         [round(sr, 1), df_plot.columns[i]] for i, sr in enumerate(sharpe_ratio)
     ]
@@ -1341,9 +1347,16 @@ def plot_pnl(
         fstr.format(col=str(item[1]), sr=str(item[0])) for item in sharpe_cols
     ]
     df_plot = df_plot.reindex(sorted_names, axis=1)
-    df_plot = df_plot.apply(hdf.apply_nan_mode, mode=nan_mode)
-    df_plot.cumsum().plot(ax=ax, colormap=colormap)
+    # Plotting the dataframe without dropping `NaN`s in each column results in
+    # a missing line for some of the pnls. To avoid it, plot by column.
+    cmap = mpl.cm.get_cmap(colormap)
+    colors = np.linspace(0, 1, df_plot.shape[1])
+    colors = [cmap(c) for c in colors]
+    for color, col in zip(colors, df_plot.columns):
+        df_plot[col].cumsum().dropna().plot(ax=ax, color=color, figsize=figsize)
     # Setting fixed borders of x-axis.
+    left_lim = start_date or min(df_plot.index)
+    right_lim = end_date or max(df_plot.index)
     ax.set_xlim([left_lim, right_lim])
     # Formatting.
     ax.set_title(title, fontsize=20)
