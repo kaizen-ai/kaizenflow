@@ -1,46 +1,166 @@
 lambda_df:
               0    1    2
-2000-01-03  0.0  NaN  NaN
-2000-01-04  0.0  0.0  NaN
-2000-01-05  0.0  0.0  0.0
-2000-01-06  0.0  0.0  0.0
-2000-01-07  0.0  0.0  0.0
-2000-01-10  0.0  0.0  0.0
-2000-01-11  0.0  0.0  0.0
-2000-01-12  0.0  0.0  0.0
-2000-01-13  0.0  0.0  0.0
-2000-01-14  0.0  0.0  0.0
+2010-01-31  0.0  NaN  NaN
+2010-02-28  0.0  0.0  NaN
+2010-03-31  0.0  0.0  0.0
+2010-04-30  0.0  0.0  0.0
+2010-05-31  0.0  0.0  0.0
+2010-06-30  0.0  0.0  0.0
+2010-07-31  0.0  0.0  0.0
+2010-08-31  0.0  0.0  0.0
+2010-09-30  0.0  0.0  0.0
+2010-10-31  0.0  0.0  0.0
+2010-11-30  0.0  0.0  0.0
+2010-12-31  0.0  0.0  0.0
+2011-01-31  0.0  0.0  0.0
+2011-02-28  0.0  0.0  0.0
+2011-03-31  0.0  0.0  0.0
+2011-04-30  0.0  0.0  0.0
+2011-05-31  0.0  0.0  0.0
+2011-06-30  0.0  0.0  0.0
+2011-07-31  0.0  0.0  0.0
+2011-08-31  0.0  0.0  0.0
+2011-09-30  0.0  0.0  0.0
+2011-10-31  0.0  0.0  0.0
+2011-11-30  0.0  0.0  0.0
+2011-12-31  0.0  0.0  0.0
+2012-01-31  0.0  0.0  0.0
+2012-02-29  0.0  0.0  0.0
+2012-03-31  0.0  0.0  0.0
+2012-04-30  0.0  0.0  0.0
+2012-05-31  0.0  0.0  0.0
+2012-06-30  0.0  0.0  0.0
+2012-07-31  0.0  0.0  0.0
+2012-08-31  0.0  0.0  0.0
+2012-09-30  0.0  0.0  0.0
+2012-10-31  0.0  0.0  0.0
+2012-11-30  0.0  0.0  0.0
+2012-12-31  0.0  0.0  0.0
+2013-01-31  0.0  0.0  0.0
+2013-02-28  0.0  0.0  0.0
+2013-03-31  0.0  0.0  0.0
+2013-04-30  0.0  0.0  0.0
 , unit_eigenvecs_dfs:
 0:
-             0   1   2   3   4   5   6   7   8   9
-2000-01-03 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-04 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-05 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-06 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-07 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-10 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-11 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-12 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-13 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-14 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
+            series_1  series_2  series_3  series_4  series_5  series_6  series_7  series_8  series_9  series_10
+2010-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-02-28       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-02-28       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-02-29       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-02-28       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
 1:
-             0   1   2   3   4   5   6   7   8   9
-2000-01-04 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-05 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-06 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-07 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-10 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-11 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-12 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-13 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-14 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
+            series_1  series_2  series_3  series_4  series_5  series_6  series_7  series_8  series_9  series_10
+2010-02-28       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-02-28       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-02-29       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-02-28       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
 2:
-             0   1   2   3   4   5   6   7   8   9
-2000-01-05 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-06 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-07 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-10 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-11 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-12 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-13 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-2000-01-14 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
+            series_1  series_2  series_3  series_4  series_5  series_6  series_7  series_8  series_9  series_10
+2010-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2010-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-02-28       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2011-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-02-29       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-05-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-06-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-07-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-08-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-09-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-10-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-11-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2012-12-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-01-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-02-28       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-03-31       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
+2013-04-30       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN        NaN
