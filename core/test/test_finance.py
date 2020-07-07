@@ -438,6 +438,6 @@ class Test_compute_returns_per_bet(hut.TestCase):
     def test1(self) -> None:
         log_rets = self._get_series(42)
         positions = self._get_series(0)
-        actual = fin.compute_returns_per_bet(log_rets, positions)
+        actual = fin.compute_returns_per_bet(positions, log_rets)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)

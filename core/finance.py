@@ -443,13 +443,13 @@ def compute_signed_bet_lengths(
 
 
 def compute_returns_per_bet(
-    log_rets: pd.Series, positions: pd.Series, nan_mode: Optional[str] = None
+    positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
     """
     Calculate returns for each bet.
 
-    :param log_rets: log returns
     :param positions: series of long/short positions
+    :param log_rets: log returns
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed returns for each bet, index corresponds to end of bet. If
         bet is 0, return is 0.
