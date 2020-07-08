@@ -473,7 +473,9 @@ def compute_returns_per_bet(
     :return: signed returns for each bet, index corresponds to the last date of
         bet
     """
-    # Get start dates, end dates and lengths of bets.
+    dbg.dassert(positions.index.equals(log_rets.index))
+    dbg.dassert_monotonic_index(log_rets)
+    # Get start dates and lengths of bets.
     bet_lengths = compute_signed_bet_lengths(
         positions, mode="bet_end", nan_mode=nan_mode
     )
@@ -482,12 +484,11 @@ def compute_returns_per_bet(
     bet_starts_idx = bet_starts[bet_starts != 0].dropna().index
     # Compute returns per bet.
     rets_per_bet = []
-    for i, (bet_start, bet_end) in enumerate(
-        zip(bet_starts_idx, bet_lengths.index)
-    ):
-        bet_sign = np.sign(bet_lengths.iloc[i])
-        rets_sum = log_rets.loc[bet_start:bet_end].sum()
-        bet_rets = rets_sum * bet_sign
+    for bet_start, bet_end in zip(bet_starts_idx, bet_lengths.index):
+        pnl_bet = (
+            log_rets.loc[bet_start:bet_end] * positions.loc[bet_start:bet_end]
+        )
+        bet_rets = pnl_bet.sum()
         rets_per_bet.append(bet_rets)
     rets_per_bet = pd.Series(
         data=rets_per_bet, index=bet_lengths.index, name=log_rets.name

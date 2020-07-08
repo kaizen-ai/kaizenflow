@@ -530,7 +530,6 @@ class Test_compute_returns_per_bet(hut.TestCase):
         positions = pd.Series([1, 2, 0, 1, -3, -2], index=idx)
         actual = fin.compute_returns_per_bet(positions, log_rets)
         expected = pd.Series(
-            {pd.Timestamp("2010-01-03"): 3, pd.Timestamp("2010-01-06"): 5},
-            dtype=float,
+            {pd.Timestamp("2010-01-03"): 5, pd.Timestamp("2010-01-06"): 5}
         )
         pd.testing.assert_series_equal(actual, expected)
