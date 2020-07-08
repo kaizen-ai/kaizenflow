@@ -391,7 +391,8 @@ def compute_bet_starts(
 
     :param positions: series of long/short positions
     :return: a series with a +1 at the start of each new long bet and a -1 at
-        the start of each new short bet; all other values are 0 or NaN
+        the start of each new short bet; 0 indicates continuation of bet and
+        `NaN` indicates absence of bet.
     """
     bet_runs = compute_bet_runs(positions, nan_mode)
     # Determine start of bets.
@@ -399,8 +400,13 @@ def compute_bet_starts(
     # TODO(*): Consider factoring out this operation.
     # Locate zero positions so that we can avoid dividing by zero when
     # determining bet sign.
-    bets_zero_mask = bet_starts == 0
-    bet_starts.loc[~bets_zero_mask] /= np.abs(bet_starts.loc[~bets_zero_mask])
+    bet_starts_zero_mask = bet_starts == 0
+    bet_starts.loc[~bet_starts_zero_mask] /= np.abs(
+        bet_starts.loc[~bet_starts_zero_mask]
+    )
+    # Set zero bet runs to `NaN`.
+    bet_runs_zero_mask = bet_runs == 0
+    bet_starts.loc[bet_runs_zero_mask] = np.nan
     return bet_starts
 
 
@@ -419,12 +425,13 @@ def compute_signed_bet_lengths(
     bet_runs = compute_bet_runs(positions, nan_mode)
     bet_starts = compute_bet_starts(positions, nan_mode)
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
-    # Remove NaNs as from `bet_starts`.
-    bet_starts = bet_starts.dropna()
     bet_starts_idx = bet_starts[bet_starts != 0].index
     bet_lengths = []
     bet_ends_idx = []
     for i, t0 in enumerate(bet_starts_idx[:-1]):
+        # `NaN` indicates zero position, skip it.
+        if pd.isna(bet_starts.loc[t0]):
+            continue
         t0_mask = bet_runs.index >= t0
         if i < bet_starts_idx.size - 1:
             t1_mask = bet_runs.index < bet_starts_idx[i + 1]

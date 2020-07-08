@@ -307,9 +307,9 @@ class Test_compute_bet_starts(hut.TestCase):
         )
         expected = pd.Series(
             {
-                pd.Timestamp("2010-01-01"): 0,
+                pd.Timestamp("2010-01-01"): np.nan,
                 pd.Timestamp("2010-01-02"): 1,
-                pd.Timestamp("2010-01-03"): -1,
+                pd.Timestamp("2010-01-03"): np.nan,
                 pd.Timestamp("2010-01-04"): -1,
             },
             dtype=float,
@@ -385,17 +385,9 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
             index=pd.date_range(start="2010-01-01", periods=12, freq="D"),
         )
         expected_bet_ends = pd.to_datetime(
-            [
-                "2010-01-05",
-                "2010-01-08",
-                "2010-01-10",
-                "2010-01-11",
-                "2010-01-12",
-            ]
+            ["2010-01-05", "2010-01-08", "2010-01-11",]
         )
-        expected = pd.Series(
-            [4, -3, 0, -1, 0], index=expected_bet_ends, dtype=float
-        )
+        expected = pd.Series([4, -3, -1], index=expected_bet_ends, dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
