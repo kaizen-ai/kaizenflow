@@ -467,7 +467,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         positions.iloc[:4] = 0
         positions.iloc[10:15] = 0
         positions.iloc[-4:] = 0
-        actual = fin.compute_signed_bet_lengths(positions, mode="next_pos")
+        actual = fin.compute_signed_bet_lengths(positions, mode="next_tick")
         output_str = (
             f"{prnt.frame('positions')}\n"
             f"{hut.convert_df_to_string(positions, index=True)}\n"

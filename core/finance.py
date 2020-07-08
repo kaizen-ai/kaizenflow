@@ -419,14 +419,14 @@ def compute_signed_bet_lengths(
     Calculate lengths of bets (in sampling freq).
 
     :param positions: series of long/short positions
-    :param mode: if "bet_end", index by bet end; if "next_pos", index by next
+    :param mode: if "bet_end", index by bet end; if "next_tick", index by next
         position after bet end
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed lengths of bets, i.e., the sign indicates whether the
         length corresponds to a long bet or a short bet. Index corresponds to
         either end of bet or next position after end of bet.
     """
-    mode = mode or "next_pos"
+    mode = mode or "next_tick"
     bet_runs = compute_bet_runs(positions, nan_mode)
     bet_starts = compute_bet_starts(positions, nan_mode)
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
@@ -447,7 +447,7 @@ def compute_signed_bet_lengths(
             mask = t0_mask
         bet_mask = bet_runs.loc[mask]
         bet_length = bet_mask.sum()
-        if mode == "next_pos":
+        if mode == "next_tick":
             bet_end = bet_starts_idx[i + 1]
         elif mode == "bet_end":
             bet_end = bet_runs.loc[mask].index[-1]
