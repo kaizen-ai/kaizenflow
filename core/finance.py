@@ -460,3 +460,39 @@ def compute_signed_bet_lengths(
         index=bet_ends_idx, data=bet_lengths, name=positions.name
     )
     return bet_length_srs
+
+
+def compute_returns_per_bet(
+    positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    Calculate returns for each bet.
+
+    :param positions: series of long/short positions
+    :param log_rets: log returns
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: signed returns for each bet, index corresponds to the last date of
+        bet
+    """
+    dbg.dassert(positions.index.equals(log_rets.index))
+    dbg.dassert_monotonic_index(log_rets)
+    # To compute returns per bet, get start dates and end dates of bets.
+    # Get lengths of bets indexed by bet ends.
+    bet_lengths = compute_signed_bet_lengths(
+        positions, mode="bet_end", nan_mode=nan_mode
+    )
+    # Get start dates of bets.
+    bet_starts = compute_bet_starts(positions, nan_mode=nan_mode)
+    bet_starts_idx = bet_starts[bet_starts != 0].dropna().index
+    # Compute returns per bet.
+    rets_per_bet = []
+    for bet_start, bet_end in zip(bet_starts_idx, bet_lengths.index):
+        pnl_bet = (
+            log_rets.loc[bet_start:bet_end] * positions.loc[bet_start:bet_end]
+        )
+        bet_rets = pnl_bet.sum()
+        rets_per_bet.append(bet_rets)
+    rets_per_bet = pd.Series(
+        data=rets_per_bet, index=bet_lengths.index, name=log_rets.name
+    )
+    return rets_per_bet

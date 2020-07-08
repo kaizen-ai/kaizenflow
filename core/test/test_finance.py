@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as sig_gen
 import core.finance as fin
+import core.signal_processing as sigp
 import helpers.printing as prnt
 import helpers.unit_test as hut
 
@@ -513,3 +514,63 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
             f"{hut.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
+
+
+class Test_compute_returns_per_bet(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        log_rets = self._get_series(42)
+        positions = sigp.compute_smooth_moving_average(log_rets, 4)
+        actual = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos = pd.concat({"pos": positions, "rets": log_rets}, axis=1)
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos, index=True)}\n"
+            f"{prnt.frame('rets_per_bet')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test2(self) -> None:
+        log_rets = self._get_series(42)
+        log_rets.iloc[6:12] = np.nan
+        positions = sigp.compute_smooth_moving_average(log_rets, 4)
+        positions.iloc[:4] = 0
+        positions.iloc[10:15] = np.nan
+        positions.iloc[-4:] = 0
+        actual = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos = pd.concat({"pos": positions, "rets": log_rets}, axis=1)
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos, index=True)}\n"
+            f"{prnt.frame('rets_per_bet')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test3(self) -> None:
+        idx = pd.to_datetime(
+            [
+                "2010-01-01",
+                "2010-01-03",
+                "2010-01-05",
+                "2010-01-06",
+                "2010-01-10",
+                "2010-01-12",
+            ]
+        )
+        log_rets = pd.Series([1, 2, 3, 5, 7, 11], index=idx)
+        positions = pd.Series([1, 2, 0, 1, -3, -2], index=idx)
+        actual = fin.compute_returns_per_bet(positions, log_rets)
+        expected = pd.Series(
+            {pd.Timestamp("2010-01-03"): 5, pd.Timestamp("2010-01-06"): 5}
+        )
+        pd.testing.assert_series_equal(actual, expected)
