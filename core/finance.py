@@ -307,6 +307,29 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
     return 1 - np.exp(-dd)
 
 
+def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
+    """
+    Generate time under water series.
+
+    :param log_rets: time series of log returns
+    :return: series of number of consecutive time points under water
+    """
+    drawdown = compute_drawdown(log_rets)
+    underwater_mask = drawdown != 0
+    # Cumulatively count number of values in True/False groups.
+    underwater_change = underwater_mask != underwater_mask.shift()
+    # Boolean values that are repeated in `underwater_mask` have repeating
+    # numbers in cumulative sum.
+    underwater_groups = underwater_change.cumsum()
+    cumulative_count_groups = underwater_mask.groupby(
+        underwater_groups
+    ).cumcount()
+    cumulative_count_groups += 1
+    # Set zero drawdown counts to zero.
+    n_timepoints_underwater = underwater_mask * cumulative_count_groups
+    return n_timepoints_underwater
+
+
 def compute_turnover(pos: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
     """
     Compute turnover for a sequence of positions.

@@ -114,6 +114,26 @@ class Test_compute_drawdown(hut.TestCase):
         self.check_string(actual_string)
 
 
+class Test_compute_time_under_water(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        series = Test_compute_time_under_water._get_series(42)
+        drawdown = fin.compute_drawdown(series).rename("drawdown")
+        time_under_water = fin.compute_time_under_water(series).rename(
+            "time_under_water"
+        )
+        output = pd.concat([series, drawdown, time_under_water], axis=1)
+        self.check_string(hut.convert_df_to_string(output, index=True))
+
+
 class Test_compute_turnover(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
