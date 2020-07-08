@@ -475,11 +475,12 @@ def compute_returns_per_bet(
     """
     dbg.dassert(positions.index.equals(log_rets.index))
     dbg.dassert_monotonic_index(log_rets)
-    # Get start dates and lengths of bets.
+    # To compute returns per bet, get start dates and end dates of bets.
+    # Get lengths of bets indexed by bet ends.
     bet_lengths = compute_signed_bet_lengths(
         positions, mode="bet_end", nan_mode=nan_mode
     )
-    log_rets = hdf.apply_nan_mode(log_rets, mode=nan_mode)
+    # Get start dates of bets.
     bet_starts = compute_bet_starts(positions)
     bet_starts_idx = bet_starts[bet_starts != 0].dropna().index
     # Compute returns per bet.
