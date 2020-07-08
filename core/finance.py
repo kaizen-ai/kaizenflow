@@ -317,10 +317,11 @@ def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
     drawdown = compute_drawdown(log_rets)
     underwater_mask = drawdown != 0
     # Cumulatively count number of values in True/False groups.
+    # Calculate the start of each underwater series.
     underwater_change = underwater_mask != underwater_mask.shift()
-    # Boolean values that are repeated in `underwater_mask` have repeating
-    # numbers in cumulative sum.
+    # Assign each underwater series unique number, repeated inside each series.
     underwater_groups = underwater_change.cumsum()
+    # Use `.cumcount()` on each underwater series.
     cumulative_count_groups = underwater_mask.groupby(
         underwater_groups
     ).cumcount()

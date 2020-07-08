@@ -133,6 +133,18 @@ class Test_compute_time_under_water(hut.TestCase):
         output = pd.concat([series, drawdown, time_under_water], axis=1)
         self.check_string(hut.convert_df_to_string(output, index=True))
 
+    def test2(self) -> None:
+        series = Test_compute_time_under_water._get_series(42)
+        series.iloc[:4] = np.nan
+        series.iloc[10:15] = np.nan
+        series.iloc[-4:] = np.nan
+        drawdown = fin.compute_drawdown(series).rename("drawdown")
+        time_under_water = fin.compute_time_under_water(series).rename(
+            "time_under_water"
+        )
+        output = pd.concat([series, drawdown, time_under_water], axis=1)
+        self.check_string(hut.convert_df_to_string(output, index=True))
+
 
 class Test_compute_turnover(hut.TestCase):
     @staticmethod
