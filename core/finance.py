@@ -411,20 +411,27 @@ def compute_bet_starts(
 
 
 def compute_signed_bet_lengths(
-    positions: pd.Series, nan_mode: Optional[str] = None
+    positions: pd.Series,
+    mode: Optional[str] = None,
+    nan_mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate lengths of bets (in sampling freq).
 
     :param positions: series of long/short positions
+    :param mode: if "bet_end", index by bet end; if "next_pos", index by next
+        position after bet end
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed lengths of bets, i.e., the sign indicates whether the
         length corresponds to a long bet or a short bet. Index corresponds to
-        end of bet.
+        either end of bet or next position after end of bet.
     """
+    mode = mode or "next_pos"
     bet_runs = compute_bet_runs(positions, nan_mode)
     bet_starts = compute_bet_starts(positions, nan_mode)
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
+    # Get starts of bets or zero positions runs (zero positions are filled with
+    # `NaN`s in `compute_bet_runs`).
     bet_starts_idx = bet_starts[bet_starts != 0].index
     bet_lengths = []
     bet_ends_idx = []
@@ -440,7 +447,12 @@ def compute_signed_bet_lengths(
             mask = t0_mask
         bet_mask = bet_runs.loc[mask]
         bet_length = bet_mask.sum()
-        bet_end = bet_starts_idx[i + 1]
+        if mode == "next_pos":
+            bet_end = bet_starts_idx[i + 1]
+        elif mode == "bet_end":
+            bet_end = bet_runs.loc[mask].index[-1]
+        else:
+            raise ValueError("Invalid `mode`='%s'" % mode)
         bet_lengths.append(bet_length)
         bet_ends_idx.append(bet_end)
     bet_length_srs = pd.Series(

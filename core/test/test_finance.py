@@ -461,3 +461,31 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-02")])
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
+
+    def test11(self) -> None:
+        positions = Test_compute_signed_bet_lengths._get_series(42)
+        positions.iloc[:4] = 0
+        positions.iloc[10:15] = 0
+        positions.iloc[-4:] = 0
+        actual = fin.compute_signed_bet_lengths(positions, mode="next_pos")
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test12(self) -> None:
+        positions = Test_compute_signed_bet_lengths._get_series(42)
+        positions.iloc[:4] = 0
+        positions.iloc[10:15] = 0
+        positions.iloc[-4:] = 0
+        actual = fin.compute_signed_bet_lengths(positions, mode="bet_end")
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
