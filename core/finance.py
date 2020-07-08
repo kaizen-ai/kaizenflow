@@ -369,7 +369,7 @@ def compute_bet_runs(
     :return: series of -1/0/1 with 1's indicating long bets and -1 indicating
         short bets
     """
-    dbg.dassert_monotonic_index(positions)
+    # dbg.dassert_monotonic_index(positions)
     # Forward fill NaN positions by default (e.g., do not assume they are
     # closed out).
     nan_mode = nan_mode or "ffill"
@@ -407,7 +407,23 @@ def compute_bet_starts(
     # Set zero bet runs to `NaN`.
     bet_runs_zero_mask = bet_runs == 0
     bet_starts.loc[bet_runs_zero_mask] = np.nan
+    bet_starts.loc[bet_runs.isna()] = np.nan
     return bet_starts
+
+
+def compute_bet_ends(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    
+    :param positions: 
+    :param nan_mode: 
+    :return: 
+    """
+    reversed_positions = positions.iloc[::-1]
+    reversed_bet_starts = compute_bet_starts(reversed_positions, nan_mode=nan_mode)
+    bet_ends = reversed_bet_starts.iloc[::-1]
+    return bet_ends
 
 
 def compute_signed_bet_lengths(
@@ -433,20 +449,21 @@ def compute_signed_bet_lengths(
     # Get starts of bets or zero positions runs (zero positions are filled with
     # `NaN`s in `compute_bet_runs`).
     bet_starts_idx = bet_starts[bet_starts != 0].index
+
+    bet_runs_cumsum = bet_runs.cumsum()
+
+
     bet_lengths = []
     bet_ends_idx = []
     for i, t0 in enumerate(bet_starts_idx[:-1]):
         # `NaN` indicates zero position, skip it.
         if pd.isna(bet_starts.loc[t0]):
             continue
-        t0_mask = bet_runs.index >= t0
-        if i < bet_starts_idx.size - 1:
-            t1_mask = bet_runs.index < bet_starts_idx[i + 1]
-            mask = t0_mask & t1_mask
-        else:
-            mask = t0_mask
-        bet_mask = bet_runs.loc[mask]
-        bet_length = bet_mask.sum()
+        t0_mask = bet_runs.index <= t0
+        # Recenter cumsum at `t0`.
+        adj_bet_runs_cumsum = bet_runs_cumsum - bet_runs.loc[t0_mask].cumsum()
+        iloc = bet_runs.index.get_loc(bet_starts_idx[i + 1]) - 1
+        bet_length = adj_bet_runs_cumsum.iloc[iloc]
         if mode == "next_pos":
             bet_end = bet_starts_idx[i + 1]
         elif mode == "bet_end":
