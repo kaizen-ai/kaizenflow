@@ -1040,7 +1040,7 @@ def plot_cumulative_returns(
         bs_label = benchmark_series.name or "benchmark_series"
         benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     if plot_zero_line:
-        ax.axhline(0, linestyle="--", linewidth=0.8, color="black", label="0")
+        ax.axhline(0, linestyle="--", linewidth=0.8, color="black")
     ax.set_ylabel(unit)
     ax.legend()
 
