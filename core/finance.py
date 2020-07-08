@@ -481,7 +481,7 @@ def compute_returns_per_bet(
         positions, mode="bet_end", nan_mode=nan_mode
     )
     # Get start dates of bets.
-    bet_starts = compute_bet_starts(positions)
+    bet_starts = compute_bet_starts(positions, nan_mode=nan_mode)
     bet_starts_idx = bet_starts[bet_starts != 0].dropna().index
     # Compute returns per bet.
     rets_per_bet = []
