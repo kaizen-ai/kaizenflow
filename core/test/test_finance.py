@@ -331,9 +331,33 @@ class Test_compute_bet_starts(hut.TestCase):
         )
         expected = pd.Series(
             {
-                pd.Timestamp("2010-01-01"): 0,
+                pd.Timestamp("2010-01-01"): np.nan,
                 pd.Timestamp("2010-01-02"): 1,
                 pd.Timestamp("2010-01-03"): 0,
+                pd.Timestamp("2010-01-04"): -1,
+            },
+            dtype=float,
+        )
+        actual = fin.compute_bet_starts(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test5(self) -> None:
+        """
+        Test consecutive zeroes.
+        """
+        positions = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): 0,
+                pd.Timestamp("2010-01-02"): 0,
+                pd.Timestamp("2010-01-03"): 0,
+                pd.Timestamp("2010-01-04"): -1,
+            }
+        )
+        expected = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): np.nan,
+                pd.Timestamp("2010-01-02"): np.nan,
+                pd.Timestamp("2010-01-03"): np.nan,
                 pd.Timestamp("2010-01-04"): -1,
             },
             dtype=float,

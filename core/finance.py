@@ -407,6 +407,7 @@ def compute_bet_starts(
     # Set zero bet runs to `NaN`.
     bet_runs_zero_mask = bet_runs == 0
     bet_starts.loc[bet_runs_zero_mask] = np.nan
+    bet_starts.loc[bet_runs.isna()] = np.nan
     return bet_starts
 
 
