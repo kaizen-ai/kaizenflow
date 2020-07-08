@@ -294,6 +294,9 @@ class Test_compute_bet_starts(hut.TestCase):
         self.check_string(output_str)
 
     def test3(self) -> None:
+        """
+        Test zeros.
+        """
         positions = pd.Series(
             {
                 pd.Timestamp("2010-01-01"): 0,
@@ -307,6 +310,30 @@ class Test_compute_bet_starts(hut.TestCase):
                 pd.Timestamp("2010-01-01"): 0,
                 pd.Timestamp("2010-01-02"): 1,
                 pd.Timestamp("2010-01-03"): -1,
+                pd.Timestamp("2010-01-04"): -1,
+            },
+            dtype=float,
+        )
+        actual = fin.compute_bet_starts(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test4(self) -> None:
+        """
+        Test `NaN`s.
+        """
+        positions = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): np.nan,
+                pd.Timestamp("2010-01-02"): 1,
+                pd.Timestamp("2010-01-03"): np.nan,
+                pd.Timestamp("2010-01-04"): -1,
+            }
+        )
+        expected = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): 0,
+                pd.Timestamp("2010-01-02"): 1,
+                pd.Timestamp("2010-01-03"): 0,
                 pd.Timestamp("2010-01-04"): -1,
             },
             dtype=float,
