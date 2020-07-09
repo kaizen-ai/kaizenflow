@@ -686,23 +686,7 @@ class TestComputeZeroNanInfStats(hut.TestCase):
 class TestCalculateHitRate(hut.TestCase):
     @staticmethod
     def _get_test_series():
-        series = pd.Series(
-            [
-                0,
-                -0.001,
-                0.001,
-                -0.01,
-                0.01,
-                -0.1,
-                0.1,
-                -1,
-                1,
-                10,
-                np.nan,
-                np.inf,
-                -np.inf,
-            ]
-        )
+        series = pd.Series([0, -0.001, 0.001, -0.01, 0.01, -0.1, 0.1, -1, 1, 10])
         return series
 
     def test1(self) -> None:
@@ -716,6 +700,46 @@ class TestCalculateHitRate(hut.TestCase):
 
     def test2(self) -> None:
         """
+        Test for the case when NaNs compose the half of the input.
+
+        The outcome should be equal to the one for the test1.
+        """
+        series = self._get_test_series()
+        nan_series = pd.Series([np.nan for i in range(len(series))])
+        series = pd.concat([series, nan_series])
+        actual = stats.calculate_hit_rate(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        """
+        Test for the case when np.inf compose the half of the input.
+
+        The outcome should be equal to the one for the test1.
+        """
+        series = self._get_test_series()
+        inf_series = pd.Series([np.inf for i in range(len(series))])
+        inf_series[:5] = -np.inf
+        series = pd.concat([series, inf_series])
+        actual = stats.calculate_hit_rate(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        """
+        Test for the case when 0 compose the half of the input.
+
+        The outcome should be equal to the one for the test1.
+        """
+        series = self._get_test_series()
+        zero_series = pd.Series([0 for i in range(len(series))])
+        series = pd.concat([series, zero_series])
+        actual = stats.calculate_hit_rate(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        """
         Test for lower threshold.
         """
         series = self._get_test_series()
@@ -723,50 +747,41 @@ class TestCalculateHitRate(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    def test3(self) -> None:
+    def test6(self) -> None:
         """
-        Test for alpha=0.1.
+        Test alpha.
         """
         series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, alpha=0.1)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    def test4(self) -> None:
+    def test7(self) -> None:
         """
-        Test for nan_mode.
-        """
-        series = self._get_test_series()
-        actual = stats.calculate_hit_rate(series, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
-    def test5(self) -> None:
-        """
-        Test for prefix.
+        Test prefix.
         """
         series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, prefix="hit_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input.
-    def test6(self) -> None:
-        series = pd.Series([])
-        stats.calculate_hit_rate(series)
-
-    # Smoke test for input of `np.nan`s.
-    def test7(self) -> None:
-        series = pd.Series([np.nan] * 10)
-        stats.calculate_hit_rate(series)
-
     def test8(self) -> None:
         """
-        Test for method.
+        Test method.
         """
         series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, method="wilson")
         self.check_string(hut.convert_df_to_string(actual, index=True))
+
+    # Smoke test for empty input.
+    def test_smoke(self) -> None:
+        series = pd.Series([])
+        stats.calculate_hit_rate(series)
+
+    # Smoke test for input of `np.nan`s.
+    def test_nan(self) -> None:
+        series = pd.Series([np.nan] * 10)
+        stats.calculate_hit_rate(series)
 
 
 class Test_compute_jensen_ratio(hut.TestCase):

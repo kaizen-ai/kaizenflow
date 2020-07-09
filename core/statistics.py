@@ -622,7 +622,6 @@ def calculate_hit_rate(
     srs: pd.Series,
     alpha: Optional[float] = None,
     method: Optional[str] = None,
-    nan_mode: Optional[str] = None,
     threshold: Optional[float] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
@@ -632,8 +631,6 @@ def calculate_hit_rate(
     :param srs: pandas series
     :param alpha: as in statsmodels.stats.proportion.proportion_confint()
     :param method: as in statsmodels.stats.proportion.proportion_confint()
-    :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence
-        intervals calculation
     :param threshold: threshold value around zero to exclude from calculations
     :param prefix: optional prefix for metrics' outcome
     :return: hit rate statistics: point estimate, lower bound, upper bound
@@ -643,7 +640,6 @@ def calculate_hit_rate(
     dbg.dassert_lte(0, alpha)
     dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "ignore"
     threshold = threshold or 0
     prefix = prefix or ""
     # Process series.
@@ -653,9 +649,13 @@ def calculate_hit_rate(
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
     ]
+    # Set all the values whose absolute values are closer to zero than
+    #    the absolute value of the threshold equal to NaN.
     srs = srs.mask(abs(srs) <= abs(threshold))
+    # Set all the inf values equal to NaN.
     srs = srs.replace([np.inf, -np.inf], np.nan)
-    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    # Ignore all the NaN values.
+    srs = hdf.apply_nan_mode(srs, mode="ignore")
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
