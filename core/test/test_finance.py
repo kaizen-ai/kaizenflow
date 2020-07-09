@@ -399,6 +399,116 @@ class Test_compute_bet_starts(hut.TestCase):
         pd.testing.assert_series_equal(actual, expected)
 
 
+class Test_compute_bet_ends(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        positions = Test_compute_bet_ends._get_series(42)
+        actual = fin.compute_bet_ends(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test2(self) -> None:
+        positions = Test_compute_bet_ends._get_series(42)
+        positions.iloc[:4] = np.nan
+        positions.iloc[10:15] = np.nan
+        positions.iloc[-4:] = np.nan
+        actual = fin.compute_bet_ends(positions)
+        output_str = (
+            f"{prnt.frame('positions')}\n"
+            f"{hut.convert_df_to_string(positions, index=True)}\n"
+            f"{prnt.frame('bet_lengths')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test3(self) -> None:
+        """
+        Test zeros.
+        """
+        positions = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): 0,
+                pd.Timestamp("2010-01-02"): 1,
+                pd.Timestamp("2010-01-03"): 0,
+                pd.Timestamp("2010-01-04"): -1,
+            }
+        )
+        expected = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): np.nan,
+                pd.Timestamp("2010-01-02"): 1,
+                pd.Timestamp("2010-01-03"): np.nan,
+                pd.Timestamp("2010-01-04"): -1,
+            },
+            dtype=float,
+        )
+        actual = fin.compute_bet_starts(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test4(self) -> None:
+        """
+        Test `NaN`s.
+        """
+        positions = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): np.nan,
+                pd.Timestamp("2010-01-02"): 1,
+                pd.Timestamp("2010-01-03"): np.nan,
+                pd.Timestamp("2010-01-04"): -1,
+            }
+        )
+        expected = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): np.nan,
+                pd.Timestamp("2010-01-02"): 1,
+                pd.Timestamp("2010-01-03"): 0,
+                pd.Timestamp("2010-01-04"): -1,
+            },
+            dtype=float,
+        )
+        actual = fin.compute_bet_starts(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test5(self) -> None:
+        """
+        Test consecutive zeroes.
+        """
+        positions = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): -1,
+                pd.Timestamp("2010-01-02"): 0,
+                pd.Timestamp("2010-01-03"): 0,
+                pd.Timestamp("2010-01-04"): 0,
+            }
+        )
+        expected = pd.Series(
+            {
+                pd.Timestamp("2010-01-01"): -1,
+                pd.Timestamp("2010-01-02"): np.nan,
+                pd.Timestamp("2010-01-03"): np.nan,
+                pd.Timestamp("2010-01-04"): np.nan,
+            },
+            dtype=float,
+        )
+        actual = fin.compute_bet_starts(positions)
+        pd.testing.assert_series_equal(actual, expected)
+
+
 class Test_compute_signed_bet_lengths(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
@@ -442,9 +552,9 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
             index=pd.date_range(start="2010-01-01", periods=12, freq="D"),
         )
         expected_bet_ends = pd.to_datetime(
-            ["2010-01-05", "2010-01-08", "2010-01-11",]
+            ["2010-01-04", "2010-01-07", "2010-01-10", "2010-01-12"]
         )
-        expected = pd.Series([4, -3, -1], index=expected_bet_ends, dtype=float)
+        expected = pd.Series([4, -3, -1, 1], index=expected_bet_ends, dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -453,7 +563,8 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         Test a single value.
         """
         positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
-        expected = pd.Series()
+        # Notice the int to float data type change.
+        expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -463,7 +574,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([np.nan, np.nan], index=idx)
-        expected = pd.Series()
+        expected = pd.Series(index=idx).dropna()
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -474,7 +585,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, np.nan, 0], index=idx)
         expected = pd.Series(
-            [2], index=pd.to_datetime(["2010-01-03"]), dtype=float
+            [2], index=pd.to_datetime(["2010-01-02"]), dtype=float
         )
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
@@ -485,7 +596,9 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, np.nan, np.nan], index=idx)
-        expected = pd.Series()
+        expected = pd.Series(
+            [3], index=pd.to_datetime(["2010-01-03"]), dtype=float
+        )
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -495,7 +608,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02"])
         positions = pd.Series([0, 0], index=idx)
-        expected = pd.Series()
+        expected = pd.Series(index=idx).dropna()
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -505,7 +618,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([0, 1, 0], index=idx)
-        expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-03")])
+        expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-02")])
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -515,7 +628,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, 0, 0], index=idx)
-        expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-02")])
+        expected = pd.Series([1.0], index=[pd.Timestamp("2010-01-01")])
         actual = fin.compute_signed_bet_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
@@ -524,7 +637,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         positions.iloc[:4] = 0
         positions.iloc[10:15] = 0
         positions.iloc[-4:] = 0
-        actual = fin.compute_signed_bet_lengths(positions, mode="next_tick")
+        actual = fin.compute_signed_bet_lengths(positions)
         output_str = (
             f"{prnt.frame('positions')}\n"
             f"{hut.convert_df_to_string(positions, index=True)}\n"
@@ -538,7 +651,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         positions.iloc[:4] = 0
         positions.iloc[10:15] = 0
         positions.iloc[-4:] = 0
-        actual = fin.compute_signed_bet_lengths(positions, mode="bet_end")
+        actual = fin.compute_signed_bet_lengths(positions)
         output_str = (
             f"{prnt.frame('positions')}\n"
             f"{hut.convert_df_to_string(positions, index=True)}\n"
@@ -603,6 +716,10 @@ class Test_compute_returns_per_bet(hut.TestCase):
         positions = pd.Series([1, 2, 0, 1, -3, -2], index=idx)
         actual = fin.compute_returns_per_bet(positions, log_rets)
         expected = pd.Series(
-            {pd.Timestamp("2010-01-03"): 5, pd.Timestamp("2010-01-06"): 5}
+            {
+                pd.Timestamp("2010-01-03"): 5,
+                pd.Timestamp("2010-01-06"): 5,
+                pd.Timestamp("2010-01-12"): -43,
+            }
         )
         pd.testing.assert_series_equal(actual, expected)
