@@ -393,8 +393,7 @@ def compute_bet_runs(
     :return: series of -1/0/1 with 1's indicating long bets and -1 indicating
         short bets
     """
-    # TODO(*): Allow a monotonic increasing or monotonic decreasing index.
-    # dbg.dassert_monotonic_index(positions)
+    dbg.dassert_monotonic_index(positions)
     # Forward fill NaN positions by default (e.g., do not assume they are
     # closed out).
     nan_mode = nan_mode or "ffill"
