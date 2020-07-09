@@ -22,7 +22,7 @@ def remove_dates_with_no_data(
     :return: filtered df
     """
     # This is not strictly necessary.
-    dbg.dassert_monotonic_index(df)
+    dbg.dassert_strictly_increasing_index(df)
     #
     removed_days = []
     df_out = []
@@ -35,7 +35,7 @@ def remove_dates_with_no_data(
             df_out.append(df_tmp)
         num_days += 1
     df_out = pd.concat(df_out)
-    dbg.dassert_monotonic_index(df_out)
+    dbg.dassert_strictly_increasing_index(df_out)
     #
     if report_stats:
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
@@ -65,7 +65,7 @@ def resample(
     """
     Resample returns (using sum) using our timing convention.
     """
-    dbg.dassert_monotonic_index(df)
+    dbg.dassert_strictly_increasing_index(df)
     resampler = df.resample(agg_interval, closed="left", label="right")
     rets = resampler.sum()
     return rets
@@ -86,7 +86,7 @@ def set_non_ath_to_nan(
       - `time <= end_time`
     """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    dbg.dassert_monotonic_index(df)
+    dbg.dassert_strictly_increasing_index(df)
     if start_time is None:
         start_time = datetime.time(9, 30)
     if end_time is None:
@@ -504,7 +504,7 @@ def compute_returns_per_bet(
         bet
     """
     dbg.dassert(positions.index.equals(log_rets.index))
-    dbg.dassert_monotonic_index(log_rets)
+    dbg.dassert_strictly_increasing_index(log_rets)
     bet_starts = compute_bet_starts(positions, nan_mode)
     bet_ends = compute_bet_ends(positions, nan_mode)
     # Sanity check indices.
