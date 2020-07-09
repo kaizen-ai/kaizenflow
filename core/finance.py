@@ -525,7 +525,7 @@ def compute_returns_per_bet(
     # To compute returns per bet, get start dates and end dates of bets.
     # Get lengths of bets indexed by bet ends.
     bet_lengths = compute_signed_bet_lengths(
-        positions, mode="bet_end", nan_mode=nan_mode
+        positions, nan_mode=nan_mode
     )
     # Get start dates of bets.
     bet_starts = compute_bet_starts(positions, nan_mode=nan_mode)
