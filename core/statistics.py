@@ -618,6 +618,42 @@ def compute_max_drawdown(
     return result
 
 
+def compute_bet_returns_stats(
+    positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
+):
+    """
+    Calculate average returns for grouped bets.
+
+    :param positions: series of long/short positions
+    :param log_rets: log returns
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: series of average returns for winning/losing and long/short bets,
+        number of positions and bets
+    """
+    rets_per_bet = fin.compute_returns_per_bet(
+        positions, log_rets, nan_mode=nan_mode
+    )
+    bet_lengths = fin.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
+    #
+    num_positions = bet_lengths.abs().sum()
+    num_bets = bet_lengths.size
+    average_ret_winning_bets = rets_per_bet.loc[rets_per_bet > 0].mean()
+    average_ret_losing_bets = rets_per_bet.loc[rets_per_bet < 0].mean()
+    average_ret_long_bet = rets_per_bet.loc[bet_lengths > 0].mean()
+    average_ret_short_bet = rets_per_bet.loc[bet_lengths < 0].mean()
+    return pd.Series(
+        {
+            "num_positions": num_positions,
+            "num_bets": num_bets,
+            "average_return_winning_bets": average_ret_winning_bets,
+            "average_return_losing_bets": average_ret_losing_bets,
+            "average_return_long_bet": average_ret_long_bet,
+            "average_return_short_bet": average_ret_short_bet,
+        },
+        name=log_rets.name,
+    )
+
+
 def calculate_hit_rate(
     srs: pd.Series,
     alpha: Optional[float] = None,
