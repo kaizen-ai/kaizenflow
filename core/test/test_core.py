@@ -851,7 +851,7 @@ class TestPcaFactorComputer1(hut.TestCase):
         eigval_df = prev_eigval_df.reindex(columns=shuffle)
         eigval_df.columns = list(range(eigval_df.shape[1]))
         for obj in (prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df):
-            dbg.dassert_monotonic_increasing_index(obj)
+            dbg.dassert_strictly_increasing_index(obj)
         return prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df
 
     def _test_stabilize_eigenvec_helper(

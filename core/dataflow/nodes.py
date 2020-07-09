@@ -281,7 +281,7 @@ class DiskDataSource(DataSource):
         if self._timestamp_col is not None:
             self.df.set_index(self._timestamp_col, inplace=True)
         self.df.index = pd.to_datetime(self.df.index)
-        dbg.dassert_monotonic_increasing_index(self.df)
+        dbg.dassert_strictly_increasing_index(self.df)
         self.df = self.df.loc[self._start_date : self._end_date]
         dbg.dassert(not self.df.empty, "Dataframe is empty")
 

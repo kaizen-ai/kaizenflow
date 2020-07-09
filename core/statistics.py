@@ -1225,7 +1225,7 @@ def get_interarrival_time(
     # Check index of a series. We require that the input
     #     series have a sorted datetime index.
     dbg.dassert_isinstance(index, pd.DatetimeIndex)
-    dbg.dassert_monotonic_increasing_index(index)
+    dbg.dassert_strictly_increasing_index(index)
     # Compute a series of interrairival time.
     interrarival_time = pd.Series(index).diff()
     return interrarival_time
@@ -1296,7 +1296,7 @@ def get_rolling_splits(
     A typical use case is where the index is a monotonic increasing datetime
     index. For such cases, causality is respected by the splits.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     n_chunks = n_splits + 1
     dbg.dassert_lte(1, n_splits)
     # Split into equal chunks.
@@ -1315,7 +1315,7 @@ def get_oos_start_split(
     """
     Split index using OOS (out-of-sample) start datetime.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     ins_mask = idx < datetime_
     dbg.dassert_lte(1, ins_mask.sum())
     oos_mask = ~ins_mask
@@ -1332,7 +1332,7 @@ def get_train_test_pct_split(
     """
     Split index into train and test sets by percentage.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     dbg.dassert_lt(0.0, train_pct)
     dbg.dassert_lt(train_pct, 1.0)
     #
@@ -1349,7 +1349,7 @@ def get_expanding_window_splits(
     """
     Generate splits with expanding overlapping windows.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     dbg.dassert_lte(1, n_splits)
     tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=n_splits)
     locs = list(tscv.split(idx))
@@ -1361,7 +1361,7 @@ def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
     """
     Return subset of idx with values >= min_idx and < max_idx.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     # TODO(*): PartTask667: Consider using bisection to avoid linear scans.
     min_mask = idx >= min_idx
     max_mask = idx < max_idx
@@ -1380,7 +1380,7 @@ def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
     TODO(Paul): Consider supporting multiple behaviors with `mode`.
     """
     for idx in idxs:
-        dbg.dassert_monotonic_increasing_index(idx)
+        dbg.dassert_strictly_increasing_index(idx)
     # Find the maximum start/end datetime overlap of all source indices.
     max_min = max([idx.min() for idx in idxs])
     _LOG.debug("Latest start datetime of indices=%s", max_min)

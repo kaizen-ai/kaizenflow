@@ -51,7 +51,7 @@ class _TimeSeriesAnalyzer:
         """
         dbg.dassert_isinstance(time_series, pd.Series)
         dbg.dassert_isinstance(time_series.index, pd.DatetimeIndex)
-        dbg.dassert_monotonic_increasing_index(time_series.index)
+        dbg.dassert_strictly_increasing_index(time_series.index)
         self._time_series = time_series
         self._ts_name = time_series.name
         self._data_name = data_name

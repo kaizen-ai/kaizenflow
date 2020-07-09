@@ -173,7 +173,7 @@ class PcaFactorComputer(FactorComputer):
 
     def _execute(self, df: pd.DataFrame, ts: int) -> pd.Series:
         _LOG.debug("ts=%s", ts)
-        dbg.dassert_monotonic_increasing_index(df)
+        dbg.dassert_strictly_increasing_index(df)
         # Compute correlation.
         df = exp.handle_nans(df, self.nan_mode_in_data)
         corr_df = df.corr()
@@ -357,8 +357,8 @@ class PcaFactorComputer(FactorComputer):
                     return sign
             return None
 
-        dbg.dassert_monotonic_increasing_index(prev_eigvec_df)
-        dbg.dassert_monotonic_increasing_index(eigvec_df)
+        dbg.dassert_strictly_increasing_index(prev_eigvec_df)
+        dbg.dassert_strictly_increasing_index(eigvec_df)
         # TODO(gp): This code can be sped up by:
         # 1) keeping a running list of the v2 columns already mapped so that
         #    we don't have to check over and over.
