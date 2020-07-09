@@ -8,6 +8,7 @@ import core.artificial_signal_generators as sig_gen
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
+import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -864,14 +865,34 @@ class Test_compute_bet_returns_stats(hut.TestCase):
         log_rets = Test_compute_bet_returns_stats._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
         actual = stats.compute_bet_returns_stats(positions, log_rets)
-        self.check_string(hut.convert_df_to_string(actual, index=True))
+        bet_rets = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos_bet_rets = pd.concat(
+            {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
+        )
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
+            f"{prnt.frame('stats')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test2(self) -> None:
         log_rets = Test_compute_bet_returns_stats._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
         log_rets.iloc[:10] = np.nan
         actual = stats.compute_bet_returns_stats(positions, log_rets)
-        self.check_string(hut.convert_df_to_string(actual, index=True))
+        bet_rets = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos_bet_rets = pd.concat(
+            {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
+        )
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
+            f"{prnt.frame('stats')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test3(self) -> None:
         idx = pd.to_datetime(
