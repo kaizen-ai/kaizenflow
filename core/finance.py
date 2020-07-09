@@ -453,17 +453,14 @@ def compute_bet_ends(
     nan_mode = nan_mode or "ffill"
     positions = hdf.apply_nan_mode(positions, mode=nan_mode)
     reversed_positions = positions.iloc[::-1]
-    reversed_bet_starts = compute_bet_starts(
-        reversed_positions, nan_mode=None
-    )
+    reversed_bet_starts = compute_bet_starts(reversed_positions, nan_mode=None)
     bet_ends = reversed_bet_starts.iloc[::-1]
     # TODO(*): Maybe exclude the last "bet" due to causality considerations.
     return bet_ends
 
 
 def compute_signed_bet_lengths(
-    positions: pd.Series,
-    nan_mode: Optional[str] = None,
+    positions: pd.Series, nan_mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate lengths of bets (in sampling freq).
@@ -524,9 +521,7 @@ def compute_returns_per_bet(
     dbg.dassert_monotonic_index(log_rets)
     # To compute returns per bet, get start dates and end dates of bets.
     # Get lengths of bets indexed by bet ends.
-    bet_lengths = compute_signed_bet_lengths(
-        positions, nan_mode=nan_mode
-    )
+    bet_lengths = compute_signed_bet_lengths(positions, nan_mode=nan_mode)
     # Get start dates of bets.
     bet_starts = compute_bet_starts(positions, nan_mode=nan_mode)
     bet_starts_idx = bet_starts[bet_starts != 0].dropna().index
