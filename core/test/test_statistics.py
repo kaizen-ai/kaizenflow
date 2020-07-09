@@ -684,34 +684,68 @@ class TestComputeZeroNanInfStats(hut.TestCase):
 
 
 class TestCalculateHitRate(hut.TestCase):
+    @staticmethod
+    def _get_test_series():
+        series = pd.Series(
+            [
+                0,
+                -0.001,
+                0.001,
+                -0.01,
+                0.01,
+                -0.1,
+                0.1,
+                -1,
+                1,
+                10,
+                np.nan,
+                np.inf,
+                -np.inf,
+            ]
+        )
+        return series
+
     def test1(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
+        """
+        Test for default parameters.
+        """
+        series = self._get_test_series()
         actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        np.random.seed(42)
-        series = pd.Series(np.random.choice([0, 1, np.nan], size=(100,)))
-        actual = stats.calculate_hit_rate(series)
+        """
+        Test for lower threshold.
+        """
+        series = self._get_test_series()
+        actual = stats.calculate_hit_rate(series, threshold=10e-4)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        np.random.seed(42)
-        series = pd.Series(np.random.choice([0, 1, np.nan], size=(100,)))
+        """
+        Test for alpha=0.1.
+        """
+        series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, alpha=0.1)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
+        """
+        Test for nan_mode.
+        """
+        series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
+        """
+        Test for prefix.
+        """
+        series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, prefix="hit_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
@@ -726,11 +760,12 @@ class TestCalculateHitRate(hut.TestCase):
         series = pd.Series([np.nan] * 10)
         stats.calculate_hit_rate(series)
 
-    def test_sign1(self) -> None:
-        np.random.seed(42)
-        data = list(np.random.randn(100)) + [np.inf, np.nan]
-        series = pd.Series(data)
-        actual = stats.calculate_hit_rate(series, mode="sign")
+    def test8(self) -> None:
+        """
+        Test for method.
+        """
+        series = self._get_test_series()
+        actual = stats.calculate_hit_rate(series, method="wilson")
         self.check_string(hut.convert_df_to_string(actual, index=True))
 
 

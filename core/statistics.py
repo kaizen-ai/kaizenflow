@@ -623,20 +623,19 @@ def calculate_hit_rate(
     alpha: Optional[float] = None,
     method: Optional[str] = None,
     nan_mode: Optional[str] = None,
+    threshold: Optional[float] = None,
     prefix: Optional[str] = None,
-    mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate hit rate statistics.
 
-    :param srs: pandas series of 0s, 1s and NaNs
+    :param srs: pandas series
     :param alpha: as in statsmodels.stats.proportion.proportion_confint()
     :param method: as in statsmodels.stats.proportion.proportion_confint()
     :param nan_mode: argument for hdf.apply_nan_mode(), can affect confidence
         intervals calculation
+    :param threshold: threshold value around zero to exclude from calculations
     :param prefix: optional prefix for metrics' outcome
-    :param mode: `strict` or `sign`. `strict` requires a series of `0`s, `1`s
-        and possibly `NaNs`; `sign` interprets positive finite numbers as hits
     :return: hit rate statistics: point estimate, lower bound, upper bound
     """
     alpha = alpha or 0.05
@@ -645,8 +644,8 @@ def calculate_hit_rate(
     dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "ignore"
+    threshold = threshold or 0
     prefix = prefix or ""
-    mode = mode or "sign"
     # Process series.
     conf_alpha = (1 - alpha / 2) * 100
     result_index = [
@@ -654,21 +653,14 @@ def calculate_hit_rate(
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
     ]
-    srs = srs.replace([-np.inf, np.inf], np.nan)
+    srs = srs.mask(abs(srs) <= abs(threshold))
+    srs = srs.replace([np.inf, -np.inf], np.nan)
     srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
         return nan_result
-    if mode == "strict":
-        dbg.dassert_is_subset(
-            srs, [0, 1], "Series should contain only 0s, 1s and NaNs"
-        )
-        hit_mask = srs.copy()
-    elif mode == "sign":
-        hit_mask = srs > 0
-    else:
-        raise ValueError("Invalid mode='%s'" % mode)
+    hit_mask = srs > 0
     # Calculate confidence intervals.
     point_estimate = hit_mask.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
