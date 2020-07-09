@@ -281,7 +281,7 @@ class DiskDataSource(DataSource):
         if self._timestamp_col is not None:
             self.df.set_index(self._timestamp_col, inplace=True)
         self.df.index = pd.to_datetime(self.df.index)
-        dbg.dassert_monotonic_index(self.df)
+        dbg.dassert_monotonic_increasing_index(self.df)
         self.df = self.df.loc[self._start_date : self._end_date]
         dbg.dassert(not self.df.empty, "Dataframe is empty")
 
@@ -1384,7 +1384,9 @@ def process_result_bundle(result_bundle: Dict) -> collections.OrderedDict:
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = stats.compute_sharpe_ratio(pnl_rets.resample("1B").sum(), time_scaling=252)
+    sr = stats.compute_sharpe_ratio(
+        pnl_rets.resample("1B").sum(), time_scaling=252
+    )
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
     info["sr"] = copy.copy(sr)

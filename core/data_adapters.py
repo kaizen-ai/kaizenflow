@@ -265,7 +265,9 @@ if True:
         `gluonts.dataset.common.ListDataset`.
         """
         dbg.dassert_isinstance(local_ts.index, pd.MultiIndex)
-        dbg.dassert_monotonic_index(local_ts.index.get_level_values(0).unique())
+        dbg.dassert_monotonic_increasing_index(
+            local_ts.index.get_level_values(0).unique()
+        )
         for ts, local_ts_grid in local_ts.groupby(level=1):
             # Get start date of time series based on `t_0` timestamp and the
             # first grid index.

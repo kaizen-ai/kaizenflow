@@ -376,7 +376,7 @@ def dassert_file_extension(
     )
 
 
-def dassert_monotonic_index(
+def dassert_monotonic_increasing_index(
     obj: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     # For some reason importing pandas is slow and we don't want to pay this
@@ -390,6 +390,23 @@ def dassert_monotonic_index(
     # TODO(gp): Understand why mypy reports:
     #   error: "dassert" gets multiple values for keyword argument "msg"
     dassert(index.is_monotonic_increasing, msg=msg, *args)  # type: ignore
+    dassert(index.is_unique, msg=msg, *args)  # type: ignore
+
+
+def dassert_monotonic_index(
+    obj: Any, msg: Optional[str] = None, *args: Any
+) -> None:
+    # For some reason importing pandas is slow and we don't want to pay this
+    # start up cost unless we have to.
+    import pandas as pd
+
+    if isinstance(obj, pd.Index):
+        index = obj
+    else:
+        index = obj.index
+    # TODO(gp): Understand why mypy reports:
+    #   error: "dassert" gets multiple values for keyword argument "msg"
+    dassert(index.is_monotonic_increasing or index.is_monotonic_decreasing, msg=msg, *args)  # type: ignore
     dassert(index.is_unique, msg=msg, *args)  # type: ignore
 
 

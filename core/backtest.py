@@ -103,7 +103,7 @@ if True:
         dbg.dassert(
             df.index.freq, "The dataframe should have uniform datetime grid"
         )
-        dbg.dassert_monotonic_index(df.index)
+        dbg.dassert_monotonic_increasing_index(df.index)
         if isinstance(y_vars, str):
             y_vars = [y_vars]
         dbg.dassert_isinstance(y_vars, list)
