@@ -639,9 +639,8 @@ def compute_bet_returns_stats(
     num_bets = bet_lengths.size
     average_ret_winning_bets = rets_per_bet.loc[rets_per_bet > 0].mean()
     average_ret_losing_bets = rets_per_bet.loc[rets_per_bet < 0].mean()
-    long_bet_mask = bet_lengths > 0
-    average_ret_long_bet = rets_per_bet.loc[long_bet_mask].mean()
-    average_ret_short_bet = rets_per_bet.loc[~long_bet_mask].mean()
+    average_ret_long_bet = rets_per_bet.loc[bet_lengths > 0].mean()
+    average_ret_short_bet = rets_per_bet.loc[bet_lengths < 0].mean()
     return pd.Series(
         {
             "num_positions": num_positions,
