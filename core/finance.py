@@ -481,23 +481,9 @@ def compute_signed_bet_lengths(
     # `NaN`s in `compute_bet_runs`).
     bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    # Calculate cumulative sums of bet runs.
-    bet_runs_cumsum = bet_runs.cumsum()
-    # Bet lengths correspond to differences of `bet_runs_cumsum` at bet
-    # start/end times (after off-by-one correction).
     bet_lengths = []
     for t0, t1 in zip(bet_starts_idx, bet_ends_idx):
-        start_val = bet_runs_cumsum.loc[t0]
-        end_val = bet_runs_cumsum.loc[t1]
-        # Bet length, off-by-one.
-        bet_length = end_val - start_val
-        # Correct off-by-one according to sign.
-        if bet_length > 0:
-            bet_length += 1
-        elif bet_length < 0:
-            bet_length -= 1
-        else:
-            bet_length = bet_runs.loc[t1]
+        bet_length = bet_runs.loc[t0:t1].sum()
         bet_lengths.append(bet_length)
     bet_length_srs = pd.Series(
         index=bet_ends_idx, data=bet_lengths, name=positions.name
