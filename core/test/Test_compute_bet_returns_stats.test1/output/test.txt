@@ -1,0 +1,7 @@
+                             arma(0,0)
+num_positions                40.000000
+num_bets                      6.000000
+average_return_winning_bets   1.909959
+average_return_losing_bets         NaN
+average_return_long_bet       1.017840
+average_return_short_bet      2.802079

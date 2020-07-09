@@ -6,6 +6,7 @@ import pytest
 
 import core.artificial_signal_generators as sig_gen
 import core.finance as fin
+import core.signal_processing as sigp
 import core.statistics as stats
 import helpers.unit_test as hut
 
@@ -849,6 +850,59 @@ class TestComputeMaxDrawdown(hut.TestCase):
         stats.compute_max_drawdown(series)
 
 
+class Test_compute_bet_returns_stats(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        log_rets = Test_compute_bet_returns_stats._get_series(42)
+        positions = sigp.compute_smooth_moving_average(log_rets, 4)
+        actual = stats.compute_bet_returns_stats(positions, log_rets)
+        self.check_string(hut.convert_df_to_string(actual, index=True))
+
+    def test2(self) -> None:
+        log_rets = Test_compute_bet_returns_stats._get_series(42)
+        positions = sigp.compute_smooth_moving_average(log_rets, 4)
+        log_rets.iloc[:10] = np.nan
+        actual = stats.compute_bet_returns_stats(positions, log_rets)
+        self.check_string(hut.convert_df_to_string(actual, index=True))
+
+    def test3(self) -> None:
+        idx = pd.to_datetime(
+            [
+                "2010-01-01",
+                "2010-01-03",
+                "2010-01-05",
+                "2010-01-06",
+                "2010-01-10",
+                "2010-01-12",
+                "2010-01-13",
+                "2010-01-15",
+            ]
+        )
+        log_rets = pd.Series([1, 2, 3, 5, 7, 11, -13, -5], index=idx)
+        positions = pd.Series([1, 2, 0, 1, -3, -2, 0, -1], index=idx)
+        actual = stats.compute_bet_returns_stats(positions, log_rets)
+        expected = pd.Series(
+            {
+                "num_positions": 6,
+                "num_bets": 4,
+                "average_return_winning_bets": 5,
+                "average_return_losing_bets": -43,
+                "average_return_long_bet": 5,
+                "average_return_short_bet": -19,
+            },
+            dtype=float,
+        )
+        pd.testing.assert_series_equal(actual, expected)
+
+
 class Test_compute_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
         ar_params = []
@@ -878,7 +932,7 @@ class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
 
 
 class Test_compute_annualized_sharpe_ratio(hut.TestCase):
-    def _generate_minutely_series(self, n_days: float, seed) -> pd.Series:
+    def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
@@ -933,7 +987,7 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
 
 
 class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
-    def _generate_minutely_series(self, n_days: float, seed) -> pd.Series:
+    def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
