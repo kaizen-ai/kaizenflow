@@ -651,16 +651,16 @@ def calculate_hit_rate(
     ]
     # Set all the values whose absolute values are closer to zero than
     #    the absolute value of the threshold equal to NaN.
-    srs = srs.mask(abs(srs) <= abs(threshold))
+    srs = srs.mask(abs(srs) < abs(threshold))
     # Set all the inf values equal to NaN.
-    srs = srs.replace([np.inf, -np.inf], np.nan)
+    srs = srs.replace([np.inf, -np.inf, 0], np.nan)
     # Ignore all the NaN values.
     srs = hdf.apply_nan_mode(srs, mode="ignore")
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
         return nan_result
-    hit_mask = srs > 0
+    hit_mask = srs >= 0
     # Calculate confidence intervals.
     point_estimate = hit_mask.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
