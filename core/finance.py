@@ -452,10 +452,10 @@ def compute_bet_ends(
     # Apply the NaN mode casually (e.g., `ffill` is not time reversible).
     nan_mode = nan_mode or "ffill"
     positions = hdf.apply_nan_mode(positions, mode=nan_mode)
+    # Calculate bet ends by calculating the bet starts of the reversed series.
     reversed_positions = positions.iloc[::-1]
     reversed_bet_starts = compute_bet_starts(reversed_positions, nan_mode=None)
     bet_ends = reversed_bet_starts.iloc[::-1]
-    # TODO(*): Maybe exclude the last "bet" due to causality considerations.
     return bet_ends
 
 
