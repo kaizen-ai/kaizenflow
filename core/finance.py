@@ -393,7 +393,8 @@ def compute_bet_runs(
     :return: series of -1/0/1 with 1's indicating long bets and -1 indicating
         short bets
     """
-    dbg.dassert_monotonic_index(positions)
+    # TODO(*): Allow a monotonic increasing or monotonic decreasing index.
+    # dbg.dassert_monotonic_index(positions)
     # Forward fill NaN positions by default (e.g., do not assume they are
     # closed out).
     nan_mode = nan_mode or "ffill"
@@ -435,51 +436,72 @@ def compute_bet_starts(
     return bet_starts
 
 
+def compute_bet_ends(
+    positions: pd.Series, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """
+    Calculate the end of each bet.
+
+    NOTE: This function is not casual (because of our choice of indexing).
+
+    :param positions: as in `compute_bet_starts()`
+    :param nan_mode: as in `compute_bet_starts()`
+    :return: as in `compute_bet_starts()`, but with long/short bet indicator at
+        the last time of the bet. Note that this is not casual.
+    """
+    # Apply the NaN mode casually (e.g., `ffill` is not time reversible).
+    nan_mode = nan_mode or "ffill"
+    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
+    reversed_positions = positions.iloc[::-1]
+    reversed_bet_starts = compute_bet_starts(
+        reversed_positions, nan_mode=None
+    )
+    bet_ends = reversed_bet_starts.iloc[::-1]
+    # TODO(*): Maybe exclude the last "bet" due to causality considerations.
+    return bet_ends
+
+
 def compute_signed_bet_lengths(
     positions: pd.Series,
-    mode: Optional[str] = None,
     nan_mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Calculate lengths of bets (in sampling freq).
 
     :param positions: series of long/short positions
-    :param mode: if "bet_end", index by bet end; if "next_tick", index by next
-        position after bet end
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed lengths of bets, i.e., the sign indicates whether the
         length corresponds to a long bet or a short bet. Index corresponds to
-        either end of bet or next position after end of bet.
+        either end of bet (not causal).
     """
-    mode = mode or "next_tick"
     bet_runs = compute_bet_runs(positions, nan_mode)
     bet_starts = compute_bet_starts(positions, nan_mode)
+    bet_ends = compute_bet_ends(positions, nan_mode)
+    # Sanity check indices.
     dbg.dassert(bet_runs.index.equals(bet_starts.index))
+    dbg.dassert(bet_starts.index.equals(bet_ends.index))
     # Get starts of bets or zero positions runs (zero positions are filled with
     # `NaN`s in `compute_bet_runs`).
-    bet_starts_idx = bet_starts[bet_starts != 0].index
+    bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
+    bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
+    # Calculate cumulative sums of bet runs.
+    bet_runs_cumsum = bet_runs.cumsum()
+    # Bet lengths correspond to differences of `bet_runs_cumsum` at bet
+    # start/end times (after off-by-one correction).
     bet_lengths = []
-    bet_ends_idx = []
-    for i, t0 in enumerate(bet_starts_idx[:-1]):
-        # `NaN` indicates zero position, skip it.
-        if pd.isna(bet_starts.loc[t0]):
-            continue
-        t0_mask = bet_runs.index >= t0
-        if i < bet_starts_idx.size - 1:
-            t1_mask = bet_runs.index < bet_starts_idx[i + 1]
-            mask = t0_mask & t1_mask
+    for t0, t1 in zip(bet_starts_idx, bet_ends_idx):
+        start_val = bet_runs_cumsum.loc[t0]
+        end_val = bet_runs_cumsum.loc[t1]
+        # Bet length, off-by-one.
+        bet_length = end_val - start_val
+        # Correct off-by-one according to sign.
+        if bet_length > 0:
+            bet_length += 1
+        elif bet_length < 0:
+            bet_length -= 1
         else:
-            mask = t0_mask
-        bet_mask = bet_runs.loc[mask]
-        bet_length = bet_mask.sum()
-        if mode == "next_tick":
-            bet_end = bet_starts_idx[i + 1]
-        elif mode == "bet_end":
-            bet_end = bet_runs.loc[mask].index[-1]
-        else:
-            raise ValueError("Invalid `mode`='%s'" % mode)
+            bet_length = bet_runs.loc[t1]
         bet_lengths.append(bet_length)
-        bet_ends_idx.append(bet_end)
     bet_length_srs = pd.Series(
         index=bet_ends_idx, data=bet_lengths, name=positions.name
     )
