@@ -376,7 +376,7 @@ def dassert_file_extension(
     )
 
 
-def dassert_monotonic_increasing_index(
+def dassert_strictly_increasing_index(
     obj: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
     # For some reason importing pandas is slow and we don't want to pay this

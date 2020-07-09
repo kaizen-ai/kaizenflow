@@ -618,6 +618,42 @@ def compute_max_drawdown(
     return result
 
 
+def compute_bet_returns_stats(
+    positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
+):
+    """
+    Calculate average returns for grouped bets.
+
+    :param positions: series of long/short positions
+    :param log_rets: log returns
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: series of average returns for winning/losing and long/short bets,
+        number of positions and bets
+    """
+    rets_per_bet = fin.compute_returns_per_bet(
+        positions, log_rets, nan_mode=nan_mode
+    )
+    bet_lengths = fin.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
+    #
+    num_positions = bet_lengths.abs().sum()
+    num_bets = bet_lengths.size
+    average_ret_winning_bets = rets_per_bet.loc[rets_per_bet > 0].mean()
+    average_ret_losing_bets = rets_per_bet.loc[rets_per_bet < 0].mean()
+    average_ret_long_bet = rets_per_bet.loc[bet_lengths > 0].mean()
+    average_ret_short_bet = rets_per_bet.loc[bet_lengths < 0].mean()
+    return pd.Series(
+        {
+            "num_positions": num_positions,
+            "num_bets": num_bets,
+            "average_return_winning_bets": average_ret_winning_bets,
+            "average_return_losing_bets": average_ret_losing_bets,
+            "average_return_long_bet": average_ret_long_bet,
+            "average_return_short_bet": average_ret_short_bet,
+        },
+        name=log_rets.name,
+    )
+
+
 def calculate_hit_rate(
     srs: pd.Series,
     alpha: Optional[float] = None,
@@ -1225,7 +1261,7 @@ def get_interarrival_time(
     # Check index of a series. We require that the input
     #     series have a sorted datetime index.
     dbg.dassert_isinstance(index, pd.DatetimeIndex)
-    dbg.dassert_monotonic_increasing_index(index)
+    dbg.dassert_strictly_increasing_index(index)
     # Compute a series of interrairival time.
     interrarival_time = pd.Series(index).diff()
     return interrarival_time
@@ -1296,7 +1332,7 @@ def get_rolling_splits(
     A typical use case is where the index is a monotonic increasing datetime
     index. For such cases, causality is respected by the splits.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     n_chunks = n_splits + 1
     dbg.dassert_lte(1, n_splits)
     # Split into equal chunks.
@@ -1315,7 +1351,7 @@ def get_oos_start_split(
     """
     Split index using OOS (out-of-sample) start datetime.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     ins_mask = idx < datetime_
     dbg.dassert_lte(1, ins_mask.sum())
     oos_mask = ~ins_mask
@@ -1332,7 +1368,7 @@ def get_train_test_pct_split(
     """
     Split index into train and test sets by percentage.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     dbg.dassert_lt(0.0, train_pct)
     dbg.dassert_lt(train_pct, 1.0)
     #
@@ -1349,7 +1385,7 @@ def get_expanding_window_splits(
     """
     Generate splits with expanding overlapping windows.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     dbg.dassert_lte(1, n_splits)
     tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=n_splits)
     locs = list(tscv.split(idx))
@@ -1361,7 +1397,7 @@ def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
     """
     Return subset of idx with values >= min_idx and < max_idx.
     """
-    dbg.dassert_monotonic_increasing_index(idx)
+    dbg.dassert_strictly_increasing_index(idx)
     # TODO(*): PartTask667: Consider using bisection to avoid linear scans.
     min_mask = idx >= min_idx
     max_mask = idx < max_idx
@@ -1380,7 +1416,7 @@ def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
     TODO(Paul): Consider supporting multiple behaviors with `mode`.
     """
     for idx in idxs:
-        dbg.dassert_monotonic_increasing_index(idx)
+        dbg.dassert_strictly_increasing_index(idx)
     # Find the maximum start/end datetime overlap of all source indices.
     max_min = max([idx.min() for idx in idxs])
     _LOG.debug("Latest start datetime of indices=%s", max_min)

@@ -22,7 +22,7 @@ def remove_dates_with_no_data(
     :return: filtered df
     """
     # This is not strictly necessary.
-    dbg.dassert_monotonic_increasing_index(df)
+    dbg.dassert_strictly_increasing_index(df)
     #
     removed_days = []
     df_out = []
@@ -35,7 +35,7 @@ def remove_dates_with_no_data(
             df_out.append(df_tmp)
         num_days += 1
     df_out = pd.concat(df_out)
-    dbg.dassert_monotonic_increasing_index(df_out)
+    dbg.dassert_strictly_increasing_index(df_out)
     #
     if report_stats:
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
@@ -65,7 +65,7 @@ def resample(
     """
     Resample returns (using sum) using our timing convention.
     """
-    dbg.dassert_monotonic_increasing_index(df)
+    dbg.dassert_strictly_increasing_index(df)
     resampler = df.resample(agg_interval, closed="left", label="right")
     rets = resampler.sum()
     return rets
@@ -86,7 +86,7 @@ def set_non_ath_to_nan(
       - `time <= end_time`
     """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    dbg.dassert_monotonic_increasing_index(df)
+    dbg.dassert_strictly_increasing_index(df)
     if start_time is None:
         start_time = datetime.time(9, 30)
     if end_time is None:
@@ -451,10 +451,10 @@ def compute_bet_ends(
     # Apply the NaN mode casually (e.g., `ffill` is not time reversible).
     nan_mode = nan_mode or "ffill"
     positions = hdf.apply_nan_mode(positions, mode=nan_mode)
+    # Calculate bet ends by calculating the bet starts of the reversed series.
     reversed_positions = positions.iloc[::-1]
     reversed_bet_starts = compute_bet_starts(reversed_positions, nan_mode=None)
     bet_ends = reversed_bet_starts.iloc[::-1]
-    # TODO(*): Maybe exclude the last "bet" due to causality considerations.
     return bet_ends
 
 
@@ -503,22 +503,23 @@ def compute_returns_per_bet(
         bet
     """
     dbg.dassert(positions.index.equals(log_rets.index))
-    dbg.dassert_monotonic_increasing_index(log_rets)
-    # To compute returns per bet, get start dates and end dates of bets.
-    # Get lengths of bets indexed by bet ends.
-    bet_lengths = compute_signed_bet_lengths(positions, nan_mode=nan_mode)
-    # Get start dates of bets.
-    bet_starts = compute_bet_starts(positions, nan_mode=nan_mode)
-    bet_starts_idx = bet_starts[bet_starts != 0].dropna().index
+    dbg.dassert_strictly_increasing_index(log_rets)
+    bet_starts = compute_bet_starts(positions, nan_mode)
+    bet_ends = compute_bet_ends(positions, nan_mode)
+    # Sanity check indices.
+    dbg.dassert(bet_starts.index.equals(bet_ends.index))
+    # Retrieve locations of bet starts and bet ends.
+    bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
+    bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
     # Compute returns per bet.
     rets_per_bet = []
-    for bet_start, bet_end in zip(bet_starts_idx, bet_lengths.index):
+    for bet_start, bet_end in zip(bet_starts_idx, bet_ends_idx):
         pnl_bet = (
             log_rets.loc[bet_start:bet_end] * positions.loc[bet_start:bet_end]
         )
         bet_rets = pnl_bet.sum()
         rets_per_bet.append(bet_rets)
     rets_per_bet = pd.Series(
-        data=rets_per_bet, index=bet_lengths.index, name=log_rets.name
+        data=rets_per_bet, index=bet_ends_idx, name=log_rets.name
     )
     return rets_per_bet
