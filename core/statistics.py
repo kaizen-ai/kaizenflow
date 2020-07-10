@@ -660,7 +660,7 @@ def calculate_hit_rate(
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
         return nan_result
-    hit_mask = srs >= 0
+    hit_mask = srs >= abs(threshold)
     # Calculate confidence intervals.
     point_estimate = hit_mask.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
