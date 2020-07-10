@@ -1720,3 +1720,10 @@ def ...(...):
      - You can fix lints or just do formatting: it's up to you
      - You can make this change directly on `master` or do a PR if you want to
        be extra sure: your call
+
+# Code style for different languages
+
+## SQL
+- You can use the package `https://github.com/andialbrecht/sqlparse` to format
+  SQL queries
+- There is also an on-line version of the same formatter at https://sqlformat.org
