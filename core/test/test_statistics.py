@@ -686,54 +686,146 @@ class TestComputeZeroNanInfStats(hut.TestCase):
 
 
 class TestCalculateHitRate(hut.TestCase):
+    @staticmethod
+    def _get_test_series():
+        series = pd.Series([0, -0.001, 0.001, -0.01, 0.01, -0.1, 0.1, -1, 1, 10])
+        return series
+
     def test1(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
+        """
+        Test for default parameters.
+
+        Expected outcome:
+                                              0
+        hit_rate_point_est             0.555556
+        hit_rate_97.50%CI_lower_bound  0.254094
+        hit_rate_97.50%CI_upper_bound  0.827032
+        """
+        series = self._get_test_series()
         actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        np.random.seed(42)
-        series = pd.Series(np.random.choice([0, 1, np.nan], size=(100,)))
+        """
+        Test for the case when NaNs compose the half of the input.
+
+        Expected outcome:
+                                              0
+        hit_rate_point_est             0.555556
+        hit_rate_97.50%CI_lower_bound  0.254094
+        hit_rate_97.50%CI_upper_bound  0.827032
+        """
+        series = self._get_test_series()
+        nan_series = pd.Series([np.nan for i in range(len(series))])
+        series = pd.concat([series, nan_series])
         actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        np.random.seed(42)
-        series = pd.Series(np.random.choice([0, 1, np.nan], size=(100,)))
-        actual = stats.calculate_hit_rate(series, alpha=0.1)
+        """
+        Test for the case when np.inf compose the half of the input.
+
+        Expected outcome:
+                                              0
+        hit_rate_point_est             0.555556
+        hit_rate_97.50%CI_lower_bound  0.254094
+        hit_rate_97.50%CI_upper_bound  0.827032
+        """
+        series = self._get_test_series()
+        inf_series = pd.Series([np.inf for i in range(len(series))])
+        inf_series[:5] = -np.inf
+        series = pd.concat([series, inf_series])
+        actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
-        actual = stats.calculate_hit_rate(series, nan_mode="fill_with_zero")
+        """
+        Test for the case when 0 compose the half of the input.
+
+        Expected outcome:
+                                              0
+        hit_rate_point_est             0.555556
+        hit_rate_97.50%CI_lower_bound  0.254094
+        hit_rate_97.50%CI_upper_bound  0.827032
+        """
+        series = self._get_test_series()
+        zero_series = pd.Series([0 for i in range(len(series))])
+        series = pd.concat([series, zero_series])
+        actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
+        """
+        Test threshold.
+
+        Expected outcome:
+                                              0
+        hit_rate_point_est             0.571429
+        hit_rate_97.50%CI_lower_bound  0.234501
+        hit_rate_97.50%CI_upper_bound  0.861136
+        """
+        series = self._get_test_series()
+        actual = stats.calculate_hit_rate(series, threshold=10e-3)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test6(self) -> None:
+        """
+        Test alpha.
+
+        Expected outcome:
+                                              0
+        hit_rate_point_est             0.555556
+        hit_rate_95.00%CI_lower_bound  0.296768
+        hit_rate_95.00%CI_upper_bound  0.791316
+        """
+        series = self._get_test_series()
+        actual = stats.calculate_hit_rate(series, alpha=0.1)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test7(self) -> None:
+        """
+        Test prefix.
+
+        Expected outcome:
+                                                  0
+        hit_hit_rate_point_est             0.555556
+        hit_hit_rate_97.50%CI_lower_bound  0.254094
+        hit_hit_rate_97.50%CI_upper_bound  0.827032
+        """
+        series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, prefix="hit_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    def test8(self) -> None:
+        """
+        Test method.
+
+        Expected outcome:
+                                              0
+        hit_rate_point_est             0.555556
+        hit_rate_97.50%CI_lower_bound  0.266651
+        hit_rate_97.50%CI_upper_bound  0.811221
+        """
+        series = self._get_test_series()
+        actual = stats.calculate_hit_rate(series, method="wilson")
+        self.check_string(hut.convert_df_to_string(actual, index=True))
+
     # Smoke test for empty input.
-    def test6(self) -> None:
+    def test_smoke(self) -> None:
         series = pd.Series([])
         stats.calculate_hit_rate(series)
 
     # Smoke test for input of `np.nan`s.
-    def test7(self) -> None:
+    def test_nan(self) -> None:
         series = pd.Series([np.nan] * 10)
         stats.calculate_hit_rate(series)
-
-    def test_sign1(self) -> None:
-        np.random.seed(42)
-        data = list(np.random.randn(100)) + [np.inf, np.nan]
-        series = pd.Series(data)
-        actual = stats.calculate_hit_rate(series, mode="sign")
-        self.check_string(hut.convert_df_to_string(actual, index=True))
 
 
 class Test_compute_jensen_ratio(hut.TestCase):
