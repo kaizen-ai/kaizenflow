@@ -641,6 +641,7 @@ def calculate_hit_rate(
     dbg.dassert_lte(alpha, 1)
     dbg.dassert_isinstance(srs, pd.Series)
     threshold = threshold or 0
+    dbg.dassert_lte(0, threshold)
     prefix = prefix or ""
     # Process series.
     conf_alpha = (1 - alpha / 2) * 100
@@ -651,7 +652,7 @@ def calculate_hit_rate(
     ]
     # Set all the values whose absolute values are closer to zero than
     #    the absolute value of the threshold equal to NaN.
-    srs = srs.mask(abs(srs) < abs(threshold))
+    srs = srs.mask(abs(srs) < threshold)
     # Set all the inf values equal to NaN.
     srs = srs.replace([np.inf, -np.inf, 0], np.nan)
     # Ignore all the NaN values.
@@ -660,7 +661,7 @@ def calculate_hit_rate(
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
         return nan_result
-    hit_mask = srs >= abs(threshold)
+    hit_mask = srs >= threshold
     # Calculate confidence intervals.
     point_estimate = hit_mask.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
