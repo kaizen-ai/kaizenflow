@@ -1128,13 +1128,13 @@ def compute_ipca(
     vsl = []
     unit_eigenvecs = []
     for step, n in enumerate(df.index):
-        # Initialize u1(n).
-        ul = [df.loc[n]]
+        # Initialize u(n).
+        u = df.loc[n].copy()
         for i in range(min(num_pc, step + 1)):
             # Initialize ith eigenvector.
             if i == step:
                 _LOG.debug("Initializing eigenvector %i...", i)
-                v = ul[-1]
+                v = u.copy()
                 # Bookkeeping.
                 vsl.append([v])
                 norm = np.linalg.norm(v)
@@ -1142,16 +1142,15 @@ def compute_ipca(
                 unit_eigenvecs.append([v / norm])
             else:
                 # Main update step for eigenvector i.
-                u, v = _compute_ipca_step(ul[-1], vsl[i][-1], alpha)
+                u, v = _compute_ipca_step(u, vsl[i][-1], alpha)
                 # Bookkeeping.
                 u.name = n
                 v.name = n
-                ul.append(u)
                 vsl[i].append(v)
                 norm = np.linalg.norm(v)
                 lambdas[i].append(norm)
                 unit_eigenvecs[i].append(v / norm)
-    _LOG.info("Completed %i steps of incremental PCA.", step)
+    _LOG.debug("Completed %i steps of incremental PCA.", step + 1)
     # Convert lambda list of lists to list of series.
     # Convert unit_eigenvecs list of lists to list of dataframes.
     lambdas_srs = []
