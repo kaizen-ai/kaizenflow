@@ -1124,7 +1124,7 @@ def compute_ipca(
     df = df.apply(hdf.apply_nan_mode, mode=nan_mode)
     lambdas = {k: [] for k in range(num_pc)}
     # V's are eigenvectors with norm equal to corresponding eigenvalue.
-    vsl = {k: [] for k in range(num_pc)}
+    vs = {k: [] for k in range(num_pc)}
     unit_eigenvecs = {k: [] for k in range(num_pc)}
     for step, n in enumerate(df.index):
         # Initialize u(n).
@@ -1136,11 +1136,10 @@ def compute_ipca(
                 v = u.copy()
             else:
                 # Main update step for eigenvector i.
-                u, v = _compute_ipca_step(u, vsl[i][-1], alpha)
+                u, v = _compute_ipca_step(u, vs[i][-1], alpha)
             # Bookkeeping.
-            u.name = n
             v.name = n
-            vsl[i].append(v)
+            vs[i].append(v)
             norm = np.linalg.norm(v)
             lambdas[i].append(norm)
             unit_eigenvecs[i].append(v / norm)
