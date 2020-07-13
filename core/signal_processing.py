@@ -1120,9 +1120,10 @@ def compute_ipca(
         msg="Dimension should be greater than or equal to the number of principal components.",
     )
     dbg.dassert_lt(0, tau)
-    alpha = 1.0 - 1.0 / np.exp(1.0 / tau)
+    com = _calculate_com_from_tau(tau)
+    alpha = 1.0 / (com + 1.0)
+    _LOG.debug("com = %0.2f", com)
     _LOG.debug("alpha = %0.2f", alpha)
-    _LOG.debug("com = %0.2f", 1.0 / alpha - 1)
     nan_mode = nan_mode or "fill_with_zero"
     df = df.apply(hdf.apply_nan_mode, mode=nan_mode)
     lambdas = {k: [] for k in range(num_pc)}
