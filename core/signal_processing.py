@@ -1086,7 +1086,7 @@ def process_nonfinite(
 
 
 def compute_ipca(
-    df: pd.DataFrame, num_pc: int, alpha: float, nan_mode: Optional[str] = None,
+    df: pd.DataFrame, num_pc: int, tau: float, nan_mode: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """
     Incremental PCA.
@@ -1097,7 +1097,9 @@ def compute_ipca(
     https://www.cse.msu.edu/~weng/research/CCIPCApami.pdf
 
     :param num_pc: number of principal components to calculate
-    :param alpha: analogous to Pandas ewm's `alpha`
+    :param tau: parameter used in (continuous) compute_ema and compute_ema-derived kernels. For
+        typical ranges it is approximately but not exactly equal to the
+        center-of-mass (com) associated with an compute_ema kernel.
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return:
       - df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
@@ -1117,9 +1119,10 @@ def compute_ipca(
         df.shape[1],
         msg="Dimension should be greater than or equal to the number of principal components.",
     )
-    dbg.dassert_lte(0, alpha, msg="alpha should belong to [0, 1].")
-    dbg.dassert_lte(alpha, 1, msg="alpha should belong to [0, 1].")
-    _LOG.info("com = %0.2f", 1.0 / alpha - 1)
+    dbg.dassert_lt(0, tau)
+    alpha = 1.0 - 1.0 / np.exp(1.0 / tau)
+    _LOG.debug("alpha = %0.2f", alpha)
+    _LOG.debug("com = %0.2f", 1.0 / alpha - 1)
     nan_mode = nan_mode or "fill_with_zero"
     df = df.apply(hdf.apply_nan_mode, mode=nan_mode)
     lambdas = {k: [] for k in range(num_pc)}
