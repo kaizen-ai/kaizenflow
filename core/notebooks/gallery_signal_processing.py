@@ -1,6 +1,7 @@
 # ---
 # jupyter:
 #   jupytext:
+#     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
@@ -288,7 +289,7 @@ plot.plot_cols(mvn_zrets)
 # ## Compute Incremental PCA
 
 # %%
-eigenvalues, eigenvectors = sigp.compute_ipca(mvn_zrets, num_pc=3, alpha=1 / 65)
+eigenvalues, eigenvectors = sigp.compute_ipca(mvn_zrets, num_pc=3, tau=16)
 
 # %% [markdown]
 # ### Plot eigenvalue evolution over time
