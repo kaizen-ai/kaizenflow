@@ -367,13 +367,25 @@ class Test_compute_rolling_zcorr1(hut.TestCase):
 
 
 class Test_compute_ipca(hut.TestCase):
+    @staticmethod
+    def _get_df(seed: int) -> pd.DataFrame:
+        """
+        Generate a dataframe via `sig_gen.MultivariateNormalProcess()`.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=seed)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=seed
+        )
+        return df
+
     def test1(self) -> None:
-        np.random.seed(42)
+        """
+        Test for a clean input.
+        """
+        df = self._get_df(seed=1)
         num_pc = 3
         alpha = 0.5
-        n = 100
-        m = 10
-        df = pd.DataFrame(np.random.randn(n, m))
         lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
@@ -382,6 +394,195 @@ class Test_compute_ipca(hut.TestCase):
             f"lambda_df:\n{lambda_df.to_string()}\n, "
             f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
         )
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        """
+        Test for an input with leading NaNs in only a subset of cols.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[0:3, :-3] = np.nan
+        num_pc = 3
+        alpha = 0.5
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    def test3(self) -> None:
+        """
+        Test for an input with interspersed NaNs.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[5:8, 3:5] = np.nan
+        df.iloc[2:4, 8:] = np.nan
+        num_pc = 3
+        alpha = 0.5
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    def test4(self) -> None:
+        """
+        Test for an input with a full-NaN row among the 3 first rows.
+
+        The eigenvalue estimates aren't in sorted order but should be.
+        TODO(*): Fix problem with not sorted eigenvalue estimates.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[1:2, :] = np.nan
+        num_pc = 3
+        alpha = 0.5
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    def test5(self) -> None:
+        """
+        Test for an input with 5 leading NaNs in all cols.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[:5, :] = np.nan
+        num_pc = 3
+        alpha = 0.5
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+
+class Test__compute_ipca_step(hut.TestCase):
+    @staticmethod
+    def _get_output_txt(
+        u: pd.Series, v: pd.Series, u_next: pd.Series, v_next: pd.Series
+    ) -> str:
+        """
+        Create string output for tests results.
+        """
+        u_string = hut.convert_df_to_string(u, index=True)
+        v_string = hut.convert_df_to_string(v, index=True)
+        u_next_string = hut.convert_df_to_string(u_next, index=True)
+        v_next_string = hut.convert_df_to_string(v_next, index=True)
+        txt = (
+            f"u:\n{u_string}\n"
+            f"v:\n{v_string}\n"
+            f"u_next:\n{u_next_string}\n"
+            f"v_next:\n{v_next_string}"
+        )
+        return txt
+
+    def test1(self) -> None:
+        """
+        Test for clean input series.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        """
+        Test for input series with all zeros.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[:] = 0
+        v[:] = 0
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
+        self.check_string(txt)
+
+    def test3(self) -> None:
+        """
+        Test that u == u_next for the case when np.linalg.norm(v)=0.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        v[:] = 0
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
+        self.check_string(txt)
+
+    def test4(self) -> None:
+        """
+       Test for input series with all NaNs.
+
+       Output is not intended.
+       TODO(Dan): implement a way to deal with NaNs in the input.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[:] = np.nan
+        v[:] = np.nan
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
+        self.check_string(txt)
+
+    def test5(self) -> None:
+        """
+        Test for input series with some NaNs.
+
+        Output is not intended.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[3:6] = np.nan
+        v[5:8] = np.nan
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
         self.check_string(txt)
 
 

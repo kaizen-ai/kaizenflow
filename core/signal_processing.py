@@ -1122,43 +1122,33 @@ def compute_ipca(
     _LOG.info("com = %0.2f", 1.0 / alpha - 1)
     nan_mode = nan_mode or "fill_with_zero"
     df = df.apply(hdf.apply_nan_mode, mode=nan_mode)
-    lambdas = []
-    # V's are eigenvectors with norm equal to corresponding eigenvalue
-    # vsl = [[v1], [v2], ...].
-    vsl = []
-    unit_eigenvecs = []
-    step = 0
-    for n in df.index:
-        step += 1
-        # Initialize u1(n).
-        ul = [df.loc[n]]
-        for i in range(1, min(num_pc, step) + 1):
+    lambdas = {k: [] for k in range(num_pc)}
+    # V's are eigenvectors with norm equal to corresponding eigenvalue.
+    vs = {k: [] for k in range(num_pc)}
+    unit_eigenvecs = {k: [] for k in range(num_pc)}
+    for step, n in enumerate(df.index):
+        # Initialize u(n).
+        u = df.loc[n].copy()
+        for i in range(min(num_pc, step + 1)):
             # Initialize ith eigenvector.
             if i == step:
-                _LOG.info("Initializing eigenvector %i...", i)
-                v = ul[-1]
-                # Bookkeeping.
-                vsl.append([v])
-                norm = np.linalg.norm(v)
-                lambdas.append([norm])
-                unit_eigenvecs.append([v / norm])
+                _LOG.debug("Initializing eigenvector %i...", i)
+                v = u.copy()
             else:
                 # Main update step for eigenvector i.
-                u, v = _compute_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
-                # Bookkeeping.
-                u.name = n
-                v.name = n
-                ul.append(u)
-                vsl[i - 1].append(v)
-                norm = np.linalg.norm(v)
-                lambdas[i - 1].append(norm)
-                unit_eigenvecs[i - 1].append(v / norm)
-    _LOG.info("Completed %i steps of incremental PCA.", step)
-    # Convert lambda list of lists to list of series.
-    # Convert unit_eigenvecs list of lists to list of dataframes.
+                u, v = _compute_ipca_step(u, vs[i][-1], alpha)
+            # Bookkeeping.
+            v.name = n
+            vs[i].append(v)
+            norm = np.linalg.norm(v)
+            lambdas[i].append(norm)
+            unit_eigenvecs[i].append(v / norm)
+    _LOG.debug("Completed %i steps of incremental PCA.", step + 1)
+    # Convert lambda dict of lists to list of series.
+    # Convert unit_eigenvecs dict of lists to list of dataframes.
     lambdas_srs = []
     unit_eigenvec_dfs = []
-    for i in range(0, num_pc):
+    for i in range(num_pc):
         lambdas_srs.append(pd.Series(index=df.index[i:], data=lambdas[i]))
         unit_eigenvec_dfs.append(pd.concat(unit_eigenvecs[i], axis=1).transpose())
     lambda_df = pd.concat(lambdas_srs, axis=1)
@@ -1182,8 +1172,12 @@ def _compute_ipca_step(
       * u_next is residualized observation for step n, component i + 1
       * v_next is unnormalized eigenvector estimate for step n, component i
     """
-    v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
-    u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
+    if np.linalg.norm(v) == 0:
+        v_next = v * 0
+        u_next = u.copy()
+    else:
+        v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
+        u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
     return u_next, v_next
 
 

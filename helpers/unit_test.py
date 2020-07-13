@@ -463,7 +463,11 @@ class TestCase(unittest.TestCase):
         return dir_name
 
     # TODO(gp): -> get_scratch_dir().
-    def get_scratch_space(self) -> str:
+    def get_scratch_space(
+        self,
+        test_class_name: Optional[Any] = None,
+        test_method_name: Optional[Any] = None,
+    ) -> str:
         """
         Return the path of the directory storing scratch data for this test class.
         The directory is also created and cleaned up based on whether the
@@ -473,7 +477,10 @@ class TestCase(unittest.TestCase):
         """
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
-            dir_name = os.path.join(self._get_current_path(), "tmp.scratch")
+            curr_path = self._get_current_path(
+                test_class_name=test_class_name, test_method_name=test_method_name
+            )
+            dir_name = os.path.join(curr_path, "tmp.scratch")
             io_.create_dir(dir_name, incremental=get_incremental_tests())
             self._scratch_dir = dir_name
         return self._scratch_dir
