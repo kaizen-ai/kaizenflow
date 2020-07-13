@@ -289,7 +289,7 @@ plot.plot_cols(mvn_zrets)
 # ## Compute Incremental PCA
 
 # %%
-eigenvalues, eigenvectors = sigp.compute_ipca(mvn_zrets, num_pc=3, tau=16)
+eigenvalues, eigenvectors = sigp.compute_ipca(mvn_zrets, num_pc=3, tau=65)
 
 # %% [markdown]
 # ### Plot eigenvalue evolution over time
