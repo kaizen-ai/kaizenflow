@@ -794,7 +794,7 @@ class ContinuousSkLearnModel(FitPredictNode):
 
 class UnsupervisedSkLearnModel(FitPredictNode):
     """
-
+    Fit and transform an unsupervised sklearn model.
     """
 
     def __init__(
@@ -823,33 +823,19 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
-        df = df_in.copy()
-        # Determine index where no x_vars are NaN.
-        x_vars = self._to_list(self._x_vars)
-        non_nan_idx = df[x_vars].dropna().index
-        dbg.dassert(not non_nan_idx.empty)
-        # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
-        # Prepare x_vars in sklearn format.
-        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
-        # Define and fit model.
-        self._model = self._model_func(**self._model_kwargs)
-        self._model = self._model.fit(x_fit)
-        # Generate insample transformations and put in dataflow dataframe format.
-        x_transform = self._model.transform(x_fit)
-        #
-        num_cols = x_transform.shape[1]
-        x_hat = adpt.transform_from_sklearn(
-            non_nan_idx, list(range(num_cols)), x_transform
-        )
-        info = collections.OrderedDict()
-        info["model_x_vars"] = x_vars
-        self._set_info("fit", info)
-        # Return targets and predictions.
-        return {"df_out": x_hat}
+        return self._fit_predict_helper(df_in, fit=True)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool = False):
+        """
+        Factor out common flow for fit/predict.
+
+        :param df_in: as in `fit`/`predict`
+        :param fit: fits model iff `True`
+        :return: transformed df_in
+        """
         self._validate_input_df(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
@@ -860,6 +846,10 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         self._handle_nans(df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        if fit:
+            # Define and fit model.
+            self._model = self._model_func(**self._model_kwargs)
+            self._model = self._model.fit(x_fit)
         # Generate insample transformations and put in dataflow dataframe format.
         x_transform = self._model.transform(x_fit)
         #
@@ -869,7 +859,10 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         )
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
-        self._set_info("predict", info)
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
         # Return targets and predictions.
         return {"df_out": x_hat}
 
