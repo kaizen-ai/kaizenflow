@@ -369,6 +369,7 @@ if __name__ == "main":
         """
         return txt
 
+    @pytest.mark.skip(reason="Disable because of PartTask3409")
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
     )
@@ -384,6 +385,7 @@ if __name__ == "main":
         # Check.
         self.check_string(output, purify_text=True)
 
+    @pytest.mark.skip(reason="Disable because of PartTask3409")
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
     )

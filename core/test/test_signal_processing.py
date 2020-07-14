@@ -385,8 +385,8 @@ class Test_compute_ipca(hut.TestCase):
         """
         df = self._get_df(seed=1)
         num_pc = 3
-        alpha = 0.5
-        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
         )
@@ -403,8 +403,8 @@ class Test_compute_ipca(hut.TestCase):
         df = self._get_df(seed=1)
         df.iloc[0:3, :-3] = np.nan
         num_pc = 3
-        alpha = 0.5
-        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
         )
@@ -422,8 +422,8 @@ class Test_compute_ipca(hut.TestCase):
         df.iloc[5:8, 3:5] = np.nan
         df.iloc[2:4, 8:] = np.nan
         num_pc = 3
-        alpha = 0.5
-        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
         )
@@ -443,8 +443,8 @@ class Test_compute_ipca(hut.TestCase):
         df = self._get_df(seed=1)
         df.iloc[1:2, :] = np.nan
         num_pc = 3
-        alpha = 0.5
-        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
         )
@@ -461,8 +461,8 @@ class Test_compute_ipca(hut.TestCase):
         df = self._get_df(seed=1)
         df.iloc[:5, :] = np.nan
         num_pc = 3
-        alpha = 0.5
-        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
         )
