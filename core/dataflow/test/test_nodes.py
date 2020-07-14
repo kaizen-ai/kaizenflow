@@ -6,10 +6,12 @@ import mxnet
 import numpy as np
 import pandas as pd
 import pytest
+import sklearn.decomposition as sld
 import sklearn.linear_model as slm
 
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
+import core.config_builders as cfgb
 import core.dataflow as dtf
 import helpers.printing as prnt
 import helpers.unit_test as hut
@@ -223,6 +225,68 @@ class TestContinuousSkLearnModel(hut.TestCase):
         idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
         df = pd.DataFrame.from_dict({"x": pred, "y": resp}).set_index(idx)
         return df
+
+
+class TestUnsupervisedSkLearnModel(hut.TestCase):
+    def test_fit_dag1(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Load sklearn config and create modeling node.
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "x_vars": [0, 1, 2, 3],
+                "model_func": sld.PCA,
+                "model_kwargs": {"n_components": 2,},
+            }
+        )
+        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict(),)
+        dag.add_node(node)
+        dag.connect("data", "sklearn")
+        #
+        output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def test_predict_dag1(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        fit_interval = ("2000-01-03", "2000-01-31")
+        predict_interval = ("2000-02-01", "2000-02-25")
+        data_source_node.set_fit_intervals([fit_interval])
+        data_source_node.set_predict_intervals([predict_interval])
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Load sklearn config and create modeling node.
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "x_vars": [0, 1, 2, 3],
+                "model_func": sld.PCA,
+                "model_kwargs": {"n_components": 2,},
+            }
+        )
+        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict(),)
+        dag.add_node(node)
+        dag.connect("data", "sklearn")
+        #
+        dag.run_leq_node("sklearn", "fit")
+        output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate multivariate normal returns.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
+        realization = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
+        )
+        return realization
 
 
 if True:
