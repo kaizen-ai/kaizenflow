@@ -27,7 +27,7 @@ A plot should be easy to interpret. This means:
 - If the function plots multiple plots, it is usually better to create a single
   figure for them. This way, the output is more concise and can be copied as 
   one image.
-- In `amd/core/plotting.py`, there is a helper called `get_multiple_plots()`
+- In `amp/core/plotting.py`, there is a helper called `get_multiple_plots()`
   that is used for generating a figure and axes
 - Add `plt.tight_layout()` in the end only if you are sure this figure will not
   be wrapped inside another figure
