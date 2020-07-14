@@ -92,7 +92,6 @@ dependencies:
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
   - scrapy
-  - scrapy_splash
   # ############################################################################
   # Pip
   # ############################################################################
@@ -107,3 +106,4 @@ dependencies:
     - mxnet >= 1.6.0
     - gluonnlp              # gluon* and mxnet need to be installed through pip
     - gluonts               # since conda doesn't support / has old packages.
+    - scrapy_splash
