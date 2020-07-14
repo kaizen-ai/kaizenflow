@@ -6,8 +6,8 @@ import mxnet
 import numpy as np
 import pandas as pd
 import pytest
+import sklearn.decomposition as sld
 import sklearn.linear_model as slm
-from sklearn.decomposition import PCA
 
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
@@ -239,7 +239,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
-                "model_func": PCA,
+                "model_func": sld.PCA,
                 "model_kwargs": {"n_components": 2,},
             }
         )
@@ -265,7 +265,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
-                "model_func": PCA,
+                "model_func": sld.PCA,
                 "model_kwargs": {"n_components": 2,},
             }
         )
