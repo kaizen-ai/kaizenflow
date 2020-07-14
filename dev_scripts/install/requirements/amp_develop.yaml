@@ -91,6 +91,7 @@ dependencies:
   - jsonpickle
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
+  - scrapy
   # ############################################################################
   # Pip
   # ############################################################################
