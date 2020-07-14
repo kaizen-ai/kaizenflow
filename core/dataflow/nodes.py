@@ -798,12 +798,12 @@ class UnsupervisedSkLearnModel(FitPredictNode):
     """
 
     def __init__(
-            self,
-            nid: str,
-            model_func: Callable[..., Any],
-            x_vars: Union[List[str], Callable[[], List[str]]],
-            model_kwargs: Optional[Any] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -840,14 +840,14 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         x_transform = self._model.transform(x_fit)
         #
         num_cols = x_transform.shape[1]
-        x_hat = adpt.transform_from_sklearn(non_nan_idx, list(range(num_cols)), x_transform)
+        x_hat = adpt.transform_from_sklearn(
+            non_nan_idx, list(range(num_cols)), x_transform
+        )
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("fit", info)
         # Return targets and predictions.
-        return {
-            "df_out": x_hat
-        }
+        return {"df_out": x_hat}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -864,14 +864,14 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         x_transform = self._model.transform(x_fit)
         #
         num_cols = x_transform.shape[1]
-        x_hat = adpt.transform_from_sklearn(non_nan_idx, list(range(num_cols)), x_transform)
+        x_hat = adpt.transform_from_sklearn(
+            non_nan_idx, list(range(num_cols)), x_transform
+        )
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("predict", info)
         # Return targets and predictions.
-        return {
-            "df_out": x_hat
-        }
+        return {"df_out": x_hat}
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index

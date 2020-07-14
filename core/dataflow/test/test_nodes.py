@@ -6,8 +6,8 @@ import mxnet
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.decomposition import PCA
 import sklearn.linear_model as slm
+from sklearn.decomposition import PCA
 
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
@@ -236,16 +236,14 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         dag = dtf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
-        config = cfgb.get_config_from_nested_dict({
-            "x_vars": [0, 1, 2, 3],
-            "model_func": PCA,
-            "model_kwargs": {
-                "n_components": 2,
-            },
-        })
-        node = dtf.UnsupervisedSkLearnModel(
-            "sklearn", **config.to_dict(),
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "x_vars": [0, 1, 2, 3],
+                "model_func": PCA,
+                "model_kwargs": {"n_components": 2,},
+            }
         )
+        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict(),)
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -262,6 +260,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
         return realization
+
 
 if True:
 
