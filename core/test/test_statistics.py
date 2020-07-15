@@ -915,7 +915,7 @@ class Test_compute_forecastability(hut.TestCase):
         stats.compute_forecastability(signal)
 
 
-class TestComputeAnnualizedReturnAndVolatility(hut.TestCase):
+class Test_compute_annualized_return_and_volatility(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([0], [0])
@@ -926,12 +926,18 @@ class TestComputeAnnualizedReturnAndVolatility(hut.TestCase):
         return series
 
     def test1(self) -> None:
+        """
+        Test for default parameters.
+        """
         series = self._get_series(seed=1)
         actual = stats.compute_annualized_return_and_volatility(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
+        """
+        Test prefix.
+        """
         series = self._get_series(seed=1)
         actual = stats.compute_annualized_return_and_volatility(
             series, prefix="test_"
