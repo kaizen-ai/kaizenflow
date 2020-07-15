@@ -568,11 +568,11 @@ def compute_annualized_return_and_volatility(
     srs: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Annualize mean return and sample volatility.
+    Annualized mean return and sample volatility in %.
 
     :param srs: series with datetimeindex with `freq`
     :param prefix: optional prefix for metrics' outcome
-    :return: annualized pd.Series with return and volatility; pct rets
+    :return: annualized pd.Series with return and volatility in %; pct rets
         if `srs` consists of pct rets, log rets if `srs` consists of log rets.
     """
     dbg.dassert_isinstance(srs, pd.Series)
@@ -587,8 +587,8 @@ def compute_annualized_return_and_volatility(
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    annualized_mean_return = fin.compute_annualized_return(srs)
-    annualized_volatility = fin.compute_annualized_volatility(srs)
+    annualized_mean_return = fin.compute_annualized_return(srs) * 100
+    annualized_volatility = fin.compute_annualized_volatility(srs) * 100
     result = pd.Series(
         data=[annualized_mean_return, annualized_volatility],
         index=result_index,
