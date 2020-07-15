@@ -128,6 +128,7 @@ class Test_set_env_amp(ut.TestCase):
 class Test_jack1(ut.TestCase):
 
     # TODO(gp): Not clear why it's broken.
+    @pytest.mark.not_docker(reason="Issue #3482")
     @pytest.mark.skipif('si.get_user_name() == "jenkins"')
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
@@ -136,6 +137,7 @@ class Test_jack1(ut.TestCase):
         cmd = 'jack -r "def dassert"'
         si.system(cmd)
 
+    @pytest.mark.not_docker(reason="Issue #3482")
     @pytest.mark.skipif('si.get_user_name() == "jenkins"')
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
