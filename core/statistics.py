@@ -619,17 +619,22 @@ def compute_max_drawdown(
 
 
 def compute_bet_returns_stats(
-    positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
-):
+    positions: pd.Series,
+    log_rets: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
     """
     Calculate average returns for grouped bets.
 
     :param positions: series of long/short positions
     :param log_rets: log returns
     :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
     :return: series of average returns for winning/losing and long/short bets,
         number of positions and bets
     """
+    prefix = prefix or ""
     rets_per_bet = fin.compute_returns_per_bet(
         positions, log_rets, nan_mode=nan_mode
     )
@@ -641,7 +646,7 @@ def compute_bet_returns_stats(
     average_ret_losing_bets = rets_per_bet.loc[rets_per_bet < 0].mean()
     average_ret_long_bet = rets_per_bet.loc[bet_lengths > 0].mean()
     average_ret_short_bet = rets_per_bet.loc[bet_lengths < 0].mean()
-    return pd.Series(
+    srs = pd.Series(
         {
             "num_positions": num_positions,
             "num_bets": num_bets,
@@ -652,6 +657,8 @@ def compute_bet_returns_stats(
         },
         name=log_rets.name,
     )
+    srs.index = prefix + srs.index
+    return srs
 
 
 def calculate_hit_rate(
