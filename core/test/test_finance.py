@@ -96,6 +96,28 @@ class Test_aggregate_log_rets(hut.TestCase):
         self.check_string(txt)
 
 
+class Test_compute_kratio(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        """
+        Test for an clean input series.
+        """
+        series = self._get_series(seed=1)
+        actual = fin.compute_kratio(series)
+        expected = -0.69011
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+
 class Test_compute_drawdown(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
