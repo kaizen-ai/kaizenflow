@@ -523,3 +523,32 @@ def compute_returns_per_bet(
         data=rets_per_bet, index=bet_ends_idx, name=log_rets.name
     )
     return rets_per_bet
+
+
+def compute_annualized_return(srs: pd.Series) -> float:
+    """
+    Annualize mean return.
+
+    :param srs: series with datetimeindex with `freq`
+    :return: annualized return; pct rets if `srs` consists of pct rets,
+        log rets if `srs` consists of log rets.
+    """
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    mean_rets = srs.mean()
+    annualized_mean_rets = ppy * mean_rets
+    return annualized_mean_rets
+
+
+def compute_annualized_volatility(srs: pd.Series) -> float:
+    """
+    Annualize sample volatility.
+
+    :param srs: series with datetimeindex with `freq`
+    :return: annualized volatility (stdev)
+    """
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    std = srs.std()
+    annualized_volatility = np.sqrt(ppy) * std
+    return annualized_volatility
