@@ -672,6 +672,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
         info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
@@ -705,6 +706,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         )
         # Generate basic perf stats.
         info = collections.OrderedDict()
+        info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
@@ -859,6 +861,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         )
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
         if fit:
             self._set_info("fit", info)
         else:
@@ -953,6 +956,7 @@ class SkLearnModel(FitPredictNode):
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
         return {"df_out": y_hat}
 
@@ -969,6 +973,7 @@ class SkLearnModel(FitPredictNode):
             idx, x_vars, x_predict, y_vars, y_predict, y_hat
         )
         info = collections.OrderedDict()
+        info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
         return {"df_out": y_hat}
