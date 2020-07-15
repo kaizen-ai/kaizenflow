@@ -564,33 +564,37 @@ def compute_max_drawdown_approximate_cdf(
 # #############################################################################
 
 
-def compute_annualized_return(srs: pd.Series) -> float:
+def compute_annualized_return_and_volatility(
+    srs: pd.Series, prefix: Optional[str] = None,
+) -> pd.Series:
     """
-    Annualize mean return.
+    Annualized mean return and sample volatility in %.
 
     :param srs: series with datetimeindex with `freq`
-    :return: annualized return; pct rets if `srs` consists of pct rets,
-        log rets if `srs` consists of log rets.
+    :param prefix: optional prefix for metrics' outcome
+    :return: annualized pd.Series with return and volatility in %; pct rets
+        if `srs` consists of pct rets, log rets if `srs` consists of log rets.
     """
-    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
-    ppy = hdf.infer_sampling_points_per_year(srs)
-    mean_rets = srs.mean()
-    annualized_mean_rets = ppy * mean_rets
-    return annualized_mean_rets
-
-
-def compute_annualized_volatility(srs: pd.Series) -> float:
-    """
-    Annualize sample volatility.
-
-    :param srs: series with datetimeindex with `freq`
-    :return: annualized volatility (stdev)
-    """
-    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
-    ppy = hdf.infer_sampling_points_per_year(srs)
-    std = srs.std()
-    annualized_volatility = np.sqrt(ppy) * std
-    return annualized_volatility
+    dbg.dassert_isinstance(srs, pd.Series)
+    prefix = prefix or ""
+    result_index = [
+        prefix + "annualized_mean_return",
+        prefix + "annualized_volatility",
+    ]
+    nan_result = pd.Series(
+        data=[np.nan, np.nan], index=result_index, name=srs.name, dtype="float64"
+    )
+    if srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    annualized_mean_return = fin.compute_annualized_return(srs) * 100
+    annualized_volatility = fin.compute_annualized_volatility(srs) * 100
+    result = pd.Series(
+        data=[annualized_mean_return, annualized_volatility],
+        index=result_index,
+        name=srs.name,
+    )
+    return result
 
 
 def compute_max_drawdown(

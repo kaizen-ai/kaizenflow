@@ -1088,7 +1088,7 @@ def plot_rolling_annualized_volatility(
     scale_coeff = _choose_scaling_coefficient(unit)
     annualized_rolling_volatility *= scale_coeff
     # Calculate whole-period target volatility.
-    annualized_volatility = stats.compute_annualized_volatility(srs)
+    annualized_volatility = fin.compute_annualized_volatility(srs)
     annualized_volatility *= scale_coeff
     # Plot.
     ax = ax or plt.gca()
