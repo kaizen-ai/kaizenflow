@@ -342,7 +342,6 @@ def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
         underwater_groups
     ).cumcount()
     cumulative_count_groups += 1
-    cumulative_count_groups += 1
     # Set zero drawdown counts to zero.
     n_timepoints_underwater = underwater_mask * cumulative_count_groups
     return n_timepoints_underwater
