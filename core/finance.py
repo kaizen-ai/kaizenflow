@@ -253,24 +253,22 @@ def _compute_scale_factor(srs: pd.Series, volatility: float) -> pd.Series:
 # #############################################################################
 
 
-def compute_kratio(rets: pd.DataFrame, y_var: str) -> float:
-    # From http://s3.amazonaws.com/zanran_storage/www.styleadvisor.com/
-    #   ContentPages/2449998087.pdf
-    daily_rets = rets.resample("1B").sum().cumsum()
+def compute_kratio(log_rets: pd.Series) -> float:
+    """
+    Calculate K-Ratio of a time series of log returns.
+
+    :param log_rets: time series of log returns
+    :return: K-Ratio
+    """
+    dbg.dassert_isinstance(log_rets, pd.Series)
+    log_rets = hdf.apply_nan_mode(log_rets, mode="ignore")
     # Fit the best line to the daily rets.
-    x = range(daily_rets.shape[0])
+    x = range(len(log_rets))
     x = sm.add_constant(x)
-    y = daily_rets[y_var]
-    reg = sm.OLS(y, x)
+    reg = sm.OLS(log_rets, x)
     model = reg.fit()
     # Compute k-ratio as slope / std err of slope.
     kratio = model.params[1] / model.bse[1]
-    if False:
-        # Debug the function.
-        print(model.summary())
-        daily_rets.index = range(daily_rets.shape[0])
-        daily_rets["kratio"] = model.predict(x)
-        daily_rets.plot()
     return kratio
 
 
