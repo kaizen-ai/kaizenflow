@@ -16,7 +16,6 @@ import pandas as pd
 
 import core.backtest as bcktst
 import core.data_adapters as adpt
-import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
 
@@ -532,18 +531,6 @@ class DataframeMethodRunner(Transformer):
         # Not all methods return DataFrames. We want to restrict to those that
         # do.
         dbg.dassert_isinstance(df, pd.DataFrame)
-        #
-        info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
-        return df, info
-
-
-class FilterAth(Transformer):
-    def _transform(
-        self, df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        df = df.copy()
-        df = fin.filter_ath(df)
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
