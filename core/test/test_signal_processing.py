@@ -16,6 +16,83 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+class Test_accumulate(hut.TestCase):
+    def test1(self) -> None:
+        srs = pd.Series(
+            range(0, 20), index=pd.date_range("2010-01-01", periods=20)
+        )
+        actual = sigp.accumulate(srs, num_steps=1)
+        expected = srs.astype(float)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test2(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=10)
+        srs = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], index=idx)
+        actual = sigp.accumulate(srs, num_steps=2)
+        expected = pd.Series([np.nan, 1, 3, 5, 7, 9, 11, 13, 15, 17], index=idx)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test3(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=10)
+        srs = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], index=idx)
+        actual = sigp.accumulate(srs, num_steps=3)
+        expected = pd.Series(
+            [np.nan, np.nan, 3, 6, 9, 12, 15, 18, 21, 24], index=idx
+        )
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test4(self) -> None:
+        srs = pd.Series(
+            np.random.randn(100), index=pd.date_range("2010-01-01", periods=100)
+        )
+        actual = sigp.accumulate(srs, num_steps=5)
+        self.check_string(hut.convert_df_to_string(actual, index=True))
+
+    def test_long_step1(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=3)
+        srs = pd.Series([1, 2, 3], index=idx)
+        actual = sigp.accumulate(srs, num_steps=5)
+        expected = pd.Series([np.nan, np.nan, np.nan], index=idx)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test_nans1(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=10)
+        srs = pd.Series([0, 1, np.nan, 2, 3, 4, np.nan, 5, 6, 7], index=idx)
+        actual = sigp.accumulate(srs, num_steps=3)
+        expected = pd.Series(
+            [
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                9,
+                np.nan,
+                np.nan,
+                np.nan,
+                18,
+            ],
+            index=idx,
+        )
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test_nans2(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=6)
+        srs = pd.Series([np.nan, np.nan, np.nan, 2, 3, 4], index=idx)
+        actual = sigp.accumulate(srs, num_steps=3)
+        expected = pd.Series(
+            [np.nan, np.nan, np.nan, np.nan, np.nan, 9], index=idx
+        )
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test_nans3(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=6)
+        srs = pd.Series([np.nan, np.nan, np.nan, 2, 3, 4], index=idx)
+        actual = sigp.accumulate(srs, num_steps=2)
+        expected = pd.Series([np.nan, np.nan, np.nan, np.nan, 5, 7], index=idx)
+        pd.testing.assert_series_equal(actual, expected)
+
+
 class Test_get_symmetric_equisized_bins(hut.TestCase):
     def test_zero_in_bin_interior_false(self) -> None:
         input_ = pd.Series([-1, 3])
