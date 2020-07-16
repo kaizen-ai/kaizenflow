@@ -260,11 +260,7 @@ def compute_kratio(log_rets: pd.Series) -> float:
     :param log_rets: time series of log returns
     :return: K-Ratio
     """
-    # TODO(Paul): Check if the link below is relevant.
-    # From http://s3.amazonaws.com/zanran_storage/www.styleadvisor.com/
-    #   ContentPages/2449998087.pdf
     dbg.dassert_isinstance(log_rets, pd.Series)
-    # TODO(Paul): Check if `mode="ignore"` is correct.
     log_rets = hdf.apply_nan_mode(log_rets, mode="ignore")
     # Fit the best line to the daily rets.
     x = range(len(log_rets))
