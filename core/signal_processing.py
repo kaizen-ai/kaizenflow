@@ -239,6 +239,21 @@ def squash(
     return scale * np.tanh(signal / scale)
 
 
+def accumulate(
+    srs: pd.Series, num_steps: int, nan_mode: Optional[str] = None,
+) -> pd.Series:
+    """
+    Accumulate series for step.
+
+    :param srs: time series
+    :param num_steps: number of steps to compute rolling sum for
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: time series for step
+    """
+    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    return srs.rolling(window=num_steps).sum()
+
+
 def get_symmetric_equisized_bins(
     signal: pd.Series, bin_size: float, zero_in_bin_interior: bool = False
 ) -> np.array:

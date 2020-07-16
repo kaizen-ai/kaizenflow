@@ -155,22 +155,6 @@ def compute_ret_0_from_multiple_prices(
 #  https://github.com/ParticleDev/commodity_research/issues/568
 
 
-def compute_accumulate_rets(
-    log_rets: pd.Series, num_steps: int, nan_mode: Optional[str] = None,
-) -> pd.Series:
-    """
-    Compute returns for step.
-
-    :param log_rets: time series of log returns
-    :param num_steps: number of steps to compute returns for. 1 corresponds to
-        `ret_0`.
-    :param nan_mode: argument for hdf.apply_nan_mode()
-    :return: time series of log returns for step
-    """
-    log_rets = hdf.apply_nan_mode(log_rets, mode=nan_mode)
-    return log_rets.rolling(window=num_steps).sum()
-
-
 def convert_log_rets_to_pct_rets(
     log_rets: Union[pd.Series, pd.DataFrame]
 ) -> Union[pd.Series, pd.DataFrame]:
