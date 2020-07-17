@@ -442,6 +442,7 @@ class Test_git1(ut.TestCase):
     def test_get_branch_name1(self) -> None:
         _ = git.get_branch_name()
 
+    @pytest.mark.not_docker(reason="Issue #3482")
     @pytest.mark.skipif('si.get_user_name() == "jenkins"', reason="#781")
     @pytest.mark.skipif(
         'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"'
@@ -458,6 +459,7 @@ class Test_git1(ut.TestCase):
         dir_name = "."
         _ = git.get_head_hash(dir_name)
 
+    @pytest.mark.not_docker(reason="Issue #3482")
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
     )
