@@ -179,6 +179,16 @@ class TestPlaybackInputOutput1(hut.TestCase):
         # Generate, freeze and execute a unit test.
         self._helper("check_string", a=a, b=b)
 
+    def test12(self) -> None:
+        """
+        Test for dict inputs with data structures recursion.
+        """
+        # Create inputs.
+        a = {"1": ["a", 2]}
+        b = {"3": pd.DataFrame({"Price": [700, 250, 800, 1200]}), "4": {"5": 6}}
+        # Generate, freeze and execute a unit test.
+        self._helper("assert_equal", a=a, b=b)
+
 
 class TestPlaybackUseCase1(hut.TestCase):
     def test1(self) -> None:
