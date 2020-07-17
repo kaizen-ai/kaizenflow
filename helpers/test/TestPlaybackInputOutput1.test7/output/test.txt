@@ -7,10 +7,7 @@ class TestGetResult(hut.TestCase):
         b = pd.DataFrame.from_dict({'Price': [1, 1, 1, 1]})
         # Get the actual function output.
         act = get_result(a, b)
-        # Create the expected function output.
-        exp = pd.DataFrame.from_dict({'Price': [701, 251, 801, 1201]})
         # Convert the dataframe into string.
         act = hut.convert_df_to_string(act)
-        exp = hut.convert_df_to_string(exp)
         # Check whether the expected value equals the actual value.
-        self.assertEqual(act, exp)
+        self.check_string(act)

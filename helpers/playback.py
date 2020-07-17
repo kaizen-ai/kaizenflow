@@ -162,7 +162,7 @@ class Playback:
             code.append("        exp = jsonpickle.decode(exp)")
         if isinstance(func_output, (pd.DataFrame, pd.Series)):
             # Convert the dataframes into strings.
-            code.append("        # Convert the dataframes into strings.")
+            code.append("        # Convert the dataframe into string.")
             code.append("        act = hut.convert_df_to_string(act)")
             if self.mode == "assert_equal":
                 code.append("        exp = hut.convert_df_to_string(exp)")
