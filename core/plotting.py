@@ -787,7 +787,9 @@ def multipletests_plot(
 # #############################################################################
 
 
-def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
+def plot_value_counts(
+    srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
+) -> None:
     """
     Plot barplots for the counts of a series and print the values.
 
@@ -795,7 +797,7 @@ def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
     series `srs`.
     """
     # Compute the counts.
-    counts = srs.value_counts()
+    counts = srs.value_counts(dropna=dropna)
     # Plot.
     return plot_counts(counts, *args, **kwargs)
 
