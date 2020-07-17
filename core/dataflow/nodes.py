@@ -189,7 +189,8 @@ class DataSource(FitPredictNode, abc.ABC):
         dbg.dassert_isinstance(intervals, list)
         for interval in intervals:
             dbg.dassert_eq(len(interval), 2)
-            dbg.dassert_lte(interval[0], interval[1])
+            if interval[0] is not None and interval[1] is not None:
+                dbg.dassert_lte(interval[0], interval[1])
 
 
 class Transformer(FitPredictNode, abc.ABC):
