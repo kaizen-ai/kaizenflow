@@ -1,9 +1,13 @@
-# Initialize function parameters.
-param0 = "test"
-param1 = "case"
-# Get the actual function output.
-act = F(param0, param1)
-# Create the expected function output.
-exp = "testcase"
-# Check whether the expected value equals the actual value.
-assert act == exp
+import helpers.unit_test as hut
+
+class TestGetResult(hut.TestCase):
+    def test1(self) -> None:
+        # Initialize function parameters.
+        param0 = "test"
+        param1 = "case"
+        # Get the actual function output.
+        act = get_result(param0, param1)
+        # Create the expected function output.
+        exp = "testcase"
+        # Check whether the expected value equals the actual value.
+        self.assertEqual(act, exp)
