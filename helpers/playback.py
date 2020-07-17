@@ -70,7 +70,6 @@ def to_python_code(obj: Any) -> str:
     return output
 
 
-# TODO: Add option to generate input files instead of inlining variables.
 class Playback:
     def __init__(
         self, mode: str, func_name: str, *args: Any, **kwargs: Any
@@ -173,6 +172,8 @@ class Playback:
         if self.mode == "assert_equal":
             code.append("        self.assertEqual(act, exp)")
         elif self.mode == "check_string":
+            if not isinstance(func_output, (pd.DataFrame, pd.Series, str)):
+                code.append("        act = str(act)")
             code.append("        self.check_string(act)")
         else:
             raise ValueError("Invalid mode='%s'" % self.mode)

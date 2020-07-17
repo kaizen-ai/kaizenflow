@@ -128,8 +128,48 @@ class TestPlaybackInputOutput1(hut.TestCase):
         b = datetime.date(2012, 1, 1)
         # Generate, freeze and execute a unit test.
         self._helper("assert_equal", a=a, b=b)
-        
+
     def test7(self) -> None:
+        """
+        Test for int inputs with check_string.
+        """
+        # Create inputs.
+        a = 3
+        b = 2
+        # Generate, freeze and execute a unit test.
+        self._helper("check_string", a=a, b=b)
+
+    def test8(self) -> None:
+        """
+        Test for string inputs with check_string.
+        """
+        # Create inputs.
+        a = "test"
+        b = "case"
+        # Generate, freeze and execute a unit test.
+        self._helper("check_string", a=a, b=b)
+
+    def test9(self) -> None:
+        """
+        Test for list inputs with check_string.
+        """
+        # Create inputs.
+        a = [1, 2, 3]
+        b = [4, 5, 6]
+        # Generate, freeze and execute a unit test.
+        self._helper("check_string", a=a, b=b)
+
+    def test10(self) -> None:
+        """
+        Test for dict inputs with check_string.
+        """
+        # Create inputs.
+        a = {"1": 2}
+        b = {"3": 4}
+        # Generate, freeze and execute a unit test.
+        self._helper("check_string", a=a, b=b)
+
+    def test11(self) -> None:
         """
         Test for pd.DataFrame inputs with check_string.
         """
@@ -173,7 +213,7 @@ class TestPlaybackUseCase1(hut.TestCase):
         # We need to disable the unit test generation inside the function `get_result`.
         use_playback = False
         exec(code, locals())
-        
+
     def test2(self) -> None:
         def get_result(a: Any, b: Any) -> Any:
             c = a + b

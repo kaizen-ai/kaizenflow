@@ -3,10 +3,9 @@ import helpers.unit_test as hut
 class TestGetResult(hut.TestCase):
     def test1(self) -> None:
         # Initialize function parameters.
-        a = 3
-        b = 2
+        a = "test"
+        b = "case"
         # Get the actual function output.
         act = get_result(a, b)
         # Check whether the expected value equals the actual value.
-        act = str(act)
         self.check_string(act)
