@@ -1450,3 +1450,32 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
         )
         txt += "\n"
     return txt
+
+
+def summarize_time_index_info(srs: pd.Series) -> pd.Series:
+    """
+    Return summarized information about datetime index of the input.
+
+    :param srs: pandas series of floats
+    :return: series with information about input's index
+    """
+    index = srs.index
+    # Check index of a series. We require that the input
+    #     series have a sorted datetime index.
+    dbg.dassert_isinstance(index, pd.DatetimeIndex)
+    dbg.dassert_strictly_increasing_index(index)
+    result = pd.Series([], dtype="object")
+    result["starting_index"] = index[0]
+    result["last_index"] = index[-1]
+    freq = str(pd.infer_freq(index))
+    result["index_freq"] = freq
+    if freq != "None":
+        result[
+            "sampling_points_per_year"
+        ] = hdf.compute_points_per_year_for_given_freq(freq)
+        time_span = index[-1] - index[0]
+        result["time_span_in_years"] = (
+            time_span.days + time_span.seconds / 86400.0
+        ) / 365.2425
+    result["index_size"] = len(index)
+    return result
