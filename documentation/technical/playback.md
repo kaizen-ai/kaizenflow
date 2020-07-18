@@ -48,7 +48,7 @@
     ```
   - The output `code` will contain a string with the unit test for `get_sum()`
 
-    ```python
+    ```
     import helpers.unit_test as hut
 
     class TestGetSum(hut.TestCase):
