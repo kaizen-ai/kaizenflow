@@ -33,16 +33,17 @@
     ```
   - Create the playback object, specifying
     - The unit test mode: "check_string" or "assert_equal"
-    - The function name: in our case, "get_sum"
+    - The function name that is being tested: in our case, "get_sum"
     - The function parameters that were created earlier
     ```python
     playback = plbck.Playback("assert_equal", "get_sum", a=a, b=b)
     ```
-  - Run the function with the created parameters to get the actual result
+  - Run the function with the previously created parameters to get the expected
+    function outcome
     ```python
     res = get_sum(a, b)
     ```
-  - Run the playback passing the actual result as a parameter
+  - Run the playback passing the expected outcome as a parameter
     ```python
     code = playback.run(res)
     ```
@@ -75,10 +76,15 @@
   ```
   - Playback supports complicated data structures with recursion
     ```python
+    # Create a dict with a list as a value.
     dict_with_list = {"1": ["a", 2]}
-    dict_with_df = {"3": pd.DataFrame({"Price": [700, 250, 800, 1200]}), "4": {"5": 6}}
-    playback = plbck.Playback("assert_equal", "get_dict_union", dict1=dict_with_list, dict2=dict_with_df)
+    # Create a dict with a pandas df and another dict as values.
+    dict_with_df_and_dict = {"3": pd.DataFrame({"Price": [700, 250, 800, 1200]}), "4": {"5": 6}}
+    # Initialize the playback object.
+    playback = plbck.Playback("assert_equal", "get_dict_union", dict1=dict_with_list, dict2=dict_with_df_and_dict)
+    # Get the function outcome to include in the unit test.
     res = get_dict_union(a, b)
+    # Get the unit test for the function.
     code = playback.run(res)
     ```
   - The generated unit test is stored as string in `code`
