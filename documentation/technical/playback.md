@@ -48,7 +48,7 @@
     ```
   - The output `code` will contain a string with the unit test for `get_sum()`
 
-    ```
+    ```data
     import helpers.unit_test as hut
 
     class TestGetSum(hut.TestCase):
@@ -83,7 +83,7 @@
     ```
   - The generated unit test is stored as string in `code`
 
-    ```python
+    ```data
     import helpers.unit_test as hut
 
     class TestGetDictUnion(hut.TestCase):
