@@ -161,7 +161,7 @@ class Playback:
             code.append("        exp = jsonpickle.decode(exp)")
         if isinstance(func_output, (pd.DataFrame, pd.Series)):
             # Convert the dataframes into strings.
-            code.append("        # Convert the dataframe into string.")
+            code.append("        # Convert into string.")
             code.append("        act = hut.convert_df_to_string(act)")
             if self.mode == "assert_equal":
                 code.append("        exp = hut.convert_df_to_string(exp)")
@@ -173,6 +173,7 @@ class Playback:
             code.append("        self.assertEqual(act, exp)")
         elif self.mode == "check_string":
             if not isinstance(func_output, (pd.DataFrame, pd.Series, str)):
+                code.append("        # Convert into string.")
                 code.append("        act = str(act)")
             code.append("        self.check_string(act)")
         else:
