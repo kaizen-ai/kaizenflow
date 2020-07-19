@@ -193,7 +193,7 @@ def rescale_to_target_annual_volatility(
     :return: rescaled returns series
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    scale_factor = _compute_scale_factor(srs, volatility=volatility)
+    scale_factor = compute_scale_factor(srs, volatility=volatility)
     return scale_factor * srs
 
 
@@ -210,7 +210,7 @@ def aggregate_log_rets(
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert(not df.columns.has_duplicates)
     # Compute inverse volatility weights.
-    weights = df.apply(lambda x: _compute_scale_factor(x, target_volatility))
+    weights = df.apply(lambda x: compute_scale_factor(x, target_volatility))
     # Replace inf's with 0's in weights.
     weights.replace([np.inf, -np.inf], np.nan, inplace=True)
     # Rescale weights to percentages.
@@ -230,7 +230,7 @@ def aggregate_log_rets(
     return rescaled_srs, weights
 
 
-def _compute_scale_factor(srs: pd.Series, volatility: float) -> pd.Series:
+def compute_scale_factor(srs: pd.Series, volatility: float) -> pd.Series:
     """
     Compute scale factor of a series according to a target volatility.
 
