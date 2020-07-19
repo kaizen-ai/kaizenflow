@@ -917,6 +917,136 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
+class Residualizer(FitPredictNode):
+    """
+    Residualize using an sklearn model with `inverse_transform()`.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Specify the data and sklearn modeling parameters.
+
+        Assumptions:
+            :param nid: unique node id
+            :param model_func: an sklearn model
+            :param x_vars: indexed by knowledge datetimes
+            :param model_kwargs: parameters to forward to the sklearn model
+                (e.g., regularization constants)
+        """
+        super().__init__(nid)
+        self._model_func = model_func
+        self._model_kwargs = model_kwargs or {}
+        self._x_vars = x_vars
+        self._model = None
+        self._nan_mode = nan_mode or "raise"
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool = False):
+        """
+        Factor out common flow for fit/predict.
+
+        :param df_in: as in `fit`/`predict`
+        :param fit: fits model iff `True`
+        :return: transformed df_in
+        """
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Determine index where no x_vars are NaN.
+        x_vars = self._to_list(self._x_vars)
+        non_nan_idx = df[x_vars].dropna().index
+        dbg.dassert(not non_nan_idx.empty)
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(df.index, non_nan_idx)
+        # Prepare x_vars in sklearn format.
+        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        if fit:
+            # Define and fit model.
+            self._model = self._model_func(**self._model_kwargs)
+            self._model = self._model.fit(x_fit)
+        # Generate insample transformations and put in dataflow dataframe format.
+        x_transform = self._model.transform(x_fit)
+        x_hat = self._model.inverse_transform(x_transform)
+        #
+        x_transform.shape[1]
+        x_residual = adpt.transform_from_sklearn(
+            non_nan_idx, x_vars, x_fit - x_hat
+        )
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
+        model_attribute_info = collections.OrderedDict()
+        for k, v in vars(self._model).items():
+            model_attribute_info[k] = v
+        info["model_attributes"] = model_attribute_info
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
+        # Return targets and predictions.
+        return {"df_out": x_residual}
+
+    def _handle_nans(
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+    ) -> None:
+        if self._nan_mode == "raise":
+            if idx.shape[0] != non_nan_idx.shape[0]:
+                nan_idx = idx.difference(non_nan_idx)
+                raise ValueError(f"NaNs detected at {nan_idx}")
+        elif self._nan_mode == "drop":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert(df.index.freq)
+
+    # TODO(Paul): Make this a mixin to use with all modeling nodes.
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        Return a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
 class SkLearnModel(FitPredictNode):
     def __init__(
         self,
