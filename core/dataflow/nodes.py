@@ -1072,7 +1072,7 @@ class SkLearnModel(FitPredictNode):
         dbg.dassert(
             df_in[df_in.isna().any(axis=1)].index.empty,
             "NaNs detected at index `%s`",
-            str(df_in[df_in.isna().any(axis=1)].index),
+            str(df_in[df_in.isna().any(axis=1)].head().index),
         )
         df = df_in.copy()
         idx = df.index
