@@ -451,10 +451,10 @@ class ColumnTransformer(Transformer):
         )
         return self._transformed_col_names
 
-    # TODO(Paul): Add type hints (or rely on parent class?).
     def _transform(
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        dbg.dassert_no_duplicates(df.columns)
         df_in = df.copy()
         df = df.copy()
         if self._cols is not None:
@@ -511,6 +511,7 @@ class ColumnTransformer(Transformer):
             pass
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        dbg.dassert_no_duplicates(df.columns)
         #
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
@@ -670,11 +671,11 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        return {
-            "df_out": fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
-        }
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -704,11 +705,11 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
-        return {
-            "df_out": fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
-        }
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
@@ -716,6 +717,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         Assert if df violates constraints, otherwise return `None`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
         dbg.dassert(df.index.freq)
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -853,6 +855,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         x_hat = adpt.transform_from_sklearn(
             non_nan_idx, list(range(num_cols)), x_transform
         )
+        dbg.dassert_no_duplicates(x_hat.columns)
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
@@ -885,6 +888,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         Assert if df violates constraints, otherwise return `None`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
         dbg.dassert(df.index.freq)
 
     # TODO(Paul): Make this a mixin to use with all modeling nodes.
@@ -1064,11 +1068,11 @@ class SkLearnModel(FitPredictNode):
         self._model = None
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        SkLearnModel._validate_input_df(df_in)
         dbg.dassert(
             df_in[df_in.isna().any(axis=1)].index.empty,
             "NaNs detected at index `%s`",
-            str(df_in[df_in.isna().any(axis=1)].head().index),
+            str(df_in[df_in.isna().any(axis=1)].index),
         )
         df = df_in.copy()
         idx = df.index
@@ -1080,6 +1084,7 @@ class SkLearnModel(FitPredictNode):
         x_fit, y_fit, y_hat = self._from_sklearn_format(
             idx, x_vars, x_fit, y_vars, y_fit, y_hat
         )
+        dbg.dassert_no_duplicates(y_hat.columns)
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
@@ -1089,7 +1094,7 @@ class SkLearnModel(FitPredictNode):
         return {"df_out": y_hat}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        SkLearnModel._validate_input_df(df_in)
         df = df_in.copy()
         idx = df.index
         x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
@@ -1100,11 +1105,20 @@ class SkLearnModel(FitPredictNode):
         x_predict, y_predict, y_hat = self._from_sklearn_format(
             idx, x_vars, x_predict, y_vars, y_predict, y_hat
         )
+        dbg.dassert_no_duplicates(y_hat.columns)
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
         return {"df_out": y_hat}
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
 
     # TODO(Paul): Add type hints.
     @staticmethod
@@ -1282,13 +1296,13 @@ class ContinuousDeepArModel(FitPredictNode):
             num_samples=self._num_traces,
             x_vars=x_vars,
         )
+        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        dbg.dassert_no_duplicates(df_out.columns)
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("fit", info)
-        return {
-            "df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        }
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -1317,13 +1331,13 @@ class ContinuousDeepArModel(FitPredictNode):
             num_samples=self._num_traces,
             x_vars=x_vars,
         )
+        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        dbg.dassert_no_duplicates(df_out.columns)
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("predict", info)
-        return {
-            "df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        }
+        return {"df_out": df_out}
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
@@ -1331,6 +1345,7 @@ class ContinuousDeepArModel(FitPredictNode):
         Assert if df violates constraints, otherwise return `None`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
         dbg.dassert(df.index.freq)
 
     def _get_fwd_y_df(self, df):
@@ -1433,6 +1448,7 @@ class DeepARGlobalModel(FitPredictNode):
         then `prediction_length = 2`.
         """
         dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_no_duplicates(df_in.columns)
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
@@ -1488,6 +1504,7 @@ class DeepARGlobalModel(FitPredictNode):
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_no_duplicates(df_in.columns)
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
