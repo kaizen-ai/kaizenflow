@@ -150,11 +150,13 @@ def convert_df_to_json_string(df: pd.DataFrame, n_head: int = 10, n_tail: int = 
     :param index: include index into string or drop
     :return: dataframe converted to JSON string
     """
+    shape_str = "shape: %s" % df.shape
     head = df.head(n_head)
     tail = df.tail(n_tail)
     df_to_print = pd.concat([head, tail])
     json_str = df_to_print.to_json(orient="index", force_ascii=False, indent=4)
-    return json_str
+    output_str = "\n".join([shape_str, json_str])
+    return output_str
 
 
 def get_ordered_value_counts(column: pd.Series) -> pd.Series:
