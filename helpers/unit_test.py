@@ -154,7 +154,7 @@ def convert_df_to_json_string(df: pd.DataFrame, n_head: int = 10, n_tail: int = 
     head = df.head(n_head)
     tail = df.tail(n_tail)
     df_to_print = pd.concat([head, tail])
-    json_str = df_to_print.to_json(orient="index", force_ascii=False, indent=4)
+    json_str = df_to_print.to_json(orient="table", force_ascii=False, indent=4)
     output_str = "\n".join([shape_str, json_str])
     return output_str
 
