@@ -1465,17 +1465,15 @@ def summarize_time_index_info(srs: pd.Series) -> pd.Series:
     dbg.dassert_isinstance(index, pd.DatetimeIndex)
     dbg.dassert_strictly_increasing_index(index)
     result = pd.Series([], dtype="object")
-    result["starting_index"] = index[0]
-    result["last_index"] = index[-1]
+    result["start_time"] = index[0]
+    result["end_time"] = index[-1]
     freq = str(pd.infer_freq(index))
-    result["index_freq"] = freq
+    result["frequency"] = freq
     if freq != "None":
-        result[
-            "sampling_points_per_year"
-        ] = hdf.compute_points_per_year_for_given_freq(freq)
-        time_span = index[-1] - index[0]
-        result["time_span_in_years"] = (
-            time_span.days + time_span.seconds / 86400.0
-        ) / 365.2425
-    result["index_size"] = len(index)
+        sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
+            freq
+        )
+        result["sampling_points_per_year"] = sampling_points_per_year
+        result["time_span_in_years"] = len(index) / sampling_points_per_year
+    result["n_sampling_points"] = len(index)
     return result
