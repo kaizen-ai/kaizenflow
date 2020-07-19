@@ -787,7 +787,9 @@ def multipletests_plot(
 # #############################################################################
 
 
-def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
+def plot_value_counts(
+    srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
+) -> None:
     """
     Plot barplots for the counts of a series and print the values.
 
@@ -795,7 +797,7 @@ def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
     series `srs`.
     """
     # Compute the counts.
-    counts = srs.value_counts()
+    counts = srs.value_counts(dropna=dropna)
     # Plot.
     return plot_counts(counts, *args, **kwargs)
 
@@ -827,9 +829,8 @@ def plot_counts(
     # Get default values for plot title and label.
     if not figsize:
         figsize = FIG_SIZE
-    unique_values = sorted(counts.index.to_list())
     # Display a number of unique values in сolumn.
-    print("Number of unique values: %d" % len(unique_values))
+    print("Number of unique values: %d" % counts.index.nunique())
     if top_n_to_print == 0:
         # Do not show anything.
         pass
