@@ -140,6 +140,19 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
+def convert_df_to_json_string(df: pd.DataFrame, n_head: int = 10, n_tail: int = 10, index=False):
+    """
+    Convert dataframe to pretty-printed json string.
+
+    :param df: dataframe to convert
+    :param n_head: number of printed top rows
+    :param n_tail: number of printed bottom rows
+    :param index: include index into string or drop
+    :return: dataframe converted to JSON string
+    """
+    return json_str
+
+
 def get_ordered_value_counts(column: pd.Series) -> pd.Series:
     """
     Get column value counts and sort.
