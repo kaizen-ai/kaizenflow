@@ -194,7 +194,7 @@ def rescale_to_target_annual_volatility(
     """
     dbg.dassert_isinstance(srs, pd.Series)
     scale_factor = compute_volatility_normalization_factor(
-        srs, volatility=volatility
+        srs, target_volatility=volatility
     )
     return scale_factor * srs
 
@@ -235,20 +235,20 @@ def aggregate_log_rets(
 
 
 def compute_volatility_normalization_factor(
-    srs: pd.Series, volatility: float
+    srs: pd.Series, target_volatility: float
 ) -> pd.Series:
     """
     Compute scale factor of a series according to a target volatility.
 
     :param srs: returns series. Index must have `freq`.
-    :param volatility: volatility as a proportion (e.g., `0.1`
+    :param target_volatility: target volatility as a proportion (e.g., `0.1`
         corresponds to 10% annual volatility)
     :return: scale factor
     """
     dbg.dassert_isinstance(srs, pd.Series)
     ppy = hdf.infer_sampling_points_per_year(srs)
     srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
-    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
+    scale_factor = target_volatility / (np.sqrt(ppy) * srs.std())
     _LOG.debug("`scale_factor`=%f", scale_factor)
     return scale_factor
 
