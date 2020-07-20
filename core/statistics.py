@@ -1459,6 +1459,7 @@ def summarize_time_index_info(srs: pd.Series) -> pd.Series:
     :param srs: pandas series of floats
     :return: series with information about input's index
     """
+    dbg.dassert_isinstance(srs, pd.Series)
     index = srs.index
     # Check index of a series. We require that the input
     #     series have a sorted datetime index.
@@ -1467,6 +1468,7 @@ def summarize_time_index_info(srs: pd.Series) -> pd.Series:
     result = pd.Series([], dtype="object")
     result["start_time"] = index[0]
     result["end_time"] = index[-1]
+    result["n_sampling_points"] = len(index)
     freq = str(pd.infer_freq(index))
     result["frequency"] = freq
     if freq != "None":
@@ -1475,5 +1477,4 @@ def summarize_time_index_info(srs: pd.Series) -> pd.Series:
         )
         result["sampling_points_per_year"] = sampling_points_per_year
         result["time_span_in_years"] = len(index) / sampling_points_per_year
-    result["n_sampling_points"] = len(index)
     return result
