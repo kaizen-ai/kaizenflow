@@ -1469,9 +1469,11 @@ def summarize_time_index_info(srs: pd.Series) -> pd.Series:
     result["start_time"] = index[0]
     result["end_time"] = index[-1]
     result["n_sampling_points"] = len(index)
-    freq = str(pd.infer_freq(index))
-    result["frequency"] = freq
-    if freq != "None":
+    if index.freq is None:
+        result["frequency"] = "None"
+    else:
+        freq = str(pd.infer_freq(index))
+        result["frequency"] = freq
         sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
             freq
         )
