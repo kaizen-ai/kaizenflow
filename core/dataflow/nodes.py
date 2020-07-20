@@ -1298,12 +1298,13 @@ class ContinuousDeepArModel(FitPredictNode):
             num_samples=self._num_traces,
             x_vars=x_vars,
         )
-        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        dbg.dassert_no_duplicates(df_out.columns)
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("fit", info)
+        #
+        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
