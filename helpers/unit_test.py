@@ -140,7 +140,7 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
-def convert_df_to_json_string(df: pd.DataFrame, n_head: int = 10, n_tail: int = 10) -> str:
+def convert_df_to_json_string(df: pd.DataFrame, n_head: int, n_tail: int) -> str:
     """
     Convert dataframe to pretty-printed json string.
 
