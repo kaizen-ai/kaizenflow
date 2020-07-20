@@ -140,7 +140,7 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
-def convert_df_to_json_string(df: pd.DataFrame, n_head: int = 10, n_tail: int = 10):
+def convert_df_to_json_string(df: pd.DataFrame, n_head: int = 10, n_tail: int = 10) -> str:
     """
     Convert dataframe to pretty-printed json string.
 
@@ -151,16 +151,15 @@ def convert_df_to_json_string(df: pd.DataFrame, n_head: int = 10, n_tail: int = 
     :return: dataframe converted to JSON string
     """
     # Append shape of the initial dataframe.
-    shape_str = "original shape=%s" % (df.shape,)
-    # Select top and bottom rows.
+    shape = "original shape=%s" % (df.shape,)
+    # Transform head to json.
     head = df.head(n_head)
+    head_json = head.to_json(orient="index", force_ascii=False, indent=4)
+    # Transform tail to json
     tail = df.tail(n_tail)
-    # Combine head and tail to single dataframe.
-    df_to_print = pd.concat([head, tail])
-    # Convert the dataframe to json.
-    json_str = df_to_print.to_json(orient="index", force_ascii=False, indent=4)
+    tail_json = tail.to_json(orient="index", force_ascii=False, indent=4)
     # Join shape and dataframe to single string.
-    output_str = "\n".join([shape_str, json_str])
+    output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
     return output_str
 
 
