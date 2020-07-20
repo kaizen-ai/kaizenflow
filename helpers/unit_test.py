@@ -149,7 +149,6 @@ def convert_df_to_json_string(df: pd.DataFrame, n_head: Optional[int], n_tail: O
     :param df: dataframe to convert
     :param n_head: number of printed top rows
     :param n_tail: number of printed bottom rows
-    :param index: include index into string or drop
     :return: dataframe converted to JSON string
     """
     # Append shape of the initial dataframe.
