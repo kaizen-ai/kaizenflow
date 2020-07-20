@@ -214,15 +214,19 @@ class Transformer(FitPredictNode, abc.ABC):
         """
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_no_duplicates(df_in.columns)
         # Transform the input df.
         df_out, info = self._transform(df_in)
         self._set_info("fit", info)
+        dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_no_duplicates(df_in.columns)
         # Transform the input df.
         df_out, info = self._transform(df_in)
         self._set_info("predict", info)
+        dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
 
@@ -454,7 +458,6 @@ class ColumnTransformer(Transformer):
     def _transform(
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        dbg.dassert_no_duplicates(df.columns)
         df_in = df.copy()
         df = df.copy()
         if self._cols is not None:
@@ -511,7 +514,6 @@ class ColumnTransformer(Transformer):
             pass
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
-        dbg.dassert_no_duplicates(df.columns)
         #
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
