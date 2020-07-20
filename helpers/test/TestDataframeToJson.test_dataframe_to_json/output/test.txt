@@ -1,4 +1,5 @@
 original shape=(7, 2)
+Head:
 {
     "0":{
         "col_1":1.0,
@@ -11,7 +12,10 @@ original shape=(7, 2)
     "2":{
         "col_1":3.0,
         "col_2":3
-    },
+    }
+}
+Tail:
+{
     "4":{
         "col_1":5.0,
         "col_2":5
