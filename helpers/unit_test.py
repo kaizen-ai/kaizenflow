@@ -151,7 +151,7 @@ def convert_df_to_json_string(df: pd.DataFrame, n_head: int = 10, n_tail: int = 
     :return: dataframe converted to JSON string
     """
     # Append shape of the initial dataframe.
-    shape_str = "shape=%s" % df.shape
+    shape_str = "original shape=%s" % df.shape
     # Select top and bottom rows.
     head = df.head(n_head)
     tail = df.tail(n_tail)
