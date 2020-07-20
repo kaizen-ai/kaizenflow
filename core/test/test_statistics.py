@@ -1421,3 +1421,30 @@ class TestComputeInterarrivalTimeStats(hut.TestCase):
         actual = stats.compute_interarrival_time_stats(series, nan_mode="ffill")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+
+class Test_summarize_time_index_info(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
+        return series
+
+    def test1(self) -> None:
+        """
+        Test for the case when index freq is not None.
+        """
+        series = self._get_series(seed=1)
+        actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test for the case when index freq is None.
+        """
+        series = self._get_series(seed=1)
+        series = series.drop(series.index[1:3])
+        actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
