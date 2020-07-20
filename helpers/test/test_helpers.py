@@ -637,6 +637,19 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         self.assert_equal(act, exp)
 
 
+class TestDataframeToJson(ut.TestCase):
+    def test_dataframe_to_json(self) -> None:
+        """
+        Verify correctness of dataframe to JSON transformation.
+        """
+        # Initialize a dataframe.
+        test_dataframe = pd.DataFrame({"col_1": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
+                                       "col_2": [1, 2, 3, 4, 5, 6, 7]})
+        # Convert dataframe to JSON.
+        output_str = ut.convert_df_to_json_string(test_dataframe, n_head=3, n_tail=3)
+        self.check_string(output_str)
+
+
 # #############################################################################
 # user_credentials.py
 # #############################################################################
