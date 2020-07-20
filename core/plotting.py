@@ -741,7 +741,7 @@ def multipletests_plot(
         if isinstance(adj_pvals, pd.Series):
             adj_pvals = adj_pvals.to_frame()
     num_cols = num_cols or 1
-    adj_pvals = adj_pvals.dropna(axis=1, how="all", inplace=True)
+    adj_pvals = adj_pvals.dropna(axis=1, how="all")
     _, ax = get_multiple_plots(
         adj_pvals.shape[1],
         num_cols=num_cols,
