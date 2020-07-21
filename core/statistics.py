@@ -1464,7 +1464,7 @@ def summarize_time_index_info(
     :return: series with information about input's index
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     index = srs.index
