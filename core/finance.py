@@ -267,7 +267,7 @@ def compute_kratio(log_rets: pd.Series) -> float:
     :return: K-Ratio
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
-    log_rets = hdf.apply_nan_mode(log_rets, mode="ignore")
+    log_rets = hdf.apply_nan_mode(log_rets, mode="drop")
     # Fit the best line to the daily rets.
     x = range(len(log_rets))
     x = sm.add_constant(x)
