@@ -107,7 +107,7 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
     """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
     # 5 = Saturday, 6 = Sunday.
-    mask = df.index.day.isin([5, 6])
+    mask = df.index.dayofweek.isin([5, 6])
     df = df.copy()
     df[mask] = np.nan
     return df
