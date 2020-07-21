@@ -1129,7 +1129,7 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         filtered_srs_sr = stats.compute_sharpe_ratio(
             filtered_srs, time_scaling=points_per_year
         )
-        np.testing.assert_almost_equal(filtered_srs_sr, -2.7093, decimal=3)
+        np.testing.assert_almost_equal(filtered_srs_sr, -2.7203, decimal=3)
         # Compare to SR annualized using `freq`.
         srs_sr = stats.compute_annualized_sharpe_ratio(srs)
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
