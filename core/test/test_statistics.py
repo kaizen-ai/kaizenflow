@@ -1038,23 +1038,17 @@ class Test_compute_bet_stats(hut.TestCase):
         log_rets = pd.Series([1, 2, 3, 5, 7, 11, -13, -5], index=idx)
         positions = pd.Series([1, 2, 0, 1, -3, -2, 0, -1], index=idx)
         actual = stats.compute_bet_stats(positions, log_rets)
-        expected = pd.Series(
-            {
-                "num_positions": 6,
-                "num_bets": 4,
-                "average_num_bets_per_year": 4,
-                "average_bet_length": 1.5,
-                "bet_hit_rate_point_est": 0.5,
-                "bet_hit_rate_97.50%CI_lower_bound": 0.1227538827695178,
-                "bet_hit_rate_97.50%CI_upper_bound": 0.8772461172304822,
-                "average_return_winning_bets": 500,
-                "average_return_losing_bets": -4300,
-                "average_return_long_bet": 500,
-                "average_return_short_bet": -1900,
-            },
-            dtype=float,
+        bet_rets = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos_bet_rets = pd.concat(
+            {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
-        pd.testing.assert_series_equal(actual, expected)
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
+            f"{prnt.frame('stats')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
 
 
 class Test_compute_sharpe_ratio(hut.TestCase):

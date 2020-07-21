@@ -649,20 +649,21 @@ def compute_bet_stats(
     bet_hit_rate = calculate_hit_rate(bet_lengths, prefix="bet_")
     stats.update(bet_hit_rate)
     #
-    rets_per_bet = fin.compute_returns_per_bet(
+    log_rets_per_bet = fin.compute_returns_per_bet(
         positions, log_rets, nan_mode=nan_mode
     )
+    pct_rets_per_bet = fin.convert_log_rets_to_pct_rets(log_rets_per_bet)
     stats["average_return_winning_bets"] = (
-        100 * rets_per_bet.loc[rets_per_bet > 0].mean()
+        100 * pct_rets_per_bet.loc[pct_rets_per_bet > 0].mean()
     )
     stats["average_return_losing_bets"] = (
-        100 * rets_per_bet.loc[rets_per_bet < 0].mean()
+        100 * pct_rets_per_bet.loc[pct_rets_per_bet < 0].mean()
     )
     stats["average_return_long_bet"] = (
-        100 * rets_per_bet.loc[bet_lengths > 0].mean()
+        100 * pct_rets_per_bet.loc[bet_lengths > 0].mean()
     )
     stats["average_return_short_bet"] = (
-        100 * rets_per_bet.loc[bet_lengths < 0].mean()
+        100 * pct_rets_per_bet.loc[bet_lengths < 0].mean()
     )
     #
     srs = pd.Series(stats, name=log_rets.name)
