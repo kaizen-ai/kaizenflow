@@ -687,7 +687,7 @@ class TestComputeZeroNanInfStats(hut.TestCase):
 
 class TestCalculateHitRate(hut.TestCase):
     @staticmethod
-    def _get_test_series():
+    def _get_test_series() -> pd.Series:
         series = pd.Series([0, -0.001, 0.001, -0.01, 0.01, -0.1, 0.1, -1, 1, 10])
         return series
 
@@ -979,7 +979,7 @@ class TestComputeMaxDrawdown(hut.TestCase):
         stats.compute_max_drawdown(series)
 
 
-class Test_compute_bet_returns_stats(hut.TestCase):
+class Test_compute_bet_stats(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])
@@ -990,9 +990,9 @@ class Test_compute_bet_returns_stats(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        log_rets = Test_compute_bet_returns_stats._get_series(42)
+        log_rets = Test_compute_bet_stats._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
-        actual = stats.compute_bet_returns_stats(positions, log_rets)
+        actual = stats.compute_bet_stats(positions, log_rets)
         bet_rets = fin.compute_returns_per_bet(positions, log_rets)
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
@@ -1006,10 +1006,10 @@ class Test_compute_bet_returns_stats(hut.TestCase):
         self.check_string(output_str)
 
     def test2(self) -> None:
-        log_rets = Test_compute_bet_returns_stats._get_series(42)
+        log_rets = Test_compute_bet_stats._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
         log_rets.iloc[:10] = np.nan
-        actual = stats.compute_bet_returns_stats(positions, log_rets)
+        actual = stats.compute_bet_stats(positions, log_rets)
         bet_rets = fin.compute_returns_per_bet(positions, log_rets)
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
@@ -1037,7 +1037,7 @@ class Test_compute_bet_returns_stats(hut.TestCase):
         )
         log_rets = pd.Series([1, 2, 3, 5, 7, 11, -13, -5], index=idx)
         positions = pd.Series([1, 2, 0, 1, -3, -2, 0, -1], index=idx)
-        actual = stats.compute_bet_returns_stats(positions, log_rets)
+        actual = stats.compute_bet_stats(positions, log_rets)
         expected = pd.Series(
             {
                 "num_positions": 6,

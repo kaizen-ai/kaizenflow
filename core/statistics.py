@@ -622,7 +622,7 @@ def compute_max_drawdown(
     return result
 
 
-def compute_bet_returns_stats(
+def compute_bet_stats(
     positions: pd.Series,
     log_rets: pd.Series,
     nan_mode: Optional[str] = None,
