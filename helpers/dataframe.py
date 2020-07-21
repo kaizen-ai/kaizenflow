@@ -122,7 +122,8 @@ def apply_nan_mode(
     :param srs: pd.Series to process
     :param mode: method of processing NaNs
         - None - no transformation
-        - "ignore" - drop all NaNs
+        - "leave_unchanged" - no transformation
+        - "drop" - drop all NaNs
         - "ffill" - forward fill not leading NaNs
         - "ffill_and_drop_leading" - do ffill and drop leading NaNs
         - "fill_with_zero" - fill NaNs with 0
@@ -133,9 +134,9 @@ def apply_nan_mode(
     dbg.dassert_isinstance(srs, pd.Series)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-    if mode is None:
+    if (mode is None) or (mode == "leave_unchanged"):
         res = srs.copy()
-    elif mode == "ignore":
+    elif mode == "drop":
         res = srs.dropna().copy()
     elif mode == "ffill":
         res = srs.ffill().copy()
