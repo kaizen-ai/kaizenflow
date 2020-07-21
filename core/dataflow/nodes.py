@@ -857,7 +857,6 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         x_hat = adpt.transform_from_sklearn(
             non_nan_idx, list(range(num_cols)), x_transform
         )
-        dbg.dassert_no_duplicates(x_hat.columns)
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
@@ -870,6 +869,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
+        dbg.dassert_no_duplicates(x_hat.columns)
         return {"df_out": x_hat}
 
     def _handle_nans(
@@ -1086,13 +1086,14 @@ class SkLearnModel(FitPredictNode):
         x_fit, y_fit, y_hat = self._from_sklearn_format(
             idx, x_vars, x_fit, y_vars, y_fit, y_hat
         )
-        dbg.dassert_no_duplicates(y_hat.columns)
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
+        #
+        dbg.dassert_no_duplicates(y_hat.columns)
         return {"df_out": y_hat}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1107,11 +1108,12 @@ class SkLearnModel(FitPredictNode):
         x_predict, y_predict, y_hat = self._from_sklearn_format(
             idx, x_vars, x_predict, y_vars, y_predict, y_hat
         )
-        dbg.dassert_no_duplicates(y_hat.columns)
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
+        #
+        dbg.dassert_no_duplicates(y_hat.columns)
         return {"df_out": y_hat}
 
     @staticmethod
