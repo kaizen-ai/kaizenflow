@@ -985,7 +985,7 @@ class Test_compute_bet_stats(hut.TestCase):
         arma_process = sig_gen.ArmaProcess([], [])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed
+            date_range_kwargs=date_range, seed=seed, scale=0.1
         )
         return series
 
