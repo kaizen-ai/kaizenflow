@@ -140,6 +140,40 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
+def convert_df_to_json_string(
+    df: pd.DataFrame, n_head: Optional[int] = 10, n_tail: Optional[int] = 10
+) -> str:
+    """
+    Convert dataframe to pretty-printed json string.
+
+    To select all rows of the dataframe, pass `n_head` as None.
+
+    :param df: dataframe to convert
+    :param n_head: number of printed top rows
+    :param n_tail: number of printed bottom rows
+    :return: dataframe converted to JSON string
+    """
+    # Append shape of the initial dataframe.
+    shape = "original shape=%s" % (df.shape,)
+    if n_head is not None:
+        # Transform head to json.
+        head = df.head(n_head)
+        head_json = head.to_json(orient="index", force_ascii=False, indent=4)
+    else:
+        # If no head specified, append entire dataframe.
+        head_json = df.to_json(orient="index", force_ascii=False, indent=4)
+    if n_tail is not None:
+        # Transform tail to json.
+        tail = df.tail(n_tail)
+        tail_json = tail.to_json(orient="index", force_ascii=False, indent=4)
+    else:
+        # If no tail specified, append an empty string.
+        tail_json = ""
+    # Join shape and dataframe to single string.
+    output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
+    return output_str
+
+
 def get_ordered_value_counts(column: pd.Series) -> pd.Series:
     """
     Get column value counts and sort.

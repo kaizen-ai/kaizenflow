@@ -870,7 +870,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
             self._set_info("predict", info)
         # Return targets and predictions.
         dbg.dassert_no_duplicates(x_hat.columns)
-        return {"df_out": x_hat}
+        return {"df_out": x_hat.reindex(index=df_in.index)}
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
@@ -1001,7 +1001,7 @@ class Residualizer(FitPredictNode):
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
-        return {"df_out": x_residual}
+        return {"df_out": x_residual.reindex(index=df_in.index)}
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index

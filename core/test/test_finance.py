@@ -12,6 +12,34 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+class Test_set_weekends_to_nan(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test for a daily frequency input.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2020-01-01", "periods": 40, "freq": "D"}, seed=1
+        )
+        actual = fin.set_weekends_to_nan(df)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test for a minutely frequency input.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2020-01-05 23:00:00", "periods": 100, "freq": "T"}, seed=1
+        )
+        actual = fin.set_weekends_to_nan(df)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
 class Test_aggregate_log_rets(hut.TestCase):
     @staticmethod
     def _get_sample(seed: int) -> pd.DataFrame:
