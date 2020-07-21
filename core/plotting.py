@@ -1310,7 +1310,7 @@ def plot_pnl(
     """
     title = title or ""
     colormap = colormap or "rainbow"
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     xlabel = xlabel or None
     ylabel = ylabel or None
     fstr = "{col} (SR={sr})"
@@ -1439,7 +1439,7 @@ def plot_qq(
     """
     dist = dist or "norm"
     ax = ax or plt.gca()
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     x_plot = hdf.apply_nan_mode(srs, mode=nan_mode)
     sp.stats.probplot(x_plot, dist=dist, plot=ax)
     ax.set_title(f"{dist} probability plot")

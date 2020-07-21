@@ -341,7 +341,7 @@ class TestMultipleTests(hut.TestCase):
     def test3(self) -> None:
         series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
-        actual = stats.multipletests(series_with_nans, nan_mode="ignore")
+        actual = stats.multipletests(series_with_nans, nan_mode="drop")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -852,7 +852,7 @@ class Test_compute_jensen_ratio(hut.TestCase):
     def test3(self) -> None:
         signal = self._get_signal(seed=1)
         signal[5:8] = np.inf
-        actual = stats.compute_jensen_ratio(signal, inf_mode="ignore",)
+        actual = stats.compute_jensen_ratio(signal, inf_mode="drop",)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 

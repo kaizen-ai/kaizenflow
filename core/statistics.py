@@ -44,7 +44,7 @@ def compute_moments(
     :return: series of computed moments
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
@@ -363,7 +363,7 @@ def compute_sharpe_ratio_standard_error(
     dbg.dassert_lte(1, time_scaling, f"time_scaling=`{time_scaling}`")
     # Compute the Sharpe ratio using the sampling frequency units[
     sr = compute_sharpe_ratio(log_rets, time_scaling=1)
-    srs_size = hdf.apply_nan_mode(log_rets, mode="ignore").size
+    srs_size = hdf.apply_nan_mode(log_rets, mode="drop").size
     dbg.dassert_lt(1, srs_size)
     sr_var_estimate = (1 + (sr ** 2) / 2) / (srs_size - 1)
     sr_se_estimate = np.sqrt(sr_var_estimate)
@@ -702,8 +702,8 @@ def calculate_hit_rate(
     srs = srs.mask(abs(srs) < threshold)
     # Set all the inf values equal to NaN.
     srs = srs.replace([np.inf, -np.inf, 0], np.nan)
-    # Ignore all the NaN values.
-    srs = hdf.apply_nan_mode(srs, mode="ignore")
+    # Drop all the NaN values.
+    srs = hdf.apply_nan_mode(srs, mode="drop")
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         nan_result = pd.Series(index=result_index, name=srs.name, dtype="float64")
@@ -740,7 +740,7 @@ def ttest_1samp(
     :return: series with t-value and p-value
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     popmean = popmean or 0
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
@@ -784,14 +784,14 @@ def multipletests(
 
     :param srs: Series with pvalues
     :param method: `method` for scipy's multipletests
-    :param nan_mode: approach to deal with NaNs, can be "strict" or "ignore"
+    :param nan_mode: approach to deal with NaNs, can be "strict" or "drop"
     :param prefix: optional prefix for metrics' outcome
     :return: Series of adjusted p-values
     """
     dbg.dassert_isinstance(srs, pd.Series)
     method = method or "fdr_bh"
     nan_mode = nan_mode or "strict"
-    dbg.dassert_in(nan_mode, ["strict", "ignore"])
+    dbg.dassert_in(nan_mode, ["strict", "drop"])
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     if data.empty:
@@ -814,7 +814,7 @@ def multi_ttest(
     Combine ttest and multitest pvalue adjustment.
     """
     popmean = popmean or 0
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     method = method or "fdr_bh"
     prefix = prefix or ""
     dbg.dassert_isinstance(data, pd.DataFrame)
@@ -845,7 +845,7 @@ def apply_normality_test(
     :return: series with statistics and p-value
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
@@ -897,7 +897,7 @@ def apply_adf_test(
     dbg.dassert_isinstance(srs, pd.Series)
     regression = regression or "c"
     autolag = autolag or "AIC"
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
@@ -970,7 +970,7 @@ def apply_kpss_test(
     """
     dbg.dassert_isinstance(srs, pd.Series)
     regression = regression or "c"
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
@@ -1034,7 +1034,7 @@ def apply_ljung_box_test(
     dbg.dassert_isinstance(srs, pd.Series)
     model_df = model_df or 0
     return_df = return_df or True
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
@@ -1106,7 +1106,7 @@ def compute_jensen_ratio(
     dbg.dassert(np.isfinite(p_norm))
     # Set reasonable defaults for inf and nan modes.
     inf_mode = inf_mode or "return_nan"
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
     nan_result = pd.Series(
@@ -1121,7 +1121,7 @@ def compute_jensen_ratio(
             # According to a strict interpretation, each norm is infinite, and
             # and so their quotient is undefined.
             return nan_result
-        if inf_mode == "ignore":
+        if inf_mode == "drop":
             # Replace inf values with np.nan and drop.
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
         else:
@@ -1217,7 +1217,7 @@ def compute_zero_diff_proportion(
     dbg.dassert_isinstance(srs, pd.Series)
     atol = atol or 0
     rtol = rtol or 1e-05
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
@@ -1256,7 +1256,7 @@ def get_interarrival_time(
     :return: series with interrarival time
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     if data.empty:
         _LOG.warning("Empty input `%s`", srs.name)
@@ -1283,7 +1283,7 @@ def compute_interarrival_time_stats(
     :return: series with statistic and related info
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
