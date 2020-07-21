@@ -640,18 +640,18 @@ def compute_bet_stats(
     """
     prefix = prefix or ""
     bet_lengths = fin.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
+    log_rets_per_bet = fin.compute_returns_per_bet(
+        positions, log_rets, nan_mode=nan_mode
+    )
     #
     stats = dict()
     stats["num_positions"] = bet_lengths.abs().sum()
     stats["num_bets"] = bet_lengths.size
     stats["average_num_bets_per_year"] = bet_lengths.resample("Y").count().mean()
     stats["average_bet_length"] = bet_lengths.abs().mean()
-    bet_hit_rate = calculate_hit_rate(bet_lengths, prefix="bet_")
+    bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
     stats.update(bet_hit_rate)
     #
-    log_rets_per_bet = fin.compute_returns_per_bet(
-        positions, log_rets, nan_mode=nan_mode
-    )
     average_ret_winning_bets = log_rets_per_bet.loc[log_rets_per_bet > 0].mean()
     stats["average_return_winning_bets"] = 100 * fin.convert_log_rets_to_pct_rets(
         average_ret_winning_bets

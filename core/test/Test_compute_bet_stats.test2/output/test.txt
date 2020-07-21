@@ -50,9 +50,9 @@ num_positions                      40.000000
 num_bets                            6.000000
 average_num_bets_per_year           2.000000
 average_bet_length                  6.666667
-bet_hit_rate_point_est              0.500000
-bet_hit_rate_97.50%CI_lower_bound   0.166808
-bet_hit_rate_97.50%CI_upper_bound   0.833192
+bet_hit_rate_point_est              0.833333
+bet_hit_rate_97.50%CI_lower_bound   0.441943
+bet_hit_rate_97.50%CI_upper_bound   0.981380
 average_return_winning_bets         1.733132
 average_return_losing_bets         -0.096660
 average_return_long_bet             0.029497
