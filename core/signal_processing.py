@@ -250,6 +250,7 @@ def accumulate(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: time series for step
     """
+    nan_mode = nan_mode or "leave_unchanged"
     srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     return srs.rolling(window=num_steps).sum()
 
