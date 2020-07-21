@@ -1129,7 +1129,7 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         filtered_srs_sr = stats.compute_sharpe_ratio(
             filtered_srs, time_scaling=points_per_year
         )
-        np.testing.assert_almost_equal(filtered_srs_sr, -2.7093, decimal=3)
+        np.testing.assert_almost_equal(filtered_srs_sr, -2.7203, decimal=3)
         # Compare to SR annualized using `freq`.
         srs_sr = stats.compute_annualized_sharpe_ratio(srs)
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
@@ -1446,5 +1446,34 @@ class Test_summarize_time_index_info(hut.TestCase):
         series = self._get_series(seed=1)
         series = series.drop(series.index[1:3])
         actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        """
+        Test for default nan_mode.
+        """
+        series = self._get_series(seed=1)
+        series[5:10] = np.nan
+        actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        """
+        Test for specified nan_mode.
+        """
+        series = self._get_series(seed=1)
+        series[5:10] = np.nan
+        actual = stats.summarize_time_index_info(series, nan_mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        """
+        Test for prefix.
+        """
+        series = self._get_series(seed=1)
+        actual = stats.summarize_time_index_info(series, prefix="test_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
