@@ -114,14 +114,13 @@ def _combine_masks(
 
 
 def apply_nan_mode(
-    srs: pd.Series, mode: Optional[str] = None, info: Optional[dict] = None,
+    srs: pd.Series, mode: str = "leave_unchanged", info: Optional[dict] = None,
 ) -> pd.Series:
     """
     Process NaN values in a series according to the parameters.
 
     :param srs: pd.Series to process
     :param mode: method of processing NaNs
-        - None - no transformation
         - "leave_unchanged" - no transformation
         - "drop" - drop all NaNs
         - "ffill" - forward fill not leading NaNs
@@ -134,7 +133,7 @@ def apply_nan_mode(
     dbg.dassert_isinstance(srs, pd.Series)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-    if (mode is None) or (mode == "leave_unchanged"):
+    if mode == "leave_unchanged":
         res = srs.copy()
     elif mode == "drop":
         res = srs.dropna().copy()
