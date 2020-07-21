@@ -24,4 +24,4 @@ bet_hit_rate_97.50%CI_upper_bound      0.877246
 average_return_winning_bets        14741.315910
 average_return_losing_bets          -100.000000
 average_return_long_bet            14741.315910
-average_return_short_bet            7320.657955
+average_return_short_bet             -99.999999

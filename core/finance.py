@@ -156,8 +156,8 @@ def compute_ret_0_from_multiple_prices(
 
 
 def convert_log_rets_to_pct_rets(
-    log_rets: Union[pd.Series, pd.DataFrame]
-) -> Union[pd.Series, pd.DataFrame]:
+    log_rets: Union[float, pd.Series, pd.DataFrame]
+) -> Union[float, pd.Series, pd.DataFrame]:
     """
     Convert log returns to percentage returns.
 
@@ -168,8 +168,8 @@ def convert_log_rets_to_pct_rets(
 
 
 def convert_pct_rets_to_log_rets(
-    pct_rets: Union[pd.Series, pd.DataFrame]
-) -> Union[pd.Series, pd.DataFrame]:
+    pct_rets: Union[float, pd.Series, pd.DataFrame]
+) -> Union[float, pd.Series, pd.DataFrame]:
     """
     Convert percentage returns to log returns.
 
