@@ -639,28 +639,33 @@ def compute_bet_stats(
         number of positions and bets
     """
     prefix = prefix or ""
+    bet_lengths = fin.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
+    #
+    stats = dict()
+    stats["num_positions"] = bet_lengths.abs().sum()
+    stats["num_bets"] = bet_lengths.size
+    stats["average_num_bets_per_year"] = bet_lengths.resample("Y").count().mean()
+    stats["average_bet_length"] = bet_lengths.abs().mean()
+    bet_hit_rate = calculate_hit_rate(bet_lengths, prefix="bet_")
+    stats.update(bet_hit_rate)
+    #
     rets_per_bet = fin.compute_returns_per_bet(
         positions, log_rets, nan_mode=nan_mode
     )
-    bet_lengths = fin.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
-    #
-    num_positions = bet_lengths.abs().sum()
-    num_bets = bet_lengths.size
-    average_ret_winning_bets = rets_per_bet.loc[rets_per_bet > 0].mean()
-    average_ret_losing_bets = rets_per_bet.loc[rets_per_bet < 0].mean()
-    average_ret_long_bet = rets_per_bet.loc[bet_lengths > 0].mean()
-    average_ret_short_bet = rets_per_bet.loc[bet_lengths < 0].mean()
-    srs = pd.Series(
-        {
-            "num_positions": num_positions,
-            "num_bets": num_bets,
-            "average_return_winning_bets": average_ret_winning_bets,
-            "average_return_losing_bets": average_ret_losing_bets,
-            "average_return_long_bet": average_ret_long_bet,
-            "average_return_short_bet": average_ret_short_bet,
-        },
-        name=log_rets.name,
+    stats["average_return_winning_bets"] = (
+        100 * rets_per_bet.loc[rets_per_bet > 0].mean()
     )
+    stats["average_return_losing_bets"] = (
+        100 * rets_per_bet.loc[rets_per_bet < 0].mean()
+    )
+    stats["average_return_long_bet"] = (
+        100 * rets_per_bet.loc[bet_lengths > 0].mean()
+    )
+    stats["average_return_short_bet"] = (
+        100 * rets_per_bet.loc[bet_lengths < 0].mean()
+    )
+    #
+    srs = pd.Series(stats, name=log_rets.name)
     srs.index = prefix + srs.index
     return srs
 

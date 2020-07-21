@@ -472,7 +472,7 @@ def compute_signed_bet_lengths(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed lengths of bets, i.e., the sign indicates whether the
         length corresponds to a long bet or a short bet. Index corresponds to
-        either end of bet (not causal).
+        end of bet (not causal).
     """
     bet_runs = compute_bet_runs(positions, nan_mode)
     bet_starts = compute_bet_starts(positions, nan_mode)
