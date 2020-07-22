@@ -119,10 +119,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     pytest_mark_opts = []
     pytest_test = ""
-    if test in ("fast", "slow"):
+    if test in ("fast", "slow", "superslow"):
         if test == "fast":
             market_opts = "not slow"
         elif test == "slow":
+            market_opts = ""
+        elif test == "superslow:
             market_opts = ""
         else:
             raise ValueError("Invalid '%s'" % test)
