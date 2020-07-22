@@ -1023,18 +1023,7 @@ class Test_compute_bet_stats(hut.TestCase):
         self.check_string(output_str)
 
     def test3(self) -> None:
-        idx = pd.to_datetime(
-            [
-                "2010-01-01",
-                "2010-01-03",
-                "2010-01-05",
-                "2010-01-06",
-                "2010-01-10",
-                "2010-01-12",
-                "2010-01-13",
-                "2010-01-15",
-            ]
-        )
+        idx = pd.date_range("2010-12-29", freq="D", periods=8)
         log_rets = pd.Series([1, 2, 3, 5, 7, 11, -13, -5], index=idx)
         positions = pd.Series([1, 2, 0, 1, -3, -2, 0, -1], index=idx)
         actual = stats.compute_bet_stats(positions, log_rets)

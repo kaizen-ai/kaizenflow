@@ -636,7 +636,9 @@ def compute_bet_stats(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: series of average returns for winning/losing and long/short bets,
-        number of positions and bets
+        number of positions and bets. In `average_num_bets_per_year`, "year" is
+        not the calendar year, but an approximate number of data points in a
+        year
     """
     prefix = prefix or ""
     bet_lengths = fin.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
@@ -647,7 +649,8 @@ def compute_bet_stats(
     stats = dict()
     stats["num_positions"] = bet_lengths.abs().sum()
     stats["num_bets"] = bet_lengths.size
-    stats["average_num_bets_per_year"] = bet_lengths.resample("Y").count().mean()
+    n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
+    stats["average_num_bets_per_year"] = bet_lengths.size / n_years
     stats["average_bet_length"] = bet_lengths.abs().mean()
     bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
     stats.update(bet_hit_rate)
