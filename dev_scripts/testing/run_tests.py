@@ -124,7 +124,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             market_opts = "not slow"
         elif test == "slow":
             market_opts = ""
-        elif test == "superslow:
+        elif test == "superslow":
             market_opts = ""
         else:
             raise ValueError("Invalid '%s'" % test)
