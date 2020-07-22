@@ -107,3 +107,9 @@ dependencies:
     - gluonnlp              # gluon* and mxnet need to be installed through pip
     - gluonts               # since conda doesn't support / has old packages.
     - scrapy_splash
+  # ############################################################################
+  # ETL3
+  # ############################################################################
+  - gitpython
+  - dbnomics-data-model
+  - python-slugify
