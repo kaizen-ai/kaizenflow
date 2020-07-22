@@ -48,6 +48,7 @@ stats
                                    arma(0,0)
 num_positions                      40.000000
 num_bets                            6.000000
+pct_long_bets                      50.000000
 average_num_bets_per_year           1.800000
 average_bet_length                  6.666667
 bet_hit_rate_point_est              0.833333

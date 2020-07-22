@@ -16,6 +16,7 @@ stats
                                               0
 num_positions                          6.000000
 num_bets                               4.000000
+pct_long_bets                         50.000000
 average_num_bets_per_year            182.625000
 average_bet_length                     1.500000
 bet_hit_rate_point_est                 0.750000
