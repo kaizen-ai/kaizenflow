@@ -687,7 +687,7 @@ class TestComputeZeroNanInfStats(hut.TestCase):
 
 class TestCalculateHitRate(hut.TestCase):
     @staticmethod
-    def _get_test_series():
+    def _get_test_series() -> pd.Series:
         series = pd.Series([0, -0.001, 0.001, -0.01, 0.01, -0.1, 0.1, -1, 1, 10])
         return series
 
@@ -979,20 +979,20 @@ class TestComputeMaxDrawdown(hut.TestCase):
         stats.compute_max_drawdown(series)
 
 
-class Test_compute_bet_returns_stats(hut.TestCase):
+class Test_compute_bet_stats(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed
+            date_range_kwargs=date_range, seed=seed, scale=0.1
         )
         return series
 
     def test1(self) -> None:
-        log_rets = Test_compute_bet_returns_stats._get_series(42)
+        log_rets = Test_compute_bet_stats._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
-        actual = stats.compute_bet_returns_stats(positions, log_rets)
+        actual = stats.compute_bet_stats(positions, log_rets)
         bet_rets = fin.compute_returns_per_bet(positions, log_rets)
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
@@ -1006,10 +1006,10 @@ class Test_compute_bet_returns_stats(hut.TestCase):
         self.check_string(output_str)
 
     def test2(self) -> None:
-        log_rets = Test_compute_bet_returns_stats._get_series(42)
+        log_rets = Test_compute_bet_stats._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
         log_rets.iloc[:10] = np.nan
-        actual = stats.compute_bet_returns_stats(positions, log_rets)
+        actual = stats.compute_bet_stats(positions, log_rets)
         bet_rets = fin.compute_returns_per_bet(positions, log_rets)
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
@@ -1023,33 +1023,21 @@ class Test_compute_bet_returns_stats(hut.TestCase):
         self.check_string(output_str)
 
     def test3(self) -> None:
-        idx = pd.to_datetime(
-            [
-                "2010-01-01",
-                "2010-01-03",
-                "2010-01-05",
-                "2010-01-06",
-                "2010-01-10",
-                "2010-01-12",
-                "2010-01-13",
-                "2010-01-15",
-            ]
-        )
+        idx = pd.date_range("2010-12-29", freq="D", periods=8)
         log_rets = pd.Series([1, 2, 3, 5, 7, 11, -13, -5], index=idx)
         positions = pd.Series([1, 2, 0, 1, -3, -2, 0, -1], index=idx)
-        actual = stats.compute_bet_returns_stats(positions, log_rets)
-        expected = pd.Series(
-            {
-                "num_positions": 6,
-                "num_bets": 4,
-                "average_return_winning_bets": 5,
-                "average_return_losing_bets": -43,
-                "average_return_long_bet": 5,
-                "average_return_short_bet": -19,
-            },
-            dtype=float,
+        actual = stats.compute_bet_stats(positions, log_rets)
+        bet_rets = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos_bet_rets = pd.concat(
+            {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
-        pd.testing.assert_series_equal(actual, expected)
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
+            f"{prnt.frame('stats')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
 
 
 class Test_compute_sharpe_ratio(hut.TestCase):

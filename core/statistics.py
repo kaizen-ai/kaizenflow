@@ -622,7 +622,7 @@ def compute_max_drawdown(
     return result
 
 
-def compute_bet_returns_stats(
+def compute_bet_stats(
     positions: pd.Series,
     log_rets: pd.Series,
     nan_mode: Optional[str] = None,
@@ -636,31 +636,44 @@ def compute_bet_returns_stats(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for metrics' outcome
     :return: series of average returns for winning/losing and long/short bets,
-        number of positions and bets
+        number of positions and bets. In `average_num_bets_per_year`, "year" is
+        not the calendar year, but an approximate number of data points in a
+        year
     """
     prefix = prefix or ""
-    rets_per_bet = fin.compute_returns_per_bet(
+    bet_lengths = fin.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
+    log_rets_per_bet = fin.compute_returns_per_bet(
         positions, log_rets, nan_mode=nan_mode
     )
-    bet_lengths = fin.compute_signed_bet_lengths(positions, nan_mode=nan_mode)
     #
-    num_positions = bet_lengths.abs().sum()
-    num_bets = bet_lengths.size
-    average_ret_winning_bets = rets_per_bet.loc[rets_per_bet > 0].mean()
-    average_ret_losing_bets = rets_per_bet.loc[rets_per_bet < 0].mean()
-    average_ret_long_bet = rets_per_bet.loc[bet_lengths > 0].mean()
-    average_ret_short_bet = rets_per_bet.loc[bet_lengths < 0].mean()
-    srs = pd.Series(
-        {
-            "num_positions": num_positions,
-            "num_bets": num_bets,
-            "average_return_winning_bets": average_ret_winning_bets,
-            "average_return_losing_bets": average_ret_losing_bets,
-            "average_return_long_bet": average_ret_long_bet,
-            "average_return_short_bet": average_ret_short_bet,
-        },
-        name=log_rets.name,
+    stats = dict()
+    stats["num_positions"] = bet_lengths.abs().sum()
+    stats["num_bets"] = bet_lengths.size
+    stats["pct_long_bets"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
+    n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
+    stats["average_num_bets_per_year"] = bet_lengths.size / n_years
+    stats["average_bet_length"] = bet_lengths.abs().mean()
+    bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
+    stats.update(bet_hit_rate)
+    #
+    average_ret_winning_bets = log_rets_per_bet.loc[log_rets_per_bet > 0].mean()
+    stats["average_return_winning_bets"] = 100 * fin.convert_log_rets_to_pct_rets(
+        average_ret_winning_bets
     )
+    average_ret_losing_bets = log_rets_per_bet.loc[log_rets_per_bet < 0].mean()
+    stats["average_return_losing_bets"] = 100 * fin.convert_log_rets_to_pct_rets(
+        average_ret_losing_bets
+    )
+    average_ret_long_bet = log_rets_per_bet.loc[bet_lengths > 0].mean()
+    stats["average_return_long_bet"] = 100 * fin.convert_log_rets_to_pct_rets(
+        average_ret_long_bet
+    )
+    average_ret_short_bet = log_rets_per_bet.loc[bet_lengths < 0].mean()
+    stats["average_return_short_bet"] = 100 * fin.convert_log_rets_to_pct_rets(
+        average_ret_short_bet
+    )
+    #
+    srs = pd.Series(stats, name=log_rets.name)
     srs.index = prefix + srs.index
     return srs
 
