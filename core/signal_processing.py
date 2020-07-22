@@ -1288,8 +1288,11 @@ def get_trend_residual_decomp(
 
 
 def get_swt(
-    sig: pd.Series, wavelet: str, mode: Optional[str] = None
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: str,
+    timing_mode: Optional[str] = None,
+    output_mode: Optional[str] = None,
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
     """
     Get stationary wt details and smooths for all available scales.
 
@@ -1309,7 +1312,7 @@ def get_swt(
 
     :param sig: input signal
     :param wavelet: pywt wavelet name, e.g., "db8"
-    :param mode: supported modes are
+    :param timing_mode: supported timing modes are
         - "knowledge_time":
             - reindex transform according to knowledge times
             - remove warm-up artifacts
@@ -1318,10 +1321,25 @@ def get_swt(
               timestamps are not necessarily knowledge times)
             - remove warm-up artifacts
         - "raw": `pywt.swt` as-is
-    :return: (smooth_df, detail_df)
+    :param output_mode: valid output modes are
+        - "tuple": return (smooth_df, detail_df)
+        - "smooth": return smooth_df
+        - "detail_df": return detail_df
+    :return: see `output_mode`
     """
     # Choice of wavelet may significantly impact results.
     _LOG.debug("wavelet=`%s`", wavelet)
+    if isinstance(sig, pd.DataFrame):
+        dbg.dassert_eq(
+            sig.shape[1], 1, "Input dataframe must have a single column."
+        )
+        sig = sig.squeeze()
+    if timing_mode is None:
+        timing_mode = "knowledge_time"
+    _LOG.debug("timing_mode=`%s`", timing_mode)
+    if output_mode is None:
+        output_mode = "tuple"
+    _LOG.debug("output_mode=`%s`", output_mode)
     # Convert to numpy and pad, since the pywt swt implementation
     # requires that the input be a power of 2 in length.
     sig_len = sig.size
@@ -1350,10 +1368,7 @@ def get_swt(
     # Record wavelet width (required for removing warm-up artifacts).
     width = len(pywt.Wavelet(wavelet).filter_bank[0])
     _LOG.debug("wavelet width=%s", width)
-    if mode is None:
-        mode = "knowledge_time"
-    _LOG.debug("mode=`%s`", mode)
-    if mode == "knowledge_time":
+    if timing_mode == "knowledge_time":
         for j in range(1, levels + 1):
             # Remove "warm-up" artifacts.
             _set_warmup_region_to_nan(detail_df[j], width, j)
@@ -1361,19 +1376,25 @@ def get_swt(
             # Index by knowledge time.
             detail_df[j] = _reindex_by_knowledge_time(detail_df[j], width, j)
             smooth_df[j] = _reindex_by_knowledge_time(smooth_df[j], width, j)
-    elif mode == "zero_phase":
+    elif timing_mode == "zero_phase":
         for j in range(1, levels + 1):
             # Delete "warm-up" artifacts.
             _set_warmup_region_to_nan(detail_df[j], width, j)
             _set_warmup_region_to_nan(smooth_df[j], width, j)
-    elif mode == "raw":
+    elif timing_mode == "raw":
         return smooth_df, detail_df
     else:
-        raise ValueError(f"Unsupported mode `{mode}`")
+        raise ValueError(f"Unsupported timing_mode `{timing_mode}`")
     # Drop columns that are all-NaNs (e.g., artifacts of padding).
     smooth_df.dropna(how="all", axis=1, inplace=True)
     detail_df.dropna(how="all", axis=1, inplace=True)
-    return smooth_df, detail_df
+    if output_mode == "tuple":
+        return smooth_df, detail_df
+    if output_mode == "smooth":
+        return (smooth_df,)
+    if output_mode == "detail":
+        return detail_df
+    raise ValueError("Unsupported output_mode `{output_mode}`")
 
 
 def _pad_to_pow_of_2(arr: np.array) -> np.array:
