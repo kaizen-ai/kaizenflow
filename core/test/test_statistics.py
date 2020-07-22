@@ -1304,7 +1304,8 @@ class TestComputeZeroDiffProportion(hut.TestCase):
         index = pd.date_range(start="1-04-2018", periods=n_elements, freq="D")
         data = list(np.random.randint(10, size=n_elements))
         series = pd.Series(data=data, index=index, name="test")
-        series[45:50] = np.nan
+        series[45:47] = np.nan
+        series[47:50] = np.inf
         return series
 
     def test1(self) -> None:
