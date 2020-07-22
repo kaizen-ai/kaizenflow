@@ -1232,6 +1232,7 @@ def compute_zero_diff_proportion(
     rtol = rtol or 1e-05
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
+    srs = srs.replace([np.inf, -np.inf], np.nan)
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
         prefix + "approx_const_count",
