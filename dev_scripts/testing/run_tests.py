@@ -120,20 +120,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
     pytest_mark_opts = []
     pytest_test = ""
     if test in ("fast", "slow", "superslow"):
-        if test == "fast":
-            market_opts = "not slow"
-        elif test == "slow":
-            market_opts = ""
-        elif test == "superslow":
-            market_opts = ""
-        else:
-            raise ValueError("Invalid '%s'" % test)
-        if market_opts:
-            market_opts += " and"
+        market_opts : List[str] = []
+        # The test lists are not overlapping.
+        if test != "fast":
+            # Fast tests don't have any tag.
+            market_opts.append(test)
+        market_opts.append("not broken_deps")
         # Skip certain tests, if needed.
-        market_opts += " not broken_deps"
         if si.get_server_name() in ("gpmac",):
-            market_opts += " and not aws_deps"
+            market_opts.append("not aws_deps")
+        market_opts = " and ".join(market_opts)
         pytest_mark_opts.append(market_opts)
     else:
         # Pick a specific test.
