@@ -619,8 +619,8 @@ def compute_annualized_return_and_volatility(
     dbg.dassert_isinstance(srs, pd.Series)
     prefix = prefix or ""
     result_index = [
-        prefix + "annualized_mean_return",
-        prefix + "annualized_volatility",
+        prefix + "annualized_mean_return_(%)",
+        prefix + "annualized_volatility_(%)",
     ]
     nan_result = pd.Series(
         data=[np.nan, np.nan], index=result_index, name=srs.name, dtype="float64"
@@ -628,8 +628,8 @@ def compute_annualized_return_and_volatility(
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    annualized_mean_return = fin.compute_annualized_return(srs) * 100
-    annualized_volatility = fin.compute_annualized_volatility(srs) * 100
+    annualized_mean_return = 100 * fin.compute_annualized_return(srs)
+    annualized_volatility = 100 * fin.compute_annualized_volatility(srs)
     result = pd.Series(
         data=[annualized_mean_return, annualized_volatility],
         index=result_index,
