@@ -159,18 +159,21 @@ def convert_df_to_json_string(
         # Transform head to json.
         head = df.head(n_head)
         head_json = head.to_json(
-            orient="index", force_ascii=False, indent=4, default_handler=str
+            orient="index", force_ascii=False, indent=4, default_handler=str,
+            date_format="iso", date_unit="s"
         )
     else:
         # If no head specified, append entire dataframe.
         head_json = df.to_json(
-            orient="index", force_ascii=False, indent=4, default_handler=str
+            orient="index", force_ascii=False, indent=4, default_handler=str,
+            date_format="iso", date_unit="s"
         )
     if n_tail is not None:
         # Transform tail to json.
         tail = df.tail(n_tail)
         tail_json = tail.to_json(
-            orient="index", force_ascii=False, indent=4, default_handler=str
+            orient="index", force_ascii=False, indent=4, default_handler=str,
+            date_format="iso", date_unit="s"
         )
     else:
         # If no tail specified, append an empty string.
