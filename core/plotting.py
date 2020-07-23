@@ -524,18 +524,22 @@ def plot_dendrogram(
     Plot a dendrogram.
 
     A dendrogram is a diagram representing a tree.
+
     :param df: df to plot a heatmap
     :param figsize: if nothing specified, basic (20,5) used
     """
     # Look at:
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
+    # Drop constant columns.
+    constant_cols = df.columns[(df.diff().iloc[1:] == 0).all()]
+    if not constant_cols.empty:
+        _LOG.warning("Excluding constant columns: %s", constant_cols.tolist())
+        df = df.drop(columns=constant_cols)
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
-    # y = scipy.spatial.distance.pdist(df.values, 'correlation')
     y = df.corr().values
-    # z = scipy.cluster.hierarchy.linkage(y, 'single')
     z = sp.cluster.hierarchy.linkage(y, "average")
     if figsize is None:
         figsize = FIG_SIZE
