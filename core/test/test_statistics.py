@@ -736,10 +736,10 @@ class TestCalculateHitRate(hut.TestCase):
         Test for default parameters.
 
         Expected outcome:
-                                              0
-        hit_rate_point_est             0.555556
-        hit_rate_97.50%CI_lower_bound  0.254094
-        hit_rate_97.50%CI_upper_bound  0.827032
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_rate_97.50%CI_upper_bound_(%)  82.7032
         """
         series = self._get_test_series()
         actual = stats.calculate_hit_rate(series)
@@ -751,10 +751,10 @@ class TestCalculateHitRate(hut.TestCase):
         Test for the case when NaNs compose the half of the input.
 
         Expected outcome:
-                                              0
-        hit_rate_point_est             0.555556
-        hit_rate_97.50%CI_lower_bound  0.254094
-        hit_rate_97.50%CI_upper_bound  0.827032
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_rate_97.50%CI_upper_bound_(%)  82.7032
         """
         series = self._get_test_series()
         nan_series = pd.Series([np.nan for i in range(len(series))])
@@ -768,10 +768,10 @@ class TestCalculateHitRate(hut.TestCase):
         Test for the case when np.inf compose the half of the input.
 
         Expected outcome:
-                                              0
-        hit_rate_point_est             0.555556
-        hit_rate_97.50%CI_lower_bound  0.254094
-        hit_rate_97.50%CI_upper_bound  0.827032
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_rate_97.50%CI_upper_bound_(%)  82.7032
         """
         series = self._get_test_series()
         inf_series = pd.Series([np.inf for i in range(len(series))])
@@ -786,10 +786,10 @@ class TestCalculateHitRate(hut.TestCase):
         Test for the case when 0 compose the half of the input.
 
         Expected outcome:
-                                              0
-        hit_rate_point_est             0.555556
-        hit_rate_97.50%CI_lower_bound  0.254094
-        hit_rate_97.50%CI_upper_bound  0.827032
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_rate_97.50%CI_upper_bound_(%)  82.7032
         """
         series = self._get_test_series()
         zero_series = pd.Series([0 for i in range(len(series))])
@@ -803,10 +803,10 @@ class TestCalculateHitRate(hut.TestCase):
         Test threshold.
 
         Expected outcome:
-                                              0
-        hit_rate_point_est             0.571429
-        hit_rate_97.50%CI_lower_bound  0.234501
-        hit_rate_97.50%CI_upper_bound  0.861136
+                                                 0
+        hit_rate_point_est_(%)             57.1429
+        hit_rate_97.50%CI_lower_bound_(%)  23.4501
+        hit_rate_97.50%CI_upper_bound_(%)  86.1136
         """
         series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, threshold=10e-3)
@@ -818,10 +818,10 @@ class TestCalculateHitRate(hut.TestCase):
         Test alpha.
 
         Expected outcome:
-                                              0
-        hit_rate_point_est             0.555556
-        hit_rate_95.00%CI_lower_bound  0.296768
-        hit_rate_95.00%CI_upper_bound  0.791316
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_95.00%CI_lower_bound_(%)  29.6768
+        hit_rate_95.00%CI_upper_bound_(%)  79.1316
         """
         series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, alpha=0.1)
@@ -833,10 +833,10 @@ class TestCalculateHitRate(hut.TestCase):
         Test prefix.
 
         Expected outcome:
-                                                  0
-        hit_hit_rate_point_est             0.555556
-        hit_hit_rate_97.50%CI_lower_bound  0.254094
-        hit_hit_rate_97.50%CI_upper_bound  0.827032
+                                                     0
+        hit_hit_rate_point_est_(%)             55.5556
+        hit_hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_hit_rate_97.50%CI_upper_bound_(%)  82.7032
         """
         series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, prefix="hit_")
@@ -848,10 +848,10 @@ class TestCalculateHitRate(hut.TestCase):
         Test method.
 
         Expected outcome:
-                                              0
-        hit_rate_point_est             0.555556
-        hit_rate_97.50%CI_lower_bound  0.266651
-        hit_rate_97.50%CI_upper_bound  0.811221
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  26.6651
+        hit_rate_97.50%CI_upper_bound_(%)  81.1221
         """
         series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, method="wilson")

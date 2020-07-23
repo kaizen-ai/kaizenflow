@@ -1,4 +1,4 @@
-                                      0
-hit_rate_point_est             0.555556
-hit_rate_95.00%CI_lower_bound  0.296768
-hit_rate_95.00%CI_upper_bound  0.791316
+                                           0
+hit_rate_point_est_(%)             55.555556
+hit_rate_95.00%CI_lower_bound_(%)  29.676789
+hit_rate_95.00%CI_upper_bound_(%)  79.131567

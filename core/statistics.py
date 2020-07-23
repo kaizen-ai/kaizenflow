@@ -747,9 +747,9 @@ def calculate_hit_rate(
     # Process series.
     conf_alpha = (1 - alpha / 2) * 100
     result_index = [
-        prefix + "hit_rate_point_est",
-        prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound",
-        prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound",
+        prefix + "hit_rate_point_est_(%)",
+        prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound_(%)",
+        prefix + f"hit_rate_{conf_alpha:.2f}%CI_upper_bound_(%)",
     ]
     # Set all the values whose absolute values are closer to zero than
     #    the absolute value of the threshold equal to NaN.
@@ -768,8 +768,8 @@ def calculate_hit_rate(
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
         count=hit_mask.sum(), nobs=hit_mask.count(), alpha=alpha, method=method
     )
-    result_values = [point_estimate, hit_lower, hit_upper]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
+    result = pd.Series(data=result_values_pct, index=result_index, name=srs.name)
     return result
 
 
