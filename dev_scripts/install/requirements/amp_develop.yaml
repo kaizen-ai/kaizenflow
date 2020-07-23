@@ -1,5 +1,5 @@
 channels:
-  #- quantopian
+  #- quantopian             # Needed by trading-calendars.
   - conda-forge
 dependencies:
   # ############################################################################
@@ -24,9 +24,9 @@ dependencies:
   - matplotlib
   - networkx
   - numba
-  - numpy <= 1.17
-  - pandas
-  - pandas-datareader=0.8.0     # PartTask344.
+  - numpy
+  - pandas >= 1.0.0
+  - pandas-datareader = 0.8.0     # PartTask344.
   - pyarrow
   - pywavelets
   - scikit-learn
@@ -46,7 +46,7 @@ dependencies:
   # ############################################################################
   # Linter
   # ############################################################################
-  #- pyment                   # conda install -c akode pyment
+  #- pyment                 # conda install -c akode pyment
   - autoflake
   - black
   - flake8
