@@ -156,26 +156,18 @@ def convert_df_to_json_string(
     # Append shape of the initial dataframe.
     shape = "original shape=%s" % (df.shape,)
     if n_head is not None:
-        # Transform head to json.
-        head = df.head(n_head)
-        head_json = head.to_json(
-            orient="index",
-            force_ascii=False,
-            indent=4,
-            default_handler=str,
-            date_format="iso",
-            date_unit="s",
-        )
+        head_df = df.head(n_head)
     else:
-        # If no head specified, append entire dataframe.
-        head_json = df.to_json(
-            orient="index",
-            force_ascii=False,
-            indent=4,
-            default_handler=str,
-            date_format="iso",
-            date_unit="s",
-        )
+        head_df = df
+    # Transform head to json.
+    head_json = head_df.to_json(
+        orient="index",
+        force_ascii=False,
+        indent=4,
+        default_handler=str,
+        date_format="iso",
+        date_unit="s",
+    )
     if n_tail is not None:
         # Transform tail to json.
         tail = df.tail(n_tail)
