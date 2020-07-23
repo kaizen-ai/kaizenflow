@@ -5,3 +5,4 @@ data_frac_nan             0.125000
 data_frac_inf             0.150000
 data_frac_constant        0.102564
 data_num_finite_samples  29.000000
+data_num_unique_values   25.000000

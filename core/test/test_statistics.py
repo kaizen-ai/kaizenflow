@@ -672,7 +672,7 @@ class TestComputeSpecialValueStats(hut.TestCase):
         Test for default arguments.
         """
         series = self._get_messy_series(seed=1)
-        actual = stats.compute_zero_nan_inf_stats(series)
+        actual = stats.compute_special_value_stats(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -681,14 +681,14 @@ class TestComputeSpecialValueStats(hut.TestCase):
         Test for prefix.
         """
         series = self._get_messy_series(seed=1)
-        actual = stats.compute_zero_nan_inf_stats(series, prefix="data_")
+        actual = stats.compute_special_value_stats(series, prefix="data_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
-        stats.compute_zero_nan_inf_stats(series)
+        stats.compute_special_value_stats(series)
 
 
 class TestComputeZeroNanInfStats(hut.TestCase):
