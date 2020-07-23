@@ -533,7 +533,7 @@ def plot_dendrogram(
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
     # Drop constant columns.
     constant_cols = df.columns[(df.diff().iloc[1:] == 0).all()]
-    if constant_cols:
+    if not constant_cols.empty:
         _LOG.warning("Excluding constant columns: %s", constant_cols.tolist())
         df = df.drop(columns=constant_cols)
     if df.shape[1] < 2:
