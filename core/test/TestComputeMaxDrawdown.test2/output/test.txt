@@ -1,2 +1,2 @@
-                 arma(1,1)
-newmax_drawdown -54.363057
+                      arma(1,1)
+new_max_drawdown_(%) -54.363057
