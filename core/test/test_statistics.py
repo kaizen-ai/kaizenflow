@@ -651,6 +651,46 @@ class TestApplyLjungBoxTest(hut.TestCase):
         stats.apply_ljung_box_test(series)
 
 
+class TestComputeSpecialValueStats(hut.TestCase):
+    @staticmethod
+    def _get_messy_series(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        series[:5] = 0
+        series[-5:] = np.nan
+        series[10:13] = np.inf
+        series[13:16] = -np.inf
+        return series
+
+    def test1(self) -> None:
+        """
+        Test for default arguments.
+        """
+        series = self._get_messy_series(seed=1)
+        actual = stats.compute_special_value_stats(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test for prefix.
+        """
+        series = self._get_messy_series(seed=1)
+        actual = stats.compute_special_value_stats(series, prefix="data_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input.
+    def test3(self) -> None:
+        series = pd.Series([])
+        stats.compute_special_value_stats(series)
+
+
 class TestComputeZeroNanInfStats(hut.TestCase):
     @staticmethod
     def _get_messy_series(seed: int) -> pd.Series:
