@@ -673,7 +673,7 @@ class TestDataframeToJson(ut.TestCase):
         )
         # Convert dataframe to JSON.
         output_str = ut.convert_df_to_json_string(
-            test_dataframe, n_head=3, n_tail=3
+            test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
 
@@ -690,7 +690,7 @@ class TestDataframeToJson(ut.TestCase):
         )
         # Convert dataframe to JSON.
         output_str = ut.convert_df_to_json_string(
-            test_dataframe, n_head=3, n_tail=3
+            test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
 
@@ -710,7 +710,7 @@ class TestDataframeToJson(ut.TestCase):
         )
         # Convert dataframe to JSON.
         output_str = ut.convert_df_to_json_string(
-            test_dataframe, n_head=3, n_tail=3
+            test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
 
