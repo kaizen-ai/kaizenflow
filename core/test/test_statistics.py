@@ -1009,7 +1009,7 @@ class TestComputeMaxDrawdown(hut.TestCase):
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_max_drawdown(series, prefix="new")
+        actual = stats.compute_max_drawdown(series, prefix="new_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 

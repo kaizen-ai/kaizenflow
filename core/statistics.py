@@ -650,7 +650,7 @@ def compute_max_drawdown(
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
     prefix = prefix or ""
-    result_index = [prefix + "max_drawdown"]
+    result_index = [prefix + "max_drawdown_(%)"]
     nan_result = pd.Series(
         index=result_index, name=log_rets.name, dtype="float64"
     )
