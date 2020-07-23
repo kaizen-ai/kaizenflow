@@ -684,7 +684,7 @@ class TestDataframeToJson(ut.TestCase):
         # Initialize a dataframe.
         test_dataframe = pd.DataFrame(
             {
-                "col_1": [pd.Timestamp("2020-01-01", pd.Timestamp("2020-05-12"))],
+                "col_1": [pd.Timestamp("2020-01-01"), pd.Timestamp("2020-05-12")],
                 "col_2": [1.0, 2.0],
             }
         )
