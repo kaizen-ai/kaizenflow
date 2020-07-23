@@ -532,7 +532,7 @@ def plot_dendrogram(
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
     # Drop constant columns.
-    constant_cols = (df.diff().iloc[1:] == 0).all()
+    constant_cols = df.columns[(df.diff().iloc[1:] == 0).all()]
     if constant_cols:
         _LOG.warning("Excluding constant columns: %s", constant_cols.tolist())
         df = df.drop(columns=constant_cols)
