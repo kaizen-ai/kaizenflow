@@ -658,6 +658,7 @@ class Test_explore1(hut.TestCase):
             df["x"], df["y"], intercept=True, print_model_stats=False
         )
 
+    @pytest.mark.skip(reason="https://github.com/ParticleDev/commodity_research/issues/3676")
     def test_rolling_pca_over_time1(self) -> None:
         np.random.seed(42)
         df = pd.DataFrame(np.random.randn(10, 5))
