@@ -690,7 +690,7 @@ def compute_bet_stats(
     stats = dict()
     stats["num_positions"] = bet_lengths.abs().sum()
     stats["num_bets"] = bet_lengths.size
-    stats["pct_long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
+    stats["long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
     n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
     stats["average_num_bets_per_year"] = bet_lengths.size / n_years
     stats["average_bet_length"] = bet_lengths.abs().mean()

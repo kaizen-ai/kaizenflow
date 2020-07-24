@@ -16,7 +16,7 @@ stats
                                              0
 num_positions                                6
 num_bets                                     4
-pct_long_bets_(%)                           50
+long_bets_(%)                               50
 average_num_bets_per_year              182.625
 average_bet_length                         1.5
 average_bet_length_in_freq                   D

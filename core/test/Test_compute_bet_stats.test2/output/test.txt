@@ -48,7 +48,7 @@ stats
                                        arma(0,0)
 num_positions                                 40
 num_bets                                       6
-pct_long_bets_(%)                             50
+long_bets_(%)                                 50
 average_num_bets_per_year                    1.8
 average_bet_length                       6.66667
 average_bet_length_in_freq                     M
