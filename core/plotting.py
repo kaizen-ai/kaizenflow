@@ -20,6 +20,7 @@ import sklearn.decomposition as skldec
 import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
+import statsmodels.regression.rolling as smrr
 
 import core.explore as expl
 import core.finance as fin
@@ -1484,6 +1485,29 @@ def plot_allocation(
     )
     ax.set_xlabel("period")
     ax.legend()
+
+
+def plot_rolling_beta(
+    rets: pd.Series,
+    benchmark_rets: pd.Series,
+    window: Optional[int],
+    figsize: Optional[Tuple[int, int]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+    **kwargs: Any,
+) -> None:
+    ax = ax or plt.gca()
+    benchmark_name = benchmark_rets.name
+    benchmark_rets = sm.add_constant(benchmark_rets)
+    model = smrr.RollingOLS(
+        rets, benchmark_rets.loc[rets.index], window=window, **kwargs
+    )
+    res = model.fit()
+    beta = res.params[benchmark_name]
+    beta.plot(
+        ax=ax, figsize=figsize, title=f"Beta estimate using {benchmark_name}"
+    )
+    ax.set_xlabel("period")
+    ax.set_ylabel("beta")
 
 
 def _choose_scaling_coefficient(unit: str) -> int:
