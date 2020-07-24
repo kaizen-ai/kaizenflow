@@ -18,8 +18,8 @@ num_positions                                6
 num_bets                                     4
 long_bets_(%)                               50
 average_num_bets_per_year              182.625
-average_bet_length                         1.5
-average_bet_length_in_freq                   D
+average_bet_length_in_days                 1.5
+average_bet_length_freq                    Day
 bet_hit_rate_point_est_(%)                  75
 bet_hit_rate_97.50%CI_lower_bound_(%)  28.3752
 bet_hit_rate_97.50%CI_upper_bound_(%)  97.1529
