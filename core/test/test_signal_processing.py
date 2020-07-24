@@ -188,6 +188,26 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    def test_arma_inf1(self) -> None:
+        """
+        Test on an arma series with leading infs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test_arma_inf2(self) -> None:
+        """
+        Test on an arma series with interspersed infs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
 
 class Test_process_outliers1(hut.TestCase):
     def _helper(
