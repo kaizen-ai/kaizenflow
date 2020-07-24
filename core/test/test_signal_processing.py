@@ -120,33 +120,38 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, scale=0.1, seed=seed
-        )
+        ).rename("input")
         return series
 
     def test_default_values1(self) -> None:
         """
         Test with default parameters on a heaviside series.
         """
-        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
-        self.check_string(zscored.to_string())
+        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1).rename("input")
+        actual = sigp.compute_rolling_zscore(heaviside, tau=40).rename("output")
+        output_df = pd.concat([heaviside, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_default_values2(self) -> None:
         """
         Test for tau with default parameters on a heaviside series.
         """
-        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.compute_rolling_zscore(heaviside, tau=20)
-        self.check_string(zscored.to_string())
+        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1).rename("input")
+        actual = sigp.compute_rolling_zscore(heaviside, tau=20).rename("output")
+        output_df = pd.concat([heaviside, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_arma_clean1(self) -> None:
         """
         Test on a clean arma series.
         """
         series = self._get_arma_series(seed=1)
-        actual = sigp.compute_rolling_zscore(series, tau=20)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_arma_nan1(self) -> None:
         """
@@ -154,9 +159,10 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         """
         series = self._get_arma_series(seed=1)
         series[:5] = np.nan
-        actual = sigp.compute_rolling_zscore(series, tau=20)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_arma_nan2(self) -> None:
         """
@@ -164,9 +170,10 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         """
         series = self._get_arma_series(seed=1)
         series[5:10] = np.nan
-        actual = sigp.compute_rolling_zscore(series, tau=20)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_arma_zero1(self) -> None:
         """
@@ -174,9 +181,10 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         """
         series = self._get_arma_series(seed=1)
         series[:5] = 0
-        actual = sigp.compute_rolling_zscore(series, tau=20)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_arma_zero2(self) -> None:
         """
@@ -184,9 +192,10 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         """
         series = self._get_arma_series(seed=1)
         series[5:10] = 0
-        actual = sigp.compute_rolling_zscore(series, tau=20)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_arma_inf1(self) -> None:
         """
@@ -194,9 +203,10 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         """
         series = self._get_arma_series(seed=1)
         series[:5] = np.inf
-        actual = sigp.compute_rolling_zscore(series, tau=20)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_arma_inf2(self) -> None:
         """
@@ -204,9 +214,10 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         """
         series = self._get_arma_series(seed=1)
         series[5:10] = np.inf
-        actual = sigp.compute_rolling_zscore(series, tau=20)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
 
 class Test_process_outliers1(hut.TestCase):
