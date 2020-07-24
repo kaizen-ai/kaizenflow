@@ -652,7 +652,7 @@ def _get_eigvals_eigvecs(
     # TODO(gp): Count and report inf and nans as warning.
     df_tmp.replace([np.inf, -np.inf], np.nan, inplace=True)
     df_tmp.fillna(0.0, inplace=True)
-    eigval, eigvec = np.linalg.eig(df_tmp)
+    eigval, eigvec = np.linalg.eigh(df_tmp)
     # Sort eigenvalues, if needed.
     if not (sorted(eigval) == eigval).all():
         _LOG.debug("eigvals not sorted: %s", eigval)

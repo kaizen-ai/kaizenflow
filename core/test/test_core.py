@@ -995,7 +995,6 @@ class TestPcaFactorComputer2(hut.TestCase):
         # We can use # the Cholesky decomposition, or the we can construct `c`
         # from the eigenvectors and eigenvalues.
         # Compute the eigenvalues and eigenvectors.
-        # evals, evecs = np.linalg.eig(r)
         evals, evecs = np.linalg.eigh(cov)
         if report_stats:
             _LOG.info("evals=\n%s", evals)
