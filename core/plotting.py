@@ -50,7 +50,7 @@ _DATETIME_TYPES = [
 
 
 # #############################################################################
-# General dataframe plotting helpers
+# General plotting helpers
 # #############################################################################
 
 
@@ -158,6 +158,217 @@ def plot_categories_count(
     else:
         plt.title(title)
     plt.show()
+
+
+def get_multiple_plots(
+    num_plots: int,
+    num_cols: int,
+    y_scale: Optional[float] = None,
+    *args: Any,
+    **kwargs: Any,
+) -> Tuple[mpl.figure.Figure, np.array]:
+    """
+    Create figure to accommodate `num_plots` plots.
+    The figure is arranged in rows with `num_cols` columns.
+
+    :param num_plots: number of plots
+    :param num_cols: number of columns to use in the subplot
+    :param y_scale: if not None
+    :return: figure and array of axes
+    """
+    dbg.dassert_lte(1, num_plots)
+    dbg.dassert_lte(1, num_cols)
+    # Heuristic to find the dimension of the fig.
+    if y_scale is not None:
+        dbg.dassert_lt(0, y_scale)
+        ysize = math.ceil(num_plots / num_cols) * y_scale
+        figsize: Optional[Tuple[float, float]] = (20, ysize)
+    else:
+        figsize = None
+    fig, ax = plt.subplots(
+        math.ceil(num_plots / num_cols),
+        num_cols,
+        figsize=figsize,
+        *args,
+        **kwargs,
+    )
+    if isinstance(ax, np.ndarray):
+        return fig, ax.flatten()
+    return fig, ax
+
+
+# #############################################################################
+# Data count plots.
+# #############################################################################
+
+
+def plot_value_counts(
+    srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
+) -> None:
+    """
+    Plot barplots for the counts of a series and print the values.
+
+    Same interface as plot_count_series() but computing the count of the given
+    series `srs`.
+    """
+    # Compute the counts.
+    counts = srs.value_counts(dropna=dropna)
+    # Plot.
+    return plot_counts(counts, *args, **kwargs)
+
+
+def plot_counts(
+    counts: pd.Series,
+    top_n_to_print: int = 10,
+    top_n_to_plot: Optional[int] = None,
+    plot_title: Optional[str] = None,
+    label: Optional[str] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    rotation: int = 0,
+) -> None:
+    """
+    Plot barplots for series containing counts and print the values.
+
+    If the number of labels is over 20, the plot is oriented horizontally
+    and the height of the plot is automatically adjusted.
+
+    :param counts: series to plot value counts for
+    :param top_n_to_print: top N values by count to print. None for all. 0 for
+        no values
+    :param top_n_to_plot: like top_n_to_print, but for the plot
+    :param plot_title: title of the barplot
+    :param label: label of the X axis
+    :param figsize: size of the plot
+    :param rotation: rotation of xtick labels
+    """
+    # Get default values for plot title and label.
+    if not figsize:
+        figsize = FIG_SIZE
+    # Display a number of unique values in сolumn.
+    print("Number of unique values: %d" % counts.index.nunique())
+    if top_n_to_print == 0:
+        # Do not show anything.
+        pass
+    else:
+        counts_tmp = counts.copy()
+        counts.sort_values(ascending=False, inplace=True)
+        if top_n_to_print is not None:
+            dbg.dassert_lte(1, top_n_to_print)
+            counts_tmp = counts_tmp[:top_n_to_print]
+            print("Up to first %d unique labels:" % top_n_to_print)
+        else:
+            print("All unique labels:")
+        print(counts_tmp)
+    # Plot horizontally or vertically, depending on counts number.
+    if top_n_to_plot == 0:
+        # Do not show anything.
+        pass
+    else:
+        counts_tmp = counts.copy()
+        # Subset N values to plot.
+        if top_n_to_plot is not None:
+            dbg.dassert_lte(1, top_n_to_plot)
+            counts_tmp = counts_tmp[:top_n_to_plot]
+        if len(counts_tmp) > 20:
+            # Plot large number of categories horizontally.
+            counts_tmp.sort_values(ascending=True, inplace=True)
+            ylen = math.ceil(len(counts_tmp) / 26) * 5
+            figsize = (figsize[0], ylen)
+            plot_barplot(
+                counts_tmp,
+                orientation="horizontal",
+                title=plot_title,
+                figsize=figsize,
+                xlabel=label,
+                rotation=rotation,
+            )
+        else:
+            # Plot small number of categories vertically.
+            plot_barplot(
+                counts_tmp,
+                orientation="vertical",
+                title=plot_title,
+                figsize=figsize,
+                xlabel=label,
+                rotation=rotation,
+            )
+
+
+def plot_barplot(
+    srs: pd.Series,
+    orientation: str = "vertical",
+    annotation_mode: str = "pct",
+    string_format: str = "%.2f",
+    title: Optional[str] = None,
+    xlabel: Optional[str] = None,
+    unicolor: bool = False,
+    color_palette: Optional[List[Tuple[float, float, float]]] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    rotation: int = 0,
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """
+    Plot a barplot.
+
+    :param srs: pd.Series
+    :param orientation: vertical or horizontal bars
+    :param annotation_mode: `pct` or `value`
+    :param string_format: format of bar annotations
+    :param title: title of the plot
+    :param xlabel: label of the X axis
+    :param unicolor: if True, plot all bars in neutral blue color
+    :param color_palette: color palette
+    :param figsize: size of plot
+    :param rotation: rotation of xtick labels
+    :param ax: axes
+    """
+
+    def _get_annotation_loc(
+        x_: float, y_: float, height_: float, width_: float
+    ) -> Tuple[float, float]:
+        if orientation == "vertical":
+            return x_, y_ + max(height_, 0)
+        if orientation == "horizontal":
+            return x_ + max(width_, 0), y_
+        raise ValueError("Invalid orientation='%s'" % orientation)
+
+    if figsize is None:
+        figsize = FIG_SIZE
+    # Choose colors.
+    if unicolor:
+        color = sns.color_palette("muted")[0]
+    else:
+        color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
+        color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
+    # Plot.
+    if orientation == "vertical":
+        kind = "bar"
+    elif orientation == "horizontal":
+        kind = "barh"
+    else:
+        raise ValueError("Invalid orientation='%s'" % orientation)
+    ax = ax or plt.gca()
+    srs.plot(
+        kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
+    )
+    # Add annotations to bars.
+    if annotation_mode == "pct":
+        annotations = srs * 100 / srs.sum()
+        string_format = string_format + "%%"
+        annotations = annotations.apply(lambda z: string_format % z)
+    elif annotation_mode == "value":
+        annotations = srs.apply(lambda z: string_format % z)
+    else:
+        raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
+    #
+    for i, p in enumerate(ax.patches):
+        height = p.get_height()
+        width = p.get_width()
+        x, y = p.get_xy()
+        annotation_loc = _get_annotation_loc(x, y, height, width)
+        ax.annotate(annotations.iloc[i], annotation_loc)
+    if xlabel:
+        ax.set(xlabel=xlabel)
 
 
 # #############################################################################
@@ -787,219 +998,8 @@ def multipletests_plot(
 
 
 # #############################################################################
-# Data count plots.
+# Model evaluation
 # #############################################################################
-
-
-def plot_value_counts(
-    srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
-) -> None:
-    """
-    Plot barplots for the counts of a series and print the values.
-
-    Same interface as plot_count_series() but computing the count of the given
-    series `srs`.
-    """
-    # Compute the counts.
-    counts = srs.value_counts(dropna=dropna)
-    # Plot.
-    return plot_counts(counts, *args, **kwargs)
-
-
-def plot_counts(
-    counts: pd.Series,
-    top_n_to_print: int = 10,
-    top_n_to_plot: Optional[int] = None,
-    plot_title: Optional[str] = None,
-    label: Optional[str] = None,
-    figsize: Optional[Tuple[int, int]] = None,
-    rotation: int = 0,
-) -> None:
-    """
-    Plot barplots for series containing counts and print the values.
-
-    If the number of labels is over 20, the plot is oriented horizontally
-    and the height of the plot is automatically adjusted.
-
-    :param counts: series to plot value counts for
-    :param top_n_to_print: top N values by count to print. None for all. 0 for
-        no values
-    :param top_n_to_plot: like top_n_to_print, but for the plot
-    :param plot_title: title of the barplot
-    :param label: label of the X axis
-    :param figsize: size of the plot
-    :param rotation: rotation of xtick labels
-    """
-    # Get default values for plot title and label.
-    if not figsize:
-        figsize = FIG_SIZE
-    # Display a number of unique values in сolumn.
-    print("Number of unique values: %d" % counts.index.nunique())
-    if top_n_to_print == 0:
-        # Do not show anything.
-        pass
-    else:
-        counts_tmp = counts.copy()
-        counts.sort_values(ascending=False, inplace=True)
-        if top_n_to_print is not None:
-            dbg.dassert_lte(1, top_n_to_print)
-            counts_tmp = counts_tmp[:top_n_to_print]
-            print("Up to first %d unique labels:" % top_n_to_print)
-        else:
-            print("All unique labels:")
-        print(counts_tmp)
-    # Plot horizontally or vertically, depending on counts number.
-    if top_n_to_plot == 0:
-        # Do not show anything.
-        pass
-    else:
-        counts_tmp = counts.copy()
-        # Subset N values to plot.
-        if top_n_to_plot is not None:
-            dbg.dassert_lte(1, top_n_to_plot)
-            counts_tmp = counts_tmp[:top_n_to_plot]
-        if len(counts_tmp) > 20:
-            # Plot large number of categories horizontally.
-            counts_tmp.sort_values(ascending=True, inplace=True)
-            ylen = math.ceil(len(counts_tmp) / 26) * 5
-            figsize = (figsize[0], ylen)
-            plot_barplot(
-                counts_tmp,
-                orientation="horizontal",
-                title=plot_title,
-                figsize=figsize,
-                xlabel=label,
-                rotation=rotation,
-            )
-        else:
-            # Plot small number of categories vertically.
-            plot_barplot(
-                counts_tmp,
-                orientation="vertical",
-                title=plot_title,
-                figsize=figsize,
-                xlabel=label,
-                rotation=rotation,
-            )
-
-
-def plot_barplot(
-    srs: pd.Series,
-    orientation: str = "vertical",
-    annotation_mode: str = "pct",
-    string_format: str = "%.2f",
-    title: Optional[str] = None,
-    xlabel: Optional[str] = None,
-    unicolor: bool = False,
-    color_palette: Optional[List[Tuple[float, float, float]]] = None,
-    figsize: Optional[Tuple[int, int]] = None,
-    rotation: int = 0,
-    ax: Optional[mpl.axes.Axes] = None,
-) -> None:
-    """
-    Plot a barplot.
-
-    :param srs: pd.Series
-    :param orientation: vertical or horizontal bars
-    :param annotation_mode: `pct` or `value`
-    :param string_format: format of bar annotations
-    :param title: title of the plot
-    :param xlabel: label of the X axis
-    :param unicolor: if True, plot all bars in neutral blue color
-    :param color_palette: color palette
-    :param figsize: size of plot
-    :param rotation: rotation of xtick labels
-    :param ax: axes
-    """
-
-    def _get_annotation_loc(
-        x_: float, y_: float, height_: float, width_: float
-    ) -> Tuple[float, float]:
-        if orientation == "vertical":
-            return x_, y_ + max(height_, 0)
-        if orientation == "horizontal":
-            return x_ + max(width_, 0), y_
-        raise ValueError("Invalid orientation='%s'" % orientation)
-
-    if figsize is None:
-        figsize = FIG_SIZE
-    # Choose colors.
-    if unicolor:
-        color = sns.color_palette("muted")[0]
-    else:
-        color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
-        color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
-    # Plot.
-    if orientation == "vertical":
-        kind = "bar"
-    elif orientation == "horizontal":
-        kind = "barh"
-    else:
-        raise ValueError("Invalid orientation='%s'" % orientation)
-    ax = ax or plt.gca()
-    srs.plot(
-        kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
-    )
-    # Add annotations to bars.
-    if annotation_mode == "pct":
-        annotations = srs * 100 / srs.sum()
-        string_format = string_format + "%%"
-        annotations = annotations.apply(lambda z: string_format % z)
-    elif annotation_mode == "value":
-        annotations = srs.apply(lambda z: string_format % z)
-    else:
-        raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
-    #
-    for i, p in enumerate(ax.patches):
-        height = p.get_height()
-        width = p.get_width()
-        x, y = p.get_xy()
-        annotation_loc = _get_annotation_loc(x, y, height, width)
-        ax.annotate(annotations.iloc[i], annotation_loc)
-    if xlabel:
-        ax.set(xlabel=xlabel)
-
-
-# #############################################################################
-# General plotting helpers
-# #############################################################################
-
-
-def get_multiple_plots(
-    num_plots: int,
-    num_cols: int,
-    y_scale: Optional[float] = None,
-    *args: Any,
-    **kwargs: Any,
-) -> Tuple[mpl.figure.Figure, np.array]:
-    """
-    Create figure to accommodate `num_plots` plots.
-    The figure is arranged in rows with `num_cols` columns.
-
-    :param num_plots: number of plots
-    :param num_cols: number of columns to use in the subplot
-    :param y_scale: if not None
-    :return: figure and array of axes
-    """
-    dbg.dassert_lte(1, num_plots)
-    dbg.dassert_lte(1, num_cols)
-    # Heuristic to find the dimension of the fig.
-    if y_scale is not None:
-        dbg.dassert_lt(0, y_scale)
-        ysize = math.ceil(num_plots / num_cols) * y_scale
-        figsize: Optional[Tuple[float, float]] = (20, ysize)
-    else:
-        figsize = None
-    fig, ax = plt.subplots(
-        math.ceil(num_plots / num_cols),
-        num_cols,
-        figsize=figsize,
-        *args,
-        **kwargs,
-    )
-    if isinstance(ax, np.ndarray):
-        return fig, ax.flatten()
-    return fig, ax
 
 
 def plot_cumulative_returns(
@@ -1199,48 +1199,6 @@ def plot_rolling_annualized_sharpe_ratio(
     ax.legend()
 
 
-def plot_monthly_heatmap(
-    log_rets: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
-) -> None:
-    """
-    Plot a heatmap of log returns statistics by year and month.
-
-    :param log_rets: input series of log returns
-    :param unit: "ratio", `%` or "bps" scaling coefficient
-    :param ax: axes
-    """
-    scale_coeff = _choose_scaling_coefficient(unit)
-    ax = ax or plt.gca()
-    monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
-    monthly_spread = monthly_pct_spread * scale_coeff
-    cmap = sns.diverging_palette(10, 133, as_cmap=True)
-    sns.heatmap(monthly_spread, center=0, cmap=cmap, annot=True, fmt=".2f", ax=ax)
-    ax.set_title(f"Monthly returns ({unit})")
-    ax.tick_params(axis="y", rotation=0)
-
-
-def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
-    """
-    Calculate log returns statistics by year and month.
-
-    :param log_rets: input series of log returns
-    :return: dataframe of log returns with years on y-axis and
-        months on x-axis
-    """
-    srs_name = log_rets.name or 0
-    log_rets_df = pd.DataFrame(log_rets)
-    log_rets_df["year"] = log_rets_df.index.year
-    log_rets_df["month"] = log_rets_df.index.month
-    log_rets_df.reset_index(inplace=True)
-    monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
-    monthly_pct_returns = fin.convert_log_rets_to_pct_rets(monthly_log_returns)
-    monthly_pct_spread = monthly_pct_returns.unstack()
-    monthly_pct_spread.columns = monthly_pct_spread.columns.map(
-        lambda x: calendar.month_abbr[x]
-    )
-    return monthly_pct_spread
-
-
 def plot_yearly_barplot(
     log_rets: pd.Series,
     unit: str = "ratio",
@@ -1284,6 +1242,26 @@ def plot_yearly_barplot(
         raise ValueError("Invalid orientation='%s'" % orientation)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+
+
+def plot_monthly_heatmap(
+    log_rets: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
+) -> None:
+    """
+    Plot a heatmap of log returns statistics by year and month.
+
+    :param log_rets: input series of log returns
+    :param unit: "ratio", `%` or "bps" scaling coefficient
+    :param ax: axes
+    """
+    scale_coeff = _choose_scaling_coefficient(unit)
+    ax = ax or plt.gca()
+    monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
+    monthly_spread = monthly_pct_spread * scale_coeff
+    cmap = sns.diverging_palette(10, 133, as_cmap=True)
+    sns.heatmap(monthly_spread, center=0, cmap=cmap, annot=True, fmt=".2f", ax=ax)
+    ax.set_title(f"Monthly returns ({unit})")
+    ax.tick_params(axis="y", rotation=0)
 
 
 def plot_pnl(
@@ -1518,3 +1496,25 @@ def _choose_scaling_coefficient(unit: str) -> int:
     else:
         raise ValueError("Invalid unit='%s'" % unit)
     return scale_coeff
+
+
+def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
+    """
+    Calculate log returns statistics by year and month.
+
+    :param log_rets: input series of log returns
+    :return: dataframe of log returns with years on y-axis and
+        months on x-axis
+    """
+    srs_name = log_rets.name or 0
+    log_rets_df = pd.DataFrame(log_rets)
+    log_rets_df["year"] = log_rets_df.index.year
+    log_rets_df["month"] = log_rets_df.index.month
+    log_rets_df.reset_index(inplace=True)
+    monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
+    monthly_pct_returns = fin.convert_log_rets_to_pct_rets(monthly_log_returns)
+    monthly_pct_spread = monthly_pct_returns.unstack()
+    monthly_pct_spread.columns = monthly_pct_spread.columns.map(
+        lambda x: calendar.month_abbr[x]
+    )
+    return monthly_pct_spread
