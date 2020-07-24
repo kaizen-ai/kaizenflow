@@ -114,15 +114,79 @@ class Test_get_symmetric_equisized_bins(hut.TestCase):
 
 
 class Test_compute_rolling_zscore1(hut.TestCase):
+    @staticmethod
+    def _get_arma_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([1], [1])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
+
     def test_default_values1(self) -> None:
+        """
+        Test with default parameters on a heaviside series.
+        """
         heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
         self.check_string(zscored.to_string())
 
     def test_default_values2(self) -> None:
+        """
+        Test for tau with default parameters on a heaviside series.
+        """
         heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
         zscored = sigp.compute_rolling_zscore(heaviside, tau=20)
         self.check_string(zscored.to_string())
+
+    def test_arma_clean1(self) -> None:
+        """
+        Test on a clean arma series.
+        """
+        series = self._get_arma_series(seed=1)
+        actual = sigp.compute_rolling_zscore(series, tau=20)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test_arma_nan1(self) -> None:
+        """
+        Test on an arma series with leading NaNs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test_arma_nan2(self) -> None:
+        """
+        Test on an arma series with interspersed NaNs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test_arma_zero1(self) -> None:
+        """
+        Test on an arma series with leading zeros.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test_arma_zero2(self) -> None:
+        """
+        Test on an arma series with interspersed zeros.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
 
 
 class Test_process_outliers1(hut.TestCase):
