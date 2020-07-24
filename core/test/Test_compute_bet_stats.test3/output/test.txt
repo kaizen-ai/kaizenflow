@@ -13,16 +13,17 @@ rets_pos
 ################################################################################
 stats
 ################################################################################
-                                                  0
-num_positions                              6.000000
-num_bets                                   4.000000
-pct_long_bets                             50.000000
-average_num_bets_per_year                182.625000
-average_bet_length                         1.500000
-bet_hit_rate_point_est_(%)                75.000000
-bet_hit_rate_97.50%CI_lower_bound_(%)     28.375168
-bet_hit_rate_97.50%CI_upper_bound_(%)     97.152910
-average_return_winning_bets            14741.315910
-average_return_losing_bets              -100.000000
-average_return_long_bet                14741.315910
-average_return_short_bet                 -99.999999
+                                             0
+num_positions                                6
+num_bets                                     4
+long_bets_(%)                               50
+average_num_bets_per_year              182.625
+average_bet_length_in_days                 1.5
+average_bet_length_freq                    Day
+bet_hit_rate_point_est_(%)                  75
+bet_hit_rate_97.50%CI_lower_bound_(%)  28.3752
+bet_hit_rate_97.50%CI_upper_bound_(%)  97.1529
+average_return_winning_bets_(%)        14741.3
+average_return_losing_bets_(%)            -100
+average_return_long_bet_(%)            14741.3
+average_return_short_bet_(%)              -100
