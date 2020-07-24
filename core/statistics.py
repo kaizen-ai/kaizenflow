@@ -690,29 +690,30 @@ def compute_bet_stats(
     stats = dict()
     stats["num_positions"] = bet_lengths.abs().sum()
     stats["num_bets"] = bet_lengths.size
-    stats["pct_long_bets"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
+    stats["pct_long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
     n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
     stats["average_num_bets_per_year"] = bet_lengths.size / n_years
     stats["average_bet_length"] = bet_lengths.abs().mean()
+    stats["average_bet_length_in_freq"] = str(pd.infer_freq(positions.index))
     bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
     stats.update(bet_hit_rate)
     #
     average_ret_winning_bets = log_rets_per_bet.loc[log_rets_per_bet > 0].mean()
-    stats["average_return_winning_bets"] = 100 * fin.convert_log_rets_to_pct_rets(
-        average_ret_winning_bets
-    )
+    stats[
+        "average_return_winning_bets_(%)"
+    ] = 100 * fin.convert_log_rets_to_pct_rets(average_ret_winning_bets)
     average_ret_losing_bets = log_rets_per_bet.loc[log_rets_per_bet < 0].mean()
-    stats["average_return_losing_bets"] = 100 * fin.convert_log_rets_to_pct_rets(
-        average_ret_losing_bets
-    )
+    stats[
+        "average_return_losing_bets_(%)"
+    ] = 100 * fin.convert_log_rets_to_pct_rets(average_ret_losing_bets)
     average_ret_long_bet = log_rets_per_bet.loc[bet_lengths > 0].mean()
-    stats["average_return_long_bet"] = 100 * fin.convert_log_rets_to_pct_rets(
+    stats["average_return_long_bet_(%)"] = 100 * fin.convert_log_rets_to_pct_rets(
         average_ret_long_bet
     )
     average_ret_short_bet = log_rets_per_bet.loc[bet_lengths < 0].mean()
-    stats["average_return_short_bet"] = 100 * fin.convert_log_rets_to_pct_rets(
-        average_ret_short_bet
-    )
+    stats[
+        "average_return_short_bet_(%)"
+    ] = 100 * fin.convert_log_rets_to_pct_rets(average_ret_short_bet)
     #
     srs = pd.Series(stats, name=log_rets.name)
     srs.index = prefix + srs.index
