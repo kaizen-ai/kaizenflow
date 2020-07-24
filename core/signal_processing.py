@@ -1324,7 +1324,7 @@ def get_swt(
     :param output_mode: valid output modes are
         - "tuple": return (smooth_df, detail_df)
         - "smooth": return smooth_df
-        - "detail_df": return detail_df
+        - "detail": return detail_df
     :return: see `output_mode`
     """
     # Choice of wavelet may significantly impact results.
@@ -1391,7 +1391,7 @@ def get_swt(
     if output_mode == "tuple":
         return smooth_df, detail_df
     if output_mode == "smooth":
-        return (smooth_df,)
+        return smooth_df
     if output_mode == "detail":
         return detail_df
     raise ValueError("Unsupported output_mode `{output_mode}`")

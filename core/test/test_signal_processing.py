@@ -2,7 +2,7 @@ import collections
 import logging
 import os
 import pprint
-from typing import Any, Optional
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -723,3 +723,96 @@ class Test_compute_rolling_annualized_sharpe_ratio(hut.TestCase):
             realization, tau=16
         )
         self.check_string(hut.convert_df_to_string(rolling_sr, index=True))
+
+
+class Test_get_swt(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int, periods: int = 20) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "1/1/2010", "periods": periods, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
+
+    @staticmethod
+    def _get_tuple_output_txt(
+        output: Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]
+    ) -> str:
+        """
+        Create string output for a tuple type return.
+        """
+        smooth_df_string = hut.convert_df_to_string(output[0], index=True)
+        detail_df_string = hut.convert_df_to_string(output[1], index=True)
+        output_str = (
+            f"smooth_df:\n{smooth_df_string}\n"
+            f"\ndetail_df\n{detail_df_string}\n"
+        )
+        return output_str
+
+    def test_clean1(self) -> None:
+        """
+        Test for default values.
+        """
+        series = self._get_series(seed=1, periods=40)
+        actual = sigp.get_swt(series, wavelet="haar")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode1(self) -> None:
+        """
+        Test for timing_mode="knowledge_time".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(
+            series, wavelet="haar", timing_mode="knowledge_time"
+        )
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode2(self) -> None:
+        """
+        Test for timing_mode="zero_phase".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", timing_mode="zero_phase")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode3(self) -> None:
+        """
+        Test for timing_mode="raw".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", timing_mode="raw")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_output_mode1(self) -> None:
+        """
+        Test for output_mode="tuple".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="tuple")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_output_mode2(self) -> None:
+        """
+        Test for output_mode="smooth".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="smooth")
+        actual_str = hut.convert_df_to_string(actual, index=True)
+        output_str = f"smooth_df:\n{actual_str}\n"
+        self.check_string(output_str)
+
+    def test_output_mode3(self) -> None:
+        """
+        Test for output_mode="detail".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="detail")
+        actual_str = hut.convert_df_to_string(actual, index=True)
+        output_str = f"detail_df:\n{actual_str}\n"
+        self.check_string(output_str)
