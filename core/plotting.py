@@ -1495,6 +1495,16 @@ def plot_rolling_beta(
     ax: Optional[mpl.axes.Axes] = None,
     **kwargs: Any,
 ) -> None:
+    """
+    Regress returns against benchmark series and plot rolling beta.
+
+    :param rets: returns
+    :param benchmark_rets: benchmark returns
+    :param window: window size
+    :param figsize: figure size
+    :param ax: axis
+    :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
+    """
     ax = ax or plt.gca()
     benchmark_name = benchmark_rets.name
     benchmark_rets = sm.add_constant(benchmark_rets)
