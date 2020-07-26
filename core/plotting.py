@@ -541,13 +541,7 @@ def plot_autocorrelation(
         ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
-            data,
-            lags=lags,
-            fft=fft,
-            ax=ax2,
-            zero=zero,
-            title=pacf_title,
-            **kwargs,
+            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs,
         )
 
 
