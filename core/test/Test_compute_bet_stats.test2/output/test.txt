@@ -50,8 +50,8 @@ num_positions                                 40
 num_bets                                       6
 long_bets_(%)                                 50
 average_num_bets_per_year                    1.8
-average_bet_length_in_months             6.66667
-average_bet_length_freq                    Month
+average_bet_length                       6.66667
+bet_length_units                           Month
 bet_hit_rate_point_est_(%)               83.3333
 bet_hit_rate_97.50%CI_lower_bound_(%)    44.1943
 bet_hit_rate_97.50%CI_upper_bound_(%)     98.138
