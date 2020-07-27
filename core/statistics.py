@@ -693,11 +693,11 @@ def compute_bet_stats(
     stats["long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
     n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
     stats["average_num_bets_per_year"] = bet_lengths.size / n_years
+    # Format index.freq outcome to the word that represents its frequency.
     freq = str(positions.index.freq)[1:-1].split("End")[0]
     stats[
         "average_bet_length_in_" + freq.lower() + "s"
     ] = bet_lengths.abs().mean()
-    stats["average_bet_length_freq"] = freq
     bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
     stats.update(bet_hit_rate)
     #
