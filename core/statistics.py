@@ -694,6 +694,8 @@ def compute_bet_stats(
     n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
     stats["average_num_bets_per_year"] = bet_lengths.size / n_years
     # Format index.freq outcome to the word that represents its frequency.
+    #    E.g. if `srs.index.freq` is equal to `<MonthEnd>` then
+    #    this string will convert it to the string "Month".
     freq = str(positions.index.freq)[1:-1].split("End")[0]
     stats[
         "average_bet_length_in_" + freq.lower() + "s"
