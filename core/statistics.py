@@ -697,9 +697,8 @@ def compute_bet_stats(
     #    E.g. if `srs.index.freq` is equal to `<MonthEnd>` then
     #    this line will convert it to the string "Month".
     freq = str(positions.index.freq)[1:-1].split("End")[0]
-    stats[
-        "average_bet_length_in_" + freq.lower() + "s"
-    ] = bet_lengths.abs().mean()
+    stats["average_bet_length"] = bet_lengths.abs().mean()
+    stats["bet_length_units"] = freq
     bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
     stats.update(bet_hit_rate)
     #
