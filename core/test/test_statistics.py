@@ -215,43 +215,6 @@ class TestComputeFracNan(hut.TestCase):
         stats.compute_frac_nan(series)
 
 
-class TestComputeFracConstant(hut.TestCase):
-    @staticmethod
-    def _get_df(seed: int) -> pd.DataFrame:
-        nrows = 15
-        ncols = 5
-        num_nans = 4
-        num_infs = 2
-        #
-        np.random.seed(seed=seed)
-        mat = np.random.randint(-1, 1, (nrows, ncols)).astype("float")
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = np.inf
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = -np.inf
-        mat.ravel()[np.random.choice(mat.size, num_nans, replace=False)] = np.nan
-        #
-        index = pd.date_range(start="01-04-2018", periods=nrows, freq="30T")
-        df = pd.DataFrame(data=mat, index=index)
-        return df
-
-    def test1(self) -> None:
-        data = [0.357143, 0.5, 0.285714, 0.285714, 0.071429]
-        index = [0, 1, 2, 3, 4]
-        expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_constant(self._get_df(seed=1))
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
-
-    def test2(self) -> None:
-        series = self._get_df(seed=1)[0]
-        expected = 0.357143
-        actual = stats.compute_frac_constant(series)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
-
-    # Smoke test for empty input.
-    def test3(self) -> None:
-        series = pd.Series([])
-        stats.compute_frac_constant(series)
-
-
 class TestComputeNumFiniteSamples(hut.TestCase):
     @staticmethod
     # Smoke test for empty input.
@@ -689,40 +652,6 @@ class TestComputeSpecialValueStats(hut.TestCase):
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_special_value_stats(series)
-
-
-class TestComputeZeroNanInfStats(hut.TestCase):
-    @staticmethod
-    def _get_messy_series(seed: int) -> pd.Series:
-        arparams = np.array([0.75, -0.25])
-        maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed
-        )
-        series[:5] = 0
-        series[-5:] = np.nan
-        series[10:13] = np.inf
-        series[13:16] = -np.inf
-        return series
-
-    def test1(self) -> None:
-        series = self._get_messy_series(seed=1)
-        actual = stats.compute_zero_nan_inf_stats(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
-    def test2(self) -> None:
-        series = self._get_messy_series(seed=1)
-        actual = stats.compute_zero_nan_inf_stats(series, prefix="data_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
-    # Smoke test for empty input.
-    def test3(self) -> None:
-        series = pd.Series([])
-        stats.compute_zero_nan_inf_stats(series)
 
 
 class TestCalculateHitRate(hut.TestCase):
