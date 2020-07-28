@@ -1492,6 +1492,7 @@ def plot_rolling_beta(
     rets: pd.Series,
     benchmark_rets: pd.Series,
     window: Optional[int],
+    nan_mode: str = "leave_unchanged",
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
     **kwargs: Any,
@@ -1502,16 +1503,21 @@ def plot_rolling_beta(
     :param rets: returns
     :param benchmark_rets: benchmark returns
     :param window: window size
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param figsize: figure size
     :param ax: axis
     :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
     """
+    dbg.dassert_strictly_increasing_index(rets)
+    dbg.dassert_strictly_increasing_index(benchmark_rets)
+    rets = hdf.apply_nan_mode(rets, nan_mode)
+    benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
+    benchmark_rets = benchmark_rets.reindex_like(rets, method="ffill")
+    #
     ax = ax or plt.gca()
     benchmark_name = benchmark_rets.name
     benchmark_rets = sm.add_constant(benchmark_rets)
-    model = smrr.RollingOLS(
-        rets, benchmark_rets.loc[rets.index], window=window, **kwargs
-    )
+    model = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res = model.fit()
     beta = res.params[benchmark_name]
     beta.plot(
