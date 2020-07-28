@@ -132,7 +132,7 @@ def compute_frac_inf(
 
 # TODO(Paul): Refactor to work with dataframes as well. Consider how to handle
 #     `axis`, which the pd.Series version of `copy()` does not take.
-def count_num_finite_samples(data: pd.Series) -> float:
+def count_num_finite_samples(data: pd.Series) -> Optional[float]:
     """
     Count number of finite data points in a given time series.
 
@@ -140,20 +140,21 @@ def count_num_finite_samples(data: pd.Series) -> float:
     """
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
-        return np.nan
+        return None
     data = data.copy()
     data = replace_infs_with_nans(data)
-    return data.count()
+    num_finite_samples = float(data.count())
+    return num_finite_samples
 
 
 # TODO(Paul): Extend to dataframes.
-def count_num_unique_values(data: pd.Series) -> int:
+def count_num_unique_values(data: pd.Series) -> Optional[float]:
     """
     Count number of unique values in the series.
     """
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
-        return np.nan
+        return None
     srs = pd.Series(data=data.unique())
     return count_num_finite_samples(srs)
 
