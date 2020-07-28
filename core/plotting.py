@@ -508,6 +508,7 @@ def plot_autocorrelation(
     lags: int = 40,
     zero: bool = False,
     nan_mode: str = "conservative",
+    fft: bool = False,
     title_prefix: Optional[str] = None,
     axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
     **kwargs: Any,
@@ -536,12 +537,12 @@ def plot_autocorrelation(
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
         _ = sm.graphics.tsa.plot_acf(
-            data, lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs
+            data, lags=lags, fft=fft, ax=ax1, zero=zero, title=acf_title, **kwargs
         )
         ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
-            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs
+            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs,
         )
 
 

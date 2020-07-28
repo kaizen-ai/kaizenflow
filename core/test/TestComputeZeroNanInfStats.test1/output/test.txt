@@ -1,7 +1,0 @@
-                    arma(2,2)
-n_rows              40.000000
-frac_zero            0.125000
-frac_nan             0.125000
-frac_inf             0.150000
-frac_constant        0.102564
-num_finite_samples  29.000000

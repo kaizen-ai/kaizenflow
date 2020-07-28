@@ -130,21 +130,6 @@ def compute_frac_inf(
     return _compute_denominator_and_package(num_infs, data, axis)
 
 
-# TODO(Paul): Consider exposing `rtol`, `atol`.
-def compute_frac_constant(
-    data: Union[pd.Series, pd.DataFrame]
-) -> Union[float, pd.Series]:
-    """
-    Compute fraction of values in the series that changes at the next timestamp.
-
-    :param data: numeric series or dataframe
-    :param axis: numpy axis for summation
-    """
-    diffs = data.diff().iloc[1:]
-    constant_frac = compute_frac_zero(diffs, axis=0)
-    return constant_frac
-
-
 # TODO(Paul): Refactor to work with dataframes as well. Consider how to handle
 #     `axis`, which the pd.Series version of `copy()` does not take.
 def count_num_finite_samples(data: pd.Series) -> float:
@@ -260,49 +245,6 @@ def compute_special_value_stats(
         compute_zero_diff_proportion(srs).iloc[1],
         count_num_finite_samples(srs),
         count_num_unique_values(srs),
-    ]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
-    return result
-
-
-def compute_zero_nan_inf_stats(
-    srs: pd.Series, prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Calculate finite and non-finite values in time series.
-
-    :param srs: pandas series of floats
-    :param prefix: optional prefix for metrics' outcome
-    :return: series of stats
-    """
-    # TODO(*): To be optimized/rewritten in #2340.
-    prefix = prefix or ""
-    dbg.dassert_isinstance(srs, pd.Series)
-    result_index = [
-        prefix + "n_rows",
-        prefix + "frac_zero",
-        prefix + "frac_nan",
-        prefix + "frac_inf",
-        prefix + "frac_constant",
-        prefix + "num_finite_samples",
-    ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
-    if srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
-    result_values = [
-        len(srs),
-        compute_frac_zero(srs),
-        compute_frac_nan(srs),
-        compute_frac_inf(srs),
-        compute_zero_diff_proportion(srs).iloc[1],
-        count_num_finite_samples(srs),
-        # TODO(*): Add after extension to dataframes.
-        # "num_unique_values",
-        # stats.count_num_unique_values
     ]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
@@ -693,11 +635,12 @@ def compute_bet_stats(
     stats["long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
     n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
     stats["average_num_bets_per_year"] = bet_lengths.size / n_years
+    # Format index.freq outcome to the word that represents its frequency.
+    #    E.g. if `srs.index.freq` is equal to `<MonthEnd>` then
+    #    this line will convert it to the string "Month".
     freq = str(positions.index.freq)[1:-1].split("End")[0]
-    stats[
-        "average_bet_length_in_" + freq.lower() + "s"
-    ] = bet_lengths.abs().mean()
-    stats["average_bet_length_freq"] = freq
+    stats["average_bet_length"] = bet_lengths.abs().mean()
+    stats["bet_length_units"] = freq
     bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
     stats.update(bet_hit_rate)
     #

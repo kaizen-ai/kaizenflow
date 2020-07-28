@@ -2,7 +2,7 @@ import collections
 import logging
 import os
 import pprint
-from typing import Any, Optional
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -114,15 +114,110 @@ class Test_get_symmetric_equisized_bins(hut.TestCase):
 
 
 class Test_compute_rolling_zscore1(hut.TestCase):
+    @staticmethod
+    def _get_arma_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([1], [1])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        ).rename("input")
+        return series
+
     def test_default_values1(self) -> None:
-        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
-        self.check_string(zscored.to_string())
+        """
+        Test with default parameters on a heaviside series.
+        """
+        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1).rename("input")
+        actual = sigp.compute_rolling_zscore(heaviside, tau=40).rename("output")
+        output_df = pd.concat([heaviside, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_default_values2(self) -> None:
-        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.compute_rolling_zscore(heaviside, tau=20)
-        self.check_string(zscored.to_string())
+        """
+        Test for tau with default parameters on a heaviside series.
+        """
+        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1).rename("input")
+        actual = sigp.compute_rolling_zscore(heaviside, tau=20).rename("output")
+        output_df = pd.concat([heaviside, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_clean1(self) -> None:
+        """
+        Test on a clean arma series.
+        """
+        series = self._get_arma_series(seed=1)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_nan1(self) -> None:
+        """
+        Test on an arma series with leading NaNs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_nan2(self) -> None:
+        """
+        Test on an arma series with interspersed NaNs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_zero1(self) -> None:
+        """
+        Test on an arma series with leading zeros.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_zero2(self) -> None:
+        """
+        Test on an arma series with interspersed zeros.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_inf1(self) -> None:
+        """
+        Test on an arma series with leading infs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_inf2(self) -> None:
+        """
+        Test on an arma series with interspersed infs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
 
 class Test_process_outliers1(hut.TestCase):
@@ -723,3 +818,96 @@ class Test_compute_rolling_annualized_sharpe_ratio(hut.TestCase):
             realization, tau=16
         )
         self.check_string(hut.convert_df_to_string(rolling_sr, index=True))
+
+
+class Test_get_swt(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int, periods: int = 20) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "1/1/2010", "periods": periods, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
+
+    @staticmethod
+    def _get_tuple_output_txt(
+        output: Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]
+    ) -> str:
+        """
+        Create string output for a tuple type return.
+        """
+        smooth_df_string = hut.convert_df_to_string(output[0], index=True)
+        detail_df_string = hut.convert_df_to_string(output[1], index=True)
+        output_str = (
+            f"smooth_df:\n{smooth_df_string}\n"
+            f"\ndetail_df\n{detail_df_string}\n"
+        )
+        return output_str
+
+    def test_clean1(self) -> None:
+        """
+        Test for default values.
+        """
+        series = self._get_series(seed=1, periods=40)
+        actual = sigp.get_swt(series, wavelet="haar")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode1(self) -> None:
+        """
+        Test for timing_mode="knowledge_time".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(
+            series, wavelet="haar", timing_mode="knowledge_time"
+        )
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode2(self) -> None:
+        """
+        Test for timing_mode="zero_phase".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", timing_mode="zero_phase")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode3(self) -> None:
+        """
+        Test for timing_mode="raw".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", timing_mode="raw")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_output_mode1(self) -> None:
+        """
+        Test for output_mode="tuple".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="tuple")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_output_mode2(self) -> None:
+        """
+        Test for output_mode="smooth".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="smooth")
+        actual_str = hut.convert_df_to_string(actual, index=True)
+        output_str = f"smooth_df:\n{actual_str}\n"
+        self.check_string(output_str)
+
+    def test_output_mode3(self) -> None:
+        """
+        Test for output_mode="detail".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="detail")
+        actual_str = hut.convert_df_to_string(actual, index=True)
+        output_str = f"detail_df:\n{actual_str}\n"
+        self.check_string(output_str)
