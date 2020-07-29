@@ -1493,7 +1493,7 @@ def plot_allocation(
 def plot_rolling_beta(
     rets: pd.Series,
     benchmark_rets: pd.Series,
-    window: Optional[int],
+    window: Optional[int] = None,
     nan_mode: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
@@ -1504,7 +1504,7 @@ def plot_rolling_beta(
 
     :param rets: returns
     :param benchmark_rets: benchmark returns
-    :param window: window size
+    :param window: length of the rolling window
     :param nan_mode: argument for hdf.apply_nan_mode()
     :param figsize: figure size
     :param ax: axis
@@ -1512,10 +1512,17 @@ def plot_rolling_beta(
     """
     dbg.dassert_strictly_increasing_index(rets)
     dbg.dassert_strictly_increasing_index(benchmark_rets)
+    dbg.dassert_eq(rets.index.freq, benchmark_rets.index.freq)
+    # Window must be strictly larger than the number of variables in the model.
+    window = window or 2
+    dbg.dassert_lte(2, window, "`window` should be larger than or equal to 2")
     nan_mode = nan_mode or "leave_unchanged"
+    figsize = figsize or FIG_SIZE
     rets = hdf.apply_nan_mode(rets, nan_mode)
     benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
-    benchmark_rets = benchmark_rets.reindex_like(rets, method="ffill")
+    # benchmark_rets should have the same index with rets in order to execute
+    #    smrr.RollingOLS
+    benchmark_rets = benchmark_rets.reindex_like(rets)
     #
     ax = ax or plt.gca()
     benchmark_name = benchmark_rets.name
@@ -1526,6 +1533,7 @@ def plot_rolling_beta(
     beta.plot(
         ax=ax, figsize=figsize, title=f"Beta with respect to {benchmark_name}"
     )
+    ax.axhline(beta.mean(), ls=":", c="k")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
 
