@@ -269,7 +269,7 @@ def summarize_sharpe_ratio(
     sr_se_estimate = compute_annualized_sharpe_ratio_standard_error(log_rets)
     res = pd.Series(
         data=[sr, sr_se_estimate],
-        index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
+        index=[prefix + "sharpe_ratio", prefix + "sharpe_ratio_standard_error"],
         name=log_rets.name,
     )
     return res
