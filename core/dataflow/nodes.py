@@ -150,6 +150,7 @@ class DataSource(FitPredictNode, abc.ABC):
         info = collections.OrderedDict()
         info["fit_df_info"] = get_df_info_as_string(fit_df)
         self._set_info("fit", info)
+        dbg.dassert(not fit_df.empty)
         return {self.output_names[0]: fit_df}
 
     def set_predict_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
@@ -180,6 +181,7 @@ class DataSource(FitPredictNode, abc.ABC):
         info = collections.OrderedDict()
         info["predict_df_info"] = get_df_info_as_string(predict_df)
         self._set_info("predict", info)
+        dbg.dassert(not predict_df.empty)
         return {self.output_names[0]: predict_df}
 
     def get_df(self) -> pd.DataFrame:
@@ -501,7 +503,7 @@ class ColumnTransformer(Transformer):
             df = df_in.merge(df, left_index=True, right_index=True)
         elif self._col_mode == "replace_selected":
             dbg.dassert(
-                df.columns.intersection(df_in[self._cols]).empty,
+                df.columns.intersection(df_in[self._cols].columns).empty,
                 "Transformed column names `%s` conflict with existing column "
                 "names `%s`.",
                 df.columns,
