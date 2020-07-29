@@ -1494,7 +1494,7 @@ def plot_rolling_beta(
     rets: pd.Series,
     benchmark_rets: pd.Series,
     window: Optional[int],
-    nan_mode: str = "leave_unchanged",
+    nan_mode: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
     **kwargs: Any,
@@ -1512,6 +1512,7 @@ def plot_rolling_beta(
     """
     dbg.dassert_strictly_increasing_index(rets)
     dbg.dassert_strictly_increasing_index(benchmark_rets)
+    nan_mode = nan_mode or "leave_unchanged"
     rets = hdf.apply_nan_mode(rets, nan_mode)
     benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
     benchmark_rets = benchmark_rets.reindex_like(rets, method="ffill")
@@ -1523,7 +1524,7 @@ def plot_rolling_beta(
     res = model.fit()
     beta = res.params[benchmark_name]
     beta.plot(
-        ax=ax, figsize=figsize, title=f"Beta estimate using {benchmark_name}"
+        ax=ax, figsize=figsize, title=f"Beta with respect to {benchmark_name}"
     )
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
