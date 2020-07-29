@@ -1,0 +1,5 @@
+                      arma(2,2)
+avg_turnover_(%)        0.85825
+turnover_frequency            D
+avg_holding_period    0.0500107
+holding_period_units          M

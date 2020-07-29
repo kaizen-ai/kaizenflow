@@ -1317,6 +1317,40 @@ def compute_interarrival_time_stats(
     return res
 
 
+def compute_avg_turnover_and_holding_period(
+    pos: pd.Series,
+    unit: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute average turnover and holding period for a sequence of positions.
+
+    :param pos: pandas series of positions
+    :param unit: desired output holding period unit (e.g. 'B', 'W', 'M', etc.)
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: average turnover, holding period and index frequency
+    """
+    unit = unit or "B"
+    nan_mode = nan_mode or "ffill"
+    prefix = prefix or ""
+    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
+    result_index = [
+        prefix + "avg_turnover_(%)",
+        prefix + "turnover_frequency",
+        prefix + "avg_holding_period",
+        prefix + "holding_period_units",
+    ]
+    avg_turnover = fin.compute_turnover(pos).mean()
+    turnover_frequency = pos.index.freqstr
+    avg_holding_period = fin.compute_average_holding_period(pos=pos, unit=unit)
+    #
+    result_values = [avg_turnover, turnover_frequency, avg_holding_period, unit]
+    res = pd.Series(data=result_values, index=result_index, name=pos.name)
+    return res
+
+
 # #############################################################################
 # Cross-validation
 # #############################################################################
