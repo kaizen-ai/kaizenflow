@@ -435,7 +435,7 @@ def compute_ttest_power_rule_constant(
     dbg.dassert_lt(power, 1)
     if two_sided:
         alpha /= 2
-    const = (sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2
+    const: float = (sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2
     return const
 
 
@@ -508,7 +508,7 @@ def compute_normalized_drawdown_cdf(
         dd_div_root_t = normalized_drawdown / np.sqrt(time)
         a = sr_mult_root_t + dd_div_root_t
         b = sr_mult_root_t - dd_div_root_t
-    probability = sp.stats.norm.cdf(a) - np.exp(
+    probability: float = sp.stats.norm.cdf(a) - np.exp(
         -2 * sharpe_ratio * normalized_drawdown
     ) * sp.stats.norm.cdf(b)
     return probability
@@ -538,7 +538,7 @@ def compute_max_drawdown_approximate_cdf(
     # lambda_ * max_drawdown is the same as
     #     -2 * sharpe_ratio * (max_drawdown / volatility)
     y = lambda_ * max_drawdown - np.log(time)
-    probability = sp.stats.gumbel_r.cdf(y)
+    probability: float = sp.stats.gumbel_r.cdf(y)
     return probability
 
 
