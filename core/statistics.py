@@ -140,11 +140,10 @@ def count_num_finite_samples(data: pd.Series) -> Optional[float]:
     """
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
-        return None
+        return np.nan
     data = data.copy()
     data = replace_infs_with_nans(data)
-    num_finite_samples = float(data.count())
-    return num_finite_samples
+    return data.count()
 
 
 # TODO(Paul): Extend to dataframes.
@@ -154,7 +153,7 @@ def count_num_unique_values(data: pd.Series) -> Optional[float]:
     """
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
-        return None
+        return np.nan
     srs = pd.Series(data=data.unique())
     return count_num_finite_samples(srs)
 
@@ -436,7 +435,7 @@ def compute_ttest_power_rule_constant(
     dbg.dassert_lt(power, 1)
     if two_sided:
         alpha /= 2
-    const = float((sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2)
+    const = (sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2
     return const
 
 
@@ -509,10 +508,9 @@ def compute_normalized_drawdown_cdf(
         dd_div_root_t = normalized_drawdown / np.sqrt(time)
         a = sr_mult_root_t + dd_div_root_t
         b = sr_mult_root_t - dd_div_root_t
-    probability = float(
-        sp.stats.norm.cdf(a)
-        - np.exp(-2 * sharpe_ratio * normalized_drawdown) * sp.stats.norm.cdf(b)
-    )
+    probability = sp.stats.norm.cdf(a) - np.exp(
+        -2 * sharpe_ratio * normalized_drawdown
+    ) * sp.stats.norm.cdf(b)
     return probability
 
 
@@ -540,7 +538,7 @@ def compute_max_drawdown_approximate_cdf(
     # lambda_ * max_drawdown is the same as
     #     -2 * sharpe_ratio * (max_drawdown / volatility)
     y = lambda_ * max_drawdown - np.log(time)
-    probability = float(sp.stats.gumbel_r.cdf(y))
+    probability = sp.stats.gumbel_r.cdf(y)
     return probability
 
 
