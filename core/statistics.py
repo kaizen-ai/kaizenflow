@@ -1295,15 +1295,17 @@ def compute_interarrival_time_stats(
         prefix + "min",
         prefix + "max",
     ]
+    nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
     if data.shape[0] < 2:
         _LOG.warning(
             "Input series `%s` with size '%d' is too small",
             srs.name,
             data.shape[0],
         )
-        nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
         return nan_result
     interarrival_time = get_interarrival_time(data)
+    if interarrival_time is None:
+        return nan_result
     n_unique = interarrival_time.nunique()
     mean = interarrival_time.mean()
     std = interarrival_time.std()
