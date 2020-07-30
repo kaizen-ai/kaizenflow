@@ -1078,6 +1078,7 @@ def plot_rolling_annualized_volatility(
     :param ax: axes
     """
     min_periods = min_periods or tau
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
     # Calculate rolling volatility.
     rolling_volatility = sigp.compute_rolling_std(
         srs, tau, min_periods, min_depth, max_depth, p_moment
@@ -1148,6 +1149,7 @@ def plot_rolling_annualized_sharpe_ratio(
     :param ax: axes
     """
     title_suffix = title_suffix or ""
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
     min_periods = tau * max_depth
     rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
         srs,

@@ -270,7 +270,7 @@ def summarize_sharpe_ratio(
     sr_se_estimate = compute_annualized_sharpe_ratio_standard_error(log_rets)
     res = pd.Series(
         data=[sr, sr_se_estimate],
-        index=[prefix + "ann_sharpe", prefix + "ann_sharpe_se"],
+        index=[prefix + "sharpe_ratio", prefix + "sharpe_ratio_standard_error"],
         name=log_rets.name,
     )
     return res
@@ -636,32 +636,32 @@ def compute_bet_stats(
     stats["num_bets"] = bet_lengths.size
     stats["long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
     n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
-    stats["average_num_bets_per_year"] = bet_lengths.size / n_years
+    stats["avg_num_bets_per_year"] = bet_lengths.size / n_years
     # Format index.freq outcome to the word that represents its frequency.
     #    E.g. if `srs.index.freq` is equal to `<MonthEnd>` then
     #    this line will convert it to the string "Month".
     freq = str(positions.index.freq)[1:-1].split("End")[0]
-    stats["average_bet_length"] = bet_lengths.abs().mean()
+    stats["avg_bet_length"] = bet_lengths.abs().mean()
     stats["bet_length_units"] = freq
     bet_hit_rate = calculate_hit_rate(log_rets_per_bet, prefix="bet_")
     stats.update(bet_hit_rate)
     #
-    average_ret_winning_bets = log_rets_per_bet.loc[log_rets_per_bet > 0].mean()
-    stats[
-        "average_return_winning_bets_(%)"
-    ] = 100 * fin.convert_log_rets_to_pct_rets(average_ret_winning_bets)
-    average_ret_losing_bets = log_rets_per_bet.loc[log_rets_per_bet < 0].mean()
-    stats[
-        "average_return_losing_bets_(%)"
-    ] = 100 * fin.convert_log_rets_to_pct_rets(average_ret_losing_bets)
-    average_ret_long_bet = log_rets_per_bet.loc[bet_lengths > 0].mean()
-    stats["average_return_long_bet_(%)"] = 100 * fin.convert_log_rets_to_pct_rets(
-        average_ret_long_bet
+    avg_ret_winning_bets = log_rets_per_bet.loc[log_rets_per_bet > 0].mean()
+    stats["avg_return_winning_bets_(%)"] = 100 * fin.convert_log_rets_to_pct_rets(
+        avg_ret_winning_bets
     )
-    average_ret_short_bet = log_rets_per_bet.loc[bet_lengths < 0].mean()
-    stats[
-        "average_return_short_bet_(%)"
-    ] = 100 * fin.convert_log_rets_to_pct_rets(average_ret_short_bet)
+    avg_ret_losing_bets = log_rets_per_bet.loc[log_rets_per_bet < 0].mean()
+    stats["avg_return_losing_bets_(%)"] = 100 * fin.convert_log_rets_to_pct_rets(
+        avg_ret_losing_bets
+    )
+    avg_ret_long_bet = log_rets_per_bet.loc[bet_lengths > 0].mean()
+    stats["avg_return_long_bet_(%)"] = 100 * fin.convert_log_rets_to_pct_rets(
+        avg_ret_long_bet
+    )
+    avg_ret_short_bet = log_rets_per_bet.loc[bet_lengths < 0].mean()
+    stats["avg_return_short_bet_(%)"] = 100 * fin.convert_log_rets_to_pct_rets(
+        avg_ret_short_bet
+    )
     #
     srs = pd.Series(stats, name=log_rets.name)
     srs.index = prefix + srs.index
