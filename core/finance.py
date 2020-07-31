@@ -507,7 +507,6 @@ def compute_returns_per_bet(
     :return: signed returns for each bet, index corresponds to the last date of
         bet
     """
-    dbg.dassert(positions.index.equals(log_rets.index))
     dbg.dassert_strictly_increasing_index(log_rets)
     bet_starts = compute_bet_starts(positions, nan_mode)
     bet_ends = compute_bet_ends(positions, nan_mode)
