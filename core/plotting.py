@@ -992,7 +992,7 @@ def multipletests_plot(
             ),
         )
         ax[i].set_title(col)
-        ax[i].axhline(threshold, ls=":", c="k")
+        ax[i].axhline(threshold, ls="--", c="k")
         ax[i].set_ylim(0, 1)
         ax[i].legend()
     plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
@@ -1533,7 +1533,7 @@ def plot_rolling_beta(
     beta.plot(
         ax=ax, figsize=figsize, title=f"Beta with respect to {benchmark_name}"
     )
-    ax.axhline(beta.mean(), ls=":", c="k")
+    ax.axhline(beta.mean(), ls="--", c="k")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
 
