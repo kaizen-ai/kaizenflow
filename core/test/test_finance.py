@@ -142,7 +142,7 @@ class Test_compute_kratio(hut.TestCase):
         """
         series = self._get_series(seed=1)
         actual = fin.compute_kratio(series)
-        expected = -0.69011
+        expected = -9.76313
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
 
