@@ -1532,13 +1532,15 @@ def plot_rolling_beta(
     #
     ax = ax or plt.gca()
     benchmark_rets = sm.add_constant(benchmark_rets)
-    model = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
-    res = model.fit()
-    beta = res.params[benchmark_name]
-    beta.plot(
+    model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
+    res_rolling = model_rolling.fit()
+    beta_rolling = res_rolling.params[benchmark_name]
+    beta_rolling.plot(
         ax=ax, figsize=figsize, title=f"Beta with respect to {benchmark_name}"
     )
-    ax.axhline(beta.mean(), ls="--", c="k")
+    model_linear = sm.OLS(rets, benchmark_rets)
+    res_linear = model_linear[benchmark_name]
+    ax.axhline(res_linear, ls="--", c="k")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
 
