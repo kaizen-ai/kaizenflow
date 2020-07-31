@@ -1349,7 +1349,7 @@ class TestGetInterarrivalTime(hut.TestCase):
         self.check_string(actual_string)
 
 
-class Test_compute_interarrival_time_stats(hut.TestCase):
+class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
     @staticmethod
     def _get_pos(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])

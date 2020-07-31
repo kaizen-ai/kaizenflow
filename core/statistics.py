@@ -1337,7 +1337,7 @@ def compute_avg_turnover_and_holding_period(
     prefix = prefix or ""
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     result_index = [
-        prefix + "avg_turnover_(%)",
+        prefix + "avg_turnover",
         prefix + "turnover_frequency",
         prefix + "avg_holding_period",
         prefix + "holding_period_units",
