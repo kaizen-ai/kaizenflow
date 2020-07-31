@@ -1493,7 +1493,7 @@ def plot_allocation(
 def plot_rolling_beta(
     rets: pd.Series,
     benchmark_rets: pd.Series,
-    window: Optional[int] = None,
+    window: int,
     nan_mode: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
@@ -1513,9 +1513,11 @@ def plot_rolling_beta(
     dbg.dassert_strictly_increasing_index(rets)
     dbg.dassert_strictly_increasing_index(benchmark_rets)
     dbg.dassert_eq(rets.index.freq, benchmark_rets.index.freq)
-    # Window must be strictly larger than the number of variables in the model.
-    window = window or 2
-    dbg.dassert_lte(2, window, "`window` should be larger than or equal to 2")
+    dbg.dassert_lte(
+        window,
+        min(len(rets), len(benchmark_rets)),
+        "`window` should not be larger than inputs' lengths",
+    )
     nan_mode = nan_mode or "leave_unchanged"
     figsize = figsize or FIG_SIZE
     rets = hdf.apply_nan_mode(rets, nan_mode)
