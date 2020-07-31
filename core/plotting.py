@@ -1516,14 +1516,17 @@ def plot_rolling_beta(
     dbg.dassert_lte(
         window,
         min(len(rets), len(benchmark_rets)),
-        "`window` should not be larger than inputs' lengths",
+        "`window` should not be larger than inputs' lengths.",
+    )
+    rets_name = rets.name
+    benchmark_name = benchmark_rets.name
+    dbg.dassert_ne(
+        rets_name, benchmark_name, "Inputs should have different names."
     )
     nan_mode = nan_mode or "leave_unchanged"
     figsize = figsize or FIG_SIZE
     rets = hdf.apply_nan_mode(rets, nan_mode)
     benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
-    benchmark_name = benchmark_rets.name
-    rets_name = rets.name
     # Combine rets and benchmark_rets in one dataframe in order to unify their
     #    indices. This is important for smrr.RollingOLS step.
     all_rets_df = pd.concat([rets, benchmark_rets], axis=1)
