@@ -203,7 +203,7 @@ class Test_compute_turnover(hut.TestCase):
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
         arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
         )

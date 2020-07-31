@@ -336,20 +336,25 @@ def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
     return n_timepoints_underwater
 
 
-def compute_turnover(pos: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
+def compute_turnover(
+    pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
+) -> pd.Series:
     """
     Compute turnover for a sequence of positions.
 
     :param pos: sequence of positions
+    :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: turnover
     """
     dbg.dassert_isinstance(pos, pd.Series)
+    unit = unit or "B"
     nan_mode = nan_mode or "ffill"
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
     turnover = numerator / denominator
+    turnover = turnover.resample(unit).mean()
     return turnover
 
 
