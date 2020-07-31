@@ -1335,16 +1335,17 @@ def compute_avg_turnover_and_holding_period(
     unit = unit or "B"
     nan_mode = nan_mode or "ffill"
     prefix = prefix or ""
-    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     result_index = [
         prefix + "avg_turnover",
         prefix + "turnover_frequency",
         prefix + "avg_holding_period",
         prefix + "holding_period_units",
     ]
-    avg_turnover = fin.compute_turnover(pos).mean()
+    avg_turnover = fin.compute_turnover(pos, nan_mode=nan_mode).mean()
     turnover_frequency = pos.index.freqstr
-    avg_holding_period = fin.compute_average_holding_period(pos=pos, unit=unit)
+    avg_holding_period = fin.compute_average_holding_period(
+        pos=pos, unit=unit, nan_mode=nan_mode
+    )
     #
     result_values = [avg_turnover, turnover_frequency, avg_holding_period, unit]
     res = pd.Series(data=result_values, index=result_index, name=pos.name)
