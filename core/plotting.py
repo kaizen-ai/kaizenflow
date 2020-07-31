@@ -1520,12 +1520,17 @@ def plot_rolling_beta(
     figsize = figsize or FIG_SIZE
     rets = hdf.apply_nan_mode(rets, nan_mode)
     benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
-    # benchmark_rets should have the same index with rets in order to execute
-    #    smrr.RollingOLS
-    benchmark_rets = benchmark_rets.reindex_like(rets)
+    benchmark_name = benchmark_rets.name
+    rets_name = rets.name
+    # Combine rets and benchmark_rets in one dataframe in order to unify their
+    #    indices. This is important for smrr.RollingOLS step.
+    all_rets_df = pd.concat([rets, benchmark_rets], axis=1)
+    all_rets_df.columns = [rets_name, benchmark_name]
+    # Extract rets and benchmark_rets with unified indices.
+    rets = all_rets_df[rets_name]
+    benchmark_rets = all_rets_df[benchmark_name]
     #
     ax = ax or plt.gca()
-    benchmark_name = benchmark_rets.name
     benchmark_rets = sm.add_constant(benchmark_rets)
     model = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res = model.fit()
