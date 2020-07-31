@@ -1541,8 +1541,9 @@ def plot_rolling_beta(
         ax=ax, figsize=figsize, title=f"Beta with respect to {benchmark_name}"
     )
     model_linear = sm.OLS(rets, benchmark_rets)
-    res_linear = model_linear[benchmark_name]
-    ax.axhline(res_linear, ls="--", c="k")
+    res_linear = model_linear.fit()
+    beta_linear = res_linear.params[benchmark_name]
+    ax.axhline(beta_linear, ls="--", c="k")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
 
