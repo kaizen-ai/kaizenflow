@@ -9,10 +9,10 @@ services:
     # For local runs in user space.
     image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
     volumes:
-      - .:/commodity_research
+      - .:/amp
       - ~/.aws:/root/.aws
       - ./docker_build/fstab:/etc/fstab
-    working_dir: /commodity_research
+    working_dir: /amp
     entrypoint: ""
     privileged: true
     cap_add:
@@ -27,18 +27,11 @@ services:
       AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
       AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
     volumes:
-      - .:/commodity_research
+      - .:/amp
 
 # ###########
 # Fast tests
 # ###########
-  fast_tests:
-    extends:
-      file: docker-compose.yml
-      service: tests
-    container_name: fast_test_container
-    command: docker_build/run_fast_tests.sh
-
   fast_tests_gh_action:
     extends:
       file: docker-compose.yml
@@ -46,34 +39,12 @@ services:
     container_name: fast_tests_gh_action_container
     command: docker_build/run_fast_tests_gh_action.sh
 
-  fast_tests_gh_action_build_image_rc:
-    extends:
-      file: docker-compose.yml
-      service: fast_tests_gh_action
-    container_name: fast_tests_gh_action_build_image_rc_container
-    image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:rc
-
 # ###########
 # Slow tests
 # ###########
-
-  slow_tests:
-    extends:
-      file: docker-compose.yml
-      service: tests
-    container_name: slow_test_container
-    command: docker_build/run_slow_tests.sh
-
   slow_tests_gh_action:
     extends:
       file: docker-compose.yml
       service: tests_gh_actions
     container_name: slow_tests_gh_action_container
     command: docker_build/run_slow_tests_gh_action.sh
-
-  slow_tests_gh_action_build_image_rc:
-    extends:
-      file: docker-compose.yml
-      service: slow_tests_gh_action
-    container_name: slow_tests_gh_action_build_image_rc_container
-    image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:rc
