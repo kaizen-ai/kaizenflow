@@ -1,0 +1,86 @@
+name: Fast tests.
+on:
+  push:
+    branches-ignore:
+      - "master"
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 */2 * * *'
+
+jobs:
+  Run_fast_tests_mark_commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post status if was triggered manually
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: "Run_fast_tests"
+          description: 'Added to queue, waiting for free runner. (Manual run)'
+          state: pending
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+  Run_fast_tests:
+    runs-on: [self-hosted, FAST]
+    steps:
+      - name: Post status if was triggered manually
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: "Run_fast_tests"
+          description: 'Job in progress. (Manual run)'
+          state: pending
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Pull image
+        run: docker pull 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
+
+      - name: Cleanup
+        run: sudo chmod 777 -R .
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+
+      - name: Run fast tests
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+        run: docker-compose run --rm fast_tests_gh_action
+
+
+      - name: Post status if was triggered manually
+        if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: "Run_fast_tests"
+          description: 'Job is done. (Manual run)'
+          state: ${{ job.status }}
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Send telegramm notification
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TG_ALL_CHANEL_ID }}
+          token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
+          message: |
+            Build failure 'Fast tests'.
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
