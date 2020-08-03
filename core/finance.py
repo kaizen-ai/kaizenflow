@@ -353,7 +353,7 @@ def compute_turnover(
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     resampled_pos = pos.resample(unit).mean()
     # Assert that we are not upsampling.
-    dbg.dassert_lte(len(resampled_pos), len(pos))
+    dbg.dassert_lte(len(resampled_pos), len(pos), "Upsampling is not allowed.")
     numerator = resampled_pos.diff().abs()
     denominator = (resampled_pos.abs() + resampled_pos.shift().abs()) / 2
     turnover = numerator / denominator
