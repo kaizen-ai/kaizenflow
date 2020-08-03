@@ -268,10 +268,11 @@ def compute_kratio(log_rets: pd.Series) -> float:
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
     log_rets = hdf.apply_nan_mode(log_rets, mode="drop")
+    cum_rets = log_rets.cumsum()
     # Fit the best line to the daily rets.
-    x = range(len(log_rets))
+    x = range(len(cum_rets))
     x = sm.add_constant(x)
-    reg = sm.OLS(log_rets, x)
+    reg = sm.OLS(cum_rets, x)
     model = reg.fit()
     # Compute k-ratio as slope / std err of slope.
     kratio = model.params[1] / model.bse[1]
