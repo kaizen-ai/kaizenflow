@@ -1541,13 +1541,16 @@ def plot_rolling_beta(
     res_rolling = model_rolling.fit()
     beta_rolling = res_rolling.params[benchmark_name]
     beta_rolling.plot(
-        ax=ax, figsize=figsize, title=f"Beta with respect to {benchmark_name}"
+        ax=ax,
+        figsize=figsize,
+        title=f"Beta with respect to {benchmark_name}",
+        label="Rolling beta",
     )
     # Calculate and plot beta for the whole period.
     model_linear = sm.OLS(rets, benchmark_rets)
     res_linear = model_linear.fit()
     beta_linear = res_linear.params[benchmark_name]
-    ax.axhline(beta_linear, ls="--", c="k")
+    ax.axhline(beta_linear, ls="--", c="k", label="Whole-period beta")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
     ax.legend()
