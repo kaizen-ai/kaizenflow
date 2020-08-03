@@ -1548,10 +1548,10 @@ def plot_rolling_beta(
         label="Rolling beta",
     )
     # Calculate and plot beta for the whole period.
-    model_linear = sm.OLS(rets, benchmark_rets)
-    res_linear = model_linear.fit()
-    beta_linear = res_linear.params[benchmark_name]
-    ax.axhline(beta_linear, ls="--", c="k", label="Whole-period beta")
+    model_whole_period = sm.OLS(rets, benchmark_rets)
+    res_whole_period = model_whole_period.fit()
+    beta_whole_period = res_whole_period.params[benchmark_name]
+    ax.axhline(beta_whole_period, ls="--", c="k", label="Whole-period beta")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
     ax.legend()
