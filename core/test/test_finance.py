@@ -234,7 +234,7 @@ class Test_compute_turnover(hut.TestCase):
         """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series, nan_mode="fill_with_zero")
+        actual = fin.compute_turnover(series, nan_mode="ffill")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -244,7 +244,7 @@ class Test_compute_turnover(hut.TestCase):
         """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series, unit="M")
+        actual = fin.compute_turnover(series, unit="B")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
