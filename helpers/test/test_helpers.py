@@ -408,6 +408,7 @@ class Test_git1(ut.TestCase):
         func_call = "git.git_log()"
         self._helper(func_call)
 
+    @pytest.mark.not_docker
     def test_git_log2(self) -> None:
         func_call = "git.git_log(my_commits=True)"
         self._helper(func_call)
@@ -610,6 +611,7 @@ class Test_s3_1(ut.TestCase):
 
 
 class Test_unit_test1(ut.TestCase):
+    @pytest.mark.not_docker
     @pytest.mark.amp
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = git.get_client_root(super_module=True)
