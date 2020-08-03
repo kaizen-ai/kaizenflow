@@ -351,10 +351,12 @@ def compute_turnover(
     unit = unit or "B"
     nan_mode = nan_mode or "ffill"
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
-    numerator = pos.diff().abs()
-    denominator = (pos.abs() + pos.shift().abs()) / 2
+    resampled_pos = pos.resample(unit).mean()
+    # Assert that we are not upsampling.
+    dbg.dassert_lte(len(resampled_pos), len(pos))
+    numerator = resampled_pos.diff().abs()
+    denominator = (resampled_pos.abs() + resampled_pos.shift().abs()) / 2
     turnover = numerator / denominator
-    turnover = turnover.resample(unit).mean()
     return turnover
 
 
