@@ -1537,6 +1537,7 @@ def plot_rolling_beta(
     #
     ax = ax or plt.gca()
     benchmark_rets = sm.add_constant(benchmark_rets)
+    # Calculate and plot rolling beta.
     model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res_rolling = model_rolling.fit()
     beta_rolling = res_rolling.params[benchmark_name]
