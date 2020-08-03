@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo $AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY > /etc/passwd-s3fs-default00-bucket
+chmod 600 /etc/passwd-s3fs-default00-bucket
