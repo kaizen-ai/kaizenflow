@@ -1513,6 +1513,8 @@ def plot_rolling_beta(
     dbg.dassert_strictly_increasing_index(rets)
     dbg.dassert_strictly_increasing_index(benchmark_rets)
     dbg.dassert_eq(rets.index.freq, benchmark_rets.index.freq)
+    # Assert that the 'rets' index is a subset of the 'benchmark_rets' index.
+    dbg.dassert(rets.index.isin(benchmark_rets.index).all())
     dbg.dassert_lte(
         window,
         min(len(rets), len(benchmark_rets)),
@@ -1525,15 +1527,15 @@ def plot_rolling_beta(
     )
     nan_mode = nan_mode or "leave_unchanged"
     figsize = figsize or FIG_SIZE
-    rets = hdf.apply_nan_mode(rets, nan_mode)
-    benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
-    # Combine rets and benchmark_rets in one dataframe in order to unify their
-    #    indices. This is important for smrr.RollingOLS step.
-    all_rets_df = pd.concat([rets, benchmark_rets], axis=1)
+    # Combine rets and benchmark_rets in one dataframe over the intersection
+    #    of their indices.
+    all_rets_df = pd.concat([rets, benchmark_rets], axis=1, join="inner")
     all_rets_df.columns = [rets_name, benchmark_name]
-    # Extract rets and benchmark_rets with unified indices.
+    # Extract copies of rets and benchmark_rets with unified indices.
     rets = all_rets_df[rets_name]
     benchmark_rets = all_rets_df[benchmark_name]
+    rets = hdf.apply_nan_mode(rets, nan_mode)
+    benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
     #
     ax = ax or plt.gca()
     benchmark_rets = sm.add_constant(benchmark_rets)
