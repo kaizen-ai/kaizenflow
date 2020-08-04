@@ -376,11 +376,8 @@ def plot_barplot(
 # #############################################################################
 
 
-def plot_timeseries(
-    df: pd.core.frame.DataFrame,
-    datetime_types: Optional[List[str]],
-    column: str,
-    ts_column: str,
+def plot_timeseries_distribution(
+    srs: pd.Series, datetime_types: Optional[List[str]] = None,
 ) -> None:
     """
     Plot timeseries distribution by
@@ -393,20 +390,21 @@ def plot_timeseries(
     - "second"
     unless otherwise provided by `datetime_types`.
 
-    :param df: df to plot
+    :param srs: timeseries pd.Series to plot
     :param datetime_types: types of pd.datetime, e.g. "month", "quarter"
-    :param column: distribution of which variable to represent
-    :param ts_column: timeseries column
     """
-    unique_rows = expl.drop_duplicates(df=df, subset=[column])
-    if not datetime_types:
+    dbg.dassert_isinstance(srs, pd.Series)
+    dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    srs = hdf.apply_nan_mode(srs, mode="drop")
+    index_series = pd.Series(srs.index)
+    if datetime_types is None:
         datetime_types = _DATETIME_TYPES
     for datetime_type in datetime_types:
         plt.figure(figsize=FIG_SIZE)
-        sns.countplot(getattr(unique_rows[ts_column].dt, datetime_type))
+        sns.countplot(getattr(index_series.dt, datetime_type))
         plt.title(f"Distribution by {datetime_type}")
         plt.xlabel(datetime_type, fontsize=12)
-        plt.ylabel(f"Quantity of {column}", fontsize=12)
+        plt.ylabel(f"Quantity of {srs.name}", fontsize=12)
         plt.show()
 
 
