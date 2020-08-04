@@ -350,14 +350,15 @@ def compute_turnover(
     dbg.dassert_isinstance(pos, pd.Series)
     dbg.dassert(pos.index.freq)
     nan_mode = nan_mode or "ffill"
-    data = hdf.apply_nan_mode(pos, mode=nan_mode)
-    if unit is not None:
-        data = data.resample(unit).mean()
-        # Assert that we are not upsampling.
-        dbg.dassert_lte(len(data), len(pos), "Upsampling is not allowed.")
-    numerator = data.diff().abs()
-    denominator = (data.abs() + data.shift().abs()) / 2
+    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
+    numerator = pos.diff().abs()
+    denominator = (pos.abs() + pos.shift().abs()) / 2
     turnover = numerator / denominator
+    if unit:
+        turnover = turnover.resample(unit).mean()
+    # Raise if we upsample.
+    if len(turnover) > len(pos):
+        raise ValueError("Upsampling is not allowed.")
     return turnover
 
 
