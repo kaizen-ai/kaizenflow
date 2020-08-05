@@ -39,9 +39,10 @@
          * [Use the appropriate self.assert*](#use-the-appropriate-selfassert)
          * [Do not use dbg.dassert](#do-not-use-dbgdassert)
          * [Interesting testing functions](#interesting-testing-functions)
+         
+     * [Update test tags](#Update-test-tags)
 
-
-
+<!-- #region -->
 <!--te-->
 
 # Running unit tests
@@ -57,7 +58,7 @@
       not horrible broken
   - `slow`
     - Tests that we don't want to run all the times because they are:
-      - Slow (typically < 30s per test)
+      - Slow (typically < 2 minutes per test)
       - Related to pieces of code that don't change often
       - External APIs we don't want to hit continuously
   - `superslow`
@@ -448,3 +449,16 @@
   - [General python](https://docs.python.org/2/library/unittest.html#test-cases)
   - [Numpy](https://docs.scipy.org/doc/numpy-1.15.0/reference/routines.testing.html)
   - [Pandas](https://pandas.pydata.org/pandas-docs/version/0.21/api.html#testing-functions)
+  
+## Update test tags
+
+- There are 2 files with the list of tests' tags:
+  - `amp/pytest.ini`
+  - `commodity_research/pytest.ini`
+  
+  
+- In order to update the tags (do it in the both files):
+  - in the `markers` section add a name of a new tag
+  - afther a `:` add a short description 
+  - keep tags in the alpabetical order
+<!-- #endregion -->
