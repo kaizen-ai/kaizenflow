@@ -353,9 +353,10 @@ def compute_turnover(
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
-    turnover = numerator / denominator
     if unit:
-        turnover = turnover.resample(unit).mean()
+        numerator = numerator.resample(unit).mean()
+        denominator = denominator.resample(unit).mean()
+    turnover = numerator / denominator
     # Raise if we upsample.
     if len(turnover) > len(pos):
         raise ValueError("Upsampling is not allowed.")
