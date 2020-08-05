@@ -1336,12 +1336,14 @@ def compute_avg_turnover_and_holding_period(
     nan_mode = nan_mode or "ffill"
     prefix = prefix or ""
     result_index = [
-        prefix + "avg_turnover",
+        prefix + "avg_turnover_(%)",
         prefix + "turnover_frequency",
         prefix + "avg_holding_period",
         prefix + "holding_period_units",
     ]
-    avg_turnover = fin.compute_turnover(pos, unit=unit, nan_mode=nan_mode).mean()
+    avg_turnover = (
+        100 * fin.compute_turnover(pos, unit=unit, nan_mode=nan_mode).mean()
+    )
     avg_holding_period = fin.compute_average_holding_period(
         pos=pos, unit=unit, nan_mode=nan_mode
     )

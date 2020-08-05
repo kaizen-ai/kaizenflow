@@ -1,5 +1,5 @@
                      arma(2,2)
-avg_turnover          0.931508
+avg_turnover_(%)       90.0313
 turnover_frequency           B
 avg_holding_period     1.08856
 holding_period_units         B
