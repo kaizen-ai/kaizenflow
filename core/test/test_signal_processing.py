@@ -219,7 +219,7 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_delay1(self) -> None:
+    def test_delay1_arma_clean1(self) -> None:
         """
         Test on a clean arma series when `delay=1`.
         """
@@ -231,11 +231,167 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_delay2(self) -> None:
+    def test_delay1_arma_nan1(self) -> None:
+        """
+        Test on an arma series with leading NaNs when `delay=1`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=1).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay1_arma_nan2(self) -> None:
+        """
+        Test on an arma series with interspersed NaNs when `delay=1`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=1).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay1_arma_zero1(self) -> None:
+        """
+        Test on an arma series with leading zeros when `delay=1`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=1).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay1_arma_zero2(self) -> None:
+        """
+        Test on an arma series with interspersed zeros when `delay=1`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=1).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay1_arma_inf1(self) -> None:
+        """
+        Test on an arma series with leading infs when `delay=1`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=1).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay1_arma_inf2(self) -> None:
+        """
+        Test on an arma series with interspersed infs when `delay=1`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=1).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2_arma_clean1(self) -> None:
         """
         Test on a clean arma series when `delay=2`.
         """
         series = self._get_arma_series(seed=1)
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2_arma_nan1(self) -> None:
+        """
+        Test on an arma series with leading NaNs when `delay=2`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2_arma_nan2(self) -> None:
+        """
+        Test on an arma series with interspersed NaNs when `delay=2`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2_arma_zero1(self) -> None:
+        """
+        Test on an arma series with leading zeros when `delay=2`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2_arma_zero2(self) -> None:
+        """
+        Test on an arma series with interspersed zeros when `delay=2`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2_arma_inf1(self) -> None:
+        """
+        Test on an arma series with leading infs when `delay=2`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2_arma_inf2(self) -> None:
+        """
+        Test on an arma series with interspersed infs when `delay=2`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.inf
         actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
             "output"
         )
