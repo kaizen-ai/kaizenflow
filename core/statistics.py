@@ -390,10 +390,10 @@ def apply_ttest_power_rule(
     const = compute_ttest_power_rule_constant(
         alpha=alpha, power=power, two_sided=two_sided
     )
-    if years is None:
+    if years is None and sharpe_ratio is not None:
         dbg.dassert_isinstance(sharpe_ratio, numbers.Number)
         years = const / (sharpe_ratio ** 2)
-    elif sharpe_ratio is None:
+    elif years is not None and sharpe_ratio is None:
         dbg.dassert_isinstance(years, numbers.Number)
         sharpe_ratio = np.sqrt(const / years)
     else:
