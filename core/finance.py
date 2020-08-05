@@ -354,8 +354,10 @@ def compute_turnover(
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
     if unit:
-        numerator = numerator.resample(unit).mean()
-        denominator = denominator.resample(unit).mean()
+        numerator = numerator.resample(unit, closed="right", label="right").sum()
+        denominator = denominator.resample(
+            unit, closed="right", label="right"
+        ).sum()
     turnover = numerator / denominator
     # Raise if we upsample.
     if len(turnover) > len(pos):
