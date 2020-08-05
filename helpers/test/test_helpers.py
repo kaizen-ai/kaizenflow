@@ -1,5 +1,7 @@
+import datetime
 import logging
 import os
+import uuid
 from typing import Any, Optional, Tuple
 
 import numpy as np
@@ -406,6 +408,7 @@ class Test_git1(ut.TestCase):
         func_call = "git.git_log()"
         self._helper(func_call)
 
+    @pytest.mark.not_docker
     def test_git_log2(self) -> None:
         func_call = "git.git_log(my_commits=True)"
         self._helper(func_call)
@@ -442,6 +445,7 @@ class Test_git1(ut.TestCase):
     def test_get_branch_name1(self) -> None:
         _ = git.get_branch_name()
 
+    @pytest.mark.not_docker(reason="Issue #3482")
     @pytest.mark.skipif('si.get_user_name() == "jenkins"', reason="#781")
     @pytest.mark.skipif(
         'git.get_repo_symbolic_name(super_module=False) == "alphamatic/amp"'
@@ -458,6 +462,7 @@ class Test_git1(ut.TestCase):
         dir_name = "."
         _ = git.get_head_hash(dir_name)
 
+    @pytest.mark.not_docker(reason="Issue #3482")
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
     )
@@ -606,6 +611,7 @@ class Test_s3_1(ut.TestCase):
 
 
 class Test_unit_test1(ut.TestCase):
+    @pytest.mark.not_docker
     @pytest.mark.amp
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = git.get_client_root(super_module=True)
@@ -633,6 +639,82 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
 """
         act = ut.purify_txt_from_client(txt)
         self.assert_equal(act, exp)
+
+
+class TestDataframeToJson(ut.TestCase):
+    def test_dataframe_to_json(self) -> None:
+        """
+        Verify correctness of dataframe to JSON transformation.
+        """
+        # Initialize a dataframe.
+        test_dataframe = pd.DataFrame(
+            {
+                "col_1": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
+                "col_2": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+        # Convert dataframe to JSON.
+        output_str = ut.convert_df_to_json_string(
+            test_dataframe, n_head=3, n_tail=3
+        )
+        self.check_string(output_str)
+
+    def test_dataframe_to_json_uuid(self) -> None:
+        """
+        Verify correctness of UUID-containing dataframe transformation.
+        """
+        # Initialize a dataframe.
+        test_dataframe = pd.DataFrame(
+            {
+                "col_1": [
+                    uuid.UUID("421470c7-7797-4a94-b584-eb83ff2de88a"),
+                    uuid.UUID("22cde381-1782-43dc-8c7a-8712cbdf5ee1"),
+                ],
+                "col_2": [1, 2],
+            }
+        )
+        # Convert dataframe to JSON.
+        output_str = ut.convert_df_to_json_string(
+            test_dataframe, n_head=None, n_tail=None
+        )
+        self.check_string(output_str)
+
+    def test_dataframe_to_json_timestamp(self) -> None:
+        """
+        Verify correctness of transformation of a dataframe with Timestamps.
+        """
+        # Initialize a dataframe.
+        test_dataframe = pd.DataFrame(
+            {
+                "col_1": [pd.Timestamp("2020-01-01"), pd.Timestamp("2020-05-12")],
+                "col_2": [1.0, 2.0],
+            }
+        )
+        # Convert dataframe to JSON.
+        output_str = ut.convert_df_to_json_string(
+            test_dataframe, n_head=None, n_tail=None
+        )
+        self.check_string(output_str)
+
+    def test_dataframe_to_json_datetime(self) -> None:
+        """
+        Verify correctness of transformation of a dataframe with datetime.
+        """
+        # Initialize a dataframe.
+        test_dataframe = pd.DataFrame(
+            {
+                "col_1": [
+                    datetime.datetime(2020, 1, 1),
+                    datetime.datetime(2020, 5, 12),
+                ],
+                "col_2": [1.0, 2.0],
+            }
+        )
+        # Convert dataframe to JSON.
+        output_str = ut.convert_df_to_json_string(
+            test_dataframe, n_head=None, n_tail=None
+        )
+        self.check_string(output_str)
 
 
 # #############################################################################

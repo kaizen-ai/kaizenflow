@@ -239,6 +239,22 @@ def squash(
     return scale * np.tanh(signal / scale)
 
 
+def accumulate(
+    srs: pd.Series, num_steps: int, nan_mode: Optional[str] = None,
+) -> pd.Series:
+    """
+    Accumulate series for step.
+
+    :param srs: time series
+    :param num_steps: number of steps to compute rolling sum for
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: time series for step
+    """
+    nan_mode = nan_mode or "leave_unchanged"
+    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    return srs.rolling(window=num_steps).sum()
+
+
 def get_symmetric_equisized_bins(
     signal: pd.Series, bin_size: float, zero_in_bin_interior: bool = False
 ) -> np.array:
@@ -1086,7 +1102,7 @@ def process_nonfinite(
 
 
 def compute_ipca(
-    df: pd.DataFrame, num_pc: int, alpha: float
+    df: pd.DataFrame, num_pc: int, tau: float, nan_mode: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """
     Incremental PCA.
@@ -1097,7 +1113,10 @@ def compute_ipca(
     https://www.cse.msu.edu/~weng/research/CCIPCApami.pdf
 
     :param num_pc: number of principal components to calculate
-    :param alpha: analogous to Pandas ewm's `alpha`
+    :param tau: parameter used in (continuous) compute_ema and compute_ema-derived kernels. For
+        typical ranges it is approximately but not exactly equal to the
+        center-of-mass (com) associated with an compute_ema kernel.
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :return:
       - df of eigenvalue series (col 0 correspond to max eigenvalue, etc.).
       - list of dfs of unit eigenvectors (0 indexes df eigenvectors
@@ -1116,47 +1135,40 @@ def compute_ipca(
         df.shape[1],
         msg="Dimension should be greater than or equal to the number of principal components.",
     )
-    dbg.dassert_lte(0, alpha, msg="alpha should belong to [0, 1].")
-    dbg.dassert_lte(alpha, 1, msg="alpha should belong to [0, 1].")
-    _LOG.info("com = %0.2f", 1.0 / alpha - 1)
-    lambdas = []
-    # V's are eigenvectors with norm equal to corresponding eigenvalue
-    # vsl = [[v1], [v2], ...].
-    vsl = []
-    unit_eigenvecs = []
-    step = 0
-    for n in df.index:
-        step += 1
-        # Initialize u1(n).
-        # Handle NaN's by replacing with 0.
-        ul = [df.loc[n].fillna(value=0)]
-        for i in range(1, min(num_pc, step) + 1):
+    dbg.dassert_lt(0, tau)
+    com = _calculate_com_from_tau(tau)
+    alpha = 1.0 / (com + 1.0)
+    _LOG.debug("com = %0.2f", com)
+    _LOG.debug("alpha = %0.2f", alpha)
+    nan_mode = nan_mode or "fill_with_zero"
+    df = df.apply(hdf.apply_nan_mode, mode=nan_mode)
+    lambdas = {k: [] for k in range(num_pc)}
+    # V's are eigenvectors with norm equal to corresponding eigenvalue.
+    vs = {k: [] for k in range(num_pc)}
+    unit_eigenvecs = {k: [] for k in range(num_pc)}
+    for step, n in enumerate(df.index):
+        # Initialize u(n).
+        u = df.loc[n].copy()
+        for i in range(min(num_pc, step + 1)):
             # Initialize ith eigenvector.
             if i == step:
-                _LOG.info("Initializing eigenvector %i...", i)
-                v = ul[-1]
-                # Bookkeeping.
-                vsl.append([v])
-                norm = np.linalg.norm(v)
-                lambdas.append([norm])
-                unit_eigenvecs.append([v / norm])
+                _LOG.debug("Initializing eigenvector %i...", i)
+                v = u.copy()
             else:
                 # Main update step for eigenvector i.
-                u, v = _compute_ipca_step(ul[-1], vsl[i - 1][-1], alpha)
-                # Bookkeeping.
-                u.name = n
-                v.name = n
-                ul.append(u)
-                vsl[i - 1].append(v)
-                norm = np.linalg.norm(v)
-                lambdas[i - 1].append(norm)
-                unit_eigenvecs[i - 1].append(v / norm)
-    _LOG.info("Completed %i steps of incremental PCA.", step)
-    # Convert lambda list of lists to list of series.
-    # Convert unit_eigenvecs list of lists to list of dataframes.
+                u, v = _compute_ipca_step(u, vs[i][-1], alpha)
+            # Bookkeeping.
+            v.name = n
+            vs[i].append(v)
+            norm = np.linalg.norm(v)
+            lambdas[i].append(norm)
+            unit_eigenvecs[i].append(v / norm)
+    _LOG.debug("Completed %i steps of incremental PCA.", step + 1)
+    # Convert lambda dict of lists to list of series.
+    # Convert unit_eigenvecs dict of lists to list of dataframes.
     lambdas_srs = []
     unit_eigenvec_dfs = []
-    for i in range(0, num_pc):
+    for i in range(num_pc):
         lambdas_srs.append(pd.Series(index=df.index[i:], data=lambdas[i]))
         unit_eigenvec_dfs.append(pd.concat(unit_eigenvecs[i], axis=1).transpose())
     lambda_df = pd.concat(lambdas_srs, axis=1)
@@ -1180,8 +1192,12 @@ def _compute_ipca_step(
       * u_next is residualized observation for step n, component i + 1
       * v_next is unnormalized eigenvector estimate for step n, component i
     """
-    v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
-    u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
+    if np.linalg.norm(v) == 0:
+        v_next = v * 0
+        u_next = u.copy()
+    else:
+        v_next = (1 - alpha) * v + alpha * u * np.dot(u, v) / np.linalg.norm(v)
+        u_next = u - np.dot(u, v) * v / (np.linalg.norm(v) ** 2)
     return u_next, v_next
 
 
@@ -1272,8 +1288,11 @@ def get_trend_residual_decomp(
 
 
 def get_swt(
-    sig: pd.Series, wavelet: str, mode: Optional[str] = None
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: str,
+    timing_mode: Optional[str] = None,
+    output_mode: Optional[str] = None,
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
     """
     Get stationary wt details and smooths for all available scales.
 
@@ -1293,7 +1312,7 @@ def get_swt(
 
     :param sig: input signal
     :param wavelet: pywt wavelet name, e.g., "db8"
-    :param mode: supported modes are
+    :param timing_mode: supported timing modes are
         - "knowledge_time":
             - reindex transform according to knowledge times
             - remove warm-up artifacts
@@ -1302,10 +1321,25 @@ def get_swt(
               timestamps are not necessarily knowledge times)
             - remove warm-up artifacts
         - "raw": `pywt.swt` as-is
-    :return: (smooth_df, detail_df)
+    :param output_mode: valid output modes are
+        - "tuple": return (smooth_df, detail_df)
+        - "smooth": return smooth_df
+        - "detail": return detail_df
+    :return: see `output_mode`
     """
     # Choice of wavelet may significantly impact results.
     _LOG.debug("wavelet=`%s`", wavelet)
+    if isinstance(sig, pd.DataFrame):
+        dbg.dassert_eq(
+            sig.shape[1], 1, "Input dataframe must have a single column."
+        )
+        sig = sig.squeeze()
+    if timing_mode is None:
+        timing_mode = "knowledge_time"
+    _LOG.debug("timing_mode=`%s`", timing_mode)
+    if output_mode is None:
+        output_mode = "tuple"
+    _LOG.debug("output_mode=`%s`", output_mode)
     # Convert to numpy and pad, since the pywt swt implementation
     # requires that the input be a power of 2 in length.
     sig_len = sig.size
@@ -1334,10 +1368,7 @@ def get_swt(
     # Record wavelet width (required for removing warm-up artifacts).
     width = len(pywt.Wavelet(wavelet).filter_bank[0])
     _LOG.debug("wavelet width=%s", width)
-    if mode is None:
-        mode = "knowledge_time"
-    _LOG.debug("mode=`%s`", mode)
-    if mode == "knowledge_time":
+    if timing_mode == "knowledge_time":
         for j in range(1, levels + 1):
             # Remove "warm-up" artifacts.
             _set_warmup_region_to_nan(detail_df[j], width, j)
@@ -1345,19 +1376,25 @@ def get_swt(
             # Index by knowledge time.
             detail_df[j] = _reindex_by_knowledge_time(detail_df[j], width, j)
             smooth_df[j] = _reindex_by_knowledge_time(smooth_df[j], width, j)
-    elif mode == "zero_phase":
+    elif timing_mode == "zero_phase":
         for j in range(1, levels + 1):
             # Delete "warm-up" artifacts.
             _set_warmup_region_to_nan(detail_df[j], width, j)
             _set_warmup_region_to_nan(smooth_df[j], width, j)
-    elif mode == "raw":
+    elif timing_mode == "raw":
         return smooth_df, detail_df
     else:
-        raise ValueError(f"Unsupported mode `{mode}`")
+        raise ValueError(f"Unsupported timing_mode `{timing_mode}`")
     # Drop columns that are all-NaNs (e.g., artifacts of padding).
     smooth_df.dropna(how="all", axis=1, inplace=True)
     detail_df.dropna(how="all", axis=1, inplace=True)
-    return smooth_df, detail_df
+    if output_mode == "tuple":
+        return smooth_df, detail_df
+    if output_mode == "smooth":
+        return smooth_df
+    if output_mode == "detail":
+        return detail_df
+    raise ValueError("Unsupported output_mode `{output_mode}`")
 
 
 def _pad_to_pow_of_2(arr: np.array) -> np.array:

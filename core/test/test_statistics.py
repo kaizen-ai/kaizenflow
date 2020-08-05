@@ -6,7 +6,9 @@ import pytest
 
 import core.artificial_signal_generators as sig_gen
 import core.finance as fin
+import core.signal_processing as sigp
 import core.statistics as stats
+import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -213,43 +215,6 @@ class TestComputeFracNan(hut.TestCase):
         stats.compute_frac_nan(series)
 
 
-class TestComputeFracConstant(hut.TestCase):
-    @staticmethod
-    def _get_df(seed: int) -> pd.DataFrame:
-        nrows = 15
-        ncols = 5
-        num_nans = 4
-        num_infs = 2
-        #
-        np.random.seed(seed=seed)
-        mat = np.random.randint(-1, 1, (nrows, ncols)).astype("float")
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = np.inf
-        mat.ravel()[np.random.choice(mat.size, num_infs, replace=False)] = -np.inf
-        mat.ravel()[np.random.choice(mat.size, num_nans, replace=False)] = np.nan
-        #
-        index = pd.date_range(start="01-04-2018", periods=nrows, freq="30T")
-        df = pd.DataFrame(data=mat, index=index)
-        return df
-
-    def test1(self) -> None:
-        data = [0.357143, 0.5, 0.285714, 0.285714, 0.071429]
-        index = [0, 1, 2, 3, 4]
-        expected = pd.Series(data=data, index=index)
-        actual = stats.compute_frac_constant(self._get_df(seed=1))
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
-
-    def test2(self) -> None:
-        series = self._get_df(seed=1)[0]
-        expected = 0.357143
-        actual = stats.compute_frac_constant(series)
-        np.testing.assert_almost_equal(actual, expected, decimal=3)
-
-    # Smoke test for empty input.
-    def test3(self) -> None:
-        series = pd.Series([])
-        stats.compute_frac_constant(series)
-
-
 class TestComputeNumFiniteSamples(hut.TestCase):
     @staticmethod
     # Smoke test for empty input.
@@ -339,7 +304,7 @@ class TestMultipleTests(hut.TestCase):
     def test3(self) -> None:
         series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
-        actual = stats.multipletests(series_with_nans, nan_mode="ignore")
+        actual = stats.multipletests(series_with_nans, nan_mode="drop")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -649,7 +614,7 @@ class TestApplyLjungBoxTest(hut.TestCase):
         stats.apply_ljung_box_test(series)
 
 
-class TestComputeZeroNanInfStats(hut.TestCase):
+class TestComputeSpecialValueStats(hut.TestCase):
     @staticmethod
     def _get_messy_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -666,72 +631,170 @@ class TestComputeZeroNanInfStats(hut.TestCase):
         return series
 
     def test1(self) -> None:
+        """
+        Test for default arguments.
+        """
         series = self._get_messy_series(seed=1)
-        actual = stats.compute_zero_nan_inf_stats(series)
+        actual = stats.compute_special_value_stats(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
+        """
+        Test for prefix.
+        """
         series = self._get_messy_series(seed=1)
-        actual = stats.compute_zero_nan_inf_stats(series, prefix="data_")
+        actual = stats.compute_special_value_stats(series, prefix="data_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
     def test3(self) -> None:
         series = pd.Series([])
-        stats.compute_zero_nan_inf_stats(series)
+        stats.compute_special_value_stats(series)
 
 
 class TestCalculateHitRate(hut.TestCase):
+    @staticmethod
+    def _get_test_series() -> pd.Series:
+        series = pd.Series([0, -0.001, 0.001, -0.01, 0.01, -0.1, 0.1, -1, 1, 10])
+        return series
+
     def test1(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
+        """
+        Test for default parameters.
+
+        Expected outcome:
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_rate_97.50%CI_upper_bound_(%)  82.7032
+        """
+        series = self._get_test_series()
         actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        np.random.seed(42)
-        series = pd.Series(np.random.choice([0, 1, np.nan], size=(100,)))
+        """
+        Test for the case when NaNs compose the half of the input.
+
+        Expected outcome:
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_rate_97.50%CI_upper_bound_(%)  82.7032
+        """
+        series = self._get_test_series()
+        nan_series = pd.Series([np.nan for i in range(len(series))])
+        series = pd.concat([series, nan_series])
         actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        np.random.seed(42)
-        series = pd.Series(np.random.choice([0, 1, np.nan], size=(100,)))
-        actual = stats.calculate_hit_rate(series, alpha=0.1)
+        """
+        Test for the case when np.inf compose the half of the input.
+
+        Expected outcome:
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_rate_97.50%CI_upper_bound_(%)  82.7032
+        """
+        series = self._get_test_series()
+        inf_series = pd.Series([np.inf for i in range(len(series))])
+        inf_series[:5] = -np.inf
+        series = pd.concat([series, inf_series])
+        actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
-        actual = stats.calculate_hit_rate(series, nan_mode="fill_with_zero")
+        """
+        Test for the case when 0 compose the half of the input.
+
+        Expected outcome:
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_rate_97.50%CI_upper_bound_(%)  82.7032
+        """
+        series = self._get_test_series()
+        zero_series = pd.Series([0 for i in range(len(series))])
+        series = pd.concat([series, zero_series])
+        actual = stats.calculate_hit_rate(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = pd.Series([0, 1, 0, 0, 1, None])
+        """
+        Test threshold.
+
+        Expected outcome:
+                                                 0
+        hit_rate_point_est_(%)             57.1429
+        hit_rate_97.50%CI_lower_bound_(%)  23.4501
+        hit_rate_97.50%CI_upper_bound_(%)  86.1136
+        """
+        series = self._get_test_series()
+        actual = stats.calculate_hit_rate(series, threshold=10e-3)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test6(self) -> None:
+        """
+        Test alpha.
+
+        Expected outcome:
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_95.00%CI_lower_bound_(%)  29.6768
+        hit_rate_95.00%CI_upper_bound_(%)  79.1316
+        """
+        series = self._get_test_series()
+        actual = stats.calculate_hit_rate(series, alpha=0.1)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test7(self) -> None:
+        """
+        Test prefix.
+
+        Expected outcome:
+                                                     0
+        hit_hit_rate_point_est_(%)             55.5556
+        hit_hit_rate_97.50%CI_lower_bound_(%)  25.4094
+        hit_hit_rate_97.50%CI_upper_bound_(%)  82.7032
+        """
+        series = self._get_test_series()
         actual = stats.calculate_hit_rate(series, prefix="hit_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
+    def test8(self) -> None:
+        """
+        Test method.
+
+        Expected outcome:
+                                                 0
+        hit_rate_point_est_(%)             55.5556
+        hit_rate_97.50%CI_lower_bound_(%)  26.6651
+        hit_rate_97.50%CI_upper_bound_(%)  81.1221
+        """
+        series = self._get_test_series()
+        actual = stats.calculate_hit_rate(series, method="wilson")
+        self.check_string(hut.convert_df_to_string(actual, index=True))
+
     # Smoke test for empty input.
-    def test6(self) -> None:
+    def test_smoke(self) -> None:
         series = pd.Series([])
         stats.calculate_hit_rate(series)
 
     # Smoke test for input of `np.nan`s.
-    def test7(self) -> None:
+    def test_nan(self) -> None:
         series = pd.Series([np.nan] * 10)
         stats.calculate_hit_rate(series)
-
-    def test_sign1(self) -> None:
-        np.random.seed(42)
-        data = list(np.random.randn(100)) + [np.inf, np.nan]
-        series = pd.Series(data)
-        actual = stats.calculate_hit_rate(series, mode="sign")
-        self.check_string(hut.convert_df_to_string(actual, index=True))
 
 
 class Test_compute_jensen_ratio(hut.TestCase):
@@ -758,7 +821,7 @@ class Test_compute_jensen_ratio(hut.TestCase):
     def test3(self) -> None:
         signal = self._get_signal(seed=1)
         signal[5:8] = np.inf
-        actual = stats.compute_jensen_ratio(signal, inf_mode="ignore",)
+        actual = stats.compute_jensen_ratio(signal, inf_mode="drop",)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -821,6 +884,42 @@ class Test_compute_forecastability(hut.TestCase):
         stats.compute_forecastability(signal)
 
 
+class Test_compute_annualized_return_and_volatility(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        """
+        Test for default parameters.
+        """
+        series = self._get_series(seed=1)
+        actual = stats.compute_annualized_return_and_volatility(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test prefix.
+        """
+        series = self._get_series(seed=1)
+        actual = stats.compute_annualized_return_and_volatility(
+            series, prefix="test_"
+        )
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input
+    def test3(self) -> None:
+        series = pd.Series([])
+        stats.compute_annualized_return_and_volatility(series)
+
+
 class TestComputeMaxDrawdown(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
@@ -839,7 +938,7 @@ class TestComputeMaxDrawdown(hut.TestCase):
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
-        actual = stats.compute_max_drawdown(series, prefix="new")
+        actual = stats.compute_max_drawdown(series, prefix="new_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -847,6 +946,67 @@ class TestComputeMaxDrawdown(hut.TestCase):
     def test3(self) -> None:
         series = pd.Series([])
         stats.compute_max_drawdown(series)
+
+
+class Test_compute_bet_stats(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed, scale=0.1
+        )
+        return series
+
+    def test1(self) -> None:
+        log_rets = Test_compute_bet_stats._get_series(42)
+        positions = sigp.compute_smooth_moving_average(log_rets, 4)
+        actual = stats.compute_bet_stats(positions, log_rets)
+        bet_rets = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos_bet_rets = pd.concat(
+            {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
+        )
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
+            f"{prnt.frame('stats')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test2(self) -> None:
+        log_rets = Test_compute_bet_stats._get_series(42)
+        positions = sigp.compute_smooth_moving_average(log_rets, 4)
+        log_rets.iloc[:10] = np.nan
+        actual = stats.compute_bet_stats(positions, log_rets)
+        bet_rets = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos_bet_rets = pd.concat(
+            {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
+        )
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
+            f"{prnt.frame('stats')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test3(self) -> None:
+        idx = pd.date_range("2010-12-29", freq="D", periods=8)
+        log_rets = pd.Series([1, 2, 3, 5, 7, 11, -13, -5], index=idx)
+        positions = pd.Series([1, 2, 0, 1, -3, -2, 0, -1], index=idx)
+        actual = stats.compute_bet_stats(positions, log_rets)
+        bet_rets = fin.compute_returns_per_bet(positions, log_rets)
+        rets_pos_bet_rets = pd.concat(
+            {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
+        )
+        output_str = (
+            f"{prnt.frame('rets_pos')}\n"
+            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
+            f"{prnt.frame('stats')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
 
 
 class Test_compute_sharpe_ratio(hut.TestCase):
@@ -878,7 +1038,7 @@ class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
 
 
 class Test_compute_annualized_sharpe_ratio(hut.TestCase):
-    def _generate_minutely_series(self, n_days: float, seed) -> pd.Series:
+    def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
@@ -926,14 +1086,14 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         filtered_srs_sr = stats.compute_sharpe_ratio(
             filtered_srs, time_scaling=points_per_year
         )
-        np.testing.assert_almost_equal(filtered_srs_sr, -2.7093, decimal=3)
+        np.testing.assert_almost_equal(filtered_srs_sr, -2.7203, decimal=3)
         # Compare to SR annualized using `freq`.
         srs_sr = stats.compute_annualized_sharpe_ratio(srs)
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
 
 
 class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
-    def _generate_minutely_series(self, n_days: float, seed) -> pd.Series:
+    def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
@@ -1113,7 +1273,8 @@ class TestComputeZeroDiffProportion(hut.TestCase):
         index = pd.date_range(start="1-04-2018", periods=n_elements, freq="D")
         data = list(np.random.randint(10, size=n_elements))
         series = pd.Series(data=data, index=index, name="test")
-        series[45:50] = np.nan
+        series[45:47] = np.nan
+        series[47:50] = np.inf
         return series
 
     def test1(self) -> None:
@@ -1216,5 +1377,61 @@ class TestComputeInterarrivalTimeStats(hut.TestCase):
     def test3(self) -> None:
         series = self._get_series(seed=1)
         actual = stats.compute_interarrival_time_stats(series, nan_mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
+class Test_summarize_time_index_info(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
+        return series
+
+    def test1(self) -> None:
+        """
+        Test for the case when index freq is not None.
+        """
+        series = self._get_series(seed=1)
+        actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test for the case when index freq is None.
+        """
+        series = self._get_series(seed=1)
+        series = series.drop(series.index[1:3])
+        actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        """
+        Test for default nan_mode.
+        """
+        series = self._get_series(seed=1)
+        series[5:10] = np.nan
+        actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        """
+        Test for specified nan_mode.
+        """
+        series = self._get_series(seed=1)
+        series[5:10] = np.nan
+        actual = stats.summarize_time_index_info(series, nan_mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        """
+        Test for prefix.
+        """
+        series = self._get_series(seed=1)
+        actual = stats.summarize_time_index_info(series, prefix="test_")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)

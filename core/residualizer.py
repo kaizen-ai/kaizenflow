@@ -173,7 +173,7 @@ class PcaFactorComputer(FactorComputer):
 
     def _execute(self, df: pd.DataFrame, ts: int) -> pd.Series:
         _LOG.debug("ts=%s", ts)
-        dbg.dassert_monotonic_index(df)
+        dbg.dassert_strictly_increasing_index(df)
         # Compute correlation.
         df = exp.handle_nans(df, self.nan_mode_in_data)
         corr_df = df.corr()
@@ -183,10 +183,7 @@ class PcaFactorComputer(FactorComputer):
         dt = df.index.max()
         _LOG.debug("ts=%s", dt)
         # Compute eigenvalues and eigenvectors.
-        # TODO(Paul): Consider replacing `eig` with `eigh` as per
-        # https://stackoverflow.com/questions/45434989
-        eigval, eigvec = np.linalg.eig(corr_df)
-        # eigval, eigvec = np.linalg.eigh(corr_df)
+        eigval, eigvec = np.linalg.eigh(corr_df)
         # Sort eigenvalues, if needed.
         if self.do_sort_eigvals:
             _, eigval, eigvec = self.sort_eigval(eigval, eigvec)
@@ -357,8 +354,8 @@ class PcaFactorComputer(FactorComputer):
                     return sign
             return None
 
-        dbg.dassert_monotonic_index(prev_eigvec_df)
-        dbg.dassert_monotonic_index(eigvec_df)
+        dbg.dassert_strictly_increasing_index(prev_eigvec_df)
+        dbg.dassert_strictly_increasing_index(eigvec_df)
         # TODO(gp): This code can be sped up by:
         # 1) keeping a running list of the v2 columns already mapped so that
         #    we don't have to check over and over.

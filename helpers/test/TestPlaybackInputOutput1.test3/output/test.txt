@@ -1,0 +1,9 @@
+# Initialize function parameters.
+param0 = [1, 2, 3]
+param1 = [4, 5, 6]
+# Get the actual function output.
+act = F(param0, param1)
+# Create the expected function output.
+exp = [1, 2, 3, 4, 5, 6]
+# Check whether the expected value equals the actual value.
+assert act == exp

@@ -2,7 +2,7 @@ import collections
 import logging
 import os
 import pprint
-from typing import Any, Optional
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,83 @@ import helpers.git as git
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+class Test_accumulate(hut.TestCase):
+    def test1(self) -> None:
+        srs = pd.Series(
+            range(0, 20), index=pd.date_range("2010-01-01", periods=20)
+        )
+        actual = sigp.accumulate(srs, num_steps=1)
+        expected = srs.astype(float)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test2(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=10)
+        srs = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], index=idx)
+        actual = sigp.accumulate(srs, num_steps=2)
+        expected = pd.Series([np.nan, 1, 3, 5, 7, 9, 11, 13, 15, 17], index=idx)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test3(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=10)
+        srs = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], index=idx)
+        actual = sigp.accumulate(srs, num_steps=3)
+        expected = pd.Series(
+            [np.nan, np.nan, 3, 6, 9, 12, 15, 18, 21, 24], index=idx
+        )
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test4(self) -> None:
+        srs = pd.Series(
+            np.random.randn(100), index=pd.date_range("2010-01-01", periods=100)
+        )
+        actual = sigp.accumulate(srs, num_steps=5)
+        self.check_string(hut.convert_df_to_string(actual, index=True))
+
+    def test_long_step1(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=3)
+        srs = pd.Series([1, 2, 3], index=idx)
+        actual = sigp.accumulate(srs, num_steps=5)
+        expected = pd.Series([np.nan, np.nan, np.nan], index=idx)
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test_nans1(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=10)
+        srs = pd.Series([0, 1, np.nan, 2, 3, 4, np.nan, 5, 6, 7], index=idx)
+        actual = sigp.accumulate(srs, num_steps=3)
+        expected = pd.Series(
+            [
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                9,
+                np.nan,
+                np.nan,
+                np.nan,
+                18,
+            ],
+            index=idx,
+        )
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test_nans2(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=6)
+        srs = pd.Series([np.nan, np.nan, np.nan, 2, 3, 4], index=idx)
+        actual = sigp.accumulate(srs, num_steps=3)
+        expected = pd.Series(
+            [np.nan, np.nan, np.nan, np.nan, np.nan, 9], index=idx
+        )
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test_nans3(self) -> None:
+        idx = pd.date_range("2010-01-01", periods=6)
+        srs = pd.Series([np.nan, np.nan, np.nan, 2, 3, 4], index=idx)
+        actual = sigp.accumulate(srs, num_steps=2)
+        expected = pd.Series([np.nan, np.nan, np.nan, np.nan, 5, 7], index=idx)
+        pd.testing.assert_series_equal(actual, expected)
 
 
 class Test_get_symmetric_equisized_bins(hut.TestCase):
@@ -37,15 +114,110 @@ class Test_get_symmetric_equisized_bins(hut.TestCase):
 
 
 class Test_compute_rolling_zscore1(hut.TestCase):
+    @staticmethod
+    def _get_arma_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([1], [1])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        ).rename("input")
+        return series
+
     def test_default_values1(self) -> None:
-        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.compute_rolling_zscore(heaviside, tau=40)
-        self.check_string(zscored.to_string())
+        """
+        Test with default parameters on a heaviside series.
+        """
+        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1).rename("input")
+        actual = sigp.compute_rolling_zscore(heaviside, tau=40).rename("output")
+        output_df = pd.concat([heaviside, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test_default_values2(self) -> None:
-        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1)
-        zscored = sigp.compute_rolling_zscore(heaviside, tau=20)
-        self.check_string(zscored.to_string())
+        """
+        Test for tau with default parameters on a heaviside series.
+        """
+        heaviside = sig_gen.get_heaviside(-10, 252, 1, 1).rename("input")
+        actual = sigp.compute_rolling_zscore(heaviside, tau=20).rename("output")
+        output_df = pd.concat([heaviside, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_clean1(self) -> None:
+        """
+        Test on a clean arma series.
+        """
+        series = self._get_arma_series(seed=1)
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_nan1(self) -> None:
+        """
+        Test on an arma series with leading NaNs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_nan2(self) -> None:
+        """
+        Test on an arma series with interspersed NaNs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.nan
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_zero1(self) -> None:
+        """
+        Test on an arma series with leading zeros.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_zero2(self) -> None:
+        """
+        Test on an arma series with interspersed zeros.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_inf1(self) -> None:
+        """
+        Test on an arma series with leading infs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[:5] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_arma_inf2(self) -> None:
+        """
+        Test on an arma series with interspersed infs.
+        """
+        series = self._get_arma_series(seed=1)
+        series[5:10] = np.inf
+        actual = sigp.compute_rolling_zscore(series, tau=20).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
 
 class Test_process_outliers1(hut.TestCase):
@@ -367,14 +539,26 @@ class Test_compute_rolling_zcorr1(hut.TestCase):
 
 
 class Test_compute_ipca(hut.TestCase):
+    @staticmethod
+    def _get_df(seed: int) -> pd.DataFrame:
+        """
+        Generate a dataframe via `sig_gen.MultivariateNormalProcess()`.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=seed)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=seed
+        )
+        return df
+
     def test1(self) -> None:
-        np.random.seed(42)
+        """
+        Test for a clean input.
+        """
+        df = self._get_df(seed=1)
         num_pc = 3
-        alpha = 0.5
-        n = 100
-        m = 10
-        df = pd.DataFrame(np.random.randn(n, m))
-        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, alpha)
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
         unit_eigenvec_dfs_txt = "\n".join(
             [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
         )
@@ -382,6 +566,195 @@ class Test_compute_ipca(hut.TestCase):
             f"lambda_df:\n{lambda_df.to_string()}\n, "
             f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
         )
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        """
+        Test for an input with leading NaNs in only a subset of cols.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[0:3, :-3] = np.nan
+        num_pc = 3
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    def test3(self) -> None:
+        """
+        Test for an input with interspersed NaNs.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[5:8, 3:5] = np.nan
+        df.iloc[2:4, 8:] = np.nan
+        num_pc = 3
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    def test4(self) -> None:
+        """
+        Test for an input with a full-NaN row among the 3 first rows.
+
+        The eigenvalue estimates aren't in sorted order but should be.
+        TODO(*): Fix problem with not sorted eigenvalue estimates.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[1:2, :] = np.nan
+        num_pc = 3
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+    def test5(self) -> None:
+        """
+        Test for an input with 5 leading NaNs in all cols.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[:5, :] = np.nan
+        num_pc = 3
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
+
+
+class Test__compute_ipca_step(hut.TestCase):
+    @staticmethod
+    def _get_output_txt(
+        u: pd.Series, v: pd.Series, u_next: pd.Series, v_next: pd.Series
+    ) -> str:
+        """
+        Create string output for tests results.
+        """
+        u_string = hut.convert_df_to_string(u, index=True)
+        v_string = hut.convert_df_to_string(v, index=True)
+        u_next_string = hut.convert_df_to_string(u_next, index=True)
+        v_next_string = hut.convert_df_to_string(v_next, index=True)
+        txt = (
+            f"u:\n{u_string}\n"
+            f"v:\n{v_string}\n"
+            f"u_next:\n{u_next_string}\n"
+            f"v_next:\n{v_next_string}"
+        )
+        return txt
+
+    def test1(self) -> None:
+        """
+        Test for clean input series.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
+        self.check_string(txt)
+
+    def test2(self) -> None:
+        """
+        Test for input series with all zeros.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[:] = 0
+        v[:] = 0
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
+        self.check_string(txt)
+
+    def test3(self) -> None:
+        """
+        Test that u == u_next for the case when np.linalg.norm(v)=0.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        v[:] = 0
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
+        self.check_string(txt)
+
+    def test4(self) -> None:
+        """
+       Test for input series with all NaNs.
+
+       Output is not intended.
+       TODO(Dan): implement a way to deal with NaNs in the input.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[:] = np.nan
+        v[:] = np.nan
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
+        self.check_string(txt)
+
+    def test5(self) -> None:
+        """
+        Test for input series with some NaNs.
+
+        Output is not intended.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=1
+        )
+        u = df.iloc[1]
+        v = df.iloc[2]
+        u[3:6] = np.nan
+        v[5:8] = np.nan
+        alpha = 0.5
+        u_next, v_next = sigp._compute_ipca_step(u, v, alpha)
+        txt = self._get_output_txt(u, v, u_next, v_next)
         self.check_string(txt)
 
 
@@ -445,3 +818,96 @@ class Test_compute_rolling_annualized_sharpe_ratio(hut.TestCase):
             realization, tau=16
         )
         self.check_string(hut.convert_df_to_string(rolling_sr, index=True))
+
+
+class Test_get_swt(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int, periods: int = 20) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "1/1/2010", "periods": periods, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
+
+    @staticmethod
+    def _get_tuple_output_txt(
+        output: Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]
+    ) -> str:
+        """
+        Create string output for a tuple type return.
+        """
+        smooth_df_string = hut.convert_df_to_string(output[0], index=True)
+        detail_df_string = hut.convert_df_to_string(output[1], index=True)
+        output_str = (
+            f"smooth_df:\n{smooth_df_string}\n"
+            f"\ndetail_df\n{detail_df_string}\n"
+        )
+        return output_str
+
+    def test_clean1(self) -> None:
+        """
+        Test for default values.
+        """
+        series = self._get_series(seed=1, periods=40)
+        actual = sigp.get_swt(series, wavelet="haar")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode1(self) -> None:
+        """
+        Test for timing_mode="knowledge_time".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(
+            series, wavelet="haar", timing_mode="knowledge_time"
+        )
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode2(self) -> None:
+        """
+        Test for timing_mode="zero_phase".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", timing_mode="zero_phase")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_timing_mode3(self) -> None:
+        """
+        Test for timing_mode="raw".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", timing_mode="raw")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_output_mode1(self) -> None:
+        """
+        Test for output_mode="tuple".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="tuple")
+        output_str = self._get_tuple_output_txt(actual)
+        self.check_string(output_str)
+
+    def test_output_mode2(self) -> None:
+        """
+        Test for output_mode="smooth".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="smooth")
+        actual_str = hut.convert_df_to_string(actual, index=True)
+        output_str = f"smooth_df:\n{actual_str}\n"
+        self.check_string(output_str)
+
+    def test_output_mode3(self) -> None:
+        """
+        Test for output_mode="detail".
+        """
+        series = self._get_series(seed=1)
+        actual = sigp.get_swt(series, wavelet="haar", output_mode="detail")
+        actual_str = hut.convert_df_to_string(actual, index=True)
+        output_str = f"detail_df:\n{actual_str}\n"
+        self.check_string(output_str)

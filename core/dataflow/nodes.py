@@ -16,7 +16,6 @@ import pandas as pd
 
 import core.backtest as bcktst
 import core.data_adapters as adpt
-import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
 
@@ -126,7 +125,8 @@ class DataSource(FitPredictNode, abc.ABC):
 
     def set_fit_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
         """
-        :param intervals: closed time intervals like [start1, end1], [start2, end2]
+        :param intervals: closed time intervals like [start1, end1],
+            [start2, end2]. `None` boundary is interpreted as data start/end
         """
         self._validate_intervals(intervals)
         self._fit_intervals = intervals
@@ -150,11 +150,13 @@ class DataSource(FitPredictNode, abc.ABC):
         info = collections.OrderedDict()
         info["fit_df_info"] = get_df_info_as_string(fit_df)
         self._set_info("fit", info)
+        dbg.dassert(not fit_df.empty)
         return {self.output_names[0]: fit_df}
 
     def set_predict_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
         """
-        :param intervals: closed time intervals like [start1, end1], [start2, end2]
+        :param intervals: closed time intervals like [start1, end1],
+            [start2, end2]. `None` boundary is interpreted as data start/end
 
         TODO(*): Warn if intervals overlap with `fit` intervals.
         TODO(*): Maybe enforce that the intervals be ordered.
@@ -179,6 +181,7 @@ class DataSource(FitPredictNode, abc.ABC):
         info = collections.OrderedDict()
         info["predict_df_info"] = get_df_info_as_string(predict_df)
         self._set_info("predict", info)
+        dbg.dassert(not predict_df.empty)
         return {self.output_names[0]: predict_df}
 
     def get_df(self) -> pd.DataFrame:
@@ -190,7 +193,8 @@ class DataSource(FitPredictNode, abc.ABC):
         dbg.dassert_isinstance(intervals, list)
         for interval in intervals:
             dbg.dassert_eq(len(interval), 2)
-            dbg.dassert_lte(interval[0], interval[1])
+            if interval[0] is not None and interval[1] is not None:
+                dbg.dassert_lte(interval[0], interval[1])
 
 
 class Transformer(FitPredictNode, abc.ABC):
@@ -212,15 +216,19 @@ class Transformer(FitPredictNode, abc.ABC):
         """
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_no_duplicates(df_in.columns)
         # Transform the input df.
         df_out, info = self._transform(df_in)
         self._set_info("fit", info)
+        dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_no_duplicates(df_in.columns)
         # Transform the input df.
         df_out, info = self._transform(df_in)
         self._set_info("predict", info)
+        dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
 
@@ -281,7 +289,7 @@ class DiskDataSource(DataSource):
         if self._timestamp_col is not None:
             self.df.set_index(self._timestamp_col, inplace=True)
         self.df.index = pd.to_datetime(self.df.index)
-        dbg.dassert_monotonic_index(self.df)
+        dbg.dassert_strictly_increasing_index(self.df)
         self.df = self.df.loc[self._start_date : self._end_date]
         dbg.dassert(not self.df.empty, "Dataframe is empty")
 
@@ -449,7 +457,6 @@ class ColumnTransformer(Transformer):
         )
         return self._transformed_col_names
 
-    # TODO(Paul): Add type hints (or rely on parent class?).
     def _transform(
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
@@ -496,7 +503,7 @@ class ColumnTransformer(Transformer):
             df = df_in.merge(df, left_index=True, right_index=True)
         elif self._col_mode == "replace_selected":
             dbg.dassert(
-                df.columns.intersection(df_in[self._cols]).empty,
+                df.columns.intersection(df_in[self._cols].columns).empty,
                 "Transformed column names `%s` conflict with existing column "
                 "names `%s`.",
                 df.columns,
@@ -532,18 +539,6 @@ class DataframeMethodRunner(Transformer):
         # Not all methods return DataFrames. We want to restrict to those that
         # do.
         dbg.dassert_isinstance(df, pd.DataFrame)
-        #
-        info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
-        return df, info
-
-
-class FilterAth(Transformer):
-    def _transform(
-        self, df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        df = df.copy()
-        df = fin.filter_ath(df)
         #
         info = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
@@ -672,14 +667,19 @@ class ContinuousSkLearnModel(FitPredictNode):
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
+        model_attribute_info = collections.OrderedDict()
+        for k, v in vars(self._model).items():
+            model_attribute_info[k] = v
+        info["model_attributes"] = model_attribute_info
         info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        return {
-            "df_out": fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
-        }
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -705,14 +705,15 @@ class ContinuousSkLearnModel(FitPredictNode):
         )
         # Generate basic perf stats.
         info = collections.OrderedDict()
+        info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
-        return {
-            "df_out": fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
-        }
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
@@ -720,6 +721,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         Assert if df violates constraints, otherwise return `None`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
         dbg.dassert(df.index.freq)
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -792,6 +794,267 @@ class ContinuousSkLearnModel(FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
+class UnsupervisedSkLearnModel(FitPredictNode):
+    """
+    Fit and transform an unsupervised sklearn model.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Specify the data and sklearn modeling parameters.
+
+        Assumptions:
+            :param nid: unique node id
+            :param model_func: an sklearn model
+            :param x_vars: indexed by knowledge datetimes
+            :param model_kwargs: parameters to forward to the sklearn model
+                (e.g., regularization constants)
+        """
+        super().__init__(nid)
+        self._model_func = model_func
+        self._model_kwargs = model_kwargs or {}
+        self._x_vars = x_vars
+        self._model = None
+        self._nan_mode = nan_mode or "raise"
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool = False):
+        """
+        Factor out common flow for fit/predict.
+
+        :param df_in: as in `fit`/`predict`
+        :param fit: fits model iff `True`
+        :return: transformed df_in
+        """
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Determine index where no x_vars are NaN.
+        x_vars = self._to_list(self._x_vars)
+        non_nan_idx = df[x_vars].dropna().index
+        dbg.dassert(not non_nan_idx.empty)
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(df.index, non_nan_idx)
+        # Prepare x_vars in sklearn format.
+        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        if fit:
+            # Define and fit model.
+            self._model = self._model_func(**self._model_kwargs)
+            self._model = self._model.fit(x_fit)
+        # Generate insample transformations and put in dataflow dataframe format.
+        x_transform = self._model.transform(x_fit)
+        #
+        num_cols = x_transform.shape[1]
+        x_hat = adpt.transform_from_sklearn(
+            non_nan_idx, list(range(num_cols)), x_transform
+        )
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
+        model_attribute_info = collections.OrderedDict()
+        for k, v in vars(self._model).items():
+            model_attribute_info[k] = v
+        info["model_attributes"] = model_attribute_info
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
+        # Return targets and predictions.
+        dbg.dassert_no_duplicates(x_hat.columns)
+        return {"df_out": x_hat.reindex(index=df_in.index)}
+
+    def _handle_nans(
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+    ) -> None:
+        if self._nan_mode == "raise":
+            if idx.shape[0] != non_nan_idx.shape[0]:
+                nan_idx = idx.difference(non_nan_idx)
+                raise ValueError(f"NaNs detected at {nan_idx}")
+        elif self._nan_mode == "drop":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert(df.index.freq)
+
+    # TODO(Paul): Make this a mixin to use with all modeling nodes.
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        Return a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
+class Residualizer(FitPredictNode):
+    """
+    Residualize using an sklearn model with `inverse_transform()`.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Specify the data and sklearn modeling parameters.
+
+        Assumptions:
+            :param nid: unique node id
+            :param model_func: an sklearn model
+            :param x_vars: indexed by knowledge datetimes
+            :param model_kwargs: parameters to forward to the sklearn model
+                (e.g., regularization constants)
+        """
+        super().__init__(nid)
+        self._model_func = model_func
+        self._model_kwargs = model_kwargs or {}
+        self._x_vars = x_vars
+        self._model = None
+        self._nan_mode = nan_mode or "raise"
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool = False):
+        """
+        Factor out common flow for fit/predict.
+
+        :param df_in: as in `fit`/`predict`
+        :param fit: fits model iff `True`
+        :return: transformed df_in
+        """
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Determine index where no x_vars are NaN.
+        x_vars = self._to_list(self._x_vars)
+        non_nan_idx = df[x_vars].dropna().index
+        dbg.dassert(not non_nan_idx.empty)
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(df.index, non_nan_idx)
+        # Prepare x_vars in sklearn format.
+        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        if fit:
+            # Define and fit model.
+            self._model = self._model_func(**self._model_kwargs)
+            self._model = self._model.fit(x_fit)
+        # Generate insample transformations and put in dataflow dataframe format.
+        x_transform = self._model.transform(x_fit)
+        x_hat = self._model.inverse_transform(x_transform)
+        #
+        x_transform.shape[1]
+        x_residual = adpt.transform_from_sklearn(
+            non_nan_idx, x_vars, x_fit - x_hat
+        )
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
+        model_attribute_info = collections.OrderedDict()
+        for k, v in vars(self._model).items():
+            model_attribute_info[k] = v
+        info["model_attributes"] = model_attribute_info
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
+        # Return targets and predictions.
+        return {"df_out": x_residual.reindex(index=df_in.index)}
+
+    def _handle_nans(
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+    ) -> None:
+        if self._nan_mode == "raise":
+            if idx.shape[0] != non_nan_idx.shape[0]:
+                nan_idx = idx.difference(non_nan_idx)
+                raise ValueError(f"NaNs detected at {nan_idx}")
+        elif self._nan_mode == "drop":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert(df.index.freq)
+
+    # TODO(Paul): Make this a mixin to use with all modeling nodes.
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        Return a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
 class SkLearnModel(FitPredictNode):
     def __init__(
         self,
@@ -809,7 +1072,7 @@ class SkLearnModel(FitPredictNode):
         self._model = None
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        SkLearnModel._validate_input_df(df_in)
         dbg.dassert(
             df_in[df_in.isna().any(axis=1)].index.empty,
             "NaNs detected at index `%s`",
@@ -829,11 +1092,14 @@ class SkLearnModel(FitPredictNode):
         # TODO(Paul): Consider separating model eval from fit/predict.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
+        #
+        dbg.dassert_no_duplicates(y_hat.columns)
         return {"df_out": y_hat}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        SkLearnModel._validate_input_df(df_in)
         df = df_in.copy()
         idx = df.index
         x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
@@ -845,9 +1111,20 @@ class SkLearnModel(FitPredictNode):
             idx, x_vars, x_predict, y_vars, y_predict, y_hat
         )
         info = collections.OrderedDict()
+        info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
+        #
+        dbg.dassert_no_duplicates(y_hat.columns)
         return {"df_out": y_hat}
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
 
     # TODO(Paul): Add type hints.
     @staticmethod
@@ -1029,9 +1306,10 @@ class ContinuousDeepArModel(FitPredictNode):
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("fit", info)
-        return {
-            "df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        }
+        #
+        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -1064,9 +1342,10 @@ class ContinuousDeepArModel(FitPredictNode):
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         self._set_info("predict", info)
-        return {
-            "df_out": fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        }
+        #
+        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
@@ -1074,6 +1353,7 @@ class ContinuousDeepArModel(FitPredictNode):
         Assert if df violates constraints, otherwise return `None`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
         dbg.dassert(df.index.freq)
 
     def _get_fwd_y_df(self, df):
@@ -1176,6 +1456,7 @@ class DeepARGlobalModel(FitPredictNode):
         then `prediction_length = 2`.
         """
         dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_no_duplicates(df_in.columns)
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
@@ -1231,6 +1512,7 @@ class DeepARGlobalModel(FitPredictNode):
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_no_duplicates(df_in.columns)
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
@@ -1384,7 +1666,9 @@ def process_result_bundle(result_bundle: Dict) -> collections.OrderedDict:
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = stats.compute_sharpe_ratio(pnl_rets.resample("1B").sum(), time_scaling=252)
+    sr = stats.compute_sharpe_ratio(
+        pnl_rets.resample("1B").sum(), time_scaling=252
+    )
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
     info["sr"] = copy.copy(sr)

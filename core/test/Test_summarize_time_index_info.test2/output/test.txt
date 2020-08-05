@@ -1,0 +1,5 @@
+                                     0
+start_time         2010-01-31 00:00:00
+end_time           2013-04-30 00:00:00
+n_sampling_points                   38
+frequency                         None

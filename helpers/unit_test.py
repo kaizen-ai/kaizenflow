@@ -140,6 +140,55 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
+def convert_df_to_json_string(
+    df: pd.DataFrame, n_head: Optional[int] = 10, n_tail: Optional[int] = 10
+) -> str:
+    """
+    Convert dataframe to pretty-printed json string.
+
+    To select all rows of the dataframe, pass `n_head` as None.
+
+    :param df: dataframe to convert
+    :param n_head: number of printed top rows
+    :param n_tail: number of printed bottom rows
+    :return: dataframe converted to JSON string
+    """
+    # Append shape of the initial dataframe.
+    shape = "original shape=%s" % (df.shape,)
+    # Select head.
+    if n_head is not None:
+        head_df = df.head(n_head)
+    else:
+        # If no n_head provided, append entire dataframe.
+        head_df = df
+    # Transform head to json.
+    head_json = head_df.to_json(
+        orient="index",
+        force_ascii=False,
+        indent=4,
+        default_handler=str,
+        date_format="iso",
+        date_unit="s",
+    )
+    if n_tail is not None:
+        # Transform tail to json.
+        tail = df.tail(n_tail)
+        tail_json = tail.to_json(
+            orient="index",
+            force_ascii=False,
+            indent=4,
+            default_handler=str,
+            date_format="iso",
+            date_unit="s",
+        )
+    else:
+        # If no tail specified, append an empty string.
+        tail_json = ""
+    # Join shape and dataframe to single string.
+    output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
+    return output_str
+
+
 def get_ordered_value_counts(column: pd.Series) -> pd.Series:
     """
     Get column value counts and sort.
@@ -463,7 +512,11 @@ class TestCase(unittest.TestCase):
         return dir_name
 
     # TODO(gp): -> get_scratch_dir().
-    def get_scratch_space(self) -> str:
+    def get_scratch_space(
+        self,
+        test_class_name: Optional[Any] = None,
+        test_method_name: Optional[Any] = None,
+    ) -> str:
         """
         Return the path of the directory storing scratch data for this test class.
         The directory is also created and cleaned up based on whether the
@@ -473,7 +526,10 @@ class TestCase(unittest.TestCase):
         """
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
-            dir_name = os.path.join(self._get_current_path(), "tmp.scratch")
+            curr_path = self._get_current_path(
+                test_class_name=test_class_name, test_method_name=test_method_name
+            )
+            dir_name = os.path.join(curr_path, "tmp.scratch")
             io_.create_dir(dir_name, incremental=get_incremental_tests())
             self._scratch_dir = dir_name
         return self._scratch_dir

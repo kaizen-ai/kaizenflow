@@ -1,5 +1,5 @@
 channels:
-  #- quantopian
+  #- quantopian             # Needed by trading-calendars.
   - conda-forge
 dependencies:
   # ############################################################################
@@ -24,9 +24,9 @@ dependencies:
   - matplotlib
   - networkx
   - numba
-  - numpy <= 1.17
-  - pandas
-  - pandas-datareader=0.8.0     # PartTask344.
+  - numpy
+  - pandas >= 1.0.0
+  - pandas-datareader = 0.8.0     # PartTask344.
   - pyarrow
   - pywavelets
   - scikit-learn
@@ -46,7 +46,7 @@ dependencies:
   # ############################################################################
   # Linter
   # ############################################################################
-  #- pyment                   # conda install -c akode pyment
+  #- pyment                 # conda install -c akode pyment
   - autoflake
   - black
   - flake8
@@ -88,8 +88,10 @@ dependencies:
   - beautifulsoup4
   - git                     # To use latest git client.
   - joblib
+  - jsonpickle
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
+  - scrapy
   # ############################################################################
   # Pip
   # ############################################################################
@@ -104,3 +106,10 @@ dependencies:
     - mxnet >= 1.6.0
     - gluonnlp              # gluon* and mxnet need to be installed through pip
     - gluonts               # since conda doesn't support / has old packages.
+    - scrapy_splash
+    # ############################################################################
+    # ETL3
+    # ############################################################################
+    - gitpython
+    - dbnomics-data-model
+    - python-slugify
