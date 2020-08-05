@@ -132,7 +132,7 @@ def compute_frac_inf(
 
 # TODO(Paul): Refactor to work with dataframes as well. Consider how to handle
 #     `axis`, which the pd.Series version of `copy()` does not take.
-def count_num_finite_samples(data: pd.Series) -> float:
+def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
     """
     Count number of finite data points in a given time series.
 
@@ -147,7 +147,7 @@ def count_num_finite_samples(data: pd.Series) -> float:
 
 
 # TODO(Paul): Extend to dataframes.
-def count_num_unique_values(data: pd.Series) -> float:
+def count_num_unique_values(data: pd.Series) -> Union[int, float]:
     """
     Count number of unique values in the series.
     """
