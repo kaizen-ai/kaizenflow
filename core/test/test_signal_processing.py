@@ -219,6 +219,30 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
+    def test_delay1(self) -> None:
+        """
+        Test on a clean arma series when `delay=1`.
+        """
+        series = self._get_arma_series(seed=1)
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=1).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2(self) -> None:
+        """
+        Test on a clean arma series when `delay=2`.
+        """
+        series = self._get_arma_series(seed=1)
+        actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
 
 class Test_process_outliers1(hut.TestCase):
     def _helper(
