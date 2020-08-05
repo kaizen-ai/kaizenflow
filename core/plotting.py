@@ -20,6 +20,7 @@ import sklearn.decomposition as skldec
 import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
+import statsmodels.regression.rolling as smrr
 
 import core.explore as expl
 import core.finance as fin
@@ -991,7 +992,7 @@ def multipletests_plot(
             ),
         )
         ax[i].set_title(col)
-        ax[i].axhline(threshold, ls=":", c="k")
+        ax[i].axhline(threshold, ls="--", c="k")
         ax[i].set_ylim(0, 1)
         ax[i].legend()
     plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
@@ -1486,6 +1487,75 @@ def plot_allocation(
         f"Portfolio allocation over time; {position_df.shape[1]} positions"
     )
     ax.set_xlabel("period")
+    ax.legend()
+
+
+def plot_rolling_beta(
+    rets: pd.Series,
+    benchmark_rets: pd.Series,
+    window: int,
+    nan_mode: Optional[str] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+    **kwargs: Any,
+) -> None:
+    """
+    Regress returns against benchmark series and plot rolling beta.
+
+    :param rets: returns
+    :param benchmark_rets: benchmark returns
+    :param window: length of the rolling window
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param figsize: figure size
+    :param ax: axis
+    :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
+    """
+    dbg.dassert_strictly_increasing_index(rets)
+    dbg.dassert_strictly_increasing_index(benchmark_rets)
+    dbg.dassert_eq(rets.index.freq, benchmark_rets.index.freq)
+    # Assert that the 'rets' index is a subset of the 'benchmark_rets' index.
+    dbg.dassert(rets.index.isin(benchmark_rets.index).all())
+    dbg.dassert_lte(
+        window,
+        min(len(rets), len(benchmark_rets)),
+        "`window` should not be larger than inputs' lengths.",
+    )
+    rets_name = rets.name
+    benchmark_name = benchmark_rets.name
+    dbg.dassert_ne(
+        rets_name, benchmark_name, "Inputs should have different names."
+    )
+    nan_mode = nan_mode or "leave_unchanged"
+    figsize = figsize or FIG_SIZE
+    # Combine rets and benchmark_rets in one dataframe over the intersection
+    #    of their indices.
+    all_rets_df = pd.concat([rets, benchmark_rets], axis=1, join="inner")
+    all_rets_df.columns = [rets_name, benchmark_name]
+    # Extract copies of rets and benchmark_rets with unified indices.
+    rets = all_rets_df[rets_name]
+    benchmark_rets = all_rets_df[benchmark_name]
+    rets = hdf.apply_nan_mode(rets, nan_mode)
+    benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
+    #
+    ax = ax or plt.gca()
+    benchmark_rets = sm.add_constant(benchmark_rets)
+    # Calculate and plot rolling beta.
+    model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
+    res_rolling = model_rolling.fit()
+    beta_rolling = res_rolling.params[benchmark_name]
+    beta_rolling.plot(
+        ax=ax,
+        figsize=figsize,
+        title=f"Beta with respect to {benchmark_name}",
+        label="Rolling beta",
+    )
+    # Calculate and plot beta for the whole period.
+    model_whole_period = sm.OLS(rets, benchmark_rets)
+    res_whole_period = model_whole_period.fit()
+    beta_whole_period = res_whole_period.params[benchmark_name]
+    ax.axhline(beta_whole_period, ls="--", c="k", label="Whole-period beta")
+    ax.set_xlabel("period")
+    ax.set_ylabel("beta")
     ax.legend()
 
 
