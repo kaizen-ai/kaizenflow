@@ -920,6 +920,8 @@ def apply_adf_test(
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
+        # The output of sm.tsa.stattools.adfuller in this case can only be
+        # of the length 6 so ignore the lint.
         (
             adf_stat,
             pval,
