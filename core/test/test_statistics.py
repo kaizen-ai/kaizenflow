@@ -1349,6 +1349,60 @@ class TestGetInterarrivalTime(hut.TestCase):
         self.check_string(actual_string)
 
 
+class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
+    @staticmethod
+    def _get_pos(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        """
+        Test for default parameters.
+        """
+        pos = self._get_pos(seed=1)
+        actual = stats.compute_avg_turnover_and_holding_period(pos)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test for unit.
+        """
+        pos = self._get_pos(seed=1)
+        actual = stats.compute_avg_turnover_and_holding_period(pos, unit="M")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        """
+        Test for nan_mode.
+        """
+        pos = self._get_pos(seed=1)
+        pos[5:10] = np.nan
+        actual = stats.compute_avg_turnover_and_holding_period(
+            pos, nan_mode="fill_with_zero"
+        )
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        """
+        Test for prefix.
+        """
+        pos = self._get_pos(seed=1)
+        actual = stats.compute_avg_turnover_and_holding_period(
+            pos, prefix="test_"
+        )
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
 class TestComputeInterarrivalTimeStats(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:

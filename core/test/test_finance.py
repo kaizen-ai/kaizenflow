@@ -203,31 +203,54 @@ class Test_compute_turnover(hut.TestCase):
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
         arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
-        )
+        ).rename("input")
         return series
 
     def test1(self) -> None:
+        """
+        Test for default arguments.
+        """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(series).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test2(self) -> None:
+        """
+        Test for only positive input.
+        """
         positive_series = self._get_series(seed=1).abs()
-        actual = fin.compute_turnover(positive_series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(positive_series).rename("output")
+        output_df = pd.concat([positive_series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test3(self) -> None:
+        """
+        Test for nan_mode.
+        """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(series, nan_mode="ffill").rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test4(self) -> None:
+        """
+        Test for unit.
+        """
+        series = self._get_series(seed=1)
+        series[5:10] = np.nan
+        actual = fin.compute_turnover(series, unit="B").rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
 
 class Test_compute_average_holding_period(hut.TestCase):
