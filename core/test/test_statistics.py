@@ -1159,6 +1159,66 @@ class Test_summarize_sharpe_ratio(hut.TestCase):
         self.check_string(hut.convert_df_to_string(res, index=True))
 
 
+class Test_zscore_oos_sharpe_ratio(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "2010-01-01", "periods": 252, "freq": "B"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed, scale=0.1
+        )
+        return series
+
+    def test1(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, 1.4469573140895036)
+
+    def test2(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-08-01")
+        self.assertEqual(oos_sr, 1.5135753117195743)
+
+    def test3(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        series.loc["2010-06-01":] = series.loc["2010-06-01":].apply(
+            lambda x: 0.1 * x if x > 0 else x
+        )
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, -3.5378299982103525)
+
+    def test4(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        series.loc["2010-06-01":] = series.loc["2010-06-01":].apply(
+            lambda x: 0.1 * x if x < 0 else x
+        )
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, 5.490525364424428)
+
+    def test_nans1(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        series.iloc[:10] = np.nan
+        series.iloc[40:50] = np.nan
+        series.loc["2010-06-01":"2010-06-15"] = np.nan
+        series.loc["2010-08-01":"2010-08-31"] = np.nan
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, 1.6125151057197262)
+
+    def test_zeros1(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        series.iloc[:10] = 0
+        series.iloc[40:50] = 0
+        series.loc["2010-06-01":"2010-06-15"] = 0
+        series.loc["2010-08-01":"2010-08-31"] = 0
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, 1.6125151057197262)
+
+    def test_oos_not_from_interval1(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        with self.assertRaises(AssertionError):
+            _ = stats.zscore_oos_sharpe_ratio(series, "2012-01-01")
+
+
 class Test_compute_drawdown_cdf(hut.TestCase):
     def test1(self) -> None:
         sharpe_ratio = 1
