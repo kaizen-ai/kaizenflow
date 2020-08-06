@@ -745,6 +745,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         return series
 
     def test1(self) -> None:
+        """
+        Test for clean input series.
+        """
         log_rets = self._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
         actual = fin.compute_returns_per_bet(positions, log_rets)
@@ -758,6 +761,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         self.check_string(output_str)
 
     def test2(self) -> None:
+        """
+        Test for input series with NaNs and zeros.
+        """
         log_rets = self._get_series(42)
         log_rets.iloc[6:12] = np.nan
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
@@ -775,6 +781,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         self.check_string(output_str)
 
     def test3(self) -> None:
+        """
+        Test for short input series.
+        """
         idx = pd.to_datetime(
             [
                 "2010-01-01",
