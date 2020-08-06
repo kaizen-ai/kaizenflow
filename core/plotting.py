@@ -1523,7 +1523,7 @@ def plot_rolling_beta(
     dbg.dassert_ne(
         rets_name, benchmark_name, "Inputs should have different names."
     )
-    nan_mode = nan_mode or "leave_unchanged"
+    nan_mode = nan_mode or "drop"
     figsize = figsize or FIG_SIZE
     # Combine rets and benchmark_rets in one dataframe over the intersection
     #    of their indices.
