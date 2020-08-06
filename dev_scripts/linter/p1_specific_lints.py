@@ -20,8 +20,8 @@ import typing_extensions
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
-import linter.base as lntr
-import linter.utils as utils
+import dev_scripts.linter.base as lntr
+import dev_scripts.linter.utils as utils
 
 _LOG = logging.getLogger(__name__)
 

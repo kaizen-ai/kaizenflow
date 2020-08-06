@@ -13,8 +13,8 @@ import helpers.parser as prsr
 import helpers.printing as prnt
 import helpers.system_interaction as si
 import helpers.unit_test as ut
-import linter.base as lntr
-import linter.utils as utils
+import dev_scripts.linter.base as lntr
+import dev_scripts.linter.utils as utils
 
 _LOG = logging.getLogger(__name__)
 

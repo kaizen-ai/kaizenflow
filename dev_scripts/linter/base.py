@@ -48,7 +48,7 @@ import helpers.list as hlist
 import helpers.parser as prsr
 import helpers.printing as prnt
 import helpers.system_interaction as si
-import linter.utils as utils
+import dev_scripts.linter.utils as utils
 
 _LOG = logging.getLogger(__name__)
 

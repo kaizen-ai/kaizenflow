@@ -11,8 +11,8 @@ from typing import List
 import helpers.dbg as dbg
 import helpers.parser as prsr
 import helpers.system_interaction as si
-import linter.base as lntr
-import linter.utils as utils
+import dev_scripts.linter.base as lntr
+import dev_scripts.linter.utils as utils
 
 _LOG = logging.getLogger(__name__)
 
