@@ -439,6 +439,55 @@ def compute_ttest_power_rule_constant(
     return const
 
 
+def zscore_oos_sharpe_ratio(log_rets: pd.Series, oos: Any) -> float:
+    """
+    Z-score the observed OOS SR wrt the INS SR and inflated SE.
+
+    TODO(*): Consider factoring out pieces and/or returning more info.
+
+    :param log_rets: log returns over entire period
+    :param oos: start of OOS (right endpoint)
+    :return: z-scored OOS SR
+    """
+    # Create ins/oos masks.
+    ins_mask = log_rets.index < oos
+    dbg.dassert(ins_mask.any())
+    ins_nobs = ins_mask.sum()
+    oos_mask = log_rets.index >= oos
+    dbg.dassert(oos_mask.any())
+    oos_nobs = oos_mask.sum()
+    #
+    inflation = compute_sharpe_ratio_prediction_interval_inflation_factor(
+        ins_nobs, oos_nobs
+    )
+    #
+    ins_srs = log_rets.loc[ins_mask].copy()
+    oos_srs = log_rets.loc[oos_mask].copy()
+    #
+    ins_sr = compute_annualized_sharpe_ratio(ins_srs)
+    ins_sr_se = compute_annualized_sharpe_ratio_standard_error(ins_srs)
+    pred_sr_se = inflation * ins_sr_se
+    #
+    oos_sr = compute_annualized_sharpe_ratio(oos_srs)
+    #
+    zscored = (oos_sr - ins_sr) / pred_sr_se
+    return zscored
+
+
+def compute_sharpe_ratio_prediction_interval_inflation_factor(
+    ins_nobs: Union[int, float], oos_nobs: Union[int, float]
+) -> float:
+    """
+    Compute the SE(SR) inflation factor for obtaining conditional OOS bounds.
+
+    :param ins_nobs: number of observations in-sample
+    :param oos_nobs: number of observations out-of-sample
+    :return: float > 1
+    """
+    se_inflation_factor = np.sqrt(1 + ins_nobs / oos_nobs)
+    return se_inflation_factor
+
+
 def compute_drawdown_cdf(
     sharpe_ratio: float,
     volatility: float,
