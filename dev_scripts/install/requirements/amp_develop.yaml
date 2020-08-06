@@ -12,6 +12,7 @@ dependencies:
   #- xmltodict
   - pytest
   - flaky
+  - pre-commit
   - pytest-cov
   - pytest-instafail
   - pytest-xdist
