@@ -132,7 +132,7 @@ def compute_frac_inf(
 
 # TODO(Paul): Refactor to work with dataframes as well. Consider how to handle
 #     `axis`, which the pd.Series version of `copy()` does not take.
-def count_num_finite_samples(data: pd.Series) -> float:
+def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
     """
     Count number of finite data points in a given time series.
 
@@ -147,7 +147,7 @@ def count_num_finite_samples(data: pd.Series) -> float:
 
 
 # TODO(Paul): Extend to dataframes.
-def count_num_unique_values(data: pd.Series) -> int:
+def count_num_unique_values(data: pd.Series) -> Union[int, float]:
     """
     Count number of unique values in the series.
     """
@@ -390,10 +390,10 @@ def apply_ttest_power_rule(
     const = compute_ttest_power_rule_constant(
         alpha=alpha, power=power, two_sided=two_sided
     )
-    if years is None:
+    if years is None and sharpe_ratio is not None:
         dbg.dassert_isinstance(sharpe_ratio, numbers.Number)
         years = const / (sharpe_ratio ** 2)
-    elif sharpe_ratio is None:
+    elif years is not None and sharpe_ratio is None:
         dbg.dassert_isinstance(years, numbers.Number)
         sharpe_ratio = np.sqrt(const / years)
     else:
@@ -435,7 +435,7 @@ def compute_ttest_power_rule_constant(
     dbg.dassert_lt(power, 1)
     if two_sided:
         alpha /= 2
-    const = (sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2
+    const: float = (sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2
     return const
 
 
@@ -508,7 +508,7 @@ def compute_normalized_drawdown_cdf(
         dd_div_root_t = normalized_drawdown / np.sqrt(time)
         a = sr_mult_root_t + dd_div_root_t
         b = sr_mult_root_t - dd_div_root_t
-    probability = sp.stats.norm.cdf(a) - np.exp(
+    probability: float = sp.stats.norm.cdf(a) - np.exp(
         -2 * sharpe_ratio * normalized_drawdown
     ) * sp.stats.norm.cdf(b)
     return probability
@@ -538,7 +538,7 @@ def compute_max_drawdown_approximate_cdf(
     # lambda_ * max_drawdown is the same as
     #     -2 * sharpe_ratio * (max_drawdown / volatility)
     y = lambda_ * max_drawdown - np.log(time)
-    probability = sp.stats.gumbel_r.cdf(y)
+    probability: float = sp.stats.gumbel_r.cdf(y)
     return probability
 
 
@@ -920,6 +920,8 @@ def apply_adf_test(
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
+        # The output of sm.tsa.stattools.adfuller in this case can only be
+        # of the length 6 so ignore the lint.
         (
             adf_stat,
             pval,
@@ -1295,15 +1297,17 @@ def compute_interarrival_time_stats(
         prefix + "min",
         prefix + "max",
     ]
+    nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
     if data.shape[0] < 2:
         _LOG.warning(
             "Input series `%s` with size '%d' is too small",
             srs.name,
             data.shape[0],
         )
-        nan_result = pd.Series(index=result_index, name=data.name, dtype="object")
         return nan_result
     interarrival_time = get_interarrival_time(data)
+    if interarrival_time is None:
+        return nan_result
     n_unique = interarrival_time.nunique()
     mean = interarrival_time.mean()
     std = interarrival_time.std()
