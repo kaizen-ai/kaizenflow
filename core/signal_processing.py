@@ -1471,11 +1471,11 @@ def causal_resample(
     :resample_kwargs: arguments for pd.DataFrame.resample
     :return: DatetimeIndexResampler object
     """
-    resample_kwargs = resample_kwargs or {
-        "rule": data.index.freq,
-        "closed": "right",
-        "label": "right",
-    }
+    resample_kwargs = resample_kwargs or {"rule": data.index.freq}
+    if "closed" not in resample_kwargs:
+        resample_kwargs["closed"] = "right"
+    if "label" not in resample_kwargs:
+        resample_kwargs["label"] = "right"
     # Execute resampling with specified kwargs.
     resampled_data = data.resample(**resample_kwargs)
     return resampled_data

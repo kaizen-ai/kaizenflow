@@ -1116,7 +1116,7 @@ class Test_causal_resample(hut.TestCase):
         ).rename("Input in " + freq)
         return series
 
-    def test_years1(self) -> None:
+    def test_day_to_year1(self) -> None:
         """
         Test when input freq="D" and unit='Y', aggregate with `.sum()`.
         """
@@ -1128,7 +1128,7 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_months1(self) -> None:
+    def test_day_to_month1(self) -> None:
         """
         Test when input freq="D" and unit='M', aggregate with `.sum()`.
         """
@@ -1140,7 +1140,7 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_weeks1(self) -> None:
+    def test_day_to_weeks1(self) -> None:
         """
         Test when input freq="D" and unit='W', aggregate with `.sum()`.
         """
@@ -1155,7 +1155,7 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_business_days1(self) -> None:
+    def test_days_to_business_days1(self) -> None:
         """
         Test when input freq="D" and unit='B', aggregate with `.sum()`.
         """
