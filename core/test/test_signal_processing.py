@@ -1248,7 +1248,9 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="D")
-        actual = sigp.causal_resample(df, rule="B", closed="left", label="left").sum()
+        actual = sigp.causal_resample(
+            df, rule="B", closed="left", label="left"
+        ).sum()
         actual.columns = ["1st output in B", "2nd output in B"]
         output_df = pd.concat([df, actual], axis=1)
         output_df["Day of the week"] = [
@@ -1367,6 +1369,24 @@ class Test_causal_resample(hut.TestCase):
             sigp.causal_resample(series, rule="B", closed="left", label="left")
             .sum()
             .rename("Output in B")
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_no_freq_input_day_to_business_day1(self) -> None:
+        """
+        Test for an input without `freq`.
+        """
+        series = self._get_series(seed=1, freq="D")
+        # Remove some observations in order to make `freq` None.
+        series[2:6] = np.nan
+        series.dropna()
+        actual = (
+            sigp.causal_resample(series, rule="B").sum().rename("Output in B")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
