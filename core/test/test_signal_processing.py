@@ -1116,9 +1116,15 @@ class Test_causal_resample(hut.TestCase):
         ).rename("Input in " + freq)
         return series
 
-    def test_day_to_year1(self) -> None:
+    def _get_df(self, seed: int, freq: str) -> pd.DataFrame:
+        srs_1 = self._get_series(seed=seed, freq=freq).rename("1st input")
+        srs_2 = self._get_series(seed=seed + 1, freq=freq).rename("2nd input")
+        df = pd.DataFrame([srs_1, srs_2]).T
+        return df
+
+    def test_srs_day_to_year1(self) -> None:
         """
-        Test when input freq="D" and unit='Y', aggregate with `.sum()`.
+        Test pd.Series input, freq="D", unit='Y', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
@@ -1128,9 +1134,20 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_day_to_month1(self) -> None:
+    def test_df_day_to_year1(self) -> None:
         """
-        Test when input freq="D" and unit='M', aggregate with `.sum()`.
+        Test pd.DataFrame input, freq="D", unit='Y', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="D")
+        actual = sigp.causal_resample(df, rule="Y").sum()
+        actual.columns = ["1st output in Y", "2nd output in Y"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_day_to_month1(self) -> None:
+        """
+        Test pd.Series input, freq="D", unit='M', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
@@ -1140,9 +1157,20 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_day_to_weeks1(self) -> None:
+    def test_df_day_to_month1(self) -> None:
         """
-        Test when input freq="D" and unit='W', aggregate with `.sum()`.
+        Test pd.DataFrame input, freq="D", unit='M', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="D")
+        actual = sigp.causal_resample(df, rule="M").sum()
+        actual.columns = ["1st output in M", "2nd output in M"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_day_to_week1(self) -> None:
+        """
+        Test pd.Series input, freq="D", unit='W', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
@@ -1155,9 +1183,23 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_days_to_business_days1(self) -> None:
+    def test_df_day_to_week1(self) -> None:
         """
-        Test when input freq="D" and unit='B', aggregate with `.sum()`.
+        Test pd.DataFrame input, freq="D", unit='W', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="D")
+        actual = sigp.causal_resample(df, rule="W").sum()
+        actual.columns = ["1st output in W", "2nd output in W"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_day_to_business_day1(self) -> None:
+        """
+        Test pd.Series input, freq="D", unit='B', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
@@ -1170,9 +1212,54 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_equal_unit_freq_days1(self) -> None:
+    def test_srs_day_to_business_day_kwargs1(self) -> None:
         """
-        Test when input freq="D" and unit="D" too, aggregate with `.sum()`.
+        Test for specified kwargs.
+        """
+        series = self._get_series(seed=1, freq="D")
+        actual = (
+            sigp.causal_resample(series, rule="B", closed="left", label="left")
+            .sum()
+            .rename("output in B")
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_df_day_to_business_day1(self) -> None:
+        """
+        Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="D")
+        actual = sigp.causal_resample(df, rule="B").sum()
+        actual.columns = ["1st output in B", "2nd output in B"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_df_day_to_business_day_kwargs1(self) -> None:
+        """
+        Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="D")
+        actual = sigp.causal_resample(df, rule="B", closed="left", label="left").sum()
+        actual.columns = ["1st output in B", "2nd output in B"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_equal_unit_freq_days1(self) -> None:
+        """
+        Test pd.Series input, freq="D", unit="D", aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
@@ -1185,9 +1272,20 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_equal_unit_freq_minutes1(self) -> None:
+    def test_df_equal_unit_freq_days1(self) -> None:
         """
-        Test when input freq="T" and unit="T" too, aggregate with `.sum()`.
+        Test pd.DataFrame input, freq="D", unit='D', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="D")
+        actual = sigp.causal_resample(df, rule="D").sum()
+        actual.columns = ["1st output in D", "2nd output in D"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_equal_unit_freq_minutes1(self) -> None:
+        """
+        Test pd.Series input, freq="T", unit="T", aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="T")
         actual = (
@@ -1197,9 +1295,20 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_upsample_month_to_days1(self) -> None:
+    def test_df_equal_unit_freq_minutes1(self) -> None:
         """
-        Test when input freq="M" and unit='D', aggregate with `.sum()`.
+        Test pd.DataFrame input, freq="T", unit='T', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="T")
+        actual = sigp.causal_resample(df, rule="T").sum()
+        actual.columns = ["1st output in T", "2nd output in T"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_upsample_month_to_days1(self) -> None:
+        """
+        Test pd.Series input, freq="M", unit='D', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="M")
         actual = (
@@ -1209,13 +1318,55 @@ class Test_causal_resample(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-    def test_upsample_business_days_to_days1(self) -> None:
+    def test_df_upsample_month_to_days1(self) -> None:
         """
-        Test when input freq="B" and unit='D', aggregate with `.sum()`.
+        Test pd.DataFrame input, freq="M", unit='D', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="M")
+        actual = sigp.causal_resample(df, rule="D").sum()
+        actual.columns = ["1st output in D", "2nd output in D"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_upsample_business_days_to_days1(self) -> None:
+        """
+        Test pd.Series input, freq="B", unit='D', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="B")
         actual = (
             sigp.causal_resample(series, rule="D").sum().rename("output in D")
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_df_upsample_business_days_to_days1(self) -> None:
+        """
+        Test pd.DataFrame input, freq="B", unit='D', aggregate with `.sum()`.
+        """
+        df = self._get_df(seed=1, freq="B")
+        actual = sigp.causal_resample(df, rule="D").sum()
+        actual.columns = ["1st output in D", "2nd output in D"]
+        output_df = pd.concat([df, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_srs_left_kwargs_only_business_day1(self) -> None:
+        """
+        Test for specified kwargs and the same frequency and unit.
+        """
+        series = self._get_series(seed=1, freq="B")
+        actual = (
+            sigp.causal_resample(series, rule="B", closed="left", label="left")
+            .sum()
+            .rename("Output in B")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
