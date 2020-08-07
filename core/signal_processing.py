@@ -1461,11 +1461,11 @@ def get_dyadic_zscored(
 # #############################################################################
 
 
-def causal_rescale(srs: pd.Series, unit: str):
+def causal_resample(srs: pd.Series, unit: str):
     """
-    Execute series rescaling with our conventions.
+    Execute series resampling with our conventions.
 
-    :srs: pd.Series with a datetime index to rescale
+    :srs: pd.Series with a datetime index to resample
     :unit: desired output scaling unit (e.g. 'B', 'W', 'M', etc.)
     :return: DatetimeIndexResampler or SeriesGroupBy object for aggregation
         functions to apply (e.g. `.sum()`, `.mean()`, etc.)

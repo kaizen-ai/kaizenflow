@@ -1093,7 +1093,7 @@ class Test_get_swt(hut.TestCase):
         self.check_string(output_str)
 
 
-class Test_causal_rescale(hut.TestCase):
+class Test_causal_resample(hut.TestCase):
     @staticmethod
     def _get_series(seed: int, freq: str) -> pd.Series:
         """
@@ -1121,7 +1121,9 @@ class Test_causal_rescale(hut.TestCase):
         Test when input freq="D" and unit='Y', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = sigp.causal_rescale(series, unit="Y").sum().rename("Output in Y")
+        actual = (
+            sigp.causal_resample(series, unit="Y").sum().rename("Output in Y")
+        )
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
@@ -1131,7 +1133,9 @@ class Test_causal_rescale(hut.TestCase):
         Test when input freq="D" and unit='M', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = sigp.causal_rescale(series, unit="M").sum().rename("Output in M")
+        actual = (
+            sigp.causal_resample(series, unit="M").sum().rename("Output in M")
+        )
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
@@ -1141,7 +1145,9 @@ class Test_causal_rescale(hut.TestCase):
         Test when input freq="D" and unit='W', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = sigp.causal_rescale(series, unit="W").sum().rename("Output in W")
+        actual = (
+            sigp.causal_resample(series, unit="W").sum().rename("Output in W")
+        )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
             date.dayofweek + 1 for date in output_df.index
@@ -1154,7 +1160,9 @@ class Test_causal_rescale(hut.TestCase):
         Test when input freq="D" and unit='B', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = sigp.causal_rescale(series, unit="B").sum().rename("output in B")
+        actual = (
+            sigp.causal_resample(series, unit="B").sum().rename("output in B")
+        )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
             date.dayofweek + 1 for date in output_df.index
@@ -1167,7 +1175,9 @@ class Test_causal_rescale(hut.TestCase):
         Test when input freq="D" and unit="D" too, aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = sigp.causal_rescale(series, unit="D").sum().rename("Output in D")
+        actual = (
+            sigp.causal_resample(series, unit="D").sum().rename("Output in D")
+        )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
             date.dayofweek + 1 for date in output_df.index
@@ -1180,7 +1190,9 @@ class Test_causal_rescale(hut.TestCase):
         Test when input freq="T" and unit="T" too, aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="T")
-        actual = sigp.causal_rescale(series, unit="T").sum().rename("Output in T")
+        actual = (
+            sigp.causal_resample(series, unit="T").sum().rename("Output in T")
+        )
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
@@ -1190,7 +1202,9 @@ class Test_causal_rescale(hut.TestCase):
         Test when input freq="M" and unit='D', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="M")
-        actual = sigp.causal_rescale(series, unit="D").sum().rename("output in D")
+        actual = (
+            sigp.causal_resample(series, unit="D").sum().rename("output in D")
+        )
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
@@ -1200,7 +1214,9 @@ class Test_causal_rescale(hut.TestCase):
         Test when input freq="B" and unit='D', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="B")
-        actual = sigp.causal_rescale(series, unit="D").sum().rename("output in D")
+        actual = (
+            sigp.causal_resample(series, unit="D").sum().rename("output in D")
+        )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
             date.dayofweek + 1 for date in output_df.index
