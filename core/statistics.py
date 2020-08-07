@@ -1385,7 +1385,10 @@ def compute_avg_turnover_and_holding_period(
     :param prefix: optional prefix for metrics' outcome
     :return: average turnover, holding period and index frequency
     """
-    unit = unit or "B"
+    dbg.dassert_isinstance(pos, pd.Series)
+    dbg.dassert(pos.index.freq)
+    pos_freq = pos.index.freq
+    unit = unit or pos_freq
     nan_mode = nan_mode or "ffill"
     prefix = prefix or ""
     result_index = [

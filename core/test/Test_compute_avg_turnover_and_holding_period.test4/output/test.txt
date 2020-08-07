@@ -1,5 +1,5 @@
                           arma(2,2)
-test_avg_turnover_(%)       91.9784
-test_turnover_frequency           B
-test_avg_holding_period     1.08721
-test_holding_period_units         B
+test_avg_turnover_(%)       65.6944
+test_turnover_frequency       <Day>
+test_avg_holding_period      1.5222
+test_holding_period_units     <Day>
