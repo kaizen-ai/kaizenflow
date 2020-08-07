@@ -1122,7 +1122,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
-            sigp.causal_resample(series, unit="Y").sum().rename("Output in Y")
+            sigp.causal_resample(series, rule="Y").sum().rename("Output in Y")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
@@ -1134,7 +1134,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
-            sigp.causal_resample(series, unit="M").sum().rename("Output in M")
+            sigp.causal_resample(series, rule="M").sum().rename("Output in M")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
@@ -1146,7 +1146,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
-            sigp.causal_resample(series, unit="W").sum().rename("Output in W")
+            sigp.causal_resample(series, rule="W").sum().rename("Output in W")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
@@ -1161,7 +1161,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
-            sigp.causal_resample(series, unit="B").sum().rename("output in B")
+            sigp.causal_resample(series, rule="B").sum().rename("output in B")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
@@ -1176,7 +1176,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
-            sigp.causal_resample(series, unit="D").sum().rename("Output in D")
+            sigp.causal_resample(series, rule="D").sum().rename("Output in D")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [
@@ -1191,7 +1191,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="T")
         actual = (
-            sigp.causal_resample(series, unit="T").sum().rename("Output in T")
+            sigp.causal_resample(series, rule="T").sum().rename("Output in T")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
@@ -1203,7 +1203,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="M")
         actual = (
-            sigp.causal_resample(series, unit="D").sum().rename("output in D")
+            sigp.causal_resample(series, rule="D").sum().rename("output in D")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
@@ -1215,7 +1215,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="B")
         actual = (
-            sigp.causal_resample(series, unit="D").sum().rename("output in D")
+            sigp.causal_resample(series, rule="D").sum().rename("output in D")
         )
         output_df = pd.concat([series, actual], axis=1)
         output_df["Day of the week"] = [

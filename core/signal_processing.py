@@ -1461,33 +1461,21 @@ def get_dyadic_zscored(
 # #############################################################################
 
 
-def causal_resample(srs: pd.Series, unit: str):
+def causal_resample(
+    data: Union[pd.Series, pd.DataFrame], **resample_kwargs: Any,
+):
     """
-    Execute series resampling with our conventions.
+    Execute series resampling with specified `.resample()` arguments.
 
-    :srs: pd.Series with a datetime index to resample
-    :unit: desired output scaling unit (e.g. 'B', 'W', 'M', etc.)
-    :return: DatetimeIndexResampler or SeriesGroupBy object for aggregation
-        functions to apply (e.g. `.sum()`, `.mean()`, etc.)
+    :data: pd.Series or pd.DataFrame with a datetime index
+    :resample_kwargs: arguments for pd.DataFrame.resample
+    :return: DatetimeIndexResampler object
     """
-    dbg.dassert_isinstance(srs, pd.Series)
-    dbg.dassert(srs.index.freq)
-    # Assert that unit belongs to a list of relevant time frequencies.
-    relevant_time_frequencies = ["T", "D", "B", "W", "M", "Y"]
-    dbg.dassert_in(
-        unit,
-        relevant_time_frequencies,
-        f"Unit=`{unit}` is not allowed. Should be in ['T', 'D', 'B', 'W', 'M', 'Y']",
-    )
-    # Extract input's index frequency in possible values of unit.
-    # If input index is in years, then `pd.infer_freq(srs.index)` = `A-DEC`.
-    # `[0].replace("A", "Y")` part is needed only to convert `A` to `Y`.
-    # In other cases `freq` is just equal to `pd.infer_freq(srs.index)`.
-    freq = pd.infer_freq(srs.index)[0].replace("A", "Y")
-    if unit == freq:
-        # Create a groupby object that is not converting original input but has
-        # the same properties as DatetimeIndexResampler object. This will ensure
-        # that just input is returned after applying aggregation functions.
-        return srs.groupby(by=srs.index)
-    # Execute only casual resampling for all the possible unit values.
-    return srs.resample(unit, closed="right", label="right")
+    resample_kwargs = resample_kwargs or {
+        "rule": data.index.freq,
+        "closed": "right",
+        "label": "right",
+    }
+    # Execute resampling with specified kwargs.
+    resampled_data = data.resample(**resample_kwargs)
+    return resampled_data
