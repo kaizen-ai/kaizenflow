@@ -1091,3 +1091,119 @@ class Test_get_swt(hut.TestCase):
         actual_str = hut.convert_df_to_string(actual, index=True)
         output_str = f"detail_df:\n{actual_str}\n"
         self.check_string(output_str)
+
+
+class Test_causal_rescale(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int, freq: str) -> pd.Series:
+        """
+        Periods include:
+
+        26/12/2014 - Friday,    workday,    5th DoW
+        27/12/2014 - Saturday,  weekend,    6th DoW
+        28/12/2014 - Sunday,    weekend,    7th DoW
+        29/12/2014 - Monday,    workday,    1th DoW
+        30/12/2014 - Tuesday,   workday,    2th DoW
+        31/12/2014 - Wednesday, workday,    3th DoW
+        01/12/2014 - Thursday,  workday,    4th DoW
+        02/12/2014 - Friday,    workday,    5th DoW
+        03/12/2014 - Saturday,  weekend,    6th DoW
+        """
+        arma_process = sig_gen.ArmaProcess([1], [1])
+        date_range = {"start": "26/12/2014", "periods": 9, "freq": freq}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        ).rename("Input in " + freq)
+        return series
+
+    def test_years1(self) -> None:
+        """
+        Test when input freq="D" and unit='Y', aggregate with `.sum()`.
+        """
+        series = self._get_series(seed=1, freq="D")
+        actual = sigp.causal_rescale(series, unit="Y").sum().rename("Output in Y")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_months1(self) -> None:
+        """
+        Test when input freq="D" and unit='M', aggregate with `.sum()`.
+        """
+        series = self._get_series(seed=1, freq="D")
+        actual = sigp.causal_rescale(series, unit="M").sum().rename("Output in M")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_weeks1(self) -> None:
+        """
+        Test when input freq="D" and unit='W', aggregate with `.sum()`.
+        """
+        series = self._get_series(seed=1, freq="D")
+        actual = sigp.causal_rescale(series, unit="W").sum().rename("Output in W")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_business_days1(self) -> None:
+        """
+        Test when input freq="D" and unit='B', aggregate with `.sum()`.
+        """
+        series = self._get_series(seed=1, freq="D")
+        actual = sigp.causal_rescale(series, unit="B").sum().rename("output in B")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_equal_unit_freq_days1(self) -> None:
+        """
+        Test when input freq="D" and unit="D" too, aggregate with `.sum()`.
+        """
+        series = self._get_series(seed=1, freq="D")
+        actual = sigp.causal_rescale(series, unit="D").sum().rename("Output in D")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_equal_unit_freq_minutes1(self) -> None:
+        """
+        Test when input freq="T" and unit="T" too, aggregate with `.sum()`.
+        """
+        series = self._get_series(seed=1, freq="T")
+        actual = sigp.causal_rescale(series, unit="T").sum().rename("Output in T")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_upsample_month_to_days1(self) -> None:
+        """
+        Test when input freq="M" and unit='D', aggregate with `.sum()`.
+        """
+        series = self._get_series(seed=1, freq="M")
+        actual = sigp.causal_rescale(series, unit="D").sum().rename("output in D")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_upsample_business_days_to_days1(self) -> None:
+        """
+        Test when input freq="B" and unit='D', aggregate with `.sum()`.
+        """
+        series = self._get_series(seed=1, freq="B")
+        actual = sigp.causal_rescale(series, unit="D").sum().rename("output in D")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df["Day of the week"] = [
+            date.dayofweek + 1 for date in output_df.index
+        ]
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)

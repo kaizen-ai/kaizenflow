@@ -1454,3 +1454,40 @@ def get_dyadic_zscored(
         )
     df = pd.DataFrame.from_dict(zscored)
     return df
+
+
+# #############################################################################
+# Resampling
+# #############################################################################
+
+
+def causal_rescale(srs: pd.Series, unit: str):
+    """
+    Execute series rescaling with our conventions.
+
+    :srs: pd.Series with a datetime index to rescale
+    :unit: desired output scaling unit (e.g. 'B', 'W', 'M', etc.)
+    :return: DatetimeIndexResampler or SeriesGroupBy object for aggregation
+        functions to apply (e.g. `.sum()`, `.mean()`, etc.)
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    dbg.dassert(srs.index.freq)
+    # Assert that unit belongs to a list of relevant time frequencies.
+    relevant_time_frequencies = ["T", "D", "B", "W", "M", "Y"]
+    dbg.dassert_in(
+        unit,
+        relevant_time_frequencies,
+        f"Unit=`{unit}` is not allowed. Should be in ['T', 'D', 'B', 'W', 'M', 'Y']",
+    )
+    # Extract input's index frequency in possible values of unit.
+    # If input index is in years, then `pd.infer_freq(srs.index)` = `A-DEC`.
+    # `[0].replace("A", "Y")` part is needed only to convert `A` to `Y`.
+    # In other cases `freq` is just equal to `pd.infer_freq(srs.index)`.
+    freq = pd.infer_freq(srs.index)[0].replace("A", "Y")
+    if unit == freq:
+        # Create a groupby object that is not converting original input but has
+        # the same properties as DatetimeIndexResampler object. This will ensure
+        # that just input is returned after applying aggregation functions.
+        return srs.groupby(by=srs.index)
+    # Execute only casual resampling for all the possible unit values.
+    return srs.resample(unit, closed="right", label="right")
