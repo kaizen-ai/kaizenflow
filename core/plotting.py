@@ -1523,24 +1523,29 @@ def plot_rolling_beta(
     dbg.dassert_ne(
         rets_name, benchmark_name, "Inputs should have different names."
     )
-    nan_mode = nan_mode or "leave_unchanged"
+    nan_mode = nan_mode or "drop"
     figsize = figsize or FIG_SIZE
     # Combine rets and benchmark_rets in one dataframe over the intersection
     #    of their indices.
     all_rets_df = pd.concat([rets, benchmark_rets], axis=1, join="inner")
     all_rets_df.columns = [rets_name, benchmark_name]
-    # Extract copies of rets and benchmark_rets with unified indices.
-    rets = all_rets_df[rets_name]
-    benchmark_rets = all_rets_df[benchmark_name]
-    rets = hdf.apply_nan_mode(rets, nan_mode)
-    benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
-    #
+    # Extract common index in order to keep NaN periods on the X-axis.
+    common_index = all_rets_df.index
+    # Apply `.dropna()` after `hdf.apply_nan_mode` in oder to drop remaining
+    #     rows with NaNs and calculate rolling beta without NaN gaps in input.
+    clean_rets_df = all_rets_df.apply(hdf.apply_nan_mode, mode=nan_mode).dropna()
+    # Get copies of rets and benchmark_rets with unified indices and no NaNs.
+    rets = clean_rets_df[rets_name]
+    benchmark_rets = clean_rets_df[benchmark_name]
+    # Calculate and plot rolling beta.
     ax = ax or plt.gca()
     benchmark_rets = sm.add_constant(benchmark_rets)
     # Calculate and plot rolling beta.
     model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res_rolling = model_rolling.fit()
     beta_rolling = res_rolling.params[benchmark_name]
+    # Return NaN periods to the rolling beta series for the plot.
+    beta_rolling = beta_rolling[common_index]
     beta_rolling.plot(
         ax=ax,
         figsize=figsize,
