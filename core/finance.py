@@ -501,7 +501,9 @@ def compute_signed_bet_lengths(
     t0s = bet_runs_abs_cumsum.loc[bet_starts_idx].reset_index(drop=True)
     t1s = bet_runs_abs_cumsum.loc[bet_ends_idx].reset_index(drop=True)
     bet_lengths = t1s - t0s + 1
-    bet_lengths = bet_lengths * bet_starts.loc[bet_starts_idx].reset_index(drop=True)
+    bet_lengths = bet_lengths * bet_starts.loc[bet_starts_idx].reset_index(
+        drop=True
+    )
     bet_length_srs = pd.Series(
         index=bet_ends_idx, data=bet_lengths.values, name=positions.name
     )
