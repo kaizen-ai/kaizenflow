@@ -1010,6 +1010,7 @@ def plot_cumulative_returns(
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     plot_zero_line: bool = True,
+    events: Optional[Dict[str, str]] = None,
 ) -> None:
     """
     Plot cumulative returns.
@@ -1022,6 +1023,7 @@ def plot_cumulative_returns(
     :param title_suffix: suffix added to the title
     :param ax: axes
     :param plot_zero_line: whether to plot horizontal line at 0
+    :param events: list of tuples with labels and dates to point out on the plot
     """
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1046,6 +1048,21 @@ def plot_cumulative_returns(
         benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black")
+    events = events or None
+    if events:
+        colors = ["red", "orange", "green", "purple", "black"]
+        dbg.dassert_lte(
+            len(events),
+            len(colors),
+            f"{len(events)} is too many spacial events to plot. Should be no more than {len(colors)}",
+        )
+        for step, event in enumerate(events):
+            ax.axvline(
+                x=pd.Timestamp(event[1]),
+                label=event[0],
+                color=colors[step],
+                linestyle="--",
+            )
     ax.set_ylabel(unit)
     ax.legend()
 
