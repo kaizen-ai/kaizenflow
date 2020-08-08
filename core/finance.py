@@ -497,12 +497,13 @@ def compute_signed_bet_lengths(
     # `NaN`s in `compute_bet_runs`).
     bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    bet_lengths = []
-    for t0, t1 in zip(bet_starts_idx, bet_ends_idx):
-        bet_length = bet_runs.loc[t0:t1].sum()
-        bet_lengths.append(bet_length)
+    bet_runs_abs_cumsum = bet_runs.abs().cumsum()
+    t0s = bet_runs_abs_cumsum.loc[bet_starts_idx].reset_index(drop=True)
+    t1s = bet_runs_abs_cumsum.loc[bet_ends_idx].reset_index(drop=True)
+    bet_lengths = t1s - t0s + 1
+    bet_lengths = bet_lengths * bet_starts.loc[bet_starts_idx].reset_index(drop=True)
     bet_length_srs = pd.Series(
-        index=bet_ends_idx, data=bet_lengths, name=positions.name
+        index=bet_ends_idx, data=bet_lengths.values, name=positions.name
     )
     return bet_length_srs
 
