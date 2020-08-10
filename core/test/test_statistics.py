@@ -1159,6 +1159,66 @@ class Test_summarize_sharpe_ratio(hut.TestCase):
         self.check_string(hut.convert_df_to_string(res, index=True))
 
 
+class Test_zscore_oos_sharpe_ratio(hut.TestCase):
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "2010-01-01", "periods": 252, "freq": "B"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed, scale=0.1
+        )
+        return series
+
+    def test1(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, 1.4469573140895036)
+
+    def test2(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-08-01")
+        self.assertEqual(oos_sr, 1.5135753117195743)
+
+    def test3(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        series.loc["2010-06-01":] = series.loc["2010-06-01":].apply(
+            lambda x: 0.1 * x if x > 0 else x
+        )
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, -3.5378299982103525)
+
+    def test4(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        series.loc["2010-06-01":] = series.loc["2010-06-01":].apply(
+            lambda x: 0.1 * x if x < 0 else x
+        )
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, 5.490525364424428)
+
+    def test_nans1(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        series.iloc[:10] = np.nan
+        series.iloc[40:50] = np.nan
+        series.loc["2010-06-01":"2010-06-15"] = np.nan
+        series.loc["2010-08-01":"2010-08-31"] = np.nan
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, 1.6125151057197262)
+
+    def test_zeros1(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        series.iloc[:10] = 0
+        series.iloc[40:50] = 0
+        series.loc["2010-06-01":"2010-06-15"] = 0
+        series.loc["2010-08-01":"2010-08-31"] = 0
+        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
+        self.assertEqual(oos_sr, 1.6125151057197262)
+
+    def test_oos_not_from_interval1(self) -> None:
+        series = Test_zscore_oos_sharpe_ratio._get_series(42)
+        with self.assertRaises(AssertionError):
+            _ = stats.zscore_oos_sharpe_ratio(series, "2012-01-01")
+
+
 class Test_compute_drawdown_cdf(hut.TestCase):
     def test1(self) -> None:
         sharpe_ratio = 1
@@ -1345,6 +1405,60 @@ class TestGetInterarrivalTime(hut.TestCase):
     def test3(self) -> None:
         series = self._get_series(seed=1)
         actual = stats.get_interarrival_time(series, nan_mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
+class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
+    @staticmethod
+    def _get_pos(seed: int) -> pd.Series:
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
+
+    def test1(self) -> None:
+        """
+        Test for default parameters.
+        """
+        pos = self._get_pos(seed=1)
+        actual = stats.compute_avg_turnover_and_holding_period(pos)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test for unit.
+        """
+        pos = self._get_pos(seed=1)
+        actual = stats.compute_avg_turnover_and_holding_period(pos, unit="M")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        """
+        Test for nan_mode.
+        """
+        pos = self._get_pos(seed=1)
+        pos[5:10] = np.nan
+        actual = stats.compute_avg_turnover_and_holding_period(
+            pos, nan_mode="fill_with_zero"
+        )
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        """
+        Test for prefix.
+        """
+        pos = self._get_pos(seed=1)
+        actual = stats.compute_avg_turnover_and_holding_period(
+            pos, prefix="test_"
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 

@@ -683,13 +683,15 @@ def compute_rolling_zscore(
         signal_std = compute_rolling_norm(
             signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
         )
-        ret = (signal - signal_ma.shift(delay)) / signal_std.shift(delay)
+        ret = (signal - signal_ma.shift(delay)) / signal_std.shift(delay).replace(
+            0, np.nan
+        )
 
     else:
         signal_std = compute_rolling_norm(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
-        ret = signal / signal_std.shift(delay)
+        ret = signal / signal_std.shift(delay).replace(0, np.nan)
     return ret
 
 
