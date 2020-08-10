@@ -1292,6 +1292,7 @@ def get_trend_residual_decomp(
 def get_swt(
     sig: Union[pd.DataFrame, pd.Series],
     wavelet: str,
+    depth: Optional[int] = None,
     timing_mode: Optional[str] = None,
     output_mode: Optional[str] = None,
 ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
@@ -1314,6 +1315,8 @@ def get_swt(
 
     :param sig: input signal
     :param wavelet: pywt wavelet name, e.g., "db8"
+    :param depth: the number of decomposition steps to perform. Corresponds to
+        "level" parameter in `pywt.swt`
     :param timing_mode: supported timing modes are
         - "knowledge_time":
             - reindex transform according to knowledge times
@@ -1347,7 +1350,7 @@ def get_swt(
     sig_len = sig.size
     padded = _pad_to_pow_of_2(sig.values)
     # Perform the wavelet decomposition.
-    decomp = pywt.swt(padded, wavelet=wavelet, norm=True)
+    decomp = pywt.swt(padded, wavelet=wavelet, level=depth, norm=True)
     # Ensure we have at least one level.
     levels = len(decomp)
     _LOG.debug("levels=%d", levels)
