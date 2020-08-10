@@ -795,7 +795,7 @@ class Test_compute_returns_per_bet(hut.TestCase):
             ]
         )
         log_rets = pd.Series([1.0, 2.0, 3.0, 5.0, 7.0, 11.0], index=idx)
-        positions = pd.Series([1.0, 2, 0.0, 1.0, -3.0, -2.0], index=idx)
+        positions = pd.Series([1.0, 2.0, 0.0, 1.0, -3.0, -2.0], index=idx)
         actual = fin.compute_returns_per_bet(positions, log_rets)
         expected = pd.Series(
             {
