@@ -1464,7 +1464,7 @@ def get_dyadic_zscored(
 # #############################################################################
 
 
-def causal_resample(
+def resample(
     data: Union[pd.Series, pd.DataFrame], **resample_kwargs: Any,
 ):
     """

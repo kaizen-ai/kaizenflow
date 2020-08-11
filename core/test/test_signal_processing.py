@@ -1093,7 +1093,7 @@ class Test_get_swt(hut.TestCase):
         self.check_string(output_str)
 
 
-class Test_causal_resample(hut.TestCase):
+class Test_resample(hut.TestCase):
     @staticmethod
     def _get_series(seed: int, freq: str) -> pd.Series:
         """
@@ -1140,9 +1140,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.Series input, freq="D", unit='Y', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = (
-            sigp.causal_resample(series, rule="Y").sum().rename("Output in Y")
-        )
+        actual = sigp.resample(series, rule="Y").sum().rename("Output in Y")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1151,7 +1149,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="D", unit='Y', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="D")
-        actual = sigp.causal_resample(df, rule="Y").sum()
+        actual = sigp.resample(df, rule="Y").sum()
         actual.columns = ["1st output in Y", "2nd output in Y"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1161,9 +1159,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.Series input, freq="D", unit='M', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = (
-            sigp.causal_resample(series, rule="M").sum().rename("Output in M")
-        )
+        actual = sigp.resample(series, rule="M").sum().rename("Output in M")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1172,7 +1168,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="D", unit='M', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="D")
-        actual = sigp.causal_resample(df, rule="M").sum()
+        actual = sigp.resample(df, rule="M").sum()
         actual.columns = ["1st output in M", "2nd output in M"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1182,9 +1178,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.Series input, freq="D", unit='W', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = (
-            sigp.causal_resample(series, rule="W").sum().rename("Output in W")
-        )
+        actual = sigp.resample(series, rule="W").sum().rename("Output in W")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1193,7 +1187,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="D", unit='W', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="D")
-        actual = sigp.causal_resample(df, rule="W").sum()
+        actual = sigp.resample(df, rule="W").sum()
         actual.columns = ["1st output in W", "2nd output in W"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1203,9 +1197,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.Series input, freq="D", unit='B', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = (
-            sigp.causal_resample(series, rule="B").sum().rename("output in B")
-        )
+        actual = sigp.resample(series, rule="B").sum().rename("output in B")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1215,7 +1207,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="D")
         actual = (
-            sigp.causal_resample(series, rule="B", closed="left", label="left")
+            sigp.resample(series, rule="B", closed="left", label="left")
             .sum()
             .rename("output in B")
         )
@@ -1227,7 +1219,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="D")
-        actual = sigp.causal_resample(df, rule="B").sum()
+        actual = sigp.resample(df, rule="B").sum()
         actual.columns = ["1st output in B", "2nd output in B"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1237,9 +1229,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="D")
-        actual = sigp.causal_resample(
-            df, rule="B", closed="left", label="left"
-        ).sum()
+        actual = sigp.resample(df, rule="B", closed="left", label="left").sum()
         actual.columns = ["1st output in B", "2nd output in B"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1249,9 +1239,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.Series input, freq="D", unit="D", aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = (
-            sigp.causal_resample(series, rule="D").sum().rename("Output in D")
-        )
+        actual = sigp.resample(series, rule="D").sum().rename("Output in D")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1260,7 +1248,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="D", unit='D', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="D")
-        actual = sigp.causal_resample(df, rule="D").sum()
+        actual = sigp.resample(df, rule="D").sum()
         actual.columns = ["1st output in D", "2nd output in D"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1270,9 +1258,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.Series input, freq="T", unit="T", aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="T")
-        actual = (
-            sigp.causal_resample(series, rule="T").sum().rename("Output in T")
-        )
+        actual = sigp.resample(series, rule="T").sum().rename("Output in T")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1281,7 +1267,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="T", unit='T', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="T")
-        actual = sigp.causal_resample(df, rule="T").sum()
+        actual = sigp.resample(df, rule="T").sum()
         actual.columns = ["1st output in T", "2nd output in T"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1291,9 +1277,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.Series input, freq="M", unit='D', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="M")
-        actual = (
-            sigp.causal_resample(series, rule="D").sum().rename("output in D")
-        )
+        actual = sigp.resample(series, rule="D").sum().rename("output in D")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1302,7 +1286,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="M", unit='D', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="M")
-        actual = sigp.causal_resample(df, rule="D").sum()
+        actual = sigp.resample(df, rule="D").sum()
         actual.columns = ["1st output in D", "2nd output in D"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1312,9 +1296,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.Series input, freq="B", unit='D', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="B")
-        actual = (
-            sigp.causal_resample(series, rule="D").sum().rename("output in D")
-        )
+        actual = sigp.resample(series, rule="D").sum().rename("output in D")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1323,7 +1305,7 @@ class Test_causal_resample(hut.TestCase):
         Test pd.DataFrame input, freq="B", unit='D', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, freq="B")
-        actual = sigp.causal_resample(df, rule="D").sum()
+        actual = sigp.resample(df, rule="D").sum()
         actual.columns = ["1st output in D", "2nd output in D"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1334,7 +1316,7 @@ class Test_causal_resample(hut.TestCase):
         """
         series = self._get_series(seed=1, freq="B")
         actual = (
-            sigp.causal_resample(series, rule="B", closed="left", label="left")
+            sigp.resample(series, rule="B", closed="left", label="left")
             .sum()
             .rename("Output in B")
         )
@@ -1349,8 +1331,6 @@ class Test_causal_resample(hut.TestCase):
         # Remove some observations in order to make `freq` None.
         series[2:6] = np.nan
         series.dropna()
-        actual = (
-            sigp.causal_resample(series, rule="B").sum().rename("Output in B")
-        )
+        actual = sigp.resample(series, rule="B").sum().rename("Output in B")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
