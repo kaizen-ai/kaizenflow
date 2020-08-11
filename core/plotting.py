@@ -1050,7 +1050,7 @@ def plot_cumulative_returns(
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black")
     if events:
-        colors = cm.Set1(np.linspace(0, 1, len(events)))
+        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
         for event, color in zip(events, colors):
             ax.axvline(
                 x=pd.Timestamp(event[0]),
