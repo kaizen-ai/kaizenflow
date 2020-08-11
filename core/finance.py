@@ -531,23 +531,23 @@ def compute_returns_per_bet(
     """
     dbg.dassert(positions.index.equals(log_rets.index))
     dbg.dassert_strictly_increasing_index(log_rets)
-    bet_starts = compute_bet_starts(positions, nan_mode)
     bet_ends = compute_bet_ends(positions, nan_mode)
-    # Sanity check indices.
-    dbg.dassert(bet_starts.index.equals(bet_ends.index))
     # Retrieve locations of bet starts and bet ends.
-    bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    # Compute returns per bet.
-    rets_per_bet = []
-    for bet_start, bet_end in zip(bet_starts_idx, bet_ends_idx):
-        pnl_bet = (
-            log_rets.loc[bet_start:bet_end] * positions.loc[bet_start:bet_end]
-        )
-        bet_rets = pnl_bet.sum()
-        rets_per_bet.append(bet_rets)
+    pnl_bets = log_rets * positions
+    bet_rets_cumsum = pnl_bets.cumsum().ffill()
+    # Select rets cumsum for periods when bets end.
+    bet_rets_cumsum_ends = bet_rets_cumsum.loc[bet_ends_idx].reset_index(
+        drop=True
+    )
+    # Difference between rets cumsum of bet ends is equal to the rets cumsum
+    # for the time between these bet ends i.e. rets cumsum per bet.
+    rets_per_bet = bet_rets_cumsum_ends.diff()
+    # The 1st element of rets_per_bet equals the 1st one of bet_rets_cumsum_ends
+    # because it is the first bet so nothing to subtract from it.
+    rets_per_bet[0] = bet_rets_cumsum_ends[0]
     rets_per_bet = pd.Series(
-        data=rets_per_bet, index=bet_ends_idx, name=log_rets.name
+        data=rets_per_bet.values, index=bet_ends_idx, name=log_rets.name
     )
     return rets_per_bet
 
