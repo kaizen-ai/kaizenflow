@@ -1201,7 +1201,7 @@ class Test_resample(hut.TestCase):
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
-    def test_srs_day_to_business_day_kwargs1(self) -> None:
+    def test_srs_day_to_business_day_left_kwargs1(self) -> None:
         """
         Test for specified kwargs.
         """
@@ -1224,7 +1224,7 @@ class Test_resample(hut.TestCase):
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
 
-    def test_df_day_to_business_day_kwargs1(self) -> None:
+    def test_df_day_to_business_day_left_kwargs1(self) -> None:
         """
         Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
         """
