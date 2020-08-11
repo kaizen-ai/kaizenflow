@@ -10,6 +10,7 @@ import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib as mpl
+import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1010,7 +1011,7 @@ def plot_cumulative_returns(
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     plot_zero_line: bool = True,
-    events: Optional[List[Tuple[Optional[str], str]]] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
     """
     Plot cumulative returns.
@@ -1023,7 +1024,7 @@ def plot_cumulative_returns(
     :param title_suffix: suffix added to the title
     :param ax: axes
     :param plot_zero_line: whether to plot horizontal line at 0
-    :param events: list of tuples with labels and dates to point out on the plot
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1049,17 +1050,12 @@ def plot_cumulative_returns(
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black")
     if events:
-        colors = ["red", "orange", "green", "purple", "black"]
-        dbg.dassert_lte(
-            len(events),
-            len(colors),
-            f"{len(events)} is too many special events to plot",
-        )
-        for step, event in enumerate(events):
+        colors = cm.Set1(np.linspace(0, 1, len(events)))
+        for event, color in zip(events, colors):
             ax.axvline(
-                x=pd.Timestamp(event[1]),
-                label=event[0],
-                color=colors[step],
+                x=pd.Timestamp(event[0]),
+                label=event[1],
+                color=color,
                 linestyle="--",
             )
     ax.set_ylabel(unit)
