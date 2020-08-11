@@ -1474,7 +1474,7 @@ def causal_resample(
     :resample_kwargs: arguments for pd.DataFrame.resample
     :return: DatetimeIndexResampler object
     """
-    resample_kwargs = resample_kwargs or {"rule": data.index.freq}
+    dbg.dassert_in("rule", resample_kwargs, "Argument 'rule' must be specified")
     if "closed" not in resample_kwargs:
         resample_kwargs["closed"] = "right"
     if "label" not in resample_kwargs:
