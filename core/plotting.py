@@ -1010,7 +1010,7 @@ def plot_cumulative_returns(
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     plot_zero_line: bool = True,
-    events: Optional[Dict[str, str]] = None,
+    events: Optional[List[Tuple[Optional[str], str]]] = None,
 ) -> None:
     """
     Plot cumulative returns.
@@ -1048,13 +1048,12 @@ def plot_cumulative_returns(
         benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black")
-    events = events or None
     if events:
         colors = ["red", "orange", "green", "purple", "black"]
         dbg.dassert_lte(
             len(events),
             len(colors),
-            f"{len(events)} is too many spacial events to plot. Should be no more than {len(colors)}",
+            f"{len(events)} is too many special events to plot",
         )
         for step, event in enumerate(events):
             ax.axvline(
