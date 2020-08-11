@@ -794,14 +794,14 @@ class Test_compute_returns_per_bet(hut.TestCase):
                 "2010-01-12",
             ]
         )
-        log_rets = pd.Series([1, 2, 3, 5, 7, 11], index=idx)
-        positions = pd.Series([1, 2, 0, 1, -3, -2], index=idx)
+        log_rets = pd.Series([1.0, 2.0, 3.0, 5.0, 7.0, 11.0], index=idx)
+        positions = pd.Series([1.0, 2.0, 0.0, 1.0, -3.0, -2.0], index=idx)
         actual = fin.compute_returns_per_bet(positions, log_rets)
         expected = pd.Series(
             {
-                pd.Timestamp("2010-01-03"): 5,
-                pd.Timestamp("2010-01-06"): 5,
-                pd.Timestamp("2010-01-12"): -43,
+                pd.Timestamp("2010-01-03"): 5.0,
+                pd.Timestamp("2010-01-06"): 5.0,
+                pd.Timestamp("2010-01-12"): -43.0,
             }
         )
         pd.testing.assert_series_equal(actual, expected)
