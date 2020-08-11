@@ -1470,6 +1470,11 @@ def resample(
     """
     Execute series resampling with specified `.resample()` arguments.
 
+    The `rule` argument must always be specified and the `closed` and `label`
+    arguments are treated specially by default.
+    The default values of `closed` and `label` arguments are intended to make
+    pandas `resample()` behavior consistent for every value of `rule`.
+
     :data: pd.Series or pd.DataFrame with a datetime index
     :resample_kwargs: arguments for pd.DataFrame.resample
     :return: DatetimeIndexResampler object
