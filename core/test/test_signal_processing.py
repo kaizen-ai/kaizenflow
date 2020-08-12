@@ -1213,13 +1213,13 @@ class Test_resample(hut.TestCase):
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
-    def test_srs_day_to_business_day_left_kwargs1(self) -> None:
+    def test_srs_day_to_business_day_closed_left1(self) -> None:
         """
         Test for specified kwargs.
         """
         series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
-            sigp.resample(series, rule="B", closed="left", label="left")
+            sigp.resample(series, rule="B", closed="left")
             .sum()
             .rename("Output in freq='B'")
         )
@@ -1236,12 +1236,12 @@ class Test_resample(hut.TestCase):
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
 
-    def test_df_day_to_business_day_left_kwargs1(self) -> None:
+    def test_df_day_to_business_day_closed_left1(self) -> None:
         """
         Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
         """
         df = self._get_df(seed=1, periods=9, freq="D")
-        actual = sigp.resample(df, rule="B", closed="left", label="left").sum()
+        actual = sigp.resample(df, rule="B", closed="left").sum()
         actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1263,6 +1263,29 @@ class Test_resample(hut.TestCase):
         """
         df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="D").sum()
+        actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
+        txt = self._get_output_txt(df, actual)
+        self.check_string(txt)
+
+    def test_srs_equal_unit_freq_days_closed_left1(self) -> None:
+        """
+        Test pd.Series input, freq="D", unit="D", closed="left.
+        """
+        series = self._get_series(seed=1, periods=9, freq="D")
+        actual = (
+            sigp.resample(series, rule="D", closed="left")
+            .sum()
+            .rename("Output in freq='D'")
+        )
+        txt = self._get_output_txt(series, actual)
+        self.check_string(txt)
+
+    def test_df_equal_unit_freq_days_closed_left1(self) -> None:
+        """
+        Test pd.DataFrame input, freq="D", unit='D', closed="left.
+        """
+        df = self._get_df(seed=1, periods=9, freq="D")
+        actual = sigp.resample(df, rule="D", closed="left").sum()
         actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
@@ -1330,13 +1353,13 @@ class Test_resample(hut.TestCase):
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
 
-    def test_srs_left_kwargs_only_business_day1(self) -> None:
+    def test_srs_only_business_day_closed_left1(self) -> None:
         """
         Test for specified kwargs and the same frequency and unit.
         """
         series = self._get_series(seed=1, periods=9, freq="B")
         actual = (
-            sigp.resample(series, rule="B", closed="left", label="left")
+            sigp.resample(series, rule="B", closed="left")
             .sum()
             .rename("Output in freq='B'")
         )
