@@ -1470,6 +1470,8 @@ def resample(
     """
     Execute series resampling with specified `.resample()` arguments.
 
+    This wrapper is intended to make resampling causal in every call
+    and to prevent labeling conventions dependence upon the frequency.
     The `rule` argument must always be specified and the `closed` and `label`
     arguments are treated specially by default.
     The default values of `closed` and `label` arguments are intended to make
