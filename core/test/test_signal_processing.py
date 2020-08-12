@@ -1095,7 +1095,7 @@ class Test_get_swt(hut.TestCase):
 
 class Test_resample(hut.TestCase):
     @staticmethod
-    def _get_series(seed: int, freq: str) -> pd.Series:
+    def _get_series(seed: int, periods: int, freq: str) -> pd.Series:
         """
         Periods include:
 
@@ -1110,19 +1110,19 @@ class Test_resample(hut.TestCase):
         03/12/2014 - Saturday,  weekend,    6th DoW
         """
         arma_process = sig_gen.ArmaProcess([1], [1])
-        date_range = {"start": "26/12/2014", "periods": 9, "freq": freq}
+        date_range = {"start": "2014-12-26", "periods": periods, "freq": freq}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, scale=0.1, seed=seed
         ).rename(f"Input in freq='{freq}'")
         return series
 
-    def _get_df(self, seed: int, freq: str) -> pd.DataFrame:
-        srs_1 = self._get_series(seed=seed, freq=freq).rename(
+    def _get_df(self, seed: int, periods: int, freq: str) -> pd.DataFrame:
+        srs_1 = self._get_series(seed=seed, periods=periods, freq=freq).rename(
             f"1st input in freq='{freq}'"
         )
-        srs_2 = self._get_series(seed=seed + 1, freq=freq).rename(
-            f"2nd input in freq='{freq}'"
-        )
+        srs_2 = self._get_series(
+            seed=seed + 1, periods=periods, freq=freq
+        ).rename(f"2nd input in freq='{freq}'")
         df = pd.DataFrame([srs_1, srs_2]).T
         return df
 
@@ -1143,7 +1143,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="D", unit='Y', aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="D")
+        series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
             sigp.resample(series, rule="Y").sum().rename("Output in freq='Y'")
         )
@@ -1154,7 +1154,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="D", unit='Y', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="D")
+        df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="Y").sum()
         actual.columns = ["1st output in freq='Y'", "2nd output in freq='Y'"]
         txt = self._get_output_txt(df, actual)
@@ -1164,7 +1164,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="D", unit='M', aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="D")
+        series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
             sigp.resample(series, rule="M").sum().rename("Output in freq='M'")
         )
@@ -1175,7 +1175,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="D", unit='M', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="D")
+        df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="M").sum()
         actual.columns = ["1st output in freq='M'", "2nd output in freq='M'"]
         txt = self._get_output_txt(df, actual)
@@ -1185,7 +1185,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="D", unit='W', aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="D")
+        series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
             sigp.resample(series, rule="W").sum().rename("Output in freq='W'")
         )
@@ -1196,7 +1196,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="D", unit='W', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="D")
+        df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="W").sum()
         actual.columns = ["1st output in freq='W'", "2nd output in freq='W'"]
         txt = self._get_output_txt(df, actual)
@@ -1206,7 +1206,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="D", unit='B', aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="D")
+        series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
             sigp.resample(series, rule="B").sum().rename("Output in freq='B'")
         )
@@ -1217,7 +1217,7 @@ class Test_resample(hut.TestCase):
         """
         Test for specified kwargs.
         """
-        series = self._get_series(seed=1, freq="D")
+        series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
             sigp.resample(series, rule="B", closed="left", label="left")
             .sum()
@@ -1230,7 +1230,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="D")
+        df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="B").sum()
         actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
         txt = self._get_output_txt(df, actual)
@@ -1240,7 +1240,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="D", unit='B', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="D")
+        df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="B", closed="left", label="left").sum()
         actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
         txt = self._get_output_txt(df, actual)
@@ -1250,7 +1250,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="D", unit="D", aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="D")
+        series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
             sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
         )
@@ -1261,7 +1261,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="D", unit='D', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="D")
+        df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="D").sum()
         actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
         txt = self._get_output_txt(df, actual)
@@ -1271,7 +1271,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="T", unit="T", aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="T")
+        series = self._get_series(seed=1, periods=9, freq="T")
         actual = (
             sigp.resample(series, rule="T").sum().rename("Output in freq='T'")
         )
@@ -1282,7 +1282,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="T", unit='T', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="T")
+        df = self._get_df(seed=1, periods=9, freq="T")
         actual = sigp.resample(df, rule="T").sum()
         actual.columns = ["1st output in freq='T'", "2nd output in freq='T'"]
         txt = self._get_output_txt(df, actual)
@@ -1292,7 +1292,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="M", unit='D', aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="M").head(3)
+        series = self._get_series(seed=1, periods=3, freq="M")
         actual = (
             sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
         )
@@ -1303,7 +1303,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="M", unit='D', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="M").head(3)
+        df = self._get_df(seed=1, periods=3, freq="M")
         actual = sigp.resample(df, rule="D").sum()
         actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
         txt = self._get_output_txt(df, actual)
@@ -1313,7 +1313,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="B", unit='D', aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="B")
+        series = self._get_series(seed=1, periods=9, freq="B")
         actual = (
             sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
         )
@@ -1324,7 +1324,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="B", unit='D', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="B")
+        df = self._get_df(seed=1, periods=9, freq="B")
         actual = sigp.resample(df, rule="D").sum()
         actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
         txt = self._get_output_txt(df, actual)
@@ -1334,7 +1334,7 @@ class Test_resample(hut.TestCase):
         """
         Test for specified kwargs and the same frequency and unit.
         """
-        series = self._get_series(seed=1, freq="B")
+        series = self._get_series(seed=1, periods=9, freq="B")
         actual = (
             sigp.resample(series, rule="B", closed="left", label="left")
             .sum()
@@ -1347,7 +1347,7 @@ class Test_resample(hut.TestCase):
         """
         Test for an input without `freq`.
         """
-        series = self._get_series(seed=1, freq="D")
+        series = self._get_series(seed=1, periods=9, freq="D")
         # Remove some observations in order to make `freq` None.
         series[2:6] = np.nan
         series.dropna()
