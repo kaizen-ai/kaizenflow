@@ -1470,12 +1470,13 @@ def resample(
     """
     Execute series resampling with specified `.resample()` arguments.
 
-    This wrapper is intended to make resampling causal in every call
-    and to prevent labeling conventions dependence upon the frequency.
     The `rule` argument must always be specified and the `closed` and `label`
     arguments are treated specially by default.
     The default values of `closed` and `label` arguments are intended to make
-    pandas `resample()` behavior consistent for every value of `rule`.
+    pandas `resample()` behavior consistent for every value of `rule` and to
+    make resampling causal so if we have sampling times t_0 < t_1 < t_2;
+    after resampling, the values at t_1 and t_2 should not be incorporated
+    into the resampled value timestamped with t_0.
 
     :data: pd.Series or pd.DataFrame with a datetime index
     :resample_kwargs: arguments for pd.DataFrame.resample
