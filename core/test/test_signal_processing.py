@@ -1201,7 +1201,7 @@ class Test_resample(hut.TestCase):
         Test pd.Series input, freq="D", unit='B', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="D")
-        actual = sigp.resample(series, rule="B").sum().rename("output in 'B'")
+        actual = sigp.resample(series, rule="B").sum().rename("Output in 'B'")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1213,7 +1213,7 @@ class Test_resample(hut.TestCase):
         actual = (
             sigp.resample(series, rule="B", closed="left", label="left")
             .sum()
-            .rename("output in 'B'")
+            .rename("Output in 'B'")
         )
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
@@ -1281,7 +1281,7 @@ class Test_resample(hut.TestCase):
         Test pd.Series input, freq="M", unit='D', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="M")
-        actual = sigp.resample(series, rule="D").sum().rename("output in 'D'")
+        actual = sigp.resample(series, rule="D").sum().rename("Output in 'D'")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
@@ -1300,7 +1300,7 @@ class Test_resample(hut.TestCase):
         Test pd.Series input, freq="B", unit='D', aggregate with `.sum()`.
         """
         series = self._get_series(seed=1, freq="B")
-        actual = sigp.resample(series, rule="D").sum().rename("output in 'D'")
+        actual = sigp.resample(series, rule="D").sum().rename("Output in 'D'")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
 
