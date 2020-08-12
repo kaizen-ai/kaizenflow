@@ -1132,7 +1132,7 @@ class Test_resample(hut.TestCase):
         """
         input_string = hut.convert_df_to_string(input_data, index=True)
         output_string = hut.convert_df_to_string(output, index=True)
-        txt = f"input:\n{input_string}\n" f"output:\n{output_string}\n"
+        txt = f"input:\n{input_string}\n\n" f"output:\n{output_string}\n"
         return txt
 
     def test_srs_day_to_year1(self) -> None:
