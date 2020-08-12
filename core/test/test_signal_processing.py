@@ -1280,7 +1280,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.Series input, freq="M", unit='D', aggregate with `.sum()`.
         """
-        series = self._get_series(seed=1, freq="M")
+        series = self._get_series(seed=1, freq="M").head(3)
         actual = sigp.resample(series, rule="D").sum().rename("Output in 'D'")
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
@@ -1289,7 +1289,7 @@ class Test_resample(hut.TestCase):
         """
         Test pd.DataFrame input, freq="M", unit='D', aggregate with `.sum()`.
         """
-        df = self._get_df(seed=1, freq="M")
+        df = self._get_df(seed=1, freq="M").head(3)
         actual = sigp.resample(df, rule="D").sum()
         actual.columns = ["1st output in 'D'", "2nd output in 'D'"]
         txt = self._get_output_txt(df, actual)
