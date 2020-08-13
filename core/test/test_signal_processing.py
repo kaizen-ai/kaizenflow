@@ -1128,7 +1128,7 @@ class Test_resample_srs(hut.TestCase):
 
     def test_day_to_year1(self) -> None:
         """
-        Test freq="D", unit="Y", aggregate with `.sum()`.
+        Test freq="D", unit="Y".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
@@ -1139,7 +1139,7 @@ class Test_resample_srs(hut.TestCase):
 
     def test_day_to_month1(self) -> None:
         """
-        Test freq="D", unit="M", aggregate with `.sum()`.
+        Test freq="D", unit="M".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
@@ -1150,7 +1150,7 @@ class Test_resample_srs(hut.TestCase):
 
     def test_day_to_week1(self) -> None:
         """
-        Test freq="D", unit="W", aggregate with `.sum()`.
+        Test freq="D", unit="W".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
@@ -1161,7 +1161,7 @@ class Test_resample_srs(hut.TestCase):
 
     def test_day_to_business_day1(self) -> None:
         """
-        Test freq="D", unit="B", aggregate with `.sum()`.
+        Test freq="D", unit="B".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
@@ -1185,7 +1185,7 @@ class Test_resample_srs(hut.TestCase):
 
     def test_equal_unit_freq_days1(self) -> None:
         """
-        Test freq="D", unit="D", aggregate with `.sum()`.
+        Test freq="D", unit="D".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
         actual = (
@@ -1209,7 +1209,7 @@ class Test_resample_srs(hut.TestCase):
 
     def test_equal_unit_freq_minutes1(self) -> None:
         """
-        Test freq="T", unit="T", aggregate with `.sum()`.
+        Test freq="T", unit="T".
         """
         series = self._get_series(seed=1, periods=9, freq="T")
         actual = (
@@ -1220,7 +1220,7 @@ class Test_resample_srs(hut.TestCase):
 
     def test_upsample_month_to_days1(self) -> None:
         """
-        Test freq="M", unit="D", aggregate with `.sum()`.
+        Test freq="M", unit="D".
         """
         series = self._get_series(seed=1, periods=3, freq="M")
         actual = (
@@ -1231,11 +1231,22 @@ class Test_resample_srs(hut.TestCase):
 
     def test_upsample_business_days_to_days1(self) -> None:
         """
-        Test freq="B", unit="D", aggregate with `.sum()`.
+        Test freq="B", unit="D".
         """
         series = self._get_series(seed=1, periods=9, freq="B")
         actual = (
             sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
+        )
+        txt = self._get_output_txt(series, actual)
+        self.check_string(txt)
+
+    def test_only_business_day_default1(self) -> None:
+        """
+        Test freq="B", unit="B".
+        """
+        series = self._get_series(seed=1, periods=9, freq="B")
+        actual = (
+            sigp.resample(series, rule="B").sum().rename("Output in freq='B'")
         )
         txt = self._get_output_txt(series, actual)
         self.check_string(txt)
@@ -1308,7 +1319,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_day_to_year1(self) -> None:
         """
-        Test freq="D", unit="Y", aggregate with `.sum()`.
+        Test freq="D", unit="Y".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="Y").sum()
@@ -1318,7 +1329,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_day_to_month1(self) -> None:
         """
-        Test freq="D", unit="M", aggregate with `.sum()`.
+        Test freq="D", unit="M".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="M").sum()
@@ -1328,7 +1339,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_day_to_week1(self) -> None:
         """
-        Test freq="D", unit="W", aggregate with `.sum()`.
+        Test freq="D", unit="W".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="W").sum()
@@ -1338,7 +1349,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_day_to_business_day1(self) -> None:
         """
-        Test freq="D", unit="B", aggregate with `.sum()`.
+        Test freq="D", unit="B".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="B").sum()
@@ -1348,7 +1359,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_day_to_business_day_closed_left1(self) -> None:
         """
-        Test freq="D", unit="B", aggregate with `.sum()`.
+        Test freq="D", unit="B".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="B", closed="left").sum()
@@ -1358,7 +1369,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_equal_unit_freq_days1(self) -> None:
         """
-        Test freq="D", unit="D", aggregate with `.sum()`.
+        Test freq="D", unit="D".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="D").sum()
@@ -1368,7 +1379,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_equal_unit_freq_days_closed_left1(self) -> None:
         """
-        Test freq="D", unit="D", closed="left.
+        Test freq="D", unit="D", closed="left".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
         actual = sigp.resample(df, rule="D", closed="left").sum()
@@ -1378,7 +1389,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_equal_unit_freq_minutes1(self) -> None:
         """
-        Test freq="T", unit="T", aggregate with `.sum()`.
+        Test freq="T", unit="T".
         """
         df = self._get_df(seed=1, periods=9, freq="T")
         actual = sigp.resample(df, rule="T").sum()
@@ -1388,7 +1399,7 @@ class Test_resample_df(hut.TestCase):
 
     def test_upsample_month_to_days1(self) -> None:
         """
-        Test freq="M", unit="D", aggregate with `.sum()`.
+        Test freq="M", unit="D".
         """
         df = self._get_df(seed=1, periods=3, freq="M")
         actual = sigp.resample(df, rule="D").sum()
@@ -1398,11 +1409,21 @@ class Test_resample_df(hut.TestCase):
 
     def test_upsample_business_days_to_days1(self) -> None:
         """
-        Test freq="B", unit="D", aggregate with `.sum()`.
+        Test freq="B", unit="D".
         """
         df = self._get_df(seed=1, periods=9, freq="B")
         actual = sigp.resample(df, rule="D").sum()
         actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
+        txt = self._get_output_txt(df, actual)
+        self.check_string(txt)
+
+    def test_only_business_day_default1(self) -> None:
+        """
+        Test freq="B", unit="B".
+        """
+        df = self._get_df(seed=1, periods=9, freq="B")
+        actual = sigp.resample(df, rule="B").sum()
+        actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
         txt = self._get_output_txt(df, actual)
         self.check_string(txt)
 
