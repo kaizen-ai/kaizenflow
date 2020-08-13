@@ -1558,26 +1558,28 @@ def summarize_time_index_info(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
-    index = srs.index
-    # Check index of a series. We require that the input
-    #     series have a sorted datetime index.
-    dbg.dassert_isinstance(index, pd.DatetimeIndex)
-    dbg.dassert_strictly_increasing_index(index)
+    original_index = srs.index
+    # Assert that input series has a sorted datetime index.
+    dbg.dassert_isinstance(original_index, pd.DatetimeIndex)
+    dbg.dassert_strictly_increasing_index(original_index)
+    freq = original_index.freq
+    clear_srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    clear_index = clear_srs.index
     result = pd.Series([], dtype="object")
-    result[prefix + "start_time"] = index[0]
-    result[prefix + "end_time"] = index[-1]
-    result[prefix + "n_sampling_points"] = len(index)
-    if index.freq is None:
+    result[prefix + "start_time"] = clear_index[0]
+    result[prefix + "end_time"] = clear_index[-1]
+    result[prefix + "n_sampling_points"] = len(clear_index)
+    if freq is None:
         result[prefix + "frequency"] = "None"
     else:
-        freq = str(pd.infer_freq(index))
         result[prefix + "frequency"] = freq
         sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
             freq
         )
         result[prefix + "sampling_points_per_year"] = sampling_points_per_year
+        # Compute input time span as a number of `freq` units in `clear_index`.
+        clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
         result[prefix + "time_span_in_years"] = (
-            len(index) / sampling_points_per_year
+            clear_index_time_span / sampling_points_per_year
         )
     return result
