@@ -1049,15 +1049,7 @@ def plot_cumulative_returns(
         benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black")
-    if events:
-        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
-        for event, color in zip(events, colors):
-            ax.axvline(
-                x=pd.Timestamp(event[0]),
-                label=event[1],
-                color=color,
-                linestyle="--",
-            )
+    _add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
 
@@ -1123,15 +1115,7 @@ def plot_rolling_annualized_volatility(
         label="average annualized volatility",
     )
     ax.axhline(0, linewidth=0.8, color="black")
-    if events:
-        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
-        for event, color in zip(events, colors):
-            ax.axvline(
-                x=pd.Timestamp(event[0]),
-                label=event[1],
-                color=color,
-                linestyle="--",
-            )
+    _add_events(ax=ax, events=events)
     ax.set_title(f"Annualized rolling volatility ({unit})")
     # Start plot from original index if specified.
     if not trim_index:
@@ -1219,15 +1203,7 @@ def plot_rolling_annualized_sharpe_ratio(
         label="average SR",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
-    if events:
-        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
-        for event, color in zip(events, colors):
-            ax.axvline(
-                x=pd.Timestamp(event[0]),
-                label=event[1],
-                color=color,
-                linestyle="--",
-            )
+    _add_events(ax=ax, events=events)
     # Start plot from original index if specified.
     if not trim_index:
         ax.set_xlim([min(srs.index), max(srs.index)])
@@ -1410,15 +1386,7 @@ def plot_drawdown(
     drawdown.plot.area(
         ax=ax, title=f"{title}{title_suffix}", label=label, color="b", alpha=0.3
     )
-    if events:
-        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
-        for event, color in zip(events, colors):
-            ax.axvline(
-                x=pd.Timestamp(event[0]),
-                label=event[1],
-                color=color,
-                linestyle="--",
-            )
+    _add_events(ax=ax, events=events)
     ax.set_ylim(top=0)
     ax.set_ylabel(unit)
     ax.legend()
@@ -1451,15 +1419,7 @@ def plot_holdings(
         color="green",
         label="average holdings, overall",
     )
-    if events:
-        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
-        for event, color in zip(events, colors):
-            ax.axvline(
-                x=pd.Timestamp(event[0]),
-                label=event[1],
-                color=color,
-                linestyle="--",
-            )
+    _add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
@@ -1515,15 +1475,7 @@ def plot_turnover(
         color="green",
         label="average turnover, overall",
     )
-    if events:
-        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
-        for event, color in zip(events, colors):
-            ax.axvline(
-                x=pd.Timestamp(event[0]),
-                label=event[1],
-                color=color,
-                linestyle="--",
-            )
+    _add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Turnover ({unit})")
@@ -1554,15 +1506,7 @@ def plot_allocation(
     position_df_plot = position_df.copy()
     position_df_plot.columns = labels
     position_df_plot.plot(ax=ax, figsize=figsize)
-    if events:
-        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
-        for event, color in zip(events, colors):
-            ax.axvline(
-                x=pd.Timestamp(event[0]),
-                label=event[1],
-                color=color,
-                linestyle="--",
-            )
+    _add_events(ax=ax, events=events)
     ax.set_title(
         f"Portfolio allocation over time; {position_df.shape[1]} positions"
     )
@@ -1639,15 +1583,7 @@ def plot_rolling_beta(
     ax.axhline(beta_whole_period, ls="--", c="k", label="Whole-period beta")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
-    if events:
-        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
-        for event, color in zip(events, colors):
-            ax.axvline(
-                x=pd.Timestamp(event[0]),
-                label=event[1],
-                color=color,
-                linestyle="--",
-            )
+    _add_events(ax=ax, events=events)
     ax.legend()
 
 
@@ -1683,3 +1619,23 @@ def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
         lambda x: calendar.month_abbr[x]
     )
     return monthly_pct_spread
+
+
+def _add_events(
+    ax: mpl.axes.Axes, events: Optional[List[Tuple[str, Optional[str]]]]
+) -> None:
+    """
+    Add labeled vertical lines at events' dates on a plot.
+
+    :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
+    """
+    if events:
+        colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
+        for event, color in zip(events, colors):
+            ax.axvline(
+                x=pd.Timestamp(event[0]),
+                label=event[1],
+                color=color,
+                linestyle="--",
+            )
