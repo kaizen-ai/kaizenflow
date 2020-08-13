@@ -8,13 +8,12 @@ import logging
 import re
 from typing import List
 
-import helpers.dbg as dbg
-import helpers.parser as prsr
-import helpers.printing as prnt
-import helpers.system_interaction as si
-import helpers.unit_test as ut
 import dev_scripts.linter.base as lntr
 import dev_scripts.linter.utils as utils
+import helpers.dbg as dbg
+import helpers.parser as prsr
+import helpers.system_interaction as si
+import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 
@@ -157,7 +156,7 @@ class _Pylint(lntr.Action):
         # pylint crashed due to lack of memory.
         # A fix according to https://github.com/PyCQA/pylint/issues/2388 is:
         opts.append('--init-hook="import sys; sys.setrecursionlimit(2000)"')
-        prnt.dassert_list_of_strings(opts)
+        dbg.dassert_list_of_strings(opts)
         opts_as_str = " ".join(opts)
         cmd = " ".join([self._executable, opts_as_str, file_name])
         _, output = lntr.tee(cmd, self._executable, abort_on_error=False)

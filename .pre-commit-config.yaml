@@ -37,49 +37,49 @@ repos:
     hooks:
       - id: p1_black
         name: p1_black
-        entry: python amp/dev_scripts/linter/p1_black.py
+        entry: p1_black.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
       - id: p1_flake8
         name: p1_flake8
-        entry: python amp/dev_scripts/linter/p1_flake8.py
+        entry: p1_flake8.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
       - id: p1_doc_formatter
         name: p1_doc_formatter
-        entry: python amp/dev_scripts/linter/p1_doc_formatter.py
+        entry: p1_doc_formatter.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
       - id: p1_specific_lints
         name: p1_specific_lints
-        entry: python amp/dev_scripts/linter/p1_specific_lints.py
+        entry: p1_specific_lints.py
         language: python
         types: [python]
         additional_dependencies:
           ["pandas", "matplotlib", "typing_extensions", "more_itertools"]
       - id: p1_pylint
         name: p1_pylint
-        entry: python amp/dev_scripts/linter/p1_pylint.py
+        entry: p1_pylint.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
       - id: p1_mypy
         name: p1_mypy
-        entry: python amp/dev_scripts/linter/p1_mypy.py
+        entry: p1_mypy.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib", "more_itertools"]
       - id: p1_processjupytext
         name: p1_processjupytext
-        entry: python amp/dev_scripts/linter/p1_processjupytext.py
+        entry: p1_processjupytext.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
       - id: p1_lint_md
         name: p1_lint_md
-        entry: python amp/dev_scripts/linter/p1_lint_md.py
+        entry: p1_lint_md.py
         language: python
         additional_dependencies: ["pandas", "matplotlib"]

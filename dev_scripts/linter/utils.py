@@ -3,14 +3,13 @@ from typing import List
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.printing as prnt
 
 
 def write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None:
-    prnt.dassert_list_of_strings(txt)
+    dbg.dassert_list_of_strings(txt)
     txt_as_str = "\n".join(txt)
     #
-    prnt.dassert_list_of_strings(txt_new)
+    dbg.dassert_list_of_strings(txt_new)
     txt_new_as_str = "\n".join(txt_new)
     #
     if txt_as_str != txt_new_as_str:

@@ -41,6 +41,7 @@ import re
 import sys
 from typing import Any, List, Tuple, Type
 
+import dev_scripts.linter.utils as utils
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_
@@ -48,7 +49,6 @@ import helpers.list as hlist
 import helpers.parser as prsr
 import helpers.printing as prnt
 import helpers.system_interaction as si
-import dev_scripts.linter.utils as utils
 
 _LOG = logging.getLogger(__name__)
 
@@ -75,9 +75,9 @@ def _annotate_output(output: List, executable: str) -> List:
 
     :return: list of strings
     """
-    prnt.dassert_list_of_strings(output)
+    dbg.dassert_list_of_strings(output)
     output = [t + " [%s]" % executable for t in output]
-    prnt.dassert_list_of_strings(output)
+    dbg.dassert_list_of_strings(output)
     return output
 
 
@@ -95,7 +95,7 @@ def tee(cmd: str, executable: str, abort_on_error: bool) -> Tuple[int, List[str]
     #
     output2 = prnt.remove_empty_lines_from_string_list(output1)
     _LOG.debug("output2= (%d)\n'%s'", len(output2), "\n".join(output2))
-    prnt.dassert_list_of_strings(output2)
+    dbg.dassert_list_of_strings(output2)
     return rc, output2
 
 
@@ -276,7 +276,7 @@ class Action:
         dbg.dassert(file_name)
         dbg.dassert_exists(file_name)
         output = self._execute(file_name, pedantic)
-        prnt.dassert_list_of_strings(output)
+        dbg.dassert_list_of_strings(output)
         return output
 
     ## @abc.abstractmethod
@@ -293,7 +293,7 @@ def run_action(action: Action, file_names: List[str]) -> None:
         )
         full_output.extend(output)
     # Print the output.
-    prnt.dassert_list_of_strings(full_output)
+    dbg.dassert_list_of_strings(full_output)
     print("\n".join(full_output))
     # Exit.
     rc = len(full_output)
@@ -312,7 +312,7 @@ def _check_file_property(
         for file_name in all_file_names:
             class_ = _get_action_class(action)
             output_tmp = class_.execute(file_name, pedantic)
-            prnt.dassert_list_of_strings(output_tmp)
+            dbg.dassert_list_of_strings(output_tmp)
             output.extend(output_tmp)
     actions = [a for a in actions if a != action]
     _LOG.debug("actions=%s", actions)
@@ -454,7 +454,7 @@ def _lint(
         output_tmp = class_.execute(dst_file_name, pedantic)
         # Annotate with executable [tag].
         output_tmp = _annotate_output(output_tmp, action)
-        prnt.dassert_list_of_strings(
+        dbg.dassert_list_of_strings(
             output_tmp, "action=%s file_name=%s", action, file_name
         )
         output.extend(output_tmp)
@@ -679,7 +679,7 @@ def _main(args: argparse.Namespace) -> int:
     lints.extend(lints_tmp)
     # Run linter.
     lints_tmp = _run_linter(actions, args, file_names)
-    prnt.dassert_list_of_strings(lints_tmp)
+    dbg.dassert_list_of_strings(lints_tmp)
     lints.extend(lints_tmp)
     # Sort the errors.
     lints = sorted(lints)
