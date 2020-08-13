@@ -2,6 +2,6 @@
 start_time                2010-01-31 00:00:00
 end_time                  2013-04-30 00:00:00
 n_sampling_points                          40
-frequency                                   M
+frequency                          <MonthEnd>
 sampling_points_per_year                   12
 time_span_in_years                    3.33333

@@ -1526,7 +1526,9 @@ class Test_summarize_time_index_info(hut.TestCase):
         Test for default nan_mode.
         """
         series = self._get_series(seed=1)
-        series[5:10] = np.nan
+        series[0] = np.nan
+        series[-1] = np.nan
+        series[5:25] = np.nan
         actual = stats.summarize_time_index_info(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
@@ -1536,8 +1538,12 @@ class Test_summarize_time_index_info(hut.TestCase):
         Test for specified nan_mode.
         """
         series = self._get_series(seed=1)
-        series[5:10] = np.nan
-        actual = stats.summarize_time_index_info(series, nan_mode="ffill")
+        series[0] = np.nan
+        series[-1] = np.nan
+        series[5:25] = np.nan
+        actual = stats.summarize_time_index_info(
+            series, nan_mode="fill_with_zero"
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
