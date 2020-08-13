@@ -1545,28 +1545,33 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
 
 
 def summarize_time_index_info(
-    srs: pd.Series, prefix: Optional[str] = None,
+    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Return summarized information about datetime index of the input.
 
     :param srs: pandas series of floats
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :param prefix: optional prefix for output's index
     :return: series with information about input's index
     """
     dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
+    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     index = srs.index
     # Check index of a series. We require that the input
     #     series have a sorted datetime index.
     dbg.dassert_isinstance(index, pd.DatetimeIndex)
     dbg.dassert_strictly_increasing_index(index)
-    freq = index.freq
     result = pd.Series([], dtype="object")
     result[prefix + "start_time"] = index[0]
     result[prefix + "end_time"] = index[-1]
     result[prefix + "n_sampling_points"] = len(index)
-    if freq:
+    if index.freq is None:
+        result[prefix + "frequency"] = "None"
+    else:
+        freq = str(pd.infer_freq(index))
         result[prefix + "frequency"] = freq
         sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
             freq
@@ -1575,6 +1580,4 @@ def summarize_time_index_info(
         result[prefix + "time_span_in_years"] = (
             len(index) / sampling_points_per_year
         )
-    else:
-        result[prefix + "frequency"] = "None"
     return result

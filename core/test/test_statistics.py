@@ -1523,7 +1523,7 @@ class Test_summarize_time_index_info(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Test for input with NaNs.
+        Test for default nan_mode.
         """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
@@ -1532,6 +1532,16 @@ class Test_summarize_time_index_info(hut.TestCase):
         self.check_string(actual_string)
 
     def test4(self) -> None:
+        """
+        Test for specified nan_mode.
+        """
+        series = self._get_series(seed=1)
+        series[5:10] = np.nan
+        actual = stats.summarize_time_index_info(series, nan_mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
         """
         Test for prefix.
         """
