@@ -1117,24 +1117,44 @@ class Test_resample_srs(hut.TestCase):
         return series
 
     @staticmethod
-    def _get_output_txt(input_data: pd.Series, output: pd.Series,) -> str:
+    def _get_output_txt(
+        input_data: pd.Series,
+        output_default: pd.Series,
+        output_closed_left: pd.Series,
+    ) -> str:
         """
         Create string output for tests results.
         """
         input_string = hut.convert_df_to_string(input_data, index=True)
-        output_string = hut.convert_df_to_string(output, index=True)
-        txt = f"input:\n{input_string}\n\n" f"output:\n{output_string}\n"
+        output_default_string = hut.convert_df_to_string(
+            output_default, index=True
+        )
+        output_closed_left_string = hut.convert_df_to_string(
+            output_closed_left, index=True
+        )
+        txt = (
+            f"Input:\n{input_string}\n\n"
+            f"Output with default arguments:\n{output_default_string}\n\n"
+            f"Output with closed='left':\n{output_closed_left_string}\n"
+        )
+
         return txt
 
+    # Converting days to other units.
     def test_day_to_year1(self) -> None:
         """
         Test freq="D", unit="Y".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
-        actual = (
+        actual_default = (
             sigp.resample(series, rule="Y").sum().rename("Output in freq='Y'")
         )
-        txt = self._get_output_txt(series, actual)
+        actual_closed_left = (
+            sigp.resample(series, rule="Y", closed="left")
+            .sum()
+            .rename("Output in freq='Y'")
+        )
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
         self.check_string(txt)
 
     def test_day_to_month1(self) -> None:
@@ -1142,10 +1162,15 @@ class Test_resample_srs(hut.TestCase):
         Test freq="D", unit="M".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
-        actual = (
+        actual_default = (
             sigp.resample(series, rule="M").sum().rename("Output in freq='M'")
         )
-        txt = self._get_output_txt(series, actual)
+        actual_closed_left = (
+            sigp.resample(series, rule="M", closed="left")
+            .sum()
+            .rename("Output in freq='M'")
+        )
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
         self.check_string(txt)
 
     def test_day_to_week1(self) -> None:
@@ -1153,10 +1178,15 @@ class Test_resample_srs(hut.TestCase):
         Test freq="D", unit="W".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
-        actual = (
+        actual_default = (
             sigp.resample(series, rule="W").sum().rename("Output in freq='W'")
         )
-        txt = self._get_output_txt(series, actual)
+        actual_closed_left = (
+            sigp.resample(series, rule="W", closed="left")
+            .sum()
+            .rename("Output in freq='W'")
+        )
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
         self.check_string(txt)
 
     def test_day_to_business_day1(self) -> None:
@@ -1164,107 +1194,101 @@ class Test_resample_srs(hut.TestCase):
         Test freq="D", unit="B".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
-        actual = (
+        actual_default = (
             sigp.resample(series, rule="B").sum().rename("Output in freq='B'")
         )
-        txt = self._get_output_txt(series, actual)
-        self.check_string(txt)
-
-    def test_day_to_business_day_closed_left1(self) -> None:
-        """
-        Test freq="D", unit="B", closed="left".
-        """
-        series = self._get_series(seed=1, periods=9, freq="D")
-        actual = (
+        actual_closed_left = (
             sigp.resample(series, rule="B", closed="left")
             .sum()
             .rename("Output in freq='B'")
         )
-        txt = self._get_output_txt(series, actual)
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_equal_unit_freq_days1(self) -> None:
+    # Equal frequency resampling.
+    def test_only_day1(self) -> None:
         """
         Test freq="D", unit="D".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
-        actual = (
+        actual_default = (
             sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
         )
-        txt = self._get_output_txt(series, actual)
-        self.check_string(txt)
-
-    def test_equal_unit_freq_days_closed_left1(self) -> None:
-        """
-        Test freq="D", unit="D", closed="left".
-        """
-        series = self._get_series(seed=1, periods=9, freq="D")
-        actual = (
+        actual_closed_left = (
             sigp.resample(series, rule="D", closed="left")
             .sum()
             .rename("Output in freq='D'")
         )
-        txt = self._get_output_txt(series, actual)
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_equal_unit_freq_minutes1(self) -> None:
+    def test_only_minute1(self) -> None:
         """
         Test freq="T", unit="T".
         """
         series = self._get_series(seed=1, periods=9, freq="T")
-        actual = (
+        actual_default = (
             sigp.resample(series, rule="T").sum().rename("Output in freq='T'")
         )
-        txt = self._get_output_txt(series, actual)
-        self.check_string(txt)
-
-    def test_upsample_month_to_days1(self) -> None:
-        """
-        Test freq="M", unit="D".
-        """
-        series = self._get_series(seed=1, periods=3, freq="M")
-        actual = (
-            sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
+        actual_closed_left = (
+            sigp.resample(series, rule="T", closed="left")
+            .sum()
+            .rename("Output in freq='T'")
         )
-        txt = self._get_output_txt(series, actual)
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_upsample_business_days_to_days1(self) -> None:
-        """
-        Test freq="B", unit="D".
-        """
-        series = self._get_series(seed=1, periods=9, freq="B")
-        actual = (
-            sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
-        )
-        txt = self._get_output_txt(series, actual)
-        self.check_string(txt)
-
-    def test_only_business_day_default1(self) -> None:
+    def test_only_business_day1(self) -> None:
         """
         Test freq="B", unit="B".
         """
         series = self._get_series(seed=1, periods=9, freq="B")
-        actual = (
+        actual_default = (
             sigp.resample(series, rule="B").sum().rename("Output in freq='B'")
         )
-        txt = self._get_output_txt(series, actual)
-        self.check_string(txt)
-
-    def test_only_business_day_closed_left1(self) -> None:
-        """
-        Test freq="B", unit="B", closed="left".
-        """
-        series = self._get_series(seed=1, periods=9, freq="B")
-        actual = (
+        actual_closed_left = (
             sigp.resample(series, rule="B", closed="left")
             .sum()
             .rename("Output in freq='B'")
         )
-        txt = self._get_output_txt(series, actual)
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_no_freq_input_day_to_business_day1(self) -> None:
+    # Upsampling.
+    def test_upsample_month_to_day1(self) -> None:
+        """
+        Test freq="M", unit="D".
+        """
+        series = self._get_series(seed=1, periods=3, freq="M")
+        actual_default = (
+            sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
+        )
+        actual_closed_left = (
+            sigp.resample(series, rule="D", closed="left")
+            .sum()
+            .rename("Output in freq='D'")
+        )
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
+        self.check_string(txt)
+
+    def test_upsample_business_day_to_day1(self) -> None:
+        """
+        Test freq="B", unit="D".
+        """
+        series = self._get_series(seed=1, periods=9, freq="B")
+        actual_default = (
+            sigp.resample(series, rule="D").sum().rename("Output in freq='D'")
+        )
+        actual_closed_left = (
+            sigp.resample(series, rule="D", closed="left")
+            .sum()
+            .rename("Output in freq='D'")
+        )
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
+        self.check_string(txt)
+
+    # Resampling freq-less series.
+    def test_no_freq_day_to_business_day1(self) -> None:
         """
         Test for an input without `freq`.
         """
@@ -1273,10 +1297,15 @@ class Test_resample_srs(hut.TestCase):
         )
         # Remove some observations in order to make `freq` None.
         series = series.drop(series.index[3:7])
-        actual = (
+        actual_default = (
             sigp.resample(series, rule="B").sum().rename("Output in freq='B'")
         )
-        txt = self._get_output_txt(series, actual)
+        actual_closed_left = (
+            sigp.resample(series, rule="B", closed="left")
+            .sum()
+            .rename("Output in freq='B'")
+        )
+        txt = self._get_output_txt(series, actual_default, actual_closed_left)
         self.check_string(txt)
 
 
@@ -1308,23 +1337,46 @@ class Test_resample_df(hut.TestCase):
         return df
 
     @staticmethod
-    def _get_output_txt(input_data: pd.DataFrame, output: pd.DataFrame,) -> str:
+    def _get_output_txt(
+        input_data: pd.DataFrame,
+        output_default: pd.DataFrame,
+        output_closed_left: pd.DataFrame,
+    ) -> str:
         """
         Create string output for tests results.
         """
         input_string = hut.convert_df_to_string(input_data, index=True)
-        output_string = hut.convert_df_to_string(output, index=True)
-        txt = f"input:\n{input_string}\n\n" f"output:\n{output_string}\n"
+        output_default_string = hut.convert_df_to_string(
+            output_default, index=True
+        )
+        output_closed_left_string = hut.convert_df_to_string(
+            output_closed_left, index=True
+        )
+        txt = (
+            f"Input:\n{input_string}\n\n"
+            f"Output with default arguments:\n{output_default_string}\n\n"
+            f"Output with closed='left':\n{output_closed_left_string}\n"
+        )
+
         return txt
 
+    # Converting days to other units.
     def test_day_to_year1(self) -> None:
         """
         Test freq="D", unit="Y".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
-        actual = sigp.resample(df, rule="Y").sum()
-        actual.columns = ["1st output in freq='Y'", "2nd output in freq='Y'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="Y").sum()
+        actual_default.columns = [
+            "1st output in freq='Y'",
+            "2nd output in freq='Y'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="Y", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='Y'",
+            "2nd output in freq='Y'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
 
     def test_day_to_month1(self) -> None:
@@ -1332,9 +1384,17 @@ class Test_resample_df(hut.TestCase):
         Test freq="D", unit="M".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
-        actual = sigp.resample(df, rule="M").sum()
-        actual.columns = ["1st output in freq='M'", "2nd output in freq='M'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="M").sum()
+        actual_default.columns = [
+            "1st output in freq='M'",
+            "2nd output in freq='M'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="M", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='M'",
+            "2nd output in freq='M'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
 
     def test_day_to_week1(self) -> None:
@@ -1342,9 +1402,17 @@ class Test_resample_df(hut.TestCase):
         Test freq="D", unit="W".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
-        actual = sigp.resample(df, rule="W").sum()
-        actual.columns = ["1st output in freq='W'", "2nd output in freq='W'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="W").sum()
+        actual_default.columns = [
+            "1st output in freq='W'",
+            "2nd output in freq='W'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="W", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='W'",
+            "2nd output in freq='W'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
 
     def test_day_to_business_day1(self) -> None:
@@ -1352,92 +1420,113 @@ class Test_resample_df(hut.TestCase):
         Test freq="D", unit="B".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
-        actual = sigp.resample(df, rule="B").sum()
-        actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="B").sum()
+        actual_default.columns = [
+            "1st output in freq='B'",
+            "2nd output in freq='B'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="B", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='B'",
+            "2nd output in freq='B'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_day_to_business_day_closed_left1(self) -> None:
-        """
-        Test freq="D", unit="B".
-        """
-        df = self._get_df(seed=1, periods=9, freq="D")
-        actual = sigp.resample(df, rule="B", closed="left").sum()
-        actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
-        txt = self._get_output_txt(df, actual)
-        self.check_string(txt)
-
-    def test_equal_unit_freq_days1(self) -> None:
+    # Equal frequency resampling.
+    def test_only_day1(self) -> None:
         """
         Test freq="D", unit="D".
         """
         df = self._get_df(seed=1, periods=9, freq="D")
-        actual = sigp.resample(df, rule="D").sum()
-        actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="D").sum()
+        actual_default.columns = [
+            "1st output in freq='D'",
+            "2nd output in freq='D'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="D", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='D'",
+            "2nd output in freq='D'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_equal_unit_freq_days_closed_left1(self) -> None:
-        """
-        Test freq="D", unit="D", closed="left".
-        """
-        df = self._get_df(seed=1, periods=9, freq="D")
-        actual = sigp.resample(df, rule="D", closed="left").sum()
-        actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
-        txt = self._get_output_txt(df, actual)
-        self.check_string(txt)
-
-    def test_equal_unit_freq_minutes1(self) -> None:
+    def test_only_minute1(self) -> None:
         """
         Test freq="T", unit="T".
         """
         df = self._get_df(seed=1, periods=9, freq="T")
-        actual = sigp.resample(df, rule="T").sum()
-        actual.columns = ["1st output in freq='T'", "2nd output in freq='T'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="T").sum()
+        actual_default.columns = [
+            "1st output in freq='T'",
+            "2nd output in freq='T'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="T", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='T'",
+            "2nd output in freq='T'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_upsample_month_to_days1(self) -> None:
-        """
-        Test freq="M", unit="D".
-        """
-        df = self._get_df(seed=1, periods=3, freq="M")
-        actual = sigp.resample(df, rule="D").sum()
-        actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
-        txt = self._get_output_txt(df, actual)
-        self.check_string(txt)
-
-    def test_upsample_business_days_to_days1(self) -> None:
-        """
-        Test freq="B", unit="D".
-        """
-        df = self._get_df(seed=1, periods=9, freq="B")
-        actual = sigp.resample(df, rule="D").sum()
-        actual.columns = ["1st output in freq='D'", "2nd output in freq='D'"]
-        txt = self._get_output_txt(df, actual)
-        self.check_string(txt)
-
-    def test_only_business_day_default1(self) -> None:
+    def test_only_business_day1(self) -> None:
         """
         Test freq="B", unit="B".
         """
         df = self._get_df(seed=1, periods=9, freq="B")
-        actual = sigp.resample(df, rule="B").sum()
-        actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="B").sum()
+        actual_default.columns = [
+            "1st output in freq='B'",
+            "2nd output in freq='B'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="B", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='B'",
+            "2nd output in freq='B'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_only_business_day_closed_left1(self) -> None:
+    # Upsampling.
+    def test_upsample_month_to_day1(self) -> None:
         """
-        Test freq="B", unit="B", closed="left".
+        Test freq="M", unit="D".
+        """
+        df = self._get_df(seed=1, periods=3, freq="M")
+        actual_default = sigp.resample(df, rule="D").sum()
+        actual_default.columns = [
+            "1st output in freq='D'",
+            "2nd output in freq='D'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="D", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='D'",
+            "2nd output in freq='D'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
+        self.check_string(txt)
+
+    def test_upsample_business_day_to_day1(self) -> None:
+        """
+        Test freq="B", unit="D".
         """
         df = self._get_df(seed=1, periods=9, freq="B")
-        actual = sigp.resample(df, rule="B", closed="left").sum()
-        actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="D").sum()
+        actual_default.columns = [
+            "1st output in freq='D'",
+            "2nd output in freq='D'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="D", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='D'",
+            "2nd output in freq='D'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
 
-    def test_no_freq_input_day_to_business_day1(self) -> None:
+    # Resampling freq-less series.
+    def test_no_freq_day_to_business_day1(self) -> None:
         """
         Test for an input without `freq`.
         """
@@ -1445,7 +1534,15 @@ class Test_resample_df(hut.TestCase):
         df.columns = ["1st input with no freq", "2nd input with no freq"]
         # Remove some observations in order to make `freq` None.
         df = df.drop(df.index[3:7])
-        actual = sigp.resample(df, rule="B").sum()
-        actual.columns = ["1st output in freq='B'", "2nd output in freq='B'"]
-        txt = self._get_output_txt(df, actual)
+        actual_default = sigp.resample(df, rule="B").sum()
+        actual_default.columns = [
+            "1st output in freq='B'",
+            "2nd output in freq='B'",
+        ]
+        actual_closed_left = sigp.resample(df, rule="B", closed="left").sum()
+        actual_closed_left.columns = [
+            "1st output in freq='B'",
+            "2nd output in freq='B'",
+        ]
+        txt = self._get_output_txt(df, actual_default, actual_closed_left)
         self.check_string(txt)
