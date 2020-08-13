@@ -1575,7 +1575,6 @@ def plot_rolling_beta(
     benchmark_rets: pd.Series,
     window: int,
     nan_mode: Optional[str] = None,
-    figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
     **kwargs: Any,
@@ -1587,7 +1586,6 @@ def plot_rolling_beta(
     :param benchmark_rets: benchmark returns
     :param window: length of the rolling window
     :param nan_mode: argument for hdf.apply_nan_mode()
-    :param figsize: figure size
     :param ax: axis
     :param events: list of tuples with dates and labels to point out on the plot
     :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
@@ -1608,7 +1606,6 @@ def plot_rolling_beta(
         rets_name, benchmark_name, "Inputs should have different names."
     )
     nan_mode = nan_mode or "drop"
-    figsize = figsize or FIG_SIZE
     # Combine rets and benchmark_rets in one dataframe over the intersection
     #    of their indices.
     all_rets_df = pd.concat([rets, benchmark_rets], axis=1, join="inner")
@@ -1632,7 +1629,6 @@ def plot_rolling_beta(
     beta_rolling = beta_rolling[common_index]
     beta_rolling.plot(
         ax=ax,
-        figsize=figsize,
         title=f"Beta with respect to {benchmark_name}",
         label="Rolling beta",
     )
