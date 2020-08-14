@@ -197,6 +197,19 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
+    def test_arma_atol1(self) -> None:
+        """
+        Test on an arma series with all-zeros period and `atol>0`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[10:25] = 0
+        actual = sigp.compute_rolling_zscore(series, tau=2, atol=0.01).rename(
+            "output"
+        )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
     def test_arma_inf1(self) -> None:
         """
         Test on an arma series with leading infs.
@@ -279,6 +292,19 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         actual = sigp.compute_rolling_zscore(series, tau=20, delay=1).rename(
             "output"
         )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay1_arma_atol1(self) -> None:
+        """
+        Test on an arma series with all-zeros period, `delay=1` and `atol>0`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[10:25] = 0
+        actual = sigp.compute_rolling_zscore(
+            series, tau=2, delay=1, atol=0.01
+        ).rename("output")
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
@@ -369,6 +395,19 @@ class Test_compute_rolling_zscore1(hut.TestCase):
         actual = sigp.compute_rolling_zscore(series, tau=20, delay=2).rename(
             "output"
         )
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test_delay2_arma_atol1(self) -> None:
+        """
+        Test on an arma series with all-zeros period, `delay=2` and `atol>0`.
+        """
+        series = self._get_arma_series(seed=1)
+        series[10:25] = 0
+        actual = sigp.compute_rolling_zscore(
+            series, tau=2, delay=2, atol=0.01
+        ).rename("output")
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
