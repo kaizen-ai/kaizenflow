@@ -194,7 +194,9 @@ def _run_notebook(
     io_.to_file(file_name, "")
 
 
-def select_config(configs: List[cfg.Config], index: str, start_from_index: str, dry_run: bool) -> List[cfg.Config]:
+def select_config(
+    configs: List[cfg.Config], index: str, start_from_index: str, dry_run: bool
+) -> List[cfg.Config]:
     """
     From a list of configs select configs to run.
 
@@ -326,7 +328,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     configs = cfgb.add_result_dir(dst_dir, configs)
     configs = cfgb.add_config_idx(configs)
     # Select the configs.
-    configs = select_config(configs, args.index, args.start_from_index, args.dry_run)
+    configs = select_config(
+        configs, args.index, args.start_from_index, args.dry_run
+    )
     #
     notebook_file = args.notebook
     notebook_file = os.path.abspath(notebook_file)
