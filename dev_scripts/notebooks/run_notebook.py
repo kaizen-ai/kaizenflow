@@ -215,14 +215,10 @@ def select_config(
         )
         if "id" in configs[0]["meta"].to_dict().keys():
             # Select a config based on the id parameter if it exists.
-            configs = [
-                x for x in configs if int(x[("meta", "id")]) == ind
-            ]
+            configs = [x for x in configs if int(x[("meta", "id")]) == ind]
         else:
             # Otherwise use index to select a config.
-            configs = [
-                x for i, x in enumerate(configs) if i == index
-            ]
+            configs = [x for i, x in enumerate(configs) if i == index]
     elif start_from_index:
         start_from_index = int(start_from_index)
         dbg.dassert_lte(0, start_from_index)
@@ -238,9 +234,7 @@ def select_config(
             ]
         else:
             # Otherwise use index to select configs.
-            configs = [
-                x for i, x in enumerate(configs) if i >= start_from_index
-            ]
+            configs = [x for i, x in enumerate(configs) if i >= start_from_index]
     _LOG.info("Created %s config(s)", len(configs))
     if dry_run:
         _LOG.warning(
