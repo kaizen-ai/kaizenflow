@@ -687,15 +687,15 @@ def compute_rolling_zscore(
         signal_std = compute_rolling_norm(
             signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
         )
-        nominator = signal - signal_ma.shift(delay)
+        numerator = signal - signal_ma.shift(delay)
     else:
         signal_std = compute_rolling_norm(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
-        nominator = signal
+        numerator = signal
     denominator = signal_std.shift(delay)
     denominator[denominator.abs() <= atol] = np.nan
-    ret = nominator / denominator
+    ret = numerator / denominator
     return ret
 
 
