@@ -194,7 +194,7 @@ def _run_notebook(
     io_.to_file(file_name, "")
 
 
-def select_config(configs: List[cfg.Config], index: int, start_from_index: int, dry_run: bool) -> List[cfg.Config]:
+def select_config(configs: List[cfg.Config], index: str, start_from_index: str, dry_run: bool) -> List[cfg.Config]:
     """
     From a list of configs select configs to run.
 
