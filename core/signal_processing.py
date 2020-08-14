@@ -663,6 +663,7 @@ def compute_rolling_zscore(
     p_moment: float = 2,
     demean: bool = True,
     delay: int = 0,
+    atol: float = 0,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
     Z-score using compute_smooth_moving_average and compute_rolling_std.
@@ -671,6 +672,9 @@ def compute_rolling_zscore(
     extreme values.
 
     Moving average corresponds to compute_ema when min_depth = max_depth = 1.
+
+    If denominator.abs() <= atol, Z-score value is set to np.nan in order to
+    avoid extreme value spikes.
 
     TODO(Paul): determine whether signal == signal.shift(0) always.
     """
@@ -683,15 +687,15 @@ def compute_rolling_zscore(
         signal_std = compute_rolling_norm(
             signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
         )
-        ret = (signal - signal_ma.shift(delay)) / signal_std.shift(delay).replace(
-            0, np.nan
-        )
-
+        numerator = signal - signal_ma.shift(delay)
     else:
         signal_std = compute_rolling_norm(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
-        ret = signal / signal_std.shift(delay).replace(0, np.nan)
+        numerator = signal
+    denominator = signal_std.shift(delay)
+    denominator[denominator.abs() <= atol] = np.nan
+    ret = numerator / denominator
     return ret
 
 
