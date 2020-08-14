@@ -6,14 +6,12 @@ Use example:
 > run_notebook.py --dst_dir nlp/test_results \
  --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
  --function "nlp.build_configs.build_PartTask1088_configs()" \
-  --num_threads 2
-
+ --num_threads 2
 
 Import as:
 
-import dev_scripts.run_notebooks as devrunn
+import dev_scripts.run_notebook as devrunn
 """
-
 import argparse
 import copy
 import logging
@@ -237,7 +235,7 @@ def select_config(configs: List[cfg.Config], index: int, start_from_index: int, 
     return configs
 
 
-def get_configs_from_builder(config_builder) -> List[cfg.Config]:
+def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
     """
     Generate configs using a config building function.
 
