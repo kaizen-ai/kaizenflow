@@ -18,6 +18,7 @@ import argparse
 import copy
 import logging
 import os
+import sys
 from typing import List
 
 import joblib
@@ -195,14 +196,15 @@ def _run_notebook(
     io_.to_file(file_name, "")
 
 
-def select_config(configs, index, start_from_index, dry_run):
+def select_config(configs: List[cfg.Config], index: int, start_from_index: int, dry_run: bool) -> List[cfg.Config]:
     """
+    From a list of configs select configs to run.
 
-    :param configs:
-    :param index:
-    :param start_from_index:
-    :param dry_run:
-    :return:
+    :param configs: a list of configs
+    :param index: index of a config to execute
+    :param start_from_index: index of a config to start execution with
+    :param dry_run: do not run configs if True
+    :return: a list of configs to execute
     """
     if index:
         ind = int(index)
@@ -235,17 +237,19 @@ def select_config(configs, index, start_from_index, dry_run):
     return configs
 
 
-def get_configs_from_builder(config_builder):
+def get_configs_from_builder(config_builder) -> List[cfg.Config]:
     """
+    Generate configs using a config building function.
 
-    :param config_builder:
-    :return:
+    :param config_builder: a config building function
+    :return: a list of configs
     """
     _LOG.info("Executing function '%s'", config_builder)
     configs = cfgb.get_configs_from_builder(config_builder)
+    #
     dbg.dassert_isinstance(configs, list)
     cfgb.assert_on_duplicated_configs(configs)
-    return config_builder, configs
+    return configs
 
 
 def _parse() -> argparse.ArgumentParser:
