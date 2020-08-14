@@ -195,7 +195,7 @@ def _run_notebook(
 
 
 def select_config(
-    configs: List[cfg.Config], index: str, start_from_index: str, dry_run: bool
+    configs: List[cfg.Config], index: int, start_from_index: int, dry_run: bool
 ) -> List[cfg.Config]:
     """
     From a list of configs select configs to run.
@@ -219,8 +219,7 @@ def select_config(
         dbg.dassert_lte(0, start_from_index)
         dbg.dassert_lt(start_from_index, len(configs))
         _LOG.warning(
-            "Only configs %s and higher will be executed due to passing "
-            "--start_from_index",
+            "Only configs %s and higher will be executed due to passing --start_from_index",
             start_from_index,
         )
         configs = [
