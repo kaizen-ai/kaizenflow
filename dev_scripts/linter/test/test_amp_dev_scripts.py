@@ -4,11 +4,11 @@ from typing import Tuple
 
 import pytest
 
+import dev_scripts.linter.base as lntr
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.system_interaction as si
 import helpers.unit_test as ut
-import linter.base as lntr
 
 _LOG = logging.getLogger(__name__)
 

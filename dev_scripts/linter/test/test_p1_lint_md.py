@@ -1,5 +1,5 @@
+import dev_scripts.linter.p1_lint_md as plintmd
 import helpers.unit_test as hut
-import linter.p1_lint_md as plintmd
 
 
 class Test_check_readme_is_capitalized(hut.TestCase):

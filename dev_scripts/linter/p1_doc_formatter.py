@@ -8,11 +8,11 @@ import logging
 import re
 from typing import List
 
+import dev_scripts.linter.base as lntr
+import dev_scripts.linter.utils as utils
 import helpers.dbg as dbg
 import helpers.parser as prsr
 import helpers.system_interaction as si
-import dev_scripts.linter.base as lntr
-import dev_scripts.linter.utils as utils
 
 _LOG = logging.getLogger(__name__)
 

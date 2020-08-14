@@ -1,8 +1,8 @@
 import tempfile
 
+import dev_scripts.linter.p1_doc_formatter as p1docf
 import helpers.io_ as io_
 import helpers.unit_test as hut
-import linter.p1_doc_formatter as script
 
 
 class Test_docformatter(hut.TestCase):
@@ -15,7 +15,7 @@ class Test_docformatter(hut.TestCase):
         """
         tmp = tempfile.NamedTemporaryFile(suffix=".py")
         io_.to_file(file_name=tmp.name, lines=text)
-        script._DocFormatter().execute(file_name=tmp.name, pedantic=0)
+        p1docf._DocFormatter().execute(file_name=tmp.name, pedantic=0)
         content: str = io_.from_file(file_name=tmp.name)
         tmp.close()
         return content
