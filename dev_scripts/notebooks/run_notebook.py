@@ -6,13 +6,17 @@ Use example:
 > run_notebook.py --dst_dir nlp/test_results \
  --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
  --function "nlp.build_configs.build_PartTask1088_configs()" \
-  --num_threads 2
-"""
+ --num_threads 2
 
+Import as:
+
+import dev_scripts.run_notebook as devrunn
+"""
 import argparse
 import copy
 import logging
 import os
+import sys
 from typing import List
 
 import joblib
@@ -30,6 +34,7 @@ import helpers.system_interaction as si
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Is this used?
 def build_configs(dst_dir: str, dry_run: bool) -> List[cfg.Config]:
     # TODO (*) Where to move this file?
     config = cfg.Config()
@@ -189,87 +194,71 @@ def _run_notebook(
     io_.to_file(file_name, "")
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    #
-    dst_dir = os.path.abspath(args.dst_dir)
-    io_.create_dir(dst_dir, incremental=not args.no_incremental)
-    #
-    config_builder = args.function
-    _LOG.info("Executing function '%s'", config_builder)
-    configs = cfgb.get_configs_from_builder(config_builder)
-    dbg.dassert_isinstance(configs, list)
-    cfgb.assert_on_duplicated_configs(configs)
-    configs = cfgb.add_result_dir(dst_dir, configs)
-    configs = cfgb.add_config_idx(configs)
-    #
-    if args.index:
-        ind = int(args.index)
+def select_config(
+    configs: List[cfg.Config], index: int, start_from_index: int, dry_run: bool
+) -> List[cfg.Config]:
+    """
+    From a list of configs select configs to run.
+
+    :param configs: a list of configs
+    :param index: index of a config to execute
+    :param start_from_index: index of a config to start execution with
+    :param dry_run: do not run configs if True
+    :return: a list of configs to execute
+    """
+    if index:
+        ind = int(index)
         dbg.dassert_lte(0, ind)
         dbg.dassert_lt(ind, len(configs))
         _LOG.warning(
             "Only config %s will be executed due to passing --index", ind
         )
-        configs = [x for x in configs if int(x[("meta", "id")]) == ind]
-    elif args.start_from_index:
-        start_from_index = int(args.start_from_index)
+        if "id" in configs[0]["meta"].to_dict():
+            # Select a config based on the id parameter if it exists.
+            configs = [x for x in configs if int(x[("meta", "id")]) == ind]
+        else:
+            # Otherwise use index to select a config.
+            configs = [x for i, x in enumerate(configs) if i == ind]
+    elif start_from_index:
+        start_from_index = int(start_from_index)
         dbg.dassert_lte(0, start_from_index)
         dbg.dassert_lt(start_from_index, len(configs))
         _LOG.warning(
             "Only configs %s and higher will be executed due to passing --start_from_index",
             start_from_index,
         )
-        configs = [
-            x for x in configs if int(x[("meta", "id")]) >= start_from_index
-        ]
+        if "id" in configs[0]["meta"].to_dict():
+            # Select configs based on the id parameter if it exists.
+            configs = [
+                x for x in configs if int(x[("meta", "id")]) >= start_from_index
+            ]
+        else:
+            # Otherwise use index to select configs.
+            configs = [x for i, x in enumerate(configs) if i >= start_from_index]
     _LOG.info("Created %s config(s)", len(configs))
-    if args.dry_run:
+    if dry_run:
         _LOG.warning(
             "The following configs will not be executed due to passing --dry_run:"
         )
         for i, config in enumerate(configs):
             print("config_%s:\n %s", i, config)
-        return
+        sys.exit(0)
+    return configs
+
+
+def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
+    """
+    Generate configs using a config building function.
+
+    :param config_builder: a config building function
+    :return: a list of configs
+    """
+    _LOG.info("Executing function '%s'", config_builder)
+    configs = cfgb.get_configs_from_builder(config_builder)
     #
-    notebook_file = args.notebook
-    notebook_file = os.path.abspath(notebook_file)
-    dbg.dassert_exists(notebook_file)
-    #
-    publish = args.publish_notebook
-    num_attempts = args.num_attempts
-    #
-    num_threads = args.num_threads
-    if num_threads == "serial":
-        for config in tqdm.tqdm(configs):
-            i = int(config[("meta", "id")])
-            _LOG.debug("\n%s", printing.frame("Config %s" % i))
-            #
-            _run_notebook(
-                i,
-                notebook_file,
-                dst_dir,
-                config,
-                config_builder,
-                num_attempts,
-                publish,
-            )
-    else:
-        num_threads = int(num_threads)
-        # -1 is interpreted by joblib like for all cores.
-        _LOG.info("Using %d threads", num_threads)
-        joblib.Parallel(n_jobs=num_threads, verbose=50)(
-            joblib.delayed(_run_notebook)(
-                int(config[("meta", "id")]),
-                notebook_file,
-                dst_dir,
-                config,
-                config_builder,
-                num_attempts,
-                publish,
-            )
-            for config in configs
-        )
+    dbg.dassert_isinstance(configs, list)
+    cfgb.assert_on_duplicated_configs(configs)
+    return configs
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -334,6 +323,63 @@ def _parse() -> argparse.ArgumentParser:
     )
     prsr.add_verbosity_arg(parser)
     return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    #
+    dst_dir = os.path.abspath(args.dst_dir)
+    io_.create_dir(dst_dir, incremental=not args.no_incremental)
+    config_builder = args.function
+    # Build the configs from the builder.
+    configs = get_configs_from_builder(config_builder)
+    # Patch the configs.
+    configs = cfgb.add_result_dir(dst_dir, configs)
+    configs = cfgb.add_config_idx(configs)
+    # Select the configs.
+    configs = select_config(
+        configs, args.index, args.start_from_index, args.dry_run
+    )
+    #
+    notebook_file = args.notebook
+    notebook_file = os.path.abspath(notebook_file)
+    dbg.dassert_exists(notebook_file)
+    #
+    publish = args.publish_notebook
+    num_attempts = args.num_attempts
+    #
+    num_threads = args.num_threads
+    if num_threads == "serial":
+        for config in tqdm.tqdm(configs):
+            i = int(config[("meta", "id")])
+            _LOG.debug("\n%s", printing.frame("Config %s" % i))
+            #
+            _run_notebook(
+                i,
+                notebook_file,
+                dst_dir,
+                config,
+                config_builder,
+                num_attempts,
+                publish,
+            )
+    else:
+        num_threads = int(num_threads)
+        # -1 is interpreted by joblib like for all cores.
+        _LOG.info("Using %d threads", num_threads)
+        joblib.Parallel(n_jobs=num_threads, verbose=50)(
+            joblib.delayed(_run_notebook)(
+                int(config[("meta", "id")]),
+                notebook_file,
+                dst_dir,
+                config,
+                config_builder,
+                num_attempts,
+                publish,
+            )
+            for config in configs
+        )
 
 
 if __name__ == "__main__":

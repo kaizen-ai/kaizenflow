@@ -10,6 +10,7 @@ import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib as mpl
+import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1010,6 +1011,7 @@ def plot_cumulative_returns(
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     plot_zero_line: bool = True,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
     """
     Plot cumulative returns.
@@ -1022,6 +1024,7 @@ def plot_cumulative_returns(
     :param title_suffix: suffix added to the title
     :param ax: axes
     :param plot_zero_line: whether to plot horizontal line at 0
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1046,6 +1049,7 @@ def plot_cumulative_returns(
         benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black")
+    _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
 
@@ -1060,6 +1064,7 @@ def plot_rolling_annualized_volatility(
     unit: str = "ratio",
     trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
     """
     Plot rolling annualized volatility.
@@ -1075,6 +1080,7 @@ def plot_rolling_annualized_volatility(
         "Exchange:Exchange_symbol"
     :param trim_index: start plot at original index if True
     :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     min_periods = min_periods or tau
     srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
@@ -1109,6 +1115,7 @@ def plot_rolling_annualized_volatility(
         label="average annualized volatility",
     )
     ax.axhline(0, linewidth=0.8, color="black")
+    _maybe_add_events(ax=ax, events=events)
     ax.set_title(f"Annualized rolling volatility ({unit})")
     # Start plot from original index if specified.
     if not trim_index:
@@ -1133,6 +1140,7 @@ def plot_rolling_annualized_sharpe_ratio(
     title_suffix: Optional[str] = None,
     trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
     """
     Plot rolling annualized Sharpe ratio.
@@ -1146,6 +1154,7 @@ def plot_rolling_annualized_sharpe_ratio(
     :param title_suffix: suffix added to the title
     :param trim_index: start plot at original index if True
     :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
     srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
@@ -1194,6 +1203,7 @@ def plot_rolling_annualized_sharpe_ratio(
         label="average SR",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
+    _maybe_add_events(ax=ax, events=events)
     # Start plot from original index if specified.
     if not trim_index:
         ax.set_xlim([min(srs.index), max(srs.index)])
@@ -1355,6 +1365,7 @@ def plot_drawdown(
     unit: str = "%",
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
     """
     Plot drawdown.
@@ -1363,6 +1374,7 @@ def plot_drawdown(
     :param unit: `ratio`, `%`, input series is rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1374,13 +1386,17 @@ def plot_drawdown(
     drawdown.plot.area(
         ax=ax, title=f"{title}{title_suffix}", label=label, color="b", alpha=0.3
     )
+    _maybe_add_events(ax=ax, events=events)
     ax.set_ylim(top=0)
     ax.set_ylabel(unit)
     ax.legend()
 
 
 def plot_holdings(
-    holdings: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
+    holdings: pd.Series,
+    unit: str = "ratio",
+    ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
     """
     Plot holdings, average holdings and average holdings by month.
@@ -1388,6 +1404,7 @@ def plot_holdings(
     :param holdings: pnl series to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1402,6 +1419,7 @@ def plot_holdings(
         color="green",
         label="average holdings, overall",
     )
+    _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
@@ -1430,7 +1448,10 @@ def plot_qq(
 
 
 def plot_turnover(
-    positions: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
+    positions: pd.Series,
+    unit: str = "ratio",
+    ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
     """
     Plot turnover, average turnover by month and overall average turnover.
@@ -1438,6 +1459,7 @@ def plot_turnover(
     :param positions: series of positions to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1453,6 +1475,7 @@ def plot_turnover(
         color="green",
         label="average turnover, overall",
     )
+    _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Turnover ({unit})")
@@ -1463,6 +1486,7 @@ def plot_allocation(
     config: Dict[str, Any],
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
     """
     Plot position allocations over time.
@@ -1471,6 +1495,7 @@ def plot_allocation(
     :param config: information about time series
     :param figsize: size of plot
     :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     ax = ax or plt.gca()
     figsize = figsize or (20, 5)
@@ -1481,6 +1506,7 @@ def plot_allocation(
     position_df_plot = position_df.copy()
     position_df_plot.columns = labels
     position_df_plot.plot(ax=ax, figsize=figsize)
+    _maybe_add_events(ax=ax, events=events)
     ax.set_title(
         f"Portfolio allocation over time; {position_df.shape[1]} positions"
     )
@@ -1493,8 +1519,8 @@ def plot_rolling_beta(
     benchmark_rets: pd.Series,
     window: int,
     nan_mode: Optional[str] = None,
-    figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -1504,8 +1530,8 @@ def plot_rolling_beta(
     :param benchmark_rets: benchmark returns
     :param window: length of the rolling window
     :param nan_mode: argument for hdf.apply_nan_mode()
-    :param figsize: figure size
     :param ax: axis
+    :param events: list of tuples with dates and labels to point out on the plot
     :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
     """
     dbg.dassert_strictly_increasing_index(rets)
@@ -1523,27 +1549,30 @@ def plot_rolling_beta(
     dbg.dassert_ne(
         rets_name, benchmark_name, "Inputs should have different names."
     )
-    nan_mode = nan_mode or "leave_unchanged"
-    figsize = figsize or FIG_SIZE
+    nan_mode = nan_mode or "drop"
     # Combine rets and benchmark_rets in one dataframe over the intersection
     #    of their indices.
     all_rets_df = pd.concat([rets, benchmark_rets], axis=1, join="inner")
     all_rets_df.columns = [rets_name, benchmark_name]
-    # Extract copies of rets and benchmark_rets with unified indices.
-    rets = all_rets_df[rets_name]
-    benchmark_rets = all_rets_df[benchmark_name]
-    rets = hdf.apply_nan_mode(rets, nan_mode)
-    benchmark_rets = hdf.apply_nan_mode(benchmark_rets, nan_mode)
-    #
+    # Extract common index in order to keep NaN periods on the X-axis.
+    common_index = all_rets_df.index
+    # Apply `.dropna()` after `hdf.apply_nan_mode` in oder to drop remaining
+    #     rows with NaNs and calculate rolling beta without NaN gaps in input.
+    clean_rets_df = all_rets_df.apply(hdf.apply_nan_mode, mode=nan_mode).dropna()
+    # Get copies of rets and benchmark_rets with unified indices and no NaNs.
+    rets = clean_rets_df[rets_name]
+    benchmark_rets = clean_rets_df[benchmark_name]
+    # Calculate and plot rolling beta.
     ax = ax or plt.gca()
     benchmark_rets = sm.add_constant(benchmark_rets)
     # Calculate and plot rolling beta.
     model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res_rolling = model_rolling.fit()
     beta_rolling = res_rolling.params[benchmark_name]
+    # Return NaN periods to the rolling beta series for the plot.
+    beta_rolling = beta_rolling[common_index]
     beta_rolling.plot(
         ax=ax,
-        figsize=figsize,
         title=f"Beta with respect to {benchmark_name}",
         label="Rolling beta",
     )
@@ -1554,6 +1583,7 @@ def plot_rolling_beta(
     ax.axhline(beta_whole_period, ls="--", c="k", label="Whole-period beta")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
+    _maybe_add_events(ax=ax, events=events)
     ax.legend()
 
 
@@ -1589,3 +1619,21 @@ def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
         lambda x: calendar.month_abbr[x]
     )
     return monthly_pct_spread
+
+
+def _maybe_add_events(
+    ax: mpl.axes.Axes, events: Optional[List[Tuple[str, Optional[str]]]]
+) -> None:
+    """
+    Add labeled vertical lines at events' dates on a plot.
+
+    :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
+    """
+    if not events:
+        return None
+    colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
+    for event, color in zip(events, colors):
+        ax.axvline(
+            x=pd.Timestamp(event[0]), label=event[1], color=color, linestyle="--",
+        )

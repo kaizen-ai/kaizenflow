@@ -663,6 +663,7 @@ def compute_rolling_zscore(
     p_moment: float = 2,
     demean: bool = True,
     delay: int = 0,
+    atol: float = 0,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
     Z-score using compute_smooth_moving_average and compute_rolling_std.
@@ -671,6 +672,9 @@ def compute_rolling_zscore(
     extreme values.
 
     Moving average corresponds to compute_ema when min_depth = max_depth = 1.
+
+    If denominator.abs() <= atol, Z-score value is set to np.nan in order to
+    avoid extreme value spikes.
 
     TODO(Paul): determine whether signal == signal.shift(0) always.
     """
@@ -683,13 +687,15 @@ def compute_rolling_zscore(
         signal_std = compute_rolling_norm(
             signal - signal_ma, tau, min_periods, min_depth, max_depth, p_moment
         )
-        ret = (signal - signal_ma.shift(delay)) / signal_std.shift(delay)
-
+        numerator = signal - signal_ma.shift(delay)
     else:
         signal_std = compute_rolling_norm(
             signal, tau, min_periods, min_depth, max_depth, p_moment
         )
-        ret = signal / signal_std.shift(delay)
+        numerator = signal
+    denominator = signal_std.shift(delay)
+    denominator[denominator.abs() <= atol] = np.nan
+    ret = numerator / denominator
     return ret
 
 
@@ -1290,6 +1296,7 @@ def get_trend_residual_decomp(
 def get_swt(
     sig: Union[pd.DataFrame, pd.Series],
     wavelet: str,
+    depth: Optional[int] = None,
     timing_mode: Optional[str] = None,
     output_mode: Optional[str] = None,
 ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
@@ -1312,6 +1319,8 @@ def get_swt(
 
     :param sig: input signal
     :param wavelet: pywt wavelet name, e.g., "db8"
+    :param depth: the number of decomposition steps to perform. Corresponds to
+        "level" parameter in `pywt.swt`
     :param timing_mode: supported timing modes are
         - "knowledge_time":
             - reindex transform according to knowledge times
@@ -1345,7 +1354,7 @@ def get_swt(
     sig_len = sig.size
     padded = _pad_to_pow_of_2(sig.values)
     # Perform the wavelet decomposition.
-    decomp = pywt.swt(padded, wavelet=wavelet, norm=True)
+    decomp = pywt.swt(padded, wavelet=wavelet, level=depth, norm=True)
     # Ensure we have at least one level.
     levels = len(decomp)
     _LOG.debug("levels=%d", levels)
@@ -1452,3 +1461,36 @@ def get_dyadic_zscored(
         )
     df = pd.DataFrame.from_dict(zscored)
     return df
+
+
+# #############################################################################
+# Resampling
+# #############################################################################
+
+
+def resample(
+    data: Union[pd.Series, pd.DataFrame], **resample_kwargs: Any,
+):
+    """
+    Execute series resampling with specified `.resample()` arguments.
+
+    The `rule` argument must always be specified and the `closed` and `label`
+    arguments are treated specially by default.
+    The default values of `closed` and `label` arguments are intended to make
+    pandas `resample()` behavior consistent for every value of `rule` and to
+    make resampling causal so if we have sampling times t_0 < t_1 < t_2;
+    after resampling, the values at t_1 and t_2 should not be incorporated
+    into the resampled value timestamped with t_0.
+
+    :data: pd.Series or pd.DataFrame with a datetime index
+    :resample_kwargs: arguments for pd.DataFrame.resample
+    :return: DatetimeIndexResampler object
+    """
+    dbg.dassert_in("rule", resample_kwargs, "Argument 'rule' must be specified")
+    if "closed" not in resample_kwargs:
+        resample_kwargs["closed"] = "right"
+    if "label" not in resample_kwargs:
+        resample_kwargs["label"] = "right"
+    # Execute resampling with specified kwargs.
+    resampled_data = data.resample(**resample_kwargs)
+    return resampled_data

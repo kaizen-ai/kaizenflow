@@ -439,6 +439,55 @@ def compute_ttest_power_rule_constant(
     return const
 
 
+def zscore_oos_sharpe_ratio(log_rets: pd.Series, oos: Any) -> float:
+    """
+    Z-score the observed OOS SR wrt the INS SR and inflated SE.
+
+    TODO(*): Consider factoring out pieces and/or returning more info.
+
+    :param log_rets: log returns over entire period
+    :param oos: start of OOS (right endpoint)
+    :return: z-scored OOS SR
+    """
+    # Create ins/oos masks.
+    ins_mask = log_rets.index < oos
+    dbg.dassert(ins_mask.any())
+    ins_nobs = ins_mask.sum()
+    oos_mask = log_rets.index >= oos
+    dbg.dassert(oos_mask.any())
+    oos_nobs = oos_mask.sum()
+    #
+    inflation = compute_sharpe_ratio_prediction_interval_inflation_factor(
+        ins_nobs, oos_nobs
+    )
+    #
+    ins_srs = log_rets.loc[ins_mask].copy()
+    oos_srs = log_rets.loc[oos_mask].copy()
+    #
+    ins_sr = compute_annualized_sharpe_ratio(ins_srs)
+    ins_sr_se = compute_annualized_sharpe_ratio_standard_error(ins_srs)
+    pred_sr_se = inflation * ins_sr_se
+    #
+    oos_sr = compute_annualized_sharpe_ratio(oos_srs)
+    #
+    zscored = (oos_sr - ins_sr) / pred_sr_se
+    return zscored
+
+
+def compute_sharpe_ratio_prediction_interval_inflation_factor(
+    ins_nobs: Union[int, float], oos_nobs: Union[int, float]
+) -> float:
+    """
+    Compute the SE(SR) inflation factor for obtaining conditional OOS bounds.
+
+    :param ins_nobs: number of observations in-sample
+    :param oos_nobs: number of observations out-of-sample
+    :return: float > 1
+    """
+    se_inflation_factor = np.sqrt(1 + ins_nobs / oos_nobs)
+    return se_inflation_factor
+
+
 def compute_drawdown_cdf(
     sharpe_ratio: float,
     volatility: float,
@@ -1321,6 +1370,43 @@ def compute_interarrival_time_stats(
     return res
 
 
+def compute_avg_turnover_and_holding_period(
+    pos: pd.Series,
+    unit: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute average turnover and holding period for a sequence of positions.
+
+    :param pos: pandas series of positions
+    :param unit: desired output holding period unit (e.g. 'B', 'W', 'M', etc.)
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: average turnover, holding period and index frequency
+    """
+    dbg.dassert_isinstance(pos, pd.Series)
+    dbg.dassert(pos.index.freq)
+    pos_freq = pos.index.freq
+    unit = unit or pos_freq
+    nan_mode = nan_mode or "ffill"
+    prefix = prefix or ""
+    result_index = [
+        prefix + "avg_turnover_(%)",
+        prefix + "turnover_frequency",
+        prefix + "avg_holding_period",
+        prefix + "holding_period_units",
+    ]
+    avg_holding_period = fin.compute_average_holding_period(
+        pos=pos, unit=unit, nan_mode=nan_mode
+    )
+    avg_turnover = 100 * (1 / avg_holding_period)
+    #
+    result_values = [avg_turnover, unit, avg_holding_period, unit]
+    res = pd.Series(data=result_values, index=result_index, name=pos.name)
+    return res
+
+
 # #############################################################################
 # Cross-validation
 # #############################################################################
@@ -1472,26 +1558,28 @@ def summarize_time_index_info(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
-    index = srs.index
-    # Check index of a series. We require that the input
-    #     series have a sorted datetime index.
-    dbg.dassert_isinstance(index, pd.DatetimeIndex)
-    dbg.dassert_strictly_increasing_index(index)
+    original_index = srs.index
+    # Assert that input series has a sorted datetime index.
+    dbg.dassert_isinstance(original_index, pd.DatetimeIndex)
+    dbg.dassert_strictly_increasing_index(original_index)
+    freq = original_index.freq
+    clear_srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    clear_index = clear_srs.index
     result = pd.Series([], dtype="object")
-    result[prefix + "start_time"] = index[0]
-    result[prefix + "end_time"] = index[-1]
-    result[prefix + "n_sampling_points"] = len(index)
-    if index.freq is None:
+    result[prefix + "start_time"] = clear_index[0]
+    result[prefix + "end_time"] = clear_index[-1]
+    result[prefix + "n_sampling_points"] = len(clear_index)
+    if freq is None:
         result[prefix + "frequency"] = "None"
     else:
-        freq = str(pd.infer_freq(index))
         result[prefix + "frequency"] = freq
         sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
             freq
         )
         result[prefix + "sampling_points_per_year"] = sampling_points_per_year
+        # Compute input time span as a number of `freq` units in `clear_index`.
+        clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
         result[prefix + "time_span_in_years"] = (
-            len(index) / sampling_points_per_year
+            clear_index_time_span / sampling_points_per_year
         )
     return result

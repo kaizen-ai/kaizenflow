@@ -336,20 +336,32 @@ def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
     return n_timepoints_underwater
 
 
-def compute_turnover(pos: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
+def compute_turnover(
+    pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
+) -> pd.Series:
     """
     Compute turnover for a sequence of positions.
 
     :param pos: sequence of positions
+    :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: turnover
     """
     dbg.dassert_isinstance(pos, pd.Series)
+    dbg.dassert(pos.index.freq)
     nan_mode = nan_mode or "ffill"
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
+    if unit:
+        numerator = numerator.resample(unit, closed="right", label="right").sum()
+        denominator = denominator.resample(
+            unit, closed="right", label="right"
+        ).sum()
     turnover = numerator / denominator
+    # Raise if we upsample.
+    if len(turnover) > len(pos):
+        raise ValueError("Upsampling is not allowed.")
     return turnover
 
 
@@ -485,12 +497,22 @@ def compute_signed_bet_lengths(
     # `NaN`s in `compute_bet_runs`).
     bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    bet_lengths = []
-    for t0, t1 in zip(bet_starts_idx, bet_ends_idx):
-        bet_length = bet_runs.loc[t0:t1].sum()
-        bet_lengths.append(bet_length)
+    # To calculate lengths of bets, we take a running cumulative sum of
+    # absolute values so that bet lengths can be calculated by subtracting
+    # the value at the beginning of each bet from its value at the end.
+    bet_runs_abs_cumsum = bet_runs.abs().cumsum()
+    # Align bet starts and ends for vectorized subtraction.
+    t0s = bet_runs_abs_cumsum.loc[bet_starts_idx].reset_index(drop=True)
+    t1s = bet_runs_abs_cumsum.loc[bet_ends_idx].reset_index(drop=True)
+    # Subtract and correct for off-by-one.
+    bet_lengths = t1s - t0s + 1
+    # Recover bet signs (positive for long, negative for short).
+    bet_lengths = bet_lengths * bet_starts.loc[bet_starts_idx].reset_index(
+        drop=True
+    )
+    # Reindex according to the bet ends index.
     bet_length_srs = pd.Series(
-        index=bet_ends_idx, data=bet_lengths, name=positions.name
+        index=bet_ends_idx, data=bet_lengths.values, name=positions.name
     )
     return bet_length_srs
 
@@ -509,23 +531,23 @@ def compute_returns_per_bet(
     """
     dbg.dassert(positions.index.equals(log_rets.index))
     dbg.dassert_strictly_increasing_index(log_rets)
-    bet_starts = compute_bet_starts(positions, nan_mode)
     bet_ends = compute_bet_ends(positions, nan_mode)
-    # Sanity check indices.
-    dbg.dassert(bet_starts.index.equals(bet_ends.index))
     # Retrieve locations of bet starts and bet ends.
-    bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    # Compute returns per bet.
-    rets_per_bet = []
-    for bet_start, bet_end in zip(bet_starts_idx, bet_ends_idx):
-        pnl_bet = (
-            log_rets.loc[bet_start:bet_end] * positions.loc[bet_start:bet_end]
-        )
-        bet_rets = pnl_bet.sum()
-        rets_per_bet.append(bet_rets)
+    pnl_bets = log_rets * positions
+    bet_rets_cumsum = pnl_bets.cumsum().ffill()
+    # Select rets cumsum for periods when bets end.
+    bet_rets_cumsum_ends = bet_rets_cumsum.loc[bet_ends_idx].reset_index(
+        drop=True
+    )
+    # Difference between rets cumsum of bet ends is equal to the rets cumsum
+    # for the time between these bet ends i.e. rets cumsum per bet.
+    rets_per_bet = bet_rets_cumsum_ends.diff()
+    # The 1st element of rets_per_bet equals the 1st one of bet_rets_cumsum_ends
+    # because it is the first bet so nothing to subtract from it.
+    rets_per_bet[0] = bet_rets_cumsum_ends[0]
     rets_per_bet = pd.Series(
-        data=rets_per_bet, index=bet_ends_idx, name=log_rets.name
+        data=rets_per_bet.values, index=bet_ends_idx, name=log_rets.name
     )
     return rets_per_bet
 

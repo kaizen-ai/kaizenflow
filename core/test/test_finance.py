@@ -203,31 +203,54 @@ class Test_compute_turnover(hut.TestCase):
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
         arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
-        )
+        ).rename("input")
         return series
 
     def test1(self) -> None:
+        """
+        Test for default arguments.
+        """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(series).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test2(self) -> None:
+        """
+        Test for only positive input.
+        """
         positive_series = self._get_series(seed=1).abs()
-        actual = fin.compute_turnover(positive_series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(positive_series).rename("output")
+        output_df = pd.concat([positive_series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test3(self) -> None:
+        """
+        Test for nan_mode.
+        """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(series, nan_mode="ffill").rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test4(self) -> None:
+        """
+        Test for unit.
+        """
+        series = self._get_series(seed=1)
+        series[5:10] = np.nan
+        actual = fin.compute_turnover(series, unit="B").rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
 
 class Test_compute_average_holding_period(hut.TestCase):
@@ -722,6 +745,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         return series
 
     def test1(self) -> None:
+        """
+        Test for clean input series.
+        """
         log_rets = self._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
         actual = fin.compute_returns_per_bet(positions, log_rets)
@@ -735,6 +761,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         self.check_string(output_str)
 
     def test2(self) -> None:
+        """
+        Test for input series with NaNs and zeros.
+        """
         log_rets = self._get_series(42)
         log_rets.iloc[6:12] = np.nan
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
@@ -752,6 +781,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         self.check_string(output_str)
 
     def test3(self) -> None:
+        """
+        Test for short input series.
+        """
         idx = pd.to_datetime(
             [
                 "2010-01-01",
@@ -762,14 +794,14 @@ class Test_compute_returns_per_bet(hut.TestCase):
                 "2010-01-12",
             ]
         )
-        log_rets = pd.Series([1, 2, 3, 5, 7, 11], index=idx)
-        positions = pd.Series([1, 2, 0, 1, -3, -2], index=idx)
+        log_rets = pd.Series([1.0, 2.0, 3.0, 5.0, 7.0, 11.0], index=idx)
+        positions = pd.Series([1.0, 2.0, 0.0, 1.0, -3.0, -2.0], index=idx)
         actual = fin.compute_returns_per_bet(positions, log_rets)
         expected = pd.Series(
             {
-                pd.Timestamp("2010-01-03"): 5,
-                pd.Timestamp("2010-01-06"): 5,
-                pd.Timestamp("2010-01-12"): -43,
+                pd.Timestamp("2010-01-03"): 5.0,
+                pd.Timestamp("2010-01-06"): 5.0,
+                pd.Timestamp("2010-01-12"): -43.0,
             }
         )
         pd.testing.assert_series_equal(actual, expected)
