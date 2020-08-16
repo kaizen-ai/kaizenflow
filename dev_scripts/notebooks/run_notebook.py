@@ -331,8 +331,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     dst_dir = os.path.abspath(args.dst_dir)
     io_.create_dir(dst_dir, incremental=not args.no_incremental)
+    config_builder = args.function
     # Build the configs from the builder.
-    config_builder, configs = get_configs_from_builder(args.function)
+    configs = get_configs_from_builder(config_builder)
     # Patch the configs.
     configs = cfgb.add_result_dir(dst_dir, configs)
     configs = cfgb.add_config_idx(configs)
