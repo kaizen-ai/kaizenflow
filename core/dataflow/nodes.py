@@ -759,8 +759,8 @@ class ContinuousSkLearnModel(FitPredictNode):
             y_hat.rename(columns=lambda x: x.replace("_hat", ""))
         )
         info["pnl_rets"] = pnl_rets
-        info["sr"] = stats.compute_sharpe_ratio(
-            pnl_rets.resample("1B").sum(), time_scaling=252
+        info["sr"] = stats.compute_annualized_sharpe_ratio(
+            pnl_rets.resample("1B").sum()
         )
         return info
 
