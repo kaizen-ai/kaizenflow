@@ -1091,6 +1091,20 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         srs_sr = stats.compute_annualized_sharpe_ratio(srs)
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
 
+    def test3(self) -> None:
+        """
+        Test for pd.DataFrame input with NaN values.
+        """
+        srs = self._generate_minutely_series(n_days=1, seed=1)[:40]
+        srs[5:10] = np.nan
+        df = pd.DataFrame([srs, srs.shift()]).T
+        df.columns = ["Series 1", "Series 2"]
+        actual = stats.compute_annualized_sharpe_ratio(df)
+        df_string = hut.convert_df_to_string(df, index=True)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        txt = f"Input:\n{df_string}\n\n" f"Output:\n{actual_string}\n"
+        self.check_string(txt)
+
 
 class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
     def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
