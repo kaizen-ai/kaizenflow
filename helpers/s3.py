@@ -24,7 +24,7 @@ def get_bucket() -> str:
     as default.
     """
     # s3_bucket = "alphamatic"
-    s3_bucket = "default00-bucket"
+    s3_bucket = "external-p1"
     return s3_bucket
 
 
