@@ -275,6 +275,45 @@ def summarize_sharpe_ratio(
     return res
 
 
+def summarize_ins_oos_sharpe_ratio(
+    log_rets: pd.Series, oos: Any, prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate annualized SR stats for in-sample and out-of-sample.
+
+    Stats:
+    - SR, SE(SR) for INS
+    - SR, SE(SR) for OOS
+    - z-scored OOS SR
+
+    :param log_rets: log returns over entire period
+    :param oos: start of OOS (right endpoint)
+    :param prefix: prefix for series index
+    :return: series of stats
+    """
+    prefix = prefix or ""
+    # Compute z-scored OOS SR. This function handles all assertions.
+    zscored_oos_sr = zscore_oos_sharpe_ratio(log_rets, oos)
+    # Create INS/OOS masks.
+    ins_mask = log_rets.index < oos
+    oos_mask = log_rets.index >= oos
+    ins_srs = log_rets.loc[ins_mask].copy()
+    oos_srs = log_rets.loc[oos_mask].copy()
+    # Compute INS Sharpe ratio and SE.
+    ins_sr_and_se = summarize_sharpe_ratio(ins_srs, prefix="INS_")
+    # Compute OOS Sharpe ratio and SE.
+    oos_sr_and_se = summarize_sharpe_ratio(oos_srs, prefix="OOS_")
+    # Combine results.
+    zscored_oos_sr_srs = pd.Series(
+        [zscored_oos_sr],
+        name=oos_sr_and_se.name,
+        index=["zscored_OOS_sharpe_ratio"],
+    )
+    srs = pd.concat([ins_sr_and_se, oos_sr_and_se, zscored_oos_sr_srs])
+    srs.index = prefix + srs.index
+    return srs
+
+
 def compute_annualized_sharpe_ratio(
     log_rets: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
