@@ -168,25 +168,16 @@ def _extract_payload_links(src_file: str) -> pd.DataFrame:
     :return: DataFrame with the list of series with Symbol and Link columns
     """
     html = io_.from_file(src_file)
-    soup = bs4.BeautifulSoup(html, "html.parser")
-    tables = soup.findAll("table")
-    found = False
-    for table in tables:
-        if table.findParent("table") is None:
-            if table.get("class", "") == ["ms-classic4-main"]:
-                _LOG.info("Found table")
-                df = pd.read_html(str(table))[0]
-                df.columns = df.iloc[0]
-                df = df.iloc[1:]
-                cols = [
-                    np.where(
-                        dataset.has_attr("href"), dataset.get("href"), "no link"
-                    )
-                    for dataset in table.find_all("a")
-                ]
-                df["Link"] = [str(c) for c in cols]
-                found = True
-    dbg.dassert(found)
+    # Find HTML that refers a required table.
+    _, table_start, rest = html.partition('<table class="ms-classic4-main">')
+    table, table_end, _ = rest.partition('</table>')
+    # Replace all anchors with their href attributes.
+    table = re.sub('<a.*?href="(.*?)">(.*?)</a>', '\\1', table)
+    # Construct back the table.
+    table = table_start + table + table_end
+    df = pd.read_html(table)[0]
+    df.columns = df.iloc[0]
+    df = df.iloc[1:]
     return df
 
 
