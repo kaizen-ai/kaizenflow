@@ -23,8 +23,7 @@ def get_bucket() -> str:
     Make sure your ~/.aws/credentials uses the right key to access this bucket
     as default.
     """
-    # s3_bucket = "alphamatic"
-    s3_bucket = "external-p1"
+    s3_bucket = "alphamatic"
     return s3_bucket
 
 
