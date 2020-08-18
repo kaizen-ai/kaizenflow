@@ -1587,6 +1587,56 @@ def plot_rolling_beta(
     ax.legend()
 
 
+def plot_sharpe_ratio_panel(
+    log_rets: pd.Series,
+    frequencies: Optional[List[str]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """
+    Plot how SRs vary under resampling.
+
+    :param log_rets: log returns
+    :param frequencies: frequencies to calculate SR for
+    :param ax: axis
+    """
+    dbg.dassert_isinstance(log_rets, pd.Series)
+    frequencies = frequencies or ["B", "D", "W", "M", "Q"]
+    srs_freq = log_rets.index.freq
+    if not srs_freq:
+        _LOG.warning("Input has no frequency and it has been rescaled to 'D'")
+        srs_freq = "D"
+    # Resample input for assuring input frequency in calculations.
+    log_rets = log_rets.resample(srs_freq).sum()
+    # Compute input frequency points per year for the further time scaling.
+    input_freq_points_per_year = hdf.compute_points_per_year_for_given_freq(
+        srs_freq
+    )
+    # Initiate series with Sharpe ratios for selected frequencies.
+    sr_series = pd.Series([], dtype="object")
+    # Initiate list with Sharpe ratios' standard errors for error bars.
+    res_se = []
+    for freq in frequencies:
+        freq_points_per_year = hdf.compute_points_per_year_for_given_freq(freq)
+        time_scaling = input_freq_points_per_year / freq_points_per_year
+        if time_scaling < 1:
+            _LOG.warning(
+                "Upsampling is done from input freq='%s' to freq='%s'"
+                % (srs_freq, freq)
+            )
+        freq_sr = stats.compute_sharpe_ratio(log_rets, time_scaling)
+        freq_se = stats.compute_sharpe_ratio_standard_error(
+            log_rets, time_scaling
+        )
+        sr_series[freq] = freq_sr
+        res_se.append(freq_se)
+    ax = ax or plt.gca()
+    sr_series.plot(
+        yerr=res_se, marker="o", capsize=2, ax=ax, label="Sharpe ratio"
+    )
+    ax.set_xlabel("Frequencies")
+    ax.legend()
+
+
 def _choose_scaling_coefficient(unit: str) -> int:
     if unit == "%":
         scale_coeff = 100
