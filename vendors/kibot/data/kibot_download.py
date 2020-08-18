@@ -327,7 +327,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info(dataset_df.head())
         dataset_dir = os.path.join(converted_dir, dataset)
         io_.create_dir(dataset_dir, incremental=True)
-        aws_dir = os.path.join(hs3.get_path(), "kibot", dataset)
+        aws_dir = os.path.join(hs3.get_bucket(), "kibot", dataset)
         if args.delete_s3_dir:
             _LOG.warning("Deleting s3 file %s", aws_dir)
             cmd = "aws s3 rm --recursive %s" % aws_dir
