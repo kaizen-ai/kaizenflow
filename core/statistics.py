@@ -279,12 +279,12 @@ def summarize_ins_oos_sharpe_ratio(
     log_rets: pd.Series, oos: Any, prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate annualized SR stats for in-sample and out-of-sample.
+    Calculate annualized SR stats for in-sample and out-of-sample rets.
 
     Stats:
-    - SR, SE(SR) for INS
-    - SR, SE(SR) for OOS
-    - z-scored OOS SR
+      - SR, SE(SR) for INS
+      - SR, SE(SR) for OOS
+      - z-scored OOS SR
 
     :param log_rets: log returns over entire period
     :param oos: start of OOS (right endpoint)
@@ -309,9 +309,9 @@ def summarize_ins_oos_sharpe_ratio(
         name=oos_sr_and_se.name,
         index=["zscored_OOS_sharpe_ratio"],
     )
-    srs = pd.concat([ins_sr_and_se, oos_sr_and_se, zscored_oos_sr_srs])
-    srs.index = prefix + srs.index
-    return srs
+    res = pd.concat([ins_sr_and_se, oos_sr_and_se, zscored_oos_sr_srs])
+    res.index = prefix + res.index
+    return res
 
 
 def compute_annualized_sharpe_ratio(
