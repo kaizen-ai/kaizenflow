@@ -20,6 +20,7 @@ import getpass
 import logging
 import os
 import re
+import urllib.parse as urlprs
 
 import bs4
 import joblib
@@ -111,8 +112,9 @@ def _download_page(
     :param requests_session: current requests session to preserve cookies
     :return: contents of the page
     """
-    _LOG.info("Requesting page '%s'", page_url)
-    page_response = requests_session.get(page_url)
+    resolved_url = urlprs.urljoin(_KIBOT_ENDPOINT, page_url)
+    _LOG.info("Requesting page '%s'", resolved_url)
+    page_response = requests_session.get(resolved_url)
     _LOG.info("Storing page to '%s'", page_file_path)
     with open(page_file_path, "w+b") as f:
         f.write(page_response.content)
