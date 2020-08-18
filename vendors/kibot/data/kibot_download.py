@@ -84,22 +84,20 @@ def _log_in(
         "input", attrs={"name": "__EVENTVALIDATION"}
     )
     data = {
-        "__EVENTTARGET": "",
-        "__EVENTARGUMENT": "",
-        "__VIEWSTATE": view_state_input.value,
-        "__EVENTVALIDATION": event_validation_input.value,
-        "Content_LoginView1_Login1_UserName": username,
-        "Content_LoginView1_Login1_Password": password,
-        "ctl00$Content$LoginView1$Login1$RememberMe": "yes",
+        "__VIEWSTATE": view_state_input.attrs.get('value'),
+        "__EVENTVALIDATION": event_validation_input.attrs.get('value'),
+        "ctl00$Content$LoginView1$Login1$UserName": username,
+        "ctl00$Content$LoginView1$Login1$Password": password,
+        "ctl00$Content$LoginView1$Login1$RememberMe": "on",
         "ctl00$Content$LoginView1$Login1$LoginButton": "  Log In  ",
     }
     _LOG.info("Sending login request to page '%s'", page_url)
     _LOG.debug("Request data is %s", data)
-    login_response = requests_session.post(page_url, data=data)
-    if login_response.status_code == 200:
-        _LOG.error("Unexpected response from the login request")
-        return False
-    return True
+    login_response = requests_session.post(page_url, data=data, allow_redirects=False)
+    if login_response.status_code == 302:
+        return True
+    _LOG.error("Unexpected response from the login request")
+    return False
 
 
 def _download_page(
