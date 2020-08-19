@@ -275,17 +275,22 @@ def _parse() -> argparse.ArgumentParser:
         "--serial", action="store_true", help="Download data serially"
     )
     parser.add_argument(
-        "--download_compressed",
+        "--no_incremental",
         action="store_true",
-        help="Download data compressed on server side",
+        help="Clean the local directories",
     )
     parser.add_argument(
-        "--not_skip_if_exists",
+        "--no_download_compressed",
+        action="store_true",
+        help="Do not download data compressed on server side",
+    )
+    parser.add_argument(
+        "--no_skip_if_exists",
         action="store_true",
         help="Do not skip if it exists on S3",
     )
     parser.add_argument(
-        "--not_clean_up_artifacts",
+        "--no_clean_up_artifacts",
         action="store_true",
         help="Do not clean artifacts",
     )
@@ -302,13 +307,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create dirs.
-    io_.create_dir(args.tmp_dir, incremental=True)
+    incremental = not args.no_incremental
+    io_.create_dir(args.tmp_dir, incremental=incremental)
     #
     source_dir_name = "source_data"
     source_dir = os.path.join(args.tmp_dir, source_dir_name)
-    io_.create_dir(source_dir, incremental=True)
+    io_.create_dir(source_dir, incremental=incremental)
     #
-    incremental = False
     converted_dir_name = "converted_data"
     converted_dir = os.path.join(args.tmp_dir, converted_dir_name)
     io_.create_dir(converted_dir, incremental=incremental)
@@ -360,22 +365,23 @@ def _main(parser: argparse.ArgumentParser) -> None:
             cmd = "aws s3 rm --recursive %s" % aws_dir
             si.system(cmd)
         # Download data.
-        to_download = dataset_df.iloc[1000:1005]
+        to_download = dataset_df
+        #to_download = dataset_df.iloc[1000:1005]
         func = lambda row: _download_payload_page(
             dataset_dir,
             aws_dir,
             row,
             **{
-                "download_compressed": args.download_compressed,
-                "skip_if_exists": not args.not_skip_if_exists,
-                "clean_up_artifacts": not args.not_clean_up_artifacts,
+                "download_compressed": not args.no_download_compressed,
+                "skip_if_exists": not args.no_skip_if_exists,
+                "clean_up_artifacts": not args.no_clean_up_artifacts,
             },
         )
         tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
 
         if not args.serial:
             joblib.Parallel(n_jobs=20, verbose=1)(
-                joblib.delayed(func)(args) for _, row in tqdm_
+                joblib.delayed(func)(row) for _, row in tqdm_
             )
         else:
             for _, row in tqdm_:
