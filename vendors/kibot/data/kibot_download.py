@@ -16,7 +16,6 @@ Download data from kibot.com, compress each file, upload it to S3.
 """
 
 import argparse
-import getpass
 import logging
 import os
 import re
@@ -32,7 +31,6 @@ import tqdm
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
-import helpers.s3 as hs3
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -40,7 +38,7 @@ _LOG = logging.getLogger(__name__)
 # S3 bucket to save the data.
 _S3_URI = "external-p1/kibot"
 
-# 
+#
 _KIBOT_ENDPOINT = "http://www.kibot.com/"
 
 _DATASETS = [
@@ -65,10 +63,10 @@ _DATASETS = [
 
 
 def _log_in(
-        page_url: str,
-        username: str,
-        password: str,
-        requests_session: requests.Session,
+    page_url: str,
+    username: str,
+    password: str,
+    requests_session: requests.Session,
 ) -> bool:
     """
     Make a login request to my account page and return the result.
@@ -88,8 +86,8 @@ def _log_in(
         "input", attrs={"name": "__EVENTVALIDATION"}
     )
     data = {
-        "__VIEWSTATE": view_state_input.attrs.get('value'),
-        "__EVENTVALIDATION": event_validation_input.attrs.get('value'),
+        "__VIEWSTATE": view_state_input.attrs.get("value"),
+        "__EVENTVALIDATION": event_validation_input.attrs.get("value"),
         "ctl00$Content$LoginView1$Login1$UserName": username,
         "ctl00$Content$LoginView1$Login1$Password": password,
         "ctl00$Content$LoginView1$Login1$RememberMe": "on",
@@ -97,7 +95,9 @@ def _log_in(
     }
     _LOG.info("Sending login request to page '%s'", page_url)
     _LOG.debug("Request data is %s", data)
-    login_response = requests_session.post(page_url, data=data, allow_redirects=False)
+    login_response = requests_session.post(
+        page_url, data=data, allow_redirects=False
+    )
     if login_response.status_code == 302:
         return True
     _LOG.error("Unexpected response from the login request")
@@ -105,7 +105,7 @@ def _log_in(
 
 
 def _download_page(
-        page_file_path: str, page_url: str, requests_session: requests.Session,
+    page_file_path: str, page_url: str, requests_session: requests.Session,
 ) -> str:
     """
     Download html file by URL and store under specific name in data directory.
@@ -176,9 +176,9 @@ def _extract_payload_links(src_file: str) -> pd.DataFrame:
     html = io_.from_file(src_file)
     # Find HTML that refers a required table.
     _, table_start, rest = html.partition('<table class="ms-classic4-main">')
-    table, table_end, _ = rest.partition('</table>')
+    table, table_end, _ = rest.partition("</table>")
     # Replace all anchors with their href attributes.
-    table = re.sub('<a.*?href="(.*?)">(.*?)</a>', '\\1', table)
+    table = re.sub('<a.*?href="(.*?)">(.*?)</a>', "\\1", table)
     # Construct back the table.
     table = table_start + table + table_end
     df = pd.read_html(table)[0]
@@ -187,7 +187,14 @@ def _extract_payload_links(src_file: str) -> pd.DataFrame:
     return df
 
 
-def _download_payload_page(local_dir: str, aws_dir: str, row: pd.Series) -> bool:
+def _download_payload_page(
+    local_dir: str,
+    aws_dir: str,
+    row: pd.Series,
+    download_compressed: bool,
+    skip_if_exists: bool,
+    clean_up_artifacts: bool,
+) -> bool:
     """
     Store CSV payload for specific Symbol in S3.
 
@@ -199,31 +206,43 @@ def _download_payload_page(local_dir: str, aws_dir: str, row: pd.Series) -> bool
     aws_file = aws_dir + "/"
     aws_file += "%s.csv.gz" % row["Symbol"]
     # Check if S3 file exists.
-    rc = si.system("aws s3 ls " + aws_file, abort_on_error=False)
-    exists = not rc
-    _LOG.debug("%s -> exists=%s", aws_file, exists)
-    if exists:
-        _LOG.info("%s -> skip", aws_file)
-        return False
+    if skip_if_exists:
+        rc = si.system("aws s3 ls " + aws_file, abort_on_error=False)
+        exists = not rc
+        _LOG.debug("%s -> exists=%s", aws_file, exists)
+        if exists:
+            _LOG.info("%s -> skip", aws_file)
+            return False
     # Download data.
     local_file = "%s/%s.csv" % (local_dir, row["Symbol"])
-    # --compression=gzip
-    cmd = "wget '%s' -O %s" % (row["Link"], local_file)
-    si.system(cmd)
-    dst_file = local_file.replace(".csv", ".csv.gz")
-    cmd = "gzip %s -c >%s" % (local_file, dst_file)
-    si.system(cmd)
-    # Delete csv file.
-    cmd = "rm -f %s" % local_file
+    if download_compressed:
+        # Download compressed.
+        dst_file = local_file.replace(".csv", ".csv.gz")
+        cmd = "wget -S --header=\"accept-encoding: gzip\" '%s' -O %s" % (
+            row["Link"],
+            dst_file,
+        )
+        si.system(cmd)
+    else:
+        # Download.
+        cmd = "wget '%s' -O %s" % (row["Link"], local_file)
+        si.system(cmd)
+        # Compress.
+        dst_file = local_file.replace(".csv", ".csv.gz")
+        cmd = "gzip %s -c >%s" % (local_file, dst_file)
+        si.system(cmd)
+        # Delete csv file.
+        cmd = "rm -f %s" % local_file
+        si.system(cmd)
+    #
+    # Copy to s3.
+    cmd = "aws s3 cp %s s3://%s" % (dst_file, aws_file)
     si.system(cmd)
     #
-    local_file = dst_file
-    # Copy to s3.
-    cmd = "aws s3 cp %s s3://%s" % (local_file, aws_file)
-    si.system(cmd)
-    # Delete local file.
-    cmd = "rm -f %s" % local_file
-    si.system(cmd)
+    if clean_up_artifacts:
+        # Delete local file.
+        cmd = "rm -f %s" % dst_file
+        si.system(cmd)
     return True
 
 
@@ -235,13 +254,9 @@ def _parse() -> argparse.ArgumentParser:
         "-u", "--username", required=True, help="Specify username",
     )
     parser.add_argument(
-        "-p",
-        "--password",
-        required=True,
-        help="Specify password",
+        "-p", "--password", required=True, help="Specify password",
     )
     parser.add_argument(
-        "-t",
         "--tmp_dir",
         type=str,
         nargs="?",
@@ -249,7 +264,6 @@ def _parse() -> argparse.ArgumentParser:
         default="tmp.kibot_downloader",
     )
     parser.add_argument(
-        "-d",
         "--dataset",
         type=str,
         help="Download a specific dataset (or all datasets if omitted)",
@@ -258,12 +272,27 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument(
-        "-s", "--serial", action="store_true", help="Download data serially"
+        "--serial", action="store_true", help="Download data serially"
+    )
+    parser.add_argument(
+        "--download_compressed",
+        action="store_true",
+        help="Download data compressed on server side",
+    )
+    parser.add_argument(
+        "--not_skip_if_exists",
+        action="store_true",
+        help="Do not skip if it exists on S3",
+    )
+    parser.add_argument(
+        "--not_clean_up_artifacts",
+        action="store_true",
+        help="Do not clean artifacts",
     )
     parser.add_argument(
         "--delete_s3_dir",
         action="store_true",
-        help="Delete the S3 dir before starting uploading",
+        help="Delete the S3 dir before starting uploading (dangerous)",
     )
     prsr.add_verbosity_arg(parser)
     return parser
@@ -279,9 +308,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     source_dir = os.path.join(args.tmp_dir, source_dir_name)
     io_.create_dir(source_dir, incremental=True)
     #
+    incremental = False
     converted_dir_name = "converted_data"
     converted_dir = os.path.join(args.tmp_dir, converted_dir_name)
-    io_.create_dir(converted_dir, incremental=True)
+    io_.create_dir(converted_dir, incremental=incremental)
     # Log in.
     requests_session = requests.Session()
     kibot_account = _KIBOT_ENDPOINT + "account.aspx"
@@ -297,9 +327,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.warning("Missing %s: downloading it", my_account_file)
         _download_page(my_account_file, kibot_account, requests_session)
     # Parse and convert my account page.
-    dataset_links_csv_file = os.path.join(
-        converted_dir, "dataset_links.csv"
-    )
+    dataset_links_csv_file = os.path.join(converted_dir, "dataset_links.csv")
     _LOG.warning("Parsing %s", my_account_file)
     dataset_links_df = _extract_dataset_links(
         os.path.join(source_dir, "my_account.html")
@@ -315,7 +343,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.warning("Missing %s: downloading it", dataset_html_file)
             [link_to_html_page] = dataset_links_df.loc[
                 dataset_links_df.dataset == dataset
-                ].link.values
+            ].link.values
             _download_page(dataset_html_file, link_to_html_page, requests_session)
         # Parse and convert dataset's html page.
         _LOG.warning("Parsing %s", dataset_html_file)
@@ -327,20 +355,31 @@ def _main(parser: argparse.ArgumentParser) -> None:
         io_.create_dir(dataset_dir, incremental=True)
         aws_dir = os.path.join(_S3_URI, dataset)
         if args.delete_s3_dir:
+            assert 0, "Very dangerous: are you sure"
             _LOG.warning("Deleting s3 file %s", aws_dir)
             cmd = "aws s3 rm --recursive %s" % aws_dir
             si.system(cmd)
         # Download data.
+        to_download = dataset_df.iloc[1000:1005]
+        func = lambda row: _download_payload_page(
+            dataset_dir,
+            aws_dir,
+            row,
+            **{
+                "download_compressed": args.download_compressed,
+                "skip_if_exists": not args.not_skip_if_exists,
+                "clean_up_artifacts": not args.not_clean_up_artifacts,
+            },
+        )
+        tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
+
         if not args.serial:
-            joblib.Parallel(n_jobs=5, verbose=50)(
-                joblib.delayed(_download_payload_page)(
-                    dataset_dir, aws_dir, row
-                )
-                for i, row in dataset_df.iterrows()
+            joblib.Parallel(n_jobs=20, verbose=1)(
+                joblib.delayed(func)(args) for _, row in tqdm_
             )
         else:
-            for _, row in tqdm.tqdm(dataset_df.iterrows(), total=len(dataset_df)):
-                _download_payload_page(dataset_dir, aws_dir, row)
+            for _, row in tqdm_:
+                func(row)
 
 
 if __name__ == "__main__":
