@@ -257,6 +257,12 @@ def _parse() -> argparse.ArgumentParser:
         "-p", "--password", required=True, help="Specify password",
     )
     parser.add_argument(
+        "--start_from",
+        type=int,
+        default=None,
+        help="Define the index of the first payload to download",
+    )
+    parser.add_argument(
         "--tmp_dir",
         type=str,
         nargs="?",
@@ -366,7 +372,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
             si.system(cmd)
         # Download data.
         to_download = dataset_df
-        #to_download = dataset_df.iloc[1000:1005]
+        if args.start_from:
+            _LOG.warning(
+                "Starting from payload %d / %d as per user request",
+                args.start_from,
+                dataset_df.shape[0],
+            )
+            dbg.dassert_lte(0, args.start_from)
+            dbg.dassert_lt(args.start_from, dataset_df.shape[0])
+            to_download = dataset_df.iloc[args.start_from :]
         func = lambda row: _download_payload_page(
             dataset_dir,
             aws_dir,
@@ -380,7 +394,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
 
         if not args.serial:
-            joblib.Parallel(n_jobs=20, verbose=1)(
+            joblib.Parallel(n_jobs=10, verbose=1)(
                 joblib.delayed(func)(row) for _, row in tqdm_
             )
         else:
