@@ -1,7 +1,7 @@
 import os
 
 import helpers.unit_test as hut
-import vendors.kibot.data.kibot_download as kb_dd
+import vendors2.kibot.data.kibot_download as kb_dd
 
 
 class TestKibotDownload(hut.TestCase):
