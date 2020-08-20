@@ -29,8 +29,8 @@ def _get_failed_tests(file_name):
     # If path exists, parse the content.
     if os.path.exists(file_name):
         # {
-        # "vendors2/test/test_vendors2.py::Test_gp::test1": true,
-        # "vendors2/test/test_vendors2.py::Test_kibot_utils1::...": true,
+        # "vendors/test/test_vendors.py::Test_gp::test1": true,
+        # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
         # }
         txt = io_.from_file(file_name)
         vals = json.loads(txt)
