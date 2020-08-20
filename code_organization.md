@@ -24,15 +24,9 @@
 │                                     specific of any project
 ├── research                        - all general code / notebooks
 ├── rolling_model                   - TODO(gp): Merge into core / remove it
-└── vendors                         - code / notebooks specific of a vendor
-    ├── cme
-    ├── etfs
-    │   └── sample_data
-    ├── eurostat
-    ├── first_rate
-    ├── kibot
-    │   └── data
-    ├── pandas_datareader
-    ├── particle_one
-    └── telegram
+├── vendors                         - production-ready code / notebooks specific of a vendor
+│   ├── kibot
+│   │   └── data
+    ...
+└── vendors2                         - under-development code / notebooks specific of a vendor
 ```

@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import pytest
 
-import dev_scripts.linter as lntr
+import dev_scripts.linter2 as lntr
 import dev_scripts.notebooks.process_jupytext as proc_jup
 import dev_scripts.url as url
 import helpers.conda as hco
