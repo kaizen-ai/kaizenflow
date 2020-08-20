@@ -1,42 +1,27 @@
 #!/usr/bin/env python
 
 r"""
-Convert Kibot data from csv.gz to Parquet.
+Convert Kibot data on S3 from .csv.gz to Parquet.
 
-The data is located in `kibot` directory on S3 and is separated into
-several subdirectories.
-The files in the following subdirectories:
-- `All_Futures_Contracts_1min`
-- `All_Futures_Continuous_Contracts_1min`
-- `All_Futures_Continuous_Contracts_daily`
-are converted to Parquet and saved to 'kibot/pq` in corresponding
-subdirectories.
+# Process only specific dataset:
+> convert_kibot_to_pq.py --dataset all_stocks_1min
 
-Usage example:
-> python vendors/kibot/convert_kibot_to_pq.py -v DEBUG
+# Process several datasets:
+> convert_kibot_to_pq.py --dataset all_stocks_1min --dataset all_stocks_daily
 
-After the conversion the data layout looks like:
-> aws s3 ls default00-bucket/kibot/
-                           PRE All_Futures_Continuous_Contracts_1min/
-                           PRE All_Futures_Continuous_Contracts_daily/
-                           PRE All_Futures_Continuous_Contracts_tick/
-                           PRE All_Futures_Contracts_1min/
-                           PRE All_Futures_Contracts_daily/
-                           PRE metadata/
-                           PRE pq/
+# Start from scratch and process all datasets:
+> convert_kibot_to_pq.py --delete_s3_dir
 
-> aws s3 ls default00-bucket/kibot/pq/
-                           PRE All_Futures_Continuous_Contracts_1min/
-                           PRE All_Futures_Continuous_Contracts_daily/
-                           PRE All_Futures_Contracts_1min/
-                           PRE All_Futures_Contracts_daily/
+# Debug
+> convert_kibot_to_pq.py --serial -v DEBUG
 """
 
 import argparse
 import logging
 import os
-from typing import Callable, Optional
+from typing import Optional, Callable
 
+import joblib
 import pandas as pd
 import tqdm
 
@@ -72,15 +57,6 @@ _DATASETS = [
 
 
 # #############################################################################
-
-# TODO(vr): Implement this one.
-def _normalize_tick(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Convert a df with tick data from kibot.
-
-    :param df: kibot raw dataframe as it is in .csv.gz files
-    :return: a dataframe
-    """
 
 
 # TODO(gp): Call the column datetime_ET suffix.
@@ -175,48 +151,58 @@ def _get_normalizer(dataset: str) -> Optional[Callable]:
         return _normalize_daily
     if dataset in ["all_futures_continuous_contracts_tick"]:
         # Tick data.
-        return _normalize_tick
-    message = "Unexpected dataset %s" % dataset
-    dbg.dfatal(message)
+        return None
+    _LOG.error("Unexpected dataset %s", dataset)
+    return None
 
 
-def _download_kibot_csv_gz_dataset(dataset: str, source_dataset_dir: str) -> None:
+def _extract_filename_without_extension(file_path: str) -> str:
     """
-    Download all .csv.gz files from S3 and store locally for processing.
+    Returns only basename of the path without the .csv.gz or .pq extensions.
 
-    :param dataset: dataset name
-    :param source_dataset_dir: tmp source directory to store csv files
+    :param file_path: a full path of a file
+    :return: file name without extension
     """
-    csv_dataset_s3_path = os.path.join("s3://", _S3_URI, dataset)
-    csv_filenames = hs3.listdir(csv_dataset_s3_path)
-    for csv_filename in csv_filenames:
-        csv_s3_filepath = os.path.join(csv_dataset_s3_path, csv_filename)
-        csv_filepath = os.path.join(source_dataset_dir, csv_filename)
-        # Copy from s3.
-        cmd = "aws s3 cp %s %s" % (csv_s3_filepath, csv_filepath)
-        si.system(cmd)
+    filename = os.path.basename(file_path)
+    filename = filename.replace(".csv.gz", "")
+    filename = filename.replace(".pq", "")
+    return filename
 
 
 def _convert_kibot_csv_gz_to_pq(
-    dataset: str, source_dataset_dir: str, converted_dataset_dir: str
+    dataset: str,
+    symbol: str,
+    dataset_aws_csv_gz_dir: str,
+    dataset_source_dir: str,
+    dataset_converted_dir: str,
+    dataset_aws_pq_dir: str,
 ) -> None:
     """
-    Convert the files in the following subdirs of `kibot` dir on S3 to Parquet.
-    Save them to `kibot/pq` dir on S3.
+    Download single .csv.gz payload from S3 into source directory,
+    convert it into .pq format, store into converted directory and upload back to S3.
 
-    :param dataset: dataset name
-    :param source_dataset_dir: tmp directory to store csv files
-    :param converted_dataset_dir: tmp directory to store pq files
+    :param symbol: symbol to process
+    :param dataset_aws_csv_gz_dir: S3 dataset directory with .csv.gz files
+    :param dataset_source_dir: local directory to store .csv.gz files
+    :param dataset_converted_dir: S3 dataset directory with .pq files
+    :param dataset_aws_pq_dir: local directory to store .pq files
+    :return:
     """
     normalizer = _get_normalizer(dataset)
-    csv.convert_csv_dir_to_pq_dir(
-        source_dataset_dir, converted_dataset_dir, header=None, normalizer=normalizer
-    )
-    _LOG.info(
-        "Converted the files in %s directory and saved them to %s.",
-        source_dataset_dir,
-        converted_dataset_dir,
-    )
+    csv_gz_filename = "%s.csv.gz" % symbol
+    pq_filename = "%s.pq" % symbol
+    csv_s3_filepath = os.path.join(dataset_aws_csv_gz_dir, csv_gz_filename)
+    csv_filepath = os.path.join(dataset_source_dir, csv_gz_filename)
+    pq_s3_filepath = os.path.join(dataset_aws_pq_dir, pq_filename)
+    pq_filepath = os.path.join(dataset_converted_dir, pq_filename)
+    _LOG.debug("Downloading s3 file %s into %s", csv_s3_filepath, csv_filepath)
+    cmd = "aws s3 cp %s %s" % (csv_s3_filepath, csv_filepath)
+    si.system(cmd)
+    _LOG.debug("Converting %s file into %s", csv_filepath, pq_filepath)
+    csv.convert_csv_to_pq(csv_filepath, pq_filepath, normalizer)
+    _LOG.debug("Uploading %s file into %s", pq_filepath, pq_s3_filepath)
+    cmd = "aws s3 cp %s %s" % (pq_filepath, pq_s3_filepath)
+    si.system(cmd)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -239,6 +225,9 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument(
+        "--serial", action="store_true", help="Download data serially"
+    )
+    parser.add_argument(
         "--no_incremental",
         action="store_true",
         help="Clean the local directories",
@@ -247,11 +236,6 @@ def _parse() -> argparse.ArgumentParser:
         "--no_skip_if_exists",
         action="store_true",
         help="Do not skip if it exists on S3",
-    )
-    parser.add_argument(
-        "--no_clean_up_artifacts",
-        action="store_true",
-        help="Do not clean artifacts",
     )
     parser.add_argument(
         "--delete_s3_dir",
@@ -276,11 +260,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     converted_dir_name = "converted_data"
     converted_dir = os.path.join(args.tmp_dir, converted_dir_name)
     io_.create_dir(converted_dir, incremental=incremental)
-    aws_dir = os.path.join("s3://", _S3_URI, "pq")
+    # Define S3 dirs.
+    aws_csv_dir = os.path.join("s3://", _S3_URI)
+    aws_pq_dir = os.path.join("s3://", _S3_URI, "pq")
     if args.delete_s3_dir:
         assert 0, "Very dangerous: are you sure"
-        _LOG.warning("Deleting s3 file %s", aws_dir)
-        cmd = "aws s3 rm --recursive %s" % aws_dir
+        _LOG.warning("Deleting s3 file %s", aws_pq_dir)
+        cmd = "aws s3 rm --recursive %s" % aws_pq_dir
         si.system(cmd)
     datasets_to_proceed = args.dataset or _DATASETS
     # Process a dataset.
@@ -289,14 +275,44 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Create dataset dirs.
         dataset_source_dir = os.path.join(source_dir, dataset)
         io_.create_dir(dataset_source_dir, incremental=incremental)
-        #
         dataset_converted_dir = os.path.join(converted_dir, dataset)
         io_.create_dir(dataset_converted_dir, incremental=incremental)
-        _download_kibot_csv_gz_dataset(dataset, dataset_source_dir)
-        _convert_kibot_csv_gz_to_pq(
-            dataset, dataset_source_dir, dataset_converted_dir
+        # Define S3 dirs.
+        dataset_aws_csv_gz_dir = os.path.join(aws_csv_dir, dataset)
+        dataset_aws_pq_dir = os.path.join(aws_pq_dir, dataset)
+        # List all existing csv gz files on S3.
+        csv_gz_s3_file_paths = hs3.listdir(dataset_aws_csv_gz_dir)
+        # Get exact list of symbols to convert.
+        csv_gz_s3_symbols = list(
+            map(_extract_filename_without_extension, csv_gz_s3_file_paths)
         )
-        # TODO(vr): Implement upload to s3 aws_dir.
+        if args.no_skip_if_exists:
+            s3_symbols = csv_gz_s3_symbols
+        else:
+            # List all existing pq files on S3.
+            pq_s3_file_paths = hs3.listdir(dataset_aws_pq_dir)
+            pq_s3_symbols = list(
+                map(_extract_filename_without_extension, pq_s3_file_paths)
+            )
+            s3_symbols = list(
+                set(csv_gz_s3_symbols).difference(set(pq_s3_symbols))
+            )
+        func = lambda symbol: _convert_kibot_csv_gz_to_pq(
+            dataset,
+            symbol,
+            dataset_aws_csv_gz_dir,
+            dataset_source_dir,
+            dataset_converted_dir,
+            dataset_aws_pq_dir,
+        )
+        tqdm_ = tqdm.tqdm(s3_symbols, total=len(s3_symbols))
+        if not args.serial:
+            joblib.Parallel(n_jobs=10, verbose=1)(
+                joblib.delayed(func)(symbol) for symbol in tqdm_
+            )
+        else:
+            for symbol in tqdm_:
+                func(symbol)
 
 
 if __name__ == "__main__":
