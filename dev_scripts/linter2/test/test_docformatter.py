@@ -1,7 +1,7 @@
 import pytest
 import tempfile
 
-import dev_scripts.linter.p1_doc_formatter as p1docf
+import dev_scripts.linter2.p1_doc_formatter as p1docf
 import helpers.io_ as io_
 import helpers.unit_test as hut
 
