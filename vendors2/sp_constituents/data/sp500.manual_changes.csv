@@ -1,0 +1,31 @@
+date,added ticker,added security,removed ticker,removed security,reason
+2011-12-12,,,GAS,drop,"Nicor was acquired by AGL, which retained the GAS ticker. The GAS ticker stayed on the list. http://www.businessweek.com/ap/financialnews/D9RGMC100.htm"
+2015-03-23,,,AGN,drop,"Allergan acquired by Actavis plc and changed name to Allergan. https://en.wikipedia.org/wiki/Allergan,_Inc."
+2016-01-19,,,CB,drop,"ACE acquired Chubb and became CB. In fact, ACE left the sp500 list. https://news.chubb.com/2016-01-14-ACE-Completes-Acquisition-of-Chubb-Adopts-Chubb-Name-and-Launches-New-Chubb-Brand"
+2016-01-19,,,ACE,,Instead of CB
+2016-01-19,,,JCI,drop,"TYC acquires JCI (and becomes new JCI). https://www.spice-indices.com/idpfiles/spice-assets/resources/public/documents/393354_mtdmpwrwcicnls5466.pdf"
+2016-01-19,,,TYC,,Instead of JCI
+2017-11-15,,,Q,,"The company adopted the new name of IQVIA, and changed its ticker symbol from Q to IQV. https://en.wikipedia.org/wiki/IQVIA"
+2018-01-02,,,KORS,,"KORS ticker changed to CAPRI. https://www.thestreet.com/investing/michael-kors-changes-name-to-capri-holdings-completes-acquisition-of-versace-14821967"
+2017-12-05,,,DLPH,,"Delphi Automotive renamed itself Aptiv. https://en.wikipedia.org/wiki/Delphi_Technologies"
+2018-02-27,,,PCLN,,"The travel site is rebranding, and will now be called Booking Holdings. https://markets.businessinsider.com/news/stocks/priceline-group-changing-its-name-2018-2-1016591653"
+2019-07-01,,,HRS,,"Result of the stock merger between Harris Corporation and L3 Technologies. https://www.quantumonline.com/SearchDD.cfm?tickersymbol=HRS&sopt=symbol"
+2019-12-10,,,JEC,,"As a result of the introduction of the new brand marks. https://invest.jacobs.com/investors/Press-Release-Details/2019/Jacobs-Announces-New-NYSE-Stock-Ticker-Symbol-Launching-New-Global-Brand-That-Reflects-Transformation/default.aspx"
+2018-06-29,,,LUK,,"Leucadia National has been renamed as Jefferies Financial Group Inc. https://www.nasdaq.com/articles/leucadia-national-luk-renamed-as-jefferies-financial-group-2018-05-24"
+2012-06-26,,,KFT,,"KFT split into KRFT and MDLZ. https://www.chicagotribune.com/business/ct-xpm-2012-06-08-chi-kraft-to-move-to-nasdaq-retire-kft-ticker-20120608-story.html#:~:text=Mondelez%20will%20use%20the%20ticker,York%20Stock%20Exchange%20since%202001."
+2020-03-03,GDI,drop,,,"Gardner Denver changed its name to the "new" Ingersoll Rand Inc. https://us.spindices.com/documents/indexnews/announcements/20200227-1098962/1098962_Final5Ingersol4Cimar.pdf"
+2011-12-12,GAS,drop,,,"Nicor was acquired by AGL, which retained the GAS ticker. The GAS ticker stayed on the list. http://www.businessweek.com/ap/financialnews/D9RGMC100.htm"
+2019-06-07,BMS,drop,,,"Bemis merged with Amcor; subsequently renamed to Amcor plc. https://us.spindices.com/documents/indexnews/announcements/20190603-938358/938358_5bemis4mattel-newboiler.pdf"
+2019-06-07,AMCR,,,,Instead of BMS
+2016-04-08,UA,drop,,,"Under Armour distribution of second class of stock: UA becomes (class C), and UAA appeared (class A). https://money.usnews.com/investing/articles/2016-12-20/ua-vs-uaa-whats-the-difference-between-under-armours-2-stock-classes"
+2016-04-08,UAA,,,,Instead of UA
+2019-06-03,DD,,,,"DWDP changed ticker to DD in connection with the intended Corteva distribution. https://www.teletrade.eu/about/news/118749-dwdp-stock-reverse-split-removing-dwdp-adding-dd#:~:text=As%20a%20result%20of%20reverse,the%20ticker%20symbol%20%22DD%22.&text=A%20new%20ticker%20symbol%20%22DD,available%20starting%20July%201st%2C%202019."
+2017-11-15,IQV,,,,"The company adopted the new name of IQVIA, and changed its ticker symbol from Q to IQV. https://en.wikipedia.org/wiki/IQVIA"
+2016-09-06,JCI,,,,"TYC acquires JCI (and becomes new JCI). https://www.spice-indices.com/idpfiles/spice-assets/resources/public/documents/393354_mtdmpwrwcicnls5466.pdf"
+2018-01-02,CPRI,,,,"KORS ticker changed to CAPRI. https://www.thestreet.com/investing/michael-kors-changes-name-to-capri-holdings-completes-acquisition-of-versace-14821967"
+2017-12-05,APTV,,,,"Delphi Automotive renamed itself Aptiv. https://en.wikipedia.org/wiki/Delphi_Technologies"
+2018-02-27,BKNG,,,,"The travel site is rebranding, and will now be called Booking Holdings. https://markets.businessinsider.com/news/stocks/priceline-group-changing-its-name-2018-2-1016591653"
+2019-07-01,LHX,,,,"Result of the stock merger between Harris Corporation and L3 Technologies. https://www.quantumonline.com/SearchDD.cfm?tickersymbol=HRS&sopt=symbol"
+2019-12-10,J,,,,"As a result of the introduction of the new brand marks. https://invest.jacobs.com/investors/Press-Release-Details/2019/Jacobs-Announces-New-NYSE-Stock-Ticker-Symbol-Launching-New-Global-Brand-That-Reflects-Transformation/default.aspx"
+2018-06-29,JEF,,,,"Leucadia National has been renamed as Jefferies Financial Group Inc. https://www.nasdaq.com/articles/leucadia-national-luk-renamed-as-jefferies-financial-group-2018-05-24"
+2012-06-26,MDLZ,,,,"KFT split into KRFT and MDLZ. https://www.chicagotribune.com/business/ct-xpm-2012-06-08-chi-kraft-to-move-to-nasdaq-retire-kft-ticker-20120608-story.html#:~:text=Mondelez%20will%20use%20the%20ticker,York%20Stock%20Exchange%20since%202001."
