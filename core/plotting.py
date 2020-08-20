@@ -1570,7 +1570,7 @@ def plot_rolling_beta(
     res_rolling = model_rolling.fit()
     beta_rolling = res_rolling.params[benchmark_name]
     # Return NaN periods to the rolling beta series for the plot.
-    beta_rolling = beta_rolling[common_index]
+    beta_rolling = beta_rolling.reindex(common_index)
     beta_rolling.plot(
         ax=ax,
         title=f"Beta with respect to {benchmark_name}",
