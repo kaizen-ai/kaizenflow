@@ -411,8 +411,8 @@ def _node_from_line(line: str) -> Union[Node, str]:
     :param line: the line from which the object needs to be constructed
     :return: returns the line if no function/class was declared, else it returns a instantiated Node object
     """
-    class_name = utils.is_class_declaration(line)
-    function_name = utils.is_function_declaration(line)
+    class_name: str = utils.is_class_declaration(line)
+    function_name: str = utils.is_function_declaration(line)
     if class_name:
         new_node = Node(class_name, line, Node.Type.CLS)
     elif function_name:
@@ -432,11 +432,11 @@ def _find_parent_node(nodes: List[Node], indent: int) -> Union[None, Node]:
     :return: the parent node if found, else None
     """
     # only classes and functions can be parents
-    pn = [n for n in nodes if n.type in [Node.Type.CLS, Node.Type.FUNC]]
-    if not pn:
+    filtered_nodes: List[Node] = [n for n in nodes if n.type in [Node.Type.CLS, Node.Type.FUNC]]
+    if not filtered_nodes:
         return
     # the parent has to be the last from the list
-    pn = pn[-1]
+    pn: Node = filtered_nodes[-1]
     if pn.indentation == indent - 4:
         return pn
     else:
@@ -452,7 +452,10 @@ def _lines_to_nodes(lines: List[str]) -> List[Node]:
     """
     root_nodes: List[Node] = list()
     decorators: List[str] = list()
-    last_node = parent_node = previous_indent = next_line_is_decorator = None
+    last_node: Union[None, Node] = None
+    parent_node: Union[None, Node] = None
+    previous_indent: Union[None, int] = None
+    next_line_is_decorator: Union[None, bool] = None
     for line in lines:
         # support for multi-line decorators
         is_decorator = utils.is_decorator(line)
@@ -470,11 +473,11 @@ def _lines_to_nodes(lines: List[str]) -> List[Node]:
             continue
         # Unless we're in the body of a function/class, it is safe to assume that the parent node has changed if the
         # level of indentation has moved.
-        current_indent = len(line) - len(line.lstrip(' '))
+        current_indent: int = len(line) - len(line.lstrip(' '))
         if current_indent != previous_indent:
-            parent_node = _find_parent_node(root_nodes, current_indent)
+            parent_node: Union[None, Node] = _find_parent_node(root_nodes, current_indent)
         #
-        node = _node_from_line(line)
+        node: Union[Node, str] = _node_from_line(line)
         if isinstance(node, str):
             if last_node is not None:
                 # all lines from within a class(basically only class variables) and all lines from within functions
