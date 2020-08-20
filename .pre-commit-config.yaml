@@ -52,7 +52,7 @@ repos:
         entry: p1_doc_formatter.py
         language: python
         types: [python]
-        additional_dependencies: ["pandas", "matplotlib"]
+        additional_dependencies: ["pandas", "matplotlib", "docformatter"]
       - id: p1_specific_lints
         name: p1_specific_lints
         entry: p1_specific_lints.py

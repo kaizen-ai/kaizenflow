@@ -1,6 +1,6 @@
 import functools
 import os
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -16,11 +16,11 @@ class KibotDataLoader:
     def read_data(
         frequency: types.Frequency,
         contract_type: types.ContractType,
-        symbols: Union[str, Tuple[str, ...]],
+        symbols: Tuple[str],
         ext: str = "pq",
         nrows: Optional[int] = None,
         cache_data: bool = True,
-    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    ) -> Dict[str, pd.DataFrame]:
         """Read kibot data.
 
         If the ext is `csv`, this function will
@@ -32,25 +32,18 @@ class KibotDataLoader:
 
         :param frequency: `D` or `T` for daily or minutely data respectively
         :param contract_type: `continuous` or `expiry`
-        :param symbols: symbol or tuple of symbols
+        :param symbols: tuple of symbols
         :param ext: whether to read `pq` or `csv` data
         :param nrows: if not None, return only the first nrows of the data
         :param cache_data: whether to use cached data if exists
-        :return: if `symbols` is a string, return pd.DataFrame with kibot
-            data. If `symbols` is a list, return a dictionary of dataframes
-            for each symbol.
+        :return: return a dictionary of dataframes for each symbol.
         """
-        if isinstance(symbols, str):
-            data = _read_single_symbol_data(
-                frequency, contract_type, symbols, ext, nrows, cache_data
+        return {
+            symbol: _read_symbol_data(
+                frequency, contract_type, symbol, ext, nrows, cache_data
             )
-        elif isinstance(symbols, tuple):
-            data = _read_multiple_symbol_data(
-                frequency, contract_type, symbols, ext, nrows, cache_data
-            )
-        else:
-            raise ValueError("Invalid type(symbols)=%s" % type(symbols))
-        return data
+            for symbol in symbols
+        }
 
 
 MEMORY = cache.get_disk_cache(tag=None)
@@ -95,23 +88,7 @@ def _get_kibot_path(
     return file_path
 
 
-def _read_multiple_symbol_data(
-    frequency: types.Frequency,
-    contract_type: types.ContractType,
-    symbols: Tuple[str, ...],
-    ext: str = "pq",
-    nrows: Optional[int] = None,
-    cache_data: bool = True,
-) -> Dict[str, pd.DataFrame]:
-    return {
-        symbol: _read_single_symbol_data(
-            frequency, contract_type, symbol, ext, nrows, cache_data
-        )
-        for symbol in symbols
-    }
-
-
-def _read_single_symbol_data(
+def _read_symbol_data(
     frequency: types.Frequency,
     contract_type: types.ContractType,
     symbol: str,
