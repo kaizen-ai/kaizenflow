@@ -285,7 +285,10 @@ def compute_annualized_sharpe_ratio(
     :return: annualized Sharpe ratio
     """
     points_per_year = hdf.infer_sampling_points_per_year(log_rets)
-    log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
+    if isinstance(log_rets, pd.Series):
+        log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
+    if isinstance(log_rets, pd.DataFrame):
+        log_rets = log_rets.apply(hdf.apply_nan_mode, mode="fill_with_zero")
     sr = compute_sharpe_ratio(log_rets, points_per_year)
     return sr
 
