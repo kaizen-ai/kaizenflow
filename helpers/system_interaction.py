@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.system_interaction as si
 
@@ -30,8 +29,9 @@ _USER_NAME = None
 
 
 def set_user_name(user_name: str) -> None:
-    """
-    To impersonate a user. To use only in rare cases.
+    """To impersonate a user.
+
+    To use only in rare cases.
     """
     _LOG.warning("Setting user to '%s'", user_name)
     global _USER_NAME
@@ -90,8 +90,7 @@ def _system(
     dry_run: bool,
     log_level: Union[int, str],
 ) -> Tuple[int, str]:
-    """
-    Execute a shell command.
+    """Execute a shell command.
 
     :param cmd: string with command to execute
     :param abort_on_error: whether we should assert in case of error or not
@@ -220,8 +219,8 @@ def system(
     dry_run: bool = False,
     log_level: Union[int, str] = logging.DEBUG,
 ) -> int:
-    """
-    Execute a shell command, without capturing its output.
+    """Execute a shell command, without capturing its output.
+
     See _system() for options.
     """
     rc, _ = _system(
@@ -259,8 +258,8 @@ def system_to_string(
     dry_run: bool = False,
     log_level: Union[int, str] = logging.DEBUG,
 ) -> Tuple[int, str]:
-    """
-    Execute a shell command and capture its output.
+    """Execute a shell command and capture its output.
+
     See _system() for options.
     """
     rc, output = _system(
@@ -281,11 +280,10 @@ def system_to_string(
 
 
 def get_first_line(output: str) -> str:
-    """
-    Return the first (and only) line from a string.
+    """Return the first (and only) line from a string.
 
-    This is used when calling system_to_string() and expecting a single line
-    output.
+    This is used when calling system_to_string() and expecting a single
+    line output.
     """
     output = prnt.remove_empty_lines(output)
     output_as_arr: List[str] = output.split("\n")
@@ -296,8 +294,8 @@ def get_first_line(output: str) -> str:
 
 
 def system_to_one_line(cmd: str, *args: Any, **kwargs: Any) -> Tuple[int, str]:
-    """
-    Execute a shell command and capture its output (expected to be a single line).
+    """Execute a shell command and capture its output (expected to be a single
+    line).
 
     This is a thin wrapper around system_to_string().
     """
@@ -312,9 +310,8 @@ def system_to_one_line(cmd: str, *args: Any, **kwargs: Any) -> Tuple[int, str]:
 def get_process_pids(
     keep_line: Callable[[str], bool]
 ) -> Tuple[List[int], List[str]]:
-    """
-    Find all the processes corresponding to `ps ax` filtered line by line with
-    `keep_line()`.
+    """Find all the processes corresponding to `ps ax` filtered line by line
+    with `keep_line()`.
 
     :return: list of pids and filtered output of `ps ax`
     """
@@ -354,8 +351,7 @@ def kill_process(
     timeout_in_secs: int = 5,
     polltime_in_secs: float = 0.1,
 ) -> None:
-    """
-    Kill all the processes returned by the function `get_pids()`.
+    """Kill all the processes returned by the function `get_pids()`.
 
     :param timeout_in_secs: how many seconds to wait at most before giving up
     :param polltime_in_secs: how often to check for dead processes
@@ -383,12 +379,28 @@ def kill_process(
     _LOG.info("Processes dead")
 
 
+def check_exec(tool: str) -> bool:
+    """Check if an executable can be executed.
+
+    :return: True if the executables "tool" can be executed.
+    """
+    suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
+    cmd = "which %s" % tool
+    abort_on_error = False
+    rc = system(
+        cmd,
+        abort_on_error=abort_on_error,
+        suppress_output=suppress_output,
+        log_level=logging.DEBUG,
+    )
+    return rc == 0
+
+
 # #############################################################################
 
 
 def query_yes_no(question: str, abort_on_no: bool) -> bool:
-    """
-    Ask a yes/no question via raw_input() and return their answer.
+    """Ask a yes/no question via raw_input() and return their answer.
 
     "question" is a string that is presented to the user.
     "default" is the presumed answer if the user just hits <Enter>.
