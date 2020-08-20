@@ -268,8 +268,8 @@ def compute_kratio(log_rets: pd.Series) -> float:
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
     dbg.dassert(log_rets.index.freq)
-    log_rets_cleared = hdf.apply_nan_mode(log_rets, mode="drop")
-    cum_rets = log_rets_cleared.cumsum()
+    log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
+    cum_rets = log_rets.cumsum()
     # Fit the best line to the daily rets.
     x = range(len(cum_rets))
     x = sm.add_constant(x)
