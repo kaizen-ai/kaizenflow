@@ -117,21 +117,29 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
         return sample
 
+    @staticmethod
+    def _get_output_txt(
+        sample: pd.DataFrame, aggregate_log_rets: pd.Series
+    ) -> str:
+        sample_string = hut.convert_df_to_string(sample, index=True)
+        aggregate_log_rets_string = hut.convert_df_to_string(
+            aggregate_log_rets, index=True
+        )
+        txt = (
+            f"Input sample:\n{sample_string}\n\n"
+            f"Output aggregate log returns:\n{aggregate_log_rets_string}\n"
+        )
+        return txt
+
     def test1(self) -> None:
         """
         Test for a clean input.
         """
         sample = self._get_sample(seed=1)
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test2(self) -> None:
         """
@@ -140,16 +148,10 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[1, 1] = np.nan
         sample.iloc[0:5, 0] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test3(self) -> None:
         """
@@ -159,16 +161,10 @@ class Test_aggregate_log_rets(hut.TestCase):
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test4(self) -> None:
         """
@@ -178,16 +174,10 @@ class Test_aggregate_log_rets(hut.TestCase):
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, aggregate_log_rets)
+        self.check_string(output_txt)
 
 
 class Test_compute_kratio(hut.TestCase):

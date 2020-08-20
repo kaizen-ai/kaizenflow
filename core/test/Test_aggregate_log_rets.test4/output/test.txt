@@ -1,4 +1,47 @@
-rescaled_srs:
+Input sample:
+            srs1  srs2
+2010-01-01   NaN   NaN
+2010-01-04   NaN   NaN
+2010-01-05   NaN   NaN
+2010-01-06   NaN   NaN
+2010-01-07   NaN   NaN
+2010-01-08   NaN   NaN
+2010-01-11   NaN   NaN
+2010-01-12   NaN   NaN
+2010-01-13   NaN   NaN
+2010-01-14   NaN   NaN
+2010-01-15   NaN   NaN
+2010-01-18   NaN   NaN
+2010-01-19   NaN   NaN
+2010-01-20   NaN   NaN
+2010-01-21   NaN   NaN
+2010-01-22   NaN   NaN
+2010-01-25   NaN   NaN
+2010-01-26   NaN   NaN
+2010-01-27   NaN   NaN
+2010-01-28   NaN   NaN
+2010-01-29   NaN   NaN
+2010-02-01   NaN   NaN
+2010-02-02   NaN   NaN
+2010-02-03   NaN   NaN
+2010-02-04   NaN   NaN
+2010-02-05   NaN   NaN
+2010-02-08   NaN   NaN
+2010-02-09   NaN   NaN
+2010-02-10   NaN   NaN
+2010-02-11   NaN   NaN
+2010-02-12   NaN   NaN
+2010-02-15   NaN   NaN
+2010-02-16   NaN   NaN
+2010-02-17   NaN   NaN
+2010-02-18   NaN   NaN
+2010-02-19   NaN   NaN
+2010-02-22   NaN   NaN
+2010-02-23   NaN   NaN
+2010-02-24   NaN   NaN
+2010-02-25   NaN   NaN
+
+Output aggregate log returns:
              0
 2010-01-01 NaN
 2010-01-04 NaN
@@ -40,8 +83,3 @@ rescaled_srs:
 2010-02-23 NaN
 2010-02-24 NaN
 2010-02-25 NaN
-
-relative_weights:
-      weights
-srs1      0.0
-srs2      0.0
