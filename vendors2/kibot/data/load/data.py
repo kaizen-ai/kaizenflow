@@ -15,7 +15,7 @@ class KibotDataLoader:
     @staticmethod
     def read_data(
         frequency: types.Frequency,
-        contract_type: str,
+        contract_type: types.ContractType,
         symbols: Union[str, Tuple[str, ...]],
         ext: str = "pq",
         nrows: Optional[int] = None,
@@ -57,7 +57,10 @@ MEMORY = cache.get_disk_cache(tag=None)
 
 
 def _get_kibot_path(
-    frequency: types.Frequency, contract_type: str, symbol: str, ext: str = "pq"
+    frequency: types.Frequency,
+    contract_type: types.ContractType,
+    symbol: str,
+    ext: str = "pq",
 ) -> str:
     """Get the path to a specific kibot dataset on s3.
 
@@ -71,12 +74,13 @@ def _get_kibot_path(
 
     freq_path = FREQ_PATH_MAPPING[frequency]
 
-    if contract_type == "continuous":
-        contract_path = "_Continuous"
-    elif contract_type == "expiry":
-        contract_path = ""
-    else:
-        raise ValueError("Invalid contract_type='%s'" % contract_type)
+    CONTRACT_PATH_MAPPING = {
+        types.ContractType.Continuous: "_Continuous",
+        types.ContractType.Expiry: "",
+    }
+
+    contract_path = CONTRACT_PATH_MAPPING[contract_type]
+
     dir_name = f"All_Futures{contract_path}_Contracts_{freq_path}"
     file_path = os.path.join(dir_name, symbol)
     if ext == "pq":
@@ -93,7 +97,7 @@ def _get_kibot_path(
 
 def _read_multiple_symbol_data(
     frequency: types.Frequency,
-    contract_type: str,
+    contract_type: types.ContractType,
     symbols: Tuple[str, ...],
     ext: str = "pq",
     nrows: Optional[int] = None,
@@ -109,7 +113,7 @@ def _read_multiple_symbol_data(
 
 def _read_single_symbol_data(
     frequency: types.Frequency,
-    contract_type: str,
+    contract_type: types.ContractType,
     symbol: str,
     ext: str = "pq",
     nrows: Optional[int] = None,
