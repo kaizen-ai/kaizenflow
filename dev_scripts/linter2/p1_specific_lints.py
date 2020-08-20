@@ -4,8 +4,10 @@ r"""Perform some p1 specific lints on python files
 > p1_specific_lints.py -f sample_file.py
 """
 from __future__ import annotations
+
 import argparse
 import dataclasses
+import enum
 import io
 import logging
 import os
@@ -13,7 +15,6 @@ import re
 import string
 import tempfile
 import tokenize
-import enum
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import more_itertools
@@ -365,8 +366,10 @@ class Node:
     def add_to_body(self, line: str):
         self._body.append(line)
 
-    def add_decorators(self, decorators: List[str]):
-        self._decorators.extend(decorators)
+    def add_decorator(self, decorator: str):
+        print(1, self._decorators)
+        self._decorators.append(decorator)
+        print(2, self._decorators)
 
     def to_lines(self) -> List[str]:
         lines: List[str] = self._decorators + [self._line] + self._body
@@ -443,6 +446,22 @@ def _find_parent_node(nodes: List[Node], indent: int) -> Union[None, Node]:
         return _find_parent_node(pn.children, indent)
 
 
+def _extract_decorator(line: str, next_line_is_decorator: bool) -> Tuple[Union[None, str], bool]:
+    is_decorator = utils.is_decorator(line)
+    # support for multi-line decorators
+    if (is_decorator and '(' in line) or next_line_is_decorator:
+        if line.endswith('\n'):
+            chars_to_reverse = -3
+        else:
+            chars_to_reverse = -1
+        next_line_is_decorator = line[chars_to_reverse] != ')'
+        return line, next_line_is_decorator
+    # support for simple decorators, i.e. @staticmethod or @abstractmethod
+    elif is_decorator:
+        return line, False
+    return None, False
+
+
 def _lines_to_nodes(lines: List[str]) -> List[Node]:
     """Creates a list of nodes from a list of lines.
 
@@ -457,19 +476,9 @@ def _lines_to_nodes(lines: List[str]) -> List[Node]:
     previous_indent: Union[None, int] = None
     next_line_is_decorator: Union[None, bool] = None
     for line in lines:
-        # support for multi-line decorators
-        is_decorator = utils.is_decorator(line)
-        if (is_decorator and '(' in line) or next_line_is_decorator:
-            decorators.append(line)
-            if line.endswith('\n'):
-                chars_to_reverse = -3
-            else:
-                chars_to_reverse = -1
-            next_line_is_decorator = line[chars_to_reverse] != ')'
-            continue
-        # support for simple decorators, i.e. @staticmethod or @abstractmethod
-        elif is_decorator:
-            decorators.append(line)
+        decorator_line, next_line_is_decorator = _extract_decorator(line, next_line_is_decorator)
+        if decorator_line is not None:
+            decorators.append(decorator_line)
             continue
         # Unless we're in the body of a function/class, it is safe to assume that the parent node has changed if the
         # level of indentation has moved.
@@ -491,9 +500,8 @@ def _lines_to_nodes(lines: List[str]) -> List[Node]:
             if parent_node is None:
                 # if there is no current parent node, the new node has to be the parent
                 parent_node = node
-            if decorators:
-                node.add_decorators(decorators)
-                decorators = list()
+            while decorators:
+                node.add_decorator(decorators.pop(0))
             if current_indent == 0:
                 root_nodes.append(node)
             else:
