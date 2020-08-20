@@ -17,7 +17,7 @@ class KibotDataLoader:
         frequency: types.Frequency,
         contract_type: types.ContractType,
         symbols: Tuple[str],
-        ext: str = "pq",
+        ext: types.Extension = types.Extension.Parquet,
         nrows: Optional[int] = None,
         cache_data: bool = True,
     ) -> Dict[str, pd.DataFrame]:
@@ -53,7 +53,7 @@ def _get_kibot_path(
     frequency: types.Frequency,
     contract_type: types.ContractType,
     symbol: str,
-    ext: str = "pq",
+    ext: types.Extension,
 ) -> str:
     """Get the path to a specific kibot dataset on s3.
 
@@ -76,14 +76,14 @@ def _get_kibot_path(
 
     dir_name = f"All_Futures{contract_path}_Contracts_{freq_path}"
     file_path = os.path.join(dir_name, symbol)
-    if ext == "pq":
+
+    if ext == types.Extension.Parquet:
         # Parquet files are located in `pq/` subdirectory.
         file_path = os.path.join("pq", file_path)
         file_path += ".pq"
-    elif ext == "csv":
+    elif ext == types.Extension.CSV:
         file_path += ".csv.gz"
-    else:
-        raise ValueError("Invalid ext='%s" % ext)
+
     file_path = os.path.join(hs3.get_path(), "kibot", file_path)
     return file_path
 
@@ -92,7 +92,7 @@ def _read_symbol_data(
     frequency: types.Frequency,
     contract_type: types.ContractType,
     symbol: str,
-    ext: str = "pq",
+    ext: types.Extension,
     nrows: Optional[int] = None,
     cache_data: bool = True,
 ) -> pd.DataFrame:

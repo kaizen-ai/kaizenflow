@@ -9,3 +9,8 @@ class Frequency(enum.Enum):
 class ContractType(enum.Enum):
     Continuous = "continuous"
     Expiry = "expiry"
+
+
+class Extension(enum.Enum):
+    CSV = "csv"
+    Parquet = "pq"
