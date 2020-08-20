@@ -21,7 +21,7 @@ import argparse
 import logging
 import re
 
-import dev_scripts.linter as lin
+import dev_scripts.linter2 as lin
 import helpers.dbg as dbg
 import helpers.parser as prsr
 import helpers.system_interaction as si

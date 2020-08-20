@@ -8,7 +8,7 @@ import logging
 import os
 from typing import List
 
-import dev_scripts.linter.base as lntr
+import dev_scripts.linter2.base as lntr
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.parser as prsr

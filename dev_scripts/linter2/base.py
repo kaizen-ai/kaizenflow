@@ -41,7 +41,7 @@ import re
 import sys
 from typing import Any, List, Tuple, Type
 
-import dev_scripts.linter.utils as utils
+import dev_scripts.linter2.utils as utils
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as io_

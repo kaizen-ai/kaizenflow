@@ -1,4 +1,4 @@
-import dev_scripts.linter.p1_lint_md as plintmd
+import dev_scripts.linter2.p1_lint_md as plintmd
 import helpers.unit_test as hut
 
 

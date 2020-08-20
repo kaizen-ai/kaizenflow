@@ -10,8 +10,8 @@ import functools
 import logging
 from typing import List
 
-import dev_scripts.linter.base as lntr
-import dev_scripts.linter.utils as utils
+import dev_scripts.linter2.base as lntr
+import dev_scripts.linter2.utils as utils
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.parser as prsr

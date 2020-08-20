@@ -17,8 +17,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 import more_itertools
 import typing_extensions
 
-import dev_scripts.linter.base as lntr
-import dev_scripts.linter.utils as utils
+import dev_scripts.linter2.base as lntr
+import dev_scripts.linter2.utils as utils
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
