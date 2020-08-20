@@ -3,6 +3,7 @@ r"""Perform some p1 specific lints on python files
 
 > p1_specific_lints.py -f sample_file.py
 """
+from __future__ import annotations
 import argparse
 import dataclasses
 import io
@@ -12,7 +13,8 @@ import re
 import string
 import tempfile
 import tokenize
-from typing import Callable, Dict, List, Optional, Tuple
+import enum
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import more_itertools
 import typing_extensions
@@ -328,6 +330,189 @@ def _reflow_comments_in_lines(lines: List[str]) -> List[str]:
     updated_lines = _replace_comments_in_lines(
         lines=lines, comments=reflowed_comments,
     )
+    return updated_lines
+
+
+class Node:
+    class Type(enum.Enum):
+        CLS = 1
+        FUNC = 2
+        TEXT = 3
+
+    def __init__(self, name: str, line: str, type: Node.Type):
+        """Represents either a class, function or raw text.
+        :param name: the function or class name
+        :param line: the complete line on which the node was found
+        :param type: class, function or raw text
+        """
+        self.type = type
+        self.children: List[Node] = list()
+        self._line = line
+        self._name = name
+        self._body: List[str] = list()
+        self._decorators: List[str] = list()
+        self._indent = None
+
+    @property
+    def indentation(self) -> int:
+        if self._indent is None:
+            self._indent = len(self._line) - len(self._line.lstrip(' '))
+        return self._indent
+
+    def add_child(self, child: Node):
+        self.children.append(child)
+
+    def add_to_body(self, line: str):
+        self._body.append(line)
+
+    def add_decorators(self, decorators: List[str]):
+        self._decorators.extend(decorators)
+
+    def to_lines(self) -> List[str]:
+        lines: List[str] = self._decorators + [self._line] + self._body
+        for child in self.children:
+            lines.extend(child.to_lines())
+        return lines
+
+    def _find_child_by_name(self, name: str):
+        return next((node for node in self.children if node._name == name), None)
+
+    @staticmethod
+    def _sorting_key(item: Node) -> int:
+        """Sorts in order of: classes > __init__ > magic methods > public methods > private methods."""
+        if item._name == '__init__':
+            return 1
+        if item.type == Node.Type.CLS:
+            return 0
+        if item._name.startswith('__') and item._name.endswith('__'):
+            return 2
+        if item._name.startswith('_'):
+            return 4
+        return 3
+
+    def order_children(self, force=None):
+        if self.type != Node.Type.CLS and not force:
+            _LOG.warning("You tried to order a node that isn't a class. This can possibly mess up the formatting. "
+                         "Use the force param if you're sure.")
+            return
+        self.children = sorted(self.children, key=self._sorting_key)
+
+    def __repr__(self):
+        types_as_str = {
+            Node.Type.FUNC: 'function',
+            Node.Type.CLS: 'class',
+            Node.Type.TEXT: 'misc'
+        }
+        return f"{types_as_str[self.type]} <{self._name}>"
+
+
+def _node_from_line(line: str) -> Union[Node, str]:
+    """Constructs a Node object from a line, if it declares a function or class.
+    :param line: the line from which the object needs to be constructed
+    :return: returns the line if no function/class was declared, else it returns a instantiated Node object
+    """
+    class_name = utils.is_class_declaration(line)
+    function_name = utils.is_function_declaration(line)
+    if class_name:
+        new_node = Node(class_name, line, Node.Type.CLS)
+    elif function_name:
+        new_node = Node(function_name, line, Node.Type.FUNC)
+    else:
+        new_node = line
+    return new_node
+
+
+def _find_parent_node(nodes: List[Node], indent: int) -> Union[None, Node]:
+    """Finds the parent node, based on level of indentation.
+
+    We assume that classes can be the parents of functions and other classes and functions can be the parents of
+    other functions and classes. Searches over the nodes and their children recursively.
+    :param nodes: nodes to check on
+    :param indent: level of indentation of the node for which the parent needs to be found
+    :return: the parent node if found, else None
+    """
+    # only classes and functions can be parents
+    pn = [n for n in nodes if n.type in [Node.Type.CLS, Node.Type.FUNC]]
+    if not pn:
+        return
+    # the parent has to be the last from the list
+    pn = pn[-1]
+    if pn.indentation == indent - 4:
+        return pn
+    else:
+        return _find_parent_node(pn.children, indent)
+
+
+def _lines_to_nodes(lines: List[str]) -> List[Node]:
+    """Creates a list of nodes from a list of lines.
+
+    All nodes in the list, are the root (parentless?) nodes. Where appropiate, the root nodes have children.
+    :param lines: the lines from which to construct the nodes
+    :return: a list of nodes representing the lines
+    """
+    root_nodes: List[Node] = list()
+    decorators: List[str] = list()
+    last_node = parent_node = previous_indent = next_line_is_decorator = None
+    for line in lines:
+        # support for multi-line decorators
+        is_decorator = utils.is_decorator(line)
+        if (is_decorator and '(' in line) or next_line_is_decorator:
+            decorators.append(line)
+            if line.endswith('\n'):
+                chars_to_reverse = -3
+            else:
+                chars_to_reverse = -1
+            next_line_is_decorator = line[chars_to_reverse] != ')'
+            continue
+        # support for simple decorators, i.e. @staticmethod or @abstractmethod
+        elif is_decorator:
+            decorators.append(line)
+            continue
+        # Unless we're in the body of a function/class, it is safe to assume that the parent node has changed if the
+        # level of indentation has moved.
+        current_indent = len(line) - len(line.lstrip(' '))
+        if current_indent != previous_indent:
+            parent_node = _find_parent_node(root_nodes, current_indent)
+        #
+        node = _node_from_line(line)
+        if isinstance(node, str):
+            if last_node is not None:
+                # all lines from within a class(basically only class variables) and all lines from within functions
+                last_node.add_to_body(line)
+            else:
+                # create a misc node to make sure all lines before function/class nodes nodes (shebangs, imports,
+                # etc) are also saved
+                last_node = node = Node('', line, Node.Type.TEXT)
+                root_nodes.append(node)
+        elif isinstance(node, Node):
+            if parent_node is None:
+                # if there is no current parent node, the new node has to be the parent
+                parent_node = node
+            if decorators:
+                node.add_decorators(decorators)
+                decorators = list()
+            if current_indent == 0:
+                root_nodes.append(node)
+            else:
+                parent_node.add_child(node)
+            #
+            last_node = node
+        previous_indent = current_indent
+    return root_nodes
+
+
+def _nodes_to_lines_in_correct_order(nodes: List[Node]) -> List[str]:
+    updated_lines: List[str] = list()
+    for node in nodes:
+        if node.type == Node.Type.CLS:
+            node.order_children()
+        updated_lines.extend(node.to_lines())
+    return updated_lines
+
+
+def _correct_order_of_methods(lines: List[str]) -> List[str]:
+    root_nodes = _lines_to_nodes(lines)
+    updated_lines = _nodes_to_lines_in_correct_order(root_nodes)
     return updated_lines
 
 
