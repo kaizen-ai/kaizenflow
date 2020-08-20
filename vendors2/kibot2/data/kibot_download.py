@@ -19,6 +19,7 @@ import argparse
 import logging
 import os
 import re
+import shutil
 import urllib.parse as urlprs
 
 import bs4
@@ -26,6 +27,8 @@ import joblib
 import numpy as np
 import pandas as pd
 import requests
+import requests.adapters as adapters
+import requests.packages.urllib3.util as url3ut
 import tqdm
 
 import helpers.dbg as dbg
@@ -191,6 +194,7 @@ def _download_payload_page(
     local_dir: str,
     aws_dir: str,
     row: pd.Series,
+    requests_session: requests.Session,
     download_compressed: bool,
     skip_if_exists: bool,
     clean_up_artifacts: bool,
@@ -218,15 +222,16 @@ def _download_payload_page(
     if download_compressed:
         # Download compressed.
         dst_file = local_file.replace(".csv", ".csv.gz")
-        cmd = "wget -S --header=\"accept-encoding: gzip\" '%s' -O %s" % (
-            row["Link"],
-            dst_file,
-        )
-        si.system(cmd)
+        with requests_session.get(
+            row["Link"], headers={"accept-encoding": "gzip"}, stream=True
+        ) as r:
+            with open(dst_file, "wb") as f:
+                shutil.copyfileobj(r.raw, f)
     else:
         # Download.
-        cmd = "wget '%s' -O %s" % (row["Link"], local_file)
-        si.system(cmd)
+        with requests_session.get(row["Link"], stream=True) as r:
+            with open(local_file, "wb") as f:
+                shutil.copyfileobj(r.raw, f)
         # Compress.
         dst_file = local_file.replace(".csv", ".csv.gz")
         cmd = "gzip %s -c >%s" % (local_file, dst_file)
@@ -325,6 +330,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     io_.create_dir(converted_dir, incremental=incremental)
     # Log in.
     requests_session = requests.Session()
+    requests_retry = url3ut.Retry(
+        total=12,
+        backoff_factor=2,
+        status_forcelist=[104, 403, 500, 501, 502, 503, 504],
+    )
+    requests_session.mount(
+        "http://", adapters.HTTPAdapter(max_retries=requests_retry)
+    )
+    requests_session.mount(
+        "https://", adapters.HTTPAdapter(max_retries=requests_retry)
+    )
     kibot_account = _KIBOT_ENDPOINT + "account.aspx"
     login_result = _log_in(
         kibot_account, args.username, str(args.password), requests_session
@@ -385,6 +401,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             dataset_dir,
             aws_dir,
             row,
+            requests_session,
             **{
                 "download_compressed": not args.no_download_compressed,
                 "skip_if_exists": not args.no_skip_if_exists,
@@ -392,7 +409,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             },
         )
         tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
-
+        # Run dataset downloads.
         if not args.serial:
             joblib.Parallel(n_jobs=10, verbose=1)(
                 joblib.delayed(func)(row) for _, row in tqdm_
