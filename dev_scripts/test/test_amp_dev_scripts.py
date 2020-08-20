@@ -268,7 +268,7 @@ dependencies:
 
 # pylint: disable=too-many-public-methods
 @pytest.mark.amp
-@pytest.mark.skip
+@pytest.mark.skip(reason="Disabled because of AmpTask508")
 class Test_linter_py1(ut.TestCase):
     def _write_input_file(self, txt: str, file_name: str) -> Tuple[str, str]:
         dir_name = self.get_scratch_space()

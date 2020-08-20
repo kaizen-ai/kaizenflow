@@ -5,6 +5,7 @@ import helpers.io_ as io_
 import helpers.unit_test as hut
 
 
+@pytest.mark.skip(reason="Disabled because of AmpTask508")
 class Test_docformatter(hut.TestCase):
     def _docformatter(self, text: str) -> str:
         """Create a temporary python file with the 'text', apply docformatter,

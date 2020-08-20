@@ -20,6 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 # pylint: disable=too-many-public-methods
 @pytest.mark.amp
+@pytest.mark.skip(reason="Disabled because of AmpTask508")
 class Test_linter_py1(ut.TestCase):
     def _write_input_file(self, txt: str, file_name: str) -> Tuple[str, str]:
         dir_name = self.get_scratch_space()
@@ -109,6 +110,7 @@ if __name__ == "main":
         """
         return txt
 
+    @pytest.mark.skip(reason="Disable because of PartTask3409")
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
     )
@@ -122,6 +124,7 @@ if __name__ == "main":
         # Check.
         self.check_string(output, purify_text=True)
 
+    @pytest.mark.skip(reason="Disable because of PartTask3409")
     @pytest.mark.skipif(
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
     )
