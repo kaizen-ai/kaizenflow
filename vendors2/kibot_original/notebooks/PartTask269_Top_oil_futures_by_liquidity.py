@@ -32,7 +32,8 @@ import helpers.env as env
 import helpers.printing as pri
 # %%
 import helpers.s3 as hs3
-import vendors2.cme.reader as cmer
+# TODO(go): add 'cme' package
+# import vendors2.cme.reader as cmer
 import vendors2.kibot.PartTask269_liquidity_analysis_utils as lau
 import vendors2.kibot.utils as kut
 
@@ -78,7 +79,7 @@ print(df4["Exchange"].unique())
 
 
 # %%
-product_specs = cmer.read_product_specs()
+# product_specs = cmer.read_product_specs()
 
 # %%
 product_specs.head()

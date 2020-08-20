@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import helpers.dbg as dbg
-import vendors2.cme.reader as cmer
+# TODO(go): add 'cme' package
+# import vendors2.cme.reader as cmer
 import vendors2.kibot_original.utils as kut
 
 _LOG = logging.getLogger(__name__)
@@ -247,7 +248,8 @@ class ProductSpecs:
     """
 
     def __init__(self):
-        self.product_specs = cmer.read_product_specs()
+        ...
+        # self.product_specs = cmer.read_product_specs()
 
     def get_metadata_symbol(self, symbol):
         return self.product_specs.loc[self.product_specs["Globex"] == symbol]
