@@ -34,7 +34,7 @@ import core.finance as fin
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
-import vendors.kibot.utils as kut
+import vendors2.kibot.utils as kut
 
 # %%
 print(env.get_system_signature())

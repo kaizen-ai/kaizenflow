@@ -32,9 +32,9 @@ import helpers.env as env
 import helpers.printing as pri
 # %%
 import helpers.s3 as hs3
-import vendors.cme.reader as cmer
-import vendors.kibot.PartTask269_liquidity_analysis_utils as lau
-import vendors.kibot.utils as kut
+import vendors2.cme.reader as cmer
+import vendors2.kibot.PartTask269_liquidity_analysis_utils as lau
+import vendors2.kibot.utils as kut
 
 # %%
 # import infra.helpers.telegram_notify.telegram_notify as tg

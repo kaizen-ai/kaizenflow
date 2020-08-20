@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 import helpers.unit_test as ut
-import vendors.kibot.PartTask269_liquidity_analysis_utils as klau
+import vendors2.kibot_original.PartTask269_liquidity_analysis_utils as klau
 
 
 class TestTimeSeriesDailyStudy(ut.TestCase):

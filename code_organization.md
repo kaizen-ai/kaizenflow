@@ -24,7 +24,7 @@
 │                                     specific of any project
 ├── research                        - all general code / notebooks
 ├── rolling_model                   - TODO(gp): Merge into core / remove it
-└── vendors                         - code / notebooks specific of a vendor
+└── vendors                         - production-ready code / notebooks specific of a vendor
     ├── cme
     ├── etfs
     │   └── sample_data
@@ -35,4 +35,5 @@
     ├── pandas_datareader
     ├── particle_one
     └── telegram
+└── vendors2                         - under-development code / notebooks specific of a vendor
 ```

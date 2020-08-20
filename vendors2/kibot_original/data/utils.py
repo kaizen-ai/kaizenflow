@@ -1,7 +1,7 @@
 """
 Import as:
 
-import vendors.kibot.data.utils as kdut
+import vendors2.kibot.data.utils as kdut
 """
 
 import os
@@ -16,7 +16,7 @@ def get_kibot_exchange_mapping_path() -> str:
     Return path to Kibot-exchange contract mapping.
     """
     root = git.get_client_root(False)
-    mapping_path = os.path.join(root, "vendors/kibot/data/kibot_to_exchange.csv")
+    mapping_path = os.path.join(root, "vendors2/kibot/data/kibot_to_exchange.csv")
     return mapping_path
 
 

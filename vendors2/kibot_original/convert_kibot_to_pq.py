@@ -13,7 +13,7 @@ are converted to Parquet and saved to 'kibot/pq` in corresponding
 subdirectories.
 
 Usage example:
-> python vendors/kibot/convert_kibot_to_pq.py -v DEBUG
+> python vendors2/kibot/convert_kibot_to_pq.py -v DEBUG
 
 After the conversion the data layout looks like:
 > aws s3 ls default00-bucket/kibot/
@@ -37,7 +37,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
-import vendors.kibot.utils as kut
+import vendors2.kibot.utils as kut
 
 _LOG = logging.getLogger(__name__)
 

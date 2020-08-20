@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import helpers.dbg as dbg
-import vendors.cme.reader as cmer
-import vendors.kibot.utils as kut
+import vendors2.cme.reader as cmer
+import vendors2.kibot_original.utils as kut
 
 _LOG = logging.getLogger(__name__)
 

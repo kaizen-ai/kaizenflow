@@ -28,7 +28,7 @@ import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
 import helpers.s3 as hs3
-import vendors.kibot.utils as kut
+import vendors2.kibot.utils as kut
 
 # %%
 print(env.get_system_signature())

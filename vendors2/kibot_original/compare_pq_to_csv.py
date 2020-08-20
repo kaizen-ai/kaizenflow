@@ -6,7 +6,7 @@ Compare data among the two representations of Kibot data:
     - parquet: pq
 
 Usage example:
-> python vendors/kibot/compare_pq_to_csv.py -v DEBUG
+> python vendors2/kibot/compare_pq_to_csv.py -v DEBUG
 """
 
 import argparse
@@ -20,7 +20,7 @@ import helpers.csv as csv
 import helpers.dbg as dbg
 import helpers.parser as prsr
 import helpers.s3 as hs3
-import vendors.kibot.utils as kut
+import vendors2.kibot.utils as kut
 
 _LOG = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import vendors.kibot.utils as kut
+import vendors2.kibot.utils as kut
 """
 
 import functools
@@ -17,7 +17,7 @@ import helpers.cache as cache
 import helpers.csv as csv
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import vendors.kibot.data.utils as kdut
+import vendors2.kibot_original.data.utils as kdut
 
 # Store a mapping from data frequency (using pandas nomenclature) to the
 # column used to compute returns.

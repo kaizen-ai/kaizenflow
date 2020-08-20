@@ -31,7 +31,7 @@ import logging
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as prnt
-import vendors.kibot.utils as kut
+import vendors2.kibot.utils as kut
 
 # %%
 dbg.init_logger(verbosity=logging.INFO)

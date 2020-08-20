@@ -11,7 +11,7 @@ class FileBackend:
         """Return path to Kibot-exchange contract mapping."""
         root = git.get_client_root(False)
         mapping_path = os.path.join(
-            root, "vendors/kibot/data/kibot_to_exchange.csv"
+            root, "vendors2/kibot/data/kibot_to_exchange.csv"
         )
         return mapping_path
 

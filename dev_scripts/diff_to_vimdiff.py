@@ -44,9 +44,9 @@ def _diff(src_dir, dst_dir):
 def _get_symbolic_filepath(src_dir, dst_dir, file_name):
     """
     Transform a path like:
-        /Users/saggese/src/commodity_research2/amp/vendors/first_rate/utils.py
+        /Users/saggese/src/commodity_research2/amp/vendors2/first_rate/utils.py
     into:
-        $SRC_DIR/amp/vendors/first_rate/utils.py
+        $SRC_DIR/amp/vendors2/first_rate/utils.py
     """
     file_name = file_name.replace(src_dir, "$SRC_DIR")
     file_name = file_name.replace(dst_dir, "$DST_DIR")
