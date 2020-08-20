@@ -733,3 +733,138 @@ class _reflow_comments_in_lines(hut.TestCase):
         )
         actual = pslints._reflow_comments_in_lines(lines=content)
         self.assertEqual(expected, actual)
+
+
+class Test_correct_method_order(hut.TestCase):
+    @property
+    def correct_lines(self):
+        return [
+            "import math",
+            ""
+            "class Mather:",
+            "    def __init__(c1: int, c2: int):",
+            "        self._comb = math.comb(c1, c2)",
+            "",
+            "    def shout(self):",
+            "        print(f'IT IS {self._comb}')",
+            "",
+            "    def _whisper(self):",
+            "        print('it is {self._comb}')",
+            ""
+        ]
+
+    @property
+    def correct_lines_with_decorator(self):
+        tmp = self.correct_lines.copy()
+        tmp.insert(8, "    @staticmethod")
+        return tmp
+
+    @property
+    def correct_lines_with_multiline_decorator(self):
+        tmp = self.correct_lines.copy()
+        tmp.insert(8, "    @staticmethod(")
+        tmp.insert(9, "       arg=1,")
+        tmp.insert(10, "       param=2)")
+        return tmp
+
+    def test1(self) -> None:
+        """Test conversion between nodes and lines with no changes to be made"""
+        correct_lines_nodes = pslints._lines_to_nodes(self.correct_lines)
+        self.assertEqual(pslints._nodes_to_lines_in_correct_order(correct_lines_nodes), self.correct_lines)
+        correct_lines_decorator = pslints._lines_to_nodes(self.correct_lines_with_decorator)
+        self.assertEqual(pslints._nodes_to_lines_in_correct_order(correct_lines_decorator),
+                         self.correct_lines_with_decorator)
+        correct_lines_multiline_decorator = pslints._lines_to_nodes(self.correct_lines_with_multiline_decorator)
+        self.assertEqual(pslints._nodes_to_lines_in_correct_order(correct_lines_multiline_decorator),
+                         self.correct_lines_with_multiline_decorator)
+
+    def test2(self):
+        """Test no changes to be made"""
+        corrected = pslints._correct_order_of_methods(self.correct_lines)
+        self.assertEqual(corrected, self.correct_lines)
+
+    def test3(self):
+        """Test incorrect order"""
+        lines = [
+            "import math",
+            ""
+            "class Mather:",
+            "    def __init__(c1: int, c2: int):",
+            "        self._comb = math.comb(c1, c2)",
+            "",
+            "    def _whisper(self):",
+            "        print('it is {self._comb}')",
+            "",
+            "    def shout(self):",
+            "        print(f'IT IS {self._comb}')",
+            "",
+        ]
+        corrected = pslints._correct_order_of_methods(lines)
+        self.assertEqual(self.correct_lines, corrected)
+
+    def test4(self):
+        """Test incorrect order with decorator"""
+        lines = [
+            "import math",
+            ""
+            "class Mather:",
+            "    def __init__(c1: int, c2: int):",
+            "        self._comb = math.comb(c1, c2)",
+            "",
+            "    @staticmethod",
+            "    def _whisper(self):",
+            "        print('it is {self._comb}')",
+            "",
+            "    def shout(self):",
+            "        print(f'IT IS {self._comb}')",
+            "",
+        ]
+        corrected = pslints._correct_order_of_methods(lines)
+        self.assertEqual(corrected, self.correct_lines_with_decorator)
+
+    def test5(self):
+        """Test incorrect order with multiline decorator"""
+        lines = [
+            "import math",
+            ""
+            "class Mather:",
+            "    def __init__(c1: int, c2: int):",
+            "        self._comb = math.comb(c1, c2)",
+            "",
+            "    @staticmethod(",
+            "       arg=1,",
+            "       param=2)",
+            "    def _whisper(self):",
+            "        print('it is {self._comb}')",
+            "",
+            "    def shout(self):",
+            "        print(f'IT IS {self._comb}')",
+            "",
+        ]
+        corrected = pslints._correct_order_of_methods(lines)
+        self.assertEqual(corrected, self.correct_lines_with_multiline_decorator)
+
+    def test6(self):
+        """Test `is_class_declaration`"""
+        examples = [
+            ("class ExampleClass1:", "ExampleClass1"),
+            ("class ExampleClass2(ExampleClass1):", "ExampleClass2"),
+            ("class ExampleClass2", ''),
+            ("cls ExampleClass2:", ''),
+        ]
+        for example, expected in examples:
+            result = pslints.utils.is_class_declaration(example)
+            self.assertEqual(expected, result)
+
+    def test7(self):
+        """Test `is_function_declaration`"""
+        examples = [
+            ("def example_function1(arg1):", "example_function1"),
+            ("def example_function2():", "example_function2"),
+            ("def example_function:", ''),
+            ("def example_function()", ''),
+            ("def example_function", ''),
+        ]
+        for example, expected in examples:
+            result = pslints.utils.is_function_declaration(example)
+            self.assertEqual(expected, result)
