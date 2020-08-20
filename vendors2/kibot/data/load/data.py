@@ -6,14 +6,15 @@ import pandas as pd
 
 import helpers.cache as cache
 import helpers.s3 as hs3
-from kibot2.data.transform import _get_normalizer
+import kibot.data.types as types
+from kibot.data.transform import _get_normalizer
 
 
 class KibotDataLoader:
     @functools.lru_cache(maxsize=None)
     @staticmethod
     def read_data(
-        frequency: str,
+        frequency: types.Frequency,
         contract_type: str,
         symbols: Union[str, Tuple[str, ...]],
         ext: str = "pq",
@@ -56,19 +57,20 @@ MEMORY = cache.get_disk_cache(tag=None)
 
 
 def _get_kibot_path(
-    frequency: str, contract_type: str, symbol: str, ext: str = "pq"
+    frequency: types.Frequency, contract_type: str, symbol: str, ext: str = "pq"
 ) -> str:
     """Get the path to a specific kibot dataset on s3.
 
     Parameters as in `read_data`.
     :return: path to the file
     """
-    if frequency == "T":
-        freq_path = "1min"
-    elif frequency == "D":
-        freq_path = "daily"
-    else:
-        raise ValueError("Invalid frequency='%s'" % frequency)
+    FREQ_PATH_MAPPING = {
+        types.Frequency.Daily: "daily",
+        types.Frequency.Minutely: "1min",
+    }
+
+    freq_path = FREQ_PATH_MAPPING[frequency]
+
     if contract_type == "continuous":
         contract_path = "_Continuous"
     elif contract_type == "expiry":
@@ -90,7 +92,7 @@ def _get_kibot_path(
 
 
 def _read_multiple_symbol_data(
-    frequency: str,
+    frequency: types.Frequency,
     contract_type: str,
     symbols: Tuple[str, ...],
     ext: str = "pq",
@@ -106,7 +108,7 @@ def _read_multiple_symbol_data(
 
 
 def _read_single_symbol_data(
-    frequency: str,
+    frequency: types.Frequency,
     contract_type: str,
     symbol: str,
     ext: str = "pq",
