@@ -8,6 +8,7 @@ import helpers.cache as cache
 import helpers.s3 as hs3
 import kibot.data.types as types
 from kibot.data.transform import _get_normalizer
+import kibot.data.load.file_path_generator as fpgen
 
 
 class KibotDataLoader:
@@ -17,6 +18,7 @@ class KibotDataLoader:
         frequency: types.Frequency,
         contract_type: types.ContractType,
         symbols: Tuple[str],
+        # TODO(amr): remove this, we should only be reading from pq files.
         ext: types.Extension = types.Extension.Parquet,
         nrows: Optional[int] = None,
         cache_data: bool = True,
@@ -49,45 +51,6 @@ class KibotDataLoader:
 MEMORY = cache.get_disk_cache(tag=None)
 
 
-def _get_kibot_path(
-    frequency: types.Frequency,
-    contract_type: types.ContractType,
-    symbol: str,
-    ext: types.Extension,
-) -> str:
-    """Get the path to a specific kibot dataset on s3.
-
-    Parameters as in `read_data`.
-    :return: path to the file
-    """
-    FREQ_PATH_MAPPING = {
-        types.Frequency.Daily: "daily",
-        types.Frequency.Minutely: "1min",
-    }
-
-    freq_path = FREQ_PATH_MAPPING[frequency]
-
-    CONTRACT_PATH_MAPPING = {
-        types.ContractType.Continuous: "_Continuous",
-        types.ContractType.Expiry: "",
-    }
-
-    contract_path = CONTRACT_PATH_MAPPING[contract_type]
-
-    dir_name = f"All_Futures{contract_path}_Contracts_{freq_path}"
-    file_path = os.path.join(dir_name, symbol)
-
-    if ext == types.Extension.Parquet:
-        # Parquet files are located in `pq/` subdirectory.
-        file_path = os.path.join("pq", file_path)
-        file_path += ".pq"
-    elif ext == types.Extension.CSV:
-        file_path += ".csv.gz"
-
-    file_path = os.path.join(hs3.get_path(), "kibot", file_path)
-    return file_path
-
-
 def _read_symbol_data(
     frequency: types.Frequency,
     contract_type: types.ContractType,
@@ -96,7 +59,9 @@ def _read_symbol_data(
     nrows: Optional[int] = None,
     cache_data: bool = True,
 ) -> pd.DataFrame:
-    file_path = _get_kibot_path(frequency, contract_type, symbol, ext)
+    file_path = fpgen.FilePathGenerator().generate_file_path(
+        frequency, contract_type, symbol, ext
+    )
     if cache_data:
         data = _read_data_from_disk_cache(file_path, nrows)
     else:
