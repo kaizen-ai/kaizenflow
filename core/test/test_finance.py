@@ -66,7 +66,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         Test for a clean input.
         """
         sample = self._get_sample(seed=1)
-        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        weights = fin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
@@ -77,7 +77,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[1, 1] = np.nan
         sample.iloc[0:5, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        weights = fin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
@@ -89,7 +89,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        weights = fin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
@@ -101,7 +101,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        weights = fin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
@@ -136,7 +136,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         Test for a clean input.
         """
         sample = self._get_sample(seed=1)
-        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        weights = fin.compute_inverse_volatility_weights(sample)
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, aggregate_log_rets)
         self.check_string(output_txt)
@@ -148,7 +148,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[1, 1] = np.nan
         sample.iloc[0:5, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        weights = fin.compute_inverse_volatility_weights(sample)
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, aggregate_log_rets)
         self.check_string(output_txt)
@@ -161,7 +161,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        weights = fin.compute_inverse_volatility_weights(sample)
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, aggregate_log_rets)
         self.check_string(output_txt)
@@ -174,7 +174,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample, 0.1)
+        weights = fin.compute_inverse_volatility_weights(sample)
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, aggregate_log_rets)
         self.check_string(output_txt)
