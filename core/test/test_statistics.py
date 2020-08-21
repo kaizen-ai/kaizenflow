@@ -1177,7 +1177,7 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])
-        date_range = {"start": "2010-01-01", "periods": 252, "freq": "B"}
+        date_range = {"start": "2010-01-01", "periods": 100, "freq": "B"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed, scale=0.1
         )
@@ -1185,47 +1185,95 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
 
     def test1(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
-        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
-        self.assertEqual(oos_sr, 1.4469573140895036)
+        oos_start = "2010-02-25"
+        sr_stats = stats.zscore_oos_sharpe_ratio(series, oos_start)
+        output_str = (
+            f"OOS start: {oos_start}\n"
+            f"{prnt.frame('input series')}\n"
+            f"{hut.convert_df_to_string(series, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test2(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
-        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-08-01")
-        self.assertEqual(oos_sr, 1.5135753117195743)
+        oos_start = "2010-04-10"
+        sr_stats = stats.zscore_oos_sharpe_ratio(series, oos_start)
+        output_str = (
+            f"OOS start: {oos_start}\n"
+            f"{prnt.frame('input series')}\n"
+            f"{hut.convert_df_to_string(series, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test3(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
-        series.loc["2010-06-01":] = series.loc["2010-06-01":].apply(
+        oos_start = "2010-02-25"
+        series.loc[oos_start:] = series.loc[oos_start:].apply(
             lambda x: 0.1 * x if x > 0 else x
         )
-        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
-        self.assertEqual(oos_sr, -3.5378299982103525)
+        sr_stats = stats.zscore_oos_sharpe_ratio(series, oos_start)
+        output_str = (
+            f"OOS start: {oos_start}\n"
+            f"{prnt.frame('input series')}\n"
+            f"{hut.convert_df_to_string(series, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test4(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
-        series.loc["2010-06-01":] = series.loc["2010-06-01":].apply(
+        oos_start = "2010-02-25"
+        series.loc[oos_start:] = series.loc[oos_start:].apply(
             lambda x: 0.1 * x if x < 0 else x
         )
-        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
-        self.assertEqual(oos_sr, 5.490525364424428)
+        sr_stats = stats.zscore_oos_sharpe_ratio(series, oos_start)
+        output_str = (
+            f"OOS start: {oos_start}\n"
+            f"{prnt.frame('input series')}\n"
+            f"{hut.convert_df_to_string(series, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test_nans1(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         series.iloc[:10] = np.nan
         series.iloc[40:50] = np.nan
-        series.loc["2010-06-01":"2010-06-15"] = np.nan
-        series.loc["2010-08-01":"2010-08-31"] = np.nan
-        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
-        self.assertEqual(oos_sr, 1.6125151057197262)
+        oos_start = "2010-02-25"
+        series.loc[oos_start:"2010-03-03"] = np.nan
+        series.loc["2010-04-01":"2010-04-30"] = np.nan
+        sr_stats = stats.zscore_oos_sharpe_ratio(series, oos_start)
+        output_str = (
+            f"OOS start: {oos_start}\n"
+            f"{prnt.frame('input series')}\n"
+            f"{hut.convert_df_to_string(series, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test_zeros1(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         series.iloc[:10] = 0
         series.iloc[40:50] = 0
-        series.loc["2010-06-01":"2010-06-15"] = 0
-        series.loc["2010-08-01":"2010-08-31"] = 0
-        oos_sr = stats.zscore_oos_sharpe_ratio(series, "2010-06-01")
-        self.assertEqual(oos_sr, 1.6125151057197262)
+        oos_start = "2010-02-25"
+        series.loc[oos_start:"2010-03-03"] = np.nan
+        series.loc["2010-04-01":"2010-04-30"] = np.nan
+        sr_stats = stats.zscore_oos_sharpe_ratio(series, oos_start)
+        output_str = (
+            f"OOS start: {oos_start}\n"
+            f"{prnt.frame('input series')}\n"
+            f"{hut.convert_df_to_string(series, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(sr_stats, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test_oos_not_from_interval1(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
