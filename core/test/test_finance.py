@@ -198,7 +198,18 @@ class Test_compute_kratio(hut.TestCase):
         """
         series = self._get_series(seed=1)
         actual = fin.compute_kratio(series)
-        expected = -9.76313
+        expected = -0.84551
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+    def test2(self) -> None:
+        """
+        Test for an input with NaN values.
+        """
+        series = self._get_series(seed=1)
+        series[:3] = np.nan
+        series[7:10] = np.nan
+        actual = fin.compute_kratio(series)
+        expected = -0.85089
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
 
