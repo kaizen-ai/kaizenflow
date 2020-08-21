@@ -674,6 +674,7 @@ class ContinuousSkLearnModel(FitPredictNode):
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
         info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
+        info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
         df_out = fwd_y_df.reindex(idx).merge(
@@ -708,10 +709,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
-        if skl.base.is_classifier(self._model) or skl.base.is_regressor(
-            self._model
-        ):
-            info["model_score"] = self._model.score(x_predict, fwd_y_hat)
+        info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
         df_out = fwd_y_df.reindex(idx).merge(
@@ -750,6 +748,25 @@ class ContinuousSkLearnModel(FitPredictNode):
             pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+    def _score(
+        self,
+        y_true: Union[pd.Series, pd.DataFrame],
+        y_pred: Union[pd.Series, pd.DataFrame],
+    ) -> Optional[float]:
+        """
+        Compute accuracy for classification or R^2 score for regression.
+        """
+        # In `predict()` method, `y_pred` may exist for index where `y_true`
+        # is already `NaN`.
+        y_true = y_true.loc[: y_true.last_valid_index()]
+        if skl.base.is_classifier(self._model):
+            metric = skl.metrics.accuracy_score
+        elif skl.base.is_regressor(self._model):
+            metric = skl.metrics.r2_score
+        else:
+            return None
+        return metric(y_true, y_pred.loc[y_true.index])
 
     # TODO(Paul): Consider omitting this (and relying on downstream
     #     processing to e.g., adjust for number of hypotheses tested).
