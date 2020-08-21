@@ -1,0 +1,85 @@
+default_stages: ["commit"]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+      - id: no-commit-to-branch
+        args: ["--pattern", '^(?!(Part|Amp|Infra)Task\d+_\S+).*$']
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.13.1
+    hooks:
+      - id: gitlint
+        stages: [commit-msg]
+        entry: gitlint
+        # B6 Body message is missing
+        args: [--contrib=CT1, --ignore=B6, --msg-filename]
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.7
+    hooks:
+      - id: remove-crlf
+      - id: remove-tabs
+        args: ["--whitespaces-count", "4"]
+  - repo: https://github.com/timothycrosley/isort
+    rev: 4.3.21
+    hooks:
+      - id: isort
+  - repo: https://github.com/humitos/mirrors-autoflake
+    rev: v1.3
+    hooks:
+      - id: autoflake
+        args: [-i, --remove-all-unused-imports, --remove-unused-variables]
+  - repo: local
+    hooks:
+      - id: p1_black
+        name: p1_black
+        entry: p1_black.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: p1_flake8
+        name: p1_flake8
+        entry: p1_flake8.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: p1_doc_formatter
+        name: p1_doc_formatter
+        entry: p1_doc_formatter.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: p1_specific_lints
+        name: p1_specific_lints
+        entry: p1_specific_lints.py
+        language: python
+        types: [python]
+        additional_dependencies:
+          ["pandas", "matplotlib", "typing_extensions", "more_itertools"]
+      - id: p1_pylint
+        name: p1_pylint
+        entry: p1_pylint.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: p1_mypy
+        name: p1_mypy
+        entry: p1_mypy.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib", "more_itertools"]
+      - id: p1_processjupytext
+        name: p1_processjupytext
+        entry: p1_processjupytext.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: p1_lint_md
+        name: p1_lint_md
+        entry: p1_lint_md.py
+        language: python
+        additional_dependencies: ["pandas", "matplotlib"]

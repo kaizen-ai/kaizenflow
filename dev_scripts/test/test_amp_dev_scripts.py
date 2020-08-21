@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import pytest
 
-import dev_scripts.linter as lntr
+import dev_scripts.linter2 as lntr
 import dev_scripts.notebooks.process_jupytext as proc_jup
 import dev_scripts.url as url
 import helpers.conda as hco
@@ -74,9 +74,7 @@ class Test_env1(ut.TestCase):
 @pytest.mark.amp
 class Test_set_env_amp(ut.TestCase):
     def test_setenv_py1(self) -> None:
-        """
-        Find _setenv_amp.py executable and run it.
-        """
+        """Find _setenv_amp.py executable and run it."""
         executable = git.find_file_in_git_tree(
             "_setenv_amp.py", super_module=False
         )
@@ -89,9 +87,7 @@ class Test_set_env_amp(ut.TestCase):
     # particular run of _setenv_amp.py.
     @pytest.mark.skipif('si.get_user_name() != "saggese"')
     def test_setenv_py2(self) -> None:
-        """
-        Find _setenv_amp.py executable, run it, and freeze the output.
-        """
+        """Find _setenv_amp.py executable, run it, and freeze the output."""
         executable = git.find_file_in_git_tree(
             "_setenv_amp.py", super_module=False
         )
@@ -107,9 +103,7 @@ class Test_set_env_amp(ut.TestCase):
         self.check_string(txt)
 
     def test_setenv_sh1(self) -> None:
-        """
-        Execute setenv_amp.sh.
-        """
+        """Execute setenv_amp.sh."""
         executable = git.find_file_in_git_tree(
             "setenv_amp.sh", super_module=False
         )
@@ -166,8 +160,7 @@ class Test_jack1(ut.TestCase):
 
 class Test_install_create_conda_py1(ut.TestCase):
     def _run_create_conda(self, cmd_opts: List[str], cleanup: bool) -> None:
-        """
-        Run a create_conda command using custom options `cmd_opts`.
+        """Run a create_conda command using custom options `cmd_opts`.
 
         :param cleanup: True if we want to cleanup the conda env instead of
             creating it.
@@ -192,9 +185,8 @@ class Test_install_create_conda_py1(ut.TestCase):
         si.system(cmd_tmp)
 
     def _helper(self, env_name: str, cmd_opts: List[str]) -> None:
-        """
-        Run create_conda with custom options `cmd_opts` and then remove the env.
-        """
+        """Run create_conda with custom options `cmd_opts` and then remove the
+        env."""
         self._run_create_conda(cmd_opts, cleanup=False)
         #
         cmd = "conda activate %s && conda info --envs" % env_name
@@ -204,9 +196,7 @@ class Test_install_create_conda_py1(ut.TestCase):
 
     @pytest.mark.slow
     def test_create_conda_test_install1(self) -> None:
-        """
-        Run create_conda with --test_install to exercise the script.
-        """
+        """Run create_conda with --test_install to exercise the script."""
         cmd_opts = [""]
         env_name = "test_install"
         cmd_opts.append(f"--env_name {env_name}")
@@ -216,9 +206,7 @@ class Test_install_create_conda_py1(ut.TestCase):
 
     @pytest.mark.slow
     def test_create_conda_yaml1(self) -> None:
-        """
-        Run create_conda.py with a single YAML file.
-        """
+        """Run create_conda.py with a single YAML file."""
         yaml = """
 channels:
   - conda-forge
@@ -242,9 +230,7 @@ dependencies:
 
     @pytest.mark.slow
     def test_create_conda_yaml2(self) -> None:
-        """
-        Run create_conda.py with two YAML files.
-        """
+        """Run create_conda.py with two YAML files."""
         yaml1 = """
 channels:
   - conda-forge
@@ -282,6 +268,7 @@ dependencies:
 
 # pylint: disable=too-many-public-methods
 @pytest.mark.amp
+@pytest.mark.skip(reason="Disabled because of AmpTask508")
 class Test_linter_py1(ut.TestCase):
     def _write_input_file(self, txt: str, file_name: str) -> Tuple[str, str]:
         dir_name = self.get_scratch_space()
@@ -376,9 +363,7 @@ if __name__ == "main":
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
     )
     def test_linter1(self) -> None:
-        """
-        Run linter.py as executable on some text.
-        """
+        """Run linter.py as executable on some text."""
         txt = self._get_horrible_python_code1()
         # Run.
         file_name = "input.py"
@@ -392,9 +377,7 @@ if __name__ == "main":
         'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
     )
     def test_linter2(self) -> None:
-        """
-        Run linter.py as library on some text.
-        """
+        """Run linter.py as library on some text."""
         txt = self._get_horrible_python_code1()
         # Run.
         file_name = "input.py"
@@ -405,9 +388,7 @@ if __name__ == "main":
 
     @pytest.mark.skip(reason="Disabled until #2430 is solved")
     def test_linter_md1(self) -> None:
-        """
-        Run linter.py as executable on some text.
-        """
+        """Run linter.py as executable on some text."""
         txt = r"""
 # Good
 - Good time management
@@ -440,9 +421,7 @@ if __name__ == "main":
         self.assert_equal(msg, exp)
 
     def test_check_shebang1(self) -> None:
-        """
-        Executable with wrong shebang: error.
-        """
+        """Executable with wrong shebang: error."""
         file_name = "exec.py"
         txt = """#!/bin/bash
 hello
@@ -453,9 +432,7 @@ world
         self._helper_check_shebang(file_name, txt, is_executable, exp)
 
     def test_check_shebang2(self) -> None:
-        """
-        Executable with the correct shebang: correct.
-        """
+        """Executable with the correct shebang: correct."""
         file_name = "exec.py"
         txt = """#!/usr/bin/env python
 hello
@@ -466,9 +443,7 @@ world
         self._helper_check_shebang(file_name, txt, is_executable, exp)
 
     def test_check_shebang3(self) -> None:
-        """
-        Non executable with a shebang: error.
-        """
+        """Non executable with a shebang: error."""
         file_name = "exec.py"
         txt = """#!/usr/bin/env python
 hello
@@ -479,9 +454,7 @@ world
         self._helper_check_shebang(file_name, txt, is_executable, exp)
 
     def test_check_shebang4(self) -> None:
-        """
-        Library without a shebang: correct.
-        """
+        """Library without a shebang: correct."""
         file_name = "lib.py"
         txt = '''"""
 Import as:
@@ -500,9 +473,7 @@ import _setenv_lib as selib
         self.assert_equal(msg, exp)
 
     def test_was_baptized1(self) -> None:
-        """
-        Correct import.
-        """
+        """Correct import."""
         file_name = "lib.py"
         txt = '''"""
 Import as:
@@ -513,9 +484,7 @@ import _setenv_lib as selib
         self._helper_was_baptized(file_name, txt, exp)
 
     def test_was_baptized2(self) -> None:
-        """
-        Invalid.
-        """
+        """Invalid."""
         file_name = "lib.py"
         txt = """
 Import as:
@@ -547,9 +516,7 @@ import foo.bar as fba
         self.assert_equal(actual_as_str, exp)
 
     def test_check_line_by_line1(self) -> None:
-        """
-        Valid import.
-        """
+        """Valid import."""
         file_name = "lib.py"
         txt = "from typing import List"
         exp = """# output
@@ -558,9 +525,7 @@ from typing import List"""
         self._helper_check_line_by_line(file_name, txt, exp)
 
     def test_check_line_by_line2(self) -> None:
-        """
-        Invalid import.
-        """
+        """Invalid import."""
         file_name = "lib.py"
         txt = "from pandas import DataFrame"
         exp = """# output
@@ -572,9 +537,7 @@ f-r-o-m pandas import DataFrame"""
         self._helper_check_line_by_line(file_name, txt, exp)
 
     def test_check_line_by_line3(self) -> None:
-        """
-        Invalid import.
-        """
+        """Invalid import."""
         file_name = "lib.py"
         txt = "import pandas as a_very_long_name"
         exp = """# output
@@ -586,9 +549,7 @@ i-m-p-o-r-t pandas as a_very_long_name"""
         self._helper_check_line_by_line(file_name, txt, exp)
 
     def test_check_line_by_line4(self) -> None:
-        """
-        Conflict markers.
-        """
+        """Conflict markers."""
         file_name = "lib.py"
         txt = """import pandas as pd
 <-<-<-<-<-<-< HEAD
@@ -636,9 +597,8 @@ from typing import List
         self._helper_check_line_by_line(file_name, txt, exp)
 
     def test_check_line_by_line6(self) -> None:
-        """
-        Check that it doesn't replace if the bar is not until the end of the line.
-        """
+        """Check that it doesn't replace if the bar is not until the end of the
+        line."""
         file_name = "lib.py"
         # We use some _ to avoid getting a replacement from the linter here.
         txt = """
@@ -667,9 +627,7 @@ from typing import List
         self.assert_equal(msg, exp)
 
     def test_check_notebook_dir1(self) -> None:
-        """
-        The notebook is not under 'notebooks': invalid.
-        """
+        """The notebook is not under 'notebooks': invalid."""
         file_name = "hello/world/notebook.ipynb"
         # pylint: disable=line-too-long
         exp = "hello/world/notebook.ipynb:1: each notebook should be under a 'notebooks' directory to not confuse pytest"
@@ -677,17 +635,13 @@ from typing import List
         self._helper_check_notebook_dir(file_name, exp)
 
     def test_check_notebook_dir2(self) -> None:
-        """
-        The notebook is under 'notebooks': valid.
-        """
+        """The notebook is under 'notebooks': valid."""
         file_name = "hello/world/notebooks/notebook.ipynb"
         exp = ""
         self._helper_check_notebook_dir(file_name, exp)
 
     def test_check_notebook_dir3(self) -> None:
-        """
-        It's not a notebook: valid.
-        """
+        """It's not a notebook: valid."""
         file_name = "hello/world/notebook.py"
         exp = ""
         self._helper_check_notebook_dir(file_name, exp)
@@ -699,17 +653,13 @@ from typing import List
         self.assert_equal(msg, exp)
 
     def test_check_test_file_dir1(self) -> None:
-        """
-        Test is under `test`: valid.
-        """
+        """Test is under `test`: valid."""
         file_name = "hello/world/test/test_all.py"
         exp = ""
         self._helper_check_test_file_dir(file_name, exp)
 
     def test_check_test_file_dir2(self) -> None:
-        """
-        Test is not under `test`: invalid.
-        """
+        """Test is not under `test`: invalid."""
         file_name = "hello/world/test_all.py"
         # pylint: disable=line-too-long
         exp = "hello/world/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
@@ -717,9 +667,7 @@ from typing import List
         self._helper_check_test_file_dir(file_name, exp)
 
     def test_check_test_file_dir3(self) -> None:
-        """
-        Test is not under `test`: invalid.
-        """
+        """Test is not under `test`: invalid."""
         file_name = "hello/world/tests/test_all.py"
         # pylint: disable=line-too-long
         exp = "hello/world/tests/test_all.py:1: test files should be under 'test' directory to be discovered by pytest"
@@ -727,9 +675,7 @@ from typing import List
         self._helper_check_test_file_dir(file_name, exp)
 
     def test_check_test_file_dir4(self) -> None:
-        """
-        It's a notebook: valid.
-        """
+        """It's a notebook: valid."""
         file_name = "hello/world/tests/test_all.ipynb"
         exp = ""
         self._helper_check_test_file_dir(file_name, exp)
