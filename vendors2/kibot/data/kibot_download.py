@@ -43,8 +43,9 @@ _S3_URI = "external-p1/kibot"
 
 #
 _KIBOT_ENDPOINT = "http://www.kibot.com/"
-
+_KIBOT_API_ENDPOINT = "http://api.kibot.com/"
 _DATASETS = [
+    "adjustments",
     "all_stocks_1min",
     "all_stocks_unadjusted_1min",
     "all_stocks_daily",
@@ -251,6 +252,87 @@ def _download_payload_page(
     return True
 
 
+def _get_dataset_payloads_to_download(
+    dataset: str,
+    dataset_links_df: pd.DataFrame,
+    source_dir: str,
+    converted_dir: str,
+    requests_session: requests.Session,
+) -> pd.DataFrame:
+    """
+    Get a DataFrame with the list of Symbols and Links to download for a dataset.
+
+    :param dataset: input dataset name to process
+    :param dataset_links_df: DataFrame with the list to a dataset pages
+    :param source_dir: directory to store source download
+    :param converted_dir: directory to store converted download
+    :param requests_session: current requests session to preserve cookies
+    :return: DataFrame with Symbol and Link columns
+    """
+    dataset_html_file = os.path.join(source_dir, f"{dataset}.html")
+    dataset_csv_file = os.path.join(converted_dir, f"{dataset}.csv")
+    # Download dataset's html page.
+    if not os.path.exists(dataset_html_file):
+        _LOG.warning("Missing %s: downloading it", dataset_html_file)
+        [link_to_html_page] = dataset_links_df.loc[
+            dataset_links_df.dataset == dataset
+        ].link.values
+        _download_page(dataset_html_file, link_to_html_page, requests_session)
+    # Parse and convert dataset's html page.
+    _LOG.warning("Parsing %s", dataset_html_file)
+    dataset_df = _extract_payload_links(dataset_html_file)
+    dataset_df.to_csv(dataset_csv_file)
+    _LOG.info("Number of files to download: %s", dataset_df.shape[0])
+    _LOG.info(dataset_df.head())
+    return dataset_df
+
+
+def _get_adjustments_payload_link(symbol: str) -> str:
+    """
+    Get the link to download adjustment data for a symbol.
+
+    :param symbol: symbol of the adjustment payload
+    :return: a link to download
+    """
+    query_params = "?"
+    query_params += urlprs.urlencode({"action": "adjustments", "symbol": symbol})
+    api_link = urlprs.urljoin(_KIBOT_API_ENDPOINT, query_params)
+    return api_link
+
+
+def _get_adjustments_to_download(
+    dataset: str,
+    source_dir: str,
+    converted_dir: str,
+    requests_session: requests.Session,
+) -> pd.DataFrame:
+    """
+    Get a DataFrame with the list of Symbols and Links to download for a dataset.
+
+    :param dataset: input dataset name to process
+    :param source_dir: directory to store source download
+    :param converted_dir: directory to store converted download
+    :param requests_session: current requests session to preserve cookies
+    :return: DataFrame with Symbol and Link columns
+    """
+    dataset_txt_file = os.path.join(source_dir, f"{dataset}.txt")
+    dataset_csv_file = os.path.join(converted_dir, f"{dataset}.csv")
+    response = requests_session.get(
+        _KIBOT_API_ENDPOINT, params={"action": "adjustments", "symbolsonly": 1}
+    )
+    with open(dataset_txt_file, "w+b") as f:
+        f.write(response.content)
+    dataset_df = pd.read_csv(dataset_txt_file, header=None)
+    dataset_df.drop_duplicates(inplace=True)
+    dataset_df.columns = ["Symbol"]
+    dataset_df["Link"] = dataset_df["Symbol"].apply(_get_adjustments_payload_link)
+    dataset_df.to_csv(dataset_csv_file)
+    dataset_df.reset_index(drop=True, inplace=True)
+    _LOG.info("Number of files to download: %s", dataset_df.shape[0])
+    _LOG.info(dataset_df.head())
+    return dataset_df
+
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -363,40 +445,37 @@ def _main(parser: argparse.ArgumentParser) -> None:
     datasets_to_proceed = args.dataset or _DATASETS
     # Process a dataset.
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
-        dataset_html_file = os.path.join(source_dir, f"{dataset}.html")
-        dataset_csv_file = os.path.join(converted_dir, f"{dataset}.csv")
-        # Download dataset's html page.
-        if not os.path.exists(dataset_html_file):
-            _LOG.warning("Missing %s: downloading it", dataset_html_file)
-            [link_to_html_page] = dataset_links_df.loc[
-                dataset_links_df.dataset == dataset
-            ].link.values
-            _download_page(dataset_html_file, link_to_html_page, requests_session)
-        # Parse and convert dataset's html page.
-        _LOG.warning("Parsing %s", dataset_html_file)
-        dataset_df = _extract_payload_links(dataset_html_file)
-        dataset_df.to_csv(dataset_csv_file)
-        _LOG.info("Number of files to download: %s", dataset_df.shape[0])
-        _LOG.info(dataset_df.head())
+        # Create dataset dir.
         dataset_dir = os.path.join(converted_dir, dataset)
         io_.create_dir(dataset_dir, incremental=True)
+        # Define S3 dataset dir.
         aws_dir = os.path.join(_S3_URI, dataset)
         if args.delete_s3_dir:
             assert 0, "Very dangerous: are you sure"
             _LOG.warning("Deleting s3 file %s", aws_dir)
             cmd = "aws s3 rm --recursive %s" % aws_dir
             si.system(cmd)
-        # Download data.
-        to_download = dataset_df
+        if dataset == "adjustments":
+            to_download = _get_adjustments_to_download(
+                dataset, source_dir, converted_dir, requests_session
+            )
+        else:
+            to_download = _get_dataset_payloads_to_download(
+                dataset,
+                dataset_links_df,
+                source_dir,
+                converted_dir,
+                requests_session,
+            )
         if args.start_from:
             _LOG.warning(
                 "Starting from payload %d / %d as per user request",
                 args.start_from,
-                dataset_df.shape[0],
+                to_download.shape[0],
             )
             dbg.dassert_lte(0, args.start_from)
-            dbg.dassert_lt(args.start_from, dataset_df.shape[0])
-            to_download = dataset_df.iloc[args.start_from :]
+            dbg.dassert_lt(args.start_from, to_download.shape[0])
+            to_download = to_download.iloc[args.start_from :]
         func = lambda row: _download_payload_page(
             dataset_dir,
             aws_dir,
