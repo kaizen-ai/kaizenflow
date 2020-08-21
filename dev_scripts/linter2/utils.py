@@ -1,5 +1,4 @@
 import os
-import re
 from typing import List
 
 import helpers.dbg as dbg
@@ -84,30 +83,3 @@ def is_paired_jupytext_file(file_name: str) -> bool:
 
 def is_init_py(file_name: str) -> bool:
     return os.path.basename(file_name) == "__init__.py"
-
-
-def is_class_declaration(line: str) -> str:
-    """Checks if a line declares a class. If so, it returns the class name. Else an empty string"""
-    regex = r"^\s*class (.*?)[\(:]"
-    m = re.match(regex, line)
-    if m is not None:
-        class_name = m.group(1)
-        return class_name
-    return ''
-
-
-def is_function_declaration(line: str) -> str:
-    """Checks if a line defines a function. If so, it returns the function name. Else it returns an empty string."""
-    regex = r"^\s*def (.*?)\(.*\):"
-    m = re.match(regex, line)
-    if m is not None:
-        function_name = m.group(1)
-        return function_name
-    return ''
-
-
-def is_decorator(line: str) -> bool:
-    """Checks if a decorator is present on a line."""
-    regex = r"\s*@.*"
-    m = re.match(regex, line)
-    return m is not None

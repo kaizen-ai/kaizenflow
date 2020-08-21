@@ -740,8 +740,7 @@ class Test_correct_method_order(hut.TestCase):
     def correct_lines(self):
         return [
             "import math",
-            ""
-            "class Mather:",
+            "" "class Mather:",
             "    def __init__(c1: int, c2: int):",
             "        self._comb = math.comb(c1, c2)",
             "",
@@ -750,7 +749,7 @@ class Test_correct_method_order(hut.TestCase):
             "",
             "    def _whisper(self):",
             "        print('it is {self._comb}')",
-            ""
+            "",
         ]
 
     @property
@@ -768,27 +767,40 @@ class Test_correct_method_order(hut.TestCase):
         return tmp
 
     def test1(self) -> None:
-        """Test conversion between nodes and lines with no changes to be made"""
+        """Test conversion between nodes and lines with no changes to be
+        made."""
         correct_lines_nodes = pslints._lines_to_nodes(self.correct_lines)
-        self.assertEqual(pslints._nodes_to_lines_in_correct_order(correct_lines_nodes), self.correct_lines)
-        correct_lines_decorator = pslints._lines_to_nodes(self.correct_lines_with_decorator)
-        self.assertEqual(pslints._nodes_to_lines_in_correct_order(correct_lines_decorator),
-                         self.correct_lines_with_decorator)
-        correct_lines_multiline_decorator = pslints._lines_to_nodes(self.correct_lines_with_multiline_decorator)
-        self.assertEqual(pslints._nodes_to_lines_in_correct_order(correct_lines_multiline_decorator),
-                         self.correct_lines_with_multiline_decorator)
+        self.assertEqual(
+            pslints._nodes_to_lines_in_correct_order(correct_lines_nodes),
+            self.correct_lines,
+        )
+        correct_lines_decorator = pslints._lines_to_nodes(
+            self.correct_lines_with_decorator
+        )
+        self.assertEqual(
+            pslints._nodes_to_lines_in_correct_order(correct_lines_decorator),
+            self.correct_lines_with_decorator,
+        )
+        correct_lines_multiline_decorator = pslints._lines_to_nodes(
+            self.correct_lines_with_multiline_decorator
+        )
+        self.assertEqual(
+            pslints._nodes_to_lines_in_correct_order(
+                correct_lines_multiline_decorator
+            ),
+            self.correct_lines_with_multiline_decorator,
+        )
 
     def test2(self):
-        """Test no changes to be made"""
-        corrected = pslints._correct_order_of_methods(self.correct_lines)
+        """Test no changes to be made."""
+        corrected = pslints._class_method_order_enforcer(self.correct_lines)
         self.assertEqual(corrected, self.correct_lines)
 
     def test3(self):
-        """Test incorrect order"""
+        """Test incorrect order."""
         lines = [
             "import math",
-            ""
-            "class Mather:",
+            "" "class Mather:",
             "    def __init__(c1: int, c2: int):",
             "        self._comb = math.comb(c1, c2)",
             "",
@@ -799,15 +811,19 @@ class Test_correct_method_order(hut.TestCase):
             "        print(f'IT IS {self._comb}')",
             "",
         ]
-        corrected = pslints._correct_order_of_methods(lines)
+        corrected = pslints._class_method_order_enforcer(lines)
         self.assertEqual(self.correct_lines, corrected)
 
+        hinted = pslints._class_method_order_detector("test.py", lines)
+        self.assertEqual(
+            "test.py:9: method `shout` should be located on line number 6", hinted
+        )
+
     def test4(self):
-        """Test incorrect order with decorator"""
+        """Test incorrect order with decorator."""
         lines = [
             "import math",
-            ""
-            "class Mather:",
+            "" "class Mather:",
             "    def __init__(c1: int, c2: int):",
             "        self._comb = math.comb(c1, c2)",
             "",
@@ -819,15 +835,20 @@ class Test_correct_method_order(hut.TestCase):
             "        print(f'IT IS {self._comb}')",
             "",
         ]
-        corrected = pslints._correct_order_of_methods(lines)
+        corrected = pslints._class_method_order_enforcer(lines)
         self.assertEqual(corrected, self.correct_lines_with_decorator)
 
+        hinted = pslints._class_method_order_detector("test.py", lines)
+        self.assertEqual(
+            "test.py:10: method `shout` should be located on line number 6",
+            hinted,
+        )
+
     def test5(self):
-        """Test incorrect order with multiline decorator"""
+        """Test incorrect order with multiline decorator."""
         lines = [
             "import math",
-            ""
-            "class Mather:",
+            "" "class Mather:",
             "    def __init__(c1: int, c2: int):",
             "        self._comb = math.comb(c1, c2)",
             "",
@@ -841,19 +862,25 @@ class Test_correct_method_order(hut.TestCase):
             "        print(f'IT IS {self._comb}')",
             "",
         ]
-        corrected = pslints._correct_order_of_methods(lines)
+        corrected = pslints._class_method_order_enforcer(lines)
         self.assertEqual(corrected, self.correct_lines_with_multiline_decorator)
+
+        hinted = pslints._class_method_order_detector("test.py", lines)
+        self.assertEqual(
+            "test.py:12: method `shout` should be located on line number 6",
+            hinted,
+        )
 
     def test6(self):
         """Test `is_class_declaration`"""
         examples = [
             ("class ExampleClass1:", "ExampleClass1"),
             ("class ExampleClass2(ExampleClass1):", "ExampleClass2"),
-            ("class ExampleClass2", ''),
-            ("cls ExampleClass2:", ''),
+            ("class ExampleClass2", ""),
+            ("cls ExampleClass2:", ""),
         ]
         for example, expected in examples:
-            result = pslints.utils.is_class_declaration(example)
+            result = pslints._is_class_declaration(example)
             self.assertEqual(expected, result)
 
     def test7(self):
@@ -861,10 +888,10 @@ class Test_correct_method_order(hut.TestCase):
         examples = [
             ("def example_function1(arg1):", "example_function1"),
             ("def example_function2():", "example_function2"),
-            ("def example_function:", ''),
-            ("def example_function()", ''),
-            ("def example_function", ''),
+            ("def example_function:", ""),
+            ("def example_function()", ""),
+            ("def example_function", ""),
         ]
         for example, expected in examples:
-            result = pslints.utils.is_function_declaration(example)
+            result = pslints._is_function_declaration(example)
             self.assertEqual(expected, result)
