@@ -86,6 +86,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         Test for an input with all-NaN column.
 
         Results are not intended.
+        `weights` are `0` for all-NaN columns in the input.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
@@ -98,6 +99,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         Test for an all-NaN input.
 
         Results are not intended.
+        `weights` are `0` for all-NaN columns in the input.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
@@ -158,6 +160,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         Test for an input with all-NaN column.
 
         Results are not intended.
+        `weights` are `0` for all-NaN columns in the input.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
@@ -171,6 +174,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         Test for an all-NaN input.
 
         Results are not intended.
+        `weights` are `0` for all-NaN columns in the input.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
