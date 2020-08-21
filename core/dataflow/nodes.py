@@ -13,6 +13,7 @@ import gluonts.model.deepar as gmd
 import gluonts.trainer as gt
 import numpy as np
 import pandas as pd
+import sklearn as skl
 
 import core.backtest as bcktst
 import core.data_adapters as adpt
@@ -707,6 +708,10 @@ class ContinuousSkLearnModel(FitPredictNode):
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
+        if skl.base.is_classifier(self._model) or skl.base.is_regressor(
+            self._model
+        ):
+            info["model_score"] = self._model.score(x_predict, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
         df_out = fwd_y_df.reindex(idx).merge(
@@ -746,7 +751,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
-    # TODO(Paul): Add type hints.
     # TODO(Paul): Consider omitting this (and relying on downstream
     #     processing to e.g., adjust for number of hypotheses tested).
     @staticmethod
@@ -830,7 +834,9 @@ class UnsupervisedSkLearnModel(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool = False):
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool = False
+    ) -> Dict[str, pd.DataFrame]:
         """
         Factor out common flow for fit/predict.
 
@@ -961,7 +967,9 @@ class Residualizer(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool = False):
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool = False
+    ) -> Dict[str, pd.DataFrame]:
         """
         Factor out common flow for fit/predict.
 
@@ -987,7 +995,6 @@ class Residualizer(FitPredictNode):
         x_transform = self._model.transform(x_fit)
         x_hat = self._model.inverse_transform(x_transform)
         #
-        x_transform.shape[1]
         x_residual = adpt.transform_from_sklearn(
             non_nan_idx, x_vars, x_fit - x_hat
         )
@@ -1356,7 +1363,7 @@ class ContinuousDeepArModel(FitPredictNode):
         dbg.dassert_no_duplicates(df.columns)
         dbg.dassert(df.index.freq)
 
-    def _get_fwd_y_df(self, df):
+    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Return dataframe of `steps_ahead` forward y values.
         """
