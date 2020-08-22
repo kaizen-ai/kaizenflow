@@ -6,11 +6,11 @@ import logging
 
 import requests
 
-from infra.helpers.telegram_notify.config import NOTIFY_JUPYTER_TOKEN
-from infra.helpers.telegram_notify.telegram_notify import TelegramNotify
+from helpers.telegram_notify.config import NOTIFY_JUPYTER_TOKEN
+from helpers.telegram_notify.telegram_notify import TelegramNotify
 
-_log = logging.getLogger(__name__)
-_log.setLevel(logging.INFO)
+_LOG = logging.getLogger(__name__)
+_LOG.setLevel(logging.INFO)
 
 
 def _get_updates_dict(token):
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     if args.token:
         token = args.token
     else:
-        _log.info("Using default token for NotifyJupyterBot.")
+        _LOG.info("Using default token for NotifyJupyterBot.")
         token = NOTIFY_JUPYTER_TOKEN
     chat_id = send_chat_id(token, username)
     print("Your chat id is: %s" % chat_id)

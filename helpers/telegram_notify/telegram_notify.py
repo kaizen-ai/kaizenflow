@@ -12,7 +12,7 @@ import requests
 # Alternative that works for both Python 2 and 3:
 from requests.compat import urljoin
 
-import infra.helpers.telegram_notify.config as tg_config
+import helpers.telegram_notify.config as tg_config
 
 try:  # Python 3 (see Edit2 below for why this may not work in Python 2)
     from notebook.notebookapp import list_running_servers
@@ -24,7 +24,7 @@ except ImportError:  # Python 2
         warnings.simplefilter("ignore", category=ShimWarning)
         from IPython.html.notebookapp import list_running_servers
 
-_log = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 _TOKEN = tg_config.TELEGRAM_TOKEN
 _CHAT_ID = tg_config.TELEGRAM_CHAT_ID
@@ -70,7 +70,7 @@ class TelegramNotify:
     @staticmethod
     def _send(text, token=_TOKEN, chat_id=_CHAT_ID):
         if chat_id is None or token is None:
-            _log.warning(
+            _LOG.warning(
                 "Not sending notifications. To send notifications, both "
                 "`chat_id` and `token` need to be specified. Go to README.md"
                 "for more information."
@@ -109,9 +109,9 @@ class _RequestsHandler(Handler):
         ).content
 
 
-class _LogstashFormatter(Formatter):
+class _LOGstashFormatter(Formatter):
     def __init__(self):
-        super(_LogstashFormatter, self).__init__()
+        super(_LOGstashFormatter, self).__init__()
 
     def format(self, record):
         launcher_name = _get_launcher_name()
@@ -124,6 +124,6 @@ def init_tglogger(log_level=logging.DEBUG):
     _tg_log = logging.getLogger("telegram_notify")
     _tg_log.setLevel(log_level)
     handler = _RequestsHandler()
-    formatter = _LogstashFormatter()
+    formatter = _LOGstashFormatter()
     handler.setFormatter(formatter)
     _tg_log.handlers = [handler]
