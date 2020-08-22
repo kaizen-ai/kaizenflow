@@ -56,9 +56,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     username = args.username
     if args.token:
-        token = args.token
+        token_ = args.token
     else:
         _LOG.info("Using default token for NotifyJupyterBot.")
-        token = NOTIFY_JUPYTER_TOKEN
-    chat_id = send_chat_id(token, username)
-    print("Your chat id is: %s" % chat_id)
+        token_ = NOTIFY_JUPYTER_TOKEN
+    chat_id_ = send_chat_id(token_, username)
+    print("Your chat id is: %s" % chat_id_)

@@ -26,8 +26,6 @@ except ImportError:  # Python 2
 
 _LOG = logging.getLogger(__name__)
 
-_TOKEN, _CHAT_ID = tg_config.get_info()
-
 
 def _get_launcher_name():
     """
@@ -63,11 +61,10 @@ class TelegramNotify:
 
     def __init__(self):
         self.launcher_name = _get_launcher_name()
-        self.token = _TOKEN
-        self.chat_id = _CHAT_ID
+        self.token, self.chat_id = tg_config.get_info()
 
     @staticmethod
-    def _send(text, token=_TOKEN, chat_id=_CHAT_ID):
+    def _send(text, token, chat_id):
         if chat_id is None or token is None:
             _LOG.warning(
                 "Not sending notifications. To send notifications, both "
@@ -98,12 +95,11 @@ class TelegramNotify:
 
 class _RequestsHandler(Handler):
     def emit(self, record):
+        token, chat_id = tg_config.get_info()
         log_entry = self.format(record)
-        payload = {"chat_id": _CHAT_ID, "text": log_entry, "parse_mode": "HTML"}
+        payload = {"chat_id": chat_id, "text": log_entry, "parse_mode": "HTML"}
         return requests.post(
-            "https://api.telegram.org/bot{token}/sendMessage".format(
-                token=_TOKEN
-            ),
+            "https://api.telegram.org/bot{token}/sendMessage".format(token=token),
             data=payload,
         ).content
 
