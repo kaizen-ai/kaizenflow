@@ -1,28 +1,30 @@
 import getpass
 import logging
 
-_LOG = logging.getLogger(__name__)
+import helpers.dbg as dbg
 
 NOTIFY_JUPYTER_TOKEN = "***REMOVED***"
 
-user = getpass.getuser()
+def get_info():
 
-# TELEGRAM_TOKEN is the token of your bot
-# - You can use @NotifyJupyterBot, its token is
-#   '***REMOVED***'
+    user = getpass.getuser()
 
-# TELEGRAM_CHAT_ID: To get it, start messaging with the bot. Then go to
-# https://api.telegram.org/bot<TELEGRAM_TOKEN>/getUpdates and get your chat id.
-# (If you are using @NotifyJupyterBot, go to
-# https://api.telegram.org/bot***REMOVED***/getUpdates )
+    # telegram_token is the token of your bot
+    # - You can use @NotifyJupyterBot, its token is
+    #   '***REMOVED***'
 
-if user == "julia":
-    TELEGRAM_TOKEN = NOTIFY_JUPYTER_TOKEN
-    TELEGRAM_CHAT_ID = "35712077"
-elif user == "saggese":
-    TELEGRAM_TOKEN = NOTIFY_JUPYTER_TOKEN
-    TELEGRAM_CHAT_ID = "967103049"
-else:
-    TELEGRAM_TOKEN = NOTIFY_JUPYTER_TOKEN
-    TELEGRAM_CHAT_ID = None
-    _LOG.warning("User `%s` is not in the config.py", user)
+    # chat_id: To get it, start messaging with the bot. Then go to
+    # https://api.telegram.org/bot<telegram_token>/getUpdates and get your chat id.
+    # (If you are using @NotifyJupyterBot, go to
+    # https://api.telegram.org/bot***REMOVED***/getUpdates )
+
+
+    if user == "julia":
+        telegram_token = NOTIFY_JUPYTER_TOKEN
+        chat_id = "35712077"
+    elif user == "saggese":
+        telegram_token = NOTIFY_JUPYTER_TOKEN
+        chat_id = "967103049"
+    else:
+        dbg.dfatal("User `%s` is not in the config.py" % user)
+    return telegram_token, chat_id

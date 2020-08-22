@@ -1,3 +1,16 @@
+<!--ts-->
+   * [telegram-notify](#telegram-notify)
+      * [Configuring the Bot](#configuring-the-bot)
+         * [Getting token and chat id](#getting-token-and-chat-id)
+         * [Modifying config for your token and chat id](#modifying-config-for-your-token-and-chat-id)
+      * [How to use](#how-to-use)
+         * [Command line](#command-line)
+         * [TelegramNotify](#telegramnotify)
+         * [Logging](#logging)
+
+
+
+<!--te-->
 # telegram-notify
 
 Send notifications via Telegram.
@@ -5,6 +18,7 @@ Send notifications via Telegram.
 ## Configuring the Bot
 
 ### Getting token and chat id
+
 - Start messaging with either `https://t.me/NotifyJupyterBot` (or with a custom
   bot by sending it `/start` message)
 
@@ -16,7 +30,7 @@ Send notifications via Telegram.
 
 - This will display a message in your terminal with your chat id and also send a
   message with it through the bot
-  ```
+  ```bash
   User `saggese` is not in the config.py
   Your chat id is: 967103049
   ```
@@ -34,10 +48,10 @@ Send notifications via Telegram.
 ## How to use
 
 - There are 3 ways of getting notification from the bot:
-  - using command line
-  - through `TelegramNotify` class (e.g., from Python code or
-    a Jupyter notebook)
-  - using logging
+  - Using command line
+  - Through `TelegramNotify` class (e.g., from Python code or a Jupyter
+    notebook)
+  - Using logging
 
 - In any case the bot will send you something like this:
   `<program name>: <your_message>`

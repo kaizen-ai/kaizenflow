@@ -16,9 +16,6 @@ import helpers.dbg as dbg
 import helpers.parser as prsr
 import helpers.telegram_notify.telegram_notify as tg
 
-import helpers.system_interaction as si
-
-
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
@@ -30,7 +27,14 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("positional", nargs="*", help="...")
     parser.add_argument("-m", "--msg", action="store", default="done", type=str)
-    parser.add_argument("-c", "--command", action="store", default=None, type=str, help="Command to execute")
+    parser.add_argument(
+        "-c",
+        "--command",
+        action="store",
+        default=None,
+        type=str,
+        help="Command to execute",
+    )
     prsr.add_verbosity_arg(parser)
     return parser
 
