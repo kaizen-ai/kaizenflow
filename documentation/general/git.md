@@ -37,6 +37,18 @@
 
 <!--te-->
 
+# Before you start
+- GitHub is the place where we keep our code.
+- `git` is the tool (program) for version control.
+- We interact with GitHub via `git`.
+- Use `public key` for authorization
+  - You can add a new `public key` here [GH -> Personal settings -> SSH keys](https://github.com/settings/keys) 
+  - More details about what is `public key` you can find in [ssh.md](ssh.md)
+- Read first 3 chapters of [Git book](https://git-scm.com/book/en/v2)
+- Read about [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+  You have to understand what it is, we use them a lot and there is no way to develop without them 
+  in our environment.
+
 # Workflow
 
 1.  Run `git fetch`
