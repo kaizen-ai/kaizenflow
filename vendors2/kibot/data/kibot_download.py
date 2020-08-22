@@ -204,7 +204,7 @@ def _download_payload_page(
     Store CSV payload for specific Symbol in S3.
 
     :param local_dir: local directory with the data
-    :param aws_dir: remove directory on S3 server
+    :param aws_dir: remote directory on S3 server
     :param row: series with Symbol and Link columns
     :return: boolean for operation result
     """
@@ -317,6 +317,7 @@ def _get_adjustments_to_download(
     """
     dataset_txt_file = os.path.join(source_dir, f"{dataset}.txt")
     dataset_csv_file = os.path.join(converted_dir, f"{dataset}.csv")
+    _LOG.debug("Making request to adjustments API")
     response = requests_session.get(
         _KIBOT_API_ENDPOINT, params={"action": "adjustments", "symbolsonly": 1}
     )
@@ -331,6 +332,24 @@ def _get_adjustments_to_download(
     _LOG.info("Number of files to download: %s", dataset_df.shape[0])
     _LOG.info(dataset_df.head())
     return dataset_df
+
+
+def _store_dataset_csv_file(
+    dataset: str, converted_dir: str, aws_dir: str
+) -> None:
+    """
+    Store dataset CSV file with Link and Symbol columns on S3.
+
+    :param dataset: input dataset name to process
+    :param converted_dir: directory to store converted download
+    :param aws_dir: remote directory on S3 server
+    """
+    _LOG.debug("Storing %s dataset CSV file on S3", dataset)
+    dataset_csv_file = os.path.join(converted_dir, f"{dataset}.csv")
+    dataset_csv_s3_file = os.path.join(aws_dir, f"{dataset}.csv")
+    # Copy to s3.
+    cmd = "aws s3 cp %s s3://%s" % (dataset_csv_file, dataset_csv_s3_file)
+    si.system(cmd)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -467,6 +486,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 converted_dir,
                 requests_session,
             )
+        _store_dataset_csv_file(dataset, converted_dir, _S3_URI)
         if args.start_from:
             _LOG.warning(
                 "Starting from payload %d / %d as per user request",
