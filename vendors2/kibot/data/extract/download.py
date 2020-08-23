@@ -3,16 +3,16 @@
 Download data from kibot.com, compress each file, upload it to S3.
 
 # Process only specific dataset:
-> kibot_download.py --dataset all_stocks_1min
+> download.py --dataset all_stocks_1min
 
 # Process several datasets:
-> kibot_download.py --dataset all_stocks_1min --dataset all_stocks_daily
+> download.py --dataset all_stocks_1min --dataset all_stocks_daily
 
 # Start from scratch and process all datasets:
-> kibot_download.py --delete_s3_dir
+> download.py --delete_s3_dir
 
 # Debug
-> kibot_download.py --serial -v DEBUG
+> download.py --serial -v DEBUG
 """
 
 import argparse
@@ -23,10 +23,6 @@ import shutil
 import urllib.parse as urlprs
 
 import bs4
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
 import joblib
 import numpy as np
 import pandas as pd
@@ -34,6 +30,12 @@ import requests
 import requests.adapters as adapters
 import requests.packages.urllib3.util as url3ut
 import tqdm
+
+import helpers.dbg as dbg
+import helpers.io_ as io_
+import helpers.parser as prsr
+import helpers.system_interaction as si
+import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
 
@@ -118,7 +120,7 @@ def _download_page(
     :param requests_session: current requests session to preserve cookies
     :return: contents of the page
     """
-    resolved_url = urlprs.urljoin(_KIBOT_ENDPOINT, page_url)
+    resolved_url = urlprs.urljoin(config.ENDPOINT, page_url)
     _LOG.info("Requesting page '%s'", resolved_url)
     page_response = requests_session.get(resolved_url)
     _LOG.info("Storing page to '%s'", page_file_path)
@@ -172,6 +174,7 @@ class DatasetListExtractor:
         clean_dataset = re.sub(r"\s+on.*$", "", clean_dataset)
         clean_dataset = re.sub(r"\s+", "_", clean_dataset)
         clean_dataset = clean_dataset.strip("_")
+        # TODO(amr): should we assert the result matches an element in `config.DATASETS`?
         return clean_dataset
 
 
@@ -426,7 +429,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         help="Download a specific dataset (or all datasets if omitted)",
-        choices=_DATASETS,
+        choices=config.DATASETS,
         action="append",
         default=None,
     )
@@ -489,7 +492,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     requests_session.mount(
         "https://", adapters.HTTPAdapter(max_retries=requests_retry)
     )
-    kibot_account = _KIBOT_ENDPOINT + "account.aspx"
+    kibot_account = config.ENDPOINT + "account.aspx"
     login_result = _log_in(
         kibot_account, args.username, str(args.password), requests_session
     )
@@ -509,7 +512,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         os.path.join(source_dir, "my_account.html")
     )
     dataset_links_df.to_csv(dataset_links_csv_file)
-    datasets_to_proceed = args.dataset or _DATASETS
+    datasets_to_proceed = args.dataset or config.DATASETS
     # Process a dataset.
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
         # Create dataset dir.
