@@ -35,32 +35,10 @@ import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.system_interaction as si
+import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
 
-# S3 bucket to save the data.
-_S3_URI = "external-p1/kibot"
-
-#
-_KIBOT_ENDPOINT = "http://www.kibot.com/"
-
-_DATASETS = [
-    "all_stocks_1min",
-    "all_stocks_unadjusted_1min",
-    "all_stocks_daily",
-    "all_stocks_unadjusted_daily",
-    "all_etfs_1min",
-    "all_etfs_unadjusted_1min",
-    "all_etfs_daily",
-    "all_etfs_unadjusted_daily",
-    "all_forex_pairs_1min",
-    "all_forex_pairs_daily",
-    "all_futures_contracts_1min",
-    "all_futures_contracts_daily",
-    "all_futures_continuous_contracts_tick",
-    "all_futures_continuous_contracts_1min",
-    "all_futures_continuous_contracts_daily",
-]
 
 # #############################################################################
 
@@ -118,7 +96,7 @@ def _download_page(
     :param requests_session: current requests session to preserve cookies
     :return: contents of the page
     """
-    resolved_url = urlprs.urljoin(_KIBOT_ENDPOINT, page_url)
+    resolved_url = urlprs.urljoin(config.ENDPOINT, page_url)
     _LOG.info("Requesting page '%s'", resolved_url)
     page_response = requests_session.get(resolved_url)
     _LOG.info("Storing page to '%s'", page_file_path)
@@ -278,7 +256,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         help="Download a specific dataset (or all datasets if omitted)",
-        choices=_DATASETS,
+        choices=config.DATASETS,
         action="append",
         default=None,
     )
@@ -341,7 +319,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     requests_session.mount(
         "https://", adapters.HTTPAdapter(max_retries=requests_retry)
     )
-    kibot_account = _KIBOT_ENDPOINT + "account.aspx"
+    kibot_account = config.ENDPOINT + "account.aspx"
     login_result = _log_in(
         kibot_account, args.username, str(args.password), requests_session
     )
@@ -360,7 +338,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         os.path.join(source_dir, "my_account.html")
     )
     dataset_links_df.to_csv(dataset_links_csv_file)
-    datasets_to_proceed = args.dataset or _DATASETS
+    datasets_to_proceed = args.dataset or config.DATASETS
     # Process a dataset.
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
         dataset_html_file = os.path.join(source_dir, f"{dataset}.html")
@@ -380,7 +358,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info(dataset_df.head())
         dataset_dir = os.path.join(converted_dir, dataset)
         io_.create_dir(dataset_dir, incremental=True)
-        aws_dir = os.path.join(_S3_URI, dataset)
+        aws_dir = os.path.join(config.S3_PREFIX, dataset)
         if args.delete_s3_dir:
             assert 0, "Very dangerous: are you sure"
             _LOG.warning("Deleting s3 file %s", aws_dir)

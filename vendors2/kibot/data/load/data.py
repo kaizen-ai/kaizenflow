@@ -1,13 +1,11 @@
 import functools
-import os
 from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
 import helpers.cache as cache
-import helpers.s3 as hs3
-import vendors2.kibot.data.types as types
 import vendors2.kibot.data.load.file_path_generator as fpgen
+import vendors2.kibot.data.types as types
 
 
 class KibotDataLoader:

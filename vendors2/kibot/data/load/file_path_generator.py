@@ -1,7 +1,7 @@
 import os
 
-import helpers.s3 as hs3
 import vendors2.kibot.data.types as types
+import vendors2.kibot.data.config as config
 
 
 class FilePathGenerator:
@@ -43,5 +43,5 @@ class FilePathGenerator:
             file_path += ".csv.gz"
 
         # TODO(amr): should we allow pointing to a local file here?
-        file_path = os.path.join(hs3.get_path(), "kibot", file_path)
+        file_path = os.path.join(config.S3_PREFIX, file_path)
         return file_path
