@@ -3,16 +3,16 @@
 Download data from kibot.com, compress each file, upload it to S3.
 
 # Process only specific dataset:
-> kibot_download.py --dataset all_stocks_1min
+> download.py --dataset all_stocks_1min
 
 # Process several datasets:
-> kibot_download.py --dataset all_stocks_1min --dataset all_stocks_daily
+> download.py --dataset all_stocks_1min --dataset all_stocks_daily
 
 # Start from scratch and process all datasets:
-> kibot_download.py --delete_s3_dir
+> download.py --delete_s3_dir
 
 # Debug
-> kibot_download.py --serial -v DEBUG
+> download.py --serial -v DEBUG
 """
 
 import argparse

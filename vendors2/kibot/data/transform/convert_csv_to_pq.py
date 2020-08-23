@@ -4,16 +4,16 @@ r"""
 Convert Kibot data on S3 from .csv.gz to Parquet.
 
 # Process only specific dataset:
-> convert_kibot_to_pq.py --dataset all_stocks_1min
+> convert_csv_to_pq.py --dataset all_stocks_1min
 
 # Process several datasets:
-> convert_kibot_to_pq.py --dataset all_stocks_1min --dataset all_stocks_daily
+> convert_csv_to_pq.py --dataset all_stocks_1min --dataset all_stocks_daily
 
 # Start from scratch and process all datasets:
-> convert_kibot_to_pq.py --delete_s3_dir
+> convert_csv_to_pq.py --delete_s3_dir
 
 # Debug
-> convert_kibot_to_pq.py --serial -v DEBUG
+> convert_csv_to_pq.py --serial -v DEBUG
 """
 
 import argparse
