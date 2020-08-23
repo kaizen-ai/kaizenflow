@@ -1,25 +1,28 @@
 import functools
 import os
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
 import helpers.cache as cache
 import helpers.s3 as hs3
-from kibot2.data.transform import _get_normalizer
+import vendors2.kibot.data.types as types
+from vendors2.kibot.data.transform import _get_normalizer
+import vendors2.kibot.data.load.file_path_generator as fpgen
 
 
 class KibotDataLoader:
-    @functools.lru_cache(maxsize=None)
     @staticmethod
+    @functools.lru_cache(maxsize=None)
     def read_data(
-        frequency: str,
-        contract_type: str,
-        symbols: Union[str, Tuple[str, ...]],
-        ext: str = "pq",
+        frequency: types.Frequency,
+        contract_type: types.ContractType,
+        symbols: Tuple[str],
+        # TODO(amr): remove this, we should only be reading from pq files.
+        ext: types.Extension = types.Extension.Parquet,
         nrows: Optional[int] = None,
         cache_data: bool = True,
-    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    ) -> Dict[str, pd.DataFrame]:
         """Read kibot data.
 
         If the ext is `csv`, this function will
@@ -31,89 +34,34 @@ class KibotDataLoader:
 
         :param frequency: `D` or `T` for daily or minutely data respectively
         :param contract_type: `continuous` or `expiry`
-        :param symbols: symbol or tuple of symbols
+        :param symbols: tuple of symbols
         :param ext: whether to read `pq` or `csv` data
         :param nrows: if not None, return only the first nrows of the data
         :param cache_data: whether to use cached data if exists
-        :return: if `symbols` is a string, return pd.DataFrame with kibot
-            data. If `symbols` is a list, return a dictionary of dataframes
-            for each symbol.
+        :return: return a dictionary of dataframes for each symbol.
         """
-        if isinstance(symbols, str):
-            data = _read_single_symbol_data(
-                frequency, contract_type, symbols, ext, nrows, cache_data
+        return {
+            symbol: _read_symbol_data(
+                frequency, contract_type, symbol, ext, nrows, cache_data
             )
-        elif isinstance(symbols, tuple):
-            data = _read_multiple_symbol_data(
-                frequency, contract_type, symbols, ext, nrows, cache_data
-            )
-        else:
-            raise ValueError("Invalid type(symbols)=%s" % type(symbols))
-        return data
+            for symbol in symbols
+        }
 
 
 MEMORY = cache.get_disk_cache(tag=None)
 
 
-def _get_kibot_path(
-    frequency: str, contract_type: str, symbol: str, ext: str = "pq"
-) -> str:
-    """Get the path to a specific kibot dataset on s3.
-
-    Parameters as in `read_data`.
-    :return: path to the file
-    """
-    if frequency == "T":
-        freq_path = "1min"
-    elif frequency == "D":
-        freq_path = "daily"
-    else:
-        raise ValueError("Invalid frequency='%s'" % frequency)
-    if contract_type == "continuous":
-        contract_path = "_Continuous"
-    elif contract_type == "expiry":
-        contract_path = ""
-    else:
-        raise ValueError("Invalid contract_type='%s'" % contract_type)
-    dir_name = f"All_Futures{contract_path}_Contracts_{freq_path}"
-    file_path = os.path.join(dir_name, symbol)
-    if ext == "pq":
-        # Parquet files are located in `pq/` subdirectory.
-        file_path = os.path.join("pq", file_path)
-        file_path += ".pq"
-    elif ext == "csv":
-        file_path += ".csv.gz"
-    else:
-        raise ValueError("Invalid ext='%s" % ext)
-    file_path = os.path.join(hs3.get_path(), "kibot", file_path)
-    return file_path
-
-
-def _read_multiple_symbol_data(
-    frequency: str,
-    contract_type: str,
-    symbols: Tuple[str, ...],
-    ext: str = "pq",
-    nrows: Optional[int] = None,
-    cache_data: bool = True,
-) -> Dict[str, pd.DataFrame]:
-    return {
-        symbol: _read_single_symbol_data(
-            frequency, contract_type, symbol, ext, nrows, cache_data
-        )
-        for symbol in symbols
-    }
-
-
-def _read_single_symbol_data(
-    frequency: str,
-    contract_type: str,
+def _read_symbol_data(
+    frequency: types.Frequency,
+    contract_type: types.ContractType,
     symbol: str,
-    ext: str = "pq",
+    ext: types.Extension,
     nrows: Optional[int] = None,
     cache_data: bool = True,
 ) -> pd.DataFrame:
-    file_path = _get_kibot_path(frequency, contract_type, symbol, ext)
+    file_path = fpgen.FilePathGenerator().generate_file_path(
+        frequency, contract_type, symbol, ext
+    )
     if cache_data:
         data = _read_data_from_disk_cache(file_path, nrows)
     else:
