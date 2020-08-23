@@ -4,16 +4,16 @@ r"""
 Convert Kibot data on S3 from .csv.gz to Parquet.
 
 # Process only specific dataset:
-> convert_kibot_to_pq.py --dataset all_stocks_1min
+> convert_csv_to_pq.py --dataset all_stocks_1min
 
 # Process several datasets:
-> convert_kibot_to_pq.py --dataset all_stocks_1min --dataset all_stocks_daily
+> convert_csv_to_pq.py --dataset all_stocks_1min --dataset all_stocks_daily
 
 # Start from scratch and process all datasets:
-> convert_kibot_to_pq.py --delete_s3_dir
+> convert_csv_to_pq.py --delete_s3_dir
 
 # Debug
-> convert_kibot_to_pq.py --serial -v DEBUG
+> convert_csv_to_pq.py --serial -v DEBUG
 """
 
 import argparse
@@ -31,29 +31,9 @@ import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.s3 as hs3
 import helpers.system_interaction as si
+import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
-
-# S3 bucket to save the data.
-_S3_URI = "external-p1/kibot"
-
-_DATASETS = [
-    "all_stocks_1min",
-    "all_stocks_unadjusted_1min",
-    "all_stocks_daily",
-    "all_stocks_unadjusted_daily",
-    "all_etfs_1min",
-    "all_etfs_unadjusted_1min",
-    "all_etfs_daily",
-    "all_etfs_unadjusted_daily",
-    "all_forex_pairs_1min",
-    "all_forex_pairs_daily",
-    "all_futures_contracts_1min",
-    "all_futures_contracts_daily",
-    "all_futures_continuous_contracts_tick",
-    "all_futures_continuous_contracts_1min",
-    "all_futures_continuous_contracts_daily",
-]
 
 
 # #############################################################################
@@ -127,30 +107,11 @@ def _get_normalizer(dataset: str) -> Optional[Callable]:
     :param dataset: dataset name
     :return: `_normalize_1_min`, `_normalize_daily` or None
     """
-    if dataset in [
-        "all_stocks_1min",
-        "all_stocks_unadjusted_1min",
-        "all_etfs_1min",
-        "all_etfs_unadjusted_1min",
-        "all_forex_pairs_1min",
-        "all_futures_contracts_1min",
-        "all_futures_continuous_contracts_1min",
-    ]:
-        # 1 minute data.
+    if dataset.endswith("1min"):
         return _normalize_1_min
-    if dataset in [
-        "all_stocks_daily",
-        "all_stocks_unadjusted_daily",
-        "all_etfs_daily",
-        "all_etfs_unadjusted_daily",
-        "all_forex_pairs_daily",
-        "all_futures_contracts_daily",
-        "all_futures_continuous_contracts_daily",
-    ]:
-        # Daily data.
+    elif dataset.endswith("daily"):
         return _normalize_daily
-    if dataset in ["all_futures_continuous_contracts_tick"]:
-        # Tick data.
+    elif dataset.endswith("tick"):
         return None
     _LOG.error("Unexpected dataset %s", dataset)
     return None
@@ -324,7 +285,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         help="Download a specific dataset (or all datasets if omitted)",
-        choices=_DATASETS,
+        choices=config.DATASETS,
         action="append",
         default=None,
     )
@@ -366,14 +327,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     converted_dir = os.path.join(args.tmp_dir, converted_dir_name)
     io_.create_dir(converted_dir, incremental=incremental)
     # Define S3 dirs.
-    aws_csv_dir = os.path.join("s3://", _S3_URI)
-    aws_pq_dir = os.path.join("s3://", _S3_URI, "pq")
+    aws_csv_dir = os.path.join("s3://", config.S3_PREFIX)
+    aws_pq_dir = os.path.join("s3://", config.S3_PREFIX, "pq")
     if args.delete_s3_dir:
         assert 0, "Very dangerous: are you sure?"
         _LOG.warning("Deleting s3 file %s", aws_pq_dir)
         cmd = "aws s3 rm --recursive %s" % aws_pq_dir
         si.system(cmd)
-    datasets_to_proceed = args.dataset or _DATASETS
+    datasets_to_proceed = args.dataset or config.DATASETS
     # Process a dataset.
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
         # Create dataset dirs.
