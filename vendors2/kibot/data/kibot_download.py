@@ -392,6 +392,12 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         api_link = urlprs.urljoin(_KIBOT_API_ENDPOINT, query_params)
         return api_link
 
+    def _download_file(
+            self, link: str, local_file: str, dst_file: str, download_compressed: bool
+    ) -> None:
+        super()._download_file(link, local_file, dst_file, download_compressed)
+        csv_table = pd.read_table(dst_file, sep="\t")
+        csv_table.to_csv(dst_file, index=False)
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
