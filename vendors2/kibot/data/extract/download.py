@@ -23,6 +23,10 @@ import shutil
 import urllib.parse as urlprs
 
 import bs4
+import helpers.dbg as dbg
+import helpers.io_ as io_
+import helpers.parser as prsr
+import helpers.system_interaction as si
 import joblib
 import numpy as np
 import pandas as pd
@@ -30,39 +34,9 @@ import requests
 import requests.adapters as adapters
 import requests.packages.urllib3.util as url3ut
 import tqdm
-
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
 import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
-
-# S3 bucket to save the data.
-_S3_URI = "external-p1/kibot"
-
-#
-_KIBOT_ENDPOINT = "http://www.kibot.com/"
-_KIBOT_API_ENDPOINT = "http://api.kibot.com/"
-_DATASETS = [
-    "adjustments",
-    "all_stocks_1min",
-    "all_stocks_unadjusted_1min",
-    "all_stocks_daily",
-    "all_stocks_unadjusted_daily",
-    "all_etfs_1min",
-    "all_etfs_unadjusted_1min",
-    "all_etfs_daily",
-    "all_etfs_unadjusted_daily",
-    "all_forex_pairs_1min",
-    "all_forex_pairs_daily",
-    "all_futures_contracts_1min",
-    "all_futures_contracts_daily",
-    "all_futures_continuous_contracts_tick",
-    "all_futures_continuous_contracts_1min",
-    "all_futures_continuous_contracts_daily",
-]
 
 # #############################################################################
 
@@ -190,7 +164,7 @@ class DatasetExtractor:
         """
         self.dataset = dataset
         self.requests_session = requests_session
-        self.aws_dir = os.path.join(_S3_URI, dataset)
+        self.aws_dir = os.path.join(config.S3_PREFIX, dataset)
 
     def delete_dataset_s3_directory(self):
         assert 0, "Very dangerous: are you sure"
@@ -358,7 +332,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         dataset_csv_file = os.path.join(converted_dir, f"{self.dataset}.csv")
         _LOG.debug("Making request to adjustments API")
         response = self.requests_session.get(
-            _KIBOT_API_ENDPOINT,
+            config.API_ENDPOINT,
             params={"action": "adjustments", "symbolsonly": 1},
         )
         with open(dataset_txt_file, "w+b") as f:
@@ -392,15 +366,16 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         query_params += urlprs.urlencode(
             {"action": "adjustments", "symbol": symbol}
         )
-        api_link = urlprs.urljoin(_KIBOT_API_ENDPOINT, query_params)
+        api_link = urlprs.urljoin(config.API_ENDPOINT, query_params)
         return api_link
 
     def _download_file(
-            self, link: str, local_file: str, dst_file: str, download_compressed: bool
+        self, link: str, local_file: str, dst_file: str, download_compressed: bool
     ) -> None:
         super()._download_file(link, local_file, dst_file, download_compressed)
         csv_table = pd.read_table(dst_file, sep="\t")
         csv_table.to_csv(dst_file, index=False)
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
