@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-"""
-Lint md files.
+"""Lint md files.
+
 > lint_txt.py -i foo.md -o bar.md
 
 It can be used in vim to prettify a part of the text using stdin / stdout.
