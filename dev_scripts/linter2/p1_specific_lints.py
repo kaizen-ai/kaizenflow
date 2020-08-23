@@ -3,8 +3,6 @@ r"""Perform some p1 specific lints on python files
 
 > p1_specific_lints.py -f sample_file.py
 """
-from __future__ import annotations
-
 import argparse
 import dataclasses
 import enum
@@ -339,7 +337,7 @@ def _reflow_comments_in_lines(lines: List[str]) -> List[str]:
 class _IncorrectPositionNode:
     current_line_num: int
     correct_line_num: int
-    node: _Node
+    node: "_Node"
 
 
 def _is_class_declaration(line: str) -> str:
@@ -385,22 +383,22 @@ class _Node:
         TEXT = 3
         ALL = 4
 
-    def __init__(self, name: str, line: str, line_num: int, type: _Node.Type):
-        """A node represents either a class, function or raw text.
+    def __init__(self, name: str, line: str, line_num: int, t: "_Node.Type"):
+        """Represent either a class, function or raw text.
 
         :param name: the function or class name
         :param line: the complete line on which the node was found
-        :param type: class, function or raw text
+        :param t: class, function or raw text
         """
-        self.type = type
-        self._children: List[_Node] = list()
+        self.type = t
+        self._children: List["_Node"] = list()
         # the complete line on which this node was found
-        self._line = line
-        self._line_num = line_num
-        self._name = name
+        self.line = line
+        self.line_num = line_num
+        self.name = name
         # all lines between this node and the next node, the body of functions/classes
-        self._body: List[str] = list()
-        self._decorators: List[str] = list()
+        self.body: List[str] = list()
+        self.decorators: List[str] = list()
         self._indent: Union[None, int] = None
 
     def __repr__(self) -> str:
@@ -409,53 +407,53 @@ class _Node:
             _Node.Type.CLS: "class",
             _Node.Type.TEXT: "misc",
         }
-        return f"{types_as_str[self.type]} <{self._name}>"
+        return f"{types_as_str[self.type]} <{self.name}>"
 
-    def __eq__(self, other: Union[Any, _Node]) -> bool:
+    def __eq__(self, other: Union[Any, "_Node"]) -> bool:
         if not isinstance(other, _Node):
             return False
         return (
-            self._line_num == other._line_num
-            and self._line == other._line
-            and self._name == other._name
-            and self._body == other._body
-            and self._decorators == other._decorators
+            self.line_num == other.line_num
+            and self.line == other.line
+            and self.name == other.name
+            and self.body == other.body
+            and self.decorators == other.decorators
         )
 
     @property
     def indentation(self) -> int:
         if self._indent is None:
-            self._indent = len(self._line) - len(self._line.lstrip(" "))
+            self._indent = len(self.line) - len(self.line.lstrip(" "))
         return self._indent
 
     @property
-    def ordered_children(self) -> List[_Node]:
+    def ordered_children(self) -> List["_Node"]:
         if self.type != _Node.Type.CLS:
             pass
-            # _LOG.warning("You tried to order a node that isn't a class. This can possibly mess up the formatting.")
+            # _LOG.warning("You tried to order a node that isn't a class. This can possibly mess
+            # up the formatting.")
         return sorted(self.get_children(), key=self._sorting_key)
 
-    def get_children(self, type: _Node.Type = Type.ALL) -> List[_Node]:
-        if type == _Node.Type.ALL:
+    def get_children(self, t: "_Node.Type" = Type.ALL) -> List["_Node"]:
+        if t == _Node.Type.ALL:
             return self._children
-        else:
-            return [child for child in self._children if child.type == type]
+        return [child for child in self._children if child.type == t]
 
-    def set_children(self, new_children: List[_Node]) -> None:
+    def set_children(self, new_children: List["_Node"]) -> None:
         self._children = new_children
 
-    def add_child(self, child: _Node) -> None:
+    def add_child(self, child: "_Node") -> None:
         self._children.append(child)
 
     def add_to_body(self, line: str) -> None:
-        self._body.append(line)
+        self.body.append(line)
 
     def add_decorator(self, decorator: str) -> None:
-        self._decorators.append(decorator)
+        self.decorators.append(decorator)
 
     def to_lines(self) -> List[str]:
         """Convert the _Node structure back to lines."""
-        lines: List[str] = self._decorators + [self._line] + self._body
+        lines: List[str] = self.decorators + [self.line] + self.body
         for child in self.get_children():
             lines.extend(child.to_lines())
         return lines
@@ -473,36 +471,37 @@ class _Node:
                 # i'm still not sure why current and correct are swapped here, but it works.
                 offending.append(
                     _IncorrectPositionNode(
-                        current_line_num=correct_node._line_num,
-                        correct_line_num=current_node._line_num
-                        - len(current_node._decorators),
+                        current_line_num=correct_node.line_num,
+                        correct_line_num=current_node.line_num
+                        - len(current_node.decorators),
                         node=correct_node,
                     )
                 )
-                # remove the offending node from both lists, so they align again and we can check for other offenders
+                # remove the offending node from both lists, so they align again and we can check
+                # for other offenders
                 for i, n in enumerate(current_order):
-                    if n._name == correct_node._name:
+                    if n.name == correct_node.name:
                         current_order.pop(i)
                 if correct_order:
                     correct_order.pop(0)
         return offending
 
-    def _find_child_by_name(self, name: str) -> Union[None, _Node]:
+    def _find_child_by_name(self, name: str) -> Union[None, "_Node"]:
         return next(
-            (node for node in self.get_children() if node._name == name), None
+            (node for node in self.get_children() if node.name == name), None
         )
 
     @staticmethod
-    def _sorting_key(item: _Node) -> int:
+    def _sorting_key(item: "_Node") -> int:
         """Sort in order of: classes > __init__ > magic methods > public
         methods > private methods."""
-        if item._name == "__init__":
+        if item.name == "__init__":
             return 1
         if item.type == _Node.Type.CLS:
             return 0
-        if item._name.startswith("__") and item._name.endswith("__"):
+        if item.name.startswith("__") and item.name.endswith("__"):
             return 2
-        if item._name.startswith("_"):
+        if item.name.startswith("_"):
             return 4
         return 3
 
@@ -511,10 +510,12 @@ def _node_from_line(line: str, line_num: int) -> Union[_Node, str]:
     """Construct a Node object from a line, if it declares a function or class.
 
     :param line: the line from which the object needs to be constructed
-    :return: returns the line if no function/class was declared, else it returns a instantiated Node object
+    :return: returns the line if no function/class was declared, else it returns
+             an instantiated Node object
     """
     class_name: str = _is_class_declaration(line)
     function_name: str = _is_function_declaration(line)
+    new_node: Union[_Node, str]
     if class_name:
         new_node = _Node(class_name, line, line_num, _Node.Type.CLS)
     elif function_name:
@@ -527,8 +528,10 @@ def _node_from_line(line: str, line_num: int) -> Union[_Node, str]:
 def _find_parent_node(nodes: List[_Node], indent: int) -> Union[None, _Node]:
     """Find the parent node, based on level of indentation.
 
-    We assume that classes can be the parents of functions and other classes and functions can be the parents of
-    other functions and classes. Searches over the nodes and their children recursively.
+    We assume that classes can be the parents of functions and other classes and functions can
+    be the parents of other functions and classes. Searches over the nodes and their children
+    recursively.
+
     :param nodes: nodes to check on
     :param indent: level of indentation of the node for which the parent needs to be found
     :return: the parent node if found, else None
@@ -538,13 +541,12 @@ def _find_parent_node(nodes: List[_Node], indent: int) -> Union[None, _Node]:
         n for n in nodes if n.type in [_Node.Type.CLS, _Node.Type.FUNC]
     ]
     if not filtered_nodes:
-        return
+        return None
     # the parent has to be the last from the list
     pn: _Node = filtered_nodes[-1]
     if pn.indentation == indent - 4:
         return pn
-    else:
-        return _find_parent_node(pn.get_children(), indent)
+    return _find_parent_node(pn.get_children(), indent)
 
 
 def _extract_decorator(
@@ -552,15 +554,14 @@ def _extract_decorator(
 ) -> Tuple[Union[None, str], bool]:
     is_decorator = _is_decorator(line)
     # support for multi-line decorators
-    if (is_decorator and "(" in line) or next_line_is_decorator:
-        if line.endswith("\n"):
-            chars_to_reverse = -3
-        else:
-            chars_to_reverse = -1
+    if (  # pylint: disable=no-else-return
+        is_decorator and "(" in line
+    ) or next_line_is_decorator:
+        chars_to_reverse = -3 if line.endswith("\n") else -1
         next_line_is_decorator = line[chars_to_reverse] != ")"
         return line, next_line_is_decorator
-    # support for simple decorators, i.e. @staticmethod or @abstractmethod
     elif is_decorator:
+        # support for simple decorators, i.e. @staticmethod or @abstractmethod
         return line, False
     return None, False
 
@@ -568,7 +569,9 @@ def _extract_decorator(
 def _lines_to_nodes(lines: List[str]) -> List[_Node]:
     """Create a list of nodes from a list of lines.
 
-    All nodes in the list, are the root (parentless?) nodes. Where appropriate, the root nodes have children.
+    All nodes in the list, are the root (parentless?) nodes. Where appropriate,
+     the root nodes have children.
+
     :param lines: the lines from which to construct the nodes
     :return: a list of nodes representing the lines
     """
@@ -577,7 +580,7 @@ def _lines_to_nodes(lines: List[str]) -> List[_Node]:
     last_node: Union[None, _Node] = None
     parent_node: Union[None, _Node] = None
     previous_indent: Union[None, int] = None
-    next_line_is_decorator: Union[None, bool] = None
+    next_line_is_decorator: bool = False
     for line_num, line in enumerate(lines, 1):
         decorator_line, next_line_is_decorator = _extract_decorator(
             line, next_line_is_decorator
@@ -585,8 +588,8 @@ def _lines_to_nodes(lines: List[str]) -> List[_Node]:
         if decorator_line is not None:
             decorators.append(decorator_line)
             continue
-        # Unless we're in the body of a function/class, it is safe to assume that the parent node has changed if the
-        # level of indentation has moved.
+        # Unless we're in the body of a function/class, it is safe to assume that the parent node
+        # has changed if the level of indentation has moved.
         current_indent: int = len(line) - len(line.lstrip(" "))
         if current_indent != previous_indent:
             parent_node = _find_parent_node(root_nodes, current_indent)
@@ -594,11 +597,12 @@ def _lines_to_nodes(lines: List[str]) -> List[_Node]:
         node: Union[_Node, str] = _node_from_line(line, line_num)
         if isinstance(node, str):
             if last_node is not None:
-                # all lines from within a class(basically only class variables) and all lines from within functions
+                # all lines from within a class(basically only class variables) and all lines from
+                # within functions
                 last_node.add_to_body(line)
             else:
-                # create a misc node to make sure all lines before function/class nodes nodes (shebangs, imports,
-                # etc) are also saved
+                # create a misc node to make sure all lines before function/class
+                # nodes(shebangs, imports, etc) are also saved
                 last_node = node = _Node("", line, line_num, _Node.Type.TEXT)
                 root_nodes.append(node)
         elif isinstance(node, _Node):
@@ -644,8 +648,8 @@ def _class_method_order_detector(file_name: str, lines: List[str]) -> str:
 
     if offending:
         return (
-            f"{file_name}:{offending[0].current_line_num}: method `{offending[0].node._name}` should be located on "
-            f"line number {offending[0].correct_line_num}"
+            f"{file_name}:{offending[0].current_line_num}: method `{offending[0].node.name}`"
+            f" should be located on line number {offending[0].correct_line_num}"
         )
     return ""
 
