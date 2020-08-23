@@ -120,6 +120,7 @@ def _clean_dataset_name(dataset: str) -> str:
     clean_dataset = re.sub(r"\s+on.*$", "", clean_dataset)
     clean_dataset = re.sub(r"\s+", "_", clean_dataset)
     clean_dataset = clean_dataset.strip("_")
+    # TODO(amr): should we assert the result matches an element in `config.DATASETS`?
     return clean_dataset
 
 

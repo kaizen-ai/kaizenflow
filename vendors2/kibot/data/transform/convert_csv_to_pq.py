@@ -107,30 +107,11 @@ def _get_normalizer(dataset: str) -> Optional[Callable]:
     :param dataset: dataset name
     :return: `_normalize_1_min`, `_normalize_daily` or None
     """
-    if dataset in [
-        "all_stocks_1min",
-        "all_stocks_unadjusted_1min",
-        "all_etfs_1min",
-        "all_etfs_unadjusted_1min",
-        "all_forex_pairs_1min",
-        "all_futures_contracts_1min",
-        "all_futures_continuous_contracts_1min",
-    ]:
-        # 1 minute data.
+    if dataset.endswith("1min"):
         return _normalize_1_min
-    if dataset in [
-        "all_stocks_daily",
-        "all_stocks_unadjusted_daily",
-        "all_etfs_daily",
-        "all_etfs_unadjusted_daily",
-        "all_forex_pairs_daily",
-        "all_futures_contracts_daily",
-        "all_futures_continuous_contracts_daily",
-    ]:
-        # Daily data.
+    elif dataset.endswith("daily"):
         return _normalize_daily
-    if dataset in ["all_futures_continuous_contracts_tick"]:
-        # Tick data.
+    elif dataset.endswith("tick"):
         return None
     _LOG.error("Unexpected dataset %s", dataset)
     return None
