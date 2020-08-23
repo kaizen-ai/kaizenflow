@@ -482,8 +482,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Parse and convert my account page.
     dataset_links_csv_file = os.path.join(converted_dir, "dataset_links.csv")
     _LOG.warning("Parsing %s", my_account_file)
-    de = DatasetListExtractor()
-    dataset_links_df = de.extract_dataset_links(
+    dle = DatasetListExtractor()
+    dataset_links_df = dle.extract_dataset_links(
         os.path.join(source_dir, "my_account.html")
     )
     dataset_links_df.to_csv(dataset_links_csv_file)
@@ -495,17 +495,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         io_.create_dir(dataset_dir, incremental=True)
         # Create payload extractor instance.
         if dataset == "adjustments":
-            pe: DatasetExtractor = AdjustmentsDatasetExtractor(
+            de: DatasetExtractor = AdjustmentsDatasetExtractor(
                 dataset, requests_session
             )
         else:
-            pe = DatasetExtractor(dataset, requests_session)
+            de = DatasetExtractor(dataset, requests_session)
         if args.delete_s3_dir:
-            pe.delete_dataset_s3_directory()
-        to_download = pe.get_dataset_payloads_to_download(
+            de.delete_dataset_s3_directory()
+        to_download = de.get_dataset_payloads_to_download(
             dataset_links_df, source_dir, converted_dir,
         )
-        pe.store_dataset_csv_file(converted_dir)
+        de.store_dataset_csv_file(converted_dir)
         if args.start_from:
             _LOG.warning(
                 "Starting from payload %d / %d as per user request",
@@ -515,7 +515,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             dbg.dassert_lte(0, args.start_from)
             dbg.dassert_lt(args.start_from, to_download.shape[0])
             to_download = to_download.iloc[args.start_from :]
-        func = lambda row: pe.download_payload_page(
+        func = lambda row: de.download_payload_page(
             dataset_dir,
             row,
             **{
