@@ -1,7 +1,7 @@
 import os
 
 import helpers.s3 as hs3
-import vendors2.kibot.types as types
+import vendors2.kibot.data.types as types
 
 
 class FilePathGenerator:

@@ -6,14 +6,14 @@ import pandas as pd
 
 import helpers.cache as cache
 import helpers.s3 as hs3
-import kibot.data.types as types
-from kibot.data.transform import _get_normalizer
-import kibot.data.load.file_path_generator as fpgen
+import vendors2.kibot.data.types as types
+from vendors2.kibot.data.transform import _get_normalizer
+import vendors2.kibot.data.load.file_path_generator as fpgen
 
 
 class KibotDataLoader:
-    @functools.lru_cache(maxsize=None)
     @staticmethod
+    @functools.lru_cache(maxsize=None)
     def read_data(
         frequency: types.Frequency,
         contract_type: types.ContractType,
