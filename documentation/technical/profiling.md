@@ -1,12 +1,12 @@
 <!--ts-->
    * [Profiling](#profiling)
-   * [Selected profilers](#selected-profilers)
-      * [Time profilers](#time-profilers)
-         * [Overall](#overall)
-         * [By function](#by-function)
-      * [Memory profilers](#memory-profilers)
-         * [Peak memory](#peak-memory)
-         * [Memory by line](#memory-by-line)
+      * [Selected profilers](#selected-profilers)
+         * [Time profilers](#time-profilers)
+            * [Overall](#overall)
+            * [By function](#by-function)
+         * [Memory profilers](#memory-profilers)
+            * [Peak memory](#peak-memory)
+            * [Memory by line](#memory-by-line)
 
 <!--te-->
 
