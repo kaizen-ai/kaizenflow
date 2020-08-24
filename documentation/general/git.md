@@ -123,13 +123,13 @@
       work regularly by committing:
 
       ````bash
-      > git status On branch my-feature
+      > git status On branch my_feature
       ...
 
           > git add ...
 
           > git commit
-          [my-feature 820b296] My feature is awesome!
+          [my_feature 820b296] My feature is awesome!
           ```
       ````
     - Commits stay local (not seen on GitHub) until you explicitly tell git to
@@ -142,8 +142,8 @@
       ```bash
       > git push -u origin my_feature
       ...
-      30194fc..820b296  my-feature -> my-feature
-      Branch 'my-feature' set up to track remote branch 'my-feature' from 'origin'.
+      30194fc..820b296  my_feature -> my_feature
+      Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
       ```
     - Note that `-u` tells git to set the upstream of this branch to origin
     - This operation is needed only the first time you create the branch and not
@@ -280,6 +280,10 @@
     don't need to write any code, just do <this_and_that>"
 
 - Merged changes are tested in the Jenkins build
+
+## Workflow diagram
+
+[](media/workflow.jpg)
 
 ## Deleting a branch
 
@@ -616,7 +620,7 @@ version, and stage #3 is the version you are merging from.
 - Not the other way around: that would be a disaster!
 
   ```bash
-  > git checkout my-feature
+  > git checkout my_feature
 
   // See that you have that master doesn't have.
   > > git ll origin/master..
@@ -648,7 +652,7 @@ version, and stage #3 is the version you are merging from.
 2. Merge your branch into `master` without fast-forward
 
    ```bash
-   > git merge --no-ff my-feature
+   > git merge --no-ff my_feature
    ```
 
 3. Push the newly merged `master`
@@ -659,7 +663,7 @@ version, and stage #3 is the version you are merging from.
 
 4. Delete the branch, if you are done with it:
    ```bash
-   > git branch -d my-feature
+   > git branch -d my_feature
    ```
 
 # Submodules
