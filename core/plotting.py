@@ -1607,28 +1607,28 @@ def plot_sharpe_ratio_panel(
         srs_freq = "D"
     # Resample input for assuring input frequency in calculations.
     log_rets = log_rets.resample(srs_freq).sum()
-    # Compute input frequency points per year for the further time scaling.
-    input_freq_points_per_year = hdf.compute_points_per_year_for_given_freq(
-        srs_freq
-    )
     # Initiate series with Sharpe ratios for selected frequencies.
     sr_series = pd.Series([], dtype="object")
     # Initiate list with Sharpe ratios' standard errors for error bars.
     res_se = []
+    # Compute input frequency points per year for identifying upsampling.
+    input_freq_points_per_year = hdf.infer_sampling_points_per_year(log_rets)
     for freq in frequencies:
         freq_points_per_year = hdf.compute_points_per_year_for_given_freq(freq)
-        time_scaling = input_freq_points_per_year / freq_points_per_year
-        if time_scaling < 1:
+        if freq_points_per_year > input_freq_points_per_year:
             _LOG.warning(
-                "Upsampling is done from input freq='%s' to freq='%s'"
+                "Upsampling from input freq='%s' to freq='%s' is blocked"
                 % (srs_freq, freq)
             )
-        freq_sr = stats.compute_sharpe_ratio(log_rets, time_scaling)
-        freq_se = stats.compute_sharpe_ratio_standard_error(
-            log_rets, time_scaling
+            continue
+        annualized_sr = stats.compute_annualized_sharpe_ratio(log_rets)
+        annualized_se = stats.compute_annualized_sharpe_ratio_standard_error(
+            log_rets
         )
-        sr_series[freq] = freq_sr
-        res_se.append(freq_se)
+        sr = annualized_sr / np.sqrt(freq_points_per_year)
+        se = annualized_se / np.sqrt(freq_points_per_year)
+        sr_series[freq] = sr
+        res_se.append(se)
     ax = ax or plt.gca()
     sr_series.plot(
         yerr=res_se, marker="o", capsize=2, ax=ax, label="Sharpe ratio"
