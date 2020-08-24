@@ -1,4 +1,5 @@
 <!--ts-->
+   * [Before you start](#before-you-start)
    * [Workflow](#workflow)
    * [Best Practices](#best-practices)
       * [Do not check in large data files](#do-not-check-in-large-data-files)
@@ -36,6 +37,21 @@
 
 
 <!--te-->
+
+# Before you start
+
+- GitHub is the place where we keep our code.
+- `git` is the tool (program) for version control.
+- We interact with GitHub via `git`.
+- Use `public key` for authorization
+  - You can add a new `public key` here
+    [GH -> Personal settings -> SSH keys](https://github.com/settings/keys)
+  - More details about what is `public key` you can find in [ssh.md](ssh.md)
+- Read first 3 chapters of [Git book](https://git-scm.com/book/en/v2)
+- Read about
+  [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) You have
+  to understand what it is, we use them a lot and there is no way to develop
+  without them in our environment.
 
 # Workflow
 
@@ -104,7 +120,10 @@
 
 5.  Commit your work **early and often**
     - Commits on your feature branch do not affect `master`. Checkpoint your
-      work regularly by committing: ```bash > git status On branch my-feature
+      work regularly by committing:
+
+      ````bash
+      > git status On branch my-feature
       ...
 
           > git add ...
@@ -112,6 +131,7 @@
           > git commit
           [my-feature 820b296] My feature is awesome!
           ```
+      ````
     - Commits stay local (not seen on GitHub) until you explicitly tell git to
       "upload" the commits through `git push` (see next)
 
