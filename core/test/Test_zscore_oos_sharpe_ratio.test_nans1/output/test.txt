@@ -111,4 +111,4 @@ INS_sharpe_ratio                 -6.727389
 INS_sharpe_ratio_standard_error   2.731415
 OOS_sharpe_ratio                 -0.695384
 OOS_sharpe_ratio_standard_error   2.086132
-zscored_OOS_sharpe_ratio          0.397839
+zscored_OOS_sharpe_ratio          1.724801

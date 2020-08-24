@@ -313,10 +313,10 @@ def zscore_oos_sharpe_ratio(
     # Compute OOS Sharpe ratio and SE.
     oos_sr_and_se = summarize_sharpe_ratio(oos_srs, prefix="OOS_")
     # Z-score OOS SR using INS SR and inflated SE.
-    pred_sr_se = inflation * ins_sr_and_se.loc["INS_sharpe_ratio"]
+    pred_sr_se = inflation * ins_sr_and_se.loc["INS_sharpe_ratio_standard_error"]
     zscored_oos_sr = (
         oos_sr_and_se.loc["OOS_sharpe_ratio"]
-        - ins_sr_and_se.loc["INS_sharpe_ratio_standard_error"]
+        - ins_sr_and_se.loc["INS_sharpe_ratio"]
     ) / pred_sr_se
     # Combine results.
     zscored_oos_sr_srs = pd.Series(
