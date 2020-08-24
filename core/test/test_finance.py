@@ -121,14 +121,16 @@ class Test_aggregate_log_rets(hut.TestCase):
 
     @staticmethod
     def _get_output_txt(
-        sample: pd.DataFrame, aggregate_log_rets: pd.Series
+        sample: pd.DataFrame, weights: pd.Series, aggregate_log_rets: pd.Series
     ) -> str:
         sample_string = hut.convert_df_to_string(sample, index=True)
+        weights_string = hut.convert_df_to_string(weights, index=True)
         aggregate_log_rets_string = hut.convert_df_to_string(
             aggregate_log_rets, index=True
         )
         txt = (
             f"Input sample:\n{sample_string}\n\n"
+            f"Input weights:\n{weights_string}\n\n"
             f"Output aggregate log returns:\n{aggregate_log_rets_string}\n"
         )
         return txt
@@ -140,7 +142,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample = self._get_sample(seed=1)
         weights = fin.compute_inverse_volatility_weights(sample)
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
-        output_txt = self._get_output_txt(sample, aggregate_log_rets)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
 
     def test2(self) -> None:
@@ -152,35 +154,29 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample.iloc[0:5, 0] = np.nan
         weights = fin.compute_inverse_volatility_weights(sample)
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
-        output_txt = self._get_output_txt(sample, aggregate_log_rets)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
 
     def test3(self) -> None:
         """
         Test for an input with all-NaN column.
-
-        Results are not intended.
-        `weights` are `0` for all-NaN columns in the input.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample)
+        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
-        output_txt = self._get_output_txt(sample, aggregate_log_rets)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
 
     def test4(self) -> None:
         """
         Test for an all-NaN input.
-
-        Results are not intended.
-        `weights` are `0` for all-NaN columns in the input.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample)
+        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
-        output_txt = self._get_output_txt(sample, aggregate_log_rets)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
 
 

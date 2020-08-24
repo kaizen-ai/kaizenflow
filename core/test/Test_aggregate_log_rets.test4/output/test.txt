@@ -41,6 +41,11 @@ Input sample:
 2010-02-24   NaN   NaN
 2010-02-25   NaN   NaN
 
+Input weights:
+      weights
+srs1      0.5
+srs2      0.5
+
 Output aggregate log returns:
              0
 2010-01-01 NaN

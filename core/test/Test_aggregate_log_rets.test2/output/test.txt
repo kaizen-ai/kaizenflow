@@ -41,6 +41,11 @@ Input sample:
 2010-02-24  1.022873  2.422932
 2010-02-25  0.677180  2.176714
 
+Input weights:
+       weights
+srs1  0.515328
+srs2  0.484672
+
 Output aggregate log returns:
                    0
 2010-01-01  0.050937
