@@ -83,5 +83,5 @@ func()
 #### Memory by line
 
 ```python
-%mprun -f func df = func()
+%mprun -f func func()
 ```
