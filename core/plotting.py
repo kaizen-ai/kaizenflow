@@ -1601,7 +1601,7 @@ def plot_sharpe_ratio_panel(
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
     frequencies = frequencies or ["B", "D", "W", "M", "Q"]
-    srs_freq = log_rets.index.freq
+    srs_freq = pd.infer_freq(log_rets.index)
     if not srs_freq:
         _LOG.warning("Input has no frequency and it has been rescaled to 'D'")
         srs_freq = "D"
@@ -1621,12 +1621,11 @@ def plot_sharpe_ratio_panel(
                 % (srs_freq, freq)
             )
             continue
-        annualized_sr = stats.compute_annualized_sharpe_ratio(log_rets)
-        annualized_se = stats.compute_annualized_sharpe_ratio_standard_error(
-            log_rets
+        resampled_log_rets = sigp.resample(log_rets, rule=freq).sum()
+        sr = stats.compute_annualized_sharpe_ratio(resampled_log_rets)
+        se = stats.compute_annualized_sharpe_ratio_standard_error(
+            resampled_log_rets
         )
-        sr = annualized_sr / np.sqrt(freq_points_per_year)
-        se = annualized_se / np.sqrt(freq_points_per_year)
         sr_series[freq] = sr
         res_se.append(se)
     ax = ax or plt.gca()
