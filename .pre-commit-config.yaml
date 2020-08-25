@@ -25,7 +25,7 @@ repos:
       - id: remove-tabs
         args: ["--whitespaces-count", "4"]
   - repo: https://github.com/timothycrosley/isort
-    rev: 4.3.21
+    rev: 5.3.2
     hooks:
       - id: isort
   - repo: https://github.com/humitos/mirrors-autoflake

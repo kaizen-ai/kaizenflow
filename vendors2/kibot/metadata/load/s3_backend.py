@@ -20,6 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class S3Backend:
+    # pylint: disable=line-too-long
     @staticmethod
     def read_1min_contract_metadata() -> pd.DataFrame:
         """Read minutely contract metadata.
@@ -36,6 +37,7 @@ class S3Backend:
         JY        http://api.kibot.com/?action=download&link=151...   CONTINUOUS JAPANESE YEN CONTRACT
         JYF18     http://api.kibot.com/?action=download&link=vrv...   JAPANESE YEN JANUARY 2018
         """
+        # pylint: enable=line-too-long
         file_name = os.path.join(
             "s3://", mconfig.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
@@ -46,6 +48,7 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
+    # pylint: disable=line-too-long
     @staticmethod
     def read_daily_contract_metadata() -> pd.DataFrame:
         """Read daily contract metadata.
@@ -61,6 +64,7 @@ class S3Backend:
         JY        http://api.kibot.com/?action=download&link=151...   CONTINUOUS JAPANESE YEN CONTRACT
         JYF18    http://api.kibot.com/?action=download&link=vrv...    JAPANESE YEN JANUARY 2018
         """
+        # pylint: enable=line-too-long
         file_name = os.path.join(
             "s3://", mconfig.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
         )
@@ -71,6 +75,7 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
+    # pylint: disable=line-too-long
     @staticmethod
     def read_tickbidask_contract_metadata() -> pd.DataFrame:
         """Read tick-bid-ask contract metadata.
@@ -90,6 +95,7 @@ class S3Backend:
         ES            ES        9/30/2009    50610.0     CONTINUOUS E-MINI S&P 500 CONTRACT    Chicago Mercantile Exchange Mini Sized Contrac...
         ES            ESH11     4/6/2010     891.0       E-MINI S&P 500 MARCH 2011             Chicago Mercantile Exchange Mini Sized Contrac...
         """
+        # pylint: enable=line-too-long
         file_name = os.path.join(
             "s3://", mconfig.S3_PREFIX, "Futures_tickbidask.txt.gz"
         )
@@ -111,6 +117,7 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
+    # pylint: disable=line-too-long
     @staticmethod
     def read_continuous_contract_metadata() -> pd.DataFrame:
         """Read tick-bid-ask metadata for continuous contracts.
@@ -131,6 +138,7 @@ class S3Backend:
         TY         TY      9/27/2009  180.0       CONTINUOUS 10 YR US TREASURY NOTE CONTRACT   Chicago Board Of Trade (CBOT GLOBEX)
         FV         FV      9/27/2009  171.0       CONTINUOUS 5 YR US TREASURY NOTE CONTRACT    Chicago Board Of Trade (CBOT GLOBEX)
         """
+        # pylint: enable=line-too-long
         file_name = os.path.join(
             "s3://", mconfig.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
         )
