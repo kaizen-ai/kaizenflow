@@ -6,6 +6,7 @@ import helpers.dataframe as hdf
 import collections
 import functools
 import logging
+import re
 from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
@@ -188,6 +189,13 @@ def compute_points_per_year_for_given_freq(freq: str) -> float:
     :param freq: string identifier of date frequency
     :return: number of time points per year (approximate)
     """
+    # `pd.date_range` breaks for zero-period frequencies, so we need to work
+    # around that.
+    if isinstance(freq, pd.offsets.BaseOffset):
+        freq = freq.freqstr
+    freq_leading_digits = re.match(r"^\d*", freq).group()
+    if freq_leading_digits == "0":
+        return 0
     # Leap years: 2012, 2016.
     points_in_span = pd.date_range(
         freq=freq, start="2012-01-01", end="2019-12-31"
