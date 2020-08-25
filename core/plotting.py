@@ -355,21 +355,20 @@ def plot_barplot(
     )
     # Add annotations to bars.
     if annotation_mode:
-        if annotation_mode in ["pct", "value"]:
-            if annotation_mode == "pct":
-                annotations = srs * 100 / srs.sum()
-                string_format = string_format + "%%"
-                annotations = annotations.apply(lambda z: string_format % z)
-            else:
-                annotations = srs.apply(lambda z: string_format % z)
-            for i, p in enumerate(ax.patches):
-                height = p.get_height()
-                width = p.get_width()
-                x, y = p.get_xy()
-                annotation_loc = _get_annotation_loc(x, y, height, width)
-                ax.annotate(annotations.iloc[i], annotation_loc)
+        if annotation_mode == "pct":
+            annotations = srs * 100 / srs.sum()
+            string_format = string_format + "%%"
+            annotations = annotations.apply(lambda z: string_format % z)
+        elif annotation_mode == "value":
+            annotations = srs.apply(lambda z: string_format % z)
         else:
             raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
+        for i, p in enumerate(ax.patches):
+            height = p.get_height()
+            width = p.get_width()
+            x, y = p.get_xy()
+            annotation_loc = _get_annotation_loc(x, y, height, width)
+            ax.annotate(annotations.iloc[i], annotation_loc)
     if xlabel:
         ax.set(xlabel=xlabel)
 
