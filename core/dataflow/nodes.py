@@ -757,15 +757,15 @@ class ContinuousSkLearnModel(FitPredictNode):
         """
         Compute accuracy for classification or R^2 score for regression.
         """
-        # In `predict()` method, `y_pred` may exist for index where `y_true`
-        # is already `NaN`.
-        y_true = y_true.loc[: y_true.last_valid_index()]
         if skl.base.is_classifier(self._model):
             metric = skl.metrics.accuracy_score
         elif skl.base.is_regressor(self._model):
             metric = skl.metrics.r2_score
         else:
             return None
+        # In `predict()` method, `y_pred` may exist for index where `y_true`
+        # is already `NaN`.
+        y_true = y_true.loc[: y_true.last_valid_index()]
         return metric(y_true, y_pred.loc[y_true.index])
 
     # TODO(Paul): Consider omitting this (and relying on downstream
