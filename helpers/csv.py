@@ -34,7 +34,7 @@ def read_csv_range(csv_path, from_, to, **kwargs):
 
 
 def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
-    """Builds a DataFrame from a csv subset as follows:
+    """Build a DataFrame from a csv subset as follows:
 
       - Names the columns using the header line (row 0)
       - Reads the value in (row, col) coordinates (`start`, `col_name`) (if it
@@ -117,8 +117,9 @@ def append(df, path, index=False, **kwargs):
 def csv_mapreduce(
     csv_path, out_dir, key_func, chunk_preprocessor=None, chunksize=1000000
 ):
-    """Map-reduce-type processing of csv. Here we.
+    """Map-reduce-type processing of csv
 
+    The phases are:
       - Read the csv in chunks, loading the chunk into a DataFrame
       - Key each row of the DataFrame using a groupby
       - "Reduce" keyed groups by writing and appending to a csv
@@ -190,7 +191,7 @@ def _maybe_remove_extension(filename, extension):
 
 
 def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
-    """Applies `convert_csv_to_pq` to all files in csv_dir.
+    """Apply `convert_csv_to_pq` to all files in csv_dir.
 
     :param csv_dir: directory of csv's
     :param pq_dir: target directory

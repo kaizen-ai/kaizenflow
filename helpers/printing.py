@@ -75,7 +75,7 @@ def frame(
 
 # TODO(gp): -> indent
 def space(str_: str, num_spaces: int = 2) -> str:
-    """Add "num_spaces" spaces before each line of the string str_."""
+    """Add `num_spaces` spaces before each line of the string `str_`."""
     return prepend(str_, " " * num_spaces)
 
 
@@ -90,7 +90,7 @@ def dedent(txt: str) -> str:
 
 
 def prepend(str_: str, prefix: str) -> str:
-    """Add "prefix" before each line of the string str_."""
+    """Add `prefix` before each line of the string `str_`."""
     # lines = ["<" + prefix + curr_line + ">" for curr_line in str_.split("\n")]
     lines = [prefix + curr_line for curr_line in str_.split("\n")]
     return "\n".join(lines)
@@ -115,7 +115,11 @@ def remove_empty_lines(txt: str) -> str:
 def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str:
     """Create a string with var name -> var value.
 
-    E.g., ["var1", "var2"] is converted into:     var1=...     var2=...
+    E.g., ["var1", "var2"] is converted into:
+    ```
+    var1=...
+    var2=...
+    ```
     """
     txt = []
     for var in vars_as_str:
