@@ -10,11 +10,10 @@ _LOG = logging.getLogger(__name__)
 
 
 def conda_system(cmd, *args, **kwargs):
-    """
-    When running a conda command we need to execute a script to configure conda.
-    This script is typically executed in .bashrc but here we create a new bash
-    shell every time to execute a command, so we need to re-initialize the shell
-    before any conda command.
+    """When running a conda command we need to execute a script to configure
+    conda. This script is typically executed in .bashrc but here we create a
+    new bash shell every time to execute a command, so we need to re-initialize
+    the shell before any conda command.
 
     :param cmd:
     :param args:
@@ -51,8 +50,7 @@ def get_conda_envs_dirs():
 
 
 def set_conda_env_root(conda_env_path):
-    """
-    Set conda env dirs so that it matches what specified in
+    """Set conda env dirs so that it matches what specified in.
 
     > conda config --show envs_dirs --json
     {

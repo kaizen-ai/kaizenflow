@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.tunnels as tnls
 """
@@ -117,9 +116,7 @@ def _service_to_string(service):
 
 
 def _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match):
-    """
-    Return the pids of the processes attached to a given port.
-    """
+    """Return the pids of the processes attached to a given port."""
 
     def _keep_line(line):
         keep = "ssh -i" in line
@@ -141,10 +138,8 @@ def _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match):
 
 
 def _create_tunnel(server_name, local_port, remote_port, user_name, ssh_key_path):
-    """
-    Create tunnel from localhost to 'server' for the ports `local_port ->
-    remote_port` and `user_name`.
-    """
+    """Create tunnel from localhost to 'server' for the ports `local_port ->
+    remote_port` and `user_name`."""
     ssh_key_path = os.path.expanduser(ssh_key_path)
     _LOG.debug("ssh_key_path=%s", ssh_key_path)
     dbg.dassert_exists(ssh_key_path)
@@ -167,9 +162,7 @@ def _create_tunnel(server_name, local_port, remote_port, user_name, ssh_key_path
 
 
 def _kill_ssh_tunnel_process(local_port, remote_port):
-    """
-    Kill all the processes attached to either local or remote port.
-    """
+    """Kill all the processes attached to either local or remote port."""
     get_pids = lambda: _get_ssh_tunnel_process(
         local_port, remote_port, fuzzy_match=True
     )
@@ -180,9 +173,7 @@ def _kill_ssh_tunnel_process(local_port, remote_port):
 
 
 def start_tunnels(user_name):
-    """
-    Start all the tunnels for the given user.
-    """
+    """Start all the tunnels for the given user."""
     _LOG.debug("user_name=%s", user_name)
     # Get tunnel info.
     tunnel_info, ssh_key_path = _get_tunnel_info()
@@ -205,9 +196,7 @@ def start_tunnels(user_name):
 
 
 def stop_tunnels():
-    """
-    Stop all the tunnels for the given user.
-    """
+    """Stop all the tunnels for the given user."""
     # Get the tunnel info.
     tunnel_info, _ = _get_tunnel_info()
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
@@ -219,9 +208,7 @@ def stop_tunnels():
 
 
 def check_tunnels():
-    """
-    Check the status of the tunnels for the given user.
-    """
+    """Check the status of the tunnels for the given user."""
     # Get the tunnel info.
     tunnel_info, _ = _get_tunnel_info()
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
@@ -239,9 +226,7 @@ def check_tunnels():
 
 
 def kill_all_tunnel_processes():
-    """
-    Kill all the processes that have `ssh -i ...:localhost:..."
-    """
+    """Kill all the processes that have `ssh -i ...:localhost:..."."""
     # cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
     def _keep_line(line):
         keep = ("ssh -i" in line) and (":localhost:" in line)

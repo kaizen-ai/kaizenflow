@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.git as git
 """
@@ -25,9 +24,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): -> get_user_name(). No stuttering.
 def get_git_name() -> str:
-    """
-    Return the git user name.
-    """
+    """Return the git user name."""
     cmd = "git config --get user.name"
     # TODO(gp): For some reason data is annotated as Any by mypy, instead of
     # Tuple[int, str] so we need to cast it to the right value.
@@ -39,8 +36,7 @@ def get_git_name() -> str:
 # TODO(gp): Make the param mandatory.
 # TODO(gp): git_dir -> dir_name
 def get_branch_name(git_dir: str = ".") -> str:
-    """
-    Return the name of the Git branch we are in.
+    """Return the name of the Git branch we are in.
 
     E.g., `master` or `PartTask672_DEV_INFRA_Add_script_to_check_and_merge_PR`
     """
@@ -55,9 +51,7 @@ def get_branch_name(git_dir: str = ".") -> str:
 #  change dir (which is a horrible idea) and thus we can memoize.
 # TODO(gp): -> is_submodule
 def is_inside_submodule(git_dir: str = ".") -> bool:
-    """
-    Return whether we are inside a Git submodule or in a Git supermodule.
-    """
+    """Return whether we are inside a Git submodule or in a Git supermodule."""
     cmd = []
     cmd.append("cd %s" % git_dir)
     cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
@@ -69,9 +63,8 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
 
 
 def get_client_root(super_module: bool) -> str:
-    """
-    Return the full path of the root of the Git client.
-    E.g., "/Users/saggese/src/.../amp"
+    """Return the full path of the root of the Git client. E.g.,
+    "/Users/saggese/src/.../amp".
 
     :param super_module: if True use the root of the Git _super_module,
         if we are in a submodule. Otherwise use the Git _sub_module root
@@ -89,10 +82,8 @@ def get_client_root(super_module: bool) -> str:
 
 
 def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
-    """
-    Find the path of a file `file_in` in the outermost git submodule (i.e.,
-    in the super-module).
-    """
+    """Find the path of a file `file_in` in the outermost git submodule (i.e.,
+    in the super-module)."""
     root_dir = get_client_root(super_module=super_module)
     cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_in)
     _, file_name = si.system_to_one_line(cmd)
@@ -106,8 +97,8 @@ def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
 
 
 def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
-    """
-    Return the name of the repo in `git_dir`.
+    """Return the name of the repo in `git_dir`.
+
     E.g., "alphamatic/amp", "ParticleDev/commodity_research"
     """
     dbg.dassert_exists(git_dir)
@@ -135,9 +126,8 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
 
 
 def get_repo_symbolic_name(super_module: bool) -> str:
-    """
-    Return the name of the remote repo.
-    E.g., "alphamatic/amp", "ParticleDev/commodity_research"
+    """Return the name of the remote repo. E.g., "alphamatic/amp",
+    "ParticleDev/commodity_research".
 
     :param super_module: like get_client_root()
     """
@@ -169,8 +159,8 @@ def get_all_repo_symbolic_names() -> List[str]:
 
 # TODO(gp): Found a better name.
 def get_repo_prefix(repo_github_name: str) -> str:
-    """
-    Return the symbolic name of a git repo.
+    """Return the symbolic name of a git repo.
+
     E.g., for "alphamatic/amp", the function returns "Amp".
     """
     repo_map = _get_repo_map()
@@ -188,8 +178,7 @@ def get_repo_github_name(repo_symbolic_name: str) -> str:
 
 
 def get_path_from_git_root(file_name: str, super_module: bool) -> str:
-    """
-    Get the git path from the root of the tree.
+    """Get the git path from the root of the tree.
 
     :param super_module: like get_client_root()
     """
@@ -205,9 +194,7 @@ def get_path_from_git_root(file_name: str, super_module: bool) -> str:
 
 
 def get_amp_abs_path() -> str:
-    """
-    Return the absolute path of `amp` dir.
-    """
+    """Return the absolute path of `amp` dir."""
     repo_sym_name = get_repo_symbolic_name(super_module=False)
     if repo_sym_name == "alphamatic/amp":
         # If we are in the amp repo, then the git client root is the amp
@@ -230,8 +217,7 @@ def get_amp_abs_path() -> str:
 
 
 def get_submodule_hash(dir_name: str) -> str:
-    """
-    Report the Git hash that a submodule (e.g., amp) is at from the point of
+    """Report the Git hash that a submodule (e.g., amp) is at from the point of
     view of a supermodule (e.g., p1).
 
     > git ls-tree master | grep <dir_name>
@@ -249,8 +235,7 @@ def get_submodule_hash(dir_name: str) -> str:
 
 
 def get_head_hash(dir_name: str) -> str:
-    """
-    Report the hash that a Git repo is synced at.
+    """Report the hash that a Git repo is synced at.
 
     > git rev-parse HEAD
     """
@@ -273,9 +258,7 @@ def get_current_commit_hash(dir_name: str = "./") -> str:
 
 
 def get_remote_head_hash(dir_name: str) -> str:
-    """
-    Report the hash that the remote Git repo is at.
-    """
+    """Report the hash that the remote Git repo is at."""
     dbg.dassert_exists(dir_name)
     sym_name = get_repo_symbolic_name_from_dirname(dir_name)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
@@ -287,9 +270,8 @@ def get_remote_head_hash(dir_name: str) -> str:
 
 
 def get_repo_dirs() -> List[str]:
-    """
-    Return the list of the repo repositories, e.g., `[".", "amp", "infra"]`.
-    """
+    """Return the list of the repo repositories, e.g., `[".", "amp",
+    "infra"]`."""
     dir_names = ["."]
     dirs = ["amp", "infra"]
     for dir_name in dirs:
@@ -338,9 +320,7 @@ def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str) -> str:
 
 
 def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
-    """
-    Return a string representing the status of the repos in `dir_names`.
-    """
+    """Return a string representing the status of the repos in `dir_names`."""
     txt = []
     for dir_name in dir_names:
         txt.append("dir_name='%s'" % dir_name)
@@ -396,8 +376,7 @@ def _get_files(
 def get_modified_files(
     dir_name: str = ".", remove_files_non_present: bool = True
 ) -> List[str]:
-    """
-    Return the files that are added and modified in the Git client.
+    """Return the files that are added and modified in the Git client.
 
     In other words the files that will be committed with a `git commit -am ...`.
     Equivalent to `dev_scripts/git_files.sh`
@@ -431,8 +410,8 @@ def get_previous_committed_files(
     num_commits: int = 1,
     remove_files_non_present: bool = True,
 ) -> List[str]:
-    """
-    Return files changed in the Git client in the last `num_commits` commits.
+    """Return files changed in the Git client in the last `num_commits`
+    commits.
 
     Equivalent to `dev_scripts/git_previous_commit_files.sh`
 
@@ -453,8 +432,8 @@ def get_previous_committed_files(
 def get_modified_files_in_branch(
     dir_name: str, dst_branch: str, remove_files_non_present: bool = True
 ) -> List[str]:
-    """
-    Return files modified in the current branch with respect to `dst_branch`.
+    """Return files modified in the current branch with respect to
+    `dst_branch`.
 
     Equivalent to `git diff --name-only master...`
     Please remember that there is a difference between `master` and `origin/master`.
@@ -475,8 +454,7 @@ def get_modified_files_in_branch(
 
 
 def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
-    """
-    Return the output of a pimped version of git log.
+    """Return the output of a pimped version of git log.
 
     :param num_commits: number of commits to report
     :param my_commits: True to report only the current user commits

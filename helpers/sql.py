@@ -27,12 +27,10 @@ def get_connection(
 
 
 def get_engine_version(connection: pg.extensions.connection) -> str:
-    """
-    Report information on the SQL engine.
+    """Report information on the SQL engine.
 
-    E.g.,
-    PostgreSQL 11.5 on x86_64-pc-linux-gnu
-        compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
+    E.g., PostgreSQL 11.5 on x86_64-pc-linux-gnu     compiled by gcc
+    (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
     """
     query = "SELECT version();"
     df = pd.read_sql_query(query, connection)
@@ -42,11 +40,9 @@ def get_engine_version(connection: pg.extensions.connection) -> str:
 
 
 def get_db_names(connection: pg.extensions.connection) -> List[str]:
-    """
-    Return the names of the available DBs.
+    """Return the names of the available DBs.
 
     E.g., ['postgres', 'rdsadmin', 'template0', 'template1']
-
     """
     query = "SELECT datname FROM pg_database;"
     cursor = connection.cursor()
@@ -61,15 +57,14 @@ def get_table_size(
     only_public: bool = True,
     summary: bool = True,
 ) -> pd.DataFrame:
-    """
-    Report the size of each table.
+    """Report the size of each table.
 
-    E.g.,
-          table_name  row_estimate    total    index       toast    table
-        0     events           0.0   262 GB  0 bytes  8192 bytes   262 GB
-        1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
-        2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB
-        3   taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB
+    E.g.,       table_name  row_estimate    total    index       toast
+    table     0     events           0.0   262 GB  0 bytes  8192 bytes
+    262 GB     1    stories           0.0   165 GB    43 GB  8192 bytes
+    122 GB     2   entities    10823400.0   706 MB  0 bytes  8192 bytes
+    706 MB     3   taxonomy       20691.0  6960 kB  0 bytes  8192 bytes
+    6952 kB
     """
     q = """SELECT *, pg_size_pretty(total_bytes) AS total
         , pg_size_pretty(index_bytes) AS INDEX
@@ -98,8 +93,7 @@ def get_table_size(
 
 
 def get_table_names(connection: pg.extensions.connection) -> List[str]:
-    """
-    Report the name of the tables.
+    """Report the name of the tables.
 
     E.g., tables=['entities', 'events', 'stories', 'taxonomy']
     """
@@ -158,11 +152,15 @@ def get_columns(connection, table_name):
 
 
 def execute_query(
-    connection, query, limit=None, offset=None, use_timer=False, profile=False, verbose=True,
+    connection,
+    query,
+    limit=None,
+    offset=None,
+    use_timer=False,
+    profile=False,
+    verbose=True,
 ):
-    """
-    Execute a query.
-    """
+    """Execute a query."""
     if limit is not None:
         query += " LIMIT %s" % limit
     if offset is not None:

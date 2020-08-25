@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.datetime_ as hdt
 """
@@ -46,8 +45,7 @@ def check_et_timezone(dt: DATETIME_TYPE) -> bool:
 
 
 def validate_datetime(timestamp: DATETIME_TYPE) -> pd.Timestamp:
-    """
-    Assert that timestamp is in UTC, convert to pd.Timestamp.
+    """Assert that timestamp is in UTC, convert to pd.Timestamp.
 
     :param timestamp: datetime object or pd.Timestamp
     :return: tz-aware pd.Timestamp

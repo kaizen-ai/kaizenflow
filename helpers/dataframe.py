@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.dataframe as hdf
 """
@@ -24,8 +23,7 @@ def filter_data_by_values(
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
-    """
-    Filter dataframe rows based on column values.
+    """Filter dataframe rows based on column values.
 
     :param data: dataframe
     :param filters: `{col_name: (possible_values)}`
@@ -59,8 +57,7 @@ def filter_data_by_comparison(
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
-    """
-    Filter dataframe by comparing columns to values.
+    """Filter dataframe by comparing columns to values.
 
     :param data: dataframe
     :param filters: `{col_name: (comparison_method, value)}` or
@@ -116,8 +113,7 @@ def _combine_masks(
 def apply_nan_mode(
     srs: pd.Series, mode: str = "leave_unchanged", info: Optional[dict] = None,
 ) -> pd.Series:
-    """
-    Process NaN values in a series according to the parameters.
+    """Process NaN values in a series according to the parameters.
 
     :param srs: pd.Series to process
     :param mode: method of processing NaNs
@@ -171,8 +167,7 @@ def apply_nan_mode(
 
 
 def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
-    """
-    Return the number of index time points per year.
+    """Return the number of index time points per year.
 
     TODO(*): Consider extending to all frequencies and count points by
         explicitly building indices of the given frequency.
@@ -188,8 +183,7 @@ def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> floa
 
 @functools.lru_cache()
 def compute_points_per_year_for_given_freq(freq: str) -> float:
-    """
-    Return the number of index time points per year.
+    """Return the number of index time points per year.
 
     :param freq: string identifier of date frequency
     :return: number of time points per year (approximate)
