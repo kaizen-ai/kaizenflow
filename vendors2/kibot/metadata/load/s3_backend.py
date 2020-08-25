@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 import pandas as pd
 
@@ -151,3 +151,11 @@ class S3Backend:
         _LOG.debug("df=\n%s", df.head(3))
         _LOG.debug("df.shape=%s", df.shape)
         return df
+
+    @staticmethod
+    def read_kibot_exchange_mapping() -> pd.DataFrame:
+        file_name = os.path.join(
+            "s3://", mconfig.S3_PREFIX, "kibot_to_exchange.csv"
+        )
+        kibot_to_cme_mapping = pd.read_csv(file_name, index_col="Kibot_symbol")
+        return kibot_to_cme_mapping

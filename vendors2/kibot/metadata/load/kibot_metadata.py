@@ -292,7 +292,7 @@ class KibotMetadata:
         :param kibot_metadata: Kibot metadata dataframe
         :return: Kibot metadata annotated with exchange mappings
         """
-        kibot_to_cme_mapping = FileBackend().read_kibot_exchange_mapping()
+        kibot_to_cme_mapping = S3Backend().read_kibot_exchange_mapping()
         # Add mapping columns to the dataframe.
         annotated_metadata = pd.concat(
             [kibot_metadata, kibot_to_cme_mapping], axis=1
