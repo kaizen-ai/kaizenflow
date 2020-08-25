@@ -27,6 +27,7 @@
 ├── vendors                         - production-ready code / notebooks specific of a vendor
 │   ├── kibot
 │   │   └── data
+│   │   └── metadata
     ...
 └── vendors2                         - under-development code / notebooks specific of a vendor
 ```
