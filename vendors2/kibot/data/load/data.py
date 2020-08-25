@@ -1,5 +1,5 @@
 import functools
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import pandas as pd
 
@@ -14,10 +14,10 @@ class KibotDataLoader:
     def read_data(
         frequency: types.Frequency,
         contract_type: types.ContractType,
-        symbols: Tuple[str],
+        symbol: str,
         nrows: Optional[int] = None,
         cache_data: bool = True,
-    ) -> Dict[str, pd.DataFrame]:
+    ) -> pd.DataFrame:
         """Read kibot data.
 
         If the ext is `csv`, this function will
@@ -29,17 +29,14 @@ class KibotDataLoader:
 
         :param frequency: `D` or `T` for daily or minutely data respectively
         :param contract_type: `continuous` or `expiry`
-        :param symbols: tuple of symbols
+        :param symbol: symbol to get the data for
         :param nrows: if not None, return only the first nrows of the data
         :param cache_data: whether to use cached data if exists
-        :return: return a dictionary of dataframes for each symbol.
+        :return: a dataframe with the symbol data
         """
-        return {
-            symbol: _read_symbol_data(
-                frequency, contract_type, symbol, nrows, cache_data
-            )
-            for symbol in symbols
-        }
+        return _read_symbol_data(
+            frequency, contract_type, symbol, nrows, cache_data
+        )
 
 
 MEMORY = cache.get_disk_cache(tag=None)
