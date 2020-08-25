@@ -1,4 +1,5 @@
 <!--ts-->
+   * [Before you start](#before-you-start)
    * [Workflow](#workflow)
    * [Best Practices](#best-practices)
       * [Do not check in large data files](#do-not-check-in-large-data-files)
@@ -36,6 +37,21 @@
 
 
 <!--te-->
+
+# Before you start
+
+- GitHub is the place where we keep our code.
+- `git` is the tool (program) for version control.
+- We interact with GitHub via `git`.
+- Use `public key` for authorization
+  - You can add a new `public key` here
+    [GH -> Personal settings -> SSH keys](https://github.com/settings/keys)
+  - More details about what is `public key` you can find in [ssh.md](ssh.md)
+- Read first 3 chapters of [Git book](https://git-scm.com/book/en/v2)
+- Read about
+  [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) You have
+  to understand what it is, we use them a lot and there is no way to develop
+  without them in our environment.
 
 # Workflow
 
@@ -104,14 +120,18 @@
 
 5.  Commit your work **early and often**
     - Commits on your feature branch do not affect `master`. Checkpoint your
-      work regularly by committing: ```bash > git status On branch my-feature
+      work regularly by committing:
+
+      ````bash
+      > git status On branch my_feature
       ...
 
           > git add ...
 
           > git commit
-          [my-feature 820b296] My feature is awesome!
+          [my_feature 820b296] My feature is awesome!
           ```
+      ````
     - Commits stay local (not seen on GitHub) until you explicitly tell git to
       "upload" the commits through `git push` (see next)
 
@@ -122,8 +142,8 @@
       ```bash
       > git push -u origin my_feature
       ...
-      30194fc..820b296  my-feature -> my-feature
-      Branch 'my-feature' set up to track remote branch 'my-feature' from 'origin'.
+      30194fc..820b296  my_feature -> my_feature
+      Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
       ```
     - Note that `-u` tells git to set the upstream of this branch to origin
     - This operation is needed only the first time you create the branch and not
@@ -260,6 +280,10 @@
     don't need to write any code, just do <this_and_that>"
 
 - Merged changes are tested in the Jenkins build
+
+## Workflow diagram
+
+[](media/workflow.jpg)
 
 ## Deleting a branch
 
@@ -596,7 +620,7 @@ version, and stage #3 is the version you are merging from.
 - Not the other way around: that would be a disaster!
 
   ```bash
-  > git checkout my-feature
+  > git checkout my_feature
 
   // See that you have that master doesn't have.
   > > git ll origin/master..
@@ -628,7 +652,7 @@ version, and stage #3 is the version you are merging from.
 2. Merge your branch into `master` without fast-forward
 
    ```bash
-   > git merge --no-ff my-feature
+   > git merge --no-ff my_feature
    ```
 
 3. Push the newly merged `master`
@@ -639,7 +663,7 @@ version, and stage #3 is the version you are merging from.
 
 4. Delete the branch, if you are done with it:
    ```bash
-   > git branch -d my-feature
+   > git branch -d my_feature
    ```
 
 # Submodules

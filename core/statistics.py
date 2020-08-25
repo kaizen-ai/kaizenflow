@@ -275,6 +275,60 @@ def summarize_sharpe_ratio(
     return res
 
 
+def zscore_oos_sharpe_ratio(
+    log_rets: pd.Series, oos: Any, prefix: Optional[str] = None
+) -> pd.Series:
+    """
+    Z-score the observed OOS SR wrt the INS SR and inflated SE.
+
+    Calculate the following stats:
+      - SR, SE(SR) for INS
+      - SR, SE(SR) for OOS
+      - z-scored OOS SR
+
+    TODO(*): Consider factoring out pieces and/or returning more info.
+
+    :param log_rets: log returns over entire period
+    :param oos: start of OOS (right endpoint)
+    :param prefix: prefix for the output series index
+    :return: series of SR stats
+    """
+    prefix = prefix or ""
+    # Create ins/oos masks.
+    ins_mask = log_rets.index < oos
+    dbg.dassert(ins_mask.any())
+    ins_nobs = ins_mask.sum()
+    oos_mask = log_rets.index >= oos
+    dbg.dassert(oos_mask.any())
+    oos_nobs = oos_mask.sum()
+    #
+    inflation = compute_sharpe_ratio_prediction_interval_inflation_factor(
+        ins_nobs, oos_nobs
+    )
+    #
+    ins_srs = log_rets.loc[ins_mask].copy()
+    oos_srs = log_rets.loc[oos_mask].copy()
+    # Compute INS Sharpe ratio and SE.
+    ins_sr_and_se = summarize_sharpe_ratio(ins_srs, prefix="INS_")
+    # Compute OOS Sharpe ratio and SE.
+    oos_sr_and_se = summarize_sharpe_ratio(oos_srs, prefix="OOS_")
+    # Z-score OOS SR using INS SR and inflated SE.
+    pred_sr_se = inflation * ins_sr_and_se.loc["INS_sharpe_ratio_standard_error"]
+    zscored_oos_sr = (
+        oos_sr_and_se.loc["OOS_sharpe_ratio"]
+        - ins_sr_and_se.loc["INS_sharpe_ratio"]
+    ) / pred_sr_se
+    # Combine results.
+    zscored_oos_sr_srs = pd.Series(
+        [zscored_oos_sr],
+        name=oos_sr_and_se.name,
+        index=["zscored_OOS_sharpe_ratio"],
+    )
+    res = pd.concat([ins_sr_and_se, oos_sr_and_se, zscored_oos_sr_srs])
+    res.index = prefix + res.index
+    return res
+
+
 def compute_annualized_sharpe_ratio(
     log_rets: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
@@ -440,41 +494,6 @@ def compute_ttest_power_rule_constant(
         alpha /= 2
     const: float = (sp.stats.norm.ppf(1 - alpha) + sp.stats.norm.ppf(power)) ** 2
     return const
-
-
-def zscore_oos_sharpe_ratio(log_rets: pd.Series, oos: Any) -> float:
-    """
-    Z-score the observed OOS SR wrt the INS SR and inflated SE.
-
-    TODO(*): Consider factoring out pieces and/or returning more info.
-
-    :param log_rets: log returns over entire period
-    :param oos: start of OOS (right endpoint)
-    :return: z-scored OOS SR
-    """
-    # Create ins/oos masks.
-    ins_mask = log_rets.index < oos
-    dbg.dassert(ins_mask.any())
-    ins_nobs = ins_mask.sum()
-    oos_mask = log_rets.index >= oos
-    dbg.dassert(oos_mask.any())
-    oos_nobs = oos_mask.sum()
-    #
-    inflation = compute_sharpe_ratio_prediction_interval_inflation_factor(
-        ins_nobs, oos_nobs
-    )
-    #
-    ins_srs = log_rets.loc[ins_mask].copy()
-    oos_srs = log_rets.loc[oos_mask].copy()
-    #
-    ins_sr = compute_annualized_sharpe_ratio(ins_srs)
-    ins_sr_se = compute_annualized_sharpe_ratio_standard_error(ins_srs)
-    pred_sr_se = inflation * ins_sr_se
-    #
-    oos_sr = compute_annualized_sharpe_ratio(oos_srs)
-    #
-    zscored = (oos_sr - ins_sr) / pred_sr_se
-    return zscored
 
 
 def compute_sharpe_ratio_prediction_interval_inflation_factor(
