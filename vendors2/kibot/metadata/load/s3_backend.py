@@ -1,9 +1,10 @@
+import os
 import logging
 
 import pandas as pd
 
 import helpers.dbg as dbg
-import metadata.config as mconfig
+import vendors2.kibot.metadata.config as mconfig
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,7 +36,9 @@ class S3Backend:
         JY        http://api.kibot.com/?action=download&link=151...   CONTINUOUS JAPANESE YEN CONTRACT
         JYF18     http://api.kibot.com/?action=download&link=vrv...   JAPANESE YEN JANUARY 2018
         """
-        file_name = mconfig.Config.S3_PATH + "/All_Futures_Contracts_1min.csv.gz"
+        file_name = os.path.join(
+            "s3://", mconfig.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
+        )
         _LOG.debug("file_name=%s", file_name)
         df = pd.read_csv(file_name, index_col=0)
         df = df.iloc[:, 1:]
@@ -58,7 +61,9 @@ class S3Backend:
         JY        http://api.kibot.com/?action=download&link=151...   CONTINUOUS JAPANESE YEN CONTRACT
         JYF18    http://api.kibot.com/?action=download&link=vrv...    JAPANESE YEN JANUARY 2018
         """
-        file_name = mconfig.Config.S3_PATH + "/All_Futures_Contracts_daily.csv.gz"
+        file_name = os.path.join(
+            "s3://", mconfig.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
+        )
         _LOG.debug("file_name=%s", file_name)
         df = pd.read_csv(file_name, index_col=0)
         df = df.iloc[:, 1:]
@@ -85,7 +90,9 @@ class S3Backend:
         ES            ES        9/30/2009    50610.0     CONTINUOUS E-MINI S&P 500 CONTRACT    Chicago Mercantile Exchange Mini Sized Contrac...
         ES            ESH11     4/6/2010     891.0       E-MINI S&P 500 MARCH 2011             Chicago Mercantile Exchange Mini Sized Contrac...
         """
-        file_name = mconfig.Config.S3_PATH + "/Futures_tickbidask.txt.gz"
+        file_name = os.path.join(
+            "s3://", mconfig.S3_PREFIX, "Futures_tickbidask.txt.gz"
+        )
         _LOG.debug("file_name=%s", file_name)
         df = pd.read_csv(
             file_name, index_col=0, skiprows=5, header=None, sep="\t"
@@ -124,7 +131,9 @@ class S3Backend:
         TY         TY      9/27/2009  180.0       CONTINUOUS 10 YR US TREASURY NOTE CONTRACT   Chicago Board Of Trade (CBOT GLOBEX)
         FV         FV      9/27/2009  171.0       CONTINUOUS 5 YR US TREASURY NOTE CONTRACT    Chicago Board Of Trade (CBOT GLOBEX)
         """
-        file_name = mconfig.Config.S3_PATH + "/FuturesContinuous_intraday.txt.gz"
+        file_name = os.path.join(
+            "s3://", mconfig.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
+        )
         _LOG.debug("file_name=%s", file_name)
         df = pd.read_csv(
             file_name, index_col=0, skiprows=5, header=None, sep="\t"
