@@ -1632,6 +1632,8 @@ def plot_sharpe_ratio_panel(
     sr_series.plot(
         yerr=res_se, marker="o", capsize=2, ax=ax, label="Sharpe ratio"
     )
+    ax.set_xticks(range(len(frequencies)))
+    ax.set_xticklabels(frequencies)
     ax.set_xlabel("Frequencies")
     ax.legend()
 
