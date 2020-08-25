@@ -40,6 +40,74 @@ class Test_set_weekends_to_nan(hut.TestCase):
         self.check_string(actual_string)
 
 
+class Test_compute_inverse_volatility_weights(hut.TestCase):
+    @staticmethod
+    def _get_sample(seed: int) -> pd.DataFrame:
+        mean = pd.Series([1, 2])
+        cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
+        date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
+        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
+        sample = mn_process.generate_sample(date_range, seed=seed)
+        sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
+        return sample
+
+    @staticmethod
+    def _get_output_txt(sample: pd.DataFrame, weights: pd.Series) -> str:
+        sample_string = hut.convert_df_to_string(sample, index=True)
+        weights_string = hut.convert_df_to_string(weights, index=True)
+        txt = (
+            f"Input sample:\n{sample_string}\n\n"
+            f"Output weights:\n{weights_string}\n"
+        )
+        return txt
+
+    def test1(self) -> None:
+        """
+        Test for a clean input.
+        """
+        sample = self._get_sample(seed=1)
+        weights = fin.compute_inverse_volatility_weights(sample)
+        output_txt = self._get_output_txt(sample, weights)
+        self.check_string(output_txt)
+
+    def test2(self) -> None:
+        """
+        Test for an input with NaNs.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[1, 1] = np.nan
+        sample.iloc[0:5, 0] = np.nan
+        weights = fin.compute_inverse_volatility_weights(sample)
+        output_txt = self._get_output_txt(sample, weights)
+        self.check_string(output_txt)
+
+    def test3(self) -> None:
+        """
+        Test for an input with all-NaN column.
+
+        Results are not intended.
+        `weights` are `0` for all-NaN columns in the input.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, 0] = np.nan
+        weights = fin.compute_inverse_volatility_weights(sample)
+        output_txt = self._get_output_txt(sample, weights)
+        self.check_string(output_txt)
+
+    def test4(self) -> None:
+        """
+        Test for an all-NaN input.
+
+        Results are not intended.
+        `weights` are `0` for all-NaN columns in the input.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, :] = np.nan
+        weights = fin.compute_inverse_volatility_weights(sample)
+        output_txt = self._get_output_txt(sample, weights)
+        self.check_string(output_txt)
+
+
 class Test_aggregate_log_rets(hut.TestCase):
     @staticmethod
     def _get_sample(seed: int) -> pd.DataFrame:
@@ -51,21 +119,31 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
         return sample
 
+    @staticmethod
+    def _get_output_txt(
+        sample: pd.DataFrame, weights: pd.Series, aggregate_log_rets: pd.Series
+    ) -> str:
+        sample_string = hut.convert_df_to_string(sample, index=True)
+        weights_string = hut.convert_df_to_string(weights, index=True)
+        aggregate_log_rets_string = hut.convert_df_to_string(
+            aggregate_log_rets, index=True
+        )
+        txt = (
+            f"Input sample:\n{sample_string}\n\n"
+            f"Input weights:\n{weights_string}\n\n"
+            f"Output aggregate log returns:\n{aggregate_log_rets_string}\n"
+        )
+        return txt
+
     def test1(self) -> None:
         """
         Test for a clean input.
         """
         sample = self._get_sample(seed=1)
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = fin.compute_inverse_volatility_weights(sample)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test2(self) -> None:
         """
@@ -74,54 +152,32 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[1, 1] = np.nan
         sample.iloc[0:5, 0] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = fin.compute_inverse_volatility_weights(sample)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test3(self) -> None:
         """
         Test for an input with all-NaN column.
-
-        Results are not intended.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test4(self) -> None:
         """
         Test for an all-NaN input.
-
-        Results are not intended.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
 
 
 class Test_compute_kratio(hut.TestCase):
