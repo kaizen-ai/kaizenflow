@@ -1606,7 +1606,7 @@ def plot_sharpe_ratio_panel(
         _LOG.warning("Input has no frequency and it has been rescaled to 'D'")
         srs_freq = "D"
     # Resample input for assuring input frequency in calculations.
-    log_rets = log_rets.resample(srs_freq).sum()
+    log_rets = sigp.resample(log_rets, rule=srs_freq).sum()
     # Initiate series with Sharpe ratios for selected frequencies.
     sr_series = pd.Series([], dtype="object")
     # Initiate list with Sharpe ratios' standard errors for error bars.
