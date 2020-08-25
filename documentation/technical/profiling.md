@@ -14,7 +14,7 @@
 
 ## Selected profilers
 You can find all of the examples below in action in the
-[PartTask4052_Time_and_memory_profiling.ipynb](https://github.com/ParticleDev/commodity_research/blob/2777689b8e4eeae95523f2da6d3c18e3d474dd80/knowledge_graph/notebooks/PartTask4052_Time_and_memory_profiling.ipynb)
+[time_memory_profiling_example.ipynb](https://github.com/alphamatic/amp/blob/master/core/notebooks/time_memory_profiling_example.ipynb)
 notebook.
 
 ### Time profilers
