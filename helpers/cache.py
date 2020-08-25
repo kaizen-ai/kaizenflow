@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-Import as:
+"""Import as:
 
 import helpers.cache as hcac
 """
@@ -63,9 +62,7 @@ _LOG_LEVEL = logging.INFO
 
 
 def get_disk_cache(tag: Optional[str]) -> Any:
-    """
-    Return the object storing the disk cache.
-    """
+    """Return the object storing the disk cache."""
     _LOG.debug("get_disk_cache")
     if tag is None:
         global _DISK_CACHE
@@ -87,8 +84,7 @@ def reset_disk_cache(tag: Optional[str]) -> None:
 
 
 class Cached:
-    """
-    Decorator wrapping a function in a disk and memory cache.
+    """Decorator wrapping a function in a disk and memory cache.
 
     If the function value was not cached either in memory or on disk, the
     function `f` is executed and the value is stored.
@@ -202,7 +198,12 @@ class Cached:
         else:
             self._reset_cache_tracing()
             obj = self._execute_func(*args, **kwargs)
-            _LOG.log(_LOG_LEVEL, "%s: executed from '%s'", self._func.__name__, self.get_last_cache_accessed())
+            _LOG.log(
+                _LOG_LEVEL,
+                "%s: executed from '%s'",
+                self._func.__name__,
+                self.get_last_cache_accessed(),
+            )
             # TODO(gp): We make a copy, but we should do something better
             # (PartTask1071).
             obj = copy.deepcopy(obj)
@@ -234,10 +235,8 @@ class Cached:
         self._execute_func_from_dir_cache.clear()
 
     def _reset_cache_tracing(self) -> None:
-        """
-        Reset the values used to track which cache we are hitting when executing
-        the cached function.
-        """
+        """Reset the values used to track which cache we are hitting when
+        executing the cached function."""
         # Note that we can only know when a cache doesn't trigger, since
         # otherwise the memory / disk caching decorator will intercept the call
         # and avoid our code to be executed. For this reason, if we are

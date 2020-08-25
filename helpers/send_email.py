@@ -7,8 +7,8 @@ from email.mime.text import MIMEText
 def send_email(
     subject, message, to_adr, email_address=None, email_password=None, html=False
 ):
-    """
-    Send mail to specified e-mail addresses
+    """Send mail to specified e-mail addresses.
+
     :param message: Message to be sent
     :param to_adr: Mail to which to send messages
     :type list

@@ -1,5 +1,4 @@
-"""
-Functions to handle filesystem operations.
+"""Functions to handle filesystem operations.
 
 Import as:
 
@@ -28,8 +27,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def find_files(directory: str, pattern: str) -> List[str]:
-    """
-    Recursive glob.
+    """Recursive glob.
 
     :param pattern: pattern to match a filename against
     """
@@ -57,11 +55,11 @@ def find_regex_files(src_dir: str, regex: str) -> List[str]:
 
 
 def create_soft_link(src: str, dst: str) -> None:
-    """
-    Create a soft-link to <src> called <dst> (where <src> and <dst> are files
-    or directories as in a Linux ln command). This is equivalent to a command
-    like
-    "cp <src> <dst>" but creating a soft link.
+    """Create a soft-link to <src> called <dst> (where <src> and <dst> are
+    files or directories as in a Linux ln command).
+
+    This is equivalent to a command like "cp <src> <dst>" but creating a
+    soft link.
     """
     _LOG.debug("# CreateSoftLink")
     # Create the enclosing directory, if needed.
@@ -98,8 +96,8 @@ def delete_dir(
     num_retries: int = 1,
     num_secs_retry: int = 1,
 ) -> None:
-    """
-    Delete a directory.
+    """Delete a directory.
+
     - change_perms: change permissions to -R rwx before deleting to deal with
       incorrect permissions left over
     - errnum_to_retry_on: specify the error to retry on
@@ -145,8 +143,7 @@ def create_dir(
     abort_if_exists: bool = False,
     ask_to_delete: bool = False,
 ) -> None:
-    """
-    Create a directory `dir_name` if it doesn't exist.
+    """Create a directory `dir_name` if it doesn't exist.
 
     - param incremental: if False then the directory is deleted and
         re-created, otherwise it skips
@@ -200,9 +197,9 @@ def create_dir(
 
 # TODO(gp): Shouldn't be always incremental=False?
 def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
-    """
-    Create the dir enclosing file_name, if needed. <incremental> has the same
-    meaning as in create_dir().
+    """Create the dir enclosing file_name, if needed.
+
+    <incremental> has the same meaning as in create_dir().
     """
     dbg.dassert_is_not(file_name, None)
     # dbg.dassert_isinstance(file_name, str)
@@ -225,9 +222,8 @@ def to_file(
     mode: Optional[str] = None,
     force_flush: bool = False,
 ) -> None:
-    """
-    Write the content of lines into file_name, creating the enclosing directory
-    if needed.
+    """Write the content of lines into file_name, creating the enclosing
+    directory if needed.
 
     :param file_name: name of written file
     :param lines: content of the file
@@ -269,8 +265,7 @@ def to_file(
 
 
 def _raise_file_decode_error(error: Exception, file_name: str) -> None:
-    """
-    Raise UnicodeDecodeError with detailed error message.
+    """Raise UnicodeDecodeError with detailed error message.
 
     :param error: raised UnicodeDecodeError
     :param file_name: name of read file that raised the exception
@@ -286,8 +281,7 @@ def _raise_file_decode_error(error: Exception, file_name: str) -> None:
 def from_file(
     file_name: str, use_gzip: bool = False, encoding: Optional[Any] = None
 ) -> str:
-    """
-    Read contents of a file as string.
+    """Read contents of a file as string.
 
     Use `use_gzip` flag to load a compressed file with correct extenstion.
 
@@ -339,8 +333,7 @@ def get_size_as_str(file_name: str) -> str:
 
 
 def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
-    """
-    Change extension of a filename (e.g. "data.csv" to "data.json").
+    """Change extension of a filename (e.g. "data.csv" to "data.json").
 
     :param filename: the old filename (including extension)
     :param old_ext: the extension of the old filename
@@ -361,8 +354,7 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
 
 
 def to_json(file_name: str, obj: dict) -> None:
-    """
-    Write an object into a JSON file.
+    """Write an object into a JSON file.
 
     :param obj: data for writing
     :param file_name: name of file
@@ -377,8 +369,7 @@ def to_json(file_name: str, obj: dict) -> None:
 
 
 def from_json(file_name: str) -> dict:
-    """
-    Read object from JSON file.
+    """Read object from JSON file.
 
     :param file_name: name of file
     :return: dict with data
@@ -390,8 +381,7 @@ def from_json(file_name: str) -> dict:
 
 
 def load_df_from_json(path_to_json: str) -> pd.DataFrame:
-    """
-    Load a dataframe from a json file.
+    """Load a dataframe from a json file.
 
     :param path_to_json: path to the json file
     :return:
