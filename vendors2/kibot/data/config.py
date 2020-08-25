@@ -1,8 +1,11 @@
 ENDPOINT = "http://www.kibot.com/"
 
+API_ENDPOINT = "http://api.kibot.com/"
+
 S3_PREFIX = "external-p1/kibot"
 
 DATASETS = [
+    "adjustments",
     "all_stocks_1min",
     "all_stocks_unadjusted_1min",
     "all_stocks_daily",
