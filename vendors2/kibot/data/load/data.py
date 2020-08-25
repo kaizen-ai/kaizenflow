@@ -50,7 +50,7 @@ def _read_symbol_data(
     cache_data: bool = True,
 ) -> pd.DataFrame:
     file_path = fpgen.FilePathGenerator().generate_file_path(
-        frequency, contract_type, symbol, ext=types.Extension.CSV
+        frequency, contract_type, symbol, ext=types.Extension.Parquet
     )
     if cache_data:
         data = _read_data_from_disk_cache(file_path, nrows)
