@@ -1063,7 +1063,7 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         # Resample to daily and calculate SR.
         daily_srs = sigp.resample(srs, rule="D").sum()
         daily_srs_sr = stats.compute_annualized_sharpe_ratio(daily_srs)
-        np.testing.assert_almost_equal(daily_srs_sr, -2.5167, decimal=3)
+        np.testing.assert_almost_equal(daily_srs_sr, -2.4890, decimal=3)
         # Resample to weekly and calculate SR.
         weekly_srs = sigp.resample(srs, rule="W").sum()
         weekly_srs_sr = stats.compute_annualized_sharpe_ratio(weekly_srs)
