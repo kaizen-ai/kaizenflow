@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.unit_test as hut
 
@@ -68,8 +67,8 @@ _CONFTEST_IN_PYTEST = False
 
 
 def in_unit_test_mode() -> bool:
-    """
-    Return True if we are inside a pytest run.
+    """Return True if we are inside a pytest run.
+
     This is set by conftest.py.
     """
     return _CONFTEST_IN_PYTEST
@@ -84,8 +83,7 @@ def convert_df_to_string(
     title: Optional[str] = None,
     index: bool = False,
 ) -> str:
-    """
-    Convert DataFrame or Series to string for verifying test results.
+    """Convert DataFrame or Series to string for verifying test results.
 
     :param df: DataFrame to be verified
     :param n_rows: number of rows in expected output
@@ -115,8 +113,7 @@ def convert_df_to_string(
 
 
 def convert_info_to_string(info: Mapping) -> str:
-    """
-    Convert info to string for verifying test results.
+    """Convert info to string for verifying test results.
 
     Info often contains pd.Series, so pandas context is provided
     to print all rows and all contents.
@@ -143,8 +140,7 @@ def convert_info_to_string(info: Mapping) -> str:
 def convert_df_to_json_string(
     df: pd.DataFrame, n_head: Optional[int] = 10, n_tail: Optional[int] = 10
 ) -> str:
-    """
-    Convert dataframe to pretty-printed json string.
+    """Convert dataframe to pretty-printed json string.
 
     To select all rows of the dataframe, pass `n_head` as None.
 
@@ -190,8 +186,7 @@ def convert_df_to_json_string(
 
 
 def get_ordered_value_counts(column: pd.Series) -> pd.Series:
-    """
-    Get column value counts and sort.
+    """Get column value counts and sort.
 
     Value counts are sorted alphabetically by index, and then counts in
     descending order. The order of indices with the same count is
@@ -214,8 +209,7 @@ def get_ordered_value_counts(column: pd.Series) -> pd.Series:
 def get_value_counts_for_columns(
     df: pd.DataFrame, columns: Optional[Iterable] = None
 ) -> Mapping[str, pd.Series]:
-    """
-    Get value counts for multiple columns.
+    """Get value counts for multiple columns.
 
     The function creates a dict of value counts for each passed column. The
     values in each resulting series are sorted first by value, then alphabetically
@@ -247,9 +241,8 @@ def to_string(var: str) -> str:
 def get_random_df(
     num_cols: int, seed: Optional[int] = None, **kwargs: Any
 ) -> pd.DataFrame:
-    """
-    Compute df with random data with `num_cols` columns and index obtained by
-    calling `pd.date_range(**kwargs)`.
+    """Compute df with random data with `num_cols` columns and index obtained
+    by calling `pd.date_range(**kwargs)`.
 
     :return: df
     """
@@ -275,9 +268,7 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
 
 # TODO(gp): Maybe it's more general than this file.
 def filter_text(regex: str, txt: str) -> str:
-    """
-    Remove lines in `txt` that match the regex `regex`.
-    """
+    """Remove lines in `txt` that match the regex `regex`."""
     _LOG.debug("Filtering with '%s'", regex)
     if regex is None:
         return txt
@@ -301,9 +292,7 @@ def filter_text(regex: str, txt: str) -> str:
 
 
 def remove_amp_references(txt: str) -> str:
-    """
-    Remove references to amp.
-    """
+    """Remove references to amp."""
     txt = re.sub("^amp/", "", txt, flags=re.MULTILINE)
     txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
     txt = re.sub("/amp:", ":", txt, flags=re.MULTILINE)
@@ -311,9 +300,7 @@ def remove_amp_references(txt: str) -> str:
 
 
 def purify_txt_from_client(txt: str) -> str:
-    """
-    Remove from a string all the information specific of a git client.
-    """
+    """Remove from a string all the information specific of a git client."""
     # We remove references to the Git modules starting from the innermost one.
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
@@ -392,10 +379,9 @@ def _assert_equal(
     test_dir: str,
     fuzzy_match: bool = False,
 ) -> None:
-    """
-    Implement a better version of self.assertEqual() that reports mismatching
-    strings with sdiff and save them to files for further analysis with
-    vimdiff.
+    """Implement a better version of self.assertEqual() that reports
+    mismatching strings with sdiff and save them to files for further analysis
+    with vimdiff.
 
     :param fuzzy: ignore differences in spaces and end of lines (see
       `_remove_spaces`)
@@ -445,10 +431,8 @@ def _assert_equal(
 
 
 class TestCase(unittest.TestCase):
-    """
-    Class adding some auxiliary functions to make easy to save output of tests
-    as txt.
-    """
+    """Class adding some auxiliary functions to make easy to save output of
+    tests as txt."""
 
     def setUp(self) -> None:
         random.seed(20000101)
@@ -489,8 +473,8 @@ class TestCase(unittest.TestCase):
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
     ) -> str:
-        """
-        Return the path of the directory storing input data for this test class.
+        """Return the path of the directory storing input data for this test
+        class.
 
         :return: dir name
         """
@@ -503,8 +487,8 @@ class TestCase(unittest.TestCase):
         return dir_name
 
     def get_output_dir(self) -> str:
-        """
-        Return the path of the directory storing output data for this test class.
+        """Return the path of the directory storing output data for this test
+        class.
 
         :return: dir name
         """
@@ -517,10 +501,9 @@ class TestCase(unittest.TestCase):
         test_class_name: Optional[Any] = None,
         test_method_name: Optional[Any] = None,
     ) -> str:
-        """
-        Return the path of the directory storing scratch data for this test class.
-        The directory is also created and cleaned up based on whether the
-        incremental behavior is enabled or not.
+        """Return the path of the directory storing scratch data for this test
+        class. The directory is also created and cleaned up based on whether
+        the incremental behavior is enabled or not.
 
         :return: dir name
         """
@@ -553,8 +536,7 @@ class TestCase(unittest.TestCase):
         purify_text: bool = False,
         use_gzip: bool = False,
     ) -> None:
-        """
-        Check the actual outcome of a test against the expected outcomes
+        """Check the actual outcome of a test against the expected outcomes
         contained in the file and/or updates the golden reference file with the
         actual outcome.
 
@@ -646,8 +628,7 @@ class TestCase(unittest.TestCase):
 
 
 def run_notebook(file_name: str, scratch_dir: str) -> None:
-    """
-    Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
+    """Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
     storing the output.
 
     Assert if the notebook doesn't complete successfully.
