@@ -20,9 +20,9 @@ _LOG = logging.getLogger(__name__)
 
 
 class S3Backend:
-    # pylint: disable=line-too-long
     @staticmethod
     def read_1min_contract_metadata() -> pd.DataFrame:
+        # pylint: disable=line-too-long
         """Read minutely contract metadata.
 
         Contains a mapping from all 1-min prices for each contract to a download
@@ -48,9 +48,10 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    # pylint: disable=line-too-long
+    
     @staticmethod
     def read_daily_contract_metadata() -> pd.DataFrame:
+        # pylint: disable=line-too-long
         """Read daily contract metadata.
 
         Same mapping as `read_1min_contract_metadata()` but for daily prices.
@@ -75,9 +76,10 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    # pylint: disable=line-too-long
+    
     @staticmethod
     def read_tickbidask_contract_metadata() -> pd.DataFrame:
+        # pylint: disable=line-too-long
         """Read tick-bid-ask contract metadata.
 
         Mapping between symbols (both continuous and not), start date, description,
@@ -117,9 +119,9 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    # pylint: disable=line-too-long
     @staticmethod
     def read_continuous_contract_metadata() -> pd.DataFrame:
+        # pylint: disable=line-too-long
         """Read tick-bid-ask metadata for continuous contracts.
 
         Returns a continuous contract subset of
