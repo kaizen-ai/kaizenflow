@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm.auto import tqdm
 
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 import helpers.introspection as intr
 
@@ -73,7 +74,7 @@ class _TimeSeriesAnalyzer:
             f"{self._title_suffix}"
         )
         plt.xticks(
-            self._time_series.resample("YS").sum().index,
+            sigp.resample(self._time_series, rule="YS").sum().index,
             ha="right",
             rotation=30,
             rotation_mode="anchor",
@@ -89,7 +90,7 @@ class _TimeSeriesAnalyzer:
             return
         #
         # Split by year.
-        yearly_resample = self._time_series.resample("y")
+        yearly_resample = sigp.resample(self._time_series, rule="Y")
         # Create as many subplots as years.
         _, axis = plt.subplots(
             len(yearly_resample),
