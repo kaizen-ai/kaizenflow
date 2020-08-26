@@ -232,7 +232,7 @@ class Cached:
 
     def clear_disk_cache(self) -> None:
         _LOG.warning("%s: clearing disk cache", self._func.__name__)
-        self._execute_func_from_dir_cache.clear()  # pylint: disable=no-member
+        self._execute_func_from_dir_cache.clear()  # pylint: disable=no-member  # type: ignore
 
     def _reset_cache_tracing(self) -> None:
         """Reset the values used to track which cache we are hitting when

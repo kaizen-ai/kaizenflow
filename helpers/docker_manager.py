@@ -3,13 +3,13 @@ import argparse
 import docker
 
 
-def get_volumes(name):  # pylint: disable=unused-argument
+def get_volumes(name: str):  # pylint: disable=unused-argument
     client = docker.from_env()
     container = client.containers.get("postgres_service")
     return container.attrs["Mounts"]
 
 
-def get_source_from(name):
+def get_source_from(name: str):
     s = ""
     for i in get_volumes(name):
         s += i["Source"] + "\n"

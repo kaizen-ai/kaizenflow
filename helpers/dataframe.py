@@ -78,7 +78,7 @@ def filter_data_by_comparison(
     masks = []
     for col_name, tuple_ in filters.items():
         if not isinstance(tuple_[0], tuple):
-            tuple_ = (tuple_,)
+            tuple_ = (tuple_,)  # type: ignore
         for comparison_method, val in tuple_:
             dbg.dassert_in(
                 comparison_method, ("eq", "ne", "le", "lt", "ge", "gt")
@@ -193,5 +193,5 @@ def compute_points_per_year_for_given_freq(freq: str) -> float:
         freq=freq, start="2012-01-01", end="2019-12-31"
     ).size
     span_in_years = 8
-    points_per_year = points_in_span / span_in_years
+    points_per_year: float = points_in_span / span_in_years
     return points_per_year

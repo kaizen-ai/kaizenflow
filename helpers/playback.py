@@ -9,10 +9,9 @@ import json
 import logging
 from typing import Any
 
-import jsonpickle
-
+import jsonpickle  # type: ignore
 # Register the pandas handler.
-import jsonpickle.ext.pandas as jsonpickle_pd
+import jsonpickle.ext.pandas as jsonpickle_pd  # type: ignore
 import pandas as pd
 
 import helpers.dbg as dbg
