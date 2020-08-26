@@ -165,7 +165,7 @@ class Playback:
         # Try to execute in a fake environment.
         # local_env = {}
         # _ = exec(output, local_env)
-        _ = exec(output)
+        _ = exec(output)  # pylint: disable=exec-used
 
 
 def json_pretty_print(parsed: Any) -> str:

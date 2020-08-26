@@ -389,7 +389,7 @@ def load_df_from_json(path_to_json: str) -> pd.DataFrame:
     # Load the dict with the data.
     data = from_json(path_to_json)
     # Preprocess the dict to handle arrays with different length.
-    data = dict([(k, pd.Series(v)) for k, v in data.items()])
+    data = {k: pd.Series(v) for k, v in data.items()}
     # Package into a dataframe.
     df = pd.DataFrame(data)
     return df
