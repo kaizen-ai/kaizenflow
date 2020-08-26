@@ -1607,10 +1607,12 @@ def plot_sharpe_ratio_panel(
         srs_freq = "D"
     # Resample input for assuring input frequency in calculations.
     log_rets = sigp.resample(log_rets, rule=srs_freq).sum()
-    # Initiate series with Sharpe ratios for selected frequencies.
+    # Initiate series for Sharpe ratios of selected frequencies.
     sr_series = pd.Series([], dtype="object")
-    # Initiate list with Sharpe ratios' standard errors for error bars.
+    # Initiate list for Sharpe ratios' standard errors for error bars.
     res_se = []
+    # Initiate list for frequencies that do not lead to upsampling.
+    valid_frequencies = []
     # Compute input frequency points per year for identifying upsampling.
     input_freq_points_per_year = hdf.infer_sampling_points_per_year(log_rets)
     for freq in frequencies:
@@ -1628,12 +1630,13 @@ def plot_sharpe_ratio_panel(
         )
         sr_series[freq] = sr
         res_se.append(se)
+        valid_frequencies.append(freq)
     ax = ax or plt.gca()
     sr_series.plot(
         yerr=res_se, marker="o", capsize=2, ax=ax, label="Sharpe ratio"
     )
-    ax.set_xticks(range(len(frequencies)))
-    ax.set_xticklabels(frequencies)
+    ax.set_xticks(range(len(valid_frequencies)))
+    ax.set_xticklabels(valid_frequencies)
     ax.set_xlabel("Frequencies")
     ax.legend()
 
