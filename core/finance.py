@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
+import core.signal_processing as sigp
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -398,7 +399,7 @@ def compute_average_holding_period(
     dbg.dassert(pos.index.freq)
     pos_freq_in_year = hdf.infer_sampling_points_per_year(pos)
     unit_freq_in_year = hdf.infer_sampling_points_per_year(
-        pos.resample(unit).sum()
+        sigp.resample(pos, rule=unit).sum()
     )
     dbg.dassert_lte(
         unit_freq_in_year,
