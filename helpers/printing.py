@@ -115,11 +115,7 @@ def remove_empty_lines(txt: str) -> str:
 def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str:
     """Create a string with var name -> var value.
 
-    E.g., ["var1", "var2"] is converted into:
-    ```
-    var1=...
-    var2=...
-    ```
+    E.g., ["var1", "var2"] is converted into: ``` var1=... var2=... ```
     """
     txt = []
     for var in vars_as_str:
@@ -250,7 +246,7 @@ def format_list(
 
 # TODO(gp): Use format_list().
 def list_to_str(
-    li: List,
+    list_: List,
     tag: str = "",
     sort: bool = False,
     axis: int = 0,
@@ -261,17 +257,17 @@ def list_to_str(
     _ = to_string
     txt = ""
     if axis == 0:
-        if li is None:
+        if list_ is None:
             txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
         else:
             # dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
-            vals = list(map(str, li))
+            vals = list(map(str, list_))
             if sort:
                 vals = sorted(vals)
-            txt += "%s: (%s) %s" % (tag, len(li), " ".join(vals)) + "\n"
+            txt += "%s: (%s) %s" % (tag, len(list_), " ".join(vals)) + "\n"
     elif axis == 1:
-        txt += "%s (%s):" % (tag, len(li)) + "\n"
-        vals = list(map(str, li))
+        txt += "%s (%s):" % (tag, len(list_)) + "\n"
+        vals = list(map(str, list_))
         if sort:
             vals = sorted(vals)
         txt += "\n".join(vals) + "\n"
