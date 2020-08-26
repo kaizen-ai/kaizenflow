@@ -1624,6 +1624,12 @@ def plot_sharpe_ratio_panel(
             )
             continue
         resampled_log_rets = sigp.resample(log_rets, rule=freq).sum()
+        if len(resampled_log_rets) == 1:
+            _LOG.warning(
+                "Resampling to freq='%s' is blocked because resampled series has only 1 observation"
+                % freq
+            )
+            continue
         sr = stats.compute_annualized_sharpe_ratio(resampled_log_rets)
         se = stats.compute_annualized_sharpe_ratio_standard_error(
             resampled_log_rets
