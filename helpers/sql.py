@@ -29,8 +29,11 @@ def get_connection(
 def get_engine_version(connection: pg.extensions.connection) -> str:
     """Report information on the SQL engine.
 
-    E.g., ``` PostgreSQL 11.5 on x86_64-pc-linux-gnu     compiled by gcc
-    (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit ```
+    E.g.,
+    ```
+    PostgreSQL 11.5 on x86_64-pc-linux-gnu
+        compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
+    ```
     """
     query = "SELECT version();"
     df = pd.read_sql_query(query, connection)
@@ -59,11 +62,14 @@ def get_table_size(
 ) -> pd.DataFrame:
     """Report the size of each table.
 
-    E.g., ```   table_name  row_estimate    total    index       toast
-    table 0     events           0.0   262 GB  0 bytes  8192 bytes   262
-    GB 1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
-    2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB 3
-    taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB ```
+     E.g.,
+    ```
+      table_name  row_estimate    total    index       toast    table
+    0     events           0.0   262 GB  0 bytes  8192 bytes   262 GB
+    1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
+    2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB
+    3   taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB
+    ```
     """
     q = """SELECT *, pg_size_pretty(total_bytes) AS total
         , pg_size_pretty(index_bytes) AS INDEX
