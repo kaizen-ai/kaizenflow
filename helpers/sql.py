@@ -29,9 +29,9 @@ def get_connection(
 def get_engine_version(connection: pg.extensions.connection) -> str:
     """Report information on the SQL engine.
 
-    E.g., 
+    E.g.,
     ```
-    PostgreSQL 11.5 on x86_64-pc-linux-gnu     
+    PostgreSQL 11.5 on x86_64-pc-linux-gnu
         compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
     ```
     """
@@ -62,7 +62,7 @@ def get_table_size(
 ) -> pd.DataFrame:
     """Report the size of each table.
 
-    E.g.,
+     E.g.,
     ```
       table_name  row_estimate    total    index       toast    table
     0     events           0.0   262 GB  0 bytes  8192 bytes   262 GB
@@ -181,8 +181,7 @@ def execute_query(
     cursor = connection.cursor()
     try:
         df = pd.read_sql_query(query, connection)
-    except:
-        # TODO(gp): Use OperationalError.
+    except pg.OperationalError:
         # Catch error and execute query directly to print error.
         try:
             cursor.execute(query)
