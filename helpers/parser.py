@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.parser as prsr
 """
@@ -20,8 +19,9 @@ def add_bool_arg(
     default: bool = False,
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
-    """
-    Add options to a parser like --xyz and --no_xyz (e.g., for --incremental).
+    """Add options to a parser like --xyz and --no_xyz (e.g., for.
+
+    --incremental).
     """
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--" + name, dest=name, action="store_true", help=help_)

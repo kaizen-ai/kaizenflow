@@ -21,9 +21,7 @@ def _replace_extension(file_name, ext):
 def to_pickle(
     obj, file_name, backend="pickle", log_level=logging.DEBUG, verbose=True
 ):
-    """
-    Pickle object <obj> into file <file_name>.
-    """
+    """Pickle object <obj> into file <file_name>."""
     dbg.dassert_type_is(file_name, str)
     dtmr = timer.dtimer_start(log_level, "Pickling to '%s'" % file_name)
     io_.create_enclosing_dir(file_name, incremental=True)
@@ -67,9 +65,7 @@ def to_pickle(
 def from_pickle(
     file_name, backend="pickle", log_level=logging.DEBUG, verbose=True
 ):
-    """
-    Unpickle and return object stored in <file_name>.
-    """
+    """Unpickle and return object stored in <file_name>."""
     dbg.dassert_type_is(file_name, str)
     dtmr = timer.dtimer_start(log_level, "Unpickling from '%s'" % file_name)
     # We assume that the user always specifies a .pkl extension and then we
@@ -109,8 +105,8 @@ def from_pickle(
 
 
 def pickle_function(func):
-    """
-    Pickle a function into bytecode stored into a string.
+    """Pickle a function into bytecode stored into a string.
+
     - return: string
     """
     dbg.dassert(callable(func))
@@ -119,9 +115,9 @@ def pickle_function(func):
 
 
 def unpickle_function(code_as_str, func_name):
-    """
-    Unpickle a function saved into string <code_as_str>. The function is injected
-    in the global namespace as <func_name>.
+    """Unpickle a function saved into string <code_as_str>. The function is
+    injected in the global namespace as <func_name>.
+
     - return: function
     """
     dbg.dassert_type_is(code_as_str, str)

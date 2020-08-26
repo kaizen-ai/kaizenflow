@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.introspection as intr
 """
@@ -13,21 +12,18 @@ import helpers.dbg as dbg
 
 
 def is_iterable(obj):
-    """
-    Return whether obj can be iterated upon or not.
+    """Return whether obj can be iterated upon or not.
 
-    Note that a string is iterable in python, but typically we refer to iterables
-    as lists, tuples, so we exclude it.
+    Note that a string is iterable in python, but typically we refer to
+    iterables as lists, tuples, so we exclude it.
     """
     # From https://stackoverflow.com/questions/1952464
     return not isinstance(obj, str) and isinstance(obj, abc.Iterable)
 
 
 def get_function_name(count=0):
-    """
-    Return the name of the function calling this function, i.e., the name of
-    the function calling `get_function_name()`.
-    """
+    """Return the name of the function calling this function, i.e., the name of
+    the function calling `get_function_name()`."""
     ptr = inspect.currentframe()
     # count=0 corresponds to the calling function, so we need to add an extra
     # step walking the call stack.
@@ -41,9 +37,7 @@ def get_function_name(count=0):
 
 # From https://github.com/bosswissam/pysize
 def get_size(obj, seen=None):
-    """
-    Recursively find size of an object `obj` in bytes.
-    """
+    """Recursively find size of an object `obj` in bytes."""
     size = sys.getsizeof(obj)
     if seen is None:
         seen = set()
@@ -77,9 +71,7 @@ def get_size(obj, seen=None):
 
 
 def get_methods(obj: Any, access: str = "all") -> List[str]:
-    """
-    Return list of names corresponding to class methods of an object
-    `obj`.
+    """Return list of names corresponding to class methods of an object `obj`.
 
     :param obj: class or class object
     :param access: allows to select private, public or all methods of

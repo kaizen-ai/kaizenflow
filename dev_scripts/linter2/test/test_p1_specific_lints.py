@@ -895,3 +895,94 @@ class Test_correct_method_order(hut.TestCase):
         for example, expected in examples:
             result = pslints._is_function_declaration(example)
             self.assertEqual(expected, result)
+
+
+@pytest.mark.skip("Disabled because of AmpTask543")
+class Test_check_comments(hut.TestCase):
+    def test_1(self) -> None:
+        """Don't capitalize or add punctuation mid-sentence."""
+        original = [
+            "# Create decorated functions with different caches and store pointers",
+            "# of these functions. Note that we need to build the functions in the",
+            "# constructor since we need to have a single instance of the decorated",
+            "# E.g., if we created these functions in `__call__`, they will be recreated at.",
+            "# `__call__`, they will be recreated at every invocation, creating a",
+            "# new memory cache at every invocation.",
+        ]
+        expected = [
+            "# Create decorated functions with different caches and store pointers of these",
+            "# functions. Note that we need to build the functions in the constructor since we",
+            "# need to have a single instance of the decorated functions. On the other side,",
+            "# e.g., if we created these functions in `__call__`, they will be recreated at",
+            "# every invocation, creating a new memory cache at every invocation.",
+        ]
+        result = pslints._fix_comment_style(original)
+        self.assertEqual(result, expected)
+
+    def test_2(self) -> None:
+        """Don't capitalize or add punctuation to single words."""
+        original = expected = ["# dfatal"]
+        result = pslints._fix_comment_style(original)
+        self.assertEqual(result, expected)
+
+    def test_3(self) -> None:
+        """Don't capitalize or add punctuation to commented out python
+        lines."""
+        originals = expected = [
+            [
+                '# txt += "\ndiff=%s" % mask.sum()',
+                '# txt += "\n%s" % val1[mask]',
+                '# txt += "\n%s" % val2[mask]',
+            ],
+            ['# txt += "\ndiff=%s" % mask.sum()',],
+            [
+                "# if False:",
+                "#     eff_level = root_logger.getEffectiveLevel()",
+                "#     print(",
+                '#         "effective level= %s (%s)"',
+                "#         % (eff_level, logging.getLevelName(eff_level))",
+                "#     )",
+                "# if False:",
+                "#     # dassert_eq(root_logger.getEffectiveLevel(), verbosity)",
+                "#     for handler in root_logger.handlers:",
+                "#         handler.setLevel(verbosity)",
+            ],
+        ]
+
+        for o, e in zip(originals, expected):
+            result = pslints._fix_comment_style(o)
+            self.assertEqual(result, e)
+
+    def test_4(self) -> None:
+        """Don't capitalize or add punctuation to urls."""
+        original = expected = [
+            ["# https://github.com/"],
+            ["# https://google.com/"],
+        ]
+        for o, e in zip(original, expected):
+            result = pslints._fix_comment_style(o)
+            self.assertEqual(result, e)
+
+
+@pytest.mark.skip("Disabled because of AmpTask543")
+class Test_reflow_comments(hut.TestCase):
+    def test_1(self) -> None:
+        original = [
+            "# Create decorated functions with different caches and store"
+            " pointers of these functions. Note that we ",
+            "# need to build the functions in the constructor since we "
+            "need to have a single instance of the decorated",
+            "# E.g., if we created these functions in `__call__`, "
+            "they will be recreated at.  `__call__`, ",
+            "they will be recreated at every invocation, creating a "
+            "new memory cache at every invocation.",
+        ]
+        expected = [
+            "# Create decorated functions with different caches and store pointers of these",
+            "# functions. Note that we need to build the functions in the constructor since we",
+            "# need to have a single instance of the decorated functions. On the other side,",
+            "# e.g., if we created these functions in `__call__`, they will be recreated at",
+            "# every invocation, creating a new memory cache at every invocation.",
+        ]
+        result = pslints._reflow_comments_in_lines(original)
+        self.assertEqual(result, expected)
