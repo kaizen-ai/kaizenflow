@@ -154,7 +154,7 @@ def convert_csv_to_pq(
         csv_path: str, pq_path: str,
         normalizer: Union[Callable, None] = None,
         header: Union[None, str] = None) -> None:
-    """Converts csv file to parquet file.
+    """Convert csv file to parquet file.
 
     Output of csv_mapreduce is typically headerless (to support append mode), and so
     `normalizer` may be used to add appropriate headers. Note that parquet
