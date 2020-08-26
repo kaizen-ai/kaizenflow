@@ -40,7 +40,7 @@ def to_pickle(
             import dill
 
             with open(file_name, "wb") as fd:
-                pickler = dill.dump(obj, fd)
+                dill.dump(obj, fd)
     elif backend == "pickle_gzip":
         dbg.dassert(
             file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name

@@ -220,7 +220,7 @@ def head_tables(connection, tables=None, limit=5, as_txt=False):
 def find_common_columns(connection, tables, as_df=False):
     limit = 5
     df = []
-    for i in range(len(tables)):
+    for i, table in enumerate(tables):
         table = tables[i]
         query = "SELECT * FROM %s LIMIT %s " % (table, limit)
         df1 = execute_query(connection, query, verbose=False)

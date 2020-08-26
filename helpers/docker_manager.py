@@ -3,7 +3,7 @@ import argparse
 import docker
 
 
-def get_volumes(name):
+def get_volumes(name):  # pylint: disable=unused-argument
     client = docker.from_env()
     container = client.containers.get("postgres_service")
     return container.attrs["Mounts"]

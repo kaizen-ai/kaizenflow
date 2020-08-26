@@ -58,7 +58,7 @@ def find_service(service_name, tunnel_info):
     return ret
 
 
-def get_server_ip(service_name):
+def get_server_ip(service_name):  # pylint: disable=unused-argument
     tunnel_info, _ = get_tunnel_info()
     _LOG.debug("tunnels=\n%s", tunnel_info_to_string(tunnel_info))
     service = find_service("Doc server", tunnel_info)
@@ -130,8 +130,7 @@ def _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match):
         return keep
 
     _LOG.debug("local_port=%d -> remote_port=%d", local_port, remote_port)
-    keep_line = lambda line: _keep_line(line)
-    pids, txt = si.get_process_pids(keep_line)
+    pids, txt = si.get_process_pids(_keep_line)
     _LOG.debug("pids=%s", pids)
     _LOG.debug("txt=\n%s", txt)
     return pids, txt
@@ -180,7 +179,7 @@ def start_tunnels(user_name):
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
     #
     for service in tunnel_info:
-        service_name, server, local_port, remote_port = service
+        _, server, local_port, remote_port = service
         pids, _ = _get_ssh_tunnel_process(
             local_port, remote_port, fuzzy_match=False
         )
@@ -202,7 +201,7 @@ def stop_tunnels():
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
     #
     for service in tunnel_info:
-        service_name, server, local_port, remote_port = service
+        _, _, local_port, remote_port = service
         _LOG.info("Stopping %s", _service_to_string(service))
         _kill_ssh_tunnel_process(local_port, remote_port)
 
@@ -214,7 +213,7 @@ def check_tunnels():
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
     #
     for service in tunnel_info:
-        service_name, server, local_port, remote_port = service
+        _, _, local_port, remote_port = service
         pids, _ = _get_ssh_tunnel_process(
             local_port, remote_port, fuzzy_match=False
         )

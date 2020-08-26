@@ -105,8 +105,7 @@ def find_first_matching_row(
         if matches.any():
             idx_max = matches.idxmax()
             return curr + idx_max
-        else:
-            curr += nrows_at_a_time
+        curr += nrows_at_a_time
 
 
 def append(df, path, index=False, **kwargs):
