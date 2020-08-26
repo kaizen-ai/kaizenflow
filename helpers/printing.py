@@ -98,7 +98,7 @@ def prepend(str_: str, prefix: str) -> str:
 
 def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
     """Remove empty lines from a list of strings."""
-    arr = [l for l in arr if l.rstrip().lstrip()]
+    arr = [line for line in arr if line.rstrip().lstrip()]
     return arr
 
 
@@ -250,7 +250,7 @@ def format_list(
 
 # TODO(gp): Use format_list().
 def list_to_str(
-    l: List,
+    li: List,
     tag: str = "",
     sort: bool = False,
     axis: int = 0,
@@ -261,17 +261,17 @@ def list_to_str(
     _ = to_string
     txt = ""
     if axis == 0:
-        if l is None:
+        if li is None:
             txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
         else:
             # dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
-            vals = list(map(str, l))
+            vals = list(map(str, li))
             if sort:
                 vals = sorted(vals)
-            txt += "%s: (%s) %s" % (tag, len(l), " ".join(vals)) + "\n"
+            txt += "%s: (%s) %s" % (tag, len(li), " ".join(vals)) + "\n"
     elif axis == 1:
-        txt += "%s (%s):" % (tag, len(l)) + "\n"
-        vals = list(map(str, l))
+        txt += "%s (%s):" % (tag, len(li)) + "\n"
+        vals = list(map(str, li))
         if sort:
             vals = sorted(vals)
         txt += "\n".join(vals) + "\n"
