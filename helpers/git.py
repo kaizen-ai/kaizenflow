@@ -142,7 +142,7 @@ def _get_repo_map() -> Dict[str, str]:
     # TODO(gp): The proper fix is #PartTask551.
     # Get info from the including repo, if possible.
     try:
-        import repo_config as repc
+        import repo_config as repc  # type: ignore
 
         repo_map.update(repc.REPO_MAP)
     except ImportError:

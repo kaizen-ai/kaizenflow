@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+from typing import List
 
 import helpers.conda as hco
 import helpers.git as git
@@ -15,7 +16,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Merge env in system_interaction or conda.py? Or split the functions.
 
 
-def _get_version(lib_name):
+def _get_version(lib_name: str) -> str:
     try:
         cmd = "import %s" % lib_name
         # pylint: disable=exec-used
@@ -28,7 +29,7 @@ def _get_version(lib_name):
     return version
 
 
-def get_system_signature(git_commit_type="all"):
+def get_system_signature(git_commit_type: str = "all") -> (List[str], int):
     txt = []
     txt.append("# Packages")
     # Add package info.
@@ -78,7 +79,7 @@ def get_system_signature(git_commit_type="all"):
 # #############################################################################
 
 
-def get_system_info(add_frame):
+def get_system_info(add_frame: bool) -> str:
     msg = ""
     if add_frame:
         msg += pri.frame("System info") + "\n"
@@ -90,7 +91,7 @@ def get_system_info(add_frame):
     return msg
 
 
-def get_package_summary(conda_env_name, add_frame):
+def get_package_summary(conda_env_name: str, add_frame: bool) -> str:
     msg = ""
     if add_frame:
         msg += pri.frame("Package summary") + "\n"
@@ -103,7 +104,7 @@ def get_package_summary(conda_env_name, add_frame):
     return msg
 
 
-def get_conda_export_list(conda_env_name, add_frame):
+def get_conda_export_list(conda_env_name: str, add_frame: bool) -> str:
     msg = ""
     if add_frame:
         msg += pri.frame("Package summary") + "\n"
@@ -116,7 +117,7 @@ def get_conda_export_list(conda_env_name, add_frame):
     return msg
 
 
-def save_env_file(conda_env_name, dir_name):
+def save_env_file(conda_env_name: str, dir_name: str) -> (str, str):
     msg = ""
     msg += get_system_info(add_frame=True)
     msg += get_package_summary(conda_env_name, add_frame=True)

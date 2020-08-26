@@ -5,7 +5,12 @@ from email.mime.text import MIMEText
 
 
 def send_email(
-    subject, message, to_adr, email_address=None, email_password=None, html=False
+        subject: str,
+        message: str,
+        to_adr: str,
+        email_address: str = None,
+        email_password: str = None,
+        html: str = False
 ):
     """Send mail to specified e-mail addresses.
 

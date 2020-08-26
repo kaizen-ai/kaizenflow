@@ -305,7 +305,7 @@ def from_file(
         f = open(file_name, "r", encoding=encoding)
     try:
         # Read data.
-        data = f.read()
+        data: str = f.read()
     except UnicodeDecodeError as e:
         # Raise unicode decode error message.
         _raise_file_decode_error(e, file_name)
@@ -376,7 +376,7 @@ def from_json(file_name: str) -> dict:
     """
     dbg.dassert_exists(file_name)
     with open(file_name, "r") as f:
-        data = json.loads(f.read())
+        data: dict = json.loads(f.read())
     return data
 
 

@@ -5,6 +5,7 @@ import marshal
 import os
 import pickle
 import types
+from typing import Callable
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -19,8 +20,12 @@ def _replace_extension(file_name, ext):
 
 
 def to_pickle(
-    obj, file_name, backend="pickle", log_level=logging.DEBUG, verbose=True
-):
+        obj: object,
+        file_name: str,
+        backend: str = "pickle",
+        log_level: int = logging.DEBUG,
+        verbose: bool = True
+) -> None:
     """Pickle object <obj> into file <file_name>."""
     dbg.dassert_type_is(file_name, str)
     dtmr = timer.dtimer_start(log_level, "Pickling to '%s'" % file_name)
@@ -63,7 +68,7 @@ def to_pickle(
 
 
 def from_pickle(
-    file_name, backend="pickle", log_level=logging.DEBUG, verbose=True
+    file_name: str, backend: str = "pickle", log_level: int = logging.DEBUG, verbose: bool = True
 ):
     """Unpickle and return object stored in <file_name>."""
     dbg.dassert_type_is(file_name, str)
@@ -104,7 +109,7 @@ def from_pickle(
     return obj
 
 
-def pickle_function(func):
+def pickle_function(func: Callable) -> str:
     """Pickle a function into bytecode stored into a string.
 
     - return: string
@@ -114,7 +119,7 @@ def pickle_function(func):
     return code_as_str
 
 
-def unpickle_function(code_as_str, func_name):
+def unpickle_function(code_as_str: str, func_name: str) -> Callable:
     """Unpickle a function saved into string <code_as_str>. The function is
     injected in the global namespace as <func_name>.
 
@@ -131,12 +136,12 @@ def unpickle_function(code_as_str, func_name):
 # #############################################################################
 
 
-def to_json(file_name, obj):
+def to_json(file_name: str, obj: object) -> None:
     with open(file_name, "w") as outfile:
         json.dump(obj, outfile)
 
 
-def from_json(file_name):
+def from_json(file_name: str) -> object:
     dbg.dassert_exists(file_name)
     obj = json.loads(io_.from_file(file_name))
     return obj
