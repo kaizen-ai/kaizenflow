@@ -52,7 +52,8 @@
 - `mypy` is unhappy when a library doesn't have types
 - Lots of libraries are starting to add type hints now that python 2 has been
   deprecated
-```
+
+```bash
 *.py:14: error: No library stub file for module 'sklearn.model_selection' [mypy]
 ```
 
@@ -89,6 +90,7 @@ or
   data) annoy `mypy`, which in turns annoys us
 
 - Unfortunately the proper solution is to use different variables
+
   ```python
   output : str = ...
   output_as_array = output.split("\n")
@@ -96,6 +98,36 @@ or
   # Process output.
   ...
   output = "\n".join(output_as_array)
+  ```
+
+- Another case could be:
+
+  ```python
+  from typing import Optional
+
+  def test_func(arg: bool):
+    ...
+
+  var: Optional[bool] = ...
+
+  dbg.dassert_is_not(var, None)
+  test_func(arg=var)
+  ```
+
+  sometimes mypy doesn't pick up the `None` check, and warns that the function
+  expects a `bool` rather than an `Optional[bool]`. In that case, the solution
+  is to explicitly use`typing.cast`on the argument when passing it in, note
+  that`typing.cast` has no runtime effects and is purely for type checking.
+
+  Here're the relevant docs: https://mypy.readthedocs.io/en/stable/casts.html
+
+  So the solution would be:
+
+  ```python
+  from typing import cast ...
+  ...
+
+  test_func(arg=cast(bool, var))
   ```
 
 ## Disabling `mypy` errors
