@@ -67,7 +67,7 @@ def resample(
     Resample returns (using sum) using our timing convention.
     """
     dbg.dassert_strictly_increasing_index(df)
-    resampler = df.resample(agg_interval, closed="left", label="right")
+    resampler = sigp.resample(df, rule=agg_interval, closed="left")
     rets = resampler.sum()
     return rets
 
@@ -372,7 +372,7 @@ def compute_turnover(
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
     if unit:
-        numerator = numerator.resample(unit, closed="right", label="right").sum()
+        numerator = sigp.resample(numerator, rule=unit).sum()
         denominator = denominator.resample(
             unit, closed="right", label="right"
         ).sum()
