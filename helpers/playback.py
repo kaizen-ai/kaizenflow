@@ -38,8 +38,8 @@ def to_python_code(obj: Any) -> str:
     elif isinstance(obj, list):
         # List ["a", 1] -> '["a", 1]'.
         output_tmp = "["
-        for l in obj:
-            output_tmp += to_python_code(l) + ", "
+        for line in obj:
+            output_tmp += to_python_code(line) + ", "
         output_tmp = output_tmp.rstrip(", ") + "]"
         output.append(output_tmp)
     elif isinstance(obj, dict):
