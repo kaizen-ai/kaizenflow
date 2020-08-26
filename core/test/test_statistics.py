@@ -1059,7 +1059,7 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         # Resample to hourly and calculate SR.
         hourly_srs = sigp.resample(srs, rule="60T").sum()
         hourly_sr = stats.compute_annualized_sharpe_ratio(hourly_srs)
-        np.testing.assert_almost_equal(hourly_sr, -2.6412, decimal=3)
+        np.testing.assert_almost_equal(hourly_sr, -2.6483, decimal=3)
         # Resample to daily and calculate SR.
         daily_srs = sigp.resample(srs, rule="D").sum()
         daily_srs_sr = stats.compute_annualized_sharpe_ratio(daily_srs)
@@ -1132,7 +1132,7 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
         daily_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
             daily_srs
         )
-        np.testing.assert_almost_equal(daily_sr_se_sr, 1.9290, decimal=3)
+        np.testing.assert_almost_equal(daily_sr_se_sr, 1.9192, decimal=3)
         # Resample to weekly and calculate SR.
         weekly_srs = sigp.resample(srs, rule="W").sum()
         weekly_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
