@@ -17,6 +17,7 @@ import sklearn as skl
 
 import core.backtest as bcktst
 import core.data_adapters as adpt
+import core.signal_processing as sigp
 import core.statistics as stats
 import helpers.dbg as dbg
 
@@ -567,7 +568,7 @@ class Resample(Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        resampler = df.resample(rule=self._rule, closed="left", label="right")
+        resampler = sigp.resample(df, rule=self._rule, closed="left")
         df = getattr(resampler, self._agg_func)()
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
@@ -781,7 +782,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         )
         info["pnl_rets"] = pnl_rets
         info["sr"] = stats.compute_annualized_sharpe_ratio(
-            pnl_rets.resample("1B").sum()
+            sigp.resample(pnl_rets, rule="1B").sum()
         )
         return info
 
@@ -1691,7 +1692,7 @@ def process_result_bundle(result_bundle: Dict) -> collections.OrderedDict:
     )
     pnl_rets = pd.concat(pnl_rets)
     sr = stats.compute_sharpe_ratio(
-        pnl_rets.resample("1B").sum(), time_scaling=252
+        sigp.resample(pnl_rets, rule="1B").sum(), time_scaling=252
     )
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
