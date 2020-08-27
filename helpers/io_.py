@@ -305,7 +305,7 @@ def from_file(
         f = open(file_name, "r", encoding=encoding)
     try:
         # Read data.
-        data = f.read()
+        data: str = f.read()
     except UnicodeDecodeError as e:
         # Raise unicode decode error message.
         _raise_file_decode_error(e, file_name)
@@ -376,7 +376,7 @@ def from_json(file_name: str) -> dict:
     """
     dbg.dassert_exists(file_name)
     with open(file_name, "r") as f:
-        data = json.loads(f.read())
+        data: dict = json.loads(f.read())
     return data
 
 
@@ -389,7 +389,7 @@ def load_df_from_json(path_to_json: str) -> pd.DataFrame:
     # Load the dict with the data.
     data = from_json(path_to_json)
     # Preprocess the dict to handle arrays with different length.
-    data = dict([(k, pd.Series(v)) for k, v in data.items()])
+    data = {k: pd.Series(v) for k, v in data.items()}
     # Package into a dataframe.
     df = pd.DataFrame(data)
     return df

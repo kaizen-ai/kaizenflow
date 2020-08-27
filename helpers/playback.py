@@ -9,10 +9,9 @@ import json
 import logging
 from typing import Any
 
-import jsonpickle
-
+import jsonpickle  # type: ignore
 # Register the pandas handler.
-import jsonpickle.ext.pandas as jsonpickle_pd
+import jsonpickle.ext.pandas as jsonpickle_pd  # type: ignore
 import pandas as pd
 
 import helpers.dbg as dbg
@@ -39,8 +38,8 @@ def to_python_code(obj: Any) -> str:
     elif isinstance(obj, list):
         # List ["a", 1] -> '["a", 1]'.
         output_tmp = "["
-        for l in obj:
-            output_tmp += to_python_code(l) + ", "
+        for line in obj:
+            output_tmp += to_python_code(line) + ", "
         output_tmp = output_tmp.rstrip(", ") + "]"
         output.append(output_tmp)
     elif isinstance(obj, dict):
@@ -165,7 +164,7 @@ class Playback:
         # Try to execute in a fake environment.
         # local_env = {}
         # _ = exec(output, local_env)
-        _ = exec(output)
+        _ = exec(output)  # pylint: disable=exec-used
 
 
 def json_pretty_print(parsed: Any) -> str:

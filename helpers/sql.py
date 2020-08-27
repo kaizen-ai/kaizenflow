@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import pandas as pd
 import psycopg2 as pg
@@ -29,16 +29,16 @@ def get_connection(
 def get_engine_version(connection: pg.extensions.connection) -> str:
     """Report information on the SQL engine.
 
-    E.g., 
+    E.g.,
     ```
-    PostgreSQL 11.5 on x86_64-pc-linux-gnu     
+    PostgreSQL 11.5 on x86_64-pc-linux-gnu
         compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
     ```
     """
     query = "SELECT version();"
     df = pd.read_sql_query(query, connection)
     # pylint: disable=no-member
-    info = df.iloc[0, 0]
+    info: str = df.iloc[0, 0]
     return info
 
 
@@ -62,7 +62,7 @@ def get_table_size(
 ) -> pd.DataFrame:
     """Report the size of each table.
 
-    E.g.,
+     E.g.,
     ```
       table_name  row_estimate    total    index       toast    table
     0     events           0.0   262 GB  0 bytes  8192 bytes   262 GB
@@ -115,7 +115,7 @@ def get_table_names(connection: pg.extensions.connection) -> List[str]:
 
 
 # TODO(gp): Test / fix this.
-def get_indexes(connection):
+def get_indexes(connection: pg.extensions.connection) -> dict:
     res = []
     tables = get_table_names(connection)
     cursor = connection.cursor()
@@ -143,7 +143,7 @@ def get_indexes(connection):
     return tmp
 
 
-def get_columns(connection, table_name):
+def get_columns(connection: pg.extensions.connection, table_name: str) -> list:
     query = (
         """SELECT column_name
             FROM information_schema.columns
@@ -157,14 +157,14 @@ def get_columns(connection, table_name):
 
 
 def execute_query(
-    connection,
-    query,
+    connection: pg.extensions.connection,
+    query: str,
     limit=None,
     offset=None,
     use_timer=False,
     profile=False,
     verbose=True,
-):
+) -> Union[None, pd.DataFrame]:
     """Execute a query."""
     if limit is not None:
         query += " LIMIT %s" % limit
@@ -181,8 +181,7 @@ def execute_query(
     cursor = connection.cursor()
     try:
         df = pd.read_sql_query(query, connection)
-    except:
-        # TODO(gp): Use OperationalError.
+    except pg.OperationalError:
         # Catch error and execute query directly to print error.
         try:
             cursor.execute(query)
@@ -197,7 +196,7 @@ def execute_query(
     return df
 
 
-def head_table(connection, table, limit=5, as_txt=False):
+def head_table(connection: pg.extensions.connection, table: str, limit=5, as_txt=False) -> str:
     query = "SELECT * FROM %s LIMIT %s " % (table, limit)
     df = execute_query(connection, query)
     if as_txt:
@@ -210,7 +209,7 @@ def head_table(connection, table, limit=5, as_txt=False):
         IPython.core.display.display(df)
 
 
-def head_tables(connection, tables=None, limit=5, as_txt=False):
+def head_tables(connection: pg.extensions.connection, tables=None, limit=5, as_txt=False) -> None:
     if tables is None:
         tables = get_table_names(connection)
     for table in tables:
@@ -218,10 +217,13 @@ def head_tables(connection, tables=None, limit=5, as_txt=False):
         head_table(connection, table, limit=limit, as_txt=as_txt)
 
 
-def find_common_columns(connection, tables, as_df=False):
+def find_common_columns(
+        connection: pg.extensions.connection,
+        tables: List[str], as_df=False
+) -> Union[None, pd.DataFrame]:
     limit = 5
     df = []
-    for i in range(len(tables)):
+    for i, table in enumerate(tables):
         table = tables[i]
         query = "SELECT * FROM %s LIMIT %s " % (table, limit)
         df1 = execute_query(connection, query, verbose=False)

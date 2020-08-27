@@ -301,6 +301,7 @@ def plot_barplot(
     orientation: str = "vertical",
     annotation_mode: str = "pct",
     string_format: str = "%.2f",
+    top_n_to_plot: Optional[int] = None,
     title: Optional[str] = None,
     xlabel: Optional[str] = None,
     unicolor: bool = False,
@@ -314,8 +315,9 @@ def plot_barplot(
 
     :param srs: pd.Series
     :param orientation: vertical or horizontal bars
-    :param annotation_mode: `pct` or `value`
+    :param annotation_mode: `pct`, `value` or None
     :param string_format: format of bar annotations
+    :param top_n_to_plot: number of top N integers to plot
     :param title: title of the plot
     :param xlabel: label of the X axis
     :param unicolor: if True, plot all bars in neutral blue color
@@ -334,15 +336,26 @@ def plot_barplot(
             return x_ + max(width_, 0), y_
         raise ValueError("Invalid orientation='%s'" % orientation)
 
+    # Get default figure size.
     if figsize is None:
         figsize = FIG_SIZE
+    if top_n_to_plot is None:
+        # If top_n not specified, plot all values.
+        srs_top_n = srs
+    else:
+        # Assert N>0.
+        dbg.dassert_lte(1, top_n_to_plot)
+        # Sort in descending order.
+        srs_sorted = srs.sort_values(ascending=False)
+        # Select top N.
+        srs_top_n = srs_sorted[:top_n_to_plot]
     # Choose colors.
     if unicolor:
         color = sns.color_palette("muted")[0]
     else:
         color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
         color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
-    # Plot.
+    # Choose orientation.
     if orientation == "vertical":
         kind = "bar"
     elif orientation == "horizontal":
@@ -350,25 +363,30 @@ def plot_barplot(
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
     ax = ax or plt.gca()
-    srs.plot(
+    # Plot top N.
+    srs_top_n.plot(
         kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
     )
     # Add annotations to bars.
-    if annotation_mode == "pct":
-        annotations = srs * 100 / srs.sum()
-        string_format = string_format + "%%"
-        annotations = annotations.apply(lambda z: string_format % z)
-    elif annotation_mode == "value":
-        annotations = srs.apply(lambda z: string_format % z)
-    else:
-        raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
-    #
-    for i, p in enumerate(ax.patches):
-        height = p.get_height()
-        width = p.get_width()
-        x, y = p.get_xy()
-        annotation_loc = _get_annotation_loc(x, y, height, width)
-        ax.annotate(annotations.iloc[i], annotation_loc)
+    # Note: annotations in both modes are taken from
+    # entire series, not top N.
+    if annotation_mode:
+        if annotation_mode == "pct":
+            annotations = srs * 100 / srs.sum()
+            string_format = string_format + "%%"
+            annotations = annotations.apply(lambda z: string_format % z)
+        elif annotation_mode == "value":
+            annotations = srs.apply(lambda z: string_format % z)
+        else:
+            raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
+        # Annotate bars.
+        for i, p in enumerate(ax.patches):
+            height = p.get_height()
+            width = p.get_width()
+            x, y = p.get_xy()
+            annotation_loc = _get_annotation_loc(x, y, height, width)
+            ax.annotate(annotations.iloc[i], annotation_loc)
+    # Set X-axis label.
     if xlabel:
         ax.set(xlabel=xlabel)
 

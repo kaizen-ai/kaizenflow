@@ -1,3 +1,5 @@
+from typing import List
+
 import pytest
 
 import dev_scripts.linter2.p1_specific_lints as pslints
@@ -286,10 +288,6 @@ class Test_warn_incorrectly_formatted_todo(hut.TestCase):
 
 
 class Test_check_notebook_dir(hut.TestCase):
-    def _helper_check_notebook_dir(self, file_name: str, exp: str) -> None:
-        msg = pslints._check_notebook_dir(file_name)
-        self.assert_equal(msg, exp)
-
     def test_check_notebook_dir1(self) -> None:
         """The notebook is not under 'notebooks': invalid."""
         file_name = "hello/world/notebook.ipynb"
@@ -311,12 +309,12 @@ class Test_check_notebook_dir(hut.TestCase):
         exp = ""
         self._helper_check_notebook_dir(file_name, exp)
 
-
-class Test_check_test_file_dir(hut.TestCase):
-    def _helper_check_test_file_dir(self, file_name: str, exp: str) -> None:
-        msg = pslints._check_test_file_dir(file_name)
+    def _helper_check_notebook_dir(self, file_name: str, exp: str) -> None:
+        msg = pslints._check_notebook_dir(file_name)
         self.assert_equal(msg, exp)
 
+
+class Test_check_test_file_dir(hut.TestCase):
     def test_check_test_file_dir1(self) -> None:
         """Test is under `test`: valid."""
         file_name = "hello/world/test/test_all.py"
@@ -347,15 +345,12 @@ class Test_check_test_file_dir(hut.TestCase):
         exp = ""
         self._helper_check_test_file_dir(file_name, exp)
 
+    def _helper_check_test_file_dir(self, file_name: str, exp: str) -> None:
+        msg = pslints._check_test_file_dir(file_name)
+        self.assert_equal(msg, exp)
+
 
 class Test_check_import(hut.TestCase):
-    def _helper_check_import(self, line: str, exp: str, file_name: str) -> None:
-        file_name = file_name or "test.py"
-        line_num = 1
-        exp = f"{file_name}:{line_num}: {exp}" if exp else exp
-        msg = pslints._check_import(file_name, line_num, line)
-        self.assertEqual(exp, msg)
-
     def test1(self) -> None:
         """Test long import shortcut: invalid."""
         shortcut = "very_long_name"
@@ -386,6 +381,13 @@ class Test_check_import(hut.TestCase):
         line = "import test.ab as tab"
         exp = ""
         self._helper_check_import(line, exp, file_name="test.py")
+
+    def _helper_check_import(self, line: str, exp: str, file_name: str) -> None:
+        file_name = file_name or "test.py"
+        line_num = 1
+        exp = f"{file_name}:{line_num}: {exp}" if exp else exp
+        msg = pslints._check_import(file_name, line_num, line)
+        self.assertEqual(exp, msg)
 
 
 class Test_format_separating_lines(hut.TestCase):
@@ -737,10 +739,10 @@ class _reflow_comments_in_lines(hut.TestCase):
 
 class Test_correct_method_order(hut.TestCase):
     @property
-    def correct_lines(self):
+    def correct_lines(self) -> List[str]:
         return [
             "import math",
-            "" "class Mather:",
+            "class Mather:",
             "    def __init__(c1: int, c2: int):",
             "        self._comb = math.comb(c1, c2)",
             "",
@@ -753,13 +755,13 @@ class Test_correct_method_order(hut.TestCase):
         ]
 
     @property
-    def correct_lines_with_decorator(self):
+    def correct_lines_with_decorator(self) -> List[str]:
         tmp = self.correct_lines.copy()
         tmp.insert(8, "    @staticmethod")
         return tmp
 
     @property
-    def correct_lines_with_multiline_decorator(self):
+    def correct_lines_with_multiline_decorator(self) -> List[str]:
         tmp = self.correct_lines.copy()
         tmp.insert(8, "    @staticmethod(")
         tmp.insert(9, "       arg=1,")
@@ -791,16 +793,16 @@ class Test_correct_method_order(hut.TestCase):
             self.correct_lines_with_multiline_decorator,
         )
 
-    def test2(self):
+    def test2(self) -> None:
         """Test no changes to be made."""
         corrected = pslints._class_method_order_enforcer(self.correct_lines)
         self.assertEqual(corrected, self.correct_lines)
 
-    def test3(self):
+    def test3(self) -> None:
         """Test incorrect order."""
         lines = [
             "import math",
-            "" "class Mather:",
+            "class Mather:",
             "    def __init__(c1: int, c2: int):",
             "        self._comb = math.comb(c1, c2)",
             "",
@@ -819,11 +821,11 @@ class Test_correct_method_order(hut.TestCase):
             "test.py:9: method `shout` should be located on line number 6", hinted
         )
 
-    def test4(self):
+    def test4(self) -> None:
         """Test incorrect order with decorator."""
         lines = [
             "import math",
-            "" "class Mather:",
+            "class Mather:",
             "    def __init__(c1: int, c2: int):",
             "        self._comb = math.comb(c1, c2)",
             "",
@@ -844,11 +846,11 @@ class Test_correct_method_order(hut.TestCase):
             hinted,
         )
 
-    def test5(self):
+    def test5(self) -> None:
         """Test incorrect order with multiline decorator."""
         lines = [
             "import math",
-            "" "class Mather:",
+            "class Mather:",
             "    def __init__(c1: int, c2: int):",
             "        self._comb = math.comb(c1, c2)",
             "",
@@ -871,7 +873,7 @@ class Test_correct_method_order(hut.TestCase):
             hinted,
         )
 
-    def test6(self):
+    def test6(self) -> None:
         """Test `is_class_declaration`"""
         examples = [
             ("class ExampleClass1:", "ExampleClass1"),
@@ -883,7 +885,7 @@ class Test_correct_method_order(hut.TestCase):
             result = pslints._is_class_declaration(example)
             self.assertEqual(expected, result)
 
-    def test7(self):
+    def test7(self) -> None:
         """Test `is_function_declaration`"""
         examples = [
             ("def example_function1(arg1):", "example_function1"),
@@ -895,3 +897,94 @@ class Test_correct_method_order(hut.TestCase):
         for example, expected in examples:
             result = pslints._is_function_declaration(example)
             self.assertEqual(expected, result)
+
+
+@pytest.mark.skip(
+    "`_fix_comment_style` hasn't been updated to accept these tests"
+)
+class Test_check_comments(hut.TestCase):
+    def test_1(self) -> None:
+        """Don't capitalize or add punctuation mid-sentence."""
+        original = [
+            "# Create decorated functions with different caches and store pointers",
+            "# of these functions. Note that we need to build the functions in the",
+            "# constructor since we need to have a single instance of the decorated",
+            "# E.g., if we created these functions in `__call__`, they will be recreated at.",
+            "# `__call__`, they will be recreated at every invocation, creating a",
+            "# new memory cache at every invocation.",
+        ]
+        expected = [
+            "# Create decorated functions with different caches and store pointers of these",
+            "# functions. Note that we need to build the functions in the constructor since we",
+            "# need to have a single instance of the decorated functions. On the other side,",
+            "# e.g., if we created these functions in `__call__`, they will be recreated at",
+            "# every invocation, creating a new memory cache at every invocation.",
+        ]
+        result = pslints._fix_comment_style(original)
+        self.assertEqual(result, expected)
+
+    def test_2(self) -> None:
+        """Don't capitalize or add punctuation to single words."""
+        original = expected = ["# dfatal"]
+        result = pslints._fix_comment_style(original)
+        self.assertEqual(result, expected)
+
+    def test_3(self) -> None:
+        """Don't capitalize or add punctuation to commented out python
+        lines."""
+        originals = expected = [
+            [
+                '# txt += "\ndiff=%s" % mask.sum()',
+                '# txt += "\n%s" % val1[mask]',
+                '# txt += "\n%s" % val2[mask]',
+            ],
+            ['# txt += "\ndiff=%s" % mask.sum()'],
+            [
+                "# if False:",
+                "#     eff_level = root_logger.getEffectiveLevel()",
+                "#     print(",
+                '#         "effective level= %s (%s)"',
+                "#         % (eff_level, logging.getLevelName(eff_level))",
+                "#     )",
+                "# if False:",
+                "#     # dassert_eq(root_logger.getEffectiveLevel(), verbosity)",
+                "#     for handler in root_logger.handlers:",
+                "#         handler.setLevel(verbosity)",
+            ],
+        ]
+
+        for o, e in zip(originals, expected):
+            result = pslints._fix_comment_style(o)
+            self.assertEqual(result, e)
+
+    def test_4(self) -> None:
+        """Don't capitalize or add punctuation to urls."""
+        original = expected = [
+            ["# https://github.com/"],
+            ["# https://google.com/"],
+        ]
+        for o, e in zip(original, expected):
+            result = pslints._fix_comment_style(o)
+            self.assertEqual(result, e)
+
+
+class Test_reflow_comments(hut.TestCase):
+    def test_1(self) -> None:
+        """Test combination of too short and too long lines."""
+        original = [
+            "# Create decorated functions with different caches and store pointers of these "
+            + "functions. Note that we need to build the functions in the constructor since we",
+            "# need to have a single instance of the decorated"
+            + " functions. On the other side,",
+            "# e.g., if we created these functions in `__call__`, they will be recreated at "
+            + "every invocation, creating a new memory cache at every invocation.",
+        ]
+        expected = [
+            "# Create decorated functions with different caches and store pointers of these",
+            "# functions. Note that we need to build the functions in the constructor since we",
+            "# need to have a single instance of the decorated functions. On the other side,",
+            "# e.g., if we created these functions in `__call__`, they will be recreated at",
+            "# every invocation, creating a new memory cache at every invocation.",
+        ]
+        result = pslints._reflow_comments_in_lines(original)
+        self.assertEqual(result, expected)
