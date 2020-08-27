@@ -11,7 +11,7 @@ from typing import Any, List
 import helpers.dbg as dbg
 
 
-def is_iterable(obj):
+def is_iterable(obj: object) -> bool:
     """Return whether obj can be iterated upon or not.
 
     Note that a string is iterable in python, but typically we refer to
@@ -21,7 +21,7 @@ def is_iterable(obj):
     return not isinstance(obj, str) and isinstance(obj, abc.Iterable)
 
 
-def get_function_name(count=0):
+def get_function_name(count: int = 0) -> str:
     """Return the name of the function calling this function, i.e., the name of
     the function calling `get_function_name()`."""
     ptr = inspect.currentframe()
@@ -30,13 +30,13 @@ def get_function_name(count=0):
     count += 1
     for _ in range(count):
         dbg.dassert_is_not(ptr, None)
-        ptr = ptr.f_back
-    func_name = ptr.f_code.co_name
+        ptr = ptr.f_back  # type: ignore
+    func_name = ptr.f_code.co_name  # type: ignore
     return func_name
 
 
 # From https://github.com/bosswissam/pysize
-def get_size(obj, seen=None):
+def get_size(obj: object, seen: bool = None) -> int:
     """Recursively find size of an object `obj` in bytes."""
     size = sys.getsizeof(obj)
     if seen is None:
