@@ -1,4 +1,5 @@
 import logging
+from typing import Callable
 
 try:
     import numba
@@ -18,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 USE_NUMBA = True
 
 
-def jit(f):
+def jit(f: Callable) -> Callable:
 
     if USE_NUMBA and not numba_available:
         _LOG.warning("numba is not installed")

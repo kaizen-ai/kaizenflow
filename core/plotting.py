@@ -315,7 +315,7 @@ def plot_barplot(
 
     :param srs: pd.Series
     :param orientation: vertical or horizontal bars
-    :param annotation_mode: `pct` or `value`
+    :param annotation_mode: `pct`, `value` or None
     :param string_format: format of bar annotations
     :param top_n_to_plot: number of top N integers to plot
     :param title: title of the plot
@@ -370,21 +370,22 @@ def plot_barplot(
     # Add annotations to bars.
     # Note: annotations in both modes are taken from
     # entire series, not top N.
-    if annotation_mode == "pct":
-        annotations = srs * 100 / srs.sum()
-        string_format = string_format + "%%"
-        annotations = annotations.apply(lambda z: string_format % z)
-    elif annotation_mode == "value":
-        annotations = srs.apply(lambda z: string_format % z)
-    else:
-        raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
-    # Annotate bars.
-    for i, p in enumerate(ax.patches):
-        height = p.get_height()
-        width = p.get_width()
-        x, y = p.get_xy()
-        annotation_loc = _get_annotation_loc(x, y, height, width)
-        ax.annotate(annotations.iloc[i], annotation_loc)
+    if annotation_mode:
+        if annotation_mode == "pct":
+            annotations = srs * 100 / srs.sum()
+            string_format = string_format + "%%"
+            annotations = annotations.apply(lambda z: string_format % z)
+        elif annotation_mode == "value":
+            annotations = srs.apply(lambda z: string_format % z)
+        else:
+            raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
+        # Annotate bars.
+        for i, p in enumerate(ax.patches):
+            height = p.get_height()
+            width = p.get_width()
+            x, y = p.get_xy()
+            annotation_loc = _get_annotation_loc(x, y, height, width)
+            ax.annotate(annotations.iloc[i], annotation_loc)
     # Set X-axis label.
     if xlabel:
         ax.set(xlabel=xlabel)
