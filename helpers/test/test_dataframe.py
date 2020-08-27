@@ -164,3 +164,7 @@ class Test_compute_points_per_year_for_given_freq(hut.TestCase):
     def test6(self) -> None:
         actual = hdf.compute_points_per_year_for_given_freq("Y")
         np.testing.assert_equal(actual, 1.0)
+
+    def test7(self) -> None:
+        actual = hdf.compute_points_per_year_for_given_freq("0D")
+        np.testing.assert_equal(actual, 0.0)
