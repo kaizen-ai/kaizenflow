@@ -10,6 +10,7 @@ class FilePathGenerator:
     FREQ_PATH_MAPPING = {
         types.Frequency.Daily: "daily",
         types.Frequency.Minutely: "1min",
+        types.Frequency.Tick: "tick",
     }
 
     CONTRACT_PATH_MAPPING = {
