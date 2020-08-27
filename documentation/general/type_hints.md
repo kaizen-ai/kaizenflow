@@ -114,10 +114,10 @@ or
   test_func(arg=var)
   ```
 
-  sometimes mypy doesn't pick up the `None` check, and warns that the function
+- Sometimes `mypy` doesn't pick up the `None` check, and warns that the function
   expects a `bool` rather than an `Optional[bool]`. In that case, the solution
-  is to explicitly use`typing.cast`on the argument when passing it in, note
-  that`typing.cast` has no runtime effects and is purely for type checking.
+  is to explicitly use`typing.cast` on the argument when passing it in, note
+  that `typing.cast` has no runtime effects and is purely for type checking.
 
   Here're the relevant docs: https://mypy.readthedocs.io/en/stable/casts.html
 
