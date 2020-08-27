@@ -12,6 +12,7 @@ from core.dataflow.nodes import (
     ColumnTransformer,
     DataframeMethodRunner,
     Resample,
+    SkLearnModel,
     YConnector,
 )
 
