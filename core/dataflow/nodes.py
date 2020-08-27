@@ -19,7 +19,6 @@ import core.backtest as bcktst
 import core.data_adapters as adpt
 import core.statistics as stats
 import helpers.dbg as dbg
-
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
 
