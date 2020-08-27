@@ -3,12 +3,12 @@ from typing import Any, List, Tuple
 
 import pandas as pd
 
-from .expiry_contract_mapper import ExpiryContractMapper
-from .file_backend import FileBackend
-from .s3_backend import S3Backend
+import vendors2.kibot.metadata.load.expiry_contract_mapper as ecmapper
+import vendors2.kibot.metadata.load.s3_backend as s3be
 
 
 class KibotMetadata:
+    # pylint: disable=line-too-long
     """Generate Kibot metadata.
 
     The metadata is computed from:
@@ -36,6 +36,7 @@ class KibotMetadata:
     AD   CONTINUOUS AUSTRALIAN DOLLAR CONTRACT  9/27/2009  Chicago Mercantile Exchange (CME GLOBEX)           65.0      11.2009      11.2020          12.0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     AEX          CONTINUOUS AEX INDEX CONTRACT        NaN                                       NaN          116.0      03.2010      02.2020          12.0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     """
+    # pylint: enable=line-too-long
 
     def __init__(self) -> None:
         self.minutely_metadata = self._compute_kibot_metadata("1min")
@@ -55,20 +56,21 @@ class KibotMetadata:
 
     def get_futures(self, contract_type: str = "1min") -> List[str]:
         """Return the continuous contracts, e.g., ES, CL."""
-        return self.get_metadata(contract_type).index.tolist()
+        futures: List[str] = self.get_metadata(contract_type).index.tolist()
+        return futures
 
     @staticmethod
     def get_expiry_contracts(symbol: str) -> List[str]:
         """Return the expiry contracts corresponding to a continuous
         contract."""
-        one_min_contract_metadata = S3Backend().read_1min_contract_metadata()
+        one_min_contract_metadata = s3be.S3Backend().read_1min_contract_metadata()
         one_min_contract_metadata, _ = KibotMetadata._extract_month_year_expiry(
             one_min_contract_metadata
         )
         # Select the rows with the Symbol equal to the requested one.
         mask = one_min_contract_metadata["SymbolBase"] == symbol
         df = one_min_contract_metadata[mask]
-        contracts = df.loc[:, "Symbol"].tolist()
+        contracts: List[str] = df.loc[:, "Symbol"].tolist()
         return contracts
 
     # //////////////////////////////////////////////////////////////////////////
@@ -76,7 +78,7 @@ class KibotMetadata:
     # TODO(Julia): Replace `one_min` with `expiry` once the PR is approved.
     @staticmethod
     def _compute_kibot_metadata(contract_type: str) -> pd.DataFrame:
-        s3_backend = S3Backend()
+        s3_backend = s3be.S3Backend()
         if contract_type in ["1min", "daily"]:
             # Minutely and daily dataframes are identical except for the `Link`
             # column.
@@ -201,7 +203,7 @@ class KibotMetadata:
         # Extract SymbolBase, month, year and expiries from contract names.
         symbol_month_year = (
             one_min_contract_metadata["Symbol"]
-            .apply(ExpiryContractMapper.parse_expiry_contract)
+            .apply(ecmapper.ExpiryContractMapper.parse_expiry_contract)
             .apply(pd.Series)
         )
         symbol_month_year.columns = ["SymbolBase", "month", "year"]
@@ -290,9 +292,11 @@ class KibotMetadata:
         Annotations are provided only for commodity-related contracts.
 
         :param kibot_metadata: Kibot metadata dataframe
-        :return: Kibot metadata annotated with exchange mappings
+        kibot_to_cme_mapping = (
+            s3be.S3Backend().read_kibot_exchange_mapping()
+        )
         """
-        kibot_to_cme_mapping = FileBackend().read_kibot_exchange_mapping()
+        kibot_to_cme_mapping = s3be.S3Backend().read_kibot_exchange_mapping()
         # Add mapping columns to the dataframe.
         annotated_metadata = pd.concat(
             [kibot_metadata, kibot_to_cme_mapping], axis=1

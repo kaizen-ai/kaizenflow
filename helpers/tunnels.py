@@ -5,6 +5,7 @@ import helpers.tunnels as tnls
 
 import logging
 import os
+from typing import Dict, List
 
 import helpers.dbg as dbg
 import helpers.printing as prnt
@@ -16,7 +17,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def get_tunnel_info():
+def get_tunnel_info() -> (list, str):
     credentials = usc.get_credentials()
     #
     tunnel_info = credentials["tunnel_info"]
@@ -31,13 +32,13 @@ def get_tunnel_info():
     return tunnel_info, ssh_key_path
 
 
-def tunnel_info_to_string(tunnel_info):
+def tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
     ret = prnt.space(ret)
     return ret
 
 
-def parse_service(service):
+def parse_service(service: str) -> Dict[str, str]:
     dbg.dassert_eq(len(service), 4, "service=%s", service)
     service_name, server, local_port, remote_port = service
     return {
@@ -48,7 +49,7 @@ def parse_service(service):
     }
 
 
-def find_service(service_name, tunnel_info):
+def find_service(service_name: str, tunnel_info: list) -> str:
     ret = None
     for service in tunnel_info:
         if service_name == parse_service(service)["service_name"]:
@@ -58,7 +59,7 @@ def find_service(service_name, tunnel_info):
     return ret
 
 
-def get_server_ip(service_name):
+def get_server_ip(service_name: str):  # pylint: disable=unused-argument
     tunnel_info, _ = get_tunnel_info()
     _LOG.debug("tunnels=\n%s", tunnel_info_to_string(tunnel_info))
     service = find_service("Doc server", tunnel_info)
@@ -66,7 +67,7 @@ def get_server_ip(service_name):
     return server
 
 
-def _get_services_info():
+def _get_services_info() -> list:
     # Server ports.
     services = [
         # service name, server public IP, local port, remote port.
@@ -96,13 +97,13 @@ def _get_tunnel_info():
     return tunnel_info, ssh_key_path
 
 
-def _tunnel_info_to_string(tunnel_info):
+def _tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
     ret = prnt.space(ret)
     return ret
 
 
-def _service_to_string(service):
+def _service_to_string(service: (str, str, str, str)) -> str:
     service_name, server, local_port, remote_port = service
     ret = (
         f"tunnel for service '{service_name}'"
@@ -115,7 +116,11 @@ def _service_to_string(service):
 # #############################################################################
 
 
-def _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match):
+def _get_ssh_tunnel_process(
+        local_port: int,
+        remote_port: int,
+        fuzzy_match: bool
+) -> (List[int], str):
     """Return the pids of the processes attached to a given port."""
 
     def _keep_line(line):
@@ -130,14 +135,19 @@ def _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match):
         return keep
 
     _LOG.debug("local_port=%d -> remote_port=%d", local_port, remote_port)
-    keep_line = lambda line: _keep_line(line)
-    pids, txt = si.get_process_pids(keep_line)
+    pids, txt = si.get_process_pids(_keep_line)
     _LOG.debug("pids=%s", pids)
     _LOG.debug("txt=\n%s", txt)
     return pids, txt
 
 
-def _create_tunnel(server_name, local_port, remote_port, user_name, ssh_key_path):
+def _create_tunnel(
+        server_name: str,
+        local_port: int,
+        remote_port: int,
+        user_name: str,
+        ssh_key_path: str
+) -> None:
     """Create tunnel from localhost to 'server' for the ports `local_port ->
     remote_port` and `user_name`."""
     ssh_key_path = os.path.expanduser(ssh_key_path)
@@ -161,7 +171,7 @@ def _create_tunnel(server_name, local_port, remote_port, user_name, ssh_key_path
     dbg.dassert_lte(1, len(pids))
 
 
-def _kill_ssh_tunnel_process(local_port, remote_port):
+def _kill_ssh_tunnel_process(local_port: int, remote_port: int) -> None:
     """Kill all the processes attached to either local or remote port."""
     get_pids = lambda: _get_ssh_tunnel_process(
         local_port, remote_port, fuzzy_match=True
@@ -172,7 +182,7 @@ def _kill_ssh_tunnel_process(local_port, remote_port):
 # #############################################################################
 
 
-def start_tunnels(user_name):
+def start_tunnels(user_name: str) -> None:
     """Start all the tunnels for the given user."""
     _LOG.debug("user_name=%s", user_name)
     # Get tunnel info.
@@ -180,7 +190,7 @@ def start_tunnels(user_name):
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
     #
     for service in tunnel_info:
-        service_name, server, local_port, remote_port = service
+        _, server, local_port, remote_port = service
         pids, _ = _get_ssh_tunnel_process(
             local_port, remote_port, fuzzy_match=False
         )
@@ -195,26 +205,26 @@ def start_tunnels(user_name):
             )
 
 
-def stop_tunnels():
+def stop_tunnels() -> None:
     """Stop all the tunnels for the given user."""
     # Get the tunnel info.
     tunnel_info, _ = _get_tunnel_info()
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
     #
     for service in tunnel_info:
-        service_name, server, local_port, remote_port = service
+        _, _, local_port, remote_port = service
         _LOG.info("Stopping %s", _service_to_string(service))
         _kill_ssh_tunnel_process(local_port, remote_port)
 
 
-def check_tunnels():
+def check_tunnels() -> None:
     """Check the status of the tunnels for the given user."""
     # Get the tunnel info.
     tunnel_info, _ = _get_tunnel_info()
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
     #
     for service in tunnel_info:
-        service_name, server, local_port, remote_port = service
+        _, _, local_port, remote_port = service
         pids, _ = _get_ssh_tunnel_process(
             local_port, remote_port, fuzzy_match=False
         )
@@ -225,7 +235,7 @@ def check_tunnels():
         _LOG.info("%s -> %s", _service_to_string(service), msg)
 
 
-def kill_all_tunnel_processes():
+def kill_all_tunnel_processes() -> None:
     """Kill all the processes that have `ssh -i ...:localhost:..."."""
     # cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
     def _keep_line(line):
