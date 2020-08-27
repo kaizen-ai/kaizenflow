@@ -5,8 +5,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: percent
-#       format_version: '1.2'
-#       jupytext_version: 1.2.4
+#       format_version: '1.3'
+#       jupytext_version: 1.5.2
 #   kernelspec:
 #     display_name: Python [conda env:.conda-p1_develop] *
 #     language: python
@@ -31,6 +31,7 @@ import seaborn as sns
 import core.config as cfg
 import core.explore as exp
 import core.finance as fin
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
@@ -227,11 +228,10 @@ mode = "pct_change"
 min_rets = compute_ret_0_from_multiple_1min_prices(min_price_dict_df, mode)
 
 
-
 min_rets.head(3)
 
 # %%
-min_rets.fillna(0.0).resample("1D").sum().cumsum().plot()
+sigp.resample(min_rets.fillna(0.0), rule="1D").sum().cumsum().plot()
 
 # %% [markdown]
 # ### Resample to 1min
@@ -242,7 +242,7 @@ _LOG.info("## Before resampling")
 exp.report_zero_nan_inf_stats(min_rets)
 
 # %%
-exp.plot_non_na_cols(min_rets.resample("1D").sum())
+exp.plot_non_na_cols(sigp.resample(min_rets, rule="1D").sum())
 
 # %%
 min_rets = fin.resample_1min(min_rets, skip_weekends=False)
@@ -264,7 +264,7 @@ min_zrets.columns = [c.replace("ret_", "zret_") for c in min_zrets.columns]
 min_zrets.dropna().head(3)
 
 # %%
-min_zrets.fillna(0.0).resample("1D").sum().cumsum().plot()
+sigp.resample(min_zrets.fillna(0.0), rule="1D").sum().cumsum().plot()
 
 # %%
 annot = True
