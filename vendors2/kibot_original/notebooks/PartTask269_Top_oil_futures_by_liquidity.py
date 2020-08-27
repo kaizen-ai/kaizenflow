@@ -27,6 +27,7 @@ from matplotlib import pyplot as plt
 
 # %%
 import core.config as cfg
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as pri
@@ -240,7 +241,7 @@ tsms = lau.TimeSeriesMinuteStudy(minutely_prices[lau.KIBOT_VOL], data_name=symbo
 tsms.execute()
 
 # %%
-five_min_vol = minutely_prices[lau.KIBOT_VOL].resample("5min").sum()
+five_min_vol = sigp.resample(minutely_prices[lau.KIBOT_VOL], rule="5min").sum()
 five_min_vol.head()
 
 # %%
