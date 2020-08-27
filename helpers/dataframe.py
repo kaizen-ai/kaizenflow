@@ -188,10 +188,15 @@ def compute_points_per_year_for_given_freq(freq: str) -> float:
     :param freq: string identifier of date frequency
     :return: number of time points per year (approximate)
     """
-    # Leap years: 2012, 2016.
-    points_in_span = pd.date_range(
-        freq=freq, start="2012-01-01", end="2019-12-31"
-    ).size
-    span_in_years = 8
-    points_per_year: float = points_in_span / span_in_years
-    return points_per_year
+    # `pd.date_range` breaks for zero-period frequencies, so we need to work
+    # around that.
+    try:
+        # Leap years: 2012, 2016.
+        points_in_span = pd.date_range(
+            freq=freq, start="2012-01-01", end="2019-12-31"
+        ).size
+        span_in_years = 8
+        points_per_year: float = points_in_span / span_in_years
+        return points_per_year
+    except ZeroDivisionError:
+        return 0.0
