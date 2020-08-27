@@ -1,6 +1,13 @@
 import enum
 
 
+class AssetClass(enum.Enum):
+    Futures = "Futures"
+    ETFs = "etfs"
+    Forex = "forex"
+    Stocks = "stocks"
+
+
 class Frequency(enum.Enum):
     Minutely = "T"
     Daily = "D"
