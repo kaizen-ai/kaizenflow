@@ -965,15 +965,14 @@ class Test_check_comments(hut.TestCase):
 
 class Test_reflow_comments(hut.TestCase):
     def test_1(self) -> None:
+        """Test combination of too short and too long lines."""
         original = [
-            "# Create decorated functions with different caches and store"
-            " pointers of these functions. Note that we ",
-            "# need to build the functions in the constructor since we "
-            "need to have a single instance of the decorated",
-            "# E.g., if we created these functions in `__call__`, "
-            "they will be recreated at.  `__call__`, ",
-            "they will be recreated at every invocation, creating a "
-            "new memory cache at every invocation.",
+            "# Create decorated functions with different caches and store pointers of these functions. Note that we "
+            "need to build the functions in the constructor since we",
+            "# need to have a single instance of the decorated"
+            " functions. On the other side,",
+            "# e.g., if we created these functions in `__call__`, they will be recreated at every invocation, "
+            "creating a new memory cache at every invocation.",
         ]
         expected = [
             "# Create decorated functions with different caches and store pointers of these",
