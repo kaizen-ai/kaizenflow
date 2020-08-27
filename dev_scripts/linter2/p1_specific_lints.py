@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 r"""Perform some p1 specific lints on python files
 
-> p1_specific_lints.py -f sample_file.py
+> p1_specific_lints.py sample_file1.py sample_file2.py
 """
 import argparse
 import ast
