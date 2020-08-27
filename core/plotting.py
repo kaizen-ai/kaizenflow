@@ -301,6 +301,7 @@ def plot_barplot(
     orientation: str = "vertical",
     annotation_mode: str = "pct",
     string_format: str = "%.2f",
+    top_n_to_plot: int = None,
     title: Optional[str] = None,
     xlabel: Optional[str] = None,
     unicolor: bool = False,
@@ -315,6 +316,7 @@ def plot_barplot(
     :param srs: pd.Series
     :param orientation: vertical or horizontal bars
     :param annotation_mode: `pct` or `value`
+    "param top_n_to_plot: number of top N integers to plot
     :param string_format: format of bar annotations
     :param title: title of the plot
     :param xlabel: label of the X axis
@@ -336,6 +338,12 @@ def plot_barplot(
 
     if figsize is None:
         figsize = FIG_SIZE
+    if top_n_to_plot is None:
+        srs_top_n = srs
+    else:
+        dbg.dassert_lte(1, top_n_to_plot)
+        srs_sorted = srs.sort_values(ascending=False)
+        srs_top_n = srs_sorted[:top_n_to_plot]
     # Choose colors.
     if unicolor:
         color = sns.color_palette("muted")[0]
@@ -350,7 +358,7 @@ def plot_barplot(
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
     ax = ax or plt.gca()
-    srs.plot(
+    srs_top_n.plot(
         kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
     )
     # Add annotations to bars.
