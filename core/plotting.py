@@ -301,7 +301,7 @@ def plot_barplot(
     orientation: str = "vertical",
     annotation_mode: str = "pct",
     string_format: str = "%.2f",
-    top_n_to_plot: int = Optional[None],
+    top_n_to_plot: Optional[int] = None,
     title: Optional[str] = None,
     xlabel: Optional[str] = None,
     unicolor: bool = False,
