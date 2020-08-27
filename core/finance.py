@@ -373,9 +373,7 @@ def compute_turnover(
     denominator = (pos.abs() + pos.shift().abs()) / 2
     if unit:
         numerator = sigp.resample(numerator, rule=unit).sum()
-        denominator = denominator.resample(
-            unit, closed="right", label="right"
-        ).sum()
+        denominator = sigp.resample(denominator, rule=unit).sum()
     turnover = numerator / denominator
     # Raise if we upsample.
     if len(turnover) > len(pos):
