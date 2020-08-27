@@ -301,7 +301,7 @@ def process_test_pnl(config, result_bundle, report_stats=True):
     txt += "\n\n" + str(config)
     #
     if report_stats:
-        ax = sigp.resample(pnl_rets, rule="1B").sum().plot()
+        ax = sigp.resample(pnl_rets, rule="1B").sum().cumsum().plot()
         ax.text(
             0.05,
             0.6,
