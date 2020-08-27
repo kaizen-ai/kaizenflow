@@ -897,7 +897,6 @@ class Test_correct_method_order(hut.TestCase):
             self.assertEqual(expected, result)
 
 
-@pytest.mark.skip("Disabled because of AmpTask543")
 class Test_check_comments(hut.TestCase):
     def test_1(self) -> None:
         """Don't capitalize or add punctuation mid-sentence."""
@@ -964,7 +963,6 @@ class Test_check_comments(hut.TestCase):
             self.assertEqual(result, e)
 
 
-@pytest.mark.skip("Disabled because of AmpTask543")
 class Test_reflow_comments(hut.TestCase):
     def test_1(self) -> None:
         original = [
