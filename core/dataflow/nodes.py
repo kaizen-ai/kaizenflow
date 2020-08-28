@@ -20,6 +20,7 @@ import core.data_adapters as adpt
 import core.signal_processing as sigp
 import core.statistics as stats
 import helpers.dbg as dbg
+
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
 
@@ -567,7 +568,7 @@ class Resample(Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        resampler = sigp.resample(df, rule=self._rule, closed="left")
+        resampler = sigp.resample(df, rule=self._rule)
         df = getattr(resampler, self._agg_func)()
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
