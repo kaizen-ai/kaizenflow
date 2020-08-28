@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, List, Tuple
 
 import boto3
+import botocore
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -66,6 +67,35 @@ def get_fsx_root_path() -> str:
 
 
 # #############################################################################
+
+
+# def exists(file_path: str) -> bool:
+#     """Check whether a file path exists on S3."""
+#     dbg.dassert(file_path.startswith("s3://"), "Invalid file='%s'", file_path)
+#     rc = si.system("aws s3 ls " + file_path, abort_on_error=False)
+#     # If rc=0, it means that it exists.
+#     ret = not rc
+#     _LOG.debug("%s -> exists=%s", file_path, ret)
+#     return ret
+
+def exists(s3_path: str) -> bool:
+    """Check if path exists in s3.
+
+    :raise: exception if checking the s3 key fails.
+    """
+    bucket, key = parse_path(s3_path)
+
+    s3 = boto3.resource("s3")
+    try:
+        s3.Object(bucket, key).load()
+        ret = True
+    except botocore.exceptions.ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            ret = False
+        else:
+            raise e
+    _LOG.debug("'%s' exists=%s", s3_path, ret)
+    return ret
 
 
 def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
@@ -204,12 +234,3 @@ def ls(file_path: str) -> List[str]:
     #       key='kibot/All_Futures_Continuous_Contracts_daily/AC.csv.gz')
     file_names = [os.path.basename(p.key) for p in res.all()]
     return file_names
-
-
-def exists(file_path: str) -> bool:
-    """Check whether a file path exists on S3."""
-    dbg.dassert(file_path.startswith("s3://"), "Invalid file='%s'", file_path)
-    rc = si.system("aws s3 ls " + file_path, abort_on_error=False)
-    ret = not rc
-    _LOG.debug("%s -> exists=%s", file_path, ret)
-    return ret

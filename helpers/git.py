@@ -63,8 +63,9 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
 
 
 def get_client_root(super_module: bool) -> str:
-    """Return the full path of the root of the Git client. E.g.,
-    "/Users/saggese/src/.../amp".
+    """Return the full path of the root of the Git client.
+
+    E.g., `/Users/saggese/src/.../amp`.
 
     :param super_module: if True use the root of the Git _super_module,
         if we are in a submodule. Otherwise use the Git _sub_module root

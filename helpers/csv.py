@@ -153,7 +153,8 @@ def csv_mapreduce(
 def convert_csv_to_pq(
         csv_path: str, pq_path: str,
         normalizer: Union[Callable, None] = None,
-        header: Union[None, str] = None) -> None:
+        header: Union[None, str] = None,
+        compression: Optional[str] = "gzip") -> None:
     """Convert csv file to parquet file.
 
     Output of csv_mapreduce is typically headerless (to support append mode), and so
@@ -171,7 +172,7 @@ def convert_csv_to_pq(
     df = pd.read_csv(csv_path, header=header)
     if normalizer is not None:
         df = normalizer(df)
-    df.to_parquet(pq_path)
+    df.to_parquet(pq_path, compression=compression)
 
 
 # TODO(gp): Promote to io_.
