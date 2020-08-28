@@ -69,15 +69,6 @@ def get_fsx_root_path() -> str:
 # #############################################################################
 
 
-# def exists(file_path: str) -> bool:
-#     """Check whether a file path exists on S3."""
-#     dbg.dassert(file_path.startswith("s3://"), "Invalid file='%s'", file_path)
-#     rc = si.system("aws s3 ls " + file_path, abort_on_error=False)
-#     # If rc=0, it means that it exists.
-#     ret = not rc
-#     _LOG.debug("%s -> exists=%s", file_path, ret)
-#     return ret
-
 def exists(s3_path: str) -> bool:
     """Check if path exists in s3.
 

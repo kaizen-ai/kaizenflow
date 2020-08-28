@@ -11,7 +11,9 @@ import helpers.s3 as hs3
 _LOG = logging.getLogger(__name__)
 
 
-def read_csv_range(csv_path: str, from_: int, to: int, **kwargs) -> pd.DataFrame:
+def read_csv_range(
+    csv_path: str, from_: int, to: int, **kwargs: Any
+) -> pd.DataFrame:
     """Read a specified row range of a csv file and convert to a DataFrame.
 
     Assumed to have header, considered to be row 0.
@@ -34,11 +36,12 @@ def read_csv_range(csv_path: str, from_: int, to: int, **kwargs) -> pd.DataFrame
 
 
 def build_chunk(
-        csv_path: str,
-        col_name: str,
-        start: int,
-        nrows_at_a_time: int = 1000,
-        **kwargs) -> pd.DataFrame:
+    csv_path: str,
+    col_name: str,
+    start: int,
+    nrows_at_a_time: int = 1000,
+    **kwargs: Any,
+) -> pd.DataFrame:
     """Build a DataFrame from a csv subset as follows:
 
       - Names the columns using the header line (row 0)
@@ -88,8 +91,13 @@ def build_chunk(
 
 
 def find_first_matching_row(
-    csv_path: str, col_name: str, val: str, start: int = 1, nrows_at_a_time: int = 1000000, **kwargs
-) -> Union[None, int]:
+    csv_path: str,
+    col_name: str,
+    val: str,
+    start: int = 1,
+    nrows_at_a_time: int = 1000000,
+    **kwargs: Any,
+) -> int:
     """Find first row in csv where value in column `col_name` equals `val`.
 
     :param csv_path: location of csv file
@@ -113,19 +121,21 @@ def find_first_matching_row(
         curr += nrows_at_a_time
 
 
-def append(df: pd.DataFrame, path: str, index: bool = False, **kwargs) -> None:
+def append(
+    df: pd.DataFrame, path: str, index: bool = False, **kwargs: Any
+) -> None:
     with open(path, "a") as f:
         df.to_csv(f, header=False, index=index, **kwargs)
 
 
 def csv_mapreduce(
-        csv_path: str,
-        out_dir: str,
-        key_func: Callable,
-        chunk_preprocessor: Union[None, Callable],
-        chunksize: int = 1000000
+    csv_path: str,
+    out_dir: str,
+    key_func: Callable,
+    chunk_preprocessor: Union[None, Callable],
+    chunksize: int = 1000000,
 ) -> None:
-    """Map-reduce-type processing of csv
+    """Map-reduce-type processing of csv.
 
     The phases are:
       - Read the csv in chunks, loading the chunk into a DataFrame
@@ -151,10 +161,12 @@ def csv_mapreduce(
 
 
 def convert_csv_to_pq(
-        csv_path: str, pq_path: str,
-        normalizer: Union[Callable, None] = None,
-        header: Union[None, str] = None,
-        compression: Optional[str] = "gzip") -> None:
+    csv_path: str,
+    pq_path: str,
+    normalizer: Union[Callable, None] = None,
+    header: Union[None, str] = None,
+    compression: Optional[str] = "gzip",
+) -> None:
     """Convert csv file to parquet file.
 
     Output of csv_mapreduce is typically headerless (to support append mode), and so
@@ -176,7 +188,7 @@ def convert_csv_to_pq(
 
 
 # TODO(gp): Promote to io_.
-def _maybe_remove_extension(filename: str, extension: str) -> Union[str, None]:
+def _maybe_remove_extension(filename: str, extension: str) -> Optional[str]:
     """Attempt to remove `extension` from `filename`.
 
     :param filename: str filename
@@ -195,17 +207,18 @@ def _maybe_remove_extension(filename: str, extension: str) -> Union[str, None]:
         extension,
     )
     #
+    ret: Optional[str] = None
     if filename.endswith(extension):
         ret = filename[: -len(extension)]
-    else:
-        ret = None
     return ret
 
 
 def convert_csv_dir_to_pq_dir(
-        csv_dir: str, pq_dir: str,
-        normalizer: Union[None, Callable] = None,
-        header: Union[None, str] = None) -> None:
+    csv_dir: str,
+    pq_dir: str,
+    normalizer: Union[None, Callable] = None,
+    header: Union[None, str] = None,
+) -> None:
     """Apply `convert_csv_to_pq` to all files in csv_dir.
 
     :param csv_dir: directory of csv's
@@ -257,7 +270,7 @@ def convert_csv_to_dict(path_to_csv: str, remove_nans: bool) -> Dict[Any, Any]:
         # Remove NaNs from the dict.
         for key in dict_df:
             dict_df[key] = [x for x in dict_df[key] if not pd.isnull(x)]
-    return dict_df
+    return dict_df  # type: ignore
 
 
 def save_csv_as_json(
