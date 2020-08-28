@@ -4,9 +4,7 @@ from typing import Dict, Optional
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import core.signal_processing as sigp
 import helpers.dbg as dbg
-
 # TODO(go): add 'cme' package
 # import vendors2.cme.reader as cmer
 import vendors2.kibot_original.utils as kut
@@ -99,7 +97,7 @@ class _TimeSeriesStudy:
             f"{self._title_suffix}"
         )
         plt.xticks(
-            sigp.resample(self._time_series, rule="YS").sum().index,
+            self._time_series.resample("YS").sum().index,
             ha="right",
             rotation=30,
             rotation_mode="anchor",
@@ -112,7 +110,7 @@ class _TimeSeriesStudy:
         Resample yearly and then plot each year on a different plot.
         """
         # Split by year.
-        yearly_resample = sigp.resample(self._time_series, rule="Y")
+        yearly_resample = self._time_series.resample("y")
         # Create as many subplots as years.
         _, axis = plt.subplots(
             len(yearly_resample),
