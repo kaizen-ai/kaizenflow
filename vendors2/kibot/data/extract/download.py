@@ -22,10 +22,6 @@ import shutil
 import urllib.parse as urlprs
 
 import bs4
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
 import joblib
 import numpy as np
 import pandas as pd
@@ -33,6 +29,12 @@ import requests
 import requests.adapters as adapters
 import requests.packages.urllib3.util as url3ut
 import tqdm
+
+import helpers.dbg as dbg
+import helpers.io_ as io_
+import helpers.parser as prsr
+import helpers.s3 as hs3
+import helpers.system_interaction as si
 import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
@@ -161,8 +163,8 @@ class DatasetExtractor:
         self.requests_session = requests_session
         self.aws_dir = os.path.join(config.S3_PREFIX, dataset)
 
-    def delete_dataset_s3_directory(self):
-        assert 0, "Very dangerous: are you sure"
+    def delete_dataset_s3_directory(self) -> None:
+        assert 0, "Very dangerous: are you sure?"
         _LOG.warning("Deleting s3 file %s", self.aws_dir)
         cmd = "aws s3 rm --recursive %s" % self.aws_dir
         si.system(cmd)
@@ -188,9 +190,7 @@ class DatasetExtractor:
         aws_file += "%s.csv.gz" % row["Symbol"]
         # Check if S3 file exists.
         if skip_if_exists:
-            rc = si.system("aws s3 ls " + aws_file, abort_on_error=False)
-            exists = not rc
-            _LOG.debug("%s -> exists=%s", aws_file, exists)
+            exists = hs3.exists(aws_file)
             if exists:
                 _LOG.info("%s -> skip", aws_file)
                 return False
@@ -357,7 +357,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
             {"action": "adjustments", "symbol": symbol}
         )
         api_link = urlprs.urljoin(config.API_ENDPOINT, query_params)
-        return api_link
+        return api_link  # type: ignore
 
     def _download_file(
         self, link: str, local_file: str, dst_file: str, download_compressed: bool

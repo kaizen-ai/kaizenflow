@@ -3,7 +3,7 @@
 r"""
 Convert Kibot data on S3 from .csv.gz to Parquet.
 
-# Process only specific dataset:
+# Process only a specific dataset:
 > convert_csv_to_pq.py --dataset all_stocks_1min
 
 # Process several datasets:
@@ -19,7 +19,7 @@ Convert Kibot data on S3 from .csv.gz to Parquet.
 import argparse
 import logging
 import os
-from typing import Callable, List
+from typing import Any, Callable, List, Optional
 
 import joblib
 import pandas as pd
@@ -99,7 +99,7 @@ def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _get_normalizer(dataset: str) -> Callable:
+def _get_normalizer(dataset: str) -> Optional[Callable]:
     """Choose a normalizer function based on a dataset name.
 
     :param dataset: dataset name
@@ -110,7 +110,7 @@ def _get_normalizer(dataset: str) -> Callable:
         return _normalize_daily
     elif dataset.endswith("tick"):
         dbg.dfatal("Support for dataset '%s' not implemented yet")
-    _LOG.error("Unexpected dataset '%s'", dataset)
+    dbg.dfatal("Unexpected dataset '%s'", dataset)
     return None
 
 
@@ -124,7 +124,8 @@ def _convert_kibot_csv_gz_to_pq(
     dataset_source_dir: str,
     dataset_converted_dir: str,
     dataset_aws_pq_dir: str,
-) -> None:
+    skip_if_exists: bool,
+) -> bool:
     """Convert a Kibot dataset for symbol.
 
     This requires to:
@@ -137,7 +138,10 @@ def _convert_kibot_csv_gz_to_pq(
     :param dataset_source_dir: local directory to store .csv.gz files
     :param dataset_converted_dir: local directory to store .pq files
     :param dataset_aws_pq_dir: S3 dataset directory with .pq files
+    :param skip_if_exists: do not process if it exists
+    :return: True if it was processed
     """
+
     _LOG.debug("Converting %s symbol for the dataset: %s", symbol, dataset)
     normalizer = _get_normalizer(dataset)
     # Prepare the CSV file.
@@ -148,6 +152,12 @@ def _convert_kibot_csv_gz_to_pq(
     pq_filename = "%s.pq" % symbol
     pq_s3_filepath = os.path.join(dataset_aws_pq_dir, pq_filename)
     pq_filepath = os.path.join(dataset_converted_dir, pq_filename)
+    # Check if S3 file exists.
+    if skip_if_exists:
+        exists = hs3.exists(pq_s3_filepath)
+        if exists:
+            _LOG.info("%s -> skip", pq_s3_filepath)
+            return False
     #
     _LOG.debug("Downloading s3 file %s into %s", csv_s3_filepath, csv_filepath)
     cmd = "aws s3 cp %s %s" % (csv_s3_filepath, csv_filepath)
@@ -159,6 +169,7 @@ def _convert_kibot_csv_gz_to_pq(
     _LOG.debug("Uploading %s file into %s", pq_filepath, pq_s3_filepath)
     cmd = "aws s3 cp %s %s" % (pq_filepath, pq_s3_filepath)
     si.system(cmd)
+    return True
 
 
 def _compare_kibot_csv_gz_to_pq(
@@ -261,11 +272,13 @@ def _get_symbols_to_process(
             map(_extract_filename_without_extension, pq_s3_file_paths)
         )
         symbols = list(set(csv_gz_symbols).difference(set(pq_symbols)))
+    dbg.dassert_no_duplicates(symbols)
+    symbols = sorted(list(set(symbols)))
     return symbols
 
 
 def _process_over_dataset(
-    fn: Callable, symbols: List[str], serial: bool, **kwargs
+    fn: Callable, symbols: List[str], serial: bool, **kwargs: Any
 ) -> None:
     """Process in parallel each symbol in the list.
 
@@ -274,7 +287,7 @@ def _process_over_dataset(
     :param serial: whether to run sequentially
     :param kwargs: other arguments to pass to fn
     """
-    tqdm_ = tqdm.tqdm(symbols, total=len(symbols))
+    tqdm_ = tqdm.tqdm(symbols, desc="Process symbol", total=len(symbols))
     if serial:
         for symbol in tqdm_:
             fn(symbol=symbol, **kwargs)
@@ -317,6 +330,9 @@ def _parse() -> argparse.ArgumentParser:
         help="Do not skip if it exists on S3",
     )
     parser.add_argument(
+        "--skip_compare", action="store_true", help="Skip compare step",
+    )
+    parser.add_argument(
         "--delete_s3_dir",
         action="store_true",
         help="Delete the S3 dir before starting uploading (dangerous)",
@@ -328,7 +344,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # dbg.shutup_chatty_modules()
+    dbg.shutup_chatty_modules()
     # Create dirs.
     incremental = not args.no_incremental
     io_.create_dir(args.tmp_dir, incremental=incremental)
@@ -357,7 +373,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         "datasets=%d %s", len(datasets_to_proceed), ", ".join(datasets_to_proceed)
     )
     # Process a dataset.
-    for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
+    for dataset in tqdm.tqdm(datasets_to_proceed, desc="Process dataset"):
         # Create dataset dirs.
         dataset_source_dir = os.path.join(source_dir, dataset)
         io_.create_dir(dataset_source_dir, incremental=incremental)
@@ -366,17 +382,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Define S3 dirs.
         dataset_aws_csv_gz_dir = os.path.join(aws_csv_dir, dataset)
         dataset_aws_pq_dir = os.path.join(aws_pq_dir, dataset)
-        _LOG.debug(
-            "Determining a list of symbols to process for the dataset: %s",
+        _LOG.info(
+            "Determining a list of symbols to process for the dataset '%s'",
             dataset,
         )
         # Get the symbols.
         symbols = _get_symbols_to_process(
             args.no_skip_if_exists, dataset_aws_csv_gz_dir, dataset_aws_pq_dir
         )
-        _LOG.debug("Found %d symbols", len(symbols))
+        _LOG.info("Found %d symbols", len(symbols))
         #
-        _LOG.debug("Convert files for the dataset: %s", dataset)
+        _LOG.debug("Convert files for the dataset '%s'", dataset)
         _process_over_dataset(
             _convert_kibot_csv_gz_to_pq,
             symbols,
@@ -386,19 +402,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
             dataset_source_dir=dataset_source_dir,
             dataset_converted_dir=dataset_converted_dir,
             dataset_aws_pq_dir=dataset_aws_pq_dir,
+            skip_if_exists=not args.no_skip_if_exists,
         )
         #
-        _LOG.debug("Checking files for the dataset: %s", dataset)
-        _process_over_dataset(
-            _compare_kibot_csv_gz_to_pq,
-            symbols,
-            args.serial,
-            dataset=dataset,
-            dataset_aws_csv_gz_dir=dataset_aws_csv_gz_dir,
-            dataset_source_dir=dataset_source_dir,
-            dataset_converted_dir=dataset_converted_dir,
-            dataset_aws_pq_dir=dataset_aws_pq_dir,
-        )
+        if args.skip_compare:
+            _LOG.debug("Checking files for the dataset '%s'", dataset)
+            _process_over_dataset(
+                _compare_kibot_csv_gz_to_pq,
+                symbols,
+                args.serial,
+                dataset=dataset,
+                dataset_aws_csv_gz_dir=dataset_aws_csv_gz_dir,
+                dataset_source_dir=dataset_source_dir,
+                dataset_converted_dir=dataset_converted_dir,
+                dataset_aws_pq_dir=dataset_aws_pq_dir,
+            )
 
 
 if __name__ == "__main__":

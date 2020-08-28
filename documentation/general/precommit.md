@@ -71,6 +71,12 @@
   > pre-commit run flake8
   ```
 
+## Pre-commit all the files modified in the current branch
+
+```bash
+> pre-commit run --files $(git diff --name-only master...)
+```
+
 ## Run hooks before of committing
 
 - If you want to see a preview of running the hooks you can run

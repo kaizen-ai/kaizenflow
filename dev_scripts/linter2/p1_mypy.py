@@ -35,7 +35,7 @@ class _Mypy(lntr.Action):
 
         :raise: RuntimeError if mypy.ini is not found
         """
-        path: str = git.find_file_in_git_tree("mypy.ini")
+        path: str = git.find_file_in_git_tree("mypy.ini", super_module=False)
         return path
 
     def check_if_possible(self) -> bool:

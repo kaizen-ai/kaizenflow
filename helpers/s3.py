@@ -192,7 +192,7 @@ def parse_path(path: str) -> Tuple[str, str]:
 # TODO(Julia): When PartTask418_PRICE_Convert_Kibot_data_from_csv is
 # merged, choose between this ls() and listdir() functions.
 def ls(file_path: str) -> List[str]:
-    """Return the file lists in `file_path`"""
+    """Return the file lists in `file_path`."""
     s3 = boto3.resource("s3")
     bucket_name, file_path = parse_path(file_path)
     _LOG.debug("bucket_name=%s, file_path=%s", bucket_name, file_path)
@@ -204,3 +204,14 @@ def ls(file_path: str) -> List[str]:
     #       key='kibot/All_Futures_Continuous_Contracts_daily/AC.csv.gz')
     file_names = [os.path.basename(p.key) for p in res.all()]
     return file_names
+
+
+def exists(file_path: str) -> bool:
+    """Check whether a file path exists on S3."""
+    dbg.dassert(
+        file_path.startswith("s3://"), "Invalid file='%s'", file_path
+    )
+    rc = si.system("aws s3 ls " + file_path, abort_on_error=False)
+    exists = not rc
+    _LOG.debug("%s -> exists=%s", file_path, exists)
+    return exists
