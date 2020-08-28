@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-r"""
-Convert Kibot data on S3 from .csv.gz to Parquet.
+r"""Converts Kibot data on S3 from .csv.gz to Parquet.
 
 # Process only a specific dataset:
 > convert_csv_to_pq.py --dataset all_stocks_1min
@@ -246,7 +245,7 @@ def _get_symbols_to_process(
     """
 
     def _extract_filename_without_extension(file_path: str) -> str:
-        """Returns only basename of the path without the .csv.gz or .pq
+        """Return only basename of the path without the .csv.gz or .pq
         extensions.
 
         :param file_path: a full path of a file

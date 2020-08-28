@@ -155,7 +155,8 @@ class DatasetExtractor:
     """Extractor of payloads for a particular dataset."""
 
     def __init__(self, dataset: str, requests_session: requests.Session):
-        """
+        """Init object.
+
         :param dataset: input dataset name to process
         :param requests_session: current requests session to preserve cookies
         """

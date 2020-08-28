@@ -1,5 +1,6 @@
-import pytest
 import tempfile
+
+import pytest
 
 import dev_scripts.linter2.p1_doc_formatter as p1docf
 import helpers.io_ as io_
