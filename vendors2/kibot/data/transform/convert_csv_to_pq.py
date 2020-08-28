@@ -103,14 +103,16 @@ def _get_normalizer(dataset: str) -> Optional[Callable]:
 
     :param dataset: dataset name
     """
+    ret = None
     if dataset.endswith("1min"):
-        return _normalize_1_min
+        ret = _normalize_1_min
     elif dataset.endswith("daily"):
-        return _normalize_daily
+        ret = _normalize_daily
     elif dataset.endswith("tick"):
         dbg.dfatal("Support for dataset '%s' not implemented yet")
-    dbg.dfatal("Unexpected dataset '%s'", dataset)
-    return None
+    else:
+        dbg.dfatal("Unexpected dataset '%s'", dataset)
+    return ret
 
 
 # #############################################################################

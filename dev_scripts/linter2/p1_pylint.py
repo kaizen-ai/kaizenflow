@@ -94,6 +94,8 @@ class _Pylint(lntr.Action):
                     # [W0603(global-statement), ] Using the global statement.
                     # - We assume that we are mature enough to use `global` properly.
                     "W0603",
+                    # [W0640(cell-var-from-loop): Cell variable  defined in loop.
+                    "W0640",
                     ## [W1113(keyword-arg-before-vararg), ] Keyword argument before variable
                     ##   positional arguments list in the definition of.
                     # - TODO(gp): Not clear what is the problem.

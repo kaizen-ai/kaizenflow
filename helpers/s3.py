@@ -210,6 +210,6 @@ def exists(file_path: str) -> bool:
     """Check whether a file path exists on S3."""
     dbg.dassert(file_path.startswith("s3://"), "Invalid file='%s'", file_path)
     rc = si.system("aws s3 ls " + file_path, abort_on_error=False)
-    exists = not rc
-    _LOG.debug("%s -> exists=%s", file_path, exists)
-    return exists
+    ret = not rc
+    _LOG.debug("%s -> exists=%s", file_path, ret)
+    return ret
