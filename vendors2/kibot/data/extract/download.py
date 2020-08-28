@@ -38,6 +38,9 @@ import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
 
+_JOBLIB_NUM_CPUS = 10
+_JOBLIB_VERBOSITY = 1
+
 # #############################################################################
 
 
@@ -527,7 +530,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
         # Run dataset downloads.
         if not args.serial:
-            joblib.Parallel(n_jobs=10, verbose=1)(
+            joblib.Parallel(n_jobs=_JOBLIB_NUM_CPUS, verbose=_JOBLIB_VERBOSITY)(
                 joblib.delayed(func)(row) for _, row in tqdm_
             )
         else:

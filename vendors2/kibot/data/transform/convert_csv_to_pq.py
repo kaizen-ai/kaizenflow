@@ -35,6 +35,9 @@ import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
 
+_JOBLIB_NUM_CPUS = 10
+_JOBLIB_VERBOSITY = 1
+
 
 # #############################################################################
 
@@ -65,13 +68,11 @@ def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
         df.drop(columns=[1], inplace=True)
         # Rename columns.
-        columns = "datetime open high low close vol".split()
-        df.columns = columns
+        df.columns = "datetime open high low close vol".split()
         df.set_index("datetime", drop=True, inplace=True)
-        _LOG.debug("Add columns")
     else:
         df.columns = df.columns.astype(str)
-        _LOG.warning("The dataframe has only one column: %s", df)
+        _LOG.warning("The dataframe has only one column:\n%s", df)
     dbg.dassert(df.index.is_monotonic_increasing)
     dbg.dassert(df.index.is_unique)
     return df
@@ -100,34 +101,68 @@ def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _get_normalizer(dataset: str) -> Optional[Callable]:
+def _get_normalizer(dataset: str) -> Callable:
     """
-    Chose a normalizer function based on a dataset name.
+    Choose a normalizer function based on a dataset name.
 
     :param dataset: dataset name
-    :return: `_normalize_1_min`, `_normalize_daily` or None
     """
     if dataset.endswith("1min"):
         return _normalize_1_min
     elif dataset.endswith("daily"):
         return _normalize_daily
     elif dataset.endswith("tick"):
-        return None
-    _LOG.error("Unexpected dataset %s", dataset)
+        dbg.dfatal("Support for dataset '%s' not implemented yet")
+    _LOG.error("Unexpected dataset '%s'", dataset)
     return None
 
 
-def _extract_filename_without_extension(file_path: str) -> str:
-    """
-    Returns only basename of the path without the .csv.gz or .pq extensions.
+# #############################################################################
 
-    :param file_path: a full path of a file
-    :return: file name without extension
+
+def _convert_kibot_csv_gz_to_pq(
+        dataset: str,
+        symbol: str,
+        dataset_aws_csv_gz_dir: str,
+        dataset_source_dir: str,
+        dataset_converted_dir: str,
+        dataset_aws_pq_dir: str,
+) -> None:
     """
-    filename = os.path.basename(file_path)
-    filename = filename.replace(".csv.gz", "")
-    filename = filename.replace(".pq", "")
-    return filename
+    Convert a Kibot dataset for symbol.
+
+    This requires to:
+    - download a single .csv.gz payload from S3 into source directory,
+    - convert it into .pq format and store into converted directory
+    - upload back to S3
+
+    :param symbol: symbol to process
+    :param dataset_aws_csv_gz_dir: S3 dataset directory with .csv.gz files
+    :param dataset_source_dir: local directory to store .csv.gz files
+    :param dataset_converted_dir: local directory to store .pq files
+    :param dataset_aws_pq_dir: S3 dataset directory with .pq files
+    """
+    _LOG.debug("Converting %s symbol for the dataset: %s", symbol, dataset)
+    normalizer = _get_normalizer(dataset)
+    # Prepare the CSV file.
+    csv_gz_filename = "%s.csv.gz" % symbol
+    csv_s3_filepath = os.path.join(dataset_aws_csv_gz_dir, csv_gz_filename)
+    csv_filepath = os.path.join(dataset_source_dir, csv_gz_filename)
+    # Prepare the PQ file.
+    pq_filename = "%s.pq" % symbol
+    pq_s3_filepath = os.path.join(dataset_aws_pq_dir, pq_filename)
+    pq_filepath = os.path.join(dataset_converted_dir, pq_filename)
+    #
+    _LOG.debug("Downloading s3 file %s into %s", csv_s3_filepath, csv_filepath)
+    cmd = "aws s3 cp %s %s" % (csv_s3_filepath, csv_filepath)
+    si.system(cmd)
+    #
+    _LOG.debug("Converting %s file into %s", csv_filepath, pq_filepath)
+    csv.convert_csv_to_pq(csv_filepath, pq_filepath, normalizer)
+    #
+    _LOG.debug("Uploading %s file into %s", pq_filepath, pq_s3_filepath)
+    cmd = "aws s3 cp %s %s" % (pq_filepath, pq_s3_filepath)
+    si.system(cmd)
 
 
 def _compare_kibot_csv_gz_to_pq(
@@ -139,32 +174,37 @@ def _compare_kibot_csv_gz_to_pq(
     dataset_aws_pq_dir: str,
 ) -> None:
     """
-    Download single .csv.gz payload from S3 into source directory,
-    convert it into .pq format, store into converted directory and upload back to S3.
+    Ensure that the converted data matches the original data.
+
+    This requires to:
+    - download a single .csv.gz payload from S3 into source directory
+    - convert it into .pq format and store it into converted directory
+    - upload back to S3.
 
     :param symbol: symbol to process
     :param dataset_aws_csv_gz_dir: S3 dataset directory with .csv.gz files
     :param dataset_source_dir: local directory to store .csv.gz files
-    :param dataset_converted_dir: S3 dataset directory with .pq files
-    :param dataset_aws_pq_dir: local directory to store .pq files
-    :return:
+    :param dataset_converted_dir: local directory to store .pq files
+    :param dataset_aws_pq_dir: S3 dataset directory with .pq files
     """
     _LOG.debug("Checking %s symbol for the dataset: %s", symbol, dataset)
     normalizer = _get_normalizer(dataset)
+    #
     csv_gz_filename = "%s.csv.gz" % symbol
-    pq_filename = "%s.pq" % symbol
     csv_s3_filepath = os.path.join(dataset_aws_csv_gz_dir, csv_gz_filename)
     csv_filepath = os.path.join(dataset_source_dir, csv_gz_filename)
+    #
+    pq_filename = "%s.pq" % symbol
     pq_s3_filepath = os.path.join(dataset_aws_pq_dir, pq_filename)
     pq_filepath = os.path.join(dataset_converted_dir, pq_filename)
-    # Ensure .pq file is downloaded.
+    # Ensure the .pq file is downloaded.
     if os.path.exists(pq_filepath):
         _LOG.debug("%s already exists", pq_filepath)
     else:
         _LOG.debug("Downloading s3 file %s into %s", pq_s3_filepath, pq_filepath)
         cmd = "aws s3 cp %s %s" % (pq_s3_filepath, pq_filepath)
         si.system(cmd)
-    # Ensure .csv.gz file is downloaded.
+    # Ensure .csv.gz file is downloaded, otherwise download it.
     if os.path.exists(csv_filepath):
         _LOG.debug("%s already exists", csv_filepath)
     else:
@@ -173,51 +213,19 @@ def _compare_kibot_csv_gz_to_pq(
         )
         cmd = "aws s3 cp %s %s" % (csv_s3_filepath, csv_filepath)
         si.system(cmd)
+    # Read the PQ file.
     pq_df = pd.read_parquet(pq_filepath)
     csv_df = pd.read_csv(csv_filepath, header=None)
     if normalizer is not None:
         csv_df = normalizer(csv_df)
+    # If there is an issue assert and report error.
     if not csv_df.equals(pq_df):
         csv_df.to_csv("csv_df.csv")
         pq_df.to_csv("pq_df.csv")
         raise ValueError("The dataframes are different: saved in files")
 
 
-def _convert_kibot_csv_gz_to_pq(
-    dataset: str,
-    symbol: str,
-    dataset_aws_csv_gz_dir: str,
-    dataset_source_dir: str,
-    dataset_converted_dir: str,
-    dataset_aws_pq_dir: str,
-) -> None:
-    """
-    Download single .csv.gz payload from S3 into source directory,
-    convert it into .pq format, store into converted directory and upload back to S3.
-
-    :param symbol: symbol to process
-    :param dataset_aws_csv_gz_dir: S3 dataset directory with .csv.gz files
-    :param dataset_source_dir: local directory to store .csv.gz files
-    :param dataset_converted_dir: S3 dataset directory with .pq files
-    :param dataset_aws_pq_dir: local directory to store .pq files
-    :return:
-    """
-    _LOG.debug("Converting %s symbol for the dataset: %s", symbol, dataset)
-    normalizer = _get_normalizer(dataset)
-    csv_gz_filename = "%s.csv.gz" % symbol
-    pq_filename = "%s.pq" % symbol
-    csv_s3_filepath = os.path.join(dataset_aws_csv_gz_dir, csv_gz_filename)
-    csv_filepath = os.path.join(dataset_source_dir, csv_gz_filename)
-    pq_s3_filepath = os.path.join(dataset_aws_pq_dir, pq_filename)
-    pq_filepath = os.path.join(dataset_converted_dir, pq_filename)
-    _LOG.debug("Downloading s3 file %s into %s", csv_s3_filepath, csv_filepath)
-    cmd = "aws s3 cp %s %s" % (csv_s3_filepath, csv_filepath)
-    si.system(cmd)
-    _LOG.debug("Converting %s file into %s", csv_filepath, pq_filepath)
-    csv.convert_csv_to_pq(csv_filepath, pq_filepath, normalizer)
-    _LOG.debug("Uploading %s file into %s", pq_filepath, pq_s3_filepath)
-    cmd = "aws s3 cp %s %s" % (pq_filepath, pq_s3_filepath)
-    si.system(cmd)
+# #############################################################################
 
 
 def _get_symbols_to_process(
@@ -229,31 +237,44 @@ def _get_symbols_to_process(
     :param no_skip_if_exists: whether to skip symbols if they already have a .pq file
     :param dataset_aws_csv_gz_dir: S3 dataset directory with .csv.gz files
     :param dataset_aws_pq_dir: S3 dataset directory with .pq files
-    :return:
+    :return: list of symbols
     """
+    def _extract_filename_without_extension(file_path: str) -> str:
+        """
+        Returns only basename of the path without the .csv.gz or .pq extensions.
+
+        :param file_path: a full path of a file
+        :return: file name without extension
+        """
+        filename = os.path.basename(file_path)
+        filename = filename.replace(".csv.gz", "")
+        filename = filename.replace(".pq", "")
+        return filename
+
+
     # List all existing csv gz files on S3.
     csv_gz_s3_file_paths = hs3.listdir(dataset_aws_csv_gz_dir)
     # Get exact list of symbols to convert.
-    csv_gz_s3_symbols = list(
+    csv_gz_symbols = list(
         map(_extract_filename_without_extension, csv_gz_s3_file_paths)
     )
     if no_skip_if_exists:
-        s3_symbols = csv_gz_s3_symbols
+        symbols = csv_gz_symbols
     else:
         # List all existing pq files on S3.
         pq_s3_file_paths = hs3.listdir(dataset_aws_pq_dir)
-        pq_s3_symbols = list(
+        pq_symbols = list(
             map(_extract_filename_without_extension, pq_s3_file_paths)
         )
-        s3_symbols = list(set(csv_gz_s3_symbols).difference(set(pq_s3_symbols)))
-    return s3_symbols
+        symbols = list(set(csv_gz_symbols).difference(set(pq_symbols)))
+    return symbols
 
 
 def _process_over_dataset(
     fn: Callable, symbols: List[str], serial: bool, **kwargs
 ) -> None:
     """
-    Run in parallel a procedure with a specific set of parameters over each symbol in the list.
+    Process in parallel each symbol in the list.
 
     :param fn: a procedure to be run for each symbol
     :param symbols: list of symbols to run fn over
@@ -265,7 +286,7 @@ def _process_over_dataset(
         for symbol in tqdm_:
             fn(symbol=symbol, **kwargs)
     else:
-        joblib.Parallel(n_jobs=10, verbose=1)(
+        joblib.Parallel(n_jobs=_JOBLIB_NUM_CPUS, verbose=_JOBLIB_VERBOSITY)(
             joblib.delayed(fn)(symbol=symbol, **kwargs) for symbol in tqdm_
         )
 
@@ -314,7 +335,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.shutup_chatty_modules()
+    #dbg.shutup_chatty_modules()
     # Create dirs.
     incremental = not args.no_incremental
     io_.create_dir(args.tmp_dir, incremental=incremental)
@@ -328,13 +349,18 @@ def _main(parser: argparse.ArgumentParser) -> None:
     io_.create_dir(converted_dir, incremental=incremental)
     # Define S3 dirs.
     aws_csv_dir = os.path.join("s3://", config.S3_PREFIX)
+    _LOG.info("aws_csv_dir=%s", aws_csv_dir)
     aws_pq_dir = os.path.join("s3://", config.S3_PREFIX, "pq")
+    _LOG.info("aws_pq_dir=%s", aws_pq_dir)
+    # Clean up S3 if needed.
     if args.delete_s3_dir:
         assert 0, "Very dangerous: are you sure?"
         _LOG.warning("Deleting s3 file %s", aws_pq_dir)
         cmd = "aws s3 rm --recursive %s" % aws_pq_dir
         si.system(cmd)
+    #
     datasets_to_proceed = args.dataset or config.DATASETS
+    _LOG.info("datasets=%d %s", len(datasets_to_proceed), ", ".join(datasets_to_proceed))
     # Process a dataset.
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
         # Create dataset dirs.
@@ -349,13 +375,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
             "Determining a list of symbols to process for the dataset: %s",
             dataset,
         )
-        s3_symbols = _get_symbols_to_process(
+        # Get the symbols.
+        symbols = _get_symbols_to_process(
             args.no_skip_if_exists, dataset_aws_csv_gz_dir, dataset_aws_pq_dir
         )
+        _LOG.debug("Found %d symbols", len(symbols))
+        #
         _LOG.debug("Convert files for the dataset: %s", dataset)
         _process_over_dataset(
             _convert_kibot_csv_gz_to_pq,
-            s3_symbols,
+            symbols,
             args.serial,
             dataset=dataset,
             dataset_aws_csv_gz_dir=dataset_aws_csv_gz_dir,
@@ -363,10 +392,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
             dataset_converted_dir=dataset_converted_dir,
             dataset_aws_pq_dir=dataset_aws_pq_dir,
         )
+        #
         _LOG.debug("Checking files for the dataset: %s", dataset)
         _process_over_dataset(
             _compare_kibot_csv_gz_to_pq,
-            s3_symbols,
+            symbols,
             args.serial,
             dataset=dataset,
             dataset_aws_csv_gz_dir=dataset_aws_csv_gz_dir,
