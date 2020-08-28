@@ -330,9 +330,7 @@ def _generate_arima_sample(
     ma: Iterable[float] = np.array([0.01]),
 ) -> np.array:
     np.random.seed(random_state)
-    return sm.tsa.arima_process.arma_generate_sample(
-        ar=ar, ma=ma, nsample=n_periods, burnin=10
-    )
+    return sm.tsa.arma_generate_sample(ar=ar, ma=ma, nsample=n_periods, burnin=10)
 
 
 def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
