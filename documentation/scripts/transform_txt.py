@@ -29,6 +29,7 @@ Perform one of several transformations on a txt file.
 #  - Add unit tests
 #  - Make functions private
 
+
 import argparse
 import logging
 import os
@@ -39,35 +40,6 @@ import helpers.dbg as dbg
 import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(gp): Factor this out.
-def _read_file(file_name):
-    """
-    Read file or stdin, returning an array of lines.
-    """
-    if file_name == "-":
-        f = sys.stdin
-    else:
-        f = open(file_name, "r")
-    # Read.
-    txt = []
-    for line in f:
-        line = line.rstrip("\n")
-        txt.append(line)
-    f.close()
-    return txt
-
-
-def _write_file(file_name, txt):
-    if file_name == "-":
-        print("\n".join(txt))
-    else:
-        with open(file_name, "w") as f:
-            f.write("\n".join(txt))
-
-
-# #############################################################################
 
 
 def skip_comments(line, skip_block):
@@ -95,7 +67,7 @@ def skip_comments(line, skip_block):
 
 def table_of_content(file_name, max_lev):
     skip_block = False
-    txt = _read_file(file_name)
+    txt = prsr.read_file(file_name)
     for l in txt:
         # Skip comments.
         skip_this_line, skip_block = skip_comments(l, skip_block)
@@ -105,10 +77,10 @@ def table_of_content(file_name, max_lev):
         for i in range(1, max_lev + 1):
             if l.startswith("#" * i + " "):
                 if (
-                    ("#########" not in l)
-                    and ("///////" not in l)
-                    and ("-------" not in l)
-                    and ("======" not in l)
+                        ("#########" not in l)
+                        and ("///////" not in l)
+                        and ("-------" not in l)
+                        and ("======" not in l)
                 ):
                     if i == 1:
                         print()
@@ -117,7 +89,7 @@ def table_of_content(file_name, max_lev):
 
 
 def format_text(in_file_name, out_file_name, max_lev):
-    txt = _read_file(in_file_name)
+    txt = prsr.read_file(in_file_name)
     #
     for line in txt:
         m = re.search("max_level=(\d+)", line)
@@ -131,10 +103,10 @@ def format_text(in_file_name, out_file_name, max_lev):
     for l in txt:
         # Keep the comments.
         if not (
-            re.match("#+ ####+", l)
-            or re.match("#+ /////+", l)
-            or re.match("#+ ------+", l)
-            or re.match("#+ ======+", l)
+                re.match("#+ ####+", l)
+                or re.match("#+ /////+", l)
+                or re.match("#+ ------+", l)
+                or re.match("#+ ======+", l)
         ):
             txt_tmp.append(l)
     txt = txt_tmp[:]
@@ -154,7 +126,7 @@ def format_text(in_file_name, out_file_name, max_lev):
             txt_tmp.append(l)
     # TODO(gp): Remove all empty lines after a heading.
     # TODO(gp): Format title (first line capital and then small).
-    _write_file(out_file_name, txt_tmp)
+    prsr.write_file(txt_tmp, out_file_name)
 
 
 def increase_chapter(in_file_name, out_file_name):
@@ -162,7 +134,7 @@ def increase_chapter(in_file_name, out_file_name):
     Increase the level of chapters by one for text in stdin.
     """
     skip_block = False
-    txt = _read_file(in_file_name)
+    txt = prsr.read_file(in_file_name)
     #
     txt_tmp = []
     for line in txt:
@@ -177,7 +149,7 @@ def increase_chapter(in_file_name, out_file_name):
                 break
         txt_tmp.append(line)
     #
-    _write_file(out_file_name, txt_tmp)
+    prsr.write_file(txt_tmp, out_file_name)
 
 
 # #############################################################################
@@ -190,8 +162,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "-a", "--action", choices=["toc", "format", "increase"], required=True
     )
-    parser.add_argument("-i", "--in_file_name", required=True)
-    parser.add_argument("-o", "--out_file_name", required=False, default=None)
+    prsr.add_input_output_args(parser)
     parser.add_argument("-l", "--max_lev", default=5)
     prsr.add_verbosity_arg(parser)
     return parser
@@ -200,21 +171,12 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     print("cmd line: %s" % dbg.get_command_line())
-    _LOG.setLevel(args.log_level)
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     cmd = args.action
     max_lev = int(args.max_lev)
-    in_file_name = args.in_file_name
-    out_file_name = args.out_file_name
-    if out_file_name is None:
-        out_file_name = in_file_name
-    # Print label.
-    if in_file_name != "-":
-        os.system("clear")
-        print("in_file_name=", in_file_name)
-        print("out_file_name=", out_file_name)
-        print("max_lev=", max_lev)
     #
+    in_file_name, out_file_name = prsr.parse_input_output_args(args)
     if cmd == "toc":
         table_of_content(in_file_name, max_lev)
     elif cmd == "format":
@@ -227,3 +189,4 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 if __name__ == "__main__":
     _main(_parse())
+

@@ -97,7 +97,7 @@ def find_first_matching_row(
     start: int = 1,
     nrows_at_a_time: int = 1000000,
     **kwargs: Any,
-) -> int:
+) -> Optional[int]:
     """Find first row in csv where value in column `col_name` equals `val`.
 
     :param csv_path: location of csv file
@@ -119,6 +119,7 @@ def find_first_matching_row(
             idx_max = matches.idxmax()
             return curr + idx_max
         curr += nrows_at_a_time
+    return None
 
 
 def append(
