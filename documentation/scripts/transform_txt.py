@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Perform one of several transformations on a txt file.
+"""Perform one of several transformations on a txt file.
 
 - The input or output can be filename or stdin (represented by '-')
 - If output file is not specified then we assume that the output file is the
@@ -32,9 +31,7 @@ Perform one of several transformations on a txt file.
 
 import argparse
 import logging
-import os
 import re
-import sys
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
@@ -68,23 +65,23 @@ def skip_comments(line, skip_block):
 def table_of_content(file_name, max_lev):
     skip_block = False
     txt = prsr.read_file(file_name)
-    for l in txt:
+    for line in txt:
         # Skip comments.
-        skip_this_line, skip_block = skip_comments(l, skip_block)
+        skip_this_line, skip_block = skip_comments(line, skip_block)
         if False and skip_this_line:
             continue
         #
         for i in range(1, max_lev + 1):
-            if l.startswith("#" * i + " "):
+            if line.startswith("#" * i + " "):
                 if (
-                        ("#########" not in l)
-                        and ("///////" not in l)
-                        and ("-------" not in l)
-                        and ("======" not in l)
+                    ("#########" not in line)
+                    and ("///////" not in line)
+                    and ("-------" not in line)
+                    and ("======" not in line)
                 ):
                     if i == 1:
                         print()
-                    print("%s%s" % ("    " * (i - 1), l))
+                    print("%s%s" % ("    " * (i - 1), line))
                 break
 
 
@@ -100,39 +97,37 @@ def format_text(in_file_name, out_file_name, max_lev):
     dbg.dassert_lte(1, max_lev)
     # Remove all headings.
     txt_tmp = []
-    for l in txt:
+    for line in txt:
         # Keep the comments.
         if not (
-                re.match("#+ ####+", l)
-                or re.match("#+ /////+", l)
-                or re.match("#+ ------+", l)
-                or re.match("#+ ======+", l)
+            re.match("#+ ####+", line)
+            or re.match("#+ /////+", line)
+            or re.match("#+ ------+", line)
+            or re.match("#+ ======+", line)
         ):
-            txt_tmp.append(l)
+            txt_tmp.append(line)
     txt = txt_tmp[:]
     # Add proper heading of the correct length.
     txt_tmp = []
-    for l in txt:
+    for line in txt:
         # Keep comments.
         found = False
         for i in range(1, max_lev + 1):
-            if l.startswith("#" * i + " "):
+            if line.startswith("#" * i + " "):
                 row = "#" * i + " " + "#" * (79 - 1 - i)
                 txt_tmp.append(row)
-                txt_tmp.append(l)
+                txt_tmp.append(line)
                 txt_tmp.append(row)
                 found = True
         if not found:
-            txt_tmp.append(l)
+            txt_tmp.append(line)
     # TODO(gp): Remove all empty lines after a heading.
     # TODO(gp): Format title (first line capital and then small).
     prsr.write_file(txt_tmp, out_file_name)
 
 
 def increase_chapter(in_file_name, out_file_name):
-    """
-    Increase the level of chapters by one for text in stdin.
-    """
+    """Increase the level of chapters by one for text in stdin."""
     skip_block = False
     txt = prsr.read_file(in_file_name)
     #
@@ -189,4 +184,3 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 if __name__ == "__main__":
     _main(_parse())
-

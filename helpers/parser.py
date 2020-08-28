@@ -21,7 +21,10 @@ def add_bool_arg(
     default: bool = False,
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
-    """Add options to a parser like --xyz and --no_xyz (e.g., for --incremental)."""
+    """Add options to a parser like --xyz and --no_xyz
+
+    E.g., for `--incremental`.
+    """
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--" + name, dest=name, action="store_true", help=help_)
     group.add_argument("--no_" + name, dest=name, action="store_false")
@@ -44,9 +47,9 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 
 
 def add_action_arg(
-        parser: argparse.ArgumentParser,
-        valid_actions: List[str],
-        default_actions: List[str],
+    parser: argparse.ArgumentParser,
+    valid_actions: List[str],
+    default_actions: List[str],
 ) -> argparse.ArgumentParser:
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument(
@@ -140,14 +143,27 @@ def add_input_output_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """Add options to parse input and output file name."""
-    parser.add_argument("-i", "--in_file_name", required=True, type=str,
-                        help="Input file or `-` for stdin")
-    parser.add_argument("-o", "--out_file_name", required=False, type=str, default=None,
-        help="Output file or `-` for stdout")
+    parser.add_argument(
+        "-i",
+        "--in_file_name",
+        required=True,
+        type=str,
+        help="Input file or `-` for stdin",
+    )
+    parser.add_argument(
+        "-o",
+        "--out_file_name",
+        required=False,
+        type=str,
+        default=None,
+        help="Output file or `-` for stdout",
+    )
     return parser
 
 
-def parse_input_output_args(args: argparse.Namespace, clear_screen: bool =True) -> Tuple[str, str]:
+def parse_input_output_args(
+    args: argparse.Namespace, clear_screen: bool = True
+) -> Tuple[str, str]:
     in_file_name = args.in_file_name
     out_file_name = args.out_file_name
     if out_file_name is None:
@@ -162,9 +178,7 @@ def parse_input_output_args(args: argparse.Namespace, clear_screen: bool =True) 
 
 
 def read_file(file_name: str) -> List[str]:
-    """
-    Read file or stdin (represented by `-`), returning an array of lines.
-    """
+    """Read file or stdin (represented by `-`), returning an array of lines."""
     if file_name == "-":
         f = sys.stdin
     else:
@@ -179,9 +193,7 @@ def read_file(file_name: str) -> List[str]:
 
 
 def write_file(txt: List[str], file_name: str) -> None:
-    """
-    Write txt in a file or stdin (represented by `-`).
-    """
+    """Write txt in a file or stdin (represented by `-`)."""
     if file_name == "-":
         print("\n".join(txt))
     else:
