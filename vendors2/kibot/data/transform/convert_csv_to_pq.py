@@ -19,7 +19,7 @@ Convert Kibot data on S3 from .csv.gz to Parquet.
 import argparse
 import logging
 import os
-from typing import Callable, List, Optional
+from typing import Callable, List
 
 import joblib
 import pandas as pd
@@ -44,8 +44,7 @@ _JOBLIB_VERBOSITY = 1
 
 # TODO(gp): Call the column datetime_ET suffix.
 def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Convert a df with 1 min Kibot data into our internal format.
+    """Convert a df with 1 min Kibot data into our internal format.
 
     - Combine the first two columns into a datetime index
     - Add column names
@@ -79,8 +78,7 @@ def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Convert a df with daily Kibot data into our internal format.
+    """Convert a df with daily Kibot data into our internal format.
 
     - Convert the first column to datetime and set is as index
     - Add column names
@@ -102,8 +100,7 @@ def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _get_normalizer(dataset: str) -> Callable:
-    """
-    Choose a normalizer function based on a dataset name.
+    """Choose a normalizer function based on a dataset name.
 
     :param dataset: dataset name
     """
@@ -121,15 +118,14 @@ def _get_normalizer(dataset: str) -> Callable:
 
 
 def _convert_kibot_csv_gz_to_pq(
-        dataset: str,
-        symbol: str,
-        dataset_aws_csv_gz_dir: str,
-        dataset_source_dir: str,
-        dataset_converted_dir: str,
-        dataset_aws_pq_dir: str,
+    dataset: str,
+    symbol: str,
+    dataset_aws_csv_gz_dir: str,
+    dataset_source_dir: str,
+    dataset_converted_dir: str,
+    dataset_aws_pq_dir: str,
 ) -> None:
-    """
-    Convert a Kibot dataset for symbol.
+    """Convert a Kibot dataset for symbol.
 
     This requires to:
     - download a single .csv.gz payload from S3 into source directory,
@@ -173,8 +169,7 @@ def _compare_kibot_csv_gz_to_pq(
     dataset_converted_dir: str,
     dataset_aws_pq_dir: str,
 ) -> None:
-    """
-    Ensure that the converted data matches the original data.
+    """Ensure that the converted data matches the original data.
 
     This requires to:
     - download a single .csv.gz payload from S3 into source directory
@@ -231,17 +226,17 @@ def _compare_kibot_csv_gz_to_pq(
 def _get_symbols_to_process(
     no_skip_if_exists: bool, dataset_aws_csv_gz_dir: str, dataset_aws_pq_dir: str
 ) -> List[str]:
-    """
-    Get a list of symbols that need a .pq file on S3.
+    """Get a list of symbols that need a .pq file on S3.
 
     :param no_skip_if_exists: whether to skip symbols if they already have a .pq file
     :param dataset_aws_csv_gz_dir: S3 dataset directory with .csv.gz files
     :param dataset_aws_pq_dir: S3 dataset directory with .pq files
     :return: list of symbols
     """
+
     def _extract_filename_without_extension(file_path: str) -> str:
-        """
-        Returns only basename of the path without the .csv.gz or .pq extensions.
+        """Returns only basename of the path without the .csv.gz or .pq
+        extensions.
 
         :param file_path: a full path of a file
         :return: file name without extension
@@ -250,7 +245,6 @@ def _get_symbols_to_process(
         filename = filename.replace(".csv.gz", "")
         filename = filename.replace(".pq", "")
         return filename
-
 
     # List all existing csv gz files on S3.
     csv_gz_s3_file_paths = hs3.listdir(dataset_aws_csv_gz_dir)
@@ -273,8 +267,7 @@ def _get_symbols_to_process(
 def _process_over_dataset(
     fn: Callable, symbols: List[str], serial: bool, **kwargs
 ) -> None:
-    """
-    Process in parallel each symbol in the list.
+    """Process in parallel each symbol in the list.
 
     :param fn: a procedure to be run for each symbol
     :param symbols: list of symbols to run fn over
@@ -335,7 +328,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    #dbg.shutup_chatty_modules()
+    # dbg.shutup_chatty_modules()
     # Create dirs.
     incremental = not args.no_incremental
     io_.create_dir(args.tmp_dir, incremental=incremental)
@@ -360,7 +353,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         si.system(cmd)
     #
     datasets_to_proceed = args.dataset or config.DATASETS
-    _LOG.info("datasets=%d %s", len(datasets_to_proceed), ", ".join(datasets_to_proceed))
+    _LOG.info(
+        "datasets=%d %s", len(datasets_to_proceed), ", ".join(datasets_to_proceed)
+    )
     # Process a dataset.
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
         # Create dataset dirs.

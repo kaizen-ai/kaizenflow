@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-Download data from kibot.com, compress each file, upload it to S3.
+"""Download data from kibot.com, compress each file, upload it to S3.
 
 # Process only specific dataset:
 > download.py --dataset all_stocks_1min
@@ -50,8 +49,7 @@ def _log_in(
     password: str,
     requests_session: requests.Session,
 ) -> bool:
-    """
-    Make a login request to my account page and return the result.
+    """Make a login request to my account page and return the result.
 
     :param page_url: URL to the my account page
     :param username: actual username
@@ -89,8 +87,8 @@ def _log_in(
 def _download_page(
     page_file_path: str, page_url: str, requests_session: requests.Session,
 ) -> str:
-    """
-    Download html file by URL and store under specific name in data directory.
+    """Download html file by URL and store under specific name in data
+    directory.
 
     :param page_file_path: path of the file
     :param page_url: URL from where to download
@@ -108,14 +106,11 @@ def _download_page(
 
 
 class DatasetListExtractor:
-    """
-    Extractor of the list of available datasets from Kibot.
-    """
+    """Extractor of the list of available datasets from Kibot."""
 
     @classmethod
     def extract_dataset_links(cls, src_file: str) -> pd.DataFrame:
-        """
-        Retrieve a table with datasets and corresponding page links.
+        """Retrieve a table with datasets and corresponding page links.
 
         :param src_file: html file with the my account page
         :return: DataFrame with dataset names and corresponding page links
@@ -138,8 +133,7 @@ class DatasetListExtractor:
 
     @staticmethod
     def _clean_dataset_name(dataset: str) -> str:
-        """
-        Clean up a dataset name for ease future reference.
+        """Clean up a dataset name for ease future reference.
 
         E.g., the dataset `1. All Stocks 1min on 9/29/2019` becomes `all_stocks_1min`.
 
@@ -156,9 +150,7 @@ class DatasetListExtractor:
 
 
 class DatasetExtractor:
-    """
-    Extractor of payloads for a particular dataset.
-    """
+    """Extractor of payloads for a particular dataset."""
 
     def __init__(self, dataset: str, requests_session: requests.Session):
         """
@@ -183,8 +175,7 @@ class DatasetExtractor:
         skip_if_exists: bool,
         clean_up_artifacts: bool,
     ) -> bool:
-        """
-        Store CSV payload for specific Symbol in S3.
+        """Store CSV payload for specific Symbol in S3.
 
         :param local_dir: local directory with the data
         :param row: series with Symbol and Link columns
@@ -222,8 +213,8 @@ class DatasetExtractor:
     def get_dataset_payloads_to_download(
         self, dataset_links_df: pd.DataFrame, source_dir: str, converted_dir: str,
     ) -> pd.DataFrame:
-        """
-        Get a DataFrame with the list of Symbols and Links to download for a dataset.
+        """Get a DataFrame with the list of Symbols and Links to download for a
+        dataset.
 
         :param dataset_links_df: DataFrame with the list to a dataset pages
         :param source_dir: directory to store source download
@@ -252,8 +243,7 @@ class DatasetExtractor:
         return dataset_df
 
     def store_dataset_csv_file(self, converted_dir: str) -> None:
-        """
-        Store dataset CSV file with Link and Symbol columns on S3.
+        """Store dataset CSV file with Link and Symbol columns on S3.
 
         :param converted_dir: directory to store converted download
         """
@@ -266,8 +256,7 @@ class DatasetExtractor:
 
     @staticmethod
     def _extract_payload_links(src_file: str) -> pd.DataFrame:
-        """
-        Extract a table from dataset html page.
+        """Extract a table from dataset html page.
 
         :param src_file: path to dataset html file page
         :return: DataFrame with the list of series with Symbol and Link columns
@@ -288,9 +277,8 @@ class DatasetExtractor:
     def _download_file(
         self, link: str, local_file: str, dst_file: str, download_compressed: bool
     ) -> None:
-        """
-        Download file from the link, store it as local_file and then gzip it as dst_file.
-        Optionally, download it already gzipped.
+        """Download file from the link, store it as local_file and then gzip it
+        as dst_file. Optionally, download it already gzipped.
 
         :param link: URL from where to download
         :param local_file: path to local .csv file
@@ -311,8 +299,8 @@ class DatasetExtractor:
 
 
 class AdjustmentsDatasetExtractor(DatasetExtractor):
-    """
-    Extractor of payloads for an adjustments dataset.
+    """Extractor of payloads for an adjustments dataset.
+
     Is a child of DatasetExtractor since requires a separate handling.
     """
 
@@ -324,8 +312,8 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
     def get_adjustments_to_download(
         self, source_dir: str, converted_dir: str,
     ) -> pd.DataFrame:
-        """
-        Get a DataFrame with the list of Symbols and Links to download for a dataset.
+        """Get a DataFrame with the list of Symbols and Links to download for a
+        dataset.
 
         :param source_dir: directory to store source download
         :param converted_dir: directory to store converted download
@@ -359,8 +347,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 
     @staticmethod
     def _get_adjustments_payload_link(symbol: str) -> str:
-        """
-        Get the link to download adjustment data for a symbol.
+        """Get the link to download adjustment data for a symbol.
 
         :param symbol: symbol of the adjustment payload
         :return: a link to download
