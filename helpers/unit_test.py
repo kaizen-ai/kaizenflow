@@ -138,19 +138,61 @@ def convert_info_to_string(info: Mapping) -> str:
 
 
 def convert_df_to_json_string(
-    df: pd.DataFrame, n_head: Optional[int] = 10, n_tail: Optional[int] = 10
+    df: pd.DataFrame,
+    n_head: Optional[int] = 10,
+    n_tail: Optional[int] = 10,
+    sort_kg_columns=False,
 ) -> str:
-    """Convert dataframe to pretty-printed json string.
+    """
+    Convert dataframe to pretty-printed json string.
 
     To select all rows of the dataframe, pass `n_head` as None.
 
     :param df: dataframe to convert
     :param n_head: number of printed top rows
     :param n_tail: number of printed bottom rows
+    :param sort_kg_columns: if true sort the KG columns in a traditional order
     :return: dataframe converted to JSON string
     """
     # Append shape of the initial dataframe.
     shape = "original shape=%s" % (df.shape,)
+    # Create columns order.
+    if sort_kg_columns:
+        cols = [
+            "Name",
+            "Frequency",
+            "Country",
+            "Unit",
+            "Start Date",
+            "End Date",
+            "Commodity",
+            "Contracts",
+            "Business Category",
+            "is_alive",
+            "source_code",
+            "dataset_code",
+            "series_code",
+        ]
+        if 'WIND Commodity' in df.columns:
+            # Append WIND-specific columns.
+            cols.extend(
+                [
+                    "WIND Commodity",
+                    "Update",
+                    "is_downloaded",
+                    "id_is_broken",
+                ]
+            )
+        else:
+            # Append other vendors specific columns.
+            cols.extend(
+                [
+                    "original_name",
+                    "extracted_frequency",
+                ]
+            )
+        # Change columns order.
+        df = df[cols]
     # Select head.
     if n_head is not None:
         head_df = df.head(n_head)
