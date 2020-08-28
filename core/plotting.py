@@ -1428,7 +1428,7 @@ def plot_holdings(
     scale_coeff = _choose_scaling_coefficient(unit)
     holdings = scale_coeff * holdings
     holdings.plot(linewidth=1, ax=ax, label="holdings")
-    sigp.resample(holdings, rule="M").mean().plot(
+    holdings.resample("M").mean().plot(
         linewidth=2.5, ax=ax, label="average holdings by month"
     )
     ax.axhline(
@@ -1484,7 +1484,7 @@ def plot_turnover(
     turnover = fin.compute_turnover(positions)
     turnover = scale_coeff * turnover
     turnover.plot(linewidth=1, ax=ax, label="turnover")
-    sigp.resample(turnover, rule="M").mean().plot(
+    turnover.resample("M").mean().plot(
         linewidth=2.5, ax=ax, label="average turnover by month"
     )
     ax.axhline(
