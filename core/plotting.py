@@ -1248,7 +1248,7 @@ def plot_yearly_barplot(
     :param ax: axes
     """
     scale_coeff = _choose_scaling_coefficient(unit)
-    yearly_log_returns = sigp.resample(log_rets, rule="Y").sum()
+    yearly_log_returns = log_rets.resample("Y").sum()
     yearly_pct_returns = fin.convert_log_rets_to_pct_rets(yearly_log_returns)
     yearly_returns = yearly_pct_returns * scale_coeff
     yearly_returns.index = yearly_returns.index.year
