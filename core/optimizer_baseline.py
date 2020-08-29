@@ -8,7 +8,7 @@
 # Once we have a clear interface for an optimizer, we can consider replacing
 # or refactoring these weighting functions.
 
-# TODO: Parametrize covariance / mean estimation strategies
+# TODO(*): Parametrize covariance / mean estimation strategies
 #       We want to parametrize the flow so that
 #         - We provide returns, a weighting strategy and, if applicable,
 #           - a covariance matrix estimation strategy

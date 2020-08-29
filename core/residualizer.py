@@ -67,6 +67,14 @@ class FactorComputer:
     def __init__(self) -> None:
         pass
 
+    def __call__(self, obj: pd.DataFrame, *args: int, **kwargs: Any) -> pd.Series:
+        if isinstance(obj, pd.Series):
+            df = pd.DataFrame(obj)
+        else:
+            df = obj
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        return self._execute(obj, *args, **kwargs)
+
     def fit(self) -> None:
         # TODO(gp): Implement sklearn complaint method.
         raise NotImplementedError
@@ -77,14 +85,6 @@ class FactorComputer:
 
     def get_factors(self) -> None:
         raise NotImplementedError
-
-    def __call__(self, obj: pd.DataFrame, *args: int, **kwargs: Any) -> pd.Series:
-        if isinstance(obj, pd.Series):
-            df = pd.DataFrame(obj)
-        else:
-            df = obj
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        return self._execute(obj, *args, **kwargs)
 
     def _execute(self, df: pd.DataFrame, ts: int) -> pd.Series:
         raise NotImplementedError
@@ -171,92 +171,6 @@ class PcaFactorComputer(FactorComputer):
         res = res.append(eigval_df.iloc[:, 0])
         return res
 
-    def _execute(self, df: pd.DataFrame, ts: int) -> pd.Series:
-        _LOG.debug("ts=%s", ts)
-        dbg.dassert_strictly_increasing_index(df)
-        # Compute correlation.
-        df = exp.handle_nans(df, self.nan_mode_in_data)
-        corr_df = df.corr()
-        corr_df = exp.handle_nans(corr_df, self.nan_mode_in_corr)
-        _LOG.debug("corr_df=%s", corr_df)
-        # Use the last datetime as timestamp.
-        dt = df.index.max()
-        _LOG.debug("ts=%s", dt)
-        # Compute eigenvalues and eigenvectors.
-        eigval, eigvec = np.linalg.eigh(corr_df)
-        # Sort eigenvalues, if needed.
-        if self.do_sort_eigvals:
-            _, eigval, eigvec = self.sort_eigval(eigval, eigvec)
-        _LOG.debug("eigval=\n%s\neigvec=\n%s", eigval, eigvec)
-        # Package eigenvalues.
-        eigval_df = pd.DataFrame([eigval], index=[dt])
-        eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
-        # Package eigenvectors.
-        if np.isnan(eigval_df).all().all():
-            eigvec = np.nan * eigvec
-        # TODO(gp): Make sure eigenvec are normalized.
-        eigvec_df = pd.DataFrame(eigvec, index=corr_df.columns)
-        _LOG.debug("eigvec_df=%s", eigvec_df)
-        if self.do_stabilize_eig:
-            eigval_df, eigvec_df = self._stabilize_eig(eigval_df, eigvec_df)
-        # Store results.
-        self._ts.append(ts)
-        #
-        _LOG.debug("eigval_df=%s", eigval_df)
-        self._eigval_df[ts] = eigval_df
-        #
-        _LOG.debug("eigvec_df=\n%s", eigvec_df)
-        self._eigvec_df[ts] = eigvec_df
-        if self._eig_num is None:
-            self._eig_num = eigvec_df.shape[1]
-            self._eig_comp_num = eigvec_df.shape[0]
-        # Turn results into a pd.Series.
-        res = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
-        dbg.dassert_isinstance(res, pd.Series)
-        return res
-
-    def _stabilize_eig(
-        self, eigval_df: pd.DataFrame, eigvec_df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        if not self._ts:
-            return eigval_df, eigvec_df
-        # Get previous ts.
-        prev_ts = self._ts[-1]
-        prev_eigvec_df = self._eigvec_df[prev_ts]
-        # Check if they are stable.
-        num_fails = self.are_eigenvectors_stable(prev_eigvec_df, eigvec_df)
-        if num_fails > 0:
-            _LOG.debug(
-                "Eigenvalues not stable: prev_ts=%s"
-                "\nprev_eigvec_df=\n%s"
-                "\neigvec_df=\n%s"
-                "\nnum_fails=%s",
-                prev_ts,
-                prev_eigvec_df,
-                eigvec_df,
-                num_fails,
-            )
-            col_map, _ = self._build_stable_eig_map(prev_eigvec_df, eigvec_df)
-            shuffled_eigval_df, shuffled_eigvec_df = self.shuffle_eigval_eigvec(
-                eigval_df, eigvec_df, col_map
-            )
-            # Check.
-            # TODO(gp): Use Frobenius norm compared to identity.
-            if False:
-                num_fails = self.are_eigenvectors_stable(
-                    prev_eigvec_df, shuffled_eigvec_df
-                )
-                dbg.dassert_eq(
-                    num_fails,
-                    0,
-                    "prev_eigvec_df=\n%s\n" "shuffled_eigvec_df=\n%s",
-                    prev_eigvec_df,
-                    shuffled_eigvec_df,
-                )
-            eigval_df = shuffled_eigval_df
-            eigvec_df = shuffled_eigvec_df
-        return eigval_df, eigvec_df
-
     @staticmethod
     def sort_eigval(
         eigval: np.array, eigvec: np.array
@@ -297,89 +211,6 @@ class PcaFactorComputer(FactorComputer):
         dbg.dassert_eq_all(sorted(col_map_src), exp_idxs)
         dbg.dassert_eq_all(sorted(col_map_dst), exp_idxs)
         return True
-
-    @staticmethod
-    def _build_stable_eig_map(
-        prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
-    ) -> Tuple[Dict[int, Tuple[int, np.int64]], np.array]:
-        """
-        Try to find a permutation and sign changes of the columns in
-        `prev_eigvec_df` to ensure continuity with `eigvec_df`.
-
-        :return: map column index of original eigvec to (sign, column index
-            of transformed eigvec)
-        """
-
-        def dist(v1: pd.Series, v2: pd.Series) -> np.float64:
-            # return res.PcaFactorComputer.eigvec_distance(v1, v2)
-            return 1 - cosine(v1, v2)
-
-        # Build a matrix with the distances between corresponding vectors.
-        num_cols = prev_eigvec_df.shape[1]
-        distances = np.zeros((num_cols, num_cols)) * np.nan
-        for i in range(num_cols):
-            for j in range(num_cols):
-                distances[i, j] = dist(
-                    prev_eigvec_df.iloc[:, i], eigvec_df.iloc[:, j]
-                )
-        _LOG.debug("distances=\n%s", distances)
-        # Find the row with the max abs value for each column.
-        max_abs_cos = np.argmax(np.abs(distances), axis=1)
-        _LOG.debug("max_abs_cos=%s", max_abs_cos)
-        signs = np.sign(distances[range(0, num_cols), max_abs_cos])
-        signs = list(map(int, signs))
-        _LOG.debug("signs=%s", signs)
-        # Package the results into col_map.
-        col_map = {k: (signs[k], max_abs_cos[k]) for k in range(0, num_cols)}
-        _LOG.debug("col_map=%s", col_map)
-        #
-        PcaFactorComputer.check_stabilized_eigvec(col_map, num_cols)
-        return col_map, distances
-
-    @staticmethod
-    def _build_stable_eig_map2(
-        prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
-    ) -> Tuple[Dict[int, Tuple[Optional[int], int]], None]:
-        """
-        Different implementation of `_build_stable_eig_map()`.
-        """
-
-        def eigvec_coeff(
-            v1: pd.Series, v2: pd.Series, thr: float = 1e-3
-        ) -> Optional[int]:
-            for sign in (-1, 1):
-                diff = PcaFactorComputer.eigvec_distance(v1, sign * v2)
-                _LOG.debug("v1=\n%s\nv2=\n%s\n-> diff=%s", v1, sign * v2, diff)
-                if diff < thr:
-                    return sign
-            return None
-
-        dbg.dassert_strictly_increasing_index(prev_eigvec_df)
-        dbg.dassert_strictly_increasing_index(eigvec_df)
-        # TODO(gp): This code can be sped up by:
-        # 1) keeping a running list of the v2 columns already mapped so that
-        #    we don't have to check over and over.
-        # 2) once we find a match between columns, move to the next one v1
-        # For now we just care about functionality.
-        num_cols = eigvec_df.shape[1]
-        col_map: Dict[int, Tuple[Optional[int], int]] = {}
-        for i in range(num_cols):
-            for j in range(num_cols):
-                coeff = eigvec_coeff(
-                    prev_eigvec_df.iloc[:, i], eigvec_df.iloc[:, j]
-                )
-                _LOG.debug("i=%s, j=%s, coeff=%s", i, j, coeff)
-                if coeff:
-                    _LOG.debug("i=%s -> j=%s", i, j)
-                    dbg.dassert_not_in(
-                        i, col_map, msg="i=%s col_map=%s" % (i, col_map)
-                    )
-                    col_map[i] = (coeff, j)
-        # Sanity check.
-        PcaFactorComputer.check_stabilized_eigvec(col_map, num_cols)
-        # Add dummy var to keep the same interface of _build_stable_eig_map.
-        dummy = None
-        return col_map, dummy
 
     @staticmethod
     def shuffle_eigval_eigvec(
@@ -508,6 +339,175 @@ class PcaFactorComputer(FactorComputer):
         dbg.dassert_lte(0, num_pcs_to_plot)
         dbg.dassert_lte(num_pcs_to_plot, max_pcs)
         return num_pcs_to_plot
+
+    def _execute(self, df: pd.DataFrame, ts: int) -> pd.Series:
+        _LOG.debug("ts=%s", ts)
+        dbg.dassert_strictly_increasing_index(df)
+        # Compute correlation.
+        df = exp.handle_nans(df, self.nan_mode_in_data)
+        corr_df = df.corr()
+        corr_df = exp.handle_nans(corr_df, self.nan_mode_in_corr)
+        _LOG.debug("corr_df=%s", corr_df)
+        # Use the last datetime as timestamp.
+        dt = df.index.max()
+        _LOG.debug("ts=%s", dt)
+        # Compute eigenvalues and eigenvectors.
+        eigval, eigvec = np.linalg.eigh(corr_df)
+        # Sort eigenvalues, if needed.
+        if self.do_sort_eigvals:
+            _, eigval, eigvec = self.sort_eigval(eigval, eigvec)
+        _LOG.debug("eigval=\n%s\neigvec=\n%s", eigval, eigvec)
+        # Package eigenvalues.
+        eigval_df = pd.DataFrame([eigval], index=[dt])
+        eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
+        # Package eigenvectors.
+        if np.isnan(eigval_df).all().all():
+            eigvec = np.nan * eigvec
+        # TODO(gp): Make sure eigenvec are normalized.
+        eigvec_df = pd.DataFrame(eigvec, index=corr_df.columns)
+        _LOG.debug("eigvec_df=%s", eigvec_df)
+        if self.do_stabilize_eig:
+            eigval_df, eigvec_df = self._stabilize_eig(eigval_df, eigvec_df)
+        # Store results.
+        self._ts.append(ts)
+        #
+        _LOG.debug("eigval_df=%s", eigval_df)
+        self._eigval_df[ts] = eigval_df
+        #
+        _LOG.debug("eigvec_df=\n%s", eigvec_df)
+        self._eigvec_df[ts] = eigvec_df
+        if self._eig_num is None:
+            self._eig_num = eigvec_df.shape[1]
+            self._eig_comp_num = eigvec_df.shape[0]
+        # Turn results into a pd.Series.
+        res = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
+        dbg.dassert_isinstance(res, pd.Series)
+        return res
+
+    @staticmethod
+    def _build_stable_eig_map(
+            prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
+    ) -> Tuple[Dict[int, Tuple[int, np.int64]], np.array]:
+        """
+        Try to find a permutation and sign changes of the columns in
+        `prev_eigvec_df` to ensure continuity with `eigvec_df`.
+
+        :return: map column index of original eigvec to (sign, column index
+            of transformed eigvec)
+        """
+
+        def dist(v1: pd.Series, v2: pd.Series) -> np.float64:
+            # return res.PcaFactorComputer.eigvec_distance(v1, v2)
+            return 1 - cosine(v1, v2)
+
+        # Build a matrix with the distances between corresponding vectors.
+        num_cols = prev_eigvec_df.shape[1]
+        distances = np.zeros((num_cols, num_cols)) * np.nan
+        for i in range(num_cols):
+            for j in range(num_cols):
+                distances[i, j] = dist(
+                    prev_eigvec_df.iloc[:, i], eigvec_df.iloc[:, j]
+                )
+        _LOG.debug("distances=\n%s", distances)
+        # Find the row with the max abs value for each column.
+        max_abs_cos = np.argmax(np.abs(distances), axis=1)
+        _LOG.debug("max_abs_cos=%s", max_abs_cos)
+        signs = np.sign(distances[range(0, num_cols), max_abs_cos])
+        signs = list(map(int, signs))
+        _LOG.debug("signs=%s", signs)
+        # Package the results into col_map.
+        col_map = {k: (signs[k], max_abs_cos[k]) for k in range(0, num_cols)}
+        _LOG.debug("col_map=%s", col_map)
+        #
+        PcaFactorComputer.check_stabilized_eigvec(col_map, num_cols)
+        return col_map, distances
+
+    @staticmethod
+    def _build_stable_eig_map2(
+            prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
+    ) -> Tuple[Dict[int, Tuple[Optional[int], int]], None]:
+        """
+        Different implementation of `_build_stable_eig_map()`.
+        """
+
+        def eigvec_coeff(
+                v1: pd.Series, v2: pd.Series, thr: float = 1e-3
+        ) -> Optional[int]:
+            for sign in (-1, 1):
+                diff = PcaFactorComputer.eigvec_distance(v1, sign * v2)
+                _LOG.debug("v1=\n%s\nv2=\n%s\n-> diff=%s", v1, sign * v2, diff)
+                if diff < thr:
+                    return sign
+            return None
+
+        dbg.dassert_strictly_increasing_index(prev_eigvec_df)
+        dbg.dassert_strictly_increasing_index(eigvec_df)
+        # TODO(gp): This code can be sped up by:
+        # 1) keeping a running list of the v2 columns already mapped so that
+        #    we don't have to check over and over.
+        # 2) once we find a match between columns, move to the next one v1
+        # For now we just care about functionality.
+        num_cols = eigvec_df.shape[1]
+        col_map: Dict[int, Tuple[Optional[int], int]] = {}
+        for i in range(num_cols):
+            for j in range(num_cols):
+                coeff = eigvec_coeff(
+                    prev_eigvec_df.iloc[:, i], eigvec_df.iloc[:, j]
+                )
+                _LOG.debug("i=%s, j=%s, coeff=%s", i, j, coeff)
+                if coeff:
+                    _LOG.debug("i=%s -> j=%s", i, j)
+                    dbg.dassert_not_in(
+                        i, col_map, msg="i=%s col_map=%s" % (i, col_map)
+                    )
+                    col_map[i] = (coeff, j)
+        # Sanity check.
+        PcaFactorComputer.check_stabilized_eigvec(col_map, num_cols)
+        # Add dummy var to keep the same interface of _build_stable_eig_map.
+        dummy = None
+        return col_map, dummy
+
+    def _stabilize_eig(
+            self, eigval_df: pd.DataFrame, eigvec_df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        if not self._ts:
+            return eigval_df, eigvec_df
+        # Get previous ts.
+        prev_ts = self._ts[-1]
+        prev_eigvec_df = self._eigvec_df[prev_ts]
+        # Check if they are stable.
+        num_fails = self.are_eigenvectors_stable(prev_eigvec_df, eigvec_df)
+        if num_fails > 0:
+            _LOG.debug(
+                "Eigenvalues not stable: prev_ts=%s"
+                "\nprev_eigvec_df=\n%s"
+                "\neigvec_df=\n%s"
+                "\nnum_fails=%s",
+                prev_ts,
+                prev_eigvec_df,
+                eigvec_df,
+                num_fails,
+            )
+            col_map, _ = self._build_stable_eig_map(prev_eigvec_df, eigvec_df)
+            shuffled_eigval_df, shuffled_eigvec_df = self.shuffle_eigval_eigvec(
+                eigval_df, eigvec_df, col_map
+            )
+            # Check.
+            # TODO(gp): Use Frobenius norm compared to identity.
+            if False:
+                num_fails = self.are_eigenvectors_stable(
+                    prev_eigvec_df, shuffled_eigvec_df
+                )
+                dbg.dassert_eq(
+                    num_fails,
+                    0,
+                    "prev_eigvec_df=\n%s\n" "shuffled_eigvec_df=\n%s",
+                    prev_eigvec_df,
+                    shuffled_eigvec_df,
+                )
+            eigval_df = shuffled_eigval_df
+            eigvec_df = shuffled_eigvec_df
+        return eigval_df, eigvec_df
 
 
 # #############################################################################
