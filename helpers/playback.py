@@ -10,18 +10,19 @@ import logging
 from typing import Any
 
 import jsonpickle  # type: ignore
+
 # Register the pandas handler.
-import jsonpickle.ext.pandas as jsonpickle_pd  # type: ignore
+import jsonpickle.ext.pandas as pd_ext  # type: ignore
 import pandas as pd
 
 import helpers.dbg as dbg
 
-jsonpickle_pd.register_handlers()
+pd_ext.register_handlers()
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO: Unit test and add more types.
+# TODO(*): Unit test and add more types.
 def to_python_code(obj: Any) -> str:
     """Serialize an object into a string of python code.
 
@@ -67,8 +68,8 @@ def to_python_code(obj: Any) -> str:
     return output
 
 
-# TODO: Pass the name of the unit test class.
-# TODO: Add option to generate input files instead of inlining variables.
+# TODO(*): Pass the name of the unit test class.
+# TODO(*): Add option to generate input files instead of inlining variables.
 class Playback:
     def __init__(
         self, mode: str, func_name: str, *args: Any, **kwargs: Any
@@ -102,7 +103,7 @@ class Playback:
         # To store the names of the variables, to which function parameters are
         # assigned.
         var_names = []
-        # TODO: Add boilerplate for unit test.
+        # TODO(*): Add boilerplate for unit test.
         # class TestPlaybackInputOutput1(hut.TestCase):
         #
         #     def test1(self) -> None:

@@ -15,8 +15,7 @@ import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp):
-#  Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
+# TODO(gp): Check https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
 
 # TODO(gp): Avoid "stuttering": the module is already called "git", so no need
 #  to make reference to git again.
