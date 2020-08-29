@@ -703,7 +703,8 @@ def _fix_comment_style(lines: List[str]) -> List[str]:
         lambda x: any(
             [
                 re.match(
-                    r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
+                    r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\."
+                    r"[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
                     word,
                 )
                 is not None
@@ -721,6 +722,8 @@ def _fix_comment_style(lines: List[str]) -> List[str]:
         if any([check(comment.multi_line_comment[0]) for check in checks]):
             continue
         match = _parse_comment(comment.multi_line_comment[0], r"(^\s*)#(\s*)(.*)")
+        if not match:
+            continue
         without_pound = match.group(3)
         # Make sure it doesn't try to capitalize an empty comment
         if without_pound and not without_pound[0].isupper():
