@@ -4,6 +4,7 @@ r"""Perform some p1 specific lints on python files
 > p1_specific_lints.py -f sample_file.py
 """
 import argparse
+import ast
 import dataclasses
 import enum
 import io
@@ -211,6 +212,10 @@ class LinesWithComment:
     start_line: int
     end_line: int
     multi_line_comment: List[str]
+
+    @property
+    def is_single_line(self):
+        return len(self.multi_line_comment) == 1
 
 
 # the key is the line number, the value is the comment.
@@ -666,38 +671,59 @@ def _modify_file_lines(lines: List[str]) -> List[str]:
 # #############################################################################
 
 
-def _fix_comment_style(line: str) -> str:
+def _is_valid_python_statement(comments: List[str]):
+    joined = '\n'.join(comments)
+    try:
+        ast.parse(joined)
+    except SyntaxError:
+        return False
+    return True
+
+
+def _capitalize(comment: str) -> str:
+    return f"{comment[0:2].upper()}{comment[2::]}"
+
+
+def _fix_comment_style(lines: List[str]) -> List[str]:
     """Update comments to start with a capital letter and end with a `.`
 
     ignores:
     - empty line comments
     - comments that start with '##'
-
-    :param line: text line
-    :return: modified line
+    - pylint & mypy comments
+    - valid python statements
     """
-    excluded_prefixes = (
-        # Ignore comments that start with '##'
-        "#",
-        # Ignore special comments.
-        "pylint",
-        "type",
+    checks = (
+        lambda x: x.startswith("##"),
+        lambda x: x.startswith("# pylint"),
+        lambda x: x.startswith("# type"),
+        lambda x: x.startswith("#!"),
+        lambda x: len(x.split()) == 2 and x.startswith('# '),
+        lambda x: any([
+            re.match(r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
+                     word) is not None for word in x.split()])
     )
 
-    new_line = line
-    match = _parse_comment(line=line, regex=r"(^\s*)#(\s*)(.*)")
-    if match:
-        comment = match.group(3)
-        if comment and not any(
-            [comment.startswith(prefix) for prefix in excluded_prefixes]
-        ):
-            # Capitalize the first letter.
-            comment = comment[0].capitalize() + comment[1:]
-            # Make sure it ends with a . if it doesn't end with punctuation.
-            if comment[-1] not in string.punctuation:
-                comment += "."
-            new_line = f"{match.group(1)}#{match.group(2)}{comment}"
-    return new_line
+    comments: List[LinesWithComment] = _extract_comments(lines)
+
+    for comment in comments:
+        if not comment.is_single_line:
+            continue
+        # If any of the checks returns True, it means the check failed.
+        if any([check(comment.multi_line_comment[0]) for check in checks]):
+            continue
+        match = _parse_comment(comment.multi_line_comment[0], r"(^\s*)#(\s*)(.*)")
+        without_pound = match.group(3)
+        # Make sure it doesn't try to capitalize an empty comment
+        if without_pound and not without_pound[0].isupper():
+            without_pound = without_pound.capitalize()
+        # Rebuild the comment and add punctuation if not already present
+        body = f"{match.group(1)}#{match.group(2)}{without_pound}"
+        if body[-1] not in string.punctuation:
+            body = f"{body}."
+        comment.multi_line_comment[0] = body
+
+    return _replace_comments_in_lines(lines, comments)
 
 
 def _format_separating_line(
