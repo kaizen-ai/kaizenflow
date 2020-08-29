@@ -120,8 +120,7 @@ def _loop(
         if abort_on_error:
             _LOG.error(str(e))
             raise e
-        else:
-            df_tmp = _build_empty_df(metadata)
+        df_tmp = _build_empty_df(metadata)
     # Make sure result is well-formed.
     is_series = isinstance(df_tmp, pd.Series)
     if is_series:
@@ -232,9 +231,9 @@ def df_rolling_apply(
         else:
             # Assemble result into a df.
             res_df = pd.concat(idx_to_df)
-        res = res_df
+        result = res_df
         if timestamps is not None:
             dbg.dassert_eq_all(res_df.index, idxs)
     else:
-        res = idx_to_df
-    return res
+        result = idx_to_df
+    return result

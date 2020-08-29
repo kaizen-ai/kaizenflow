@@ -527,7 +527,7 @@ def plot_autocorrelation(
     nan_mode: str = "conservative",
     fft: bool = False,
     title_prefix: Optional[str] = None,
-    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
+    axes: Optional[List[mpl.axes.Axes]] = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -536,6 +536,8 @@ def plot_autocorrelation(
     https://www.statsmodels.org/stable/_modules/statsmodels/graphics/tsaplots.html#plot_acf
     https://www.statsmodels.org/stable/_modules/statsmodels/tsa/stattools.html#acf
     """
+    if axes is None:
+        axes = [[None, None]]
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
     nrows = len(signal.columns)
@@ -567,7 +569,7 @@ def plot_spectrum(
     signal: Union[pd.Series, pd.DataFrame],
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
-    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
+    axes: Optional[List[mpl.axes.Axes]] = None
 ) -> None:
     """
     Plot power spectral density and spectrogram of columns.
@@ -580,6 +582,8 @@ def plot_spectrum(
         "Spectrograms can be used as a way of visualizing the change of a
          nonstationary signal's frequency content over time."
     """
+    if axes is None:
+        axes = [[None, None]]
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
     if title_prefix is None:
@@ -944,7 +948,7 @@ def plot_confusion_heatmap(
     )
     if return_results:
         return df_out, df_out_percentage
-
+    return None
 
 def multipletests_plot(
     pvals: pd.Series,
@@ -1339,7 +1343,7 @@ def plot_pnl(
     if empty_srs:
         _LOG.warning(
             "Empty input series were dropped: '%s'",
-            ", ".join(empty_srs.astype(str)),
+            ", ".join([str(x) for x in empty_srs]),
         )
     df_plot = pd.concat(pnls_notna, axis=1)
     # Compute sharpe ratio for every time series.
@@ -1586,7 +1590,7 @@ def plot_rolling_beta(
     # Calculate and plot rolling beta.
     model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res_rolling = model_rolling.fit()
-    beta_rolling = res_rolling.params[benchmark_name]
+    beta_rolling = res_rolling.params[benchmark_name]  # pylint: disable=unsubscriptable-object
     # Return NaN periods to the rolling beta series for the plot.
     beta_rolling = beta_rolling.reindex(common_index)
     beta_rolling.plot(
@@ -1638,14 +1642,14 @@ def plot_sharpe_ratio_panel(
         if freq_points_per_year > input_freq_points_per_year:
             _LOG.warning(
                 "Upsampling from input freq='%s' to freq='%s' is blocked"
-                % (srs_freq, freq)
+                , srs_freq, freq
             )
             continue
         resampled_log_rets = sigp.resample(log_rets, rule=freq).sum()
         if len(resampled_log_rets) == 1:
             _LOG.warning(
                 "Resampling to freq='%s' is blocked because resampled series has only 1 observation"
-                % freq
+                , freq
             )
             continue
         sr = stats.compute_annualized_sharpe_ratio(resampled_log_rets)
@@ -1715,3 +1719,4 @@ def _maybe_add_events(
         ax.axvline(
             x=pd.Timestamp(event[0]), label=event[1], color=color, linestyle="--",
         )
+    return None
