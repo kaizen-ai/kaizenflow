@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-Download data from kibot.com, compress each file, upload it to S3.
+"""Download data from kibot.com, compress each file, upload it to S3.
 
 # Start from scratch and process all datasets
 > futures_1mins/kibot_download.py --delete_s3_dir
@@ -66,8 +65,7 @@ def _log_in(
     password: str,
     requests_session: requests.Session,
 ) -> bool:
-    """
-    Make a login request to my account page and return the result.
+    """Make a login request to my account page and return the result.
 
     :param page_url: URL to the my account page
     :param username: actual username
@@ -105,8 +103,8 @@ def _log_in(
 def _download_page(
     page_file_path: str, page_url: str, requests_session: requests.Session,
 ) -> str:
-    """
-    Download html file by URL and store under specific name in data directory.
+    """Download html file by URL and store under specific name in data
+    directory.
 
     :param page_file_path: path of the file
     :param page_url: URL from where to download
@@ -123,9 +121,8 @@ def _download_page(
 
 
 def _clean_dataset_name(dataset: str) -> str:
-    """
-    Clean up a dataset name for ease future reference.
-    E.g., the dataset `1. All Stocks 1min on 9/29/2019` becomes `all_stocks_1min`.
+    """Clean up a dataset name for ease future reference. E.g., the dataset `1.
+    All Stocks 1min on 9/29/2019` becomes `all_stocks_1min`.
 
     :param dataset: input dataset name to process
     :return: cleaned dataset name
@@ -139,8 +136,7 @@ def _clean_dataset_name(dataset: str) -> str:
 
 
 def _extract_dataset_links(src_file: str) -> pd.DataFrame:
-    """
-    Retrieve a table with datasets and corresponding page links.
+    """Retrieve a table with datasets and corresponding page links.
 
     :param src_file: html file with the my account page
     :return: DataFrame with dataset names and corresponding page links
@@ -163,8 +159,7 @@ def _extract_dataset_links(src_file: str) -> pd.DataFrame:
 
 
 def _extract_payload_links(src_file: str) -> pd.DataFrame:
-    """
-    Extract a table from dataset html page.
+    """Extract a table from dataset html page.
 
     :param src_file: path to dataset html file page
     :return: DataFrame with the list of series with Symbol and Link columns
@@ -193,8 +188,7 @@ def _extract_payload_links(src_file: str) -> pd.DataFrame:
 
 
 def _download_payload_page(local_dir: str, aws_dir: str, row: pd.Series) -> bool:
-    """
-    Store CSV payload for specific Symbol in S3.
+    """Store CSV payload for specific Symbol in S3.
 
     :param local_dir: local directory with the data
     :param aws_dir: remove directory on S3 server
@@ -236,12 +230,12 @@ def _download_payload_page(local_dir: str, aws_dir: str, row: pd.Series) -> bool
 class PasswordPrompter:
     DEFAULT = "Prompt if not specified"
 
-    def __init__(self, value):
+    def __init__(self, value: str) -> None:
         if value == self.DEFAULT:
             value = getpass.getpass("Password: ")
         self.value = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
@@ -309,9 +303,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.warning("Missing %s: downloading it", my_account_file)
         _download_page(my_account_file, _KIBOT_MY_ACCOUNT, requests_session)
     # Parse and convert my account page.
-    dataset_links_csv_file = os.path.join(
-        converted_dir, "dataset_links.csv"
-    )
+    dataset_links_csv_file = os.path.join(converted_dir, "dataset_links.csv")
     _LOG.warning("Parsing %s", my_account_file)
     dataset_links_df = _extract_dataset_links(
         os.path.join(source_dir, "my_account.html")
@@ -345,9 +337,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Download data.
         if not args.serial:
             joblib.Parallel(n_jobs=5, verbose=10)(
-                joblib.delayed(_download_payload_page)(
-                    dataset_dir, aws_dir, row
-                )
+                joblib.delayed(_download_payload_page)(dataset_dir, aws_dir, row)
                 for i, row in dataset_df.iterrows()
             )
         else:
