@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.timeseries_study as tss
 """
@@ -18,14 +17,14 @@ _LOG = logging.getLogger(__name__)
 
 
 class _TimeSeriesAnalyzer:
-    """
-    Perform basic study of time series, such as:
-        - analysis at different time frequencies by resampling
-        - plot time series for column
-            - by year
-            - by month
-            - by day of week
-            - by hour
+    """Perform basic study of time series, such as:
+
+    - analysis at different time frequencies by resampling
+    - plot time series for column
+        - by year
+        - by month
+        - by day of week
+        - by hour
     """
 
     def __init__(
@@ -58,9 +57,7 @@ class _TimeSeriesAnalyzer:
         self._disabled_methods = disabled_methods or []
 
     def plot_time_series(self):
-        """
-        Plot timeseries on its original time scale.
-        """
+        """Plot timeseries on its original time scale."""
         func_name = intr.get_function_name()
         _LOG.debug(func_name)
         if func_name in self._disabled_methods:
@@ -81,9 +78,7 @@ class _TimeSeriesAnalyzer:
         plt.show()
 
     def plot_by_year(self):
-        """
-        Resample yearly and then plot each year on a different plot.
-        """
+        """Resample yearly and then plot each year on a different plot."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -120,9 +115,7 @@ class _TimeSeriesAnalyzer:
     #  different timescales instead of doing the mean in each step
     #  (see https://en.wikipedia.org/wiki/Seasonality#Detecting_seasonality)
     def boxplot_day_of_month(self):
-        """
-        Plot the mean value of the timeseries for each day.
-        """
+        """Plot the mean value of the timeseries for each day."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -139,9 +132,7 @@ class _TimeSeriesAnalyzer:
         plt.close()
 
     def boxplot_day_of_week(self):
-        """
-        Plot the mean value of the timeseries for year.
-        """
+        """Plot the mean value of the timeseries for year."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -226,8 +217,7 @@ def map_dict_to_dataframe(
     add_prefix: bool = True,
     progress_bar: bool = True,
 ) -> pd.DataFrame:
-    """
-    Apply and combine results of specified functions on a dict of series.
+    """Apply and combine results of specified functions on a dict of series.
 
     :param dict_: dict of series to apply functions to.
     :param functions: dict with functions prefixes in keys and functions

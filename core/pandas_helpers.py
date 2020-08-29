@@ -1,6 +1,4 @@
-"""
-Package with general pandas helpers.
-"""
+"""Package with general pandas helpers."""
 
 import collections
 import logging
@@ -24,9 +22,8 @@ _LOG = logging.getLogger(__name__)
 def resample_index(
     index: pd.DatetimeIndex, time: Tuple[int, int] = None, **kwargs: Any
 ) -> pd.DatetimeIndex:
-    """
-    Resample `index` with options compatible with pd.date_range().
-    Implementation inspired by https://stackoverflow.com/questions/37853623
+    """Resample `index` with options compatible with pd.date_range().
+    Implementation inspired by https://stackoverflow.com/questions/37853623.
 
     :param index: The daily-frequency index to resample as pd.DatetimeIndex
     :param time: (hour, time) tuple to align the sampling
@@ -51,10 +48,11 @@ def resample_index(
 
 
 def _build_empty_df(metadata: Dict[str, Any]) -> pd.DataFrame:
-    """
-    Build an empty dataframe using the data in `metadata`, which is populated
-    in the previous calls of the `df_rolling_apply` function.
-    This is used to generate missing data when applying the rolling function.
+    """Build an empty dataframe using the data in `metadata`, which is
+    populated in the previous calls of the `df_rolling_apply` function.
+
+    This is used to generate missing data when applying the rolling
+    function.
     """
     dbg.dassert_is_not(metadata, None)
     cols = metadata["cols"]
@@ -79,9 +77,7 @@ def _loop(
     metadata: Optional[Dict[str, Any]],
     abort_on_error: bool,
 ) -> Tuple[Optional[pd.DataFrame], Optional[Dict[str, Any]]]:
-    """
-    Apply `func` to a slice of `df` given by `i` and `window`.
-    """
+    """Apply `func` to a slice of `df` given by `i` and `window`."""
     # Extract the window.
     if i <= 1:
         _LOG.debug("i=%s -> return=None", i)
@@ -149,9 +145,9 @@ def df_rolling_apply(
     progress_bar: bool = False,
     abort_on_error: bool = True,
 ) -> pd.DataFrame:
-    """
-    Apply function `func` to a rolling window over `df` with `window` columns.
-    Timing semantic:
+    """Apply function `func` to a rolling window over `df` with `window`
+    columns. Timing semantic:
+
     - a timestamp i is computed based on a data slice [i - window + 1:i]
     - mimics pd.rolling functions
 

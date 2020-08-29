@@ -1,5 +1,4 @@
-"""
-Implement a residualizer pipeline that, given data (e.g., returns or features),
+"""Implement a residualizer pipeline that, given data (e.g., returns or features),
 computes:
 1) factors
 2) loadings
@@ -31,9 +30,9 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): This is probably general and should be moved somewhere else.
 # TODO(gp): -> stack_df or better name.
 def linearize_df(df: pd.DataFrame, prefix: str) -> pd.Series:
-    """
-    Transform a pd.DataFrame like:
-                 0         1         2
+    """Transform a pd.DataFrame like:
+
+    0         1         2
         0  0.691443 -0.088121  0.717036
         1  0.656170 -0.338633 -0.674366
         2  0.302238  0.936783 -0.176323
@@ -96,9 +95,7 @@ class FactorComputer:
 # TODO(gp): eigval_df -> eigval since it's a Series?
 # eigvec_df -> eigvec
 class PcaFactorComputer(FactorComputer):
-    """
-    Compute factors using a rolling PCA decomposition.
-    """
+    """Compute factors using a rolling PCA decomposition."""
 
     def __init__(
         self,
@@ -131,28 +128,20 @@ class PcaFactorComputer(FactorComputer):
 
     @property
     def eig_num(self) -> Optional[int]:
-        """
-        Number of eigenvalue / vectors.
-        """
+        """Return number of eigenvalue / vectors."""
         return self._eig_num
 
     @property
     def eig_comp_num(self) -> Optional[int]:
-        """
-        Number of components for each eigenvector.
-        """
+        """Return number of components for each eigenvector."""
         return self._eig_comp_num
 
     def get_eigval_names(self) -> List[str]:
-        """
-        Return the names of the eigenvalues column in the result df.
-        """
+        """Return the names of the eigenvalues column in the result df."""
         return ["eigval%s" % i for i in range(self.eig_num)]
 
     def get_eigvec_names(self, i: int) -> List[str]:
-        """
-        Return the names of the i-th eigenvector in the result df.
-        """
+        """Return the names of the i-th eigenvector in the result df."""
         dbg.dassert_lte(0, i)
         dbg.dassert_lt(i, self.eig_num)
         return ["eigvec%s_%s" % (i, j) for j in range(self.eig_comp_num)]
@@ -302,8 +291,7 @@ class PcaFactorComputer(FactorComputer):
     def _build_stable_eig_map(
         prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
     ) -> Tuple[Dict[int, Tuple[int, np.int64]], np.array]:
-        """
-        Try to find a permutation and sign changes of the columns in
+        """Try to find a permutation and sign changes of the columns in
         `prev_eigvec_df` to ensure continuity with `eigvec_df`.
 
         :return: map column index of original eigvec to (sign, column index
@@ -340,9 +328,7 @@ class PcaFactorComputer(FactorComputer):
     def _build_stable_eig_map2(
         prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
     ) -> Tuple[Dict[int, Tuple[Optional[int], int]], None]:
-        """
-        Different implementation of `_build_stable_eig_map()`.
-        """
+        """Different implementation of `_build_stable_eig_map()`."""
 
         def eigvec_coeff(
             v1: pd.Series, v2: pd.Series, thr: float = 1e-3
@@ -389,8 +375,7 @@ class PcaFactorComputer(FactorComputer):
             Dict[int, Tuple[int, int]], Dict[int, Tuple[int, np.int64]]
         ],
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Transform the eigenvalues / eigenvectors according to a col_map
+        """Transform the eigenvalues / eigenvectors according to a col_map
         returned by `_build_stable_eig_map()`.
 
         :return: updated eigvalues and eigenvectors
@@ -416,10 +401,9 @@ class PcaFactorComputer(FactorComputer):
     def are_eigenvectors_stable(
         prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame, thr: float = 0.1
     ) -> int:
-        """
-        Return whether eigvec_df are "stable" in the sense that the change of
-        corresponding of each eigenvec is smaller than a certain threshold.
-        """
+        """Return whether eigvec_df are "stable" in the sense that the change
+        of corresponding of each eigenvec is smaller than a certain
+        threshold."""
         dbg.dassert_eq(
             prev_eigvec_df.shape,
             eigvec_df.shape,
@@ -459,9 +443,7 @@ class PcaFactorComputer(FactorComputer):
     def plot_over_time(
         self, res_df: pd.DataFrame, num_pcs_to_plot: int = 0, num_cols: int = 2
     ) -> None:
-        """
-        Similar to plot_pca_analysis() but over time.
-        """
+        """Similar to plot_pca_analysis() but over time."""
         # Plot eigenvalues.
         cols = [c for c in res_df.columns if c.startswith("eigval")]
         eigval_df = res_df[cols]
@@ -500,9 +482,7 @@ class PcaFactorComputer(FactorComputer):
 
     @staticmethod
     def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
-        """
-        Get the number of principal components to plot.
-        """
+        """Get the number of principal components to plot."""
         if num_pcs_to_plot == -1:
             num_pcs_to_plot = max_pcs
         dbg.dassert_lte(0, num_pcs_to_plot)
@@ -515,8 +495,7 @@ class PcaFactorComputer(FactorComputer):
 
 # TODO(gp): Factor out interface once this code is stable.
 class FactorLoadingStatsmodelComputer:
-    """
-    Compute factor loading from target df (e.g., returns) and factor df.
+    """Compute factor loading from target df (e.g., returns) and factor df.
 
     Timing assumption:
     - All timing info are in terms of timestamps (date times and not dates)
@@ -529,6 +508,5 @@ class FactorLoadingStatsmodelComputer:
         self._residuals = []
 
     def transform(self, target_df: pd.DataFrame, factor_df: pd.DataFrame) -> None:
-        """
-        Express each row of target_df in terms of previous rows of factor_df.
-        """
+        """Express each row of target_df in terms of previous rows of
+        factor_df."""

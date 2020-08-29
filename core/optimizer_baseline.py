@@ -30,17 +30,14 @@ _LOG = logging.getLogger(__name__)
 # Benchmark portfolio weighting strategies.
 #
 def equal_weighting(df):
-    """
-    Equally weight returns in df and generate stream of log rets.
-    """
+    """Equally weight returns in df and generate stream of log rets."""
     rets = df.dropna(how="any").mean(axis=1)
     log_rets = np.log(rets + 1)
     return log_rets
 
 
 def inverse_volatility_weighting(df, com, min_periods):
-    """
-    Weight returns by inverse volatility (calculated by rolling std).
+    """Weight returns by inverse volatility (calculated by rolling std).
 
     Assume df contains % returns.
     """
@@ -61,8 +58,7 @@ def inverse_volatility_weighting(df, com, min_periods):
 
 
 def minimum_variance_weighting(df, com, min_periods):
-    """
-    Weight returns by inverse covariance (calculating by rolling cov).
+    """Weight returns by inverse covariance (calculating by rolling cov).
 
     Note that weights may be negative.
     """
@@ -96,8 +92,7 @@ def minimum_variance_weighting(df, com, min_periods):
 
 
 def kelly_optimal_weighting(df, com, min_periods):
-    """
-    Same as Markowitz tangency portfolio, but with optimal leverage.
+    """Same as Markowitz tangency portfolio, but with optimal leverage.
 
     See https://epchan.blogspot.com/2014/08/kelly-vs-markowitz-portfolio.html.
 
@@ -133,8 +128,9 @@ def kelly_optimal_weighting(df, com, min_periods):
 # https://github.com/pandas-dev/pandas/blob/v0.25.0/pandas/core/window.py
 # https://github.com/pandas-dev/pandas/blob/v0.25.0/pandas/_libs/window.pyx
 def _ewm_cov(df, com, min_periods, adjust=True, ignore_na=False, axis=0):
-    """
-    Accepts df of % returns and calculates ewm covariance matrix
+    """Calculate ewm covariance matrix.
+
+    Accepts df of % returns
     """
     _LOG.info("df num rows = %i", df.shape[0])
     _LOG.info("df num rows with no NaNs = %i", df.dropna(how="any").shape[0])
@@ -152,9 +148,7 @@ def _ewm_cov(df, com, min_periods, adjust=True, ignore_na=False, axis=0):
 
 
 def _cov_df_to_inv(df):
-    """
-    Invert cov/corr matrices given as output of ewm cov/corr.
-    """
+    """Invert cov/corr matrices given as output of ewm cov/corr."""
     _LOG.info("Calculating matrix inverses...")
     _LOG.info("columns are %s", str(df.columns.values))
     cov = df.values

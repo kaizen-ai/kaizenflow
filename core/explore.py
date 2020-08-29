@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.explore as expl
 
@@ -63,9 +62,8 @@ def cast_to_series(obj: Union[pd.Series, pd.DataFrame]) -> pd.Series:
 
 # TODO(gp): Need to be tested.
 def adapt_to_series(f: Callable) -> Callable:
-    """
-    Decorate a function working on data frames in order to work on series.
-    """
+    """Decorate a function working on data frames in order to work on
+    series."""
 
     def wrapper(
         obj: Union[pd.Series, pd.DataFrame], *args: Any, **kwargs: Any
@@ -105,9 +103,8 @@ def drop_axis_with_all_nans(
     drop_infs: bool = False,
     report_stats: bool = False,
 ) -> pd.DataFrame:
-    """
-    Remove columns and rows completely empty.
-    The operation is not in place and the resulting df is returned.
+    """Remove columns and rows completely empty. The operation is not in place
+    and the resulting df is returned.
 
     Assume that the index is timestamps.
 
@@ -168,9 +165,8 @@ def drop_na(
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
-    """
-    Wrapper around pd.dropna() reporting information about the removed rows.
-    """
+    """Wrapper around pd.dropna() reporting information about the removed
+    rows."""
     dbg.dassert_isinstance(df, pd.DataFrame)
     num_rows_before = df.shape[0]
     if drop_infs:
@@ -189,8 +185,7 @@ def report_zero_nan_inf_stats(
     verbose: bool = False,
     as_txt: bool = False,
 ) -> pd.DataFrame:
-    """
-    Report count and percentage about zeros, nans, infs for a df.
+    """Report count and percentage about zeros, nans, infs for a df.
 
     :param verbose: print more information
     """
@@ -246,9 +241,8 @@ def report_zero_nan_inf_stats(
 def drop_duplicates(
     df: pd.DataFrame, subset: Optional[List[str]] = None
 ) -> pd.DataFrame:
-    """
-    Wrapper around pd.drop_duplicates() reporting information about theremoved
-    rows.
+    """Wrapper around pd.drop_duplicates() reporting information about
+    theremoved rows.
 
     :df: Df to drop duplicates from.
     :subset: Columns subset.
@@ -270,8 +264,7 @@ def drop_duplicates(
 def _get_variable_cols(
     df: pd.DataFrame, threshold: int = 1
 ) -> Tuple[List[str], List[str]]:
-    """
-    Return columns of a df that contain less than <threshold> unique values.
+    """Return columns of a df that contain less than <threshold> unique values.
 
     :return: (variable columns, constant columns)
     """
@@ -288,8 +281,7 @@ def _get_variable_cols(
 def remove_columns_with_low_variability(
     df: pd.DataFrame, threshold: int = 1, log_level: int = logging.DEBUG
 ) -> pd.DataFrame:
-    """
-    Remove columns of a df that contain less than <threshold> unique values.
+    """Remove columns of a df that contain less than <threshold> unique values.
 
     :return: df with only columns with sufficient variability
     """
@@ -315,10 +307,9 @@ def add_pct(
     num_digits: int = 2,
     use_thousands_separator: bool = True,
 ) -> pd.DataFrame:
-    """
-    Add to df a column "dst_col_name" storing the percentage of values in
-    column "col_name" with respect to "total".
-    The rest of the parameters are the same as pri.round_digits().
+    """Add to df a column "dst_col_name" storing the percentage of values in
+    column "col_name" with respect to "total". The rest of the parameters are
+    the same as pri.round_digits().
 
     :return: updated df
     """
@@ -398,8 +389,8 @@ def print_column_variability(
     num_digits: int = 2,
     use_thousands_separator: bool = True,
 ) -> pd.DataFrame:
-    """
-    Print statistics about the values in each column of a data frame.
+    """Print statistics about the values in each column of a data frame.
+
     This is useful to get a sense of which columns are interesting.
     """
     print(("# df.columns=%s" % pri.list_to_str(df.columns)))
@@ -490,10 +481,8 @@ def remove_columns(
 def filter_with_df(
     df: pd.DataFrame, filter_df: pd.DataFrame, log_level: int = logging.DEBUG
 ) -> pd.Series:
-    """
-    Compute a mask for DataFrame df using common columns and values in
-    "filter_df".
-    """
+    """Compute a mask for DataFrame df using common columns and values in
+    "filter_df"."""
     mask = None
     for c in filter_df:
         dbg.dassert_in(c, df.columns)
@@ -542,9 +531,8 @@ def filter_by_val(
     use_thousands_separator: bool = True,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
-    """
-    Filter out rows of df where df[col_name] is not in [min_val, max_val].
-    """
+    """Filter out rows of df where df[col_name] is not in [min_val,
+    max_val]."""
     # TODO(gp): If column is ordered, this can be done more efficiently with
     # binary search.
     num_rows = df.shape[0]
@@ -584,9 +572,7 @@ def filter_by_val(
 
 
 def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
-    """
-    Get the number of principal components to plot.
-    """
+    """Get the number of principal components to plot."""
     if num_pcs_to_plot == -1:
         num_pcs_to_plot = max_pcs
     dbg.dassert_lte(0, num_pcs_to_plot)
@@ -612,9 +598,9 @@ def handle_nans(df: pd.DataFrame, nan_mode: str) -> pd.DataFrame:
 def sample_rolling_df(
     rolling_df: pd.DataFrame, periods: int
 ) -> Tuple[pd.DataFrame, pd.DatetimeIndex]:
-    """
-    Given a rolling metric stored as multiindex (e.g., correlation computed by
-    pd.ewm) sample `periods` equispaced samples.
+    """Given a rolling metric stored as multiindex (e.g., correlation computed
+    by pd.ewm) sample `periods` equispaced samples.
+
     :return: sampled df, array of timestamps selected
     """
     timestamps = rolling_df.index.get_level_values(0)
@@ -632,8 +618,8 @@ def sample_rolling_df(
 def rolling_corr_over_time(
     df: pd.DataFrame, com: float, nan_mode: str
 ) -> pd.DataFrame:
-    """
-    Compute rolling correlation over time.
+    """Compute rolling correlation over time.
+
     :return: corr_df is a multi-index df storing correlation matrices with
         labels
     """
@@ -674,8 +660,8 @@ def _get_eigvals_eigvecs(
 def rolling_pca_over_time(
     df: pd.DataFrame, com: float, nan_mode: str, sort_eigvals: bool = True
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """
-    Compute rolling PCAs over time.
+    """Compute rolling PCAs over time.
+
     :param sort_eigvals: sort the eigenvalues in descending orders
     :return:
         - eigval_df stores eigenvalues for the different components indexed by
@@ -715,9 +701,7 @@ def plot_pca_over_time(
     num_pcs_to_plot: int = 0,
     num_cols: int = 2,
 ) -> None:
-    """
-    Similar to plot_pca_analysis() but over time.
-    """
+    """Similar to plot_pca_analysis() but over time."""
     # Plot eigenvalues.
     eigval_df.plot(title="Eigenvalues over time", ylim=(0, 1))
     # Plot cumulative variance.
@@ -747,8 +731,8 @@ def plot_time_distributions(
     mode: str,
     density: bool = True,
 ) -> mpl.axes.Axes:
-    """
-    Compute distribution for an array of timestamps `dts`.
+    """Compute distribution for an array of timestamps `dts`.
+
     - mode: see below
     """
     dbg.dassert_type_in(dts[0], (datetime.datetime, pd.Timestamp))
@@ -847,8 +831,7 @@ def jointplot(
     *args: Any,
     **kwargs: Any,
 ) -> None:
-    """
-    Perform a scatterplot of two columns of a dataframe using
+    """Perform a scatterplot of two columns of a dataframe using
     seaborn.jointplot().
 
     :param df: dataframe
@@ -877,9 +860,7 @@ def _preprocess_regression(
     predictor_vars: Union[str, List[str]],
     predictor_vars_delay: int,
 ) -> Optional[Tuple[pd.DataFrame, List[str], List[str]]]:
-    """
-    Preprocess data in dataframe form in order to perform a regression.
-    """
+    """Preprocess data in dataframe form in order to perform a regression."""
     # Sanity check vars.
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_lte(1, df.shape[0])
@@ -952,8 +933,7 @@ def ols_regress(
     predictor_vars_delay: int = 0,
     max_nrows: float = 1e4,
 ) -> Optional[Dict[str, Any]]:
-    """
-    Perform OLS on columns of a dataframe.
+    """Perform OLS on columns of a dataframe.
 
     :param df: dataframe
     :param predicted_var: y variable
@@ -1049,8 +1029,7 @@ def ols_regress_series(
     convert_to_dates: bool = False,
     **kwargs: Any,
 ) -> Dict[str, Any]:
-    """
-    Regress two series against each other.
+    """Regress two series against each other.
 
     Wrapper around regress() to regress series against each other.
     """
@@ -1206,9 +1185,9 @@ def display_df(
     tag: Optional[str] = None,
     mode: Optional[str] = None,
 ) -> None:
-    """
-    Display a pandas object (series, df, panel) in a better way than the
+    """Display a pandas object (series, df, panel) in a better way than the
     ipython display, e.g.,
+
         - by printing head and tail of the dataframe
         - by formatting the code
 
@@ -1309,8 +1288,8 @@ def describe_df(
     sort_by_uniq_num: bool = False,
     log_level: int = logging.INFO,
 ) -> None:
-    """
-    Improved version of pd.DataFrame.describe()
+    """Improved version of pd.DataFrame.describe()
+
     :param ts_col: timestamp column
     """
     if ts_col is None:
