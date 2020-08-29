@@ -191,9 +191,12 @@ def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
 
     output: List[str] = []
     for check in CONTENT_CHECKS:
-        msg = check(file_name=file_name, lines=lines)
+        msg: Union[str, list] = check(file_name=file_name, lines=lines)
         if msg:
-            output.append(msg)
+            if isinstance(msg, str):
+                output.append(msg)
+            else:
+                output.extend(msg)
 
     return output
 
@@ -896,6 +899,4 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 
 if __name__ == "__main__":
-    # _main(_parse())
-    action = _P1SpecificLints()
-    lntr.run_action(action, ['p1_specific_lints.py'])
+    _main(_parse())
