@@ -204,6 +204,7 @@ def _download_payload_page(local_dir: str, aws_dir: str, row: pd.Series) -> bool
     aws_file = aws_dir + "/"
     aws_file += "%s.csv.gz" % row["Symbol"]
     # Check if S3 file exists.
+    hs3.check_valid_s3_path(aws_file)
     rc = si.system("aws s3 ls " + aws_file, abort_on_error=False)
     exists = not rc
     _LOG.debug("%s -> exists=%s", aws_file, exists)

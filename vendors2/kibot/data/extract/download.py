@@ -212,7 +212,8 @@ class DatasetExtractor:
             row["Link"], local_file, dst_file, download_compressed
         )
         # Copy to s3.
-        cmd = "aws s3 cp %s s3://%s" % (dst_file, aws_file)
+        hs3.check_valid_s3_path(aws_file)
+        cmd = "aws s3 cp %s %s" % (dst_file, aws_file)
         si.system(cmd)
         #
         if clean_up_artifacts:
@@ -274,7 +275,8 @@ class DatasetExtractor:
         dataset_csv_file = os.path.join(converted_dir, f"{self.dataset}.csv")
         dataset_csv_s3_file = os.path.join(self.aws_dir, f"{self.dataset}.csv")
         # Copy to s3.
-        cmd = "aws s3 cp %s s3://%s" % (dataset_csv_file, dataset_csv_s3_file)
+        hs3.check_valid_s3_path(dataset_csv_s3_file)
+        cmd = "aws s3 cp %s %s" % (dataset_csv_file, dataset_csv_s3_file)
         si.system(cmd)
 
     @staticmethod
