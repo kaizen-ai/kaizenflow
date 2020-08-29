@@ -110,7 +110,8 @@ def _download_page(
     return page_content
 
 
-# ########################
+# #############################################################################
+
 
 class DatasetListExtractor:
     """Extractor of the list of available datasets from Kibot."""
@@ -157,7 +158,7 @@ class DatasetListExtractor:
         return clean_dataset
 
 
-# ########################
+# #############################################################################
 
 
 class DatasetExtractor:
@@ -240,9 +241,14 @@ class DatasetExtractor:
                 dataset_links_df.dataset == self.dataset
             ].link.values
             if len(links) == 0:
-                dbg.dfatal("Can't find a link corresponding to the request dataset")
+                dbg.dfatal(
+                    "Can't find a link corresponding to the request dataset"
+                )
             if len(links) != 1:
-                dbg.dfatal("Found multiple links corresponding to the requested dataset: %s" % links)
+                dbg.dfatal(
+                    "Found multiple links corresponding to the requested dataset: %s"
+                    % links
+                )
             dbg.dassert_eq(len(links), 1, "links=%s", links)
             link_to_html_page = links[0]
             _download_page(
@@ -252,8 +258,11 @@ class DatasetExtractor:
         _LOG.warning("Parsing '%s'", dataset_html_file)
         dataset_df = self._extract_payload_links(dataset_html_file)
         dataset_df.to_csv(dataset_csv_file)
-        _LOG.info("Number of files to download: %s:\n%s", dataset_df.shape[0],
-            dataset_df.head())
+        _LOG.info(
+            "Number of files to download: %s:\n%s",
+            dataset_df.shape[0],
+            dataset_df.head(),
+        )
         return dataset_df
 
     def store_dataset_csv_file(self, converted_dir: str) -> None:
@@ -311,7 +320,9 @@ class DatasetExtractor:
             cmd = "rm -f %s" % local_file
             si.system(cmd)
 
-# ########################
+
+# #############################################################################
+
 
 class AdjustmentsDatasetExtractor(DatasetExtractor):
     """Extractor of payloads for an adjustments dataset.
@@ -382,7 +393,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         csv_table.to_csv(dst_file, index=False)
 
 
-# ########################
+# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -451,7 +462,7 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
+def _main(parser: argparse.ArgumentParser) -> int:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create dirs.
@@ -483,7 +494,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         kibot_account, args.username, str(args.password), requests_session
     )
     if not login_result:
-        # Unable to login
+        # Unable to login.
         return -1
     my_account_file = os.path.join(source_dir, "my_account.html")
     # Download my account html page.
@@ -497,8 +508,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dataset_links_df = dle.extract_dataset_links(
         os.path.join(source_dir, "my_account.html")
     )
-    _LOG.info("Found %d datasets to download:\n%s", len(dataset_links_df),
-              dataset_links_df)
+    _LOG.info(
+        "Found %d datasets to download:\n%s",
+        len(dataset_links_df),
+        dataset_links_df,
+    )
     # Save the file.
     dataset_links_df.to_csv(dataset_links_csv_file)
     _LOG.info("Saved dataset list to download in '%s'", dataset_links_csv_file)
@@ -543,14 +557,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
             tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
             # Run dataset downloads.
             if not args.serial:
-                joblib.Parallel(n_jobs=_JOBLIB_NUM_CPUS, verbose=_JOBLIB_VERBOSITY)(
-                    joblib.delayed(func)(row) for _, row in tqdm_
-                )
+                joblib.Parallel(
+                    n_jobs=_JOBLIB_NUM_CPUS, verbose=_JOBLIB_VERBOSITY
+                )(joblib.delayed(func)(row) for _, row in tqdm_)
             else:
                 for _, row in tqdm_:
                     func(row)
         else:
             _LOG.warning("Skipping download as per user requested")
+    return 0
 
 
 if __name__ == "__main__":
