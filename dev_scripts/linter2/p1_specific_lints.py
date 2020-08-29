@@ -458,7 +458,7 @@ class _Node:
             lines.extend(child.to_lines())
         return lines
 
-    def check_method_order(self) -> List[_IncorrectPositionNode]:
+    def check_method_order(self) -> List["_Node"]:
         """Check the order of the methods of a class."""
         current_order = self.get_children()
         correct_order = self.ordered_children
@@ -467,23 +467,10 @@ class _Node:
         while current_order and correct_order:
             current_node = current_order.pop(0)
             correct_node = correct_order.pop(0)
-            if current_node != correct_node:
-                # i'm still not sure why current and correct are swapped here, but it works.
-                offending.append(
-                    _IncorrectPositionNode(
-                        current_line_num=correct_node.line_num,
-                        correct_line_num=current_node.line_num
-                        - len(current_node.decorators),
-                        node=correct_node,
-                    )
-                )
-                # remove the offending node from both lists, so they align again and we can check
-                # for other offenders
-                for i, n in enumerate(current_order):
-                    if n.name == correct_node.name:
-                        current_order.pop(i)
-                if correct_order:
-                    correct_order.pop(0)
+            # we only have to check magic and private methods. If those are in the correct position,
+            # public methods will also have to be correctly positioned.
+            if current_node != correct_node and current_node.name.startswith('_'):
+                offending.append(current_node)
         return offending
 
     def _find_child_by_name(self, name: str) -> Union[None, "_Node"]:
@@ -637,21 +624,19 @@ def _class_method_order_enforcer(lines: List[str]) -> List[str]:
     return updated_lines
 
 
-def _class_method_order_detector(file_name: str, lines: List[str]) -> str:
+def _class_method_order_detector(file_name: str, lines: List[str]) -> List[str]:
     root_nodes = _lines_to_nodes(lines)
-    offending: List[_IncorrectPositionNode] = list()
+    offending: List[_Node] = list()
 
     for node in root_nodes:
         if node.type not in [_Node.Type.CLS, _Node.Type.FUNC]:
             continue
         offending.extend(node.check_method_order())
 
-    if offending:
-        return (
-            f"{file_name}:{offending[0].current_line_num}: method `{offending[0].node.name}`"
-            f" should be located on line number {offending[0].correct_line_num}"
-        )
-    return ""
+    return [
+        f"{file_name}:{off.line_num}: method `{off.name}`"
+        f" is located on the wrong line" for off in offending
+    ]
 
 
 def _modify_file_lines(lines: List[str]) -> List[str]:
@@ -911,4 +896,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 
 if __name__ == "__main__":
-    _main(_parse())
+    # _main(_parse())
+    action = _P1SpecificLints()
+    lntr.run_action(action, ['p1_specific_lints.py'])
