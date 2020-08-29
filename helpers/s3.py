@@ -89,6 +89,14 @@ def exists(s3_path: str) -> bool:
     return ret
 
 
+def is_valid_s3_path(s3_path: str) -> bool:
+    return s3_path.startswith("s3://")
+
+
+def check_valid_s3_path(s3_path: str) -> None:
+    dbg.dassert(is_valid_s3_path(s3_path), "Invalid S3 file='%s'", s3_path)
+
+
 def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
     """List s3 keys.
 
