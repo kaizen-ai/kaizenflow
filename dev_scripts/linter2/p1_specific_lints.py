@@ -4,6 +4,7 @@ r"""Perform some p1 specific lints on python files
 > p1_specific_lints.py -f sample_file.py
 """
 import argparse
+import ast
 import dataclasses
 import enum
 import io
@@ -179,7 +180,7 @@ def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
         """A function that takes a file's content, and return an error message
         or an empty string."""
 
-        def __call__(self, file_name: str, lines: List[str]) -> str:
+        def __call__(self, file_name: str, lines: List[str]) -> Union[List, str]:
             # This definition is needed as typing.Callable doesn't support keyword arguments.
             # Ref: https://github.com/python/mypy/issues/1655.
             ...
@@ -191,9 +192,12 @@ def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
 
     output: List[str] = []
     for check in CONTENT_CHECKS:
-        msg = check(file_name=file_name, lines=lines)
+        msg: Union[str, list] = check(file_name=file_name, lines=lines)
         if msg:
-            output.append(msg)
+            if isinstance(msg, str):
+                output.append(msg)
+            else:
+                output.extend(msg)
 
     return output
 
@@ -208,6 +212,10 @@ class LinesWithComment:
     start_line: int
     end_line: int
     multi_line_comment: List[str]
+
+    @property
+    def is_single_line(self) -> bool:
+        return len(self.multi_line_comment) == 1
 
 
 # the key is the line number, the value is the comment.
@@ -458,7 +466,7 @@ class _Node:
             lines.extend(child.to_lines())
         return lines
 
-    def check_method_order(self) -> List[_IncorrectPositionNode]:
+    def check_method_order(self) -> List["_Node"]:
         """Check the order of the methods of a class."""
         current_order = self.get_children()
         correct_order = self.ordered_children
@@ -467,23 +475,10 @@ class _Node:
         while current_order and correct_order:
             current_node = current_order.pop(0)
             correct_node = correct_order.pop(0)
-            if current_node != correct_node:
-                # i'm still not sure why current and correct are swapped here, but it works.
-                offending.append(
-                    _IncorrectPositionNode(
-                        current_line_num=correct_node.line_num,
-                        correct_line_num=current_node.line_num
-                        - len(current_node.decorators),
-                        node=correct_node,
-                    )
-                )
-                # remove the offending node from both lists, so they align again and we can check
-                # for other offenders
-                for i, n in enumerate(current_order):
-                    if n.name == correct_node.name:
-                        current_order.pop(i)
-                if correct_order:
-                    correct_order.pop(0)
+            # we only have to check magic and private methods. If those are in the correct position,
+            # public methods will also have to be correctly positioned.
+            if current_node != correct_node and current_node.name.startswith("_"):
+                offending.append(current_node)
         return offending
 
     def _find_child_by_name(self, name: str) -> Union[None, "_Node"]:
@@ -637,21 +632,20 @@ def _class_method_order_enforcer(lines: List[str]) -> List[str]:
     return updated_lines
 
 
-def _class_method_order_detector(file_name: str, lines: List[str]) -> str:
+def _class_method_order_detector(file_name: str, lines: List[str]) -> List[str]:
     root_nodes = _lines_to_nodes(lines)
-    offending: List[_IncorrectPositionNode] = list()
+    offending: List[_Node] = list()
 
     for node in root_nodes:
         if node.type not in [_Node.Type.CLS, _Node.Type.FUNC]:
             continue
         offending.extend(node.check_method_order())
 
-    if offending:
-        return (
-            f"{file_name}:{offending[0].current_line_num}: method `{offending[0].node.name}`"
-            f" should be located on line number {offending[0].correct_line_num}"
-        )
-    return ""
+    return [
+        f"{file_name}:{off.line_num}: method `{off.name}`"
+        f" is located on the wrong line"
+        for off in offending
+    ]
 
 
 def _modify_file_lines(lines: List[str]) -> List[str]:
@@ -678,38 +672,69 @@ def _modify_file_lines(lines: List[str]) -> List[str]:
 # #############################################################################
 
 
-def _fix_comment_style(line: str) -> str:
+def _is_valid_python_statement(comments: List[str]) -> bool:
+    joined = "\n".join(comments)
+    try:
+        ast.parse(joined)
+    except SyntaxError:
+        return False
+    return True
+
+
+def _capitalize(comment: str) -> str:
+    return f"{comment[0:2].upper()}{comment[2::]}"
+
+
+def _fix_comment_style(lines: List[str]) -> List[str]:
     """Update comments to start with a capital letter and end with a `.`
 
     ignores:
     - empty line comments
     - comments that start with '##'
-
-    :param line: text line
-    :return: modified line
+    - pylint & mypy comments
+    - valid python statements
     """
-    excluded_prefixes = (
-        # Ignore comments that start with '##'
-        "#",
-        # Ignore special comments.
-        "pylint",
-        "type",
+    checks = (
+        lambda x: x.startswith("##"),
+        lambda x: x.startswith("# pylint"),
+        lambda x: x.startswith("# type"),
+        lambda x: x.startswith("#!"),
+        lambda x: len(x.split()) == 2 and x.startswith("# "),
+        lambda x: any(
+            [
+                re.match(
+                    r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\."
+                    r"[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
+                    word,
+                )
+                is not None
+                for word in x.split()
+            ]
+        ),
     )
 
-    new_line = line
-    match = _parse_comment(line=line, regex=r"(^\s*)#(\s*)(.*)")
-    if match:
-        comment = match.group(3)
-        if comment and not any(
-            [comment.startswith(prefix) for prefix in excluded_prefixes]
-        ):
-            # Capitalize the first letter.
-            comment = comment[0].capitalize() + comment[1:]
-            # Make sure it ends with a . if it doesn't end with punctuation.
-            if comment[-1] not in string.punctuation:
-                comment += "."
-            new_line = f"{match.group(1)}#{match.group(2)}{comment}"
-    return new_line
+    comments: List[LinesWithComment] = _extract_comments(lines)
+
+    for comment in comments:
+        if not comment.is_single_line:
+            continue
+        # If any of the checks returns True, it means the check failed.
+        if any([check(comment.multi_line_comment[0]) for check in checks]):
+            continue
+        match = _parse_comment(comment.multi_line_comment[0], r"(^\s*)#(\s*)(.*)")
+        if not match:
+            continue
+        without_pound = match.group(3)
+        # Make sure it doesn't try to capitalize an empty comment
+        if without_pound and not without_pound[0].isupper():
+            without_pound = without_pound.capitalize()
+        # Rebuild the comment and add punctuation if not already present
+        body = f"{match.group(1)}#{match.group(2)}{without_pound}"
+        if body[-1] not in string.punctuation:
+            body = f"{body}."
+        comment.multi_line_comment[0] = body
+
+    return _replace_comments_in_lines(lines, comments)
 
 
 def _format_separating_line(
