@@ -94,7 +94,7 @@ def is_valid_s3_path(s3_path: str) -> bool:
 
 
 def check_valid_s3_path(s3_path: str) -> None:
-    dbg.dassert(hs3.is_valid_s3_path(s3_path), "Invalid S3 file='%s'", s3_path)
+    dbg.dassert(is_valid_s3_path(s3_path), "Invalid S3 file='%s'", s3_path)
 
 
 def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:

@@ -173,6 +173,7 @@ class DatasetExtractor:
         self.dataset = dataset
         self.requests_session = requests_session
         self.aws_dir = os.path.join(config.S3_PREFIX, dataset)
+        _LOG.info("Saving to S3 in '%s'", self.aws_dir)
 
     def delete_dataset_s3_directory(self) -> None:
         assert 0, "Very dangerous: are you sure?"
