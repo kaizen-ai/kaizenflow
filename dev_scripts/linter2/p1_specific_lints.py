@@ -180,7 +180,7 @@ def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
         """A function that takes a file's content, and return an error message
         or an empty string."""
 
-        def __call__(self, file_name: str, lines: List[str]) -> str:
+        def __call__(self, file_name: str, lines: List[str]) -> Union[List, str]:
             # This definition is needed as typing.Callable doesn't support keyword arguments.
             # Ref: https://github.com/python/mypy/issues/1655.
             ...
@@ -214,7 +214,7 @@ class LinesWithComment:
     multi_line_comment: List[str]
 
     @property
-    def is_single_line(self):
+    def is_single_line(self) -> bool:
         return len(self.multi_line_comment) == 1
 
 
@@ -477,7 +477,7 @@ class _Node:
             correct_node = correct_order.pop(0)
             # we only have to check magic and private methods. If those are in the correct position,
             # public methods will also have to be correctly positioned.
-            if current_node != correct_node and current_node.name.startswith('_'):
+            if current_node != correct_node and current_node.name.startswith("_"):
                 offending.append(current_node)
         return offending
 
@@ -643,7 +643,8 @@ def _class_method_order_detector(file_name: str, lines: List[str]) -> List[str]:
 
     return [
         f"{file_name}:{off.line_num}: method `{off.name}`"
-        f" is located on the wrong line" for off in offending
+        f" is located on the wrong line"
+        for off in offending
     ]
 
 
@@ -671,8 +672,8 @@ def _modify_file_lines(lines: List[str]) -> List[str]:
 # #############################################################################
 
 
-def _is_valid_python_statement(comments: List[str]):
-    joined = '\n'.join(comments)
+def _is_valid_python_statement(comments: List[str]) -> bool:
+    joined = "\n".join(comments)
     try:
         ast.parse(joined)
     except SyntaxError:
@@ -698,10 +699,17 @@ def _fix_comment_style(lines: List[str]) -> List[str]:
         lambda x: x.startswith("# pylint"),
         lambda x: x.startswith("# type"),
         lambda x: x.startswith("#!"),
-        lambda x: len(x.split()) == 2 and x.startswith('# '),
-        lambda x: any([
-            re.match(r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
-                     word) is not None for word in x.split()])
+        lambda x: len(x.split()) == 2 and x.startswith("# "),
+        lambda x: any(
+            [
+                re.match(
+                    r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
+                    word,
+                )
+                is not None
+                for word in x.split()
+            ]
+        ),
     )
 
     comments: List[LinesWithComment] = _extract_comments(lines)
