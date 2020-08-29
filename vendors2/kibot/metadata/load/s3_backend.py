@@ -39,7 +39,7 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            "s3://", mconfig.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
+            mconfig.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
         df = pd.read_csv(file_name, index_col=0)
@@ -48,7 +48,6 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    
     @staticmethod
     def read_daily_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long
@@ -76,7 +75,6 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    
     @staticmethod
     def read_tickbidask_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long

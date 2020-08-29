@@ -60,7 +60,7 @@ class FilePathGenerator:
             file_path += ".csv.gz"
 
         # TODO(amr): should we allow pointing to a local file here?
-        file_path = os.path.join("s3://", config.S3_PREFIX, file_path)
+        file_path = os.path.join(config.S3_PREFIX, file_path)
         return file_path
 
     def _generate_contract_path_modifier(

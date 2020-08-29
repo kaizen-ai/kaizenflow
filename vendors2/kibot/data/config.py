@@ -2,7 +2,7 @@ ENDPOINT = "http://www.kibot.com/"
 
 API_ENDPOINT = "http://api.kibot.com/"
 
-S3_PREFIX = "external-p1/kibot"
+S3_PREFIX = "s3://external-p1/kibot"
 
 DATASETS = [
     "adjustments",

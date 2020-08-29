@@ -93,5 +93,5 @@ class TestFilePathGenerator(hut.TestCase):
         generator = fpgen.FilePathGenerator()
 
         actual = generator.generate_file_path(**args)
-        expected = f"s3://{config.S3_PREFIX}/{expected_file_path}"
+        expected = f"{config.S3_PREFIX}/{expected_file_path}"
         self.assertEqual(actual, expected)
