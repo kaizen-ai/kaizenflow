@@ -14,9 +14,9 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not changed
         """
-        line = "test.method()"
-        actual = pslints._fix_comment_style(line)
-        self.assertEqual(line, actual)
+        lines = ["test.method()"]
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(lines, actual)
 
     def test2(self) -> None:
         """Test first letter is capitalized.
@@ -25,10 +25,10 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then comment starts with a capital letter
         """
-        line = "# do this."
-        expected = "# Do this."
+        lines = ["# do this."]
+        expected = ["# Do this."]
 
-        actual = pslints._fix_comment_style(line)
+        actual = pslints._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test3(self) -> None:
@@ -38,10 +38,10 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then comment ends with .
         """
-        line = "# Do this"
-        expected = "# Do this."
+        lines = ["# Do this"]
+        expected = ["# Do this."]
 
-        actual = pslints._fix_comment_style(line)
+        actual = pslints._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     @pytest.mark.skip(
@@ -58,10 +58,10 @@ class Test_fix_comment_style(hut.TestCase):
         - Then code is not changed
         - And comment ends with .
         """
-        line = "test.method() # do this"
-        expected = "test.method() # Do this."
+        lines = ["test.method() # do this"]
+        expected = ["test.method() # Do this."]
 
-        actual = pslints._fix_comment_style(line)
+        actual = pslints._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test5(self) -> None:
@@ -73,10 +73,10 @@ class Test_fix_comment_style(hut.TestCase):
         - Then line has a trailing .
         - And comment doesn't start with a space
         """
-        line = "#Do this"
-        expected = "#Do this."
+        lines = ["#Do this"]
+        expected = ["#Do this."]
 
-        actual = pslints._fix_comment_style(line)
+        actual = pslints._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test6(self) -> None:
@@ -86,10 +86,9 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not updated
         """
-        line = "#!/usr/bin/env python"
-        expected = line
+        lines = expected = ["#!/usr/bin/env python"]
 
-        actual = pslints._fix_comment_style(line)
+        actual = pslints._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test7(self) -> None:
@@ -99,10 +98,9 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not updated
         """
-        line = r'comment_regex = r"(.*)#\s*(.*)\s*"'
-        expected = line
+        lines = expected = [r'comment_regex = r"(.*)#\s*(.*)\s*"']
 
-        actual = pslints._fix_comment_style(line)
+        actual = pslints._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test8(self) -> None:
@@ -112,10 +110,9 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not updated
         """
-        line = 'line = f"{match.group(1)}# {comment}"'
-        expected = line
+        lines = expected = ['line = f"{match.group(1)}# {comment}"']
 
-        actual = pslints._fix_comment_style(line)
+        actual = pslints._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test9(self) -> None:
@@ -125,10 +122,9 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not updated
         """
-        line = "# #############################################################################"
-        expected = line
+        lines = expected = ["# #############################################################################"]
 
-        actual = pslints._fix_comment_style(line)
+        actual = pslints._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test10(self) -> None:
@@ -138,9 +134,9 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not changed
         """
-        line = "# "
-        actual = pslints._fix_comment_style(line)
-        self.assertEqual(line, actual)
+        lines = ["#"]
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(lines, actual)
 
     def test11(self) -> None:
         """Test no changes are applied to comments that end in punctation.
@@ -149,9 +145,9 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not changed
         """
-        line = "# TODO(test): Should this be changed?"
-        actual = pslints._fix_comment_style(line)
-        self.assertEqual(line, actual)
+        lines = ["# TODO(test): Should this be changed?"]
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(lines, actual)
 
     def test12(self) -> None:
         """Test no changes are applied to comments that start in a number.
@@ -160,9 +156,9 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not changed
         """
-        line = "# -1 is interpreted by joblib like for all cores."
-        actual = pslints._fix_comment_style(line)
-        self.assertEqual(line, actual)
+        lines = ["# -1 is interpreted by joblib like for all cores."]
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(lines, actual)
 
     def test13(self) -> None:
         """Test no changes are applied to comments that start with '##'.
@@ -171,21 +167,58 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not changed
         """
-        line = "## iNVALD"
-        actual = pslints._fix_comment_style(line)
-        self.assertEqual(line, actual)
+        lines = ["## iNVALD"]
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(lines, actual)
 
     def test14(self) -> None:
         """Test no changes are applied to comments that start with 'pylint'."""
-        line = "# pylint: disable=unused-argument"
-        actual = pslints._fix_comment_style(line)
-        self.assertEqual(line, actual)
+        lines = ["# pylint: disable=unused-argument"]
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(lines, actual)
 
     def test15(self) -> None:
         """Test no changes are applied to comments that start with 'type'."""
-        line = "# type: noqa"
-        actual = pslints._fix_comment_style(line)
-        self.assertEqual(line, actual)
+        lines = ["# type: noqa"]
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(lines, actual)
+
+    def test16(self) -> None:
+        """Test no changes are applied to comments with one word."""
+        lines = expected = ["# oneword"]
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(expected, actual)
+
+    def test17(self) -> None:
+        """Test no changes are applied to comments with urls."""
+        lines = expected = [
+            ["# https://github.com/"],
+            ["# https://google.com/"],
+            ["# reference: https://facebook.com"]
+        ]
+        for l, e in zip(lines, expected):
+            actual = pslints._fix_comment_style(l)
+            self.assertEqual(e, actual)
+
+    def test18(self) -> None:
+        """Test no changes are applied to comments that are valid python statements"""
+        lines = expected = [
+            "# print('hello')"
+        ]
+
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(expected, actual)
+
+    def test19(self) -> None:
+        lines = expected = [
+            "# We need a matrix `c` for which `c*c^T = r`.",
+            "# We can use # the Cholesky decomposition, or the we can construct `c`",
+            "# from the eigenvectors and eigenvalues.",
+            "# Compute the eigenvalues and eigenvectors."
+        ]
+
+        actual = pslints._fix_comment_style(lines)
+        self.assertEqual(expected, actual)
 
 
 class Test_warn_incorrectly_formatted_todo(hut.TestCase):
@@ -897,75 +930,6 @@ class Test_correct_method_order(hut.TestCase):
         for example, expected in examples:
             result = pslints._is_function_declaration(example)
             self.assertEqual(expected, result)
-
-
-@pytest.mark.skip(
-    "`_fix_comment_style` hasn't been updated to accept these tests"
-)
-class Test_check_comments(hut.TestCase):
-    def test_1(self) -> None:
-        """Don't capitalize or add punctuation mid-sentence."""
-        original = [
-            "# Create decorated functions with different caches and store pointers",
-            "# of these functions. Note that we need to build the functions in the",
-            "# constructor since we need to have a single instance of the decorated",
-            "# E.g., if we created these functions in `__call__`, they will be recreated at.",
-            "# `__call__`, they will be recreated at every invocation, creating a",
-            "# new memory cache at every invocation.",
-        ]
-        expected = [
-            "# Create decorated functions with different caches and store pointers of these",
-            "# functions. Note that we need to build the functions in the constructor since we",
-            "# need to have a single instance of the decorated functions. On the other side,",
-            "# e.g., if we created these functions in `__call__`, they will be recreated at",
-            "# every invocation, creating a new memory cache at every invocation.",
-        ]
-        result = pslints._fix_comment_style(original)
-        self.assertEqual(result, expected)
-
-    def test_2(self) -> None:
-        """Don't capitalize or add punctuation to single words."""
-        original = expected = ["# dfatal"]
-        result = pslints._fix_comment_style(original)
-        self.assertEqual(result, expected)
-
-    def test_3(self) -> None:
-        """Don't capitalize or add punctuation to commented out python
-        lines."""
-        originals = expected = [
-            [
-                '# txt += "\ndiff=%s" % mask.sum()',
-                '# txt += "\n%s" % val1[mask]',
-                '# txt += "\n%s" % val2[mask]',
-            ],
-            ['# txt += "\ndiff=%s" % mask.sum()'],
-            [
-                "# if False:",
-                "#     eff_level = root_logger.getEffectiveLevel()",
-                "#     print(",
-                '#         "effective level= %s (%s)"',
-                "#         % (eff_level, logging.getLevelName(eff_level))",
-                "#     )",
-                "# if False:",
-                "#     # dassert_eq(root_logger.getEffectiveLevel(), verbosity)",
-                "#     for handler in root_logger.handlers:",
-                "#         handler.setLevel(verbosity)",
-            ],
-        ]
-
-        for o, e in zip(originals, expected):
-            result = pslints._fix_comment_style(o)
-            self.assertEqual(result, e)
-
-    def test_4(self) -> None:
-        """Don't capitalize or add punctuation to urls."""
-        original = expected = [
-            ["# https://github.com/"],
-            ["# https://google.com/"],
-        ]
-        for o, e in zip(original, expected):
-            result = pslints._fix_comment_style(o)
-            self.assertEqual(result, e)
 
 
 class Test_reflow_comments(hut.TestCase):
