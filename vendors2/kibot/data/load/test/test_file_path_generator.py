@@ -89,6 +89,17 @@ class TestFilePathGenerator(hut.TestCase):
         expected_file_path = "pq/all_etfs_unadjusted_1min/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
 
+    def test8(self) -> None:
+        args = dict(
+            symbol="TEST",
+            asset_class=types.AssetClass.Futures,
+            contract_type=types.ContractType.Continuous,
+            frequency=types.Frequency.Tick,
+            ext=types.Extension.CSV,
+        )
+        expected_file_path = "All_Futures_Continuous_Contracts_tick/TEST.csv.gz"
+        self._assert_file_path(args=args, expected_file_path=expected_file_path)
+
     def _assert_file_path(self, args: dict, expected_file_path: str) -> None:
         generator = fpgen.FilePathGenerator()
 

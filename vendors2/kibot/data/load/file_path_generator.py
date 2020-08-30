@@ -10,6 +10,7 @@ class FilePathGenerator:
     FREQ_PATH_MAPPING = {
         types.Frequency.Daily: "daily",
         types.Frequency.Minutely: "1min",
+        types.Frequency.Tick: "tick",
     }
 
     CONTRACT_PATH_MAPPING = {
@@ -60,6 +61,7 @@ class FilePathGenerator:
             file_path += ".csv.gz"
 
         # TODO(amr): should we allow pointing to a local file here?
+        # or rename the method to `generate_s3_path`?
         file_path = os.path.join(config.S3_PREFIX, file_path)
         return file_path
 

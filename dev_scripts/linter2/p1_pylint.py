@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 r"""Wrapper for black
 
-> p1_black.py sample_file1.py sample_file2.py
+> p1_pylint.py sample_file1.py sample_file2.py
 """
 import argparse
 import logging
