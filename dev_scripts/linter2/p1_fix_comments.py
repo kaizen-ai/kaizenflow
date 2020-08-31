@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+r"""Reflow, capitalize and add punctuation to python files.
+
+> p1_fix_comments.py sample_file1.py sample_file2.py
+"""
 import argparse
 import dataclasses
 import io
