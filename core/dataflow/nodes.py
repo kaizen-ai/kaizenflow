@@ -17,8 +17,10 @@ import sklearn as skl
 
 import core.backtest as bcktst
 import core.data_adapters as adpt
+import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
+
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
 
@@ -1584,6 +1586,76 @@ class DeepARGlobalModel(FitPredictNode):
         if isinstance(to_list, list):
             return to_list
         raise TypeError("Data type=`%s`" % type(to_list))
+
+
+# #############################################################################
+# Results processing
+# #############################################################################
+
+
+class VolatilityNormalizer(FitPredictNode):
+    def __init__(
+        self,
+        nid: str,
+        y_var_hat: str,
+        target_volatility: float,
+        col_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Normalize series to target annual volatility.
+
+        :param nid: node identifier
+        :param y_var_hat: name of column to rescale
+        :param target_volatility: target volatility as a proportion
+        :param col_mode: `merge_all` or `replace_all`. If `replace_all`, return
+            only the rescaled column, if `merge_all`, append the rescaled
+            column to input dataframe
+        """
+        super().__init__(nid)
+        self._y_var_hat = y_var_hat
+        self._target_volatility = target_volatility
+        self._col_mode = col_mode or "merge_all"
+        dbg.dassert_in(
+            self._col_mode,
+            ["merge_all", "replace_all"],
+            "Invalid `col_mode`='%s'",
+            self._col_mode,
+        )
+        self._scale_factor: Optional[float] = None
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_in(self._y_var_hat, df_in.columns)
+        self._scale_factor = fin.compute_volatility_normalization_factor(
+            df_in[self._y_var_hat], self._target_volatility
+        )
+        rescaled_y_hat = self._scale_factor * df_in[self._y_var_hat]
+        df_out = self._form_output_df(df_in, rescaled_y_hat)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_in(self._y_var_hat, df_in.columns)
+        rescaled_y_hat = self._scale_factor * df_in[self._y_var_hat]
+        df_out = self._form_output_df(df_in, rescaled_y_hat)
+        return {"df_out": df_out}
+
+    def _form_output_df(
+        self, df_in: pd.DataFrame, srs: pd.Series
+    ) -> pd.DataFrame:
+        srs.name = f"rescaled_{srs.name}"
+        # Maybe merge transformed columns with a subset of input df columns.
+        if self._col_mode == "merge_all":
+            dbg.dassert_not_in(
+                srs.name,
+                df_in.columns,
+                "'%s' is already in `df_in` columns.",
+                srs.name,
+            )
+            df_out = df_in.merge(srs, left_index=True, right_index=True)
+        elif self._col_mode == "replace_all":
+            df_out = srs.to_frame()
+        else:
+            raise ValueError("Invalid `col_mode`='%s'" % self._col_mode)
+        return df_out
 
 
 # #############################################################################
