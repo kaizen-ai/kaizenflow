@@ -1057,15 +1057,15 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         srs_sr = stats.compute_annualized_sharpe_ratio(srs)
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
         # Resample to hourly and calculate SR.
-        hourly_srs = srs.resample("60T").sum()
+        hourly_srs = sigp.resample(srs, rule="60T").sum()
         hourly_sr = stats.compute_annualized_sharpe_ratio(hourly_srs)
-        np.testing.assert_almost_equal(hourly_sr, -2.6412, decimal=3)
+        np.testing.assert_almost_equal(hourly_sr, -2.6483, decimal=3)
         # Resample to daily and calculate SR.
-        daily_srs = srs.resample("D").sum()
+        daily_srs = sigp.resample(srs, rule="D").sum()
         daily_srs_sr = stats.compute_annualized_sharpe_ratio(daily_srs)
-        np.testing.assert_almost_equal(daily_srs_sr, -2.5167, decimal=3)
+        np.testing.assert_almost_equal(daily_srs_sr, -2.4890, decimal=3)
         # Resample to weekly and calculate SR.
-        weekly_srs = srs.resample("W").sum()
+        weekly_srs = sigp.resample(srs, rule="W").sum()
         weekly_srs_sr = stats.compute_annualized_sharpe_ratio(weekly_srs)
         np.testing.assert_almost_equal(weekly_srs_sr, -2.7717, decimal=3)
 
@@ -1122,19 +1122,19 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
         srs_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(srs)
         np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)
         # Resample to hourly and calculate SR.
-        hourly_srs = srs.resample("60T").sum()
+        hourly_srs = sigp.resample(srs, rule="60T").sum()
         hourly_sr_se = stats.compute_annualized_sharpe_ratio_standard_error(
             hourly_srs
         )
         np.testing.assert_almost_equal(hourly_sr_se, 1.9116, decimal=3)
         # Resample to daily and calculate SR.
-        daily_srs = srs.resample("D").sum()
+        daily_srs = sigp.resample(srs, rule="D").sum()
         daily_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
             daily_srs
         )
-        np.testing.assert_almost_equal(daily_sr_se_sr, 1.9290, decimal=3)
+        np.testing.assert_almost_equal(daily_sr_se_sr, 1.9192, decimal=3)
         # Resample to weekly and calculate SR.
-        weekly_srs = srs.resample("W").sum()
+        weekly_srs = sigp.resample(srs, rule="W").sum()
         weekly_sr_se_sr = stats.compute_annualized_sharpe_ratio_standard_error(
             weekly_srs
         )
