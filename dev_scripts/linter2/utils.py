@@ -1,5 +1,6 @@
 import os
-from typing import List
+import re
+from typing import List, Optional
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -83,3 +84,35 @@ def is_paired_jupytext_file(file_name: str) -> bool:
 
 def is_init_py(file_name: str) -> bool:
     return os.path.basename(file_name) == "__init__.py"
+
+
+def is_separator(line: str) -> bool:
+    """Check if the line matches a separator line.
+
+    :return: True if it matches a separator line
+    """
+    return (
+        line
+        == "# #############################################################################"
+    )
+
+
+def is_shebang(line: str) -> bool:
+    """Check if the line is a shebang (starts with #!)
+
+    :return: True if it is a shebang (starts with #!)
+    """
+    return line.startswith("#!")
+
+
+def parse_comment(
+    line: str, regex: str = r"(^\s*)#\s*(.*)\s*"
+) -> Optional[re.Match]:
+    """Parse a line and return a comment if there's one.
+
+    Seperator lines and shebang return None.
+    """
+    if is_separator(line) or is_shebang(line):
+        return None
+
+    return re.search(regex, line)
