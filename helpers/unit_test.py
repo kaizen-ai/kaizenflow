@@ -141,7 +141,7 @@ def convert_df_to_json_string(
     df: pd.DataFrame,
     n_head: Optional[int] = 10,
     n_tail: Optional[int] = 10,
-    sort_kg_columns=False,
+    columns_order: Optional[List[str]] = None,
 ) -> str:
     """
     Convert dataframe to pretty-printed json string.
@@ -151,48 +151,14 @@ def convert_df_to_json_string(
     :param df: dataframe to convert
     :param n_head: number of printed top rows
     :param n_tail: number of printed bottom rows
-    :param sort_kg_columns: if true sort the KG columns in a traditional order
+    :param columns_order: order for the KG columns sort
     :return: dataframe converted to JSON string
     """
     # Append shape of the initial dataframe.
     shape = "original shape=%s" % (df.shape,)
-    # Create columns order.
-    if sort_kg_columns:
-        cols = [
-            "Name",
-            "Frequency",
-            "Country",
-            "Unit",
-            "Start Date",
-            "End Date",
-            "Commodity",
-            "Contracts",
-            "Business Category",
-            "is_alive",
-            "source_code",
-            "dataset_code",
-            "series_code",
-        ]
-        if 'WIND Commodity' in df.columns:
-            # Append WIND-specific columns.
-            cols.extend(
-                [
-                    "WIND Commodity",
-                    "Update",
-                    "is_downloaded",
-                    "id_is_broken",
-                ]
-            )
-        else:
-            # Append other vendors specific columns.
-            cols.extend(
-                [
-                    "original_name",
-                    "extracted_frequency",
-                ]
-            )
-        # Change columns order.
-        df = df[cols]
+    # Reorder columns.
+    columns_order = columns_order or df.cols
+    df = df[columns_order]
     # Select head.
     if n_head is not None:
         head_df = df.head(n_head)
