@@ -1162,7 +1162,7 @@ class SkLearnModel(FitPredictNode):
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
         info["sr"] = stats.compute_sharpe_ratio(
-            pnl_rets.resample("1B").sum(), time_scaling=252
+            sigp.resample(pnl_rets, rule="1B").sum(), time_scaling=252
         )
         return info
 
