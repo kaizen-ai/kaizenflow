@@ -500,8 +500,7 @@ class Test_correct_method_order(hut.TestCase):
 
         hinted = pslints._class_method_order_detector("test.py", lines)
         self.assertEqual(
-            ["test.py:7: method `_whisper` is located on the wrong line"],
-            hinted,
+            ["test.py:7: method `_whisper` is located on the wrong line"], hinted,
         )
 
     def test5(self) -> None:
@@ -527,8 +526,7 @@ class Test_correct_method_order(hut.TestCase):
 
         hinted = pslints._class_method_order_detector("test.py", lines)
         self.assertEqual(
-            ["test.py:9: method `_whisper` is located on the wrong line"],
-            hinted,
+            ["test.py:9: method `_whisper` is located on the wrong line"], hinted,
         )
 
     def test6(self) -> None:

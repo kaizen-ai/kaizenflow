@@ -1,7 +1,6 @@
-
 import pytest
 
-import dev_scripts.linter2.p1_fix_comments as f_comment
+import dev_scripts.linter2.p1_fix_comments as f_comm
 import helpers.unit_test as hut
 
 
@@ -14,7 +13,7 @@ class Test_fix_comment_style(hut.TestCase):
         - Then line is not changed
         """
         lines = ["test.method()"]
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(lines, actual)
 
     def test2(self) -> None:
@@ -27,7 +26,7 @@ class Test_fix_comment_style(hut.TestCase):
         lines = ["# do this."]
         expected = ["# Do this."]
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test3(self) -> None:
@@ -40,7 +39,7 @@ class Test_fix_comment_style(hut.TestCase):
         lines = ["# Do this"]
         expected = ["# Do this."]
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     @pytest.mark.skip(
@@ -60,7 +59,7 @@ class Test_fix_comment_style(hut.TestCase):
         lines = ["test.method() # do this"]
         expected = ["test.method() # Do this."]
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test5(self) -> None:
@@ -75,7 +74,7 @@ class Test_fix_comment_style(hut.TestCase):
         lines = ["#Do this"]
         expected = ["#Do this."]
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test6(self) -> None:
@@ -87,7 +86,7 @@ class Test_fix_comment_style(hut.TestCase):
         """
         lines = expected = ["#!/usr/bin/env python"]
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test7(self) -> None:
@@ -99,7 +98,7 @@ class Test_fix_comment_style(hut.TestCase):
         """
         lines = expected = [r'comment_regex = r"(.*)#\s*(.*)\s*"']
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test8(self) -> None:
@@ -111,7 +110,7 @@ class Test_fix_comment_style(hut.TestCase):
         """
         lines = expected = ['line = f"{match.group(1)}# {comment}"']
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test9(self) -> None:
@@ -121,9 +120,11 @@ class Test_fix_comment_style(hut.TestCase):
         - When function runs
         - Then line is not updated
         """
-        lines = expected = ["# #############################################################################"]
+        lines = expected = [
+            "# #############################################################################"
+        ]
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test10(self) -> None:
@@ -134,7 +135,7 @@ class Test_fix_comment_style(hut.TestCase):
         - Then line is not changed
         """
         lines = ["#"]
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(lines, actual)
 
     def test11(self) -> None:
@@ -145,7 +146,7 @@ class Test_fix_comment_style(hut.TestCase):
         - Then line is not changed
         """
         lines = ["# TODO(test): Should this be changed?"]
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(lines, actual)
 
     def test12(self) -> None:
@@ -156,7 +157,7 @@ class Test_fix_comment_style(hut.TestCase):
         - Then line is not changed
         """
         lines = ["# -1 is interpreted by joblib like for all cores."]
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(lines, actual)
 
     def test13(self) -> None:
@@ -167,25 +168,25 @@ class Test_fix_comment_style(hut.TestCase):
         - Then line is not changed
         """
         lines = ["## iNVALD"]
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(lines, actual)
 
     def test14(self) -> None:
         """Test no changes are applied to comments that start with 'pylint'."""
         lines = ["# pylint: disable=unused-argument"]
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(lines, actual)
 
     def test15(self) -> None:
         """Test no changes are applied to comments that start with 'type'."""
         lines = ["# type: noqa"]
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(lines, actual)
 
     def test16(self) -> None:
         """Test no changes are applied to comments with one word."""
         lines = expected = ["# oneword"]
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test17(self) -> None:
@@ -193,19 +194,18 @@ class Test_fix_comment_style(hut.TestCase):
         lines = expected = [
             ["# https://github.com/"],
             ["# https://google.com/"],
-            ["# reference: https://facebook.com"]
+            ["# reference: https://facebook.com"],
         ]
-        for l, e in zip(lines, expected):
-            actual = f_comment._fix_comment_style(l)
+        for line, e in zip(lines, expected):
+            actual = f_comm._fix_comment_style(line)
             self.assertEqual(e, actual)
 
     def test18(self) -> None:
-        """Test no changes are applied to comments that are valid python statements"""
-        lines = expected = [
-            "# print('hello')"
-        ]
+        """Test no changes are applied to comments that are valid python
+        statements."""
+        lines = expected = ["# print('hello')"]
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
     def test19(self) -> None:
@@ -213,10 +213,10 @@ class Test_fix_comment_style(hut.TestCase):
             "# We need a matrix `c` for which `c*c^T = r`.",
             "# We can use # the Cholesky decomposition, or the we can construct `c`",
             "# from the eigenvectors and eigenvalues.",
-            "# Compute the eigenvalues and eigenvectors."
+            "# Compute the eigenvalues and eigenvectors.",
         ]
 
-        actual = f_comment._fix_comment_style(lines)
+        actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
 
@@ -228,7 +228,7 @@ class Test_extract_comments(hut.TestCase):
         # comment two
         """
         expected = [
-            f_comment._LinesWithComment(
+            f_comm._LinesWithComment(
                 start_line=2,
                 end_line=3,
                 multi_line_comment=[
@@ -237,7 +237,7 @@ class Test_extract_comments(hut.TestCase):
                 ],
             )
         ]
-        actual = f_comment._extract_comments(content.split("\n"))
+        actual = f_comm._extract_comments(content.split("\n"))
         self.assertEqual(expected, actual)
 
     def test2(self) -> None:
@@ -246,13 +246,13 @@ class Test_extract_comments(hut.TestCase):
         # comment one
         """
         expected = [
-            f_comment._LinesWithComment(
+            f_comm._LinesWithComment(
                 start_line=2,
                 end_line=2,
                 multi_line_comment=["        # comment one"],
             )
         ]
-        actual = f_comment._extract_comments(content.split("\n"))
+        actual = f_comm._extract_comments(content.split("\n"))
         self.assertEqual(expected, actual)
 
     def test3(self) -> None:
@@ -264,7 +264,7 @@ class Test_extract_comments(hut.TestCase):
         # comment three
         """
         expected = [
-            f_comment._LinesWithComment(
+            f_comm._LinesWithComment(
                 start_line=2,
                 end_line=3,
                 multi_line_comment=[
@@ -272,13 +272,13 @@ class Test_extract_comments(hut.TestCase):
                     "        # comment two",
                 ],
             ),
-            f_comment._LinesWithComment(
+            f_comm._LinesWithComment(
                 start_line=5,
                 end_line=5,
                 multi_line_comment=["        # comment three"],
             ),
         ]
-        actual = f_comment._extract_comments(content.split("\n"))
+        actual = f_comm._extract_comments(content.split("\n"))
         self.assertEqual(expected, actual)
 
 
@@ -289,10 +289,10 @@ class Test_reflow_comment(hut.TestCase):
             "# This is a super long message that has too much information in it. "
             "Although inline comments are cool, this sentence should not be this long."
         )
-        comment = f_comment._LinesWithComment(
+        comment = f_comm._LinesWithComment(
             start_line=1, end_line=1, multi_line_comment=[long_line],
         )
-        expected = f_comment._LinesWithComment(
+        expected = f_comm._LinesWithComment(
             start_line=comment.start_line,
             end_line=comment.end_line,
             multi_line_comment=[
@@ -300,38 +300,38 @@ class Test_reflow_comment(hut.TestCase):
                 "# inline comments are cool, this sentence should not be this long.",
             ],
         )
-        actual = f_comment._reflow_comment(comment)
+        actual = f_comm._reflow_comment(comment)
         self.assertEqual(expected, actual)
 
     def test2(self) -> None:
         """Test markdown lists are respected."""
-        comment = f_comment._LinesWithComment(
+        comment = f_comm._LinesWithComment(
             start_line=1,
             end_line=2,
             multi_line_comment=["# - Hello", "# - How are you?"],
         )
         expected = comment
-        actual = f_comment._reflow_comment(comment)
+        actual = f_comm._reflow_comment(comment)
         self.assertEqual(expected, actual)
 
     def test3(self) -> None:
         """Test indentation is preserved."""
-        comment = f_comment._LinesWithComment(
+        comment = f_comm._LinesWithComment(
             start_line=1, end_line=1, multi_line_comment=["    # indented"],
         )
         expected = comment
-        actual = f_comment._reflow_comment(comment)
+        actual = f_comm._reflow_comment(comment)
         self.assertEqual(expected, actual)
 
     def test4(self) -> None:
         """Test a single comment with inconsistent whitespace raises error."""
-        comment = f_comment._LinesWithComment(
+        comment = f_comm._LinesWithComment(
             start_line=1,
             end_line=2,
             multi_line_comment=["# - Hello", "    # - How are you?"],
         )
         with self.assertRaises(AssertionError):
-            f_comment._reflow_comment(comment)
+            f_comm._reflow_comment(comment)
 
 
 class Test_replace_comments_in_lines(hut.TestCase):
@@ -343,13 +343,13 @@ class Test_replace_comments_in_lines(hut.TestCase):
 
         lines = [code_line, old_comment]
         updated_comments = [
-            f_comment._LinesWithComment(
+            f_comm._LinesWithComment(
                 start_line=2, end_line=2, multi_line_comment=[new_comment]
             )
         ]
 
         expected = [code_line, new_comment]
-        actual = f_comment._replace_comments_in_lines(
+        actual = f_comm._replace_comments_in_lines(
             lines=lines, comments=updated_comments
         )
         self.assertEqual(expected, actual)
@@ -376,7 +376,7 @@ class _reflow_comments_in_lines(hut.TestCase):
         """.split(
             "\n"
         )
-        actual = f_comment._reflow_comments_in_lines(lines=content)
+        actual = f_comm._reflow_comments_in_lines(lines=content)
         self.assertEqual(expected, actual)
 
 
@@ -390,7 +390,7 @@ class Test_reflow_comments(hut.TestCase):
             + " functions. On the other side,",
             "# e.g., if we created these functions in `__call__`, they will be recreated at "
             + "every invocation, creating a new memory cache at every invocation.",
-            ]
+        ]
         expected = [
             "# Create decorated functions with different caches and store pointers of these",
             "# functions. Note that we need to build the functions in the constructor since we",
@@ -398,5 +398,5 @@ class Test_reflow_comments(hut.TestCase):
             "# e.g., if we created these functions in `__call__`, they will be recreated at",
             "# every invocation, creating a new memory cache at every invocation.",
         ]
-        result = f_comment._reflow_comments_in_lines(original)
+        result = f_comm._reflow_comments_in_lines(original)
         self.assertEqual(result, expected)
