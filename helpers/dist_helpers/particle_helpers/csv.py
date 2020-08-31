@@ -4,9 +4,9 @@ from typing import Any, Callable, Dict, Optional, Union
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.s3 as hs3
+import particle_helpers.dbg as dbg
+import particle_helpers.io_ as io_
+import particle_helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 

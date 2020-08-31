@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Import as:
 
-import helpers.cache as hcac
+import particle_helpers.cache as hcac
 """
 
 import argparse
@@ -13,10 +13,10 @@ from typing import Any, Callable, Optional
 
 import joblib
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.parser as prsr
-import helpers.unit_test as ut
+import particle_helpers.dbg as dbg
+import particle_helpers.git as git
+import particle_helpers.parser as prsr
+import particle_helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 

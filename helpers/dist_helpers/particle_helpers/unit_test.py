@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.unit_test as hut
+import particle_helpers.unit_test as hut
 
 # TODO(gp): use hut instead of ut.
 """
@@ -19,11 +19,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.io_ as io_
-import helpers.printing as prnt
-import helpers.system_interaction as si
+import particle_helpers.dbg as dbg
+import particle_helpers.git as git
+import particle_helpers.io_ as io_
+import particle_helpers.printing as prnt
+import particle_helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 

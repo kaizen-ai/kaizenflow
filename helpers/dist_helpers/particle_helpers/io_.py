@@ -2,7 +2,7 @@
 
 Import as:
 
-import helpers.io_ as io_
+import particle_helpers.io_ as io_
 """
 
 import fnmatch
@@ -16,8 +16,8 @@ from typing import Any, List, Optional
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.system_interaction as si
+import particle_helpers.dbg as dbg
+import particle_helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 

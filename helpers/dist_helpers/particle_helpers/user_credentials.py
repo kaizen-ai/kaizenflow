@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """Import as:
 
-import helpers.user_credentials as usc
+import particle_helpers.user_credentials as usc
 
 # Test that all the credentials are properly defined.
-> helpers/user_credentials.py
+> particle_helpers/user_credentials.py
 """
 
 import argparse
@@ -13,11 +13,11 @@ import os
 import pprint
 from typing import Any, Dict, List
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import particle_helpers.dbg as dbg
+import particle_helpers.git as git
+import particle_helpers.io_ as io_
+import particle_helpers.parser as prsr
+import particle_helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 

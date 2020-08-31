@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.dbg as dbg
+import particle_helpers.dbg as dbg
 """
 
 import copy
@@ -507,7 +507,7 @@ class _ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, colored_record)
 
 
-# Copied from `helpers/system_interaction.py` to avoid circular dependencies.
+# Copied from `particle_helpers/system_interaction.py` to avoid circular dependencies.
 def get_user_name() -> str:
     import getpass
 

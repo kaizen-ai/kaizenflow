@@ -2,7 +2,7 @@
 
 Import as:
 
-import helpers.playback as plbck
+import particle_helpers.playback as plbck
 """
 
 import json
@@ -15,7 +15,7 @@ import jsonpickle  # type: ignore
 import jsonpickle.ext.pandas as pd_ext  # type: ignore
 import pandas as pd
 
-import helpers.dbg as dbg
+import particle_helpers.dbg as dbg
 
 pd_ext.register_handlers()
 

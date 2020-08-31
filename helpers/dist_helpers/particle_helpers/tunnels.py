@@ -1,16 +1,16 @@
 """Import as:
 
-import helpers.tunnels as tnls
+import particle_helpers.tunnels as tnls
 """
 
 import logging
 import os
 from typing import Dict, List
 
-import helpers.dbg as dbg
-import helpers.printing as prnt
-import helpers.system_interaction as si
-import helpers.user_credentials as usc
+import particle_helpers.dbg as dbg
+import particle_helpers.printing as prnt
+import particle_helpers.system_interaction as si
+import particle_helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 

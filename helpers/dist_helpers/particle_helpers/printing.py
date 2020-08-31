@@ -1,11 +1,11 @@
 """Import as:
 
-import helpers.printing as prnt
+import particle_helpers.printing as prnt
 """
 
 from typing import Any, Dict, Iterable, List, Optional, cast
 
-import helpers.dbg as dbg
+import particle_helpers.dbg as dbg
 
 # #############################################################################
 # Debug output

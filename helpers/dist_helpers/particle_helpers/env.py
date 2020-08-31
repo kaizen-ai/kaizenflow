@@ -3,11 +3,11 @@ import os
 import platform
 from typing import List
 
-import helpers.conda as hco
-import helpers.git as git
-import helpers.io_ as io_
-import helpers.printing as pri
-import helpers.system_interaction as si
+import particle_helpers.conda as hco
+import particle_helpers.git as git
+import particle_helpers.io_ as io_
+import particle_helpers.printing as pri
+import particle_helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 

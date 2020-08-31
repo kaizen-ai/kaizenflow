@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.datetime_ as hdt
+import particle_helpers.datetime_ as hdt
 """
 
 import datetime
@@ -8,7 +8,7 @@ from typing import Union
 
 import pandas as pd
 
-import helpers.dbg as dbg
+import particle_helpers.dbg as dbg
 
 DATETIME_TYPE = Union[pd.Timestamp, datetime.datetime]
 

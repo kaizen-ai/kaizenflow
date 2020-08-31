@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.system_interaction as si
+import particle_helpers.system_interaction as si
 
 Contain all the code needed to interact with the outside world, e.g., through
 system commands, env vars, ...
@@ -16,9 +16,9 @@ import sys
 import time
 from typing import Any, Callable, List, Optional, Tuple, Union
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.printing as prnt
+import particle_helpers.dbg as dbg
+import particle_helpers.io_ as io_
+import particle_helpers.printing as prnt
 
 _LOG = logging.getLogger(__name__)
 
@@ -440,7 +440,7 @@ def create_executable_script(file_name: str, content: str) -> None:
 
 # #############################################################################
 
-# TODO(gp): Move it helpers/tools_interaction.py ?
+# TODO(gp): Move it particle_helpers/tools_interaction.py ?
 
 
 def pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str]:

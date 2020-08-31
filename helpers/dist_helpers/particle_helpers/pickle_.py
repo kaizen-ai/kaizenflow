@@ -7,9 +7,9 @@ import pickle
 import types
 from typing import Callable
 
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.timer as timer
+import particle_helpers.dbg as dbg
+import particle_helpers.io_ as io_
+import particle_helpers.timer as timer
 
 _LOG = logging.getLogger(__name__)
 

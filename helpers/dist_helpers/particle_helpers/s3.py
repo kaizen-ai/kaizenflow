@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.s3 as hs3
+import particle_helpers.s3 as hs3
 """
 
 import logging
@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Tuple
 import boto3
 import botocore
 
-import helpers.dbg as dbg
-import helpers.system_interaction as si
+import particle_helpers.dbg as dbg
+import particle_helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def get_s3fs_bucket_path() -> str:
     return path
 
 
-# TODO(*): Move to amp/helpers/fsx.py at some point.
+# TODO(*): Move to amp/particle_helpers/fsx.py at some point.
 def get_fsx_root_path() -> str:
     """Return the path where FSx is mounted on the filesystem."""
     path = "/fsx"

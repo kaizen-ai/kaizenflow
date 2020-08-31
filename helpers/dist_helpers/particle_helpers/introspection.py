@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.introspection as intr
+import particle_helpers.introspection as intr
 """
 
 import collections.abc as abc
@@ -8,7 +8,7 @@ import inspect
 import sys
 from typing import Any, List
 
-import helpers.dbg as dbg
+import particle_helpers.dbg as dbg
 
 
 def is_iterable(obj: object) -> bool:

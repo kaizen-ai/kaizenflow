@@ -4,7 +4,7 @@ from typing import List, Tuple, Union
 import pandas as pd
 import psycopg2 as pg
 
-import helpers.timer as timer
+import particle_helpers.timer as timer
 
 _log = logging.getLogger(__name__)
 

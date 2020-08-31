@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.parser as prsr
+import particle_helpers.parser as prsr
 """
 
 import argparse
@@ -9,8 +9,8 @@ import os
 import sys
 from typing import List, Optional, Tuple
 
-import helpers.dbg as dbg
-import helpers.printing as prnt
+import particle_helpers.dbg as dbg
+import particle_helpers.printing as prnt
 
 _LOG = logging.getLogger(__name__)
 

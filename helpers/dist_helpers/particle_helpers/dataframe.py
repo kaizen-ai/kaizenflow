@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.dataframe as hdf
+import particle_helpers.dataframe as hdf
 """
 
 import collections
@@ -11,8 +11,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.printing as prnt
+import particle_helpers.dbg as dbg
+import particle_helpers.printing as prnt
 
 _LOG = logging.getLogger(__name__)
 

@@ -2,9 +2,9 @@ import json
 import logging
 import os
 
-import helpers.dbg as dbg
-import helpers.system_interaction as si
-import helpers.user_credentials as usc
+import particle_helpers.dbg as dbg
+import particle_helpers.system_interaction as si
+import particle_helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 

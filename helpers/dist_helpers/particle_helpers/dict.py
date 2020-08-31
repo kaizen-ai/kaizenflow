@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.dict as dct
+import particle_helpers.dict as dct
 """
 
 import collections

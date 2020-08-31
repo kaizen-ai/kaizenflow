@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.git as git
+import particle_helpers.git as git
 """
 
 import collections
@@ -9,9 +9,9 @@ import os
 import re
 from typing import Dict, List, Optional, Tuple
 
-import helpers.datetime_ as hdt
-import helpers.dbg as dbg
-import helpers.system_interaction as si
+import particle_helpers.datetime_ as hdt
+import particle_helpers.dbg as dbg
+import particle_helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
 
@@ -389,7 +389,7 @@ def get_modified_files(
     # If the client status is:
     #   > git status -s
     #   AM dev_scripts/infra/ssh_tunnels.py
-    #   M helpers/git.py
+    #   M particle_helpers/git.py
     #   ?? linter_warnings.txt
     #
     # The result is:
@@ -398,7 +398,7 @@ def get_modified_files(
     #
     #   > git ls-files -m
     #   dev_scripts/infra/ssh_tunnels.py
-    #   helpers/git.py
+    #   particle_helpers/git.py
     cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
     files = _get_files(dir_name, cmd, remove_files_non_present)
     return files

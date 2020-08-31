@@ -1,11 +1,11 @@
 """Import as:
 
-import helpers.list as hlist
+import particle_helpers.list as hlist
 """
 
 from typing import Any, List, Set
 
-import helpers.dbg as dbg
+import particle_helpers.dbg as dbg
 
 
 def assert_single_element_and_return(list_: List[Any]) -> Any:
