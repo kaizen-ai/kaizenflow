@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 import argparse
-import re
-import string
 import dataclasses
-import tempfile
-import dev_scripts.linter2.base as lntr
-import tokenize
-import more_itertools
 import io
 import logging
+import re
+import string
+import tempfile
+import tokenize
 from typing import List, Optional, Tuple
+
+import more_itertools
+
+import dev_scripts.linter2.base as lntr
 import dev_scripts.linter2.utils as utils
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -39,13 +41,13 @@ def _extract_comments(lines: List[str]) -> List[_LinesWithComment]:
         t.start[0]: t.line.rstrip() for t in tokens if t.type == tokenize.COMMENT
     }
 
-    # find consecutive line numbers to determine multi-line comments
+    # Find consecutive line numbers to determine multi-line comments.
     comment_line_numbers = comments_by_line.keys()
     comments: List[_LinesWithComment] = []
     for group in more_itertools.consecutive_groups(comment_line_numbers):
         line_numbers = list(group)
-        # TODO(*): Do a single scan using an FSM to build this map.
-        # Reference: https://github.com/ParticleDev/external/pull/65/files#r464000483
+        # TODO(\*): Do a single scan using an FSM to build this map. Reference:
+        # https://github.com/ParticleDev/external/pull/65/files#r464000483
         matching_comments = [
             line
             for line_num, line in comments_by_line.items()
@@ -74,7 +76,7 @@ def _reflow_comment(comment: _LinesWithComment) -> _LinesWithComment:
             return comment
         content += "\n" + match.group(2)
 
-        # assumption: all consecutive comments have the same indentation
+        # Assumption: all consecutive comments have the same indentation.
         if whitespace is None:
             whitespace = match.group(1)
         else:
@@ -97,7 +99,7 @@ def _reflow_comment(comment: _LinesWithComment) -> _LinesWithComment:
 
 
 def _replace_comments_in_lines(
-        lines: List[str], comments: List[_LinesWithComment]
+    lines: List[str], comments: List[_LinesWithComment]
 ) -> List[str]:
     """Replace comments in lines.
 
@@ -113,26 +115,26 @@ def _replace_comments_in_lines(
 
     updated_lines_with_numbers = lines_with_numbers.copy()
     for comment in comments:
-        # find index of first line that matches those line nums
+        # Find index of first line that matches those line nums.
         index_to_insert_at = next(
             idx
             for idx, (line_num, line) in enumerate(updated_lines_with_numbers)
             if line_num == comment.start_line
         )
 
-        # remove lines that are not between start_line & end_line
+        # Remove lines that are not between start_line & end_line.
         updated_lines_with_numbers = [
             (line_num, line)
             for line_num, line in updated_lines_with_numbers
             if line_num < comment.start_line or line_num > comment.end_line
         ]
 
-        # insert the new lines at that index
+        # Insert the new lines at that index.
         inserted_lines = [(-1, line) for line in comment.multi_line_comment]
         updated_lines_with_numbers = (
-                updated_lines_with_numbers[:index_to_insert_at]
-                + inserted_lines
-                + updated_lines_with_numbers[index_to_insert_at:]
+            updated_lines_with_numbers[:index_to_insert_at]
+            + inserted_lines
+            + updated_lines_with_numbers[index_to_insert_at:]
         )
 
     updated_lines = [line for line_num, line in updated_lines_with_numbers]
@@ -184,14 +186,16 @@ def _fix_comment_style(lines: List[str]) -> List[str]:
         # If any of the checks returns True, it means the check failed.
         if any([check(comment.multi_line_comment[0]) for check in checks]):
             continue
-        match = utils.parse_comment(comment.multi_line_comment[0], r"(^\s*)#(\s*)(.*)")
+        match = utils.parse_comment(
+            comment.multi_line_comment[0], r"(^\s*)#(\s*)(.*)"
+        )
         if not match:
             continue
         without_pound = match.group(3)
-        # Make sure it doesn't try to capitalize an empty comment
+        # Make sure it doesn't try to capitalize an empty comment.
         if without_pound and not without_pound[0].isupper():
             without_pound = without_pound.capitalize()
-        # Rebuild the comment and add punctuation if not already present
+        # Rebuild the comment and add punctuation if not already present.
         body = f"{match.group(1)}#{match.group(2)}{without_pound}"
         if body[-1] not in string.punctuation:
             body = f"{body}."

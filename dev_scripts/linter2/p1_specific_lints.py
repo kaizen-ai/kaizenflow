@@ -163,6 +163,7 @@ def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
 # File Content Modifiers.
 # #############################################################################
 
+
 @dataclasses.dataclass
 class _IncorrectPositionNode:
     current_line_num: int
@@ -222,11 +223,11 @@ class _Node:
         """
         self.type = t
         self._children: List["_Node"] = list()
-        # the complete line on which this node was found
+        # The complete line on which this node was found.
         self.line = line
         self.line_num = line_num
         self.name = name
-        # all lines between this node and the next node, the body of functions/classes
+        # All lines between this node and the next node, the body of functions/classes.
         self.body: List[str] = list()
         self.decorators: List[str] = list()
         self._indent: Union[None, int] = None
@@ -243,11 +244,11 @@ class _Node:
         if not isinstance(other, _Node):
             return False
         return (
-                self.line_num == other.line_num
-                and self.line == other.line
-                and self.name == other.name
-                and self.body == other.body
-                and self.decorators == other.decorators
+            self.line_num == other.line_num
+            and self.line == other.line
+            and self.name == other.name
+            and self.body == other.body
+            and self.decorators == other.decorators
         )
 
     @property
@@ -260,8 +261,8 @@ class _Node:
     def ordered_children(self) -> List["_Node"]:
         if self.type != _Node.Type.CLS:
             pass
-            # _LOG.warning("You tried to order a node that isn't a class. This can possibly mess
-            # up the formatting.")
+            # \_LOG.warning("You tried to order a node that isn't a class. This can possibly
+            # mess up the formatting.")
         return sorted(self.get_children(), key=self._sorting_key)
 
     def get_children(self, t: "_Node.Type" = Type.ALL) -> List["_Node"]:
@@ -297,8 +298,8 @@ class _Node:
         while current_order and correct_order:
             current_node = current_order.pop(0)
             correct_node = correct_order.pop(0)
-            # we only have to check magic and private methods. If those are in the correct position,
-            # public methods will also have to be correctly positioned.
+            # we only have to check magic and private methods. If those are in the correct
+            # position, public methods will also have to be correctly positioned.
             if current_node != correct_node and current_node.name.startswith("_"):
                 offending.append(current_node)
         return offending
@@ -353,28 +354,30 @@ def _find_parent_node(nodes: List[_Node], indent: int) -> Union[None, _Node]:
     :param indent: level of indentation of the node for which the parent needs to be found
     :return: the parent node if found, else None
     """
-    # only classes and functions can be parents
+    # Only classes and functions can be parents.
     filtered_nodes: List[_Node] = [
         n for n in nodes if n.type in [_Node.Type.CLS, _Node.Type.FUNC]
     ]
     if not filtered_nodes:
         return None
-    # the parent has to be the last from the list
+    # The parent has to be the last from the list.
     pn: _Node = filtered_nodes[-1]
     if pn.indentation == indent - 4:
         return pn
     return _find_parent_node(pn.get_children(), indent)
 
 
-def _extract_decorator(line: str, next_line_is_decorator: bool) -> Tuple[Union[None, str], bool]:
+def _extract_decorator(
+    line: str, next_line_is_decorator: bool
+) -> Tuple[Union[None, str], bool]:
     is_decorator = _is_decorator(line)
-    # support for multi-line decorators
+    # Support for multi-line decorators.
     if (is_decorator and "(" in line) or next_line_is_decorator:
         chars_to_reverse = -3 if line.endswith("\n") else -1
         next_line_is_decorator = line[chars_to_reverse] != ")"
         return line, next_line_is_decorator
     if is_decorator:
-        # support for simple decorators, i.e. @staticmethod or @abstractmethod
+        # Support for simple decorators, i.e. @staticmethod or @abstractmethod.
         return line, False
     return None, False
 
@@ -401,8 +404,8 @@ def _lines_to_nodes(lines: List[str]) -> List[_Node]:
         if decorator_line is not None:
             decorators.append(decorator_line)
             continue
-        # Unless we're in the body of a function/class, it is safe to assume that the parent node
-        # has changed if the level of indentation has moved.
+        # Unless we're in the body of a function/class, it is safe to assume that the
+        # parent node has changed if the level of indentation has moved.
         current_indent: int = len(line) - len(line.lstrip(" "))
         if current_indent != previous_indent:
             parent_node = _find_parent_node(root_nodes, current_indent)
@@ -414,13 +417,13 @@ def _lines_to_nodes(lines: List[str]) -> List[_Node]:
                 # within functions
                 last_node.add_to_body(line)
             else:
-                # create a misc node to make sure all lines before function/class
-                # nodes(shebangs, imports, etc) are also saved
+                # create a misc node to make sure all lines before function/class nodes(shebangs,
+                # imports, etc) are also saved
                 last_node = node = _Node("", line, line_num, _Node.Type.TEXT)
                 root_nodes.append(node)
         elif isinstance(node, _Node):
             if parent_node is None:
-                # if there is no current parent node, the new node has to be the parent
+                # If there is no current parent node, the new node has to be the parent.
                 parent_node = node
             while decorators:
                 node.add_decorator(decorators.pop(0))
@@ -476,8 +479,7 @@ def _modify_file_lines(lines: List[str]) -> List[str]:
     # Functions that take a line, and return a modified line.
     ContentModifier = Callable[[List[str]], List[str]]
     CONTENT_MODIFIERS: List[ContentModifier] = [
-        # TODO(amr): enable this once it's tested enough.
-        # _reflow_comments_in_lines
+        # TODO(amr): enable this once it's tested enough. \_reflow_comments_in_lines.
     ]
 
     for modifier in CONTENT_MODIFIERS:
@@ -533,8 +535,7 @@ def _modify_file_line_by_line(lines: List[str]) -> List[str]:
     LineModifier = Callable[[str], str]
     LINE_MODIFIERS: List[LineModifier] = [
         _format_separating_line,
-        # TODO(amr): re-enable this for multi-line comments only.
-        # _fix_comment_style,
+        # TODO(amr): re-enable this for multi-line comments only. \_fix_comment_style,
         # TODO(gp): Remove empty lines in functions.
     ]
 
@@ -581,8 +582,8 @@ def _check_import(file_name: str, line_num: int, line: str) -> str:
     msg = ""
 
     if utils.is_init_py(file_name):
-        # In __init__.py we can import in weird ways.
-        # (e.g., the evil `from ... import *`).
+        # In **init**.py we can import in weird ways. (e.g., the evil
+        # `from ... import *`).
         return msg
 
     m = re.match(r"\s*from\s+(\S+)\s+import\s+.*", line)
