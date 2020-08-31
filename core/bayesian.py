@@ -123,7 +123,7 @@ def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
 
 
 def fit_laplace(data, prior_tau=1e-6, time_scaling=1, **kwargs):
-    """Fits a Laplace distribution to each column of data (independently).
+    """Fit a Laplace distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
     :param prior_tau: Controls precision of mean and log_std priors
@@ -158,7 +158,7 @@ def fit_laplace(data, prior_tau=1e-6, time_scaling=1, **kwargs):
 
 
 def fit_normal(data, prior_tau=1e-6, time_scaling=1, **kwargs):
-    """Fits a normal distribution to each column of data (independently).
+    """Fit a normal distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
     :param prior_tau: Controls precision of mean and log_std priors
@@ -193,7 +193,7 @@ def fit_normal(data, prior_tau=1e-6, time_scaling=1, **kwargs):
 
 
 def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
-    """Fits a Student T distribution to each column of data (independently).
+    """Fit a Student T distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
     :param prior_tau: Controls precision of mean and log_std priors
@@ -230,7 +230,7 @@ def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
 def fit_one_way_normal(
     df, prior_tau=1e-6, time_scaling=1, vol_mode="point", **kwargs
 ):
-    """Fits a one-way normal model.
+    """Fit a one-way normal model.
 
     :param df: Df of obs, each column representing a group
     :param prior_tau: Controls precision of global mean prior
