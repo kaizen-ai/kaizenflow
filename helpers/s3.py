@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, List, Tuple
 
 import boto3
+import botocore
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -65,7 +66,55 @@ def get_fsx_root_path() -> str:
     return path
 
 
+def exists(s3_path: str) -> bool:
+    """Check if path exists in s3.
+
+    :raise: exception if checking the s3 key fails.
+    """
+    bucket, key = parse_path(s3_path)
+
+    s3 = boto3.resource("s3")
+    try:
+        s3.Object(bucket, key).load()
+        ret = True
+    except botocore.exceptions.ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            ret = False
+        else:
+            raise e
+
+    return ret
+
+
 # #############################################################################
+
+
+def exists(s3_path: str) -> bool:
+    """Check if path exists in s3.
+
+    :raise: exception if checking the s3 key fails.
+    """
+    bucket, key = parse_path(s3_path)
+
+    s3 = boto3.resource("s3")
+    try:
+        s3.Object(bucket, key).load()
+        ret = True
+    except botocore.exceptions.ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            ret = False
+        else:
+            raise e
+    _LOG.debug("'%s' exists=%s", s3_path, ret)
+    return ret
+
+
+def is_valid_s3_path(s3_path: str) -> bool:
+    return s3_path.startswith("s3://")
+
+
+def check_valid_s3_path(s3_path: str) -> None:
+    dbg.dassert(is_valid_s3_path(s3_path), "Invalid S3 file='%s'", s3_path)
 
 
 def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
@@ -192,7 +241,7 @@ def parse_path(path: str) -> Tuple[str, str]:
 # TODO(Julia): When PartTask418_PRICE_Convert_Kibot_data_from_csv is
 # merged, choose between this ls() and listdir() functions.
 def ls(file_path: str) -> List[str]:
-    """Return the file lists in `file_path`"""
+    """Return the file lists in `file_path`."""
     s3 = boto3.resource("s3")
     bucket_name, file_path = parse_path(file_path)
     _LOG.debug("bucket_name=%s, file_path=%s", bucket_name, file_path)

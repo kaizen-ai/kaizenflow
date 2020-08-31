@@ -11,6 +11,7 @@ class AssetClass(enum.Enum):
 class Frequency(enum.Enum):
     Minutely = "T"
     Daily = "D"
+    Tick = "tick"
 
 
 class ContractType(enum.Enum):

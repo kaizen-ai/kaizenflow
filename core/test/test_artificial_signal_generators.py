@@ -75,6 +75,12 @@ class TestMultivariateNormalProcess(hut.TestCase):
         self.check_string(hut.convert_df_to_string(realization, index=True))
 
 
+class Test_generate_arima_signal_and_response(hut.TestCase):
+    def test1(self) -> None:
+        srs = sig_gen.generate_arima_signal_and_response("2010-01-01", "D", 40, 1)
+        self.check_string(hut.convert_df_to_string(srs, index=True))
+
+
 # TODO(gp): Remove after PartTask2335
 if True:
     import gluonts

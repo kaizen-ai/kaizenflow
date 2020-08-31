@@ -6,6 +6,7 @@
       * [Pre-commit on all the files](#pre-commit-on-all-the-files)
       * [Pre-commit on specific files](#pre-commit-on-specific-files)
       * [Pre-commit only one hook](#pre-commit-only-one-hook)
+      * [Pre-commit all the files modified in the current branch](#pre-commit-all-the-files-modified-in-the-current-branch)
       * [Run hooks before of committing](#run-hooks-before-of-committing)
       * [Skip running hooks](#skip-running-hooks)
       * [Generate all the lints to be fixed with vim](#generate-all-the-lints-to-be-fixed-with-vim)
@@ -70,6 +71,12 @@
   ```bash
   > pre-commit run flake8
   ```
+
+## Pre-commit all the files modified in the current branch
+
+```bash
+> pre-commit run --files $(git diff --name-only master...)
+```
 
 ## Run hooks before of committing
 

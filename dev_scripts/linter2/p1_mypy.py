@@ -28,16 +28,6 @@ class _Mypy(lntr.Action):
         executable = "mypy"
         super().__init__(executable)
 
-    @staticmethod
-    @functools.lru_cache()
-    def _config_path() -> str:
-        """Return path of mypy.ini file.
-
-        :raise: RuntimeError if mypy.ini is not found
-        """
-        path: str = git.find_file_in_git_tree("mypy.ini")
-        return path
-
     def check_if_possible(self) -> bool:
         check: bool = si.check_exec(self._executable)
         return check
@@ -76,6 +66,16 @@ class _Mypy(lntr.Action):
             output_tmp.append(line)
         output = output_tmp
         return output
+
+    @staticmethod
+    @functools.lru_cache()
+    def _config_path() -> str:
+        """Return path of mypy.ini file.
+
+        :raise: RuntimeError if mypy.ini is not found
+        """
+        path: str = git.find_file_in_git_tree("mypy.ini", super_module=False)
+        return path
 
 
 # #############################################################################

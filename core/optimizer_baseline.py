@@ -8,7 +8,7 @@
 # Once we have a clear interface for an optimizer, we can consider replacing
 # or refactoring these weighting functions.
 
-# TODO: Parametrize covariance / mean estimation strategies
+# TODO(*): Parametrize covariance / mean estimation strategies
 #       We want to parametrize the flow so that
 #         - We provide returns, a weighting strategy and, if applicable,
 #           - a covariance matrix estimation strategy
@@ -46,7 +46,7 @@ def inverse_volatility_weighting(df, com, min_periods):
     """
     # Convert to log returns for the purpose of calculating volatility.
     log_df = np.log(df + 1)
-    log_df = log_df.ewm(
+    log_df = log_df.ewm(  # pylint: disable=no-member
         com=com, min_periods=min_periods, adjust=True, ignore_na=False, axis=0
     ).std()
     inv_vol = 1.0 / log_df
@@ -70,7 +70,7 @@ def minimum_variance_weighting(df, com, min_periods):
     _LOG.info("df num rows = %i", df.shape[0])
     _LOG.info("df num rows with no NaNs = %i", df.dropna(how="any").shape[0])
     log_df = np.log(df + 1)
-    cov = log_df.ewm(
+    cov = log_df.ewm(  # pylint: disable=no-member
         com=com, min_periods=min_periods, adjust=True, ignore_na=False, axis=0
     ).cov()
     _LOG.info("cov num matrices = %i", cov.shape[0] / cov.shape[1])
@@ -140,7 +140,7 @@ def _ewm_cov(df, com, min_periods, adjust=True, ignore_na=False, axis=0):
     _LOG.info("df num rows with no NaNs = %i", df.dropna(how="any").shape[0])
     # Convert to log returns for the purpose of calculating covariance.
     log_df = np.log(df + 1)
-    cov = log_df.ewm(
+    cov = log_df.ewm(  # pylint: disable=no-member
         com=com,
         min_periods=min_periods,
         adjust=adjust,
