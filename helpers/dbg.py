@@ -716,7 +716,8 @@ def shutup_chatty_modules(verbosity: int = logging.CRITICAL) -> None:
         "nose",
     ]
     loggers = get_matching_loggers(module_names)
-    print("Shutting up modules: (%d) %s" % (len(loggers), loggers))
+    print("Shutting up %s modules" % len(loggers))
+    _LOG.debug("Shutting up modules: (%d) %s", len(loggers), loggers)
     for logger in loggers:
         logger.setLevel(verbosity)
 

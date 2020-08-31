@@ -1,6 +1,8 @@
 #!/usr/bin/env python
-"""
-Download data from kibot.com, compress each file, upload it to S3.
+"""Download data from kibot.com, compress each file, upload it to S3.
+
+# Process only specific dataset:
+> download.py --dataset all_stocks_1min --dry_run -u XYZ -p ABC
 
 # Process only specific dataset:
 > download.py --dataset all_stocks_1min
@@ -23,10 +25,6 @@ import shutil
 import urllib.parse as urlprs
 
 import bs4
-import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
 import joblib
 import numpy as np
 import pandas as pd
@@ -34,9 +32,18 @@ import requests
 import requests.adapters as adapters
 import requests.packages.urllib3.util as url3ut
 import tqdm
+
+import helpers.dbg as dbg
+import helpers.io_ as io_
+import helpers.parser as prsr
+import helpers.s3 as hs3
+import helpers.system_interaction as si
 import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
+
+_JOBLIB_NUM_CPUS = 10
+_JOBLIB_VERBOSITY = 1
 
 # #############################################################################
 
@@ -47,8 +54,7 @@ def _log_in(
     password: str,
     requests_session: requests.Session,
 ) -> bool:
-    """
-    Make a login request to my account page and return the result.
+    """Make a login request to my account page and return the result.
 
     :param page_url: URL to the my account page
     :param username: actual username
@@ -56,7 +62,7 @@ def _log_in(
     :param requests_session: current requests session to preserve cookies
     :return: boolean for operation result
     """
-    _LOG.info("Requesting page '%s'", page_url)
+    _LOG.debug("Requesting page '%s'", page_url)
     page_response = requests_session.get(page_url)
     page_content = str(page_response.content, "utf-8")
     soup = bs4.BeautifulSoup(page_content, "html.parser")
@@ -72,7 +78,7 @@ def _log_in(
         "ctl00$Content$LoginView1$Login1$RememberMe": "on",
         "ctl00$Content$LoginView1$Login1$LoginButton": "  Log In  ",
     }
-    _LOG.info("Sending login request to page '%s'", page_url)
+    _LOG.debug("Sending login request to page '%s'", page_url)
     _LOG.debug("Request data is %s", data)
     login_response = requests_session.post(
         page_url, data=data, allow_redirects=False
@@ -86,8 +92,8 @@ def _log_in(
 def _download_page(
     page_file_path: str, page_url: str, requests_session: requests.Session,
 ) -> str:
-    """
-    Download html file by URL and store under specific name in data directory.
+    """Download html file by URL and store under specific name in data
+    directory.
 
     :param page_file_path: path of the file
     :param page_url: URL from where to download
@@ -104,15 +110,15 @@ def _download_page(
     return page_content
 
 
+# #############################################################################
+
+
 class DatasetListExtractor:
-    """
-    Extractor of the list of available datasets from Kibot.
-    """
+    """Extractor of the list of available datasets from Kibot."""
 
     @classmethod
     def extract_dataset_links(cls, src_file: str) -> pd.DataFrame:
-        """
-        Retrieve a table with datasets and corresponding page links.
+        """Retrieve a table with datasets and corresponding page links.
 
         :param src_file: html file with the my account page
         :return: DataFrame with dataset names and corresponding page links
@@ -135,8 +141,7 @@ class DatasetListExtractor:
 
     @staticmethod
     def _clean_dataset_name(dataset: str) -> str:
-        """
-        Clean up a dataset name for ease future reference.
+        """Clean up a dataset name for ease future reference.
 
         E.g., the dataset `1. All Stocks 1min on 9/29/2019` becomes `all_stocks_1min`.
 
@@ -147,27 +152,31 @@ class DatasetListExtractor:
         clean_dataset = re.sub(r"^\d+.", "", clean_dataset)
         clean_dataset = re.sub(r"\s+on.*$", "", clean_dataset)
         clean_dataset = re.sub(r"\s+", "_", clean_dataset)
+        clean_dataset = re.sub(r"&", "", clean_dataset)
         clean_dataset = clean_dataset.strip("_")
         # TODO(amr): should we assert the result matches an element in `config.DATASETS`?
         return clean_dataset
 
 
+# #############################################################################
+
+
 class DatasetExtractor:
-    """
-    Extractor of payloads for a particular dataset.
-    """
+    """Extractor of payloads for a particular dataset."""
 
     def __init__(self, dataset: str, requests_session: requests.Session):
-        """
+        """Init object.
+
         :param dataset: input dataset name to process
         :param requests_session: current requests session to preserve cookies
         """
         self.dataset = dataset
         self.requests_session = requests_session
         self.aws_dir = os.path.join(config.S3_PREFIX, dataset)
+        _LOG.info("Saving to S3 in '%s'", self.aws_dir)
 
-    def delete_dataset_s3_directory(self):
-        assert 0, "Very dangerous: are you sure"
+    def delete_dataset_s3_directory(self) -> None:
+        assert 0, "Very dangerous: are you sure?"
         _LOG.warning("Deleting s3 file %s", self.aws_dir)
         cmd = "aws s3 rm --recursive %s" % self.aws_dir
         si.system(cmd)
@@ -180,8 +189,7 @@ class DatasetExtractor:
         skip_if_exists: bool,
         clean_up_artifacts: bool,
     ) -> bool:
-        """
-        Store CSV payload for specific Symbol in S3.
+        """Store CSV payload for specific Symbol in S3.
 
         :param local_dir: local directory with the data
         :param row: series with Symbol and Link columns
@@ -194,9 +202,7 @@ class DatasetExtractor:
         aws_file += "%s.csv.gz" % row["Symbol"]
         # Check if S3 file exists.
         if skip_if_exists:
-            rc = si.system("aws s3 ls " + aws_file, abort_on_error=False)
-            exists = not rc
-            _LOG.debug("%s -> exists=%s", aws_file, exists)
+            exists = hs3.exists(aws_file)
             if exists:
                 _LOG.info("%s -> skip", aws_file)
                 return False
@@ -207,7 +213,8 @@ class DatasetExtractor:
             row["Link"], local_file, dst_file, download_compressed
         )
         # Copy to s3.
-        cmd = "aws s3 cp %s s3://%s" % (dst_file, aws_file)
+        hs3.check_valid_s3_path(aws_file)
+        cmd = "aws s3 cp %s %s" % (dst_file, aws_file)
         si.system(cmd)
         #
         if clean_up_artifacts:
@@ -219,8 +226,8 @@ class DatasetExtractor:
     def get_dataset_payloads_to_download(
         self, dataset_links_df: pd.DataFrame, source_dir: str, converted_dir: str,
     ) -> pd.DataFrame:
-        """
-        Get a DataFrame with the list of Symbols and Links to download for a dataset.
+        """Get a DataFrame with the list of Symbols and Links to download for a
+        dataset.
 
         :param dataset_links_df: DataFrame with the list to a dataset pages
         :param source_dir: directory to store source download
@@ -229,28 +236,39 @@ class DatasetExtractor:
         """
         dataset_html_file = os.path.join(source_dir, f"{self.dataset}.html")
         dataset_csv_file = os.path.join(converted_dir, f"{self.dataset}.csv")
-        # Download dataset's html page.
+        # Download dataset html page.
         if not os.path.exists(dataset_html_file):
             _LOG.warning("Missing %s: downloading it", dataset_html_file)
             links = dataset_links_df.loc[
                 dataset_links_df.dataset == self.dataset
             ].link.values
-            dbg.dassert_eq(len(links), 1)
+            if len(links) == 0:
+                dbg.dfatal(
+                    "Can't find a link corresponding to the request dataset"
+                )
+            if len(links) != 1:
+                dbg.dfatal(
+                    "Found multiple links corresponding to the requested dataset: %s"
+                    % links
+                )
+            dbg.dassert_eq(len(links), 1, "links=%s", links)
             link_to_html_page = links[0]
             _download_page(
                 dataset_html_file, link_to_html_page, self.requests_session
             )
         # Parse and convert dataset's html page.
-        _LOG.warning("Parsing %s", dataset_html_file)
+        _LOG.warning("Parsing '%s'", dataset_html_file)
         dataset_df = self._extract_payload_links(dataset_html_file)
         dataset_df.to_csv(dataset_csv_file)
-        _LOG.info("Number of files to download: %s", dataset_df.shape[0])
-        _LOG.info(dataset_df.head())
+        _LOG.info(
+            "Number of files to download: %s:\n%s",
+            dataset_df.shape[0],
+            dataset_df.head(),
+        )
         return dataset_df
 
     def store_dataset_csv_file(self, converted_dir: str) -> None:
-        """
-        Store dataset CSV file with Link and Symbol columns on S3.
+        """Store dataset CSV file with Link and Symbol columns on S3.
 
         :param converted_dir: directory to store converted download
         """
@@ -258,13 +276,13 @@ class DatasetExtractor:
         dataset_csv_file = os.path.join(converted_dir, f"{self.dataset}.csv")
         dataset_csv_s3_file = os.path.join(self.aws_dir, f"{self.dataset}.csv")
         # Copy to s3.
-        cmd = "aws s3 cp %s s3://%s" % (dataset_csv_file, dataset_csv_s3_file)
+        hs3.check_valid_s3_path(dataset_csv_s3_file)
+        cmd = "aws s3 cp %s %s" % (dataset_csv_file, dataset_csv_s3_file)
         si.system(cmd)
 
     @staticmethod
     def _extract_payload_links(src_file: str) -> pd.DataFrame:
-        """
-        Extract a table from dataset html page.
+        """Extract a table from dataset html page.
 
         :param src_file: path to dataset html file page
         :return: DataFrame with the list of series with Symbol and Link columns
@@ -285,9 +303,8 @@ class DatasetExtractor:
     def _download_file(
         self, link: str, local_file: str, dst_file: str, download_compressed: bool
     ) -> None:
-        """
-        Download file from the link, store it as local_file and then gzip it as dst_file.
-        Optionally, download it already gzipped.
+        """Download file from the link, store it as local_file and then gzip it
+        as dst_file. Optionally, download it already gzipped.
 
         :param link: URL from where to download
         :param local_file: path to local .csv file
@@ -307,9 +324,12 @@ class DatasetExtractor:
             si.system(cmd)
 
 
+# #############################################################################
+
+
 class AdjustmentsDatasetExtractor(DatasetExtractor):
-    """
-    Extractor of payloads for an adjustments dataset.
+    """Extractor of payloads for an adjustments dataset.
+
     Is a child of DatasetExtractor since requires a separate handling.
     """
 
@@ -321,8 +341,8 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
     def get_adjustments_to_download(
         self, source_dir: str, converted_dir: str,
     ) -> pd.DataFrame:
-        """
-        Get a DataFrame with the list of Symbols and Links to download for a dataset.
+        """Get a DataFrame with the list of Symbols and Links to download for a
+        dataset.
 
         :param source_dir: directory to store source download
         :param converted_dir: directory to store converted download
@@ -356,8 +376,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 
     @staticmethod
     def _get_adjustments_payload_link(symbol: str) -> str:
-        """
-        Get the link to download adjustment data for a symbol.
+        """Get the link to download adjustment data for a symbol.
 
         :param symbol: symbol of the adjustment payload
         :return: a link to download
@@ -367,7 +386,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
             {"action": "adjustments", "symbol": symbol}
         )
         api_link = urlprs.urljoin(config.API_ENDPOINT, query_params)
-        return api_link
+        return api_link  # type: ignore
 
     def _download_file(
         self, link: str, local_file: str, dst_file: str, download_compressed: bool
@@ -375,6 +394,9 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         super()._download_file(link, local_file, dst_file, download_compressed)
         csv_table = pd.read_table(dst_file, sep="\t")
         csv_table.to_csv(dst_file, index=False)
+
+
+# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -412,6 +434,9 @@ def _parse() -> argparse.ArgumentParser:
         "--serial", action="store_true", help="Download data serially"
     )
     parser.add_argument(
+        "--dry_run", action="store_true", help="Just do a dry-run"
+    )
+    parser.add_argument(
         "--no_incremental",
         action="store_true",
         help="Clean the local directories",
@@ -440,7 +465,7 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
+def _main(parser: argparse.ArgumentParser) -> int:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create dirs.
@@ -472,12 +497,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         kibot_account, args.username, str(args.password), requests_session
     )
     if not login_result:
-        # Unable to login
-        return
+        # Unable to login.
+        return -1
     my_account_file = os.path.join(source_dir, "my_account.html")
     # Download my account html page.
     if not os.path.exists(my_account_file):
-        _LOG.warning("Missing %s: downloading it", my_account_file)
+        _LOG.warning("Missing '%s': downloading it", my_account_file)
         _download_page(my_account_file, kibot_account, requests_session)
     # Parse and convert my account page.
     dataset_links_csv_file = os.path.join(converted_dir, "dataset_links.csv")
@@ -486,9 +511,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dataset_links_df = dle.extract_dataset_links(
         os.path.join(source_dir, "my_account.html")
     )
+    _LOG.info(
+        "Found %d datasets to download:\n%s",
+        len(dataset_links_df),
+        dataset_links_df,
+    )
+    # Save the file.
     dataset_links_df.to_csv(dataset_links_csv_file)
-    datasets_to_proceed = args.dataset or config.DATASETS
+    _LOG.info("Saved dataset list to download in '%s'", dataset_links_csv_file)
     # Process a dataset.
+    datasets_to_proceed = args.dataset or config.DATASETS
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
         # Create dataset dir.
         dataset_dir = os.path.join(converted_dir, dataset)
@@ -506,33 +538,37 @@ def _main(parser: argparse.ArgumentParser) -> None:
             dataset_links_df, source_dir, converted_dir,
         )
         de.store_dataset_csv_file(converted_dir)
-        if args.start_from:
-            _LOG.warning(
-                "Starting from payload %d / %d as per user request",
-                args.start_from,
-                to_download.shape[0],
+        if not args.dry_run:
+            if args.start_from:
+                _LOG.warning(
+                    "Starting from payload %d / %d as per user request",
+                    args.start_from,
+                    to_download.shape[0],
+                )
+                dbg.dassert_lte(0, args.start_from)
+                dbg.dassert_lt(args.start_from, to_download.shape[0])
+                to_download = to_download.iloc[args.start_from :]
+            func = lambda row: de.download_payload_page(
+                dataset_dir,
+                row,
+                **{
+                    "download_compressed": not args.no_download_compressed,
+                    "skip_if_exists": not args.no_skip_if_exists,
+                    "clean_up_artifacts": not args.no_clean_up_artifacts,
+                },
             )
-            dbg.dassert_lte(0, args.start_from)
-            dbg.dassert_lt(args.start_from, to_download.shape[0])
-            to_download = to_download.iloc[args.start_from :]
-        func = lambda row: de.download_payload_page(
-            dataset_dir,
-            row,
-            **{
-                "download_compressed": not args.no_download_compressed,
-                "skip_if_exists": not args.no_skip_if_exists,
-                "clean_up_artifacts": not args.no_clean_up_artifacts,
-            },
-        )
-        tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
-        # Run dataset downloads.
-        if not args.serial:
-            joblib.Parallel(n_jobs=10, verbose=1)(
-                joblib.delayed(func)(row) for _, row in tqdm_
-            )
+            tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
+            # Run dataset downloads.
+            if not args.serial:
+                joblib.Parallel(
+                    n_jobs=_JOBLIB_NUM_CPUS, verbose=_JOBLIB_VERBOSITY
+                )(joblib.delayed(func)(row) for _, row in tqdm_)
+            else:
+                for _, row in tqdm_:
+                    func(row)
         else:
-            for _, row in tqdm_:
-                func(row)
+            _LOG.warning("Skipping download as per user requested")
+    return 0
 
 
 if __name__ == "__main__":

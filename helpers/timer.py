@@ -29,6 +29,15 @@ class Timer:
         else:
             self._start = None
 
+    def __repr__(self) -> str:
+        """Return string with the intervals measured so far."""
+        measured_time = self._total_elapsed
+        if self.is_started() and not self.is_stopped():
+            # Timer still running.
+            measured_time += time.time() - self._start
+        ret = "%.3f secs" % measured_time
+        return ret
+
     def stop(self) -> None:
         """Stop the timer and accumulate the interval."""
         # Timer must have not been stopped before.
@@ -49,15 +58,6 @@ class Timer:
             self.stop()
         dbg.dassert_is_not(self._last_elapsed, None)
         return self._last_elapsed
-
-    def __repr__(self) -> str:
-        """Return string with the intervals measured so far."""
-        measured_time = self._total_elapsed
-        if self.is_started() and not self.is_stopped():
-            # Timer still running.
-            measured_time += time.time() - self._start
-        ret = "%.3f secs" % measured_time
-        return ret
 
     # /////////////////////////////////////////////////////////////////////////
 

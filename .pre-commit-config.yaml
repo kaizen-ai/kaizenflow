@@ -28,7 +28,7 @@ repos:
     rev: 5.3.2
     hooks:
       - id: isort
-        entry: bash -c 'isort "$@" -y; if [ -z "${CI}" ]; then git add -u; fi' --
+        entry: bash -c 'isort "$@"; if [ -z "${CI}" ]; then git add -u; fi' --
   - repo: https://github.com/humitos/mirrors-autoflake
     rev: v1.3
     hooks:
@@ -36,20 +36,20 @@ repos:
         args: [-i, --remove-all-unused-imports, --remove-unused-variables]
   - repo: local
     hooks:
-      - id: p1_black
-        name: p1_black
+      - id: black
+        name: black
         entry: bash -c 'p1_black.py "$@"; if [ -z "${CI}" ]; then git add -u; fi' --
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
-      - id: p1_flake8
-        name: p1_flake8
+      - id: flake8
+        name: flake8
         entry: p1_flake8.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
-      - id: p1_doc_formatter
-        name: p1_doc_formatter
+      - id: doc_formatter
+        name: doc_formatter
         entry: p1_doc_formatter.py
         language: python
         types: [python]
@@ -61,26 +61,26 @@ repos:
         types: [python]
         additional_dependencies:
           ["pandas", "matplotlib", "typing_extensions", "more_itertools"]
-      - id: p1_pylint
-        name: p1_pylint
+      - id: pylint
+        name: pylint
         entry: p1_pylint.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
-      - id: p1_mypy
-        name: p1_mypy
+      - id: mypy
+        name: mypy
         entry: p1_mypy.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib", "more_itertools"]
-      - id: p1_processjupytext
-        name: p1_processjupytext
+      - id: processjupytext
+        name: processjupytext
         entry: p1_processjupytext.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
-      - id: p1_lint_md
-        name: p1_lint_md
+      - id: lint_md
+        name: lint_md
         entry: p1_lint_md.py
         language: python
         additional_dependencies: ["pandas", "matplotlib"]
