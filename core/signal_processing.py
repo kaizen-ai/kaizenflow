@@ -99,7 +99,7 @@ def plot_scaleogram(
     signal: Union[pd.DataFrame, pd.Series],
     scales: np.array,
     wavelet_name: str,
-    cmap: plt.cm = plt.cm.seismic,
+    cmap: plt.cm = plt.cm.seismic,  # pylint: disable=no-member
     title: str = "Wavelet Spectrogram of signal",
     ylabel: str = "Period",
     xlabel: str = "Time",
@@ -1152,6 +1152,7 @@ def compute_ipca(
     # V's are eigenvectors with norm equal to corresponding eigenvalue.
     vs = {k: [] for k in range(num_pc)}
     unit_eigenvecs = {k: [] for k in range(num_pc)}
+    step = 0
     for step, n in enumerate(df.index):
         # Initialize u(n).
         u = df.loc[n].copy()

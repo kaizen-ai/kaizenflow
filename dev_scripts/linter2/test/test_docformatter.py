@@ -1,5 +1,6 @@
-import pytest
 import tempfile
+
+import pytest
 
 import dev_scripts.linter2.p1_doc_formatter as p1docf
 import helpers.io_ as io_
@@ -8,20 +9,6 @@ import helpers.unit_test as hut
 
 @pytest.mark.skip(reason="Disabled because of AmpTask508")
 class Test_docformatter(hut.TestCase):
-    def _docformatter(self, text: str) -> str:
-        """Create a temporary python file with the 'text', apply docformatter,
-        then return the modified content.
-
-        :param text: content to be formatted
-        :return: modified content after formatting
-        """
-        tmp = tempfile.NamedTemporaryFile(suffix=".py")
-        io_.to_file(file_name=tmp.name, lines=text)
-        p1docf._DocFormatter().execute(file_name=tmp.name, pedantic=0)
-        content: str = io_.from_file(file_name=tmp.name)
-        tmp.close()
-        return content
-
     def test1(self) -> None:
         """Test that module docstring should be dedented."""
         text = '''
@@ -106,3 +93,17 @@ def sample_method() -> None:
 
         actual = self._docformatter(text=text)
         self.assertEqual(expected, actual)
+
+    def _docformatter(self, text: str) -> str:
+        """Create a temporary python file with the 'text', apply docformatter,
+        then return the modified content.
+
+        :param text: content to be formatted
+        :return: modified content after formatting
+        """
+        tmp = tempfile.NamedTemporaryFile(suffix=".py")
+        io_.to_file(file_name=tmp.name, lines=text)
+        p1docf._DocFormatter().execute(file_name=tmp.name, pedantic=0)
+        content: str = io_.from_file(file_name=tmp.name)
+        tmp.close()
+        return content

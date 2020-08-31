@@ -209,19 +209,6 @@ class Config:
                 dict_[k] = v
         return dict_
 
-    def _to_dict_except_for_leaves(self) -> Dict[str, Any]:
-        """
-        Convert as in `to_dict` except for leaf values.
-        """
-        # pylint: disable=unsubscriptable-object
-        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        for k, v in self._config.items():
-            if v and isinstance(v, Config):
-                dict_[k] = v.to_dict()
-            else:
-                dict_[k] = v
-        return dict_
-
     def flatten(self) -> Dict[Tuple[str], Any]:
         """
         Key leaves by tuple representing path to leaf.
@@ -282,6 +269,19 @@ class Config:
             "Invalid %s='%s' in config=\n%s"
             % (key, self._config[key], pri.space(str(self)))
         )
+
+    def _to_dict_except_for_leaves(self) -> Dict[str, Any]:
+        """
+        Convert as in `to_dict` except for leaf values.
+        """
+        # pylint: disable=unsubscriptable-object
+        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        for k, v in self._config.items():
+            if v and isinstance(v, Config):
+                dict_[k] = v.to_dict()
+            else:
+                dict_[k] = v
+        return dict_
 
 
 # #############################################################################

@@ -4,6 +4,7 @@ import os
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 import vendors2.kibot.metadata.config as mconfig
 
 _LOG = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            "s3://", mconfig.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
+            mconfig.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
         df = pd.read_csv(file_name, index_col=0)
@@ -48,7 +49,6 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    
     @staticmethod
     def read_daily_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long
@@ -67,8 +67,9 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            "s3://", mconfig.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
+            mconfig.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
         )
+        hs3.check_valid_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
         df = pd.read_csv(file_name, index_col=0)
         df = df.iloc[:, 1:]
@@ -76,7 +77,6 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    
     @staticmethod
     def read_tickbidask_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long
@@ -98,10 +98,9 @@ class S3Backend:
         ES            ESH11     4/6/2010     891.0       E-MINI S&P 500 MARCH 2011             Chicago Mercantile Exchange Mini Sized Contrac...
         """
         # pylint: enable=line-too-long
-        file_name = os.path.join(
-            "s3://", mconfig.S3_PREFIX, "Futures_tickbidask.txt.gz"
-        )
+        file_name = os.path.join(mconfig.S3_PREFIX, "Futures_tickbidask.txt.gz")
         _LOG.debug("file_name=%s", file_name)
+        hs3.check_valid_s3_path(file_name)
         df = pd.read_csv(
             file_name, index_col=0, skiprows=5, header=None, sep="\t"
         )
@@ -142,9 +141,10 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            "s3://", mconfig.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
+            mconfig.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
         )
         _LOG.debug("file_name=%s", file_name)
+        hs3.check_valid_s3_path(file_name)
         df = pd.read_csv(
             file_name, index_col=0, skiprows=5, header=None, sep="\t"
         )
@@ -164,8 +164,7 @@ class S3Backend:
 
     @staticmethod
     def read_kibot_exchange_mapping() -> pd.DataFrame:
-        file_name = os.path.join(
-            "s3://", mconfig.S3_PREFIX, "kibot_to_exchange.csv"
-        )
+        file_name = os.path.join(mconfig.S3_PREFIX, "kibot_to_exchange.csv")
+        hs3.check_valid_s3_path(file_name)
         kibot_to_cme_mapping = pd.read_csv(file_name, index_col="Kibot_symbol")
         return kibot_to_cme_mapping

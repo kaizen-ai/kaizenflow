@@ -313,7 +313,7 @@ def compute_drawdown(log_rets: pd.Series) -> pd.Series:
     dbg.dassert_isinstance(log_rets, pd.Series)
     log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
     cum_rets = log_rets.cumsum()
-    running_max = np.maximum.accumulate(cum_rets)
+    running_max = np.maximum.accumulate(cum_rets)  # pylint: disable=no-member
     drawdown = running_max - cum_rets
     return drawdown
 
