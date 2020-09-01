@@ -142,32 +142,6 @@ def _check_file_path(file_name: str) -> List[str]:
 # #############################################################################
 
 
-def _check_shebang(file_name: str, lines: List[str]) -> str:
-    """Return warning if:
-
-    - a python executable has no shebang
-    - a python file has a shebang and isn't executable
-
-    Note: the function ignores __init__.py files  & test code.
-    """
-    msg = ""
-    if os.path.basename(file_name) == "__init__.py" or utils.is_test_code(
-        file_name
-    ):
-        return msg
-
-    shebang = "#!/usr/bin/env python"
-    has_shebang = lines[0] == shebang
-    is_executable = os.access(file_name, os.X_OK)
-
-    if is_executable and not has_shebang:
-        msg = f"{file_name}:1: any executable needs to start with a shebang '{shebang}'"
-    elif not is_executable and has_shebang:
-        msg = f"{file_name}:1: a non-executable can't start with a shebang."
-
-    return msg
-
-
 def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
     """Check file content, prints warnings if any issues are found.
 
