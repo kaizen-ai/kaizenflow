@@ -5,7 +5,6 @@ import helpers.unit_test as hut
 # TODO(gp): use hut instead of ut.
 """
 
-import collections
 import inspect
 import logging
 import os
@@ -13,7 +12,7 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, Iterable, List, Mapping, NoReturn, Optional, Union
+from typing import Any, List, Mapping, NoReturn, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -192,55 +191,6 @@ def convert_df_to_json_string(
     # Join shape and dataframe to single string.
     output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
     return output_str
-
-
-def get_ordered_value_counts(column: pd.Series) -> pd.Series:
-    """Get column value counts and sort.
-
-    Value counts are sorted alphabetically by index, and then counts in
-    descending order. The order of indices with the same count is
-    alphabetical, which makes the string representation of the same series
-    predictable.
-
-    The output of `value_counts` without sort arranges indices with same
-    counts randomly, which makes tests dependent on string comparison
-    impossible.
-
-    :param column: column for value counts
-    :return: counts ordered by index and values
-    """
-    value_counts = column.value_counts()
-    value_counts = value_counts.sort_index()
-    value_counts = value_counts.sort_values(ascending=False)
-    return value_counts
-
-
-def get_value_counts_for_columns(
-    df: pd.DataFrame, columns: Optional[Iterable] = None
-) -> Mapping[str, pd.Series]:
-    """Get value counts for multiple columns.
-
-    The function creates a dict of value counts for each passed column. The
-    values in each resulting series are sorted first by value, then alphabetically
-    by index to keep the order predictable.
-
-    Counts are included in info for filtering and mapping functions to keep
-    track of changes in values.
-
-    :param df: dataframe with value counts going to info
-    :param columns: names of columns for counting values
-    :return: value counts for provided columns
-    """
-    columns = columns or df.columns.to_list()
-    dbg.dassert_is_subset(
-        columns,
-        df.columns.to_list(),
-        msg="The requested columns could not be found in the dataframe",
-    )
-    value_counts_by_column = collections.OrderedDict()
-    for col in columns:
-        value_counts_by_column[col] = get_ordered_value_counts(df[col])
-    return value_counts_by_column
 
 
 def to_string(var: str) -> str:
