@@ -13,21 +13,22 @@
 <!--te-->
 # Particle Helpers Distribution Package
 
-This document describes build, distribution and installation workflow for the
-corporate helpers package.
+- This document describes building, distribution and installation workflow for
+  the P1 `helpers` package
 
-**Note for dev/data science members:** if you are looking for how to install
-packages for the daily work, go to **Client Configuration**.
+- Note for dev/data science members: if you are looking for how to install
+  packages for your daily work, go to **Client Configuration**.
 
 ## General Information
 
-We use [pypiserver](https://github.com/pypiserver/pypiserver) as a corpatete
-PyPI Index server for installing `pip`. It implements the same interfaces as
-[PyPI](https://pypi.org/), allowing standard Python packaging tooling such as
-`pip` to interact with it as a package index just as they would with
-[PyPI](https://pypi.org/). The server is based on bottle and serves packages
-from regular directories. Wheels, bdists, eggs can be uploaded either with pip,
-setuptools or simply copied with scp to the server directory.
+- We use [pypiserver](https://github.com/pypiserver/pypiserver) as a corporate
+  PyPI Index server for installing `pip`
+- It implements the same interfaces as [PyPI](https://pypi.org/), allowing
+  standard Python packaging tooling such as `pip` to interact with it as a
+  package index just as they would with [PyPI](https://pypi.org/)
+- The server is based on bottle and serves packages from regular directories
+- Wheels, bdists, eggs can be uploaded either with `pip`, `setuptools` or simply
+  copied with `scp` to the server directory
 
 ## Client Configuration / Installation
 
@@ -37,14 +38,14 @@ You have two options:
    doesn't have a requested package, it is a good idea to configure them to
    always use your local pypi index.
 
-   For pip command this can be done by setting the environment variable
-   PIP_EXTRA_INDEX_URL:
+- For pip command this can be done by setting the environment variable
+  `PIP_EXTRA_INDEX_URL`
 
    ```bash
-   export PIP_EXTRA_INDEX_URL=http://172.31.16.23:8855/simple/
+   >export PIP_EXTRA_INDEX_URL=http://172.31.16.23:8855/simple/
    ```
 
-   or by adding the following lines to ~/.pip/pip.conf:
+   or by adding the following lines to `~/.pip/pip.conf`:
 
    ```ini
    [global]
@@ -64,13 +65,13 @@ You have two options:
    > pip install --extra-index-url http://172.31.16.23:8855 helpers
    ```
 
-   Search hosted packages:
+ - Search hosted packages:
 
    ```bash
    > pip search --index http://172.31.16.23:8855 ...
    ```
 
-   **Note** that pip search does not currently work with the /simple/ endpoint.
+ - **Note** that pip search does not currently work with the /simple/ endpoint.
 
 ## Server Details
 
@@ -82,32 +83,32 @@ You have two options:
 
 ## Server Configuration
 
-The corporate PyPI Index server runs with Docker as a standalone container with
-mapped volumes on the host.
+- The corporate PyPI Index server runs with Docker as a standalone container with
+  mapped volumes on the host.
 
-All corporate packages serve from host directory: `/home/ubuntu/pypi/packages`
+- All corporate packages serve from host directory: `/home/ubuntu/pypi/packages`
 
-Uploading a new packages or updates existing pacakges password-proteced. Only
-authorize user can upload packages. Authorized user credential serves from host
-Apache-Like authentication file: `/home/ubuntu/pypi/.htpasswd`.
+- Uploading a new packages or updates existing packages password-protected. Only
+  authorized user can upload packages. Authorized user credential serves from
+  host Apache-Like authentication file: `/home/ubuntu/pypi/.htpasswd`.
 
-Credential details you can find on the server in a file `~/.pypi_credentials`
+- Credential details you can find on the server in a file `~/.pypi_credentials`
 
-To serve packages and authenticate against local `.htpasswd`:
+- To serve packages and authenticate against local `.htpasswd`:
 
-```bash
-> docker run -d -p 8855:8080 -v ~/pypi/packages:/data/packages -v ~/pypi/.htpasswd:/data/.htpasswd --restart=always pypiserver/pypiserver:latest -v  -P .htpasswd packages
-```
+  ```bash
+  > docker run -d -p 8855:8080 -v ~/pypi/packages:/data/packages -v ~/pypi/.htpasswd:/data/.htpasswd --restart=always pypiserver/pypiserver:latest -v  -P .htpasswd packages
+  ```
 
 ## Distribute workflow
 
-**Note**: This section desribes temporary solution until we will not introduce
-CI pipeline.
+- **Note**: This section describes temporary solution until we will not introduce
+  CI pipeline.
 
-The mainteneer of helpers package must do after merging changes of `helpers/`
-into master:
+- The maintener of `helpers` package must do after merging changes of `helpers/`
+  into master:
 
-1. Edit or create a ~/.pypirc file with a similar content:
+1. Edit or create a `~/.pypirc` file with a similar content:
 
    ```ini
    [distutils]
@@ -127,16 +128,13 @@ into master:
 
 ## Limitation
 
-The `pypiserver` does not implement the full API as seen on
-[PyPI](https://pypi.org/). It implements just enough to make `pip install`, and
-`search` work.
+- The `pypiserver` does not implement the full API as seen on
+  [PyPI](https://pypi.org/). It implements just enough to make `pip install`, and
+  `search` work.
 
 ## Links
 
-[pip user guide](https://pip.pypa.io/en/stable/user_guide/#user-guide)
-
-[pypiserver](https://github.com/pypiserver/pypiserver)
-
-[setuptool](https://setuptools.readthedocs.io/en/latest/index.html)
-
-[packaging python projects](https://packaging.python.org/tutorials/packaging-projects/)
+- [pip user guide](https://pip.pypa.io/en/stable/user_guide/#user-guide)
+- [pypiserver](https://github.com/pypiserver/pypiserver)
+- [setuptool](https://setuptools.readthedocs.io/en/latest/index.html)
+- [packaging python projects](https://packaging.python.org/tutorials/packaging-projects/)
