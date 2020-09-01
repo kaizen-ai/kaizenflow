@@ -142,8 +142,8 @@ class Cached:
             )
             # If we get here, we know that we didn't hit the memory cache,
             # but we don't know about the disk cache.
-            if self._use_mem_cache:
-                self._last_used_mem_cache = False
+            self._last_used_mem_cache = False
+            if self._use_disk_cache:
                 _LOG.debug(
                     "%s(args=%s kwargs=%s): trying to read from disk",
                     self._func.__name__,
@@ -152,6 +152,7 @@ class Cached:
                 )
                 obj = _execute_func_from_disk_cache(*args, **kwargs)
             else:
+                self._last_used_disk_cache = False
                 _LOG.warning("Skipping disk cache")
                 obj = self._func(*args, **kwargs)
             return obj
@@ -229,7 +230,7 @@ class Cached:
 
     def clear_disk_cache(self) -> None:
         _LOG.warning("%s: clearing disk cache", self._func.__name__)
-        self._execute_func_from_dir_cache.clear()  # pylint: disable=no-member  # type: ignore
+        self._execute_func_from_disk_cache.clear()
 
     def _reset_cache_tracing(self) -> None:
         """Reset the values used to track which cache we are hitting when
