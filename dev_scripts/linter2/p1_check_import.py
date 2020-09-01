@@ -1,20 +1,18 @@
 #!/usr/bin/env python
-r"""
+r"""Check if imports use our standard.
 
 > p1_check_import.py sample-file1.py sample-file2.py
 """
-import re
 import argparse
 import logging
-
+import re
 from typing import List
 
-import dev_scripts.linter2.utils as utils
 import dev_scripts.linter2.base as lntr
-import helpers.io_ as io_
+import dev_scripts.linter2.utils as utils
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.parser as prsr
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -44,15 +42,15 @@ def _check_import(file_name: str, line_num: int, line: str) -> str:
             shortcut = m.group(1)
             if len(shortcut) > MAX_LEN_IMPORT:
                 msg = (
-                        "%s:%s: the import shortcut '%s' in '%s' is longer than "
-                        "%s characters"
-                        % (
-                            file_name,
-                            line_num,
-                            shortcut,
-                            line.rstrip().lstrip(),
-                            MAX_LEN_IMPORT,
-                        )
+                    "%s:%s: the import shortcut '%s' in '%s' is longer than "
+                    "%s characters"
+                    % (
+                        file_name,
+                        line_num,
+                        shortcut,
+                        line.rstrip().lstrip(),
+                        MAX_LEN_IMPORT,
+                    )
                 )
     return msg
 
@@ -69,7 +67,7 @@ class _P1CheckImport(lntr.Action):
 
         output = []
 
-        lines = io_.from_file(file_name).split('\n')
+        lines = io_.from_file(file_name).split("\n")
         for i, line in enumerate(lines):
             msg = _check_import(file_name, i, line)
             if msg:

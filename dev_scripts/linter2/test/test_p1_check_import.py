@@ -1,5 +1,5 @@
-import helpers.unit_test as hut
 import dev_scripts.linter2.p1_check_import as pci
+import helpers.unit_test as hut
 
 
 class Test_check_import(hut.TestCase):
@@ -40,4 +40,3 @@ class Test_check_import(hut.TestCase):
         exp = f"{file_name}:{line_num}: {exp}" if exp else exp
         msg = pci._check_import(file_name, line_num, line)
         self.assertEqual(exp, msg)
-
