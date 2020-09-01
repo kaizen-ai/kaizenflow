@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Import as:
 
 import helpers.cache as hcac
