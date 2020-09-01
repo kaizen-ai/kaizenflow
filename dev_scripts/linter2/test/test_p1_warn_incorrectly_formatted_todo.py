@@ -99,4 +99,3 @@ class Test_warn_incorrectly_formatted_todo(hut.TestCase):
 
         msg = pwift._warn_incorrectly_formatted_todo("test.py", 1, line)
         self.assertEqual("", msg)
-

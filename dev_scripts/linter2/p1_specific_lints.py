@@ -467,6 +467,7 @@ def _class_method_order_detector(file_name: str, lines: List[str]) -> List[str]:
         for off in offending
     ]
 
+
 def _modify_file_lines(lines: List[str]) -> List[str]:
     """Modify multiple lines based on some rules, returns an updated list of
     line.
@@ -499,7 +500,7 @@ def _is_valid_python_statement(comments: List[str]) -> bool:
     return True
 
 
-# TODO (*): Is this function used anywhere?
+# TODO (\*): Is this function used anywhere?
 def _capitalize(comment: str) -> str:
     return f"{comment[0:2].upper()}{comment[2::]}"
 

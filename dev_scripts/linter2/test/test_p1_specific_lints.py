@@ -1,9 +1,10 @@
+from typing import List
+
 import pytest
 
 import dev_scripts.linter2.p1_specific_lints as pslints
 import helpers.unit_test as hut
 
-from typing import List
 
 class Test_check_notebook_dir(hut.TestCase):
     def test_check_notebook_dir1(self) -> None:
@@ -453,4 +454,3 @@ class Test_correct_method_order(hut.TestCase):
         for example, expected in examples:
             result = pslints._is_function_declaration(example)
             self.assertEqual(expected, result)
- 
