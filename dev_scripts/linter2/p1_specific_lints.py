@@ -499,7 +499,7 @@ def _is_valid_python_statement(comments: List[str]) -> bool:
     return True
 
 
-TODO (*): Is this function used anywhere?
+# TODO (*): Is this function used anywhere?
 def _capitalize(comment: str) -> str:
     return f"{comment[0:2].upper()}{comment[2::]}"
 
