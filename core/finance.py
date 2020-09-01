@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
+import core.signal_processing as sigp
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -64,7 +65,7 @@ def resample(
 ) -> pd.DataFrame:
     """Resample returns (using sum) using our timing convention."""
     dbg.dassert_strictly_increasing_index(df)
-    resampler = df.resample(agg_interval, closed="left", label="right")
+    resampler = sigp.resample(df, rule=agg_interval, closed="left")
     rets = resampler.sum()
     return rets
 
@@ -300,7 +301,7 @@ def compute_drawdown(log_rets: pd.Series) -> pd.Series:
     dbg.dassert_isinstance(log_rets, pd.Series)
     log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
     cum_rets = log_rets.cumsum()
-    running_max = np.maximum.accumulate(cum_rets)
+    running_max = np.maximum.accumulate(cum_rets)  # pylint: disable=no-member
     drawdown = running_max - cum_rets
     return drawdown
 
@@ -355,10 +356,8 @@ def compute_turnover(
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
     if unit:
-        numerator = numerator.resample(unit, closed="right", label="right").sum()
-        denominator = denominator.resample(
-            unit, closed="right", label="right"
-        ).sum()
+        numerator = sigp.resample(numerator, rule=unit).sum()
+        denominator = sigp.resample(denominator, rule=unit).sum()
     turnover = numerator / denominator
     # Raise if we upsample.
     if len(turnover) > len(pos):
@@ -381,7 +380,7 @@ def compute_average_holding_period(
     dbg.dassert(pos.index.freq)
     pos_freq_in_year = hdf.infer_sampling_points_per_year(pos)
     unit_freq_in_year = hdf.infer_sampling_points_per_year(
-        pos.resample(unit).sum()
+        sigp.resample(pos, rule=unit).sum()
     )
     dbg.dassert_lte(
         unit_freq_in_year,

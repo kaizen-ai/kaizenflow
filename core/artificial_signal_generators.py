@@ -158,7 +158,7 @@ class ArmaProcess:
           - maroots
 
         Further details are available at
-          - https://www.statsmodels.org/stable/generated/statsmodels.tsa.arima_process.ArmaProcess.html
+          - https://www.statsmodels.org/stable/generated/statsmodels.tsa.arima_process.ArmaProcess.html  # pylint: disable=line-too-long
         """
         self.ar_coeffs = ar_coeffs
         self.ma_coeffs = ma_coeffs
@@ -254,7 +254,7 @@ class MultivariateNormalProcess:
         """
         if obj is None:
             return None
-        elif isinstance(obj, expected_type):
+        if isinstance(obj, expected_type):
             return obj.values
         raise ValueError(f"Unsupported type {type(obj)}")
 

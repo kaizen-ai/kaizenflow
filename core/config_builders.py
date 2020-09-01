@@ -12,17 +12,8 @@ import itertools
 import logging
 import os
 import re
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
+                    Union, cast)
 
 import pandas as pd
 
@@ -349,7 +340,7 @@ def load_configs(results_dir: str) -> List[cfg.Config]:
     :param results_dir: Directory with results of experiments.
     :return: All result configs and result dataframes.
     """
-    # TODO (*) Move function to a different lib.
+    # TODO(*): Move function to a different lib.
     configs = []
     result_subfolders = os.listdir(results_dir)
     for subfolder in result_subfolders:

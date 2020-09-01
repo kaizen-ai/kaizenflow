@@ -352,9 +352,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     converted_dir = os.path.join(args.tmp_dir, converted_dir_name)
     io_.create_dir(converted_dir, incremental=incremental)
     # Define S3 dirs.
-    aws_csv_dir = os.path.join("s3://", config.S3_PREFIX)
+    aws_csv_dir = os.path.join(config.S3_PREFIX)
     _LOG.info("aws_csv_dir=%s", aws_csv_dir)
-    aws_pq_dir = os.path.join("s3://", config.S3_PREFIX, "pq")
+    aws_pq_dir = os.path.join(config.S3_PREFIX, "pq")
     _LOG.info("aws_pq_dir=%s", aws_pq_dir)
     #
     datasets_to_proceed = args.dataset or config.DATASETS
@@ -386,10 +386,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         )
         # TODO(gp): Replace the functions from AmpTask573.
         # symbols = _get_symbols_to_process(aws_csv_gz_dir)
-        #symbols = ["AAPL"]
-        symbols = ("AAPL AMGN AMZN BAC BIDU BRK.A C CAT COP CSCO CVX DIS EMC F FCX GE GILD "
-        "GMCR GOOG GS HAL HD HPQ IBM INTC JNJ JPM KO LOW LVS MCD MRK MS MSFT NFLX "
-        "ORCL OXY PBR PCLN PFE PG PM PSE QCOM SLB T VZ WFC WMT XOM GOOGL").split()
+        # symbols = ["AAPL"]
+        symbols = (
+            "AAPL AMGN AMZN BAC BIDU BRK.A C CAT COP CSCO CVX DIS EMC F FCX GE GILD "
+            "GMCR GOOG GS HAL HD HPQ IBM INTC JNJ JPM KO LOW LVS MCD MRK MS MSFT NFLX "
+            "ORCL OXY PBR PCLN PFE PG PM PSE QCOM SLB T VZ WFC WMT XOM GOOGL"
+        ).split()
         if args.max_num_assets is not None:
             dbg.dassert_lte(1, args.max_num_assets)
             symbols = symbols[: args.max_num_assets]

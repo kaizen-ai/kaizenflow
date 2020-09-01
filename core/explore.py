@@ -684,11 +684,12 @@ def rolling_pca_over_time(
     # TODO(gp): Move this up.
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
     #
-    eigvec = eigvec.reshape((-1, eigvec.shape[-1]))
+    # pylint ref: github.com/PyCQA/pylint/issues/3139
+    eigvec = eigvec.reshape((-1, eigvec.shape[-1]))  # pylint: disable=unsubscriptable-object
     idx = pd.MultiIndex.from_product(
         [timestamps, df.columns], names=["datetime", None]
     )
-    eigvec_df = pd.DataFrame(eigvec, index=idx, columns=range(df.shape[1]))
+    eigvec_df = pd.DataFrame(eigvec, index=idx, columns=range(df.shape[1]))  # pylint: disable=unsubscriptable-object
     dbg.dassert_eq(
         len(eigvec_df.index.get_level_values(0).unique()), len(timestamps)
     )
