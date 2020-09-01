@@ -17,9 +17,9 @@ _LOG = logging.getLogger(__name__)
 def remove_dates_with_no_data(
     df: pd.DataFrame, report_stats: bool
 ) -> pd.DataFrame:
-    """
-    Given a df indexed with timestamps, scan the data by date and filter out
+    """Given a df indexed with timestamps, scan the data by date and filter out
     all the data when it's all nans.
+
     :return: filtered df
     """
     # This is not strictly necessary.
@@ -63,9 +63,7 @@ def remove_dates_with_no_data(
 def resample(
     df: pd.DataFrame, agg_interval: Union[str, pd.Timedelta, pd.DateOffset]
 ) -> pd.DataFrame:
-    """
-    Resample returns (using sum) using our timing convention.
-    """
+    """Resample returns (using sum) using our timing convention."""
     dbg.dassert_strictly_increasing_index(df)
     resampler = sigp.resample(df, rule=agg_interval, closed="left")
     rets = resampler.sum()
@@ -77,8 +75,7 @@ def set_non_ath_to_nan(
     start_time: Optional[datetime.time] = None,
     end_time: Optional[datetime.time] = None,
 ) -> pd.DataFrame:
-    """
-    Filter according to active trading hours.
+    """Filter according to active trading hours.
 
     We assume time intervals are left closed, right open, labeled right.
 
@@ -103,9 +100,7 @@ def set_non_ath_to_nan(
 
 
 def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Filter out weekends.
-    """
+    """Filter out weekends."""
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
     # 5 = Saturday, 6 = Sunday.
     mask = df.index.dayofweek.isin([5, 6])
@@ -159,8 +154,7 @@ def compute_ret_0_from_multiple_prices(
 def convert_log_rets_to_pct_rets(
     log_rets: Union[float, pd.Series, pd.DataFrame]
 ) -> Union[float, pd.Series, pd.DataFrame]:
-    """
-    Convert log returns to percentage returns.
+    """Convert log returns to percentage returns.
 
     :param log_rets: time series of log returns
     :return: time series of percentage returns
@@ -171,8 +165,7 @@ def convert_log_rets_to_pct_rets(
 def convert_pct_rets_to_log_rets(
     pct_rets: Union[float, pd.Series, pd.DataFrame]
 ) -> Union[float, pd.Series, pd.DataFrame]:
-    """
-    Convert percentage returns to log returns.
+    """Convert percentage returns to log returns.
 
     :param pct_rets: time series of percentage returns
     :return: time series of log returns
@@ -183,8 +176,7 @@ def convert_pct_rets_to_log_rets(
 def rescale_to_target_annual_volatility(
     srs: pd.Series, volatility: float
 ) -> pd.Series:
-    """
-    Rescale srs to achieve target annual volatility.
+    """Rescale srs to achieve target annual volatility.
 
     NOTE: This is not a causal rescaling, but SR is an invariant.
 
@@ -201,8 +193,7 @@ def rescale_to_target_annual_volatility(
 
 
 def compute_inverse_volatility_weights(df: pd.DataFrame) -> pd.Series:
-    """
-    Calculate inverse volatility relative weights.
+    """Calculate inverse volatility relative weights.
 
     :param df: cols contain log returns
     :return: series of weights
@@ -228,8 +219,7 @@ def compute_inverse_volatility_weights(df: pd.DataFrame) -> pd.Series:
 
 
 def aggregate_log_rets(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
-    """
-    Compute aggregate log returns.
+    """Compute aggregate log returns.
 
     :param df: cols contain log returns
     :param weights: series of weights
@@ -251,8 +241,7 @@ def aggregate_log_rets(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
 def compute_volatility_normalization_factor(
     srs: pd.Series, target_volatility: float
 ) -> float:
-    """
-    Compute scale factor of a series according to a target volatility.
+    """Compute scale factor of a series according to a target volatility.
 
     :param srs: returns series. Index must have `freq`.
     :param target_volatility: target volatility as a proportion (e.g., `0.1`
@@ -274,8 +263,7 @@ def compute_volatility_normalization_factor(
 
 
 def compute_kratio(log_rets: pd.Series) -> float:
-    """
-    Calculate K-Ratio of a time series of log returns.
+    """Calculate K-Ratio of a time series of log returns.
 
     :param log_rets: time series of log returns
     :return: K-Ratio
@@ -298,8 +286,7 @@ def compute_kratio(log_rets: pd.Series) -> float:
 
 
 def compute_drawdown(log_rets: pd.Series) -> pd.Series:
-    r"""
-    Calculate drawdown of a time series of log returns.
+    r"""Calculate drawdown of a time series of log returns.
 
     Define the drawdown at index location j to be
         d_j := max_{0 \leq i \leq j} \log(p_i / p_j)
@@ -320,8 +307,7 @@ def compute_drawdown(log_rets: pd.Series) -> pd.Series:
 
 
 def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
-    """
-    Calculate drawdown in terms of percentage loss.
+    """Calculate drawdown in terms of percentage loss.
 
     :param log_rets: time series of log returns
     :return: drawdown time series as percentage loss
@@ -331,8 +317,7 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
 
 
 def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
-    """
-    Generate time under water series.
+    """Generate time under water series.
 
     :param log_rets: time series of log returns
     :return: series of number of consecutive time points under water
@@ -357,8 +342,7 @@ def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
 def compute_turnover(
     pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Compute turnover for a sequence of positions.
+    """Compute turnover for a sequence of positions.
 
     :param pos: sequence of positions
     :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
@@ -384,8 +368,7 @@ def compute_turnover(
 def compute_average_holding_period(
     pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Compute average holding period for a sequence of positions.
+    """Compute average holding period for a sequence of positions.
 
     :param pos: sequence of positions
     :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
@@ -416,8 +399,7 @@ def compute_average_holding_period(
 def compute_bet_runs(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate runs of long/short bets.
+    """Calculate runs of long/short bets.
 
     A bet "run" is a (maximal) series of positions on the same "side", e.g.,
     long or short.
@@ -443,8 +425,7 @@ def compute_bet_runs(
 def compute_bet_starts(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate the start of each new bet.
+    """Calculate the start of each new bet.
 
     :param positions: series of long/short positions
     :return: a series with a +1 at the start of each new long bet and a -1 at
@@ -471,8 +452,7 @@ def compute_bet_starts(
 def compute_bet_ends(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate the end of each bet.
+    """Calculate the end of each bet.
 
     NOTE: This function is not casual (because of our choice of indexing).
 
@@ -494,8 +474,7 @@ def compute_bet_ends(
 def compute_signed_bet_lengths(
     positions: pd.Series, nan_mode: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate lengths of bets (in sampling freq).
+    """Calculate lengths of bets (in sampling freq).
 
     :param positions: series of long/short positions
     :param nan_mode: argument for hdf.apply_nan_mode()
@@ -536,8 +515,7 @@ def compute_signed_bet_lengths(
 def compute_returns_per_bet(
     positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate returns for each bet.
+    """Calculate returns for each bet.
 
     :param positions: series of long/short positions
     :param log_rets: log returns
@@ -569,8 +547,7 @@ def compute_returns_per_bet(
 
 
 def compute_annualized_return(srs: pd.Series) -> float:
-    """
-    Annualize mean return.
+    """Annualize mean return.
 
     :param srs: series with datetimeindex with `freq`
     :return: annualized return; pct rets if `srs` consists of pct rets,
@@ -584,8 +561,7 @@ def compute_annualized_return(srs: pd.Series) -> float:
 
 
 def compute_annualized_volatility(srs: pd.Series) -> float:
-    """
-    Annualize sample volatility.
+    """Annualize sample volatility.
 
     :param srs: series with datetimeindex with `freq`
     :return: annualized volatility (stdev)

@@ -7,16 +7,11 @@ import argparse
 import ast
 import dataclasses
 import enum
-import io
 import logging
 import os
 import re
-import string
-import tempfile
-import tokenize
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union
 
-import more_itertools
 import typing_extensions
 
 import dev_scripts.linter2.base as lntr
@@ -26,44 +21,6 @@ import helpers.io_ as io_
 import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
-
-# #############################################################################
-# Utilities.
-# #############################################################################
-# TODO(amr): Move to linter/utils.py
-
-
-def _is_separator(line: str) -> bool:
-    """Check if the line matches a separator line.
-
-    :return: True if it matches a separator line
-    """
-    return (
-        line
-        == "# #############################################################################"
-    )
-
-
-def _is_shebang(line: str) -> bool:
-    """Check if the line is a shebang (starts with #!)
-
-    :return: True if it is a shebang (starts with #!)
-    """
-    return line.startswith("#!")
-
-
-def _parse_comment(
-    line: str, regex: str = r"(^\s*)#\s*(.*)\s*"
-) -> Optional[re.Match]:
-    """Parse a line and return a comment if there's one.
-
-    Seperator lines and shebang return None.
-    """
-    if _is_separator(line) or _is_shebang(line):
-        return None
-
-    return re.search(regex, line)
-
 
 # #############################################################################
 # File Path Checks.
@@ -187,7 +144,6 @@ def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
 
     CONTENT_CHECKS: List[ContentCheck] = [
         _check_shebang,
-        _class_method_order_detector,
     ]
 
     output: List[str] = []
@@ -205,140 +161,6 @@ def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
 # #############################################################################
 # File Content Modifiers.
 # #############################################################################
-
-
-@dataclasses.dataclass
-class LinesWithComment:
-    start_line: int
-    end_line: int
-    multi_line_comment: List[str]
-
-    @property
-    def is_single_line(self) -> bool:
-        return len(self.multi_line_comment) == 1
-
-
-# the key is the line number, the value is the comment.
-Comment = Dict[int, str]
-
-
-def _extract_comments(lines: List[str]) -> List[LinesWithComment]:
-    """Extract comments (which can be single line or multi-lines) from a list
-    of file lines, all consecutive lines with a comment would be merged into a
-    single multiline comment."""
-    content = "\n".join(lines)
-    tokens = tokenize.tokenize(io.BytesIO(content.encode("utf-8")).readline)
-    comments_by_line = {
-        t.start[0]: t.line.rstrip() for t in tokens if t.type == tokenize.COMMENT
-    }
-
-    # find consecutive line numbers to determine multi-line comments
-    comment_line_numbers = comments_by_line.keys()
-    comments: List[LinesWithComment] = []
-    for group in more_itertools.consecutive_groups(comment_line_numbers):
-        line_numbers = list(group)
-        # TODO(*): Do a single scan using an FSM to build this map.
-        # Reference: https://github.com/ParticleDev/external/pull/65/files#r464000483
-        matching_comments = [
-            line
-            for line_num, line in comments_by_line.items()
-            if line_num in line_numbers
-        ]
-        comments.append(
-            LinesWithComment(
-                start_line=min(line_numbers),
-                end_line=max(line_numbers),
-                multi_line_comment=matching_comments,
-            )
-        )
-
-    return comments
-
-
-def _reflow_comment(comment: LinesWithComment) -> LinesWithComment:
-    """Reflow comment using prettier."""
-    content = ""
-    whitespace: Optional[str] = None
-    for line in comment.multi_line_comment:
-        match = _parse_comment(line)
-        if match is None:
-            if not _is_shebang(line) and not _is_separator(line):
-                _LOG.warning("'%s' doesn't have a comment!", line)
-            return comment
-        content += "\n" + match.group(2)
-
-        # assumption: all consecutive comments have the same indentation
-        if whitespace is None:
-            whitespace = match.group(1)
-        else:
-            dbg.dassert_eq(whitespace, match.group(1))
-
-    tmp = tempfile.NamedTemporaryFile(suffix=".md")
-    io_.to_file(file_name=tmp.name, lines=content)
-
-    cmd = f"prettier --prose-wrap always --write {tmp.name}"
-    lntr.tee(cmd, "prettier", abort_on_error=False)
-    content: str = io_.from_file(file_name=tmp.name)
-    tmp.close()
-
-    updated_multi_line_comment: List[str] = []
-    for line in content.strip().split("\n"):
-        updated_multi_line_comment.append(str(whitespace) + "# " + line)
-
-    comment.multi_line_comment = updated_multi_line_comment
-    return comment
-
-
-def _replace_comments_in_lines(
-    lines: List[str], comments: List[LinesWithComment]
-) -> List[str]:
-    """Replace comments in lines.
-
-    - For each comment:
-        1. finds the the index in lines where the new lines should be inserted
-        2. removes the lines between the comment's start_line & end_line.
-        3. adds the new multiline comment
-    """
-    LineWithNumber = Tuple[int, str]
-    lines_with_numbers: List[LineWithNumber] = [
-        (idx + 1, line) for idx, line in enumerate(lines)
-    ]
-
-    updated_lines_with_numbers = lines_with_numbers.copy()
-    for comment in comments:
-        # find index of first line that matches those line nums
-        index_to_insert_at = next(
-            idx
-            for idx, (line_num, line) in enumerate(updated_lines_with_numbers)
-            if line_num == comment.start_line
-        )
-
-        # remove lines that are not between start_line & end_line
-        updated_lines_with_numbers = [
-            (line_num, line)
-            for line_num, line in updated_lines_with_numbers
-            if line_num < comment.start_line or line_num > comment.end_line
-        ]
-
-        # insert the new lines at that index
-        inserted_lines = [(-1, line) for line in comment.multi_line_comment]
-        updated_lines_with_numbers = (
-            updated_lines_with_numbers[:index_to_insert_at]
-            + inserted_lines
-            + updated_lines_with_numbers[index_to_insert_at:]
-        )
-
-    updated_lines = [line for line_num, line in updated_lines_with_numbers]
-    return updated_lines
-
-
-def _reflow_comments_in_lines(lines: List[str]) -> List[str]:
-    comments = _extract_comments(lines=lines)
-    reflowed_comments = [_reflow_comment(c) for c in comments]
-    updated_lines = _replace_comments_in_lines(
-        lines=lines, comments=reflowed_comments,
-    )
-    return updated_lines
 
 
 @dataclasses.dataclass
@@ -400,11 +222,11 @@ class _Node:
         """
         self.type = t
         self._children: List["_Node"] = list()
-        # the complete line on which this node was found
+        # The complete line on which this node was found.
         self.line = line
         self.line_num = line_num
         self.name = name
-        # all lines between this node and the next node, the body of functions/classes
+        # All lines between this node and the next node, the body of functions/classes.
         self.body: List[str] = list()
         self.decorators: List[str] = list()
         self._indent: Union[None, int] = None
@@ -438,8 +260,8 @@ class _Node:
     def ordered_children(self) -> List["_Node"]:
         if self.type != _Node.Type.CLS:
             pass
-            # _LOG.warning("You tried to order a node that isn't a class. This can possibly mess
-            # up the formatting.")
+            # \_LOG.warning("You tried to order a node that isn't a class. This can possibly
+            # mess up the formatting.")
         return sorted(self.get_children(), key=self._sorting_key)
 
     def get_children(self, t: "_Node.Type" = Type.ALL) -> List["_Node"]:
@@ -475,8 +297,8 @@ class _Node:
         while current_order and correct_order:
             current_node = current_order.pop(0)
             correct_node = correct_order.pop(0)
-            # we only have to check magic and private methods. If those are in the correct position,
-            # public methods will also have to be correctly positioned.
+            # we only have to check magic and private methods. If those are in the correct
+            # position, public methods will also have to be correctly positioned.
             if current_node != correct_node and current_node.name.startswith("_"):
                 offending.append(current_node)
         return offending
@@ -531,13 +353,13 @@ def _find_parent_node(nodes: List[_Node], indent: int) -> Union[None, _Node]:
     :param indent: level of indentation of the node for which the parent needs to be found
     :return: the parent node if found, else None
     """
-    # only classes and functions can be parents
+    # Only classes and functions can be parents.
     filtered_nodes: List[_Node] = [
         n for n in nodes if n.type in [_Node.Type.CLS, _Node.Type.FUNC]
     ]
     if not filtered_nodes:
         return None
-    # the parent has to be the last from the list
+    # The parent has to be the last from the list.
     pn: _Node = filtered_nodes[-1]
     if pn.indentation == indent - 4:
         return pn
@@ -548,15 +370,13 @@ def _extract_decorator(
     line: str, next_line_is_decorator: bool
 ) -> Tuple[Union[None, str], bool]:
     is_decorator = _is_decorator(line)
-    # support for multi-line decorators
-    if (  # pylint: disable=no-else-return
-        is_decorator and "(" in line
-    ) or next_line_is_decorator:
+    # Support for multi-line decorators.
+    if (is_decorator and "(" in line) or next_line_is_decorator:
         chars_to_reverse = -3 if line.endswith("\n") else -1
         next_line_is_decorator = line[chars_to_reverse] != ")"
         return line, next_line_is_decorator
-    elif is_decorator:
-        # support for simple decorators, i.e. @staticmethod or @abstractmethod
+    if is_decorator:
+        # Support for simple decorators, i.e. @staticmethod or @abstractmethod.
         return line, False
     return None, False
 
@@ -583,8 +403,8 @@ def _lines_to_nodes(lines: List[str]) -> List[_Node]:
         if decorator_line is not None:
             decorators.append(decorator_line)
             continue
-        # Unless we're in the body of a function/class, it is safe to assume that the parent node
-        # has changed if the level of indentation has moved.
+        # Unless we're in the body of a function/class, it is safe to assume that the
+        # parent node has changed if the level of indentation has moved.
         current_indent: int = len(line) - len(line.lstrip(" "))
         if current_indent != previous_indent:
             parent_node = _find_parent_node(root_nodes, current_indent)
@@ -596,13 +416,13 @@ def _lines_to_nodes(lines: List[str]) -> List[_Node]:
                 # within functions
                 last_node.add_to_body(line)
             else:
-                # create a misc node to make sure all lines before function/class
-                # nodes(shebangs, imports, etc) are also saved
+                # create a misc node to make sure all lines before function/class nodes(shebangs,
+                # imports, etc) are also saved
                 last_node = node = _Node("", line, line_num, _Node.Type.TEXT)
                 root_nodes.append(node)
         elif isinstance(node, _Node):
             if parent_node is None:
-                # if there is no current parent node, the new node has to be the parent
+                # If there is no current parent node, the new node has to be the parent.
                 parent_node = node
             while decorators:
                 node.add_decorator(decorators.pop(0))
@@ -647,7 +467,6 @@ def _class_method_order_detector(file_name: str, lines: List[str]) -> List[str]:
         for off in offending
     ]
 
-
 def _modify_file_lines(lines: List[str]) -> List[str]:
     """Modify multiple lines based on some rules, returns an updated list of
     line.
@@ -658,8 +477,7 @@ def _modify_file_lines(lines: List[str]) -> List[str]:
     # Functions that take a line, and return a modified line.
     ContentModifier = Callable[[List[str]], List[str]]
     CONTENT_MODIFIERS: List[ContentModifier] = [
-        # TODO(amr): enable this once it's tested enough.
-        # _reflow_comments_in_lines
+        # TODO(amr): enable this once it's tested enough. \_reflow_comments_in_lines.
     ]
 
     for modifier in CONTENT_MODIFIERS:
@@ -681,60 +499,9 @@ def _is_valid_python_statement(comments: List[str]) -> bool:
     return True
 
 
+# TODO (*): Is this function used anywhere?
 def _capitalize(comment: str) -> str:
     return f"{comment[0:2].upper()}{comment[2::]}"
-
-
-def _fix_comment_style(lines: List[str]) -> List[str]:
-    """Update comments to start with a capital letter and end with a `.`
-
-    ignores:
-    - empty line comments
-    - comments that start with '##'
-    - pylint & mypy comments
-    - valid python statements
-    """
-    checks = (
-        lambda x: x.startswith("##"),
-        lambda x: x.startswith("# pylint"),
-        lambda x: x.startswith("# type"),
-        lambda x: x.startswith("#!"),
-        lambda x: len(x.split()) == 2 and x.startswith("# "),
-        lambda x: any(
-            [
-                re.match(
-                    r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\."
-                    r"[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
-                    word,
-                )
-                is not None
-                for word in x.split()
-            ]
-        ),
-    )
-
-    comments: List[LinesWithComment] = _extract_comments(lines)
-
-    for comment in comments:
-        if not comment.is_single_line:
-            continue
-        # If any of the checks returns True, it means the check failed.
-        if any([check(comment.multi_line_comment[0]) for check in checks]):
-            continue
-        match = _parse_comment(comment.multi_line_comment[0], r"(^\s*)#(\s*)(.*)")
-        if not match:
-            continue
-        without_pound = match.group(3)
-        # Make sure it doesn't try to capitalize an empty comment
-        if without_pound and not without_pound[0].isupper():
-            without_pound = without_pound.capitalize()
-        # Rebuild the comment and add punctuation if not already present
-        body = f"{match.group(1)}#{match.group(2)}{without_pound}"
-        if body[-1] not in string.punctuation:
-            body = f"{body}."
-        comment.multi_line_comment[0] = body
-
-    return _replace_comments_in_lines(lines, comments)
 
 
 def _format_separating_line(
@@ -767,8 +534,7 @@ def _modify_file_line_by_line(lines: List[str]) -> List[str]:
     LineModifier = Callable[[str], str]
     LINE_MODIFIERS: List[LineModifier] = [
         _format_separating_line,
-        # TODO(amr): re-enable this for multi-line comments only.
-        # _fix_comment_style,
+        # TODO(amr): re-enable this for multi-line comments only. \_fix_comment_style,
         # TODO(gp): Remove empty lines in functions.
     ]
 
@@ -792,7 +558,7 @@ def _warn_incorrectly_formatted_todo(
     match the format: (# TODO(assignee): (task).)"""
     msg = ""
 
-    match = _parse_comment(line=line)
+    match = utils.parse_comment(line=line)
     if match is None:
         return msg
 
@@ -815,8 +581,8 @@ def _check_import(file_name: str, line_num: int, line: str) -> str:
     msg = ""
 
     if utils.is_init_py(file_name):
-        # In __init__.py we can import in weird ways.
-        # (e.g., the evil `from ... import *`).
+        # In **init**.py we can import in weird ways. (e.g., the evil
+        # `from ... import *`).
         return msg
 
     m = re.match(r"\s*from\s+(\S+)\s+import\s+.*", line)
