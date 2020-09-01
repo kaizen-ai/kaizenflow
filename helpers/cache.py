@@ -4,7 +4,6 @@
 import helpers.cache as hcac
 """
 
-import argparse
 import copy
 import functools
 import logging
@@ -15,8 +14,7 @@ import joblib
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.parser as prsr
-import helpers.unit_test as ut
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,7 +39,7 @@ def is_caching_enabled() -> bool:
 
 
 def get_disk_cache_name(tag: Optional[str]) -> str:
-    if ut.in_unit_test_mode():
+    if hut.in_unit_test_mode():
         cache_name = "tmp.joblib.unittest.cache"
         if tag is not None:
             cache_name += f".{tag}"
@@ -207,6 +205,18 @@ class Cached:
             obj = copy.deepcopy(obj)
         return obj
 
+    def clear_memory_cache(self) -> None:
+        _LOG.warning("%s: clearing memory cache", self._func.__name__)
+        self._execute_func_from_mem_cache.cache_clear()
+
+    def clear_disk_cache(self) -> None:
+        _LOG.warning("%s: clearing disk cache", self._func.__name__)
+        self._execute_func_from_disk_cache.clear()
+
+    def clear_all_cache(self) -> None:
+        self.clear_memory_cache()
+        self.clear_disk_cache()
+
     def get_last_cache_accessed(self) -> str:
         if self._last_used_disk_cache and self._last_used_mem_cache:
             # We executed `read_data` -> we hit the mem cache.
@@ -224,14 +234,6 @@ class Cached:
             ret = "disk"
         return ret
 
-    def clear_memory_cache(self) -> None:
-        _LOG.warning("%s: clearing memory cache", self._func.__name__)
-        self._execute_func_from_mem_cache.cache_clear()
-
-    def clear_disk_cache(self) -> None:
-        _LOG.warning("%s: clearing disk cache", self._func.__name__)
-        self._execute_func_from_disk_cache.clear()
-
     def _reset_cache_tracing(self) -> None:
         """Reset the values used to track which cache we are hitting when
         executing the cached function."""
@@ -242,32 +244,3 @@ class Cached:
         # then have the decorator set it to False.
         self._last_used_disk_cache = True
         self._last_used_mem_cache = True
-
-
-# #############################################################################
-
-# TODO(gp): Move to a different file, e.g., manage_cache.py
-
-
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument("positional", nargs=1, choices=["reset_cache"])
-    prsr.add_verbosity_arg(parser)
-    return parser
-
-
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    action = args.positional[0]
-    if action == "reset_cache":
-        tag = None
-        reset_disk_cache(tag)
-    else:
-        dbg.dfatal("Invalid action='%s'" % action)
-
-
-if __name__ == "__main__":
-    _main(_parse())
