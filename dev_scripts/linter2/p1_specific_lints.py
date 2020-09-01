@@ -428,26 +428,6 @@ def _fix_comment_style(lines: List[str]) -> List[str]:
     return _replace_comments_in_lines(lines, comments)
 
 
-def _format_separating_line(
-    line: str, min_num_chars: int = 6, line_width: int = 78
-) -> str:
-    """Transform a line int oa separating line if more than 6 # are found.
-
-    :param line: line to format
-    :param min_num_chars: minimum number of # to match after '# ' to decide
-    this is a seperator line
-    :param line_width: desired width for the seperator line
-    :return: modified line
-    """
-    regex = r"(\s*\#)\s*([\#\=\-\<\>]){%d,}\s*$" % min_num_chars
-
-    m = re.match(regex, line)
-    if m:
-        char = m.group(2)
-        line = m.group(1) + " " + char * (line_width - len(m.group(1)))
-    return line
-
-
 def _modify_file_line_by_line(lines: List[str]) -> List[str]:
     """Modify each line based on some rules, returns an updated list of line.
 
@@ -457,7 +437,6 @@ def _modify_file_line_by_line(lines: List[str]) -> List[str]:
     # Functions that take a line, and return a modified line.
     LineModifier = Callable[[str], str]
     LINE_MODIFIERS: List[LineModifier] = [
-        _format_separating_line,
         # TODO(amr): re-enable this for multi-line comments only.
         # _fix_comment_style,
         # TODO(gp): Remove empty lines in functions.
