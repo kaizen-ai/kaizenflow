@@ -13,7 +13,7 @@ import re
 import string
 import tempfile
 import tokenize
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple
 
 import more_itertools
 import typing_extensions
@@ -140,38 +140,6 @@ def _check_file_path(file_name: str) -> List[str]:
 # #############################################################################
 # File Content Checks.
 # #############################################################################
-
-
-def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
-    """Check file content, prints warnings if any issues are found.
-
-    :param file_name: name of the file being checked
-    :param lines: lines of content
-    """
-
-    class ContentCheck(typing_extensions.Protocol):
-        """A function that takes a file's content, and return an error message
-        or an empty string."""
-
-        def __call__(self, file_name: str, lines: List[str]) -> Union[List, str]:
-            # This definition is needed as typing.Callable doesn't support keyword arguments.
-            # Ref: https://github.com/python/mypy/issues/1655.
-            ...
-
-    CONTENT_CHECKS: List[ContentCheck] = [
-        _check_shebang,
-    ]
-
-    output: List[str] = []
-    for check in CONTENT_CHECKS:
-        msg: Union[str, list] = check(file_name=file_name, lines=lines)
-        if msg:
-            if isinstance(msg, str):
-                output.append(msg)
-            else:
-                output.extend(msg)
-
-    return output
 
 
 # #############################################################################
@@ -569,7 +537,6 @@ class _P1SpecificLints(lntr.Action):
         # Process file.
         txt_new = _modify_file_lines(lines=txt)
         txt_new = _modify_file_line_by_line(lines=txt_new)
-        output.extend(_check_file_lines(file_name=file_name, lines=txt_new))
         output.extend(
             _check_file_line_by_line(file_name=file_name, lines=txt_new)
         )

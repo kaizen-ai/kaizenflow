@@ -1,13 +1,13 @@
 import pytest
 
-import helpers.unit_test as hut
 import dev_scripts.linter2.p1_check_shebang as pcs
+import helpers.unit_test as hut
 
 
 @pytest.mark.skip(reason="Need to install mock")
 class Test_check_shebang(hut.TestCase):
     def _helper_check_shebang(
-            self, file_name: str, txt: str, is_executable: bool, exp: str,
+        self, file_name: str, txt: str, is_executable: bool, exp: str,
     ) -> None:
         import mock
 
@@ -61,4 +61,3 @@ import _setenv_lib as selib
         is_executable = False
         exp = ""
         self._helper_check_shebang(file_name, txt, is_executable, exp)
-

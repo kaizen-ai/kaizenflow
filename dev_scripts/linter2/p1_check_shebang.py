@@ -1,15 +1,13 @@
-import os
-import logging
 import argparse
-
-import dev_scripts.linter2.utils as utils
-import dev_scripts.linter2.base as lntr
-import helpers.parser as prsr
-import helpers.io_ as io_
-import helpers.dbg as dbg
-
+import logging
+import os
 from typing import List
 
+import dev_scripts.linter2.base as lntr
+import dev_scripts.linter2.utils as utils
+import helpers.dbg as dbg
+import helpers.io_ as io_
+import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +22,7 @@ def _check_shebang(file_name: str, lines: List[str]) -> str:
     """
     msg = ""
     if os.path.basename(file_name) == "__init__.py" or utils.is_test_code(
-            file_name
+        file_name
     ):
         return msg
 
@@ -41,7 +39,7 @@ def _check_shebang(file_name: str, lines: List[str]) -> str:
 
 
 class _P1CheckShebang(lntr.Action):
-    """Check if executables start with a shebang"""
+    """Check if executables start with a shebang."""
 
     def check_if_possible(self) -> bool:
         return True
@@ -49,23 +47,25 @@ class _P1CheckShebang(lntr.Action):
     def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
 
-        if not utils.is_ipynb_file(file_name) and not utils.is_ipynb_file(file_name):
+        if not utils.is_ipynb_file(file_name) and not utils.is_ipynb_file(
+            file_name
+        ):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
 
-        lines = io_.from_file(file_name).split('\n')
+        lines = io_.from_file(file_name).split("\n")
         return [_check_shebang(file_name, lines)]
 
 
 def _parse() -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser(
-            description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-        )
-        parser.add_argument(
-            "files", nargs="+", action="store", type=str, help="Files to process",
-        )
-        prsr.add_verbosity_arg(parser)
-        return parser
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "files", nargs="+", action="store", type=str, help="Files to process",
+    )
+    prsr.add_verbosity_arg(parser)
+    return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
