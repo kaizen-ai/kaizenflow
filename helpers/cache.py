@@ -20,9 +20,14 @@ import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
-
 _USE_CACHING: bool = True
+# This is the global disk cache.
+_DISK_CACHE: Any = None
+# Log level for information about the high level behavior of the caching
+# layer.
+_LOG_LEVEL = logging.DEBUG
+
+# #############################################################################
 
 
 def set_caching(val: bool) -> None:
@@ -51,14 +56,6 @@ def get_disk_cache_path(tag: Optional[str]) -> str:
     file_name = os.path.join(git.get_client_root(super_module=True), cache_name)
     file_name = os.path.abspath(file_name)
     return file_name
-
-
-# This is the global disk cache.
-_DISK_CACHE: Any = None
-
-# Log level for information about the high level behavior of the cachine
-# layer.
-_LOG_LEVEL = logging.INFO
 
 
 def get_disk_cache(tag: Optional[str]) -> Any:

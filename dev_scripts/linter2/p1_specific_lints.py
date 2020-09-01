@@ -144,7 +144,6 @@ def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
 
     CONTENT_CHECKS: List[ContentCheck] = [
         _check_shebang,
-        _class_method_order_detector,
     ]
 
     output: List[str] = []
@@ -467,7 +466,6 @@ def _class_method_order_detector(file_name: str, lines: List[str]) -> List[str]:
         f" is located on the wrong line"
         for off in offending
     ]
-
 
 def _modify_file_lines(lines: List[str]) -> List[str]:
     """Modify multiple lines based on some rules, returns an updated list of
