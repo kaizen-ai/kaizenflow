@@ -9,6 +9,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -22,14 +29,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -569,7 +568,7 @@ def plot_spectrum(
     signal: Union[pd.Series, pd.DataFrame],
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
-    axes: Optional[List[mpl.axes.Axes]] = None
+    axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
     """
     Plot power spectral density and spectrogram of columns.
@@ -949,6 +948,7 @@ def plot_confusion_heatmap(
     if return_results:
         return df_out, df_out_percentage
     return None
+
 
 def multipletests_plot(
     pvals: pd.Series,
@@ -1590,7 +1590,9 @@ def plot_rolling_beta(
     # Calculate and plot rolling beta.
     model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res_rolling = model_rolling.fit()
-    beta_rolling = res_rolling.params[benchmark_name]  # pylint: disable=unsubscriptable-object
+    beta_rolling = res_rolling.params[
+        benchmark_name
+    ]  # pylint: disable=unsubscriptable-object
     # Return NaN periods to the rolling beta series for the plot.
     beta_rolling = beta_rolling.reindex(common_index)
     beta_rolling.plot(
@@ -1607,6 +1609,7 @@ def plot_rolling_beta(
     ax.set_ylabel("beta")
     _maybe_add_events(ax=ax, events=events)
     ax.legend()
+
 
 def plot_rolling_correlation(
     srs1: pd.Series,
@@ -1670,6 +1673,7 @@ def plot_rolling_correlation(
     _maybe_add_events(ax=ax, events=events)
     ax.legend()
 
+
 def plot_sharpe_ratio_panel(
     log_rets: pd.Series,
     frequencies: Optional[List[str]] = None,
@@ -1702,15 +1706,16 @@ def plot_sharpe_ratio_panel(
         freq_points_per_year = hdf.compute_points_per_year_for_given_freq(freq)
         if freq_points_per_year > input_freq_points_per_year:
             _LOG.warning(
-                "Upsampling from input freq='%s' to freq='%s' is blocked"
-                , srs_freq, freq
+                "Upsampling from input freq='%s' to freq='%s' is blocked",
+                srs_freq,
+                freq,
             )
             continue
         resampled_log_rets = sigp.resample(log_rets, rule=freq).sum()
         if len(resampled_log_rets) == 1:
             _LOG.warning(
-                "Resampling to freq='%s' is blocked because resampled series has only 1 observation"
-                , freq
+                "Resampling to freq='%s' is blocked because resampled series has only 1 observation",
+                freq,
             )
             continue
         sr = stats.compute_annualized_sharpe_ratio(resampled_log_rets)
