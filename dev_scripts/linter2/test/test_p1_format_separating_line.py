@@ -1,5 +1,5 @@
-import helpers.unit_test as hut
 import dev_scripts.linter2.p1_format_separating_line as pfsl
+import helpers.unit_test as hut
 
 
 class Test_format_separating_lines(hut.TestCase):
@@ -22,9 +22,7 @@ class Test_format_separating_lines(hut.TestCase):
 
         line = f"# {'#' * (min_num_chars - 1)}"
         exp = line
-        actual = pfsl._format_separating_line(
-            line, min_num_chars=min_num_chars,
-        )
+        actual = pfsl._format_separating_line(line, min_num_chars=min_num_chars,)
         self.assertEqual(exp, actual)
 
     def test3(self) -> None:
@@ -51,4 +49,3 @@ class Test_format_separating_lines(hut.TestCase):
             line, min_num_chars=min_num_chars, line_width=line_width
         )
         self.assertEqual(exp, actual)
-
