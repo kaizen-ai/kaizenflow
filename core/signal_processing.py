@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.signal_processing as sigp
 """
@@ -37,8 +36,7 @@ _LOG = logging.getLogger(__name__)
 def plot_wavelet_levels(
     signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, levels: int
 ) -> None:
-    """
-    Wavelet level decomposition plot. Higher levels are smoother.
+    """Wavelet level decomposition plot. Higher levels are smoother.
 
     :param signal: Series-like numerical object
     :param wavelet_name: One of the names in pywt.wavelist()
@@ -70,8 +68,7 @@ def plot_wavelet_levels(
 def filter_low_pass(
     signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, threshold: float
 ) -> pd.Series:
-    """
-    Wavelet low-pass filtering using a threshold.
+    """Wavelet low-pass filtering using a threshold.
 
     Currently configured to use 'periodic' mode.
     See https://pywavelets.readthedocs.io/en/latest/regression/modes.html.
@@ -104,8 +101,7 @@ def plot_scaleogram(
     ylabel: str = "Period",
     xlabel: str = "Time",
 ) -> None:
-    r"""
-    Plot wavelet-based spectrogram (aka scaleogram).
+    r"""Plot wavelet-based spectrogram (aka scaleogram).
 
     A nice reference and utility for plotting can be found at
     https://github.com/alsauve/scaleogram.
@@ -161,8 +157,7 @@ def plot_scaleogram(
 def fit_random_walk_plus_noise(
     signal: Union[pd.DataFrame, pd.Series]
 ) -> Tuple[sm.tsa.UnobservedComponents, sm.tsa.statespace.MLEResults]:
-    """
-    Fit a random walk + Gaussian noise model using state space methods.
+    """Fit a random walk + Gaussian noise model using state space methods.
 
     After convergence the resulting model is equivalent to exponential
     smoothing. Using the state space approach we can
@@ -199,8 +194,7 @@ def fit_random_walk_plus_noise(
 def plot_crosscorrelation(
     x: Union[pd.DataFrame, pd.Series], y: Union[pd.DataFrame, pd.Series]
 ) -> None:
-    r"""
-    Assume x, y have been approximately demeaned and normalized (e.g.,
+    r"""Assume x, y have been approximately demeaned and normalized (e.g.,
     z-scored with ewma).
 
     At index `k` in the result, the value is given by
@@ -226,8 +220,7 @@ def plot_crosscorrelation(
 def squash(
     signal: Union[pd.DataFrame, pd.Series], scale: int = 1
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Apply squashing function to data.
+    """Apply squashing function to data.
 
     :param signal: data
     :param scale: Divide data by scale and multiply squashed output by scale.
@@ -242,8 +235,7 @@ def squash(
 def accumulate(
     srs: pd.Series, num_steps: int, nan_mode: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Accumulate series for step.
+    """Accumulate series for step.
 
     :param srs: time series
     :param num_steps: number of steps to compute rolling sum for
@@ -258,8 +250,7 @@ def accumulate(
 def get_symmetric_equisized_bins(
     signal: pd.Series, bin_size: float, zero_in_bin_interior: bool = False
 ) -> np.array:
-    """
-    Get bins of equal size, symmetric about zero, adapted to `signal`.
+    """Get bins of equal size, symmetric about zero, adapted to `signal`.
 
     :param bin_size: width of bin
     :param zero_in_bin_interior: Determines whether `0` is a bin edge or not.
@@ -288,8 +279,7 @@ def get_symmetric_equisized_bins(
 
 
 def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Series:
-    """
-    Digitize (i.e., discretize) `signal` into `bins`.
+    """Digitize (i.e., discretize) `signal` into `bins`.
 
     - In the output, bins are referenced with integers and are such that `0`
       always belongs to bin `0`
@@ -321,8 +311,7 @@ def digitize(signal: pd.Series, bins: np.array, right: bool = False) -> pd.Serie
 
 
 def _wrap(signal: pd.Series, num_cols: int) -> pd.DataFrame:
-    """
-    Convert a 1-d series into a 2-d dataframe left-to-right top-to-bottom.
+    """Convert a 1-d series into a 2-d dataframe left-to-right top-to-bottom.
 
     :param num_cols: number of columns to use for wrapping
     """
@@ -347,8 +336,7 @@ def _wrap(signal: pd.Series, num_cols: int) -> pd.DataFrame:
 def _unwrap(
     df: pd.DataFrame, idx: pd.Index, name: Optional[Any] = None
 ) -> pd.Series:
-    """
-    Undo `_wrap`.
+    """Undo `_wrap`.
 
     We allow `index.size` to be less than nrows * ncols of `df`, in which case
     values are truncated from the end of the unwrapped dataframe.
@@ -373,8 +361,8 @@ def skip_apply_func(
     func: Callable[[pd.Series], pd.DataFrame],
     **kwargs: Any,
 ) -> pd.DataFrame:
-    """
-    Apply `func` to each col of `signal` after a wrap, then unwrap and merge.
+    """Apply `func` to each col of `signal` after a wrap, then unwrap and
+    merge.
 
     :param skip_size: num_cols used for wrapping each col of `signal`
     :param kwargs: forwarded to `func`
@@ -395,8 +383,7 @@ def skip_apply_func(
 
 
 def _calculate_tau_from_com(com: float) -> float:
-    """
-    Transform center-of-mass (com) into tau parameter.
+    """Transform center-of-mass (com) into tau parameter.
 
     This is the function inverse of `_calculate_com_from_tau`.
     """
@@ -405,8 +392,7 @@ def _calculate_tau_from_com(com: float) -> float:
 
 
 def _calculate_com_from_tau(tau: float) -> float:
-    """
-    Transform tau parameter into center-of-mass (com).
+    """Transform tau parameter into center-of-mass (com).
 
     We use the tau parameter for kernels (as in Dacorogna, et al), but for the
     compute_ema operator want to take advantage of pandas' implementation, which uses
@@ -429,8 +415,7 @@ def compute_ema(
     min_periods: int,
     depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
-    r"""
-    Implement iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
+    r"""Implement iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
 
     depth=1 corresponds to a single application of exponential smoothing.
 
@@ -481,8 +466,7 @@ def compute_smooth_derivative(
     scaling: int = 1,
     order: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
-    r"""
-    Compute a "low-noise" differential operator.
+    r"""Compute a "low-noise" differential operator.
 
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 
@@ -536,8 +520,7 @@ def compute_smooth_moving_average(
     min_depth: int = 1,
     max_depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Implement moving average operator defined in terms of iterated compute_ema's.
+    """Implement moving average operator defined in terms of iterated compute_ema's.
     Choosing min_depth > 1 results in a lagged operator.
     Choosing min_depth = max_depth = 1 reduces to a single compute_ema.
 
@@ -587,8 +570,7 @@ def compute_rolling_norm(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Implement smooth moving average norm (when p_moment >= 1).
+    """Implement smooth moving average norm (when p_moment >= 1).
 
     Moving average corresponds to compute_ema when min_depth = max_depth = 1.
     """
@@ -606,8 +588,7 @@ def compute_rolling_var(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Implement smooth moving average central moment.
+    """Implement smooth moving average central moment.
 
     Moving average corresponds to compute_ema when min_depth = max_depth = 1.
     """
@@ -627,8 +608,7 @@ def compute_rolling_std(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Implement normalized smooth moving average central moment.
+    """Implement normalized smooth moving average central moment.
 
     Moving average corresponds to compute_ema when min_depth = max_depth = 1.
     """
@@ -645,9 +625,7 @@ def compute_rolling_demean(
     min_depth: int = 1,
     max_depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Demean signal on a rolling basis with compute_smooth_moving_average.
-    """
+    """Demean signal on a rolling basis with compute_smooth_moving_average."""
     signal_ma = compute_smooth_moving_average(
         signal, tau, min_periods, min_depth, max_depth
     )
@@ -665,8 +643,7 @@ def compute_rolling_zscore(
     delay: int = 0,
     atol: float = 0,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Z-score using compute_smooth_moving_average and compute_rolling_std.
+    """Z-score using compute_smooth_moving_average and compute_rolling_std.
 
     If delay > 0, then pay special attention to 0 and NaN handling to avoid
     extreme values.
@@ -708,9 +685,7 @@ def compute_rolling_skew(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Smooth moving average skew of z-scored signal.
-    """
+    """Smooth moving average skew of z-scored signal."""
     z_signal = compute_rolling_zscore(
         signal, tau_z, min_periods, min_depth, max_depth, p_moment
     )
@@ -729,9 +704,7 @@ def compute_rolling_kurtosis(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Smooth moving average kurtosis of z-scored signal.
-    """
+    """Smooth moving average kurtosis of z-scored signal."""
     z_signal = compute_rolling_zscore(
         signal, tau_z, min_periods, min_depth, max_depth, p_moment
     )
@@ -754,12 +727,11 @@ def compute_rolling_annualized_sharpe_ratio(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Compute rolling annualized Sharpe ratio and standard error.
+    """Compute rolling annualized Sharpe ratio and standard error.
 
-    The standard error adjustment uses the range of the smooth moving average
-    kernel as an estimate of the "number of data points" used in the
-    calculation of the Sharpe ratio.
+    The standard error adjustment uses the range of the smooth moving
+    average kernel as an estimate of the "number of data points" used in
+    the calculation of the Sharpe ratio.
     """
     ppy = hdf.infer_sampling_points_per_year(signal)
     sr = compute_rolling_sharpe_ratio(
@@ -783,9 +755,8 @@ def compute_rolling_sharpe_ratio(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Sharpe ratio using compute_smooth_moving_average and compute_rolling_std.
-    """
+    """Sharpe ratio using compute_smooth_moving_average and
+    compute_rolling_std."""
     signal_ma = compute_smooth_moving_average(
         signal, tau, min_periods, min_depth, max_depth
     )
@@ -811,10 +782,7 @@ def compute_rolling_corr(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Smooth moving correlation.
-
-    """
+    """Smooth moving correlation."""
     if demean:
         srs1_adj = srs1 - compute_smooth_moving_average(
             srs1, tau, min_periods, min_depth, max_depth
@@ -848,10 +816,10 @@ def compute_rolling_zcorr(
     max_depth: int = 1,
     p_moment: float = 2,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """
-    Z-score srs1, srs2 then calculate moving average of product.
+    """Z-score srs1, srs2 then calculate moving average of product.
 
-    Not guaranteed to lie in [-1, 1], but bilinear in the z-scored variables.
+    Not guaranteed to lie in [-1, 1], but bilinear in the z-scored
+    variables.
     """
     if demean:
         z_srs1 = compute_rolling_zscore(
@@ -886,8 +854,7 @@ def process_outliers(
     min_periods: Optional[int] = None,
     info: Optional[dict] = None,
 ) -> pd.Series:
-    """
-    Process outliers in different ways given lower / upper quantiles.
+    """Process outliers in different ways given lower / upper quantiles.
 
     Default behavior:
       - If `window` is `None`, set `window` to series length
@@ -1016,8 +983,7 @@ def process_outlier_df(
     min_periods: Optional[int] = None,
     info: Optional[dict] = None,
 ) -> pd.DataFrame:
-    """
-    Extend `process_outliers` to dataframes.
+    """Extend `process_outliers` to dataframes.
 
     TODO(*): Revisit this with a decorator approach:
     https://github.com/ParticleDev/commodity_research/issues/568
@@ -1062,8 +1028,7 @@ def process_nonfinite(
     remove_inf: bool = True,
     info: Optional[dict] = None,
 ) -> pd.Series:
-    """
-    Remove infinite and NaN values according to the parameters.
+    """Remove infinite and NaN values according to the parameters.
 
     :param srs: pd.Series to process
     :param remove_nan: remove NaN values if True and keep if False
@@ -1110,8 +1075,7 @@ def process_nonfinite(
 def compute_ipca(
     df: pd.DataFrame, num_pc: int, tau: float, nan_mode: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
-    """
-    Incremental PCA.
+    """Incremental PCA.
 
     The dataframe should already be centered.
 
@@ -1185,8 +1149,7 @@ def compute_ipca(
 def _compute_ipca_step(
     u: pd.Series, v: pd.Series, alpha: float
 ) -> Tuple[pd.Series, pd.Series]:
-    """
-    Single step of incremental PCA.
+    """Single step of incremental PCA.
 
     At each point, the norm of v is the eigenvalue estimate (for the component
     to which u and v refer).
@@ -1209,8 +1172,7 @@ def _compute_ipca_step(
 
 
 def compute_unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
-    """
-    Calculate the angular distance between unit vectors.
+    """Calculate the angular distance between unit vectors.
 
     Accepts a df of unit vectors (each row a unit vector) and returns a series
     of consecutive angular distances indexed according to the later time point.
@@ -1227,9 +1189,7 @@ def compute_unit_vector_angular_distance(df: pd.DataFrame) -> pd.Series:
 
 
 def compute_eigenvector_diffs(eigenvecs: List[pd.DataFrame]) -> pd.DataFrame:
-    """
-    Take a list of eigenvectors and return a df of angular distances.
-    """
+    """Take a list of eigenvectors and return a df of angular distances."""
     ang_chg = []
     for i, vec in enumerate(eigenvecs):
         srs = compute_unit_vector_angular_distance(vec)
@@ -1252,8 +1212,7 @@ def get_trend_residual_decomp(
     max_depth: int = 1,
     nan_mode: Optional[str] = None,
 ) -> pd.DataFrame:
-    """
-    Decompose a signal into trend + residual.
+    """Decompose a signal into trend + residual.
 
     - The `trend` warm-up period is set by `min_periods`
     - If `min_periods` is positive, then leading values of `trend` are NaN
@@ -1301,8 +1260,7 @@ def get_swt(
     timing_mode: Optional[str] = None,
     output_mode: Optional[str] = None,
 ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
-    """
-    Get stationary wt details and smooths for all available scales.
+    """Get stationary wt details and smooths for all available scales.
 
     If sig.index.freq == "B", then there is the following rough correspondence
     between wavelet levels and time scales:
@@ -1408,9 +1366,7 @@ def get_swt(
 
 
 def _pad_to_pow_of_2(arr: np.array) -> np.array:
-    """
-    Minimally extend `arr` with zeros so that len is a power of 2.
-    """
+    """Minimally extend `arr` with zeros so that len is a power of 2."""
     sig_len = arr.shape[0]
     _LOG.debug("signal length=%d", sig_len)
     pow2_ceil = int(2 ** np.ceil(np.log2(sig_len)))
@@ -1420,8 +1376,7 @@ def _pad_to_pow_of_2(arr: np.array) -> np.array:
 
 
 def _set_warmup_region_to_nan(srs: pd.Series, width: int, level: int) -> None:
-    """
-    Remove warm-up artifacts by setting to `NaN`.
+    """Remove warm-up artifacts by setting to `NaN`.
 
     NOTE: Modifies `srs` in-place.
 
@@ -1435,8 +1390,7 @@ def _set_warmup_region_to_nan(srs: pd.Series, width: int, level: int) -> None:
 def _reindex_by_knowledge_time(
     srs: pd.Series, width: int, level: int
 ) -> pd.Series:
-    """
-    Shift series so that indexing is according to knowledge time.
+    """Shift series so that indexing is according to knowledge time.
 
     :srs: swt
     :width: width (length of support of mother wavelet)
@@ -1448,8 +1402,7 @@ def _reindex_by_knowledge_time(
 def get_dyadic_zscored(
     sig: pd.Series, demean: bool = False, **kwargs: Any
 ) -> pd.DataFrame:
-    """
-    Z-score `sig` with successive powers of 2.
+    """Z-score `sig` with successive powers of 2.
 
     :return: dataframe with cols named according to the exponent of 2. Number
         of cols is determined based on signal length.
@@ -1472,8 +1425,7 @@ def get_dyadic_zscored(
 def resample(
     data: Union[pd.Series, pd.DataFrame], **resample_kwargs: Any,
 ):
-    """
-    Execute series resampling with specified `.resample()` arguments.
+    """Execute series resampling with specified `.resample()` arguments.
 
     The `rule` argument must always be specified and the `closed` and `label`
     arguments are treated specially by default.

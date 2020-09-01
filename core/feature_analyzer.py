@@ -107,10 +107,8 @@ def analyze_features(
 
 
 class Reporter:
-    """
-    Report results from `analyze_features()` in a heatmap with coefficient
-    values and p-values.
-    """
+    """Report results from `analyze_features()` in a heatmap with coefficient
+    values and p-values."""
 
     def __init__(self, res_df):
         self.res_df = res_df
@@ -162,9 +160,9 @@ class Reporter:
 
     @staticmethod
     def _interpolate(val, max_val, min_col, max_col):
-        """
-        Interpolate intensity in [min_col, max_col] based on val in
-        0, max_val].
+        """Interpolate intensity in [min_col, max_col] based on val in 0,
+        max_val].
+
         :return: float value in [0, 1]
         """
         dbg.dassert_lte(0, val)
@@ -174,8 +172,8 @@ class Reporter:
 
     @staticmethod
     def _interpolate_rgb(val, max_val, min_rgb, max_rgb):
-        """
-        Interpolate val in [0, max_val] in terms of the rgb colors
+        """Interpolate val in [0, max_val] in terms of the rgb colors.
+
         [min_rgb, max_rgb] by interpolating the 3 color channels.
         :return: triple representing the interpolated color
         """
