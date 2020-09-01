@@ -3,6 +3,7 @@ import pytest
 import dev_scripts.linter2.p1_specific_lints as pslints
 import helpers.unit_test as hut
 
+from typing import List
 
 class Test_warn_incorrectly_formatted_todo(hut.TestCase):
     def test1(self) -> None:
