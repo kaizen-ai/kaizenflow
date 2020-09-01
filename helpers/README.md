@@ -31,13 +31,13 @@ You have two options:
 2. Manual installation:
 
     ```bash
-    > pip install --extra-index-url http://172.31.16.23:8855/simple --trusted-host 172.31.36.23 particle-helpers
+    > pip install --extra-index-url http://172.31.16.23:8855/simple --trusted-host 172.31.36.23 helpers
     ```
 
     or
 
     ```bash
-    > pip install --extra-index-url http://172.31.16.23:8855 particle-helpers
+    > pip install --extra-index-url http://172.31.16.23:8855 helpers
     ```
 
     Search hosted packages:
@@ -76,7 +76,7 @@ To serve packages and authenticate against local `.htpasswd`:
 
 **Note**: This section desribes temporary solution until we will not introduce CI pipeline.
 
-The mainteneer of helpers package must do after merging changes of `p1_helpers/` into master:
+The mainteneer of helpers package must do after merging changes of `helpers/` into master:
 
 1. Edit or create a ~/.pypirc file with a similar content:
 
@@ -84,13 +84,12 @@ The mainteneer of helpers package must do after merging changes of `p1_helpers/`
     [distutils]
     index-servers =
     particle
-
     [particle]
     username:<upload_pypi_username>
     password:<upload_pypi_passwd>
     ```
 
-2. Update the `p1_helpers/CHANGELOG`, add version and new changes.
+2. Update the `helpers/CHANGELOG`, add version and new changes.
 
 3. Edit `setup.py`, change `version` with accordance in `CHANGELOG`, update `install_requires` parameters.
 

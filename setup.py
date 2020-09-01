@@ -2,8 +2,8 @@ import setuptools
 
 
 setuptools.setup(
-    name="particle-helpers",
-    ext_package="particle_helpers",
+    name="helpers",
+    ext_package="helpers",
     version="1.0.0",
     author="Konstantin Naumov",
     author_email="kostya@particle.one",
