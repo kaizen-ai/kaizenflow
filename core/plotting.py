@@ -1608,6 +1608,67 @@ def plot_rolling_beta(
     _maybe_add_events(ax=ax, events=events)
     ax.legend()
 
+def plot_rolling_correlation(
+    srs1: pd.Series,
+    srs2: pd.Series,
+    tau: float,
+    demean: bool = True,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+    zcorr: bool = False,
+    ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
+) -> None:
+    """
+    Return rolling correlation between 2 series and plot rolling correlation.
+
+    :param srs1: first series
+    :param srs2: second series
+    :param tau: tau correlation coefficient
+    :param demean: bool demean
+    :param min_periods: min periods
+    :param min_depth: min depth
+    :param max_depth: max depth
+    :param p_moment: p moment
+    :param ax: axis
+    :param events: list of tuples with dates and labels to point out on the plot
+
+    """
+    # Calculate and plot rolling correlation.
+    ax = ax or plt.gca()
+    # Calculate rolling correlation
+    if zcorr:
+        roll_correlation = sigp.compute_rolling_zcorr
+        title = "Z Correlation of 2 time series"
+        label = "Rolling z correlation"
+    else:
+        roll_correlation = sigp.compute_rolling_corr
+        title = "Correlation of 2 time series"
+        label = "Rolling correlation"
+
+    roll_corr = roll_correlation(
+        srs1,
+        srs2,
+        tau=tau,
+        demean=demean,
+        min_periods=min_periods,
+        min_depth=min_depth,
+        max_depth=max_depth,
+        p_moment=p_moment,
+    )
+
+    # Plot rolling correlation
+    roll_corr.plot(ax=ax, title=title, label=label)
+    # Calculate correlation whole period
+    whole_period = srs1.corr(srs2)
+    # Plot correlation whole period
+    ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
+    ax.set_xlabel("period")
+    ax.set_ylabel("correlation")
+    _maybe_add_events(ax=ax, events=events)
+    ax.legend()
 
 def plot_sharpe_ratio_panel(
     log_rets: pd.Series,
