@@ -201,6 +201,7 @@ class PcaFactorComputer(FactorComputer):
         dbg.dassert_eq_all(sorted(col_map_dst), exp_idxs)
         return True
 
+    @staticmethod
     def shuffle_eigval_eigvec(
         eigval_df: pd.DataFrame,
         eigvec_df: pd.DataFrame,
