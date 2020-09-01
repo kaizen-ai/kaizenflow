@@ -157,8 +157,9 @@ def convert_df_to_json_string(
     # Append shape of the initial dataframe.
     shape = "original shape=%s" % (df.shape,)
     # Reorder columns.
-    columns_order = columns_order or df.cols
-    df = df[columns_order]
+    if columns_order is not None:
+        dbg.dassert_set_eq(columns_order, df.cols)
+        df = df[columns_order]
     # Select head.
     if n_head is not None:
         head_df = df.head(n_head)
