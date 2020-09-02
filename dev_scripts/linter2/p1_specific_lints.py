@@ -10,7 +10,7 @@ import enum
 import logging
 import os
 import re
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union, Optional
 
 import typing_extensions
 
@@ -29,64 +29,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 # File Content Checks.
 # #############################################################################
-
-
-def _check_shebang(file_name: str, lines: List[str]) -> str:
-    """Return warning if:
-
-    - a python executable has no shebang
-    - a python file has a shebang and isn't executable
-
-    Note: the function ignores __init__.py files  & test code.
-    """
-    msg = ""
-    if os.path.basename(file_name) == "__init__.py" or utils.is_test_code(
-        file_name
-    ):
-        return msg
-
-    shebang = "#!/usr/bin/env python"
-    has_shebang = lines[0] == shebang
-    is_executable = os.access(file_name, os.X_OK)
-
-    if is_executable and not has_shebang:
-        msg = f"{file_name}:1: any executable needs to start with a shebang '{shebang}'"
-    elif not is_executable and has_shebang:
-        msg = f"{file_name}:1: a non-executable can't start with a shebang."
-
-    return msg
-
-
-def _check_file_lines(file_name: str, lines: List[str]) -> List[str]:
-    """Check file content, prints warnings if any issues are found.
-
-    :param file_name: name of the file being checked
-    :param lines: lines of content
-    """
-
-    class ContentCheck(typing_extensions.Protocol):
-        """A function that takes a file's content, and return an error message
-        or an empty string."""
-
-        def __call__(self, file_name: str, lines: List[str]) -> Union[List, str]:
-            # This definition is needed as typing.Callable doesn't support keyword arguments.
-            # Ref: https://github.com/python/mypy/issues/1655.
-            ...
-
-    CONTENT_CHECKS: List[ContentCheck] = [
-        _check_shebang,
-    ]
-
-    output: List[str] = []
-    for check in CONTENT_CHECKS:
-        msg: Union[str, list] = check(file_name=file_name, lines=lines)
-        if msg:
-            if isinstance(msg, str):
-                output.append(msg)
-            else:
-                output.extend(msg)
-
-    return output
 
 
 # #############################################################################
@@ -556,7 +498,6 @@ class _P1SpecificLints(lntr.Action):
         # Process file.
         txt_new = _modify_file_lines(lines=txt)
         txt_new = _modify_file_line_by_line(lines=txt_new)
-        output.extend(_check_file_lines(file_name=file_name, lines=txt_new))
         output.extend(
             _check_file_line_by_line(file_name=file_name, lines=txt_new)
         )
