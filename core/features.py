@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.features as ftrs
 """
@@ -38,9 +37,8 @@ def get_lagged_feature_names(y_var, delay_lag, num_lags):
 
 
 def compute_lagged_features(df, y_var, delay_lag, num_lags):
-    """
-    Compute features by adding lags of `y_var` in `df`.
-    The operation is performed in-place.
+    """Compute features by adding lags of `y_var` in `df`. The operation is
+    performed in-place.
 
     :return: transformed df and info about the transformation.
     """
@@ -68,9 +66,7 @@ def compute_lagged_features(df, y_var, delay_lag, num_lags):
 def compute_lagged_columns(
     df: pd.DataFrame, lag_delay: int, num_lags: int
 ) -> pd.DataFrame:
-    """
-    Computes lags of each column in df.
-    """
+    """Compute lags of each column in df."""
     if lag_delay < 0:
         _LOG.warning(
             "Using anticausal features since lag_delay=%d < 0. This "
