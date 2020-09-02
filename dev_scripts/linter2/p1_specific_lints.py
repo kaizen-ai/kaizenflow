@@ -22,78 +22,9 @@ import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
+# Utilities.
 # #############################################################################
-# File Path Checks.
-# #############################################################################
-
-
-def _check_notebook_dir(file_name: str) -> str:
-    """Check if that notebooks are under `notebooks` dir."""
-    msg = ""
-    if utils.is_ipynb_file(file_name):
-        subdir_names = file_name.split("/")
-        if "notebooks" not in subdir_names:
-            msg = (
-                "%s:1: each notebook should be under a 'notebooks' "
-                "directory to not confuse pytest" % file_name
-            )
-    return msg
-
-
-def _check_test_file_dir(file_name: str) -> str:
-    """Check if test files are under `test` dir."""
-    msg = ""
-    # TODO(gp): A little annoying that we use "notebooks" and "test".
-    if utils.is_py_file(file_name) and os.path.basename(file_name).startswith(
-        "test_"
-    ):
-        if not utils.is_under_test_dir(file_name):
-            msg = (
-                "%s:1: test files should be under 'test' directory to "
-                "be discovered by pytest" % file_name
-            )
-    return msg
-
-
-def _check_notebook_filename(file_name: str) -> str:
-    r"""Check notebook filenames start with `Master_` or match: `\S+Task\d+_...`"""
-    msg = ""
-
-    basename = os.path.basename(file_name)
-    if utils.is_ipynb_file(file_name) and not any(
-        [basename.startswith("Master_"), re.match(r"^\S+Task\d+_", basename)]
-    ):
-        msg = (
-            f"{file_name}:1: "
-            r"All notebook filenames start with `Master_` or match: `\S+Task\d+_...`"
-        )
-    return msg
-
-
-def _check_file_path(file_name: str) -> List[str]:
-    """Perform various checks based on the path of a file:
-
-    - check that notebook files are under a `notebooks` dir
-    - check that test files are under `test` dir
-    """
-    # Functions that take the filepath, and return an error message or an empty
-    # string.
-    FilePathCheck = Callable[[str], str]
-    FILE_PATH_CHECKS: List[FilePathCheck] = [
-        _check_notebook_dir,
-        _check_test_file_dir,
-        _check_notebook_filename,
-    ]
-
-    output: List[str] = []
-    for func in FILE_PATH_CHECKS:
-        msg = func(file_name)
-        if msg:
-            _LOG.warning(msg)
-            output.append(msg)
-
-    return output
-
+# TODO(amr): Move to linter/utils.py
 
 # #############################################################################
 # File Content Checks.
@@ -639,8 +570,6 @@ class _P1SpecificLints(lntr.Action):
             return []
 
         output: List[str] = []
-
-        output.extend(_check_file_path(file_name))
 
         # Read file.
         txt = io_.from_file(file_name).split("\n")
