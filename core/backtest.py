@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 if True:
     import gluonts
     import gluonts.evaluation.backtest
+
     import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
     def predict(
@@ -25,8 +26,7 @@ if True:
         num_samples: int,
         x_vars: Optional[List[str]] = None,
     ) -> gluonts.model.forecast.SampleForecast:
-        """
-        Predict next values using trained predictor.
+        """Predict next values using trained predictor.
 
         It is assumed that x_vars and y_vars are both indexed by knowledge times.
 
@@ -77,8 +77,7 @@ if True:
         num_samples: int,
         x_vars: Optional[List[str]] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Generate forward predictions using trained predictor.
+        """Generate forward predictions using trained predictor.
 
         For each time step, generate `num_samples` predictions for each of
         `prediction_length` steps, take the mean across samples.
