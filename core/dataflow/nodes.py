@@ -594,6 +594,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         steps_ahead: int,
+        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -624,6 +625,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
+        self._col_mode = col_mode
         self._model = None
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -679,9 +681,19 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
+        if self._col_mode == "merge_all":
+            df_out = fwd_y_df.reindex(idx).merge(
+                fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            )
+        elif self._col_mode == "replace_all":
+            df_out = fwd_y_df.reindex(idx).merge(
+                fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            )
+            df_out = df_in.reindex(idx).merge(
+                df_out.reindex(idx), left_index=True, right_index=True
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
@@ -714,9 +726,19 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
+        if self._col_mode == "merge_all":
+            df_out = fwd_y_df.reindex(idx).merge(
+                fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            )
+        elif self._col_mode == "replace_all":
+            df_out = fwd_y_df.reindex(idx).merge(
+                fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            )
+            df_out = df_in.reindex(idx).merge(
+                df_out.reindex(idx), left_index=True, right_index=True
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
@@ -1088,6 +1110,7 @@ class SkLearnModel(FitPredictNode):
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         model_func: Callable[..., Any],
+        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
     ) -> None:
         super().__init__(nid)
@@ -1095,6 +1118,7 @@ class SkLearnModel(FitPredictNode):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
+        self._col_mode = col_mode
         self._model = None
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1121,8 +1145,19 @@ class SkLearnModel(FitPredictNode):
         info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
         #
-        dbg.dassert_no_duplicates(y_hat.columns)
-        return {"df_out": y_hat}
+        if self._col_mode == "merge_all":  # !!!!!!!!!!!!!
+
+            df_out = y_hat
+
+        elif self._col_mode == "replace_all":
+
+            df_out = df_in.reindex(idx).merge(
+                y_hat.reindex(idx), left_index=True, right_index=True
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -1141,8 +1176,19 @@ class SkLearnModel(FitPredictNode):
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
         #
-        dbg.dassert_no_duplicates(y_hat.columns)
-        return {"df_out": y_hat}
+        if self._col_mode == "merge_all":  # !!!!!!!!!!!!!
+
+            df_out = y_hat
+
+        elif self._col_mode == "replace_all":
+
+            df_out = df_in.reindex(idx).merge(
+                y_hat.reindex(idx), left_index=True, right_index=True
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
