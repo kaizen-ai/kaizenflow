@@ -373,7 +373,7 @@ def _is_valid_python_statement(comments: List[str]) -> bool:
     return True
 
 
-# TODO (\*): Is this function used anywhere?
+# TODO(*): Is this function used anywhere?
 def _capitalize(comment: str) -> str:
     return f"{comment[0:2].upper()}{comment[2::]}"
 
@@ -405,44 +405,6 @@ def _modify_file_line_by_line(lines: List[str]) -> List[str]:
 # #############################################################################
 
 
-def _check_import(file_name: str, line_num: int, line: str) -> str:
-    # The maximum length of an 'import as'.
-    MAX_LEN_IMPORT = 8
-
-    msg = ""
-
-    if utils.is_init_py(file_name):
-        # In **init**.py we can import in weird ways. (e.g., the evil
-        # `from ... import *`).
-        return msg
-
-    m = re.match(r"\s*from\s+(\S+)\s+import\s+.*", line)
-    if m:
-        if m.group(1) != "typing":
-            msg = "%s:%s: do not use '%s' use 'import foo.bar " "as fba'" % (
-                file_name,
-                line_num,
-                line.rstrip().lstrip(),
-            )
-    else:
-        m = re.match(r"\s*import\s+\S+\s+as\s+(\S+)", line)
-        if m:
-            shortcut = m.group(1)
-            if len(shortcut) > MAX_LEN_IMPORT:
-                msg = (
-                    "%s:%s: the import shortcut '%s' in '%s' is longer than "
-                    "%s characters"
-                    % (
-                        file_name,
-                        line_num,
-                        shortcut,
-                        line.rstrip().lstrip(),
-                        MAX_LEN_IMPORT,
-                    )
-                )
-    return msg
-
-
 def _check_file_line_by_line(file_name: str, lines: List[str]) -> List[str]:
     """Check file line by line, prints warnings if any issues are found.
 
@@ -460,7 +422,6 @@ def _check_file_line_by_line(file_name: str, lines: List[str]) -> List[str]:
             ...
 
     LINE_CHECKS: List[LineCheck] = [
-        _check_import,
     ]
 
     output: List[str] = []
