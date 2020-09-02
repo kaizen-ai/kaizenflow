@@ -16,7 +16,7 @@ repos:
       - id: gitlint
         stages: [commit-msg]
         entry: gitlint
-        # B6 Body message is missing
+        # B6 Body message is missing.
         args: [--contrib=CT1, --ignore=B6, --msg-filename]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.7
@@ -104,6 +104,6 @@ repos:
         additional_dependencies: ["pandas", "matplotlib"]
       - id: warn_incorrectly_formatted_todo
         name: warn_incorrectly_formatted_todo
-        entry: warn_incorrectly_formatted_todo.py
+        entry: p1_warn_incorrectly_formatted_todo.py
         language: python
         additional_dependencies: ["pandas", "matplotlib"]
