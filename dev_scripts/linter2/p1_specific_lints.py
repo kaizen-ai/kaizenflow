@@ -10,7 +10,7 @@ import enum
 import logging
 import os
 import re
-from typing import Any, Callable, List, Tuple, Union, Optional
+from typing import Any, Callable, List, Tuple, Union
 
 import typing_extensions
 
@@ -25,39 +25,6 @@ _LOG = logging.getLogger(__name__)
 # Utilities.
 # #############################################################################
 # TODO(amr): Move to linter/utils.py
-
-
-def _is_separator(line: str) -> bool:
-    """Check if the line matches a separator line.
-
-    :return: True if it matches a separator line
-    """
-    return (
-        line
-        == "# #############################################################################"
-    )
-
-
-def _is_shebang(line: str) -> bool:
-    """Check if the line is a shebang (starts with #!)
-
-    :return: True if it is a shebang (starts with #!)
-    """
-    return line.startswith("#!")
-
-
-def _parse_comment(
-    line: str, regex: str = r"(^\s*)#\s*(.*)\s*"
-) -> Optional[re.Match]:
-    """Parse a line and return a comment if there's one.
-
-    Seperator lines and shebang return None.
-    """
-    if _is_separator(line) or _is_shebang(line):
-        return None
-
-    return re.search(regex, line)
-
 
 # #############################################################################
 # File Content Checks.
