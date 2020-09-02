@@ -22,78 +22,9 @@ import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
+# Utilities.
 # #############################################################################
-# File Path Checks.
-# #############################################################################
-
-
-def _check_notebook_dir(file_name: str) -> str:
-    """Check if that notebooks are under `notebooks` dir."""
-    msg = ""
-    if utils.is_ipynb_file(file_name):
-        subdir_names = file_name.split("/")
-        if "notebooks" not in subdir_names:
-            msg = (
-                "%s:1: each notebook should be under a 'notebooks' "
-                "directory to not confuse pytest" % file_name
-            )
-    return msg
-
-
-def _check_test_file_dir(file_name: str) -> str:
-    """Check if test files are under `test` dir."""
-    msg = ""
-    # TODO(gp): A little annoying that we use "notebooks" and "test".
-    if utils.is_py_file(file_name) and os.path.basename(file_name).startswith(
-        "test_"
-    ):
-        if not utils.is_under_test_dir(file_name):
-            msg = (
-                "%s:1: test files should be under 'test' directory to "
-                "be discovered by pytest" % file_name
-            )
-    return msg
-
-
-def _check_notebook_filename(file_name: str) -> str:
-    r"""Check notebook filenames start with `Master_` or match: `\S+Task\d+_...`"""
-    msg = ""
-
-    basename = os.path.basename(file_name)
-    if utils.is_ipynb_file(file_name) and not any(
-        [basename.startswith("Master_"), re.match(r"^\S+Task\d+_", basename)]
-    ):
-        msg = (
-            f"{file_name}:1: "
-            r"All notebook filenames start with `Master_` or match: `\S+Task\d+_...`"
-        )
-    return msg
-
-
-def _check_file_path(file_name: str) -> List[str]:
-    """Perform various checks based on the path of a file:
-
-    - check that notebook files are under a `notebooks` dir
-    - check that test files are under `test` dir
-    """
-    # Functions that take the filepath, and return an error message or an empty
-    # string.
-    FilePathCheck = Callable[[str], str]
-    FILE_PATH_CHECKS: List[FilePathCheck] = [
-        _check_notebook_dir,
-        _check_test_file_dir,
-        _check_notebook_filename,
-    ]
-
-    output: List[str] = []
-    for func in FILE_PATH_CHECKS:
-        msg = func(file_name)
-        if msg:
-            _LOG.warning(msg)
-            output.append(msg)
-
-    return output
-
+# TODO(amr): Move to linter/utils.py
 
 # #############################################################################
 # File Content Checks.
@@ -505,26 +436,6 @@ def _capitalize(comment: str) -> str:
     return f"{comment[0:2].upper()}{comment[2::]}"
 
 
-def _format_separating_line(
-    line: str, min_num_chars: int = 6, line_width: int = 78
-) -> str:
-    """Transform a line int oa separating line if more than 6 # are found.
-
-    :param line: line to format
-    :param min_num_chars: minimum number of # to match after '# ' to decide
-    this is a seperator line
-    :param line_width: desired width for the seperator line
-    :return: modified line
-    """
-    regex = r"(\s*\#)\s*([\#\=\-\<\>]){%d,}\s*$" % min_num_chars
-
-    m = re.match(regex, line)
-    if m:
-        char = m.group(2)
-        line = m.group(1) + " " + char * (line_width - len(m.group(1)))
-    return line
-
-
 def _modify_file_line_by_line(lines: List[str]) -> List[str]:
     """Modify each line based on some rules, returns an updated list of line.
 
@@ -534,8 +445,8 @@ def _modify_file_line_by_line(lines: List[str]) -> List[str]:
     # Functions that take a line, and return a modified line.
     LineModifier = Callable[[str], str]
     LINE_MODIFIERS: List[LineModifier] = [
-        _format_separating_line,
-        # TODO(amr): re-enable this for multi-line comments only. \_fix_comment_style,
+        # TODO(amr): re-enable this for multi-line comments only.
+        # _fix_comment_style,
         # TODO(gp): Remove empty lines in functions.
     ]
 
@@ -600,8 +511,6 @@ class _P1SpecificLints(lntr.Action):
             return []
 
         output: List[str] = []
-
-        output.extend(_check_file_path(file_name))
 
         # Read file.
         txt = io_.from_file(file_name).split("\n")
