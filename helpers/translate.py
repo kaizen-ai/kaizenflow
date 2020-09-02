@@ -67,12 +67,11 @@ class TranslateAPI:
         aws_secret_key: str,
         region: Optional[str] = "us-east-2",
     ) -> None:
-        self.aws_access_key = aws_access_key
-        self.aws_secret_key = aws_secret_key
-        self.region = region
-        self.translate = boto3.client(
+        self._translate = boto3.client(
             service_name="translate",
-            region_name=self.region, use_ssl=True
+            region_name=region, use_ssl=True,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
         )
 
     def translate_text(self, text: str, lang_code: str) -> str:
@@ -85,7 +84,7 @@ class TranslateAPI:
         languages and code of Amazon.
         :return: English text.
         """
-        tr = self.translate.translate_text(
+        tr = self._translate.translate_text(
             Text=text,
             SourceLanguageCode=lang_code,
             TargetLanguageCode="en"
@@ -101,7 +100,7 @@ class TranslateAPI:
         page = html.parse(source_path)
         for elm in page.getiterator():
             if elm.text and re.search(r'[^0-9.,|\-\s]', elm.text):
-                tr = self.translate_text(elm.text, lang_code)
+                tr = self._translate_text(elm.text, lang_code)
                 elm.text = tr
         page.write(result_path)
         return True
