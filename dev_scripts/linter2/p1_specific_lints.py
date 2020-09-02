@@ -552,29 +552,6 @@ def _modify_file_line_by_line(lines: List[str]) -> List[str]:
 # #############################################################################
 
 
-def _warn_incorrectly_formatted_todo(
-    file_name: str, line_num: int, line: str
-) -> str:
-    """Issues a warning for incorrectly formatted todo comments that don't
-    match the format: (# TODO(assignee): (task).)"""
-    msg = ""
-
-    match = utils.parse_comment(line=line)
-    if match is None:
-        return msg
-
-    comment = match.group(2)
-    if not comment.lower().strip().startswith("todo"):
-        return msg
-
-    todo_regex = r"TODO\(\S+\): (.*)"
-
-    match = re.search(todo_regex, comment)
-    if match is None:
-        msg = f"{file_name}:{line_num}: found incorrectly formatted TODO comment: '{comment}'"
-    return msg
-
-
 def _check_file_line_by_line(file_name: str, lines: List[str]) -> List[str]:
     """Check file line by line, prints warnings if any issues are found.
 
@@ -592,7 +569,6 @@ def _check_file_line_by_line(file_name: str, lines: List[str]) -> List[str]:
             ...
 
     LINE_CHECKS: List[LineCheck] = [
-        _warn_incorrectly_formatted_todo,
     ]
 
     output: List[str] = []

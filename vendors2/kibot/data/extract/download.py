@@ -22,6 +22,7 @@ import logging
 import os
 import re
 import shutil
+import sys
 import urllib.parse as urlprs
 
 import bs4
@@ -572,4 +573,4 @@ def _main(parser: argparse.ArgumentParser) -> int:
 
 
 if __name__ == "__main__":
-    _main(_parse())
+    sys.exit(_main(_parse()))
