@@ -42,33 +42,33 @@ You have two options:
   `PIP_EXTRA_INDEX_URL`
 
    ```bash
-   >export PIP_EXTRA_INDEX_URL=http://172.31.16.23:8855/simple/
+   >export PIP_EXTRA_INDEX_URL=http://172.31.36.23:8855/simple/
    ```
 
    or by adding the following lines to `~/.pip/pip.conf`:
 
    ```ini
    [global]
-   extra-index-url = http://172.31.16.23:8855/simple/
-   trusted-host = 172.31.16.23
+   extra-index-url = http://172.31.36.23:8855/simple/
+   trusted-host = 172.31.36.23
    ```
 
 2. Manual installation:
 
    ```bash
-   > pip install --extra-index-url http://172.31.16.23:8855/simple --trusted-host 172.31.36.23 helpers
+   > pip install --extra-index-url http://172.31.36.23:8855/simple --trusted-host 172.31.36.23 helpers
    ```
 
    or
 
    ```bash
-   > pip install --extra-index-url http://172.31.16.23:8855 helpers
+   > pip install --extra-index-url http://172.31.36.23:8855 helpers
    ```
 
  - Search hosted packages:
 
    ```bash
-   > pip search --index http://172.31.16.23:8855 ...
+   > pip search --index http://172.31.36.23:8855 ...
    ```
 
  - **Note** that pip search does not currently work with the /simple/ endpoint.
