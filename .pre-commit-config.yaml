@@ -72,7 +72,7 @@ repos:
         entry: p1_mypy.py
         language: python
         types: [python]
-        additional_dependencies: ["pandas", "matplotlib", "more_itertools"]
+        additional_dependencies: ["pandas", "matplotlib"]
       - id: processjupytext
         name: processjupytext
         entry: p1_processjupytext.py
@@ -84,3 +84,8 @@ repos:
         entry: p1_lint_md.py
         language: python
         additional_dependencies: ["pandas", "matplotlib"]
+      - id: fix_comments
+        name: fix_comments
+        entry: p1_fix_comments.py
+        language: python
+        additional_dependencies: ["pandas", "matplotlib", "more_itertools"]

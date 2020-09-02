@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.statistics as stats
 """
@@ -35,8 +34,7 @@ _LOG = logging.getLogger(__name__)
 def compute_moments(
     srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate, mean, standard deviation, skew, and kurtosis.
+    """Calculate, mean, standard deviation, skew, and kurtosis.
 
     :param srs: input series for computing moments
     :param nan_mode: argument for hdf.apply_nan_mode()
@@ -76,9 +74,7 @@ def compute_moments(
 def replace_infs_with_nans(
     data: Union[pd.Series, pd.DataFrame],
 ) -> Union[pd.Series, pd.DataFrame]:
-    """
-    Replace infs with nans in a copy of `data`.
-    """
+    """Replace infs with nans in a copy of `data`."""
     if data.empty:
         _LOG.warning("Empty input!")
     return data.replace([np.inf, -np.inf], np.nan)
@@ -89,8 +85,7 @@ def compute_frac_zero(
     atol: float = 0.0,
     axis: Optional[int] = 0,
 ) -> Union[float, pd.Series]:
-    """
-    Calculate fraction of zeros in a numerical series or dataframe.
+    """Calculate fraction of zeros in a numerical series or dataframe.
 
     :param data: numeric series or dataframe
     :param atol: absolute tolerance, as in `np.isclose`
@@ -107,8 +102,7 @@ def compute_frac_zero(
 def compute_frac_nan(
     data: Union[pd.Series, pd.DataFrame], axis: Optional[int] = 0
 ) -> Union[float, pd.Series]:
-    """
-    Calculate fraction of nans in `data`.
+    """Calculate fraction of nans in `data`.
 
     :param data: numeric series or dataframe
     :param axis: numpy axis for summation
@@ -120,8 +114,7 @@ def compute_frac_nan(
 def compute_frac_inf(
     data: Union[pd.Series, pd.DataFrame], axis: Optional[int] = 0
 ) -> Union[float, pd.Series]:
-    """
-    Count fraction of infs in a numerical series or dataframe.
+    """Count fraction of infs in a numerical series or dataframe.
 
     :param data: numeric series or dataframe
     :param axis: numpy axis for summation
@@ -133,8 +126,7 @@ def compute_frac_inf(
 # TODO(Paul): Refactor to work with dataframes as well. Consider how to handle
 #     `axis`, which the pd.Series version of `copy()` does not take.
 def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
-    """
-    Count number of finite data points in a given time series.
+    """Count number of finite data points in a given time series.
 
     :param data: numeric series or dataframe
     """
@@ -148,9 +140,7 @@ def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
 
 # TODO(Paul): Extend to dataframes.
 def count_num_unique_values(data: pd.Series) -> Union[int, float]:
-    """
-    Count number of unique values in the series.
-    """
+    """Count number of unique values in the series."""
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
         return np.nan
@@ -163,8 +153,8 @@ def _compute_denominator_and_package(
     data: Union[pd.Series, pd.DataFrame],
     axis: Optional[float] = None,
 ) -> Union[float, pd.Series]:
-    """
-    Normalize and package `reduction` according to `axis` and `data` metadata.
+    """Normalize and package `reduction` according to `axis` and `data`
+    metadata.
 
     This is a helper function used for several `compute_frac_*` functions:
     - It determines the denominator to use in normalization (for the `frac`
@@ -212,8 +202,7 @@ def _compute_denominator_and_package(
 def compute_special_value_stats(
     srs: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate special value statistics in time series.
+    """Calculate special value statistics in time series.
 
     :param srs: pandas series of floats
     :param prefix: optional prefix for metrics' outcome
@@ -258,8 +247,7 @@ def compute_special_value_stats(
 def summarize_sharpe_ratio(
     log_rets: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate SR, SE(SR) from rets with an index freq and annualize.
+    """Calculate SR, SE(SR) from rets with an index freq and annualize.
 
     TODO(*): Consider de-biasing when the number of sample points is small,
         e.g., https://www.twosigma.com/wp-content/uploads/sharpe-tr-1.pdf
@@ -278,8 +266,7 @@ def summarize_sharpe_ratio(
 def zscore_oos_sharpe_ratio(
     log_rets: pd.Series, oos: Any, prefix: Optional[str] = None
 ) -> pd.Series:
-    """
-    Z-score the observed OOS SR wrt the INS SR and inflated SE.
+    """Z-score the observed OOS SR wrt the INS SR and inflated SE.
 
     Calculate the following stats:
       - SR, SE(SR) for INS
@@ -332,8 +319,7 @@ def zscore_oos_sharpe_ratio(
 def compute_annualized_sharpe_ratio(
     log_rets: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
-    """
-    Compute SR from rets with an index freq and annualize.
+    """Compute SR from rets with an index freq and annualize.
 
     :param log_rets: time series of log returns
     :return: annualized Sharpe ratio
@@ -350,8 +336,7 @@ def compute_annualized_sharpe_ratio(
 def compute_annualized_sharpe_ratio_standard_error(
     log_rets: Union[pd.Series, pd.DataFrame],
 ) -> Union[float, pd.Series]:
-    """
-    Compute SE(SR) from rets with an index freq and annualize.
+    """Compute SE(SR) from rets with an index freq and annualize.
 
     This function calculates the standard error with respect to the original
     sampling frequency and then rescales to turn it into a standard error
@@ -369,8 +354,7 @@ def compute_annualized_sharpe_ratio_standard_error(
 def compute_sharpe_ratio(
     log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
 ) -> Union[float, pd.Series]:
-    r"""
-    Calculate Sharpe Ratio (SR) from log returns and rescale.
+    r"""Calculate Sharpe Ratio (SR) from log returns and rescale.
 
     For a detailed exploration of SR, see
     http://www.gilgamath.com/pages/ssc.html.
@@ -393,8 +377,7 @@ def compute_sharpe_ratio(
 def compute_sharpe_ratio_standard_error(
     log_rets: Union[pd.Series, pd.DataFrame], time_scaling: Union[int, float] = 1
 ) -> Union[float, pd.Series]:
-    """
-    Calculate Sharpe Ratio standard error from log returns and rescale.
+    """Calculate Sharpe Ratio standard error from log returns and rescale.
 
     :param log_rets: time series of log returns
     :param time_scaling: as in `compute_sharpe_ratio`
@@ -426,8 +409,7 @@ def apply_ttest_power_rule(
     years: Optional[float] = None,
     sharpe_ratio: Optional[float] = None,
 ) -> pd.Series:
-    """
-    Apply t-test power rule to SR will null hypothesis SR = 0.
+    """Apply t-test power rule to SR will null hypothesis SR = 0.
 
     - The `power` is with respect to a specific type I error probability
       `alpha`
@@ -474,8 +456,7 @@ def apply_ttest_power_rule(
 def compute_ttest_power_rule_constant(
     alpha: float, power: float, two_sided: bool = False
 ) -> float:
-    """
-    Compute the constant to use in the t-test power law.
+    """Compute the constant to use in the t-test power law.
 
     E.g., http://www.vanbelle.org/chapters/webchapter2.pdf
 
@@ -499,8 +480,8 @@ def compute_ttest_power_rule_constant(
 def compute_sharpe_ratio_prediction_interval_inflation_factor(
     ins_nobs: Union[int, float], oos_nobs: Union[int, float]
 ) -> float:
-    """
-    Compute the SE(SR) inflation factor for obtaining conditional OOS bounds.
+    """Compute the SE(SR) inflation factor for obtaining conditional OOS
+    bounds.
 
     :param ins_nobs: number of observations in-sample
     :param oos_nobs: number of observations out-of-sample
@@ -516,8 +497,7 @@ def compute_drawdown_cdf(
     drawdown: float,
     time: Optional[float] = None,
 ) -> float:
-    """
-    Compute the drawdown cdf for `drawdown` at `time` given SR, vol specs.
+    """Compute the drawdown cdf for `drawdown` at `time` given SR, vol specs.
 
     - Refs:
       - https://www.jstor.org/stable/3318509
@@ -558,8 +538,7 @@ def compute_drawdown_cdf(
 def compute_normalized_drawdown_cdf(
     sharpe_ratio: float, normalized_drawdown: float, time: Optional[float] = None,
 ) -> float:
-    """
-    Compute the drawdown cdf for drawdown given in units of volatility.
+    """Compute the drawdown cdf for drawdown given in units of volatility.
 
     :param sharpe_ratio: Sharpe ratio
     :param normalized_drawdown: drawdown in units of volatility, e.g.,
@@ -588,8 +567,8 @@ def compute_normalized_drawdown_cdf(
 def compute_max_drawdown_approximate_cdf(
     sharpe_ratio: float, volatility: float, max_drawdown: float, time: float
 ) -> float:
-    """
-    Compute the approximate cdf for the maximum drawdown over a span of time.
+    """Compute the approximate cdf for the maximum drawdown over a span of
+    time.
 
     - https://www.sciencedirect.com/science/article/pii/S0304414913001695
     - G. F. Newell, Asymptotic Extreme Value Distribution for One-dimensional
@@ -621,8 +600,7 @@ def compute_max_drawdown_approximate_cdf(
 def compute_annualized_return_and_volatility(
     srs: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Annualized mean return and sample volatility in %.
+    """Annualized mean return and sample volatility in %.
 
     :param srs: series with datetimeindex with `freq`
     :param prefix: optional prefix for metrics' outcome
@@ -654,8 +632,7 @@ def compute_annualized_return_and_volatility(
 def compute_max_drawdown(
     log_rets: pd.Series, prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate max drawdown statistic.
+    """Calculate max drawdown statistic.
 
     :param log_rets: pandas series of log returns
     :param prefix: optional prefix for metrics' outcome
@@ -682,8 +659,7 @@ def compute_bet_stats(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate average returns for grouped bets.
+    """Calculate average returns for grouped bets.
 
     :param positions: series of long/short positions
     :param log_rets: log returns
@@ -744,8 +720,7 @@ def calculate_hit_rate(
     threshold: Optional[float] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate hit rate statistics.
+    """Calculate hit rate statistics.
 
     :param srs: pandas series
     :param alpha: as in statsmodels.stats.proportion.proportion_confint()
@@ -802,8 +777,7 @@ def ttest_1samp(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Thin wrapper around scipy's ttest.
+    """Thin wrapper around scipy's ttest.
 
     :param srs: input series for computing statistics
     :param popmean: assumed population mean for test
@@ -847,8 +821,7 @@ def multipletests(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Wrap statsmodel's multipletests.
+    """Wrap statsmodel's multipletests.
 
     Returns results in a series indexed like srs.
     Documentation at
@@ -882,9 +855,7 @@ def multi_ttest(
     method: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.DataFrame:
-    """
-    Combine ttest and multitest pvalue adjustment.
-    """
+    """Combine ttest and multitest pvalue adjustment."""
     popmean = popmean or 0
     nan_mode = nan_mode or "drop"
     method = method or "fdr_bh"
@@ -907,8 +878,7 @@ def multi_ttest(
 def apply_normality_test(
     srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Test (indep) null hypotheses that each col is normally distributed.
+    """Test (indep) null hypotheses that each col is normally distributed.
 
     An omnibus test of normality that combines skew and kurtosis.
 
@@ -955,8 +925,7 @@ def apply_adf_test(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Implement a wrapper around statsmodels' adfuller test.
+    """Implement a wrapper around statsmodels' adfuller test.
 
     :param srs: pandas series of floats
     :param maxlag: as in stattools.adfuller
@@ -1030,8 +999,7 @@ def apply_kpss_test(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Implement a wrapper around statsmodels' KPSS test.
+    """Implement a wrapper around statsmodels' KPSS test.
 
     http://debis.deu.edu.tr/userweb//onder.hanedar/dosyalar/kpss.pdf
 
@@ -1093,8 +1061,7 @@ def apply_ljung_box_test(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.DataFrame:
-    """
-    Implement a wrapper around statsmodels' Ljung-Box test.
+    """Implement a wrapper around statsmodels' Ljung-Box test.
 
     :param srs: pandas series of floats
     :param lags: as in diagnostic.acorr_ljungbox
@@ -1148,8 +1115,8 @@ def compute_jensen_ratio(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
+    """Calculate a ratio >= 1 with equality only when Jensen's inequality
+    holds.
 
     Definition and derivation:
       - The result is the p-th root of the expectation of the p-th power of
@@ -1223,8 +1190,7 @@ def compute_forecastability(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    r"""
-    Compute frequency-domain-based "forecastability" of signal.
+    r"""Compute frequency-domain-based "forecastability" of signal.
 
     Reference: https://arxiv.org/abs/1205.4591
 
@@ -1276,8 +1242,7 @@ def compute_zero_diff_proportion(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Compute proportion of unvarying periods in a series.
+    """Compute proportion of unvarying periods in a series.
 
     https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
 
@@ -1323,8 +1288,7 @@ def compute_zero_diff_proportion(
 def get_interarrival_time(
     srs: pd.Series, nan_mode: Optional[str] = None,
 ) -> Optional[pd.Series]:
-    """
-    Get interrarival time from index of a time series.
+    """Get interrarival time from index of a time series.
 
     :param srs: pandas series of floats
     :param nan_mode: argument for hdf.apply_nan_mode()
@@ -1349,8 +1313,7 @@ def get_interarrival_time(
 def compute_interarrival_time_stats(
     srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Compute interarrival time statistics.
+    """Compute interarrival time statistics.
 
     :param srs: pandas series of interrarival time
     :param nan_mode: argument for hdf.apply_nan_mode()
@@ -1398,8 +1361,7 @@ def compute_avg_turnover_and_holding_period(
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Compute average turnover and holding period for a sequence of positions.
+    """Compute average turnover and holding period for a sequence of positions.
 
     :param pos: pandas series of positions
     :param unit: desired output holding period unit (e.g. 'B', 'W', 'M', etc.)
@@ -1437,8 +1399,7 @@ def compute_avg_turnover_and_holding_period(
 def get_rolling_splits(
     idx: pd.Index, n_splits: int
 ) -> List[Tuple[pd.Index, pd.Index]]:
-    """
-    Partition index into chunks and returns pairs of successive chunks.
+    """Partition index into chunks and returns pairs of successive chunks.
 
     If the index looks like
         [0, 1, 2, 3, 4, 5, 6]
@@ -1466,9 +1427,7 @@ def get_rolling_splits(
 def get_oos_start_split(
     idx: pd.Index, datetime_: Union[datetime.datetime, pd.Timestamp]
 ) -> List[Tuple[pd.Index, pd.Index]]:
-    """
-    Split index using OOS (out-of-sample) start datetime.
-    """
+    """Split index using OOS (out-of-sample) start datetime."""
     dbg.dassert_strictly_increasing_index(idx)
     ins_mask = idx < datetime_
     dbg.dassert_lte(1, ins_mask.sum())
@@ -1483,9 +1442,7 @@ def get_oos_start_split(
 def get_train_test_pct_split(
     idx: pd.Index, train_pct: float
 ) -> List[Tuple[pd.Index, pd.Index]]:
-    """
-    Split index into train and test sets by percentage.
-    """
+    """Split index into train and test sets by percentage."""
     dbg.dassert_strictly_increasing_index(idx)
     dbg.dassert_lt(0.0, train_pct)
     dbg.dassert_lt(train_pct, 1.0)
@@ -1500,9 +1457,7 @@ def get_train_test_pct_split(
 def get_expanding_window_splits(
     idx: pd.Index, n_splits: int
 ) -> List[Tuple[pd.Index, pd.Index]]:
-    """
-    Generate splits with expanding overlapping windows.
-    """
+    """Generate splits with expanding overlapping windows."""
     dbg.dassert_strictly_increasing_index(idx)
     dbg.dassert_lte(1, n_splits)
     tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=n_splits)
@@ -1512,9 +1467,7 @@ def get_expanding_window_splits(
 
 
 def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
-    """
-    Return subset of idx with values >= min_idx and < max_idx.
-    """
+    """Return subset of idx with values >= min_idx and < max_idx."""
     dbg.dassert_strictly_increasing_index(idx)
     # TODO(*): PartTask667: Consider using bisection to avoid linear scans.
     min_mask = idx >= min_idx
@@ -1525,8 +1478,8 @@ def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
 
 
 def combine_indices(idxs: Iterable[pd.Index]) -> pd.Index:
-    """
-    Combine multiple indices into a single index for cross-validation splits.
+    """Combine multiple indices into a single index for cross-validation
+    splits.
 
     This is computed as the union of all the indices within the largest common
     interval.
@@ -1569,8 +1522,7 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
 def summarize_time_index_info(
     srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Return summarized information about datetime index of the input.
+    """Return summarized information about datetime index of the input.
 
     :param srs: pandas series of floats
     :param nan_mode: argument for hdf.apply_nan_mode()

@@ -8,6 +8,9 @@ import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(vr): Is it ok to leave it here?
+hut._CONFTEST_IN_PYTEST = True
+
 # #############################################################################
 
 
@@ -214,6 +217,64 @@ class Test_cache2(hut.TestCase):
         #
         self._check_cache_state(
             f, cf, 4, 4, exp_f_state=False, exp_cf_state="disk"
+        )
+
+    def test_with_caching_mem_reset(self) -> None:
+        """Test resetting mem cache."""
+        f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=False)
+        #
+        # Execute the first time: verify that it is executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        # Execute the first time: verify that it is *NOT* executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 2nd time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
+        #
+        # Reset memory cache
+        #
+        cf.clear_memory_cache()
+        #
+        # Execute the 3rd time: verify that it is executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 3rd time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+
+    def test_with_caching_disk_reset(self) -> None:
+        """Test resetting disk cache."""
+        f, cf = self._get_f_cf_functions(use_mem_cache=False, use_disk_cache=True)
+        #
+        # Execute the first time: verify that it is executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 1st time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        #
+        # Execute the first time: verify that it is *NOT* executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 2nd time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
+        )
+        #
+        # Reset disk cache
+        #
+        cf.clear_disk_cache()
+        #
+        # Execute the 3rd time: verify that it is executed.
+        #
+        _LOG.debug("\n%s", prnt.frame("Executing the 3rd time"))
+        self._check_cache_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
 
     def _get_function(self) -> _Function:

@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.config as cfg
 """
@@ -21,9 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Config:
-    """
-    A hierarchical ordered dictionary storing configuration information.
-    """
+    """A hierarchical ordered dictionary storing configuration information."""
 
     def __init__(
         self,
@@ -46,11 +43,11 @@ class Config:
                 self._config[k] = v
 
     def __setitem__(self, key: Union[str, Iterable[str]], val: Any) -> None:
-        """
-        Set / update `key` to `val`.
+        """Set / update `key` to `val`.
 
-        If `key` is an iterable of keys, then the key hierarchy is navigated /
-        created and the leaf value added / updated with `val`.
+        If `key` is an iterable of keys, then the key hierarchy is
+        navigated / created and the leaf value added / updated with
+        `val`.
         """
         if intr.is_iterable(key):
             head_key, tail_key = key[0], key[1:]  # type: ignore
@@ -76,12 +73,12 @@ class Config:
         self._config[key] = val  # type: ignore
 
     def __getitem__(self, key: Union[str, Iterable[str]]) -> Any:
-        """
-        Get value for `key` or assert, if it doesn't exist.
+        """Get value for `key` or assert, if it doesn't exist.
 
-        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`,
-        then the hierarchy is navigated until the corresponding element is found
-        or we assert if the element doesn't exist.
+        If `key` is an iterable of keys (e.g., `("read_data",
+        "file_name")`, then the hierarchy is navigated until the
+        corresponding element is found or we assert if the element
+        doesn't exist.
         """
         if intr.is_iterable(key):
             head_key, tail_key = key[0], key[1:]  # type: ignore
@@ -106,9 +103,7 @@ class Config:
         return ret
 
     def __str__(self) -> str:
-        """
-        Return the string representation.
-        """
+        """Return the string representation."""
         txt = []
         for k, v in self._config.items():
             if isinstance(v, Config):
@@ -128,19 +123,17 @@ class Config:
         return ret
 
     def __repr__(self) -> str:
-        """
-        Return as unambiguous representation the same as str().
+        """Return as unambiguous representation the same as str().
 
         This is used by Jupyter notebook when printing.
         """
         return str(self)
 
     def __len__(self) -> int:
-        """
-        Return len of underlying dict.
+        """Return len of underlying dict.
 
-        This enables calculating `len` as with a dict and also enables bool
-        evaluation of a Config() object for truth value testing.
+        This enables calculating `len` as with a dict and also enables
+        bool evaluation of a Config() object for truth value testing.
         """
         return len(self._config)
 
@@ -151,8 +144,7 @@ class Config:
         return config
 
     def update(self, config: "Config") -> None:
-        """
-        Update `self` with `config`.
+        """Update `self` with `config`.
 
         Some features of the update:
         - Updates leaf values in self from values in `config`
@@ -164,10 +156,8 @@ class Config:
             self.__setitem__(path, val)
 
     def get(self, key: str, val: Any) -> Any:
-        """
-        Implement the same functionality as `__getitem__` but returning `val`
-        if the value corresponding to key doesn't exist.
-        """
+        """Implement the same functionality as `__getitem__` but returning
+        `val` if the value corresponding to key doesn't exist."""
         try:
             ret = self.__getitem__(key)
         except AssertionError:
@@ -175,31 +165,23 @@ class Config:
         return ret
 
     def pop(self, key: str) -> Any:
-        """
-        Equivalent to `dict.pop()`.
-        """
+        """Equivalent to `dict.pop()`."""
         return self._config.pop(key)
 
     def copy(self) -> "Config":
-        """
-        Create a deep copy of the Config object.
-        """
+        """Create a deep copy of the Config object."""
         return copy.deepcopy(self)
 
     @classmethod
     def from_python(cls, code: str) -> "Config":
-        """
-        Create an object from the code returned by `to_python()`.
-        """
+        """Create an object from the code returned by `to_python()`."""
         dbg.dassert_isinstance(code, str)
         val = eval(code)
         dbg.dassert_isinstance(val, Config)
         return val  # type: ignore
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to an ordered dict of ordered dicts, removing the class.
-        """
+        """Convert to an ordered dict of ordered dicts, removing the class."""
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
@@ -210,9 +192,7 @@ class Config:
         return dict_
 
     def flatten(self) -> Dict[Tuple[str], Any]:
-        """
-        Key leaves by tuple representing path to leaf.
-        """
+        """Key leaves by tuple representing path to leaf."""
         dict_ = self._to_dict_except_for_leaves()
         iter_ = dct.get_nested_dict_iterator(dict_)
         return collections.OrderedDict(iter_)
@@ -229,10 +209,8 @@ class Config:
         return config_as_str
 
     def check_params(self, keys: Iterable[str]) -> None:
-        """
-        Check whether all the `keys` are present in the object, otherwise
-        raise.
-        """
+        """Check whether all the `keys` are present in the object, otherwise
+        raise."""
         missing_keys = []
         for key in keys:
             if key not in self._config:
@@ -250,10 +228,8 @@ class Config:
     #     missing.
     # TODO(gp): return a string
     def print_config(self, keys: Iterable[str]) -> None:
-        """
-        Return a string representation of a subset of keys, assigning "na" when
-        there is no value.
-        """
+        """Return a string representation of a subset of keys, assigning "na"
+        when there is no value."""
         if isinstance(keys, str):
             keys = [keys]
         for k in keys:
@@ -262,9 +238,7 @@ class Config:
 
     # TODO(gp): Use this everywhere.
     def get_exception(self, key: str) -> None:
-        """
-        Raise an exception when a key is not present.
-        """
+        """Raise an exception when a key is not present."""
         raise ValueError(
             "Invalid %s='%s' in config=\n%s"
             % (key, self._config[key], pri.space(str(self)))
@@ -290,9 +264,7 @@ class Config:
 
 
 def make_hashable(obj: Any) -> collections.abc.Hashable:
-    """
-    Coerce `obj` to a hashable type if not already hashable.
-    """
+    """Coerce `obj` to a hashable type if not already hashable."""
     if isinstance(obj, collections.abc.Hashable):
         return obj
     if isinstance(obj, collections.abc.Iterable):
@@ -301,8 +273,7 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
 
 
 def intersect_configs(configs: Iterable[Config]) -> Config:
-    """
-    Return a config formed by taking the intersection of configs.
+    """Return a config formed by taking the intersection of configs.
 
     - Key insertion order is not taken into consideration for the purpose of
       calculating the config intersection.
@@ -332,8 +303,7 @@ def intersect_configs(configs: Iterable[Config]) -> Config:
 
 
 def subtract_config(minuend: Config, subtrahend: Config) -> Config:
-    """
-    Return a Config() defined via minuend - subtrahend.
+    """Return a Config() defined via minuend - subtrahend.
 
     :return: return a Config() with path, val pairs in `minuend` that are not in
         `subtrahend` (like a set difference). Equivalently, return a Config like
@@ -351,8 +321,7 @@ def subtract_config(minuend: Config, subtrahend: Config) -> Config:
 
 
 def diff_configs(configs: Iterable[Config]) -> List[Config]:
-    """
-    Diff configs with respect to their common intersection.
+    """Diff configs with respect to their common intersection.
 
     :return: for each config `config` in `configs`, return a new Config()
         consisting of the part of `config` not in the intersection of the
@@ -370,8 +339,7 @@ def diff_configs(configs: Iterable[Config]) -> List[Config]:
 
 
 def convert_to_series(config: Config) -> pd.Series:
-    """
-    Convert config into a flattened series representation.
+    """Convert config into a flattened series representation.
 
     - This is lossy but useful for comparing multiple configs
     - `str` tuple paths are joined on "."
@@ -395,8 +363,7 @@ def convert_to_series(config: Config) -> pd.Series:
 
 
 def convert_to_dataframe(configs: Iterable[Config]) -> pd.DataFrame:
-    """
-    Convert multiple configs into flattened dataframe representation.
+    """Convert multiple configs into flattened dataframe representation.
 
     E.g., to highlight config differences in a dataframe, for an iterable
     `configs`, do
