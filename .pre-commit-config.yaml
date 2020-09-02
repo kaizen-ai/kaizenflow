@@ -16,7 +16,7 @@ repos:
       - id: gitlint
         stages: [commit-msg]
         entry: gitlint
-        # B6 Body message is missing
+        # B6 Body message is missing.
         args: [--contrib=CT1, --ignore=B6, --msg-filename]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.7
@@ -54,13 +54,6 @@ repos:
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib", "docformatter"]
-      - id: p1_specific_lints
-        name: p1_specific_lints
-        entry: p1_specific_lints.py
-        language: python
-        types: [python]
-        additional_dependencies:
-          ["pandas", "matplotlib", "typing_extensions", "more_itertools"]
       - id: pylint
         name: pylint
         entry: p1_pylint.py
@@ -89,3 +82,28 @@ repos:
         entry: p1_fix_comments.py
         language: python
         additional_dependencies: ["pandas", "matplotlib", "more_itertools"]
+      - id: method_order
+        name: method_order
+        entry: p1_class_method_order.py
+        language: python
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: check_fillename
+        name: check_filename
+        entry: p1_check_filename.py
+        language: python
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: check_import
+        name: check_import
+        entry: p1_check_import.py
+        language: python
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: format_separating_line
+        name: format_separating_line
+        entry: p1_format_separating_line.py
+        language: python
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: warn_incorrectly_formatted_todo
+        name: warn_incorrectly_formatted_todo
+        entry: p1_warn_incorrectly_formatted_todo.py
+        language: python
+        additional_dependencies: ["pandas", "matplotlib"]
