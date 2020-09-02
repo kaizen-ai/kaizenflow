@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+r"""Replace aliased imports.
+
+> p1_clean_import.py sample_file1.py sample_file2.py
+"""
 import argparse
 import dataclasses
 import logging
