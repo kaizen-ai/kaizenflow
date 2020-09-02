@@ -849,6 +849,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         nid: str,
         model_func: Callable[..., Any],
         x_vars: Union[List[str], Callable[[], List[str]]],
+        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -866,6 +867,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
+        self._col_mode = col_mode
         self._model = None
         self._nan_mode = nan_mode or "raise"
 
@@ -918,8 +920,17 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
-        dbg.dassert_no_duplicates(x_hat.columns)
-        return {"df_out": x_hat.reindex(index=df_in.index)}
+        if self._col_mode == "merge_all":
+            df_out = x_hat.reindex(index=df_in.index)
+        elif self._col_mode == "replace_all":
+            df_out = df_in.reindex(df_in.index).merge(
+                x_hat.reindex(index=df_in.index), left_index=True, right_index=True
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        # Return targets and predictions.
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
