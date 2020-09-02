@@ -16,7 +16,7 @@ repos:
       - id: gitlint
         stages: [commit-msg]
         entry: gitlint
-        # B6 Body message is missing
+        # B6 Body message is missing.
         args: [--contrib=CT1, --ignore=B6, --msg-filename]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.7
@@ -89,3 +89,8 @@ repos:
         entry: p1_fix_comments.py
         language: python
         additional_dependencies: ["pandas", "matplotlib", "more_itertools"]
+      - id: clean_import
+        name: clean_import
+        entry: p1_clean_import.py
+        language: python
+        additional_dependencies: ["pandas", "matplotlib"]
