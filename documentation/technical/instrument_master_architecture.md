@@ -1,4 +1,5 @@
 <!--ts-->
+   * [Overview](#overview)
    * [Architecture](#architecture)
       * [System context diagram](#system-context-diagram)
       * [Container Diagram](#container-diagram)
@@ -13,6 +14,27 @@
 
 
 <!--te-->
+
+# Overview
+
+At a high level, we want to implement a system that:
+
+- Downloads the price data (both historical & also real-time) from different
+  data sources (we already have Kibot interface and want to add an interface for
+  EODData)
+- Downloads and saves the related metadata
+- Convert CSV price data into a suitable format for fast querying (e.g., Parquet
+  format)
+- Implement mapping between metadata and price data
+- Allow to query the system to get specific price time series based on symbol
+  name
+  - It should handle:
+    - Different frequency (e.g., end-of-day vs 5 minutes vs 1 minute)
+    - Different asset classes (e.g., equities vs futures vs forex vs ...)
+    - Different providers (e.g., `kibot` vs `eoddata` vs `firstrate` vs ...)
+  - This system has:
+    - Different backends for different data providers (e.g., Kibot, EODData)
+    - A layer to make all the data uniform from the semantics point of view
 
 # Architecture
 
