@@ -1585,7 +1585,7 @@ def plot_rolling_correlation(
     min_depth: int = 1,
     max_depth: int = 1,
     p_moment: float = 2,
-    zcorr: bool = False,
+    mode: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
@@ -1600,22 +1600,24 @@ def plot_rolling_correlation(
     :param min_depth: min depth
     :param max_depth: max depth
     :param p_moment: p moment
+    :param mode: regular or zcorr
     :param ax: axis
     :param events: list of tuples with dates and labels to point out on the plot
-
     """
     # Calculate and plot rolling correlation.
     ax = ax or plt.gca()
-    # Calculate rolling correlation
-    if zcorr:
+    # Calculate rolling correlation.
+    if mode == "zcorr":
         roll_correlation = sigp.compute_rolling_zcorr
         title = "Z Correlation of 2 time series"
         label = "Rolling z correlation"
-    else:
+    elif mode is None:
         roll_correlation = sigp.compute_rolling_corr
         title = "Correlation of 2 time series"
         label = "Rolling correlation"
-
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    # Calculate rolling correlation with the given mode.
     roll_corr = roll_correlation(
         srs1,
         srs2,
@@ -1626,12 +1628,11 @@ def plot_rolling_correlation(
         max_depth=max_depth,
         p_moment=p_moment,
     )
-
-    # Plot rolling correlation
+    # Plot rolling correlation.
     roll_corr.plot(ax=ax, title=title, label=label)
-    # Calculate correlation whole period
+    # Calculate correlation whole period.
     whole_period = srs1.corr(srs2)
-    # Plot correlation whole period
+    # Plot correlation whole period.
     ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
     ax.set_xlabel("period")
     ax.set_ylabel("correlation")
