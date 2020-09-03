@@ -7,6 +7,7 @@ import copy
 import functools
 import logging
 import os
+import time
 from typing import Any, Callable, Optional
 
 import joblib
@@ -95,6 +96,7 @@ class Cached:
         func: Callable,
         use_mem_cache: bool = True,
         use_disk_cache: bool = True,
+        set_verbose_mode: bool = True,
         tag: Optional[str] = None,
     ):
         # This is used to make the class have the same attributes (e.g.,
@@ -103,6 +105,7 @@ class Cached:
         self._func = func
         self._use_mem_cache = use_mem_cache
         self._use_disk_cache = use_disk_cache
+        self._set_verbose_mode = set_verbose_mode
         self._tag = tag
         self._reset_cache_tracing()
         # Create decorated functions with different caches and store pointers
@@ -186,6 +189,8 @@ class Cached:
         self._execute_func = _execute_func
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        if self._set_verbose_mode:
+            perf_counter_start = time.perf_counter()
         if not is_caching_enabled():
             _LOG.warning("Caching is disabled")
             self._last_used_disk_cache = self._last_used_mem_cache = False
@@ -202,6 +207,13 @@ class Cached:
             # TODO(gp): We make a copy, but we should do something better
             # (PartTask1071).
             obj = copy.deepcopy(obj)
+        if self._set_verbose_mode:
+            perf_counter = time.perf_counter() - perf_counter_start
+            _LOG.info(
+                "data was retrieved from %s in %f sec",
+                self.get_last_cache_accessed(),
+                perf_counter,
+            )
         return obj
 
     def clear_memory_cache(self) -> None:
@@ -227,7 +239,7 @@ class Cached:
             # We executed the function -> we didn't hit any cache.
             ret = "no_cache"
         else:
-            # We hit the disk cache but not the
+            # We hit the disk cache.
             dbg.dassert(not self._last_used_disk_cache)
             dbg.dassert(self._last_used_mem_cache)
             ret = "disk"
