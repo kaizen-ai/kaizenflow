@@ -1,7 +1,14 @@
+import logging
 from typing import Generator, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+
+import helpers.dbg as dbg
+
+_LOG = logging.getLogger(__name__)
+
+# #############################################################################
 
 
 def _crop_data_frame_in_batches(
@@ -19,7 +26,7 @@ def _crop_data_frame_in_batches(
     return generator_object
 
 
-class StandardBars:
+class _StandardBars:
     """Contains all of the logic to construct the standard bars from chapter 2.
     This class shouldn't be used directly. We have added functions to the
     package such as get_dollar_bars which will create an instance of this class
@@ -56,16 +63,17 @@ class StandardBars:
             "cum_volume": 0,
             "cum_buy_volume": 0,
         }
-        self.tick_num = 0  # Tick number when bar was formed
+        # Tick number when bar was formed.
+        self.tick_num = 0
         # Threshold at which to sample.
         self.threshold = threshold
-        # Batch_run properties
-        self.flag = False  # The first flag is false since the first batch doesn't use the cache
+        # Batch_run properties.
+        # The first flag is false since the first batch doesn't use the cache.
+        self.flag = False
 
     def batch_run(
         self,
         file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
-        verbose: bool = True,
         to_csv: bool = False,
         output_path: Optional[str] = None,
     ) -> Union[pd.DataFrame, None]:
@@ -75,7 +83,6 @@ class StandardBars:
 
         :param file_path_or_df: Path to the csv file(s) or Pandas Data Frame containing
         raw tick data in the format[date_time, price, volume]
-        :param verbose: Flag whether to print message on each processed batch or not
         :param to_csv: Flag for writing the results of bars generation to local csv file,
         or to in-memory DataFrame
         :param output_path: Path to results file, if to_csv = True
@@ -88,8 +95,7 @@ class StandardBars:
             if output_path:
                 # Clean output csv file.
                 open(output_path, "w").close()
-        if verbose:
-            print("Reading data in batches:")
+        _LOG.debug("Reading data in batches:")
         # Read csv in batches.
         count = 0
         final_bars = []
@@ -106,8 +112,7 @@ class StandardBars:
             "cum_dollar_value",
         ]
         for batch in self._batch_iterator(file_path_or_df):
-            if verbose:  # pragma: no cover
-                print("Batch number:", count)
+            _LOG.debug("Batch number: %d", count)
             list_bars = self.run(data=batch)
             if to_csv is True:
                 pd.DataFrame(list_bars, columns=cols).to_csv(
@@ -118,8 +123,7 @@ class StandardBars:
                 # Append to bars list.
                 final_bars += list_bars
             count += 1
-        if verbose:  # pragma: no cover
-            print("Returning bars \n")
+        _LOG.debug("Returning bars")
         # Return a DataFrame.
         if final_bars:
             bars_df = pd.DataFrame(final_bars, columns=cols)
@@ -230,9 +234,7 @@ class StandardBars:
             if signed_tick == 1:
                 self.cum_statistics["cum_buy_volume"] += volume
             # If threshold reached then take a sample.
-            if (
-                self.cum_statistics[self.metric] >= threshold
-            ):  # pylint: disable=eval-used
+            if self.cum_statistics[self.metric] >= threshold:
                 self._create_bars(
                     date_time, price, self.high_price, self.low_price, list_bars
                 )
@@ -259,15 +261,14 @@ class StandardBars:
 
         :param test_batch: The first row of the dataset.
         """
-        assert (
-            test_batch.shape[1] == 3
-        ), "Must have only 3 columns in csv: date_time, price, & volume."
-        assert isinstance(
-            test_batch.iloc[0, 1], float
-        ), "price column in csv not float."
-        assert not isinstance(
-            test_batch.iloc[0, 2], str
-        ), "volume column in csv not int or float."
+        dbg.dassert_eq(
+            test_batch.shape[1],
+            3,
+            "Must have only 3 columns in csv: date_time, price, & volume.",
+        )
+        dbg.dassert_isinstance(
+            test_batch.iloc[0, 1], float, "price column in csv not float."
+        )
         try:
             pd.to_datetime(test_batch.iloc[0, 0])
         except ValueError as ex:
@@ -306,11 +307,11 @@ class StandardBars:
         These bars are appended to list_bars, which is later used to construct
         the final bars DataFrame.
 
-        :param date_time: (str) Timestamp of the bar
-        :param price: (float) The current price
-        :param high_price: (float) Highest price in the period
-        :param low_price: (float) Lowest price in the period
-        :param list_bars: (list) List to which we append the bars
+        :param date_time: Timestamp of the bar
+        :param price: The current price
+        :param high_price: Highest price in the period
+        :param low_price: Lowest price in the period
+        :param list_bars: List to which we append the bars
         """
         # Create bars.
         open_price = self.open_price
@@ -385,7 +386,6 @@ def get_dollar_bars(
     file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
     threshold: Union[float, int, pd.Series] = 70000000,
     batch_size: int = 20000000,
-    verbose: bool = True,
     to_csv: bool = False,
     output_path: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -399,19 +399,15 @@ def get_dollar_bars(
     Values in the series can only be at times when the threshold is changed,
     not for every observation.
     :param batch_size: The number of rows per batch. Less RAM = smaller batch size.
-    :param verbose: Print out batch numbers (True or False)
     :param to_csv: Save bars to csv after every batch run (True or False)
     :param output_path: Path to csv file, if to_csv is True
     :return: Dataframe of dollar bars
     """
-    bars = StandardBars(
+    bars = _StandardBars(
         metric="cum_dollar_value", threshold=threshold, batch_size=batch_size
     )
     dollar_bars = bars.batch_run(
-        file_path_or_df=file_path_or_df,
-        verbose=verbose,
-        to_csv=to_csv,
-        output_path=output_path,
+        file_path_or_df=file_path_or_df, to_csv=to_csv, output_path=output_path,
     )
     return dollar_bars
 
@@ -420,7 +416,6 @@ def get_volume_bars(
     file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
     threshold: Union[float, int, pd.Series] = 70000000,
     batch_size: int = 20000000,
-    verbose: bool = True,
     to_csv: bool = False,
     output_path: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -434,19 +429,15 @@ def get_volume_bars(
     Values in the series can only be at times when the threshold is changed,
     not for every observation
     :param batch_size: The number of rows per batch. Less RAM = smaller batch size.
-    :param verbose: Print out batch numbers (True or False)
     :param to_csv: Save bars to csv after every batch run (True or False)
     :param output_path: Path to csv file, if to_csv is True
     :return: Dataframe of volume bars
     """
-    bars = StandardBars(
+    bars = _StandardBars(
         metric="cum_volume", threshold=threshold, batch_size=batch_size
     )
     volume_bars = bars.batch_run(
-        file_path_or_df=file_path_or_df,
-        verbose=verbose,
-        to_csv=to_csv,
-        output_path=output_path,
+        file_path_or_df=file_path_or_df, to_csv=to_csv, output_path=output_path,
     )
     return volume_bars
 
@@ -455,7 +446,6 @@ def get_tick_bars(
     file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
     threshold: Union[float, int, pd.Series] = 70000000,
     batch_size: int = 20000000,
-    verbose: bool = True,
     to_csv: bool = False,
     output_path: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -469,18 +459,14 @@ def get_tick_bars(
     Values in the series can only be at times when the threshold is changed,
     not for every observation
     :param batch_size: The number of rows per batch. Less RAM = smaller batch size.
-    :param verbose: Print out batch numbers (True or False)
     :param to_csv: Save bars to csv after every batch run (True or False)
     :param output_path: Path to csv file, if to_csv is True
     :return: Dataframe of volume bars
     """
-    bars = StandardBars(
+    bars = _StandardBars(
         metric="cum_ticks", threshold=threshold, batch_size=batch_size
     )
     tick_bars = bars.batch_run(
-        file_path_or_df=file_path_or_df,
-        verbose=verbose,
-        to_csv=to_csv,
-        output_path=output_path,
+        file_path_or_df=file_path_or_df, to_csv=to_csv, output_path=output_path,
     )
     return tick_bars
