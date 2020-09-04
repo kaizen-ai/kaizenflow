@@ -1,21 +1,20 @@
-import re
+#!/usr/bin/env python
 import argparse
 import logging
-
-import dev_scripts.linter2.utils as utils
-import dev_scripts.linter2.base as lntr
-import helpers.parser as prsr
-import helpers.dbg as dbg
-import helpers.io_ as io_
-
+import re
 from typing import List
 
+import dev_scripts.linter2.base as lntr
+import dev_scripts.linter2.utils as utils
+import helpers.dbg as dbg
+import helpers.io_ as io_
+import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
 
 def _warn_incorrectly_formatted_todo(
-        file_name: str, line_num: int, line: str
+    file_name: str, line_num: int, line: str
 ) -> str:
     """Issues a warning for incorrectly formatted todo comments that don't
     match the format: (# TODO(assignee): (task).)"""
@@ -49,7 +48,7 @@ class _P1WarnIncorrectlyFormattedTodo(lntr.Action):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
 
-        lines = io_.from_file(file_name).split('\n')
+        lines = io_.from_file(file_name).split("\n")
         output = []
 
         for i, line in enumerate(lines):

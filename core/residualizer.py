@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import cosine
+from scipy.spatial.distance import cosine  # type: ignore
 
 import core.explore as exp
 import core.plotting as plot
@@ -369,10 +369,9 @@ class PcaFactorComputer(FactorComputer):
 
     @staticmethod
     def _build_stable_eig_map(
-            prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
+        prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
     ) -> Tuple[Dict[int, Tuple[int, np.int64]], np.array]:
-        """
-        Try to find a permutation and sign changes of the columns in
+        """Try to find a permutation and sign changes of the columns in
         `prev_eigvec_df` to ensure continuity with `eigvec_df`.
 
         :return: map column index of original eigvec to (sign, column index
@@ -407,14 +406,12 @@ class PcaFactorComputer(FactorComputer):
 
     @staticmethod
     def _build_stable_eig_map2(
-            prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
+        prev_eigvec_df: pd.DataFrame, eigvec_df: pd.DataFrame
     ) -> Tuple[Dict[int, Tuple[Optional[int], int]], None]:
-        """
-        Different implementation of `_build_stable_eig_map()`.
-        """
+        """Different implementation of `_build_stable_eig_map()`."""
 
         def eigvec_coeff(
-                v1: pd.Series, v2: pd.Series, thr: float = 1e-3
+            v1: pd.Series, v2: pd.Series, thr: float = 1e-3
         ) -> Optional[int]:
             for sign in (-1, 1):
                 diff = PcaFactorComputer.eigvec_distance(v1, sign * v2)
@@ -451,7 +448,7 @@ class PcaFactorComputer(FactorComputer):
         return col_map, dummy
 
     def _stabilize_eig(
-            self, eigval_df: pd.DataFrame, eigvec_df: pd.DataFrame
+        self, eigval_df: pd.DataFrame, eigvec_df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         if not self._ts:
             return eigval_df, eigvec_df
