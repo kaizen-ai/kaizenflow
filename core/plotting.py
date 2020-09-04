@@ -1600,10 +1600,11 @@ def plot_rolling_correlation(
     :param min_depth: min depth
     :param max_depth: max depth
     :param p_moment: p moment
-    :param mode: regular or zcorr
+    :param mode: corr or zcorr
     :param ax: axis
     :param events: list of tuples with dates and labels to point out on the plot
     """
+    mode = mode or "corr"
     # Calculate and plot rolling correlation.
     ax = ax or plt.gca()
     # Calculate rolling correlation.
@@ -1611,7 +1612,7 @@ def plot_rolling_correlation(
         roll_correlation = sigp.compute_rolling_zcorr
         title = "Z Correlation of 2 time series"
         label = "Rolling z correlation"
-    elif mode is None:
+    elif mode == "corr":
         roll_correlation = sigp.compute_rolling_corr
         title = "Correlation of 2 time series"
         label = "Rolling correlation"
