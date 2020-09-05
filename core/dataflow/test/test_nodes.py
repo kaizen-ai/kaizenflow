@@ -363,6 +363,47 @@ class TestResidualizer(hut.TestCase):
         return realization
 
 
+class TestSmaModel(hut.TestCase):
+    def test_fit_dag1(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Load config and create modeling node.
+        config = self._get_config(steps_ahead=2)
+        node = dtf.SmaModel(
+            "sma", **config.to_dict(),
+        )
+        dag.add_node(node)
+        dag.connect("data", "sma")
+        #
+        output_df = dag.run_leq_node("sma", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def _get_config(self, steps_ahead: int) -> cfg.Config:
+        config = cfg.Config()
+        config["col"] = ["vol"]
+        config["steps_ahead"] = steps_ahead
+        config["nan_mode"] = "drop"
+        return config
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate "random returns". Use lag + noise as predictor.
+        """
+        arma_process = sig_gen.ArmaProcess([0.45], [0])
+        date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
+        date_range = pd.date_range(**date_range_kwargs)
+        realization = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, seed=0
+        )
+        vol = np.abs(realization) ** 2
+        vol.name = "vol"
+        df = pd.DataFrame(index=date_range, data=vol)
+        return df
+
 if True:
 
     class TestContinuousDeepArModel(hut.TestCase):
