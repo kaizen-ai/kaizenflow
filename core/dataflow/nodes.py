@@ -1619,7 +1619,8 @@ class SmaModel(FitPredictNode):
                       `steps_ahead` steps ahead (and not all intermediate steps)
         """
         super().__init__(nid)
-        self._col = col
+        dbg.dassert_isinstance(col, str)
+        self._col = [col]
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
@@ -1746,7 +1747,7 @@ class SmaModel(FitPredictNode):
         """
         Return dataframe of `steps_ahead` forward y values.
         """
-        mapper = lambda y: y + "_%i" % self._steps_ahead
+        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
         fwd_y_df = df[self._col].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
