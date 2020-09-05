@@ -373,9 +373,7 @@ class TestSmaModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Load config and create modeling node.
         config = self._get_config(steps_ahead=2)
-        node = dtf.SmaModel(
-            "sma", **config.to_dict(),
-        )
+        node = dtf.SmaModel("sma", **config.to_dict(),)
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -403,6 +401,7 @@ class TestSmaModel(hut.TestCase):
         vol.name = "vol"
         df = pd.DataFrame(index=date_range, data=vol)
         return df
+
 
 if True:
 

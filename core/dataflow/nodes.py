@@ -1596,11 +1596,11 @@ class SmaModel(FitPredictNode):
     """
 
     def __init__(
-            self,
-            nid: str,
-            col: str,
-            steps_ahead: int,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        col: str,
+        steps_ahead: int,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sma modeling parameters.
@@ -1619,7 +1619,7 @@ class SmaModel(FitPredictNode):
                       `steps_ahead` steps ahead (and not all intermediate steps)
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(col, str)
+        # dbg.dassert_isinstance(col, str)
         self._col = [col]
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -1680,22 +1680,31 @@ class SmaModel(FitPredictNode):
     def _learn_tau(self, x, y) -> float:
         def score(tau):
             x_srs = pd.DataFrame(x.flatten())
-            sma = sigp.compute_smooth_moving_average(x_srs, tau=tau,
-                                                     min_periods=0,
-                                                     min_depth=self._min_depth,
-                                                     max_depth=self._max_depth)
-            return skl.metrics.mean_absolute_error(sma.values, y[self._min_periods:])
+            sma = sigp.compute_smooth_moving_average(
+                x_srs,
+                tau=tau,
+                min_periods=0,
+                min_depth=self._min_depth,
+                max_depth=self._max_depth,
+            )
+            return skl.metrics.mean_absolute_error(
+                sma.values, y[self._min_periods :]
+            )
 
-        opt_results = sp.optimize.minimize_scalar(score, method="bounded", bounds=[1, 100])
+        opt_results = sp.optimize.minimize_scalar(
+            score, method="bounded", bounds=[1, 100]
+        )
         return opt_results.x
 
     def _predict(self, x) -> pd.Series:
         x_srs = pd.DataFrame(x.flatten())
-        x_sma = sigp.compute_smooth_moving_average(x_srs,
-                                                  tau=self._tau,
-                                                  min_periods=2 * self._tau,
-                                                  min_depth=self._min_depth,
-                                                  max_depth=self._max_depth)
+        x_sma = sigp.compute_smooth_moving_average(
+            x_srs,
+            tau=self._tau,
+            min_periods=2 * self._tau,
+            min_depth=self._min_depth,
+            max_depth=self._max_depth,
+        )
         return x_sma.values
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1753,7 +1762,7 @@ class SmaModel(FitPredictNode):
         return fwd_y_df
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -1765,9 +1774,9 @@ class SmaModel(FitPredictNode):
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
     def _score(
-            self,
-            y_true: Union[pd.Series, pd.DataFrame],
-            y_pred: Union[pd.Series, pd.DataFrame],
+        self,
+        y_true: Union[pd.Series, pd.DataFrame],
+        y_pred: Union[pd.Series, pd.DataFrame],
     ) -> Optional[float]:
         """
         Compute accuracy for classification or R^2 score for regression.
@@ -1787,7 +1796,7 @@ class SmaModel(FitPredictNode):
     #     processing to e.g., adjust for number of hypotheses tested).
     @staticmethod
     def _model_perf(
-            y: pd.DataFrame, y_hat: pd.DataFrame
+        y: pd.DataFrame, y_hat: pd.DataFrame
     ) -> collections.OrderedDict:
         info = collections.OrderedDict()
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
