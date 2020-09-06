@@ -1717,9 +1717,8 @@ class SmaModel(FitPredictNode):
                 min_depth=self._min_depth,
                 max_depth=self._max_depth,
             )
-            return self._metric(
-                sma.values, y[self._min_periods :]
-            )
+            return self._metric(sma.values, y[self._min_periods :])
+
         # TODO(*): Make this configurable.
         opt_results = sp.optimize.minimize_scalar(
             score, method="bounded", bounds=[1, 100]
@@ -1737,7 +1736,6 @@ class SmaModel(FitPredictNode):
             max_depth=self._max_depth,
         )
         return x_sma.values
-
 
     # TODO(Paul): Consider omitting this (and relying on downstream
     #     processing to e.g., adjust for number of hypotheses tested).
