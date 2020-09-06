@@ -385,13 +385,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
             "# Look for list of symbols to process for the dataset '%s'", dataset,
         )
         # TODO(gp): Replace the functions from AmpTask573.
-        # symbols = _get_symbols_to_process(aws_csv_gz_dir)
+        symbols = _get_symbols_to_process(aws_csv_gz_dir)
         # symbols = ["AAPL"]
-        symbols = (
-            "AAPL AMGN AMZN BAC BIDU BRK.A C CAT COP CSCO CVX DIS EMC F FCX GE GILD "
-            "GMCR GOOG GS HAL HD HPQ IBM INTC JNJ JPM KO LOW LVS MCD MRK MS MSFT NFLX "
-            "ORCL OXY PBR PCLN PFE PG PM PSE QCOM SLB T VZ WFC WMT XOM GOOGL"
-        ).split()
+        #symbols = (
+        #    "AAPL AMGN AMZN BAC BIDU BRK.A C CAT COP CSCO CVX DIS EMC F FCX GE GILD "
+        #    "GMCR GOOG GS HAL HD HPQ IBM INTC JNJ JPM KO LOW LVS MCD MRK MS MSFT NFLX "
+        #    "ORCL OXY PBR PCLN PFE PG PM PSE QCOM SLB T VZ WFC WMT XOM GOOGL"
+        #).split()
         if args.max_num_assets is not None:
             dbg.dassert_lte(1, args.max_num_assets)
             symbols = symbols[: args.max_num_assets]
