@@ -8,6 +8,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -21,14 +28,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -559,7 +558,7 @@ def plot_spectrum(
     signal: Union[pd.Series, pd.DataFrame],
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
-    axes: Optional[List[mpl.axes.Axes]] = None
+    axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
     """Plot power spectral density and spectrogram of columns.
 
@@ -926,6 +925,7 @@ def plot_confusion_heatmap(
     if return_results:
         return df_out, df_out_percentage
     return None
+
 
 def multipletests_plot(
     pvals: pd.Series,
@@ -1555,7 +1555,9 @@ def plot_rolling_beta(
     # Calculate and plot rolling beta.
     model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res_rolling = model_rolling.fit()
-    beta_rolling = res_rolling.params[benchmark_name]  # pylint: disable=unsubscriptable-object
+    beta_rolling = res_rolling.params[
+        benchmark_name
+    ]  # pylint: disable=unsubscriptable-object
     # Return NaN periods to the rolling beta series for the plot.
     beta_rolling = beta_rolling.reindex(common_index)
     beta_rolling.plot(
@@ -1570,6 +1572,71 @@ def plot_rolling_beta(
     ax.axhline(beta_whole_period, ls="--", c="k", label="Whole-period beta")
     ax.set_xlabel("period")
     ax.set_ylabel("beta")
+    _maybe_add_events(ax=ax, events=events)
+    ax.legend()
+
+
+def plot_rolling_correlation(
+    srs1: pd.Series,
+    srs2: pd.Series,
+    tau: float,
+    demean: bool = True,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+    mode: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
+) -> None:
+    """
+    Return rolling correlation between 2 series and plot rolling correlation.
+
+    :param srs1: first series
+    :param srs2: second series
+    :param tau: tau correlation coefficient
+    :param demean: bool demean
+    :param min_periods: min periods
+    :param min_depth: min depth
+    :param max_depth: max depth
+    :param p_moment: p moment
+    :param mode: corr or zcorr
+    :param ax: axis
+    :param events: list of tuples with dates and labels to point out on the plot
+    """
+    mode = mode or "corr"
+    # Calculate and plot rolling correlation.
+    ax = ax or plt.gca()
+    # Calculate rolling correlation.
+    if mode == "zcorr":
+        roll_correlation = sigp.compute_rolling_zcorr
+        title = "Z Correlation of 2 time series"
+        label = "Rolling z correlation"
+    elif mode == "corr":
+        roll_correlation = sigp.compute_rolling_corr
+        title = "Correlation of 2 time series"
+        label = "Rolling correlation"
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    # Calculate rolling correlation with the given mode.
+    roll_corr = roll_correlation(
+        srs1,
+        srs2,
+        tau=tau,
+        demean=demean,
+        min_periods=min_periods,
+        min_depth=min_depth,
+        max_depth=max_depth,
+        p_moment=p_moment,
+    )
+    # Plot rolling correlation.
+    roll_corr.plot(ax=ax, title=title, label=label)
+    # Calculate correlation whole period.
+    whole_period = srs1.corr(srs2)
+    # Plot correlation whole period.
+    ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
+    ax.set_xlabel("period")
+    ax.set_ylabel("correlation")
     _maybe_add_events(ax=ax, events=events)
     ax.legend()
 
@@ -1605,15 +1672,16 @@ def plot_sharpe_ratio_panel(
         freq_points_per_year = hdf.compute_points_per_year_for_given_freq(freq)
         if freq_points_per_year > input_freq_points_per_year:
             _LOG.warning(
-                "Upsampling from input freq='%s' to freq='%s' is blocked"
-                , srs_freq, freq
+                "Upsampling from input freq='%s' to freq='%s' is blocked",
+                srs_freq,
+                freq,
             )
             continue
         resampled_log_rets = sigp.resample(log_rets, rule=freq).sum()
         if len(resampled_log_rets) == 1:
             _LOG.warning(
-                "Resampling to freq='%s' is blocked because resampled series has only 1 observation"
-                , freq
+                "Resampling to freq='%s' is blocked because resampled series has only 1 observation",
+                freq,
             )
             continue
         sr = stats.compute_annualized_sharpe_ratio(resampled_log_rets)
