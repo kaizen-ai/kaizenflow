@@ -688,13 +688,16 @@ class ContinuousSkLearnModel(FitPredictNode):
         # Return targets and predictions.
         # TODO(Alina): Factor out this idiom into a private helper.
         df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            fwd_y_hat.reindex(idx), how="outer", left_index=True, right_index=True
         )
         if self._col_mode == "replace_all":
             pass
         elif self._col_mode == "merge_all":
-            df_out = df_in.reindex(idx).merge(
-                df_out.reindex(idx), left_index=True, right_index=True
+            df_out = df_in.merge(
+                df_out.reindex(idx),
+                how="outer",
+                left_index=True,
+                right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
@@ -731,13 +734,16 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._set_info("predict", info)
         # Return targets and predictions.
         df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            fwd_y_hat.reindex(idx), how="outer", left_index=True, right_index=True
         )
         if self._col_mode == "replace_all":
             pass
         elif self._col_mode == "merge_all":
-            df_out = df_in.reindex(idx).merge(
-                df_out.reindex(idx), left_index=True, right_index=True
+            df_out = df_in.merge(
+                df_out.reindex(idx),
+                how="outer",
+                left_index=True,
+                right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
@@ -925,8 +931,9 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         if self._col_mode == "replace_all":
             df_out = x_hat.reindex(index=df_in.index)
         elif self._col_mode == "merge_all":
-            df_out = df_in.reindex(index=df_in.index).merge(
+            df_out = df_in.merge(
                 x_hat.reindex(index=df_in.index),
+                how="outer",
                 left_index=True,
                 right_index=True,
             )
