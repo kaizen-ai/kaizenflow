@@ -382,7 +382,7 @@ class TestSmaModel(hut.TestCase):
 
     def _get_config(self, steps_ahead: int) -> cfg.Config:
         config = cfg.Config()
-        config["col"] = "vol"
+        config["col"] = ["vol"]
         config["steps_ahead"] = steps_ahead
         config["nan_mode"] = "drop"
         return config

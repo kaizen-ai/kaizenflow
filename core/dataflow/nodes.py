@@ -1598,7 +1598,7 @@ class SmaModel(FitPredictNode):
     def __init__(
         self,
         nid: str,
-        col: str,
+        col: list,
         steps_ahead: int,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -1619,8 +1619,8 @@ class SmaModel(FitPredictNode):
                       `steps_ahead` steps ahead (and not all intermediate steps)
         """
         super().__init__(nid)
-        # dbg.dassert_isinstance(col, str)
-        self._col = [col]
+        dbg.dassert_isinstance(col, list)
+        self._col = col
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
@@ -1663,85 +1663,19 @@ class SmaModel(FitPredictNode):
         self._tau = tau
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._predict(x_fit)
-        # TODO(Paul): Set first min_periods results to NaN?
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
         fwd_y_hat = adpt.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
-        # TODO(Paul): Summarize model perf or make configurable.
-        # TODO(Paul): Consider separating model eval from fit/predict.
         # Return targets and predictions.
         df_out = fwd_y_df.reindex(idx).merge(
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
-
-    def _learn_tau(self, x, y) -> float:
-        def score(tau):
-            x_srs = pd.DataFrame(x.flatten())
-            sma = sigp.compute_smooth_moving_average(
-                x_srs,
-                tau=tau,
-                min_periods=0,
-                min_depth=self._min_depth,
-                max_depth=self._max_depth,
-            )
-            return skl.metrics.mean_absolute_error(
-                sma.values, y[self._min_periods :]
-            )
-
-        opt_results = sp.optimize.minimize_scalar(
-            score, method="bounded", bounds=[1, 100]
-        )
-        return opt_results.x
-
-    def _predict(self, x) -> pd.Series:
-        x_srs = pd.DataFrame(x.flatten())
-        x_sma = sigp.compute_smooth_moving_average(
-            x_srs,
-            tau=self._tau,
-            min_periods=2 * self._tau,
-            min_depth=self._min_depth,
-            max_depth=self._max_depth,
-        )
-        return x_sma.values
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        # TODO(Paul): check whole implementation
-        self._validate_input_df(df_in)
-        df = df_in.copy()
-        idx = df.index
-        # Restrict to times where x_vars have no NaNs.
-        x_vars = self._to_list(self._x_vars)
-        non_nan_idx = df.loc[idx][x_vars].dropna().index
-        # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(idx, non_nan_idx)
-        # Transform x_vars to sklearn format.
-        x_predict = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
-        # Use trained model to generate predictions.
-        dbg.dassert_is_not(
-            self._model, None, "Model not found! Check if `fit` has been run."
-        )
-        fwd_y_hat = self._model.predict(x_predict)
-        # Put predictions in dataflow dataframe format.
-        fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(
-            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
-        )
-        # Generate basic perf stats.
-        info = collections.OrderedDict()
-        info["model_params"] = self._model.get_params()
-        info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
-        info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
-        self._set_info("predict", info)
-        # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
+        raise NotImplementedError
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
@@ -1773,24 +1707,37 @@ class SmaModel(FitPredictNode):
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
-    def _score(
-        self,
-        y_true: Union[pd.Series, pd.DataFrame],
-        y_pred: Union[pd.Series, pd.DataFrame],
-    ) -> Optional[float]:
-        """
-        Compute accuracy for classification or R^2 score for regression.
-        """
-        if skl.base.is_classifier(self._model):
-            metric = skl.metrics.accuracy_score
-        elif skl.base.is_regressor(self._model):
-            metric = skl.metrics.r2_score
-        else:
-            return None
-        # In `predict()` method, `y_pred` may exist for index where `y_true`
-        # is already `NaN`.
-        y_true = y_true.loc[: y_true.last_valid_index()]
-        return metric(y_true, y_pred.loc[y_true.index])
+    def _learn_tau(self, x, y) -> float:
+        def score(tau):
+            x_srs = pd.DataFrame(x.flatten())
+            sma = sigp.compute_smooth_moving_average(
+                x_srs,
+                tau=tau,
+                min_periods=0,
+                min_depth=self._min_depth,
+                max_depth=self._max_depth,
+            )
+            return self._metric(
+                sma.values, y[self._min_periods :]
+            )
+        # TODO(*): Make this configurable.
+        opt_results = sp.optimize.minimize_scalar(
+            score, method="bounded", bounds=[1, 100]
+        )
+        return opt_results.x
+
+    def _predict(self, x) -> pd.Series:
+        x_srs = pd.DataFrame(x.flatten())
+        # TODO(*): Make `min_periods` configurable.
+        x_sma = sigp.compute_smooth_moving_average(
+            x_srs,
+            tau=self._tau,
+            min_periods=2 * self._tau,
+            min_depth=self._min_depth,
+            max_depth=self._max_depth,
+        )
+        return x_sma.values
+
 
     # TODO(Paul): Consider omitting this (and relying on downstream
     #     processing to e.g., adjust for number of hypotheses tested).
