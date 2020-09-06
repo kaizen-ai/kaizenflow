@@ -1688,7 +1688,9 @@ class SmaModel(FitPredictNode):
         x_predict = adpt.transform_to_sklearn(df.loc[non_nan_idx], self._col)
         # Use trained model to generate predictions.
         dbg.dassert_is_not(
-            self._tau, None, "Parameter tau not found! Check if `fit` has been run."
+            self._tau,
+            None,
+            "Parameter tau not found! Check if `fit` has been run.",
         )
         fwd_y_hat = self._predict(x_predict)
         # Put predictions in dataflow dataframe format.
