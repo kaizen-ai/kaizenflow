@@ -10,16 +10,10 @@ import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.s3 as hs3
 import helpers.system_interaction as si
-
-# TODO(amr): move common configs between data & metadata to
-# `vendors2.kibot.config`
-import vendors2.kibot.data.config as config
+import vendors2.kibot.metadata.config as config
 
 _LOG = logging.getLogger(__name__)
 
-
-SUB_DIR = os.path.join("metadata", "raw", "adjustments")
-S3_PREFIX = os.path.join(config.S3_PREFIX, SUB_DIR)
 
 # #############################################################################
 
@@ -89,15 +83,16 @@ def _main(parser: argparse.ArgumentParser) -> int:
         ),
     )
 
-    # TODO(gp): do we want a more descriptive name? and we don't just rely on
-    # directory names.
-    file_name = f"downloads_{args.start_date}.txt"
-    file_path = os.path.join(args.tmp_dir, SUB_DIR, file_name)
+    file_path = os.path.join(
+        args.tmp_dir, config.ADJUSTMENTS_SUB_DIR, config.ADJUSTMENTS_FILE_NAME
+    )
     io_.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
     _LOG.info("Downloaded file to: %s", file_path)
 
     # Save to s3.
-    aws_path = os.path.join(S3_PREFIX, file_name)
+    aws_path = os.path.join(
+        config.S3_PREFIX, config.ADJUSTMENTS_SUB_DIR, config.ADJUSTMENTS_FILE_NAME
+    )
     hs3.check_valid_s3_path(aws_path)
     # TODO(amr): create hs3.copy() helper.
     cmd = "aws s3 cp %s %s" % (file_path, aws_path)
