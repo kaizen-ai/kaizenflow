@@ -593,8 +593,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         steps_ahead: int,
-        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
         """
@@ -618,6 +618,8 @@ class ContinuousSkLearnModel(FitPredictNode):
                       `steps_ahead` steps ahead (and not all intermediate steps)
             :param model_kwargs: parameters to forward to the sklearn model
                 (e.g., regularization constants)
+            :param col_mode: `merge_all` or `replace_all`, as in
+                ColumnTransformer()
         """
         super().__init__(nid)
         self._model_func = model_func
@@ -630,10 +632,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
-        if nan_mode is None:
-            self._nan_mode = "raise"
-        else:
-            self._nan_mode = nan_mode
+        # NOTE: Set to "replace_all" for backward compatibility.
+        self._col_mode = col_mode or "replace_all"
+        self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -680,14 +681,13 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        if self._col_mode == "merge_all":
-            df_out = fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
-        elif self._col_mode == "replace_all":
-            df_out = fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
+        # TODO(Alina): Factor out this idiom into a private helper.
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        if self._col_mode == "replace_all":
+            pass
+        elif self._col_mode == "merge_all":
             df_out = df_in.reindex(idx).merge(
                 df_out.reindex(idx), left_index=True, right_index=True
             )
@@ -725,14 +725,12 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return targets and predictions.
-        if self._col_mode == "merge_all":
-            df_out = fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
-        elif self._col_mode == "replace_all":
-            df_out = fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        if self._col_mode == "replace_all":
+            pass
+        elif self._col_mode == "merge_all":
             df_out = df_in.reindex(idx).merge(
                 df_out.reindex(idx), left_index=True, right_index=True
             )
@@ -848,8 +846,8 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         nid: str,
         model_func: Callable[..., Any],
         x_vars: Union[List[str], Callable[[], List[str]]],
-        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
         """
@@ -866,8 +864,8 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
-        self._col_mode = col_mode
         self._model = None
+        self._col_mode = col_mode or "replace_all"
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -919,10 +917,10 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
-        if self._col_mode == "merge_all":
+        if self._col_mode == "replace_all":
             df_out = x_hat.reindex(index=df_in.index)
-        elif self._col_mode == "replace_all":
-            df_out = df_in.reindex(df_in.index).merge(
+        elif self._col_mode == "merge_all":
+            df_out = df_in.reindex(index=df_in.index).merge(
                 x_hat.reindex(index=df_in.index),
                 left_index=True,
                 right_index=True,
@@ -1122,16 +1120,16 @@ class SkLearnModel(FitPredictNode):
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         model_func: Callable[..., Any],
-        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
     ) -> None:
         super().__init__(nid)
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._col_mode = col_mode
         self._model = None
+        self._col_mode = col_mode or "replace_all"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -1157,13 +1155,10 @@ class SkLearnModel(FitPredictNode):
         info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
         #
-        if self._col_mode == "merge_all":  # !!!!!!!!!!!!!
-
+        if self._col_mode == "replace_all":
             df_out = y_hat
-
-        elif self._col_mode == "replace_all":
-
-            df_out = df_in.reindex(idx).merge(
+        elif self._col_mode == "merge_all":
+            df_out = df_in.merge(
                 y_hat.reindex(idx), left_index=True, right_index=True
             )
         else:
@@ -1188,13 +1183,10 @@ class SkLearnModel(FitPredictNode):
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
         #
-        if self._col_mode == "merge_all":  # !!!!!!!!!!!!!
-
+        if self._col_mode == "replace_all":
             df_out = y_hat
-
-        elif self._col_mode == "replace_all":
-
-            df_out = df_in.reindex(idx).merge(
+        elif self._col_mode == "merge_all":
+            df_out = df_in.merge(
                 y_hat.reindex(idx), left_index=True, right_index=True
             )
         else:
