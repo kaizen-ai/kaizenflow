@@ -1661,6 +1661,8 @@ class SmaModel(FitPredictNode):
         tau = self._learn_tau(x_fit, fwd_y_fit)
         _LOG.debug(f"tau={tau}")
         self._tau = tau
+        info = collections.OrderedDict()
+        info["tau"] = tau
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._predict(x_fit)
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
@@ -1675,7 +1677,32 @@ class SmaModel(FitPredictNode):
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        raise NotImplementedError
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        idx = df.index
+        # Restrict to times where col has no NaNs.
+        non_nan_idx = df.loc[idx][self._col].dropna().index
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(idx, non_nan_idx)
+        # Transform x_vars to sklearn format.
+        x_predict = adpt.transform_to_sklearn(df.loc[non_nan_idx], self._col)
+        # Use trained model to generate predictions.
+        dbg.dassert_is_not(
+            self._tau, None, "Parameter tau not found! Check if `fit` has been run."
+        )
+        fwd_y_hat = self._predict(x_predict)
+        # Put predictions in dataflow dataframe format.
+        fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
+        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat = adpt.transform_from_sklearn(
+            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
+        )
+        # Return targets and predictions.
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:

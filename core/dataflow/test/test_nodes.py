@@ -371,8 +371,11 @@ class TestSmaModel(hut.TestCase):
         # Create DAG and test data node.
         dag = dtf.DAG(mode="strict")
         dag.add_node(data_source_node)
-        # Load config and create modeling node.
-        config = self._get_config(steps_ahead=2)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["vol"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
         node = dtf.SmaModel("sma", **config.to_dict(),)
         dag.add_node(node)
         dag.connect("data", "sma")
@@ -380,12 +383,29 @@ class TestSmaModel(hut.TestCase):
         output_df = dag.run_leq_node("sma", "fit")["df_out"]
         self.check_string(output_df.to_string())
 
-    def _get_config(self, steps_ahead: int) -> cfg.Config:
+    def test_predict_dag1(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        fit_interval = ("2000-01-01", "2000-02-10")
+        predict_interval = ("2000-01-20", "2000-02-23")
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node.set_fit_intervals([fit_interval])
+        data_source_node.set_predict_intervals([predict_interval])
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
         config = cfg.Config()
         config["col"] = ["vol"]
-        config["steps_ahead"] = steps_ahead
+        config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        return config
+        node = dtf.SmaModel("sma", **config.to_dict(),)
+        dag.add_node(node)
+        dag.connect("data", "sma")
+        #
+        dag.run_leq_node("sma", "fit")
+        output_df = dag.run_leq_node("sma", "predict")["df_out"]
+        self.check_string(output_df.to_string())
 
     def _get_data(self) -> pd.DataFrame:
         """
