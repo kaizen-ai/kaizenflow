@@ -692,7 +692,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         if self._col_mode == "replace_all":
             pass
         elif self._col_mode == "merge_all":
-            df_out = df_in.reindex(idx).merge(
+            df_out = df_in.merge(
                 df_out.reindex(idx),
                 how="outer",
                 left_index=True,
@@ -738,7 +738,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         if self._col_mode == "replace_all":
             pass
         elif self._col_mode == "merge_all":
-            df_out = df_in.reindex(idx).merge(
+            df_out = df_in.merge(
                 df_out.reindex(idx),
                 how="outer",
                 left_index=True,
@@ -930,7 +930,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         if self._col_mode == "replace_all":
             df_out = x_hat.reindex(index=df_in.index)
         elif self._col_mode == "merge_all":
-            df_out = df_in.reindex(index=df_in.index).merge(
+            df_out = df_in.merge(
                 x_hat.reindex(index=df_in.index),
                 how="outer",
                 left_index=True,
