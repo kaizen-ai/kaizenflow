@@ -1,7 +1,7 @@
 import dataclasses
 import enum
 
-# TODO(Amr): add doc strings to these classes with examples
+# TODO(Amr): add doc strings to these classes with examples.
 
 
 class KibotContractType(enum.Enum):
@@ -26,3 +26,13 @@ class TickBidAskContractMetadata:
     Size: str
     Description: str
     Exchange: str
+
+
+@dataclasses.dataclass
+class Adjustment:
+    Date: str
+    Symbol: str
+    Company: str
+    Action: str
+    Description: str
+    EventDate: str
