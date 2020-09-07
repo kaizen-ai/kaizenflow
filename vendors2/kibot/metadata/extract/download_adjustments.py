@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+
+"""# Download adjustments from kibot since 5/1/2020.
+
+> download_adjustments.py   \
+    -u kibot_username       \
+    -p kibot_password       \
+    -s 5/1/2020
+"""
 import argparse
 import logging
 import os
