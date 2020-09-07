@@ -8,7 +8,7 @@ import vendors2.kibot.metadata.types as types
 
 
 class TickerListsLoader:
-    def load(self, ticker_list: str, listed: bool = True) -> List[types.Ticker]:
+    def get(self, ticker_list: str, listed: bool = True) -> List[types.Ticker]:
         file_path = os.path.join(
             config.S3_PREFIX, config.TICKER_LISTS_SUB_DIR, f"{ticker_list}.txt",
         )
@@ -45,6 +45,12 @@ class TickerListsLoader:
 
     @staticmethod
     def _get_ticker_from_line(line: str) -> types.Ticker:
+        """Get a ticker from a line.
+
+        Example line:
+        #       Symbol  StartDate       Size(MB)        Description     Exchange        Industry        Sector
+        1       AA      4/27/2007       68      "Alcoa Corporation"     NYSE    "Aluminum"      "Basic Industries"
+        """
         args = line.split("\t")
         # Remove new line from last element. Note: if we strip before splitting, the tab
         # delimiters would be removed as well if a column is empty.

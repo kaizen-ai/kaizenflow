@@ -88,8 +88,8 @@ def _main(parser: argparse.ArgumentParser) -> int:
         _LOG.info("Processing historical page: %s", url)
         file_url = _extract_file_url_from_historical_page(page_url=url)
         _LOG.info("Extracted file url: %s", file_url)
-        # clean file name TODO(amr): is this necessary? if so, let's move this function to
-        # a more common place
+        # TODO(amr): is cleaning the file name necessary? if so, let's move this function
+        # to a more common place.
         file_name = os.path.basename(urlprs.urlparse(file_url).path)
         # TODO(amr): is cleaning the file name necessary? if so, let's move this
         # function to a more common place.
