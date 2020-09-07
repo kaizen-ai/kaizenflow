@@ -1735,6 +1735,7 @@ class SmaModel(FitPredictNode):
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
+        self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1765,6 +1766,7 @@ class SmaModel(FitPredictNode):
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
+        self._set_info("predict", info)
         return {"df_out": df_out}
 
     @staticmethod
@@ -1886,12 +1888,15 @@ class VolatilityModel(FitPredictNode):
         df_in = df_in.copy()
         vol = self._calculate_vol(df_in)
         sma = self._sma_model.fit(vol)["df_out"]
+        info = collections.OrderedDict()
+        info["sma"] = self._sma_model.get_info("fit")
         self._check_cols(df_in, sma)
         normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
         df_in[self._zscored_col] = df_in[self._col[0]].divide(
             normalized_vol.shift(self._steps_ahead)
         )
         df_in = sma.merge(df_in, left_index=True, right_index=True)
+        self._set_info("fit", info)
         return {"df_out": df_in}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1900,12 +1905,15 @@ class VolatilityModel(FitPredictNode):
             np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
         ).to_frame()
         sma = self._sma_model.predict(vol)["df_out"]
+        info = collections.OrderedDict()
+        info["sma"] = self._sma_model.get_info("predict")
         self._check_cols(df_in, sma)
         normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
         df_in[self._zscored_col] = df_in[self._col[0]].divide(
             normalized_vol.shift(self._steps_ahead)
         )
         df_in = sma.merge(df_in, left_index=True, right_index=True)
+        self._set_info("predict", info)
         return {"df_out": df_in}
 
     def _calculate_vol(self, df_in: pd.DataFrame) -> pd.DataFrame:
