@@ -1891,7 +1891,7 @@ class VolatilityModel(FitPredictNode):
         df_in[self._zscored_col] = df_in[self._col[0]].divide(
             normalized_vol.shift(self._steps_ahead)
         )
-        df_in = df_in.merge(sma, left_index=True, right_index=True)
+        df_in = sma.merge(df_in, left_index=True, right_index=True)
         return {"df_out": df_in}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1905,7 +1905,7 @@ class VolatilityModel(FitPredictNode):
         df_in[self._zscored_col] = df_in[self._col[0]].divide(
             normalized_vol.shift(self._steps_ahead)
         )
-        df_in = df_in.merge(sma, left_index=True, right_index=True)
+        df_in = sma.merge(df_in, left_index=True, right_index=True)
         return {"df_out": df_in}
 
     def _calculate_vol(self, df_in: pd.DataFrame) -> pd.DataFrame:
