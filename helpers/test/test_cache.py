@@ -8,9 +8,6 @@ import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(vr): Is it ok to leave it here?
-hut._CONFTEST_IN_PYTEST = True
-
 # #############################################################################
 
 
@@ -31,10 +28,10 @@ class Test_cache1(hut.TestCase):
     def test1(self) -> None:
         """Cache unit tests need to clean up the cache, so we need to make sure
         we are using the unit test cache, and not the dev cache."""
-        cache_tag = None
-        disk_cache_name = hcac.get_disk_cache_name(cache_tag)
+        cache_tag = "unittest"
+        disk_cache_name = hcac.get_cache_name("disk", cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
-        self.assertIn("unittest", disk_cache_name)
+        self.assertIn(cache_tag, disk_cache_name)
 
 
 # All unit tests for the cache should be in this class since we have a single
@@ -52,10 +49,10 @@ class Test_cache2(hut.TestCase):
     def tearDown(self) -> None:
         # TODO(gp): Use a context manager to create / destroy a local cache.
         # For now we do it explicitly.
-        disk_cache_path = hcac.get_disk_cache_path(self.cache_tag)
+        disk_cache_path = hcac.get_cache_path("disk", self.cache_tag)
         _LOG.debug("Destroying disk_cache_path=%s", disk_cache_path)
         io_.delete_dir(disk_cache_path)
-        memory_cache_path = hcac.get_memory_cache_path(self.cache_tag)
+        memory_cache_path = hcac.get_cache_path("mem", self.cache_tag)
         _LOG.debug("Destroying memory_cache_path=%s", memory_cache_path)
         io_.delete_dir(memory_cache_path)
         #
@@ -202,7 +199,7 @@ class Test_cache2(hut.TestCase):
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # Reset memory cache.
-        cf.clear_memory_cache()
+        cf.clear_cache("mem")
         # Execute the 3rd time: verify that it is executed.
         _LOG.debug("\n%s", prnt.frame("Executing the 3rd time"))
         self._check_cache_state(
@@ -223,7 +220,7 @@ class Test_cache2(hut.TestCase):
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
         # Reset disk cache.
-        cf.clear_disk_cache()
+        cf.clear_cache("disk")
         # Execute the 3rd time: verify that it is executed.
         _LOG.debug("\n%s", prnt.frame("Executing the 3rd time"))
         self._check_cache_state(
@@ -284,10 +281,11 @@ class Test_cache2(hut.TestCase):
     ) -> Tuple[_get_function, hcac.Cached]:
         """Create the intrinsic function `f` and its cached version `cf`."""
         # Make sure that we are using the unit test cache.
-        disk_cache_name = hcac.get_disk_cache_name(self.cache_tag)
+        disk_cache_name = hcac.get_cache_name("disk", self.cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
-        _LOG.debug("disk_cache_path=%s", hcac.get_disk_cache_path(self.cache_tag))
-        self.assertIn("unittest", disk_cache_name)
+        _LOG.debug(
+            "disk_cache_path=%s", hcac.get_cache_path("disk", self.cache_tag)
+        )
         # Create the intrinsic function.
         f = self._get_function()
         # Create the cached function.
