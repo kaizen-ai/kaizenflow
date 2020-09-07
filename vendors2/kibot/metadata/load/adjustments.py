@@ -1,8 +1,7 @@
-import csv
 import os
 from typing import List
 
-import smart_open
+import pandas as pd
 
 import vendors2.kibot.metadata.config as config
 import vendors2.kibot.metadata.types as types
@@ -17,11 +16,9 @@ class AdjustmentsLoader:
             config.ADJUSTMENTS_FILE_NAME,
         )
 
-        # I use smart_open.open to allow file_path to both be a local file, or an s3 file,
-        # or any other source that `smart_open` supports, which is a lot.
-        with smart_open.open(file_path, "r") as fh:
-            reader = csv.reader(fh, delimiter="\t")
-            # Skip header.
-            next(reader)
-            ret = [types.Adjustment(*row) for row in reader]
-        return ret
+        df = pd.read_csv(file_path, sep="\t")
+        return [types.Adjustment(*row) for row in df.values.tolist()]
+
+
+if __name__ == "__main__":
+    print(AdjustmentsLoader().load())
