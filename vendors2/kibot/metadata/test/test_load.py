@@ -36,3 +36,17 @@ class TestTickerListLoader(hut.TestCase):
                 Sector='"Energy"',
             )
         ]
+
+    def test_real_call(self) -> None:
+        tickers = load.TickerListsLoader().get(ticker_list="dow_30_intraday")
+        assert len(tickers) == 43
+
+        assert tickers[0] == types.Ticker(
+            Symbol="AA",
+            StartDate="4/27/2007",
+            Size="68",
+            Description='"Alcoa Corporation"',
+            Exchange="NYSE",
+            Industry='"Aluminum"',
+            Sector='"Basic Industries"',
+        )

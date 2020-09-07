@@ -1,17 +1,27 @@
 import os
 from typing import List, Tuple
 
-import smart_open
+import pandas as pd
 
 import vendors2.kibot.metadata.config as config
 import vendors2.kibot.metadata.types as types
 
 
 class TickerListsLoader:
+    def get(self, ticker_list: str, listed: bool = True) -> List[types.Ticker]:
+        s3_path = os.path.join(
+            config.S3_PREFIX, config.TICKER_LISTS_SUB_DIR, f"{ticker_list}.txt",
+        )
+
+        lines = self._get_lines(s3_path=s3_path)
+        listed_tickers, delisted_tickers = self._parse_lines(lines=lines)
+        return listed_tickers if listed else delisted_tickers
+
     @staticmethod
     def _get_lines(s3_path: str) -> List[str]:
-        with smart_open.open(s3_path, "r") as fh:
-            return fh.readlines()
+        return [
+            line[0] for line in pd.read_csv(s3_path, sep="/t").values.tolist()
+        ]
 
     def _parse_lines(
         self, lines: List[str]
@@ -46,22 +56,14 @@ class TickerListsLoader:
 
         return listed_tickers, delisted_tickers
 
-    def get(self, ticker_list: str, listed: bool = True) -> List[types.Ticker]:
-        s3_path = os.path.join(
-            config.S3_PREFIX, config.TICKER_LISTS_SUB_DIR, f"{ticker_list}.txt",
-        )
-
-        lines = self._get_lines(s3_path=s3_path)
-        listed_tickers, delisted_tickers = self._parse_lines(lines=lines)
-        return listed_tickers if listed else delisted_tickers
-
     @staticmethod
     def _get_ticker_from_line(line: str) -> types.Ticker:
         """Get a ticker from a line.
 
-        Example line:
-        #       Symbol  StartDate       Size(MB)        Description     Exchange        Industry        Sector
-        1       AA      4/27/2007       68      "Alcoa Corporation"     NYSE    "Aluminum"      "Basic Industries"
+        Example line: #       Symbol  StartDate       Size(MB)
+        Description     Exchange        Industry        Sector 1
+        AA      4/27/2007       68      "Alcoa Corporation"     NYSE
+        "Aluminum"      "Basic Industries"
         """
         args = line.split("\t")
         # Remove new line from last element. Note: if we strip before splitting, the tab
