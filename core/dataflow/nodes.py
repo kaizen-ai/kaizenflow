@@ -1853,12 +1853,12 @@ class VolatilityModel(FitPredictNode):
     """
 
     def __init__(
-            self,
-            nid: str,
-            col: list,
-            steps_ahead: int,
-            p_moment: float = 2,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        col: list,
+        steps_ahead: int,
+        p_moment: float = 2,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sma modeling parameters.
@@ -1875,10 +1875,12 @@ class VolatilityModel(FitPredictNode):
         self._p_moment = p_moment
         self._nan_mode = nan_mode
         # NOTE: Experimental and an abuse of "node".
-        self._sma_model = SmaModel("anonymous_sma",
-                                   col=[self._vol_col],
-                                   steps_ahead=self._steps_ahead,
-                                   nan_mode=self._nan_mode)
+        self._sma_model = SmaModel(
+            "anonymous_sma",
+            col=[self._vol_col],
+            steps_ahead=self._steps_ahead,
+            nan_mode=self._nan_mode,
+        )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_in = df_in.copy()
@@ -1886,25 +1888,30 @@ class VolatilityModel(FitPredictNode):
         sma = self._sma_model.fit(vol)["df_out"]
         self._check_cols(df_in, sma)
         normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
-        df_in[self._zscored_col] = df_in[self._col[0]].divide(normalized_vol.shift(self._steps_ahead))
+        df_in[self._zscored_col] = df_in[self._col[0]].divide(
+            normalized_vol.shift(self._steps_ahead)
+        )
         df_in = df_in.merge(sma, left_index=True, right_index=True)
         return {"df_out": df_in}
 
-
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_not_in(self._vol_col, df_in.columns)
-        vol = pd.Series(np.abs(df_in[self._col[0]]) ** self._p_moment,
-                        name=self._vol_col).to_frame()
+        vol = pd.Series(
+            np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
+        ).to_frame()
         sma = self._sma_model.predict(vol)["df_out"]
         self._check_cols(df_in, sma)
         normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
-        df_in[self._zscored_col] = df_in[self._col[0]].divide(normalized_vol.shift(self._steps_ahead))
+        df_in[self._zscored_col] = df_in[self._col[0]].divide(
+            normalized_vol.shift(self._steps_ahead)
+        )
         df_in = df_in.merge(sma, left_index=True, right_index=True)
         return {"df_out": df_in}
 
     def _calculate_vol(self, df_in: pd.DataFrame) -> pd.DataFrame:
-        vol = pd.Series(np.abs(df_in[self._col[0]]) ** self._p_moment,
-                        name=self._vol_col).to_frame()
+        vol = pd.Series(
+            np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
+        ).to_frame()
         return vol
 
     def _check_cols(self, df_in: pd.DataFrame, sma: pd.DataFrame) -> None:
