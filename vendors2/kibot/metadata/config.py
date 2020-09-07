@@ -9,4 +9,4 @@ API_ENDPOINT = "http://api.kibot.com/"
 ADJUSTMENTS_SUB_DIR = "raw"
 ADJUSTMENTS_FILE_NAME = "adjustments.txt"
 
-TICKER_LISTS_SUB_DIR = "raw/ticker_list"
+TICKER_LISTS_SUB_DIR = "raw/ticker_lists"

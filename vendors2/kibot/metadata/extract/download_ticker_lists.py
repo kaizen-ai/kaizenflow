@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+
+"""# Download all ticker lists and push them to s3.
+
+> download_ticker_lists.py
+"""
 import argparse
 import logging
 import os
