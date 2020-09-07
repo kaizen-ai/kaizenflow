@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import helpers.unit_test as hut
 import vendors2.kibot.metadata.load as load
 import vendors2.kibot.metadata.types as types
@@ -37,6 +39,7 @@ class TestTickerListLoader(hut.TestCase):
             )
         ]
 
+    @pytest.mark.xfail(reason="Requires S3 access")
     def test_real_call(self) -> None:
         tickers = load.TickerListsLoader().get(ticker_list="dow_30_intraday")
         assert len(tickers) == 43

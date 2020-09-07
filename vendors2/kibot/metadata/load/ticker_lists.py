@@ -1,3 +1,4 @@
+import enum
 import os
 from typing import List, Tuple
 
@@ -5,6 +6,17 @@ import pandas as pd
 
 import vendors2.kibot.metadata.config as config
 import vendors2.kibot.metadata.types as types
+
+
+class ParsingState(enum.Enum):
+    # started parsing the file, no keywords encountered
+    Started = 0
+    # A listed section header was found
+    ListedSectionStarted = 1
+    # The column headers were skipped
+    HeaderSkipped = 2
+    # A delisted section header was found
+    DelistedSectionStarted = 3
 
 
 class TickerListsLoader:
@@ -30,28 +42,27 @@ class TickerListsLoader:
         listed_tickers: List[types.Ticker] = []
         delisted_tickers: List[types.Ticker] = []
 
-        listed_found = False
-        header_skipped = False
-        delisted_found = False
+        state = ParsingState.Started
+
         for line in lines:
             if not line.strip():
                 # Skip empty lines.
                 continue
 
+            if state == ParsingState.ListedSectionStarted:
+                state = ParsingState.HeaderSkipped
+                continue
+
             if line.strip() == "Listed:":
-                listed_found = True
+                state = ParsingState.ListedSectionStarted
                 continue
             if line.strip() == "Delisted:":
-                delisted_found = True
+                state = ParsingState.DelistedSectionStarted
                 continue
 
-            if listed_found and not delisted_found:
-                if not header_skipped:
-                    header_skipped = True
-                    continue
-
+            if state == ParsingState.HeaderSkipped:
                 listed_tickers.append(self._get_ticker_from_line(line))
-            elif delisted_found:
+            elif state == ParsingState.DelistedSectionStarted:
                 delisted_tickers.append(self._get_ticker_from_line(line))
 
         return listed_tickers, delisted_tickers
@@ -60,10 +71,9 @@ class TickerListsLoader:
     def _get_ticker_from_line(line: str) -> types.Ticker:
         """Get a ticker from a line.
 
-        Example line: #       Symbol  StartDate       Size(MB)
-        Description     Exchange        Industry        Sector 1
-        AA      4/27/2007       68      "Alcoa Corporation"     NYSE
-        "Aluminum"      "Basic Industries"
+        Example line:
+        #       Symbol  StartDate       Size(MB)    Description     Exchange        Industry        Sector 1
+        AA      4/27/2007       68      "Alcoa Corporation"     NYSE    "Aluminum"      "Basic Industries"
         """
         args = line.split("\t")
         # Remove new line from last element. Note: if we strip before splitting, the tab
