@@ -48,14 +48,13 @@ class _P1CheckShebang(lntr.Action):
     def _execute(self, file_name: str, pedantic: int) -> List[str]:
         _ = pedantic
 
-        if not utils.is_ipynb_file(file_name) and not utils.is_ipynb_file(
-            file_name
-        ):
+        if not utils.is_py_file(file_name) and not utils.is_ipynb_file(file_name):
             _LOG.debug("Skipping file_name='%s'", file_name)
             return []
 
         lines = io_.from_file(file_name).split("\n")
-        return [_check_shebang(file_name, lines)]
+        out = _check_shebang(file_name, lines)
+        return [out] if out else []
 
 
 def _parse() -> argparse.ArgumentParser:
