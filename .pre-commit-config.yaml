@@ -28,7 +28,7 @@ repos:
     rev: 5.3.2
     hooks:
       - id: isort
-        entry: bash -c 'isort "$@"; if [ -z "${CI}" ]; then git add -u; fi' --
+        entry: isort
   - repo: https://github.com/humitos/mirrors-autoflake
     rev: v1.3
     hooks:
@@ -38,7 +38,7 @@ repos:
     hooks:
       - id: black
         name: black
-        entry: bash -c 'p1_black.py "$@"; if [ -z "${CI}" ]; then git add -u; fi' --
+        entry: p1_black.py
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
