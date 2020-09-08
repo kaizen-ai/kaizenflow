@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.artificial_signal_generators as sig_gen
 """
@@ -27,12 +26,12 @@ if True:
     import gluonts
     import gluonts.dataset.artificial as gda
     import gluonts.dataset.artificial.recipe as rcp
+
     import gluonts.dataset.repository.datasets as gdrd  # isort: skip # noqa: F401 # pylint: disable=unused-import
     import gluonts.dataset.util as gdu  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
     def get_gluon_dataset_names() -> List[str]:
-        """
-        Get names of available Gluon datasets. Each of those names can be
+        """Get names of available Gluon datasets. Each of those names can be
         used in `get_gluon_dataset` function.
 
         :return: list of names
@@ -44,8 +43,7 @@ if True:
         train_length: Optional[int] = None,
         test_length: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Load Gluon dataset, transform it into train and test dataframes.
+        """Load Gluon dataset, transform it into train and test dataframes.
 
         The default `m4_hourly` time series look like this:
         https://gluon-ts.mxnet.io/_images/examples_forecasting_tutorial_9_0.png
@@ -74,8 +72,7 @@ if True:
     def evaluate_recipe(
         recipe: List[Tuple[str, Callable]], length: int, **kwargs: Any
     ) -> Dict[str, np.array]:
-        """
-        Generate data based on recipe.
+        """Generate data based on recipe.
 
         For documentation on recipes, see
         https://gluon-ts.mxnet.io/_modules/gluonts/dataset/artificial/_base.html#RecipeDataset.
@@ -90,8 +87,7 @@ if True:
     def add_recipe_components(
         recipe: List[Tuple[str, Callable]], name: str = "signal"
     ) -> List[Tuple[str, rcp.Lifted]]:
-        """
-        Append the sum of the components to the recipe.
+        """Append the sum of the components to the recipe.
 
         :param recipe: [(field, function)]
         :param name: name of the sum
@@ -112,8 +108,7 @@ if True:
         num_timeseries: int,
         trim_length_func: Callable = lambda x, **kwargs: 0,
     ) -> gluonts.dataset.common.TrainDatasets:
-        """
-        Generate GluonTS TrainDatasets from recipe.
+        """Generate GluonTS TrainDatasets from recipe.
 
         For more information on recipes, see
         https://gluon-ts.mxnet.io/_modules/gluonts/dataset/artificial/_base.html#RecipeDataset
@@ -151,13 +146,10 @@ if True:
 
 
 class ArmaProcess:
-    """
-    A thin wrapper around statsmodels `ArmaProcess`, with Pandas support.
-    """
+    """A thin wrapper around statsmodels `ArmaProcess`, with Pandas support."""
 
     def __init__(self, ar_coeffs: List[float], ma_coeffs: List[float]) -> None:
-        """
-        Initialize `arma_process` using given coefficients.
+        """Initialize `arma_process` using given coefficients.
 
         Useful properties include
           - arroots
@@ -166,7 +158,7 @@ class ArmaProcess:
           - maroots
 
         Further details are available at
-          - https://www.statsmodels.org/stable/generated/statsmodels.tsa.arima_process.ArmaProcess.html
+          - https://www.statsmodels.org/stable/generated/statsmodels.tsa.arima_process.ArmaProcess.html  # pylint: disable=line-too-long
         """
         self.ar_coeffs = ar_coeffs
         self.ma_coeffs = ma_coeffs
@@ -181,8 +173,7 @@ class ArmaProcess:
         burnin: float = 0,
         seed: Optional[int] = None,
     ) -> pd.Series:
-        """
-        Generate an ARMA realization.
+        """Generate an ARMA realization.
 
         This wraps statsmodels' `generate_sample`, placing the values in a
         `pd.Series` with index specified through the date range parameters.
@@ -209,9 +200,7 @@ class ArmaProcess:
 
 
 class MultivariateNormalProcess:
-    """
-    A wrapper around sp.stats.multivariate_normal, with Pandas support.
-    """
+    """A wrapper around sp.stats.multivariate_normal, with Pandas support."""
 
     def __init__(
         self,
@@ -219,9 +208,8 @@ class MultivariateNormalProcess:
         cov: Optional[pd.DataFrame] = None,
         allow_singular: Optional[bool] = None,
     ) -> None:
-        """
-        Optionally initialize mean and covariance of multivariate normal RV.
-        """
+        """Optionally initialize mean and covariance of multivariate normal
+        RV."""
         self.mean = self._maybe_return_values(mean, pd.Series)
         self.cov = self._maybe_return_values(cov, pd.DataFrame)
         self.allow_singular = allow_singular
@@ -229,8 +217,7 @@ class MultivariateNormalProcess:
     def set_cov_from_inv_wishart_draw(
         self, dim: int, seed: Optional[int] = None
     ) -> None:
-        """
-        Set covariance matrix equal to a draw from Inverse Wishart.
+        """Set covariance matrix equal to a draw from Inverse Wishart.
 
         - Defaults to least informative proper distribution
         - Takes dof = dim, scale = identify matrix of dimension `dim`
@@ -244,8 +231,7 @@ class MultivariateNormalProcess:
     def generate_sample(
         self, date_range_kwargs: Dict[str, Any], seed: Optional[int] = None
     ) -> pd.DataFrame:
-        """
-        Generate a multivariate normal distribution sample over index.
+        """Generate a multivariate normal distribution sample over index.
 
         https://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.stats.multivariate_normal.html#scipy.stats.multivariate_normal
         """
@@ -262,14 +248,13 @@ class MultivariateNormalProcess:
         obj: Union[pd.Series, pd.DataFrame, None],
         expected_type: Union[pd.Series, pd.DataFrame],
     ) -> Union[None, np.array]:
-        """
-        Return values of series or dataframe or else None if object is None.
+        """Return values of series or dataframe or else None if object is None.
 
         This is a convenience method used in initialization.
         """
         if obj is None:
             return None
-        elif isinstance(obj, expected_type):
+        if isinstance(obj, expected_type):
             return obj.values
         raise ValueError(f"Unsupported type {type(obj)}")
 
@@ -282,8 +267,7 @@ def generate_arima_signal_and_response(
     base_random_state: int = 0,
     shift: int = 1,
 ) -> pd.DataFrame:
-    """
-    Generate dataframe of predictors and response.
+    """Generate dataframe of predictors and response.
 
     Example data:
                                x0        x1         y
@@ -330,15 +314,11 @@ def _generate_arima_sample(
     ma: Iterable[float] = np.array([0.01]),
 ) -> np.array:
     np.random.seed(random_state)
-    return sm.tsa.arima_process.arma_generate_sample(
-        ar=ar, ma=ma, nsample=n_periods, burnin=10
-    )
+    return sm.tsa.arma_generate_sample(ar=ar, ma=ma, nsample=n_periods, burnin=10)
 
 
 def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
-    """
-    Generate Heaviside pd.Series.
-    """
+    """Generate Heaviside pd.Series."""
     dbg.dassert_lte(a, zero_val)
     dbg.dassert_lte(zero_val, b)
     array = np.arange(a, b, tick)
@@ -349,9 +329,7 @@ def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
 
 
 def get_impulse(a: int, b: int, tick: int) -> pd.Series:
-    """
-    Generate unit impulse pd.Series.
-    """
+    """Generate unit impulse pd.Series."""
     heavi = get_heaviside(a, b, 1, tick)
     impulse = (heavi - heavi.shift(1)).shift(-1).fillna(0)
     impulse.name = "impulse"

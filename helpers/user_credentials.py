@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-Import as:
+"""Import as:
 
 import helpers.user_credentials as usc
 
@@ -12,7 +11,7 @@ import argparse
 import logging
 import os
 import pprint
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -27,9 +26,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_p1_dev_server_ip() -> str:
-    """
-    Get the dev server name from the user environment.
-    """
+    """Get the dev server name from the user environment."""
     env_var_name = "P1_DEV_SERVER"
     if env_var_name not in os.environ:
         _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh?", env_var_name)
@@ -40,11 +37,10 @@ def get_p1_dev_server_ip() -> str:
 
 # pylint: disable=too-many-statements
 def get_credentials() -> Dict[str, Any]:
-    """
-    Report information about a user set-up as a function of:
-        1) user name
-        2) server name
-        3) git repository name
+    """Report information about a user set-up as a function of:
+    1) user name
+    2) server name
+    3) git repository name.
 
     The mandatory information are:
     1) git_user_name
@@ -98,7 +94,7 @@ def get_credentials() -> Dict[str, Any]:
     git_user_email = ""
     conda_sh_path = ""
     ssh_key_path = "~/.ssh/id_rsa"
-    tunnel_info = []
+    tunnel_info: List[str] = []
     jupyter_port = -1
     notebook_html_path = ""
     notebook_backup_path = ""
@@ -256,6 +252,16 @@ def get_credentials() -> Dict[str, Any]:
         if server_name == "particle-90":
             # Home laptop.
             conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
+            conda_env_path = "~/.conda/envs"
+        else:
+            dbg.dassert_ne(conda_sh_path, "")
+    elif user_name == "stan":
+        git_user_name = "stanvanrooy"
+        git_user_email = "stan@rooy.dev"
+        jupyter_port = 9233
+        if server_name == "Lenovo-ideapad-530S-15IKB":
+            # Home laptop.
+            conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "~/.conda/envs"
         else:
             dbg.dassert_ne(conda_sh_path, "")

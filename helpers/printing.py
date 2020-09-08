@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.printing as prnt
 """
@@ -31,9 +30,7 @@ def clear_screen() -> None:
 
 
 def line(char: Optional[str] = None, num_chars: Optional[int] = None) -> str:
-    """
-    Return a line with the desired character.
-    """
+    """Return a line with the desired character."""
     char = "#" if char is None else char
     num_chars = 80 if num_chars is None else num_chars
     return char * num_chars
@@ -46,9 +43,7 @@ def frame(
     char2: Optional[str] = None,
     thickness: int = 1,
 ) -> str:
-    """
-    Print a frame around a message.
-    """
+    """Print a frame around a message."""
     # Fill in the default values.
     if char1 is None:
         # User didn't specify any char.
@@ -80,16 +75,12 @@ def frame(
 
 # TODO(gp): -> indent
 def space(str_: str, num_spaces: int = 2) -> str:
-    """
-    Add "num_spaces" spaces before each line of the string str_.
-    """
+    """Add `num_spaces` spaces before each line of the string `str_`."""
     return prepend(str_, " " * num_spaces)
 
 
 def dedent(txt: str) -> str:
-    """
-    Remove all extra leadning / trailing spaces and empty lines
-    """
+    """Remove all extra leadning / trailing spaces and empty lines."""
     txt_out = []
     for curr_line in txt.split("\n"):
         curr_line = curr_line.rstrip(" ").lstrip(" ")
@@ -99,28 +90,22 @@ def dedent(txt: str) -> str:
 
 
 def prepend(str_: str, prefix: str) -> str:
-    """
-    Add "prefix" before each line of the string str_.
-    """
+    """Add `prefix` before each line of the string `str_`."""
     # lines = ["<" + prefix + curr_line + ">" for curr_line in str_.split("\n")]
     lines = [prefix + curr_line for curr_line in str_.split("\n")]
     return "\n".join(lines)
 
 
 def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
-    """
-    Remove empty lines from a list of strings.
-    """
-    arr = [l for l in arr if l.rstrip().lstrip()]
+    """Remove empty lines from a list of strings."""
+    arr = [line for line in arr if line.rstrip().lstrip()]
     return arr
 
 
 # TODO(gp): It would be nice to have a decorator to go from / to array of
 #  strings.
 def remove_empty_lines(txt: str) -> str:
-    """
-    Remove empty lines from a multi-line string.
-    """
+    """Remove empty lines from a multi-line string."""
     arr = txt.split("\n")
     arr = remove_empty_lines_from_string_list(arr)
     txt = "\n".join(arr)
@@ -128,11 +113,9 @@ def remove_empty_lines(txt: str) -> str:
 
 
 def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str:
-    """
-    Create a string with var name -> var value.
-    E.g., ["var1", "var2"] is converted into:
-        var1=...
-        var2=...
+    """Create a string with var name -> var value.
+
+    E.g., ["var1", "var2"] is converted into: ``` var1=... var2=... ```
     """
     txt = []
     for var in vars_as_str:
@@ -159,8 +142,7 @@ def perc(
     num_digits: int = 2,
     use_thousands_separator: bool = False,
 ) -> str:
-    """
-    Calculate percentage a / b as a string.
+    """Calculate percentage a / b as a string.
 
     Asserts 0 <= a <= b. If true, returns a/b to `num_digits` decimal places.
 
@@ -195,8 +177,7 @@ def perc(
 def round_digits(
     v: float, num_digits: int = 2, use_thousands_separator: bool = False
 ) -> str:
-    """
-    Round digit returning a string representing the formatted number.
+    """Round digit returning a string representing the formatted number.
 
     :param v: value to convert
     :param num_digits: number of digits to represent v on
@@ -219,10 +200,8 @@ def round_digits(
 
 
 def type_to_string(type_as_str: str) -> str:
-    """
-    Return a short string representing the type of an object, e.g.,
-        "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")
-    """
+    """Return a short string representing the type of an object, e.g.,
+    "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")"""
     if isinstance(type_as_str, type):
         type_as_str = str(type_as_str)
     dbg.dassert_isinstance(type_as_str, str)
@@ -267,30 +246,28 @@ def format_list(
 
 # TODO(gp): Use format_list().
 def list_to_str(
-    l: List,
+    list_: List,
     tag: str = "",
     sort: bool = False,
     axis: int = 0,
     to_string: bool = False,
 ) -> str:
-    """
-    Print list / index horizontally or vertically.
-    """
+    """Print list / index horizontally or vertically."""
     # TODO(gp): Fix this.
     _ = to_string
     txt = ""
     if axis == 0:
-        if l is None:
+        if list_ is None:
             txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
         else:
             # dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
-            vals = list(map(str, l))
+            vals = list(map(str, list_))
             if sort:
                 vals = sorted(vals)
-            txt += "%s: (%s) %s" % (tag, len(l), " ".join(vals)) + "\n"
+            txt += "%s: (%s) %s" % (tag, len(list_), " ".join(vals)) + "\n"
     elif axis == 1:
-        txt += "%s (%s):" % (tag, len(l)) + "\n"
-        vals = list(map(str, l))
+        txt += "%s (%s):" % (tag, len(list_)) + "\n"
+        vals = list(map(str, list_))
         if sort:
             vals = sorted(vals)
         txt += "\n".join(vals) + "\n"

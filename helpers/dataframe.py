@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.dataframe as hdf
 """
@@ -24,8 +23,7 @@ def filter_data_by_values(
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
-    """
-    Filter dataframe rows based on column values.
+    """Filter dataframe rows based on column values.
 
     :param data: dataframe
     :param filters: `{col_name: (possible_values)}`
@@ -59,8 +57,7 @@ def filter_data_by_comparison(
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
-    """
-    Filter dataframe by comparing columns to values.
+    """Filter dataframe by comparing columns to values.
 
     :param data: dataframe
     :param filters: `{col_name: (comparison_method, value)}` or
@@ -81,7 +78,7 @@ def filter_data_by_comparison(
     masks = []
     for col_name, tuple_ in filters.items():
         if not isinstance(tuple_[0], tuple):
-            tuple_ = (tuple_,)
+            tuple_ = (tuple_,)  # type: ignore
         for comparison_method, val in tuple_:
             dbg.dassert_in(
                 comparison_method, ("eq", "ne", "le", "lt", "ge", "gt")
@@ -114,15 +111,14 @@ def _combine_masks(
 
 
 def apply_nan_mode(
-    srs: pd.Series, mode: Optional[str] = None, info: Optional[dict] = None,
+    srs: pd.Series, mode: str = "leave_unchanged", info: Optional[dict] = None,
 ) -> pd.Series:
-    """
-    Process NaN values in a series according to the parameters.
+    """Process NaN values in a series according to the parameters.
 
     :param srs: pd.Series to process
     :param mode: method of processing NaNs
-        - None - no transformation
-        - "ignore" - drop all NaNs
+        - "leave_unchanged" - no transformation
+        - "drop" - drop all NaNs
         - "ffill" - forward fill not leading NaNs
         - "ffill_and_drop_leading" - do ffill and drop leading NaNs
         - "fill_with_zero" - fill NaNs with 0
@@ -133,9 +129,9 @@ def apply_nan_mode(
     dbg.dassert_isinstance(srs, pd.Series)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-    if mode is None:
+    if mode == "leave_unchanged":
         res = srs.copy()
-    elif mode == "ignore":
+    elif mode == "drop":
         res = srs.dropna().copy()
     elif mode == "ffill":
         res = srs.ffill().copy()
@@ -171,8 +167,7 @@ def apply_nan_mode(
 
 
 def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
-    """
-    Return the number of index time points per year.
+    """Return the number of index time points per year.
 
     TODO(*): Consider extending to all frequencies and count points by
         explicitly building indices of the given frequency.
@@ -188,16 +183,20 @@ def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> floa
 
 @functools.lru_cache()
 def compute_points_per_year_for_given_freq(freq: str) -> float:
-    """
-    Return the number of index time points per year.
+    """Return the number of index time points per year.
 
     :param freq: string identifier of date frequency
     :return: number of time points per year (approximate)
     """
-    # Leap years: 2012, 2016.
-    points_in_span = pd.date_range(
-        freq=freq, start="2012-01-01", end="2019-12-31"
-    ).size
-    span_in_years = 8
-    points_per_year = points_in_span / span_in_years
-    return points_per_year
+    # `pd.date_range` breaks for zero-period frequencies, so we need to work
+    # around that.
+    try:
+        # Leap years: 2012, 2016.
+        points_in_span = pd.date_range(
+            freq=freq, start="2012-01-01", end="2019-12-31"
+        ).size
+        span_in_years = 8
+        points_per_year: float = points_in_span / span_in_years
+        return points_per_year
+    except ZeroDivisionError:
+        return 0.0

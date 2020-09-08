@@ -1,0 +1,50 @@
+version: '2.1'
+
+services:
+# ###########
+# Templates
+# ###########
+
+  tests:
+    # For local runs in user space.
+    image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
+    volumes:
+      - .:/amp
+      - ~/.aws:/root/.aws
+      - ./docker_build/fstab:/etc/fstab
+    working_dir: /amp
+    entrypoint: ""
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+
+  tests_gh_actions:
+    # For runs through GH Actions.
+    extends:
+      file: docker-compose.yml
+      service: tests
+    environment:
+      AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+    volumes:
+      - .:/amp
+
+# ###########
+# Fast tests
+# ###########
+  fast_tests_gh_action:
+    extends:
+      file: docker-compose.yml
+      service: tests_gh_actions
+    container_name: fast_tests_gh_action_container
+    command: docker_build/run_fast_tests_gh_action.sh
+
+# ###########
+# Slow tests
+# ###########
+  slow_tests_gh_action:
+    extends:
+      file: docker-compose.yml
+      service: tests_gh_actions
+    container_name: slow_tests_gh_action_container
+    command: docker_build/run_slow_tests_gh_action.sh

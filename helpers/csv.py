@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Union
 
 import pandas as pd
 
@@ -11,9 +11,10 @@ import helpers.s3 as hs3
 _LOG = logging.getLogger(__name__)
 
 
-def read_csv_range(csv_path, from_, to, **kwargs):
-    """
-    Read a specified row range of a csv file and convert to a DataFrame.
+def read_csv_range(
+    csv_path: str, from_: int, to: int, **kwargs: Any
+) -> pd.DataFrame:
+    """Read a specified row range of a csv file and convert to a DataFrame.
 
     Assumed to have header, considered to be row 0.
     Reads [from_, to), e.g., to - from_ lines.
@@ -34,9 +35,15 @@ def read_csv_range(csv_path, from_, to, **kwargs):
     return df
 
 
-def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
-    """
-    Builds a DataFrame from a csv subset as follows:
+def build_chunk(
+    csv_path: str,
+    col_name: str,
+    start: int,
+    nrows_at_a_time: int = 1000,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """Build a DataFrame from a csv subset as follows:
+
       - Names the columns using the header line (row 0)
       - Reads the value in (row, col) coordinates (`start`, `col_name`) (if it
           exists) as `value`
@@ -84,10 +91,14 @@ def build_chunk(csv_path, col_name, start, nrows_at_a_time=1000, **kwargs):
 
 
 def find_first_matching_row(
-    csv_path, col_name, val, start=1, nrows_at_a_time=1000000, **kwargs
-):
-    """
-    Find first row in csv where value in column `col_name` equals `val`.
+    csv_path: str,
+    col_name: str,
+    val: str,
+    start: int = 1,
+    nrows_at_a_time: int = 1000000,
+    **kwargs: Any,
+) -> Optional[int]:
+    """Find first row in csv where value in column `col_name` equals `val`.
 
     :param csv_path: location of csv file
     :param col_name: name of column whose values define chunks
@@ -107,20 +118,27 @@ def find_first_matching_row(
         if matches.any():
             idx_max = matches.idxmax()
             return curr + idx_max
-        else:
-            curr += nrows_at_a_time
+        curr += nrows_at_a_time
+    return None
 
 
-def append(df, path, index=False, **kwargs):
+def append(
+    df: pd.DataFrame, path: str, index: bool = False, **kwargs: Any
+) -> None:
     with open(path, "a") as f:
         df.to_csv(f, header=False, index=index, **kwargs)
 
 
 def csv_mapreduce(
-    csv_path, out_dir, key_func, chunk_preprocessor=None, chunksize=1000000
-):
-    """
-    Map-reduce-type processing of csv. Here we
+    csv_path: str,
+    out_dir: str,
+    key_func: Callable,
+    chunk_preprocessor: Union[None, Callable],
+    chunksize: int = 1000000,
+) -> None:
+    """Map-reduce-type processing of csv.
+
+    The phases are:
       - Read the csv in chunks, loading the chunk into a DataFrame
       - Key each row of the DataFrame using a groupby
       - "Reduce" keyed groups by writing and appending to a csv
@@ -143,9 +161,14 @@ def csv_mapreduce(
             append(df, os.path.join(out_dir, idx + ".csv"))
 
 
-def convert_csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
-    """
-    Converts csv file to parquet file.
+def convert_csv_to_pq(
+    csv_path: str,
+    pq_path: str,
+    normalizer: Union[Callable, None] = None,
+    header: Union[None, str] = None,
+    compression: Optional[str] = "gzip",
+) -> None:
+    """Convert csv file to parquet file.
 
     Output of csv_mapreduce is typically headerless (to support append mode), and so
     `normalizer` may be used to add appropriate headers. Note that parquet
@@ -162,13 +185,12 @@ def convert_csv_to_pq(csv_path, pq_path, normalizer=None, header=None):
     df = pd.read_csv(csv_path, header=header)
     if normalizer is not None:
         df = normalizer(df)
-    df.to_parquet(pq_path)
+    df.to_parquet(pq_path, compression=compression)
 
 
 # TODO(gp): Promote to io_.
-def _maybe_remove_extension(filename, extension):
-    """
-    Attempt to remove `extension` from `filename`.
+def _maybe_remove_extension(filename: str, extension: str) -> Optional[str]:
+    """Attempt to remove `extension` from `filename`.
 
     :param filename: str filename
     :param extension: e.g., ".csv"
@@ -186,16 +208,19 @@ def _maybe_remove_extension(filename, extension):
         extension,
     )
     #
+    ret: Optional[str] = None
     if filename.endswith(extension):
         ret = filename[: -len(extension)]
-    else:
-        ret = None
     return ret
 
 
-def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
-    """
-    Applies `convert_csv_to_pq` to all files in csv_dir.
+def convert_csv_dir_to_pq_dir(
+    csv_dir: str,
+    pq_dir: str,
+    normalizer: Union[None, Callable] = None,
+    header: Union[None, str] = None,
+) -> None:
+    """Apply `convert_csv_to_pq` to all files in csv_dir.
 
     :param csv_dir: directory of csv's
     :param pq_dir: target directory
@@ -229,8 +254,7 @@ def convert_csv_dir_to_pq_dir(csv_dir, pq_dir, normalizer=None, header=None):
 
 
 def convert_csv_to_dict(path_to_csv: str, remove_nans: bool) -> Dict[Any, Any]:
-    """
-    Convert a csv file with a dataframe into a json-compatible dict.
+    """Convert a csv file with a dataframe into a json-compatible dict.
 
     :param path_to_csv: path to the csv file
     :param remove_nans: whether to remove NaNs from the dictionary
@@ -247,14 +271,13 @@ def convert_csv_to_dict(path_to_csv: str, remove_nans: bool) -> Dict[Any, Any]:
         # Remove NaNs from the dict.
         for key in dict_df:
             dict_df[key] = [x for x in dict_df[key] if not pd.isnull(x)]
-    return dict_df
+    return dict_df  # type: ignore
 
 
 def save_csv_as_json(
     path_to_csv: str, remove_nans: bool, path_to_json: Optional[str] = None
 ) -> None:
-    """
-    Convert the df from a csv into a dict and save it into a json file.
+    """Convert the df from a csv into a dict and save it into a json file.
 
     If the `path_to_json` is not provided, the json is saved in the folder where
     the csv file is located.

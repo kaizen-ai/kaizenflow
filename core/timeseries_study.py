@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.timeseries_study as tss
 """
@@ -8,11 +7,9 @@ import logging
 from typing import Any, Callable, Dict, Iterable, Optional
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
-import core.statistics as stats
 import helpers.dbg as dbg
 import helpers.introspection as intr
 
@@ -20,14 +17,14 @@ _LOG = logging.getLogger(__name__)
 
 
 class _TimeSeriesAnalyzer:
-    """
-    Perform basic study of time series, such as:
-        - analysis at different time frequencies by resampling
-        - plot time series for column
-            - by year
-            - by month
-            - by day of week
-            - by hour
+    """Perform basic study of time series, such as:
+
+    - analysis at different time frequencies by resampling
+    - plot time series for column
+        - by year
+        - by month
+        - by day of week
+        - by hour
     """
 
     def __init__(
@@ -60,9 +57,7 @@ class _TimeSeriesAnalyzer:
         self._disabled_methods = disabled_methods or []
 
     def plot_time_series(self):
-        """
-        Plot timeseries on its original time scale.
-        """
+        """Plot timeseries on its original time scale."""
         func_name = intr.get_function_name()
         _LOG.debug(func_name)
         if func_name in self._disabled_methods:
@@ -83,9 +78,7 @@ class _TimeSeriesAnalyzer:
         plt.show()
 
     def plot_by_year(self):
-        """
-        Resample yearly and then plot each year on a different plot.
-        """
+        """Resample yearly and then plot each year on a different plot."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -122,9 +115,7 @@ class _TimeSeriesAnalyzer:
     #  different timescales instead of doing the mean in each step
     #  (see https://en.wikipedia.org/wiki/Seasonality#Detecting_seasonality)
     def boxplot_day_of_month(self):
-        """
-        Plot the mean value of the timeseries for each day.
-        """
+        """Plot the mean value of the timeseries for each day."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -141,9 +132,7 @@ class _TimeSeriesAnalyzer:
         plt.close()
 
     def boxplot_day_of_week(self):
-        """
-        Plot the mean value of the timeseries for year.
-        """
+        """Plot the mean value of the timeseries for year."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -218,58 +207,6 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
         self.boxplot_minutely_hour()
 
 
-# Stats for time series.
-
-
-# TODO(*): doubts - name is misleading and makes us believe that the function is
-#  1) infering "the true period"
-#  2) returns pd.timedelta and not the number of days
-#  also the function migh be not general enough to be here
-def infer_timedelta(series: pd.Series) -> int:
-    """
-    Compute timedelta for first two points of the time series.
-
-    :return: timedelta as number of days between first 2 data points
-    """
-    if series.shape[0] > 1:
-        timedelta = series.index[0] - series.index[1]
-        timedelta = abs(timedelta.days)
-    else:
-        timedelta = np.nan
-    return timedelta
-
-
-def infer_average_timedelta(series: pd.Series) -> float:
-    """
-    Compute average timedelta based on beginning/end timestamps and sample counts.
-
-    :return: timedelta as average number of days between all data points
-    """
-    timedelta = series.index.max() - series.index.min()
-    return stats.safe_div(timedelta.days, series.shape[0])
-
-
-def compute_moments(series: pd.Series) -> dict:
-    """
-    Wrap stats.moments function for returning a dict.
-
-    :return: dict of moments
-    """
-    moments = stats.moments(series.dropna().to_frame()).to_dict(orient="records")[
-        0
-    ]
-    return moments
-
-
-def compute_coefficient_of_variation(series):
-    """
-    Compute the coefficient of variation for a given series.
-
-    https://stats.stackexchange.com/questions/158729/normalizing-std-dev
-    """
-    return stats.safe_div(series.std(), series.mean())
-
-
 # Functions for processing dict of time series to generate a df with statistics
 # of these series.
 
@@ -280,8 +217,7 @@ def map_dict_to_dataframe(
     add_prefix: bool = True,
     progress_bar: bool = True,
 ) -> pd.DataFrame:
-    """
-    Apply and combine results of specified functions on a dict of series.
+    """Apply and combine results of specified functions on a dict of series.
 
     :param dict_: dict of series to apply functions to.
     :param functions: dict with functions prefixes in keys and functions

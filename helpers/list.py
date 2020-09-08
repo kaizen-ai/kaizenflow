@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.list as hlist
 """
@@ -10,8 +9,7 @@ import helpers.dbg as dbg
 
 
 def assert_single_element_and_return(list_: List[Any]) -> Any:
-    """
-    Assert that list `l` has a single element and return it.
+    """Assert that list `l` has a single element and return it.
 
     :param list_: list
     :return: returns the unique element of the list
@@ -22,9 +20,7 @@ def assert_single_element_and_return(list_: List[Any]) -> Any:
 
 
 def find_duplicates(list_: List) -> List:
-    """
-    Find the elements duplicated in a list.
-    """
+    """Find the elements duplicated in a list."""
     dbg.dassert_isinstance(list_, list)
     # Count the occurrences of each element of the seq.
     # TODO(gp): Consider replacing with pd.Series.value_counts.
@@ -36,9 +32,7 @@ def find_duplicates(list_: List) -> List:
 
 
 def remove_duplicates(list_: List) -> List:
-    """
-    Remove the elements duplicated in a list, without changing the order.
-    """
+    """Remove the elements duplicated in a list, without changing the order."""
     dbg.dassert_isinstance(list_, list)
     list_out = []
     set_l: Set[Any] = set()

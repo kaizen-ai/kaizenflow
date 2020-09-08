@@ -71,7 +71,6 @@ import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.system_interaction as si
-import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
@@ -276,7 +275,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if _ACTION_PUBLISH in args.action:
         _LOG.debug("Action '%s' selected.", _ACTION_PUBLISH)
         # Convert the notebook to the HTML format and move to the PUB location.
-        server_address = usc.get_p1_dev_server_ip()
+        server_address = "research.p1"
         publisher_dir = "/http/notebook_publisher"
         dst_path = f"{publisher_dir}/{args.subdir}"
         _create_remote_folder(server_address, dst_path)

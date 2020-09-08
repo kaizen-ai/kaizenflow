@@ -90,31 +90,46 @@ class Test_apply_nan_mode(hut.TestCase):
         return series
 
     def test1(self) -> None:
-        series = self._get_series_with_nans(1)
+        """
+        Test for `mode=leave_unchanged`.
+        """
+        series = self._get_series_with_nans(seed=1)
         actual = hdf.apply_nan_mode(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
-        series = self._get_series_with_nans(1)
-        actual = hdf.apply_nan_mode(series, mode="ignore")
+        """
+        Test for `mode="drop"`.
+        """
+        series = self._get_series_with_nans(seed=1)
+        actual = hdf.apply_nan_mode(series, mode="drop")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
-        series = self._get_series_with_nans(1)
+        """
+        Test for `mode="ffill"`.
+        """
+        series = self._get_series_with_nans(seed=1)
         actual = hdf.apply_nan_mode(series, mode="ffill")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
-        series = self._get_series_with_nans(1)
+        """
+        Test for `mode="ffill_and_drop_leading"`.
+        """
+        series = self._get_series_with_nans(seed=1)
         actual = hdf.apply_nan_mode(series, mode="ffill_and_drop_leading")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
-        series = self._get_series_with_nans(1)
+        """
+        Test for `mode="fill_with_zero"`.
+        """
+        series = self._get_series_with_nans(seed=1)
         actual = hdf.apply_nan_mode(series, mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
@@ -149,3 +164,7 @@ class Test_compute_points_per_year_for_given_freq(hut.TestCase):
     def test6(self) -> None:
         actual = hdf.compute_points_per_year_for_given_freq("Y")
         np.testing.assert_equal(actual, 1.0)
+
+    def test7(self) -> None:
+        actual = hdf.compute_points_per_year_for_given_freq("0D")
+        np.testing.assert_equal(actual, 0.0)

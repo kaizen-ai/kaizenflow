@@ -1,0 +1,122 @@
+default_stages: ["commit"]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+      - id: no-commit-to-branch
+        args: ["--pattern", '^(?!(Part|Amp|Infra)Task\d+_\S+).*$']
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.13.1
+    hooks:
+      - id: gitlint
+        stages: [commit-msg]
+        entry: gitlint
+        # B6 Body message is missing.
+        args: [--contrib=CT1, --ignore=B6, --msg-filename]
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.7
+    hooks:
+      - id: remove-crlf
+      - id: remove-tabs
+        args: ["--whitespaces-count", "4"]
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.3.2
+    hooks:
+      - id: isort
+        entry: bash -c 'isort "$@"; if [ -z "${CI}" ]; then git add -u; fi' --
+  - repo: https://github.com/humitos/mirrors-autoflake
+    rev: v1.3
+    hooks:
+      - id: autoflake
+        args: [-i, --remove-all-unused-imports, --remove-unused-variables]
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: bash -c 'p1_black.py "$@"; if [ -z "${CI}" ]; then git add -u; fi' --
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: flake8
+        name: flake8
+        entry: p1_flake8.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: doc_formatter
+        name: doc_formatter
+        entry: p1_doc_formatter.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib", "docformatter"]
+      - id: pylint
+        name: pylint
+        entry: p1_pylint.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: mypy
+        name: mypy
+        entry: p1_mypy.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: processjupytext
+        name: processjupytext
+        entry: p1_processjupytext.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: lint_md
+        name: lint_md
+        entry: p1_lint_md.py
+        language: python
+        types: [markdown]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: fix_comments
+        name: fix_comments
+        entry: p1_fix_comments.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib", "more_itertools"]
+      - id: method_order
+        name: method_order
+        entry: p1_class_method_order.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: check_fillename
+        name: check_filename
+        entry: p1_check_filename.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: check_import
+        name: check_import
+        entry: p1_check_import.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: format_separating_line
+        name: format_separating_line
+        entry: p1_format_separating_line.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: warn_incorrectly_formatted_todo
+        name: warn_incorrectly_formatted_todo
+        entry: p1_warn_incorrectly_formatted_todo.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
+      - id: check_shebang
+        name: check_shebang
+        entry: p1_check_shebang.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]

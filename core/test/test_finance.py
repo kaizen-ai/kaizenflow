@@ -12,6 +12,102 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+class Test_set_weekends_to_nan(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test for a daily frequency input.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2020-01-01", "periods": 40, "freq": "D"}, seed=1
+        )
+        actual = fin.set_weekends_to_nan(df)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test for a minutely frequency input.
+        """
+        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=1)
+        df = mn_process.generate_sample(
+            {"start": "2020-01-05 23:00:00", "periods": 100, "freq": "T"}, seed=1
+        )
+        actual = fin.set_weekends_to_nan(df)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+
+class Test_compute_inverse_volatility_weights(hut.TestCase):
+    @staticmethod
+    def _get_sample(seed: int) -> pd.DataFrame:
+        mean = pd.Series([1, 2])
+        cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
+        date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
+        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
+        sample = mn_process.generate_sample(date_range, seed=seed)
+        sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
+        return sample
+
+    @staticmethod
+    def _get_output_txt(sample: pd.DataFrame, weights: pd.Series) -> str:
+        sample_string = hut.convert_df_to_string(sample, index=True)
+        weights_string = hut.convert_df_to_string(weights, index=True)
+        txt = (
+            f"Input sample:\n{sample_string}\n\n"
+            f"Output weights:\n{weights_string}\n"
+        )
+        return txt
+
+    def test1(self) -> None:
+        """
+        Test for a clean input.
+        """
+        sample = self._get_sample(seed=1)
+        weights = fin.compute_inverse_volatility_weights(sample)
+        output_txt = self._get_output_txt(sample, weights)
+        self.check_string(output_txt)
+
+    def test2(self) -> None:
+        """
+        Test for an input with NaNs.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[1, 1] = np.nan
+        sample.iloc[0:5, 0] = np.nan
+        weights = fin.compute_inverse_volatility_weights(sample)
+        output_txt = self._get_output_txt(sample, weights)
+        self.check_string(output_txt)
+
+    def test3(self) -> None:
+        """
+        Test for an input with all-NaN column.
+
+        Results are not intended.
+        `weights` are `0` for all-NaN columns in the input.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, 0] = np.nan
+        weights = fin.compute_inverse_volatility_weights(sample)
+        output_txt = self._get_output_txt(sample, weights)
+        self.check_string(output_txt)
+
+    def test4(self) -> None:
+        """
+        Test for an all-NaN input.
+
+        Results are not intended.
+        `weights` are `0` for all-NaN columns in the input.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, :] = np.nan
+        weights = fin.compute_inverse_volatility_weights(sample)
+        output_txt = self._get_output_txt(sample, weights)
+        self.check_string(output_txt)
+
+
 class Test_aggregate_log_rets(hut.TestCase):
     @staticmethod
     def _get_sample(seed: int) -> pd.DataFrame:
@@ -23,21 +119,31 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
         return sample
 
+    @staticmethod
+    def _get_output_txt(
+        sample: pd.DataFrame, weights: pd.Series, aggregate_log_rets: pd.Series
+    ) -> str:
+        sample_string = hut.convert_df_to_string(sample, index=True)
+        weights_string = hut.convert_df_to_string(weights, index=True)
+        aggregate_log_rets_string = hut.convert_df_to_string(
+            aggregate_log_rets, index=True
+        )
+        txt = (
+            f"Input sample:\n{sample_string}\n\n"
+            f"Input weights:\n{weights_string}\n\n"
+            f"Output aggregate log returns:\n{aggregate_log_rets_string}\n"
+        )
+        return txt
+
     def test1(self) -> None:
         """
         Test for a clean input.
         """
         sample = self._get_sample(seed=1)
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = fin.compute_inverse_volatility_weights(sample)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test2(self) -> None:
         """
@@ -46,54 +152,32 @@ class Test_aggregate_log_rets(hut.TestCase):
         sample = self._get_sample(seed=1)
         sample.iloc[1, 1] = np.nan
         sample.iloc[0:5, 0] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = fin.compute_inverse_volatility_weights(sample)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test3(self) -> None:
         """
         Test for an input with all-NaN column.
-
-        Results are not intended.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
 
     def test4(self) -> None:
         """
         Test for an all-NaN input.
-
-        Results are not intended.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
-        rescaled_srs, relative_weights = fin.aggregate_log_rets(sample, 0.1)
-        rescaled_srs_string = hut.convert_df_to_string(rescaled_srs, index=True)
-        relative_weights_string = hut.convert_df_to_string(
-            relative_weights, index=True
-        )
-        txt = (
-            f"rescaled_srs:\n{rescaled_srs_string}\n\n"
-            f"relative_weights:\n{relative_weights_string}"
-        )
-        self.check_string(txt)
+        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
 
 
 class Test_compute_kratio(hut.TestCase):
@@ -114,7 +198,18 @@ class Test_compute_kratio(hut.TestCase):
         """
         series = self._get_series(seed=1)
         actual = fin.compute_kratio(series)
-        expected = -0.69011
+        expected = -0.84551
+        np.testing.assert_almost_equal(actual, expected, decimal=3)
+
+    def test2(self) -> None:
+        """
+        Test for an input with NaN values.
+        """
+        series = self._get_series(seed=1)
+        series[:3] = np.nan
+        series[7:10] = np.nan
+        actual = fin.compute_kratio(series)
+        expected = -0.85089
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
 
@@ -175,31 +270,54 @@ class Test_compute_turnover(hut.TestCase):
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
         arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
-        )
+        ).rename("input")
         return series
 
     def test1(self) -> None:
+        """
+        Test for default arguments.
+        """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(series).rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test2(self) -> None:
+        """
+        Test for only positive input.
+        """
         positive_series = self._get_series(seed=1).abs()
-        actual = fin.compute_turnover(positive_series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(positive_series).rename("output")
+        output_df = pd.concat([positive_series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
     def test3(self) -> None:
+        """
+        Test for nan_mode.
+        """
         series = self._get_series(seed=1)
         series[5:10] = np.nan
-        actual = fin.compute_turnover(series, nan_mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual = fin.compute_turnover(series, nan_mode="ffill").rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
+
+    def test4(self) -> None:
+        """
+        Test for unit.
+        """
+        series = self._get_series(seed=1)
+        series[5:10] = np.nan
+        actual = fin.compute_turnover(series, unit="B").rename("output")
+        output_df = pd.concat([series, actual], axis=1)
+        output_df_string = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_df_string)
 
 
 class Test_compute_average_holding_period(hut.TestCase):
@@ -694,6 +812,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         return series
 
     def test1(self) -> None:
+        """
+        Test for clean input series.
+        """
         log_rets = self._get_series(42)
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
         actual = fin.compute_returns_per_bet(positions, log_rets)
@@ -707,6 +828,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         self.check_string(output_str)
 
     def test2(self) -> None:
+        """
+        Test for input series with NaNs and zeros.
+        """
         log_rets = self._get_series(42)
         log_rets.iloc[6:12] = np.nan
         positions = sigp.compute_smooth_moving_average(log_rets, 4)
@@ -724,6 +848,9 @@ class Test_compute_returns_per_bet(hut.TestCase):
         self.check_string(output_str)
 
     def test3(self) -> None:
+        """
+        Test for short input series.
+        """
         idx = pd.to_datetime(
             [
                 "2010-01-01",
@@ -734,14 +861,14 @@ class Test_compute_returns_per_bet(hut.TestCase):
                 "2010-01-12",
             ]
         )
-        log_rets = pd.Series([1, 2, 3, 5, 7, 11], index=idx)
-        positions = pd.Series([1, 2, 0, 1, -3, -2], index=idx)
+        log_rets = pd.Series([1.0, 2.0, 3.0, 5.0, 7.0, 11.0], index=idx)
+        positions = pd.Series([1.0, 2.0, 0.0, 1.0, -3.0, -2.0], index=idx)
         actual = fin.compute_returns_per_bet(positions, log_rets)
         expected = pd.Series(
             {
-                pd.Timestamp("2010-01-03"): 5,
-                pd.Timestamp("2010-01-06"): 5,
-                pd.Timestamp("2010-01-12"): -43,
+                pd.Timestamp("2010-01-03"): 5.0,
+                pd.Timestamp("2010-01-06"): 5.0,
+                pd.Timestamp("2010-01-12"): -43.0,
             }
         )
         pd.testing.assert_series_equal(actual, expected)

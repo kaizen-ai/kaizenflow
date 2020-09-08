@@ -1,11 +1,12 @@
 import datetime
 import logging
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
+import core.signal_processing as sigp
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 import helpers.printing as pri
@@ -16,9 +17,9 @@ _LOG = logging.getLogger(__name__)
 def remove_dates_with_no_data(
     df: pd.DataFrame, report_stats: bool
 ) -> pd.DataFrame:
-    """
-    Given a df indexed with timestamps, scan the data by date and filter out
+    """Given a df indexed with timestamps, scan the data by date and filter out
     all the data when it's all nans.
+
     :return: filtered df
     """
     # This is not strictly necessary.
@@ -62,11 +63,9 @@ def remove_dates_with_no_data(
 def resample(
     df: pd.DataFrame, agg_interval: Union[str, pd.Timedelta, pd.DateOffset]
 ) -> pd.DataFrame:
-    """
-    Resample returns (using sum) using our timing convention.
-    """
+    """Resample returns (using sum) using our timing convention."""
     dbg.dassert_strictly_increasing_index(df)
-    resampler = df.resample(agg_interval, closed="left", label="right")
+    resampler = sigp.resample(df, rule=agg_interval, closed="left")
     rets = resampler.sum()
     return rets
 
@@ -76,8 +75,7 @@ def set_non_ath_to_nan(
     start_time: Optional[datetime.time] = None,
     end_time: Optional[datetime.time] = None,
 ) -> pd.DataFrame:
-    """
-    Filter according to active trading hours.
+    """Filter according to active trading hours.
 
     We assume time intervals are left closed, right open, labeled right.
 
@@ -102,12 +100,10 @@ def set_non_ath_to_nan(
 
 
 def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Filter out weekends.
-    """
+    """Filter out weekends."""
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
     # 5 = Saturday, 6 = Sunday.
-    mask = df.index.day.isin([5, 6])
+    mask = df.index.dayofweek.isin([5, 6])
     df = df.copy()
     df[mask] = np.nan
     return df
@@ -156,10 +152,9 @@ def compute_ret_0_from_multiple_prices(
 
 
 def convert_log_rets_to_pct_rets(
-    log_rets: Union[pd.Series, pd.DataFrame]
-) -> Union[pd.Series, pd.DataFrame]:
-    """
-    Convert log returns to percentage returns.
+    log_rets: Union[float, pd.Series, pd.DataFrame]
+) -> Union[float, pd.Series, pd.DataFrame]:
+    """Convert log returns to percentage returns.
 
     :param log_rets: time series of log returns
     :return: time series of percentage returns
@@ -168,10 +163,9 @@ def convert_log_rets_to_pct_rets(
 
 
 def convert_pct_rets_to_log_rets(
-    pct_rets: Union[pd.Series, pd.DataFrame]
-) -> Union[pd.Series, pd.DataFrame]:
-    """
-    Convert percentage returns to log returns.
+    pct_rets: Union[float, pd.Series, pd.DataFrame]
+) -> Union[float, pd.Series, pd.DataFrame]:
+    """Convert percentage returns to log returns.
 
     :param pct_rets: time series of percentage returns
     :return: time series of log returns
@@ -182,8 +176,7 @@ def convert_pct_rets_to_log_rets(
 def rescale_to_target_annual_volatility(
     srs: pd.Series, volatility: float
 ) -> pd.Series:
-    """
-    Rescale srs to achieve target annual volatility.
+    """Rescale srs to achieve target annual volatility.
 
     NOTE: This is not a causal rescaling, but SR is an invariant.
 
@@ -193,24 +186,28 @@ def rescale_to_target_annual_volatility(
     :return: rescaled returns series
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    scale_factor = _compute_scale_factor(srs, volatility=volatility)
+    scale_factor = compute_volatility_normalization_factor(
+        srs, target_volatility=volatility
+    )
     return scale_factor * srs
 
 
-def aggregate_log_rets(
-    df: pd.DataFrame, target_volatility: float
-) -> Tuple[pd.Series, pd.Series]:
-    """
-    Perform inverse volatility weighting and normalize volatility.
+def compute_inverse_volatility_weights(df: pd.DataFrame) -> pd.Series:
+    """Calculate inverse volatility relative weights.
 
     :param df: cols contain log returns
-    :param target_volatility: annualize target volatility
-    :return: series of log returns, series of weights
+    :return: series of weights
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert(not df.columns.has_duplicates)
     # Compute inverse volatility weights.
-    weights = df.apply(lambda x: _compute_scale_factor(x, target_volatility))
+    # The result of `compute_volatility_normalization_factor()`
+    # is independent of the `target_volatility`.
+    weights = df.apply(
+        lambda x: compute_volatility_normalization_factor(
+            x, target_volatility=0.1
+        )
+    )
     # Replace inf's with 0's in weights.
     weights.replace([np.inf, -np.inf], np.nan, inplace=True)
     # Rescale weights to percentages.
@@ -218,31 +215,43 @@ def aggregate_log_rets(
     weights.name = "weights"
     # Replace NaN with zero for weights.
     weights = hdf.apply_nan_mode(weights, mode="fill_with_zero")
-    # Compute aggregate log returns.
+    return weights
+
+
+def aggregate_log_rets(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
+    """Compute aggregate log returns.
+
+    :param df: cols contain log returns
+    :param weights: series of weights
+    :return: series of log returns
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(not df.columns.has_duplicates)
+    dbg.dassert(df.columns.equals(weights.index))
     df = df.apply(
-        lambda x: rescale_to_target_annual_volatility(x, target_volatility)
+        lambda x: rescale_to_target_annual_volatility(x, weights[x.name])
     )
     df = df.apply(convert_log_rets_to_pct_rets)
     df = df.mean(axis=1)
     srs = df.squeeze()
     srs = convert_pct_rets_to_log_rets(srs)
-    rescaled_srs = rescale_to_target_annual_volatility(srs, target_volatility)
-    return rescaled_srs, weights
+    return srs
 
 
-def _compute_scale_factor(srs: pd.Series, volatility: float) -> pd.Series:
-    """
-    Compute scale factor of a series according to a target volatility.
+def compute_volatility_normalization_factor(
+    srs: pd.Series, target_volatility: float
+) -> float:
+    """Compute scale factor of a series according to a target volatility.
 
     :param srs: returns series. Index must have `freq`.
-    :param volatility: volatility as a proportion (e.g., `0.1`
+    :param target_volatility: target volatility as a proportion (e.g., `0.1`
         corresponds to 10% annual volatility)
     :return: scale factor
     """
     dbg.dassert_isinstance(srs, pd.Series)
     ppy = hdf.infer_sampling_points_per_year(srs)
     srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
-    scale_factor = volatility / (np.sqrt(ppy) * srs.std())
+    scale_factor = target_volatility / (np.sqrt(ppy) * srs.std())
     _LOG.debug("`scale_factor`=%f", scale_factor)
     return scale_factor
 
@@ -254,27 +263,30 @@ def _compute_scale_factor(srs: pd.Series, volatility: float) -> pd.Series:
 
 
 def compute_kratio(log_rets: pd.Series) -> float:
-    """
-    Calculate K-Ratio of a time series of log returns.
+    """Calculate K-Ratio of a time series of log returns.
 
     :param log_rets: time series of log returns
     :return: K-Ratio
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
-    log_rets = hdf.apply_nan_mode(log_rets, mode="ignore")
+    dbg.dassert(log_rets.index.freq)
+    log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
+    cum_rets = log_rets.cumsum()
     # Fit the best line to the daily rets.
-    x = range(len(log_rets))
+    x = range(len(cum_rets))
     x = sm.add_constant(x)
-    reg = sm.OLS(log_rets, x)
+    reg = sm.OLS(cum_rets, x)
     model = reg.fit()
     # Compute k-ratio as slope / std err of slope.
     kratio = model.params[1] / model.bse[1]
+    # Adjust k-ratio by the number of observations and points per year.
+    ppy = hdf.infer_sampling_points_per_year(log_rets)
+    kratio = kratio * np.sqrt(ppy) / len(log_rets)
     return kratio
 
 
 def compute_drawdown(log_rets: pd.Series) -> pd.Series:
-    r"""
-    Calculate drawdown of a time series of log returns.
+    r"""Calculate drawdown of a time series of log returns.
 
     Define the drawdown at index location j to be
         d_j := max_{0 \leq i \leq j} \log(p_i / p_j)
@@ -289,14 +301,13 @@ def compute_drawdown(log_rets: pd.Series) -> pd.Series:
     dbg.dassert_isinstance(log_rets, pd.Series)
     log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
     cum_rets = log_rets.cumsum()
-    running_max = np.maximum.accumulate(cum_rets)
+    running_max = np.maximum.accumulate(cum_rets)  # pylint: disable=no-member
     drawdown = running_max - cum_rets
     return drawdown
 
 
 def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
-    """
-    Calculate drawdown in terms of percentage loss.
+    """Calculate drawdown in terms of percentage loss.
 
     :param log_rets: time series of log returns
     :return: drawdown time series as percentage loss
@@ -306,8 +317,7 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
 
 
 def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
-    """
-    Generate time under water series.
+    """Generate time under water series.
 
     :param log_rets: time series of log returns
     :return: series of number of consecutive time points under water
@@ -329,28 +339,36 @@ def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
     return n_timepoints_underwater
 
 
-def compute_turnover(pos: pd.Series, nan_mode: Optional[str] = None) -> pd.Series:
-    """
-    Compute turnover for a sequence of positions.
+def compute_turnover(
+    pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
+) -> pd.Series:
+    """Compute turnover for a sequence of positions.
 
     :param pos: sequence of positions
+    :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: turnover
     """
     dbg.dassert_isinstance(pos, pd.Series)
+    dbg.dassert(pos.index.freq)
     nan_mode = nan_mode or "ffill"
     pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
+    if unit:
+        numerator = sigp.resample(numerator, rule=unit).sum()
+        denominator = sigp.resample(denominator, rule=unit).sum()
     turnover = numerator / denominator
+    # Raise if we upsample.
+    if len(turnover) > len(pos):
+        raise ValueError("Upsampling is not allowed.")
     return turnover
 
 
 def compute_average_holding_period(
     pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Compute average holding period for a sequence of positions.
+    """Compute average holding period for a sequence of positions.
 
     :param pos: sequence of positions
     :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
@@ -362,7 +380,7 @@ def compute_average_holding_period(
     dbg.dassert(pos.index.freq)
     pos_freq_in_year = hdf.infer_sampling_points_per_year(pos)
     unit_freq_in_year = hdf.infer_sampling_points_per_year(
-        pos.resample(unit).sum()
+        sigp.resample(pos, rule=unit).sum()
     )
     dbg.dassert_lte(
         unit_freq_in_year,
@@ -381,8 +399,7 @@ def compute_average_holding_period(
 def compute_bet_runs(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate runs of long/short bets.
+    """Calculate runs of long/short bets.
 
     A bet "run" is a (maximal) series of positions on the same "side", e.g.,
     long or short.
@@ -408,8 +425,7 @@ def compute_bet_runs(
 def compute_bet_starts(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate the start of each new bet.
+    """Calculate the start of each new bet.
 
     :param positions: series of long/short positions
     :return: a series with a +1 at the start of each new long bet and a -1 at
@@ -436,8 +452,7 @@ def compute_bet_starts(
 def compute_bet_ends(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate the end of each bet.
+    """Calculate the end of each bet.
 
     NOTE: This function is not casual (because of our choice of indexing).
 
@@ -459,14 +474,13 @@ def compute_bet_ends(
 def compute_signed_bet_lengths(
     positions: pd.Series, nan_mode: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate lengths of bets (in sampling freq).
+    """Calculate lengths of bets (in sampling freq).
 
     :param positions: series of long/short positions
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed lengths of bets, i.e., the sign indicates whether the
         length corresponds to a long bet or a short bet. Index corresponds to
-        either end of bet (not causal).
+        end of bet (not causal).
     """
     bet_runs = compute_bet_runs(positions, nan_mode)
     bet_starts = compute_bet_starts(positions, nan_mode)
@@ -478,12 +492,22 @@ def compute_signed_bet_lengths(
     # `NaN`s in `compute_bet_runs`).
     bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    bet_lengths = []
-    for t0, t1 in zip(bet_starts_idx, bet_ends_idx):
-        bet_length = bet_runs.loc[t0:t1].sum()
-        bet_lengths.append(bet_length)
+    # To calculate lengths of bets, we take a running cumulative sum of
+    # absolute values so that bet lengths can be calculated by subtracting
+    # the value at the beginning of each bet from its value at the end.
+    bet_runs_abs_cumsum = bet_runs.abs().cumsum()
+    # Align bet starts and ends for vectorized subtraction.
+    t0s = bet_runs_abs_cumsum.loc[bet_starts_idx].reset_index(drop=True)
+    t1s = bet_runs_abs_cumsum.loc[bet_ends_idx].reset_index(drop=True)
+    # Subtract and correct for off-by-one.
+    bet_lengths = t1s - t0s + 1
+    # Recover bet signs (positive for long, negative for short).
+    bet_lengths = bet_lengths * bet_starts.loc[bet_starts_idx].reset_index(
+        drop=True
+    )
+    # Reindex according to the bet ends index.
     bet_length_srs = pd.Series(
-        index=bet_ends_idx, data=bet_lengths, name=positions.name
+        index=bet_ends_idx, data=bet_lengths.values, name=positions.name
     )
     return bet_length_srs
 
@@ -491,8 +515,7 @@ def compute_signed_bet_lengths(
 def compute_returns_per_bet(
     positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate returns for each bet.
+    """Calculate returns for each bet.
 
     :param positions: series of long/short positions
     :param log_rets: log returns
@@ -502,30 +525,29 @@ def compute_returns_per_bet(
     """
     dbg.dassert(positions.index.equals(log_rets.index))
     dbg.dassert_strictly_increasing_index(log_rets)
-    bet_starts = compute_bet_starts(positions, nan_mode)
     bet_ends = compute_bet_ends(positions, nan_mode)
-    # Sanity check indices.
-    dbg.dassert(bet_starts.index.equals(bet_ends.index))
     # Retrieve locations of bet starts and bet ends.
-    bet_starts_idx = bet_starts.loc[bet_starts != 0].dropna().index
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
-    # Compute returns per bet.
-    rets_per_bet = []
-    for bet_start, bet_end in zip(bet_starts_idx, bet_ends_idx):
-        pnl_bet = (
-            log_rets.loc[bet_start:bet_end] * positions.loc[bet_start:bet_end]
-        )
-        bet_rets = pnl_bet.sum()
-        rets_per_bet.append(bet_rets)
+    pnl_bets = log_rets * positions
+    bet_rets_cumsum = pnl_bets.cumsum().ffill()
+    # Select rets cumsum for periods when bets end.
+    bet_rets_cumsum_ends = bet_rets_cumsum.loc[bet_ends_idx].reset_index(
+        drop=True
+    )
+    # Difference between rets cumsum of bet ends is equal to the rets cumsum
+    # for the time between these bet ends i.e. rets cumsum per bet.
+    rets_per_bet = bet_rets_cumsum_ends.diff()
+    # The 1st element of rets_per_bet equals the 1st one of bet_rets_cumsum_ends
+    # because it is the first bet so nothing to subtract from it.
+    rets_per_bet[0] = bet_rets_cumsum_ends[0]
     rets_per_bet = pd.Series(
-        data=rets_per_bet, index=bet_ends_idx, name=log_rets.name
+        data=rets_per_bet.values, index=bet_ends_idx, name=log_rets.name
     )
     return rets_per_bet
 
 
 def compute_annualized_return(srs: pd.Series) -> float:
-    """
-    Annualize mean return.
+    """Annualize mean return.
 
     :param srs: series with datetimeindex with `freq`
     :return: annualized return; pct rets if `srs` consists of pct rets,
@@ -539,8 +561,7 @@ def compute_annualized_return(srs: pd.Series) -> float:
 
 
 def compute_annualized_volatility(srs: pd.Series) -> float:
-    """
-    Annualize sample volatility.
+    """Annualize sample volatility.
 
     :param srs: series with datetimeindex with `freq`
     :return: annualized volatility (stdev)

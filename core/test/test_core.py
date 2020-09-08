@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
+import pytest
 import scipy
 
 import core.config as cfg
@@ -658,6 +659,9 @@ class Test_explore1(hut.TestCase):
             df["x"], df["y"], intercept=True, print_model_stats=False
         )
 
+    @pytest.mark.skip(
+        reason="https://github.com/ParticleDev/commodity_research/issues/3676"
+    )
     def test_rolling_pca_over_time1(self) -> None:
         np.random.seed(42)
         df = pd.DataFrame(np.random.randn(10, 5))
@@ -991,7 +995,6 @@ class TestPcaFactorComputer2(hut.TestCase):
         # We can use # the Cholesky decomposition, or the we can construct `c`
         # from the eigenvectors and eigenvalues.
         # Compute the eigenvalues and eigenvectors.
-        # evals, evecs = np.linalg.eig(r)
         evals, evecs = np.linalg.eigh(cov)
         if report_stats:
             _LOG.info("evals=\n%s", evals)

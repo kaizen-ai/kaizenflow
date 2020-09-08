@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-"""
-Lint md files.
+"""Lint md files.
+
 > lint_txt.py -i foo.md -o bar.md
 
 It can be used in vim to prettify a part of the text using stdin / stdout.
@@ -162,7 +162,7 @@ def _postprocess(txt: str, in_file_name: str) -> str:
         txt_new.append(line)
     if in_triple_tick_block:
         print("%s:%s: A ``` block was not ending" % (in_file_name, 1))
-    txt_new_as_str = "\n".join(txt_new).rstrip("\n")
+    txt_new_as_str = "\n".join(txt_new)
     return txt_new_as_str
 
 

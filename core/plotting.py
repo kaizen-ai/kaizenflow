@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import core.plotting as plot
 """
@@ -9,7 +8,15 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
+import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,14 +27,7 @@ import sklearn.decomposition as skldec
 import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
+import statsmodels.regression.rolling as smrr
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ _DATETIME_TYPES = [
 
 
 # #############################################################################
-# General dataframe plotting helpers
+# General plotting helpers
 # #############################################################################
 
 
@@ -60,8 +60,7 @@ def plot_non_na_cols(
     ascending: bool = True,
     max_num: Optional[int] = None,
 ) -> Any:
-    """
-    Plot a diagram describing the non-nans intervals for the columns of df.
+    """Plot a diagram describing the non-nans intervals for the columns of df.
 
     :param df: usual df indexed with times
     :param sort: sort the columns by number of non-nans
@@ -116,8 +115,7 @@ def plot_categories_count(
     title: Optional[str] = None,
     label: Optional[str] = None,
 ) -> None:
-    """
-    Plot countplot of a given `category_column`.
+    """Plot countplot of a given `category_column`.
 
     :param df: df to plot
     :param category_column: categorical column to subset plots by
@@ -160,19 +158,241 @@ def plot_categories_count(
     plt.show()
 
 
+def get_multiple_plots(
+    num_plots: int,
+    num_cols: int,
+    y_scale: Optional[float] = None,
+    *args: Any,
+    **kwargs: Any,
+) -> Tuple[mpl.figure.Figure, np.array]:
+    """Create figure to accommodate `num_plots` plots. The figure is arranged
+    in rows with `num_cols` columns.
+
+    :param num_plots: number of plots
+    :param num_cols: number of columns to use in the subplot
+    :param y_scale: if not None
+    :return: figure and array of axes
+    """
+    dbg.dassert_lte(1, num_plots)
+    dbg.dassert_lte(1, num_cols)
+    # Heuristic to find the dimension of the fig.
+    if y_scale is not None:
+        dbg.dassert_lt(0, y_scale)
+        ysize = math.ceil(num_plots / num_cols) * y_scale
+        figsize: Optional[Tuple[float, float]] = (20, ysize)
+    else:
+        figsize = None
+    fig, ax = plt.subplots(
+        math.ceil(num_plots / num_cols),
+        num_cols,
+        figsize=figsize,
+        *args,
+        **kwargs,
+    )
+    if isinstance(ax, np.ndarray):
+        return fig, ax.flatten()
+    return fig, ax
+
+
+# #############################################################################
+# Data count plots.
+# #############################################################################
+
+
+def plot_value_counts(
+    srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
+) -> None:
+    """Plot barplots for the counts of a series and print the values.
+
+    Same interface as plot_count_series() but computing the count of the
+    given series `srs`.
+    """
+    # Compute the counts.
+    counts = srs.value_counts(dropna=dropna)
+    # Plot.
+    return plot_counts(counts, *args, **kwargs)
+
+
+def plot_counts(
+    counts: pd.Series,
+    top_n_to_print: int = 10,
+    top_n_to_plot: Optional[int] = None,
+    plot_title: Optional[str] = None,
+    label: Optional[str] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    rotation: int = 0,
+) -> None:
+    """Plot barplots for series containing counts and print the values.
+
+    If the number of labels is over 20, the plot is oriented horizontally
+    and the height of the plot is automatically adjusted.
+
+    :param counts: series to plot value counts for
+    :param top_n_to_print: top N values by count to print. None for all. 0 for
+        no values
+    :param top_n_to_plot: like top_n_to_print, but for the plot
+    :param plot_title: title of the barplot
+    :param label: label of the X axis
+    :param figsize: size of the plot
+    :param rotation: rotation of xtick labels
+    """
+    # Get default values for plot title and label.
+    if not figsize:
+        figsize = FIG_SIZE
+    # Display a number of unique values in сolumn.
+    print("Number of unique values: %d" % counts.index.nunique())
+    if top_n_to_print == 0:
+        # Do not show anything.
+        pass
+    else:
+        counts_tmp = counts.copy()
+        counts.sort_values(ascending=False, inplace=True)
+        if top_n_to_print is not None:
+            dbg.dassert_lte(1, top_n_to_print)
+            counts_tmp = counts_tmp[:top_n_to_print]
+            print("Up to first %d unique labels:" % top_n_to_print)
+        else:
+            print("All unique labels:")
+        print(counts_tmp)
+    # Plot horizontally or vertically, depending on counts number.
+    if top_n_to_plot == 0:
+        # Do not show anything.
+        pass
+    else:
+        counts_tmp = counts.copy()
+        # Subset N values to plot.
+        if top_n_to_plot is not None:
+            dbg.dassert_lte(1, top_n_to_plot)
+            counts_tmp = counts_tmp[:top_n_to_plot]
+        if len(counts_tmp) > 20:
+            # Plot large number of categories horizontally.
+            counts_tmp.sort_values(ascending=True, inplace=True)
+            ylen = math.ceil(len(counts_tmp) / 26) * 5
+            figsize = (figsize[0], ylen)
+            plot_barplot(
+                counts_tmp,
+                orientation="horizontal",
+                title=plot_title,
+                figsize=figsize,
+                xlabel=label,
+                rotation=rotation,
+            )
+        else:
+            # Plot small number of categories vertically.
+            plot_barplot(
+                counts_tmp,
+                orientation="vertical",
+                title=plot_title,
+                figsize=figsize,
+                xlabel=label,
+                rotation=rotation,
+            )
+
+
+def plot_barplot(
+    srs: pd.Series,
+    orientation: str = "vertical",
+    annotation_mode: str = "pct",
+    string_format: str = "%.2f",
+    top_n_to_plot: Optional[int] = None,
+    title: Optional[str] = None,
+    xlabel: Optional[str] = None,
+    unicolor: bool = False,
+    color_palette: Optional[List[Tuple[float, float, float]]] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    rotation: int = 0,
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """Plot a barplot.
+
+    :param srs: pd.Series
+    :param orientation: vertical or horizontal bars
+    :param annotation_mode: `pct`, `value` or None
+    :param string_format: format of bar annotations
+    :param top_n_to_plot: number of top N integers to plot
+    :param title: title of the plot
+    :param xlabel: label of the X axis
+    :param unicolor: if True, plot all bars in neutral blue color
+    :param color_palette: color palette
+    :param figsize: size of plot
+    :param rotation: rotation of xtick labels
+    :param ax: axes
+    """
+
+    def _get_annotation_loc(
+        x_: float, y_: float, height_: float, width_: float
+    ) -> Tuple[float, float]:
+        if orientation == "vertical":
+            return x_, y_ + max(height_, 0)
+        if orientation == "horizontal":
+            return x_ + max(width_, 0), y_
+        raise ValueError("Invalid orientation='%s'" % orientation)
+
+    # Get default figure size.
+    if figsize is None:
+        figsize = FIG_SIZE
+    if top_n_to_plot is None:
+        # If top_n not specified, plot all values.
+        srs_top_n = srs
+    else:
+        # Assert N>0.
+        dbg.dassert_lte(1, top_n_to_plot)
+        # Sort in descending order.
+        srs_sorted = srs.sort_values(ascending=False)
+        # Select top N.
+        srs_top_n = srs_sorted[:top_n_to_plot]
+    # Choose colors.
+    if unicolor:
+        color = sns.color_palette("muted")[0]
+    else:
+        color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
+        color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
+    # Choose orientation.
+    if orientation == "vertical":
+        kind = "bar"
+    elif orientation == "horizontal":
+        kind = "barh"
+    else:
+        raise ValueError("Invalid orientation='%s'" % orientation)
+    ax = ax or plt.gca()
+    # Plot top N.
+    srs_top_n.plot(
+        kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
+    )
+    # Add annotations to bars.
+    # Note: annotations in both modes are taken from
+    # entire series, not top N.
+    if annotation_mode:
+        if annotation_mode == "pct":
+            annotations = srs * 100 / srs.sum()
+            string_format = string_format + "%%"
+            annotations = annotations.apply(lambda z: string_format % z)
+        elif annotation_mode == "value":
+            annotations = srs.apply(lambda z: string_format % z)
+        else:
+            raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
+        # Annotate bars.
+        for i, p in enumerate(ax.patches):
+            height = p.get_height()
+            width = p.get_width()
+            x, y = p.get_xy()
+            annotation_loc = _get_annotation_loc(x, y, height, width)
+            ax.annotate(annotations.iloc[i], annotation_loc)
+    # Set X-axis label.
+    if xlabel:
+        ax.set(xlabel=xlabel)
+
+
 # #############################################################################
 # Time series plotting
 # #############################################################################
 
 
-def plot_timeseries(
-    df: pd.core.frame.DataFrame,
-    datetime_types: Optional[List[str]],
-    column: str,
-    ts_column: str,
+def plot_timeseries_distribution(
+    srs: pd.Series, datetime_types: Optional[List[str]] = None,
 ) -> None:
-    """
-    Plot timeseries distribution by
+    """Plot timeseries distribution by.
+
     - "year",
     - "month",
     - "quarter",
@@ -182,20 +402,21 @@ def plot_timeseries(
     - "second"
     unless otherwise provided by `datetime_types`.
 
-    :param df: df to plot
+    :param srs: timeseries pd.Series to plot
     :param datetime_types: types of pd.datetime, e.g. "month", "quarter"
-    :param column: distribution of which variable to represent
-    :param ts_column: timeseries column
     """
-    unique_rows = expl.drop_duplicates(df=df, subset=[column])
-    if not datetime_types:
+    dbg.dassert_isinstance(srs, pd.Series)
+    dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    srs = hdf.apply_nan_mode(srs, mode="drop")
+    index_series = pd.Series(srs.index)
+    if datetime_types is None:
         datetime_types = _DATETIME_TYPES
     for datetime_type in datetime_types:
         plt.figure(figsize=FIG_SIZE)
-        sns.countplot(getattr(unique_rows[ts_column].dt, datetime_type))
+        sns.countplot(getattr(index_series.dt, datetime_type))
         plt.title(f"Distribution by {datetime_type}")
         plt.xlabel(datetime_type, fontsize=12)
-        plt.ylabel(f"Quantity of {column}", fontsize=12)
+        plt.ylabel(f"Quantity of {srs.name}", fontsize=12)
         plt.show()
 
 
@@ -209,8 +430,7 @@ def plot_timeseries_per_category(
     top_n: Optional[int] = None,
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
-    """
-    Plot distribution (where `datetime_types` has the same meaning as in
+    """Plot distribution (where `datetime_types` has the same meaning as in
     plot_headlines) for a given list of categories.
 
     If `categories` param is not specified, `top_n` must be specified and plots
@@ -266,8 +486,7 @@ def plot_cols(
     axes: Optional[List[mpl.axes.Axes]] = None,
     figsize: Optional[Tuple[float, float]] = (20, 10),
 ) -> None:
-    """
-    Plot lineplot and density plot for the given dataframe.
+    """Plot lineplot and density plot for the given dataframe.
 
     :param data: data to plot
     :param colormap: preferred colors
@@ -296,16 +515,18 @@ def plot_autocorrelation(
     lags: int = 40,
     zero: bool = False,
     nan_mode: str = "conservative",
+    fft: bool = False,
     title_prefix: Optional[str] = None,
-    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
+    axes: Optional[List[mpl.axes.Axes]] = None,
     **kwargs: Any,
 ) -> None:
-    """
-    Plot ACF and PACF of columns.
+    """Plot ACF and PACF of columns.
 
     https://www.statsmodels.org/stable/_modules/statsmodels/graphics/tsaplots.html#plot_acf
     https://www.statsmodels.org/stable/_modules/statsmodels/tsa/stattools.html#acf
     """
+    if axes is None:
+        axes = [[None, None]]
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
     nrows = len(signal.columns)
@@ -324,12 +545,12 @@ def plot_autocorrelation(
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
         _ = sm.graphics.tsa.plot_acf(
-            data, lags=lags, ax=ax1, zero=zero, title=acf_title, **kwargs
+            data, lags=lags, fft=fft, ax=ax1, zero=zero, title=acf_title, **kwargs
         )
         ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
-            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs
+            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs,
         )
 
 
@@ -337,10 +558,9 @@ def plot_spectrum(
     signal: Union[pd.Series, pd.DataFrame],
     nan_mode: str = "conservative",
     title_prefix: Optional[str] = None,
-    axes: Optional[List[mpl.axes.Axes]] = [[None, None]],
+    axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
-    """
-    Plot power spectral density and spectrogram of columns.
+    """Plot power spectral density and spectrogram of columns.
 
     PSD:
       - Estimate the power spectral density using Welch's method.
@@ -350,6 +570,8 @@ def plot_spectrum(
         "Spectrograms can be used as a way of visualizing the change of a
          nonstationary signal's frequency content over time."
     """
+    if axes is None:
+        axes = [[None, None]]
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
     if title_prefix is None:
@@ -394,8 +616,7 @@ def plot_heatmap(
     vmax: float = 1.0,
     ax: Optional[plt.axes] = None,
 ) -> None:
-    """
-    Plot a heatmap for a corr / cov df.
+    """Plot a heatmap for a corr / cov df.
 
     :param corr_df: df to plot a heatmap
     :param mode: "heatmap_semitriangle", "heatmap" or "clustermap"
@@ -475,8 +696,7 @@ def plot_correlation_matrix(
     method: Optional[str] = None,
     min_periods: Optional[int] = None,
 ) -> pd.core.frame.DataFrame:
-    """
-    Compute correlation matrix and plot its heatmap.
+    """Compute correlation matrix and plot its heatmap.
 
     :param df: Df to compute correlation matrix and plot a heatmap
     :param mode: "heatmap_semitriangle", "heatmap" or "clustermap"
@@ -507,9 +727,7 @@ def plot_correlation_matrix(
 
 
 def display_corr_df(df: pd.core.frame.DataFrame) -> None:
-    """
-    Display a correlation df with values with 2 decimal places.
-    """
+    """Display a correlation df with values with 2 decimal places."""
     if df is not None:
         df_tmp = df.applymap(lambda x: "%.2f" % x)
         expl.display_df(df_tmp)
@@ -520,22 +738,25 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
 def plot_dendrogram(
     df: pd.core.frame.DataFrame, figsize: Optional[Tuple[int, int]] = None
 ) -> None:
-    """
-    Plot a dendrogram.
+    """Plot a dendrogram.
 
     A dendrogram is a diagram representing a tree.
+
     :param df: df to plot a heatmap
     :param figsize: if nothing specified, basic (20,5) used
     """
     # Look at:
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
+    # Drop constant columns.
+    constant_cols = df.columns[(df.diff().iloc[1:] == 0).all()]
+    if not constant_cols.empty:
+        _LOG.warning("Excluding constant columns: %s", constant_cols.tolist())
+        df = df.drop(columns=constant_cols)
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
-    # y = scipy.spatial.distance.pdist(df.values, 'correlation')
     y = df.corr().values
-    # z = scipy.cluster.hierarchy.linkage(y, 'single')
     z = sp.cluster.hierarchy.linkage(y, "average")
     if figsize is None:
         figsize = FIG_SIZE
@@ -555,9 +776,7 @@ def plot_corr_over_time(
     annot: bool = False,
     num_cols: int = 4,
 ) -> None:
-    """
-    Plot correlation over time.
-    """
+    """Plot correlation over time."""
     timestamps = corr_df.index.get_level_values(0).unique()
     if len(timestamps) > 20:
         _LOG.warning("The first level of index length='%s' > 20", len(timestamps))
@@ -603,8 +822,7 @@ class PCA:
     def plot_components(
         self, num_components: Optional[int] = None, num_cols: int = 4
     ) -> None:
-        """
-        Plot principal components.
+        """Plot principal components.
 
         :param num_components: number of top components to plot
         :param num_cols: number of columns to use in the subplot
@@ -641,9 +859,7 @@ class PCA:
 
     @staticmethod
     def _get_num_pcs_to_plot(num_pcs_to_plot: Optional[int], max_pcs: int) -> int:
-        """
-        Get the number of principal components to plot.
-        """
+        """Get the number of principal components to plot."""
         if num_pcs_to_plot is None:
             num_pcs_to_plot = max_pcs
             _LOG.warning("Plotting all %s components", num_pcs_to_plot)
@@ -665,9 +881,7 @@ def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
 
 
 def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
-    """
-    Generate a custom diverging colormap useful for heatmaps.
-    """
+    """Generate a custom diverging colormap useful for heatmaps."""
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
     return cmap
 
@@ -682,8 +896,8 @@ def plot_confusion_heatmap(
     y_pred: Union[List[Union[float, int]], np.array],
     return_results: bool = False,
 ) -> Any:
-    """
-    Construct and plot a heatmap for a confusion matrix of fact and prediction.
+    """Construct and plot a heatmap for a confusion matrix of fact and
+    prediction.
 
     :param y_true: true values
     :param y_pred: predictions
@@ -710,6 +924,7 @@ def plot_confusion_heatmap(
     )
     if return_results:
         return df_out, df_out_percentage
+    return None
 
 
 def multipletests_plot(
@@ -721,8 +936,7 @@ def multipletests_plot(
     suptitle: Optional[str] = None,
     **kwargs: Any,
 ) -> None:
-    """
-    Plot adjusted p-values and pass/fail threshold.
+    """Plot adjusted p-values and pass/fail threshold.
 
     :param pvals: unadjusted p-values
     :param threshold: threshold for adjusted p-values separating accepted and
@@ -741,7 +955,7 @@ def multipletests_plot(
         if isinstance(adj_pvals, pd.Series):
             adj_pvals = adj_pvals.to_frame()
     num_cols = num_cols or 1
-    adj_pvals.dropna(axis=1, how="all", inplace=True)
+    adj_pvals = adj_pvals.dropna(axis=1, how="all")
     _, ax = get_multiple_plots(
         adj_pvals.shape[1],
         num_cols=num_cols,
@@ -775,7 +989,7 @@ def multipletests_plot(
             ),
         )
         ax[i].set_title(col)
-        ax[i].axhline(threshold, ls=":", c="k")
+        ax[i].axhline(threshold, ls="--", c="k")
         ax[i].set_ylim(0, 1)
         ax[i].legend()
     plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
@@ -783,218 +997,8 @@ def multipletests_plot(
 
 
 # #############################################################################
-# Data count plots.
+# Model evaluation
 # #############################################################################
-
-
-def plot_value_counts(srs: pd.Series, *args: Any, **kwargs: Any) -> None:
-    """
-    Plot barplots for the counts of a series and print the values.
-
-    Same interface as plot_count_series() but computing the count of the given
-    series `srs`.
-    """
-    # Compute the counts.
-    counts = srs.value_counts()
-    # Plot.
-    return plot_counts(counts, *args, **kwargs)
-
-
-def plot_counts(
-    counts: pd.Series,
-    top_n_to_print: int = 10,
-    top_n_to_plot: Optional[int] = None,
-    plot_title: Optional[str] = None,
-    label: Optional[str] = None,
-    figsize: Optional[Tuple[int, int]] = None,
-    rotation: int = 0,
-) -> None:
-    """
-    Plot barplots for series containing counts and print the values.
-
-    If the number of labels is over 20, the plot is oriented horizontally
-    and the height of the plot is automatically adjusted.
-
-    :param counts: series to plot value counts for
-    :param top_n_to_print: top N values by count to print. None for all. 0 for
-        no values
-    :param top_n_to_plot: like top_n_to_print, but for the plot
-    :param plot_title: title of the barplot
-    :param label: label of the X axis
-    :param figsize: size of the plot
-    :param rotation: rotation of xtick labels
-    """
-    # Get default values for plot title and label.
-    if not figsize:
-        figsize = FIG_SIZE
-    unique_values = sorted(counts.index.to_list())
-    # Display a number of unique values in сolumn.
-    print("Number of unique values: %d" % len(unique_values))
-    if top_n_to_print == 0:
-        # Do not show anything.
-        pass
-    else:
-        counts_tmp = counts.copy()
-        counts.sort_values(ascending=False, inplace=True)
-        if top_n_to_print is not None:
-            dbg.dassert_lte(1, top_n_to_print)
-            counts_tmp = counts_tmp[:top_n_to_print]
-            print("Up to first %d unique labels:" % top_n_to_print)
-        else:
-            print("All unique labels:")
-        print(counts_tmp)
-    # Plot horizontally or vertically, depending on counts number.
-    if top_n_to_plot == 0:
-        # Do not show anything.
-        pass
-    else:
-        counts_tmp = counts.copy()
-        # Subset N values to plot.
-        if top_n_to_plot is not None:
-            dbg.dassert_lte(1, top_n_to_plot)
-            counts_tmp = counts_tmp[:top_n_to_plot]
-        if len(counts_tmp) > 20:
-            # Plot large number of categories horizontally.
-            counts_tmp.sort_values(ascending=True, inplace=True)
-            ylen = math.ceil(len(counts_tmp) / 26) * 5
-            figsize = (figsize[0], ylen)
-            plot_barplot(
-                counts_tmp,
-                orientation="horizontal",
-                title=plot_title,
-                figsize=figsize,
-                xlabel=label,
-                rotation=rotation,
-            )
-        else:
-            # Plot small number of categories vertically.
-            plot_barplot(
-                counts_tmp,
-                orientation="vertical",
-                title=plot_title,
-                figsize=figsize,
-                xlabel=label,
-                rotation=rotation,
-            )
-
-
-def plot_barplot(
-    srs: pd.Series,
-    orientation: str = "vertical",
-    annotation_mode: str = "pct",
-    string_format: str = "%.2f",
-    title: Optional[str] = None,
-    xlabel: Optional[str] = None,
-    unicolor: bool = False,
-    color_palette: Optional[List[Tuple[float, float, float]]] = None,
-    figsize: Optional[Tuple[int, int]] = None,
-    rotation: int = 0,
-    ax: Optional[mpl.axes.Axes] = None,
-) -> None:
-    """
-    Plot a barplot.
-
-    :param srs: pd.Series
-    :param orientation: vertical or horizontal bars
-    :param annotation_mode: `pct` or `value`
-    :param string_format: format of bar annotations
-    :param title: title of the plot
-    :param xlabel: label of the X axis
-    :param unicolor: if True, plot all bars in neutral blue color
-    :param color_palette: color palette
-    :param figsize: size of plot
-    :param rotation: rotation of xtick labels
-    :param ax: axes
-    """
-
-    def _get_annotation_loc(
-        x_: float, y_: float, height_: float, width_: float
-    ) -> Tuple[float, float]:
-        if orientation == "vertical":
-            return x_, y_ + max(height_, 0)
-        if orientation == "horizontal":
-            return x_ + max(width_, 0), y_
-        raise ValueError("Invalid orientation='%s'" % orientation)
-
-    if figsize is None:
-        figsize = FIG_SIZE
-    # Choose colors.
-    if unicolor:
-        color = sns.color_palette("muted")[0]
-    else:
-        color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
-        color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
-    # Plot.
-    if orientation == "vertical":
-        kind = "bar"
-    elif orientation == "horizontal":
-        kind = "barh"
-    else:
-        raise ValueError("Invalid orientation='%s'" % orientation)
-    ax = ax or plt.gca()
-    srs.plot(
-        kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
-    )
-    # Add annotations to bars.
-    if annotation_mode == "pct":
-        annotations = srs * 100 / srs.sum()
-        string_format = string_format + "%%"
-        annotations = annotations.apply(lambda z: string_format % z)
-    elif annotation_mode == "value":
-        annotations = srs.apply(lambda z: string_format % z)
-    else:
-        raise ValueError("Invalid annotations_mode='%s'" % annotation_mode)
-    #
-    for i, p in enumerate(ax.patches):
-        height = p.get_height()
-        width = p.get_width()
-        x, y = p.get_xy()
-        annotation_loc = _get_annotation_loc(x, y, height, width)
-        ax.annotate(annotations.iloc[i], annotation_loc)
-    if xlabel:
-        ax.set(xlabel=xlabel)
-
-
-# #############################################################################
-# General plotting helpers
-# #############################################################################
-
-
-def get_multiple_plots(
-    num_plots: int,
-    num_cols: int,
-    y_scale: Optional[float] = None,
-    *args: Any,
-    **kwargs: Any,
-) -> Tuple[mpl.figure.Figure, np.array]:
-    """
-    Create figure to accommodate `num_plots` plots.
-    The figure is arranged in rows with `num_cols` columns.
-
-    :param num_plots: number of plots
-    :param num_cols: number of columns to use in the subplot
-    :param y_scale: if not None
-    :return: figure and array of axes
-    """
-    dbg.dassert_lte(1, num_plots)
-    dbg.dassert_lte(1, num_cols)
-    # Heuristic to find the dimension of the fig.
-    if y_scale is not None:
-        dbg.dassert_lt(0, y_scale)
-        ysize = math.ceil(num_plots / num_cols) * y_scale
-        figsize: Optional[Tuple[float, float]] = (20, ysize)
-    else:
-        figsize = None
-    fig, ax = plt.subplots(
-        math.ceil(num_plots / num_cols),
-        num_cols,
-        figsize=figsize,
-        *args,
-        **kwargs,
-    )
-    if isinstance(ax, np.ndarray):
-        return fig, ax.flatten()
-    return fig, ax
 
 
 def plot_cumulative_returns(
@@ -1005,9 +1009,9 @@ def plot_cumulative_returns(
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     plot_zero_line: bool = True,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """
-    Plot cumulative returns.
+    """Plot cumulative returns.
 
     :param cumulative_rets: log or pct cumulative returns
     :param mode: log or pct, used to choose plot title
@@ -1017,6 +1021,7 @@ def plot_cumulative_returns(
     :param title_suffix: suffix added to the title
     :param ax: axes
     :param plot_zero_line: whether to plot horizontal line at 0
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1041,6 +1046,7 @@ def plot_cumulative_returns(
         benchmark_series.plot(ax=ax, label=bs_label, color="grey")
     if plot_zero_line:
         ax.axhline(0, linestyle="--", linewidth=0.8, color="black")
+    _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
 
@@ -1055,9 +1061,9 @@ def plot_rolling_annualized_volatility(
     unit: str = "ratio",
     trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """
-    Plot rolling annualized volatility.
+    """Plot rolling annualized volatility.
 
     :param srs: input series
     :param tau: argument as for sigp.compute_rolling_std
@@ -1070,8 +1076,10 @@ def plot_rolling_annualized_volatility(
         "Exchange:Exchange_symbol"
     :param trim_index: start plot at original index if True
     :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     min_periods = min_periods or tau
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
     # Calculate rolling volatility.
     rolling_volatility = sigp.compute_rolling_std(
         srs, tau, min_periods, min_depth, max_depth, p_moment
@@ -1103,6 +1111,7 @@ def plot_rolling_annualized_volatility(
         label="average annualized volatility",
     )
     ax.axhline(0, linewidth=0.8, color="black")
+    _maybe_add_events(ax=ax, events=events)
     ax.set_title(f"Annualized rolling volatility ({unit})")
     # Start plot from original index if specified.
     if not trim_index:
@@ -1127,9 +1136,9 @@ def plot_rolling_annualized_sharpe_ratio(
     title_suffix: Optional[str] = None,
     trim_index: Optional[bool] = False,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """
-    Plot rolling annualized Sharpe ratio.
+    """Plot rolling annualized Sharpe ratio.
 
     :param srs: input series
     :param tau: argument as for sigp.compute_smooth_moving_average
@@ -1140,8 +1149,10 @@ def plot_rolling_annualized_sharpe_ratio(
     :param title_suffix: suffix added to the title
     :param trim_index: start plot at original index if True
     :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
     min_periods = tau * max_depth
     rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
         srs,
@@ -1187,53 +1198,12 @@ def plot_rolling_annualized_sharpe_ratio(
         label="average SR",
     )
     ax.axhline(0, linewidth=0.8, color="black", label="0")
+    _maybe_add_events(ax=ax, events=events)
     # Start plot from original index if specified.
     if not trim_index:
         ax.set_xlim([min(srs.index), max(srs.index)])
     ax.set_ylabel("annualized SR")
     ax.legend()
-
-
-def plot_monthly_heatmap(
-    log_rets: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
-) -> None:
-    """
-    Plot a heatmap of log returns statistics by year and month.
-
-    :param log_rets: input series of log returns
-    :param unit: "ratio", `%` or "bps" scaling coefficient
-    :param ax: axes
-    """
-    scale_coeff = _choose_scaling_coefficient(unit)
-    ax = ax or plt.gca()
-    monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
-    monthly_spread = monthly_pct_spread * scale_coeff
-    cmap = sns.diverging_palette(10, 133, as_cmap=True)
-    sns.heatmap(monthly_spread, center=0, cmap=cmap, annot=True, fmt=".2f", ax=ax)
-    ax.set_title(f"Monthly returns ({unit})")
-    ax.tick_params(axis="y", rotation=0)
-
-
-def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
-    """
-    Calculate log returns statistics by year and month.
-
-    :param log_rets: input series of log returns
-    :return: dataframe of log returns with years on y-axis and
-        months on x-axis
-    """
-    srs_name = log_rets.name or 0
-    log_rets_df = pd.DataFrame(log_rets)
-    log_rets_df["year"] = log_rets_df.index.year
-    log_rets_df["month"] = log_rets_df.index.month
-    log_rets_df.reset_index(inplace=True)
-    monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
-    monthly_pct_returns = fin.convert_log_rets_to_pct_rets(monthly_log_returns)
-    monthly_pct_spread = monthly_pct_returns.unstack()
-    monthly_pct_spread.columns = monthly_pct_spread.columns.map(
-        lambda x: calendar.month_abbr[x]
-    )
-    return monthly_pct_spread
 
 
 def plot_yearly_barplot(
@@ -1244,8 +1214,7 @@ def plot_yearly_barplot(
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
-    """
-    Plot a barplot of log returns statistics by year.
+    """Plot a barplot of log returns statistics by year.
 
     :param log_rets: input series of log returns
     :param unit: "ratio", "%" or "bps" scaling coefficient
@@ -1281,6 +1250,25 @@ def plot_yearly_barplot(
     ax.set_ylabel(ylabel)
 
 
+def plot_monthly_heatmap(
+    log_rets: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
+) -> None:
+    """Plot a heatmap of log returns statistics by year and month.
+
+    :param log_rets: input series of log returns
+    :param unit: "ratio", `%` or "bps" scaling coefficient
+    :param ax: axes
+    """
+    scale_coeff = _choose_scaling_coefficient(unit)
+    ax = ax or plt.gca()
+    monthly_pct_spread = _calculate_year_to_month_spread(log_rets)
+    monthly_spread = monthly_pct_spread * scale_coeff
+    cmap = sns.diverging_palette(10, 133, as_cmap=True)
+    sns.heatmap(monthly_spread, center=0, cmap=cmap, annot=True, fmt=".2f", ax=ax)
+    ax.set_title(f"Monthly returns ({unit})")
+    ax.tick_params(axis="y", rotation=0)
+
+
 def plot_pnl(
     pnls: Dict[int, pd.Series],
     title: Optional[str] = None,
@@ -1293,8 +1281,7 @@ def plot_pnl(
     ylabel: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
-    """
-    Plot pnls for dict of pnl time series.
+    """Plot pnls for dict of pnl time series.
 
     :param pnls: dict of pnl time series
     :param title: plot title
@@ -1309,7 +1296,7 @@ def plot_pnl(
     """
     title = title or ""
     colormap = colormap or "rainbow"
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     xlabel = xlabel or None
     ylabel = ylabel or None
     fstr = "{col} (SR={sr})"
@@ -1326,7 +1313,7 @@ def plot_pnl(
     if empty_srs:
         _LOG.warning(
             "Empty input series were dropped: '%s'",
-            ", ".join(empty_srs.astype(str)),
+            ", ".join([str(x) for x in empty_srs]),
         )
     df_plot = pd.concat(pnls_notna, axis=1)
     # Compute sharpe ratio for every time series.
@@ -1370,14 +1357,15 @@ def plot_drawdown(
     unit: str = "%",
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """
-    Plot drawdown.
+    """Plot drawdown.
 
     :param log_rets: log returns
     :param unit: `ratio`, `%`, input series is rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1389,20 +1377,24 @@ def plot_drawdown(
     drawdown.plot.area(
         ax=ax, title=f"{title}{title_suffix}", label=label, color="b", alpha=0.3
     )
+    _maybe_add_events(ax=ax, events=events)
     ax.set_ylim(top=0)
     ax.set_ylabel(unit)
     ax.legend()
 
 
 def plot_holdings(
-    holdings: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
+    holdings: pd.Series,
+    unit: str = "ratio",
+    ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """
-    Plot holdings, average holdings and average holdings by month.
+    """Plot holdings, average holdings and average holdings by month.
 
     :param holdings: pnl series to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1417,6 +1409,7 @@ def plot_holdings(
         color="green",
         label="average holdings, overall",
     )
+    _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
@@ -1428,8 +1421,8 @@ def plot_qq(
     dist: Optional[str] = None,
     nan_mode: Optional[str] = None,
 ) -> None:
-    """
-    Plot ordered values against theoretical quantiles of the given distribution.
+    """Plot ordered values against theoretical quantiles of the given
+    distribution.
 
     :param srs: data to plot
     :param ax: axes in which to draw the plot
@@ -1438,21 +1431,24 @@ def plot_qq(
     """
     dist = dist or "norm"
     ax = ax or plt.gca()
-    nan_mode = nan_mode or "ignore"
+    nan_mode = nan_mode or "drop"
     x_plot = hdf.apply_nan_mode(srs, mode=nan_mode)
     sp.stats.probplot(x_plot, dist=dist, plot=ax)
     ax.set_title(f"{dist} probability plot")
 
 
 def plot_turnover(
-    positions: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None,
+    positions: pd.Series,
+    unit: str = "ratio",
+    ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """
-    Plot turnover, average turnover by month and overall average turnover.
+    """Plot turnover, average turnover by month and overall average turnover.
 
     :param positions: series of positions to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
@@ -1468,6 +1464,7 @@ def plot_turnover(
         color="green",
         label="average turnover, overall",
     )
+    _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
     ax.set_title(f"Turnover ({unit})")
@@ -1478,14 +1475,15 @@ def plot_allocation(
     config: Dict[str, Any],
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """
-    Plot position allocations over time.
+    """Plot position allocations over time.
 
     :param position_df: dataframe with position time series
     :param config: information about time series
     :param figsize: size of plot
     :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
     """
     ax = ax or plt.gca()
     figsize = figsize or (20, 5)
@@ -1496,10 +1494,210 @@ def plot_allocation(
     position_df_plot = position_df.copy()
     position_df_plot.columns = labels
     position_df_plot.plot(ax=ax, figsize=figsize)
+    _maybe_add_events(ax=ax, events=events)
     ax.set_title(
         f"Portfolio allocation over time; {position_df.shape[1]} positions"
     )
     ax.set_xlabel("period")
+    ax.legend()
+
+
+def plot_rolling_beta(
+    rets: pd.Series,
+    benchmark_rets: pd.Series,
+    window: int,
+    nan_mode: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
+    **kwargs: Any,
+) -> None:
+    """Regress returns against benchmark series and plot rolling beta.
+
+    :param rets: returns
+    :param benchmark_rets: benchmark returns
+    :param window: length of the rolling window
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param ax: axis
+    :param events: list of tuples with dates and labels to point out on the plot
+    :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
+    """
+    dbg.dassert_strictly_increasing_index(rets)
+    dbg.dassert_strictly_increasing_index(benchmark_rets)
+    dbg.dassert_eq(rets.index.freq, benchmark_rets.index.freq)
+    # Assert that the 'rets' index is a subset of the 'benchmark_rets' index.
+    dbg.dassert(rets.index.isin(benchmark_rets.index).all())
+    dbg.dassert_lte(
+        window,
+        min(len(rets), len(benchmark_rets)),
+        "`window` should not be larger than inputs' lengths.",
+    )
+    rets_name = rets.name
+    benchmark_name = benchmark_rets.name
+    dbg.dassert_ne(
+        rets_name, benchmark_name, "Inputs should have different names."
+    )
+    nan_mode = nan_mode or "drop"
+    # Combine rets and benchmark_rets in one dataframe over the intersection
+    #    of their indices.
+    all_rets_df = pd.concat([rets, benchmark_rets], axis=1, join="inner")
+    all_rets_df.columns = [rets_name, benchmark_name]
+    # Extract common index in order to keep NaN periods on the X-axis.
+    common_index = all_rets_df.index
+    # Apply `.dropna()` after `hdf.apply_nan_mode` in oder to drop remaining
+    #     rows with NaNs and calculate rolling beta without NaN gaps in input.
+    clean_rets_df = all_rets_df.apply(hdf.apply_nan_mode, mode=nan_mode).dropna()
+    # Get copies of rets and benchmark_rets with unified indices and no NaNs.
+    rets = clean_rets_df[rets_name]
+    benchmark_rets = clean_rets_df[benchmark_name]
+    # Calculate and plot rolling beta.
+    ax = ax or plt.gca()
+    benchmark_rets = sm.add_constant(benchmark_rets)
+    # Calculate and plot rolling beta.
+    model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
+    res_rolling = model_rolling.fit()
+    beta_rolling = res_rolling.params[
+        benchmark_name
+    ]  # pylint: disable=unsubscriptable-object
+    # Return NaN periods to the rolling beta series for the plot.
+    beta_rolling = beta_rolling.reindex(common_index)
+    beta_rolling.plot(
+        ax=ax,
+        title=f"Beta with respect to {benchmark_name}",
+        label="Rolling beta",
+    )
+    # Calculate and plot beta for the whole period.
+    model_whole_period = sm.OLS(rets, benchmark_rets)
+    res_whole_period = model_whole_period.fit()
+    beta_whole_period = res_whole_period.params[benchmark_name]
+    ax.axhline(beta_whole_period, ls="--", c="k", label="Whole-period beta")
+    ax.set_xlabel("period")
+    ax.set_ylabel("beta")
+    _maybe_add_events(ax=ax, events=events)
+    ax.legend()
+
+
+def plot_rolling_correlation(
+    srs1: pd.Series,
+    srs2: pd.Series,
+    tau: float,
+    demean: bool = True,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    p_moment: float = 2,
+    mode: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+    events: Optional[List[Tuple[str, Optional[str]]]] = None,
+) -> None:
+    """
+    Return rolling correlation between 2 series and plot rolling correlation.
+
+    :param srs1: first series
+    :param srs2: second series
+    :param tau: tau correlation coefficient
+    :param demean: bool demean
+    :param min_periods: min periods
+    :param min_depth: min depth
+    :param max_depth: max depth
+    :param p_moment: p moment
+    :param mode: corr or zcorr
+    :param ax: axis
+    :param events: list of tuples with dates and labels to point out on the plot
+    """
+    mode = mode or "corr"
+    # Calculate and plot rolling correlation.
+    ax = ax or plt.gca()
+    # Calculate rolling correlation.
+    if mode == "zcorr":
+        roll_correlation = sigp.compute_rolling_zcorr
+        title = "Z Correlation of 2 time series"
+        label = "Rolling z correlation"
+    elif mode == "corr":
+        roll_correlation = sigp.compute_rolling_corr
+        title = "Correlation of 2 time series"
+        label = "Rolling correlation"
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    # Calculate rolling correlation with the given mode.
+    roll_corr = roll_correlation(
+        srs1,
+        srs2,
+        tau=tau,
+        demean=demean,
+        min_periods=min_periods,
+        min_depth=min_depth,
+        max_depth=max_depth,
+        p_moment=p_moment,
+    )
+    # Plot rolling correlation.
+    roll_corr.plot(ax=ax, title=title, label=label)
+    # Calculate correlation whole period.
+    whole_period = srs1.corr(srs2)
+    # Plot correlation whole period.
+    ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
+    ax.set_xlabel("period")
+    ax.set_ylabel("correlation")
+    _maybe_add_events(ax=ax, events=events)
+    ax.legend()
+
+
+def plot_sharpe_ratio_panel(
+    log_rets: pd.Series,
+    frequencies: Optional[List[str]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """Plot how SRs vary under resampling.
+
+    :param log_rets: log returns
+    :param frequencies: frequencies to calculate SR for
+    :param ax: axis
+    """
+    dbg.dassert_isinstance(log_rets, pd.Series)
+    frequencies = frequencies or ["B", "D", "W", "M", "Q"]
+    srs_freq = pd.infer_freq(log_rets.index)
+    if not srs_freq:
+        _LOG.warning("Input has no frequency and it has been rescaled to 'D'")
+        srs_freq = "D"
+    # Resample input for assuring input frequency in calculations.
+    log_rets = sigp.resample(log_rets, rule=srs_freq).sum()
+    # Initiate series for Sharpe ratios of selected frequencies.
+    sr_series = pd.Series([], dtype="object")
+    # Initiate list for Sharpe ratios' standard errors for error bars.
+    res_se = []
+    # Initiate list for frequencies that do not lead to upsampling.
+    valid_frequencies = []
+    # Compute input frequency points per year for identifying upsampling.
+    input_freq_points_per_year = hdf.infer_sampling_points_per_year(log_rets)
+    for freq in frequencies:
+        freq_points_per_year = hdf.compute_points_per_year_for_given_freq(freq)
+        if freq_points_per_year > input_freq_points_per_year:
+            _LOG.warning(
+                "Upsampling from input freq='%s' to freq='%s' is blocked",
+                srs_freq,
+                freq,
+            )
+            continue
+        resampled_log_rets = sigp.resample(log_rets, rule=freq).sum()
+        if len(resampled_log_rets) == 1:
+            _LOG.warning(
+                "Resampling to freq='%s' is blocked because resampled series has only 1 observation",
+                freq,
+            )
+            continue
+        sr = stats.compute_annualized_sharpe_ratio(resampled_log_rets)
+        se = stats.compute_annualized_sharpe_ratio_standard_error(
+            resampled_log_rets
+        )
+        sr_series[freq] = sr
+        res_se.append(se)
+        valid_frequencies.append(freq)
+    ax = ax or plt.gca()
+    sr_series.plot(
+        yerr=res_se, marker="o", capsize=2, ax=ax, label="Sharpe ratio"
+    )
+    ax.set_xticks(range(len(valid_frequencies)))
+    ax.set_xticklabels(valid_frequencies)
+    ax.set_xlabel("Frequencies")
     ax.legend()
 
 
@@ -1513,3 +1711,42 @@ def _choose_scaling_coefficient(unit: str) -> int:
     else:
         raise ValueError("Invalid unit='%s'" % unit)
     return scale_coeff
+
+
+def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
+    """Calculate log returns statistics by year and month.
+
+    :param log_rets: input series of log returns
+    :return: dataframe of log returns with years on y-axis and
+        months on x-axis
+    """
+    srs_name = log_rets.name or 0
+    log_rets_df = pd.DataFrame(log_rets)
+    log_rets_df["year"] = log_rets_df.index.year
+    log_rets_df["month"] = log_rets_df.index.month
+    log_rets_df.reset_index(inplace=True)
+    monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
+    monthly_pct_returns = fin.convert_log_rets_to_pct_rets(monthly_log_returns)
+    monthly_pct_spread = monthly_pct_returns.unstack()
+    monthly_pct_spread.columns = monthly_pct_spread.columns.map(
+        lambda x: calendar.month_abbr[x]
+    )
+    return monthly_pct_spread
+
+
+def _maybe_add_events(
+    ax: mpl.axes.Axes, events: Optional[List[Tuple[str, Optional[str]]]]
+) -> None:
+    """Add labeled vertical lines at events' dates on a plot.
+
+    :param ax: axes
+    :param events: list of tuples with dates and labels to point out on the plot
+    """
+    if not events:
+        return None
+    colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
+    for event, color in zip(events, colors):
+        ax.axvline(
+            x=pd.Timestamp(event[0]), label=event[1], color=color, linestyle="--",
+        )
+    return None

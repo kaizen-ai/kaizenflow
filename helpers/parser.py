@@ -1,11 +1,12 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.parser as prsr
 """
 
 import argparse
 import logging
+import os
+import sys
 from typing import List, Optional, Tuple
 
 import helpers.dbg as dbg
@@ -20,8 +21,9 @@ def add_bool_arg(
     default: bool = False,
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
-    """
-    Add options to a parser like --xyz and --no_xyz (e.g., for --incremental).
+    """Add options to a parser like --xyz and --no_xyz
+
+    E.g., for `--incremental`.
     """
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--" + name, dest=name, action="store_true", help=help_)
@@ -42,6 +44,32 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 
 
 # #############################################################################
+
+
+def add_action_arg(
+    parser: argparse.ArgumentParser,
+    valid_actions: List[str],
+    default_actions: List[str],
+) -> argparse.ArgumentParser:
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument(
+        "--action",
+        action="append",
+        choices=valid_actions,
+        help="Actions to execute",
+    )
+    group.add_argument(
+        "--skip_action",
+        action="append",
+        choices=valid_actions,
+        help="Actions to skip",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all the actions (%s)" % (" ".join(default_actions)),
+    )
+    return parser
 
 
 def actions_to_string(
@@ -108,27 +136,66 @@ def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
     return to_execute, actions
 
 
-def add_action_arg(
+# #############################################################################
+
+
+def add_input_output_args(
     parser: argparse.ArgumentParser,
-    valid_actions: List[str],
-    default_actions: List[str],
 ) -> argparse.ArgumentParser:
-    group = parser.add_mutually_exclusive_group(required=False)
-    group.add_argument(
-        "--action",
-        action="append",
-        choices=valid_actions,
-        help="Actions to execute",
-    )
-    group.add_argument(
-        "--skip_action",
-        action="append",
-        choices=valid_actions,
-        help="Actions to skip",
+    """Add options to parse input and output file name."""
+    parser.add_argument(
+        "-i",
+        "--in_file_name",
+        required=True,
+        type=str,
+        help="Input file or `-` for stdin",
     )
     parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Run all the actions (%s)" % (" ".join(default_actions)),
+        "-o",
+        "--out_file_name",
+        required=False,
+        type=str,
+        default=None,
+        help="Output file or `-` for stdout",
     )
     return parser
+
+
+def parse_input_output_args(
+    args: argparse.Namespace, clear_screen: bool = True
+) -> Tuple[str, str]:
+    in_file_name = args.in_file_name
+    out_file_name = args.out_file_name
+    if out_file_name is None:
+        out_file_name = in_file_name
+    # Print summary.
+    if in_file_name != "-":
+        if clear_screen:
+            os.system("clear")
+        print("in_file_name='%s'" % in_file_name)
+        print("out_file_name='%s'" % out_file_name)
+    return in_file_name, out_file_name
+
+
+def read_file(file_name: str) -> List[str]:
+    """Read file or stdin (represented by `-`), returning an array of lines."""
+    if file_name == "-":
+        f = sys.stdin
+    else:
+        f = open(file_name, "r")
+    # Read.
+    txt = []
+    for line in f:
+        line = line.rstrip("\n")
+        txt.append(line)
+    f.close()
+    return txt
+
+
+def write_file(txt: List[str], file_name: str) -> None:
+    """Write txt in a file or stdin (represented by `-`)."""
+    if file_name == "-":
+        print("\n".join(txt))
+    else:
+        with open(file_name, "w") as f:
+            f.write("\n".join(txt))

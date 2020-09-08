@@ -5,8 +5,8 @@ import pandas as pd
 import pymc3 as pm
 import theano
 
-# See https://stackoverflow.com/questions/51238578/error-non-constant-expression-cannot-be-narrowed-from-type-npy-intp-to-int
-theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
+# See https://stackoverflow.com/questions/51238578/error-non-constant-expression-cannot-be-narrowed-from-type-npy-intp-to-int  # pylint: disable=line-too-long
+theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"  # pylint: disable=no-member
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,16 +37,14 @@ def get_col_shape(data):
     """
     if isinstance(data, pd.Series):
         return 1
-    elif isinstance(data, pd.DataFrame):
+    if isinstance(data, pd.DataFrame):
         return data.shape[1]
-    else:
-        raise ValueError("Expects pd.Series or pd.DataFrame!")
+    raise ValueError("Expects pd.Series or pd.DataFrame!")
 
 
 def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
-    """
-    Bayesian Estimation Supersedes the T Test.
-    See http://www.indiana.edu/~kruschke/BEST/BEST.pdf
+    """Bayesian Estimation Supersedes the T Test. See
+    http://www.indiana.edu/~kruschke/BEST/BEST.pdf.
 
     This is a generic t-test replacement.
     :param **kwargs: Passed to pm.sample.
@@ -104,11 +102,11 @@ def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
         # Vol in sampling units, unless adjusted.
         group1_vol = pm.Deterministic(
             "group1_volatilty",
-            np.sqrt(time_scaling) * resp_group1.distribution.variance ** 0.5,
+            np.sqrt(time_scaling) * resp_group1.distribution.variance ** 0.5,  # pylint: disable=no-member
         )
         group2_vol = pm.Deterministic(
             "group2_volatility",
-            np.sqrt(time_scaling) * resp_group2.distribution.variance ** 0.5,
+            np.sqrt(time_scaling) * resp_group2.distribution.variance ** 0.5,  # pylint: disable=no-member
         )
         # Sharpe ratio in sampling units, unless adjusted.
         group1_sr = pm.Deterministic(
@@ -124,8 +122,7 @@ def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
 
 
 def fit_laplace(data, prior_tau=1e-6, time_scaling=1, **kwargs):
-    """
-    Fits a Laplace distribution to each column of data (independently).
+    """Fit a Laplace distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
     :param prior_tau: Controls precision of mean and log_std priors
@@ -151,17 +148,16 @@ def fit_laplace(data, prior_tau=1e-6, time_scaling=1, **kwargs):
         scale = pm.Deterministic(SCALE, pm.math.exp(log_std))
         returns = pm.Laplace(RET, mu=loc, b=scale, observed=data)
         vol = pm.Deterministic(
-            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5
+            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5  # pylint: disable=no-member
         )
-        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)
+        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)  # pylint: disable=no-member
         trace = pm.sample(**kwargs)
     model.name = LAP_TAG
     return model, trace
 
 
 def fit_normal(data, prior_tau=1e-6, time_scaling=1, **kwargs):
-    """
-    Fits a normal distribution to each column of data (independently).
+    """Fit a normal distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
     :param prior_tau: Controls precision of mean and log_std priors
@@ -187,17 +183,16 @@ def fit_normal(data, prior_tau=1e-6, time_scaling=1, **kwargs):
         scale = pm.Deterministic(SCALE, pm.math.exp(log_std))
         returns = pm.Normal(RET, mu=loc, sigma=scale, observed=data)
         vol = pm.Deterministic(
-            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5
+            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5  # pylint: disable=no-member
         )
-        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)
+        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)  # pylint: disable=no-member
         trace = pm.sample(**kwargs)
     model.name = NORM_TAG
     return model, trace
 
 
 def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
-    """
-    Fits a Student T distribution to each column of data (independently).
+    """Fit a Student T distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
     :param prior_tau: Controls precision of mean and log_std priors
@@ -223,9 +218,9 @@ def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
         dof = pm.Deterministic(DOF, nu_offset + 2)
         returns = pm.StudentT(RET, nu=dof, mu=loc, sigma=scale, observed=data)
         vol = pm.Deterministic(
-            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5
+            VOL, np.sqrt(time_scaling) * returns.distribution.variance ** 0.5  # pylint: disable=no-member
         )
-        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)
+        pm.Deterministic(SR, time_scaling * returns.distribution.mean / vol)  # pylint: disable=no-member
         trace = pm.sample(**kwargs)
     model.name = T_TAG
     return model, trace
@@ -234,8 +229,7 @@ def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
 def fit_one_way_normal(
     df, prior_tau=1e-6, time_scaling=1, vol_mode="point", **kwargs
 ):
-    """
-    Fits a one-way normal model.
+    """Fit a one-way normal model.
 
     :param df: Df of obs, each column representing a group
     :param prior_tau: Controls precision of global mean prior
@@ -277,18 +271,16 @@ def fit_one_way_normal(
         )
         vol = pm.Deterministic(
             "volatility",
-            np.sqrt(time_scaling) * groups.distribution.variance ** 0.5,
+            np.sqrt(time_scaling) * groups.distribution.variance ** 0.5,  # pylint: disable=no-member
         )
-        pm.Deterministic("sharpe", time_scaling * groups.distribution.mean / vol)
+        pm.Deterministic("sharpe", time_scaling * groups.distribution.mean / vol)  # pylint: disable=no-member
         trace = pm.sample(**kwargs)
     model.name = ONE_WAY_NORM_TAG
     return model, trace
 
 
 def trace_info(trace, **kwargs):
-    """
-    Standard trace plots and info.
-    """
+    """Standard trace plots and info."""
     _LOG.info("traceplot...")
     pm.traceplot(trace, **kwargs)
     _LOG.info("plot_posterior...")

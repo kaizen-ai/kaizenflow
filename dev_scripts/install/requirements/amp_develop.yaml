@@ -1,5 +1,5 @@
 channels:
-  #- quantopian
+  #- quantopian             # Needed by trading-calendars.
   - conda-forge
 dependencies:
   # ############################################################################
@@ -11,6 +11,8 @@ dependencies:
   #- xlrd
   #- xmltodict
   - pytest
+  - flaky
+  - pre-commit
   - pytest-cov
   - pytest-instafail
   - pytest-xdist
@@ -24,15 +26,16 @@ dependencies:
   - matplotlib
   - networkx
   - numba
-  - numpy <= 1.17
-  - pandas
-  - pandas-datareader=0.8.0     # PartTask344.
+  - numpy
+  - pandas >= 1.0.0
+  - pandas-datareader = 0.8.0     # PartTask344.
   - pyarrow
   - pywavelets
   - scikit-learn
   - scipy
   - seaborn
   - statsmodels
+  - tabulate                # Required to transform pandas dfs to markdown
   # ############################################################################
   # jupyter
   # ############################################################################
@@ -46,7 +49,7 @@ dependencies:
   # ############################################################################
   # Linter
   # ############################################################################
-  #- pyment                   # conda install -c akode pyment
+  #- pyment                 # conda install -c akode pyment
   - autoflake
   - black
   - flake8
@@ -93,6 +96,11 @@ dependencies:
   - pymongo
   - scrapy
   # ############################################################################
+  # Profiling
+  # ############################################################################
+  - memory_profiler
+  - gprof2dot
+  # ############################################################################
   # Pip
   # ############################################################################
   - pip
@@ -107,3 +115,9 @@ dependencies:
     - gluonnlp              # gluon* and mxnet need to be installed through pip
     - gluonts               # since conda doesn't support / has old packages.
     - scrapy_splash
+    # ############################################################################
+    # ETL3
+    # ############################################################################
+    - gitpython
+    - dbnomics-data-model
+    - python-slugify
