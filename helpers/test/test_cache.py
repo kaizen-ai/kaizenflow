@@ -323,6 +323,7 @@ class Test_cache2(hut.TestCase):
         # Create the cached function.
         cf = hcac.Cached(f, tag=self.cache_tag, **kwargs)
         # Reset everything and check that it's in the expected state.
-        hcac.reset_disk_cache(self.cache_tag)
+        hcac.reset_cache("disk", self.cache_tag)
+        hcac.reset_cache("mem", self.cache_tag)
         cf._reset_cache_tracing()
         return f, cf

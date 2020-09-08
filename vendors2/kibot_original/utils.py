@@ -41,7 +41,7 @@ TOP_KIBOT = {
 
 _LOG = logging.getLogger(__name__)
 
-MEMORY = cache.get_disk_cache(tag=None)
+MEMORY = cache.get_cache("disk", tag=None)
 
 # #############################################################################
 # Read data.

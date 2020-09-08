@@ -31,17 +31,40 @@ _LOG_LEVEL = logging.DEBUG
 # #############################################################################
 
 
+def _check_valid_cache_type(cache_type: str) -> None:
+    """Assert that cache_type is a valid one.
+
+    :param cache_type: type of a cache
+    """
+    dbg.dassert_in(cache_type, ("mem", "disk"))
+
+
 def set_caching(val: bool) -> None:
+    """Enable or disable cache for all usages.
+
+    :param val: boolean flag
+    """
     global _USE_CACHING
     _LOG.warning("Setting caching to %s -> %s", _USE_CACHING, val)
     _USE_CACHING = val
 
 
 def is_caching_enabled() -> bool:
+    """Check if cache is enabled.
+
+    :return: boolean
+    """
     return _USE_CACHING
 
 
-def get_cache_name(cache_type: str, tag: Optional[str]) -> str:
+def get_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
+    """Get cache name to be used in a folder.
+
+    :param cache_type: type of a cache
+    :param tag: optional unique tag of the cache, empty by default
+    :return: name of the folder for a cache
+    """
+    _check_valid_cache_type(cache_type)
     cache_name = "tmp.joblib"
     cache_name += f".{cache_type}"
     if tag is not None:
@@ -50,48 +73,90 @@ def get_cache_name(cache_type: str, tag: Optional[str]) -> str:
     return cache_name
 
 
-def get_cache_path(cache_type: str, tag: Optional[str]) -> str:
+def get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
+    """Get path to the cache.
+
+    For disk path -- on file system relative to git root.
+    For memory path -- in a predefined ram disk.
+
+    :param cache_type: type of a cache
+    :param tag: optional unique tag of the cache, empty by default
+    :return: a file system path
+    """
+    _check_valid_cache_type(cache_type)
     cache_name = get_cache_name(cache_type, tag)
-    file_name = os.path.join(git.get_client_root(super_module=True), cache_name)
+    if cache_type == 'mem':
+        root_path = _MEMORY_TMPFS_PATH
+    else:
+        root_path = git.get_client_root(super_module=True)
+    file_name = os.path.join(root_path, cache_name)
     file_name = os.path.abspath(file_name)
     return file_name
 
 
-def get_disk_cache(tag: Optional[str]) -> Any:
-    """Return the object storing the disk cache."""
-    _LOG.debug("get_disk_cache")
+def get_global_cache(cache_type: str) -> joblib.Memory:
+    """Get global cache by cache type.
+
+    :param cache_type: type of a cache
+    :return: caching backend
+    """
+    _check_valid_cache_type(cache_type)
+    global _MEMORY_CACHE
+    global _DISK_CACHE
+    if cache_type == 'mem':
+        global_cache = _MEMORY_CACHE
+    else:
+        global_cache = _DISK_CACHE
+    return global_cache
+
+
+def set_global_cache(cache_type: str, cache: joblib.Memory) -> None:
+    """Set global cache by cache type.
+
+    :param cache_type: type of a cache
+    :param cache: caching backend
+    """
+    _check_valid_cache_type(cache_type)
+    global _MEMORY_CACHE
+    global _DISK_CACHE
+    if cache_type == 'mem':
+        _MEMORY_CACHE = cache
+    else:
+        _DISK_CACHE = cache
+
+
+def get_cache(cache_type: str, tag: Optional[str]) -> joblib.Memory:
+    """Return the object storing a cache.
+
+    :param cache_type: type of a cache
+    :param tag: optional unique tag of the cache, empty by default
+    :return:
+    """
+    _check_valid_cache_type(cache_type)
+    global_cache = get_global_cache(cache_type)
     if tag is None:
-        global _DISK_CACHE
-        if not _DISK_CACHE:
-            file_name = get_cache_path("disk", tag)
-            _DISK_CACHE = joblib.Memory(file_name, verbose=0, compress=1)
-        disk_cache = _DISK_CACHE
+        if global_cache:
+            cache = global_cache
+        else:
+            file_name = get_cache_path(cache_type, tag)
+            cache = joblib.Memory(file_name, verbose=0, compress=1)
+            set_global_cache(cache_type, cache)
     else:
         # Build a one-off cache.
-        file_name = get_cache_path("disk", tag)
-        disk_cache = joblib.Memory(file_name, verbose=0, compress=1)
-    return disk_cache
+        file_name = get_cache_path(cache_type, tag)
+        cache = joblib.Memory(file_name, verbose=0, compress=1)
+    return cache
 
 
-def get_memory_cache(tag: Optional[str]) -> Any:
-    """Return the object storing the memory cache."""
-    _LOG.debug("get_memory_cache")
-    if tag is None:
-        global _MEMORY_CACHE
-        if not _MEMORY_CACHE:
-            file_name = get_cache_path("mem", tag)
-            _MEMORY_CACHE = joblib.Memory(file_name, verbose=0, compress=1)
-        memory_cache = _MEMORY_CACHE
-    else:
-        # Build a one-off cache.
-        file_name = get_cache_path("mem", tag)
-        memory_cache = joblib.Memory(file_name, verbose=0, compress=1)
-    return memory_cache
+def reset_cache(cache_type: str, tag: Optional[str] = None) -> None:
+    """Reset a cache by cache type.
 
-
-def reset_disk_cache(tag: Optional[str]) -> None:
-    _LOG.warning("Resetting disk cache '%s'", get_cache_path("disk", tag))
-    disk_cache = get_disk_cache(tag)
+    :param cache_type: type of a cache
+    :param tag: optional unique tag of the cache, empty by default
+    """
+    _check_valid_cache_type(cache_type)
+    _LOG.warning("Resetting %s cache '%s'", cache_type, get_cache_path(cache_type, tag))
+    disk_cache = get_cache(cache_type, tag)
     disk_cache.clear(warn=True)
 
 
@@ -126,8 +191,8 @@ class Cached:
         self._tag = tag
         self._reset_cache_tracing()
         # Create the disk and mem cache object, if needed.
-        self._disk_cache = get_disk_cache(tag)
-        self._memory_cache = get_memory_cache(tag)
+        self._disk_cache = get_cache("disk", tag)
+        self._memory_cache = get_cache("mem", tag)
         # Create the functions decorated with the caching layer.
         self._disk_cached_func = self._disk_cache.cache(self._func)
         self._memory_cached_func = self._memory_cache.cache(self._func)
@@ -234,7 +299,7 @@ class Cached:
     def _store_cached_version(
         self, cache_type: str, func_id: str, args_id: str, obj: Any
     ) -> None:
-        """Store returned value from the intrinsic in the cache.
+        """Store returned value from the intrinsic function in the cache.
 
         :param cache_type: type of a cache
         :param func_id: digest of the function obtained from _get_identifiers

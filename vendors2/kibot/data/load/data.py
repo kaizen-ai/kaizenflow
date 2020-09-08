@@ -9,7 +9,7 @@ import helpers.dbg as dbg
 import vendors2.kibot.data.load.file_path_generator as fpgen
 import vendors2.kibot.data.types as types
 
-MEMORY = cache.get_disk_cache(tag=None)
+MEMORY = cache.get_cache("disk", tag=None)
 
 
 class KibotDataLoader:
