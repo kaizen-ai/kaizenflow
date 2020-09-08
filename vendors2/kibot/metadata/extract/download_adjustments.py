@@ -3,13 +3,17 @@
 """Download all adjustments from kibot.
 
 > download_adjustments.py -u kibot_username -p kibot_password
+
+# Download serially
+> download_adjustments.py -u kibot_username -p kibot_password --serial
 """
 import argparse
 import logging
 import os
 import sys
-from typing import List
+from typing import Callable, Iterable, List
 
+import joblib
 import requests
 import tqdm
 
@@ -19,6 +23,28 @@ import helpers.parser as prsr
 import helpers.s3 as hs3
 import helpers.system_interaction as si
 import vendors2.kibot.metadata.config as config
+
+# #############################################################################
+
+_JOBLIB_NUM_CPUS = 10
+_JOBLIB_VERBOSITY = 1
+
+
+# TODO(amr): make more general and provide as helper.
+def _execute_loop(
+    func: Callable, kwargs_list: Iterable[dict], total: int, serial: bool = True,
+) -> None:
+    """Execute a function with a list of kwargs serially or in parallel."""
+    tqdm_ = tqdm.tqdm(kwargs_list, total=total)
+
+    if not serial:
+        joblib.Parallel(n_jobs=_JOBLIB_NUM_CPUS, verbose=_JOBLIB_VERBOSITY)(
+            joblib.delayed(func)(**row) for row in tqdm_
+        )
+    else:
+        for row in tqdm_:
+            func(**row)
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -103,6 +129,9 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Clean the local directories",
     )
+    parser.add_argument(
+        "--serial", action="store_true", help="Download data serially"
+    )
     prsr.add_verbosity_arg(parser)
     return parser
 
@@ -118,8 +147,14 @@ def _main(parser: argparse.ArgumentParser) -> int:
 
     symbols = _get_symbols_list()
 
-    for symbol in tqdm.tqdm(symbols):
-        _download_adjustments_data_for_symbol(symbol=symbol, tmp_dir=args.tmp_dir)
+    _execute_loop(
+        func=_download_adjustments_data_for_symbol,
+        kwargs_list=(
+            dict(symbol=symbol, tmp_dir=args.tmp_dir) for symbol in symbols
+        ),
+        total=len(symbols),
+        serial=args.serial,
+    )
 
     return 0
 
