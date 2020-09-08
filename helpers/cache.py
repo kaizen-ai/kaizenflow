@@ -15,6 +15,7 @@ import joblib.func_inspect as jfi
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.io_ as io_
 
 _LOG = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ def get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     """
     _check_valid_cache_type(cache_type)
     cache_name = get_cache_name(cache_type, tag)
-    if cache_type == 'mem':
+    if cache_type == "mem":
         root_path = _MEMORY_TMPFS_PATH
     else:
         root_path = git.get_client_root(super_module=True)
@@ -103,7 +104,7 @@ def get_global_cache(cache_type: str) -> joblib.Memory:
     _check_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
-    if cache_type == 'mem':
+    if cache_type == "mem":
         global_cache = _MEMORY_CACHE
     else:
         global_cache = _DISK_CACHE
@@ -119,7 +120,7 @@ def set_global_cache(cache_type: str, cache: joblib.Memory) -> None:
     _check_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
-    if cache_type == 'mem':
+    if cache_type == "mem":
         _MEMORY_CACHE = cache
     else:
         _DISK_CACHE = cache
@@ -155,9 +156,23 @@ def reset_cache(cache_type: str, tag: Optional[str] = None) -> None:
     :param tag: optional unique tag of the cache, empty by default
     """
     _check_valid_cache_type(cache_type)
-    _LOG.warning("Resetting %s cache '%s'", cache_type, get_cache_path(cache_type, tag))
+    _LOG.warning(
+        "Resetting %s cache '%s'", cache_type, get_cache_path(cache_type, tag)
+    )
     disk_cache = get_cache(cache_type, tag)
     disk_cache.clear(warn=True)
+
+
+def destroy_cache(cache_type: str, tag: Optional[str] = None) -> None:
+    """Destroy a cache by cache type and remove physical direcotory.
+
+    :param cache_type: type of a cache
+    :param tag: optional unique tag of the cache, empty by default
+    """
+    _check_valid_cache_type(cache_type)
+    cache_path = get_cache_path(cache_type, tag)
+    _LOG.warning("Destroying %s cache '%s'", cache_type, cache_path)
+    io_.delete_dir(cache_path)
 
 
 class Cached:
