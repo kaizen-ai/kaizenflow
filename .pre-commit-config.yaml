@@ -114,3 +114,9 @@ repos:
         language: python
         types: [python]
         additional_dependencies: ["pandas", "matplotlib"]
+      - id: check_shebang
+        name: check_shebang
+        entry: p1_check_shebang.py
+        language: python
+        types: [python]
+        additional_dependencies: ["pandas", "matplotlib"]
