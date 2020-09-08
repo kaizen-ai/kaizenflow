@@ -1666,18 +1666,10 @@ class SmaModel(FitPredictNode):
         """
         Specify the data and sma modeling parameters.
 
-        Assumptions:
-            :param nid: unique node id
-            :param col: name of column to model
-            :param steps_ahead: number of steps ahead for which a prediction is
-                to be generated. E.g.,
-                    - if `steps_ahead == 0`, then the predictions are
-                      are contemporaneous with the observed response (and hence
-                      inactionable)
-                    - if `steps_ahead == 1`, then the model attempts to predict
-                      `y_vars` for the next time step
-                    - The model is only trained to predict the target
-                      `steps_ahead` steps ahead (and not all intermediate steps)
+        :param nid: unique node id
+        :param col: name of column to model
+        :param steps_ahead: as in ContinuousSkLearnModel
+        :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
         dbg.dassert_isinstance(col, list)
@@ -1735,6 +1727,7 @@ class SmaModel(FitPredictNode):
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
+        self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1765,6 +1758,8 @@ class SmaModel(FitPredictNode):
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
+        info = collections.OrderedDict()
+        self._set_info("predict", info)
         return {"df_out": df_out}
 
     @staticmethod
@@ -1843,6 +1838,103 @@ class SmaModel(FitPredictNode):
             sigp.resample(pnl_rets, rule="1B").sum()
         )
         return info
+
+
+class VolatilityModel(FitPredictNode):
+    """
+    Fit and predict a smooth moving average volatility model.
+
+    Wraps SmaModel internally, handling calculation of volatility from returns
+    and column appends.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        col: list,
+        steps_ahead: int,
+        p_moment: float = 2,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Specify the data and sma modeling parameters.
+
+        :param nid: unique node id
+        :param col: name of returns column to model
+        :param steps_ahead: as in ContinuousSkLearnModel
+        :param p_moment: exponent to apply to the absolute value of returns
+        :param nan_mode: as in ContinuousSkLearnModel
+        """
+        super().__init__(nid)
+        dbg.dassert_isinstance(col, list)
+        self._col = col
+        self._vol_col = str(self._col[0]) + "_vol"
+        self._steps_ahead = steps_ahead
+        self._fwd_vol_col = self._vol_col + f"_{self._steps_ahead}"
+        self._fwd_vol_col_hat = self._fwd_vol_col + "_hat"
+        self._zscored_col = self._col[0] + "_zscored"
+        dbg.dassert_lte(1, p_moment)
+        self._p_moment = p_moment
+        self._nan_mode = nan_mode
+        # The SmaModel node is only used internally (e.g., it is not added to
+        # any encompasing DAG).
+        self._sma_model = SmaModel(
+            "anonymous_sma",
+            col=[self._vol_col],
+            steps_ahead=self._steps_ahead,
+            nan_mode=self._nan_mode,
+        )
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df_in = df_in.copy()
+        vol = self._calculate_vol(df_in)
+        sma = self._sma_model.fit(vol)["df_out"]
+        info = collections.OrderedDict()
+        info["sma"] = self._sma_model.get_info("fit")
+        self._check_cols(df_in, sma)
+        normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
+        df_in[self._zscored_col] = df_in[self._col[0]].divide(
+            normalized_vol.shift(self._steps_ahead)
+        )
+        df_in = sma.merge(df_in, left_index=True, right_index=True)
+        self._set_info("fit", info)
+        return {"df_out": df_in}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_not_in(self._vol_col, df_in.columns)
+        vol = pd.Series(
+            np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
+        ).to_frame()
+        sma = self._sma_model.predict(vol)["df_out"]
+        info = collections.OrderedDict()
+        info["sma"] = self._sma_model.get_info("predict")
+        self._check_cols(df_in, sma)
+        normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
+        df_in[self._zscored_col] = df_in[self._col[0]].divide(
+            normalized_vol.shift(self._steps_ahead)
+        )
+        df_in = sma.merge(df_in, left_index=True, right_index=True)
+        self._set_info("predict", info)
+        return {"df_out": df_in}
+
+    def _calculate_vol(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate p-th moment of returns.
+        """
+        vol = pd.Series(
+            np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
+        ).to_frame()
+        return vol
+
+    def _check_cols(self, df_in: pd.DataFrame, sma: pd.DataFrame) -> None:
+        """
+        Avoid column naming collisions.
+        """
+        dbg.dassert_not_in(self._fwd_vol_col, df_in.columns)
+        dbg.dassert_not_in(self._fwd_vol_col_hat, df_in.columns)
+        dbg.dassert_not_in(self._zscored_col, df_in.columns)
+        dbg.dassert_in(self._fwd_vol_col, sma.columns)
+        dbg.dassert_in(self._fwd_vol_col_hat, sma.columns)
 
 
 # #############################################################################

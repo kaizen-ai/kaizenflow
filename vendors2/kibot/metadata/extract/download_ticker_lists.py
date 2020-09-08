@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+
+"""# Download all ticker lists and push them to s3.
+
+> download_ticker_lists.py
+"""
 import argparse
 import logging
 import os
@@ -13,17 +19,11 @@ import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.s3 as hs3
 import helpers.system_interaction as si
-
-# TODO(amr): move common configs between data & metadata to
-# `vendors2.kibot.config`
-import vendors2.kibot.data.config as config
 import vendors2.kibot.data.extract.download as download
+import vendors2.kibot.metadata.config as config
 
 _LOG = logging.getLogger(__name__)
 
-
-SUB_DIR = os.path.join("metadata", "raw", "ticker_list")
-S3_PREFIX = os.path.join(config.S3_PREFIX, SUB_DIR)
 
 # TODO(amr): reuse requests setup from extract/download.py.
 
@@ -94,7 +94,8 @@ def _main(parser: argparse.ArgumentParser) -> int:
         _LOG.info("Processing historical page: %s", url)
         file_url = _extract_file_url_from_historical_page(page_url=url)
         _LOG.info("Extracted file url: %s", file_url)
-
+        # TODO(amr): is cleaning the file name necessary? if so, let's move this function
+        # to a more common place.
         file_name = os.path.basename(urlprs.urlparse(file_url).path)
         # TODO(amr): is cleaning the file name necessary? if so, let's move this
         # function to a more common place.
@@ -106,13 +107,18 @@ def _main(parser: argparse.ArgumentParser) -> int:
         # Download file.
         response = requests.get(file_url)
         dbg.dassert_eq(response.status_code, 200)
-        file_path = os.path.join(args.tmp_dir, SUB_DIR, file_name)
+        file_path = os.path.join(
+            args.tmp_dir, config.TICKER_LISTS_SUB_DIR, file_name
+        )
         io_.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
         _LOG.info("Downloaded file to: %s", file_path)
 
         # Save to s3.
-        aws_path = os.path.join(S3_PREFIX, file_name)
+        aws_path = os.path.join(
+            config.S3_PREFIX, config.TICKER_LISTS_SUB_DIR, file_name
+        )
         hs3.check_valid_s3_path(aws_path)
+
         # TODO(amr): create hs3.copy() helper.
         cmd = "aws s3 cp %s %s" % (file_path, aws_path)
         si.system(cmd)

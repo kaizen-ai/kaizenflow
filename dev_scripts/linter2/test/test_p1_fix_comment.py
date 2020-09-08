@@ -219,6 +219,13 @@ class Test_fix_comment_style(hut.TestCase):
         actual = f_comm._fix_comment_style(lines)
         self.assertEqual(expected, actual)
 
+    def test20(self) -> None:
+        """Test no changes are applied to indented comments that start with
+        'pylint'."""
+        lines = ["  # pylint: disable=unused-argument"]
+        actual = f_comm._fix_comment_style(lines)
+        self.assertEqual(lines, actual)
+
 
 class Test_extract_comments(hut.TestCase):
     def test1(self) -> None:

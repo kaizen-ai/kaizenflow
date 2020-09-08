@@ -7,7 +7,5 @@ class TestGetResult(hut.TestCase):
         b = "case"
         # Get the actual function output.
         act = get_result(a, b)
-        # Create the expected function output.
-        exp = "testcase"
         # Check whether the expected value equals the actual value.
-        self.assertEqual(act, exp)
+        self.check_string(act)
