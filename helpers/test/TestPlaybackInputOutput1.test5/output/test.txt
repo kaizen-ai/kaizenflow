@@ -1,9 +1,16 @@
-# Initialize function parameters.
-param0 = pd.DataFrame.from_dict({'Price': [700, 250, 800, 1200]})
-param1 = pd.DataFrame.from_dict({'Price': [1, 1, 1, 1]})
-# Get the actual function output.
-act = F(param0, param1)
-# Create the expected function output.
-exp = pd.DataFrame.from_dict({'Price': [701, 251, 801, 1201]})
-# Check whether the expected value equals the actual value.
-assert act.equals(exp)
+import helpers.unit_test as hut
+
+class TestGetResult(hut.TestCase):
+    def test1(self) -> None:
+        # Initialize function parameters.
+        a = pd.DataFrame.from_dict({'Price': [700, 250, 800, 1200]})
+        b = pd.DataFrame.from_dict({'Price': [1, 1, 1, 1]})
+        # Get the actual function output.
+        act = get_result(a, b)
+        # Create the expected function output.
+        exp = pd.DataFrame.from_dict({'Price': [701, 251, 801, 1201]})
+        # Convert into string.
+        act = hut.convert_df_to_string(act)
+        exp = hut.convert_df_to_string(exp)
+        # Check whether the expected value equals the actual value.
+        self.assertEqual(act, exp)
