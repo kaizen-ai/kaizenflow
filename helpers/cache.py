@@ -11,6 +11,7 @@ import time
 from typing import Any, Callable, Optional, Tuple
 
 import joblib
+import joblib.func_inspect as jfi
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -22,7 +23,7 @@ _USE_CACHING: bool = True
 _DISK_CACHE: Any = None
 # This is the global memory cache.
 _MEMORY_CACHE: Any = None
-_MEMORY_TMPFS_PATH = os.curdir  # "/mnt/tmpfs"
+_MEMORY_TMPFS_PATH = "/mnt/tmpfs"
 # Log level for information about the high level behavior of the caching
 # layer.
 _LOG_LEVEL = logging.DEBUG
@@ -159,7 +160,7 @@ class Cached:
             )
         return obj
 
-    def clear_cache(self, cache_type: Optional[str]) -> None:
+    def clear_cache(self, cache_type: Optional[str] = None) -> None:
         """Clear all cache, or a cache by type.
 
         :param cache_type: type of a cache to clear, or None to clear all caches
@@ -241,6 +242,11 @@ class Cached:
         :param obj: return value of the intrinsic function
         """
         cache = self._get_cache(cache_type)
+        # Write out function code to the cache.
+        func_code, _, first_line = jfi.get_func_code(cache.func)
+        # pylint: disable=protected-access
+        cache._write_func_code(func_code, first_line)
+        # Store the returned value into the cache.
         cache.store_backend.dump_item([func_id, args_id], obj)
 
     def _reset_cache_tracing(self) -> None:
