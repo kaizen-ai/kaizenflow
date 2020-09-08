@@ -36,3 +36,14 @@ class Adjustment:
     Action: str
     Description: str
     EventDate: str
+
+
+@dataclasses.dataclass
+class Ticker:
+    Symbol: str
+    StartDate: str
+    Size: str
+    Description: str
+    Exchange: str
+    Industry: str
+    Sector: str

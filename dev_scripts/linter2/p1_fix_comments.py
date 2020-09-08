@@ -188,7 +188,9 @@ def _fix_comment_style(lines: List[str]) -> List[str]:
         if not comment.is_single_line:
             continue
         # If any of the checks returns True, it means the check failed.
-        if any([check(comment.multi_line_comment[0]) for check in checks]):
+        if any(
+            [check(comment.multi_line_comment[0].strip()) for check in checks]
+        ):
             continue
         match = utils.parse_comment(
             comment.multi_line_comment[0], r"(^\s*)#(\s*)(.*)"
