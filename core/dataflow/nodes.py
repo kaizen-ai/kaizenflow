@@ -1758,6 +1758,7 @@ class SmaModel(FitPredictNode):
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
+        info = collections.OrderedDict()
         self._set_info("predict", info)
         return {"df_out": df_out}
 
