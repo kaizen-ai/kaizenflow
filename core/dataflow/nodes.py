@@ -9,18 +9,17 @@ import logging
 import os
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-import gluonts.model.deepar as gmd
-import gluonts.trainer as gt
-import numpy as np
-import pandas as pd
-import sklearn as skl
-
 import core.backtest as bcktst
 import core.data_adapters as adpt
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
+import gluonts.model.deepar as gmd
+import gluonts.trainer as gt
 import helpers.dbg as dbg
+import numpy as np
+import pandas as pd
+import sklearn as skl
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
@@ -594,6 +593,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         steps_ahead: int,
+        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -626,6 +626,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._y_vars = y_vars
         self._model = None
         self._steps_ahead = steps_ahead
+        self._col_mode = col_mode
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
@@ -679,11 +680,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
+        return self._output_helper(self, df, fwd_y_df, fwd_y_hat)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -713,10 +710,26 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
-        # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
+        # Return predictions.
+        return self._output_helper(self, df, fwd_y_df, fwd_y_hat)
+
+    def _output_helper(
+        self, df: pd.DataFrame, fwd_y_df: pd.DataFrame, fwd_y_hat: pd.DataFrame
+    ) -> Dict[str, pd.DataFrame]:
+        idx = df.index
+        if self._col_mode == "replace_all":
+            df_out = fwd_y_df.reindex(idx).merge(
+                fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            )
+        elif self._col_mode == "merge_all":
+            df_out = fwd_y_df.reindex(idx).merge(
+                fwd_y_hat.reindex(idx), left_index=True, right_index=True
+            )
+            df_out = df.reindex(idx).merge(
+                df_out.reindex(idx), left_index=True, right_index=True
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
@@ -827,6 +840,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         nid: str,
         model_func: Callable[..., Any],
         x_vars: Union[List[str], Callable[[], List[str]]],
+        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -845,6 +859,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._model = None
+        self._col_mode = col_mode
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -896,8 +911,19 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
-        dbg.dassert_no_duplicates(x_hat.columns)
-        return {"df_out": x_hat.reindex(index=df_in.index)}
+        if self._col_mode == "replace_all":
+            df_out = x_hat.reindex(index=df_in.index)
+        elif self._col_mode == "merge_all":
+            df_out = df_in.reindex(df_in.index).merge(
+                x_hat.reindex(index=df_in.index),
+                left_index=True,
+                right_index=True,
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        # Return targets and predictions.
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
@@ -1088,6 +1114,7 @@ class SkLearnModel(FitPredictNode):
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         model_func: Callable[..., Any],
+        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
     ) -> None:
         super().__init__(nid)
@@ -1095,6 +1122,7 @@ class SkLearnModel(FitPredictNode):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
+        self._col_mode = col_mode
         self._model = None
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1120,9 +1148,8 @@ class SkLearnModel(FitPredictNode):
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
-        #
-        dbg.dassert_no_duplicates(y_hat.columns)
-        return {"df_out": y_hat}
+        # Return targets and predictions.
+        return self._output_helper(self, df, y_hat)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -1140,9 +1167,23 @@ class SkLearnModel(FitPredictNode):
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
-        #
-        dbg.dassert_no_duplicates(y_hat.columns)
-        return {"df_out": y_hat}
+        # Return predictions.
+        return self._output_helper(self, df, y_hat)
+
+    def _output_helper(
+        self, df: pd.DataFrame, y_hat: pd.DataFrame
+    ) -> Dict[str, pd.DataFrame]:
+        idx = df.index
+        if self._col_mode == "replace_all":
+            df_out = y_hat
+        elif self._col_mode == "merge_all":
+            df_out = df.reindex(idx).merge(
+                y_hat.reindex(idx), left_index=True, right_index=True
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
 
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
