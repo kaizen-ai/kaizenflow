@@ -1666,18 +1666,10 @@ class SmaModel(FitPredictNode):
         """
         Specify the data and sma modeling parameters.
 
-        Assumptions:
-            :param nid: unique node id
-            :param col: name of column to model
-            :param steps_ahead: number of steps ahead for which a prediction is
-                to be generated. E.g.,
-                    - if `steps_ahead == 0`, then the predictions are
-                      are contemporaneous with the observed response (and hence
-                      inactionable)
-                    - if `steps_ahead == 1`, then the model attempts to predict
-                      `y_vars` for the next time step
-                    - The model is only trained to predict the target
-                      `steps_ahead` steps ahead (and not all intermediate steps)
+        :param nid: unique node id
+        :param col: name of column to model
+        :param steps_ahead: as in ContinuousSkLearnModel
+        :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
         dbg.dassert_isinstance(col, list)
@@ -1851,7 +1843,8 @@ class VolatilityModel(FitPredictNode):
     """
     Fit and predict a smooth moving average volatility model.
 
-    TODO(*): Refactor together with SmaModel.
+    Wraps SmaModel internally, handling calculation of volatility from returns
+    and column appends.
     """
 
     def __init__(
@@ -1864,6 +1857,12 @@ class VolatilityModel(FitPredictNode):
     ) -> None:
         """
         Specify the data and sma modeling parameters.
+
+        :param nid: unique node id
+        :param col: name of returns column to model
+        :param steps_ahead: as in ContinuousSkLearnModel
+        :param p_moment: exponent to apply to the absolute value of returns
+        :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
         dbg.dassert_isinstance(col, list)
@@ -1876,7 +1875,8 @@ class VolatilityModel(FitPredictNode):
         dbg.dassert_lte(1, p_moment)
         self._p_moment = p_moment
         self._nan_mode = nan_mode
-        # NOTE: Experimental and an abuse of "node".
+        # The SmaModel node is only used internally (e.g., it is not added to
+        # any encompasing DAG).
         self._sma_model = SmaModel(
             "anonymous_sma",
             col=[self._vol_col],
@@ -1917,12 +1917,18 @@ class VolatilityModel(FitPredictNode):
         return {"df_out": df_in}
 
     def _calculate_vol(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate p-th moment of returns.
+        """
         vol = pd.Series(
             np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
         ).to_frame()
         return vol
 
     def _check_cols(self, df_in: pd.DataFrame, sma: pd.DataFrame) -> None:
+        """
+        Avoid column naming collisions.
+        """
         dbg.dassert_not_in(self._fwd_vol_col, df_in.columns)
         dbg.dassert_not_in(self._fwd_vol_col_hat, df_in.columns)
         dbg.dassert_not_in(self._zscored_col, df_in.columns)
