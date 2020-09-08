@@ -8,11 +8,13 @@
     -s 5/1/2020
 """
 import argparse
+import csv
 import logging
 import os
 import sys
 
 import requests
+import tqdm
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -20,6 +22,7 @@ import helpers.parser as prsr
 import helpers.s3 as hs3
 import helpers.system_interaction as si
 import vendors2.kibot.metadata.config as config
+import vendors2.kibot.metadata.types as types
 
 _LOG = logging.getLogger(__name__)
 
@@ -36,12 +39,6 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-p", "--password", required=True, help="Specify password",
-    )
-    parser.add_argument(
-        "-s",
-        "--start_date",
-        required=True,
-        help="Start date to download adjustments since, i.e '5/1/2020'",
     )
     parser.add_argument(
         "--tmp_dir",
@@ -82,31 +79,44 @@ def _main(parser: argparse.ArgumentParser) -> int:
         msg=f"Failed to login: {response.text}",
     )
 
-    # TODO(amr): confirm last available start date.
-
-    # Download file.
     response = requests.get(
         url=config.API_ENDPOINT,
-        params=dict(
-            action="adjustments", symbol="allsymbols", startdate=args.start_date,
-        ),
+        params=dict(action="adjustments", symbolsonly="1"),
     )
 
-    file_path = os.path.join(
-        args.tmp_dir, config.ADJUSTMENTS_SUB_DIR, config.ADJUSTMENTS_FILE_NAME
-    )
-    io_.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
-    _LOG.info("Downloaded file to: %s", file_path)
+    # Skipping the header in the first line.
+    lines = response.text.splitlines()[1:]
 
-    # Save to s3.
-    aws_path = os.path.join(
-        config.S3_PREFIX, config.ADJUSTMENTS_SUB_DIR, config.ADJUSTMENTS_FILE_NAME
-    )
-    hs3.check_valid_s3_path(aws_path)
-    # TODO(amr): create hs3.copy() helper.
-    cmd = "aws s3 cp %s %s" % (file_path, aws_path)
-    si.system(cmd)
-    _LOG.info("Uploaded file to s3: %s", aws_path)
+    # Parsing into adjustments to validate response structure.
+    adjustments = [
+        types.Adjustment(*row) for row in csv.reader(lines, delimiter="\t")
+    ]
+    symbols = [a.Symbol for a in adjustments]
+
+    _LOG.info("Found %s symbols", len(symbols))
+
+    for symbol in tqdm.tqdm(symbols):
+        # Download file.
+        response = requests.get(
+            url=config.API_ENDPOINT,
+            params=dict(action="adjustments", symbol=symbol),
+        )
+
+        file_name = f"{symbol}.txt"
+        file_path = os.path.join(
+            args.tmp_dir, config.ADJUSTMENTS_SUB_DIR, file_name
+        )
+        io_.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
+
+        # Save to s3.
+        aws_path = os.path.join(
+            config.S3_PREFIX, config.ADJUSTMENTS_SUB_DIR, file_name
+        )
+        hs3.check_valid_s3_path(aws_path)
+
+        # TODO(amr): create hs3.copy() helper.
+        cmd = "aws s3 cp %s %s" % (file_path, aws_path)
+        si.system(cmd)
 
     return 0
 
