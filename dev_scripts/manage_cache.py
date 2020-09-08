@@ -20,8 +20,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     action = args.positional[0]
     if action == "reset_cache":
-        tag = None
-        hcac.reset_disk_cache(tag)
+        hcac.reset_cache("disk", tag=None)
+        hcac.reset_cache("mem", tag=None)
     else:
         dbg.dfatal("Invalid action='%s'" % action)
 
