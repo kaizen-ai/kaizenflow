@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Tuple
+from typing import Any, Callable, Tuple
 
 import helpers.cache as hcac
 import helpers.io_ as io_
@@ -11,10 +11,10 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _get_add_function():
+def _get_add_function() -> Callable:
     """Return function for testing with the ability to track state."""
     #
-    def fn(x, y):
+    def fn(x: int, y: int) -> int:
         fn.executed = True
         return x + y
 
@@ -227,7 +227,41 @@ class Test_cache2(hut.TestCase):
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
 
-    def _get_function(self) -> _get_add_function:
+    def test_redefined_function(self) -> None:
+        """Test if the function is redefined, but it's still the same, the
+        intrinsic function should not be recomputed."""
+        # Define the function inline imitating working in a notebook.
+        add = self._redefine_function()
+        cached_add = hcac.Cached(add, tag=self.cache_tag)
+        # Execute the first time.
+        self._check_cache_state(
+            add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        # Execute the second time. Must use memory cache.
+        self._check_cache_state(
+            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
+        )
+        # Redefine the function inline.
+        add = self._redefine_function()
+        cached_add = hcac.Cached(add, tag=self.cache_tag)
+        # Execute the third time. Should still use memory cache.
+        self._check_cache_state(
+            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
+        )
+        # Execute the fourth time. Should still use memory cache.
+        self._check_cache_state(
+            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
+        )
+
+    @staticmethod
+    def _redefine_function() -> Callable:
+        def add(x: int, y: int) -> int:
+            add.executed = True
+            return x + y
+
+        return add
+
+    def _get_function(self) -> Callable:
         """Build a function that can be used to verify if it was executed or
         not."""
         f = _get_add_function()
@@ -235,7 +269,7 @@ class Test_cache2(hut.TestCase):
         self.assertFalse(f.executed)
         return f
 
-    def _reset_function(self, f) -> None:
+    def _reset_function(self, f: Callable) -> None:
         """Reset the function before another execution, so we can verify if it
         was executed or not.
 
@@ -247,7 +281,7 @@ class Test_cache2(hut.TestCase):
 
     def _check_cache_state(
         self,
-        f: _get_function,
+        f: Callable,
         cf: hcac.Cached,
         val1: int,
         val2: int,
@@ -276,9 +310,7 @@ class Test_cache2(hut.TestCase):
         _LOG.debug("executed=%s", f.executed)
         self.assertEqual(exp_f_state, f.executed)
 
-    def _get_f_cf_functions(
-        self, **kwargs: Any
-    ) -> Tuple[_get_function, hcac.Cached]:
+    def _get_f_cf_functions(self, **kwargs: Any) -> Tuple[Callable, hcac.Cached]:
         """Create the intrinsic function `f` and its cached version `cf`."""
         # Make sure that we are using the unit test cache.
         disk_cache_name = hcac.get_cache_name("disk", self.cache_tag)
