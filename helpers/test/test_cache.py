@@ -1,8 +1,11 @@
 import logging
+import time
 from typing import Any, Callable, Tuple
 
+import numpy as np
+import pandas as pd
+
 import helpers.cache as hcac
-import helpers.io_ as io_
 import helpers.printing as prnt
 import helpers.unit_test as hut
 
@@ -34,10 +37,6 @@ class Test_cache1(hut.TestCase):
         self.assertIn(cache_tag, disk_cache_name)
 
 
-# All unit tests for the cache should be in this class since we have a single
-# disk cache. Therefore if we used different classes and the unit tests were
-# executed in parallel we would incur in race conditions for unit tests all
-# resetting / using the same disk cache.
 class Test_cache2(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -47,14 +46,8 @@ class Test_cache2(hut.TestCase):
         )
 
     def tearDown(self) -> None:
-        # TODO(gp): Use a context manager to create / destroy a local cache.
-        # For now we do it explicitly.
-        disk_cache_path = hcac.get_cache_path("disk", self.cache_tag)
-        _LOG.debug("Destroying disk_cache_path=%s", disk_cache_path)
-        io_.delete_dir(disk_cache_path)
-        memory_cache_path = hcac.get_cache_path("mem", self.cache_tag)
-        _LOG.debug("Destroying memory_cache_path=%s", memory_cache_path)
-        io_.delete_dir(memory_cache_path)
+        hcac.destroy_cache("disk", tag=self.cache_tag)
+        hcac.destroy_cache("mem", tag=self.cache_tag)
         #
         super().tearDown()
 
@@ -327,3 +320,95 @@ class Test_cache2(hut.TestCase):
         hcac.reset_cache("mem", self.cache_tag)
         cf._reset_cache_tracing()
         return f, cf
+
+
+class Test_cache_performance(hut.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.cache_tag = "%s::%s" % (
+            self.__class__.__name__,
+            self._testMethodName,
+        )
+
+    def tearDown(self) -> None:
+        hcac.destroy_cache("disk", tag=self.cache_tag)
+        hcac.destroy_cache("mem", tag=self.cache_tag)
+        #
+        super().tearDown()
+
+    def test_performance_dataframe(self) -> None:
+        """Test performance of the cache over pandas DataFrame."""
+        # Create a somewhat big DataFrame with random data.
+        df = pd.DataFrame(
+            np.random.randint(0, 100, size=(100, 4)), columns=list("ABCD")
+        )
+        print("testing pandas dataframe, with sample size", df.shape)
+        self._test_performance(df)
+
+    def test_performance_series(self) -> None:
+        """Test performance of the cache over pandas Series."""
+        # Create a somewhat big DataFrame with random data.
+        s = pd.Series(np.random.randint(0, 100, size=100))
+        print("testing pandas series, with sample size", s.shape)
+        self._test_performance(s)
+
+    def _test_performance(self, val: Any) -> None:
+        """Test performance of the cache over some argument val.
+
+        :param val: any hashable argument
+        """
+        # Create cached versions of the computation function.
+        _mem_cached_computation = hcac.Cached(
+            self._computation,
+            tag=self.cache_tag,
+            use_mem_cache=True,
+            use_disk_cache=False,
+        )
+        _disk_cached_computation = hcac.Cached(
+            self._computation,
+            tag=self.cache_tag,
+            use_mem_cache=False,
+            use_disk_cache=True,
+        )
+        # First step: no cache.
+        no_cache_ct = self._timeit(lambda: self._computation(val))
+        print("no cache run time=%f" % no_cache_ct)
+        # Second step: memory cache.
+        memory_no_cache_ct = self._timeit(lambda: _mem_cached_computation(val))
+        print("empty memory cache run time=%f" % memory_no_cache_ct)
+        print(
+            "empty memory cache overhead=%f" % (memory_no_cache_ct - no_cache_ct)
+        )
+        memory_cache_ct = self._timeit(lambda: _mem_cached_computation(val))
+        print("hot memory cache run time=%f" % memory_cache_ct)
+        print("hot memory cache benefit=%f" % (no_cache_ct - memory_cache_ct))
+        # Third step: disk cache.
+        disk_no_cache_ct = self._timeit(lambda: _disk_cached_computation(val))
+        print("empty disk cache run time=%f" % disk_no_cache_ct)
+        print("empty disk cache overhead=%f" % (disk_no_cache_ct - no_cache_ct))
+        disk_cache_ct = self._timeit(lambda: _disk_cached_computation(val))
+        print("hot disk cache run time=%f" % disk_cache_ct)
+        print("hot disk cache benefit=%f" % (no_cache_ct - disk_cache_ct))
+
+    @staticmethod
+    # pylint: disable=unused-argument
+    def _computation(*args: Any) -> None:
+        """Simulate work.
+
+        :param args: throw away arguments
+        """
+        # Emulate small quantity of work.
+        time.sleep(0.01)
+
+    @staticmethod
+    def _timeit(fn: Callable, *args: Any) -> float:
+        """Get performance measure of the call to fn with args.
+
+        :param fn: callable function
+        :param args: any arguments to pass to the function fn
+        :return: precise time in seconds
+        """
+        perf_start = time.perf_counter()
+        fn(*args)
+        perf_diff = time.perf_counter() - perf_start
+        return perf_diff
