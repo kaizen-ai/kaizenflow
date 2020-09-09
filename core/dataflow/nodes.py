@@ -19,8 +19,8 @@ import gluonts.trainer as gt
 import helpers.dbg as dbg
 import numpy as np
 import pandas as pd
-import sklearn as skl
 import scipy as sp
+import sklearn as skl
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
@@ -597,7 +597,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         steps_ahead: int,
-        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -631,10 +630,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._col_mode = col_mode
         self._model = None
         self._steps_ahead = steps_ahead
-        self._col_mode = col_mode
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
@@ -847,7 +844,6 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         nid: str,
         model_func: Callable[..., Any],
         x_vars: Union[List[str], Callable[[], List[str]]],
-        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -1123,7 +1119,6 @@ class SkLearnModel(FitPredictNode):
         x_vars: Union[List[str], Callable[[], List[str]]],
         y_vars: Union[List[str], Callable[[], List[str]]],
         model_func: Callable[..., Any],
-        col_mode: "str" = "merge_all",
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
     ) -> None:
@@ -1132,7 +1127,6 @@ class SkLearnModel(FitPredictNode):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._col_mode = col_mode
         self._model = None
         self._col_mode = col_mode or "replace_all"
 
