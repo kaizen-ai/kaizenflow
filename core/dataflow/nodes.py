@@ -9,18 +9,19 @@ import logging
 import os
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import gluonts.model.deepar as gmd
+import gluonts.trainer as gt
+import numpy as np
+import pandas as pd
+import scipy as sp
+import sklearn as skl
+
 import core.backtest as bcktst
 import core.data_adapters as adpt
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
-import gluonts.model.deepar as gmd
-import gluonts.trainer as gt
 import helpers.dbg as dbg
-import numpy as np
-import pandas as pd
-import scipy as sp
-import sklearn as skl
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
@@ -1679,6 +1680,7 @@ class SmaModel(FitPredictNode):
         """
         super().__init__(nid)
         dbg.dassert_isinstance(col, list)
+        dbg.dassert_eq(len(col), 1)
         self._col = col
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -1876,6 +1878,7 @@ class VolatilityModel(FitPredictNode):
         """
         super().__init__(nid)
         dbg.dassert_isinstance(col, list)
+        dbg.dassert_eq(len(col), 1)
         self._col = col
         self._vol_col = str(self._col[0]) + "_vol"
         self._steps_ahead = steps_ahead
