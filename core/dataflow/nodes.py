@@ -555,25 +555,29 @@ class Resample(Transformer):
         nid: str,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
         agg_func: str,
-        agg_func_kwargs: Optional[Any] = None,
+        resample_kwargs: Optional[Dict[str, Any]] = None,
+        agg_func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         :param nid: node identifier
         :param rule: resampling frequency passed into
             pd.DataFrame.resample
         :param agg_func: a function that is applied to the resampler
+        :param resample_kwargs: kwargs for `resample`. Should not include
+            `rule` since we handle this separately.
         :param agg_func_kwargs: kwargs for agg_func
         """
         super().__init__(nid)
         self._rule = rule
         self._agg_func = agg_func
+        self._resample_kwargs = resample_kwargs or {}
         self._agg_func_kwargs = agg_func_kwargs or {}
 
     def _transform(
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        resampler = sigp.resample(df, rule=self._rule)
+        resampler = sigp.resample(df, rule=self._rule, **self._resample_kwargs)
         df = getattr(resampler, self._agg_func)(**self._agg_func_kwargs)
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
