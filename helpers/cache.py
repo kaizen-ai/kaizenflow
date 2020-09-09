@@ -8,7 +8,7 @@ import functools
 import logging
 import os
 import time
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, Union
 
 import joblib
 import joblib.func_inspect as jfi
@@ -25,10 +25,11 @@ _USE_CACHING: bool = True
 _DISK_CACHE: Any = None
 # This is the global memory cache.
 _MEMORY_CACHE: Any = None
-_MEMORY_TMPFS_PATH = "/mnt/tmpfs"
+_MEMORY_TMPFS_PATH = os.curdir  # "/mnt/tmpfs"
 # Log level for information about the high level behavior of the caching
 # layer.
 _LOG_LEVEL = logging.DEBUG
+
 
 # #############################################################################
 
@@ -112,19 +113,19 @@ def get_global_cache(cache_type: str) -> joblib.Memory:
     return global_cache
 
 
-def set_global_cache(cache_type: str, cache: joblib.Memory) -> None:
+def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
     """Set global cache by cache type.
 
     :param cache_type: type of a cache
-    :param cache: caching backend
+    :param cache_backend: caching backend
     """
     _check_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
     if cache_type == "mem":
-        _MEMORY_CACHE = cache
+        _MEMORY_CACHE = cache_backend
     else:
-        _DISK_CACHE = cache
+        _DISK_CACHE = cache_backend
 
 
 def get_cache(cache_type: str, tag: Optional[str]) -> joblib.Memory:
@@ -138,16 +139,16 @@ def get_cache(cache_type: str, tag: Optional[str]) -> joblib.Memory:
     global_cache = get_global_cache(cache_type)
     if tag is None:
         if global_cache:
-            cache = global_cache
+            cache_backend = global_cache
         else:
             file_name = get_cache_path(cache_type, tag)
-            cache = joblib.Memory(file_name, verbose=0, compress=1)
-            set_global_cache(cache_type, cache)
+            cache_backend = joblib.Memory(file_name, verbose=0, compress=1)
+            set_global_cache(cache_type, cache_backend)
     else:
         # Build a one-off cache.
         file_name = get_cache_path(cache_type, tag)
-        cache = joblib.Memory(file_name, verbose=0, compress=1)
-    return cache
+        cache_backend = joblib.Memory(file_name, verbose=0, compress=1)
+    return cache_backend
 
 
 def reset_cache(cache_type: str, tag: Optional[str] = None) -> None:
@@ -230,8 +231,6 @@ class Cached:
                 self._func.__name__,
                 self.get_last_cache_accessed(),
             )
-            # TODO(gp): We make a copy, but we should do something better
-            # (PartTask1071).
             obj = copy.deepcopy(obj)
         if self._set_verbose_mode:
             perf_counter = time.perf_counter() - perf_counter_start
@@ -253,8 +252,8 @@ class Cached:
             mem_cache = self._get_cache("mem")
             mem_cache.clear()
         else:
-            cache = self._get_cache(cache_type)
-            cache.clear()
+            cache_backend = self._get_cache(cache_type)
+            cache_backend.clear()
 
     def get_last_cache_accessed(self) -> str:
         """Get the last used cache in the latest call.
@@ -279,8 +278,8 @@ class Cached:
         :param kwargs: original kw-arguments of the call
         :return: digests of the function and current arguments
         """
-        cache = self._get_cache(cache_type)
-        func_id, args_id = cache._get_output_identifiers(*args, **kwargs)
+        cache_backend = self._get_cache(cache_type)
+        func_id, args_id = cache_backend._get_output_identifiers(*args, **kwargs)
         return func_id, args_id
 
     def _get_cache(self, cache_type: str) -> joblib.MemorizedResult:
@@ -290,12 +289,12 @@ class Cached:
         :return: instance of the cache from joblib
         """
         if cache_type == "mem":
-            cache = self._memory_cached_func
+            cache_backend = self._memory_cached_func
         elif cache_type == "disk":
-            cache = self._disk_cached_func
+            cache_backend = self._disk_cached_func
         else:
             dbg.dfatal("Unknown cache type: %s", cache_type)
-        return cache
+        return cache_backend
 
     def _has_cached_version(
         self, cache_type: str, func_id: str, args_id: str
@@ -308,19 +307,23 @@ class Cached:
         :param args_id: digest of arguments obtained from _get_identifiers
         :return: whether there is an entry in a cache
         """
-        cache = self._get_cache(cache_type)
-        has_cached_version = cache.store_backend.contains_item([func_id, args_id])
+        cache_backend = self._get_cache(cache_type)
+        has_cached_version = cache_backend.store_backend.contains_item(
+            [func_id, args_id]
+        )
         if has_cached_version:
             # We must check that the source of the function is the same.
             # Otherwise, cache tracing will not be correct.
             # First, try faster check via joblib hash.
             if self._func in jm._FUNCTION_HASHES:
-                func_hash = cache._hash_func()
+                func_hash = cache_backend._hash_func()
                 if func_hash == jm._FUNCTION_HASHES[self._func]:
                     return True
             # Otherwise, check the the source of the function is still the same.
             func_code, _, _ = jm.get_func_code(self._func)
-            old_func_code_cache = cache.store_backend.get_cached_func_code([func_id])
+            old_func_code_cache = cache_backend.store_backend.get_cached_func_code(
+                [func_id]
+            )
             old_func_code, _ = jm.extract_first_line(old_func_code_cache)
             if func_code == old_func_code:
                 return True
@@ -336,12 +339,12 @@ class Cached:
         :param args_id: digest of arguments obtained from _get_identifiers
         :param obj: return value of the intrinsic function
         """
-        cache = self._get_cache(cache_type)
+        cache_backend = self._get_cache(cache_type)
         # Write out function code to the cache.
-        func_code, _, first_line = jfi.get_func_code(cache.func)
-        cache._write_func_code(func_code, first_line)
+        func_code, _, first_line = jfi.get_func_code(cache_backend.func)
+        cache_backend._write_func_code(func_code, first_line)
         # Store the returned value into the cache.
-        cache.store_backend.dump_item([func_id, args_id], obj)
+        cache_backend.store_backend.dump_item([func_id, args_id], obj)
 
     def _reset_cache_tracing(self) -> None:
         """Reset the values used to track which cache we are hitting when
@@ -415,3 +418,50 @@ class Cached:
                 _LOG.warning("Skipping disk cache")
                 obj = self._func(*args, **kwargs)
         return obj
+
+
+def cache(
+    fn: Optional[Callable] = None,
+    use_mem_cache: bool = True,
+    use_disk_cache: bool = True,
+    set_verbose_mode: bool = False,
+    tag: Optional[str] = None,
+) -> Union[Callable, Cached]:
+    """Decorate.
+
+    Usage examples:
+
+    @cache
+    def add(x: int, y: int) -> int:
+        return x + y
+
+    @cache(use_mem_cache=False)
+    def add(x: int, y: int) -> int:
+        return x + y
+
+    :param fn: function to decorate with Cached class
+    :param use_mem_cache: whether to use memory cache
+    :param use_disk_cache: whether to use disk cache
+    :param set_verbose_mode: whether to report performance metrics
+    :param tag: optional tag to separate cache from the global one, if set
+    :return: Cached instance if fn is set, otherwise a function decorator
+    """
+    if callable(fn):
+        return Cached(
+            fn,
+            use_mem_cache=use_mem_cache,
+            use_disk_cache=use_disk_cache,
+            set_verbose_mode=set_verbose_mode,
+            tag=tag,
+        )
+
+    def wrapper(func):
+        return Cached(
+            func,
+            use_mem_cache=use_mem_cache,
+            use_disk_cache=use_disk_cache,
+            set_verbose_mode=set_verbose_mode,
+            tag=tag,
+        )
+
+    return wrapper

@@ -269,6 +269,7 @@ class Test_cache2(hut.TestCase):
         )
         # Redefine the function inline. Change body.
 
+        # pylint: disable=function-redefined
         def add(x: int, y: int) -> int:
             add.executed = True
             z = x + y
@@ -454,3 +455,84 @@ class Test_cache_performance(hut.TestCase):
         fn(*args)
         perf_diff = time.perf_counter() - perf_start
         return perf_diff
+
+
+class Test_decorator(hut.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.cache_tag = "%s::%s" % (
+            self.__class__.__name__,
+            self._testMethodName,
+        )
+
+    def tearDown(self) -> None:
+        hcac.destroy_cache("disk", tag=self.cache_tag)
+        hcac.destroy_cache("mem", tag=self.cache_tag)
+        #
+        super().tearDown()
+
+    def test_decorated_function(self) -> None:
+        """Test if the function is redefined, but it is not the same, the
+        intrinsic function should be recomputed."""
+        # Define the function inline imitating working in a notebook.
+        @hcac.cache(tag=self.cache_tag)
+        def add(x: int, y: int) -> int:
+            add.__wrapped__.executed = True
+            return x + y
+
+        # Execute the first time.
+        self._check_cache_state(
+            add.__wrapped__, add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        # Execute the second time. Must use memory cache.
+        self._check_cache_state(
+            add.__wrapped__, add, 1, 2, exp_f_state=False, exp_cf_state="mem"
+        )
+
+    def test_decorated_function_no_mem(self) -> None:
+        """Test if the function is redefined, but it is not the same, the
+        intrinsic function should be recomputed."""
+        # Define the function inline imitating working in a notebook.
+        @hcac.cache(tag=self.cache_tag, use_mem_cache=False)
+        def add(x: int, y: int) -> int:
+            add.__wrapped__.executed = True
+            return x + y
+
+        # Execute the first time.
+        self._check_cache_state(
+            add.__wrapped__, add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        # Execute the second time. Must use disk cache.
+        self._check_cache_state(
+            add.__wrapped__, add, 1, 2, exp_f_state=False, exp_cf_state="disk"
+        )
+
+    def _check_cache_state(
+        self,
+        f: Callable,
+        cf: hcac.Cached,
+        val1: int,
+        val2: int,
+        exp_f_state: bool,
+        exp_cf_state: str,
+    ) -> None:
+        """Call the (cached function) `cf(val1, val2)` and check whether the
+        intrinsic function was executed and what caches were used."""
+        _LOG.debug(
+            "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
+            val1,
+            val2,
+            exp_f_state,
+            exp_cf_state,
+        )
+        # Reset the function.
+        f.executed = False
+        # Call the cached function.
+        act = cf(val1, val2)
+        exp = val1 + val2
+        self.assertEqual(act, exp)
+        # Check which function was executed and what caches were used.
+        _LOG.debug("get_last_cache_accessed=%s", cf.get_last_cache_accessed())
+        self.assertEqual(exp_cf_state, cf.get_last_cache_accessed())
+        _LOG.debug("executed=%s", f.executed)
+        self.assertEqual(exp_f_state, f.executed)
