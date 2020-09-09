@@ -71,7 +71,7 @@ class Test_env1(ut.TestCase):
 #  annotations from pyannotate.
 
 
-@pytest.mark.amp
+@pytest.mark.skipif('Deprecated after switch to Docker dev env')
 class Test_set_env_amp(ut.TestCase):
     def test_setenv_py1(self) -> None:
         """Find _setenv_amp.py executable and run it."""
@@ -115,49 +115,11 @@ class Test_set_env_amp(ut.TestCase):
 
 
 # #############################################################################
-# jack*
-# #############################################################################
-
-
-class Test_jack1(ut.TestCase):
-
-    # TODO(gp): Not clear why it's broken.
-    @pytest.mark.not_docker(reason="Issue #3482")
-    @pytest.mark.skipif('si.get_user_name() == "jenkins"')
-    @pytest.mark.skipif(
-        'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
-    )
-    def test_jack(self) -> None:
-        cmd = 'jack -r "def dassert"'
-        si.system(cmd)
-
-    @pytest.mark.not_docker(reason="Issue #3482")
-    @pytest.mark.skipif('si.get_user_name() == "jenkins"')
-    @pytest.mark.skipif(
-        'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
-    )
-    def test_jackpy(self) -> None:
-        cmd = 'jackpy -r "def dassert"'
-        si.system(cmd)
-
-    def test_jackipynb(self) -> None:
-        cmd = 'jackipynb -r "import"'
-        si.system(cmd)
-
-    def test_jackppy(self) -> None:
-        cmd = 'jackipynb -r "import"'
-        si.system(cmd)
-
-    def test_jacktxt(self) -> None:
-        cmd = 'jacktxt -r "python"'
-        si.system(cmd)
-
-
-# #############################################################################
 # create_conda.py
 # #############################################################################
 
 
+@pytest.mark.skipif('Deprecated after switch to Docker dev env')
 class Test_install_create_conda_py1(ut.TestCase):
     def _run_create_conda(self, cmd_opts: List[str], cleanup: bool) -> None:
         """Run a create_conda command using custom options `cmd_opts`.
