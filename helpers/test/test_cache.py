@@ -472,8 +472,7 @@ class Test_decorator(hut.TestCase):
         super().tearDown()
 
     def test_decorated_function(self) -> None:
-        """Test if the function is redefined, but it is not the same, the
-        intrinsic function should be recomputed."""
+        """Test decorator with both caches enabled."""
         # Define the function inline imitating working in a notebook.
         @hcac.cache(tag=self.cache_tag)
         def add(x: int, y: int) -> int:
@@ -490,8 +489,7 @@ class Test_decorator(hut.TestCase):
         )
 
     def test_decorated_function_no_mem(self) -> None:
-        """Test if the function is redefined, but it is not the same, the
-        intrinsic function should be recomputed."""
+        """Test decorator with only disk cache."""
         # Define the function inline imitating working in a notebook.
         @hcac.cache(tag=self.cache_tag, use_mem_cache=False)
         def add(x: int, y: int) -> int:
