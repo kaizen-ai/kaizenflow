@@ -99,7 +99,16 @@ class Playback:
         :return: the code of the unit test
         """
         code = []
-        code.append("# Initialize function parameters.")
+        code.append("import helpers.unit_test as hut")
+        code.append("")
+        # Get the function name without the library shortcut.
+        test_name_tmp = self.func_name.split(".")[-1]
+        # Get the test name by turning the function name into (a sort of)
+        # Hungarian notation.
+        test_name = "".join([x.capitalize() for x in test_name_tmp.split("_")])
+        code.append(f"class Test{test_name}(hut.TestCase):")
+        code.append("    def test1(self) -> None:")
+        code.append("        # Initialize function parameters.")
         # To store the names of the variables, to which function parameters are
         # assigned.
         var_names = []
@@ -116,43 +125,59 @@ class Playback:
                 var_names.append(var_name)
                 # Serialize the object into a string of python code.
                 var_code = to_python_code(param_obj)
-                code.append("%s = %s" % (var_name, var_code))
+                code.append("        %s = %s" % (var_name, var_code))
                 if not isinstance(
                     param_obj, (int, float, str, list, dict, pd.DataFrame)
                 ):
                     # Decode the jsonpickle encoding.
-                    code.append("{0} = jsonpickle.decode({0})".format(var_name))
+                    code.append(
+                        "        {0} = jsonpickle.decode({0})".format(var_name)
+                    )
         if self.kwargs:
             for key in self.kwargs:
                 var_names.append(key)
                 # Serialize the object into a string of python code.
                 var_code = to_python_code(self.kwargs[key])
-                code.append("%s = %s" % (key, var_code))
+                code.append("        %s = %s" % (key, var_code))
                 if not isinstance(
                     self.kwargs[key], (int, float, str, list, dict, pd.DataFrame)
                 ):
                     # Decode the jsonpickle encoding.
-                    code.append("{0} = jsonpickle.decode({0})".format(key))
+                    code.append(
+                        "        {0} = jsonpickle.decode({0})".format(key)
+                    )
         # Add to the code the function call that generates the actual output.
-        code.append("# Get the actual function output.")
-        code.append("act = %s(%s)" % (self.func_name, ", ".join(var_names)))
-        # Add to the code the serialization of the expected output.
-        code.append("# Create the expected function output.")
-        func_output_code = to_python_code(func_output)
-        code.append("exp = %s" % func_output_code)
+        code.append("        # Get the actual function output.")
+        code.append(
+            "        act = %s(%s)" % (self.func_name, ", ".join(var_names))
+        )
+        if self.mode == "assert_equal":
+            # Add to the code the serialization of the expected output.
+            code.append("        # Create the expected function output.")
+            func_output_code = to_python_code(func_output)
+            code.append("        exp = %s" % func_output_code)
         if not isinstance(
             func_output, (int, float, str, list, dict, pd.DataFrame)
         ):
             # Decode the jsonpickle encoding.
-            code.append("exp = jsonpickle.decode(exp)")
+            code.append("        exp = jsonpickle.decode(exp)")
+        if isinstance(func_output, (pd.DataFrame, pd.Series)):
+            # Convert the dataframes into strings.
+            code.append("        # Convert into string.")
+            code.append("        act = hut.convert_df_to_string(act)")
+            if self.mode == "assert_equal":
+                code.append("        exp = hut.convert_df_to_string(exp)")
         # Add to the code the equality check between actual and expected.
-        code.append("# Check whether the expected value equals the actual value.")
+        code.append(
+            "        # Check whether the expected value equals the actual value."
+        )
         if self.mode == "assert_equal":
-            # Add a different check for different values.
-            if isinstance(func_output, pd.DataFrame):
-                code.append("assert act.equals(exp)")
-            else:
-                code.append("assert act == exp")
+            code.append("        self.assertEqual(act, exp)")
+        elif self.mode == "check_string":
+            if not isinstance(func_output, (pd.DataFrame, pd.Series, str)):
+                code.append("        # Convert into string.")
+                code.append("        act = str(act)")
+            code.append("        self.check_string(act)")
         else:
             raise ValueError("Invalid mode='%s'" % self.mode)
         #
