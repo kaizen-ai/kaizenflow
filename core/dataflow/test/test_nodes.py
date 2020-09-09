@@ -2,13 +2,6 @@ import logging
 import os
 import pprint
 
-import mxnet
-import numpy as np
-import pandas as pd
-import pytest
-import sklearn.decomposition as sld
-import sklearn.linear_model as slm
-
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
 import core.config_builders as cfgb
@@ -17,6 +10,12 @@ import core.finance as fin
 import core.signal_processing as sigp
 import helpers.printing as prnt
 import helpers.unit_test as hut
+import mxnet
+import numpy as np
+import pandas as pd
+import pytest
+import sklearn.decomposition as sld
+import sklearn.linear_model as slm
 
 _LOG = logging.getLogger(__name__)
 
@@ -252,10 +251,10 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sld.PCA,
-                "model_kwargs": {"n_components": 2,},
+                "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict(),)
+        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -278,10 +277,10 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sld.PCA,
-                "model_kwargs": {"n_components": 2,},
+                "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict(),)
+        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -314,10 +313,10 @@ class TestResidualizer(hut.TestCase):
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sld.PCA,
-                "model_kwargs": {"n_components": 2,},
+                "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.Residualizer("sklearn", **config.to_dict(),)
+        node = dtf.Residualizer("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -340,10 +339,10 @@ class TestResidualizer(hut.TestCase):
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sld.PCA,
-                "model_kwargs": {"n_components": 2,},
+                "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.Residualizer("sklearn", **config.to_dict(),)
+        node = dtf.Residualizer("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -376,7 +375,30 @@ class TestSmaModel(hut.TestCase):
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("sma", **config.to_dict(),)
+        node = dtf.SmaModel("sma", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "sma")
+        #
+        output_df = dag.run_leq_node("sma", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def test_fit_dag2(self) -> None:
+        """
+        Specify `tau` parameter.
+        """
+        # Load test data.
+        data = self._get_data()
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["vol"]
+        config["steps_ahead"] = 2
+        config["tau"] = 8
+        config["nan_mode"] = "drop"
+        node = dtf.SmaModel("sma", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -399,7 +421,7 @@ class TestSmaModel(hut.TestCase):
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("sma", **config.to_dict(),)
+        node = dtf.SmaModel("sma", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -407,7 +429,8 @@ class TestSmaModel(hut.TestCase):
         output_df = dag.run_leq_node("sma", "predict")["df_out"]
         self.check_string(output_df.to_string())
 
-    def _get_data(self) -> pd.DataFrame:
+    @staticmethod
+    def _get_data() -> pd.DataFrame:
         """
         Generate "random returns". Use lag + noise as predictor.
         """
