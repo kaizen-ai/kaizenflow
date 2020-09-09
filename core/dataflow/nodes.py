@@ -1674,7 +1674,7 @@ class SmaModel(FitPredictNode):
         :param nid: unique node id
         :param col: name of column to model
         :param steps_ahead: as in ContinuousSkLearnModel
-        :param tau: as in `sigp.compute_smooth_moving_average`. if `None`,
+        :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
             learn this parameter
         :param nan_mode: as in ContinuousSkLearnModel
         """
@@ -1872,7 +1872,7 @@ class VolatilityModel(FitPredictNode):
         :param col: name of returns column to model
         :param steps_ahead: as in ContinuousSkLearnModel
         :param p_moment: exponent to apply to the absolute value of returns
-        :param tau: as in `sigp.compute_smooth_moving_average`. if `None`,
+        :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
             learn this parameter
         :param nan_mode: as in ContinuousSkLearnModel
         """
