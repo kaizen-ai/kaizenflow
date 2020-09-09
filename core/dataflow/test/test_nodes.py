@@ -483,7 +483,7 @@ class TestVolatilityModel(hut.TestCase):
         config["col"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("vol_model", **config.to_dict())
+        node = dtf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
