@@ -555,8 +555,8 @@ class Resample(Transformer):
         nid: str,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
         agg_func: str,
-        resample_kwargs: Dict[str, Any] = None,
-        agg_func_kwargs: Optional[Any] = None,
+        resample_kwargs: Optional[Dict[str, Any]] = None,
+        agg_func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         :param nid: node identifier
@@ -569,8 +569,8 @@ class Resample(Transformer):
         """
         super().__init__(nid)
         self._rule = rule
-        self._resample_kwargs = resample_kwargs or {}
         self._agg_func = agg_func
+        self._resample_kwargs = resample_kwargs or {}
         self._agg_func_kwargs = agg_func_kwargs or {}
 
     def _transform(
