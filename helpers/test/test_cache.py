@@ -224,7 +224,7 @@ class Test_cache2(hut.TestCase):
         """Test if the function is redefined, but it's still the same, the
         intrinsic function should not be recomputed."""
         # Define the function inline imitating working in a notebook.
-        add = self._redefine_function()
+        add = self._get_add_function()
         cached_add = hcac.Cached(add, tag=self.cache_tag)
         # Execute the first time.
         self._check_cache_state(
@@ -235,7 +235,7 @@ class Test_cache2(hut.TestCase):
             add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
         )
         # Redefine the function inline.
-        add = self._redefine_function()
+        add = self._get_add_function()
         cached_add = hcac.Cached(add, tag=self.cache_tag)
         # Execute the third time. Should still use memory cache.
         self._check_cache_state(
@@ -245,9 +245,51 @@ class Test_cache2(hut.TestCase):
         self._check_cache_state(
             add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
         )
+        # Check that call with other arguments miss the cache.
+        self._check_cache_state(
+            add, cached_add, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+
+    def test_changed_function(self) -> None:
+        """Test if the function is redefined, but it is not the same, the
+        intrinsic function should be recomputed."""
+        # Define the function inline imitating working in a notebook.
+        def add(x: int, y: int) -> int:
+            add.executed = True
+            return x + y
+
+        cached_add = hcac.Cached(add, tag=self.cache_tag)
+        # Execute the first time.
+        self._check_cache_state(
+            add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        # Execute the second time. Must use memory cache.
+        self._check_cache_state(
+            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
+        )
+        # Redefine the function inline. Change body.
+
+        def add(x: int, y: int) -> int:
+            add.executed = True
+            z = x + y
+            return z
+
+        cached_add = hcac.Cached(add, tag=self.cache_tag)
+        # Execute the third time. Should still use memory cache.
+        self._check_cache_state(
+            add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        # Execute the fourth time. Should still use memory cache.
+        self._check_cache_state(
+            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
+        )
+        # Check that call with other arguments miss the cache.
+        self._check_cache_state(
+            add, cached_add, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
 
     @staticmethod
-    def _redefine_function() -> Callable:
+    def _get_add_function() -> Callable:
         def add(x: int, y: int) -> int:
             add.executed = True
             return x + y

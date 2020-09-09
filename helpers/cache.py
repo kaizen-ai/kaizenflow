@@ -12,6 +12,7 @@ from typing import Any, Callable, Optional, Tuple
 
 import joblib
 import joblib.func_inspect as jfi
+import joblib.memory as jm
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -176,6 +177,7 @@ def destroy_cache(cache_type: str, tag: Optional[str] = None) -> None:
 
 
 class Cached:
+    # pylint: disable=protected-access
     """Decorator wrapping a function in a disk and memory cache.
 
     If the function value was not cached either in memory or on disk, the
@@ -278,7 +280,6 @@ class Cached:
         :return: digests of the function and current arguments
         """
         cache = self._get_cache(cache_type)
-        # pylint: disable=protected-access
         func_id, args_id = cache._get_output_identifiers(*args, **kwargs)
         return func_id, args_id
 
@@ -299,17 +300,31 @@ class Cached:
     def _has_cached_version(
         self, cache_type: str, func_id: str, args_id: str
     ) -> bool:
-        """Check if cache contains entry for corresponding function and
-        arguments digests.
+        """Check if a cache contains an entry for a corresponding function and
+        arguments digests, and that function source has not changed.
 
         :param cache_type: type of a cache
         :param func_id: digest of the function obtained from _get_identifiers
         :param args_id: digest of arguments obtained from _get_identifiers
-        :return: whether there is an entry
+        :return: whether there is an entry in a cache
         """
         cache = self._get_cache(cache_type)
         has_cached_version = cache.store_backend.contains_item([func_id, args_id])
-        return bool(has_cached_version)
+        if has_cached_version:
+            # We must check that the source of the function is the same.
+            # Otherwise, cache tracing will not be correct.
+            # First, try faster check via joblib hash.
+            if self._func in jm._FUNCTION_HASHES:
+                func_hash = cache._hash_func()
+                if func_hash == jm._FUNCTION_HASHES[self._func]:
+                    return True
+            # Otherwise, check the the source of the function is still the same.
+            func_code, _, _ = jm.get_func_code(self._func)
+            old_func_code_cache = cache.store_backend.get_cached_func_code([func_id])
+            old_func_code, _ = jm.extract_first_line(old_func_code_cache)
+            if func_code == old_func_code:
+                return True
+        return False
 
     def _store_cached_version(
         self, cache_type: str, func_id: str, args_id: str, obj: Any
@@ -324,7 +339,6 @@ class Cached:
         cache = self._get_cache(cache_type)
         # Write out function code to the cache.
         func_code, _, first_line = jfi.get_func_code(cache.func)
-        # pylint: disable=protected-access
         cache._write_func_code(func_code, first_line)
         # Store the returned value into the cache.
         cache.store_backend.dump_item([func_id, args_id], obj)
