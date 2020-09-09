@@ -431,11 +431,13 @@ def cache(
 
     Usage examples:
 
-    @cache
+    import helpers.cache as hcac
+
+    @hcac.cache
     def add(x: int, y: int) -> int:
         return x + y
 
-    @cache(use_mem_cache=False)
+    @hcac.cache(use_mem_cache=False)
     def add(x: int, y: int) -> int:
         return x + y
 
