@@ -16,7 +16,3 @@ class AdjustmentsLoader:
 
         df = pd.read_csv(s3_path, sep="\t")
         return [types.Adjustment(*row) for row in df.values.tolist()]
-
-
-if __name__ == "__main__":
-    print(AdjustmentsLoader().load(symbol="SPTN"))
