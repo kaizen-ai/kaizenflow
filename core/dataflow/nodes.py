@@ -688,7 +688,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        return self._output_helper(df, fwd_y_df, fwd_y_hat, idx)
+        return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -719,10 +719,14 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
         # Return predictions.
-        return self._output_helper(df, fwd_y_df, fwd_y_hat, idx)
+        return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
 
-    def _output_helper(
-        self, df: pd.DataFrame, fwd_y_df: pd.DataFrame, fwd_y_hat: pd.DataFrame, idx: pd.Series
+    def _replace_or_merge_output(
+        self,
+        df: pd.DataFrame,
+        fwd_y_df: pd.DataFrame,
+        fwd_y_hat: pd.DataFrame,
+        idx: pd.Series,
     ) -> Dict[str, pd.DataFrame]:
         if self._col_mode == "replace_all":
             df_out = fwd_y_df.reindex(idx).merge(
@@ -733,7 +737,10 @@ class ContinuousSkLearnModel(FitPredictNode):
                 fwd_y_hat.reindex(idx), left_index=True, right_index=True
             )
             df_out = df.reindex(idx).merge(
-                df_out.reindex(idx), how="outer", left_index=True, right_index=True
+                df_out.reindex(idx),
+                how="outer",
+                left_index=True,
+                right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
@@ -1157,7 +1164,7 @@ class SkLearnModel(FitPredictNode):
         info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
         # Return targets and predictions.
-        return self._output_helper(df, y_hat, idx)
+        return self._replace_or_merge_output(df, y_hat, idx)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -1176,9 +1183,9 @@ class SkLearnModel(FitPredictNode):
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
         # Return predictions.
-        return self._output_helper(df, y_hat, idx)
+        return self._replace_or_merge_output(df, y_hat, idx)
 
-    def _output_helper(
+    def _replace_or_merge_output(
         self, df: pd.DataFrame, y_hat: pd.DataFrame, idx: pd.Series
     ) -> Dict[str, pd.DataFrame]:
         if self._col_mode == "replace_all":
