@@ -519,7 +519,7 @@ class ColumnTransformer(Transformer):
             df = df_in.merge(df, left_index=True, right_index=True)
         elif self._col_mode == "replace_selected":
             dbg.dassert(
-                df.columns.intersection(df_in[self._cols].columns).empty,
+                df.drop(self._cols, axis=1).columns.intersection(df_in[self._cols].columns).empty,
                 "Transformed column names `%s` conflict with existing column "
                 "names `%s`.",
                 df.columns,
