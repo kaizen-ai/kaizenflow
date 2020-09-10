@@ -10,7 +10,6 @@
 import argparse
 import logging
 import os
-import sys
 from typing import Callable, Iterable, List
 
 import joblib
@@ -19,9 +18,9 @@ import tqdm
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.parser as prsr
 import helpers.s3 as hs3
 import helpers.system_interaction as si
+import vendors2.kibot.base.command as command
 import vendors2.kibot.metadata.config as config
 
 # #############################################################################
@@ -107,57 +106,39 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
 # #############################################################################
 
 
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "-u", "--username", required=True, help="Specify username",
-    )
-    parser.add_argument(
-        "-p", "--password", required=True, help="Specify password",
-    )
-    parser.add_argument(
-        "--tmp_dir",
-        type=str,
-        nargs="?",
-        help="Directory to store temporary data",
-        default="tmp.kibot_downloader",
-    )
-    parser.add_argument(
-        "--no_incremental",
-        action="store_true",
-        help="Clean the local directories",
-    )
-    parser.add_argument(
-        "--serial", action="store_true", help="Download data serially"
-    )
-    prsr.add_verbosity_arg(parser)
-    return parser
+class DownloadAdjustmentsCommand(command.KibotCommand):
+    SUPPORTS_TMP_DIR = True
+    LOG_FILE_NAME = __file__ + ".log"
 
+    @staticmethod
+    def customize_parser(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "-u", "--username", required=True, help="Specify username",
+        )
+        parser.add_argument(
+            "-p", "--password", required=True, help="Specify password",
+        )
+        parser.add_argument(
+            "--serial", action="store_true", help="Download data serially"
+        )
 
-def _main(parser: argparse.ArgumentParser) -> int:
-    args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Create dirs.
-    incremental = not args.no_incremental
-    io_.create_dir(args.tmp_dir, incremental=incremental)
+    def customize_run(self) -> int:
+        _login(user=self.args.username, password=self.args.password)
 
-    _login(user=args.username, password=args.password)
+        symbols = _get_symbols_list()
 
-    symbols = _get_symbols_list()
+        _execute_loop(
+            func=_download_adjustments_data_for_symbol,
+            kwargs_list=(
+                dict(symbol=symbol, tmp_dir=self.args.tmp_dir)
+                for symbol in symbols
+            ),
+            total=len(symbols),
+            serial=self.args.serial,
+        )
 
-    _execute_loop(
-        func=_download_adjustments_data_for_symbol,
-        kwargs_list=(
-            dict(symbol=symbol, tmp_dir=args.tmp_dir) for symbol in symbols
-        ),
-        total=len(symbols),
-        serial=args.serial,
-    )
-
-    return 0
+        return 0
 
 
 if __name__ == "__main__":
-    sys.exit(_main(_parse()))
+    DownloadAdjustmentsCommand().run()

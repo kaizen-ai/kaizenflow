@@ -22,7 +22,6 @@ import logging
 import os
 import re
 import shutil
-import sys
 import urllib.parse as urlprs
 
 import bs4
@@ -31,14 +30,14 @@ import numpy as np
 import pandas as pd
 import requests
 import requests.adapters as adapters
-import requests.packages.urllib3.util as url3ut
+import requests.packages.urllib3.util as url3ut  # pylint: disable=import-error
 import tqdm
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.parser as prsr
 import helpers.s3 as hs3
 import helpers.system_interaction as si
+import vendors2.kibot.base.command as command
 import vendors2.kibot.data.config as config
 
 _LOG = logging.getLogger(__name__)
@@ -400,79 +399,67 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 # #############################################################################
 
 
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "-u", "--username", required=True, help="Specify username",
-    )
-    parser.add_argument(
-        "-p", "--password", required=True, help="Specify password",
-    )
-    parser.add_argument(
-        "--start_from",
-        type=int,
-        default=None,
-        help="Define the index of the first payload to download",
-    )
-    parser.add_argument(
-        "--tmp_dir",
-        type=str,
-        nargs="?",
-        help="Directory to store temporary data",
-        default="tmp.kibot_downloader",
-    )
-    parser.add_argument(
-        "--dataset",
-        type=str,
-        help="Download a specific dataset (or all datasets if omitted)",
-        choices=config.DATASETS,
-        action="append",
-        default=None,
-    )
-    parser.add_argument(
-        "--serial", action="store_true", help="Download data serially"
-    )
-    parser.add_argument(
-        "--dry_run", action="store_true", help="Just do a dry-run"
-    )
-    parser.add_argument(
-        "--no_incremental",
-        action="store_true",
-        help="Clean the local directories",
-    )
-    parser.add_argument(
-        "--no_download_compressed",
-        action="store_true",
-        help="Do not download data compressed on server side",
-    )
-    parser.add_argument(
-        "--no_skip_if_exists",
-        action="store_true",
-        help="Do not skip if it exists on S3",
-    )
-    parser.add_argument(
-        "--no_clean_up_artifacts",
-        action="store_true",
-        help="Do not clean artifacts",
-    )
-    parser.add_argument(
-        "--delete_s3_dir",
-        action="store_true",
-        help="Delete the S3 dir before starting uploading (dangerous)",
-    )
-    prsr.add_verbosity_arg(parser)
-    return parser
+class DownloadDataCommand(command.KibotCommand):
+    SUPPORTS_TMP_DIR = True
+    LOG_FILE_NAME = __file__ + ".log"
+
+    @staticmethod
+    def customize_parser(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "-u", "--username", required=True, help="Specify username",
+        )
+        parser.add_argument(
+            "-p", "--password", required=True, help="Specify password",
+        )
+        parser.add_argument(
+            "--start_from",
+            type=int,
+            default=None,
+            help="Define the index of the first payload to download",
+        )
+        parser.add_argument(
+            "--dataset",
+            type=str,
+            help="Download a specific dataset (or all datasets if omitted)",
+            choices=config.DATASETS,
+            action="append",
+            default=None,
+        )
+        parser.add_argument(
+            "--serial", action="store_true", help="Download data serially"
+        )
+        parser.add_argument(
+            "--dry_run", action="store_true", help="Just do a dry-run"
+        )
+        parser.add_argument(
+            "--no_download_compressed",
+            action="store_true",
+            help="Do not download data compressed on server side",
+        )
+        parser.add_argument(
+            "--no_skip_if_exists",
+            action="store_true",
+            help="Do not skip if it exists on S3",
+        )
+        parser.add_argument(
+            "--no_clean_up_artifacts",
+            action="store_true",
+            help="Do not clean artifacts",
+        )
+        parser.add_argument(
+            "--delete_s3_dir",
+            action="store_true",
+            help="Delete the S3 dir before starting uploading (dangerous)",
+        )
+
+    def customize_run(self) -> int:
+        return _run(args=self.args)
 
 
-def _main(parser: argparse.ArgumentParser) -> int:
-    args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Create dirs.
+def _run(args) -> int:  # type: ignore
+    # TODO(amr): This is kept as a separate function to minimize the diff, should be
+    # cleaned up at some point Create dirs.
     incremental = not args.no_incremental
-    io_.create_dir(args.tmp_dir, incremental=incremental)
-    #
     source_dir_name = "source_data"
     source_dir = os.path.join(args.tmp_dir, source_dir_name)
     io_.create_dir(source_dir, incremental=incremental)
@@ -573,4 +560,4 @@ def _main(parser: argparse.ArgumentParser) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(_main(_parse()))
+    DownloadDataCommand().run()

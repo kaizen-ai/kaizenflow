@@ -4,10 +4,8 @@
 
 > download_ticker_lists.py
 """
-import argparse
 import logging
 import os
-import sys
 import urllib.parse as urlprs
 from typing import List
 
@@ -16,9 +14,9 @@ import requests
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
-import helpers.parser as prsr
 import helpers.s3 as hs3
 import helpers.system_interaction as si
+import vendors2.kibot.base.command as command
 import vendors2.kibot.data.extract.download as download
 import vendors2.kibot.metadata.config as config
 
@@ -58,74 +56,52 @@ def _extract_ticker_page_urls() -> List[str]:
 # #############################################################################
 
 
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--tmp_dir",
-        type=str,
-        nargs="?",
-        help="Directory to store temporary data",
-        default="tmp.kibot_downloader",
-    )
-    parser.add_argument(
-        "--no_incremental",
-        action="store_true",
-        help="Clean the local directories",
-    )
-    prsr.add_verbosity_arg(parser)
-    return parser
+class DownloadTickerListsCommand(command.KibotCommand):
+    SUPPORTS_TMP_DIR = True
+    LOG_FILE_NAME = __file__ + ".log"
 
+    def customize_run(self) -> int:
+        page_urls = _extract_ticker_page_urls()
+        _LOG.info("Found %s historical page urls", len(page_urls))
 
-def _main(parser: argparse.ArgumentParser) -> int:
-    args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Create dirs.
-    incremental = not args.no_incremental
-    io_.create_dir(args.tmp_dir, incremental=incremental)
+        # TODO(amr): reuse parallelization logic in extract/download.py.
 
-    page_urls = _extract_ticker_page_urls()
-    _LOG.info("Found %s historical page urls", len(page_urls))
+        for url in page_urls:
+            _LOG.info("Processing historical page: %s", url)
+            file_url = _extract_file_url_from_historical_page(page_url=url)
+            _LOG.info("Extracted file url: %s", file_url)
+            # TODO(amr): is cleaning the file name necessary? if so, let's move this function
+            # to a more common place.
+            file_name = os.path.basename(urlprs.urlparse(file_url).path)
+            # TODO(amr): is cleaning the file name necessary? if so, let's move this
+            # function to a more common place.
+            file_name = download.DatasetListExtractor._clean_dataset_name(  # pylint: disable=protected-access
+                file_name
+            )
+            _LOG.info("Cleaned up file name: %s", file_name)
 
-    # TODO(amr): reuse parallelization logic in extract/download.py.
+            # Download file.
+            response = requests.get(file_url)
+            dbg.dassert_eq(response.status_code, 200)
+            file_path = os.path.join(
+                self.args.tmp_dir, config.TICKER_LISTS_SUB_DIR, file_name
+            )
+            io_.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
+            _LOG.info("Downloaded file to: %s", file_path)
 
-    for url in page_urls:
-        _LOG.info("Processing historical page: %s", url)
-        file_url = _extract_file_url_from_historical_page(page_url=url)
-        _LOG.info("Extracted file url: %s", file_url)
-        # TODO(amr): is cleaning the file name necessary? if so, let's move this function
-        # to a more common place.
-        file_name = os.path.basename(urlprs.urlparse(file_url).path)
-        # TODO(amr): is cleaning the file name necessary? if so, let's move this
-        # function to a more common place.
-        file_name = download.DatasetListExtractor._clean_dataset_name(  # pylint: disable=protected-access
-            file_name
-        )
-        _LOG.info("Cleaned up file name: %s", file_name)
+            # Save to s3.
+            aws_path = os.path.join(
+                config.S3_PREFIX, config.TICKER_LISTS_SUB_DIR, file_name
+            )
+            hs3.check_valid_s3_path(aws_path)
 
-        # Download file.
-        response = requests.get(file_url)
-        dbg.dassert_eq(response.status_code, 200)
-        file_path = os.path.join(
-            args.tmp_dir, config.TICKER_LISTS_SUB_DIR, file_name
-        )
-        io_.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
-        _LOG.info("Downloaded file to: %s", file_path)
+            # TODO(amr): create hs3.copy() helper.
+            cmd = "aws s3 cp %s %s" % (file_path, aws_path)
+            si.system(cmd)
+            _LOG.info("Uploaded file to s3: %s", aws_path)
 
-        # Save to s3.
-        aws_path = os.path.join(
-            config.S3_PREFIX, config.TICKER_LISTS_SUB_DIR, file_name
-        )
-        hs3.check_valid_s3_path(aws_path)
-
-        # TODO(amr): create hs3.copy() helper.
-        cmd = "aws s3 cp %s %s" % (file_path, aws_path)
-        si.system(cmd)
-        _LOG.info("Uploaded file to s3: %s", aws_path)
-
-    return 0
+        return 0
 
 
 if __name__ == "__main__":
-    sys.exit(_main(_parse()))
+    DownloadTickerListsCommand().run()
