@@ -1818,7 +1818,7 @@ class SmaModel(FitPredictNode):
         )
         return opt_results.x
 
-    def _predict(self, x: np.array) -> pd.Series:
+    def _predict(self, x: np.array) -> np.array:
         x_srs = pd.DataFrame(x.flatten())
         # TODO(*): Make `min_periods` configurable.
         x_sma = sigp.compute_smooth_moving_average(
@@ -1882,6 +1882,7 @@ class VolatilityModel(FitPredictNode):
         self._col = col
         self._vol_col = str(self._col[0]) + "_vol"
         self._steps_ahead = steps_ahead
+        self._vol_col_hat = self._vol_col + "_0_hat"
         self._fwd_vol_col = self._vol_col + f"_{self._steps_ahead}"
         self._fwd_vol_col_hat = self._fwd_vol_col + "_hat"
         self._zscored_col = self._col[0] + "_zscored"
@@ -1890,7 +1891,7 @@ class VolatilityModel(FitPredictNode):
         self._tau = tau
         self._nan_mode = nan_mode
         # The SmaModel node is only used internally (e.g., it is not added to
-        # any encompasing DAG).
+        # any encompassing DAG).
         self._sma_model = SmaModel(
             "anonymous_sma",
             col=[self._vol_col],
@@ -1906,6 +1907,12 @@ class VolatilityModel(FitPredictNode):
         info = collections.OrderedDict()
         info["sma"] = self._sma_model.get_info("fit")
         self._check_cols(df_in, sma)
+        # Add not shifted volatility prediction column.
+        if self._steps_ahead != 0:
+            sma[self._vol_col_hat] = sma[self._fwd_vol_col_hat].shift(
+                self._steps_ahead
+            )
+        # Add z-score column.
         normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
         df_in[self._zscored_col] = df_in[self._col[0]].divide(
             normalized_vol.shift(self._steps_ahead)
@@ -1923,6 +1930,12 @@ class VolatilityModel(FitPredictNode):
         info = collections.OrderedDict()
         info["sma"] = self._sma_model.get_info("predict")
         self._check_cols(df_in, sma)
+        # Add not shifted volatility prediction column.
+        if self._steps_ahead != 0:
+            sma[self._vol_col_hat] = sma[self._fwd_vol_col_hat].shift(
+                self._steps_ahead
+            )
+        # Add z-score column.
         normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
         df_in[self._zscored_col] = df_in[self._col[0]].divide(
             normalized_vol.shift(self._steps_ahead)
