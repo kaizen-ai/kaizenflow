@@ -71,7 +71,7 @@ class Test_env1(ut.TestCase):
 #  annotations from pyannotate.
 
 
-@pytest.mark.skipif('Deprecated after switch to Docker dev env')
+@pytest.mark.skip('Deprecated after switch to Docker dev env')
 class Test_set_env_amp(ut.TestCase):
     def test_setenv_py1(self) -> None:
         """Find _setenv_amp.py executable and run it."""
@@ -119,7 +119,7 @@ class Test_set_env_amp(ut.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skipif('Deprecated after switch to Docker dev env')
+@pytest.mark.skip('Deprecated after switch to Docker dev env')
 class Test_install_create_conda_py1(ut.TestCase):
     def _run_create_conda(self, cmd_opts: List[str], cleanup: bool) -> None:
         """Run a create_conda command using custom options `cmd_opts`.

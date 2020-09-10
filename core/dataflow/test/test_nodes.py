@@ -252,10 +252,10 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sld.PCA,
-                "model_kwargs": {"n_components": 2,},
+                "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict(),)
+        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -278,10 +278,10 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sld.PCA,
-                "model_kwargs": {"n_components": 2,},
+                "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict(),)
+        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -314,10 +314,10 @@ class TestResidualizer(hut.TestCase):
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sld.PCA,
-                "model_kwargs": {"n_components": 2,},
+                "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.Residualizer("sklearn", **config.to_dict(),)
+        node = dtf.Residualizer("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -340,10 +340,10 @@ class TestResidualizer(hut.TestCase):
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sld.PCA,
-                "model_kwargs": {"n_components": 2,},
+                "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.Residualizer("sklearn", **config.to_dict(),)
+        node = dtf.Residualizer("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -376,7 +376,30 @@ class TestSmaModel(hut.TestCase):
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("sma", **config.to_dict(),)
+        node = dtf.SmaModel("sma", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "sma")
+        #
+        output_df = dag.run_leq_node("sma", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def test_fit_dag2(self) -> None:
+        """
+        Specify `tau` parameter.
+        """
+        # Load test data.
+        data = self._get_data()
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["vol"]
+        config["steps_ahead"] = 2
+        config["tau"] = 8
+        config["nan_mode"] = "drop"
+        node = dtf.SmaModel("sma", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -399,7 +422,7 @@ class TestSmaModel(hut.TestCase):
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("sma", **config.to_dict(),)
+        node = dtf.SmaModel("sma", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -407,7 +430,8 @@ class TestSmaModel(hut.TestCase):
         output_df = dag.run_leq_node("sma", "predict")["df_out"]
         self.check_string(output_df.to_string())
 
-    def _get_data(self) -> pd.DataFrame:
+    @staticmethod
+    def _get_data() -> pd.DataFrame:
         """
         Generate "random returns". Use lag + noise as predictor.
         """
@@ -419,6 +443,67 @@ class TestSmaModel(hut.TestCase):
         )
         vol = np.abs(realization) ** 2
         vol.name = "vol"
+        df = pd.DataFrame(index=date_range, data=vol)
+        return df
+
+
+class TestVolatilityModel(hut.TestCase):
+    def test_fit_dag1(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "vol_model")
+        #
+        output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def test_predict_dag1(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        fit_interval = ("2000-01-01", "2000-02-10")
+        predict_interval = ("2000-01-20", "2000-02-23")
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node.set_fit_intervals([fit_interval])
+        data_source_node.set_predict_intervals([predict_interval])
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "vol_model")
+        #
+        dag.run_leq_node("vol_model", "fit")
+        output_df = dag.run_leq_node("vol_model", "predict")["df_out"]
+        self.check_string(output_df.to_string())
+
+    @staticmethod
+    def _get_data() -> pd.DataFrame:
+        """
+        Generate "random returns". Use lag + noise as predictor.
+        """
+        arma_process = sig_gen.ArmaProcess([0.45], [0])
+        date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
+        date_range = pd.date_range(**date_range_kwargs)
+        realization = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, seed=0
+        )
+        vol = np.abs(realization) ** 2
+        vol.name = "ret_0"
         df = pd.DataFrame(index=date_range, data=vol)
         return df
 
