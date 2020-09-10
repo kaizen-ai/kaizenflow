@@ -1654,6 +1654,7 @@ class SmaModel(FitPredictNode):
         nid: str,
         col: list,
         steps_ahead: int,
+        tau: Optional[float] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
         """
@@ -1662,10 +1663,13 @@ class SmaModel(FitPredictNode):
         :param nid: unique node id
         :param col: name of column to model
         :param steps_ahead: as in ContinuousSkLearnModel
+        :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
+            learn this parameter
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
         dbg.dassert_isinstance(col, list)
+        dbg.dassert_eq(len(col), 1)
         self._col = col
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -1676,7 +1680,7 @@ class SmaModel(FitPredictNode):
         else:
             self._nan_mode = nan_mode
         # Smooth moving average model parameters to learn.
-        self._tau = None
+        self._tau = tau
         self._min_periods = None
         self._min_depth = 1
         self._max_depth = 1
@@ -1704,11 +1708,11 @@ class SmaModel(FitPredictNode):
         # Prepare forward y_vars in sklearn format.
         fwd_y_fit = adpt.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
         # Define and fit model.
-        tau = self._learn_tau(x_fit, fwd_y_fit)
-        _LOG.debug(f"tau={tau}")
-        self._tau = tau
+        if self._tau is None:
+            self._tau = self._learn_tau(x_fit, fwd_y_fit)
+        _LOG.debug("tau=", self._tau)
         info = collections.OrderedDict()
-        info["tau"] = tau
+        info["tau"] = self._tau
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._predict(x_fit)
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
@@ -1785,8 +1789,8 @@ class SmaModel(FitPredictNode):
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
-    def _learn_tau(self, x, y) -> float:
-        def score(tau):
+    def _learn_tau(self, x: np.array, y: np.array) -> float:
+        def score(tau: float) -> float:
             x_srs = pd.DataFrame(x.flatten())
             sma = sigp.compute_smooth_moving_average(
                 x_srs,
@@ -1803,7 +1807,7 @@ class SmaModel(FitPredictNode):
         )
         return opt_results.x
 
-    def _predict(self, x) -> pd.Series:
+    def _predict(self, x: np.array) -> pd.Series:
         x_srs = pd.DataFrame(x.flatten())
         # TODO(*): Make `min_periods` configurable.
         x_sma = sigp.compute_smooth_moving_average(
@@ -1847,6 +1851,7 @@ class VolatilityModel(FitPredictNode):
         col: list,
         steps_ahead: int,
         p_moment: float = 2,
+        tau: Optional[float] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
         """
@@ -1856,10 +1861,13 @@ class VolatilityModel(FitPredictNode):
         :param col: name of returns column to model
         :param steps_ahead: as in ContinuousSkLearnModel
         :param p_moment: exponent to apply to the absolute value of returns
+        :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
+            learn this parameter
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
         dbg.dassert_isinstance(col, list)
+        dbg.dassert_eq(len(col), 1)
         self._col = col
         self._vol_col = str(self._col[0]) + "_vol"
         self._steps_ahead = steps_ahead
@@ -1868,6 +1876,7 @@ class VolatilityModel(FitPredictNode):
         self._zscored_col = self._col[0] + "_zscored"
         dbg.dassert_lte(1, p_moment)
         self._p_moment = p_moment
+        self._tau = tau
         self._nan_mode = nan_mode
         # The SmaModel node is only used internally (e.g., it is not added to
         # any encompasing DAG).
@@ -1875,6 +1884,7 @@ class VolatilityModel(FitPredictNode):
             "anonymous_sma",
             col=[self._vol_col],
             steps_ahead=self._steps_ahead,
+            tau=self._tau,
             nan_mode=self._nan_mode,
         )
 
