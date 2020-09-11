@@ -728,14 +728,12 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat: pd.DataFrame,
         idx: pd.Series,
     ) -> Dict[str, pd.DataFrame]:
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
         if self._col_mode == "replace_all":
-            df_out = fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
+            pass
         elif self._col_mode == "merge_all":
-            df_out = fwd_y_df.reindex(idx).merge(
-                fwd_y_hat.reindex(idx), left_index=True, right_index=True
-            )
             df_out = df.reindex(idx).merge(
                 df_out.reindex(idx),
                 how="outer",
@@ -925,14 +923,12 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
+        df_out = x_hat.reindex(index=df_in.index)
         if self._col_mode == "replace_all":
-            df_out = x_hat.reindex(index=df_in.index)
+            pass
         elif self._col_mode == "merge_all":
             df_out = df_in.merge(
-                x_hat.reindex(index=df_in.index),
-                how="outer",
-                left_index=True,
-                right_index=True,
+                df_out, how="outer", left_index=True, right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
@@ -1188,11 +1184,15 @@ class SkLearnModel(FitPredictNode):
     def _replace_or_merge_output(
         self, df: pd.DataFrame, y_hat: pd.DataFrame, idx: pd.Series
     ) -> Dict[str, pd.DataFrame]:
+        df_out = y_hat
         if self._col_mode == "replace_all":
-            df_out = y_hat
+            pass
         elif self._col_mode == "merge_all":
-            df_out = df.reindex(idx).merge(
-                y_hat.reindex(idx), how="outer", left_index=True, right_index=True
+            df_out = df.merge(
+                df_out.reindex(idx),
+                how="outer",
+                left_index=True,
+                right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
