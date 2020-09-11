@@ -424,6 +424,7 @@ class ColumnTransformer(Transformer):
         cols: Optional[Iterable[str]] = None,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
         col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: unique node id
@@ -438,6 +439,8 @@ class ColumnTransformer(Transformer):
             lambda x: "zscore_" + x
         :param col_mode: `merge_all`, `replace_selected`, or `replace_all`.
             Determines what columns are propagated by the node.
+        :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to all
+            columns simultaneously.
         """
         super().__init__(nid)
         if cols is not None:
@@ -451,6 +454,7 @@ class ColumnTransformer(Transformer):
         self._transformer_kwargs = transformer_kwargs or {}
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
+        self._nan_mode = nan_mode or "leave_unchanged"
 
     def transformed_col_names(self) -> List[str]:
         dbg.dassert_is_not(
@@ -468,6 +472,13 @@ class ColumnTransformer(Transformer):
         df = df.copy()
         if self._cols is not None:
             df = df[self._cols]
+        idx = df.index
+        if self._nan_mode == "leave_unchanged":
+            pass
+        elif self._nan_mode == "drop":
+            df = df.dropna()
+        else:
+            raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
         # Initialize container to store info (e.g., auxiliary stats) in the
         # node.
         info = collections.OrderedDict()
@@ -484,6 +495,7 @@ class ColumnTransformer(Transformer):
             info["func_info"] = func_info
         else:
             df = self._transformer_func(df, **self._transformer_kwargs)
+        df = df.reindex(index=idx)
         # TODO(Paul): Consider supporting the option of relaxing or
         # foregoing this check.
         dbg.dassert(
@@ -507,7 +519,9 @@ class ColumnTransformer(Transformer):
             df = df_in.merge(df, left_index=True, right_index=True)
         elif self._col_mode == "replace_selected":
             dbg.dassert(
-                df.columns.intersection(df_in[self._cols].columns).empty,
+                df.drop(self._cols, axis=1)
+                .columns.intersection(df_in[self._cols].columns)
+                .empty,
                 "Transformed column names `%s` conflict with existing column "
                 "names `%s`.",
                 df.columns,
