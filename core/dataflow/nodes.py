@@ -748,7 +748,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         if self._col_mode == "replace_all":
             pass
         elif self._col_mode == "merge_all":
-            df_out = df.reindex(idx).merge(
+            df_out = df.merge(
                 df_out.reindex(idx),
                 how="outer",
                 left_index=True,
