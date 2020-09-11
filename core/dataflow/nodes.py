@@ -9,19 +9,18 @@ import logging
 import os
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-import gluonts.model.deepar as gmd
-import gluonts.trainer as gt
-import numpy as np
-import pandas as pd
-import scipy as sp
-import sklearn as skl
-
 import core.backtest as bcktst
 import core.data_adapters as adpt
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
+import gluonts.model.deepar as gmd
+import gluonts.trainer as gt
 import helpers.dbg as dbg
+import numpy as np
+import pandas as pd
+import scipy as sp
+import sklearn as skl
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
@@ -649,7 +648,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._col_mode = col_mode
         self._model = None
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -704,23 +702,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        # TODO(Alina): Factor out this idiom into a private helper.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), how="outer", left_index=True, right_index=True
-        )
-        if self._col_mode == "replace_all":
-            pass
-        elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
-                df_out.reindex(idx),
-                how="outer",
-                left_index=True,
-                right_index=True,
-            )
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
+        return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -750,14 +732,23 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("predict", info)
-        # Return targets and predictions.
+        # Return predictions.
+        return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
+
+    def _replace_or_merge_output(
+        self,
+        df: pd.DataFrame,
+        fwd_y_df: pd.DataFrame,
+        fwd_y_hat: pd.DataFrame,
+        idx: pd.Series,
+    ) -> Dict[str, pd.DataFrame]:
         df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), how="outer", left_index=True, right_index=True
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         if self._col_mode == "replace_all":
             pass
         elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
+            df_out = df.reindex(idx).merge(
                 df_out.reindex(idx),
                 how="outer",
                 left_index=True,
@@ -946,14 +937,12 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
+        df_out = x_hat.reindex(index=df_in.index)
         if self._col_mode == "replace_all":
-            df_out = x_hat.reindex(index=df_in.index)
+            pass
         elif self._col_mode == "merge_all":
             df_out = df_in.merge(
-                x_hat.reindex(index=df_in.index),
-                how="outer",
-                left_index=True,
-                right_index=True,
+                df_out, how="outer", left_index=True, right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
@@ -1184,17 +1173,8 @@ class SkLearnModel(FitPredictNode):
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
-        #
-        if self._col_mode == "replace_all":
-            df_out = y_hat
-        elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
-                y_hat.reindex(idx), left_index=True, right_index=True
-            )
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
+        # Return targets and predictions.
+        return self._replace_or_merge_output(df, y_hat, idx)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -1212,12 +1192,21 @@ class SkLearnModel(FitPredictNode):
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
-        #
+        # Return predictions.
+        return self._replace_or_merge_output(df, y_hat, idx)
+
+    def _replace_or_merge_output(
+        self, df: pd.DataFrame, y_hat: pd.DataFrame, idx: pd.Series
+    ) -> Dict[str, pd.DataFrame]:
+        df_out = y_hat
         if self._col_mode == "replace_all":
-            df_out = y_hat
+            pass
         elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
-                y_hat.reindex(idx), left_index=True, right_index=True
+            df_out = df.merge(
+                df_out.reindex(idx),
+                how="outer",
+                left_index=True,
+                right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
