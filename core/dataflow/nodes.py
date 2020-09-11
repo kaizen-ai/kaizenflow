@@ -1693,6 +1693,7 @@ class SmaModel(FitPredictNode):
         # Smooth moving average model parameters to learn.
         self._tau = tau
         self._min_periods = None
+        self._min_periods_max_frac = 0.2
         self._min_depth = 1
         self._max_depth = 1
         self._metric = skl.metrics.mean_absolute_error
@@ -1721,6 +1722,11 @@ class SmaModel(FitPredictNode):
         # Define and fit model.
         if self._tau is None:
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
+        min_periods = 2 * self._tau
+        if min_periods / len(non_nan_idx) > self._min_periods_max_frac:
+            self._min_periods = int(len(non_nan_idx) * self._min_periods_max_frac)
+        else:
+            self._min_periods = min_periods
         _LOG.debug("tau=", self._tau)
         info = collections.OrderedDict()
         info["tau"] = self._tau
@@ -1824,7 +1830,7 @@ class SmaModel(FitPredictNode):
         x_sma = sigp.compute_smooth_moving_average(
             x_srs,
             tau=self._tau,
-            min_periods=2 * self._tau,
+            min_periods=self._min_periods,
             min_depth=self._min_depth,
             max_depth=self._max_depth,
         )
