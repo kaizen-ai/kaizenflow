@@ -1,4 +1,10 @@
+* [General](#general)
+* [Notification system](#notification-system)
+* [Buildmeister instructions](#buildmeister-instructions)
+* [Post-mortem analysis](#post-mortem-analysis)
+
 # General
+*   This document was generated from the [gdoc](https://docs.google.com/document/d/1lrLIU5XYs8hIGlvpZWWjo73-TZTug86vAtvJLRpvfeQ/edit?usp=sharing) using the [markdown extension](https://github.com/evbacher/gd2md-html/wiki)
 *   Buildmeister rotates every 2 weeks
 *   To see who is the Buildmeister now refer to [Buildmeister spreadsheet](https://docs.google.com/spreadsheets/d/1AajgLnRQka9-W8mKOkobg8QOzaEVOnIMlDi8wWVATeA/edit#gid=1363431255), sheet “Buildmeister rotation”
 *   Buildmeister is responsible for:
@@ -16,7 +22,10 @@
     *   Failing tests type: fast/slow/super-slow
     *   Link to a failing run
     *   Example: 
-    
+    ```
+    Build failure 'Fast tests'.
+    https://github.com/ParticleDev/commodity_research/actions/runs/248816321
+    ```
 
 # Buildmeister instructions
 *   You receive a break notification from @p1_GH_bot
