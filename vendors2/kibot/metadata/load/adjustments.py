@@ -9,16 +9,10 @@ import vendors2.kibot.metadata.types as types
 
 class AdjustmentsLoader:
     @staticmethod
-    def load() -> List[types.Adjustment]:
-        file_path = os.path.join(
-            config.S3_PREFIX,
-            config.ADJUSTMENTS_SUB_DIR,
-            config.ADJUSTMENTS_FILE_NAME,
+    def load(symbol: str) -> List[types.Adjustment]:
+        s3_path = os.path.join(
+            config.S3_PREFIX, config.ADJUSTMENTS_SUB_DIR, f"{symbol}.txt"
         )
 
-        df = pd.read_csv(file_path, sep="\t")
+        df = pd.read_csv(s3_path, sep="\t")
         return [types.Adjustment(*row) for row in df.values.tolist()]
-
-
-if __name__ == "__main__":
-    print(AdjustmentsLoader().load())
