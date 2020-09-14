@@ -58,7 +58,6 @@ def _extract_ticker_page_urls() -> List[str]:
 
 class DownloadTickerListsCommand(command.KibotCommand):
     SUPPORTS_TMP_DIR = True
-    LOG_FILE_NAME = __file__ + ".log"
 
     def customize_run(self) -> int:
         page_urls = _extract_ticker_page_urls()

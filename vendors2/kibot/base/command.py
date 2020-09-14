@@ -1,4 +1,5 @@
 import argparse
+import inspect
 import sys
 
 import helpers.dbg as dbg
@@ -9,11 +10,6 @@ import helpers.parser as prsr
 class KibotCommand:
     # If true, adds optional `tmp_dir` and `incremental` arguments.
     SUPPORTS_TMP_DIR: bool = False
-
-    # TODO(amr): think about a better way of handling this. the main problem is the
-    # execution path seems to pick up the file for the base classs, rather than the
-    # child classes.
-    LOG_FILE_NAME: str = ""
 
     def __init__(self) -> None:
         self._setup_parser()
@@ -56,7 +52,8 @@ class KibotCommand:
     def _main(self) -> int:
         self.args = self.parser.parse_args()
         dbg.init_logger(
-            verbosity=self.args.log_level, log_filename=self.LOG_FILE_NAME
+            verbosity=self.args.log_level,
+            log_filename=inspect.getfile(self.__class__) + ".log",
         )
 
         if self.SUPPORTS_TMP_DIR:

@@ -401,7 +401,6 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 
 class DownloadDataCommand(command.KibotCommand):
     SUPPORTS_TMP_DIR = True
-    LOG_FILE_NAME = __file__ + ".log"
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:

@@ -108,7 +108,6 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
 
 class DownloadAdjustmentsCommand(command.KibotCommand):
     SUPPORTS_TMP_DIR = True
-    LOG_FILE_NAME = __file__ + ".log"
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:
