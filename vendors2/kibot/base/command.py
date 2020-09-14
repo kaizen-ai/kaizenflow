@@ -1,4 +1,5 @@
 import argparse
+import ast
 import inspect
 import sys
 
@@ -12,6 +13,7 @@ class KibotCommand:
     SUPPORTS_TMP_DIR: bool = False
 
     def __init__(self) -> None:
+        self._file_path = inspect.getfile(self.__class__)
         self._setup_parser()
 
     def run(self) -> None:
@@ -27,7 +29,7 @@ class KibotCommand:
 
     def _setup_parser(self) -> None:
         self.parser = argparse.ArgumentParser(
-            description=__doc__,
+            description=self._get_file_docstring(self._file_path),
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
 
@@ -49,11 +51,16 @@ class KibotCommand:
 
         self.customize_parser(parser=self.parser)
 
+    @staticmethod
+    def _get_file_docstring(file_path: str) -> str:
+        with open(file_path, "r") as fh:
+            tree = ast.parse(fh.read())
+        return ast.get_docstring(tree)
+
     def _main(self) -> int:
         self.args = self.parser.parse_args()
         dbg.init_logger(
-            verbosity=self.args.log_level,
-            log_filename=inspect.getfile(self.__class__) + ".log",
+            verbosity=self.args.log_level, log_filename=self._file_path + ".log",
         )
 
         if self.SUPPORTS_TMP_DIR:
