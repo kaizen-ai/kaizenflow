@@ -9,7 +9,7 @@
 
 - Buildmeister rotates every 2 weeks
   - To see who is the Buildmeister now refer to
-    [Buildmeister spreadsheet "Buildmeister rotation"](https://docs.google.com/spreadsheets/d/1AajgLnRQka9-W8mKOkobg8QOzaEVOnIMlDi8wWVATeA/edit#gid=1363431255),
+    [Buildmeister spreadsheet "Buildmeister rotation"](https://docs.google.com/spreadsheets/d/1AajgLnRQka9-W8mKOkobg8QOzaEVOnIMlDi8wWVATeA/edit#gid=0),
 - Buildmeister is responsible for:
   - Pushing team members to fix broken tests
   - Conducting post-mortem analysis, see

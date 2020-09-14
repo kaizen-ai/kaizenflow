@@ -7,12 +7,12 @@
 # How to convert a google doc to Markdown
 
 - Use the
-  [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki#using-docs-to-markdown)
+  [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki)
   extension
   - Install
     [the extension](https://gsuite.google.com/marketplace/app/docs_to_markdown/700168918607)
     from the G Suite marketplace
-  - [User guide](https://gsuite.google.com/marketplace/app/docs_to_markdown/700168918607)
+  - [User guide](https://github.com/evbacher/gd2md-html/wiki#using-docs-to-markdown)
     for the extension
 - One needs to accept/reject all suggestions in a gdoc as the extension works
   poorly when a document is edited in the suggestion mode
