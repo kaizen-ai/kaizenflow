@@ -3,15 +3,23 @@ import ast
 import inspect
 import sys
 
+import requests
+
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
+import vendors2.kibot.metadata.config as config
 
 
 class KibotCommand:
     # If true, adds optional `tmp_dir` and `incremental` arguments.
     SUPPORTS_TMP_DIR: bool = False
+
+    # If true, adds username and password as required arguments.
     REQUIRES_AUTH: bool = False
+
+    # If true, logs into API before calling customize_run()
+    REQUIRES_API_LOGIN: bool = False
 
     def __init__(self) -> None:
         self._file_path = inspect.getfile(self.__class__)
@@ -77,4 +85,30 @@ class KibotCommand:
                 self.args.tmp_dir, incremental=not self.args.no_incremental
             )
 
+        if self.REQUIRES_API_LOGIN:
+            dbg.dassert_eq(True, self.REQUIRES_AUTH)
+            self._login_to_api()
+
         return self.customize_run()
+
+    def _login_to_api(self) -> None:
+        """Login to Kibot API."""
+
+        response = requests.get(
+            url=config.API_ENDPOINT,
+            params=dict(
+                action="login",
+                user=self.args.username,
+                password=self.args.password,
+            ),
+        )
+        status_code = int(response.text.split()[0])
+        accepted_status_codes = [
+            200,  # login successfuly
+            407,  # user already logged in
+        ]
+        dbg.dassert_in(
+            status_code,
+            accepted_status_codes,
+            msg=f"Failed to login: {response.text}",
+        )

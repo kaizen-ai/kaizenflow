@@ -16,7 +16,6 @@ import joblib
 import requests
 import tqdm
 
-import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.s3 as hs3
 import helpers.system_interaction as si
@@ -49,24 +48,6 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-
-
-def _login(user: str, password: str) -> None:
-    """Login to Kibot API."""
-    response = requests.get(
-        url=config.API_ENDPOINT,
-        params=dict(action="login", user=user, password=password),
-    )
-    status_code = int(response.text.split()[0])
-    accepted_status_codes = [
-        200,  # login successfuly
-        407,  # user already logged in
-    ]
-    dbg.dassert_in(
-        status_code,
-        accepted_status_codes,
-        msg=f"Failed to login: {response.text}",
-    )
 
 
 def _get_symbols_list() -> List[str]:
@@ -109,6 +90,7 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
 class DownloadAdjustmentsCommand(command.KibotCommand):
     SUPPORTS_TMP_DIR = True
     REQUIRES_AUTH = True
+    REQUIRES_API_LOGIN = True
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:
@@ -117,8 +99,6 @@ class DownloadAdjustmentsCommand(command.KibotCommand):
         )
 
     def customize_run(self) -> int:
-        _login(user=self.args.username, password=self.args.password)
-
         symbols = _get_symbols_list()
 
         _execute_loop(
