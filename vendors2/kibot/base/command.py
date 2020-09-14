@@ -11,6 +11,7 @@ import helpers.parser as prsr
 class KibotCommand:
     # If true, adds optional `tmp_dir` and `incremental` arguments.
     SUPPORTS_TMP_DIR: bool = False
+    REQUIRES_AUTH: bool = False
 
     def __init__(self) -> None:
         self._file_path = inspect.getfile(self.__class__)
@@ -47,6 +48,14 @@ class KibotCommand:
                 "--no_incremental",
                 action="store_true",
                 help="Clean the local directories",
+            )
+
+        if self.REQUIRES_AUTH:
+            self.parser.add_argument(
+                "-u", "--username", required=True, help="Specify username",
+            )
+            self.parser.add_argument(
+                "-p", "--password", required=True, help="Specify password",
             )
 
         self.customize_parser(parser=self.parser)

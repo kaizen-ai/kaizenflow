@@ -108,15 +108,10 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
 
 class DownloadAdjustmentsCommand(command.KibotCommand):
     SUPPORTS_TMP_DIR = True
+    REQUIRES_AUTH = True
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "-u", "--username", required=True, help="Specify username",
-        )
-        parser.add_argument(
-            "-p", "--password", required=True, help="Specify password",
-        )
         parser.add_argument(
             "--serial", action="store_true", help="Download data serially"
         )

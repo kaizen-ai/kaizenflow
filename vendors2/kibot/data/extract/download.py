@@ -401,15 +401,10 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 
 class DownloadDataCommand(command.KibotCommand):
     SUPPORTS_TMP_DIR = True
+    REQUIRES_AUTH = True
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "-u", "--username", required=True, help="Specify username",
-        )
-        parser.add_argument(
-            "-p", "--password", required=True, help="Specify password",
-        )
         parser.add_argument(
             "--start_from",
             type=int,
