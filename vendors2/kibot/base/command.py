@@ -1,5 +1,4 @@
 import argparse
-import ast
 import inspect
 import sys
 
@@ -14,16 +13,19 @@ import vendors2.kibot.metadata.config as config
 class KibotCommand:
     def __init__(
         self,
+        docstring: str,
         supports_tmp_dir: bool = False,
         requires_auth: bool = False,
         requires_api_login: bool = False,
     ) -> None:
         """Create a kibot command line script.
 
+        :param docstring: the command's docstring.
         :param supports_tmp_dir: If true, adds optional `tmp_dir` and `incremental` arguments.
         :param requires_auth: If true, adds username and password as required arguments.
         :param requires_api_login: If true, logs into API before calling customize_run()
         """
+        self.docstring = docstring
         self.supports_tmp_dir = supports_tmp_dir
         self.requires_auth = requires_auth
         self.requires_api_login = requires_api_login
@@ -44,7 +46,7 @@ class KibotCommand:
 
     def _setup_parser(self) -> None:
         self.parser = argparse.ArgumentParser(
-            description=self._get_file_docstring(self._file_path),
+            description=self.docstring,
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
 
@@ -79,12 +81,6 @@ class KibotCommand:
             )
 
         self.customize_parser(parser=self.parser)
-
-    @staticmethod
-    def _get_file_docstring(file_path: str) -> str:
-        with open(file_path, "r") as fh:
-            tree = ast.parse(fh.read())
-        return ast.get_docstring(tree)
 
     def _main(self) -> int:
         self.args = self.parser.parse_args()

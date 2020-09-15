@@ -94,7 +94,10 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
 class DownloadAdjustmentsCommand(command.KibotCommand):
     def __init__(self) -> None:
         super().__init__(
-            supports_tmp_dir=True, requires_auth=True, requires_api_login=True
+            docstring=__doc__,
+            supports_tmp_dir=True,
+            requires_auth=True,
+            requires_api_login=True,
         )
 
     @staticmethod

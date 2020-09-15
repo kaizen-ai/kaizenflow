@@ -21,7 +21,9 @@ _LOG = logging.getLogger(__name__)
 
 class CheckReadtimeFeedCommand(command.KibotCommand):
     def __init__(self) -> None:
-        super().__init__(requires_auth=True, requires_api_login=True)
+        super().__init__(
+            docstring=__doc__, requires_auth=True, requires_api_login=True
+        )
 
     def customize_run(self) -> int:
         # Download file.
