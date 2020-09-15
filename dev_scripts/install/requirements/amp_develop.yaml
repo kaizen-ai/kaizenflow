@@ -15,6 +15,7 @@ dependencies:
   - pre-commit
   - pytest-cov
   - pytest-instafail
+  - pytest-timeout
   - pytest-xdist
   - python >= 3.7
   - python-dateutil
