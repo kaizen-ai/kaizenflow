@@ -90,7 +90,9 @@ def _log_in(
 
 
 def _download_page(
-    page_file_path: str, page_url: str, requests_session: requests.Session,
+    page_file_path: str,
+    page_url: str,
+    requests_session: requests.Session,
 ) -> str:
     """Download html file by URL and store under specific name in data
     directory.
@@ -224,7 +226,10 @@ class DatasetExtractor:
         return True
 
     def get_dataset_payloads_to_download(
-        self, dataset_links_df: pd.DataFrame, source_dir: str, converted_dir: str,
+        self,
+        dataset_links_df: pd.DataFrame,
+        source_dir: str,
+        converted_dir: str,
     ) -> pd.DataFrame:
         """Get a DataFrame with the list of Symbols and Links to download for a
         dataset.
@@ -339,7 +344,9 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         self.requests_session = requests_session
 
     def get_adjustments_to_download(
-        self, source_dir: str, converted_dir: str,
+        self,
+        source_dir: str,
+        converted_dir: str,
     ) -> pd.DataFrame:
         """Get a DataFrame with the list of Symbols and Links to download for a
         dataset.
@@ -400,8 +407,8 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 
 
 class DownloadDataCommand(command.KibotCommand):
-    SUPPORTS_TMP_DIR = True
-    REQUIRES_AUTH = True
+    def __init__(self) -> None:
+        super().__init__(supports_tmp_dir=True, requires_auth=True)
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:
@@ -517,7 +524,9 @@ def _run(args) -> int:  # type: ignore
         if args.delete_s3_dir:
             de.delete_dataset_s3_directory()
         to_download = de.get_dataset_payloads_to_download(
-            dataset_links_df, source_dir, converted_dir,
+            dataset_links_df,
+            source_dir,
+            converted_dir,
         )
         de.store_dataset_csv_file(converted_dir)
         if not args.dry_run:

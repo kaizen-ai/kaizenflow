@@ -30,7 +30,10 @@ _JOBLIB_VERBOSITY = 1
 
 # TODO(amr): make more general and provide as helper.
 def _execute_loop(
-    func: Callable, kwargs_list: Iterable[dict], total: int, serial: bool = True,
+    func: Callable,
+    kwargs_list: Iterable[dict],
+    total: int,
+    serial: bool = True,
 ) -> None:
     """Execute a function with a list of kwargs serially or in parallel."""
     tqdm_ = tqdm.tqdm(kwargs_list, total=total)
@@ -66,7 +69,8 @@ def _get_symbols_list() -> List[str]:
 def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
     """Download adjustments file for a symbol and save to s3."""
     response = requests.get(
-        url=config.API_ENDPOINT, params=dict(action="adjustments", symbol=symbol),
+        url=config.API_ENDPOINT,
+        params=dict(action="adjustments", symbol=symbol),
     )
 
     file_name = f"{symbol}.txt"
@@ -88,9 +92,10 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
 
 
 class DownloadAdjustmentsCommand(command.KibotCommand):
-    SUPPORTS_TMP_DIR = True
-    REQUIRES_AUTH = True
-    REQUIRES_API_LOGIN = True
+    def __init__(self) -> None:
+        super().__init__(
+            supports_tmp_dir=True, requires_auth=True, requires_api_login=True
+        )
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:

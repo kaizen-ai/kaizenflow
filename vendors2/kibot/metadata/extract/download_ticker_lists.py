@@ -57,7 +57,8 @@ def _extract_ticker_page_urls() -> List[str]:
 
 
 class DownloadTickerListsCommand(command.KibotCommand):
-    SUPPORTS_TMP_DIR = True
+    def __init__(self) -> None:
+        super().__init__(supports_tmp_dir=True)
 
     def customize_run(self) -> int:
         page_urls = _extract_ticker_page_urls()

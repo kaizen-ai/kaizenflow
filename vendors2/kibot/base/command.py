@@ -12,16 +12,22 @@ import vendors2.kibot.metadata.config as config
 
 
 class KibotCommand:
-    # If true, adds optional `tmp_dir` and `incremental` arguments.
-    SUPPORTS_TMP_DIR: bool = False
+    def __init__(
+        self,
+        supports_tmp_dir: bool = False,
+        requires_auth: bool = False,
+        requires_api_login: bool = False,
+    ) -> None:
+        """Create a kibot command line script.
 
-    # If true, adds username and password as required arguments.
-    REQUIRES_AUTH: bool = False
+        :param supports_tmp_dir: If true, adds optional `tmp_dir` and `incremental` arguments.
+        :param requires_auth: If true, adds username and password as required arguments.
+        :param requires_api_login: If true, logs into API before calling customize_run()
+        """
+        self.supports_tmp_dir = supports_tmp_dir
+        self.requires_auth = requires_auth
+        self.requires_api_login = requires_api_login
 
-    # If true, logs into API before calling customize_run()
-    REQUIRES_API_LOGIN: bool = False
-
-    def __init__(self) -> None:
         self._file_path = inspect.getfile(self.__class__)
         self._setup_parser()
 
@@ -44,7 +50,7 @@ class KibotCommand:
 
         prsr.add_verbosity_arg(self.parser)
 
-        if self.SUPPORTS_TMP_DIR:
+        if self.supports_tmp_dir:
             self.parser.add_argument(
                 "--tmp_dir",
                 type=str,
@@ -58,12 +64,18 @@ class KibotCommand:
                 help="Clean the local directories",
             )
 
-        if self.REQUIRES_AUTH:
+        if self.requires_auth:
             self.parser.add_argument(
-                "-u", "--username", required=True, help="Specify username",
+                "-u",
+                "--username",
+                required=True,
+                help="Specify username",
             )
             self.parser.add_argument(
-                "-p", "--password", required=True, help="Specify password",
+                "-p",
+                "--password",
+                required=True,
+                help="Specify password",
             )
 
         self.customize_parser(parser=self.parser)
@@ -77,16 +89,17 @@ class KibotCommand:
     def _main(self) -> int:
         self.args = self.parser.parse_args()
         dbg.init_logger(
-            verbosity=self.args.log_level, log_filename=self._file_path + ".log",
+            verbosity=self.args.log_level,
+            log_filename=self._file_path + ".log",
         )
 
-        if self.SUPPORTS_TMP_DIR:
+        if self.supports_tmp_dir:
             io_.create_dir(
                 self.args.tmp_dir, incremental=not self.args.no_incremental
             )
 
-        if self.REQUIRES_API_LOGIN:
-            dbg.dassert_eq(True, self.REQUIRES_AUTH)
+        if self.requires_api_login:
+            dbg.dassert_eq(True, self.requires_auth)
             self._login_to_api()
 
         return self.customize_run()
