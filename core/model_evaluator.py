@@ -214,7 +214,7 @@ class ModelEvaluator:
                 if v[: self.oos_start].dropna().empty:
                     _LOG.warning("All-NaN in-sample for `k`=%s", str(k))
                     continue
-                if v[self.oos_start: ].dropna().empty:
+                if v[self.oos_start :].dropna().empty:
                     _LOG.warning("All-NaN out-of-sample for `k`=%s", str(k))
                     continue
             if v.index.freq is None:
