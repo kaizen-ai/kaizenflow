@@ -6,81 +6,57 @@ import argparse
 import logging
 from typing import List
 
-import helpers.unit_test as ut
-
 import dev_scripts.testing.run_tests2 as rt
+import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_get_test_suite_property1(ut.TestCase):
-    """Test run_tests._get_test_suite_property method"""
+class Test_PytestSuiteOptsBuilder1(ut.TestCase):
+    """Test methods inside run_tests._PytestSuiteOptionsBuilder class"""
 
-    # Define available suites.
-    suites = rt._get_available_test_suites()
+    def test_build1(self) -> None:
+        """Test build fast suite options for non-ci mode"""
+        # Get builder.
+        opts_builder = rt._PytestSuiteOptionsBuilder("fast")
+        # Build options.
+        opts = opts_builder.build(False)
+        # Check that opts correct.
+        self.assertCountEqual(opts, [])
 
-    def test_existing_property1(self) -> None:
-        """Test get timeout property from existing suite"""
-        # Get property.
-        timeout = rt._get_test_suite_property("fast", "timeout")
-        # Find etalon value.
-        etalon = self.suites["fast"].timeout
-        # Check that getting property is correct.
-        self.assertEqual(timeout, etalon)
+    def test_build2(self) -> None:
+        """Test build slow suite options for non-ci mode"""
+        # Get builder.
+        opts_builder = rt._PytestSuiteOptionsBuilder("slow")
+        # Build options.
+        opts = opts_builder.build(False)
+        # Check that opts correct.
+        self.assertCountEqual(opts, ['-m "slow"'])
 
-    def test_existing_property2(self) -> None:
-        """Test get marks property from existing suite"""
-        # Get property.
-        marks = rt._get_test_suite_property("slow", "marks")
-        # Find etalon value.
-        etalon = self.suites["slow"].marks
-        # Check that getting property is correct.
-        self.assertEqual(marks, etalon)
+    def test_build_ci1(self) -> None:
+        """Test build fast suite options for ci mode"""
+        # Get builder.
+        opts_builder = rt._PytestSuiteOptionsBuilder("fast")
+        # Build options.
+        opts = opts_builder.build(True)
+        # Check that opts correct.
+        self.assertCountEqual(opts, ["--timeout=5"])
 
-    def test_unexisting_property1(self) -> None:
-        """Test get unexisting property from existing suite"""
-        # Get property.
-        with self.assertRaises(AttributeError) as cm:
-            rt._get_test_suite_property("fast", "property123")
-        # Check that property is None.
-        self.assertIn("property123", str(cm.exception))
+    def test_build_ci2(self) -> None:
+        """Test build superslow suite options for ci mode"""
+        # Get builder.
+        opts_builder = rt._PytestSuiteOptionsBuilder("superslow")
+        # Build options.
+        opts = opts_builder.build(True)
+        # Check that opts correct.
+        self.assertCountEqual(opts, ["--timeout=1800", '-m "superslow"'])
 
-    def test_unexisting_test_suite1(self) -> None:
-        """Test get a property from unexisting suite"""
-        # Get property.
+    def test_init_unexisting1(self) -> None:
+        """Test build unexisting suite options"""
         with self.assertRaises(AssertionError) as cm:
-            rt._get_test_suite_property("suite123", "timeout")
-        # Check that exception raised by method.
-        self.assertIn("Invalid _build_pytest_optsuite", str(cm.exception))
-
-
-class Test_get_marker_options1(ut.TestCase):
-    """Test run_tests._get_marker_options method"""
-
-    def test_empty_marker1(self) -> None:
-        """Test get marker options from fast test suite"""
-        # Get marker.
-        marker = rt._get_marker_options("fast")
-        # Check that marker is empty.
-        self.assertListEqual(marker, [])
-
-    def test_non_empty_marker1(self) -> None:
-        """Test get marker options from slow test suite"""
-        # Get marker.
-        marker = rt._get_marker_options("slow")
-        # Check that marker is correct.
-        self.assertListEqual(marker, ['-m "slow"'])
-
-
-class Test_get_timeout_options1(ut.TestCase):
-    """Test run_tests._get_timeout_options method"""
-
-    def test_non_empty_timeout1(self) -> None:
-        """Test get timeout from superslow test suite"""
-        # Get timeout.
-        timeout = rt._get_timeout_options("superslow")
-        # Check that timeout is correct.
-        self.assertListEqual(timeout, ["--timeout=1800"])
+            # Get builder.
+            rt._PytestSuiteOptionsBuilder("suite123")
+        self.assertIn("suite123", str(cm.exception))
 
 
 class Test_get_parallel_options1(ut.TestCase):
@@ -120,7 +96,7 @@ class Test_get_parallel_options1(ut.TestCase):
         self._check_log(parallel=True, log_strings=cm.output)
 
     def _num_cores(self) -> int:
-        import joblib  # type: ignore
+        import joblib
 
         return int(joblib.cpu_count())
 

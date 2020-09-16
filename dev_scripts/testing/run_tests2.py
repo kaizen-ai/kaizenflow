@@ -19,9 +19,10 @@
 """
 
 import argparse
+import dataclasses
 import logging
 import sys
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Tuple
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
@@ -39,81 +40,66 @@ _LOG = logging.getLogger(__name__)
 #  - run all the tests there
 
 
-class TestSuite:
+@dataclasses.dataclass
+class _TestSuite:
     """Class represents a test suite"""
 
-    def __init__(
-        self, timeout: Optional[int] = None, marks: Optional[List[str]] = None
-    ) -> None:
-        self._timeout = timeout
-        self._marks = marks
-
-    @property
-    def timeout(self) -> Optional[int]:
-        """Get _timeout attribute"""
-        return self._timeout
-
-    @property
-    def marks(self) -> Optional[List[str]]:
-        """Get _marks attribute"""
-        return self._marks
+    timeout: int
+    marks: List[str] = dataclasses.field(default_factory=list)
 
 
-def _get_available_test_suites() -> Dict[str, TestSuite]:
-    """
-    Define suites
-      - timeout - time limit for 1 test
-        > pytest --timeout=10
-      - marks - list of test markers
-        > pytest -m "slow"
-    """
-    suites = {
-        "fast": TestSuite(timeout=5),
-        "slow": TestSuite(timeout=120, marks=["slow"]),
-        "superslow": TestSuite(timeout=1800, marks=["superslow"]),
+class _PytestSuiteOptionsBuilder:
+    """Represent methods to build pytest options depending on test_suite"""
+
+    _available_suites = {
+        "fast": _TestSuite(timeout=5),
+        "slow": _TestSuite(timeout=120, marks=["slow"]),
+        "superslow": _TestSuite(timeout=1800, marks=["superslow"]),
     }
-    return suites
 
+    def __init__(self, test_suite_name: str) -> None:
+        self._check(test_suite_name)
+        self._test_suite = self._available_suites[test_suite_name]
 
-def _get_test_suite_property(test_suite: str, attribute: str) -> Any:
-    """
-    Get test suite attribute, raises an error if test suite
-    is not found.
+    def build(self, ci: bool) -> List[str]:
+        """Build list of pytest options"""
+        opts = self._marker_options()
+        if ci:
+            opts.extend(self._timeout_options())
+        return opts
 
-    :return: attribute value or None if it was not found.
-    """
-    suites = _get_available_test_suites()
-    if test_suite not in suites:
-        dbg.dfatal("Invalid _build_pytest_optsuite='%s'" % test_suite)
-    return suites[test_suite].__getattribute__(attribute)
+    def _check(self, test_suite_name: str) -> None:
+        """Check if test_suite is available"""
+        dbg.dassert_in(
+            test_suite_name,
+            self._available_suites,
+            "Invalid _build_pytest_optsuite='%s'" % test_suite_name,
+        )
 
+    def _marker_options(self) -> List[str]:
+        """
+        Convert test_suite's marks to marker option for pytest.
 
-def _get_marker_options(test_suite: str) -> List[str]:
-    """
-    Convert test_suite to marker option for pytest.
+        :return: list of options related to marker.
+        """
+        opts = []
+        if self._test_suite.marks:
+            # > pytest -m "mark1 and mark2"
+            opts.append('-m "' + " and ".join(self._test_suite.marks) + '"')
+        return opts
 
-    :return: list of options related to marker.
-    """
-    opts = []
-    marker = _get_test_suite_property(test_suite, "marks")
-    if marker is not None:
-        # > pytest -m "mark1 and mark2"
-        opts.append('-m "' + " and ".join(marker) + '"')
-    return opts
+    def _timeout_options(self) -> List[str]:
+        """
+        Convert test_suite's timeout to timeout option for pytest.
 
-
-def _get_timeout_options(test_suite: str) -> List[str]:
-    """
-    Get a timeout pytest option for the test_suite.
-
-    :return: list of options related to timeout.
-    """
-    opts = []
-    timeout = _get_test_suite_property(test_suite, "timeout")
-    if timeout is not None:
-        # > pytest --timeout=120
-        opts.append("--timeout=%d" % timeout)
-    return opts
+        :return: list of options related to timeout.
+        """
+        opts = []
+        if self._test_suite.timeout:
+            # --timeout=0 equals disabling timeout
+            # > pytest --timeout=100
+            opts.append("--timeout=%d" % self._test_suite.timeout)
+        return opts
 
 
 def _get_coverage_options() -> List[str]:
@@ -130,7 +116,7 @@ def _get_coverage_options() -> List[str]:
 def _get_real_number_of_cores_to_use(num_cpus: int) -> int:
     if num_cpus == -1:
         # -1 means all available
-        import joblib  # type: ignore
+        import joblib
 
         return int(joblib.cpu_count())
     return num_cpus
@@ -190,18 +176,16 @@ def _build_pytest_opts(args: argparse.Namespace) -> Tuple[List[str], List[str]]:
     # -> opts
     opts = []
     collect_opts = []
-    # Add marker.
-    opts.extend(_get_marker_options(args.test_suite))
+    # Add marker and timeout.
+    test_suite_opts_builder = _PytestSuiteOptionsBuilder(args.test_suite)
+    opts.extend(test_suite_opts_builder.build(args.ci))
+    collect_opts.extend(test_suite_opts_builder.build(False))
     # Save options for collect step.
-    collect_opts = opts.copy()
     collect_opts.extend(["--collect-only", "-q"])
     # Return if pytest arguments specified directly.
     if args.override_pytest_arg is not None:
         _LOG.warning("Overriding the pytest args")
         return collect_opts, [args.override_pytest_arg]
-    # Add timeout, if needed.
-    if args.test_suite and args.ci:
-        opts.extend(_get_timeout_options(args.test_suite))
     # Add coverage, if needed.
     if args.coverage:
         opts.extend(_get_coverage_options())
