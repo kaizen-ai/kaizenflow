@@ -4,10 +4,8 @@ import logging
 from typing import Optional
 
 import core.config as cfg
-import helpers.dbg as dbg
 from core.dataflow.core import DAG
 from core.dataflow.nodes import extract_info
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -96,6 +94,7 @@ class DagRunner:
         - fit (val type: pd.DataFrame)
         - predict (val type: pd.DataFrame)
     """
+
     def __init__(self, config: cfg.Config) -> None:
         """
         Initialize DAG and skeleton of result_bundle.
@@ -124,10 +123,15 @@ class DagRunner:
         # Create DAG using DAG builder.
         self.dag = self._dag_builder.get_dag(self.config["DAG"])
         # Identify key columns.
-        self.target_cols, self.prediction_cols = self._dag_builder.get_target_and_prediction_col_names(
+        (
+            self.target_cols,
+            self.prediction_cols,
+        ) = self._dag_builder.get_target_and_prediction_col_names(
             self.config["DAG"]
         )
-        self.predictor_cols = self._dag_builder.get_predictor_col_names(self.config["DAG"])
+        self.predictor_cols = self._dag_builder.get_predictor_col_names(
+            self.config["DAG"]
+        )
         self.result_node = self.config["meta", "result_node"]
         # Create result bundle.
         self.result_bundle = collections.OrderedDict()
