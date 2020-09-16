@@ -18,7 +18,7 @@ _LOG = logging.getLogger(__name__)
 
 class ModelEvaluator:
     """
-
+    Evaluate performance of financial models for returns.
     """
 
     def __init__(
@@ -29,14 +29,16 @@ class ModelEvaluator:
         oos_start: Optional[float] = None,
     ) -> None:
         """
+        Initialize by supplying returns and predictions.
 
-        TODO: Add optional target volatility and OOS start.
-
-        :param returns:
-        :param prediction:
+        :param returns: financial returns
+        :param predictions: returns predictions (aligned with returns)
+        :param target_volatility: Generate positions to achieve target
+            volatility on in-sample region.
+        :param oos_start: Optional end of in-sample/start of out-of-sample.
         """
         self.oos_start = oos_start or None
-        self.valid_keys = list(self._get_valid_keys(returns, predictions))
+        self.valid_keys = self._get_valid_keys(returns, predictions)
         self.rets = {k: returns[k] for k in self.valid_keys}
         self.preds = {k: predictions[k] for k in self.valid_keys}
         self.target_volatility = target_volatility or None
@@ -46,30 +48,6 @@ class ModelEvaluator:
         # TODO(*): Allow configurable strategies.
         # TODO(*): Maybe required that this be called instead of always doing it.
         self.pnls = self._calculate_pnls(self.rets, self.pos)
-
-    def _calculate_positions(self) -> Dict[Any, pd.Series]:
-        """
-        Calculate positions from returns and predictions.
-
-        Rescales to target volatility over in-sample period (if provided).
-        """
-        pnls = self._calculate_pnls(self.rets, self.preds)
-        if self.oos_start is not None:
-            insample_pnls = {
-                k: pnls[k].loc[: self.oos_start] for k in self.valid_keys
-            }
-        else:
-            insample_pnls = pnls
-        if self.target_volatility is not None:
-            scale_factors = {
-                k: fin.compute_volatility_normalization_factor(
-                    srs=insample_pnls[k], target_volatility=self.target_volatility
-                )
-                for k in self.valid_keys
-            }
-        else:
-            scale_factors = {k: 1.0 for k in self.valid_keys}
-        return {k: scale_factors[k] * self.preds[k] for k in self.valid_keys}
 
     def get_pnls(
         self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
@@ -99,10 +77,11 @@ class ModelEvaluator:
         self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
     ) -> pd.DataFrame:
         """
+        Calculate performance characteristics of selected models.
 
-        :param keys:
-        :param mode:
-        :return:
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :return: Dataframe of statistics with `keys` as columns
         """
         keys = keys or self.valid_keys
         mode = mode or "all_available"
@@ -132,10 +111,7 @@ class ModelEvaluator:
         self, returns: pd.Series, positions: pd.Series, pnl: pd.Series,
     ) -> pd.DataFrame:
         """
-
-        :param keys:
-        :param mode:
-        :return:
+        Calculate stats for a single test run.
         """
         # Calculate stats.
         stats_dict = {}
@@ -165,10 +141,35 @@ class ModelEvaluator:
         stats_srs = pd.concat(stats_dict).droplevel(0)
         return stats_srs
 
+    def _calculate_positions(self) -> Dict[Any, pd.Series]:
+        """
+        Calculate positions from returns and predictions.
+
+        Rescales to target volatility over in-sample period (if provided).
+        """
+        pnls = self._calculate_pnls(self.rets, self.preds)
+        if self.oos_start is not None:
+            insample_pnls = {
+                k: pnls[k].loc[: self.oos_start] for k in self.valid_keys
+            }
+        else:
+            insample_pnls = pnls
+        if self.target_volatility is not None:
+            scale_factors = {
+                k: fin.compute_volatility_normalization_factor(
+                    srs=insample_pnls[k], target_volatility=self.target_volatility
+                )
+                for k in self.valid_keys
+            }
+        else:
+            scale_factors = {k: 1.0 for k in self.valid_keys}
+        return {k: scale_factors[k] * self.preds[k] for k in self.valid_keys}
+
     def _calculate_pnls(
         self, returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series]
     ) -> Dict[Any, pd.Series]:
         """
+        Calculate returns from positions.
         """
         pnls = {}
         for key in tqdm(returns.keys()):
@@ -179,7 +180,7 @@ class ModelEvaluator:
 
     def _get_valid_keys(
         self, returns: Dict[Any, pd.Series], predictions: Dict[Any, pd.Series]
-    ) -> set:
+    ) -> list:
         """
         Perform basic sanity checks.
 
@@ -193,9 +194,9 @@ class ModelEvaluator:
         dbg.dassert(shared_keys, msg="Set of valid keys must be nonempty!")
         for key in shared_keys:
             dbg.dassert_eq(returns[key].index.freq, predictions[key].index.freq)
-        return shared_keys
+        return list(shared_keys)
 
-    def _get_valid_keys_helper(self, input_dict: Dict[Any, pd.Series]):
+    def _get_valid_keys_helper(self, input_dict: Dict[Any, pd.Series]) -> list:
         """
         Return keys for nonempty values with a `freq`.
 
@@ -207,9 +208,13 @@ class ModelEvaluator:
             if v.empty:
                 _LOG.warning("Empty series for `k`=%s", str(k))
                 continue
-            if v[: self.oos_start].dropna().empty:
-                _LOG.warning("All-NaN in-sample for `k`=%s", str(k))
-                continue
+            if self.oos_start is not None:
+                if v[: self.oos_start].dropna().empty:
+                    _LOG.warning("All-NaN in-sample for `k`=%s", str(k))
+                    continue
+                if v[self.oos_start: ].dropna().empty:
+                    _LOG.warning("All-NaN out-of-sample for `k`=%s", str(k))
+                    continue
             if v.index.freq is None:
                 _LOG.warning("No `freq` for series for `k`=%s", str(k))
                 continue
