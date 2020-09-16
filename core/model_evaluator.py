@@ -69,6 +69,7 @@ class ModelEvaluator:
         elif mode == "ins":
             return {k: v.loc[: self.oos_start] for k, v in self.pnls.items()}
         elif mode == "oos":
+            dbg.dassert(self.oos_start, msg="No `oos_start` set!")
             return {k: v.loc[self.oos_start :] for k, v in self.pnls.items()}
         else:
             raise ValueError(f"Unrecognized mode {mode}.")
@@ -94,6 +95,7 @@ class ModelEvaluator:
             pos = {k: self.pos[k].loc[: self.oos_start] for k in keys}
             rets = {k: self.rets[k].loc[: self.oos_start] for k in keys}
         elif mode == "oos":
+            dbg.dassert(self.oos_start, msg="No `oos_start` set!")
             pnl = {k: self.pnls[k].loc[self.oos_start :] for k in keys}
             pos = {k: self.pos[k].loc[self.oos_start :] for k in keys}
             rets = {k: self.rets[k].loc[self.oos_start :] for k in keys}
