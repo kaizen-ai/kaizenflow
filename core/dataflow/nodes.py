@@ -9,18 +9,19 @@ import logging
 import os
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import gluonts.model.deepar as gmd
+import gluonts.trainer as gt
+import numpy as np
+import pandas as pd
+import scipy as sp
+import sklearn as skl
+
 import core.backtest as bcktst
 import core.data_adapters as adpt
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
-import gluonts.model.deepar as gmd
-import gluonts.trainer as gt
 import helpers.dbg as dbg
-import numpy as np
-import pandas as pd
-import scipy as sp
-import sklearn as skl
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG, Node
@@ -722,6 +723,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_predict)
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
+        fwd_y_non_nan_idx = fwd_y_df.dropna().index
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
         fwd_y_hat = adpt.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
@@ -730,7 +732,9 @@ class ContinuousSkLearnModel(FitPredictNode):
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
-        info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
+        info["model_score"] = self._score(
+            fwd_y_df.loc[fwd_y_non_nan_idx], fwd_y_hat.loc[fwd_y_non_nan_idx]
+        )
         self._set_info("predict", info)
         # Return predictions.
         return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
