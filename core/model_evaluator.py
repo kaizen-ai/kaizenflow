@@ -38,12 +38,13 @@ class ModelEvaluator:
         # TODO(*): Maybe required that this be called instead of always doing it.
         self.pnls = self._calculate_pnls()
 
-
-    def get_pnls(self,
-                 keys: Optional[List[Any]] = None,
-                 target_volatility: Optional[float] = None,
-                 oos_start: Optional[pd.datetime] = None,
-                 mode: Optional[str] = None):
+    def get_pnls(
+        self,
+        keys: Optional[List[Any]] = None,
+        target_volatility: Optional[float] = None,
+        oos_start: Optional[pd.datetime] = None,
+        mode: Optional[str] = None,
+    ):
         """
         Calculate PnLs from `returns` and `predictions`
 
@@ -62,9 +63,12 @@ class ModelEvaluator:
         else:
             insample_pnls = self.pnls
         if target_volatility is not None:
-           scale_factors = {k: fin.compute_volatility_normalization_factor(
-               srs=insample_pnls[k], target_volatility=target_volatility
-           ) for k in keys}
+            scale_factors = {
+                k: fin.compute_volatility_normalization_factor(
+                    srs=insample_pnls[k], target_volatility=target_volatility
+                )
+                for k in keys
+            }
         else:
             scale_factors = {k: 1.0 for k in keys}
         rescaled_pnls = {k: scale_factors[k] * self.pnls[k] for k in keys}
