@@ -22,7 +22,9 @@ class ModelEvaluator:
     """
 
     def __init__(
-        self, returns: Dict[Any, pd.Series], predictions: Dict[Any, pd.Series],
+        self,
+        returns: Dict[Any, pd.Series],
+        predictions: Dict[Any, pd.Series],
         target_volatility: Optional[float] = None,
         oos_start: Optional[float] = None,
     ) -> None:
@@ -53,7 +55,9 @@ class ModelEvaluator:
         """
         pnls = self._calculate_pnls(self.rets, self.preds)
         if self.oos_start is not None:
-            insample_pnls = {k: pnls[k].loc[:self.oos_start] for k in self.valid_keys}
+            insample_pnls = {
+                k: pnls[k].loc[: self.oos_start] for k in self.valid_keys
+            }
         else:
             insample_pnls = pnls
         if self.target_volatility is not None:
@@ -68,9 +72,7 @@ class ModelEvaluator:
         return {k: scale_factors[k] * self.preds[k] for k in self.valid_keys}
 
     def get_pnls(
-        self,
-        keys: Optional[List[Any]] = None,
-        mode: Optional[str] = None,
+        self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
     ) -> Dict[Any, pd.Series]:
         """
         Returns pnls for requested keys over requested range.
@@ -87,15 +89,14 @@ class ModelEvaluator:
         if mode == "all_available":
             return self.pnls
         elif mode == "ins":
-            return {k: v.loc[:self.oos_start] for k, v in self.pnls.items()}
+            return {k: v.loc[: self.oos_start] for k, v in self.pnls.items()}
         elif mode == "oos":
-            return {k: v.loc[self.oos_start:] for k, v in self.pnls.items()}
+            return {k: v.loc[self.oos_start :] for k, v in self.pnls.items()}
         else:
             raise ValueError(f"Unrecognized mode {mode}.")
 
-    def calculate_stats(self,
-        keys: Optional[List[Any]] = None,
-        mode: Optional[str] = None,
+    def calculate_stats(
+        self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
     ) -> pd.DataFrame:
         """
 
@@ -110,27 +111,25 @@ class ModelEvaluator:
             pos = {k: self.pos[k] for k in keys}
             rets = {k: self.rets[k] for k in keys}
         elif mode == "ins":
-            pnl = {k: self.pnls[k].loc[:self.oos_start] for k in keys}
-            pos = {k: self.pos[k].loc[:self.oos_start] for k in keys}
-            rets = {k: self.rets[k].loc[:self.oos_start] for k in keys}
+            pnl = {k: self.pnls[k].loc[: self.oos_start] for k in keys}
+            pos = {k: self.pos[k].loc[: self.oos_start] for k in keys}
+            rets = {k: self.rets[k].loc[: self.oos_start] for k in keys}
         elif mode == "oos":
-            pnl = {k: self.pnls[k].loc[self.oos_start:] for k in keys}
-            pos = {k: self.pos[k].loc[self.oos_start:] for k in keys}
-            rets = {k: self.rets[k].loc[self.oos_start:] for k in keys}
+            pnl = {k: self.pnls[k].loc[self.oos_start :] for k in keys}
+            pos = {k: self.pos[k].loc[self.oos_start :] for k in keys}
+            rets = {k: self.rets[k].loc[self.oos_start :] for k in keys}
         else:
             raise ValueError(f"Unrecognized mode {mode}.")
         stats_dict = {}
         for key in keys:
-            stats_val = self._calculate_stats(returns=rets[key],
-                                              positions=pos[key],
-                                              pnl=pnl[key])
+            stats_val = self._calculate_stats(
+                returns=rets[key], positions=pos[key], pnl=pnl[key]
+            )
             stats_dict[key] = stats_val
         return pd.concat(stats_dict, axis=1)
 
-    def _calculate_stats(self,
-        returns: pd.Series,
-        positions: pd.Series,
-        pnl: pd.Series,
+    def _calculate_stats(
+        self, returns: pd.Series, positions: pd.Series, pnl: pd.Series,
     ) -> pd.DataFrame:
         """
 
@@ -152,7 +151,9 @@ class ModelEvaluator:
         stats_dict[7] = pd.Series(
             pnl.corr(returns), index=["corr_to_underlying"], name=returns.name
         )
-        stats_dict[8] = stats.compute_bet_stats(positions, returns[positions.index])
+        stats_dict[8] = stats.compute_bet_stats(
+            positions, returns[positions.index]
+        )
         stats_dict[9] = stats.compute_avg_turnover_and_holding_period(positions)
         stats_dict[10] = stats.compute_jensen_ratio(pnl)
         stats_dict[11] = stats.compute_forecastability(pnl)
@@ -164,9 +165,9 @@ class ModelEvaluator:
         stats_srs = pd.concat(stats_dict).droplevel(0)
         return stats_srs
 
-    def _calculate_pnls(self,
-                        returns: Dict[Any, pd.Series],
-                        positions: Dict[Any, pd.Series]) -> Dict[Any, pd.Series]:
+    def _calculate_pnls(
+        self, returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series]
+    ) -> Dict[Any, pd.Series]:
         """
         """
         pnls = {}
@@ -206,7 +207,7 @@ class ModelEvaluator:
             if v.empty:
                 _LOG.warning("Empty series for `k`=%s", str(k))
                 continue
-            if v[:self.oos_start].dropna().empty:
+            if v[: self.oos_start].dropna().empty:
                 _LOG.warning("All-NaN in-sample for `k`=%s", str(k))
                 continue
             if v.index.freq is None:
