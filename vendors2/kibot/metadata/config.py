@@ -6,7 +6,5 @@ S3_PREFIX = "s3://external-p1/kibot/metadata"
 ENDPOINT = "http://www.kibot.com/"
 API_ENDPOINT = "http://api.kibot.com/"
 
-ADJUSTMENTS_SUB_DIR = "raw"
-ADJUSTMENTS_FILE_NAME = "adjustments.txt"
-
 TICKER_LISTS_SUB_DIR = "raw/ticker_lists"
+ADJUSTMENTS_SUB_DIR = "raw/adjustments"

@@ -1,13 +1,16 @@
+# Test created for test_playback.get_result_cs
 import helpers.unit_test as hut
+import jsonpickle
+import pandas as pd
 
-class TestGetResult(hut.TestCase):
+
+class TestGetResultCs(hut.TestCase):
     def test1(self) -> None:
-        # Initialize function parameters.
+        # Define input variables
         a = {"1": 2}
         b = {"3": 4}
-        # Get the actual function output.
-        act = get_result(a, b)
-        # Check whether the expected value equals the actual value.
-        # Convert into string.
+        # Call function to test
+        act = get_result_cs(a=a, b=b)
         act = str(act)
+        # Check output
         self.check_string(act)

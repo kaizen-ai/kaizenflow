@@ -65,3 +65,23 @@ class TestTickerListLoader(hut.TestCase):
                 Sector='"Basic Industries"',
             ),
         )
+
+
+class TestAdjustmentsLoader(hut.TestCase):
+    @pytest.mark.skip("Disabled waiting for PartTask4139")
+    def test_real_call(self) -> None:
+        adjustments = load.AdjustmentsLoader().load(symbol="SPTN")
+
+        self.assertEqual(len(adjustments), 58)
+
+        self.assertEqual(
+            adjustments[0],
+            types.Adjustment(
+                Date="2/27/2006",
+                Symbol="SPTN",
+                Company="SpartanNash Company",
+                Action=0.05,
+                Description="Dividend",
+                EventDate="2/27/2006",
+            ),
+        )

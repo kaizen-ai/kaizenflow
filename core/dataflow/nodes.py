@@ -424,6 +424,7 @@ class ColumnTransformer(Transformer):
         cols: Optional[Iterable[str]] = None,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
         col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: unique node id
@@ -438,6 +439,8 @@ class ColumnTransformer(Transformer):
             lambda x: "zscore_" + x
         :param col_mode: `merge_all`, `replace_selected`, or `replace_all`.
             Determines what columns are propagated by the node.
+        :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to all
+            columns simultaneously.
         """
         super().__init__(nid)
         if cols is not None:
@@ -451,6 +454,7 @@ class ColumnTransformer(Transformer):
         self._transformer_kwargs = transformer_kwargs or {}
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
+        self._nan_mode = nan_mode or "leave_unchanged"
 
     def transformed_col_names(self) -> List[str]:
         dbg.dassert_is_not(
@@ -468,6 +472,13 @@ class ColumnTransformer(Transformer):
         df = df.copy()
         if self._cols is not None:
             df = df[self._cols]
+        idx = df.index
+        if self._nan_mode == "leave_unchanged":
+            pass
+        elif self._nan_mode == "drop":
+            df = df.dropna()
+        else:
+            raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
         # Initialize container to store info (e.g., auxiliary stats) in the
         # node.
         info = collections.OrderedDict()
@@ -484,6 +495,7 @@ class ColumnTransformer(Transformer):
             info["func_info"] = func_info
         else:
             df = self._transformer_func(df, **self._transformer_kwargs)
+        df = df.reindex(index=idx)
         # TODO(Paul): Consider supporting the option of relaxing or
         # foregoing this check.
         dbg.dassert(
@@ -507,7 +519,9 @@ class ColumnTransformer(Transformer):
             df = df_in.merge(df, left_index=True, right_index=True)
         elif self._col_mode == "replace_selected":
             dbg.dassert(
-                df.columns.intersection(df_in[self._cols].columns).empty,
+                df.drop(self._cols, axis=1)
+                .columns.intersection(df_in[self._cols].columns)
+                .empty,
                 "Transformed column names `%s` conflict with existing column "
                 "names `%s`.",
                 df.columns,
@@ -635,7 +649,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._col_mode = col_mode
         self._model = None
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -690,23 +703,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        # TODO(Alina): Factor out this idiom into a private helper.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), how="outer", left_index=True, right_index=True
-        )
-        if self._col_mode == "replace_all":
-            pass
-        elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
-                df_out.reindex(idx),
-                how="outer",
-                left_index=True,
-                right_index=True,
-            )
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
+        return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -726,6 +723,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         fwd_y_hat = self._model.predict(x_predict)
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
+        fwd_y_non_nan_idx = fwd_y_df.dropna().index
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
         fwd_y_hat = adpt.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
@@ -734,16 +732,27 @@ class ContinuousSkLearnModel(FitPredictNode):
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
-        info["model_score"] = self._score(fwd_y_df, fwd_y_hat)
+        info["model_score"] = self._score(
+            fwd_y_df.loc[fwd_y_non_nan_idx], fwd_y_hat.loc[fwd_y_non_nan_idx]
+        )
         self._set_info("predict", info)
-        # Return targets and predictions.
+        # Return predictions.
+        return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
+
+    def _replace_or_merge_output(
+        self,
+        df: pd.DataFrame,
+        fwd_y_df: pd.DataFrame,
+        fwd_y_hat: pd.DataFrame,
+        idx: pd.Series,
+    ) -> Dict[str, pd.DataFrame]:
         df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), how="outer", left_index=True, right_index=True
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         if self._col_mode == "replace_all":
             pass
         elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
+            df_out = df.merge(
                 df_out.reindex(idx),
                 how="outer",
                 left_index=True,
@@ -932,14 +941,12 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
+        df_out = x_hat.reindex(index=df_in.index)
         if self._col_mode == "replace_all":
-            df_out = x_hat.reindex(index=df_in.index)
+            pass
         elif self._col_mode == "merge_all":
             df_out = df_in.merge(
-                x_hat.reindex(index=df_in.index),
-                how="outer",
-                left_index=True,
-                right_index=True,
+                df_out, how="outer", left_index=True, right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
@@ -1170,17 +1177,8 @@ class SkLearnModel(FitPredictNode):
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
         self._set_info("fit", info)
-        #
-        if self._col_mode == "replace_all":
-            df_out = y_hat
-        elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
-                y_hat.reindex(idx), left_index=True, right_index=True
-            )
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
+        # Return targets and predictions.
+        return self._replace_or_merge_output(df, y_hat, idx)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -1198,12 +1196,21 @@ class SkLearnModel(FitPredictNode):
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         self._set_info("predict", info)
-        #
+        # Return predictions.
+        return self._replace_or_merge_output(df, y_hat, idx)
+
+    def _replace_or_merge_output(
+        self, df: pd.DataFrame, y_hat: pd.DataFrame, idx: pd.Series
+    ) -> Dict[str, pd.DataFrame]:
+        df_out = y_hat
         if self._col_mode == "replace_all":
-            df_out = y_hat
+            pass
         elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
-                y_hat.reindex(idx), left_index=True, right_index=True
+            df_out = df.merge(
+                df_out.reindex(idx),
+                how="outer",
+                left_index=True,
+                right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
