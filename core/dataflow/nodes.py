@@ -1737,6 +1737,7 @@ class SmaModel(FitPredictNode):
         _LOG.debug("tau=", self._tau)
         info = collections.OrderedDict()
         info["tau"] = self._tau
+        info["min_periods"] = self._min_periods
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._predict(x_fit)
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
