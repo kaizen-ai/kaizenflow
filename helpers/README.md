@@ -11,13 +11,58 @@
 
 
 <!--te-->
+
 # Particle Helpers Distribution Package
 
-- This document describes building, distribution and installation workflow for
-  the P1 `helpers` package
+- This document describes how to build, distribute and install the P1 `helpers`
+  package
 
 - Note for dev/data science members: if you are looking for how to install
   packages for your daily work, go to **Client Configuration**.
+
+# Creating and installing the package
+
+## PyPI local file
+
+- You can create the `helpers` package with:
+  ```bash
+  > cd helpers
+  > python setup.py bdist_wheel
+  ```
+
+- This creates a file `dist/helpers-1.0.0-py3-none-any.whl` that contains the
+  package
+
+- You can install the package with:
+  ```
+  > python -m pip install dist/helpers-1.0.0-py3-none-any.whl
+  ```
+
+## PyPI workflow
+
+- This section describes a temporary solution while we build the CI pipeline.
+
+- The maintainer of `helpers` package after merging changes of `helpers/` into
+  `master`, should run:
+
+1. Edit or create a `~/.pypirc` file with:
+   ```ini
+   [distutils]
+   index-servers =
+   particle
+   [particle]
+   username:<upload_pypi_username>
+   password:<upload_pypi_passwd>
+   ```
+
+2. Update the `helpers/CHANGELOG` and add version
+
+3. Edit `setup.py`, changing `version` in accordance in `CHANGELOG`, update
+   `install_requires` parameters.
+
+4. Run `python setup.py sdist upload -r particle`
+
+# PyPI server installation
 
 ## General Information
 
@@ -42,7 +87,7 @@ You have two options:
   `PIP_EXTRA_INDEX_URL`
 
    ```bash
-   >export PIP_EXTRA_INDEX_URL=http://172.31.36.23:8855/simple/
+   > export PIP_EXTRA_INDEX_URL=http://172.31.36.23:8855/simple/
    ```
 
    or by adding the following lines to `~/.pip/pip.conf`:
@@ -99,32 +144,6 @@ You have two options:
   ```bash
   > docker run -d -p 8855:8080 -v ~/pypi/packages:/data/packages -v ~/pypi/.htpasswd:/data/.htpasswd --restart=always pypiserver/pypiserver:latest -v  -P .htpasswd packages
   ```
-
-## Distribute workflow
-
-- **Note**: This section describes temporary solution until we will not introduce
-  CI pipeline.
-
-- The maintener of `helpers` package must do after merging changes of `helpers/`
-  into master:
-
-1. Edit or create a `~/.pypirc` file with a similar content:
-
-   ```ini
-   [distutils]
-   index-servers =
-   particle
-   [particle]
-   username:<upload_pypi_username>
-   password:<upload_pypi_passwd>
-   ```
-
-2. Update the `helpers/CHANGELOG`, add version and new changes.
-
-3. Edit `setup.py`, change `version` with accordance in `CHANGELOG`, update
-   `install_requires` parameters.
-
-4. Run `python setup.py sdist upload -r particle`
 
 ## Limitation
 
