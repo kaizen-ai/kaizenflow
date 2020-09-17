@@ -1299,9 +1299,20 @@ class SkLearnModel(FitPredictNode):
 
 class ContinuousSarimaxModel(FitPredictNode):
     """
-    A dataflow node for a continuous SARIMAX model.
+    A dataflow node for continuous SARIMAX model.
 
-    TODO(Julia): Finish docstring.
+    This is a wrapper around statsmodels SARIMAX with the following
+    modifications:
+      - We predict `y_t`, ... , `y_{t+n}` using `x_{t-n+1}`, ..., `x_t`, where
+       `n` is `steps_ahead`, whereas in the classic implementation it is
+        predicted using`x_t`, ... , `x_{t+n}`
+      - When making predictions in the `fit` method, we treat the input data as
+        out-of-sample. This allows making n-step-ahead predictions on a subset
+        of exogenous data.
+
+    See
+    https://www.statsmodels.org/stable/examples/notebooks/generated/statespace_sarimax_stata.html
+    for SARIMAX model examples.
     """
 
     def __init__(
@@ -1315,7 +1326,20 @@ class ContinuousSarimaxModel(FitPredictNode):
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
-        # TODO(Julia): Add docstrings.
+        """
+        Initialize node for SARIMAX model.
+
+        :param nid: node identifier
+        :param y_vars: names of y variables. Only univariate predictions are
+            supported
+        :param steps_ahead: number of prediction steps
+        :param init_kwargs: kwargs for initializing `sm.tsa.statespace.SARIMAX`
+        :param fit_kwargs: kwargs for `fit` method of
+            `sm.tsa.statespace.SARIMAX`
+        :param x_vars: names of x variables
+        :param col_mode: "replace_all" or "merge_all"
+        :param nan_mode: "raise" or "drop"
+        """
         super().__init__(nid)
         self._y_vars = y_vars
         dbg.dassert_lte(
