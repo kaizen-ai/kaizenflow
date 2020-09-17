@@ -301,6 +301,65 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         return realization
 
 
+class TestContinuousSarimaxModel(hut.TestCase):
+    def test_fit1(self) -> None:
+        data = self._get_data()
+        config = self._get_config()
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        df_out = csm.fit(data)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test_predict1(self) -> None:
+        data = self._get_data()
+        data_fit = data.iloc[:70]
+        data_predict = data.iloc[70:]
+        config = self._get_config()
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm.fit(data_fit)
+        df_out = csm.predict(data_predict)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
+
+    @staticmethod
+    def _get_data(periods: int = 100, seed: int = 42) -> pd.DataFrame:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range_kwargs = {
+            "start": "2010-01-01",
+            "periods": periods,
+            "freq": "M",
+        }
+        y = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
+        ).rename("ret_0")
+        x = sigp.compute_smooth_moving_average(y, 26).rename("x")
+        return pd.concat([x, y], axis=1)
+
+    @staticmethod
+    def _get_config() -> cfg.Config:
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "y_vars": ["ret_0"],
+                "steps_ahead": 3,
+                "init_kwargs": {
+                    "order": (1, 0, 1),
+                    "seasonal_order": (1, 0, 1, 3),
+                },
+                "x_vars": ["x"],
+                "nan_mode": "drop",
+            }
+        )
+        return config
+
+
 class TestResidualizer(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
