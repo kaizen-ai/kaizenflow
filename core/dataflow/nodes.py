@@ -1398,10 +1398,16 @@ class ContinuousSarimaxModel(FitPredictNode):
     def _predict(
         self, y: pd.DataFrame, x: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
+        """
+        Make n-step-ahead predictions.
+        """
         # TODO(Julia): Consider leaving all steps of the prediction, not just
         #     the last one.
         preds = []
-        for t in tqdm(range(1, len(y) - self._steps_ahead + 1)):
+        pred_range = len(y)
+        if self._x_vars is not None:
+            pred_range -= self._steps_ahead - 1
+        for t in tqdm(range(1, pred_range)):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
             if x is not None:

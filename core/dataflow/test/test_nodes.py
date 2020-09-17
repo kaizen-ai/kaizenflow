@@ -314,11 +314,48 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         self.check_string(output_str)
 
+    def test_fit_no_x1(self) -> None:
+        """
+        Fit without providing an exogenous variable.
+        """
+        data = self._get_data()
+        data.drop(columns=["x"], inplace=True)
+        config = self._get_config()
+        config["x_vars"] = None
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        df_out = csm.fit(data)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
+
     def test_predict1(self) -> None:
         data = self._get_data()
         data_fit = data.iloc[:70]
         data_predict = data.iloc[70:]
         config = self._get_config()
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm.fit(data_fit)
+        df_out = csm.predict(data_predict)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test_predict_no_x1(self) -> None:
+        """
+        Predict without providing an exogenous variable.
+        """
+        data = self._get_data()
+        data.drop(columns=["x"], inplace=True)
+        config = self._get_config()
+        config["x_vars"] = None
+        data_fit = data.iloc[:70]
+        data_predict = data.iloc[70:]
         csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
