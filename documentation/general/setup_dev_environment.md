@@ -188,7 +188,7 @@
 
 ## Configure user credentials
 
-For now this topic is obsolete. All development with AWS is running on a server
+- For now this topic is obsolete. All development with AWS is running on a server
 side (or locally) in a docker container. Here you can find the documentation
 [the link](https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/docker.md)
 
