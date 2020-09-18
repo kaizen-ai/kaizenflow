@@ -14,7 +14,7 @@ more complex pipelines. The output is reported through logging.
 import datetime
 import logging
 import math
-from typing import Any, Callable, Collection, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Tuple, Union, cast
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -430,7 +430,7 @@ def print_column_variability(
 
 
 def find_common_columns(
-    names: Collection[str], dfs: Collection[pd.DataFrame]
+    names: List[str], dfs: List[pd.DataFrame]
 ) -> pd.DataFrame:
     df = []
     for i, df1 in enumerate(dfs):
@@ -491,6 +491,7 @@ def filter_with_df(
             mask = df[c].isin(vals)
         else:
             mask &= df[c].isin(vals)
+    mask: pd.DataFrame
     _LOG.log(log_level, "after filter=%s", pri.perc(mask.sum(), len(mask)))
     return mask
 
@@ -728,7 +729,7 @@ def plot_pca_over_time(
 
 
 def plot_time_distributions(
-    dts: Collection[Union[datetime.datetime, pd.Timestamp]],
+    dts: List[Union[datetime.datetime, pd.Timestamp]],
     mode: str,
     density: bool = True,
 ) -> mpl.axes.Axes:
@@ -1059,6 +1060,7 @@ def ols_regress_series(
     df.columns = [srs1_name, srs2_name]
     #
     val = ols_regress(df, srs1_name, srs2_name, intercept=intercept, **kwargs)
+    val = cast(Dict[str, Any], val)
     return val
 
 
@@ -1068,6 +1070,7 @@ def pvalue_to_stars(pval: Optional[float]) -> str:
     else:
         dbg.dassert_lte(0.0, pval)
         dbg.dassert_lte(pval, 1.0)
+        pval = cast(float, pval)
         if pval < 0.005:
             # More than 99.5% confidence.
             stars = "****"
@@ -1090,7 +1093,7 @@ def format_ols_regress_results(regr_res: Optional[pd.DataFrame]) -> pd.DataFrame
         _LOG.warning("regr_res=None: skipping")
         df = pd.DataFrame(None)
         return df
-    row: List[str, float] = [
+    row: List[Union[float, str]] = [
         "%.3f (%s)" % (coeff, pvalue_to_stars(pval))
         for (coeff, pval) in zip(regr_res["coeffs"], regr_res["pvals"])
     ]
@@ -1333,7 +1336,7 @@ def describe_df(
 
 
 def to_qgrid(df: pd.DataFrame) -> Any:
-    import qgrid
+    import qgrid  # type: ignore
 
     grid_options = {
         "fullWidthRows": True,

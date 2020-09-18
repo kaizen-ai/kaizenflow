@@ -23,20 +23,22 @@ import logging
 import numpy as np
 import pandas as pd
 
+from typing import Tuple
+
 _LOG = logging.getLogger(__name__)
 
 
 #
 # Benchmark portfolio weighting strategies.
 #
-def equal_weighting(df):
+def equal_weighting(df: pd.DataFrame) -> np.darray:
     """Equally weight returns in df and generate stream of log rets."""
     rets = df.dropna(how="any").mean(axis=1)
     log_rets = np.log(rets + 1)
     return log_rets
 
 
-def inverse_volatility_weighting(df, com, min_periods):
+def inverse_volatility_weighting(df: pd.DataFrame, com: float, min_periods: int) -> Tuple[np.darray, pd.DataFrame]:
     """Weight returns by inverse volatility (calculated by rolling std).
 
     Assume df contains % returns.
@@ -57,7 +59,7 @@ def inverse_volatility_weighting(df, com, min_periods):
     return log_rets, weights
 
 
-def minimum_variance_weighting(df, com, min_periods):
+def minimum_variance_weighting(df: pd.DataFrame, com: float, min_periods: int) -> Tuple[np.darray, pd.DataFrame]:
     """Weight returns by inverse covariance (calculating by rolling cov).
 
     Note that weights may be negative.
@@ -91,7 +93,7 @@ def minimum_variance_weighting(df, com, min_periods):
     return log_rets, weights_df
 
 
-def kelly_optimal_weighting(df, com, min_periods):
+def kelly_optimal_weighting(df: pd.DataFrame, com: float, min_periods: int) -> Tuple[np.darray, pd.DataFrame]:
     """Same as Markowitz tangency portfolio, but with optimal leverage.
 
     See https://epchan.blogspot.com/2014/08/kelly-vs-markowitz-portfolio.html.
@@ -127,7 +129,7 @@ def kelly_optimal_weighting(df, com, min_periods):
 # Implementation:
 # https://github.com/pandas-dev/pandas/blob/v0.25.0/pandas/core/window.py
 # https://github.com/pandas-dev/pandas/blob/v0.25.0/pandas/_libs/window.pyx
-def _ewm_cov(df, com, min_periods, adjust=True, ignore_na=False, axis=0):
+def _ewm_cov(df: pd.DataFrame, com: float, min_periods: int, adjust: bool = True, ignore_na: bool = False, axis: int = 0) -> np.darray:
     """Calculate ewm covariance matrix.
 
     Accepts df of % returns
@@ -147,7 +149,7 @@ def _ewm_cov(df, com, min_periods, adjust=True, ignore_na=False, axis=0):
     return cov
 
 
-def _cov_df_to_inv(df):
+def _cov_df_to_inv(df: pd.DataFrame) -> np.ndarray:
     """Invert cov/corr matrices given as output of ewm cov/corr."""
     _LOG.info("Calculating matrix inverses...")
     _LOG.info("columns are %s", str(df.columns.values))

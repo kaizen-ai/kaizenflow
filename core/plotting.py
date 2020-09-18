@@ -6,7 +6,7 @@ import core.plotting as plot
 import calendar
 import logging
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import core.explore as expl
 import core.finance as fin
@@ -454,6 +454,7 @@ def plot_timeseries_per_category(
     if not datetime_types:
         datetime_types = _DATETIME_TYPES
     for datetime_type in datetime_types:
+        categories = cast(List[str], categories)
         rows = math.ceil(len(categories) / 3)
         fig, ax = plt.subplots(
             figsize=(FIG_SIZE[0], rows * 4.5),
@@ -532,7 +533,7 @@ def plot_autocorrelation(
     nrows = len(signal.columns)
     if axes == [[None, None]]:
         _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:
+        if axes.size == 2:  # type: ignore
             axes = [axes]
     if title_prefix is None:
         title_prefix = ""
@@ -541,7 +542,8 @@ def plot_autocorrelation(
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
-        ax1 = axes[idx][0]
+        axes = cast(List, axes)
+        ax1 = axes[idx][0] 
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
         _ = sm.graphics.tsa.plot_acf(
@@ -579,13 +581,14 @@ def plot_spectrum(
     nrows = len(signal.columns)
     if axes == [[None, None]]:
         _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:
+        if axes.size == 2:  # type: ignore
             axes = [axes]
     for idx, col in enumerate(signal.columns):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
+        axes = cast(List, axes)
         ax1 = axes[idx][0]
         f_pxx, Pxx = sp.signal.welch(data)
         ax1.semilogy(f_pxx, Pxx)

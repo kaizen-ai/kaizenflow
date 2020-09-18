@@ -63,6 +63,7 @@ def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
     #   "nlp.build_configs.build_PartTask1088_configs()"
     m = re.match(r"^(\S+)\.(\S+)\((.*)\)$", config_builder)
     dbg.dassert(m, "config_builder='%s'", config_builder)
+    m = cast(re.Match, m)
     import_, function, args = m.groups()
     _LOG.debug("import=%s", import_)
     _LOG.debug("function=%s", function)

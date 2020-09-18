@@ -2,9 +2,10 @@ import logging
 
 import numpy as np
 import pandas as pd
-import pymc3 as pm
-import theano
+import pymc3 as pm  # type: ignore
+import theano  # type: ignore
 
+from typing import Union, Any
 # See https://stackoverflow.com/questions/51238578/error-non-constant-expression-cannot-be-narrowed-from-type-npy-intp-to-int  # pylint: disable=line-too-long
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"  # pylint: disable=no-member
 
@@ -29,7 +30,7 @@ ONE_WAY_NORM_TAG = "one_way_normal"
 # TODO(Paul): Consider factoring out common code
 
 
-def get_col_shape(data):
+def get_col_shape(data: Union[pd.Series, pd.DataFrame]) -> int:
     """
 
     :param data:
@@ -38,11 +39,12 @@ def get_col_shape(data):
     if isinstance(data, pd.Series):
         return 1
     if isinstance(data, pd.DataFrame):
-        return data.shape[1]
+        s: int = data.shape[1]
+        return s
     raise ValueError("Expects pd.Series or pd.DataFrame!")
 
 
-def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
+def best(y1, y2, prior_tau: float = 1e-6, time_scaling: int = 1, **kwargs: Any):
     """Bayesian Estimation Supersedes the T Test. See
     http://www.indiana.edu/~kruschke/BEST/BEST.pdf.
 
@@ -121,7 +123,7 @@ def best(y1, y2, prior_tau=1e-6, time_scaling=1, **kwargs):
     return model, trace
 
 
-def fit_laplace(data, prior_tau=1e-6, time_scaling=1, **kwargs):
+def fit_laplace(data, prior_tau: float =1e-6, time_scaling: int = 1, **kwargs: Any):
     """Fit a Laplace distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
@@ -156,7 +158,7 @@ def fit_laplace(data, prior_tau=1e-6, time_scaling=1, **kwargs):
     return model, trace
 
 
-def fit_normal(data, prior_tau=1e-6, time_scaling=1, **kwargs):
+def fit_normal(data, prior_tau: float = 1e-6, time_scaling: int = 1, **kwargs: Any):
     """Fit a normal distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
@@ -191,7 +193,7 @@ def fit_normal(data, prior_tau=1e-6, time_scaling=1, **kwargs):
     return model, trace
 
 
-def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
+def fit_t(data, prior_tau: float = 1e-6, time_scaling: int = 1, **kwargs: Any):
     """Fit a Student T distribution to each column of data (independently).
 
     :param data: pd.Series of pd.DataFrame (obs along rows)
@@ -227,7 +229,7 @@ def fit_t(data, prior_tau=1e-6, time_scaling=1, **kwargs):
 
 
 def fit_one_way_normal(
-    df, prior_tau=1e-6, time_scaling=1, vol_mode="point", **kwargs
+        df: pd.DataFrame, prior_tau: float = 1e-6, time_scaling: int = 1, vol_mode: str = "point", **kwargs: Any
 ):
     """Fit a one-way normal model.
 
@@ -279,7 +281,7 @@ def fit_one_way_normal(
     return model, trace
 
 
-def trace_info(trace, **kwargs):
+def trace_info(trace, **kwargs) -> None:
     """Standard trace plots and info."""
     _LOG.info("traceplot...")
     pm.traceplot(trace, **kwargs)

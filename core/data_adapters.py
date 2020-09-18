@@ -78,7 +78,7 @@ if True:
     def transform_to_gluon(
         df: pd.DataFrame,
         x_vars: Optional[List[str]],
-        y_vars: List[str],
+        y_vars: Union[str, List[str]],
         frequency: Optional[str] = None,
         y_truncate: Optional[int] = None,
     ) -> gluonts.dataset.common.ListDataset:
@@ -238,7 +238,7 @@ if True:
         # If `ListDataset` contains only one gluon time series, return
         # singly indexed dataframe; else return a multiindexed dataframe.
         if len(dfs) == 1:
-            df = dfs[0]
+            df: pd.Dateframe = dfs[0]
             df = df.droplevel(0)
             df.index.name = index_name
         else:
