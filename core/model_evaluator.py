@@ -31,7 +31,7 @@ class ModelEvaluator:
         """
         Initialize by supplying returns and predictions.
 
-        :param returns: financial returns
+        :param returns: financial (log) returns
         :param predictions: returns predictions (aligned with returns)
         :param target_volatility: Generate positions to achieve target
             volatility on in-sample region.
@@ -49,6 +49,7 @@ class ModelEvaluator:
         # TODO(*): Maybe required that this be called instead of always doing it.
         self.pnls = self._calculate_pnls(self.rets, self.pos)
 
+    # TODO(*): Consider exposing positions / returns in the same way.
     def get_pnls(
         self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
     ) -> Dict[Any, pd.Series]:
@@ -107,7 +108,11 @@ class ModelEvaluator:
                 returns=rets[key], positions=pos[key], pnl=pnl[key]
             )
             stats_dict[key] = stats_val
-        return pd.concat(stats_dict, axis=1)
+        stats_df = pd.concat(stats_dict, axis=1)
+        # Calculate BH adjustment of pvals.
+        adj_pvals = stats.multipletests(stats_df.loc["pval"], nan_mode="drop")
+        stats_df = pd.concat([stats_df.transpose(), adj_pvals], axis=1).transpose()
+        return stats_df
 
     def _calculate_stats(
         self, returns: pd.Series, positions: pd.Series, pnl: pd.Series,
