@@ -143,8 +143,12 @@ class ModelEvaluator:
         stats_dict[9] = stats.compute_avg_turnover_and_holding_period(positions)
         stats_dict[10] = stats.compute_jensen_ratio(pnl)
         stats_dict[11] = stats.compute_forecastability(pnl)
-        stats_dict[12] = stats.compute_moments(pnl)
-        stats_dict[13] = stats.compute_special_value_stats(pnl)
+        # TODO(*): Use `predictions` instead.
+        stats_dict[12] = pd.Series(
+            positions.corr(returns), index=["prediction_corr"], name=returns.name
+        )
+        stats_dict[13] = stats.compute_moments(pnl)
+        stats_dict[14] = stats.compute_special_value_stats(pnl)
         # Sort dict by integer keys.
         stats_dict = dict(sorted(stats_dict.items()))
         # Combine stats into one series indexed by stats names.
