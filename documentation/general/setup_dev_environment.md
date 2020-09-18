@@ -1,16 +1,17 @@
 <!--ts-->
    * [Tools](#tools)
       * [Editors](#editors)
-      * [Dev](#dev)
+      * [Development / Data science](#development--data-science)
       * [Infra](#infra)
    * [Set up a new machine](#set-up-a-new-machine)
+      * [Server vs laptop](#server-vs-laptop)
       * [Definitions](#definitions)
       * [Connect to the server](#connect-to-the-server)
       * [Use python3](#use-python3)
       * [(optional) Install anaconda](#optional-install-anaconda)
       * [Configure anaconda](#configure-anaconda)
    * [Create a Git client](#create-a-git-client)
-      * [Check out the git code](#check-out-the-git-code)
+      * [Clone the git code](#clone-the-git-code)
       * [Configure git submodules](#configure-git-submodules)
       * [Configure user credentials](#configure-user-credentials)
       * [Create conda environment](#create-conda-environment)
@@ -21,6 +22,7 @@
          * [Manually delete a conda environment](#manually-delete-a-conda-environment)
          * [To delete the entire conda installation (advanced users)](#to-delete-the-entire-conda-installation-advanced-users)
       * [Update anaconda](#update-anaconda)
+      * [Clone multiple git client](#clone-multiple-git-client)
    * [Be patient](#be-patient)
    * [Workflow examples](#workflow-examples)
       * [Working with multiple clients](#working-with-multiple-clients)
@@ -65,6 +67,7 @@
 # Set up a new machine
 
 ## Server vs laptop
+
 - We prefer to work on the dev server on AWS since it is more reliable and
   powerful
 
@@ -91,6 +94,7 @@
 
 - After enabling the VPN on your laptop, open a terminal
 - Make sure you see the servers:
+
   ```bash
   > ping research.p1
   PING research.p1 (172.31.16.23): 56 data bytes
@@ -102,8 +106,8 @@
   ```bash
   > ssh research.p1
   ```
-- Best course of action is to pass your public key to Infra so that you can login
-  without typing in a password
+- Best course of action is to pass your public key to Infra so that you can
+  login without typing in a password
 
 ## Use python3
 
@@ -145,6 +149,7 @@
   ```
 
 - If you encounter the error
+
   ```bash
   bash git@github.com: Permission denied (publickey).
   fatal: Could not read from remote repository.
@@ -152,8 +157,9 @@
   Please make sure you have the correct access rights
   and the repository exists.
   ```
-  make sure that your SSH key in `$HOME/.ssh/id_rsa.pub` is on your GitHub account.
-  Follow the instructions
+
+  make sure that your SSH key in `$HOME/.ssh/id_rsa.pub` is on your GitHub
+  account. Follow the instructions
   [here](https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account)
 
 - If you have problems run
@@ -166,6 +172,7 @@
 ## Configure git submodules
 
 - Make sure you have both submodule repos `infra` and `amp` by running:
+
   ```bash
   > cd $DST_DIR
   > ls amp
@@ -181,9 +188,8 @@
 
 ## Configure user credentials
 
-For now this topic is obsolete. 
-All development with AWS is running on a server side (or locally) in a docker container.
-Here you can find the documentation 
+For now this topic is obsolete. All development with AWS is running on a server
+side (or locally) in a docker container. Here you can find the documentation
 [the link](https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/docker.md)
 
 - Update the user credential files in `amp/helpers/user_credentials.py`
@@ -219,15 +225,15 @@ Here you can find the documentation
 
 - Every time you open a shell you need to activate the development environment
   run:
+
   ```bash
   > source dev_scripts_p1/setenv_p1.sh
   ```
 
 - This script:
-  - activates the conda environment
-  - sets environment variables
-  - makes sure things are working properly
-
+  - Activates the conda environment
+  - Sets environment variables
+  - Makes sure things are working properly
 
 ## Delete / recreate environment
 
@@ -323,12 +329,12 @@ Here you can find the documentation
 # Be patient
 
 - The `create_conda.py` flow is designed to make our projects portable across:
-  - platforms (e.g., macOS, Linux)
-  - different installation of OSes (e.g., GP's laptop vs Paul's laptop) with all
+  - Platforms (e.g., macOS, Linux)
+  - Different installation of OSes (e.g., GP's laptop vs Paul's laptop) with all
     the peculiar ways we install and manage servers and laptops
-  - different versions of conda
-  - different versions of python 3.x
-  - different versions of python packages
+  - Different versions of conda
+  - Different versions of python 3.x
+  - Different versions of python packages
 
 - There is no easy way to make sure that `create_conda.py` works for everybody
   - We can only make sure that Jenkins builds the environment correctly in its
@@ -360,17 +366,17 @@ Here you can find the documentation
   - One client for development
 
 - Two Git clients `commodity_research1` and `commodity_research2`
-  - one for development
-  - one for review CLs
+  - One for development
+  - One for review CLs
 - One terminal window per Git client
   - (So I can switch easily between Git clients)
 - One Pycharm project for each Git client
   - To edit the code
 - One tmux session in each terminal with:
   - (So I can switch easily between dirs of the project)
-  - one shell cd-ed in `commodity_research*`
-  - one shell running jupyter
-  - one shell cd-ed `commodity_research*/amp`
+  - One shell cd-ed in `commodity_research*`
+  - One shell running jupyter
+  - One shell cd-ed `commodity_research*/amp`
   - See details `//amp/dev_scripts/tmux.sh`
 
 ## Run jupyter notebook
@@ -382,7 +388,7 @@ Here you can find the documentation
   - If you want to have a constantly running notebook, create a tmux session.
     - `tmux` - Create tmux session.
     - `tmux a` - Connect to the last session.
-    - leave/detach the tmux session by typing `Ctrl+b` and `then d`.
+    - Leave/detach the tmux session by typing `Ctrl+b` and `then d`.
   - Example run notebook:
     - IP - You can allow all addresses, but we expect you to use the internal
       server addresses(Example: 172.31.16.23).
