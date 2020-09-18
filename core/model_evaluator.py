@@ -1,4 +1,5 @@
-"""Import as:
+"""
+Import as:
 
 import core.model_evaluator as modeval
 """
@@ -54,7 +55,7 @@ class ModelEvaluator:
         self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
     ) -> Dict[Any, pd.Series]:
         """
-        Returns pnls for requested keys over requested range.
+        Return pnls for requested keys over requested range.
 
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
@@ -67,9 +68,9 @@ class ModelEvaluator:
         # NOTE: ins/oos overlap by one point as-is (consider changing).
         if mode == "all_available":
             return self.pnls
-        elif mode == "ins":
+        if mode == "ins":
             return {k: v.loc[: self.oos_start] for k, v in self.pnls.items()}
-        elif mode == "oos":
+        if mode == "oos":
             dbg.dassert(self.oos_start, msg="No `oos_start` set!")
             return {k: v.loc[self.oos_start :] for k, v in self.pnls.items()}
         else:
@@ -111,7 +112,9 @@ class ModelEvaluator:
         stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
         adj_pvals = stats.multipletests(stats_df.loc["pval"], nan_mode="drop")
-        stats_df = pd.concat([stats_df.transpose(), adj_pvals], axis=1).transpose()
+        stats_df = pd.concat(
+            [stats_df.transpose(), adj_pvals], axis=1
+        ).transpose()
         return stats_df
 
     def _calculate_stats(
