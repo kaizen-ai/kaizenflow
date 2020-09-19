@@ -105,7 +105,7 @@ class ModelEvaluator:
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
-    ) -> Tuple[pd.Series, pd.Series]:
+    ) -> Tuple[pd.Series, pd.Series, pd.Series]:
         """
         Combine selected pnls.
 
@@ -137,7 +137,11 @@ class ModelEvaluator:
         pos_df = pos_df.apply(lambda x: x * col_map[x.name]).sum(axis=1)
         pos_srs = pos_df.squeeze()
         pos_srs.name = "portfolio_pos"
-        return pnl_srs, pos_srs
+        # Calculate statistics.
+        aggregate_stats = self.calculate_model_stats(
+            positions=pos_srs, pnl=pnl_srs,
+        )
+        return pnl_srs, pos_srs, aggregate_stats
 
     def calculate_stats(
         self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
@@ -156,9 +160,15 @@ class ModelEvaluator:
         pos = self.get_series_dict("positions", keys, mode)
         rets = self.get_series_dict("returns", keys, mode)
         stats_dict = {}
+        oos_start = None
+        if mode == "all_available" and self.oos_start is not None:
+            oos_start = self.oos_start
         for key in tqdm(keys):
             stats_val = self.calculate_model_stats(
-                returns=rets[key], positions=pos[key], pnl=pnls[key]
+                returns=rets[key],
+                positions=pos[key],
+                pnl=pnls[key],
+                oos_start=oos_start,
             )
             stats_dict[key] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
@@ -175,6 +185,7 @@ class ModelEvaluator:
         returns: Optional[pd.Series] = None,
         positions: Optional[pd.Series] = None,
         pnl: Optional[pd.Series] = None,
+        oos_start: Optional[Any] = None,
     ) -> pd.DataFrame:
         """
         Calculate stats for a single model or portfolio.
@@ -221,6 +232,11 @@ class ModelEvaluator:
             stats_dict[9] = stats.compute_avg_turnover_and_holding_period(
                 positions
             )
+        # Z-score OOS SRs.
+        if oos_start is not None:
+            dbg.dassert(pnl[:oos_start].any())
+            dbg.dassert(pnl[oos_start:].any())
+            stats_dict[15] = stats.zscore_oos_sharpe_ratio(pnl, oos_start)
         # Sort dict by integer keys.
         stats_dict = dict(sorted(stats_dict.items()))
         # Combine stats into one series indexed by stats names.
