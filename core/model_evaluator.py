@@ -138,9 +138,9 @@ class ModelEvaluator:
         pos_srs = pos_df.squeeze()
         pos_srs.name = "portfolio_pos"
         # Calculate statistics.
-        aggregate_stats = self.calculate_model_stats(positions=pos_srs,
-                                                     pnl=pnl_srs,
-                                                     )
+        aggregate_stats = self.calculate_model_stats(
+            positions=pos_srs, pnl=pnl_srs,
+        )
         return pnl_srs, pos_srs, aggregate_stats
 
     def calculate_stats(
@@ -165,8 +165,10 @@ class ModelEvaluator:
             oos_start = self.oos_start
         for key in tqdm(keys):
             stats_val = self.calculate_model_stats(
-                returns=rets[key], positions=pos[key], pnl=pnls[key],
-                oos_start=oos_start
+                returns=rets[key],
+                positions=pos[key],
+                pnl=pnls[key],
+                oos_start=oos_start,
             )
             stats_dict[key] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
