@@ -7,9 +7,13 @@ import core.model_plotter as modplot
 import logging
 from typing import Any, List, Optional
 
+import pandas as pd
+import numpy as np
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+import core.finance as fin
 import core.model_evaluator as modeval
 import core.plotting as plot
 
@@ -62,6 +66,72 @@ class ModelPlotter:
             rets, axes=[[fig.add_subplot(gs[5, 0]), fig.add_subplot(gs[5, -1])]]
         )
 
+    def plot_performance(self,
+        keys: Optional[List[Any]] = None,
+        weights: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+        benchmark: Optional[pd.Series] = None,
+        plot_cumulative_returns_kwargs: Optional[dict] = None,
+        plot_rolling_beta_kwargs: Optional[dict] = None,
+        plot_rolling_annualized_sharpe_ratio_kwargs: Optional[dict] = None,
+    ) -> None:
+        # Obtain (log) returns.
+        rets, _ = self.model_evaluator.aggregate_models(
+            keys=keys, weights=weights, mode=mode
+        )
+        if resample_rule is not None:
+            rets = rets.resample(rule=resample_rule).sum(min_count=1)
+        # Set kwargs.
+        plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or \
+                                         {"mode": "pct", "unit": "%"}
+        plot_rolling_beta_kwargs = plot_rolling_beta_kwargs or \
+                                   {"window": 52}
+        plot_rolling_annualized_sharpe_ratio_kwargs = plot_rolling_annualized_sharpe_ratio_kwargs or \
+                                                      {"tau": 52, "max_depth": 1, "ci": 0.5}
+        # Set OOS start if applicable.
+        events = None
+        if mode == "all_available" and self.model_evaluator.oos_start is not None:
+            events = [(self.model_evaluator.oos_start, "OOS start")]
+        # Set number of plots.
+        if benchmark is not None:
+            num_plots = 4
+        else:
+            num_plots = 3
+        _, axs = plt.subplots(
+            num_plots, 1, figsize=(20, 5 * num_plots), constrained_layout=True
+        )
+        cumrets = rets.cumsum()
+        cumrets_mode = plot_cumulative_returns_kwargs["mode"]
+        if cumrets_mode == "log":
+            pass
+        elif cumrets_mode == "pct":
+            cumrets = fin.convert_log_rets_to_pct_rets(cumrets)
+        else:
+            raise ValueError("Invalid cumulative returns mode `{cumrets_mode}`")
+        plot.plot_cumulative_returns(
+            cumrets,
+            benchmark_series=benchmark,
+            ax=axs[0],
+            events=events,
+            **plot_cumulative_returns_kwargs,
+        )
+        if benchmark is not None:
+            plot.plot_rolling_beta(
+                log_rets,
+                benchmark,
+                ax=axs[1],
+                events=events,
+                **plot_rolling_beta_kwargs,
+            )
+        plot.plot_rolling_annualized_sharpe_ratio(
+            rets,
+            ax=axs[-2],
+            events=events,
+            **plot_rolling_annualized_sharpe_ratio_kwargs,
+        )
+        plot.plot_drawdown(rets, ax=axs[-1], events=events)
+
     def plot_rets_and_vol(
         self,
         keys: Optional[List[Any]] = None,
@@ -99,6 +169,7 @@ class ModelPlotter:
         )
         # Plot monthly returns.
         plot.plot_monthly_heatmap(rets, ax=axs[1], **plot_monthly_heatmap_kwargs)
+        # Set OOS start if applicable.
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
@@ -121,3 +192,24 @@ class ModelPlotter:
             keys=keys, weights=weights, mode=mode
         )
         plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies)
+
+    def plot_returns_and_predictions(self,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+    ) -> None:
+        keys = keys or self.model_evaluator.valid_keys
+        rets = self.model_evaluator.get_series_dict("returns", keys=keys, mode=mode)
+        preds = self.model_evaluator.get_series_dict("predictions", keys=keys, mode=mode)
+        _, axes = plot.get_multiple_plots(
+            len(keys), 1, y_scale=5, sharex=True, sharey=True
+        )
+        if not isinstance(axes, np.ndarray):
+            axes = [axes]
+        for idx, key in enumerate(keys):
+            y_yhat = pd.concat([rets[key], preds[key]], axis=1)
+            if resample_rule is not None:
+                y_yhat = y_yhat.resample(rule=resample_rule).sum(min_count=1)
+            y_yhat.plot(ax=axes[idx], title=f"Model {key}")
+        plt.suptitle("Returns and predictions over time", y=1.01)
+        plt.tight_layout()
