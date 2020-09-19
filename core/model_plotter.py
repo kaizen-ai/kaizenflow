@@ -5,17 +5,13 @@ import core.model_plotter as modplot
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
-
-import pandas as pd
-from tqdm.auto import tqdm
+from typing import Any, List, Optional
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 import core.model_evaluator as modeval
 import core.plotting as plot
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,21 +20,20 @@ class ModelPlotter:
     """
 
     """
-    def __init__(
-        self,
-        model_evaluator: modeval.ModelEvaluator,
-    ) -> None:
+
+    def __init__(self, model_evaluator: modeval.ModelEvaluator,) -> None:
         """
 
         :param model_evaluator:
         """
         self.model_evaluator = model_evaluator
 
-    def plot_rets_signal_analysis(self,
+    def plot_rets_signal_analysis(
+        self,
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
-        resample_rule: Optional[str] = None
+        resample_rule: Optional[str] = None,
     ) -> None:
         rets, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
@@ -67,7 +62,6 @@ class ModelPlotter:
             rets, axes=[[fig.add_subplot(gs[5, 0]), fig.add_subplot(gs[5, -1])]]
         )
 
-
     def plot_rets_and_vol(
         self,
         keys: Optional[List[Any]] = None,
@@ -81,12 +75,12 @@ class ModelPlotter:
         """
         Plot returns by year and month, plot rolling volatility.
         """
-        plot_yearly_barplot_kwargs = plot_yearly_barplot_kwargs or \
-                                     {"unit": "%"}
-        plot_monthly_heatmap_kwargs = plot_monthly_heatmap_kwargs or \
-                                      {"unit" : "%"}
-        plot_rolling_annualized_volatility_kwargs = plot_rolling_annualized_volatility_kwargs or \
-                                                    {"tau": 52, "max_depth": 1, "unit": "%"}
+        plot_yearly_barplot_kwargs = plot_yearly_barplot_kwargs or {"unit": "%"}
+        plot_monthly_heatmap_kwargs = plot_monthly_heatmap_kwargs or {"unit": "%"}
+        plot_rolling_annualized_volatility_kwargs = (
+            plot_rolling_annualized_volatility_kwargs
+            or {"tau": 52, "max_depth": 1, "unit": "%"}
+        )
         rets, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
@@ -101,12 +95,10 @@ class ModelPlotter:
             rets,
             ax=axs[0],
             figsize=(20, 5 * num_plots),
-            **plot_yearly_barplot_kwargs
+            **plot_yearly_barplot_kwargs,
         )
         # Plot monthly returns.
-        plot.plot_monthly_heatmap(
-            rets, ax=axs[1], **plot_monthly_heatmap_kwargs
-        )
+        plot.plot_monthly_heatmap(rets, ax=axs[1], **plot_monthly_heatmap_kwargs)
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
@@ -118,13 +110,13 @@ class ModelPlotter:
             **plot_rolling_annualized_volatility_kwargs,
         )
 
-
-    def plot_sharpe_ratio_panel(self,
-                                  keys: Optional[List[Any]] = None,
-                                  weights: Optional[List[Any]] = None,
-                                  mode: Optional[str] = None,
-                                  frequencies: Optional[List[str]] = None,
-                                  ) -> None:
+    def plot_sharpe_ratio_panel(
+        self,
+        keys: Optional[List[Any]] = None,
+        weights: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        frequencies: Optional[List[str]] = None,
+    ) -> None:
         rets, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
