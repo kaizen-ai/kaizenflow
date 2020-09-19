@@ -167,6 +167,14 @@ class ModelEvaluator:
         stats_df = pd.concat(
             [stats_df.transpose(), adj_pvals], axis=1
         ).transpose()
+        # Z-score OOS SRs.
+        if mode == "all_available" and self.oos_start is not None:
+            ins_oos_sr_stats = {
+                key: stats.zscore_oos_sharpe_ratio(pnl, self.oos_start)
+                for key, pnl in pnls.items()
+            }
+            ins_oos_sr_stats = pd.concat(ins_oos_sr_stats, axis=1)
+            stats_df = pd.concat([stats_df, ins_oos_sr_stats])
         return stats_df
 
     @staticmethod
