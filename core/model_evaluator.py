@@ -78,7 +78,7 @@ class ModelEvaluator:
         else:
             raise ValueError(f"Unrecognized mode {mode}.")
 
-    def aggregate_pnls(
+    def aggregate_models(
         self,
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
@@ -97,18 +97,25 @@ class ModelEvaluator:
         dbg.dassert_is_subset(keys, self.valid_keys)
         mode = mode or "all_available"
         # Obtain dataframe of (log) returns.
-        df = self._get_pnls_as_df(keys, mode)
+        pnl_df = self._get_series_as_df("pnls", keys, mode)
         # Convert to pct returns before aggregating.
-        df = df.apply(fin.convert_log_rets_to_pct_rets)
+        pnl_df = pnl_df.apply(fin.convert_log_rets_to_pct_rets)
         # Average by default; otherwise use supplied weights.
         weights = weights or [1 / len(keys)] * len(keys)
         dbg.dassert_eq(len(keys), len(weights))
         col_map = {keys[idx]: weights[idx] for idx in range(len(keys))}
-        df = df.apply(lambda x: x * col_map[x.name]).sum(axis=1)
-        srs = df.squeeze()
+        # Calculate pnl srs.
+        pnl_df = pnl_df.apply(lambda x: x * col_map[x.name]).sum(axis=1)
+        pnl_srs = pnl_df.squeeze()
         # Convert back to log returns from aggregated pct returns.
-        srs = fin.convert_pct_rets_to_log_rets(srs)
-        return srs
+        pnl_srs = fin.convert_pct_rets_to_log_rets(pnl_srs)
+        pnl_srs.name = "portfolio_pnl"
+        # Aggregate positions.
+        pos_df = self._get_series_as_df("positions", keys, mode)
+        pos_df = pos_df.apply(lambda x: x * col_map[x.name]).sum(axis=1)
+        pos_srs = pos_df.squeeze()
+        pos_srs.name = "portfolio_pos"
+        return pnl_srs, pos_srs
 
     def calculate_stats(
         self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
@@ -140,8 +147,8 @@ class ModelEvaluator:
         else:
             raise ValueError(f"Unrecognized mode {mode}.")
         stats_dict = {}
-        for key in keys:
-            stats_val = self._calculate_stats(
+        for key in tqdm(keys):
+            stats_val = self.calculate_model_stats(
                 returns=rets[key], positions=pos[key], pnl=pnl[key]
             )
             stats_dict[key] = stats_val
@@ -153,43 +160,51 @@ class ModelEvaluator:
         ).transpose()
         return stats_df
 
-    def _get_pnls_as_df(
+    def _get_series_as_df(
         self,
+        series: str,
         keys: List[Any],
         mode: str,
     ) -> pd.DataFrame:
         """
-        Return request pnl streams as a single dataframe.
+        Return request series streams as a single dataframe.
 
-        TODO(*): Maybe automatically resample to slowest frequency.
-
-        :param keys: pnl stream keys
+        :param keys: stream keys
         :param mode: "all_available", "ins", or "oos"
-        :return: Dataframe of pnl series with `keys` as columns
+        :return: Dataframe of series with `keys` as columns
         """
         dbg.dassert_isinstance(keys, list)
         dbg.dassert_is_subset(keys, self.valid_keys)
-        # Confirm that the pnl streams are of the same frequency.
-        pnls = {k: self.pnls[k] for k in keys}
-        pnl_freqs = set()
-        for pnl in pnls.values():
-            freq = pnl.index.freq
-            dbg.dassert(freq, "PnLs should have a frequency")
-            pnl_freqs.add(freq)
-        dbg.dassert_eq(len(pnl_freqs), 1, "PnLs should have the same frequency")
+        # Select the data stream.
+        if series == "pnls":
+            series_dict = self.pnls
+        elif series == "positions":
+            series_dict = self.pos
+        elif series == "returns":
+            series_dict = self.rets
+        else:
+            raise ValueError(f"Unrecognized series {series}")
+        series_for_keys = {k: series_dict[k] for k in keys}
+        # Confirm that the streams are of the same frequency.
+        freqs = set()
+        for s in series_for_keys.values():
+            freq = s.index.freq
+            dbg.dassert(freq, "Data should have a frequency")
+            freqs.add(freq)
+        dbg.dassert_eq(len(freqs), 1, "Series should have the same frequency")
         # Create dataframe.
-        pnl_df = pd.DataFrame.from_dict(pnls)
+        df = pd.DataFrame.from_dict(series_for_keys)
         if mode == "all_available":
             pass
         elif mode == "ins":
-            pnl_df = pnl_df.loc[: self.oos_start]
+            df = df.loc[: self.oos_start]
         elif mode == "oos":
             dbg.dassert(self.oos_start, msg="No `oos_start` set!")
-            pnl_df = pnl_df.loc[self.oos_start: ]
+            df = df.loc[self.oos_start: ]
         else:
             raise ValueError(f"Unrecognized mode {mode}.")
         # TODO(*): Add first_valid_index option
-        return pnl_df
+        return df
 
     def _calculate_positions(self) -> Dict[Any, pd.Series]:
         """
@@ -230,42 +245,56 @@ class ModelEvaluator:
         return pnls
 
     @staticmethod
-    def _calculate_stats(
-        returns: pd.Series, positions: pd.Series, pnl: pd.Series,
+    def calculate_model_stats(
+        *,
+        returns: Optional[pd.Series] = None,
+        positions: Optional[pd.Series] = None,
+        pnl: Optional[pd.Series] = None,
     ) -> pd.DataFrame:
         """
         Calculate stats for a single test run.
         """
+        dbg.dassert(
+            not pd.isna([pnl, positions, returns]).all(),
+            "At least one series should be not `None`",
+        )
+        freqs = {srs.index.freq for srs in [pnl, positions, returns] if srs is not None}
+        dbg.dassert_eq(len(freqs), 1, "Series have different frequencies")
         # Calculate stats.
         stats_dict = {}
-        stats_dict[0] = stats.summarize_sharpe_ratio(pnl)
-        stats_dict[1] = stats.ttest_1samp(pnl)
-        stats_dict[2] = pd.Series(
-            fin.compute_kratio(pnl), index=["kratio"], name=pnl.name
-        )
-        stats_dict[3] = stats.compute_annualized_return_and_volatility(pnl)
-        stats_dict[4] = stats.compute_max_drawdown(pnl)
-        stats_dict[5] = stats.summarize_time_index_info(pnl)
-        stats_dict[6] = stats.calculate_hit_rate(pnl)
-        stats_dict[7] = pd.Series(
-            pnl.corr(returns), index=["corr_to_underlying"], name=returns.name
-        )
-        stats_dict[8] = stats.compute_bet_stats(
-            positions, returns[positions.index]
-        )
-        stats_dict[9] = stats.compute_avg_turnover_and_holding_period(positions)
-        stats_dict[10] = stats.compute_jensen_ratio(pnl)
-        stats_dict[11] = stats.compute_forecastability(pnl)
-        # TODO(*): Use `predictions` instead.
-        stats_dict[12] = pd.Series(
-            positions.corr(returns), index=["prediction_corr"], name=returns.name
-        )
-        stats_dict[13] = stats.compute_moments(pnl)
-        stats_dict[14] = stats.compute_special_value_stats(pnl)
+        if pnl is not None:
+            stats_dict[0] = stats.summarize_sharpe_ratio(pnl)
+            stats_dict[1] = stats.ttest_1samp(pnl)
+            stats_dict[2] = pd.Series(
+                fin.compute_kratio(pnl), index=["kratio"], name=pnl.name
+            )
+            stats_dict[3] = stats.compute_annualized_return_and_volatility(pnl)
+            stats_dict[4] = stats.compute_max_drawdown(pnl)
+            stats_dict[5] = stats.summarize_time_index_info(pnl)
+            stats_dict[6] = stats.calculate_hit_rate(pnl)
+            stats_dict[10] = stats.compute_jensen_ratio(pnl)
+            stats_dict[11] = stats.compute_forecastability(pnl)
+            stats_dict[13] = stats.compute_moments(pnl)
+            stats_dict[14] = stats.compute_special_value_stats(pnl)
+        if pnl is not None and returns is not None:
+            stats_dict[7] = pd.Series(
+                pnl.corr(returns), index=["corr_to_underlying"], name=returns.name
+            )
+        if positions is not None and returns is not None:
+            stats_dict[8] = stats.compute_bet_stats(
+                positions, returns[positions.index]
+            )
+            # TODO(*): Use `predictions` instead.
+            stats_dict[12] = pd.Series(
+                positions.corr(returns), index=["prediction_corr"], name=returns.name
+            )
+        if positions is not None:
+            stats_dict[9] = stats.compute_avg_turnover_and_holding_period(positions)
         # Sort dict by integer keys.
         stats_dict = dict(sorted(stats_dict.items()))
         # Combine stats into one series indexed by stats names.
         stats_srs = pd.concat(stats_dict).droplevel(0)
+        stats_srs.name = "stats"
         return stats_srs
 
     def _get_valid_keys(
