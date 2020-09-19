@@ -58,7 +58,8 @@ class ModelEvaluator:
     def get_series_dict(
         self,
         series: str,
-        keys: Optional[List[Any]] = None, mode: Optional[str] = None,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
     ) -> Dict[Any, pd.Series]:
         """
         Return pnls for requested keys over requested range.
@@ -87,14 +88,17 @@ class ModelEvaluator:
         if mode == "all_available":
             series_for_keys = {k: series_dict[k] for k in keys}
         elif mode == "ins":
-            series_for_keys = {k: series_dict[k].loc[: self.oos_start] for k in keys}
+            series_for_keys = {
+                k: series_dict[k].loc[: self.oos_start] for k in keys
+            }
         elif mode == "oos":
             dbg.dassert(self.oos_start, msg="No `oos_start` set!")
-            series_for_keys = {k: series_dict[k].loc[self.oos_start:] for k in keys}
+            series_for_keys = {
+                k: series_dict[k].loc[self.oos_start :] for k in keys
+            }
         else:
             raise ValueError(f"Unrecognized mode `{mode}`.")
         return series_for_keys
-
 
     def aggregate_models(
         self,
@@ -234,9 +238,7 @@ class ModelEvaluator:
         :param mode: "all_available", "ins", or "oos"
         :return: Dataframe of series with `keys` as columns
         """
-        series_for_keys = self.get_series_dict(series,
-                                               keys,
-                                               mode)
+        series_for_keys = self.get_series_dict(series, keys, mode)
         # Confirm that the streams are of the same frequency.
         freqs = set()
         for s in series_for_keys.values():
