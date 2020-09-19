@@ -38,8 +38,10 @@ class ModelEvaluator:
             volatility on in-sample region.
         :param oos_start: Optional end of in-sample/start of out-of-sample.
         """
+        dbg.dassert_isinstance(returns, dict)
+        dbg.dassert_isinstance(predictions, dict)
         self.oos_start = oos_start or None
-        self.valid_keys = self._get_valid_keys(returns, predictions)
+        self.valid_keys = self._get_valid_keys(returns, predictions, self.oos_start)
         self.rets = {k: returns[k] for k in self.valid_keys}
         self.preds = {k: predictions[k] for k in self.valid_keys}
         self.target_volatility = target_volatility or None
@@ -67,7 +69,7 @@ class ModelEvaluator:
         mode = mode or "all_available"
         # NOTE: ins/oos overlap by one point as-is (consider changing).
         if mode == "all_available":
-            return self.pnls
+            return {k: v for k, v in self.pnls.items()}
         if mode == "ins":
             return {k: v.loc[: self.oos_start] for k, v in self.pnls.items()}
         if mode == "oos":
@@ -75,6 +77,30 @@ class ModelEvaluator:
             return {k: v.loc[self.oos_start :] for k, v in self.pnls.items()}
         else:
             raise ValueError(f"Unrecognized mode {mode}.")
+
+    def aggregate_pnls(
+        self,
+        keys: Optional[List[Any]] = None,
+        weights: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+    ) -> pd.DataFrame:
+        keys = keys or self.valid_keys
+        dbg.dassert_isinstance(keys, list)
+        dbg.dassert_is_subset(keys, self.valid_keys)
+        mode = mode or "all_available"
+        # Obtain dataframe of (log) returns.
+        df = self._get_pnls_as_df(keys, mode)
+        # Convert to pct returns before aggregating.
+        df = df.apply(fin.convert_log_rets_to_pct_rets)
+        # Average by default; otherwise use supplied weights.
+        weights = weights or [1 / len(keys)] * len(keys)
+        dbg.dassert_eq(len(keys), len(weights))
+        col_map = {keys[idx]: weights[idx] for idx in range(len(keys))}
+        df = df.apply(lambda x: x * col_map[x.name]).sum(axis=1)
+        srs = df.squeeze()
+        # Convert back to log returns from aggregated pct returns.
+        srs = fin.convert_pct_rets_to_log_rets(srs)
+        return srs
 
     def calculate_stats(
         self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
@@ -87,6 +113,8 @@ class ModelEvaluator:
         :return: Dataframe of statistics with `keys` as columns
         """
         keys = keys or self.valid_keys
+        dbg.dassert_isinstance(keys, list)
+        dbg.dassert_is_subset(keys, self.valid_keys)
         mode = mode or "all_available"
         if mode == "all_available":
             pnl = {k: self.pnls[k] for k in keys}
@@ -117,8 +145,85 @@ class ModelEvaluator:
         ).transpose()
         return stats_df
 
+    def _get_pnls_as_df(
+        self,
+        keys: List[Any],
+        mode: str,
+    ) -> pd.DataFrame:
+        """
+        Return request pnl streams as a single dataframe.
+
+        TODO(*): Maybe automatically resample to slowest frequency.
+
+        :param keys: pnl stream keys
+        :param mode: "all_available", "ins", or "oos"
+        :return: Dataframe of pnl series with `keys` as columns
+        """
+        dbg.dassert_isinstance(keys, list)
+        dbg.dassert_is_subset(keys, self.valid_keys)
+        # Confirm that the pnl streams are of the same frequency.
+        pnls = {k: self.pnls[k] for k in keys}
+        pnl_freqs = set()
+        for pnl in pnls.values():
+            freq = pnl.index.freq
+            dbg.dassert(freq, "PnLs should have a frequency")
+            pnl_freqs.add(freq)
+        dbg.dassert_eq(len(pnl_freqs), 1, "PnLs should have the same frequency")
+        # Create dataframe.
+        pnl_df = pd.DataFrame.from_dict(pnls)
+        if mode == "all_available":
+            pass
+        elif mode == "ins":
+            pnl_df = pnl_df.loc[: self.oos_start]
+        elif mode == "oos":
+            dbg.dassert(self.oos_start, msg="No `oos_start` set!")
+            pnl_df = pnl_df.loc[self.oos_start: ]
+        else:
+            raise ValueError(f"Unrecognized mode {mode}.")
+        # TODO(*): Add first_valid_index option
+        return pnl_df
+
+    def _calculate_positions(self) -> Dict[Any, pd.Series]:
+        """
+        Calculate positions from returns and predictions.
+
+        Rescales to target volatility over in-sample period (if provided).
+        """
+        pnls = self._calculate_pnls(self.rets, self.preds)
+        if self.oos_start is not None:
+            insample_pnls = {
+                k: pnls[k].loc[: self.oos_start] for k in self.valid_keys
+            }
+        else:
+            insample_pnls = pnls
+        if self.target_volatility is not None:
+            scale_factors = {
+                k: fin.compute_volatility_normalization_factor(
+                    srs=insample_pnls[k], target_volatility=self.target_volatility
+                )
+                for k in self.valid_keys
+            }
+        else:
+            scale_factors = {k: 1.0 for k in self.valid_keys}
+        return {k: scale_factors[k] * self.preds[k] for k in self.valid_keys}
+
+    @staticmethod
+    def _calculate_pnls(
+            returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series]
+    ) -> Dict[Any, pd.Series]:
+        """
+        Calculate returns from positions.
+        """
+        pnls = {}
+        for key in tqdm(returns.keys()):
+            pnl = returns[key].multiply(positions[key])
+            dbg.dassert(pnl.index.freq)
+            pnls[key] = pnl
+        return pnls
+
+    @staticmethod
     def _calculate_stats(
-        self, returns: pd.Series, positions: pd.Series, pnl: pd.Series,
+        returns: pd.Series, positions: pd.Series, pnl: pd.Series,
     ) -> pd.DataFrame:
         """
         Calculate stats for a single test run.
@@ -155,45 +260,9 @@ class ModelEvaluator:
         stats_srs = pd.concat(stats_dict).droplevel(0)
         return stats_srs
 
-    def _calculate_positions(self) -> Dict[Any, pd.Series]:
-        """
-        Calculate positions from returns and predictions.
-
-        Rescales to target volatility over in-sample period (if provided).
-        """
-        pnls = self._calculate_pnls(self.rets, self.preds)
-        if self.oos_start is not None:
-            insample_pnls = {
-                k: pnls[k].loc[: self.oos_start] for k in self.valid_keys
-            }
-        else:
-            insample_pnls = pnls
-        if self.target_volatility is not None:
-            scale_factors = {
-                k: fin.compute_volatility_normalization_factor(
-                    srs=insample_pnls[k], target_volatility=self.target_volatility
-                )
-                for k in self.valid_keys
-            }
-        else:
-            scale_factors = {k: 1.0 for k in self.valid_keys}
-        return {k: scale_factors[k] * self.preds[k] for k in self.valid_keys}
-
-    def _calculate_pnls(
-        self, returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series]
-    ) -> Dict[Any, pd.Series]:
-        """
-        Calculate returns from positions.
-        """
-        pnls = {}
-        for key in tqdm(returns.keys()):
-            pnl = returns[key].multiply(positions[key])
-            dbg.dassert(pnl.index.freq)
-            pnls[key] = pnl
-        return pnls
-
     def _get_valid_keys(
-        self, returns: Dict[Any, pd.Series], predictions: Dict[Any, pd.Series]
+        self, returns: Dict[Any, pd.Series], predictions: Dict[Any, pd.Series],
+        oos_start: Optional[float],
     ) -> list:
         """
         Perform basic sanity checks.
@@ -202,15 +271,17 @@ class ModelEvaluator:
         :param predictions:
         :return:
         """
-        rets_keys = set(self._get_valid_keys_helper(returns))
-        preds_keys = set(self._get_valid_keys_helper(predictions))
+        rets_keys = set(self._get_valid_keys_helper(returns, oos_start))
+        preds_keys = set(self._get_valid_keys_helper(predictions, oos_start))
         shared_keys = rets_keys.intersection(preds_keys)
         dbg.dassert(shared_keys, msg="Set of valid keys must be nonempty!")
         for key in shared_keys:
             dbg.dassert_eq(returns[key].index.freq, predictions[key].index.freq)
         return list(shared_keys)
 
-    def _get_valid_keys_helper(self, input_dict: Dict[Any, pd.Series]) -> list:
+    @staticmethod
+    def _get_valid_keys_helper(input_dict: Dict[Any, pd.Series],
+                               oos_start: Optional[float]) -> list:
         """
         Return keys for nonempty values with a `freq`.
 
@@ -222,11 +293,11 @@ class ModelEvaluator:
             if v.empty:
                 _LOG.warning("Empty series for `k`=%s", str(k))
                 continue
-            if self.oos_start is not None:
-                if v[: self.oos_start].dropna().empty:
+            if oos_start is not None:
+                if v[: oos_start].dropna().empty:
                     _LOG.warning("All-NaN in-sample for `k`=%s", str(k))
                     continue
-                if v[self.oos_start :].dropna().empty:
+                if v[oos_start :].dropna().empty:
                     _LOG.warning("All-NaN out-of-sample for `k`=%s", str(k))
                     continue
             if v.index.freq is None:
