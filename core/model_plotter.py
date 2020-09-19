@@ -57,7 +57,7 @@ class ModelPlotter:
         :param mode: "all_available", "ins", or "oos"
         :param resample_rule: Resampling frequency to apply before plotting
         """
-        rets, _ = self.model_evaluator.aggregate_models(
+        rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
         if resample_rule is not None:
@@ -114,7 +114,7 @@ class ModelPlotter:
         :param benchmark: Benchmark returns to compare against
         """
         # Obtain (log) returns.
-        rets, _ = self.model_evaluator.aggregate_models(
+        rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
         if resample_rule is not None:
@@ -196,7 +196,7 @@ class ModelPlotter:
             plot_rolling_annualized_volatility_kwargs
             or {"tau": 52, "max_depth": 1, "unit": "%"}
         )
-        rets, _ = self.model_evaluator.aggregate_models(
+        rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
         if resample_rule is not None:
@@ -239,7 +239,7 @@ class ModelPlotter:
         :param weights: Average if `None`
         :param mode: "all_available", "ins", or "oos"
         """
-        _, pos = self.model_evaluator.aggregate_models(
+        _, pos, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
         num_plots = 2
@@ -270,7 +270,7 @@ class ModelPlotter:
         :param mode: "all_available", "ins", or "oos"
         :param resample_rule: Resampling frequency to apply before plotting
         """
-        rets, _ = self.model_evaluator.aggregate_models(
+        rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
         plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies)
