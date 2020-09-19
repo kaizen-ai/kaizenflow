@@ -5,7 +5,7 @@ import core.model_evaluator as modeval
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -163,10 +163,10 @@ class ModelEvaluator:
 
     @staticmethod
     def calculate_model_stats(
-            *,
-            returns: Optional[pd.Series] = None,
-            positions: Optional[pd.Series] = None,
-            pnl: Optional[pd.Series] = None,
+        *,
+        returns: Optional[pd.Series] = None,
+        positions: Optional[pd.Series] = None,
+        pnl: Optional[pd.Series] = None,
     ) -> pd.DataFrame:
         """
         Calculate stats for a single test run.
