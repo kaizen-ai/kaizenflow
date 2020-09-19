@@ -15,6 +15,7 @@ import pandas as pd
 import core.finance as fin
 import core.model_evaluator as modeval
 import core.plotting as plot
+import helpers.debug as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -225,11 +226,12 @@ class ModelPlotter:
             **plot_rolling_annualized_volatility_kwargs,
         )
 
-    def plot_positions(self,
-                       keys: Optional[List[Any]] = None,
-                       weights: Optional[List[Any]] = None,
-                       mode: Optional[str] = None,
-                       ) -> None:
+    def plot_positions(
+        self,
+        keys: Optional[List[Any]] = None,
+        weights: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+    ) -> None:
         """
         Plot holdings and turnover.
 
