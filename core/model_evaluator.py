@@ -55,12 +55,15 @@ class ModelEvaluator:
         self.pnls = self._calculate_pnls(self.rets, self.pos)
 
     # TODO(*): Consider exposing positions / returns in the same way.
-    def get_pnls(
-        self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
+    def get_series_dict(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None, mode: Optional[str] = None,
     ) -> Dict[Any, pd.Series]:
         """
         Return pnls for requested keys over requested range.
 
+        :param series: "returns", "predictions", "positions", or "pnls"
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
         :return: Dictionary of rescaled PnL curves
@@ -69,15 +72,29 @@ class ModelEvaluator:
         dbg.dassert_isinstance(keys, list)
         dbg.dassert_is_subset(keys, self.valid_keys)
         mode = mode or "all_available"
+        # Select the data stream.
+        if series == "returns":
+            series_dict = self.rets
+        elif series == "predictions":
+            series_dict = self.preds
+        elif series == "positions":
+            series_dict = self.pos
+        elif series == "pnls":
+            series_dict = self.pnls
+        else:
+            raise ValueError(f"Unrecognized series `{series}`.")
         # NOTE: ins/oos overlap by one point as-is (consider changing).
         if mode == "all_available":
-            return {k: v for k, v in self.pnls.items()}
-        if mode == "ins":
-            return {k: v.loc[: self.oos_start] for k, v in self.pnls.items()}
-        if mode == "oos":
+            series_for_keys = {k: series_dict[k] for k in keys}
+        elif mode == "ins":
+            series_for_keys = {k: series_dict[k].loc[: self.oos_start] for k in keys}
+        elif mode == "oos":
             dbg.dassert(self.oos_start, msg="No `oos_start` set!")
-            return {k: v.loc[self.oos_start :] for k, v in self.pnls.items()}
-        raise ValueError(f"Unrecognized mode {mode}.")
+            series_for_keys = {k: series_dict[k].loc[self.oos_start:] for k in keys}
+        else:
+            raise ValueError(f"Unrecognized mode `{mode}`.")
+        return series_for_keys
+
 
     def aggregate_models(
         self,
@@ -91,12 +108,12 @@ class ModelEvaluator:
         :param keys: Use all available if `None`
         :param weights: Average if `None`
         :param mode: "all_available", "ins", or "oos"
-        :return: aggregate pnl stream
+        :return: aggregate pnl stream, position stream
         """
         keys = keys or self.valid_keys
         dbg.dassert_isinstance(keys, list)
         dbg.dassert_is_subset(keys, self.valid_keys)
-        mode = mode or "all_available"
+        mode = mode or "ins"
         # Obtain dataframe of (log) returns.
         pnl_df = self._get_series_as_df("pnls", keys, mode)
         # Convert to pct returns before aggregating.
@@ -131,26 +148,13 @@ class ModelEvaluator:
         keys = keys or self.valid_keys
         dbg.dassert_isinstance(keys, list)
         dbg.dassert_is_subset(keys, self.valid_keys)
-        mode = mode or "all_available"
-        if mode == "all_available":
-            pnl = {k: self.pnls[k] for k in keys}
-            pos = {k: self.pos[k] for k in keys}
-            rets = {k: self.rets[k] for k in keys}
-        elif mode == "ins":
-            pnl = {k: self.pnls[k].loc[: self.oos_start] for k in keys}
-            pos = {k: self.pos[k].loc[: self.oos_start] for k in keys}
-            rets = {k: self.rets[k].loc[: self.oos_start] for k in keys}
-        elif mode == "oos":
-            dbg.dassert(self.oos_start, msg="No `oos_start` set!")
-            pnl = {k: self.pnls[k].loc[self.oos_start :] for k in keys}
-            pos = {k: self.pos[k].loc[self.oos_start :] for k in keys}
-            rets = {k: self.rets[k].loc[self.oos_start :] for k in keys}
-        else:
-            raise ValueError(f"Unrecognized mode {mode}.")
+        pnls = self.get_series_dict("pnls", keys, mode)
+        pos = self.get_series_dict("positions", keys, mode)
+        rets = self.get_series_dict("returns", keys, mode)
         stats_dict = {}
         for key in tqdm(keys):
             stats_val = self.calculate_model_stats(
-                returns=rets[key], positions=pos[key], pnl=pnl[key]
+                returns=rets[key], positions=pos[key], pnl=pnls[key]
             )
             stats_dict[key] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
@@ -169,16 +173,16 @@ class ModelEvaluator:
         pnl: Optional[pd.Series] = None,
     ) -> pd.DataFrame:
         """
-        Calculate stats for a single test run.
+        Calculate stats for a single model or portfolio.
         """
         dbg.dassert(
             not pd.isna([pnl, positions, returns]).all(),
-            "At least one series should be not `None`",
+            "At least one series should be not `None`.",
         )
         freqs = {
             srs.index.freq for srs in [pnl, positions, returns] if srs is not None
         }
-        dbg.dassert_eq(len(freqs), 1, "Series have different frequencies")
+        dbg.dassert_eq(len(freqs), 1, "Series have different frequencies.")
         # Calculate stats.
         stats_dict = {}
         if pnl is not None:
@@ -230,36 +234,18 @@ class ModelEvaluator:
         :param mode: "all_available", "ins", or "oos"
         :return: Dataframe of series with `keys` as columns
         """
-        dbg.dassert_isinstance(keys, list)
-        dbg.dassert_is_subset(keys, self.valid_keys)
-        # Select the data stream.
-        if series == "pnls":
-            series_dict = self.pnls
-        elif series == "positions":
-            series_dict = self.pos
-        elif series == "returns":
-            series_dict = self.rets
-        else:
-            raise ValueError(f"Unrecognized series {series}")
-        series_for_keys = {k: series_dict[k] for k in keys}
+        series_for_keys = self.get_series_dict(series,
+                                               keys,
+                                               mode)
         # Confirm that the streams are of the same frequency.
         freqs = set()
         for s in series_for_keys.values():
             freq = s.index.freq
-            dbg.dassert(freq, "Data should have a frequency")
+            dbg.dassert(freq, "Data should have a frequency.")
             freqs.add(freq)
-        dbg.dassert_eq(len(freqs), 1, "Series should have the same frequency")
+        dbg.dassert_eq(len(freqs), 1, "Series should have the same frequency.")
         # Create dataframe.
         df = pd.DataFrame.from_dict(series_for_keys)
-        if mode == "all_available":
-            pass
-        elif mode == "ins":
-            df = df.loc[: self.oos_start]
-        elif mode == "oos":
-            dbg.dassert(self.oos_start, msg="No `oos_start` set!")
-            df = df.loc[self.oos_start :]
-        else:
-            raise ValueError(f"Unrecognized mode {mode}.")
         # TODO(*): Add first_valid_index option
         return df
 
@@ -309,10 +295,6 @@ class ModelEvaluator:
     ) -> list:
         """
         Perform basic sanity checks.
-
-        :param returns:
-        :param predictions:
-        :return:
         """
         rets_keys = set(self._get_valid_keys_helper(returns, oos_start))
         preds_keys = set(self._get_valid_keys_helper(predictions, oos_start))
@@ -328,9 +310,6 @@ class ModelEvaluator:
     ) -> list:
         """
         Return keys for nonempty values with a `freq`.
-
-        :param input_dict:
-        :return:
         """
         valid_keys = []
         for k, v in input_dict.items():
