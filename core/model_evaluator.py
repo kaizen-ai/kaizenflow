@@ -41,7 +41,9 @@ class ModelEvaluator:
         dbg.dassert_isinstance(returns, dict)
         dbg.dassert_isinstance(predictions, dict)
         self.oos_start = oos_start or None
-        self.valid_keys = self._get_valid_keys(returns, predictions, self.oos_start)
+        self.valid_keys = self._get_valid_keys(
+            returns, predictions, self.oos_start
+        )
         self.rets = {k: returns[k] for k in self.valid_keys}
         self.preds = {k: predictions[k] for k in self.valid_keys}
         self.target_volatility = target_volatility or None
@@ -75,8 +77,7 @@ class ModelEvaluator:
         if mode == "oos":
             dbg.dassert(self.oos_start, msg="No `oos_start` set!")
             return {k: v.loc[self.oos_start :] for k, v in self.pnls.items()}
-        else:
-            raise ValueError(f"Unrecognized mode {mode}.")
+        raise ValueError(f"Unrecognized mode {mode}.")
 
     def aggregate_models(
         self,
@@ -160,11 +161,67 @@ class ModelEvaluator:
         ).transpose()
         return stats_df
 
+    @staticmethod
+    def calculate_model_stats(
+            *,
+            returns: Optional[pd.Series] = None,
+            positions: Optional[pd.Series] = None,
+            pnl: Optional[pd.Series] = None,
+    ) -> pd.DataFrame:
+        """
+        Calculate stats for a single test run.
+        """
+        dbg.dassert(
+            not pd.isna([pnl, positions, returns]).all(),
+            "At least one series should be not `None`",
+        )
+        freqs = {
+            srs.index.freq for srs in [pnl, positions, returns] if srs is not None
+        }
+        dbg.dassert_eq(len(freqs), 1, "Series have different frequencies")
+        # Calculate stats.
+        stats_dict = {}
+        if pnl is not None:
+            stats_dict[0] = stats.summarize_sharpe_ratio(pnl)
+            stats_dict[1] = stats.ttest_1samp(pnl)
+            stats_dict[2] = pd.Series(
+                fin.compute_kratio(pnl), index=["kratio"], name=pnl.name
+            )
+            stats_dict[3] = stats.compute_annualized_return_and_volatility(pnl)
+            stats_dict[4] = stats.compute_max_drawdown(pnl)
+            stats_dict[5] = stats.summarize_time_index_info(pnl)
+            stats_dict[6] = stats.calculate_hit_rate(pnl)
+            stats_dict[10] = stats.compute_jensen_ratio(pnl)
+            stats_dict[11] = stats.compute_forecastability(pnl)
+            stats_dict[13] = stats.compute_moments(pnl)
+            stats_dict[14] = stats.compute_special_value_stats(pnl)
+        if pnl is not None and returns is not None:
+            stats_dict[7] = pd.Series(
+                pnl.corr(returns), index=["corr_to_underlying"], name=returns.name
+            )
+        if positions is not None and returns is not None:
+            stats_dict[8] = stats.compute_bet_stats(
+                positions, returns[positions.index]
+            )
+            # TODO(*): Use `predictions` instead.
+            stats_dict[12] = pd.Series(
+                positions.corr(returns),
+                index=["prediction_corr"],
+                name=returns.name,
+            )
+        if positions is not None:
+            stats_dict[9] = stats.compute_avg_turnover_and_holding_period(
+                positions
+            )
+        # Sort dict by integer keys.
+        stats_dict = dict(sorted(stats_dict.items()))
+        # Combine stats into one series indexed by stats names.
+        stats_srs = pd.concat(stats_dict).droplevel(0)
+        stats_srs.name = "stats"
+        return stats_srs
+
     def _get_series_as_df(
-        self,
-        series: str,
-        keys: List[Any],
-        mode: str,
+        self, series: str, keys: List[Any], mode: str,
     ) -> pd.DataFrame:
         """
         Return request series streams as a single dataframe.
@@ -200,7 +257,7 @@ class ModelEvaluator:
             df = df.loc[: self.oos_start]
         elif mode == "oos":
             dbg.dassert(self.oos_start, msg="No `oos_start` set!")
-            df = df.loc[self.oos_start: ]
+            df = df.loc[self.oos_start :]
         else:
             raise ValueError(f"Unrecognized mode {mode}.")
         # TODO(*): Add first_valid_index option
@@ -232,7 +289,7 @@ class ModelEvaluator:
 
     @staticmethod
     def _calculate_pnls(
-            returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series]
+        returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series]
     ) -> Dict[Any, pd.Series]:
         """
         Calculate returns from positions.
@@ -244,61 +301,10 @@ class ModelEvaluator:
             pnls[key] = pnl
         return pnls
 
-    @staticmethod
-    def calculate_model_stats(
-        *,
-        returns: Optional[pd.Series] = None,
-        positions: Optional[pd.Series] = None,
-        pnl: Optional[pd.Series] = None,
-    ) -> pd.DataFrame:
-        """
-        Calculate stats for a single test run.
-        """
-        dbg.dassert(
-            not pd.isna([pnl, positions, returns]).all(),
-            "At least one series should be not `None`",
-        )
-        freqs = {srs.index.freq for srs in [pnl, positions, returns] if srs is not None}
-        dbg.dassert_eq(len(freqs), 1, "Series have different frequencies")
-        # Calculate stats.
-        stats_dict = {}
-        if pnl is not None:
-            stats_dict[0] = stats.summarize_sharpe_ratio(pnl)
-            stats_dict[1] = stats.ttest_1samp(pnl)
-            stats_dict[2] = pd.Series(
-                fin.compute_kratio(pnl), index=["kratio"], name=pnl.name
-            )
-            stats_dict[3] = stats.compute_annualized_return_and_volatility(pnl)
-            stats_dict[4] = stats.compute_max_drawdown(pnl)
-            stats_dict[5] = stats.summarize_time_index_info(pnl)
-            stats_dict[6] = stats.calculate_hit_rate(pnl)
-            stats_dict[10] = stats.compute_jensen_ratio(pnl)
-            stats_dict[11] = stats.compute_forecastability(pnl)
-            stats_dict[13] = stats.compute_moments(pnl)
-            stats_dict[14] = stats.compute_special_value_stats(pnl)
-        if pnl is not None and returns is not None:
-            stats_dict[7] = pd.Series(
-                pnl.corr(returns), index=["corr_to_underlying"], name=returns.name
-            )
-        if positions is not None and returns is not None:
-            stats_dict[8] = stats.compute_bet_stats(
-                positions, returns[positions.index]
-            )
-            # TODO(*): Use `predictions` instead.
-            stats_dict[12] = pd.Series(
-                positions.corr(returns), index=["prediction_corr"], name=returns.name
-            )
-        if positions is not None:
-            stats_dict[9] = stats.compute_avg_turnover_and_holding_period(positions)
-        # Sort dict by integer keys.
-        stats_dict = dict(sorted(stats_dict.items()))
-        # Combine stats into one series indexed by stats names.
-        stats_srs = pd.concat(stats_dict).droplevel(0)
-        stats_srs.name = "stats"
-        return stats_srs
-
     def _get_valid_keys(
-        self, returns: Dict[Any, pd.Series], predictions: Dict[Any, pd.Series],
+        self,
+        returns: Dict[Any, pd.Series],
+        predictions: Dict[Any, pd.Series],
         oos_start: Optional[float],
     ) -> list:
         """
@@ -317,8 +323,9 @@ class ModelEvaluator:
         return list(shared_keys)
 
     @staticmethod
-    def _get_valid_keys_helper(input_dict: Dict[Any, pd.Series],
-                               oos_start: Optional[float]) -> list:
+    def _get_valid_keys_helper(
+        input_dict: Dict[Any, pd.Series], oos_start: Optional[float]
+    ) -> list:
         """
         Return keys for nonempty values with a `freq`.
 
@@ -331,10 +338,10 @@ class ModelEvaluator:
                 _LOG.warning("Empty series for `k`=%s", str(k))
                 continue
             if oos_start is not None:
-                if v[: oos_start].dropna().empty:
+                if v[:oos_start].dropna().empty:
                     _LOG.warning("All-NaN in-sample for `k`=%s", str(k))
                     continue
-                if v[oos_start :].dropna().empty:
+                if v[oos_start:].dropna().empty:
                     _LOG.warning("All-NaN out-of-sample for `k`=%s", str(k))
                     continue
             if v.index.freq is None:
