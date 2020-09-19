@@ -7,11 +7,10 @@ import core.model_plotter as modplot
 import logging
 from typing import Any, List, Optional
 
-import pandas as pd
-import numpy as np
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 import core.finance as fin
 import core.model_evaluator as modeval
@@ -66,7 +65,8 @@ class ModelPlotter:
             rets, axes=[[fig.add_subplot(gs[5, 0]), fig.add_subplot(gs[5, -1])]]
         )
 
-    def plot_performance(self,
+    def plot_performance(
+        self,
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
@@ -83,12 +83,15 @@ class ModelPlotter:
         if resample_rule is not None:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
         # Set kwargs.
-        plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or \
-                                         {"mode": "pct", "unit": "%"}
-        plot_rolling_beta_kwargs = plot_rolling_beta_kwargs or \
-                                   {"window": 52}
-        plot_rolling_annualized_sharpe_ratio_kwargs = plot_rolling_annualized_sharpe_ratio_kwargs or \
-                                                      {"tau": 52, "max_depth": 1, "ci": 0.5}
+        plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or {
+            "mode": "pct",
+            "unit": "%",
+        }
+        plot_rolling_beta_kwargs = plot_rolling_beta_kwargs or {"window": 52}
+        plot_rolling_annualized_sharpe_ratio_kwargs = (
+            plot_rolling_annualized_sharpe_ratio_kwargs
+            or {"tau": 52, "max_depth": 1, "ci": 0.5}
+        )
         # Set OOS start if applicable.
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
@@ -118,7 +121,7 @@ class ModelPlotter:
         )
         if benchmark is not None:
             plot.plot_rolling_beta(
-                log_rets,
+                rets,
                 benchmark,
                 ax=axs[1],
                 events=events,
@@ -193,14 +196,19 @@ class ModelPlotter:
         )
         plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies)
 
-    def plot_returns_and_predictions(self,
+    def plot_returns_and_predictions(
+        self,
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
     ) -> None:
         keys = keys or self.model_evaluator.valid_keys
-        rets = self.model_evaluator.get_series_dict("returns", keys=keys, mode=mode)
-        preds = self.model_evaluator.get_series_dict("predictions", keys=keys, mode=mode)
+        rets = self.model_evaluator.get_series_dict(
+            "returns", keys=keys, mode=mode
+        )
+        preds = self.model_evaluator.get_series_dict(
+            "predictions", keys=keys, mode=mode
+        )
         _, axes = plot.get_multiple_plots(
             len(keys), 1, y_scale=5, sharex=True, sharey=True
         )
