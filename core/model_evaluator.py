@@ -84,7 +84,7 @@ class ModelEvaluator:
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
-    ) -> pd.Series:
+    ) -> Tuple[pd.Series, pd.Series]:
         """
         Combine selected pnls.
 
