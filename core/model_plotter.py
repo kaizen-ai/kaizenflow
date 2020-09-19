@@ -21,14 +21,16 @@ _LOG = logging.getLogger(__name__)
 
 class ModelPlotter:
     """
-
+    Wraps a ModelEvaluator with plotting functionality.
     """
 
     def __init__(self, model_evaluator: modeval.ModelEvaluator,) -> None:
         """
+        Initialize by supplying an initialized `ModelEvaluator`.
 
-        :param model_evaluator:
+        :param model_evaluator: initialized ModelEvaluator
         """
+        dbg.dassert_isinstance(model_evaluator, modeval.ModelEvaluator)
         self.model_evaluator = model_evaluator
 
     def plot_rets_signal_analysis(
@@ -38,6 +40,22 @@ class ModelPlotter:
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
     ) -> None:
+        """
+        Plot a panel of signal analyses for (log) returns.
+
+        Plots include:
+        - Q-Q plot
+        - histogram
+        - time evolution
+        - cumulative sum
+        - ACF and PACF
+        - spectral density and spectrogram
+
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param resample_rule: Resampling frequency to apply before plotting
+        """
         rets, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
@@ -76,6 +94,24 @@ class ModelPlotter:
         plot_rolling_beta_kwargs: Optional[dict] = None,
         plot_rolling_annualized_sharpe_ratio_kwargs: Optional[dict] = None,
     ) -> None:
+        """
+        Plot strategy performance.
+
+        Plots include:
+        - Cumulative returns
+        - Rolling Sharpe Ratio
+        - Drawdown
+
+        If a benchmark is provided, then
+        - Cumulative returns against benchmark is displayed
+        - Rolling beta against benchmark is displayed
+
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param resample_rule: Resampling frequency to apply before plotting
+        :param benchmark: Benchmark returns to compare against
+        """
         # Obtain (log) returns.
         rets, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
@@ -147,6 +183,11 @@ class ModelPlotter:
     ) -> None:
         """
         Plot returns by year and month, plot rolling volatility.
+
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param resample_rule: Resampling frequency to apply before plotting
         """
         plot_yearly_barplot_kwargs = plot_yearly_barplot_kwargs or {"unit": "%"}
         plot_monthly_heatmap_kwargs = plot_monthly_heatmap_kwargs or {"unit": "%"}
@@ -184,6 +225,34 @@ class ModelPlotter:
             **plot_rolling_annualized_volatility_kwargs,
         )
 
+    def plot_positions(self,
+                       keys: Optional[List[Any]] = None,
+                       weights: Optional[List[Any]] = None,
+                       mode: Optional[str] = None,
+                       ) -> None:
+        """
+        Plot holdings and turnover.
+
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        """
+        _, pos = self.model_evaluator.aggregate_models(
+            keys=keys, weights=weights, mode=mode
+        )
+        num_plots = 2
+        _, axs = plt.subplots(
+            num_plots, 1, figsize=(20, 5 * num_plots), constrained_layout=True
+        )
+        # Set OOS start if applicable.
+        events = None
+        if mode == "all_available" and self.model_evaluator.oos_start is not None:
+            events = [(self.model_evaluator.oos_start, "OOS start")]
+        # Plot holdings.
+        plot.plot_holdings(pos, ax=axs[0], events=events)
+        # Plot turnover.
+        plot.plot_turnover(pos, unit="%", ax=axs[1], events=events)
+
     def plot_sharpe_ratio_panel(
         self,
         keys: Optional[List[Any]] = None,
@@ -191,6 +260,14 @@ class ModelPlotter:
         mode: Optional[str] = None,
         frequencies: Optional[List[str]] = None,
     ) -> None:
+        """
+        Plot how the SR varies under resampling.
+
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param resample_rule: Resampling frequency to apply before plotting
+        """
         rets, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
@@ -202,6 +279,13 @@ class ModelPlotter:
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
     ) -> None:
+        """
+        Plot returns and model predictions (per key).
+
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param resample_rule: Resampling frequency to apply before plotting
+        """
         keys = keys or self.model_evaluator.valid_keys
         rets = self.model_evaluator.get_series_dict(
             "returns", keys=keys, mode=mode
