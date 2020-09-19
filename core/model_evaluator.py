@@ -83,7 +83,15 @@ class ModelEvaluator:
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
-    ) -> pd.DataFrame:
+    ) -> pd.Series:
+        """
+        Combine selected pnls.
+
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :return: aggregate pnl stream
+        """
         keys = keys or self.valid_keys
         dbg.dassert_isinstance(keys, list)
         dbg.dassert_is_subset(keys, self.valid_keys)
