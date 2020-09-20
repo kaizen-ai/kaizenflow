@@ -11,6 +11,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 import core.finance as fin
 import core.model_evaluator as modeval
@@ -338,7 +339,7 @@ class ModelPlotter:
         resample_rule: Optional[str] = None,
     ) -> None:
         """
-        Plot multiple pnl series and their aggregation.
+        Plot multiple pnl series (cumulatively summed) simultaneously.
 
         :param keys: Use all available if `None`
         :param weights: Average if `None`
@@ -356,3 +357,137 @@ class ModelPlotter:
             for k, v in pnls.items():
                 pnls[k] = v.resample(rule=resample_rule).sum(min_count=1)
         plot.plot_pnl(pnls)
+
+    def plot_correlation_matrix(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+        plot_correlation_matrix_kwargs: Optional[dict] = None,
+    ) -> None:
+        """
+        Plot correlation matrix.
+
+        :param series: "returns", "predictions", "positions", or "pnls"
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        """
+        plot_correlation_matrix_kwargs = plot_correlation_matrix_kwargs or {
+            "mode": "heatmap"
+        }
+        df = self._get_series_as_df(
+            series, keys=keys, mode=mode, resample_rule=resample_rule
+        )
+        plot.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
+
+    def plot_clustermap(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+        clustermap_kwargs: Optional[dict] = None,
+    ) -> None:
+        """
+        Plot correlation matrix together with dendrogram.
+
+        :param series: "returns", "predictions", "positions", or "pnls"
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        """
+        clustermap_kwargs = clustermap_kwargs or {}
+        df = self._get_series_as_df(
+            series, keys=keys, mode=mode, resample_rule=resample_rule
+        )
+        corr = df.corr().fillna(0)
+        sns.clustermap(corr, **clustermap_kwargs)
+
+    def plot_dendrogram(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+    ) -> None:
+        """
+        Plot dendrogram of correlation of selected series.
+
+        :param series: "returns", "predictions", "positions", or "pnls"
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        """
+        df = self._get_series_as_df(
+            series, keys=keys, mode=mode, resample_rule=resample_rule
+        )
+        plot.plot_dendrogram(df.fillna(0))
+
+    def plot_multiple_time_series(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+        plot_time_series_dict_kwargs: Optional[dict] = None,
+    ) -> None:
+        """
+        Plot one time series per plot.
+
+        :param series: "returns", "predictions", "positions", or "pnls"
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param resample_rule: Resampling frequency to apply before plotting
+        """
+        plot_time_series_dict_kwargs = plot_time_series_dict_kwargs or {}
+        series_dict = self.model_evaluator.get_series_dict(
+            series, keys=keys, mode=mode
+        )
+        if resample_rule is not None:
+            for k, v in series_dict.items():
+                series_dict[k] = v.resample(rule=resample_rule).sum(min_count=1)
+        plot.plot_time_series_dict(series_dict, **plot_time_series_dict_kwargs)
+
+    def plot_pca_components(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+        num_components: Optional[int] = None,
+    ) -> None:
+        df = self._get_series_as_df(
+            series, keys=keys, mode=mode, resample_rule=resample_rule
+        )
+        pca = plot.PCA(mode="standard")
+        pca.fit(df.fillna(0))
+        pca.plot_components(num_components)
+
+    def plot_explained_variance(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+    ) -> None:
+        df = self._get_series_as_df(
+            series, keys=keys, mode=mode, resample_rule=resample_rule
+        )
+        pca = plot.PCA(mode="standard")
+        pca.fit(df.fillna(0))
+        pca.plot_explained_variance()
+
+    def _get_series_as_df(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+    ) -> pd.DataFrame:
+        series_dict = self.model_evaluator.get_series_dict(
+            series, keys=keys, mode=mode
+        )
+        if resample_rule is not None:
+            for k, v in series_dict.items():
+                series_dict[k] = v.resample(rule=resample_rule).sum(min_count=1)
+        df = pd.DataFrame.from_dict(series_dict)
+        return df
