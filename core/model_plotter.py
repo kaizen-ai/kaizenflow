@@ -314,9 +314,11 @@ class ModelPlotter:
         threshold: float,
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
-        multipletests_plot_kwargs: Optional[dict] = None
+        multipletests_plot_kwargs: Optional[dict] = None,
     ) -> None:
         multipletests_plot_kwargs = multipletests_plot_kwargs or {}
         pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
         pvals = {k: stats.ttest_1samp(v).loc["pval"] for k, v in pnls.items()}
-        plot.multipletests_plot(pd.Series(pvals), threshold, **multipletests_plot_kwargs)
+        plot.multipletests_plot(
+            pd.Series(pvals), threshold, **multipletests_plot_kwargs
+        )
