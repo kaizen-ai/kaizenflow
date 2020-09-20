@@ -347,7 +347,9 @@ class ModelPlotter:
         """
         keys = keys or self.model_evaluator.valid_keys
         pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
-        aggregate_pnl, _, _ = self.model_evaluator.aggregate_models(keys=keys, weights=weights, mode=mode)
+        aggregate_pnl, _, _ = self.model_evaluator.aggregate_models(
+            keys=keys, weights=weights, mode=mode
+        )
         dbg.dassert_not_in("aggregated", pnls.keys())
         pnls["aggregated"] = aggregate_pnl
         if resample_rule is not None:
