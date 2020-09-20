@@ -8,13 +8,6 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -28,6 +21,14 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
+
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -599,6 +600,50 @@ def plot_spectrum(
         ax2.set_title(title_prefix + f"{col} spectrogram")
         # ax2.set_ylabel("Frequency band")
         # ax2.set_xlabel("Time window")
+
+
+def plot_time_series_dict(
+    dict_: Dict[str, pd.Series],
+    num_plots: Optional[int] = None,
+    num_cols: Optional[int] = 2,
+    y_scale: Optional[float] = 4,
+    sharex: bool = True,
+    sharey: bool = False,
+    exclude_empty: bool = True,
+) -> None:
+    """
+    Plot series from a dict of series.
+
+    :param dict_: dict of series
+    :param num_plots: number of plots
+    :param num_cols: number of columns to use in the subplot
+    :param y_scale: scale of y-axis
+    :param sharex: unify x-axis if True
+    :param sharey: unify y-axis if True
+    :param exclude_empty: whether to exclude plots of empty series
+    """
+    if exclude_empty:
+        non_empty_dict_ = {
+            key: val for key, val in dict_.items() if not val.empty
+        }
+        if len(non_empty_dict_) < len(dict_):
+            excluded_series = set(dict_).difference(non_empty_dict_)
+            _LOG.warning("Excluded empty series: %s", excluded_series)
+        dict_ = non_empty_dict_
+    num_plots = num_plots or len(dict_)
+    # Create figure to accommodate plots.
+    _, axes = get_multiple_plots(
+        num_plots=num_plots,
+        num_cols=num_cols,
+        y_scale=y_scale,
+        sharex=sharex,
+        sharey=sharey,
+    )
+    # Select first `num_plots` series in the dict and plot them.
+    keys_to_draw = list(dict_.keys())[:num_plots]
+    for i, key in enumerate(keys_to_draw):
+        srs = dict_[key]
+        srs.to_frame().plot(title=key, ax=axes[i])
 
 
 # #############################################################################
