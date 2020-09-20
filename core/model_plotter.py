@@ -329,3 +329,28 @@ class ModelPlotter:
         plot.multipletests_plot(
             pd.Series(pvals), threshold, **multipletests_plot_kwargs
         )
+
+    def plot_multiple_pnls(
+        self,
+        keys: Optional[List[Any]] = None,
+        weights: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+    ) -> None:
+        """
+        Plot multiple pnl series and their aggregation.
+
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param resample_rule: Resampling frequency to apply before plotting
+        """
+        keys = keys or self.model_evaluator.valid_keys
+        pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
+        aggregate_pnl, _, _ = self.model_evaluator.aggregate_models(keys=keys, weights=weights, mode=mode)
+        dbg.dassert_not_in("aggregated", pnls.keys())
+        pnls["aggregated"] = aggregate_pnl
+        if resample_rule is not None:
+            for k, v in pnls.items():
+                pnls[k] = v.resample(rule=resample_rule).sum(min_count=1)
+        plot.plot_pnl(pnls)
