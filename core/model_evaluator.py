@@ -72,7 +72,7 @@ class ModelEvaluator:
         keys = keys or self.valid_keys
         dbg.dassert_isinstance(keys, list)
         dbg.dassert_is_subset(keys, self.valid_keys)
-        mode = mode or "all_available"
+        mode = mode or "ins"
         # Select the data stream.
         if series == "returns":
             series_dict = self.rets
