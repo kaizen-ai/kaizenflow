@@ -15,6 +15,7 @@ import pandas as pd
 import core.finance as fin
 import core.model_evaluator as modeval
 import core.plotting as plot
+import core.statistics as stats
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -307,3 +308,15 @@ class ModelPlotter:
             y_yhat.plot(ax=axes[idx], title=f"Model {key}")
         plt.suptitle("Returns and predictions over time", y=1.01)
         plt.tight_layout()
+
+    def plot_multiple_tests_adjustment(
+        self,
+        threshold: float,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        multipletests_plot_kwargs: Optional[dict] = None
+    ) -> None:
+        multipletests_plot_kwargs = multipletests_plot_kwargs or {}
+        pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
+        pvals = {k: stats.ttest_1samp(v).loc["pval"] for k, v in pnls.items()}
+        plot.multipletests_plot(pd.Series(pvals), threshold, **multipletests_plot_kwargs)
