@@ -316,6 +316,13 @@ class ModelPlotter:
         mode: Optional[str] = None,
         multipletests_plot_kwargs: Optional[dict] = None,
     ) -> None:
+        """
+        Adjust p-values for selected keys and plot.
+
+        :param threshold: Adjust p-value threshold for a "pass"
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        """
         multipletests_plot_kwargs = multipletests_plot_kwargs or {}
         pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
         pvals = {k: stats.ttest_1samp(v).loc["pval"] for k, v in pnls.items()}
