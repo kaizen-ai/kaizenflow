@@ -21,4 +21,8 @@ docker run --rm -t \
 
 EOD
 
-# TODO(amr): Provide a command `p1-precommit` that calls `pre-commit` through the docker image
+# TODO: add this to PATH?
+# TODO: should that script be placed in another place other than local directory?
+# I like the idea of moving it to `/usr/local/bin`, but that would require sudo privilages
+ln -s .git/hooks/pre-commit p1-precommit
+chmod +x p1-precommit
