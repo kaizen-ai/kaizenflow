@@ -38,12 +38,12 @@
      - Show the components inside a container (i.e., a high-level block)
   4. Code
      - Show how components are implemented
-     - Represented in terms of UML class diagram
+     - Represented in terms of UML class diagrams
 
 ### System context (Level 1)
 
 - A system context describes something that delivers value to its users
-  - Typically a system system is owned by a single software development team
+  - Typically a system is owned by a single software development team
 
 - System context diagram shows the big picture of how the software system
   interacts with users and other systems in the IT environment
@@ -57,7 +57,7 @@
   - Both technical and non-technical people
   - Both inside and outside the software development team
 
-- A system system is made of one or more containers
+- A system system is made up of one or more containers
 
 ### Container (Level 2)
 
@@ -117,16 +117,15 @@
 
 ## Use classes!
 
-- In order to be able to describe the system with C4 we need to use classes to
-  separate responsibilities and package code
-  - The same concepts can be expressed with free-standing functions
-  - In fact there is no C++ program that can't be expressed in C
+- In order to be able to describe the system with C4 it is best to use classes
+  to separate responsibilities and package code
 
-- Classes has the advantage of:
-  - Organize the code in cohesive parts
-  - Make clear what is public interface vs private interface (e.g., helpers)
-  - Highlight responsibility (e.g., builder, annotation, processor, analyzer)
-  - Simplify the interface of functions by sharing state in the object
+- Using classes has the following advantages:
+  - Organizes the code in cohesive parts
+  - Makes clear what is a public interface vs a private interface
+    (e.g., helpers)
+  - Highlights responsibility (e.g., builder, annotation, processor, analyzer)
+  - Simplifies the interface of functions by sharing state in the object
 
 - Note that classes still allow our favorite functional style of programming
   - E.g., pandas is implemented with classes and it allows functional style
@@ -141,7 +140,7 @@
 
 ## Mapping C4 and code structure
 
-- To simplify we map the 4 levels of C4 in the code structure
+- To simplify, we map the 4 levels of C4 in the code structure
 
 - Level 1
   - System context = big picture of how the system interacts with users and
@@ -154,12 +153,12 @@
 - Level 2:
   - Container = high-level software architecture and how responsibilities are
     split in the system
-  - A container is the first level of directories in a repo
+  - A container corresponds to the first level of directories in a repo
   - E.g., in `//p1`
     - `automl`: application for automatic machine learning for commodity
       analysis
     - `edgar`: application to handle EDGAR data
-    - `etl3`: back-end db for timeseries with real-time and point-in-time
+    - `etl3`: back-end db for time series with real-time and point-in-time
       semantics
 
 - Level 3
@@ -185,7 +184,7 @@
 
 ## Generating class diagram
 
-- To generate class diagram (level 4 of c4) you can run
+- To generate a class diagram (level 4 of c4), you can run
   ```
   > dev_scripts/create_class_diagram.sh
   ```
@@ -193,7 +192,7 @@
 # Brief introduction to PlantUML
 
 - Unified Modeling Language (UML) is a modeling language for software
-  engineering to provide standard way to visualize design of a system
+  engineering to provide a standard way to visualize design of a system
 
 - We use mainly Class Diagrams
   - For information on some class diagram convention see
@@ -201,7 +200,7 @@
 
 - You can refer to the PDF guide at http://plantuml.com/guide for an extensive
   description of what PlantUML can do
-  - You are mainly interested in the "Class diagram" section
+  - We are mainly interested in the "Class diagram" section
 
 - The website https://structurizr.com has lots of information on using tools for
   C4
@@ -209,7 +208,7 @@
 # PlantUML is Markdown
 
 - We use PlantUML for rendering diagrams in our documentation
-  - For interactive use you can rely on on-line tools like:
+  - For interactive use you can rely on online tools like:
     - [planttext](https://www.planttext.com/)
     - [liveuml](https://liveuml.com/)
 
