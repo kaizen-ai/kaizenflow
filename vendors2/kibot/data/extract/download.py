@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Download data from kibot.com, compress each file, upload it to S34.
+"""Download data from kibot.com, compress each file, upload it to S3.
 
 # Process only specific dataset:
 > download.py --dataset all_stocks_1min --dry_run -u XYZ -p ABC
