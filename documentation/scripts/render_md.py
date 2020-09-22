@@ -48,7 +48,7 @@ _LOG = logging.getLogger(__name__)
 _ACTION_OPEN = 'open'
 _ACTION_RENDER = 'render'
 _VALID_ACTIONS = [_ACTION_OPEN, _ACTION_RENDER]
-_DEFAULT_ACTIONS = [_ACTION_OPEN]
+_DEFAULT_ACTIONS = [_ACTION_OPEN, _ACTION_RENDER]
 
 
 def _open_html(md_file: str) -> None:
