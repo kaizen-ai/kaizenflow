@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import collections
+import datetime
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
@@ -14,6 +15,7 @@ from core.dataflow.nodes import (
     FitPredictNode,
     Resample,
     Residualizer,
+    SmaModel,
     UnsupervisedSkLearnModel,
     VolatilityModel,
 )
