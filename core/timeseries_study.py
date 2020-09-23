@@ -4,161 +4,16 @@ import core.timeseries_study as tss
 """
 
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm.auto import tqdm
 
-import core.dataflow as dtf
 import helpers.dbg as dbg
 import helpers.introspection as intr
 
 _LOG = logging.getLogger(__name__)
-
-
-class DataFrameModeler:
-    """
-    Wraps common dataframe modeling and exploratory analysis functionality.
-
-    TODO(*): Add
-      - seasonal decomposition
-      - stats (e.g., stationarity, autocorrelation)
-      - correlation / clustering options
-    """
-
-    def __init__(
-        self, df: pd.DataFrame, oos_start: Optional[float] = None,
-    ) -> None:
-        """
-        Initialize by supplying a dataframe of time series.
-
-        :param df: time series dataframe
-        :param oos_start: Optional end of in-sample/start of out-of-sample.
-            For methods supporting "fit"/"predict", "fit" applies to
-            in-sample only, and "predict" requires `oos_start`.
-        """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert(pd.DataFrame)
-        self.df = df
-        self.oos_start = oos_start or None
-
-    def apply_sklearn_model(
-        self,
-        model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
-        steps_ahead: int,
-        model_kwargs: Optional[Any] = None,
-        mode: str = "fit",
-    ) -> Tuple[pd.DataFrame, dict]:
-        """
-        Apply a supervised sklearn model.
-
-        Both x and y vars should be indexed by knowledge time.
-        """
-        model = dtf.ContinuousSkLearnModel(
-            nid="sklearn",
-            model_func=model_func,
-            x_vars=x_vars,
-            y_vars=y_vars,
-            steps_ahead=steps_ahead,
-            model_kwargs=model_kwargs,
-            col_mode="merge_all",
-            nan_mode="drop",
-        )
-        return self._run_model(model, mode)
-
-    def apply_unsupervised_sklearn_model(
-        self,
-        model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        model_kwargs: Optional[Any] = None,
-        mode: str = "fit",
-    ) -> Tuple[pd.DataFrame, dict]:
-        """
-        Apply an unsupervised model, e.g., PCA.
-        """
-        model = dtf.UnsupervisedSkLearnModel(
-            nid="unsupervised_sklearn",
-            model_func=model_func,
-            x_vars=x_vars,
-            model_kwargs=model_kwargs,
-            col_mode="merge_all",
-            nan_mode="drop",
-        )
-        return self._run_model(model, mode)
-
-    def apply_residualizer(
-        self,
-        model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        model_kwargs: Optional[Any] = None,
-        mode: str = "fit",
-    ) -> Tuple[pd.DataFrame, dict]:
-        """
-        Apply an unsupervised model and residualize.
-        """
-        model = dtf.Residualizer(
-            nid="sklearn_residualizer",
-            model_func=model_func,
-            x_vars=x_vars,
-            model_kwargs=model_kwargs,
-            nan_mode="drop",
-        )
-        return self._run_model(model, mode)
-
-    def apply_sma_model(
-        self,
-        col: str,
-        steps_ahead: int,
-        tau: Optional[float] = None,
-        mode: str = "fit",
-    ) -> Tuple[pd.DataFrame, dict]:
-        """
-        Apply a smooth moving average model.
-        """
-        model = dtf.SmaModel(
-            nid="sma_model",
-            col=[col],
-            steps_ahead=steps_ahead,
-            tau=tau,
-            nan_mode="drop",
-        )
-        return self._run_model(model, mode)
-
-    def apply_volatility_model(
-        self,
-        col: str,
-        steps_ahead: int,
-        p_moment: float = 2,
-        tau: Optional[float] = None,
-        mode: str = "fit",
-    ) -> Tuple[pd.DataFrame, dict]:
-        """
-        Model volatility.
-        """
-        model = dtf.VolatilityModel(
-            nid="volatility_model",
-            col=[col],
-            steps_ahead=steps_ahead,
-            p_moment=p_moment,
-            tau=tau,
-            nan_mode="drop",
-        )
-        return self._run_model(model, mode)
-
-    def _run_model(self, model, mode) -> Tuple[pd.DataFrame, dict]:
-        if mode == "fit":
-            df_out = model.fit(self.df[: self.oos_start])["df_out"]
-            info = model.get_info("fit")
-        elif mode == "predict":
-            model.fit(self.df[self.oos_start :])
-            df_out = model.predict(self.df)["df_out"]
-            info = model.get_info("predict")
-        else:
-            raise ValueError(f"Unrecognized mode `{mode}`.")
-        return df_out, info
 
 
 class _TimeSeriesAnalyzer:
