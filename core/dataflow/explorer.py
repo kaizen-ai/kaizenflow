@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import pandas as pd
 
-import core.dataflow as dtf
+import core.finance as fin
 import helpers.dbg as dbg
 from core.dataflow.nodes import (
     ColumnTransformer,
@@ -27,6 +27,7 @@ class DataFrameModeler:
     TODO(*): Return a DataFrameModeler instead.
 
     TODO(*): Add
+      - methods for getting ins/oos dataframe slices
       - seasonal decomposition
       - stats (e.g., stationarity, autocorrelation)
       - correlation / clustering options
@@ -83,6 +84,7 @@ class DataFrameModeler:
         agg_func_kwargs: Optional[Dict[str, Any]] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
+        agg_func_kwargs = agg_func_kwargs or {"min_count": 1}
         model = Resample(
             nid="resample",
             rule=rule,
@@ -151,7 +153,7 @@ class DataFrameModeler:
         """
         Apply a smooth moving average model.
         """
-        model = dtf.SmaModel(
+        model = SmaModel(
             nid="sma_model",
             col=[col],
             steps_ahead=steps_ahead,
@@ -204,15 +206,41 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    def set_non_ath_to_nan(
+        self,
+        start_time: Optional[datetime.time] = None,
+        end_time: Optional[datetime.time] = None,
+        method: str = "fit",
+    ) -> DataFrameModeler:
+        model = ColumnTransformer(
+            nid="set_non_ath_to_nan",
+            transformer_func=fin.set_non_ath_to_nan,
+            col_mode="replace_all",
+            transformer_kwargs={"start_time": start_time,
+                                "end_time": end_time},
+        )
+        return self._run_model(model, method)
+
+    def set_weekends_to_nan(self, method: str = "fit") -> DataFrameModeler:
+        model = ColumnTransformer(
+            nid="set_weekends_to_nan",
+            transformer_func=fin.set_weekends_to_nan,
+            col_mode="replace_all",
+        )
+        return self._run_model(model, method)
+
     def _run_model(self, model: FitPredictNode, method: str) -> DataFrameModeler:
         if method == "fit":
             df_out = model.fit(self.df[: self.oos_start])["df_out"]
             info = model.get_info("fit")
+            oos_start = None
         elif method == "predict":
+            dbg.dassert(self.oos_start, msg="Must set `oos_start` to run `predict()`")
             model.fit(self.df[self.oos_start :])
             df_out = model.predict(self.df)["df_out"]
             info = model.get_info("predict")
+            oos_start = self.oos_start
         else:
             raise ValueError(f"Unrecognized method `{method}`.")
-        dfm = DataFrameModeler(df_out, self.oos_start, info)
+        dfm = DataFrameModeler(df_out, oos_start, info)
         return dfm
