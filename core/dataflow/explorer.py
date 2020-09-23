@@ -217,15 +217,15 @@ class DataFrameModeler:
     # Convenience methods
     # #########################################################################
 
-    def compute_ret_0(self,
-          rets_mode: str = "log_rets",
-          # TODO(Paul): May need to assume `List` instead.
-          cols: Optional[Iterable[str]] = None,
-          col_rename_func: Optional[Callable[[Any], Any]] = None,
-          col_mode: Optional[str] = None,
-          nan_mode: Optional[str] = None,
-          method: str = "fit",
-        ):
+    def compute_ret_0(
+        self,
+        rets_mode: str = "log_rets",
+        cols: Optional[Iterable[str]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+        method: str = "fit",
+    ) -> DataFrameModeler:
         col_rename_func = col_rename_func or (lambda x: str(x) + "_ret_0")
         col_mode = col_mode or "replace_all"
         model = ColumnTransformer(
