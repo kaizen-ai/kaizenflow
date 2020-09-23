@@ -19,16 +19,24 @@ _LOG = logging.getLogger(__name__)
 
 class DataFrameModeler:
     """
+    Wraps common dataframe modeling and exploratory analysis functionality.
 
+    TODO(*): Add
+      - seasonal decomposition
+      - stats (e.g., stationarity, autocorrelation)
+      - correlation / clustering options
     """
 
     def __init__(
         self, df: pd.DataFrame, oos_start: Optional[float] = None,
     ) -> None:
         """
+        Initialize by supplying a dataframe of time series.
 
-        :param df:
-        :param oos_start:
+        :param df: time series dataframe
+        :param oos_start: Optional end of in-sample/start of out-of-sample.
+            For methods supporting "fit"/"predict", "fit" applies to
+            in-sample only, and "predict" requires `oos_start`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert(pd.DataFrame)
@@ -45,13 +53,9 @@ class DataFrameModeler:
         mode: str = "fit",
     ) -> Tuple[pd.DataFrame, dict]:
         """
+        Apply a supervised sklearn model.
 
-        :param model_func:
-        :param x_vars:
-        :param y_vars:
-        :param steps_ahead:
-        :param model_kwargs:
-        :return:
+        Both x and y vars should be indexed by knowledge time.
         """
         model = dtf.ContinuousSkLearnModel(
             nid="sklearn",
@@ -73,11 +77,7 @@ class DataFrameModeler:
         mode: str = "fit",
     ) -> Tuple[pd.DataFrame, dict]:
         """
-
-        :param model_func:
-        :param x_vars:
-        :param model_kwargs:
-        :return:
+        Apply an unsupervised model, e.g., PCA.
         """
         model = dtf.UnsupervisedSkLearnModel(
             nid="unsupervised_sklearn",
@@ -97,11 +97,7 @@ class DataFrameModeler:
         mode: str = "fit",
     ) -> Tuple[pd.DataFrame, dict]:
         """
-
-        :param model_func:
-        :param x_vars:
-        :param model_kwargs:
-        :return:
+        Apply an unsupervised model and residualize.
         """
         model = dtf.Residualizer(
             nid="sklearn_residualizer",
@@ -120,12 +116,7 @@ class DataFrameModeler:
         mode: str = "fit",
     ) -> Tuple[pd.DataFrame, dict]:
         """
-
-        :param col:
-        :param steps_ahead:
-        :param tau:
-        :param nan_mode:
-        :return:
+        Apply a smooth moving average model.
         """
         model = dtf.SmaModel(
             nid="sma_model",
@@ -145,12 +136,7 @@ class DataFrameModeler:
         mode: str = "fit",
     ) -> Tuple[pd.DataFrame, dict]:
         """
-
-        :param col:
-        :param steps_ahead:
-        :param p_moment:
-        :param tau:
-        :return:
+        Model volatility.
         """
         model = dtf.VolatilityModel(
             nid="volatility_model",
