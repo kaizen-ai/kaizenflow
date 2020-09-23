@@ -30,6 +30,7 @@ import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.printing as prnt
+import helpers.open as opn
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -229,41 +230,6 @@ def _copy_to_gdrive(args: argparse.Namespace, file_name: str, ext: str) -> None:
     _LOG.debug("Saved file='%s' to gdrive", dst_file)
 
 
-def _open_pdf(file_name: str) -> None:
-    _LOG.info("\n%s", prnt.frame("Open PDF", char1="<", char2=">"))
-    dbg.dassert_exists(file_name)
-    dbg.dassert_file_extension(file_name, "pdf")
-    #
-    _LOG.debug("Opening file='%s'", file_name)
-    cmd = (
-        """
-/usr/bin/osascript << EOF
-set theFile to POSIX file "%s" as alias
-tell application "Skim"
-activate
-set theDocs to get documents whose path is (get POSIX path of theFile)
-if (count of theDocs) > 0 then revert theDocs
-open theFile
-end tell
-EOF
-            """
-        % file_name
-    )
-    _ = _system(cmd)
-    cmd = "open -a Skim %s" % file_name
-    _ = _system(cmd)
-
-
-def _open_html(file_name: str) -> None:
-    _LOG.info("\n%s", prnt.frame("Open HTML", char1="<", char2=">"))
-    dbg.dassert_exists(file_name)
-    dbg.dassert_file_extension(file_name, "html")
-    #
-    _LOG.debug("Opening file='%s'", file_name)
-    cmd = "open %s" % file_name
-    _ = _system(cmd)
-
-
 def _cleanup_after(prefix: str) -> None:
     _LOG.info("\n%s", prnt.frame("Clean up after", char1="<", char2=">"))
     cmd = "rm -rf %s*" % prefix
@@ -326,17 +292,12 @@ def _pandoc(args: argparse.Namespace) -> None:
     action = "open"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
-        os_name = si.get_os_name()
-        if os_name == "Darwin":
-            if args.type == "pdf":
-                _open_pdf(file_final)
-            elif args.type == "html":
-                _open_html(file_final)
-            else:
-                raise ValueError("Invalid type='%s'" % args.type)
+        if args.type == "pdf":
+            opn.open_pdf(file_final)
+        elif args.type == "html":
+            opn.open_html(file_final)
         else:
-            # TODO(gp): Extend this.
-            _LOG.warning("Can't open file on %s", os_name)
+            raise ValueError("Invalid type='%s'" % args.type)
     #
     action = "cleanup_after"
     to_execute, actions = prsr.mark_action(action, actions)
