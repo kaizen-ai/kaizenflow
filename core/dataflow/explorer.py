@@ -217,6 +217,28 @@ class DataFrameModeler:
     # Convenience methods
     # #########################################################################
 
+    def compute_ret_0(self,
+          rets_mode: str = "log_rets",
+          # TODO(Paul): May need to assume `List` instead.
+          cols: Optional[Iterable[str]] = None,
+          col_rename_func: Optional[Callable[[Any], Any]] = None,
+          col_mode: Optional[str] = None,
+          nan_mode: Optional[str] = None,
+          method: str = "fit",
+        ):
+        col_rename_func = col_rename_func or (lambda x: str(x) + "_ret_0")
+        col_mode = col_mode or "replace_all"
+        model = ColumnTransformer(
+            nid="compute_ret_0",
+            transformer_func=fin.compute_ret_0,
+            transformer_kwargs={"mode": rets_mode},
+            cols=cols,
+            col_rename_func=col_rename_func,
+            col_mode=col_mode,
+            nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
     def set_non_ath_to_nan(
         self,
         start_time: Optional[datetime.time] = None,
