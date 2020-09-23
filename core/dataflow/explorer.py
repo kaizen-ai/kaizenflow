@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -6,8 +7,13 @@ import pandas as pd
 
 import core.dataflow as dtf
 import helpers.dbg as dbg
-from core.dataflow.nodes import ContinuousSkLearnModel, UnsupervisedSkLearnModel, Residualizer, SmaModel, VolatilityModel
-
+from core.dataflow.nodes import (
+    ContinuousSkLearnModel,
+    FitPredictNode,
+    Residualizer,
+    UnsupervisedSkLearnModel,
+    VolatilityModel,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,10 +31,10 @@ class DataFrameModeler:
     """
 
     def __init__(
-            self,
-            df: pd.DataFrame,
-            oos_start: Optional[float] = None,
-            info: Optional[Dict[str, Any]] = None,
+        self,
+        df: pd.DataFrame,
+        oos_start: Optional[float] = None,
+        info: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Initialize by supplying a dataframe of time series.
@@ -45,15 +51,15 @@ class DataFrameModeler:
         self.info = info or None
 
     def apply_sklearn_model(
-            self,
-            model_func: Callable[..., Any],
-            x_vars: Union[List[str], Callable[[], List[str]]],
-            y_vars: Union[List[str], Callable[[], List[str]]],
-            steps_ahead: int,
-            model_kwargs: Optional[Any] = None,
-            col_mode: Optional[str] = "merge_all",
-            nan_mode: Optional[str] = "drop",
-            method: str = "fit",
+        self,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        steps_ahead: int,
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = "merge_all",
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Apply a supervised sklearn model.
@@ -73,13 +79,13 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     def apply_unsupervised_sklearn_model(
-            self,
-            model_func: Callable[..., Any],
-            x_vars: Union[List[str], Callable[[], List[str]]],
-            model_kwargs: Optional[Any] = None,
-            col_mode: Optional[str] = "merge_all",
-            nan_mode: Optional[str] = "drop",
-            method: str = "fit",
+        self,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = "merge_all",
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Apply an unsupervised model, e.g., PCA.
@@ -95,13 +101,12 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     def apply_residualizer(
-            self,
-            model_func: Callable[..., Any],
-            x_vars: Union[List[str], Callable[[], List[str]]],
-            model_kwargs: Optional[Any] = None,
-            col_mode: Optional[str] = "merge_all",
-            nan_mode: Optional[str] = "drop",
-            method: str = "fit",
+        self,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
@@ -111,18 +116,17 @@ class DataFrameModeler:
             model_func=model_func,
             x_vars=x_vars,
             model_kwargs=model_kwargs,
-            col_mode=col_mode,
             nan_mode=nan_mode,
         )
         return self._run_model(model, method)
 
     def apply_sma_model(
-            self,
-            col: str,
-            steps_ahead: int,
-            tau: Optional[float] = None,
-            nan_mode: Optional[str] = "drop",
-            method: str = "fit",
+        self,
+        col: str,
+        steps_ahead: int,
+        tau: Optional[float] = None,
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Apply a smooth moving average model.
@@ -137,13 +141,13 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     def apply_volatility_model(
-            self,
-            col: str,
-            steps_ahead: int,
-            p_moment: float = 2,
-            tau: Optional[float] = None,
-            nan_mode: Optional[str] = "drop",
-            method: str = "fit",
+        self,
+        col: str,
+        steps_ahead: int,
+        p_moment: float = 2,
+        tau: Optional[float] = None,
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Model volatility.
@@ -158,7 +162,7 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
-    def _run_model(self, model, method) -> DataFrameModeler:
+    def _run_model(self, model: FitPredictNode, method: str) -> DataFrameModeler:
         if method == "fit":
             df_out = model.fit(self.df[: self.oos_start])["df_out"]
             info = model.get_info("fit")
