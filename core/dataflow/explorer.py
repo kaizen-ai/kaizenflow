@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
@@ -52,6 +53,10 @@ class DataFrameModeler:
         self.df = df
         self.oos_start = oos_start or None
         self.info = info or None
+
+    # #########################################################################
+    # Dataflow nodes
+    # #########################################################################
 
     def apply_column_transformer(
         self,
@@ -206,6 +211,10 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    # #########################################################################
+    # Convenience methods
+    # #########################################################################
+
     def set_non_ath_to_nan(
         self,
         start_time: Optional[datetime.time] = None,
@@ -216,8 +225,7 @@ class DataFrameModeler:
             nid="set_non_ath_to_nan",
             transformer_func=fin.set_non_ath_to_nan,
             col_mode="replace_all",
-            transformer_kwargs={"start_time": start_time,
-                                "end_time": end_time},
+            transformer_kwargs={"start_time": start_time, "end_time": end_time},
         )
         return self._run_model(model, method)
 
@@ -229,16 +237,24 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    # #########################################################################
+    # Private helpers
+    # #########################################################################
+
     def _run_model(self, model: FitPredictNode, method: str) -> DataFrameModeler:
+        info = collections.OrderedDict()
         if method == "fit":
             df_out = model.fit(self.df[: self.oos_start])["df_out"]
-            info = model.get_info("fit")
+            info["fit"] = model.get_info("fit")
             oos_start = None
         elif method == "predict":
-            dbg.dassert(self.oos_start, msg="Must set `oos_start` to run `predict()`")
+            dbg.dassert(
+                self.oos_start, msg="Must set `oos_start` to run `predict()`"
+            )
             model.fit(self.df[self.oos_start :])
+            info["fit"] = model.get_info("fit")
             df_out = model.predict(self.df)["df_out"]
-            info = model.get_info("predict")
+            info["predict"] = model.get_info("predict")
             oos_start = self.oos_start
         else:
             raise ValueError(f"Unrecognized method `{method}`.")
