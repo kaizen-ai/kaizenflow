@@ -1930,6 +1930,7 @@ class VolatilityModel(FitPredictNode):
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_not_in(self._vol_col, df_in.columns)
+        df_in = df_in.copy()
         vol = pd.Series(
             np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
         ).to_frame()
