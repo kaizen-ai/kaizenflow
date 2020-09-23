@@ -777,7 +777,7 @@ class ContinuousSkLearnModel(FitPredictNode):
         Return dataframe of `steps_ahead` forward y values.
         """
         y_vars = self._to_list(self._y_vars)
-        mapper = lambda y: y + "_%i" % self._steps_ahead
+        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
@@ -1930,6 +1930,7 @@ class VolatilityModel(FitPredictNode):
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_not_in(self._vol_col, df_in.columns)
+        df_in = df_in.copy()
         vol = pd.Series(
             np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
         ).to_frame()
