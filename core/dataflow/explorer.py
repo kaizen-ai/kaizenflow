@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import pandas as pd
 
@@ -11,6 +11,7 @@ from core.dataflow.nodes import (
     ColumnTransformer,
     ContinuousSkLearnModel,
     FitPredictNode,
+    Resample,
     Residualizer,
     UnsupervisedSkLearnModel,
     VolatilityModel,
@@ -52,17 +53,17 @@ class DataFrameModeler:
         self.info = info or None
 
     def apply_column_transformer(
-            self,
-            transformer_func: Callable[..., pd.DataFrame],
-            # TODO(Paul): Tighten this type annotation.
-            transformer_kwargs: Optional[Any] = None,
-            # TODO(Paul): May need to assume `List` instead.
-            cols: Optional[Iterable[str]] = None,
-            col_rename_func: Optional[Callable[[Any], Any]] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
-            method: str = "fit",
-        ) -> DataFrameModeler:
+        self,
+        transformer_func: Callable[..., pd.DataFrame],
+        # TODO(Paul): Tighten this type annotation.
+        transformer_kwargs: Optional[Any] = None,
+        # TODO(Paul): May need to assume `List` instead.
+        cols: Optional[Iterable[str]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+        method: str = "fit",
+    ) -> DataFrameModeler:
         model = ColumnTransformer(
             nid="column_transformer",
             transformer_func=transformer_func,
@@ -74,7 +75,8 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
-    def apply_resampler(self,
+    def apply_resampler(
+        self,
         rule: str,
         agg_func: str,
         resample_kwargs: Optional[Dict[str, Any]] = None,
@@ -91,12 +93,12 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     def apply_residualizer(
-            self,
-            model_func: Callable[..., Any],
-            x_vars: Union[List[str], Callable[[], List[str]]],
-            model_kwargs: Optional[Any] = None,
-            nan_mode: Optional[str] = "drop",
-            method: str = "fit",
+        self,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
@@ -139,12 +141,12 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     def apply_sma_model(
-            self,
-            col: str,
-            steps_ahead: int,
-            tau: Optional[float] = None,
-            nan_mode: Optional[str] = "drop",
-            method: str = "fit",
+        self,
+        col: str,
+        steps_ahead: int,
+        tau: Optional[float] = None,
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Apply a smooth moving average model.
