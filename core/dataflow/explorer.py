@@ -8,6 +8,7 @@ import pandas as pd
 import core.dataflow as dtf
 import helpers.dbg as dbg
 from core.dataflow.nodes import (
+    ColumnTransformer,
     ContinuousSkLearnModel,
     FitPredictNode,
     Residualizer,
@@ -50,6 +51,65 @@ class DataFrameModeler:
         self.oos_start = oos_start or None
         self.info = info or None
 
+    def apply_column_transformer(
+            self,
+            transformer_func: Callable[..., pd.DataFrame],
+            # TODO(Paul): Tighten this type annotation.
+            transformer_kwargs: Optional[Any] = None,
+            # TODO(Paul): May need to assume `List` instead.
+            cols: Optional[Iterable[str]] = None,
+            col_rename_func: Optional[Callable[[Any], Any]] = None,
+            col_mode: Optional[str] = None,
+            nan_mode: Optional[str] = None,
+            method: str = "fit",
+        ) -> DataFrameModeler:
+        model = ColumnTransformer(
+            nid="column_transformer",
+            transformer_func=transformer_func,
+            transformer_kwargs=transformer_kwargs,
+            cols=cols,
+            col_rename_func=col_rename_func,
+            col_mode=col_mode,
+            nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
+    def apply_resampler(self,
+        rule: str,
+        agg_func: str,
+        resample_kwargs: Optional[Dict[str, Any]] = None,
+        agg_func_kwargs: Optional[Dict[str, Any]] = None,
+        method: str = "fit",
+    ) -> DataFrameModeler:
+        model = Resample(
+            nid="resample",
+            rule=rule,
+            agg_func=agg_func,
+            resample_kwargs=resample_kwargs,
+            agg_func_kwargs=agg_func_kwargs,
+        )
+        return self._run_model(model, method)
+
+    def apply_residualizer(
+            self,
+            model_func: Callable[..., Any],
+            x_vars: Union[List[str], Callable[[], List[str]]],
+            model_kwargs: Optional[Any] = None,
+            nan_mode: Optional[str] = "drop",
+            method: str = "fit",
+    ) -> DataFrameModeler:
+        """
+        Apply an unsupervised model and residualize.
+        """
+        model = Residualizer(
+            nid="sklearn_residualizer",
+            model_func=model_func,
+            x_vars=x_vars,
+            model_kwargs=model_kwargs,
+            nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
     def apply_sklearn_model(
         self,
         model_func: Callable[..., Any],
@@ -78,6 +138,26 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    def apply_sma_model(
+            self,
+            col: str,
+            steps_ahead: int,
+            tau: Optional[float] = None,
+            nan_mode: Optional[str] = "drop",
+            method: str = "fit",
+    ) -> DataFrameModeler:
+        """
+        Apply a smooth moving average model.
+        """
+        model = dtf.SmaModel(
+            nid="sma_model",
+            col=[col],
+            steps_ahead=steps_ahead,
+            tau=tau,
+            nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
     def apply_unsupervised_sklearn_model(
         self,
         model_func: Callable[..., Any],
@@ -96,46 +176,6 @@ class DataFrameModeler:
             x_vars=x_vars,
             model_kwargs=model_kwargs,
             col_mode=col_mode,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
-    def apply_residualizer(
-        self,
-        model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        model_kwargs: Optional[Any] = None,
-        nan_mode: Optional[str] = "drop",
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Apply an unsupervised model and residualize.
-        """
-        model = Residualizer(
-            nid="sklearn_residualizer",
-            model_func=model_func,
-            x_vars=x_vars,
-            model_kwargs=model_kwargs,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
-    def apply_sma_model(
-        self,
-        col: str,
-        steps_ahead: int,
-        tau: Optional[float] = None,
-        nan_mode: Optional[str] = "drop",
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Apply a smooth moving average model.
-        """
-        model = dtf.SmaModel(
-            nid="sma_model",
-            col=[col],
-            steps_ahead=steps_ahead,
-            tau=tau,
             nan_mode=nan_mode,
         )
         return self._run_model(model, method)
