@@ -78,6 +78,7 @@ imaster -up-> vendors: fetches raw data from
 imaster <-- models: fetches processed data from
 @enduml
 ```
+![](plantuml-images/instrument_master_architecture.1.png)
 
 ## Container Diagram
 
@@ -153,6 +154,7 @@ vendors <-- vextractor: fetches data from
 loader <-up- models: fetches data from
 @enduml
 ```
+![](plantuml-images/instrument_master_architecture.2.png)
 
 ### Questions
 
@@ -287,6 +289,7 @@ namespace generated {
 }
 @enduml
 ```
+![](plantuml-images/instrument_master_architecture.3.png)
 
 ## Notes
 
