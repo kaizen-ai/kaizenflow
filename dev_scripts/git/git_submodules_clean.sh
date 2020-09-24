@@ -16,8 +16,3 @@ cd amp
 cmd="git clean -fd"
 execute $cmd
 cd ..
-
-cd infra
-cmd="git clean -fd"
-execute $cmd
-cd ..

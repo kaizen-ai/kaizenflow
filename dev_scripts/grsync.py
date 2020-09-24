@@ -32,7 +32,6 @@ _TO_EXCLUDE = [
     ".idea",
     ".ipynb_checkpoints",
     "'*/my_venv/*'",
-    "'*/infra/*'",
 ]
 
 

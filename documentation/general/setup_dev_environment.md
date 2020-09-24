@@ -171,19 +171,17 @@
 
 ## Configure git submodules
 
-- Make sure you have both submodule repos `infra` and `amp` by running:
+- Make sure you have submodule (e.g., `amp`) by running:
 
   ```bash
   > cd $DST_DIR
   > ls amp
-  > ls infra
   ```
 
 - Make sure each submodule uses the `master` branch:
   ```bash
   > cd $DST_DIR
   > (cd amp; git checkout master)
-  > (cd infra; git checkout master)
   ```
 
 ## Configure user credentials
