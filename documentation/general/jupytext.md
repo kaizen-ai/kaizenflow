@@ -41,6 +41,11 @@
 - [https://jupytext.readthedocs.io/en/latest/faq.html](https://jupytext.readthedocs.io/en/latest/faq.html)
 
 ## Installation
+**Docker approach notes:**
+- We perform following steps automatically when we build an image
+  `docker_build/init/jupyter_server_setup.sh` in `commotity_researh` repo.
+
+---
 
 - It is part of `*_develop` package
 
@@ -72,7 +77,7 @@
   > jupyter notebook --generate-config
   ```
 
-  edit `.jupyter/jupyter_notebook_config.py` and append the following:
+  edit `~/.jupyter/jupyter_notebook_config.py` and append the following:
 
   ```python
   #------------------------------------------------------------------------------

@@ -37,7 +37,7 @@ def _process_comment_block(line: str, in_skip_block: bool) -> Tuple[bool, bool]:
         # Start skipping comments.
         in_skip_block = True
     if in_skip_block:
-        if line.startswith(r"-->") or re.search(r"\*\/", line):
+        if line.endswith(r"-->") or re.search(r"\*\/", line):
             # End skipping comments.
             in_skip_block = False
         # Skip comment.

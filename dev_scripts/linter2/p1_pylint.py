@@ -100,6 +100,11 @@ class _Pylint(lntr.Action):
                     ##   positional arguments list in the definition of.
                     # - TODO(gp): Not clear what is the problem.
                     "W1113",
+                    # Ignoring import errors till we figure out how to fix those in docker.
+                    # ref: https://github.com/alphamatic/amp/issues/695
+                    # TODO(amr): Figure out a better way, as I think this also disables the
+                    # `no-member` errors.
+                    "E0401",
                 ]
             )
             # Unit test.
@@ -195,7 +200,11 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "files", nargs="+", action="store", type=str, help="Files to process",
+        "files",
+        nargs="+",
+        action="store",
+        type=str,
+        help="Files to process",
     )
     prsr.add_verbosity_arg(parser)
     return parser
