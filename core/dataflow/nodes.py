@@ -15,6 +15,8 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import sklearn as skl
+import statsmodels.api as sm
+from tqdm.autonotebook import tqdm
 
 import core.backtest as bcktst
 import core.data_adapters as adpt
@@ -30,6 +32,8 @@ _LOG = logging.getLogger(__name__)
 
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
+
+# TODO(*): Consider splitting this file.
 
 
 # #############################################################################
@@ -1293,6 +1297,245 @@ class SkLearnModel(FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
+class ContinuousSarimaxModel(FitPredictNode):
+    """
+    A dataflow node for continuous SARIMAX model.
+
+    This is a wrapper around statsmodels SARIMAX with the following
+    modifications:
+      - We predict `y_t`, ... , `y_{t+n}` using `x_{t-n+1}`, ..., `x_t`, where
+       `n` is `steps_ahead`, whereas in the classic implementation it is
+        predicted using`x_t`, ... , `x_{t+n}`
+      - When making predictions in the `fit` method, we treat the input data as
+        out-of-sample. This allows making n-step-ahead predictions on a subset
+        of exogenous data.
+
+    See
+    https://www.statsmodels.org/stable/examples/notebooks/generated/statespace_sarimax_stata.html
+    for SARIMAX model examples.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        steps_ahead: int,
+        init_kwargs: Optional[Dict[str, Any]] = None,
+        fit_kwargs: Optional[Dict[str, Any]] = None,
+        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Initialize node for SARIMAX model.
+
+        :param nid: node identifier
+        :param y_vars: names of y variables. Only univariate predictions are
+            supported
+        :param steps_ahead: number of prediction steps
+        :param init_kwargs: kwargs for initializing `sm.tsa.statespace.SARIMAX`
+        :param fit_kwargs: kwargs for `fit` method of
+            `sm.tsa.statespace.SARIMAX`
+        :param x_vars: names of x variables
+        :param col_mode: "replace_all" or "merge_all"
+        :param nan_mode: "raise" or "drop"
+        """
+        super().__init__(nid)
+        self._y_vars = y_vars
+        dbg.dassert_lte(
+            0, steps_ahead, "Non-causal prediction attempted! Aborting..."
+        )
+        self._steps_ahead = steps_ahead
+        self._init_kwargs = init_kwargs
+        self._fit_kwargs = fit_kwargs or {"disp": False}
+        self._x_vars = x_vars
+        self._model = None
+        self._model_results = None
+        self._col_mode = col_mode or "merge_all"
+        self._nan_mode = nan_mode or "raise"
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        idx = df.index
+        # Get intersection of non-NaN `y` and `x`.
+        y_vars = self._to_list(self._y_vars)
+        y_fit = df[y_vars]
+        non_nan_idx = df[y_vars].dropna().index
+        if self._x_vars is not None:
+            x_fit = self._get_bwd_x_df(df).dropna()
+            x_fit_non_nan_idx = x_fit.dropna().index
+            non_nan_idx = non_nan_idx.intersection(x_fit_non_nan_idx)
+            idx = idx[self._steps_ahead - 1 :]
+        else:
+            x_fit = None
+        dbg.dassert(not non_nan_idx.empty)
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(idx, non_nan_idx)
+        y_fit = y_fit.loc[non_nan_idx]
+        # Fit the model.
+        self._model = sm.tsa.statespace.SARIMAX(
+            y_fit, exog=x_fit, **self._init_kwargs
+        )
+        self._model_results = self._model.fit(**self._fit_kwargs)
+        # Get predictions.
+        # Treat the fit data as out-of-sample to mimic the behavior in
+        # `predict()`.
+        fwd_y_hat = self._predict(y_fit, x_fit)
+        # Package results.
+        fwd_y_df = self._get_fwd_y_df(df)
+        df_out = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, df.index)
+        # Add info.
+        # TODO(Julia): Maybe add model performance to info.
+        info = collections.OrderedDict()
+        info["model_summary"] = self._model_results.summary()
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        idx = df.index
+        # Get intersection of non-NaN `y` and `x`.
+        y_vars = self._to_list(self._y_vars)
+        dbg.dassert_eq(len(y_vars), 1, "Only univariate `y` is supported")
+        y_predict = df[y_vars]
+        if self._x_vars is not None:
+            x_predict = self._get_bwd_x_df(df)
+            x_predict = x_predict.dropna()
+            y_predict = y_predict.loc[x_predict.index]
+            idx = idx[self._steps_ahead - 1 :]
+        else:
+            x_predict = None
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(idx, y_predict.index)
+        fwd_y_hat = self._predict(y_predict, x_predict)
+        # Package results.
+        fwd_y_df = self._get_fwd_y_df(df)
+        df_out = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, df.index)
+        # Add info.
+        info = collections.OrderedDict()
+        info["model_summary"] = self._model_results.summary()
+        self._set_info("predict", info)
+        return {"df_out": df_out}
+
+    def _predict(
+        self, y: pd.DataFrame, x: Optional[pd.DataFrame]
+    ) -> pd.DataFrame:
+        """
+        Make n-step-ahead predictions.
+        """
+        # TODO(Julia): Consider leaving all steps of the prediction, not just
+        #     the last one.
+        preds = []
+        pred_range = len(y)
+        if self._x_vars is not None:
+            pred_range -= self._steps_ahead - 1
+        for t in tqdm(range(1, pred_range)):
+            # If `t` is larger than `y`, this selects the whole `y`.
+            y_past = y.iloc[:t]
+            if x is not None:
+                x_past = x.iloc[:t]
+                x_step = x.iloc[t : t + self._steps_ahead]
+            else:
+                x_past = None
+                x_step = None
+            # Create a model with the same params as `self._model`, but make it
+            # aware of the past values.
+            model_predict = self._model.clone(y_past, exog=x_past)
+            result_predict = model_predict.filter(self._model_results.params)
+            # Make forecast.
+            forecast = result_predict.forecast(
+                steps=self._steps_ahead, exog=x_step
+            )
+            forecast_last_step = forecast.iloc[-1:]
+            preds.append(forecast_last_step)
+        preds = pd.concat(preds)
+        y_var = y.columns[0]
+        preds = preds.to_frame(name=f"{y_var}_{self._steps_ahead}_hat")
+        return preds
+
+    def _get_bwd_x_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Return dataframe of `steps_ahead - 1` backward x values.
+
+        This way we predict `y_t` using `x_{t-n+1}`, ..., `x_t`, where `n` is
+        `self._steps_ahead`.
+        """
+        x_vars = self._to_list(self._x_vars)
+        shift = self._steps_ahead - 1
+        mapper = lambda x: x + "_bwd_%i" % shift
+        bwd_x_df = df[x_vars].shift(shift).rename(columns=mapper)
+        return bwd_x_df
+
+    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Return dataframe of `steps_ahead` forward y values.
+        """
+        y_vars = self._to_list(self._y_vars)
+        mapper = lambda y: y + "_%i" % self._steps_ahead
+        fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
+        return fwd_y_df
+
+    def _handle_nans(
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+    ) -> None:
+        if self._nan_mode == "raise":
+            if idx.shape[0] != non_nan_idx.shape[0]:
+                nan_idx = idx.difference(non_nan_idx)
+                raise ValueError(f"NaNs detected at {nan_idx}")
+        elif self._nan_mode == "drop":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+    # TODO(*): This is roughly copied from `ContinuousSKlearnModel`. Maybe this
+    #     method can be made static and moved to `FitPredictNode`, or factored
+    #     out as a function.
+    def _replace_or_merge_output(
+        self,
+        df: pd.DataFrame,
+        fwd_y_df: pd.DataFrame,
+        fwd_y_hat: pd.DataFrame,
+        idx: pd.Index,
+    ) -> pd.DataFrame:
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        if self._col_mode == "replace_all":
+            pass
+        elif self._col_mode == "merge_all":
+            df_out = df.merge(
+                df_out.reindex(idx),
+                how="outer",
+                left_index=True,
+                right_index=True,
+            )
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return df_out
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if `df` violates constraints.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
+
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        As in `SkLearnNode` version.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
 class ContinuousDeepArModel(FitPredictNode):
     """
     A dataflow node for a DeepAR model.
@@ -1832,7 +2075,7 @@ class SmaModel(FitPredictNode):
         )
         return opt_results.x
 
-    def _predict(self, x: np.array) -> pd.Series:
+    def _predict(self, x: np.array) -> np.array:
         x_srs = pd.DataFrame(x.flatten())
         # TODO(*): Make `min_periods` configurable.
         x_sma = sigp.compute_smooth_moving_average(
