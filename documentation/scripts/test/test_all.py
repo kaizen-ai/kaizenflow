@@ -513,18 +513,18 @@ $$"""
         self._helper_process(txt, exp, file_name)
 
 
-##################################
+# #############################################################################
 # render_md.py
-##################################
+# #############################################################################
 class Test_render_md1(ut.TestCase):
     def test_uml_file_names1(self) -> None:
         """
-        Check output dir and file names correctness for absolute 
+        Check output dir and file names correctness for absolute
         destination path.
         """
         dest_file = "/a/b/c/d/e.md"
         idx = 8
-        extension = 'png'
+        extension = "png"
         pathes = rmd._uml_file_names(dest_file, idx, extension)
         self.check_string("\n".join(pathes))
 
@@ -534,7 +534,7 @@ class Test_render_md1(ut.TestCase):
         """
         uml_file = "/a/b/c.puml"
         dest = "/d/e/f"
-        extension = 'png'
+        extension = "png"
         cmd = rmd._render_command(uml_file, dest, extension)
         self.check_string(cmd)
 
@@ -544,10 +544,10 @@ class Test_render_md1(ut.TestCase):
         """
         uml_file = "/a/b/c.puml"
         dest = "/d/e/f"
-        extension = 'bmp'
+        extension = "bmp"
         with self.assertRaises(AssertionError) as exception:
             rmd._render_command(uml_file, dest, extension)
-            self.assertIn('bmp', exception.msg)
+            self.assertIn("bmp", exception.msg)
 
     def test_render_plantuml1(self) -> None:
         """
@@ -600,7 +600,9 @@ class Test_render_md1(ut.TestCase):
         self._check_str_after_render(in_text)
 
     def _check_str_after_render(self, in_text: List[str]) -> None:
-        out_file = os.path.join(self.get_scratch_space(), 'out.md')
+        out_file = os.path.join(self.get_scratch_space(), "out.md")
         extension = "png"
-        out_text = rmd._render_plantuml(in_text, out_file, extension, dry_run=True)
+        out_text = rmd._render_plantuml(
+            in_text, out_file, extension, dry_run=True
+        )
         self.check_string("\n".join(out_text))

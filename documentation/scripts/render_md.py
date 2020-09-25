@@ -94,9 +94,9 @@ def _render_command(uml_file: str, pic_dest: str, extension: str) -> str:
 
 
 def _render_plantuml_code(
-    uml_text: str, 
-    out_file: str, 
-    idx: int, 
+    uml_text: str,
+    out_file: str,
+    idx: int,
     extension: str,
     dry_run: bool,
 ) -> str:
@@ -139,7 +139,7 @@ def _render_plantuml(
 ) -> List[str]:
     """
     Add rendered image after plantuml code blocks
-    
+
     :param in_txt: list of strings to process
     :param out_file: name of outcome file
     :param extension: extension for rendered images
