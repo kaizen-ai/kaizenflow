@@ -15,13 +15,15 @@ class Test_open1(ut.TestCase):
         """Test unknown extension raises an error."""
         with self.assertRaises(AssertionError) as cm:
             opn.open_file("a.unknown_ext")
-            self.assertIn("unknown_ext", cm.exception)
+        # Check error text.
+        self.assertIn("unknown_ext", str(cm.exception))
 
     def test2(self) -> None:
         """Test unknown OS raises an error."""
         with self.assertRaises(AssertionError) as cm:
             opn._cmd_open_html("b.html", "UnknownOS")
-            self.assertIn("UnknownOS", cm.exception)
+        # Check error text.
+        self.assertIn("UnknownOS", str(cm.exception))
 
 
 class Test_open2(ut.TestCase):

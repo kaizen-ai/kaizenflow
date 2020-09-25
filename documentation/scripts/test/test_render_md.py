@@ -46,7 +46,8 @@ class Test_render_md2(ut.TestCase):
         extension = "bmp"
         with self.assertRaises(AssertionError) as cm:
             rmd._render_command(uml_file, dest, extension)
-        self.assertIn("bmp", cm.exception)
+        # Check error text.
+        self.assertIn("bmp", str(cm.exception))
 
 
 class Test_render_md3(ut.TestCase):
