@@ -113,6 +113,8 @@ class ModelEvaluator:
         :param keys: Use all available if `None`
         :param weights: Average if `None`
         :param mode: "all_available", "ins", or "oos"
+        :param target_volatility: Rescale portfolio to achieve
+            `target_volatility` on in-sample region
         :return: aggregate pnl stream, position stream, statistics
         """
         keys = keys or self.valid_keys
@@ -128,25 +130,29 @@ class ModelEvaluator:
         dbg.dassert_eq(len(keys), len(weights))
         col_map = {keys[idx]: weights[idx] for idx in range(len(keys))}
         # Calculate pnl srs.
-        pnl_df = pnl_df.apply(lambda x: x * col_map[x.name]).sum(axis=1,
-                                                                 min_count=1)
+        pnl_df = pnl_df.apply(lambda x: x * col_map[x.name]).sum(
+            axis=1, min_count=1
+        )
         pnl_srs = pnl_df.squeeze()
         # Convert back to log returns from aggregated pct returns.
         pnl_srs = fin.convert_pct_rets_to_log_rets(pnl_srs)
         pnl_srs.name = "portfolio_pnl"
         # Aggregate positions.
         pos_df = self._get_series_as_df("positions", keys, mode)
-        pos_df = pos_df.apply(lambda x: x * col_map[x.name]).sum(axis=1,
-                                                                 min_count=1)
+        pos_df = pos_df.apply(lambda x: x * col_map[x.name]).sum(
+            axis=1, min_count=1
+        )
         pos_srs = pos_df.squeeze()
         pos_srs.name = "portfolio_pos"
         # Maybe rescale.
         if target_volatility is not None:
             if mode != "ins":
-                ins_pnl_srs, _, _ = self.aggregate_models(keys=keys,
-                                                          weights=weights,
-                                                          mode="ins",
-                                                          target_volatility=target_volatility)
+                ins_pnl_srs, _, _ = self.aggregate_models(
+                    keys=keys,
+                    weights=weights,
+                    mode="ins",
+                    target_volatility=target_volatility,
+                )
             else:
                 ins_pnl_srs = pnl_srs
             scale_factor = fin.compute_volatility_normalization_factor(
