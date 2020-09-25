@@ -528,17 +528,6 @@ class Test_render_md1(ut.TestCase):
         pathes = rmd._uml_file_names(dest_file, idx, extension)
         self.check_string("\n".join(pathes))
 
-    def test_uml_file_names2(self) -> None:
-        """
-        Check output dir and file names correctness for relative 
-        destination path.
-        """
-        dest_file = "./a.md"
-        idx = 88
-        extension = 'svg'
-        pathes = rmd._uml_file_names(dest_file, idx, extension)
-        self.check_string('\n'.join(pathes))
-
     def test_render_command1(self) -> None:
         """
         Check correctness of the command to render.
