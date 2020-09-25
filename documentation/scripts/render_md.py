@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 """
-The script replaces all plantuml sections in the markdown files
+The script replaces all plantUML sections in the markdown files
 with rendered images:
 
 Usage:
-    1. Include plantuml diagram picture to markdown:
+    1. Include plantUML diagram picture to markdown:
     > render_md.py -i ABC.md -o XYZ.md --action render
 
-    2. Include plantuml diagram picture in place:
+    2. Include plantUML diagram picture in place:
     > render_md.py -i ABC.md --action render
 
     3. Open html to preview:
@@ -17,21 +17,11 @@ Usage:
     4. Render with preview:
     > render_md.py -i ABC.md -o XYZ.md
     > render_md.py -i ABC.md
-
-Details:
-    - Read input file.
-    - Extract the plantUML code started with ```plantuml and ended with ```.
-    - Save the plantUML code in a temp file.
-    - Call plantuml command on the temp file to create the uml image.
-    - Store the image in a folder and return the link of the image.
-    - Insert the plantUML code and the link of the image to the output file.
-    - Process the rest of the file while looking for the plantuml code.
-    - Open file for preview if needed.
 """
 
-import os
-import logging
 import argparse
+import logging
+import os
 import tempfile
 from typing import List, Tuple
 
@@ -45,8 +35,8 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
-_ACTION_OPEN = 'open'
-_ACTION_RENDER = 'render'
+_ACTION_OPEN = "open"
+_ACTION_RENDER = "render"
 _VALID_ACTIONS = [_ACTION_OPEN, _ACTION_RENDER]
 _DEFAULT_ACTIONS = [_ACTION_OPEN, _ACTION_RENDER]
 
@@ -57,31 +47,29 @@ def _open_html(md_file: str) -> None:
     # Get pandoc.py command.
     curr_path = os.path.abspath(os.path.dirname(__file__))
     tmp_dir = os.path.split(md_file)[0]
-    cmd = "%s/pandoc.py -t %s -i %s --skip_action %s --skip_action %s --tmp_dir %s" % (
-        curr_path,
-        "html",
-        md_file,
-        "copy_to_gdrive",
-        "cleanup_after",
-        tmp_dir
+    cmd = (
+        "%s/pandoc.py -t %s -i %s --skip_action %s --skip_action %s --tmp_dir %s"
+        % (curr_path, "html", md_file, "copy_to_gdrive", "cleanup_after", tmp_dir)
     )
     si.system(cmd)
 
 
-def _uml_file_names(dest_file: str, idx: int, extension: str) -> Tuple[str, str, str]:
+def _uml_file_names(
+    dest_file: str, idx: int, extension: str
+) -> Tuple[str, str, str]:
     """
-    Generate plantuml picture filename, temporary uml filename,
+    Generate plantUML picture filename, temporary UML filename,
     full path to picture. We want to assign the name of the image relative
     to the originating file and index. In this way if we update the image,
     the name of the image doesn't change.
 
     :param dest_file: markdowm target file where diagrams should be included
-    :param idx: order number of the uml appearence at the input file
+    :param idx: order number of the UML appearence at the input file
     :param extension: extension for image file
     :return:
-        - full path to uml picture dir
+        - full path to UML picture dir
         - relative picture file name
-        - temporary uml file name
+        - temporary UML file name
     """
     sub_dir = "plantuml-images"
     dst_dir, dest_file_name = os.path.split(os.path.abspath(dest_file))
@@ -109,18 +97,20 @@ def _render_plantuml_code(
     uml_text: str,
     out_file: str,
     idx: int,
-    extension: str
+    extension: str,
+    dry_run: bool,
 ) -> str:
     """
     Render the PlantUML text into a file.
 
     :param uml_text: UML format text
     :param out_file: full path to output md file
-    :param idx: index of uml appearence
+    :param idx: index of UML appearence
     :param extension: type of rendered image
+    :param dry_run: if True, doesn't execute plantulml command
     :return: related path to image
     """
-    # Format uml text to render.
+    # Format UML text to render.
     uml_content = uml_text
     if not uml_content.startswith("@startuml"):
         uml_content = "@startuml\n%s" % uml_content
@@ -129,23 +119,32 @@ def _render_plantuml_code(
     # Create the including directory, if needed.
     io_.create_enclosing_dir(out_file, incremental=True)
     # Get pathes.
-    target_dir, rel_path, tmp_file_name = _uml_file_names(out_file, idx, extension)
+    target_dir, rel_path, tmp_file_name = _uml_file_names(
+        out_file, idx, extension
+    )
     # Save text to temporary file.
     tmp_file = os.path.join(tempfile.gettempdir(), tmp_file_name)
-    with open(tmp_file, 'w') as uml_file:
-        # Format to be able to render.
-        uml_file.write(uml_content)
-    # Convert the plantuml txt.
+    io_.to_file(tmp_file, uml_content)
+    # Convert the plantUML txt.
     cmd = _render_command(tmp_file, target_dir, extension)
     _LOG.info("Creating uml diagram from %s source.", tmp_file)
     _LOG.info("Saving image to %s.", target_dir)
     _LOG.info("> %s", cmd)
-    si.system(cmd)
+    si.system(cmd, dry_run=dry_run)
     return rel_path
 
 
-def _render_plantuml(in_txt: List[str], out_file: str, extension: str) -> List[str]:
-    """Add rendered image after plantuml code blocks"""
+def _render_plantuml(
+    in_txt: List[str], out_file: str, extension: str, dry_run: bool
+) -> List[str]:
+    """
+    Add rendered image after plantuml code blocks
+
+    :param in_txt: list of strings to process
+    :param out_file: name of outcome file
+    :param extension: extension for rendered images
+    :param dry_run: only changes text skipping image creation
+    """
     # Store the output.
     out_txt: List[str] = []
     # Store the plantuml code found so far.
@@ -166,10 +165,11 @@ def _render_plantuml(in_txt: List[str], out_file: str, extension: str) -> List[s
             _LOG.debug(" -> state=%s", state)
         elif line.strip() == "```" and state == "found_plantuml":
             img_file_name = _render_plantuml_code(
-                uml_text='\n'.join(plantuml_txt),
+                uml_text="\n".join(plantuml_txt),
                 out_file=out_file,
                 idx=plantuml_idx,
-                extension=extension
+                extension=extension,
+                dry_run=dry_run,
             )
             out_txt.append("![](%s)" % img_file_name)
             state = "searching"
@@ -185,6 +185,12 @@ def _parse() -> argparse.ArgumentParser:
     )
     prsr.add_input_output_args(parser)
     prsr.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
+    # Debug arguments.
+    parser.add_argument(
+        "--dry_run",
+        action="store_true",
+        help="Don't create images with plantuml command",
+    )
     prsr.add_verbosity_arg(parser)
     return parser
 
@@ -196,22 +202,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Read file arguments.
     in_file, out_file = prsr.parse_input_output_args(args)
     # Not support stdin and stdout.
-    dbg.dassert_ne(in_file, '-')
-    dbg.dassert_ne(out_file, '-')
+    dbg.dassert_ne(in_file, "-")
+    dbg.dassert_ne(out_file, "-")
     # Read actions argument.
     actions = prsr.select_actions(args, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     # Set rendered image extension.
     extension = "png"
     # Save to temporary file and keep svg extension if only open.
     if actions == [_ACTION_OPEN]:
-        out_file = tempfile.mktemp(suffix='.md')
+        out_file = tempfile.mktemp(suffix=".md")
         extension = "svg"
     # Read input file lines.
-    in_lines = io_.from_file(in_file).split('\n')
+    in_lines = io_.from_file(in_file).split("\n")
     # Get updated lines after rendering.
-    out_lines = _render_plantuml(in_lines, out_file, extension)
+    out_lines = _render_plantuml(in_lines, out_file, extension, args.dry_run)
     # Save the output into a file.
-    io_.to_file(out_file, '\n'.join(out_lines))
+    io_.to_file(out_file, "\n".join(out_lines))
     # Open if needed.
     if _ACTION_OPEN in actions:
         _open_html(out_file)
