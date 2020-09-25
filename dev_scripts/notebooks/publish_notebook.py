@@ -68,9 +68,9 @@ import tempfile
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.open as opn
 import helpers.parser as prsr
 import helpers.system_interaction as si
-import helpers.open as opn
 
 _LOG = logging.getLogger(__name__)
 
@@ -211,7 +211,8 @@ def _parse() -> argparse.ArgumentParser:
         _ACTION_OPEN: f"'--action {_ACTION_OPEN}' - Open selected notebook in a browser.",
     }
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawTextHelpFormatter,
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
         "-f",
@@ -262,7 +263,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if _ACTION_OPEN in args.action:
         _LOG.debug("Action '%s' selected.", _ACTION_OPEN)
         # Convert the notebook to the HTML format and store in the TMP location.
-        opn.open_html(html_file_name)
+        opn.open_file(html_file_name)
         print(f"You opened local file: {html_file_name}")
     if _ACTION_PUBLISH in args.action:
         _LOG.debug("Action '%s' selected.", _ACTION_PUBLISH)

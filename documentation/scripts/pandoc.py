@@ -12,7 +12,8 @@ Convert a txt file into a PDF / HTML using pandoc.
 # Check that can be compiled:
 > pandoc.py -a pdf --no_toc --no_open_pdf --input ...
 
-> pandoc.py --input notes/IN_PROGRESS/math.The_hundred_page_ML_book.Burkov.2019.txt -a pdf --no_cleanup --no_cleanup_before --no_run_latex_again --no_open
+> pandoc.py --input notes/IN_PROGRESS/math.The_hundred_page_ML_book.Burkov.2019.txt \
+        -a pdf --no_cleanup --no_cleanup_before --no_run_latex_again --no_open
 """
 
 # TODO(gp):
@@ -28,9 +29,9 @@ from typing import Any, List, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.open as opn
 import helpers.parser as prsr
 import helpers.printing as prnt
-import helpers.open as opn
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -205,7 +206,11 @@ def _copy_to_output(args: argparse.Namespace, file_in: str, prefix: str) -> str:
         file_out = args.output
     else:
         _LOG.debug("Leaving file_out in the tmp dir")
-        file_out = "%s.%s.%s" % (prefix, os.path.basename(args.input), args.type,)
+        file_out = "%s.%s.%s" % (
+            prefix,
+            os.path.basename(args.input),
+            args.type,
+        )
     _LOG.debug("file_out=%s", file_out)
     cmd = r"\cp -af %s %s" % (file_in, file_out)
     _ = _system(cmd)
@@ -292,12 +297,7 @@ def _pandoc(args: argparse.Namespace) -> None:
     action = "open"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
-        if args.type == "pdf":
-            opn.open_pdf(file_final)
-        elif args.type == "html":
-            opn.open_html(file_final)
-        else:
-            raise ValueError("Invalid type='%s'" % args.type)
+        opn.open_file(file_final)
     #
     action = "cleanup_after"
     to_execute, actions = prsr.mark_action(action, actions)

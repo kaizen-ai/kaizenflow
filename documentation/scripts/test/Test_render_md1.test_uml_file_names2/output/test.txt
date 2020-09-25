@@ -1,0 +1,3 @@
+/home/plyq/w/python/pone/amp/plantuml-images
+plantuml-images/a.88.svg
+a.88.puml
