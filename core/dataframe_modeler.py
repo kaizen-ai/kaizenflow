@@ -4,7 +4,6 @@ Import as:
 import core.dataframe_modeler as dfmod
 """
 
-
 from __future__ import annotations
 
 import collections
@@ -308,7 +307,7 @@ class DataFrameModeler:
         stats_df = pd.concat(stats_dict, axis=1)
         return stats_df
 
-    def correlate_with_lag(
+    def plot_correlation_with_lag(
         self, lag: int, cols: Optional[List[Any]] = None, mode: str = "ins"
     ) -> pd.DataFrame:
         """
@@ -317,7 +316,7 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
         corr_df = sigp.correlate_with_lag(df, lag=lag)
-        return corr_df
+        return plot.plot_correlation_matrix(corr_df)
 
     def plot_autocorrelation(
         self,
@@ -354,10 +353,10 @@ class DataFrameModeler:
         cols: Optional[List[Any]] = None,
         plot_correlation_matrix_kwargs: Optional[dict] = None,
         mode: str = "ins",
-    ) -> None:
+    ) -> pd.DataFrame:
         df = self._get_df(cols=cols, mode=mode)
         plot_correlation_matrix_kwargs = plot_correlation_matrix_kwargs or {}
-        plot.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
+        return plot.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
 
     def plot_dendrogram(
         self,

@@ -1013,6 +1013,7 @@ def apply_kpss_test(
     dbg.dassert_isinstance(srs, pd.Series)
     regression = regression or "c"
     nan_mode = nan_mode or "drop"
+    nlags = nlags or "auto"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
