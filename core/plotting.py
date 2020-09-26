@@ -480,6 +480,7 @@ def plot_timeseries_per_category(
         fig.suptitle(f"Distribution by {datetime_type}")
 
 
+# TODO(*): Rename. Maybe `plot_sequence_and_density()`.
 def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
     colormap: str = "rainbow",
@@ -511,12 +512,13 @@ def plot_cols(
     data.plot(colormap=colormap, ax=axes[1])
 
 
+# TODO(*): Check that data index size exceeds lags.
 def plot_autocorrelation(
     signal: Union[pd.Series, pd.DataFrame],
     lags: int = 40,
     zero: bool = False,
     nan_mode: str = "conservative",
-    fft: bool = False,
+    fft: bool = True,
     title_prefix: Optional[str] = None,
     axes: Optional[List[mpl.axes.Axes]] = None,
     **kwargs: Any,
@@ -653,7 +655,7 @@ def plot_time_series_dict(
 
 def plot_heatmap(
     corr_df: pd.core.frame.DataFrame,
-    mode: str,
+    mode: Optional[str] = None,
     annot: Union[bool, str] = "auto",
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
@@ -693,6 +695,7 @@ def plot_heatmap(
     cmap = _get_heatmap_colormap()
     if figsize is None:
         figsize = FIG_SIZE
+    mode = mode or "heatmap"
     if mode in ("heatmap", "heatmap_semitriangle"):
         # Set up the matplotlib figure.
         if ax is None:
@@ -734,7 +737,7 @@ def plot_heatmap(
 # http://stackoverflow.com/questions/24432101/correlation-coefficients-and-p-values-for-all-pairs-of-rows-of-a-matrix
 def plot_correlation_matrix(
     df: pd.core.frame.DataFrame,
-    mode: str,
+    mode: Optional[str] = None,
     annot: Union[bool, str] = False,
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
@@ -761,7 +764,7 @@ def plot_correlation_matrix(
     # Plot heatmap.
     plot_heatmap(
         corr_df,
-        mode,
+        mode=mode,
         annot=annot,
         figsize=figsize,
         title=title,
@@ -817,11 +820,12 @@ def plot_dendrogram(
 
 def plot_corr_over_time(
     corr_df: pd.core.frame.DataFrame,
-    mode: str,
+    mode: Optional[str] = None,
     annot: bool = False,
     num_cols: int = 4,
 ) -> None:
     """Plot correlation over time."""
+    mode = mode or "heatmap"
     timestamps = corr_df.index.get_level_values(0).unique()
     if len(timestamps) > 20:
         _LOG.warning("The first level of index length='%s' > 20", len(timestamps))

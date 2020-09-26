@@ -191,6 +191,24 @@ def fit_random_walk_plus_noise(
 # #############################################################################
 
 
+def correlate_with_lag(
+        df: pd.DataFrame,
+        lag: int,
+) -> pd.DataFrame:
+    """
+    Combine cols of `df` with their lags and compute the correlation matrix.
+
+    :param df: dataframe of numeric values
+    :param lag: number of lags to apply
+    :return: correlation matrix with `2 * df.columns` columns
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_isinstance(lag, int)
+    df_lagged = df.shift(lag).rename(columns=lambda x: str(x) + f"_lag_{lag}")
+    merged_df = df.merge(df_lagged, left_index=True, right_index=True)
+    return merged_df.corr()
+
+
 def plot_crosscorrelation(
     x: Union[pd.DataFrame, pd.Series], y: Union[pd.DataFrame, pd.Series]
 ) -> None:

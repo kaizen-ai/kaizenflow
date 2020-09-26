@@ -1,24 +1,26 @@
+"""
+Import as:
+
+import core.dataframe_modeler as dfmod
+"""
+
 from __future__ import annotations
 
 import collections
 import datetime
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import matplotlib as mpl
 import pandas as pd
 
+import core.dataflow as dtf
 import core.finance as fin
+import core.plotting as plot
+import core.signal_processing as sigp
+import core.statistics as stats
+import core.timeseries_study as tss
 import helpers.dbg as dbg
-from core.dataflow.nodes import (
-    ColumnTransformer,
-    ContinuousSkLearnModel,
-    FitPredictNode,
-    Resample,
-    Residualizer,
-    SmaModel,
-    UnsupervisedSkLearnModel,
-    VolatilityModel,
-)
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,10 +29,7 @@ class DataFrameModeler:
     """
     Wraps common dataframe modeling and exploratory analysis functionality.
 
-    TODO(*): Return a DataFrameModeler instead.
-
     TODO(*): Add
-      - methods for getting ins/oos dataframe slices
       - seasonal decomposition
       - stats (e.g., stationarity, autocorrelation)
       - correlation / clustering options
@@ -52,9 +51,22 @@ class DataFrameModeler:
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert(pd.DataFrame)
-        self.df = df
+        self._df = df
         self.oos_start = oos_start or None
         self.info = info or None
+
+    @property
+    def ins_df(self) -> pd.DataFrame:
+        return self._df[: self.oos_start].copy()
+
+    @property
+    def oos_df(self) -> pd.DataFrame:
+        dbg.dassert(self.oos_start, msg="`oos_start` must be set")
+        return self._df[self.oos_start :].copy()
+
+    @property
+    def df(self) -> pd.DataFrame:
+        return self._df.copy()
 
     # #########################################################################
     # Dataflow nodes
@@ -72,7 +84,10 @@ class DataFrameModeler:
         nan_mode: Optional[str] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
-        model = ColumnTransformer(
+        """
+        Apply a function a a select of columns.
+        """
+        model = dtf.ColumnTransformer(
             nid="column_transformer",
             transformer_func=transformer_func,
             transformer_kwargs=transformer_kwargs,
@@ -91,8 +106,11 @@ class DataFrameModeler:
         agg_func_kwargs: Optional[Dict[str, Any]] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
+        """
+        Resample the dataframe (causally, by default).
+        """
         agg_func_kwargs = agg_func_kwargs or {"min_count": 1}
-        model = Resample(
+        model = dtf.Resample(
             nid="resample",
             rule=rule,
             agg_func=agg_func,
@@ -112,7 +130,7 @@ class DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
         """
-        model = Residualizer(
+        model = dtf.Residualizer(
             nid="sklearn_residualizer",
             model_func=model_func,
             x_vars=x_vars,
@@ -137,7 +155,7 @@ class DataFrameModeler:
 
         Both x and y vars should be indexed by knowledge time.
         """
-        model = ContinuousSkLearnModel(
+        model = dtf.ContinuousSkLearnModel(
             nid="sklearn",
             model_func=model_func,
             x_vars=x_vars,
@@ -160,7 +178,7 @@ class DataFrameModeler:
         """
         Apply a smooth moving average model.
         """
-        model = SmaModel(
+        model = dtf.SmaModel(
             nid="sma_model",
             col=[col],
             steps_ahead=steps_ahead,
@@ -181,7 +199,7 @@ class DataFrameModeler:
         """
         Apply an unsupervised model, e.g., PCA.
         """
-        model = UnsupervisedSkLearnModel(
+        model = dtf.UnsupervisedSkLearnModel(
             nid="unsupervised_sklearn",
             model_func=model_func,
             x_vars=x_vars,
@@ -203,7 +221,7 @@ class DataFrameModeler:
         """
         Model volatility.
         """
-        model = VolatilityModel(
+        model = dtf.VolatilityModel(
             nid="volatility_model",
             col=[col],
             steps_ahead=steps_ahead,
@@ -226,9 +244,12 @@ class DataFrameModeler:
         nan_mode: Optional[str] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
+        """
+        Calculate returns (realized at timestamp).
+        """
         col_rename_func = col_rename_func or (lambda x: str(x) + "_ret_0")
         col_mode = col_mode or "replace_all"
-        model = ColumnTransformer(
+        model = dtf.ColumnTransformer(
             nid="compute_ret_0",
             transformer_func=fin.compute_ret_0,
             transformer_kwargs={"mode": rets_mode},
@@ -245,7 +266,10 @@ class DataFrameModeler:
         end_time: Optional[datetime.time] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
-        model = ColumnTransformer(
+        """
+        Replace values at non active trading hours with NaNs.
+        """
+        model = dtf.ColumnTransformer(
             nid="set_non_ath_to_nan",
             transformer_func=fin.set_non_ath_to_nan,
             col_mode="replace_all",
@@ -254,7 +278,10 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     def set_weekends_to_nan(self, method: str = "fit") -> DataFrameModeler:
-        model = ColumnTransformer(
+        """
+        Replace values over weekends with NaNs.
+        """
+        model = dtf.ColumnTransformer(
             nid="set_weekends_to_nan",
             transformer_func=fin.set_weekends_to_nan,
             col_mode="replace_all",
@@ -262,25 +289,190 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     # #########################################################################
+    # Dataframe stats and plotting
+    # #########################################################################
+
+    def calculate_stats(
+        self, cols: Optional[List[Any]] = None, mode: str = "ins"
+    ) -> pd.DataFrame:
+        """
+        Calculate stats for selected columns.
+        """
+        df = self._get_df(cols=cols, mode=mode)
+        # Calculate stats.
+        stats_dict = {}
+        for col in df.columns:
+            stats_val = self._calculate_series_stats(df[col])
+            stats_dict[col] = stats_val
+        stats_df = pd.concat(stats_dict, axis=1)
+        return stats_df
+
+    def plot_correlation_with_lag(
+        self, lag: int, cols: Optional[List[Any]] = None, mode: str = "ins"
+    ) -> pd.DataFrame:
+        """
+        Calculate correlation of `cols` with lags of `cols`.
+        """
+        df = self._get_df(cols=cols, mode=mode)
+        # Calculate correlation.
+        corr_df = sigp.correlate_with_lag(df, lag=lag)
+        return plot.plot_correlation_matrix(corr_df)
+
+    def plot_autocorrelation(
+        self,
+        cols: Optional[List[Any]] = None,
+        plot_auto_correlation_kwargs: Optional[dict] = None,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        plot_auto_correlation_kwargs = plot_auto_correlation_kwargs or {}
+        plot.plot_autocorrelation(df, **plot_auto_correlation_kwargs)
+
+    def plot_sequence_and_density(
+        self,
+        cols: Optional[List[Any]] = None,
+        plot_cols_kwargs: Optional[dict] = None,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        plot_cols_kwargs = plot_cols_kwargs or {}
+        plot.plot_cols(df, **plot_cols_kwargs)
+
+    def plot_spectrum(
+        self,
+        cols: Optional[List[Any]] = None,
+        plot_spectrum_kwargs: Optional[dict] = None,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        plot_spectrum_kwargs = plot_spectrum_kwargs or {}
+        plot.plot_spectrum(df, **plot_spectrum_kwargs)
+
+    def plot_correlation_matrix(
+        self,
+        cols: Optional[List[Any]] = None,
+        plot_correlation_matrix_kwargs: Optional[dict] = None,
+        mode: str = "ins",
+    ) -> pd.DataFrame:
+        df = self._get_df(cols=cols, mode=mode)
+        plot_correlation_matrix_kwargs = plot_correlation_matrix_kwargs or {}
+        return plot.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
+
+    def plot_dendrogram(
+        self,
+        cols: Optional[List[Any]] = None,
+        figsize: Optional[Tuple[int, int]] = None,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        plot.plot_dendrogram(df, figsize)
+
+    def plot_pca_components(
+        self,
+        cols: Optional[List[Any]] = None,
+        num_components: Optional[int] = None,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        pca = plot.PCA(mode="standard")
+        pca.fit(df.fillna(0))
+        pca.plot_components(num_components)
+
+    def plot_explained_variance(
+        self, cols: Optional[List[Any]] = None, mode: str = "ins"
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        pca = plot.PCA(mode="standard")
+        pca.fit(df.fillna(0))
+        pca.plot_explained_variance()
+
+    def plot_qq(
+        self,
+        col: Any,
+        ax: Optional[mpl.axes.Axes] = None,
+        dist: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+        mode: str = "ins",
+    ) -> None:
+        srs = self._get_df(cols=[col], mode=mode).squeeze()
+        plot.plot_qq(srs, ax=ax, dist=dist, nan_mode=nan_mode)
+
+    def plot_rolling_correlation(
+        self,
+        col1: Any,
+        col2: Any,
+        tau: float,
+        plot_rolling_correlation_kwargs: Optional[dict] = None,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=[col1, col2], mode=mode)
+        plot_rolling_correlation_kwargs = plot_rolling_correlation_kwargs or {}
+        plot.plot_rolling_correlation(
+            df[col1], df[col2], tau=tau, **plot_rolling_correlation_kwargs,
+        )
+
+    def plot_time_series_study(self, col: Any, mode: str = "ins") -> None:
+        srs = self._get_df(cols=[col], mode=mode).squeeze()
+        tsds = tss.TimeSeriesDailyStudy(srs, data_name=str(col))
+        tsds.execute()
+
+    # #########################################################################
     # Private helpers
     # #########################################################################
 
-    def _run_model(self, model: FitPredictNode, method: str) -> DataFrameModeler:
+    def _get_df(self, cols: Optional[List[Any]], mode: str) -> pd.DataFrame:
+        cols = cols or self._df.columns
+        dbg.dassert_is_subset(cols, self._df.columns)
+        if mode == "ins":
+            return self.ins_df[cols]
+        if mode == "oos":
+            return self.oos_df[cols]
+        if mode == "all_available":
+            return self.df[cols]
+        raise ValueError(f"Unrecognized mode `{mode}`")
+
+    def _run_model(
+        self, model: dtf.FitPredictNode, method: str
+    ) -> DataFrameModeler:
         info = collections.OrderedDict()
         if method == "fit":
-            df_out = model.fit(self.df[: self.oos_start])["df_out"]
+            df_out = model.fit(self._df[: self.oos_start])["df_out"]
             info["fit"] = model.get_info("fit")
             oos_start = None
         elif method == "predict":
             dbg.dassert(
                 self.oos_start, msg="Must set `oos_start` to run `predict()`"
             )
-            model.fit(self.df[self.oos_start :])
+            model.fit(self._df[self.oos_start :])
             info["fit"] = model.get_info("fit")
-            df_out = model.predict(self.df)["df_out"]
+            df_out = model.predict(self._df)["df_out"]
             info["predict"] = model.get_info("predict")
             oos_start = self.oos_start
         else:
             raise ValueError(f"Unrecognized method `{method}`.")
         dfm = DataFrameModeler(df_out, oos_start, info)
         return dfm
+
+    @staticmethod
+    def _calculate_series_stats(srs: pd.Series) -> pd.Series:
+        """
+        Calculate stats for a single series.
+        """
+        dbg.dassert(not srs.empty, msg="Series should not be empty")
+        stats_dict = {}
+        stats_dict[0] = stats.summarize_time_index_info(srs)
+        stats_dict[1] = stats.compute_jensen_ratio(srs)
+        stats_dict[2] = stats.compute_forecastability(srs)
+        stats_dict[3] = stats.compute_moments(srs)
+        stats_dict[4] = stats.compute_special_value_stats(srs)
+        stats_dict[5] = stats.apply_normality_test(srs, prefix="normality_")
+        stats_dict[6] = stats.apply_adf_test(srs, prefix="adf_")
+        stats_dict[7] = stats.apply_kpss_test(srs, prefix="kpss_")
+        stats_dict[8] = stats.compute_interarrival_time_stats(
+            srs, prefix="interarrival_"
+        )
+        # Sort dict by integer keys.
+        stats_dict = dict(sorted(stats_dict.items()))
+        stats_srs = pd.concat(stats_dict).droplevel(0)
+        stats_srs.name = "stats"
+        return stats_srs
