@@ -56,16 +56,16 @@ class DataFrameModeler:
 
     @property
     def ins_df(self) -> pd.DataFrame:
-        return self._df[:self.oos_start].copy()
+        return self._df[: self.oos_start].copy()
 
     @property
     def oos_df(self) -> pd.DataFrame:
         dbg.dassert(self.oos_start, msg="`oos_start` must be set")
-        return self._df[self.oos_start:].copy()
+        return self._df[self.oos_start :].copy()
 
     @property
     def df(self) -> pd.DataFrame:
-        return self._df
+        return self._df.copy()
 
     # #########################################################################
     # Dataflow nodes
@@ -287,10 +287,9 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
-    def correlate_with_lag(self,
-                           lag: int,
-                           cols: Optional[Iterable[str]] = None,
-                           method: str = "fit") -> DataFrameModeler:
+    def correlate_with_lag(
+        self, lag: int, cols: Optional[Iterable[str]] = None, method: str = "fit"
+    ) -> DataFrameModeler:
         """
         Calculate correlation of `cols` with lags of `cols`.
         """
