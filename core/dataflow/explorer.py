@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 import pandas as pd
 
 import core.finance as fin
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 from core.dataflow.nodes import (
     ColumnTransformer,
@@ -27,10 +28,7 @@ class DataFrameModeler:
     """
     Wraps common dataframe modeling and exploratory analysis functionality.
 
-    TODO(*): Return a DataFrameModeler instead.
-
     TODO(*): Add
-      - methods for getting ins/oos dataframe slices
       - seasonal decomposition
       - stats (e.g., stationarity, autocorrelation)
       - correlation / clustering options
@@ -52,9 +50,22 @@ class DataFrameModeler:
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert(pd.DataFrame)
-        self.df = df
+        self._df = df
         self.oos_start = oos_start or None
         self.info = info or None
+
+    @property
+    def ins_df(self) -> pd.DataFrame:
+        return self._df[:self.oos_start].copy()
+
+    @property
+    def oos_df(self) -> pd.DataFrame:
+        dbg.dassert(self.oos_start, msg="`oos_start` must be set")
+        return self._df[self.oos_start:].copy()
+
+    @property
+    def df(self) -> pd.DataFrame:
+        return self._df
 
     # #########################################################################
     # Dataflow nodes
@@ -72,6 +83,9 @@ class DataFrameModeler:
         nan_mode: Optional[str] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
+        """
+        Apply a function a a select of columns.
+        """
         model = ColumnTransformer(
             nid="column_transformer",
             transformer_func=transformer_func,
@@ -91,6 +105,9 @@ class DataFrameModeler:
         agg_func_kwargs: Optional[Dict[str, Any]] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
+        """
+        Resample the dataframe (causally, by default).
+        """
         agg_func_kwargs = agg_func_kwargs or {"min_count": 1}
         model = Resample(
             nid="resample",
@@ -226,6 +243,9 @@ class DataFrameModeler:
         nan_mode: Optional[str] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
+        """
+        Calculate returns (realized at timestamp).
+        """
         col_rename_func = col_rename_func or (lambda x: str(x) + "_ret_0")
         col_mode = col_mode or "replace_all"
         model = ColumnTransformer(
@@ -245,6 +265,9 @@ class DataFrameModeler:
         end_time: Optional[datetime.time] = None,
         method: str = "fit",
     ) -> DataFrameModeler:
+        """
+        Replace values at non active trading hours with NaNs.
+        """
         model = ColumnTransformer(
             nid="set_non_ath_to_nan",
             transformer_func=fin.set_non_ath_to_nan,
@@ -254,12 +277,42 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     def set_weekends_to_nan(self, method: str = "fit") -> DataFrameModeler:
+        """
+        Replace values over weekends with NaNs.
+        """
         model = ColumnTransformer(
             nid="set_weekends_to_nan",
             transformer_func=fin.set_weekends_to_nan,
             col_mode="replace_all",
         )
         return self._run_model(model, method)
+
+    def correlate_with_lag(self,
+                           lag: int,
+                           cols: Optional[Iterable[str]] = None,
+                           method: str = "fit") -> DataFrameModeler:
+        """
+        Calculate correlation of `cols` with lags of `cols`.
+        """
+        # Validate column selection.
+        cols = cols or self._df.columns
+        dbg.dassert_is_subset(cols, self._df.columns)
+        # Slice dataframe according to `fit` or `predict`.
+        if method == "fit":
+            df = self.ins_df[cols]
+        elif method == "predict":
+            df = self.df[cols]
+        else:
+            raise ValueError(f"Unrecognized method `{method}`.")
+        # Calculate correlation.
+        corr_df = sigp.correlate_with_lag(df, lag=lag)
+        # Add info.
+        method_info = collections.OrderedDict()
+        method_info["n_samples"] = df.index.size
+        method_info["correlation_matrix"] = corr_df
+        info = collections.OrderedDict()
+        info[method] = method_info
+        return DataFrameModeler(self.df, oos_start=self.oos_start, info=info)
 
     # #########################################################################
     # Private helpers
@@ -268,16 +321,16 @@ class DataFrameModeler:
     def _run_model(self, model: FitPredictNode, method: str) -> DataFrameModeler:
         info = collections.OrderedDict()
         if method == "fit":
-            df_out = model.fit(self.df[: self.oos_start])["df_out"]
+            df_out = model.fit(self._df[: self.oos_start])["df_out"]
             info["fit"] = model.get_info("fit")
             oos_start = None
         elif method == "predict":
             dbg.dassert(
                 self.oos_start, msg="Must set `oos_start` to run `predict()`"
             )
-            model.fit(self.df[self.oos_start :])
+            model.fit(self._df[self.oos_start :])
             info["fit"] = model.get_info("fit")
-            df_out = model.predict(self.df)["df_out"]
+            df_out = model.predict(self._df)["df_out"]
             info["predict"] = model.get_info("predict")
             oos_start = self.oos_start
         else:
