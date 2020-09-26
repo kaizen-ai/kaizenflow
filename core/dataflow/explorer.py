@@ -9,6 +9,7 @@ import pandas as pd
 
 import core.finance as fin
 import core.signal_processing as sigp
+import core.statistics as stats
 import helpers.dbg as dbg
 from core.dataflow.nodes import (
     ColumnTransformer,
@@ -287,8 +288,42 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    # #########################################################################
+    # Dataframe no-ops
+    # #########################################################################
+
+    def calculate_stats(self,
+                        cols: Optional[Iterable[Any]] = None,
+                        method: str = "fit") -> DataFrameModeler:
+        """
+        Calculate stats for selected columns.
+        """
+        # TODO(*): Factor out this piece.
+        # Validate column selection.
+        cols = cols or self._df.columns
+        dbg.dassert_is_subset(cols, self._df.columns)
+        # Slice dataframe according to `fit` or `predict`.
+        if method == "fit":
+            df = self.ins_df[cols]
+        elif method == "predict":
+            df = self.df[cols]
+        else:
+            raise ValueError(f"Unrecognized method `{method}`.")
+        stats_dict = {}
+        for col in df.columns:
+            stats_val = self._calculate_series_stats(df[col])
+            stats_dict[col] = stats_val
+        stats_df = pd.concat(stats_dict, axis=1)
+        # Add info.
+        method_info = collections.OrderedDict()
+        method_info["stats"] = stats_df
+        info = collections.OrderedDict()
+        info[method] = method_info
+        return DataFrameModeler(self.df, oos_start=self.oos_start, info=info)
+
+
     def correlate_with_lag(
-        self, lag: int, cols: Optional[Iterable[str]] = None, method: str = "fit"
+        self, lag: int, cols: Optional[Iterable[Any]] = None, method: str = "fit"
     ) -> DataFrameModeler:
         """
         Calculate correlation of `cols` with lags of `cols`.
@@ -336,3 +371,25 @@ class DataFrameModeler:
             raise ValueError(f"Unrecognized method `{method}`.")
         dfm = DataFrameModeler(df_out, oos_start, info)
         return dfm
+
+    @staticmethod
+    def _calculate_series_stats(srs: pd.Series) -> pd.Series:
+        """
+        Calculate stats for a single series.
+        """
+        dbg.dassert(not srs.empty, msg="Series should not be empty")
+        stats_dict = {}
+        stats_dict[0] = stats.summarize_time_index_info(srs)
+        stats_dict[1] = stats.compute_jensen_ratio(srs)
+        stats_dict[2] = stats.compute_forecastability(srs)
+        stats_dict[3] = stats.compute_moments(srs)
+        stats_dict[4] = stats.compute_special_value_stats(srs)
+        stats_dict[5] = stats.apply_normality_test(srs, prefix="normality_")
+        stats_dict[6] = stats.apply_adf_test(srs, prefix="adf_")
+        stats_dict[7] = stats.apply_kpss_test(srs, prefix="kpss_")
+        stats_dict[8] = stats.compute_interarrival_time_stats(srs, prefix="interarrival_")
+        # Sort dict by integer keys.
+        stats_dict = dict(sorted(stats_dict.items()))
+        stats_srs = pd.concat(stats_dict).droplevel(0)
+        stats_srs.name = "stats"
+        return stats_srs
