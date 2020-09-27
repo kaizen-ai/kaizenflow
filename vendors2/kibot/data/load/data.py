@@ -4,9 +4,10 @@ from typing import Optional
 import pandas as pd
 
 import helpers.cache as cache
-import helpers.s3 as hs3
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 import vendors2.kibot.data.load.file_path_generator as fpgen
+import vendors2.kibot.data.transform.normalizers as nls
 import vendors2.kibot.data.types as types
 
 MEMORY = cache.get_cache("disk", tag=None)
@@ -41,11 +42,15 @@ class KibotDataLoader:
             frequency=frequency,
             contract_type=contract_type,
             unadjusted=unadjusted,
+            ext=types.Extension.CSV,
         )
         if cache_data:
             data = _read_data_from_disk_cache(file_path, nrows)
         else:
             data = _read_data_from_disk(file_path, nrows)
+
+        data = nls.get_normalizer(frequency=frequency)(data)
+
         return data
 
 
@@ -69,8 +74,6 @@ def _read_data(file_path: str, nrows: Optional[int]) -> pd.DataFrame:
             hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
         )
 
-    df = pd.read_parquet(file_path)
+    df = pd.read_csv(file_path, header=None, nrows=nrows)
 
-    if nrows is not None:
-        df = df.head(nrows)
     return df

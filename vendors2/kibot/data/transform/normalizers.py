@@ -1,9 +1,10 @@
 import logging
-from typing import Callable, Optional
+from typing import Callable
 
 import pandas as pd
 
 import helpers.dbg as dbg
+import vendors2.kibot.data.types as types
 
 _LOG = logging.getLogger(__name__)
 
@@ -65,18 +66,19 @@ def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def get_normalizer(dataset: str) -> Optional[Callable]:
+def get_normalizer(frequency: types.Frequency) -> Callable:
     """Choose a normalizer function based on a dataset name.
 
     :param dataset: dataset name
+    :return: a function that can process a dataframe
+    :raises AssertionError: if a frequency is not supported in 'Mapping'.
     """
-    ret = None
-    if dataset.endswith("1min"):
-        ret = _normalize_1_min
-    elif dataset.endswith("daily"):
-        ret = _normalize_daily
-    elif dataset.endswith("tick"):
-        dbg.dfatal("Support for dataset '%s' not implemented yet")
-    else:
-        dbg.dfatal("Unexpected dataset '%s'", dataset)
-    return ret
+    MAPPING = {
+        types.Frequency.Daily: _normalize_daily,
+        types.Frequency.Minutely: _normalize_1_min,
+    }
+
+    if frequency not in MAPPING:
+        dbg.dfatal("Support for frequency '%s' not implemented yet", frequency)
+
+    return MAPPING[frequency]
