@@ -1,4 +1,3 @@
-import functools
 from typing import Optional
 
 import pandas as pd
@@ -15,7 +14,7 @@ MEMORY = cache.get_cache("disk", tag=None)
 
 class KibotDataLoader:
     @staticmethod
-    @functools.lru_cache(maxsize=None)
+    @cache.cache
     def read_data(
         symbol: str,
         asset_class: types.AssetClass,
