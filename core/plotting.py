@@ -508,7 +508,9 @@ def plot_cols(
         data /= data.std()
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
-    data.plot(kind="density", colormap=colormap, ax=axes[0])
+    data.replace([np.inf, -np.inf], np.nan).plot(
+        kind="density", colormap=colormap, ax=axes[0]
+    )
     data.plot(colormap=colormap, ax=axes[1])
 
 

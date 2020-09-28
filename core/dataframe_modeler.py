@@ -12,6 +12,7 @@ import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import matplotlib as mpl
+import numpy as np
 import pandas as pd
 
 import core.dataflow as dtf
@@ -375,7 +376,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         pca = plot.PCA(mode="standard")
-        pca.fit(df.fillna(0))
+        pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_components(num_components)
 
     def plot_explained_variance(
@@ -383,7 +384,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         pca = plot.PCA(mode="standard")
-        pca.fit(df.fillna(0))
+        pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_explained_variance()
 
     def plot_qq(
@@ -468,9 +469,6 @@ class DataFrameModeler:
         stats_dict[5] = stats.apply_normality_test(srs, prefix="normality_")
         stats_dict[6] = stats.apply_adf_test(srs, prefix="adf_")
         stats_dict[7] = stats.apply_kpss_test(srs, prefix="kpss_")
-        stats_dict[8] = stats.compute_interarrival_time_stats(
-            srs, prefix="interarrival_"
-        )
         # Sort dict by integer keys.
         stats_dict = dict(sorted(stats_dict.items()))
         stats_srs = pd.concat(stats_dict).droplevel(0)

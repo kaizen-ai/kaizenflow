@@ -60,11 +60,12 @@ def compute_moments(
             name=srs.name,
         )
         return nan_result
+    # TODO(*): re-applyg stricter sp.stats nan_policy after we handle inf's.
     result_values = [
         data.mean(),
         data.std(),
-        sp.stats.skew(data, nan_policy="raise"),
-        sp.stats.kurtosis(data, nan_policy="raise"),
+        sp.stats.skew(data, nan_policy="omit"),
+        sp.stats.kurtosis(data, nan_policy="omit"),
     ]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
@@ -940,6 +941,8 @@ def apply_adf_test(
     autolag = autolag or "AIC"
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
+    # Hack until we factor out inf handling.
+    srs = srs.replace([np.inf, -np.inf], np.nan)
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
     result_index = [
