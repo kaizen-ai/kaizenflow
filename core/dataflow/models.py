@@ -747,6 +747,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
+        disable_tqdm: bool = False,
     ) -> None:
         """
         Initialize node for SARIMAX model.
@@ -761,6 +762,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         :param x_vars: names of x variables
         :param col_mode: "replace_all" or "merge_all"
         :param nan_mode: "raise" or "drop"
+        :param disable_tqdm: whether to disable tqdm progress bar
         """
         super().__init__(nid)
         self._y_vars = y_vars
@@ -775,6 +777,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         self._model_results = None
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode or "raise"
+        self._disable_tqdm = disable_tqdm
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -785,7 +788,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         y_fit = df[y_vars]
         non_nan_idx = df[y_vars].dropna().index
         if self._x_vars is not None:
-            x_fit = self._get_bwd_x_df(df).dropna()
+            x_fit = self._get_bkwd_x_df(df).dropna()
             x_fit_non_nan_idx = x_fit.dropna().index
             non_nan_idx = non_nan_idx.intersection(x_fit_non_nan_idx)
             idx = idx[self._steps_ahead - 1 :]
@@ -823,7 +826,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         dbg.dassert_eq(len(y_vars), 1, "Only univariate `y` is supported")
         y_predict = df[y_vars]
         if self._x_vars is not None:
-            x_predict = self._get_bwd_x_df(df)
+            x_predict = self._get_bkwd_x_df(df)
             x_predict = x_predict.dropna()
             y_predict = y_predict.loc[x_predict.index]
             idx = idx[self._steps_ahead - 1 :]
@@ -853,7 +856,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         pred_range = len(y)
         if self._x_vars is not None:
             pred_range -= self._steps_ahead - 1
-        for t in tqdm(range(1, pred_range)):
+        for t in tqdm(range(1, pred_range), disable=self._disable_tqdm):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
             if x is not None:
@@ -877,7 +880,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         preds = preds.to_frame(name=f"{y_var}_{self._steps_ahead}_hat")
         return preds
 
-    def _get_bwd_x_df(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _get_bkwd_x_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Return dataframe of `steps_ahead - 1` backward x values.
 
@@ -886,9 +889,9 @@ class ContinuousSarimaxModel(FitPredictNode):
         """
         x_vars = self._to_list(self._x_vars)
         shift = self._steps_ahead - 1
-        mapper = lambda x: x + "_bwd_%i" % shift
-        bwd_x_df = df[x_vars].shift(shift).rename(columns=mapper)
-        return bwd_x_df
+        mapper = lambda x: x + "_bkwd_%i" % shift
+        bkwd_x_df = df[x_vars].shift(shift).rename(columns=mapper)
+        return bkwd_x_df
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
