@@ -8,11 +8,11 @@ import core.event_study as esf
 import core.signal_processing as sigp
 from core.dataflow.builder import DagBuilder
 from core.dataflow.core import DAG
+from core.dataflow.models import SkLearnModel
 from core.dataflow.nodes import (
     ColumnTransformer,
     DataframeMethodRunner,
     Resample,
-    SkLearnModel,
     YConnector,
 )
 
@@ -388,6 +388,7 @@ class ContinuousSignalModelBuilder(DagBuilder):
         )
         dag.add_node(node)
         dag.connect(
-            self._get_nid("merge_predictions"), self._get_nid("output_socket"),
+            self._get_nid("merge_predictions"),
+            self._get_nid("output_socket"),
         )
         return dag
