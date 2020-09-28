@@ -15,13 +15,13 @@ from tqdm.autonotebook import tqdm
 
 import core.backtest as bcktst
 import core.data_adapters as adpt
-import core.dataflow as dtf
 import core.signal_processing as sigp
 import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.core import DAG
+from core.dataflow.nodes import FitPredictNode, extract_info
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
-class ContinuousSkLearnModel(dtf.FitPredictNode):
+class ContinuousSkLearnModel(FitPredictNode):
     """
     Fit and predict an sklearn model.
     """
@@ -285,7 +285,7 @@ class ContinuousSkLearnModel(dtf.FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-class UnsupervisedSkLearnModel(dtf.FitPredictNode):
+class UnsupervisedSkLearnModel(FitPredictNode):
     """
     Fit and transform an unsupervised sklearn model.
     """
@@ -433,7 +433,7 @@ class UnsupervisedSkLearnModel(dtf.FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-class Residualizer(dtf.FitPredictNode):
+class Residualizer(FitPredictNode):
     """
     Residualize using an sklearn model with `inverse_transform()`.
     """
@@ -564,7 +564,7 @@ class Residualizer(dtf.FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-class SkLearnModel(dtf.FitPredictNode):
+class SkLearnModel(FitPredictNode):
     def __init__(
         self,
         nid: str,
@@ -721,7 +721,7 @@ class SkLearnModel(dtf.FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-class ContinuousSarimaxModel(dtf.FitPredictNode):
+class ContinuousSarimaxModel(FitPredictNode):
     """
     A dataflow node for continuous SARIMAX model.
 
@@ -960,7 +960,7 @@ class ContinuousSarimaxModel(dtf.FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-class ContinuousDeepArModel(dtf.FitPredictNode):
+class ContinuousDeepArModel(FitPredictNode):
     """
     A dataflow node for a DeepAR model.
 
@@ -1150,7 +1150,7 @@ class ContinuousDeepArModel(dtf.FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-class DeepARGlobalModel(dtf.FitPredictNode):
+class DeepARGlobalModel(FitPredictNode):
     """
     A dataflow node for a DeepAR model.
 
@@ -1339,7 +1339,7 @@ class DeepARGlobalModel(dtf.FitPredictNode):
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-class SmaModel(dtf.FitPredictNode):
+class SmaModel(FitPredictNode):
     """
     Fit and predict a smooth moving average model.
     """
@@ -1539,7 +1539,7 @@ class SmaModel(dtf.FitPredictNode):
         return info
 
 
-class VolatilityModel(dtf.FitPredictNode):
+class VolatilityModel(FitPredictNode):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -1718,7 +1718,7 @@ def cross_validate(
         dag.run_dag("fit")
         dag.run_dag("predict")
         #
-        split_info["stages"] = dtf.extract_info(dag, ["fit", "predict"])
+        split_info["stages"] = extract_info(dag, ["fit", "predict"])
         result_bundle["split_" + str(i)] = split_info
     return result_bundle
 
