@@ -13,6 +13,7 @@ import pandas as pd
 
 import core.finance as fin
 import core.signal_processing as sigp
+import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
@@ -663,6 +664,118 @@ class VolatilityNormalizer(FitPredictNode):
         else:
             raise ValueError("Invalid `col_mode`='%s'" % self._col_mode)
         return df_out
+
+
+# #############################################################################
+# Cross-validation
+# #############################################################################
+
+
+def _get_source_idxs(dag: DAG, mode: Optional[str] = None) -> Dict[str, pd.Index]:
+    """
+    Warm up source nodes and extract dataframe indices.
+
+    :param mode: Determines how source indices extracted from dataframes
+        - `default`: return index as-is
+        - `dropna`: drop NaNs (any) and then return index
+        - `ffill_dropna`: forward fill NaNs, drop leading NaNs, then return
+                          index
+    """
+    mode = mode or "default"
+    # Warm up source nodes to get dataframes from which we can generate splits.
+    source_nids = dag.get_sources()
+    for nid in source_nids:
+        dag.run_leq_node(nid, "fit")
+    # Collect source dataframe indices.
+    source_idxs = {}
+    for nid in source_nids:
+        df = dag.get_node(nid).get_df()
+        if mode == "default":
+            source_idxs[nid] = df.index
+        elif mode == "dropna":
+            source_idxs[nid] = df.dropna().index
+        elif mode == "ffill_dropna":
+            source_idxs[nid] = df.fillna(method="ffill").dropna().index
+        else:
+            raise ValueError("Unsupported mode `%s`" % mode)
+    return source_idxs
+
+
+# TODO(Paul): Formalize what this returns and what can be done with it.
+def cross_validate(
+    dag: DAG,
+    split_func: Callable,
+    split_func_kwargs: Dict,
+    idx_mode: Optional[str] = None,
+) -> collections.OrderedDict:
+    """
+    Generate splits, run train/test, collect info.
+
+    :param idx_mode: same meaning as mode in `_get_source_idxs`
+    :return: DAG info for each split, keyed by split
+    """
+    # Get dataframe indices of source nodes.
+    source_idxs = _get_source_idxs(dag, mode=idx_mode)
+    composite_idx = stats.combine_indices(source_idxs.values())
+    # Generate cross-validation splits from
+    splits = split_func(composite_idx, **split_func_kwargs)
+    _LOG.debug(stats.convert_splits_to_string(splits))
+    #
+    result_bundle = collections.OrderedDict()
+    # TODO(Paul): rename train/test to fit/predict.
+    for i, (train_idxs, test_idxs) in enumerate(splits):
+        split_info = collections.OrderedDict()
+        for nid, idx in source_idxs.items():
+            node_info = collections.OrderedDict()
+            node_train_idxs = idx.intersection(train_idxs)
+            dbg.dassert_lte(1, node_train_idxs.size)
+            node_info["fit_idxs"] = node_train_idxs
+            dag.get_node(nid).set_fit_idxs(node_train_idxs)
+            #
+            node_test_idxs = idx.intersection(test_idxs)
+            dbg.dassert_lte(1, node_test_idxs.size)
+            node_info["predict_idxs"] = node_test_idxs
+            dag.get_node(nid).set_predict_idxs(node_test_idxs)
+            #
+            split_info[nid] = node_info
+        dag.run_dag("fit")
+        dag.run_dag("predict")
+        #
+        split_info["stages"] = extract_info(dag, ["fit", "predict"])
+        result_bundle["split_" + str(i)] = split_info
+    return result_bundle
+
+
+def process_result_bundle(result_bundle: Dict) -> collections.OrderedDict:
+    info = collections.OrderedDict()
+    split_names = []
+    model_coeffs = []
+    model_x_vars = []
+    pnl_rets = []
+    for split in result_bundle.keys():
+        split_names.append(split)
+        # model_coeffs.append(
+        #    result_bundle[split]["stages"]["model"]["fit"]["model_coeffs"]
+        # )
+        model_x_vars.append(
+            result_bundle[split]["stages"]["model"]["fit"]["model_x_vars"]
+        )
+        pnl_rets.append(
+            result_bundle[split]["stages"]["model"]["predict"]["model_perf"][
+                "pnl_rets"
+            ]
+        )
+    model_df = pd.DataFrame(
+        model_coeffs, index=split_names, columns=model_x_vars[0]
+    )
+    pnl_rets = pd.concat(pnl_rets)
+    sr = stats.compute_sharpe_ratio(
+        sigp.resample(pnl_rets, rule="1B").sum(), time_scaling=252
+    )
+    info["model_df"] = copy.copy(model_df)
+    info["pnl_rets"] = copy.copy(pnl_rets)
+    info["sr"] = copy.copy(sr)
+    return info
 
 
 def get_df_info_as_string(df: pd.DataFrame) -> str:
