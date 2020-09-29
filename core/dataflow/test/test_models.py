@@ -220,6 +220,42 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         self.check_string(output_str)
 
+    def test_fit_zero_step1(self) -> None:
+        """
+        Fit on `x = y`.
+        """
+        data = self._get_data([1], [])
+        data["x"] = data["ret_0"]
+        config = self._get_config((1, 0, 0))
+        config["steps_ahead"] = 0
+        config["fit_kwargs"] = {"start_params": [0.9999, 0.0001, 1.57e-11]}
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        df_out = csm.fit(data)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test_fit_step_one1(self) -> None:
+        """
+        Fit on `x = y`.
+        """
+        data = self._get_data([1], [])
+        data["x"] = data["ret_0"]
+        config = self._get_config((1, 0, 0))
+        config["steps_ahead"] = 1
+        config["fit_kwargs"] = {"start_params": [0.9999, 0.0001, 1.57e-11]}
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        df_out = csm.fit(data)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
+
     def test_fit_no_x1(self) -> None:
         """
         Fit without providing an exogenous variable.
@@ -287,12 +323,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         df_out3 = csm.predict(data_predict3)["df_out"]
         #
         pd.testing.assert_series_equal(
-            df_out1.loc["2010-03-26":"2010-04-02", "ret_0_3_hat"],
-            df_out2.loc["2010-03-26":"2010-04-02", "ret_0_3_hat"],
+            df_out1.loc["2010-03-29":"2010-04-02", "ret_0_3_hat"],
+            df_out2.loc["2010-03-29":"2010-04-02", "ret_0_3_hat"],
         )
         pd.testing.assert_series_equal(
-            df_out2.loc["2010-04-07":"2010-04-17", "ret_0_3_hat"],
-            df_out3.loc["2010-04-07":"2010-04-17", "ret_0_3_hat"],
+            df_out2.loc["2010-04-10":"2010-04-17", "ret_0_3_hat"],
+            df_out3.loc["2010-04-10":"2010-04-17", "ret_0_3_hat"],
         )
         df_out = pd.concat([df_out1, df_out2, df_out3], axis=1)
         self.check_string(hut.convert_df_to_string(df_out, index=True))
@@ -336,12 +372,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         df_out3 = csm.predict(data_predict3)["df_out"]
         #
         pd.testing.assert_series_equal(
-            df_out1.loc["2010-03-23":"2010-04-02", "ret_0_3_hat"],
-            df_out2.loc["2010-03-23":"2010-04-02", "ret_0_3_hat"],
+            df_out1.loc["2010-03-26":"2010-04-02", "ret_0_3_hat"],
+            df_out2.loc["2010-03-26":"2010-04-02", "ret_0_3_hat"],
         )
         pd.testing.assert_series_equal(
-            df_out2.loc["2010-04-04":"2010-04-17", "ret_0_3_hat"],
-            df_out3.loc["2010-04-04":"2010-04-17", "ret_0_3_hat"],
+            df_out2.loc["2010-04-07":"2010-04-17", "ret_0_3_hat"],
+            df_out3.loc["2010-04-07":"2010-04-17", "ret_0_3_hat"],
         )
 
     @staticmethod

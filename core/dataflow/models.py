@@ -725,8 +725,8 @@ class ContinuousSarimaxModel(FitPredictNode):
 
     This is a wrapper around statsmodels SARIMAX with the following
     modifications:
-      - We predict `y_t`, ... , `y_{t+n}` using `x_{t-n+1}`, ..., `x_t`, where
-       `n` is `steps_ahead`, whereas in the classic implementation it is
+      - We predict `y_t`, ... , `y_{t+n}` using `x_{t-n}`, ..., `x_{t-1}`,
+        where `n` is `steps_ahead`, whereas in the classic implementation it is
         predicted using`x_t`, ... , `x_{t+n}`
       - When making predictions in the `fit` method, we treat the input data as
         out-of-sample. This allows making n-step-ahead predictions on a subset
@@ -791,7 +791,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             x_fit = self._get_bkwd_x_df(df).dropna()
             x_fit_non_nan_idx = x_fit.dropna().index
             non_nan_idx = non_nan_idx.intersection(x_fit_non_nan_idx)
-            idx = idx[self._steps_ahead - 1 :]
+            idx = idx[self._steps_ahead :]
         else:
             x_fit = None
         dbg.dassert(not non_nan_idx.empty)
@@ -829,7 +829,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             x_predict = self._get_bkwd_x_df(df)
             x_predict = x_predict.dropna()
             y_predict = y_predict.loc[x_predict.index]
-            idx = idx[self._steps_ahead - 1 :]
+            idx = idx[self._steps_ahead :]
         else:
             x_predict = None
         # Handle presence of NaNs according to `nan_mode`.
@@ -854,8 +854,9 @@ class ContinuousSarimaxModel(FitPredictNode):
         #     the last one.
         preds = []
         if self._x_vars is not None:
-            pred_range = len(y) - self._steps_ahead + 1
-            pred_start = self._steps_ahead - 1
+            pred_range = len(y) - self._steps_ahead
+            # TODO(Julia): Check this.
+            pred_start = self._steps_ahead or 1
         else:
             pred_range = len(y)
             pred_start = 1
@@ -864,7 +865,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             y_past = y.iloc[:t]
             if x is not None:
                 x_past = x.iloc[:t]
-                x_step = x.iloc[t : t + self._steps_ahead]
+                x_step = x.iloc[t : t + self._steps_ahead + 1]
             else:
                 x_past = None
                 x_step = None
@@ -874,7 +875,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             result_predict = model_predict.filter(self._model_results.params)
             # Make forecast.
             forecast = result_predict.forecast(
-                steps=self._steps_ahead, exog=x_step
+                steps=self._steps_ahead + 1, exog=x_step
             )
             forecast_last_step = forecast.iloc[-1:]
             preds.append(forecast_last_step)
@@ -887,11 +888,11 @@ class ContinuousSarimaxModel(FitPredictNode):
         """
         Return dataframe of `steps_ahead - 1` backward x values.
 
-        This way we predict `y_t` using `x_{t-n+1}`, ..., `x_t`, where `n` is
+        This way we predict `y_t` using `x_{t-n}`, ..., `x_{t-1}`, where `n` is
         `self._steps_ahead`.
         """
         x_vars = self._to_list(self._x_vars)
-        shift = self._steps_ahead - 1
+        shift = self._steps_ahead
         mapper = lambda x: x + "_bkwd_%i" % shift
         bkwd_x_df = df[x_vars].shift(shift).rename(columns=mapper)
         return bkwd_x_df
