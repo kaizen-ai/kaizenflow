@@ -217,11 +217,11 @@
 
 - To render PlantUML in our markdown files instead of `@startuml` you need to use
   the tag:
-  ```
-  \`\`\`plantuml
+  ````
+  ```plantuml
   ...
-  \`\`\`
   ```
+  ````
 
 - We have a `render_md.py` tool to embed images after `plantuml` section.
   Typical usage to insert images to the markdowm file and to preview it:
