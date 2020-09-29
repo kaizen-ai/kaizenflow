@@ -28,7 +28,6 @@ from typing import List, Tuple
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
-import helpers.playback as plbck
 import helpers.printing as prnt
 import helpers.system_interaction as si
 
@@ -146,9 +145,6 @@ def _render_plantuml(
     :param extension: extension for rendered images
     :param dry_run: only changes text skipping image creation
     """
-    # Generate test.
-    playback = plbck.Playback("check_string")
-    print(prnt.frame(playback.run(None)))
     # Store the output.
     out_txt: List[str] = []
     # Store the plantuml code found so far.
