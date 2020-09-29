@@ -47,6 +47,6 @@ class KibotDataLoader:
 
         df = pd.read_csv(file_path, header=None, nrows=nrows)
 
-        df = nls.get_normalizer(frequency=frequency)(df)
+        df = nls.normalize(df=df, frequency=frequency)
 
         return df

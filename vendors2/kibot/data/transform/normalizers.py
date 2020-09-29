@@ -1,5 +1,4 @@
 import logging
-from typing import Callable
 
 import pandas as pd
 
@@ -66,11 +65,12 @@ def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def get_normalizer(frequency: types.Frequency) -> Callable:
-    """Choose a normalizer function based on a dataset name.
+def normalize(df: pd.DataFrame, frequency: types.Frequency) -> pd.DataFrame:
+    """Apply a normalizer function based on the frequency.
 
-    :param dataset: dataset name
-    :return: a function that can process a dataframe
+    :param df: a dataframe that should be normalized
+    :param frequency: frequency of the data
+    :return: a normalized dataframe
     :raises AssertionError: if a frequency is not supported in 'Mapping'.
     """
     MAPPING = {
@@ -81,4 +81,5 @@ def get_normalizer(frequency: types.Frequency) -> Callable:
     if frequency not in MAPPING:
         dbg.dfatal("Support for frequency '%s' not implemented yet", frequency)
 
-    return MAPPING[frequency]
+    normalizer = MAPPING[frequency]
+    return normalizer(df)
