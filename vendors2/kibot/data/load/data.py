@@ -2,19 +2,19 @@ from typing import Optional
 
 import pandas as pd
 
-import helpers.cache as cache
+import helpers.cache as hcac
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 import vendors2.kibot.data.load.file_path_generator as fpgen
 import vendors2.kibot.data.transform.normalizers as nls
 import vendors2.kibot.data.types as types
 
-MEMORY = cache.get_cache("disk", tag=None)
+MEMORY = hcac.get_cache("disk", tag=None)
 
 
 class KibotDataLoader:
     @staticmethod
-    @cache.cache
+    @hcac.cache
     def read_data(
         symbol: str,
         asset_class: types.AssetClass,
