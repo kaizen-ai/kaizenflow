@@ -151,7 +151,7 @@
   ```
 
 - `in_txt` value is too long to keep it in test - needed to be replaced with previously generated file.
-  Also we can add some cosmetic changes and put this test to existent ones:
+  Also some cosmetic changes are needed and code is ready to paste to the existing test:
   ```python
   def test_render_plantuml_playback1(self) -> None:
       """Test real usage for instrument_master_architecture.md.test"""
