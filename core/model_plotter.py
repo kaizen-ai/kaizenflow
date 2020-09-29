@@ -41,6 +41,7 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
+        target_volatility: Optional[float] = None,
         resample_rule: Optional[str] = None,
     ) -> None:
         """
@@ -57,10 +58,15 @@ class ModelPlotter:
         :param keys: Use all available if `None`
         :param weights: Average if `None`
         :param mode: "all_available", "ins", or "oos"
+        :param target_volatility: Rescale portfolio to achieve
+            `target_volatility` on in-sample region
         :param resample_rule: Resampling frequency to apply before plotting
         """
         rets, _, _ = self.model_evaluator.aggregate_models(
-            keys=keys, weights=weights, mode=mode
+            keys=keys,
+            weights=weights,
+            mode=mode,
+            target_volatility=target_volatility,
         )
         if resample_rule is not None:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
@@ -91,6 +97,7 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
+        target_volatility: Optional[float] = None,
         resample_rule: Optional[str] = None,
         benchmark: Optional[pd.Series] = None,
         plot_cumulative_returns_kwargs: Optional[dict] = None,
@@ -112,12 +119,17 @@ class ModelPlotter:
         :param keys: Use all available if `None`
         :param weights: Average if `None`
         :param mode: "all_available", "ins", or "oos"
+        :param target_volatility: Rescale portfolio to achieve
+            `target_volatility` on in-sample region
         :param resample_rule: Resampling frequency to apply before plotting
         :param benchmark: Benchmark returns to compare against
         """
         # Obtain (log) returns.
         rets, _, _ = self.model_evaluator.aggregate_models(
-            keys=keys, weights=weights, mode=mode
+            keys=keys,
+            weights=weights,
+            mode=mode,
+            target_volatility=target_volatility,
         )
         if resample_rule is not None:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
@@ -179,6 +191,7 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
+        target_volatility: Optional[float] = None,
         resample_rule: Optional[str] = None,
         plot_yearly_barplot_kwargs: Optional[dict] = None,
         plot_monthly_heatmap_kwargs: Optional[dict] = None,
@@ -190,6 +203,8 @@ class ModelPlotter:
         :param keys: Use all available if `None`
         :param weights: Average if `None`
         :param mode: "all_available", "ins", or "oos"
+        :param target_volatility: Rescale portfolio to achieve
+            `target_volatility` on in-sample region
         :param resample_rule: Resampling frequency to apply before plotting
         """
         plot_yearly_barplot_kwargs = plot_yearly_barplot_kwargs or {"unit": "%"}
@@ -199,7 +214,10 @@ class ModelPlotter:
             or {"tau": 52, "max_depth": 1, "unit": "%"}
         )
         rets, _, _ = self.model_evaluator.aggregate_models(
-            keys=keys, weights=weights, mode=mode
+            keys=keys,
+            weights=weights,
+            mode=mode,
+            target_volatility=target_volatility,
         )
         if resample_rule is not None:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
@@ -233,6 +251,7 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
+        target_volatility: Optional[float] = None,
     ) -> None:
         """
         Plot holdings and turnover.
@@ -240,9 +259,14 @@ class ModelPlotter:
         :param keys: Use all available if `None`
         :param weights: Average if `None`
         :param mode: "all_available", "ins", or "oos"
+        :param target_volatility: Rescale portfolio to achieve
+            `target_volatility` on in-sample region
         """
         _, pos, _ = self.model_evaluator.aggregate_models(
-            keys=keys, weights=weights, mode=mode
+            keys=keys,
+            weights=weights,
+            mode=mode,
+            target_volatility=target_volatility,
         )
         num_plots = 2
         _, axs = plt.subplots(
