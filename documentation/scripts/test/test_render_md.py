@@ -3,6 +3,7 @@ import os
 from typing import List
 
 import documentation.scripts.render_md as rmd
+import helpers.io_ as io_
 import helpers.unit_test as ut
 
 _LOG = logging.getLogger(__name__)
@@ -102,6 +103,23 @@ class Test_render_md3(ut.TestCase):
             "```",
         ]
         self._check_str_after_render(in_text)
+
+    def test_render_plantuml_playback1(self) -> None:
+        """Test real usage for instrument_master_architecture.md"""
+        # Define input variables
+        file_name = "instrument_master_architecture.md.test"
+        in_file = os.path.join(self.get_input_dir(), file_name)
+        in_txt = io_.from_file(in_file).split("\n")
+        out_file = os.path.join(self.get_scratch_space(), file_name)
+        extension = "png"
+        dry_run = True
+        # Call function to test
+        act = rmd._render_plantuml(
+            in_txt=in_txt, out_file=out_file, extension=extension, dry_run=dry_run
+        )
+        act = "\n".join(act)
+        # Check output
+        self.check_string(act)
 
     def _check_str_after_render(self, in_text: List[str]) -> None:
         out_file = os.path.join(self.get_scratch_space(), "out.md")

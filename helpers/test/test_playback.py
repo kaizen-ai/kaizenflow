@@ -172,3 +172,62 @@ class TestPlaybackInputOutput1(hut.TestCase):
         self.check_string(code)
         _LOG.debug("Testing code:\n%s", code)
         exec(code, locals())  # pylint: disable=exec-used
+
+
+class TestToPythonCode1(hut.TestCase):
+    """Test to_python_code() for different types."""
+
+    def _check(self, input_obj: Any, expected: str) -> None:
+        res = plbck.to_python_code(input_obj)
+        self.assert_equal(res, expected)
+
+    def test_float1(self) -> None:
+        """Test float without first zero"""
+        self._check(0.1, "0.1")
+
+    def test_float2(self) -> None:
+        """Test positive float"""
+        self._check(1.0, "1.0")
+
+    def test_float3(self) -> None:
+        """Test negative float"""
+        self._check(-1.1, "-1.1")
+
+    def test_int1(self) -> None:
+        """Test zero"""
+        self._check(0, "0")
+
+    def test_int2(self) -> None:
+        """Test positive int"""
+        self._check(10, "10")
+
+    def test_int3(self) -> None:
+        """Test negative int"""
+        self._check(-10, "-10")
+
+    def test_str1(self) -> None:
+        """Test str simple"""
+        self._check("a", '"a"')
+
+    def test_str2(self) -> None:
+        """Test str with double quotes"""
+        self._check('"b"', '"\\"b\\""')
+
+    def test_str3(self) -> None:
+        """Test str with single quotes"""
+        self._check("'c'", "\"'c'\"")
+
+    def test_list1(self) -> None:
+        """Test List"""
+        self._check([1, 0.2, "3"], '[1, 0.2, "3"]')
+
+    def test_dict1(self) -> None:
+        """Test Dist"""
+        self._check({"a": 0.2, 3: "b"}, '{"a": 0.2, 3: "b"}')
+
+    def test_df1(self) -> None:
+        """Test pd.DataFrame (single quotes expected in field names)"""
+        self._check(
+            pd.DataFrame.from_dict({"a": [0.2, 0.1]}),
+            "pd.DataFrame.from_dict({'a': [0.2, 0.1]})",
+        )
