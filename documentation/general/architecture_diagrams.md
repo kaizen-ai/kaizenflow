@@ -205,7 +205,7 @@
 - The website https://structurizr.com has lots of information on using tools for
   C4
 
-# PlantUML is Markdown
+## PlantUML is Markdown
 
 - We use PlantUML for rendering diagrams in our documentation
   - For interactive use you can rely on online tools like:
@@ -220,8 +220,11 @@
   ```
   \`\`\`plantuml
   ...
-  \\\
+  \`\`\`
   ```
 
-- We are implementing a `render.py` tool that can render a markdown with PlantUML
-  embedded in the browser or GitHub
+- We have a `render_md.py` tool to embed images after `plantuml` section.
+  Typical usage to insert images to the markdowm file and to preview it:
+  ```
+  > documentation/scripts/render_md.py -i documentation/general/architecture.md
+  ```
