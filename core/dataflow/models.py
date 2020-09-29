@@ -853,10 +853,13 @@ class ContinuousSarimaxModel(FitPredictNode):
         # TODO(Julia): Consider leaving all steps of the prediction, not just
         #     the last one.
         preds = []
-        pred_range = len(y)
         if self._x_vars is not None:
-            pred_range -= self._steps_ahead - 1
-        for t in tqdm(range(1, pred_range), disable=self._disable_tqdm):
+            pred_range = len(y) - self._steps_ahead + 1
+            pred_start = self._steps_ahead - 1
+        else:
+            pred_range = len(y)
+            pred_start = 1
+        for t in tqdm(range(pred_start, pred_range), disable=self._disable_tqdm):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
             if x is not None:
