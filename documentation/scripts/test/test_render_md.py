@@ -105,7 +105,7 @@ class Test_render_md3(ut.TestCase):
         self._check_str_after_render(in_text)
 
     def test_render_plantuml_playback1(self) -> None:
-        """Test real usage for vendors2/kibot/instrument_master_architecture.md.test"""
+        """Test real usage for instrument_master_architecture.md"""
         # Define input variables
         file_name = "instrument_master_architecture.md.test"
         in_file = os.path.join(self.get_input_dir(), file_name)

@@ -1,8 +1,7 @@
 <!--ts-->
    * [Playback](#playback)
-      * [Sources](#sources)
+      * [Code and tests](#code-and-tests)
       * [Using playback](#using-playback)
-
 
 
 <!--te-->
@@ -107,3 +106,68 @@
           # Check whether the expected value equals the actual value.
           self.assertEqual(act, exp)
   ```
+
+### Example 2: testing `_render_plantuml()` from `render_md.py`
+
+- Copy real `instrument_master_architecture.md` to a test location
+
+- Add playback into the code:
+  ```python
+  ...
+  import helpers.playback as plbck
+  ...
+  def _render_plantuml(
+      in_txt: List[str], out_file: str, extension: str, dry_run: bool
+  ) -> List[str]:
+      # Generate test.
+      playback = plbck.Playback("check_string")
+      print(prnt.frame(playback.run(None)))
+      ...
+  ...
+  ```
+
+- Run `render_md.py -i instrument_master_architecture.md`
+
+- The following output is prompted:
+  ```python
+  # Test created for __main__._render_plantuml
+  import helpers.unit_test as hut
+  import jsonpickle
+  import pandas as pd
+
+
+  class TestRenderPlantuml(hut.TestCase):
+      def test1(self) -> None:
+          # Define input variables
+          in_txt = ["<!--ts-->", ..., "", "> **GP:**: Not urgent", ""]
+          out_file = "instrument_master_architecture.md"
+          extension = "png"
+          dry_run = False
+          # Call function to test
+          act = _render_plantuml(in_txt=in_txt, out_file=out_file, extension=extension, dry_run=dry_run)
+          act = str(act)
+          # Check output
+          self.check_string(act)
+  ```
+
+- `in_txt` value is too long to keep it in test - needed to be replaced with previously generated file.
+  Also we can add some cosmetic changes and put this test to existent ones:
+  ```python
+  def test_render_plantuml_playback1(self) -> None:
+      """Test real usage for instrument_master_architecture.md.test"""
+      # Define input variables
+      file_name = "instrument_master_architecture.md.test"
+      in_file = os.path.join(self.get_input_dir(), file_name)
+      in_txt = io_.from_file(in_file).split("\n")
+      out_file = os.path.join(self.get_scratch_space(), file_name)
+      extension = "png"
+      dry_run = True
+      # Call function to test
+      act = rmd._render_plantuml(
+          in_txt=in_txt, out_file=out_file, extension=extension, dry_run=dry_run
+      )
+      act = "\n".join(act)
+      # Check output
+      self.check_string(act)
+  ```
+
