@@ -191,10 +191,7 @@ def fit_random_walk_plus_noise(
 # #############################################################################
 
 
-def correlate_with_lag(
-        df: pd.DataFrame,
-        lag: int,
-) -> pd.DataFrame:
+def correlate_with_lag(df: pd.DataFrame, lag: int,) -> pd.DataFrame:
     """
     Combine cols of `df` with their lags and compute the correlation matrix.
 
@@ -791,13 +788,13 @@ def compute_rolling_sharpe_ratio(
 
 
 def compute_rolling_cov(
-        srs1: Union[pd.DataFrame, pd.Series],
-        srs2: Union[pd.DataFrame, pd.Series],
-        tau: float,
-        demean: bool = True,
-        min_periods: int = 0,
-        min_depth: int = 1,
-        max_depth: int = 1,
+    srs1: Union[pd.DataFrame, pd.Series],
+    srs2: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    demean: bool = True,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
     """Smooth moving correlation."""
     if demean:
