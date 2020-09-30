@@ -73,19 +73,6 @@ class DataFrameModeler:
     # Dataflow nodes
     # #########################################################################
 
-    def apply_dataframe_method_runner(
-        self, method: str, method_kwargs: Optional[Dict[str, Any]] = None
-    ) -> DataFrameModeler:
-        """
-        Execute a dataframe method.
-        """
-        model = dtf.DataframeMethodRunner(
-            nid="dataframe_method_runner",
-            method=method,
-            method_kwargs=method_kwargs,
-        )
-        return self._run_model(model, method)
-
     def apply_column_transformer(
         self,
         transformer_func: Callable[..., pd.DataFrame],
@@ -108,6 +95,22 @@ class DataFrameModeler:
             col_rename_func=col_rename_func,
             col_mode=col_mode,
             nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
+    def apply_dataframe_method_runner(
+        self,
+        dataframe_method: str,
+        method_kwargs: Optional[Dict[str, Any]] = None,
+        method: str = "fit",
+    ) -> DataFrameModeler:
+        """
+        Execute a dataframe method.
+        """
+        model = dtf.DataframeMethodRunner(
+            nid="dataframe_method_runner",
+            method=dataframe_method,
+            method_kwargs=method_kwargs,
         )
         return self._run_model(model, method)
 
