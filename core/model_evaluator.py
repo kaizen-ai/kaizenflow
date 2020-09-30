@@ -24,8 +24,11 @@ class ModelEvaluator:
 
     def __init__(
         self,
+        *,
         returns: Dict[Any, pd.Series],
         predictions: Dict[Any, pd.Series],
+        price: Optional[Dict[Any, pd.Series]] = None,
+        volume: Optional[Dict[Any, pd.Series]] = None,
         target_volatility: Optional[float] = None,
         oos_start: Optional[float] = None,
     ) -> None:
@@ -46,6 +49,16 @@ class ModelEvaluator:
         )
         self.rets = {k: returns[k] for k in self.valid_keys}
         self.preds = {k: predictions[k] for k in self.valid_keys}
+        self.price = None
+        self.volume = None
+        if price is not None:
+            keys = self._get_valid_keys(returns, price, self.oos_start)
+            dbg.dassert(set(self.valid_keys) == set(keys))
+            self.price = {k: price[k] for k in self.valid_keys}
+        if volume is not None:
+            keys = self._get_valid_keys(returns, volume, self.oos_start)
+            dbg.dassert(set(self.valid_keys) == set(keys))
+            self.volume = {k: volume[k] for k in self.valid_keys}
         self.target_volatility = target_volatility or None
         # Calculate positions
         self.pos = self._calculate_positions()
@@ -82,6 +95,12 @@ class ModelEvaluator:
             series_dict = self.pos
         elif series == "pnls":
             series_dict = self.pnls
+        elif series == "price":
+            dbg.dassert(self.price, msg="No price data supplied")
+            series_dict = self.price
+        elif series == "volume":
+            dbg.dassert(self.volume, msg="No volume data supplied")
+            series_dict = self.volume
         else:
             raise ValueError(f"Unrecognized series `{series}`.")
         # NOTE: ins/oos overlap by one point as-is (consider changing).
@@ -333,19 +352,19 @@ class ModelEvaluator:
 
     def _get_valid_keys(
         self,
-        returns: Dict[Any, pd.Series],
-        predictions: Dict[Any, pd.Series],
+        dict1: Dict[Any, pd.Series],
+        dict2: Dict[Any, pd.Series],
         oos_start: Optional[float],
     ) -> list:
         """
         Perform basic sanity checks.
         """
-        rets_keys = set(self._get_valid_keys_helper(returns, oos_start))
-        preds_keys = set(self._get_valid_keys_helper(predictions, oos_start))
-        shared_keys = rets_keys.intersection(preds_keys)
+        dict1_keys = set(self._get_valid_keys_helper(dict1, oos_start))
+        dict2_keys = set(self._get_valid_keys_helper(dict2, oos_start))
+        shared_keys = dict1_keys.intersection(dict2_keys)
         dbg.dassert(shared_keys, msg="Set of valid keys must be nonempty!")
         for key in shared_keys:
-            dbg.dassert_eq(returns[key].index.freq, predictions[key].index.freq)
+            dbg.dassert_eq(dict1[key].index.freq, dict2[key].index.freq)
         return list(shared_keys)
 
     @staticmethod
