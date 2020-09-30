@@ -796,7 +796,7 @@ def compute_rolling_cov(
     min_depth: int = 1,
     max_depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
-    """Smooth moving correlation."""
+    """Smooth moving covariance."""
     if demean:
         srs1_adj = srs1 - compute_smooth_moving_average(
             srs1, tau, min_periods, min_depth, max_depth
@@ -807,7 +807,6 @@ def compute_rolling_cov(
     else:
         srs1_adj = srs1
         srs2_adj = srs2
-
     smooth_prod = compute_smooth_moving_average(
         srs1_adj.multiply(srs2_adj), tau, min_periods, min_depth, max_depth
     )
@@ -835,7 +834,6 @@ def compute_rolling_corr(
     else:
         srs1_adj = srs1
         srs2_adj = srs2
-
     smooth_prod = compute_smooth_moving_average(
         srs1_adj.multiply(srs2_adj), tau, min_periods, min_depth, max_depth
     )
