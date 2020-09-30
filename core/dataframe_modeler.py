@@ -73,11 +73,23 @@ class DataFrameModeler:
     # Dataflow nodes
     # #########################################################################
 
+    def apply_dataframe_method_runner(
+        self, method: str, method_kwargs: Optional[Dict[str, Any]] = None
+    ) -> DataFrameModeler:
+        """
+        Execute a dataframe method.
+        """
+        model = dtf.DataframeMethodRunner(
+            nid="dataframe_method_runner",
+            method=method,
+            method_kwargs=method_kwargs,
+        )
+        return self._run_model(model, method)
+
     def apply_column_transformer(
         self,
         transformer_func: Callable[..., pd.DataFrame],
-        # TODO(Paul): Tighten this type annotation.
-        transformer_kwargs: Optional[Any] = None,
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
         cols: Optional[Iterable[str]] = None,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
@@ -86,7 +98,7 @@ class DataFrameModeler:
         method: str = "fit",
     ) -> DataFrameModeler:
         """
-        Apply a function a a select of columns.
+        Apply a function to a select of columns.
         """
         model = dtf.ColumnTransformer(
             nid="column_transformer",
