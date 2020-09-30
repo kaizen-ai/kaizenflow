@@ -114,6 +114,69 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 # #############################################################################
 
 
+def resample_bars(
+    df: pd.DataFrame,
+    rule: str,
+    *,
+    price_cols: Optional[list] = None,
+    price_agg_func: Optional[str] = "mean",
+    price_agg_func_kwargs: Optional[dict] = None,
+    ret_cols: Optional[list] = None,
+    ret_agg_func: Optional[str] = "sum",
+    ret_agg_func_kwargs: Optional[dict] = None,
+    volume_cols: Optional[list] = None,
+    volume_agg_func: Optional[str] = "sum",
+    volume_agg_func_kwargs: Optional[dict] = None,
+) -> pd.DataFrame:
+    """
+    Resample price, return, volume columns.
+
+
+
+    :param df:
+    :param rule:
+    :param price_cols:
+    :param price_agg_func:
+    :param price_agg_func_kwargs:
+    :param ret_cols:
+    :param ret_agg_func:
+    :param ret_agg_func_kwargs:
+    :param volume_cols:
+    :param volume_agg_func:
+    :param volume_agg_func_kwargs:
+    :return:
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(not df.empty)
+    if price_cols is not None:
+        price_agg_func_kwargs = price_agg_func_kwargs or {}
+        dbg.dassert_is_subset(price_cols, df.columns)
+        price_rs = sigp.resample(df[price_cols], rule=rule)
+        price_df = price_rs.agg(price_agg_func, **price_agg_func_kwargs)
+        dbg.dassert(price_df.index.freq)
+    else:
+        price_df = None
+    if ret_cols is not None:
+        ret_agg_func_kwargs = ret_agg_func_kwargs or {"min_count": 1}
+        dbg.dassert_is_subset(df[ret_cols], df.columns)
+        ret_rs = sigp.resample(df[ret_cols], rule=rule)
+        ret_df = ret_rs.agg(ret_agg_func, **ret_agg_func_kwargs)
+        dbg.dassert(ret_df.index.freq)
+    else:
+        ret_df = None
+    if volume_cols is not None:
+        volume_agg_func_kwargs = volume_agg_func_kwargs or {"min_count": 1}
+        dbg.dassert_is_subset(df[volume_cols], df.columns)
+        volume_rs = sigp.resample(df[volume_cols], rule=rule)
+        volume_df = volume_rs.agg(volume_agg_func, **volume_agg_func_kwargs)
+        dbg.dassert(volume_df.index.freq)
+    else:
+        volume_df = None
+    resampled = pd.concat([price_df, ret_df, volume_df], axis=1)
+    dbg.dassert(resampled.index.freq)
+    return resampled
+
+
 def compute_ret_0(
     prices: Union[pd.Series, pd.DataFrame], mode: str
 ) -> Union[pd.Series, pd.DataFrame]:
