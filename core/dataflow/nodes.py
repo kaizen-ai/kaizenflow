@@ -567,8 +567,7 @@ class Resample(Transformer):
     ) -> None:
         """
         :param nid: node identifier
-        :param rule: resampling frequency passed into
-            pd.DataFrame.resample
+        :param rule: resampling frequency
         :param agg_func: a function that is applied to the resampler
         :param resample_kwargs: kwargs for `resample`. Should not include
             `rule` since we handle this separately.
@@ -586,6 +585,63 @@ class Resample(Transformer):
         df = df.copy()
         resampler = sigp.resample(df, rule=self._rule, **self._resample_kwargs)
         df = getattr(resampler, self._agg_func)(**self._agg_func_kwargs)
+        #
+        info: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
+class TimeBarResampler(Transformer):
+    def __init__(
+        self,
+        nid: str,
+        rule: Union[pd.DateOffset, pd.Timedelta, str],
+        return_cols: list,
+        return_agg_func: Optional[str] = None,
+        return_agg_func_kwargs: Optional[dict] = None,
+        price_cols: Optional[list] = None,
+        price_agg_func: Optional[str] = None,
+        price_agg_func_kwargs: Optional[list] = None,
+        volume_cols: Optional[list] = None,
+        volume_agg_func: Optional[str] = None,
+        volume_agg_func_kwargs: Optional[list] = None,
+    ) -> None:
+        """
+        Resample time bars with returns, price, volume.
+
+        This function wraps `resample_time_bars()`. Params as in that function.
+
+        :param nid: node identifier
+        """
+        super().__init__(nid)
+        self._rule = rule
+        self._return_cols = return_cols
+        self._return_agg_func = return_agg_func
+        self._return_agg_func_kwargs = return_agg_func_kwargs
+        self._price_cols = price_cols
+        self._price_agg_func = price_agg_func
+        self._price_agg_func_kwargs = price_agg_func_kwargs
+        self._volume_cols = volume_cols
+        self._volume_agg_func = volume_agg_func
+        self._volume_agg_func_kwargs = volume_agg_func_kwargs
+
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        df = df.copy()
+        df = fin.resample_time_bars(
+            df,
+            self._rule,
+            return_cols=self._return_cols,
+            return_agg_func=self._return_agg_func,
+            return_agg_func_kwargs=self._return_agg_func_kwargs,
+            price_cols=self._price_cols,
+            price_agg_func=self._price_agg_func,
+            price_agg_func_kwargs=self._price_agg_func_kwargs,
+            volume_cols=self._volume_cols,
+            volume_agg_func=self._volume_agg_func,
+            volume_agg_func_kwargs=self._volume_agg_func_kwargs,
+        )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
