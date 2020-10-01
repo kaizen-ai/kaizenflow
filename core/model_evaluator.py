@@ -7,6 +7,7 @@ import core.model_evaluator as modeval
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
@@ -29,6 +30,7 @@ class ModelEvaluator:
         predictions: Dict[Any, pd.Series],
         price: Optional[Dict[Any, pd.Series]] = None,
         volume: Optional[Dict[Any, pd.Series]] = None,
+        volatility: Optional[Dict[Any, pd.Series]] = None,
         target_volatility: Optional[float] = None,
         oos_start: Optional[float] = None,
     ) -> None:
@@ -37,9 +39,12 @@ class ModelEvaluator:
 
         :param returns: financial (log) returns
         :param predictions: returns predictions (aligned with returns)
-        :param target_volatility: Generate positions to achieve target
+        :param price: price of instrument
+        :param volume: volume traded
+        :param volatility: returns volatility (used for adjustment)
+        :param target_volatility: generate positions to achieve target
             volatility on in-sample region.
-        :param oos_start: Optional end of in-sample/start of out-of-sample.
+        :param oos_start: optional end of in-sample/start of out-of-sample.
         """
         dbg.dassert_isinstance(returns, dict)
         dbg.dassert_isinstance(predictions, dict)
@@ -51,6 +56,7 @@ class ModelEvaluator:
         self.preds = {k: predictions[k] for k in self.valid_keys}
         self.price = None
         self.volume = None
+        self.slippage = None
         if price is not None:
             keys = self._get_valid_keys(returns, price, self.oos_start)
             dbg.dassert(set(self.valid_keys) == set(keys))
@@ -59,13 +65,22 @@ class ModelEvaluator:
             keys = self._get_valid_keys(returns, volume, self.oos_start)
             dbg.dassert(set(self.valid_keys) == set(keys))
             self.volume = {k: volume[k] for k in self.valid_keys}
+        if volatility is not None:
+            keys = self._get_valid_keys(returns, volatility, self.oos_start)
+            dbg.dassert(set(self.valid_keys) == set(keys))
+            self.volatility = {k: volatility[k] for k in self.valid_keys}
         self.target_volatility = target_volatility or None
         # Calculate positions
         self.pos = self._calculate_positions()
         # Calculate pnl streams.
         # TODO(*): Allow configurable strategies.
-        # TODO(*): Maybe required that this be called instead of always doing it.
+        # TODO(*): Maybe require that this be called instead of always doing it.
         self.pnls = self._calculate_pnls(self.rets, self.pos)
+        # Calculate basic slippage estimate under certain assumptions.
+        if price is not None and volatility is not None:
+            self._slippage = self._calculate_slippage(
+                positions=self.pos, price=self.price, volatility=self.volatility
+            )
 
     # TODO(*): Consider exposing positions / returns in the same way.
     def get_series_dict(
@@ -101,6 +116,12 @@ class ModelEvaluator:
         elif series == "volume":
             dbg.dassert(self.volume, msg="No volume data supplied")
             series_dict = self.volume
+        elif series == "volatility":
+            dbg.dassert(self.volatility, msg="No volume data supplied")
+            series_dict = self.volatility
+        elif series == "slippage":
+            dbg.dassert(self._slippage, msg="Cannot calculate slippage")
+            series_dict = self._slippage
         else:
             raise ValueError(f"Unrecognized series `{series}`.")
         # NOTE: ins/oos overlap by one point as-is (consider changing).
@@ -338,7 +359,7 @@ class ModelEvaluator:
 
     @staticmethod
     def _calculate_pnls(
-        returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series]
+        returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series],
     ) -> Dict[Any, pd.Series]:
         """
         Calculate returns from positions.
@@ -349,6 +370,32 @@ class ModelEvaluator:
             dbg.dassert(pnl.index.freq)
             pnls[key] = pnl
         return pnls
+
+    @staticmethod
+    def _calculate_slippage(
+        *,
+        positions: Dict[Any, pd.Series],
+        price: Dict[Any, pd.Series],
+        volatility: Dict[Any, pd.Series],
+    ) -> Dict[Any, pd.Series]:
+        """
+        Calculate slippage.
+
+        Experimental. Assumes that
+        - `positions` correspond to volatility-adjusted returns
+        - `volatility` provides the returns volatility adjustment
+        - `price` is in dollars and the spread is constant at 1 cent
+        - half the spread is paid
+        """
+        slippage = {}
+        for key in tqdm(positions.keys()):
+            # Assume a constant spread of $0.01.
+            spread_pct = 0.01 / price[key]
+            # Positions volatility-adjusted.
+            pos = positions[key].divide(volatility[key])
+            # Calculate slippage cost.
+            slippage[key] = 0.5 * spread_pct.multiply(np.abs(pos.diff()))
+        return slippage
 
     def _get_valid_keys(
         self,
