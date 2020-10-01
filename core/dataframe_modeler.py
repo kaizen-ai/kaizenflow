@@ -125,7 +125,7 @@ class DataFrameModeler:
         """
         Resample the dataframe (causally, by default).
         """
-        agg_func_kwargs = agg_func_kwargs or {"min_count": 1}
+        agg_func_kwargs = agg_func_kwargs or {}
         model = dtf.Resample(
             nid="resample",
             rule=rule,
