@@ -169,16 +169,3 @@
 
 - We have installed it in the repo but the script might need to be updated once
   in a while
-
-# Team member list
-
-- In alphabetical order (just to be fair)
-  - [ ] Dan
-  - [ ] Daniil
-  - [ ] GP
-  - [ ] Greg
-  - [ ] Julia
-  - [ ] Paul
-  - [ ] Sergey
-  - [ ] Sonya
-  - [ ] Vitaliy
