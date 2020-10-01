@@ -313,7 +313,7 @@ class DataFrameModeler:
         self,
         cols: Optional[List[Any]] = None,
         num_plots: Optional[int] = None,
-        num_cols: Optional[int] = 2,
+        num_cols: int = 2,
         y_scale: Optional[float] = 4,
         sharex: bool = True,
         sharey: bool = False,
