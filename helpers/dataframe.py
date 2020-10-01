@@ -6,6 +6,7 @@ import helpers.dataframe as hdf
 import collections
 import functools
 import logging
+import operator
 from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
@@ -95,6 +96,42 @@ def filter_data_by_comparison(
     return filtered_data
 
 
+def filter_data_by_method(
+    data: pd.DataFrame,
+    filters: Dict[str, Dict[str, Dict[str, Any]]],
+    mode: str,
+    info: Optional[collections.OrderedDict] = None,
+) -> pd.DataFrame:
+    """Filter dataframe by calling a method specified for each column.
+
+    :param data: dataframe
+    :param filters: `{col_name: {method: kwargs}}`, where `method` is the
+        method called on the dataframe column, e.g. "isin" or "str.contains",
+        and `kwargs` are the kwargs for this method
+    :param mode: `and` for conjunction and `or` for disjunction of filters
+    :param info: information storage
+    :return: filtered dataframe
+    """
+    if info is None:
+        info = collections.OrderedDict()
+    info["nrows"] = data.shape[0]
+    if not filters:
+        info["nrows_remaining"] = data.shape[0]
+        return data.copy()
+    # Create filter masks for each column.
+    masks = []
+    for col_name, method_dict in filters.items():
+        for method, kwargs in method_dict.items():
+            mask = operator.attrgetter(method)(data[col_name])(**kwargs)
+            info[f"n_{col_name}"] = mask.sum()
+            info[f"perc_{col_name}"] = prnt.perc(mask.sum(), data.shape[0])
+            masks.append(mask)
+    masks = pd.concat(masks, axis=1)
+    combined_mask = _combine_masks(masks, mode, info)
+    filtered_data = data.loc[combined_mask].copy()
+    return filtered_data
+
+
 def _combine_masks(
     masks: pd.DataFrame, mode: str, info: collections.OrderedDict
 ) -> pd.Series:
@@ -111,7 +148,9 @@ def _combine_masks(
 
 
 def apply_nan_mode(
-    srs: pd.Series, mode: str = "leave_unchanged", info: Optional[dict] = None,
+    srs: pd.Series,
+    mode: str = "leave_unchanged",
+    info: Optional[dict] = None,
 ) -> pd.Series:
     """Process NaN values in a series according to the parameters.
 
