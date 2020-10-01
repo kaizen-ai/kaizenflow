@@ -411,8 +411,7 @@ class ColumnTransformer(Transformer):
         self,
         nid: str,
         transformer_func: Callable[..., pd.DataFrame],
-        # TODO(Paul): Tighten this type annotation.
-        transformer_kwargs: Optional[Any] = None,
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
         cols: Optional[Iterable[str]] = None,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
@@ -534,7 +533,10 @@ class ColumnTransformer(Transformer):
 
 class DataframeMethodRunner(Transformer):
     def __init__(
-        self, nid: str, method: str, method_kwargs: Optional[Any] = None
+        self,
+        nid: str,
+        method: str,
+        method_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(nid)
         dbg.dassert(method)
