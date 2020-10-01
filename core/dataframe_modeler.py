@@ -12,6 +12,7 @@ import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -308,6 +309,32 @@ class DataFrameModeler:
         stats_df = pd.concat(stats_dict, axis=1)
         return stats_df
 
+    def plot_time_series(
+        self,
+        cols: Optional[List[Any]] = None,
+        num_plots: Optional[int] = None,
+        num_cols: Optional[int] = 2,
+        y_scale: Optional[float] = 4,
+        sharex: bool = True,
+        sharey: bool = False,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        num_plots = num_plots or df.shape[1]
+        # Create figure to accommodate plots.
+        _, axes = plot.get_multiple_plots(
+            num_plots=num_plots,
+            num_cols=num_cols,
+            y_scale=y_scale,
+            sharex=sharex,
+            sharey=sharey,
+        )
+        # Select first `num_plots` series in the dict and plot them.
+        cols_to_draw = df.columns[:num_plots]
+        for i, col_name in enumerate(cols_to_draw):
+            srs = df[col_name]
+            srs.to_frame().plot(title=col_name, ax=axes[i])
+
     def plot_correlation_with_lag(
         self, lag: int, cols: Optional[List[Any]] = None, mode: str = "ins"
     ) -> pd.DataFrame:
@@ -380,10 +407,13 @@ class DataFrameModeler:
         pca.plot_components(num_components)
 
     def plot_explained_variance(
-        self, cols: Optional[List[Any]] = None, mode: str = "ins"
+        self,
+        cols: Optional[List[Any]] = None,
+        num_components: Optional[int] = None,
+        mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
-        pca = plot.PCA(mode="standard")
+        pca = plot.PCA(mode="standard", n_components=num_components)
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_explained_variance()
 
@@ -409,13 +439,25 @@ class DataFrameModeler:
         df = self._get_df(cols=[col1, col2], mode=mode)
         plot_rolling_correlation_kwargs = plot_rolling_correlation_kwargs or {}
         plot.plot_rolling_correlation(
-            df[col1], df[col2], tau=tau, **plot_rolling_correlation_kwargs,
+            df[col1],
+            df[col2],
+            tau=tau,
+            **plot_rolling_correlation_kwargs,
         )
 
-    def plot_time_series_study(self, col: Any, mode: str = "ins") -> None:
-        srs = self._get_df(cols=[col], mode=mode).squeeze()
-        tsds = tss.TimeSeriesDailyStudy(srs, data_name=str(col))
-        tsds.execute()
+    def plot_time_series_study(
+        self,
+        cols: Optional[List[Any]] = None,
+        num_plots: Optional[int] = None,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode).squeeze()
+        num_plots = num_plots or df.shape[1]
+        cols_to_draw = df.columns[:num_plots]
+        for col_name in cols_to_draw:
+            tsds = tss.TimeSeriesDailyStudy(df[col_name], data_name=str(col_name))
+            tsds.execute()
+            plt.show()
 
     # #########################################################################
     # Private helpers
