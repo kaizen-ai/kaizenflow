@@ -1565,6 +1565,7 @@ def summarize_time_index_info(
     freq = original_index.freq
     clear_srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     if clear_srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
         result = pd.Series(
             np.nan,
             index=[
