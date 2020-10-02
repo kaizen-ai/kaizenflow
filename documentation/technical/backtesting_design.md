@@ -19,11 +19,11 @@
     - The time grid has no gaps, e.g., weekends and overnight periods are
       sampled uniformly in the same way that more interesting periods of time
       are
-  - Point-in-time data with a left-closed, right-open, right-label convention
+  - Point-in-time data with a left-open, right-closed, right-label convention
     - E.g., in the dataframe, the label `t_i` represents the value of the
-      variables in the time interval `[t_{i-1}, t_i)`
+      variables in the time interval `(t_{i-1}, t_i]`
     - This convention has the nice property that all and only information
-      available at time < `t_i` is represented in the data frame for rows with
+      available at time <= `t_i` is represented in the data frame for rows with
       index `t_i`, which makes it easier to prevent future-peeking
   - A snippet appears as follows:
 
@@ -196,3 +196,136 @@
 - What this means is that by taking into account the mechanics of trading (e.g.,
   time to get into position and time to get out), we are already and naturally
   in the setting of multistep prediction
+
+## Returns and volatility
+
+### Definition
+
+Let `p_t` denote the price of an asset as time `t`.
+
+The _percentage return_ from time `t-1` to time `t` is defined by
+`(p_t - p_{t -  1}) / p_{t - 1} = p_t / p_{t - 1} - 1`.
+This is also called the _relative return_.
+
+The _log return_ is defined by
+`\log (p_t / p_{t - 1})`.
+
+For small changes in price, the percentage return and log return are the same
+up to a first order approximation (e.g., using a Taylor expansion):
+`\log (p_t / p_{t - 1}) = \log (1 + (p_t / p_{t - 1} - 1) \approx p_t / p_{t -1} - 1`.
+
+Volatility refers to the standard deviation of the return.
+  - Note that this is not instantaneously observable
+  - _Realized volatility_ (or _historical volatility) refers to the standard
+    deviation of returns calculated over a rolling window 
+
+### Calculating returns  
+
+To calculate returns, we use the function `fin.compute_ret_0()`. The `0` in the
+name emphasizes the fact that the return series is not shifted in time.
+
+To translate between log and percentage returns, use
+`fin.convert_log_rets_to_pct_rets()` or `fin.convert_pct_rets_to_log_rets()`.
+
+### Units
+
+What we typically call "returns" or "return" is really short for
+"rate of return". In particular,
+  - Returns have units of "return per time" (percentage or log))
+  - The standard deviation of returns, or _volatility_, has units of
+    "return per square root time"
+
+To make returns and volatility comparable across instruments and
+strategies, we typically annualize the quantities using
+`fin.compute_annualized_return()` and
+`fin.compute_annualized_volatility()`, respectively.
+
+### Log or relative?
+
+- (Quant Nugget 2: Linear vs. Compounded Returns)[https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1586656]
+  - Here "linear" refers to "relative" and "compound" to "log"
+
+Reasons to prefer log returns include:
+  - The distribution can be easily projected to any time horizon
+  - Log returns naturally aggregate in time
+  - The distribution is symmetric
+  - They are comparable across instruments
+  - The "standard" assumption in continuous-time finance and economics is that
+    log returns are normally distributed (as when the underlying price process
+    is given by geometric Brownian motion)
+   
+Reasons to prefer relative returns include:
+  - Relative returns naturally aggregate cross-sectionally
+  - Relative returns aggregate naturally across time under the assumption of a
+    fixed capital allocation
+  - Relative returns are robust to scenarios where an investment can decrease
+    in value 100% or more
+
+### PnL
+
+- (Quant Nugget 5: Return Calculations for Leveraged Securities and Portfolios)[https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1675067]
+
+For this section, we choose dollars as the _numeraire_.
+
+Suppose we have an instrument with prices `p_0, p_1, p_2, ...`, in dollars.
+Denote our corresponding _target holdings_ (or _positions_) as `h_1, h_2, ...`
+(also in dollars).
+
+> For the purposes of this section, we assume that we know our
+target holdings `n` steps ahead (typically with `n` set to `1` or `2`). To
+connect this with our conventions around backtests, we would generate our target
+holdings for period `j` from a prediction for the returns over period `j-1` to
+`j`.
+
+We assume that we enter `h_j`, transacting at price `p_{j - 1}` at time
+`t_{j - 1}`, and exit the position at time `t_j` at price `p_j` (while
+simultaneously entering the next position `h_{j + 1}`). The position `h_j`
+therefore has as dollar value `h_j` at time `t_{j - 1}` and a dollar value
+of `h_j \cdot (p_j / p_{j - 1} - 1)` at time `t_j`. This may be re-expressed as
+`h_j \cdot r_j`, where `r_j` denotes the relative return.
+
+Under these conventions, the strategy PnL series is a sequence of dollars,
+representing profit or loss.
+- Average PnL has units of dollar per time
+- PnL volatility has units of dollar per square root time
+- Sharpe ratio (still) has units of per square root time
+  - The Sharpe ratio is invariant under changes of scale, e.g., doubling the
+    target positions does not alter the Sharpe ratio
+- Aggregation over time intervals is by summation
+
+An alternative way to interpret `h_j` is as a ratio of a fixed but unspecified
+dollar amount, e.g., a fixed amount of capital available for deployment daily
+- We assume profits are siphoned off / losses are "replenished" to/from the
+  total "available capital"
+- `h_j \cdot r_j` then admits the interpretation as the percentage return with 
+  respect to the capital deployed
+- We may interpret this PnL curve as we would returns
+  - Though the returns are relative, they are additive in time (because the
+    amount of capital is fixed)
+  - Return and volatility again admit percentage-like units
+- The advantage of this interpretation is that it is scale invariant with
+  respect to the size of the deployed capital
+- To convert into dollars, we multiply `h_j` by the fixed "available capital"
+  amount
+
+## Statistics
+
+### Sharpe ratio
+
+The Sharpe ratio, abbreviated SR, is our key metric for evaluating returns.
+
+A good reference for many technical nuances of the Sharpe Ratio is
+(A Short Sharpe Course)[https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3036276].
+
+Some key facts about the Sharpe ratio:
+- It is equivalent to a rescaled t-statistic
+- The probability of a drawdown of a certain size can be bounded in terms of
+  the Sharpe ratio
+
+It is important to understand how return characteristics and changes in units
+(e.g., resampling in time) affect the Sharpe ratio: 
+- SR is not a unitless quantity, but has units of per square root time
+- Using relative returns instead of log returns inflates the SR 
+- SR is fairly robust to non-normality assumptions
+  - Strong positive autocorrelation overly inflates SR estimates
+  - Vice-versa for negative autocorrelation
