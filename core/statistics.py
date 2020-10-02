@@ -1564,38 +1564,29 @@ def summarize_time_index_info(
     dbg.dassert_strictly_increasing_index(original_index)
     freq = original_index.freq
     clear_srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    clear_index = clear_srs.index
+    result = pd.Series([], dtype="object")
     if clear_srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-        result = pd.Series(
-            np.nan,
-            index=[
-                "start_time",
-                "end_time",
-                "n_sampling_points",
-                "frequency",
-                "sampling_points_per_year",
-                "time_span_in_years",
-            ],
-        )
+        result["start_time"] = np.nan
+        result["end_time"] = np.nan
     else:
-        clear_index = clear_srs.index
-        result = pd.Series([], dtype="object")
         result["start_time"] = clear_index[0]
         result["end_time"] = clear_index[-1]
-        result["n_sampling_points"] = len(clear_index)
-        if freq is None:
-            result["frequency"] = np.nan
-        else:
-            result["frequency"] = freq
-            sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
-                freq
-            )
-            result["sampling_points_per_year"] = sampling_points_per_year
-            # Compute input time span as a number of `freq` units in
-            # `clear_index`.
-            clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
-            result["time_span_in_years"] = (
-                clear_index_time_span / sampling_points_per_year
-            )
+    result["n_sampling_points"] = len(clear_index)
+    if freq is None:
+        result["frequency"] = np.nan
+    else:
+        result["frequency"] = freq
+        sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
+            freq
+        )
+        result["sampling_points_per_year"] = sampling_points_per_year
+        # Compute input time span as a number of `freq` units in
+        # `clear_index`.
+        clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
+        result["time_span_in_years"] = (
+            clear_index_time_span / sampling_points_per_year
+        )
     result.index = prefix + result.index
     return result
