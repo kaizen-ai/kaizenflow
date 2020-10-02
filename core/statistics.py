@@ -1596,5 +1596,5 @@ def summarize_time_index_info(
             result["time_span_in_years"] = (
                 clear_index_time_span / sampling_points_per_year
             )
-    result.index = prefix + result.columns
+    result.index = prefix + result.index
     return result
