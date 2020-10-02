@@ -379,9 +379,10 @@ class DataFrameModeler:
         cols: Optional[List[Any]] = None,
         figsize: Optional[Tuple[int, int]] = None,
         mode: str = "ins",
+        **kwargs
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
-        plot.plot_dendrogram(df, figsize)
+        plot.plot_dendrogram(df, figsize, **kwargs)
 
     def plot_pca_components(
         self,
