@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import matplotlib as mpl
 import numpy as np
 import pandas as pd
+from tqdm.autonotebook import tqdm
 
 import core.dataflow as dtf
 import core.finance as fin
@@ -309,7 +310,10 @@ class DataFrameModeler:
     # #########################################################################
 
     def calculate_stats(
-        self, cols: Optional[List[Any]] = None, mode: str = "ins"
+        self,
+        cols: Optional[List[Any]] = None,
+        disable_tqdm: bool = False,
+        mode: str = "ins",
     ) -> pd.DataFrame:
         """
         Calculate stats for selected columns.
@@ -317,7 +321,7 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate stats.
         stats_dict = {}
-        for col in df.columns:
+        for col in tqdm(df.columns, disable=disable_tqdm):
             stats_val = self._calculate_series_stats(df[col])
             stats_dict[col] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
@@ -424,7 +428,10 @@ class DataFrameModeler:
         df = self._get_df(cols=[col1, col2], mode=mode)
         plot_rolling_correlation_kwargs = plot_rolling_correlation_kwargs or {}
         plot.plot_rolling_correlation(
-            df[col1], df[col2], tau=tau, **plot_rolling_correlation_kwargs,
+            df[col1],
+            df[col2],
+            tau=tau,
+            **plot_rolling_correlation_kwargs,
         )
 
     def plot_time_series_study(self, col: Any, mode: str = "ins") -> None:
