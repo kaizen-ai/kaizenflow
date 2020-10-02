@@ -32,7 +32,9 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Paul): Double-check axes in used in calculation.
 def compute_moments(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Calculate, mean, standard deviation, skew, and kurtosis.
 
@@ -201,7 +203,8 @@ def _compute_denominator_and_package(
 
 
 def compute_special_value_stats(
-    srs: pd.Series, prefix: Optional[str] = None,
+    srs: pd.Series,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Calculate special value statistics in time series.
 
@@ -246,7 +249,8 @@ def compute_special_value_stats(
 
 
 def summarize_sharpe_ratio(
-    log_rets: pd.Series, prefix: Optional[str] = None,
+    log_rets: pd.Series,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Calculate SR, SE(SR) from rets with an index freq and annualize.
 
@@ -537,7 +541,9 @@ def compute_drawdown_cdf(
 
 
 def compute_normalized_drawdown_cdf(
-    sharpe_ratio: float, normalized_drawdown: float, time: Optional[float] = None,
+    sharpe_ratio: float,
+    normalized_drawdown: float,
+    time: Optional[float] = None,
 ) -> float:
     """Compute the drawdown cdf for drawdown given in units of volatility.
 
@@ -599,7 +605,8 @@ def compute_max_drawdown_approximate_cdf(
 
 
 def compute_annualized_return_and_volatility(
-    srs: pd.Series, prefix: Optional[str] = None,
+    srs: pd.Series,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Annualized mean return and sample volatility in %.
 
@@ -631,7 +638,8 @@ def compute_annualized_return_and_volatility(
 
 
 def compute_max_drawdown(
-    log_rets: pd.Series, prefix: Optional[str] = None,
+    log_rets: pd.Series,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Calculate max drawdown statistic.
 
@@ -877,7 +885,9 @@ def multi_ttest(
 
 
 def apply_normality_test(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Test (indep) null hypotheses that each col is normally distributed.
 
@@ -957,7 +967,9 @@ def apply_adf_test(
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
+        data=[np.nan for i in range(n_stats)],
+        index=result_index,
+        name=data.name,
     )
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
@@ -1030,15 +1042,20 @@ def apply_kpss_test(
     ]
     n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
+        data=[np.nan for i in range(n_stats)],
+        index=result_index,
+        name=data.name,
     )
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
-        (kpss_stat, pval, lags, critical_values,) = sm.tsa.stattools.kpss(
-            data.values, regression=regression, nlags=nlags
-        )
+        (
+            kpss_stat,
+            pval,
+            lags,
+            critical_values,
+        ) = sm.tsa.stattools.kpss(data.values, regression=regression, nlags=nlags)
     except ValueError:
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
@@ -1290,7 +1307,8 @@ def compute_zero_diff_proportion(
 
 
 def get_interarrival_time(
-    srs: pd.Series, nan_mode: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
 ) -> Optional[pd.Series]:
     """Get interrarival time from index of a time series.
 
@@ -1315,7 +1333,9 @@ def get_interarrival_time(
 
 
 def compute_interarrival_time_stats(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Compute interarrival time statistics.
 
@@ -1524,7 +1544,9 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
 
 
 def summarize_time_index_info(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Return summarized information about datetime index of the input.
 
@@ -1542,22 +1564,37 @@ def summarize_time_index_info(
     dbg.dassert_strictly_increasing_index(original_index)
     freq = original_index.freq
     clear_srs = hdf.apply_nan_mode(srs, mode=nan_mode)
-    clear_index = clear_srs.index
-    result = pd.Series([], dtype="object")
-    result[prefix + "start_time"] = clear_index[0]
-    result[prefix + "end_time"] = clear_index[-1]
-    result[prefix + "n_sampling_points"] = len(clear_index)
-    if freq is None:
-        result[prefix + "frequency"] = "None"
+    if clear_srs.empty:
+        result = pd.Series(
+            np.nan,
+            index=[
+                "start_time",
+                "end_time",
+                "n_sampling_points",
+                "frequency",
+                "sampling_points_per_year",
+                "time_span_in_years",
+            ],
+        )
     else:
-        result[prefix + "frequency"] = freq
-        sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
-            freq
-        )
-        result[prefix + "sampling_points_per_year"] = sampling_points_per_year
-        # Compute input time span as a number of `freq` units in `clear_index`.
-        clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
-        result[prefix + "time_span_in_years"] = (
-            clear_index_time_span / sampling_points_per_year
-        )
+        clear_index = clear_srs.index
+        result = pd.Series([], dtype="object")
+        result["start_time"] = clear_index[0]
+        result["end_time"] = clear_index[-1]
+        result["n_sampling_points"] = len(clear_index)
+        if freq is None:
+            result["frequency"] = np.nan
+        else:
+            result["frequency"] = freq
+            sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
+                freq
+            )
+            result["sampling_points_per_year"] = sampling_points_per_year
+            # Compute input time span as a number of `freq` units in
+            # `clear_index`.
+            clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
+            result["time_span_in_years"] = (
+                clear_index_time_span / sampling_points_per_year
+            )
+    result.columns = prefix + result.columns
     return result
