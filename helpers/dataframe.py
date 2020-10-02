@@ -18,6 +18,9 @@ import helpers.printing as prnt
 _LOG = logging.getLogger(__name__)
 
 
+_METHOD_TO_APPLY = Dict[str, Dict[str, Any]]
+
+
 def filter_data_by_values(
     data: pd.DataFrame,
     filters: Dict[Union[int, str], Tuple[Any, ...]],
@@ -98,7 +101,7 @@ def filter_data_by_comparison(
 
 def filter_data_by_method(
     data: pd.DataFrame,
-    filters: Dict[str, Dict[str, Dict[str, Any]]],
+    filters: Dict[str, _METHOD_TO_APPLY],
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
