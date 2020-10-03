@@ -242,7 +242,7 @@ strategies, we typically annualize the quantities using
 
 ### Log or relative?
 
-- (Quant Nugget 2: Linear vs. Compounded Returns)[https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1586656]
+- [Quant Nugget 2: Linear vs. Compounded Returns](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1586656)
   - Here "linear" refers to "relative" and "compound" to "log"
 
 Reasons to prefer log returns include:
@@ -263,7 +263,7 @@ Reasons to prefer relative returns include:
 
 ### PnL
 
-- (Quant Nugget 5: Return Calculations for Leveraged Securities and Portfolios)[https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1675067]
+- [Quant Nugget 5: Return Calculations for Leveraged Securities and Portfolios](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1675067)
 
 For this section, we choose dollars as the _numeraire_.
 
@@ -293,20 +293,62 @@ representing profit or loss.
     target positions does not alter the Sharpe ratio
 - Aggregation over time intervals is by summation
 
-An alternative way to interpret `h_j` is as a ratio of a fixed but unspecified
-dollar amount, e.g., a fixed amount of capital available for deployment daily
-- We assume profits are siphoned off / losses are "replenished" to/from the
-  total "available capital"
-- `h_j \cdot r_j` then admits the interpretation as the percentage return with 
-  respect to the capital deployed
-- We may interpret this PnL curve as we would returns
+An alternative way to interpret `h_j` is as a ratio of a fixed but not
+necessarily specified dollar amount of capital, the target
+_Gross Market Value_, or _GMV_. The GMV is the sum of the absolute value of
+the dollar value of all positions (which can also include a cash "buffer"). It
+is assumed that trading gains and losses are "siphoned off" or "replenished"
+to or from (respectively) the total _Assets Under Managment_, or _AUM_.
+
+Under these conventions, where `h_j` represents a percentage of GMV, the
+following hold:
+- `h_j \cdot r_j` admits the interpretation as the percentage return with 
+  respect to GMV
+- We may interpret the PnL series `h_j \cdot r_j` as we would returns
   - Though the returns are relative, they are additive in time (because the
-    amount of capital is fixed)
-  - Return and volatility again admit percentage-like units
+    GMV is fixed)
+  - Return and volatility of the series again admit percentage-like units
 - The advantage of this interpretation is that it is scale invariant with
-  respect to the size of the deployed capital
-- To convert into dollars, we multiply `h_j` by the fixed "available capital"
-  amount
+  respect to GMV, e.g., increasing or decreasing GMV does not change `h_j`
+- To convert into dollars, we multiply `h_j` by GMV
+
+### Leverage
+
+Note that GMV may exceed AUM.
+- In the case of equities, this can happen if the proceeds from short sales
+  are used to finance long positions
+- Another (very similar) example is if borrowed money is used to finance
+  positions
+- In futures, the amount of capital required for initiating a position is
+  typically small relative to the cash value of the contract
+  - The cash value of a contract is also called its _notational_ value
+  - The initial margin to be posted is typically 3-12% of a contract's
+    notional value
+  - Contracts are marked to market daily, and additional margin may be
+    required (a _margin call_) if the position moves against the holder
+ 
+Leverage can be beneficial in that it provides greater _capital efficiency_.
+It is dangerous if risk is not sufficiently well-managed, as adverse market
+movements can result in losses exceeding the capital investment.
+
+GMV is typically expressed as a notional (cash) value, as are prices and PnL
+streams.
+
+The above methods for calculating portfolio PnL can also be expanded to account
+for leverage. A detailed discussion can be found in 
+[Quant Nugget 5: Return Calculations for Leveraged Securities and Portfolios](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1675067)
+for additional details. We consider two relative simple cases here:
+1. Cross-sectionally, the total holdings sum to less than 1 (at each point in
+   time)
+   - This implicitly assumes that the "missing" percentage of GMV is held in
+     cash
+   - Consider the degenerate case where we trade one stock. Decreasing all `h_j`
+     by a multiplicative factor corresponds to investing a smaller percentage
+     of "investable cash" in the stock strategy.
+2. Cross-sectionally, the total holdings sum to a number greater than 1
+   - This implicitly provides a portfolio leverage factor
+   - The "reference point" is no longer target GMV, but rather a different
+     basis 
 
 ## Statistics
 
@@ -315,7 +357,7 @@ dollar amount, e.g., a fixed amount of capital available for deployment daily
 The Sharpe ratio, abbreviated SR, is our key metric for evaluating returns.
 
 A good reference for many technical nuances of the Sharpe Ratio is
-(A Short Sharpe Course)[https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3036276].
+[A Short Sharpe Course](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3036276).
 
 Some key facts about the Sharpe ratio:
 - It is equivalent to a rescaled t-statistic
