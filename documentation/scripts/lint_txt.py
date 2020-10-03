@@ -178,7 +178,8 @@ def _refresh_toc(txt: str) -> str:
     io_.to_file(tmp_file_name, txt)
     # Process TOC.
     cmd: List[str] = []
-    # Find the script.
+    # Find the script `gh-md-toc`, assuming that it's in the same directory of
+    # this script.
     gh_md_toc = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "gh-md-toc"
     )
