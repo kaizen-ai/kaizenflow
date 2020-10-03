@@ -166,19 +166,19 @@ streams.
 
 The above methods for calculating portfolio PnL can also be expanded to account
 for leverage. A detailed discussion can be found in 
-[Quant Nugget 5: Return Calculations for Leveraged Securities and Portfolios](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1675067)
-for additional details. We consider two relative simple cases here:
+[Quant Nugget 5: Return Calculations for Leveraged Securities and Portfolios](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1675067).
+We consider two relative simple cases here:
 1. Cross-sectionally, the total holdings sum to less than 1 (at each point in
    time)
    - This implicitly assumes that the "missing" percentage of GMV is held in
      cash
    - Consider the degenerate case where we trade one stock. Decreasing all `h_j`
-     by a multiplicative factor corresponds to investing a smaller percentage
-     of "investable cash" in the stock strategy.
+     by a (single) multiplicative factor corresponds to investing a smaller
+     percentage of "investable cash" in the stock strategy.
 2. Cross-sectionally, the total holdings sum to a number greater than 1
    - This implicitly provides a portfolio leverage factor
    - The "reference point" is no longer target GMV, but rather a different
-     basis 
+     _basis_
 
 ## Statistics
 
@@ -206,7 +206,7 @@ It is important to understand how return characteristics and changes in units
 - Using relative returns instead of log returns inflates the SR 
 - SR is fairly robust to non-normality assumptions
   - Strong positive autocorrelation overly inflates SR estimates
-  - Vice-versa for negative autocorrelation
+  - Vice-versa for strong negative autocorrelation
 
 ## Building a strategy in a nutshell
 
