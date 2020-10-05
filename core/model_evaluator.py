@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
-import core.dataflow as dtf
 import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -340,23 +339,18 @@ class ModelEvaluator:
 
         Rescales to target volatility over in-sample period (if provided).
         """
-        pnls = self._calculate_pnls(self.rets, self.preds)
-        if self.oos_start is not None:
-            insample_pnls = {
-                k: pnls[k].loc[: self.oos_start] for k in self.valid_keys
-            }
-        else:
-            insample_pnls = pnls
-        if self.target_volatility is not None:
-            scale_factors = {
-                k: fin.compute_volatility_normalization_factor(
-                    srs=insample_pnls[k], target_volatility=self.target_volatility
-                )
-                for k in self.valid_keys
-            }
-        else:
-            scale_factors = {k: 1.0 for k in self.valid_keys}
-        return {k: scale_factors[k] * self.preds[k] for k in self.valid_keys}
+        position_dict = {}
+        for key in tqdm(self.valid_keys):
+            position_computer = PositionComputer(
+                returns=self.rets[key],
+                predictions=self.preds[key],
+                target_volatility=self.target_volatility,
+                oos_start=self.oos_start,
+                strategy="rescale",
+            )
+            positions = position_computer.compute_positions(mode="all_available")
+            position_dict[key] = positions
+        return position_dict
 
     @staticmethod
     def _calculate_pnls(
@@ -367,8 +361,10 @@ class ModelEvaluator:
         """
         pnls = {}
         for key in tqdm(returns.keys()):
-            pnl = returns[key].multiply(positions[key])
-            dbg.dassert(pnl.index.freq)
+            pnl_computer = PnlComputer(
+                returns=returns[key], positions=positions[key]
+            )
+            pnl = pnl_computer.compute_pnl()
             pnls[key] = pnl
         return pnls
 
@@ -446,18 +442,17 @@ class PnlComputer:
     Computes PnL from returns and holdings.
     """
 
-    def __init__(
-        self,
-        returns: pd.Series,
-        positions: pd.Series,
-    ) -> None:
+    def __init__(self, returns: pd.Series, positions: pd.Series,) -> None:
         self._validate_series(returns)
         self._validate_series(positions)
         self.returns = returns
         self.positions = positions
         # TODO(*): validate indices
 
-    def compute_pnl(self):
+    def compute_pnl(self) -> pd.Series:
+        """
+        Compute PnL from returns and positions.
+        """
         pnl = self.returns.multiply(self.positions)
         dbg.dassert(pnl.index.freq)
         pnl.name = "pnl"
@@ -482,15 +477,17 @@ class PositionComputer:
         predictions: pd.Series,
         target_volatility: Optional[float] = None,
         oos_start: Optional[float] = None,
-        strategy: str = "rolling",
+        strategy: str = "rescale",
     ) -> None:
         """
+        Initialize by supplying returns and predictions.
 
-        :param returns:
-        :param predictions:
-        :param target_volatility:
-        :param oos_start:
-        :param strategy:
+        :param returns: financial returns
+        :param predictions: returns predictions (aligned with returns)
+        :param target_volatility: generate positions to achieve target
+            volatility on in-sample region.
+        :param oos_start: optional end of in-sample/start of out-of-sample.
+        :param strategy: "rescale", "rolling" (not yet implemented)
         """
         self._validate_series(returns)
         self._validate_series(predictions)
@@ -499,46 +496,53 @@ class PositionComputer:
         self.target_volatility = target_volatility
         self.oos_start = oos_start
         self.strategy = strategy
-        if self.strategy == "rolling":
-            self.volatility_modeler = dtf.VolatilityModel(
-                nid="volatility_model",
-                col=["pnl"],
-                steps_ahead=2,
-                p_moment=2,
-                tau=None,
-                nan_mode="drop",
-            )
-        else:
-            raise ValueError(f"Unrecognized strategy `{strategy}`!")
+        # if self.strategy == "rolling":
+        #     self.volatility_modeler = dtf.VolatilityModel(
+        #         nid="volatility_model",
+        #         col=["pnl"],
+        #         steps_ahead=2,
+        #         p_moment=2,
+        #         tau=None,
+        #         nan_mode="drop",
+        #     )
+        # else:
+        #     raise ValueError(f"Unrecognized strategy `{strategy}`!")
 
     def compute_positions(self, mode: str = "ins") -> pd.Series:
         """
+        Compute positions from returns and predictions.
 
-        :return:
+        :param mode: "all_available", "ins", or "oos"
+        :return: series of positions
         """
-        # Sanity-check settings.
-        if mode == "oos":
-            dbg.dassert(
-                self.oos_start, msg="Must set `oos_start` to run `oos`",
-            )
-        # TODO(*): Make the strategy configurable on-demand.
-        if self.strategy != "rolling":
-            raise NotImplementedError(f"Strategy `{strategy}` not implemented!")
         # Compute PnL by interpreting predictions as positions.
         pnl_computer = PnlComputer(self.returns, self.predictions)
         pnl = pnl_computer.compute_pnl()
         pnl.name = "pnl"
-        pnl = pnl.to_frame()
         #
-        fit_df = self.volatility_modeler.fit(pnl[: self.oos_start])["df_out"]
+        if self.target_volatility is None:
+            return self._return_srs(pnl, mode=mode)
+        #
+        ins_pnl = pnl[: self.oos_start]
+        if self.strategy == "rescale":
+            scale_factor = fin.compute_volatility_normalization_factor(
+                srs=ins_pnl, target_volatility=self.target_volatility
+            )
+            positions = scale_factor * self.predictions
+            return self._return_srs(positions, mode=mode)
+        else:
+            raise ValueError(f"Unrecognized strategy `{strategy}`!")
+
+    def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
         if mode == "ins":
-            return fit_df
-        predict_df = self.volatility_modeler.predict(pnl)["df_out"]
-        if mode == "all_available":
-            return predict_df
-        if mode == "oos":
-            return predict_srs[self.oos_start: ]
-        raise RuntimeError
+            return srs[: self.oos_start]
+        elif mode == "all_available":
+            return srs
+        elif mode == "oos":
+            dbg.dassert(
+                self.oos_start, msg="Must set `oos_start` to run `oos`",
+            )
+            return srs[self.oos_start :]
 
     @staticmethod
     def _validate_series(srs: pd.Series) -> None:
