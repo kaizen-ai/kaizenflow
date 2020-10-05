@@ -598,9 +598,8 @@ class TestVolatilityModel(hut.TestCase):
         realization = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, seed=0
         )
-        vol = np.abs(realization) ** 2
-        vol.name = "ret_0"
-        df = pd.DataFrame(index=date_range, data=vol)
+        realization.name = "ret_0"
+        df = pd.DataFrame(index=date_range, data=realization)
         return df
 
 
