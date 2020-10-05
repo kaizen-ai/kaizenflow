@@ -32,12 +32,12 @@ class ModelEvaluator:
         volume: Optional[Dict[Any, pd.Series]] = None,
         volatility: Optional[Dict[Any, pd.Series]] = None,
         target_volatility: Optional[float] = None,
-        oos_start: Optional[float] = None,
+        oos_start: Optional[Any] = None,
     ) -> None:
         """
         Initialize by supplying returns and predictions.
 
-        :param returns: financial (log) returns
+        :param returns: financial returns
         :param predictions: returns predictions (aligned with returns)
         :param price: price of instrument
         :param volume: volume traded
@@ -344,11 +344,12 @@ class ModelEvaluator:
             position_computer = PositionComputer(
                 returns=self.rets[key],
                 predictions=self.preds[key],
-                target_volatility=self.target_volatility,
                 oos_start=self.oos_start,
-                strategy="rescale",
             )
-            positions = position_computer.compute_positions(mode="all_available")
+            positions = position_computer.compute_positions(
+                target_volatility=self.target_volatility,
+                mode="all_available",
+                strategy="rescale")
             position_dict[key] = positions
         return position_dict
 
@@ -443,6 +444,12 @@ class PnlComputer:
     """
 
     def __init__(self, returns: pd.Series, positions: pd.Series,) -> None:
+        """
+        Initialize by supply returns and positions.
+
+        :param returns: financial returns
+        :param predictions: returns predictions (aligned with returns)
+        """
         self._validate_series(returns)
         self._validate_series(positions)
         self.returns = returns
@@ -475,58 +482,49 @@ class PositionComputer:
         *,
         returns: pd.Series,
         predictions: pd.Series,
-        target_volatility: Optional[float] = None,
         oos_start: Optional[float] = None,
-        strategy: str = "rescale",
     ) -> None:
         """
         Initialize by supplying returns and predictions.
 
         :param returns: financial returns
         :param predictions: returns predictions (aligned with returns)
-        :param target_volatility: generate positions to achieve target
-            volatility on in-sample region.
         :param oos_start: optional end of in-sample/start of out-of-sample.
-        :param strategy: "rescale", "rolling" (not yet implemented)
         """
         self._validate_series(returns)
         self._validate_series(predictions)
         self.returns = returns
         self.predictions = predictions
-        self.target_volatility = target_volatility
         self.oos_start = oos_start
-        self.strategy = strategy
-        # if self.strategy == "rolling":
-        #     self.volatility_modeler = dtf.VolatilityModel(
-        #         nid="volatility_model",
-        #         col=["pnl"],
-        #         steps_ahead=2,
-        #         p_moment=2,
-        #         tau=None,
-        #         nan_mode="drop",
-        #     )
-        # else:
-        #     raise ValueError(f"Unrecognized strategy `{strategy}`!")
 
-    def compute_positions(self, mode: str = "ins") -> pd.Series:
+    def compute_positions(self,
+                          target_volatility: Optional[float] = None,
+                          mode: Optional[str] = None,
+                          strategy: Optional[str] = None,
+                          ) -> pd.Series:
         """
         Compute positions from returns and predictions.
 
+        :param target_volatility: generate positions to achieve target
+            volatility on in-sample region.
         :param mode: "all_available", "ins", or "oos"
+        :param strategy: "rescale", "rolling" (not yet implemented)
         :return: series of positions
         """
+        mode = mode or "ins"
+        strategy = strategy or "rescale"
         # Compute PnL by interpreting predictions as positions.
         pnl_computer = PnlComputer(self.returns, self.predictions)
         pnl = pnl_computer.compute_pnl()
         pnl.name = "pnl"
         #
-        if self.target_volatility is None:
+        if target_volatility is None:
             return self._return_srs(pnl, mode=mode)
         #
         ins_pnl = pnl[: self.oos_start]
-        if self.strategy == "rescale":
+        if strategy == "rescale":
             scale_factor = fin.compute_volatility_normalization_factor(
-                srs=ins_pnl, target_volatility=self.target_volatility
+                srs=ins_pnl, target_volatility=target_volatility
             )
             positions = scale_factor * self.predictions
             return self._return_srs(positions, mode=mode)
@@ -549,3 +547,49 @@ class PositionComputer:
         dbg.dassert_isinstance(srs, pd.Series)
         dbg.dassert(not srs.dropna().empty)
         dbg.dassert(srs.index.freq)
+
+
+    class TransactionCostModeler:
+        """
+        Estimates transaction costs.
+        """
+
+        def __init__(self,
+            *,
+            price: pd.Series,
+            positions: pd.Series,
+            oos_start: Optional[float] = None,
+            tick_size: Optional[float] = None,
+            spread_pct: Optional[float] = None,
+        ) -> None:
+            self._validate_series(price)
+            self._validate_series(positions)
+            self.price = price
+            self.positions = positions
+
+        def compute_transaction_costs(self,
+                                      tick_size: Optional[float] = None,
+                                      spread_pct: Optional[float] = None,
+                                      mode: Optional[str] = None,
+                                      ) -> pd.Series:
+            """
+
+            :return:
+            """
+
+        def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
+            if mode == "ins":
+                return srs[: self.oos_start]
+            elif mode == "all_available":
+                return srs
+            elif mode == "oos":
+                dbg.dassert(
+                    self.oos_start, msg="Must set `oos_start` to run `oos`",
+                )
+                return srs[self.oos_start:]
+
+        @staticmethod
+        def _validate_series(srs: pd.Series) -> None:
+            dbg.dassert_isinstance(srs, pd.Series)
+            dbg.dassert(not srs.dropna().empty)
+            dbg.dassert(srs.index.freq)
