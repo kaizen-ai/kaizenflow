@@ -369,10 +369,7 @@ class UnsupervisedSkLearnModel(FitPredictNode):
             pass
         elif self._col_mode == "merge_all":
             df_out = df_in.merge(
-                df_out,
-                how="outer",
-                left_index=True,
-                right_index=True,
+                df_out, how="outer", left_index=True, right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
@@ -1264,10 +1261,7 @@ class DeepARGlobalModel(FitPredictNode):
         # by the passed-in local timeseries dataframe.
         # TODO(Paul): Do this mapping earlier before removing the traces.
         aligned_idx = y_hat.index.map(
-            lambda x: (
-                x[0] + 1,
-                x[1] - pd.Timedelta(f"1{self._freq}"),
-            )
+            lambda x: (x[0] + 1, x[1] - pd.Timedelta(f"1{self._freq}"),)
         )
         y_hat.index = aligned_idx
         y_hat.name = y_vars[0] + "_hat"
@@ -1291,11 +1285,7 @@ class DeepARGlobalModel(FitPredictNode):
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_test = adpt.transform_to_gluon(
-            df,
-            x_vars,
-            y_vars,
-            self._freq,
-            self._prediction_length,
+            df, x_vars, y_vars, self._freq, self._prediction_length,
         )
         predictions = list(self._predictor.predict(gluon_test))
         # Transform gluon-ts predictions into a dataflow local timeseries
@@ -1310,10 +1300,7 @@ class DeepARGlobalModel(FitPredictNode):
         # by the passed-in local timeseries dataframe.
         # TODO(Paul): Do this mapping earlier before removing the traces.
         aligned_idx = y_hat.index.map(
-            lambda x: (
-                x[0] + 1,
-                x[1] - pd.Timedelta(f"1{self._freq}"),
-            )
+            lambda x: (x[0] + 1, x[1] - pd.Timedelta(f"1{self._freq}"),)
         )
         y_hat.index = aligned_idx
         y_hat.name = y_vars[0] + "_hat"
@@ -1596,16 +1583,21 @@ class VolatilityModel(FitPredictNode):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_in = df_in.copy()
-        vol = self._calculate_vol(df_in)
-        sma = self._sma_model.fit(vol)["df_out"]
+        vol_power = self._calculate_vol_power(df_in)
+        sma = self._sma_model.fit(vol_power)["df_out"]
         info = collections.OrderedDict()
         info["sma"] = self._sma_model.get_info("fit")
         self._check_cols(df_in, sma)
-        normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
-        df_in[self._zscored_col] = df_in[self._col[0]].divide(
-            normalized_vol.shift(self._steps_ahead)
+        normalized_vol = sma[self._fwd_vol_col] ** (1.0 / self._p_moment)
+        normalized_vol_hat = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
+        df_in[self._zscored_col] = df_in[self._col[0]].divide(normalized_vol_hat)
+        vol_df = pd.DataFrame(
+            {
+                self._fwd_vol_col: normalized_vol,
+                self._fwd_vol_col_hat: normalized_vol_hat,
+            }
         )
-        df_in = sma.merge(df_in, left_index=True, right_index=True)
+        df_in = vol_df.merge(df_in, left_index=True, right_index=True)
         self._set_info("fit", info)
         return {"df_out": df_in}
 
@@ -1627,14 +1619,14 @@ class VolatilityModel(FitPredictNode):
         self._set_info("predict", info)
         return {"df_out": df_in}
 
-    def _calculate_vol(self, df_in: pd.DataFrame) -> pd.DataFrame:
+    def _calculate_vol_power(self, df_in: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate p-th moment of returns.
         """
-        vol = pd.Series(
+        vol_p = pd.Series(
             np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
         ).to_frame()
-        return vol
+        return vol_p
 
     def _check_cols(self, df_in: pd.DataFrame, sma: pd.DataFrame) -> None:
         """
