@@ -62,7 +62,7 @@
 
   ```python
   def get_sum(a: List[int], b: List[int]) -> Any:
-      playback = plbck.Playback("assert_equal", "get_sum", a=a, b=b)
+      playback = plbck.Playback("assert_equal")
       c = a + b
       code = playback.run(res)
       print(code)
@@ -71,7 +71,7 @@
 
 - Create the playback object
   ```python
-  playback = plbck.Playback("assert_equal", "get_sum", a=a, b=b)
+  playback = plbck.Playback("assert_equal")
   ```
   which specifies:
   - The unit test mode: "check_string" or "assert_equal"

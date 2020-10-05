@@ -19,9 +19,9 @@ class FilePathGenerator:
     }
 
     ASSET_TYPE_PREFIX = {
-        types.AssetClass.ETFs: "all_etfs",
-        types.AssetClass.Stocks: "all_stocks",
-        types.AssetClass.Forex: "all_forex",
+        types.AssetClass.ETFs: "all_etfs_",
+        types.AssetClass.Stocks: "all_stocks_",
+        types.AssetClass.Forex: "all_forex_pairs_",
         types.AssetClass.Futures: "All_Futures",
     }
 
@@ -73,7 +73,7 @@ class FilePathGenerator:
 
     @staticmethod
     def _generate_unadjusted_modifier(unadjusted: bool) -> str:
-        adjusted_modifier = "_unadjusted_" if unadjusted else ""
+        adjusted_modifier = "unadjusted_" if unadjusted else ""
         return adjusted_modifier
 
     def _generate_modifier(

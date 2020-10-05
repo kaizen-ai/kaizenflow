@@ -1,5 +1,6 @@
 import logging
 import pprint
+from typing import List, Optional, Tuple
 
 import mxnet
 import numpy as np
@@ -13,6 +14,7 @@ import core.config as cfg
 import core.config_builders as cfgb
 import core.dataflow as dtf
 import core.signal_processing as sigp
+import helpers.dbg as dbg
 import helpers.printing as prnt
 import helpers.unit_test as hut
 
@@ -201,9 +203,14 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
 
 
 class TestContinuousSarimaxModel(hut.TestCase):
+    """
+    Warning:
+        SARIMAX can give slightly different outputs on different machines.
+    """
+
     def test_fit1(self) -> None:
-        data = self._get_data()
-        config = self._get_config()
+        data = self._get_data([], [])
+        config = self._get_config((1, 0, 1), (1, 0, 1, 3))
         csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
         output_str = (
@@ -217,9 +224,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         """
         Fit without providing an exogenous variable.
         """
-        data = self._get_data()
+        data = self._get_data([], [])
         data.drop(columns=["x"], inplace=True)
-        config = self._get_config()
+        config = self._get_config((1, 0, 1), (1, 0, 1, 3))
         config["x_vars"] = None
         csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
@@ -231,10 +238,10 @@ class TestContinuousSarimaxModel(hut.TestCase):
         self.check_string(output_str)
 
     def test_predict1(self) -> None:
-        data = self._get_data()
+        data = self._get_data([], [])
         data_fit = data.iloc[:70]
         data_predict = data.iloc[70:]
-        config = self._get_config()
+        config = self._get_config((1, 0, 1), (1, 0, 1, 3))
         csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
@@ -245,13 +252,58 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         self.check_string(output_str)
 
+    def test_predict2(self) -> None:
+        """
+        Test AR(1) process.
+        """
+        data = self._get_data([1], [])
+        data_fit = data.iloc[:70]
+        data_predict = data.iloc[70:]
+        config = self._get_config((1, 0, 0))
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm.fit(data_fit)
+        df_out = csm.predict(data_predict)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test_predict_different_intervals1(self) -> None:
+        """
+        Verify that predictions on different intervals match.
+        """
+        data = self._get_data([1], [], periods=120, freq="D")
+        config = self._get_config((1, 0, 0))
+        data_fit = data.loc[:"2010-03-12"]
+        data_predict1 = data.loc["2010-03-12":"2010-04-02"]
+        data_predict2 = data.loc["2010-03-20":"2010-04-17"]
+        data_predict3 = data.loc["2010-04-01":"2010-04-27"]
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm.fit(data_fit)
+        df_out1 = csm.predict(data_predict1)["df_out"]
+        df_out2 = csm.predict(data_predict2)["df_out"]
+        df_out3 = csm.predict(data_predict3)["df_out"]
+        #
+        pd.testing.assert_series_equal(
+            df_out1.loc["2010-03-26":"2010-04-02", "ret_0_3_hat"],
+            df_out2.loc["2010-03-26":"2010-04-02", "ret_0_3_hat"],
+        )
+        pd.testing.assert_series_equal(
+            df_out2.loc["2010-04-07":"2010-04-17", "ret_0_3_hat"],
+            df_out3.loc["2010-04-07":"2010-04-17", "ret_0_3_hat"],
+        )
+        df_out = pd.concat([df_out1, df_out2, df_out3], axis=1)
+        self.check_string(hut.convert_df_to_string(df_out, index=True))
+
     def test_predict_no_x1(self) -> None:
         """
         Predict without providing an exogenous variable.
         """
-        data = self._get_data()
+        data = self._get_data([], [])
         data.drop(columns=["x"], inplace=True)
-        config = self._get_config()
+        config = self._get_config((1, 0, 1), (1, 0, 1, 3))
         config["x_vars"] = None
         data_fit = data.iloc[:70]
         data_predict = data.iloc[70:]
@@ -265,13 +317,46 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         self.check_string(output_str)
 
+    def test_predict_different_intervals_no_x1(self) -> None:
+        """
+        Verify that predictions on different intervals match.
+        """
+        data = self._get_data([1], [], periods=120, freq="D")
+        data.drop(columns=["x"], inplace=True)
+        config = self._get_config((1, 0, 0))
+        config["x_vars"] = None
+        data_fit = data.loc[:"2010-03-12"]
+        data_predict1 = data.loc["2010-03-12":"2010-04-02"]
+        data_predict2 = data.loc["2010-03-20":"2010-04-17"]
+        data_predict3 = data.loc["2010-04-01":"2010-04-27"]
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm.fit(data_fit)
+        df_out1 = csm.predict(data_predict1)["df_out"]
+        df_out2 = csm.predict(data_predict2)["df_out"]
+        df_out3 = csm.predict(data_predict3)["df_out"]
+        #
+        pd.testing.assert_series_equal(
+            df_out1.loc["2010-03-23":"2010-04-02", "ret_0_3_hat"],
+            df_out2.loc["2010-03-23":"2010-04-02", "ret_0_3_hat"],
+        )
+        pd.testing.assert_series_equal(
+            df_out2.loc["2010-04-04":"2010-04-17", "ret_0_3_hat"],
+            df_out3.loc["2010-04-04":"2010-04-17", "ret_0_3_hat"],
+        )
+
     @staticmethod
-    def _get_data(periods: int = 100, seed: int = 42) -> pd.DataFrame:
-        arma_process = sig_gen.ArmaProcess([], [])
+    def _get_data(
+        ar_coeffs: List[int],
+        ma_coeffs: List[int],
+        periods: int = 100,
+        freq: str = "M",
+        seed: int = 42,
+    ) -> pd.DataFrame:
+        arma_process = sig_gen.ArmaProcess(ar_coeffs, ma_coeffs)
         date_range_kwargs = {
             "start": "2010-01-01",
             "periods": periods,
-            "freq": "M",
+            "freq": freq,
         }
         y = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
@@ -280,20 +365,36 @@ class TestContinuousSarimaxModel(hut.TestCase):
         return pd.concat([x, y], axis=1)
 
     @staticmethod
-    def _get_config() -> cfg.Config:
+    def _get_config(
+        order: Tuple[int, int, int],
+        seasonal_order: Optional[Tuple[int, int, int, int]] = None,
+    ) -> cfg.Config:
         config = cfgb.get_config_from_nested_dict(
             {
                 "y_vars": ["ret_0"],
                 "steps_ahead": 3,
                 "init_kwargs": {
-                    "order": (1, 0, 1),
-                    "seasonal_order": (1, 0, 1, 3),
+                    "order": order,
+                    "seasonal_order": seasonal_order,
                 },
                 "x_vars": ["x"],
                 "nan_mode": "drop",
             }
         )
         return config
+
+    @staticmethod
+    def _compare_non_nan_intersection(
+        df1: pd.DataFrame, df2: pd.DataFrame
+    ) -> None:
+        dbg.dassert(
+            df1.columns.equals(df2.columns),
+            "Comparison of dataframes with different columns is not supported",
+        )
+        for col in df1.columns:
+            df1[col].dropna()
+            df2[col].dropna()
+            dbg.dassert
 
 
 class TestResidualizer(hut.TestCase):

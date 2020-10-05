@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""Lint md files.
+"""
+Lint md files.
 
 > lint_txt.py -i foo.md -o bar.md
 
@@ -19,7 +20,6 @@ import tempfile
 from typing import List, Optional
 
 import helpers.dbg as dbg
-import helpers.git as git
 import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.system_interaction as si
@@ -177,9 +177,12 @@ def _refresh_toc(txt: str) -> str:
     tmp_file_name = tempfile.NamedTemporaryFile().name
     io_.to_file(tmp_file_name, txt)
     # Process TOC.
-    amp_path = git.get_amp_abs_path()
     cmd: List[str] = []
-    gh_md_toc = os.path.join(amp_path, "documentation/scripts/gh-md-toc")
+    # Find the script `gh-md-toc`, assuming that it's in the same directory of
+    # this script.
+    gh_md_toc = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "gh-md-toc"
+    )
     dbg.dassert_exists(gh_md_toc)
     cmd.append(gh_md_toc)
     cmd.append("--insert %s" % tmp_file_name)
@@ -259,10 +262,15 @@ def _parser() -> argparse.ArgumentParser:
         default=sys.stdout,
     )
     parser.add_argument(
-        "--in_place", action="store_true",
+        "--in_place",
+        action="store_true",
     )
     parser.add_argument(
-        "-w", "--print-width", action="store", type=int, default=None,
+        "-w",
+        "--print-width",
+        action="store",
+        type=int,
+        default=None,
     )
     prsr.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
     prsr.add_verbosity_arg(parser)
