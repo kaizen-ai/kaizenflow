@@ -77,8 +77,7 @@ class DataFrameModeler:
     def apply_column_transformer(
         self,
         transformer_func: Callable[..., pd.DataFrame],
-        # TODO(Paul): Tighten this type annotation.
-        transformer_kwargs: Optional[Any] = None,
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
         cols: Optional[Iterable[str]] = None,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
@@ -87,7 +86,7 @@ class DataFrameModeler:
         method: str = "fit",
     ) -> DataFrameModeler:
         """
-        Apply a function a a select of columns.
+        Apply a function to a select of columns.
         """
         model = dtf.ColumnTransformer(
             nid="column_transformer",
@@ -97,6 +96,22 @@ class DataFrameModeler:
             col_rename_func=col_rename_func,
             col_mode=col_mode,
             nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
+    def apply_dataframe_method_runner(
+        self,
+        dataframe_method: str,
+        method_kwargs: Optional[Dict[str, Any]] = None,
+        method: str = "fit",
+    ) -> DataFrameModeler:
+        """
+        Execute a dataframe method.
+        """
+        model = dtf.DataframeMethodRunner(
+            nid="dataframe_method_runner",
+            method=dataframe_method,
+            method_kwargs=method_kwargs,
         )
         return self._run_model(model, method)
 
@@ -111,7 +126,7 @@ class DataFrameModeler:
         """
         Resample the dataframe (causally, by default).
         """
-        agg_func_kwargs = agg_func_kwargs or {"min_count": 1}
+        agg_func_kwargs = agg_func_kwargs or {}
         model = dtf.Resample(
             nid="resample",
             rule=rule,

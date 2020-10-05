@@ -114,6 +114,87 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 # #############################################################################
 
 
+def resample_time_bars(
+    df: pd.DataFrame,
+    rule: str,
+    *,
+    return_cols: list,
+    return_agg_func: Optional[str] = None,
+    return_agg_func_kwargs: Optional[dict] = None,
+    price_cols: Optional[list] = None,
+    price_agg_func: Optional[str] = None,
+    price_agg_func_kwargs: Optional[list] = None,
+    volume_cols: Optional[list] = None,
+    volume_agg_func: Optional[str] = None,
+    volume_agg_func_kwargs: Optional[list] = None,
+) -> pd.DataFrame:
+    """
+    Convenience resampler for time bars.
+
+    Features:
+    - Respects causality
+    - Chooses sensible defaults:
+      - returns are summed
+      - prices are averaged
+      - volume is summed
+    - NaN intervals remain NaN
+    - Defaults may be overidden (e.g., choose `last` instead of `mean` for
+      price)
+
+    :param df: input dataframe with datetime index
+    :param rule: resampling frequency
+    :param return_cols: columns containing returns
+    :param return_agg_func: aggregation function
+    :param return_agg_func_kwargs: kwargs
+    :param price_cols: columns containing price
+    :param price_agg_func: aggregation function
+    :param price_agg_func_kwargs: kwargs
+    :param volume_cols: columns containing volume
+    :param volume_agg_func: aggregation function
+    :param volume_agg_func_kwargs: kwargs
+    :return: dataframe of resampled time bars
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    # Helper
+    def _resample_financial(df, rule, cols, agg_func, agg_func_kwargs):
+        dbg.dassert(not df.empty)
+        dbg.dassert_isinstance(cols, list)
+        dbg.dassert(cols, msg="`cols` must be nonempty.")
+        dbg.dassert_is_subset(cols, df.columns)
+        resampler = sigp.resample(df[cols], rule=rule)
+        resampled = resampler.agg(agg_func, **agg_func_kwargs)
+        return resampled
+
+    # Resample returns.
+    return_agg_func = return_agg_func or "sum"
+    return_agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
+    result_df = _resample_financial(
+        df, rule, return_cols, return_agg_func, return_agg_func_kwargs
+    )
+    # Maybe resample prices.
+    if price_cols:
+        price_agg_func = price_agg_func or "mean"
+        price_agg_func_kwargs = price_agg_func_kwargs or {}
+        price_df = _resample_financial(
+            df, rule, price_cols, price_agg_func, price_agg_func_kwargs
+        )
+        result_df = result_df.merge(
+            price_df, how="outer", left_index=True, right_index=True
+        )
+        dbg.dassert(result_df.index.freq)
+    if volume_cols:
+        volume_agg_func = volume_agg_func or "sum"
+        volume_agg_func_kwargs = volume_agg_func_kwargs or {"min_count": 1}
+        volume_df = _resample_financial(
+            df, rule, volume_cols, volume_agg_func, volume_agg_func_kwargs
+        )
+        result_df = result_df.merge(
+            volume_df, how="outer", left_index=True, right_index=True
+        )
+        dbg.dassert(result_df.index.freq)
+    return result_df
+
+
 def compute_ret_0(
     prices: Union[pd.Series, pd.DataFrame], mode: str
 ) -> Union[pd.Series, pd.DataFrame]:

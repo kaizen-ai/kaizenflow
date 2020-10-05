@@ -31,6 +31,25 @@ class KibotDataLoader:
         :param nrows: if not None, return only the first nrows of the data
         :return: a dataframe with the symbol data
         """
+        return self._read_data(
+            symbol=symbol,
+            asset_class=asset_class,
+            frequency=frequency,
+            contract_type=contract_type,
+            unadjusted=unadjusted,
+            nrows=nrows,
+        )
+
+    @staticmethod
+    def _read_data(
+        symbol: str,
+        asset_class: types.AssetClass,
+        frequency: types.Frequency,
+        contract_type: Optional[types.ContractType] = None,
+        unadjusted: Optional[bool] = None,
+        nrows: Optional[int] = None,
+    ) -> pd.DataFrame:
+
         file_path = fpgen.FilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
