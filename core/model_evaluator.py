@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
+import core.dataflow as dtf
 import core.finance as fin
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -20,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 class ModelEvaluator:
     """
-    Evaluate performance of financial models for returns.
+    Evaluates performance of financial models for returns.
     """
 
     def __init__(
@@ -438,3 +439,109 @@ class ModelEvaluator:
                 continue
             valid_keys.append(k)
         return valid_keys
+
+
+class PnlComputer:
+    """
+    Computes PnL from returns and holdings.
+    """
+
+    def __init__(
+        self,
+        returns: pd.Series,
+        positions: pd.Series,
+    ) -> None:
+        self._validate_series(returns)
+        self._validate_series(positions)
+        self.returns = returns
+        self.positions = positions
+        # TODO(*): validate indices
+
+    def compute_pnl(self):
+        pnl = self.returns.multiply(self.positions)
+        dbg.dassert(pnl.index.freq)
+        pnl.name = "pnl"
+        return pnl
+
+    @staticmethod
+    def _validate_series(srs: pd.Series) -> None:
+        dbg.dassert_isinstance(srs, pd.Series)
+        dbg.dassert(not srs.dropna().empty)
+        dbg.dassert(srs.index.freq)
+
+
+class PositionComputer:
+    """
+    Computes target positions from returns, predictions, and constraints.
+    """
+
+    def __init__(
+        self,
+        *,
+        returns: pd.Series,
+        predictions: pd.Series,
+        target_volatility: Optional[float] = None,
+        oos_start: Optional[float] = None,
+        strategy: str = "rolling",
+    ) -> None:
+        """
+
+        :param returns:
+        :param predictions:
+        :param target_volatility:
+        :param oos_start:
+        :param strategy:
+        """
+        self._validate_series(returns)
+        self._validate_series(predictions)
+        self.returns = returns
+        self.predictions = predictions
+        self.target_volatility = target_volatility
+        self.oos_start = oos_start
+        self.strategy = strategy
+        if self.strategy == "rolling":
+            self.volatility_modeler = dtf.VolatilityModel(
+                nid="volatility_model",
+                col=["pnl"],
+                steps_ahead=2,
+                p_moment=2,
+                tau=None,
+                nan_mode="drop",
+            )
+        else:
+            raise ValueError(f"Unrecognized strategy `{strategy}`!")
+
+    def compute_positions(self, mode: str = "ins") -> pd.Series:
+        """
+
+        :return:
+        """
+        # Sanity-check settings.
+        if mode == "oos":
+            dbg.dassert(
+                self.oos_start, msg="Must set `oos_start` to run `oos`",
+            )
+        # TODO(*): Make the strategy configurable on-demand.
+        if self.strategy != "rolling":
+            raise NotImplementedError(f"Strategy `{strategy}` not implemented!")
+        # Compute PnL by interpreting predictions as positions.
+        pnl_computer = PnlComputer(self.returns, self.predictions)
+        pnl = pnl_computer.compute_pnl()
+        pnl.name = "pnl"
+        pnl = pnl.to_frame()
+        #
+        fit_df = self.volatility_modeler.fit(pnl[: self.oos_start])["df_out"]
+        if mode == "ins":
+            return fit_df
+        predict_df = self.volatility_modeler.predict(pnl)["df_out"]
+        if mode == "all_available":
+            return predict_df
+        if mode == "oos":
+            return predict_srs[self.oos_start: ]
+        raise RuntimeError
+
+    @staticmethod
+    def _validate_series(srs: pd.Series) -> None:
+        dbg.dassert_isinstance(srs, pd.Series)
+        dbg.dassert(not srs.dropna().empty)
+        dbg.dassert(srs.index.freq)
