@@ -406,10 +406,12 @@ class DataFrameModeler:
         cols: Optional[List[Any]] = None,
         figsize: Optional[Tuple[int, int]] = None,
         mode: str = "ins",
-        **kwargs
+        plot_dendrogram_kwargs: Optional[Dict[str, Any]] = None
     ) -> None:
+        plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
+        #
         df = self._get_df(cols=cols, mode=mode)
-        plot.plot_dendrogram(df, figsize, **kwargs)
+        plot.plot_dendrogram(df, figsize, **plot_dendrogram_kwargs)
 
     def plot_pca_components(
         self,
