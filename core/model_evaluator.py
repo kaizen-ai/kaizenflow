@@ -346,7 +346,8 @@ class ModelEvaluator:
             positions = position_computer.compute_positions(
                 target_volatility=self.target_volatility,
                 mode="all_available",
-                strategy="rescale")
+                strategy="rescale",
+            )
             position_dict[key] = positions
         return position_dict
 
@@ -470,15 +471,14 @@ class PositionComputer:
         self.returns = returns
         self.predictions = predictions
 
-
-
-    def compute_positions(self,
-                          target_volatility: Optional[float] = None,
-                          mode: Optional[str] = None,
-                          prediction_strategy: Optional[str] = None,
-                          volatility_strategy: Optional[str] = None,
-                          **kwargs: Any,
-                          ) -> pd.Series:
+    def compute_positions(
+        self,
+        target_volatility: Optional[float] = None,
+        mode: Optional[str] = None,
+        prediction_strategy: Optional[str] = None,
+        volatility_strategy: Optional[str] = None,
+        **kwargs: Any,
+    ) -> pd.Series:
         """
         Compute positions from returns and predictions.
 
@@ -499,53 +499,56 @@ class PositionComputer:
         elif prediction_strategy == "squash":
             predictions = self._squash(self.predictions, **kwargs)
         else:
-            raise ValueError(f"Unrecognized prediction_strategy `{prediction_strategy}`!")
+            raise ValueError(
+                f"Unrecognized prediction_strategy `{prediction_strategy}`!"
+            )
         # Specify strategy for volatility targeting.
         volatility_strategy = volatility_strategy or "rescale"
         if target_volatility is None:
             positions = predictions.copy()
             positions.name = "positions"
             return self._return_srs(positions, mode=mode)
-        return self._adjust_for_volatility(predictions,
-                                           target_volatility=target_volatility,
-                                           mode=mode,
-                                           volatility_strategy=volatility_strategy,
-                                           )
-    def _multiply_kernel(self,
-                predictions: pd.Series,
-                tau: float,
-                delay: int,
-                z_mute_point: float,
-                z_saturation_point: float,
-                ) -> pd.Series:
-        zscored_preds = sigp.compute_rolling_zscore(predictions,
-                                                    tau=tau,
-                                                    delay=delay)
-        bump_function = functools.partial(sigp.c_infinity_bump_function,
-                                          a=z_mute_point,
-                                          b=z_saturation_point)
+        return self._adjust_for_volatility(
+            predictions,
+            target_volatility=target_volatility,
+            mode=mode,
+            volatility_strategy=volatility_strategy,
+        )
+
+    def _multiply_kernel(
+        self,
+        predictions: pd.Series,
+        tau: float,
+        delay: int,
+        z_mute_point: float,
+        z_saturation_point: float,
+    ) -> pd.Series:
+        zscored_preds = sigp.compute_rolling_zscore(
+            predictions, tau=tau, delay=delay
+        )
+        bump_function = functools.partial(
+            sigp.c_infinity_bump_function, a=z_mute_point, b=z_saturation_point
+        )
         scale_factors = 1 - zscored_preds.apply(bump_function)
         adjusted_preds = zscored_preds.multiply(scale_factors)
         return adjusted_preds
 
-    def _squash(self,
-                predictions: pd.Series,
-                tau: float,
-                delay: int,
-                scale: float,
-                ) -> pd.Series:
+    def _squash(
+        self, predictions: pd.Series, tau: float, delay: int, scale: float,
+    ) -> pd.Series:
 
-        zscored_preds = sigp.compute_rolling_zscore(predictions,
-                                                    tau=tau,
-                                                    delay=delay)
+        zscored_preds = sigp.compute_rolling_zscore(
+            predictions, tau=tau, delay=delay
+        )
         return sigp.squash(zscored_preds, scale=scale)
 
-    def _adjust_for_volatility(self,
-                               predictions: pd.Series,
-                               target_volatility: float,
-                               mode: str,
-                               volatility_strategy: str,
-                               ) -> pd.Series:
+    def _adjust_for_volatility(
+        self,
+        predictions: pd.Series,
+        target_volatility: float,
+        mode: str,
+        volatility_strategy: str,
+    ) -> pd.Series:
         """
 
         :param predictions:
@@ -598,7 +601,8 @@ class TransactionCostModeler:
     Estimates transaction costs.
     """
 
-    def __init__(self,
+    def __init__(
+        self,
         *,
         price: pd.Series,
         positions: pd.Series,
@@ -610,11 +614,12 @@ class TransactionCostModeler:
         self.price = price
         self.positions = positions
 
-    def compute_transaction_costs(self,
-                                  tick_size: Optional[float] = None,
-                                  spread_pct: Optional[float] = None,
-                                  mode: Optional[str] = None,
-                                  ) -> pd.Series:
+    def compute_transaction_costs(
+        self,
+        tick_size: Optional[float] = None,
+        spread_pct: Optional[float] = None,
+        mode: Optional[str] = None,
+    ) -> pd.Series:
         """
         Estimate transaction costs by estimating the bid-ask spread.
         """
@@ -636,7 +641,7 @@ class TransactionCostModeler:
             dbg.dassert(
                 self.oos_start, msg="Must set `oos_start` to run `oos`",
             )
-            return srs[self.oos_start:]
+            return srs[self.oos_start :]
         else:
             raise ValueError(f"Invalid mode `{mode}`!")
 
