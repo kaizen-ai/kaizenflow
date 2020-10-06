@@ -84,7 +84,8 @@ class _TimeSeriesAnalyzer:
             return
         #
         # Split by year.
-        yearly_resample = self._time_series.resample("y")
+        time_series = self._time_series.dropna()
+        yearly_resample = time_series.resample("y")
         # Create as many subplots as years.
         _, axis = plt.subplots(
             len(yearly_resample),
