@@ -143,6 +143,28 @@ class TestFilePathGenerator(hut.TestCase):
         expected_file_path = "all_etfs_1min/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
 
+    def test13(self) -> None:
+        args = dict(
+            symbol="TEST",
+            asset_class=types.AssetClass.SP500,
+            unadjusted=False,
+            frequency=types.Frequency.Tick,
+            ext=types.Extension.CSV,
+        )
+        expected_file_path = "sp_500_tick/TEST.csv.gz"
+        self._assert_file_path(args=args, expected_file_path=expected_file_path)
+
+    def test14(self) -> None:
+        args = dict(
+            symbol="TEST",
+            asset_class=types.AssetClass.SP500,
+            unadjusted=True,
+            frequency=types.Frequency.Tick,
+            ext=types.Extension.CSV,
+        )
+        expected_file_path = "sp_500_unadjusted_tick/TEST.csv.gz"
+        self._assert_file_path(args=args, expected_file_path=expected_file_path)
+
     def _assert_file_path(self, args: dict, expected_file_path: str) -> None:
         generator = fpgen.FilePathGenerator()
 
