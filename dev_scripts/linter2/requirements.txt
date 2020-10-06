@@ -1,8 +1,0 @@
-pandas
-matplotlib
-docformatter
-more_itertools
-black
-pylint
-mypy
-flake8
