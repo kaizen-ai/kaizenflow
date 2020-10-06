@@ -319,7 +319,9 @@ def from_typed_csv(file_name: str) -> pd.DataFrame:
     'file_name.types' file.
     """
     dtypes_filename = file_name + '.types'
-    if os.path.exists(dtypes_filename)
+    assert os.path.exists(dtypes_filename), \
+        f'There is not .types file related to {file_name}'
+
     dtypes_file = open(dtypes_filename)
     dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
 
