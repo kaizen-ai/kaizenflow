@@ -45,8 +45,9 @@ class Test_from_typed_csv(ut.TestCase):
         test_csv_types_path = os.path.join(self.get_input_dir(), "test.csv.types")
         actual_result = csv.from_typed_csv(test_csv_path).dtypes.apply(lambda x: x.name).to_dict()
         expected_result = {
-            {'A': 'int64', 'B': 'float64', 'C': 'object', 'D': 'object', 'E': 'int64'}
-        }
+            'A': 'int64', 'B': 'float64', 'C': 'object', 'D': 'object', 'E': 'int64'
+            }
+        
         self.assertEqual(actual_result, expected_result)
 
 
