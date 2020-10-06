@@ -47,6 +47,7 @@ class Test_from_typed_csv(ut.TestCase):
         expected_result = {
             {'A': 'int64', 'B': 'float64', 'C': 'object', 'D': 'object', 'E': 'int64'}
         }
+        print(actual_result, expected_result)
         self.assertEqual(actual_result, expected_result)
 
     def test2(self) -> None:
