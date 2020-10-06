@@ -321,7 +321,7 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate stats.
         stats_dict = {}
-        for col in tqdm(df.columns, disable=progress_bar):
+        for col in tqdm(df.columns, disable=not progress_bar):
             stats_val = self._calculate_series_stats(df[col])
             stats_dict[col] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
