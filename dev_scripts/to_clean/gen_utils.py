@@ -13,6 +13,7 @@ import scipy
 import seaborn as sns
 import statsmodels
 
+from helpers.csv import to_typed_csv
 import utils.debug as dbg
 import utils.jos
 import utils.jstats
@@ -986,7 +987,7 @@ def to_csv(model_df, file_name, overwrite_if_present):
             msg="don't want to overwrite '%s'" % file_name,
         )
     # Save data.
-    model_df.to_csv(file_name)
+    to_typed_csv(model_df, file_name)
     print("File saved to: %s" % file_name)
 
 

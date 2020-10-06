@@ -3,6 +3,7 @@ import os
 from typing import Any, Callable, Dict, Optional, Union
 
 import pandas as pd
+import ast
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -294,3 +295,33 @@ def save_csv_as_json(
         path_to_json = io_.change_filename_extension(path_to_csv, ".csv", ".json")
     # Save the dict into a json file.
     io_.to_json(path_to_json, dict_df)
+
+
+def to_typed_csv(df: pd.DataFrame, file_name: str) -> None:
+    """
+    Convert Dataframe into csv and then
+    creates a file with the same name and
+    a suffix 'foobar.csv.types' with the columns'
+    dtypes from the original dataframe
+    """
+    dtypes_filename = file_name + '.types'
+    dtypes_dict = str(df.dtypes.apply(lambda x: x.name).to_dict())
+
+    df.to_csv(file_name, index = False)
+    with open(dtypes_filename, 'w') as dtypes_file:
+        dtypes_file.write(dtypes_dict)
+    
+
+def from_typed_csv(file_name: str) -> pd.DataFrame:
+    """
+    Loads csv file to dataframe and applies the types
+    using dtype param, which contains into
+    'file_name.types' file.
+    """
+    dtypes_filename = file_name + '.types'
+    if os.path.exists(dtypes_filename)
+    dtypes_file = open(dtypes_filename)
+    dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
+
+    df = pd.read_csv(file_name, dtype = dtypes_dict)
+    return df
