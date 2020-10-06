@@ -1487,3 +1487,50 @@ def resample(
     # Execute resampling with specified kwargs.
     resampled_data = data.resample(**resample_kwargs)
     return resampled_data
+
+
+# #############################################################################
+# Special functions
+# #############################################################################
+
+
+def c_infinity(x: float) -> float:
+    """
+    Return C-infinity function evaluated at x.
+
+    This function is zero for x <= 0 and approaches exp(1) as x -> infinity.
+    """
+    if x > 0:
+        return np.exp(-1 / x)
+    else:
+        return 0
+
+
+def c_infinity_step_function(x: float) -> float:
+    """
+    Return C-infinity step function evaluated at x.
+
+    This function is
+      - 0 for x <= 0
+      - 1 for x >= 1
+    """
+    fx = c_infinity(x)
+    f1mx = c_infinity(1 - x)
+    if fx + f1mx == 0:
+        return np.nan
+    return fx / (fx + f1mx)
+
+
+def c_infinity_bump_function(x: float, a: float, b: float) -> float:
+    """
+    Return value of C-infinity bump function evaluated at x.
+
+    :param x: point at which to evaluate
+    :param a: function is 1 between -a and a
+    :param b: function is zero for abs(x) >= b
+    """
+    dbg.dassert_lt(0, a)
+    dbg.dassert_lt(a, b)
+    y = (x ** 2 - a ** 2) / (b ** 2 - a ** 2)
+    inverse_bump = c_infinity_step_function(y)
+    return 1 - inverse_bump
