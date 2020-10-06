@@ -4,6 +4,7 @@ Import as:
 import core.model_evaluator as modeval
 """
 
+import functools
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -12,6 +13,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 import core.finance as fin
+import core.signal_processing as sigp
 import core.statistics as stats
 import helpers.dbg as dbg
 
@@ -76,11 +78,6 @@ class ModelEvaluator:
         # TODO(*): Allow configurable strategies.
         # TODO(*): Maybe require that this be called instead of always doing it.
         self.pnls = self._calculate_pnls(self.rets, self.pos)
-        # Calculate basic slippage estimate under certain assumptions.
-        if price is not None and volatility is not None:
-            self._slippage = self._calculate_slippage(
-                positions=self.pos, price=self.price, volatility=self.volatility
-            )
 
     # TODO(*): Consider exposing positions / returns in the same way.
     def get_series_dict(
@@ -369,32 +366,6 @@ class ModelEvaluator:
             pnls[key] = pnl
         return pnls
 
-    @staticmethod
-    def _calculate_slippage(
-        *,
-        positions: Dict[Any, pd.Series],
-        price: Dict[Any, pd.Series],
-        volatility: Dict[Any, pd.Series],
-    ) -> Dict[Any, pd.Series]:
-        """
-        Calculate slippage.
-
-        Experimental. Assumes that
-        - `positions` correspond to volatility-adjusted returns
-        - `volatility` provides the returns volatility adjustment
-        - `price` is in dollars and the spread is constant at 1 cent
-        - half the spread is paid
-        """
-        slippage = {}
-        for key in tqdm(positions.keys()):
-            # Assume a constant spread of $0.01.
-            spread_pct = 0.01 / price[key]
-            # Positions volatility-adjusted.
-            pos = positions[key].divide(volatility[key])
-            # Calculate slippage cost.
-            slippage[key] = 0.5 * spread_pct.multiply(np.abs(pos.diff()))
-        return slippage
-
     def _get_valid_keys(
         self,
         dict1: Dict[Any, pd.Series],
@@ -424,6 +395,8 @@ class ModelEvaluator:
             if v.empty:
                 _LOG.warning("Empty series for `k`=%s", str(k))
                 continue
+            if v.dropna().empty:
+                _LOG.warning("All NaN series for `k`=%s", str(k))
             if oos_start is not None:
                 if v[:oos_start].dropna().empty:
                     _LOG.warning("All-NaN in-sample for `k`=%s", str(k))
@@ -491,16 +464,20 @@ class PositionComputer:
         :param predictions: returns predictions (aligned with returns)
         :param oos_start: optional end of in-sample/start of out-of-sample.
         """
-        self._validate_series(returns)
-        self._validate_series(predictions)
+        self.oos_start = oos_start
+        self._validate_series(returns, self.oos_start)
+        self._validate_series(predictions, self.oos_start)
         self.returns = returns
         self.predictions = predictions
-        self.oos_start = oos_start
+
+
 
     def compute_positions(self,
                           target_volatility: Optional[float] = None,
                           mode: Optional[str] = None,
-                          strategy: Optional[str] = None,
+                          prediction_strategy: Optional[str] = None,
+                          volatility_strategy: Optional[str] = None,
+                          **kwargs: Any,
                           ) -> pd.Series:
         """
         Compute positions from returns and predictions.
@@ -508,28 +485,90 @@ class PositionComputer:
         :param target_volatility: generate positions to achieve target
             volatility on in-sample region.
         :param mode: "all_available", "ins", or "oos"
-        :param strategy: "rescale", "rolling" (not yet implemented)
+        :param prediction_strategy: "raw", "kernel", "squash"
+        :param volatility_strategy: "rescale", "rolling" (not yet implemented)
         :return: series of positions
         """
         mode = mode or "ins"
-        strategy = strategy or "rescale"
+        # Process/adjust predictions.
+        prediction_strategy = prediction_strategy or "raw"
+        if prediction_strategy == "raw":
+            predictions = self.predictions.copy()
+        elif prediction_strategy == "kernel":
+            predictions = self._multiply_kernel(self.predictions, **kwargs)
+        elif prediction_strategy == "squash":
+            predictions = self._squash(self.predictions, **kwargs)
+        else:
+            raise ValueError(f"Unrecognized prediction_strategy `{prediction_strategy}`!")
+        # Specify strategy for volatility targeting.
+        volatility_strategy = volatility_strategy or "rescale"
+        if target_volatility is None:
+            positions = predictions.copy()
+            positions.name = "positions"
+            return self._return_srs(positions, mode=mode)
+        return self._adjust_for_volatility(predictions,
+                                           target_volatility=target_volatility,
+                                           mode=mode,
+                                           volatility_strategy=volatility_strategy,
+                                           )
+    def _multiply_kernel(self,
+                predictions: pd.Series,
+                tau: float,
+                delay: int,
+                z_mute_point: float,
+                z_saturation_point: float,
+                ) -> pd.Series:
+        zscored_preds = sigp.compute_rolling_zscore(predictions,
+                                                    tau=tau,
+                                                    delay=delay)
+        bump_function = functools.partial(sigp.c_infinity_bump_function,
+                                          a=z_mute_point,
+                                          b=z_saturation_point)
+        scale_factors = 1 - zscored_preds.apply(bump_function)
+        adjusted_preds = zscored_preds.multiply(scale_factors)
+        return adjusted_preds
+
+    def _squash(self,
+                predictions: pd.Series,
+                tau: float,
+                delay: int,
+                scale: float,
+                ) -> pd.Series:
+
+        zscored_preds = sigp.compute_rolling_zscore(predictions,
+                                                    tau=tau,
+                                                    delay=delay)
+        return sigp.squash(zscored_preds, scale=scale)
+
+    def _adjust_for_volatility(self,
+                               predictions: pd.Series,
+                               target_volatility: float,
+                               mode: str,
+                               volatility_strategy: str,
+                               ) -> pd.Series:
+        """
+
+        :param predictions:
+        :param target_volatility:
+        :param mode:
+        :param volatility_strategy:
+        :return:
+        """
         # Compute PnL by interpreting predictions as positions.
-        pnl_computer = PnlComputer(self.returns, self.predictions)
+        pnl_computer = PnlComputer(self.returns, predictions)
         pnl = pnl_computer.compute_pnl()
         pnl.name = "pnl"
         #
-        if target_volatility is None:
-            return self._return_srs(pnl, mode=mode)
-        #
         ins_pnl = pnl[: self.oos_start]
-        if strategy == "rescale":
+        if volatility_strategy == "rescale":
             scale_factor = fin.compute_volatility_normalization_factor(
                 srs=ins_pnl, target_volatility=target_volatility
             )
-            positions = scale_factor * self.predictions
+            positions = scale_factor * predictions
+            positions.name = "positions"
             return self._return_srs(positions, mode=mode)
         else:
-            raise ValueError(f"Unrecognized strategy `{strategy}`!")
+            raise ValueError(f"Unrecognized strategy `{volatility_strategy}`!")
 
     def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
         if mode == "ins":
@@ -541,55 +580,71 @@ class PositionComputer:
                 self.oos_start, msg="Must set `oos_start` to run `oos`",
             )
             return srs[self.oos_start :]
+        else:
+            raise ValueError(f"Invalid mode `{mode}`!")
 
     @staticmethod
-    def _validate_series(srs: pd.Series) -> None:
+    def _validate_series(srs: pd.Series, oos_start: Optional[float]) -> None:
         dbg.dassert_isinstance(srs, pd.Series)
         dbg.dassert(not srs.dropna().empty)
+        if oos_start is not None:
+            dbg.dassert(not srs[:oos_start].dropna().empty)
+            dbg.dassert(not srs[oos_start:].dropna().empty)
         dbg.dassert(srs.index.freq)
 
 
-    class TransactionCostModeler:
+class TransactionCostModeler:
+    """
+    Estimates transaction costs.
+    """
+
+    def __init__(self,
+        *,
+        price: pd.Series,
+        positions: pd.Series,
+        oos_start: Optional[float] = None,
+    ) -> None:
+        self.oos_start = oos_start
+        self._validate_series(price, self.oos_start)
+        self._validate_series(positions, self.oos_start)
+        self.price = price
+        self.positions = positions
+
+    def compute_transaction_costs(self,
+                                  tick_size: Optional[float] = None,
+                                  spread_pct: Optional[float] = None,
+                                  mode: Optional[str] = None,
+                                  ) -> pd.Series:
         """
-        Estimates transaction costs.
+        Estimate transaction costs by estimating the bid-ask spread.
         """
+        mode = mode or "ins"
+        tick_size = tick_size or 0.01
+        spread_pct = spread_pct or 0.5
+        spread = tick_size / self.price
+        position_changes = np.abs(self.positions.diff())
+        transaction_costs = spread_pct * spread.multiply(position_changes)
+        transaction_costs.name = "transaction_costs"
+        return self._return_srs(transaction_costs, mode=mode)
 
-        def __init__(self,
-            *,
-            price: pd.Series,
-            positions: pd.Series,
-            oos_start: Optional[float] = None,
-            tick_size: Optional[float] = None,
-            spread_pct: Optional[float] = None,
-        ) -> None:
-            self._validate_series(price)
-            self._validate_series(positions)
-            self.price = price
-            self.positions = positions
+    def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
+        if mode == "ins":
+            return srs[: self.oos_start]
+        elif mode == "all_available":
+            return srs
+        elif mode == "oos":
+            dbg.dassert(
+                self.oos_start, msg="Must set `oos_start` to run `oos`",
+            )
+            return srs[self.oos_start:]
+        else:
+            raise ValueError(f"Invalid mode `{mode}`!")
 
-        def compute_transaction_costs(self,
-                                      tick_size: Optional[float] = None,
-                                      spread_pct: Optional[float] = None,
-                                      mode: Optional[str] = None,
-                                      ) -> pd.Series:
-            """
-
-            :return:
-            """
-
-        def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
-            if mode == "ins":
-                return srs[: self.oos_start]
-            elif mode == "all_available":
-                return srs
-            elif mode == "oos":
-                dbg.dassert(
-                    self.oos_start, msg="Must set `oos_start` to run `oos`",
-                )
-                return srs[self.oos_start:]
-
-        @staticmethod
-        def _validate_series(srs: pd.Series) -> None:
-            dbg.dassert_isinstance(srs, pd.Series)
-            dbg.dassert(not srs.dropna().empty)
-            dbg.dassert(srs.index.freq)
+    @staticmethod
+    def _validate_series(srs: pd.Series, oos_start: Optional[float]) -> None:
+        dbg.dassert_isinstance(srs, pd.Series)
+        dbg.dassert(not srs.dropna().empty)
+        if oos_start is not None:
+            dbg.dassert(not srs[:oos_start].dropna().empty)
+            dbg.dassert(not srs[oos_start:].dropna().empty)
+        dbg.dassert(srs.index.freq)
