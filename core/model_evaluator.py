@@ -75,8 +75,6 @@ class ModelEvaluator:
         # Calculate positions
         self.pos = self._calculate_positions()
         # Calculate pnl streams.
-        # TODO(*): Allow configurable strategies.
-        # TODO(*): Maybe require that this be called instead of always doing it.
         self.pnls = self._calculate_pnls(self.rets, self.pos)
 
     # TODO(*): Consider exposing positions / returns in the same way.
@@ -116,9 +114,6 @@ class ModelEvaluator:
         elif series == "volatility":
             dbg.dassert(self.volatility, msg="No volume data supplied")
             series_dict = self.volatility
-        elif series == "slippage":
-            dbg.dassert(self._slippage, msg="Cannot calculate slippage")
-            series_dict = self._slippage
         else:
             raise ValueError(f"Unrecognized series `{series}`.")
         # NOTE: ins/oos overlap by one point as-is (consider changing).
