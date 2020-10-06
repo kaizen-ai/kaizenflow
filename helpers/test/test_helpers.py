@@ -46,8 +46,7 @@ class Test_from_typed_csv(ut.TestCase):
         actual_result = csv.from_typed_csv(test_csv_path).dtypes.apply(lambda x: x.name).to_dict()
         expected_result = {
             'A': 'int64', 'B': 'float64', 'C': 'object', 'D': 'object', 'E': 'int64'
-            }
-        
+        }
         self.assertEqual(actual_result, expected_result)
 
 
@@ -59,6 +58,7 @@ class Test_to_typed_csv(ut.TestCase):
         csv.to_typed_csv(df, test_csv_path)
         self.assertTrue(os.path.exists(test_csv_types_path))
         os.remove(test_csv_types_path)
+
 
 # #############################################################################
 # env.py
