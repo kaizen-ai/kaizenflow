@@ -274,6 +274,47 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         self.check_string(output_str)
 
+    def test_compare_to_linear_regression1(self) -> None:
+        """
+        Compare SARIMAX results to Linear Regression.
+        """
+        data = self._get_data([1], [])
+        data.drop(columns=["x"], inplace=True)
+        steps_ahead = 2
+        # Train SkLearn model.
+        sklearn_config = cfgb.get_config_from_nested_dict(
+            {
+                "model_func": slm.LinearRegression,
+                "x_vars": ["ret_0"],
+                "y_vars": ["ret_0"],
+                "steps_ahead": steps_ahead,
+                "col_mode": "merge_all",
+            }
+        )
+        sklearn_model = dtf.ContinuousSkLearnModel(
+            "model", **sklearn_config.to_dict()
+        )
+        skl_out = sklearn_model.fit(data)["df_out"]
+        skl_out.rename(columns=lambda x: "skl_" + x, inplace=True)
+        # Train SARIMAX model.
+        sarimax_config = self._get_config((1, 0, 0))
+        sarimax_config["x_vars"] = None
+        sarimax_config["steps_ahead"] = steps_ahead
+        sarimax_model = dtf.ContinuousSarimaxModel(
+            "model", **sarimax_config.to_dict()
+        )
+        sarimax_out = sarimax_model.fit(data)["df_out"]
+        # sarimax_out.rename(columns=lambda x: "sarimax_" + x, inplace=True)
+        # Compare outputs.
+        output_df = pd.concat([skl_out, sarimax_out], axis=1)
+        output_str = (
+            f"{prnt.frame('sklearn_config')}\n{sklearn_config}\n"
+            f"{prnt.frame('sarimax_config')}\n{sarimax_config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(output_df, index=True)}"
+        )
+        self.check_string(output_str)
+
     def test_predict1(self) -> None:
         data = self._get_data([], [])
         data_fit = data.iloc[:70]
@@ -315,7 +356,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config = self._get_config((1, 0, 0))
         data_fit = data.loc[:"2010-03-12"]
         data_predict1 = data.loc["2010-03-12":"2010-04-02"]
-        data_predict2 = data.loc["2010-03-20":"2010-04-17"]
+        data_predict2 = data.loc["2010-03-16":"2010-04-17"]
         data_predict3 = data.loc["2010-04-01":"2010-04-27"]
         csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
@@ -324,12 +365,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         df_out3 = csm.predict(data_predict3)["df_out"]
         #
         pd.testing.assert_series_equal(
-            df_out1.loc["2010-03-29":"2010-04-02", "ret_0_3_hat"],
-            df_out2.loc["2010-03-29":"2010-04-02", "ret_0_3_hat"],
+            df_out1.loc["2010-03-25":"2010-03-29", "ret_0_3_hat"],
+            df_out2.loc["2010-03-25":"2010-03-29", "ret_0_3_hat"],
         )
         pd.testing.assert_series_equal(
-            df_out2.loc["2010-04-10":"2010-04-17", "ret_0_3_hat"],
-            df_out3.loc["2010-04-10":"2010-04-17", "ret_0_3_hat"],
+            df_out2.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],
+            df_out3.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],
         )
         df_out = pd.concat([df_out1, df_out2, df_out3], axis=1)
         self.check_string(hut.convert_df_to_string(df_out, index=True))
@@ -373,12 +414,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         df_out3 = csm.predict(data_predict3)["df_out"]
         #
         pd.testing.assert_series_equal(
-            df_out1.loc["2010-03-26":"2010-04-02", "ret_0_3_hat"],
-            df_out2.loc["2010-03-26":"2010-04-02", "ret_0_3_hat"],
+            df_out1.loc["2010-03-26":"2010-04-01", "ret_0_3_hat"],
+            df_out2.loc["2010-03-26":"2010-04-01", "ret_0_3_hat"],
         )
         pd.testing.assert_series_equal(
-            df_out2.loc["2010-04-07":"2010-04-17", "ret_0_3_hat"],
-            df_out3.loc["2010-04-07":"2010-04-17", "ret_0_3_hat"],
+            df_out2.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],
+            df_out3.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],
         )
 
     @staticmethod

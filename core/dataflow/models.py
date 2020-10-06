@@ -369,7 +369,10 @@ class UnsupervisedSkLearnModel(FitPredictNode):
             pass
         elif self._col_mode == "merge_all":
             df_out = df_in.merge(
-                df_out, how="outer", left_index=True, right_index=True,
+                df_out,
+                how="outer",
+                left_index=True,
+                right_index=True,
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
@@ -877,8 +880,14 @@ class ContinuousSarimaxModel(FitPredictNode):
             forecast_last_step = forecast.iloc[-1:]
             preds.append(forecast_last_step)
         preds = pd.concat(preds)
+        # These predictions are made at time `t` for
+        # `t + self._steps_ahead + 1` and indexed by `t`. Therefore, we need to
+        # shift predictions by the lag.
+        preds = preds.shift(-self._steps_ahead - 1)
+        #
         y_var = y.columns[0]
-        preds = preds.to_frame(name=f"{y_var}_{self._steps_ahead}_hat")
+        pred_col = f"{y_var}_{self._steps_ahead}_hat"
+        preds = preds.to_frame(name=pred_col)
         return preds
 
     def _get_bkwd_x_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -1262,7 +1271,10 @@ class DeepARGlobalModel(FitPredictNode):
         # by the passed-in local timeseries dataframe.
         # TODO(Paul): Do this mapping earlier before removing the traces.
         aligned_idx = y_hat.index.map(
-            lambda x: (x[0] + 1, x[1] - pd.Timedelta(f"1{self._freq}"),)
+            lambda x: (
+                x[0] + 1,
+                x[1] - pd.Timedelta(f"1{self._freq}"),
+            )
         )
         y_hat.index = aligned_idx
         y_hat.name = y_vars[0] + "_hat"
@@ -1286,7 +1298,11 @@ class DeepARGlobalModel(FitPredictNode):
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_test = adpt.transform_to_gluon(
-            df, x_vars, y_vars, self._freq, self._prediction_length,
+            df,
+            x_vars,
+            y_vars,
+            self._freq,
+            self._prediction_length,
         )
         predictions = list(self._predictor.predict(gluon_test))
         # Transform gluon-ts predictions into a dataflow local timeseries
@@ -1301,7 +1317,10 @@ class DeepARGlobalModel(FitPredictNode):
         # by the passed-in local timeseries dataframe.
         # TODO(Paul): Do this mapping earlier before removing the traces.
         aligned_idx = y_hat.index.map(
-            lambda x: (x[0] + 1, x[1] - pd.Timedelta(f"1{self._freq}"),)
+            lambda x: (
+                x[0] + 1,
+                x[1] - pd.Timedelta(f"1{self._freq}"),
+            )
         )
         y_hat.index = aligned_idx
         y_hat.name = y_vars[0] + "_hat"
