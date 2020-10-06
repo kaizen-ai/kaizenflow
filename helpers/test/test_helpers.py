@@ -39,30 +39,6 @@ class Test_convert_csv_to_dict(ut.TestCase):
         self.assertEqual(actual_result, expected_result)
 
 
-class Test_from_typed_csv(ut.TestCase):
-    def test1(self) -> None:
-        test_csv_path = os.path.join(self.get_input_dir(), "test.csv")
-        test_csv_types_path = os.path.join(self.get_input_dir(), "test.csv.types")
-        actual_result = csv.from_typed_csv(test_csv_path).dtypes.apply(lambda x: x.name).to_dict()
-        expected_result = {
-            {'A': 'int64', 'B': 'float64', 'C': 'object', 'D': 'object', 'E': 'int64'}
-        }
-        print(actual_result, expected_result)
-        self.assertEqual(actual_result, expected_result)
-
-    def test2(self) -> None:
-        test_csv_path = os.path.join(self.get_input_dir(), "test.csv")
-        actual_result = csv.from_typed_csv(test_csv_path)
-        expected_result = {
-            "A": [1],
-            "B": [2.3456],
-            "C": ["c"],
-            "D": ["d"],
-            "E": [78],
-        }
-        self.assertEqual(actual_result, expected_result)
-
-
 class Test_to_typed_csv(ut.TestCase):
     def test1(self) -> None:
         test_csv_path = os.path.join(self.get_input_dir(), "test.csv")
