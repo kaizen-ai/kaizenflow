@@ -1516,6 +1516,8 @@ def c_infinity_step_function(x: float) -> float:
     """
     fx = c_infinity(x)
     f1mx = c_infinity(1 - x)
+    if fx + f1mx == 0:
+        return np.nan
     return fx / (fx + f1mx)
 
 
