@@ -745,6 +745,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         init_kwargs: Optional[Dict[str, Any]] = None,
         fit_kwargs: Optional[Dict[str, Any]] = None,
         x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        add_constant: bool = False,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
         disable_tqdm: bool = False,
@@ -760,6 +761,9 @@ class ContinuousSarimaxModel(FitPredictNode):
         :param fit_kwargs: kwargs for `fit` method of
             `sm.tsa.statespace.SARIMAX`
         :param x_vars: names of x variables
+        :param add_constant: whether to add constant to exogenous dataset,
+            default `False`. Note that adding a constant and specifying
+            `trend="c"` is not the same
         :param col_mode: "replace_all" or "merge_all"
         :param nan_mode: "raise" or "drop"
         :param disable_tqdm: whether to disable tqdm progress bar
@@ -773,6 +777,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         self._init_kwargs = init_kwargs
         self._fit_kwargs = fit_kwargs or {"disp": False}
         self._x_vars = x_vars
+        self._add_constant = add_constant
         self._model = None
         self._model_results = None
         self._col_mode = col_mode or "merge_all"
@@ -794,6 +799,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             idx = idx[self._steps_ahead :]
         else:
             x_fit = None
+        x_fit = self._add_constant_to_x(x_fit)
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
@@ -832,6 +838,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             idx = idx[self._steps_ahead :]
         else:
             x_predict = None
+        x_predict = self._add_constant_to_x(x_predict)
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, y_predict.index)
         fwd_y_hat = self._predict(y_predict, x_predict)
@@ -911,6 +918,19 @@ class ContinuousSarimaxModel(FitPredictNode):
         mapper = lambda y: y + "_%i" % self._steps_ahead
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
+
+    def _add_constant_to_x(self, x: pd.DataFrame) -> Optional[pd.DataFrame]:
+        if not self._add_constant:
+            return x
+        if self._x_vars is not None:
+            dbg.dassert_not_in(
+                "const",
+                self._to_list(self._x_vars),
+                "A column name 'const' is already present, please rename column.",
+            )
+            self._x_vars.append("const")
+            return sm.add_constant(x)
+        _LOG.warning("`add_constant=True` but no exog is provided.")
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
