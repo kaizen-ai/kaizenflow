@@ -8,9 +8,9 @@
 - IMO = in my opinion
 - KG = knowledge graph
 - KG-OG = KG Original Gangsta 
-- KG-ification = The process of turning something in a KG
+- KG-fication = The process of turning something in a KG
 - KOTH = King Of The Hill (the best model so far)
-- OOTO = Out Of The Office
+- OOO, OOTO = Out Of The Office
 - PR = Pull Request (we prefer this to MR = merge request)
 - PTAL = please take a look
 - SO = stack overflow
