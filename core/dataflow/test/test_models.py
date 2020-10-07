@@ -239,6 +239,20 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         self.check_string(output_str)
 
+    def test_fit_with_constant1(self) -> None:
+        data = self._get_data([1], [])
+        config = self._get_config((1, 0, 0))
+        config["steps_ahead"] = 2
+        config["add_constant"] = True
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        df_out = csm.fit(data)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
+
     def test_fit_no_x1(self) -> None:
         """
         Fit without providing an exogenous variable.
