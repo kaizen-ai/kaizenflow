@@ -29,7 +29,8 @@ _LOG = logging.getLogger(__name__)
 
 class Test_convert_csv_to_dict(ut.TestCase):
     def test1(self) -> None:
-        test_csv_path = os.path.join(self.get_input_dir(), "test.csv")
+        dir_name = self.get_input_dir()
+        test_csv_path = os.path.join(dir_name, "test.csv")
         actual_result = csv.convert_csv_to_dict(test_csv_path, remove_nans=True)
         expected_result = {
             "col1": ["a", "b", "c", "d"],
@@ -48,7 +49,7 @@ class Test_from_typed_csv(ut.TestCase):
     def test1(self) -> None:
         dir_name = self.get_input_dir()
         test_csv_path = os.path.join(dir_name, "test.csv")
-        test_csv_types_path = os.path.join(self.get_input_dir(), "test.csv.types")
+        test_csv_types_path = os.path.join(dir_name, "test.csv.types")
         actual_result = csv.from_typed_csv(test_csv_path).dtypes.apply(lambda x: x.name).to_dict()
         expected_result = {
             'A': 'int64', 'B': 'float64', 'C': 'object', 'D': 'object', 'E': 'int64'
