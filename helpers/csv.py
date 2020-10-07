@@ -327,7 +327,7 @@ def from_typed_csv(file_name: str) -> pd.DataFrame:
     :return pd.DataFrame: dataframe of pandas format.
     """
     dtypes_filename = file_name + '.types'
-    # dbg.dassert_dir_exists(dtypes_filename)
+    dbg.dassert_exists(dtypes_filename)
 
     dtypes_file = open(dtypes_filename)
     dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
