@@ -6,6 +6,7 @@ class AssetClass(enum.Enum):
     ETFs = "etfs"
     Forex = "forex"
     Stocks = "stocks"
+    SP500 = "sp_500"
 
 
 class Frequency(enum.Enum):

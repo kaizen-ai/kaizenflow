@@ -390,7 +390,8 @@ def plot_barplot(
 
 
 def plot_timeseries_distribution(
-    srs: pd.Series, datetime_types: Optional[List[str]] = None,
+    srs: pd.Series,
+    datetime_types: Optional[List[str]] = None,
 ) -> None:
     """Plot timeseries distribution by.
 
@@ -555,7 +556,12 @@ def plot_autocorrelation(
         ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
-            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs,
+            data,
+            lags=lags,
+            ax=ax2,
+            zero=zero,
+            title=pacf_title,
+            **kwargs,
         )
 
 
@@ -786,7 +792,9 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
 
 
 def plot_dendrogram(
-    df: pd.core.frame.DataFrame, figsize: Optional[Tuple[int, int]] = None
+    df: pd.core.frame.DataFrame,
+    figsize: Optional[Tuple[int, int]] = None,
+    **kwargs: Any,
 ) -> None:
     """Plot a dendrogram.
 
@@ -794,6 +802,7 @@ def plot_dendrogram(
 
     :param df: df to plot a heatmap
     :param figsize: if nothing specified, basic (20,5) used
+    :param kwargs: kwargs for `sp.cluster.hierarchy.dendrogram`
     """
     # Look at:
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
@@ -812,11 +821,7 @@ def plot_dendrogram(
         figsize = FIG_SIZE
     _ = plt.figure(figsize=figsize)
     sp.cluster.hierarchy.dendrogram(
-        z,
-        labels=df.columns.tolist(),
-        leaf_rotation=0,
-        color_threshold=0,
-        orientation="right",
+        z, labels=df.columns.tolist(), orientation="right", **kwargs
     )
 
 
@@ -1152,7 +1157,8 @@ def plot_rolling_annualized_volatility(
     # Plot.
     ax = ax or plt.gca()
     ax.plot(
-        annualized_rolling_volatility, label="annualized rolling volatility",
+        annualized_rolling_volatility,
+        label="annualized rolling volatility",
     )
     ax.axhline(
         annualized_volatility,
@@ -1798,6 +1804,9 @@ def _maybe_add_events(
     colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
     for event, color in zip(events, colors):
         ax.axvline(
-            x=pd.Timestamp(event[0]), label=event[1], color=color, linestyle="--",
+            x=pd.Timestamp(event[0]),
+            label=event[1],
+            color=color,
+            linestyle="--",
         )
     return None
