@@ -766,8 +766,9 @@ class ContinuousSarimaxModel(FitPredictNode):
         """
         super().__init__(nid)
         self._y_vars = y_vars
+        # Zero-step prediction is not supported for autoregressive models.
         dbg.dassert_lte(
-            0, steps_ahead, "Non-causal prediction attempted! Aborting..."
+            1, steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
         self._steps_ahead = steps_ahead
         self._init_kwargs = init_kwargs
@@ -856,7 +857,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         if self._x_vars is not None:
             pred_range = len(y) - self._steps_ahead
             # TODO(Julia): Check this.
-            pred_start = self._steps_ahead or 1
+            pred_start = self._steps_ahead
         else:
             pred_range = len(y)
             pred_start = 1
@@ -865,7 +866,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             y_past = y.iloc[:t]
             if x is not None:
                 x_past = x.iloc[:t]
-                x_step = x.iloc[t : t + self._steps_ahead + 1]
+                x_step = x.iloc[t : t + self._steps_ahead]
             else:
                 x_past = None
                 x_step = None
@@ -875,20 +876,21 @@ class ContinuousSarimaxModel(FitPredictNode):
             result_predict = model_predict.filter(self._model_results.params)
             # Make forecast.
             forecast = result_predict.forecast(
-                steps=self._steps_ahead + 1, exog=x_step
+                steps=self._steps_ahead, exog=x_step
             )
             forecast_last_step = forecast.iloc[-1:]
             preds.append(forecast_last_step)
         preds = pd.concat(preds)
-        # These predictions are made at time `t` for
-        # `t + self._steps_ahead + 1` and indexed by `t`. Therefore, we need to
-        # shift predictions by the lag.
-        preds = preds.shift(-self._steps_ahead - 1)
-        #
         y_var = y.columns[0]
-        pred_col = f"{y_var}_{self._steps_ahead}_hat"
-        preds = preds.to_frame(name=pred_col)
-        return preds
+        preds.name = f"{y_var}_0_hat"
+        #
+        # The value `yhat_t` in `preds` is the prediction of `y_t` made
+        # `self._steps_ahead` time points ago. However, by our conventions, the
+        # target and prediction columns are indexed by the timestamp when the
+        # prediction was made and contain the lag in their name:
+        preds = preds.shift(-self._steps_ahead)
+        preds.name = preds.name.replace("_0_hat", f"_{self._steps_ahead}_hat")
+        return preds.to_frame()
 
     def _get_bkwd_x_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """

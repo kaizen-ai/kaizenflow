@@ -221,24 +221,6 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         self.check_string(output_str)
 
-    def test_fit_zero_step1(self) -> None:
-        """
-        Fit on `x = y`.
-        """
-        data = self._get_data([1], [])
-        data["x"] = data["ret_0"]
-        config = self._get_config((1, 0, 0))
-        config["steps_ahead"] = 0
-        config["fit_kwargs"] = {"start_params": [0.9999, 0.0001, 1.57e-11]}
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
-        df_out = csm.fit(data)["df_out"]
-        output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
-
     def test_fit_step_one1(self) -> None:
         """
         Fit on `x = y`.
@@ -280,7 +262,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         """
         data = self._get_data([1], [])
         data.drop(columns=["x"], inplace=True)
-        steps_ahead = 2
+        steps_ahead = 1
         # Train SkLearn model.
         sklearn_config = cfgb.get_config_from_nested_dict(
             {
@@ -304,9 +286,56 @@ class TestContinuousSarimaxModel(hut.TestCase):
             "model", **sarimax_config.to_dict()
         )
         sarimax_out = sarimax_model.fit(data)["df_out"]
-        # sarimax_out.rename(columns=lambda x: "sarimax_" + x, inplace=True)
+        sarimax_out.rename(columns=lambda x: "sarimax_" + x, inplace=True)
         # Compare outputs.
         output_df = pd.concat([skl_out, sarimax_out], axis=1)
+        output_df["skl_sarimax_pred_diff"] = (
+            output_df["skl_ret_0_1_hat"] - output_df["sarimax_ret_0_1_hat"]
+        )
+        output_str = (
+            f"{prnt.frame('sklearn_config')}\n{sklearn_config}\n"
+            f"{prnt.frame('sarimax_config')}\n{sarimax_config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(output_df, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test_compare_to_linear_regression2(self) -> None:
+        """
+        Compare SARIMAX results to Linear Regression for 3 steps ahead.
+        """
+        data = self._get_data([1], [])
+        data.drop(columns=["x"], inplace=True)
+        steps_ahead = 3
+        # Train SkLearn model.
+        sklearn_config = cfgb.get_config_from_nested_dict(
+            {
+                "model_func": slm.LinearRegression,
+                "x_vars": ["ret_0"],
+                "y_vars": ["ret_0"],
+                "steps_ahead": steps_ahead,
+                "col_mode": "merge_all",
+            }
+        )
+        sklearn_model = dtf.ContinuousSkLearnModel(
+            "model", **sklearn_config.to_dict()
+        )
+        skl_out = sklearn_model.fit(data)["df_out"]
+        skl_out.rename(columns=lambda x: "skl_" + x, inplace=True)
+        # Train SARIMAX model.
+        sarimax_config = self._get_config((1, 0, 0))
+        sarimax_config["x_vars"] = None
+        sarimax_config["steps_ahead"] = steps_ahead
+        sarimax_model = dtf.ContinuousSarimaxModel(
+            "model", **sarimax_config.to_dict()
+        )
+        sarimax_out = sarimax_model.fit(data)["df_out"]
+        sarimax_out.rename(columns=lambda x: "sarimax_" + x, inplace=True)
+        # Compare outputs.
+        output_df = pd.concat([skl_out, sarimax_out], axis=1)
+        output_df["skl_sarimax_pred_diff"] = (
+            output_df["skl_ret_0_3_hat"] - output_df["sarimax_ret_0_3_hat"]
+        )
         output_str = (
             f"{prnt.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{prnt.frame('sarimax_config')}\n{sarimax_config}\n"
