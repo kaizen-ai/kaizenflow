@@ -725,8 +725,8 @@ class ContinuousSarimaxModel(FitPredictNode):
 
     This is a wrapper around statsmodels SARIMAX with the following
     modifications:
-      - We predict `y_t`, ... , `y_{t+n}` using `x_{t-n+1}`, ..., `x_t`, where
-       `n` is `steps_ahead`, whereas in the classic implementation it is
+      - We predict `y_t`, ... , `y_{t+n}` using `x_{t-n}`, ..., `x_{t-1}`,
+        where `n` is `steps_ahead`, whereas in the classic implementation it is
         predicted using`x_t`, ... , `x_{t+n}`
       - When making predictions in the `fit` method, we treat the input data as
         out-of-sample. This allows making n-step-ahead predictions on a subset
@@ -791,7 +791,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             x_fit = self._get_bkwd_x_df(df).dropna()
             x_fit_non_nan_idx = x_fit.dropna().index
             non_nan_idx = non_nan_idx.intersection(x_fit_non_nan_idx)
-            idx = idx[self._steps_ahead - 1 :]
+            idx = idx[self._steps_ahead :]
         else:
             x_fit = None
         dbg.dassert(not non_nan_idx.empty)
@@ -829,7 +829,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             x_predict = self._get_bkwd_x_df(df)
             x_predict = x_predict.dropna()
             y_predict = y_predict.loc[x_predict.index]
-            idx = idx[self._steps_ahead - 1 :]
+            idx = idx[self._steps_ahead :]
         else:
             x_predict = None
         # Handle presence of NaNs according to `nan_mode`.
@@ -853,15 +853,19 @@ class ContinuousSarimaxModel(FitPredictNode):
         # TODO(Julia): Consider leaving all steps of the prediction, not just
         #     the last one.
         preds = []
-        pred_range = len(y)
         if self._x_vars is not None:
-            pred_range -= self._steps_ahead - 1
-        for t in tqdm(range(1, pred_range), disable=self._disable_tqdm):
+            pred_range = len(y) - self._steps_ahead
+            # TODO(Julia): Check this.
+            pred_start = self._steps_ahead or 1
+        else:
+            pred_range = len(y)
+            pred_start = 1
+        for t in tqdm(range(pred_start, pred_range), disable=self._disable_tqdm):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
             if x is not None:
                 x_past = x.iloc[:t]
-                x_step = x.iloc[t : t + self._steps_ahead]
+                x_step = x.iloc[t : t + self._steps_ahead + 1]
             else:
                 x_past = None
                 x_step = None
@@ -871,24 +875,30 @@ class ContinuousSarimaxModel(FitPredictNode):
             result_predict = model_predict.filter(self._model_results.params)
             # Make forecast.
             forecast = result_predict.forecast(
-                steps=self._steps_ahead, exog=x_step
+                steps=self._steps_ahead + 1, exog=x_step
             )
             forecast_last_step = forecast.iloc[-1:]
             preds.append(forecast_last_step)
         preds = pd.concat(preds)
+        # These predictions are made at time `t` for
+        # `t + self._steps_ahead + 1` and indexed by `t`. Therefore, we need to
+        # shift predictions by the lag.
+        preds = preds.shift(-self._steps_ahead - 1)
+        #
         y_var = y.columns[0]
-        preds = preds.to_frame(name=f"{y_var}_{self._steps_ahead}_hat")
+        pred_col = f"{y_var}_{self._steps_ahead}_hat"
+        preds = preds.to_frame(name=pred_col)
         return preds
 
     def _get_bkwd_x_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Return dataframe of `steps_ahead - 1` backward x values.
 
-        This way we predict `y_t` using `x_{t-n+1}`, ..., `x_t`, where `n` is
+        This way we predict `y_t` using `x_{t-n}`, ..., `x_{t-1}`, where `n` is
         `self._steps_ahead`.
         """
         x_vars = self._to_list(self._x_vars)
-        shift = self._steps_ahead - 1
+        shift = self._steps_ahead
         mapper = lambda x: x + "_bkwd_%i" % shift
         bkwd_x_df = df[x_vars].shift(shift).rename(columns=mapper)
         return bkwd_x_df
@@ -1593,16 +1603,21 @@ class VolatilityModel(FitPredictNode):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_in = df_in.copy()
-        vol = self._calculate_vol(df_in)
-        sma = self._sma_model.fit(vol)["df_out"]
+        vol_power = self._calculate_vol_power(df_in)
+        sma = self._sma_model.fit(vol_power)["df_out"]
         info = collections.OrderedDict()
         info["sma"] = self._sma_model.get_info("fit")
         self._check_cols(df_in, sma)
-        normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
-        df_in[self._zscored_col] = df_in[self._col[0]].divide(
-            normalized_vol.shift(self._steps_ahead)
+        normalized_vol = sma[self._fwd_vol_col] ** (1.0 / self._p_moment)
+        normalized_vol_hat = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
+        df_in[self._zscored_col] = df_in[self._col[0]].divide(normalized_vol_hat)
+        vol_df = pd.DataFrame(
+            {
+                self._fwd_vol_col: normalized_vol,
+                self._fwd_vol_col_hat: normalized_vol_hat,
+            }
         )
-        df_in = sma.merge(df_in, left_index=True, right_index=True)
+        df_in = vol_df.merge(df_in, left_index=True, right_index=True)
         self._set_info("fit", info)
         return {"df_out": df_in}
 
@@ -1624,14 +1639,14 @@ class VolatilityModel(FitPredictNode):
         self._set_info("predict", info)
         return {"df_out": df_in}
 
-    def _calculate_vol(self, df_in: pd.DataFrame) -> pd.DataFrame:
+    def _calculate_vol_power(self, df_in: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate p-th moment of returns.
         """
-        vol = pd.Series(
+        vol_p = pd.Series(
             np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
         ).to_frame()
-        return vol
+        return vol_p
 
     def _check_cols(self, df_in: pd.DataFrame, sma: pd.DataFrame) -> None:
         """
