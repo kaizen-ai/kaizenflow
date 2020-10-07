@@ -57,7 +57,9 @@ def filter_data_by_values(
 
 def filter_data_by_comparison(
     data: pd.DataFrame,
-    filters: Dict[str, Union[Tuple[str, Any], Tuple[Tuple[str, Any], ...]]],
+    filters: Dict[
+        Union[int, str], Union[Tuple[str, Any], Tuple[Tuple[str, Any], ...]]
+    ],
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
@@ -101,7 +103,7 @@ def filter_data_by_comparison(
 
 def filter_data_by_method(
     data: pd.DataFrame,
-    filters: Dict[str, _METHOD_TO_APPLY],
+    filters: Dict[Union[int, str], _METHOD_TO_APPLY],
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
