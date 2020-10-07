@@ -23,6 +23,7 @@ class FilePathGenerator:
         types.AssetClass.Stocks: "all_stocks_",
         types.AssetClass.Forex: "all_forex_pairs_",
         types.AssetClass.Futures: "All_Futures",
+        types.AssetClass.SP500: "sp_500_",
     }
 
     def generate_file_path(
@@ -100,11 +101,15 @@ class FilePathGenerator:
             modifier = self._generate_contract_path_modifier(
                 contract_type=contract_type
             )
-        elif asset_class in [types.AssetClass.Stocks, types.AssetClass.ETFs]:
+        elif asset_class in [
+            types.AssetClass.Stocks,
+            types.AssetClass.ETFs,
+            types.AssetClass.SP500,
+        ]:
             dbg.dassert_is_not(
                 unadjusted,
                 None,
-                msg="`unadjusted` is a required arg for asset classes: 'stocks' & 'etfs'",
+                msg="`unadjusted` is a required arg for asset classes: 'stocks' & 'etfs' & 'sp_500'",
             )
             modifier = self._generate_unadjusted_modifier(
                 unadjusted=cast(bool, unadjusted)
