@@ -1,5 +1,6 @@
 import collections
 import logging
+import os
 
 import numpy as np
 import pandas as pd
@@ -79,11 +80,39 @@ class Test_filter_data_by_comparison(hut.TestCase):
         self.check_string(str_output)
 
 
+class TestFilterDataByMethod(hut.TestCase):
+    """This test was generated automatically with Playback."""
+
+    def test1(self) -> None:
+        # Define input variables.
+        input_path = os.path.join(self.get_input_dir(), "test.txt")
+        data = pd.read_csv(input_path, index_col=0)
+        filters = {
+            "Frequency": {"isin": {"values": ["Monthly", "Weekly", "Daily"]}},
+            "source_code": {"isin": {"values": ["WIND"]}},
+            "is_downloaded": {"isin": {"values": ["success"]}},
+        }
+        mode = "and"
+        info: collections.OrderedDict = collections.OrderedDict()
+        # Call function to test.
+        act = hdf.filter_data_by_method(
+            data=data, filters=filters, mode=mode, info=info
+        )
+        act = hut.convert_df_to_string(act)
+        act = str(act)
+        # Check output.
+        self.check_string(act)
+
+
 class Test_apply_nan_mode(hut.TestCase):
     @staticmethod
     def _get_series_with_nans(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
+        series = hut.get_random_df(
+            num_cols=1,
+            seed=seed,
+            **date_range,
+        )[0]
         series[:3] = np.nan
         series[-3:] = np.nan
         series[5:7] = np.nan
