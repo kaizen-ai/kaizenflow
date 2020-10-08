@@ -745,6 +745,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         init_kwargs: Optional[Dict[str, Any]] = None,
         fit_kwargs: Optional[Dict[str, Any]] = None,
         x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        add_constant: bool = False,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
         disable_tqdm: bool = False,
@@ -760,19 +761,24 @@ class ContinuousSarimaxModel(FitPredictNode):
         :param fit_kwargs: kwargs for `fit` method of
             `sm.tsa.statespace.SARIMAX`
         :param x_vars: names of x variables
+        :param add_constant: whether to add constant to exogenous dataset,
+            default `False`. Note that adding a constant and specifying
+            `trend="c"` is not the same
         :param col_mode: "replace_all" or "merge_all"
         :param nan_mode: "raise" or "drop"
         :param disable_tqdm: whether to disable tqdm progress bar
         """
         super().__init__(nid)
         self._y_vars = y_vars
+        # Zero-step prediction is not supported for autoregressive models.
         dbg.dassert_lte(
-            0, steps_ahead, "Non-causal prediction attempted! Aborting..."
+            1, steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
         self._steps_ahead = steps_ahead
         self._init_kwargs = init_kwargs
         self._fit_kwargs = fit_kwargs or {"disp": False}
         self._x_vars = x_vars
+        self._add_constant = add_constant
         self._model = None
         self._model_results = None
         self._col_mode = col_mode or "merge_all"
@@ -794,6 +800,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             idx = idx[self._steps_ahead :]
         else:
             x_fit = None
+        x_fit = self._add_constant_to_x(x_fit)
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
@@ -832,6 +839,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             idx = idx[self._steps_ahead :]
         else:
             x_predict = None
+        x_predict = self._add_constant_to_x(x_predict)
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, y_predict.index)
         fwd_y_hat = self._predict(y_predict, x_predict)
@@ -856,7 +864,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         if self._x_vars is not None:
             pred_range = len(y) - self._steps_ahead
             # TODO(Julia): Check this.
-            pred_start = self._steps_ahead or 1
+            pred_start = self._steps_ahead
         else:
             pred_range = len(y)
             pred_start = 1
@@ -865,7 +873,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             y_past = y.iloc[:t]
             if x is not None:
                 x_past = x.iloc[:t]
-                x_step = x.iloc[t : t + self._steps_ahead + 1]
+                x_step = x.iloc[t : t + self._steps_ahead]
             else:
                 x_past = None
                 x_step = None
@@ -875,20 +883,21 @@ class ContinuousSarimaxModel(FitPredictNode):
             result_predict = model_predict.filter(self._model_results.params)
             # Make forecast.
             forecast = result_predict.forecast(
-                steps=self._steps_ahead + 1, exog=x_step
+                steps=self._steps_ahead, exog=x_step
             )
             forecast_last_step = forecast.iloc[-1:]
             preds.append(forecast_last_step)
         preds = pd.concat(preds)
-        # These predictions are made at time `t` for
-        # `t + self._steps_ahead + 1` and indexed by `t`. Therefore, we need to
-        # shift predictions by the lag.
-        preds = preds.shift(-self._steps_ahead - 1)
-        #
         y_var = y.columns[0]
-        pred_col = f"{y_var}_{self._steps_ahead}_hat"
-        preds = preds.to_frame(name=pred_col)
-        return preds
+        preds.name = f"{y_var}_0_hat"
+        #
+        # The value `yhat_t` in `preds` is the prediction of `y_t` made
+        # `self._steps_ahead` time points ago. However, by our conventions, the
+        # target and prediction columns are indexed by the timestamp when the
+        # prediction was made and contain the lag in their name:
+        preds = preds.shift(-self._steps_ahead)
+        preds.name = preds.name.replace("_0_hat", f"_{self._steps_ahead}_hat")
+        return preds.to_frame()
 
     def _get_bkwd_x_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -911,6 +920,19 @@ class ContinuousSarimaxModel(FitPredictNode):
         mapper = lambda y: y + "_%i" % self._steps_ahead
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
+
+    def _add_constant_to_x(self, x: pd.DataFrame) -> Optional[pd.DataFrame]:
+        if not self._add_constant:
+            return x
+        if self._x_vars is not None:
+            dbg.dassert_not_in(
+                "const",
+                self._to_list(self._x_vars),
+                "A column name 'const' is already present, please rename column.",
+            )
+            self._x_vars.append("const")
+            return sm.add_constant(x)
+        _LOG.warning("`add_constant=True` but no exog is provided.")
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
