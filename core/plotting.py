@@ -684,13 +684,11 @@ def plot_heatmap(
     """
     # Sanity check.
     dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
+    if corr_df.empty:
+        _LOG.warning("Can't plot heatmap for empty `corr_df`")
+        return
     if corr_df.shape[0] > 20:
         _LOG.warning("The corr_df.shape[0]='%s' > 20", corr_df.shape[0])
-    if corr_df.shape[0] < 2:
-        _LOG.warning(
-            "Can't plot heatmap for corr_df with shape=%s", str(corr_df.shape)
-        )
-        return
     if np.all(np.isnan(corr_df)):
         _LOG.warning(
             "Can't plot heatmap with only nans:\n%s", corr_df.to_string()
@@ -761,8 +759,8 @@ def plot_correlation_matrix(
     :param min_periods: minimum number of observations required per pair of columns to have
         a valid result; currently only available for Pearson and Spearman correlation
     """
-    if df.shape[1] < 2:
-        _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
+    if df.empty:
+        _LOG.warning("Skipping correlation matrix since `df` is empty")
         return None
     # Compute the correlation matrix.
     method = method or "pearson"
