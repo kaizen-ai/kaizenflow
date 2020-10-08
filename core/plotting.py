@@ -686,7 +686,7 @@ def plot_heatmap(
     dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
     if corr_df.shape[0] > 20:
         _LOG.warning("The corr_df.shape[0]='%s' > 20", corr_df.shape[0])
-    if corr_df.shape[0] < 2 or corr_df.shape[1] < 2:
+    if corr_df.shape[0] < 2:
         _LOG.warning(
             "Can't plot heatmap for corr_df with shape=%s", str(corr_df.shape)
         )
@@ -718,7 +718,6 @@ def plot_heatmap(
             square=True,
             annot=annot,
             fmt=".2f",
-            linewidths=0.5,
             cbar_kws={"shrink": 0.5},
             mask=mask,
             ax=ax,
@@ -731,7 +730,6 @@ def plot_heatmap(
             cmap=cmap,
             vmin=vmin,
             vmax=vmax,
-            linewidths=0.5,
             square=True,
             annot=annot,
             figsize=figsize,
