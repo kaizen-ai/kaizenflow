@@ -410,7 +410,7 @@ class DataFrameModeler:
         cols: Optional[List[Any]] = None,
         figsize: Optional[Tuple[int, int]] = None,
         mode: str = "ins",
-        plot_dendrogram_kwargs: Optional[Dict[str, Any]] = None
+        plot_dendrogram_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
         #
@@ -526,7 +526,6 @@ class DataFrameModeler:
         """
         Calculate stats for a single series.
         """
-        dbg.dassert(not srs.empty, msg="Series should not be empty")
         stats_dict = {}
         stats_dict[0] = stats.summarize_time_index_info(srs)
         stats_dict[1] = stats.compute_jensen_ratio(srs)
