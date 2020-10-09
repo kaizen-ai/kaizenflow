@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -1038,8 +1039,8 @@ class Test_compute_bet_stats(hut.TestCase):
 
 class Test_compute_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1052,8 +1053,8 @@ class Test_compute_sharpe_ratio(hut.TestCase):
 
 class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1188,8 +1189,8 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
 
 class Test_summarize_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},

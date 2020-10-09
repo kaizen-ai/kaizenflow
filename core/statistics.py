@@ -55,12 +55,7 @@ def compute_moments(
     ]
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-        n_stats = len(result_index)
-        nan_result = pd.Series(
-            data=[np.nan for i in range(n_stats)],
-            index=result_index,
-            name=srs.name,
-        )
+        nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
         return nan_result
     # TODO(*): re-applyg stricter sp.stats nan_policy after we handle inf's.
     result_values = [
@@ -223,10 +218,7 @@ def compute_special_value_stats(
         prefix + "num_finite_samples",
         prefix + "num_unique_values",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -622,7 +614,7 @@ def compute_annualized_return_and_volatility(
         prefix + "annualized_volatility_(%)",
     ]
     nan_result = pd.Series(
-        data=[np.nan, np.nan], index=result_index, name=srs.name, dtype="float64"
+        np.nan, index=result_index, name=srs.name, dtype="float64"
     )
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
@@ -803,9 +795,7 @@ def ttest_1samp(
         prefix + "tval",
         prefix + "pval",
     ]
-    nan_result = pd.Series(
-        data=[np.nan, np.nan], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -873,7 +863,7 @@ def multi_ttest(
     if data.empty:
         _LOG.warning("Empty input!")
         return pd.DataFrame(
-            [np.nan, np.nan, np.nan],
+            np.nan,
             index=[prefix + "tval", prefix + "pval", prefix + "adj_pval"],
             columns=[data.columns],
         )
@@ -905,10 +895,7 @@ def apply_normality_test(
         prefix + "stat",
         prefix + "pval",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -965,9 +952,8 @@ def apply_adf_test(
         prefix + "critical_values_10%",
         prefix + "ic_best",
     ]
-    n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
+        data=np.nan,
         index=result_index,
         name=data.name,
     )
@@ -1040,9 +1026,8 @@ def apply_kpss_test(
         prefix + "critical_values_5%",
         prefix + "critical_values_10%",
     ]
-    n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
+        data=np.nan,
         index=result_index,
         name=data.name,
     )
@@ -1172,7 +1157,7 @@ def compute_jensen_ratio(
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
     nan_result = pd.Series(
-        data=[np.nan], index=[prefix + "jensen_ratio"], name=signal.name
+        data=np.nan, index=[prefix + "jensen_ratio"], name=signal.name
     )
     dbg.dassert(not data.isna().any())
     # Handle infs.
@@ -1236,7 +1221,7 @@ def compute_forecastability(
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)
         nan_result = pd.Series(
-            data=[np.nan], index=[prefix + "forecastability"], name=signal.name
+            data=np.nan, index=[prefix + "forecastability"], name=signal.name
         )
         return nan_result
     if mode == "welch":
@@ -1291,9 +1276,7 @@ def compute_zero_diff_proportion(
             srs.name,
             data.shape[0],
         )
-        nan_result = pd.Series(
-            data=[np.nan, np.nan], index=result_index, name=srs.name
-        )
+        nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
         return nan_result
     # Compute if neighboring elements are equal within the given tolerance.
     equal_ngb_srs = np.isclose(data.shift(1)[1:], data[1:], atol=atol, rtol=rtol)
