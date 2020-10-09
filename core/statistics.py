@@ -1056,9 +1056,10 @@ def apply_kpss_test(
             lags,
             critical_values,
         ) = sm.tsa.stattools.kpss(data.values, regression=regression, nlags=nlags)
-    except ValueError:
+    except (ValueError, OverflowError):
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
+        # TODO(Julia): Debug OverflowError.
         return nan_result
         #
     result_values = [
