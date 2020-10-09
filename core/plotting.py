@@ -195,6 +195,22 @@ def get_multiple_plots(
     return fig, ax
 
 
+def plot_projection(df: pd.DataFrame, ax: mpl.axes.Axes) -> None:
+    """
+    Plot lines above index where each column is not `NaN`.
+
+    :param df: dataframe
+    :param ax: axis on which to plot
+    """
+    for i, (_, srs) in enumerate(df.items()):
+        # Bottom `ylim` gets shifted with each new line.
+        ylim = ax.get_ylim()
+        color = ax.lines[i].get_color()
+        srs.mask(srs.notna(), ylim[0]).plot(
+            ax=ax, legend=None, color=color, linewidth=1, alpha=0.8
+        )
+
+
 # #############################################################################
 # Data count plots.
 # #############################################################################
