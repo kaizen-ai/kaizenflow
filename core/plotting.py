@@ -205,10 +205,11 @@ def plot_projection(df: pd.DataFrame, ax: mpl.axes.Axes) -> None:
     for i, (_, srs) in enumerate(df.items()):
         # Bottom `ylim` gets shifted with each new line.
         ylim = ax.get_ylim()
+        # Replace non-nan values with bottom `ylim`.
+        ylim_srs = srs.mask(srs.notna(), ylim[0])
+        # Plot line above the index.
         color = ax.lines[i].get_color()
-        srs.mask(srs.notna(), ylim[0]).plot(
-            ax=ax, legend=None, color=color, linewidth=1, alpha=0.8
-        )
+        ylim_srs.plot(ax=ax, legend=None, color=color, linewidth=1, alpha=0.8)
 
 
 # #############################################################################
