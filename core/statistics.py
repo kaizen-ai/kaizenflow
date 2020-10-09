@@ -1586,7 +1586,10 @@ def summarize_time_index_info(
         result["sampling_points_per_year"] = sampling_points_per_year
         # Compute input time span as a number of `freq` units in
         # `clear_index`.
-        clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
+        if not clear_srs.empty:
+            clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
+        else:
+            clear_index_time_span = 0
         result["time_span_in_years"] = (
             clear_index_time_span / sampling_points_per_year
         )
