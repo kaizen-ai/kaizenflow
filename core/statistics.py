@@ -46,7 +46,8 @@ def compute_moments(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, mode=nan_mode)
+    data = replace_infs_with_nans(srs)
+    data = hdf.apply_nan_mode(data, mode=nan_mode)
     result_index = [
         prefix + "mean",
         prefix + "std",
